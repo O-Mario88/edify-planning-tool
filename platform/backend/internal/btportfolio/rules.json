@@ -1,0 +1,387 @@
+{
+  "case_statuses": [
+    [
+      "recommended",
+      "Recommended"
+    ],
+    [
+      "triage",
+      "In triage"
+    ],
+    [
+      "active",
+      "Active"
+    ],
+    [
+      "monitoring",
+      "Monitoring"
+    ],
+    [
+      "deferred",
+      "Deferred"
+    ],
+    [
+      "closed",
+      "Closed"
+    ]
+  ],
+  "district_profile_roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+  ],
+  "ia_statuses": [
+    [
+      "pending",
+      "Pending"
+    ],
+    [
+      "verified",
+      "Verified"
+    ],
+    [
+      "returned",
+      "Returned"
+    ]
+  ],
+  "impact_statuses": [
+    [
+      "not_due",
+      "Not Due"
+    ],
+    [
+      "baseline_required",
+      "Baseline Required"
+    ],
+    [
+      "due",
+      "Due"
+    ],
+    [
+      "under_review",
+      "Under Review"
+    ],
+    [
+      "strong_positive",
+      "Strong Positive Impact"
+    ],
+    [
+      "positive",
+      "Positive Impact"
+    ],
+    [
+      "early_progress",
+      "Early Progress"
+    ],
+    [
+      "mixed",
+      "Mixed Impact"
+    ],
+    [
+      "no_change",
+      "No Measurable Change"
+    ],
+    [
+      "negative",
+      "Negative Impact"
+    ],
+    [
+      "insufficient_evidence",
+      "Insufficient Evidence"
+    ]
+  ],
+  "loan_statuses": [
+    [
+      "processing",
+      "Processing"
+    ],
+    [
+      "disbursed",
+      "Disbursed"
+    ],
+    [
+      "active",
+      "Active"
+    ],
+    [
+      "repaid",
+      "Repaid"
+    ],
+    [
+      "defaulted",
+      "Defaulted"
+    ],
+    [
+      "canceled",
+      "Canceled"
+    ]
+  ],
+  "metric_labels": {
+    "bt_active_portfolio": "Active Portfolio",
+    "bt_collection_rate": "Collection Rate",
+    "bt_par30": "Portfolio at Risk 30",
+    "bt_schools_financed": "Schools Financed",
+    "bt_use_verified": "Loan Use Verified",
+    "bt_value_disbursed": "Value Disbursed"
+  },
+  "mfi_roles": [
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin"
+  ],
+  "nav_role": "BusinessTransformationOfficer",
+  "open_case_statuses": [
+    "recommended",
+    "triage",
+    "active",
+    "monitoring",
+    "deferred"
+  ],
+  "recommendation_kinds": [
+    [
+      "financial_health_training",
+      "Financial Health training"
+    ],
+    [
+      "accountant_training",
+      "School accountant training"
+    ],
+    [
+      "compliance_support",
+      "Government requirements support"
+    ],
+    [
+      "loan_readiness",
+      "Loan readiness assessment"
+    ],
+    [
+      "loan_referral",
+      "MFI referral"
+    ],
+    [
+      "loan_use_verification",
+      "Loan-use verification"
+    ],
+    [
+      "loan_impact_assessment",
+      "Loan impact assessment"
+    ],
+    [
+      "follow_up_mentorship",
+      "Follow-up mentorship"
+    ],
+    [
+      "further_assessment",
+      "Further assessment"
+    ],
+    [
+      "no_immediate_intervention",
+      "No immediate intervention"
+    ]
+  ],
+  "roles": {
+    "Accountant": {
+      "pages": [
+        "/business-transformation/impact-reports",
+        "/business-transformation/overview"
+      ],
+      "permissions": [
+        "businessTransformation.facility.transfer",
+        "businessTransformation.facility.view"
+      ]
+    },
+    "Admin": {
+      "pages": [
+        "/business-transformation/impact-reports",
+        "/business-transformation/overview"
+      ],
+      "permissions": []
+    },
+    "BusinessTransformationOfficer": {
+      "pages": [
+        "/business-transformation/business-accounting-finance",
+        "/business-transformation/government-requirements",
+        "/business-transformation/impact-reports",
+        "/business-transformation/overview",
+        "/loans"
+      ],
+      "permissions": [
+        "businessTransformation.allocation.manage",
+        "businessTransformation.export",
+        "businessTransformation.facility.manage",
+        "businessTransformation.facility.view",
+        "businessTransformation.portfolio.view",
+        "businessTransformation.purpose.review",
+        "businessTransformation.salesforce.confirm",
+        "businessTransformation.sensitive.view",
+        "businessTransformation.view"
+      ]
+    },
+    "CCEO": {
+      "pages": [
+        "/business-transformation/impact-reports",
+        "/business-transformation/overview",
+        "/loans"
+      ],
+      "permissions": [
+        "businessTransformation.schoolSupport.manage"
+      ]
+    },
+    "ClusterLeader": {
+      "pages": [],
+      "permissions": []
+    },
+    "CountryDirector": {
+      "pages": [
+        "/business-transformation/impact-reports",
+        "/business-transformation/overview",
+        "/loans"
+      ],
+      "permissions": [
+        "businessTransformation.allocation.manage",
+        "businessTransformation.amendment.approve",
+        "businessTransformation.case.manage",
+        "businessTransformation.export",
+        "businessTransformation.facility.approve",
+        "businessTransformation.facility.manage",
+        "businessTransformation.facility.view",
+        "businessTransformation.mfi.manage",
+        "businessTransformation.portfolio.view",
+        "businessTransformation.purpose.approve",
+        "businessTransformation.referral.manage",
+        "businessTransformation.schoolSupport.manage",
+        "businessTransformation.sensitive.view",
+        "businessTransformation.view"
+      ]
+    },
+    "HumanResources": {
+      "pages": [
+        "/business-transformation/impact-reports",
+        "/business-transformation/overview"
+      ],
+      "permissions": []
+    },
+    "ImpactAssessment": {
+      "pages": [
+        "/business-transformation/impact-reports",
+        "/business-transformation/overview",
+        "/loans"
+      ],
+      "permissions": [
+        "businessTransformation.export",
+        "businessTransformation.ia.validate",
+        "businessTransformation.portfolio.view",
+        "businessTransformation.purpose.define",
+        "businessTransformation.sensitive.view",
+        "businessTransformation.view"
+      ]
+    },
+    "MfiLoanOfficer": {
+      "pages": [
+        "/loans",
+        "/mfi-portal"
+      ],
+      "permissions": [
+        "businessTransformation.disbursement.write",
+        "businessTransformation.facility.view",
+        "businessTransformation.loan.write",
+        "businessTransformation.portfolio.view",
+        "businessTransformation.purpose.request",
+        "businessTransformation.repayment.write",
+        "businessTransformation.sensitive.view",
+        "businessTransformation.view"
+      ]
+    },
+    "MfiPartnerAdmin": {
+      "pages": [
+        "/loans",
+        "/mfi-portal"
+      ],
+      "permissions": [
+        "businessTransformation.disbursement.write",
+        "businessTransformation.facility.view",
+        "businessTransformation.loan.write",
+        "businessTransformation.mfiMember.manage",
+        "businessTransformation.portfolio.certify",
+        "businessTransformation.portfolio.view",
+        "businessTransformation.purpose.request",
+        "businessTransformation.repayment.reverse",
+        "businessTransformation.repayment.write",
+        "businessTransformation.sensitive.view",
+        "businessTransformation.view"
+      ]
+    },
+    "PartnerAdmin": {
+      "pages": [
+        "/business-transformation/impact-reports",
+        "/business-transformation/overview"
+      ],
+      "permissions": []
+    },
+    "PartnerFieldOfficer": {
+      "pages": [
+        "/business-transformation/impact-reports",
+        "/business-transformation/overview"
+      ],
+      "permissions": []
+    },
+    "Program Lead": {
+      "pages": [],
+      "permissions": [
+        "businessTransformation.schoolSupport.manage"
+      ]
+    },
+    "ProjectCoordinator": {
+      "pages": [
+        "/business-transformation/impact-reports",
+        "/business-transformation/overview"
+      ],
+      "permissions": []
+    },
+    "RegionalProgramLead": {
+      "pages": [
+        "/business-transformation/impact-reports"
+      ],
+      "permissions": []
+    },
+    "RegionalVicePresident": {
+      "pages": [
+        "/business-transformation/impact-reports",
+        "/business-transformation/overview",
+        "/loans"
+      ],
+      "permissions": [
+        "businessTransformation.export",
+        "businessTransformation.facility.view",
+        "businessTransformation.portfolio.view",
+        "businessTransformation.sensitive.view",
+        "businessTransformation.view"
+      ]
+    }
+  },
+  "salesforce_statuses": [
+    [
+      "pending",
+      "Pending"
+    ],
+    [
+      "confirmed",
+      "Confirmed"
+    ],
+    [
+      "returned",
+      "Returned"
+    ]
+  ],
+  "summary_only_roles": [],
+  "uganda_wide_roles": [
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CountryDirector",
+    "ImpactAssessment",
+    "RegionalVicePresident"
+  ]
+}

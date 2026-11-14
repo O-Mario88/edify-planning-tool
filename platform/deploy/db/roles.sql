@@ -715,3 +715,9 @@ GRANT SELECT (updated_at) ON document_asset TO edify_gateway_ro;
 GRANT SELECT (document_id, superseded_at) ON document_version TO edify_gateway_ro;
 GRANT SELECT (functional_manager_id) ON hr_performance_review TO edify_gateway_ro;
 GRANT SELECT (id, review_id, weight) ON hr_performance_priority TO edify_gateway_ro;
+
+-- Business Transformation engine (internal/btportfolio, internal/btpages):
+-- who registered a loan (a loan officer's own book), its IA validation state
+-- and Salesforce loan id (filters and search), and the year a case opened.
+GRANT SELECT (registered_by, ia_validation_status, salesforce_loan_id) ON bt_mfi_loan TO edify_gateway_ro;
+GRANT SELECT (opened_fy) ON bt_case TO edify_gateway_ro;
