@@ -60,4 +60,26 @@ integration tests, parity for all 29 accounts, hand-ons listed.
   URL match (`apps/mobile_feed/views.py`), so the RVP and the Accountant read
   "Cost Intelligence" in the app as on the web, not "Cost Catalogue".
 
-Next: stage 2, /budget.
+- **Stage 2, /budget for CCEOs and Program Leads** (`internal/budgetpage`,
+  rules from `manage.py export_budget_rules`): the period tabs, the year, the
+  Program Lead's team cost summary, and the ledger of planned cost lines
+  grouped by activity and by item and rate (a shared day's rate from its own
+  snapshot, trainings and meetings counted by sessions and participants, the
+  partner lump sum shown as the facilitation fee, a line dated only by its
+  month in the months wholly inside the period, the week that crosses
+  1 October reading both years). Golden: 15 answers of 4 accounts, 0
+  differing. Hand-ons: the five country roles (their Budget carries the
+  monthly approval workflow and Finance Health, the next part of stage 2),
+  the Project Coordinator (a section strip), a reader whose scope is the
+  country, any other query (district, staff, search, week, month), a date or
+  year that is not plainly one, more than 50 groups, a day rate int() would
+  refuse. The ledger's training and meeting sets and the country roles were
+  lifted to module constants (`LEDGER_*` in `apps/budget/services.py`,
+  `COUNTRY_BUDGET_ROLES` in `budget_views.py`) so the export reads them.
+- **The app reads the whole ledger**: the feed read a table's first body
+  only, so the app showed the first activity group and dropped the rest and
+  the grand total. A table without a head is now read whole when it has
+  several bodies or a footer (only the budget ledger has either), in the
+  feed and in Go's `feeddom` alike.
+
+Next: the country Budget (approval workflow, Finance Health).
