@@ -22,6 +22,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/accounts"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/acting"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/adminops"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/calendarpage"
@@ -37,6 +38,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/escalations"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/extrawork"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/feed"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/fyplanning"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/health"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/hrregister"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/httpmw"
@@ -54,8 +56,11 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partneroversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningoversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningpage"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/policycompliance"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/programmeschools"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/projectcapacity"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/projectmonitoring"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/qualityflags"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schools"
@@ -126,6 +131,11 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			planningpage.NewService(pool, time.Now),
 			decisionlog.NewService(pool, time.Now),
 			escalations.NewService(pool, time.Now),
+			qualityflags.NewService(pool, time.Now),
+			projectcapacity.NewService(pool, time.Now),
+			adminops.NewService(pool),
+			fyplanning.NewService(pool, time.Now),
+			policycompliance.NewService(pool, time.Now),
 			myactions.NewService(pool, time.Now),
 			coreoversight.NewService(pool, time.Now),
 			myplan.NewService(pool, time.Now).WithTrainingSummary(trainingsummary.OwnSummary),

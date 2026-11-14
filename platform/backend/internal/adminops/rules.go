@@ -1,0 +1,58 @@
+// Package adminops is the Admin's platform-operations registers: Support
+// Tickets (/admin-ops/support), System Incidents (/admin-ops/incidents) and
+// the Maintenance Calendar (/admin-ops/maintenance), as the existing pages
+// draw them (apps.admin_ops.views and pages/admin_ops/) and the app's feed
+// reads them (apps.mobile_feed). Triage, resolving, acknowledging and the
+// incident's own page stay with the existing application.
+//
+// The doors, labels and limits are exported to rules.json by
+// `manage.py export_admin_ops_rules`;
+// apps/admin_ops/test_admin_ops_rules_export.py fails when the two differ.
+package adminops
+
+import (
+	_ "embed"
+	"encoding/json"
+	"fmt"
+)
+
+//go:embed rules.json
+var rulesJSON []byte
+
+var rules = func() (r struct {
+	Pages map[string]struct {
+		Roles map[string]struct {
+			Page bool `json:"page"`
+		} `json:"roles"`
+	} `json:"pages"`
+	TicketStatuses           map[string]string `json:"ticket_statuses"`
+	TicketCategories         map[string]string `json:"ticket_categories"`
+	ClosedTicketStatuses     []string          `json:"closed_ticket_statuses"`
+	ResolvableTicketStatuses []string          `json:"resolvable_ticket_statuses"`
+	UntriagedTicketStatus    string            `json:"untriaged_ticket_status"`
+	IncidentStatuses         map[string]string `json:"incident_statuses"`
+	Severities               map[string]string `json:"severities"`
+	WorkItemStatuses         map[string]string `json:"work_item_statuses"`
+	WorkItemCategories       map[string]string `json:"work_item_categories"`
+	DoneWorkItemStatus       string            `json:"done_work_item_status"`
+	MaintenanceCategories    []string          `json:"maintenance_categories"`
+	Limits                   struct {
+		Tickets         int `json:"tickets"`
+		Incidents       int `json:"incidents"`
+		MaintenanceWork int `json:"maintenance_work"`
+	} `json:"limits"`
+}) {
+	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.Pages) == 0 || len(r.TicketStatuses) == 0 || r.Limits.Tickets == 0 || r.UntriagedTicketStatus == "" {
+		panic(fmt.Sprintf("adminops: the embedded rules are unreadable: %v", err))
+	}
+	return r
+}()
+
+// label is a choice's display, or the stored value when it is not one
+// (get_FOO_display).
+func label(choices map[string]string, value string) string {
+	if l, ok := choices[value]; ok {
+		return l
+	}
+	return value
+}

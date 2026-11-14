@@ -1,0 +1,122 @@
+{
+  "live_statuses": [
+    "active",
+    "paused",
+    "proposed",
+    "scaling",
+    "under_review"
+  ],
+  "near_capacity_share": 0.8,
+  "open_statuses": [
+    "active",
+    "proposed",
+    "scaling",
+    "under_review"
+  ],
+  "page_size": 50,
+  "query_keys_not_passed": [
+    "csv",
+    "download",
+    "export",
+    "format",
+    "pdf",
+    "xlsx"
+  ],
+  "roles": {
+    "Accountant": {
+      "page": false,
+      "staff_links": false,
+      "strip": null
+    },
+    "Admin": {
+      "page": true,
+      "staff_links": true,
+      "strip": null
+    },
+    "BusinessTransformationOfficer": {
+      "page": false,
+      "staff_links": false,
+      "strip": null
+    },
+    "CCEO": {
+      "page": false,
+      "staff_links": false,
+      "strip": null
+    },
+    "ClusterLeader": {
+      "page": false,
+      "staff_links": false,
+      "strip": null
+    },
+    "CountryDirector": {
+      "page": false,
+      "staff_links": true,
+      "strip": null
+    },
+    "HumanResources": {
+      "page": false,
+      "staff_links": true,
+      "strip": null
+    },
+    "ImpactAssessment": {
+      "page": true,
+      "staff_links": true,
+      "strip": null
+    },
+    "MfiLoanOfficer": {
+      "page": false,
+      "staff_links": false,
+      "strip": null
+    },
+    "MfiPartnerAdmin": {
+      "page": false,
+      "staff_links": false,
+      "strip": null
+    },
+    "PartnerAdmin": {
+      "page": false,
+      "staff_links": false,
+      "strip": null
+    },
+    "PartnerFieldOfficer": {
+      "page": false,
+      "staff_links": false,
+      "strip": null
+    },
+    "Program Lead": {
+      "page": false,
+      "staff_links": true,
+      "strip": null
+    },
+    "ProjectCoordinator": {
+      "page": true,
+      "staff_links": false,
+      "strip": {
+        "label": "Projects",
+        "scrolls": true,
+        "tabs": [
+          {
+            "active": false,
+            "href": "/projects",
+            "label": "Projects"
+          },
+          {
+            "active": true,
+            "href": "/projects/capacity",
+            "label": "Capacity"
+          }
+        ]
+      }
+    },
+    "RegionalProgramLead": {
+      "page": false,
+      "staff_links": false,
+      "strip": null
+    },
+    "RegionalVicePresident": {
+      "page": false,
+      "staff_links": true,
+      "strip": null
+    }
+  }
+}

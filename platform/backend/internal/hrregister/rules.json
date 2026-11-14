@@ -89,12 +89,14 @@
     "Near misses": "Near misses",
     "No reporting line": "No reporting line",
     "Offers": "Offers",
+    "Open": "Open",
     "Open incidents": "Open incidents",
     "Open roles": "Open roles",
     "Open surveys": "Open surveys",
     "Overdue": "Overdue",
     "Past exit date, still active": "Past exit date, still active",
     "Pay reviews due": "Pay reviews due",
+    "Pending approval": "Pending approval",
     "People in scope": "People in scope",
     "People recognised": "People recognised",
     "Plans": "Plans",
@@ -104,6 +106,7 @@
     "Ready for activation": "Ready for activation",
     "Recognitions": "Recognitions",
     "Refused actions": "Refused actions",
+    "Replacements": "Replacements",
     "Requirements": "Requirements",
     "Reviews": "Reviews",
     "Reviews due": "Reviews due",
@@ -1651,6 +1654,110 @@
         }
       }
     },
+    "/recruitment": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [
+            "/recruitment/new"
+          ],
+          "links": [],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "links": [],
+          "page": true,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [
+            "/recruitment/new"
+          ],
+          "links": [],
+          "page": true,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [],
+          "links": [],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        }
+      }
+    },
     "/workforce-planning": {
       "roles": {
         "Accountant": {
@@ -1874,6 +1981,18 @@
     "high": "High",
     "low": "Low",
     "medium": "Medium"
+  },
+  "vacancy_statuses": {
+    "approved": "Approved",
+    "cancelled": "Cancelled",
+    "closed": "Closed",
+    "draft": "Draft",
+    "open": "Open",
+    "pending_approval": "Pending approval"
+  },
+  "vacancy_types": {
+    "new_role": "New Role",
+    "replacement": "Replacement"
   },
   "voluntary_exit_reasons": [
     "resignation",

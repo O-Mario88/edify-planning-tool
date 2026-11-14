@@ -78,6 +78,9 @@ type Rules struct {
 	PulseStatuses     map[string]string `json:"pulse_statuses"`
 	PulseQuestions    []string          `json:"pulse_questions"`
 	PulseMinResponses int               `json:"pulse_min_responses"`
+	// The labels of a vacancy's status and type (replacement or new role).
+	VacancyStatuses map[string]string `json:"vacancy_statuses"`
+	VacancyTypes    map[string]string `json:"vacancy_types"`
 	// Reviews are the roles each role is the performance reviewer for.
 	Reviews           map[string][]string `json:"reviews"`
 	MetricLabels      map[string]string   `json:"metric_labels"`
@@ -94,6 +97,7 @@ func mustLoad(raw []byte) Rules {
 		len(r.ExitReasons) == 0 || len(r.VoluntaryExitReasons) == 0 || len(r.ApplicationStages) == 0 || len(r.ComplianceStatuses) == 0 || len(r.DocumentTypes) == 0 || len(r.DocumentStatuses) == 0 ||
 		len(r.RecoveryPlanTypes) == 0 || len(r.RecoveryCauses) == 0 || len(r.RecoveryStatuses) == 0 || len(r.Reviews) == 0 ||
 		len(r.ReviewStages) == 0 || len(r.PulseStatuses) == 0 || len(r.PulseQuestions) == 0 || r.PulseMinResponses <= 0 || len(r.CompensationStatuses) == 0 || len(r.MedicalCovers) == 0 || len(r.ReviewTypes) == 0 || len(r.PerformanceRatings) == 0 ||
+		len(r.VacancyStatuses) == 0 || len(r.VacancyTypes) == 0 ||
 		len(r.MetricLabels) == 0 || r.HelperFigureChars <= 0 || r.PageSize <= 0 {
 		panic(fmt.Sprintf("hrregister: the embedded rules are unreadable: %v", err))
 	}

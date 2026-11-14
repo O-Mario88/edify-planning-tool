@@ -8,7 +8,7 @@ answers, who may open it, the workspace strip each role is shown above it and
 which of its drawer buttons each role is shown; the labels of a People
 record's lifecycle, a recognition's category and a safety incident's
 category, severity and status, an onboarding plan's status and an exit's
-reason, and which reasons are voluntary, an application's stage an employee's compliance status, a document's type and status, and a recovery plan's type, cause and
+reason, and which reasons are voluntary, an application's stage, a vacancy's status and type, an employee's compliance status, a document's type and status, and a recovery plan's type, cause and
 status, a performance review's stage, type and rating, a compensation
 record's status and medical cover, and a pulse survey's status; a pulse
 survey's statements and its anonymity floor; whom each role reviews; which
@@ -72,6 +72,13 @@ PAGES = {
             "Voluntary exits",
             "Past exit date, still active",
         ],
+    },
+    "/recruitment": {
+        "permission": "recruitment",
+        "drawers": ["/recruitment/new"],
+        # recruitment_view passes its header button to these roles only.
+        "drawer_roles": ["HumanResources", "Admin"],
+        "metrics": ["Open", "Pending approval", "Replacements", "Applications"],
     },
     "/candidate-pipeline": {
         "permission": "candidate_pipeline",
@@ -167,7 +174,12 @@ def pages() -> dict:
                 "page": RolePermissionService.can_view_page(user, page["permission"])
                 and bool(can_open_url(user, path)),
                 "strip": strip(user, path, "partials/_section_nav.html"),
-                "drawers": [d for d in page["drawers"] if can_open_url(user, d)],
+                "drawers": [
+                    d
+                    for d in page["drawers"]
+                    if can_open_url(user, d)
+                    and role.value in page.get("drawer_roles", [role.value])
+                ],
                 "links": [h for h in page.get("links", []) if can_open_url(user, h)],
             }
         out[path] = {"roles": roles}
@@ -207,6 +219,7 @@ def rules() -> dict:
         PULSE_QUESTIONS,
         VOLUNTARY_EXIT_REASONS,
         ApplicationStage,
+        VacancyStatus,
         CompensationStatus,
         ComplianceStatus,
         ERSeverity,
@@ -225,6 +238,7 @@ def rules() -> dict:
         SafetyIncidentStatus,
     )
     from apps.core.pagination import TABLE_PAGE_SIZE
+    from apps.hr.models import Vacancy
 
     return {
         "pages": pages(),
@@ -237,6 +251,10 @@ def rules() -> dict:
         "exit_reasons": dict(ExitReason.choices),
         "voluntary_exit_reasons": sorted(str(r) for r in VOLUNTARY_EXIT_REASONS),
         "application_stages": dict(ApplicationStage.choices),
+        "vacancy_statuses": dict(VacancyStatus.choices),
+        "vacancy_types": dict(
+            Vacancy._meta.get_field("replacement_or_new_role").choices
+        ),
         "compliance_statuses": dict(ComplianceStatus.choices),
         "document_types": dict(DocumentType.choices),
         "recovery_plan_types": dict(RecoveryPlanType.choices),

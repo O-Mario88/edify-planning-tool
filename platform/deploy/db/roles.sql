@@ -495,6 +495,30 @@ GRANT SELECT (source_engagement_id) ON cce_cceo_coaching TO edify_gateway_ro;
 -- agreed actions or the officer's response.
 GRANT SELECT (id, subject, kind, held_on, author_id, cceo_staff_id, cceo_user_id, country, follow_up_due, follow_up_done_at,
   shared_at, acknowledged_at, created_at) ON cce_cceo_coaching TO edify_gateway_ro;
+-- Quality Flags: a flag's raiser, assignee, what it is about, its note and
+-- recommendation, priority, due day, status and resolution note.
+GRANT SELECT (id, raised_by_user_id, raised_by_name, assigned_to_user_id, category, scope_name, note, recommended_action,
+  priority, due_date, status, resolution_note, created_at) ON cd_flag TO edify_gateway_ro;
+-- Project Capacity: an allocation's id, which its Edit capacity drawer opens.
+GRANT SELECT (id) ON project_staff_capacity TO edify_gateway_ro;
+-- Platform operations (Admin): a ticket's reference, title, category, status, the
+-- reporter's role, page and time (never its description, reporter or browser);
+-- an incident's title, severity, status, where and when it was last seen (never
+-- its samples or detail); the maintenance templates' schedule and the open
+-- maintenance work.
+GRANT SELECT (id, reference, title, category, status, reporter_role, route, created_at) ON admin_support_ticket TO edify_gateway_ro;
+GRANT SELECT (id, title, severity, status, affected_route, affected_component, last_detected_at) ON admin_system_incident TO edify_gateway_ro;
+GRANT SELECT (name, category, frequency_days, estimated_minutes, next_due_date) ON admin_maintenance_template TO edify_gateway_ro;
+GRANT SELECT (reference, title, category, status, scheduled_date, created_at) ON admin_ops_work_item TO edify_gateway_ro;
+-- Recruitment: a vacancy's type, target start and when it was requested (never its salary band or budget source).
+GRANT SELECT (replacement_or_new_role, target_start_date, created_at) ON hr_vacancy TO edify_gateway_ro;
+-- Fiscal Year Planning: each year's delivery window and follow-up rule (never its notes or who opened it).
+GRANT SELECT (execution_start, execution_end, follow_up_visit_requires_prior_training) ON fiscal_year_planning_policy TO edify_gateway_ro;
+-- Policy Compliance: each acknowledgement's reading time, attestation, due day, role and time; a policy's
+-- required reading; whether a comment waits for the reader (its status and author's country, never its text).
+GRANT SELECT (document_id, version_id, role_at_acknowledgement, active_reading_seconds, offline_attestation, due_date, created_at) ON document_acknowledgement TO edify_gateway_ro;
+GRANT SELECT (required_reading_minutes) ON document_asset TO edify_gateway_ro;
+GRANT SELECT (status, author_country) ON document_comment TO edify_gateway_ro;
 -- The To-Do page's Programme Lead builders (agent/todos-pl, docs/migration/55).
 GRANT SELECT (id, fy, status, due_date, created_at) ON hr_performance_review TO edify_gateway_ro;
 GRANT SELECT (id, fy, active_window) ON hr_performance_cycle TO edify_gateway_ro;
