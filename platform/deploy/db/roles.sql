@@ -799,3 +799,13 @@ GRANT SELECT (fy, created_at) ON pd_request TO edify_gateway_ro;
 GRANT SELECT (review_id) ON hr_performance_snapshot TO edify_gateway_ro;
 GRANT SELECT (priority_id) ON hr_priority_amendment TO edify_gateway_ro;
 GRANT SELECT (active, definition_status) ON hr_priority_milestone TO edify_gateway_ro;
+
+-- The approved priority contract (internal/allocations): an allocation's
+-- parent, denominator and weight; a milestone's title, unit, weight and cap;
+-- each activity rule's milestone, counting basis and the activities it
+-- matches; and each progress credit's rule, activity, value and reversal.
+GRANT SELECT (parent_id, denominator, weight) ON hr_milestone_allocation TO edify_gateway_ro;
+GRANT SELECT (title, target_unit, weight, cap_at_100) ON hr_priority_milestone TO edify_gateway_ro;
+GRANT SELECT (id, milestone_id, counting_basis, catalogue_item_id, project_id, required_executor_type, required_delivery_method,
+              school_type, target_intervention, active) ON hr_milestone_activity_rule TO edify_gateway_ro;
+GRANT SELECT (rule_id, activity_id, reversed_at, credited_value) ON hr_milestone_progress_credit TO edify_gateway_ro;

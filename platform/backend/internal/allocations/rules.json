@@ -1,0 +1,50 @@
+{
+  "completed_work_statuses": [
+    "ia_verified",
+    "closed",
+    "accountant_confirmed",
+    "completed"
+  ],
+  "leader_bases": [
+    "SCHOOL_LEADERS_TRAINED"
+  ],
+  "planned_output_statuses": [
+    "planned",
+    "scheduled",
+    "assigned_to_partner",
+    "partner_scheduled",
+    "in_progress",
+    "completion_started",
+    "evidence_uploaded",
+    "evidence_accepted",
+    "salesforce_id_required",
+    "submitted_to_pl",
+    "returned_by_pl",
+    "returned_by_ia",
+    "awaiting_ia_verification",
+    "rescheduled"
+  ],
+  "rate_measurement_types": [
+    "percentage",
+    "ratio"
+  ],
+  "school_bases": [
+    "PERCENT_OF_ELIGIBLE_SCHOOLS",
+    "UNIQUE_SCHOOLS_SUPPORTED",
+    "UNIQUE_SCHOOLS_TRAINED"
+  ],
+  "school_type_families": {
+    "client": [
+      "client",
+      "core_trained"
+    ],
+    "core": [
+      "core",
+      "champion"
+    ]
+  },
+  "teacher_bases": [
+    "TEACHERS_TRAINED",
+    "UNIQUE_PARTICIPANTS"
+  ]
+}

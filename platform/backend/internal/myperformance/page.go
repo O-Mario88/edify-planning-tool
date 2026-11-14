@@ -9,8 +9,7 @@
 // It reads; it never writes. Passed on to the existing page:
 //   - a reader with no review in a year that has a performance cycle: the
 //     existing page drafts their agreement on that read (owner, 2026-11-14);
-//   - a year with an approved allocation on a live, approved milestone: the
-//     distributed priorities are the allocations engine's, not yet in Go;
+//   - a contract longer than one table page;
 //   - an officer with guidance from their Programme Lead, a review with
 //     conversation snapshots or amendments, a manager whose conversation
 //     window is closed, a role shown a section strip, a reader with no People
@@ -39,6 +38,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/allocations"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
@@ -131,15 +131,14 @@ func (s *Service) build(ctx context.Context, p auth.Principal, query url.Values,
 	if n, err := strconv.Atoi(fy); err != nil || len(fy) != 4 || n < 2000 || n > 2100 || strings.TrimFunc(fy, unicode.IsDigit) != "" {
 		return nil, errPassOn // reporting_period refuses it
 	}
-	var allocated bool
-	if err := s.db.QueryRow(ctx, `
-SELECT EXISTS (SELECT 1 FROM hr_milestone_allocation a JOIN hr_priority_milestone m ON m.id = a.milestone_id
-               JOIN hr_strategic_priority sp ON sp.id = m.priority_id
-               WHERE a.status = 'approved' AND sp.fy = $1 AND m.active AND m.definition_status = 'approved')`, fy).Scan(&allocated); err != nil {
-		return nil, fmt.Errorf("myperformance: reading the year's allocations: %w", err)
+	now := s.now()
+	local := now.In(zone)
+	contract, err := allocations.Read(ctx, s.db, p, fy, now, time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC))
+	if err != nil {
+		return nil, err
 	}
-	if allocated {
-		return nil, errPassOn
+	if len(contract.Rows) > pageSize {
+		return nil, errPassOn // the table's own pager
 	}
 	var window *string
 	hasCycle := true
@@ -190,14 +189,14 @@ SELECT EXISTS (SELECT 1 FROM hr_performance_snapshot WHERE review_id = $1)
 	if tab != "values" && tab != "spiritual" && tab != "development" {
 		tab = "distributed"
 	}
-	blocks := []*screensv1.PageBlock{headline(rv, hasCycle, window)}
+	blocks := []*screensv1.PageBlock{headline(rv, hasCycle, window, contract.Pct)}
 	if p.ActiveRole == "CCEO" {
 		blocks = append(blocks, guidance()...)
 	}
 	blocks = append(blocks,
 		&screensv1.PageBlock{Kind: &screensv1.PageBlock_Filters{Filters: &screensv1.PageFilters{Hidden: map[string]string{"tab": tab}}}},
 		tabs(fy, tab))
-	content, err := s.tabContent(ctx, p, rv, fy, tab, caps)
+	content, err := s.tabContent(ctx, p, rv, fy, tab, caps, contract)
 	if err != nil {
 		return nil, err
 	}
@@ -274,7 +273,7 @@ func stageLabel(stage string) string {
 	return strings.ToUpper(words[:1]) + strings.ToLower(words[1:])
 }
 
-func headline(rv *review, hasCycle bool, window *string) *screensv1.PageBlock {
+func headline(rv *review, hasCycle bool, window *string, overall *float64) *screensv1.PageBlock {
 	status, updated := "—", ""
 	if rv != nil {
 		status = stageLabel(rv.stage)
@@ -288,13 +287,17 @@ func headline(rv *review, hasCycle bool, window *string) *screensv1.PageBlock {
 	if hasCycle && window != nil {
 		label = rules.WindowLabels[*window]
 	}
+	progress := fact("Overall progress", "—", "No verified work yet", "neutral")
+	if overall != nil {
+		progress = fact("Overall progress", allocations.Repr(*overall)+"%", "Weighted verified progress", "primary")
+	}
 	windowFact := fact("Conversation window", "None open", "HR schedules the next window", "neutral")
 	if label != "" {
 		windowFact = fact("Conversation window", label, "Open performance conversation", "warning")
 	}
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Strip{Strip: &screensv1.PageStrip{Title: "Performance headline", Metrics: []*screensv1.PageMetric{
 		fact("Agreement status", status, updated, "success"),
-		fact("Overall progress", "—", "No verified work yet", "neutral"),
+		progress,
 		windowFact,
 	}}}}
 }
@@ -317,7 +320,7 @@ func tabs(fy, active string) *screensv1.PageBlock {
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_LinkTabs{LinkTabs: t}}
 }
 
-func (s *Service) tabContent(ctx context.Context, p auth.Principal, rv *review, fy, tab string, caps bool) ([]*screensv1.PageBlock, error) {
+func (s *Service) tabContent(ctx context.Context, p auth.Principal, rv *review, fy, tab string, caps bool, contract allocations.Contract) ([]*screensv1.PageBlock, error) {
 	switch tab {
 	case "values", "spiritual":
 		title, kind := "Core Values", "value"
@@ -369,11 +372,43 @@ func (s *Service) tabContent(ctx context.Context, p auth.Principal, rv *review, 
 		return []*screensv1.PageBlock{{Kind: &screensv1.PageBlock_Panel{Panel: manage}}, panel("", "", items...)}, nil
 	}
 	return []*screensv1.PageBlock{
-		{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{Title: "Distributed priorities (0)",
-			EmptyMessage: "No approved priorities distributed for FY" + fy + "."}}},
+		distributed(contract, fy),
 		panel("", "", "Completion updates as work is completed. Verified achievement updates after verification; returned work is removed from achievement."),
 	}, nil
 }
+
+// pageSize is the distributed table's page (TABLE_PAGE_SIZE); a longer
+// contract is passed on with its pager.
+const pageSize = 50
+
+// distributed is the Distributed priorities card as the feed reads it.
+func distributed(c allocations.Contract, fy string) *screensv1.PageBlock {
+	t := &screensv1.PageTable{Title: fmt.Sprintf("Distributed priorities (%d)", len(c.Rows))}
+	if len(c.Rows) == 0 {
+		t.EmptyMessage = "No approved priorities distributed for FY" + fy + "."
+		return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: t}}
+	}
+	for _, label := range []string{"Priority", "Approved target", "Plan and completion", "Verified", "Action"} {
+		t.Columns = append(t.Columns, &screensv1.PageColumn{Label: label})
+	}
+	for _, r := range c.Rows {
+		verified := "Awaiting metric configuration"
+		if r.Pct != nil {
+			verified = allocations.FloatFormat(r.Actual, -2) + " · " + allocations.Repr(*r.Pct) + "%"
+		}
+		cells := []*screensv1.PageCell{
+			{Text: collapse(r.Title + r.Priority)},
+			{Text: collapse(allocations.FloatFormat(r.Target, -2) + " " + r.Unit + r.Source + " · FY" + fy)},
+			{Text: collapse(allocations.Meter(r.Progress))},
+			{Text: verified},
+			{Text: "Open planning", Href: "/planning?fy=" + fy},
+		}
+		t.Rows = append(t.Rows, &screensv1.PageRow{Cells: cells})
+	}
+	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: t}}
+}
+
+func collapse(s string) string { return strings.Join(strings.Fields(s), " ") }
 
 func nonEmpty(texts ...string) []string {
 	out := []string{}
