@@ -41,7 +41,20 @@ var rules = func() (r struct {
 		Key, Title, Description, Outcome, Referral string
 		Automatic                                  bool
 	} `json:"repairs"`
-	Limits struct {
+	// Admin My Plan and Admin Planning: the severities in order, the
+	// statuses My Plan's sections list, how much closed work it shows, how
+	// many open incidents and untriaged tickets Planning lists, the backlog
+	// and monitoring statuses, the incident statuses that are no longer
+	// open, and the backlog table's page size.
+	SeverityChoices        [][2]string `json:"severity_choices"`
+	MyPlanStatuses         []string    `json:"my_plan_statuses"`
+	RecentlyDone           int         `json:"recently_done"`
+	PlanningLimit          int         `json:"planning_limit"`
+	BacklogStatus          string      `json:"backlog_status"`
+	MonitoringStatus       string      `json:"monitoring_status"`
+	ClosedIncidentStatuses []string    `json:"closed_incident_statuses"`
+	TablePageSize          int         `json:"table_page_size"`
+	Limits                 struct {
 		Tickets         int `json:"tickets"`
 		Incidents       int `json:"incidents"`
 		MaintenanceWork int `json:"maintenance_work"`

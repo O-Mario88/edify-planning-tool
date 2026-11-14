@@ -20,15 +20,18 @@ const (
 	IncidentsPath   = "/admin-ops/incidents"
 	MaintenancePath = "/admin-ops/maintenance"
 	RepairPath      = "/data-repair"
+	MyPlanPath      = "/admin-ops/my-plan"
+	PlanningPath    = "/admin-ops/planning"
 )
 
 // Service answers the registers from the existing database.
 type Service struct {
-	db schooldirectory.Querier
+	db  schooldirectory.Querier
+	now func() time.Time
 }
 
 // NewService is the registers over db.
-func NewService(db schooldirectory.Querier) *Service { return &Service{db: db} }
+func NewService(db schooldirectory.Querier) *Service { return &Service{db: db, now: time.Now} }
 
 // Build answers the three registers; every other path is not theirs.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
@@ -51,6 +54,10 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 			return nil, false, nil
 		}
 		return repairPage(), true, nil
+	case MyPlanPath:
+		return s.myPlan(ctx)
+	case PlanningPath:
+		return s.planning(ctx, query)
 	}
 	return s.maintenance(ctx)
 }

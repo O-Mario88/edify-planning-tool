@@ -2,7 +2,8 @@
 
 Go builds Support Tickets (/admin-ops/support), System Incidents
 (/admin-ops/incidents), the Maintenance Calendar (/admin-ops/maintenance) and
-the Data Repair Center (/data-repair)
+the Data Repair Center (/data-repair), Admin My Plan (/admin-ops/my-plan)
+and Admin Planning (/admin-ops/planning)
 (apps.admin_ops.views and pages/admin_ops/) from what this command writes to
 platform/backend/internal/adminops/rules.json: for each page, who may open it
 (the page permission, the feed's door and the views' Admin-only guard); the
@@ -34,6 +35,8 @@ PAGES = {
     "/admin-ops/incidents": "admin_incidents",
     "/admin-ops/maintenance": "admin_maintenance",
     "/data-repair": "data_repair",
+    "/admin-ops/my-plan": "admin_my_plan",
+    "/admin-ops/planning": "admin_planning",
 }
 
 #: The views' `_admin_only` guard: the role in use must be this one.
@@ -41,6 +44,15 @@ ADMIN_ROLE = "Admin"
 
 #: tickets[:200], incidents[:200] and the maintenance work's [:50].
 LIMITS = {"tickets": 200, "incidents": 200, "maintenance_work": 50}
+
+#: AdminMyPlanService.context: the statuses its sections list, and the newest
+#: closed work it shows (recently_done[:8]).
+MY_PLAN_STATUSES = ["scheduled", "in_progress", "waiting", "monitoring"]
+RECENTLY_DONE = 8
+
+#: AdminPlanningService.context: open incidents and untriaged tickets, the
+#: newest 50 of each.
+PLANNING_LIMIT = 50
 
 #: The work item categories the Maintenance Calendar lists as open work.
 MAINTENANCE_CATEGORIES = ["preventive_maintenance", "corrective_maintenance"]
@@ -55,6 +67,7 @@ def rules() -> dict:
         WorkItemCategory,
         WorkItemStatus,
     )
+    from apps.core.pagination import TABLE_PAGE_SIZE
     from apps.core.permissions import RolePermissionService, can_open_url
     from apps.core.rbac import EdifyRole
 
@@ -97,6 +110,17 @@ def rules() -> dict:
         "maintenance_categories": MAINTENANCE_CATEGORIES,
         "limits": LIMITS,
         "repairs": repairs(),
+        # Admin My Plan and Admin Planning.
+        "severity_choices": [[v, str(label)] for v, label in Severity.choices],
+        "my_plan_statuses": MY_PLAN_STATUSES,
+        "recently_done": RECENTLY_DONE,
+        "planning_limit": PLANNING_LIMIT,
+        "backlog_status": str(WorkItemStatus.BACKLOG),
+        "monitoring_status": str(WorkItemStatus.MONITORING),
+        "closed_incident_statuses": sorted(
+            str(s) for s in (IncidentStatus.RESOLVED, IncidentStatus.CLOSED)
+        ),
+        "table_page_size": TABLE_PAGE_SIZE,
     }
 
 

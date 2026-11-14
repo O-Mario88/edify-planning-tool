@@ -614,3 +614,10 @@ GRANT SELECT (id, verification_id, decision, decided_by, decided_at) ON ia_verif
 GRANT SELECT (reviewed_by, return_reason, country) ON mscs_story TO edify_gateway_ro;
 GRANT SELECT (id, code, name, version) ON impact_outcome_area TO edify_gateway_ro;
 GRANT SELECT (area_id, intervention) ON impact_outcome_area_domain TO edify_gateway_ro;
+
+-- Admin My Plan and Admin Planning (internal/adminops/myplan.go, planning.go):
+-- each work item's severity, route, next action, incident, due and closing
+-- dates and verification note; an open incident's reference and how often it
+-- fired. Not a work item's description or resolution criteria.
+GRANT SELECT (id, severity, affected_route, next_action, incident_id, due_date, completed_at, verification_note) ON admin_ops_work_item TO edify_gateway_ro;
+GRANT SELECT (reference, occurrence_count) ON admin_system_incident TO edify_gateway_ro;

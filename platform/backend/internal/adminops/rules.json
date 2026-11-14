@@ -1,4 +1,9 @@
 {
+  "backlog_status": "backlog",
+  "closed_incident_statuses": [
+    "closed",
+    "resolved"
+  ],
   "closed_ticket_statuses": [
     "cancelled",
     "closed",
@@ -22,6 +27,13 @@
   "maintenance_categories": [
     "preventive_maintenance",
     "corrective_maintenance"
+  ],
+  "monitoring_status": "monitoring",
+  "my_plan_statuses": [
+    "scheduled",
+    "in_progress",
+    "waiting",
+    "monitoring"
   ],
   "pages": {
     "/admin-ops/incidents": {
@@ -77,6 +89,110 @@
       }
     },
     "/admin-ops/maintenance": {
+      "roles": {
+        "Accountant": {
+          "page": false
+        },
+        "Admin": {
+          "page": true
+        },
+        "BusinessTransformationOfficer": {
+          "page": false
+        },
+        "CCEO": {
+          "page": false
+        },
+        "ClusterLeader": {
+          "page": false
+        },
+        "CountryDirector": {
+          "page": false
+        },
+        "HumanResources": {
+          "page": false
+        },
+        "ImpactAssessment": {
+          "page": false
+        },
+        "MfiLoanOfficer": {
+          "page": false
+        },
+        "MfiPartnerAdmin": {
+          "page": false
+        },
+        "PartnerAdmin": {
+          "page": false
+        },
+        "PartnerFieldOfficer": {
+          "page": false
+        },
+        "Program Lead": {
+          "page": false
+        },
+        "ProjectCoordinator": {
+          "page": false
+        },
+        "RegionalProgramLead": {
+          "page": false
+        },
+        "RegionalVicePresident": {
+          "page": false
+        }
+      }
+    },
+    "/admin-ops/my-plan": {
+      "roles": {
+        "Accountant": {
+          "page": false
+        },
+        "Admin": {
+          "page": true
+        },
+        "BusinessTransformationOfficer": {
+          "page": false
+        },
+        "CCEO": {
+          "page": false
+        },
+        "ClusterLeader": {
+          "page": false
+        },
+        "CountryDirector": {
+          "page": false
+        },
+        "HumanResources": {
+          "page": false
+        },
+        "ImpactAssessment": {
+          "page": false
+        },
+        "MfiLoanOfficer": {
+          "page": false
+        },
+        "MfiPartnerAdmin": {
+          "page": false
+        },
+        "PartnerAdmin": {
+          "page": false
+        },
+        "PartnerFieldOfficer": {
+          "page": false
+        },
+        "Program Lead": {
+          "page": false
+        },
+        "ProjectCoordinator": {
+          "page": false
+        },
+        "RegionalProgramLead": {
+          "page": false
+        },
+        "RegionalVicePresident": {
+          "page": false
+        }
+      }
+    },
+    "/admin-ops/planning": {
       "roles": {
         "Accountant": {
           "page": false
@@ -233,6 +349,8 @@
       }
     }
   },
+  "planning_limit": 50,
+  "recently_done": 8,
   "repairs": [
     {
       "automatic": true,
@@ -269,6 +387,25 @@
     "low": "Low",
     "medium": "Medium"
   },
+  "severity_choices": [
+    [
+      "critical",
+      "Critical"
+    ],
+    [
+      "high",
+      "High"
+    ],
+    [
+      "medium",
+      "Medium"
+    ],
+    [
+      "low",
+      "Low"
+    ]
+  ],
+  "table_page_size": 50,
   "ticket_categories": {
     "account_locked": "Account Locked",
     "broken_link": "Broken Link",
