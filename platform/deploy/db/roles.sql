@@ -732,3 +732,9 @@ GRANT SELECT (source_intervention) ON bt_case_recommendation TO edify_gateway_ro
 GRANT SELECT (created_at) ON bt_financial_practice_assessment TO edify_gateway_ro;
 GRANT SELECT (ia_status, expiry_date) ON bt_school_compliance_assessment TO edify_gateway_ro;
 GRANT SELECT (responsible_authority, country_code, active) ON bt_compliance_requirement TO edify_gateway_ro;
+
+-- BT Loans register (internal/btpages/loans.go): what the latest repayment
+-- snapshot says was paid, and when a loan's repayment data and record last
+-- changed (the register's Last Updated column and the partner dashboard).
+GRANT SELECT (amount_paid_during_period) ON bt_repayment_snapshot TO edify_gateway_ro;
+GRANT SELECT (last_repayment_data_date, updated_at) ON bt_mfi_loan TO edify_gateway_ro;

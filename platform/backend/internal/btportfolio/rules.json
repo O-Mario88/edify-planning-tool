@@ -120,6 +120,103 @@
       "Canceled"
     ]
   ],
+  "loans": {
+    "application_statuses": [
+      [
+        "submitted",
+        "Submitted"
+      ],
+      [
+        "under_review",
+        "Under review"
+      ],
+      [
+        "referred",
+        "Referred to lender"
+      ],
+      [
+        "processing",
+        "Processing"
+      ],
+      [
+        "approved",
+        "Approved"
+      ],
+      [
+        "declined",
+        "Declined"
+      ],
+      [
+        "withdrawn",
+        "Withdrawn"
+      ],
+      [
+        "converted",
+        "Converted to loan"
+      ]
+    ],
+    "application_update_roles": [
+      "BusinessTransformationOfficer",
+      "CCEO",
+      "CountryDirector",
+      "ImpactAssessment"
+    ],
+    "at_risk_repayment": [
+      "overdue_31_90",
+      "overdue_90_plus"
+    ],
+    "disbursed_statuses": [
+      "disbursed",
+      "active",
+      "repaid",
+      "defaulted"
+    ],
+    "repayment_frequencies": [
+      [
+        "monthly",
+        "Monthly"
+      ],
+      [
+        "termly",
+        "Termly"
+      ]
+    ],
+    "repayment_statuses": [
+      [
+        "not_started",
+        "Not Started"
+      ],
+      [
+        "current",
+        "Current"
+      ],
+      [
+        "due_soon",
+        "Due Soon"
+      ],
+      [
+        "overdue_1_30",
+        "Overdue 1–30"
+      ],
+      [
+        "overdue_31_90",
+        "Overdue 31–90"
+      ],
+      [
+        "overdue_90_plus",
+        "Overdue 90+"
+      ],
+      [
+        "restructured",
+        "Restructured"
+      ],
+      [
+        "unknown",
+        "Unknown"
+      ]
+    ],
+    "row_limit": 200
+  },
   "metric_labels": {
     "bt_active_portfolio": "Active Portfolio",
     "bt_collection_rate": "Collection Rate",

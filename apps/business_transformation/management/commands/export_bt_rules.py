@@ -8,7 +8,8 @@ which BT permissions each role holds; which roles read the whole Uganda
 portfolio, only summaries, or one lending partner's books; the role the
 workspace tabs are drawn for and who reads districts as links; the words for each case, recommendation, loan,
 Salesforce, IA and impact status; and the registry labels of the portfolio
-figures. A change to any of them must be exported again;
+figures; and the Loans register's application, repayment and frequency
+words. A change to any of them must be exported again;
 apps/business_transformation/test_bt_rules_export.py fails until it is.
 
     python manage.py export_bt_rules
@@ -107,6 +108,29 @@ def rules() -> dict:
         "metric_labels": {key: get_metric(key).label for key in METRIC_KEYS},
         # The two school-level portfolios (_intervention_school_portfolio_context).
         "portfolio": portfolio_rules(),
+        # The Loans register (loan_register_context and loans.html).
+        "loans": loan_rules(),
+    }
+
+
+def loan_rules() -> dict:
+    from apps.business_transformation import loan_tracking
+    from apps.business_transformation import models as m
+
+    def choices(enum) -> list[list[str]]:
+        return [[str(k), str(v)] for k, v in enum.choices]
+
+    return {
+        "application_statuses": choices(m.LoanApplicationStatus),
+        "repayment_statuses": choices(m.RepaymentStatus),
+        "repayment_frequencies": choices(m.LoanRepaymentFrequency),
+        "application_update_roles": sorted(loan_tracking.APPLICATION_UPDATE_ROLES),
+        "disbursed_statuses": [str(s) for s in m.DISBURSED_LOAN_STATUSES],
+        "at_risk_repayment": [
+            str(m.RepaymentStatus.OVERDUE_31_90),
+            str(m.RepaymentStatus.OVERDUE_90_PLUS),
+        ],
+        "row_limit": 200,
     }
 
 

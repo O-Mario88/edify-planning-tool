@@ -53,8 +53,17 @@ var Rules = func() (r struct {
 		SchoolTypes           [][2]string `json:"school_types"`
 		PageSizes             []int       `json:"page_sizes"`
 	} `json:"portfolio"`
+	Loans struct {
+		ApplicationStatuses    [][2]string `json:"application_statuses"`
+		RepaymentStatuses      [][2]string `json:"repayment_statuses"`
+		RepaymentFrequencies   [][2]string `json:"repayment_frequencies"`
+		ApplicationUpdateRoles []string    `json:"application_update_roles"`
+		DisbursedStatuses      []string    `json:"disbursed_statuses"`
+		AtRiskRepayment        []string    `json:"at_risk_repayment"`
+		RowLimit               int         `json:"row_limit"`
+	} `json:"loans"`
 }) {
-	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.Roles) == 0 || len(r.CaseStatuses) == 0 {
+	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.Roles) == 0 || len(r.CaseStatuses) == 0 || r.Loans.RowLimit == 0 {
 		panic(fmt.Sprintf("btportfolio: the embedded rules are unreadable: %v", err))
 	}
 	return r
