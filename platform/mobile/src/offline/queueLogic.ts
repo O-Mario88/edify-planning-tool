@@ -74,3 +74,34 @@ export function failedNote(code: string, message: string): string {
   }
   return message || 'The capture could not be accepted.';
 }
+
+/** A second capture of the same school this soon and this close is a repeat, not a new reading. */
+export const REPEAT_WITHIN_MS = 10 * 60_000;
+export const REPEAT_WITHIN_M = 10;
+
+interface CaptureLike {
+  readonly schoolId: string;
+  readonly target: string;
+  readonly kind: string;
+  readonly lat: number | null;
+  readonly lng: number | null;
+  readonly createdAt: number;
+  readonly status: QueueStatus;
+}
+
+/**
+ * The earlier capture a new one repeats, if any: same school and target,
+ * within ten minutes, and the same answer (a confirmation again, or a point
+ * within ten metres). A double press, or a replayed tap, never files twice.
+ */
+export function repeatOf<T extends CaptureLike>(next: Omit<CaptureLike, 'status'>, earlier: readonly T[], meters: (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => number): T | null {
+  return (
+    earlier.find((c) => {
+      if (c.schoolId !== next.schoolId || c.target !== next.target || c.status === 'failed') return false;
+      if (next.createdAt - c.createdAt > REPEAT_WITHIN_MS || next.createdAt < c.createdAt) return false;
+      if (next.kind === 'confirm' || c.kind === 'confirm') return next.kind === c.kind;
+      if (next.lat === null || next.lng === null || c.lat === null || c.lng === null) return false;
+      return meters({ lat: c.lat, lng: c.lng }, { lat: next.lat, lng: next.lng }) <= REPEAT_WITHIN_M;
+    }) ?? null
+  );
+}

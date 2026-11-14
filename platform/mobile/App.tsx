@@ -347,7 +347,7 @@ function SignedIn({ session }: { readonly session: Session }) {
   } else if (isLoansUrl(route.url)) {
     screen = <LoansRoute key={route.url} url={route.url} />;
   } else if (route.url === OFFLINE_QUEUE_URL) {
-    screen = <SyncQueueScreen />;
+    screen = <SyncQueueScreen onOpenSchool={openSchool} />;
   } else if (route.url === LOCATION_REPORTS_URL) {
     screen = <LocationReportsScreen onOpenSchool={openSchool} />;
   } else if (isRouteUrl(route.url)) {

@@ -19,6 +19,7 @@ import { fonts, radius, spacing, useTheme } from '../../theme';
 import { DEVICE_ACCURACY_MAX_M, LOCATE_TIMEOUT_MS, kindFor, movedText, parsePoint, pointText, reportKey, reportedText, sourceText } from './locationReport';
 import type { ReportKind, TypedPoint } from './locationReport';
 import { PIN_TONES } from './routeData';
+import { FLAG_TEXT } from '../../offline/LocationHistory';
 
 const BLUE = PIN_TONES.planned;
 
@@ -232,6 +233,8 @@ export function ReportDetails({ report }: { readonly report: LocationReport }) {
       <Line label="Source" value={sourceText(report)} />
       <Line label="Change" value={movedText(report)} />
       <Line label="Note" value={report.note} />
+      {report.target === 'entrance' ? <Line label="Point" value="Entrance / road access" /> : null}
+      {report.flags.length ? <Line label="Why it needs review" value={report.flags.map((f) => FLAG_TEXT[f] ?? f).join(' · ')} /> : null}
       {report.accessNote ? <Line label="Directions" value={report.accessNote} /> : null}
       {report.status !== 'pending' ? (
         <Line label={report.status === 'approved' ? 'Approved by' : 'Rejected by'} value={`${report.reviewedByName}${report.reviewNote ? ` · ${report.reviewNote}` : ''}`} />

@@ -1,6 +1,6 @@
 import { bandOf, inUganda, isSettled, metersBetween, summarize } from '../offline/gpsMath';
 import type { GpsSample } from '../offline/gpsMath';
-import { actionForError, retryDelayMs, statusForOutcome } from '../offline/queueLogic';
+import { actionForError, repeatOf, retryDelayMs, statusForOutcome } from '../offline/queueLogic';
 
 const start = 1_000_000;
 const at = (lat: number, lng: number, accuracy: number, t: number): GpsSample => ({ lat, lng, accuracy, at: start + t });
@@ -68,5 +68,27 @@ describe('the offline capture queue', () => {
     expect(actionForError('unauthenticated')).toBe('sign_in');
     expect(actionForError('permission_denied')).toBe('failed');
     expect(actionForError('not_found')).toBe('failed');
+  });
+});
+
+describe('a repeated capture', () => {
+  const base = { schoolId: 's1', target: 'school', kind: 'correction', lat: 0.5465, lng: 32.8782, createdAt: 1_000_000, status: 'synced' as const };
+
+  it('is the same school, point and answer within ten minutes', () => {
+    expect(repeatOf({ ...base, createdAt: base.createdAt + 6 * 60_000 }, [base], metersBetween)).toBe(base);
+    expect(repeatOf({ ...base, lat: 0.54652 }, [base], metersBetween)).toBe(base);
+  });
+
+  it('is not a new point, another school, a later visit or an earlier refusal', () => {
+    expect(repeatOf({ ...base, lat: 0.5475 }, [base], metersBetween)).toBeNull();
+    expect(repeatOf({ ...base, schoolId: 's2' }, [base], metersBetween)).toBeNull();
+    expect(repeatOf({ ...base, createdAt: base.createdAt + 11 * 60_000 }, [base], metersBetween)).toBeNull();
+    expect(repeatOf(base, [{ ...base, status: 'failed' as const }], metersBetween)).toBeNull();
+    expect(repeatOf({ ...base, target: 'entrance' }, [base], metersBetween)).toBeNull();
+  });
+
+  it('counts a second "location is correct" the same day as a repeat', () => {
+    const yes = { ...base, kind: 'confirm', lat: null, lng: null };
+    expect(repeatOf({ ...yes, createdAt: base.createdAt + 60_000 }, [yes], metersBetween)).toBe(yes);
   });
 });

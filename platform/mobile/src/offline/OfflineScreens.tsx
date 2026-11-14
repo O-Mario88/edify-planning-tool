@@ -21,8 +21,68 @@ import { VisitPrompt } from './VisitPrompt';
 const BLUE = '#1d6fe0';
 const TIME = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 
-/** The sync queue and the offline schools' state; also reached from More when online. */
-export function SyncQueueScreen() {
+/** How many saved schools a search shows at once. */
+const SAVED_SHOWN = 30;
+
+/**
+ * The phone's saved schools, today's visits first, searchable: a school
+ * opens from the phone's copy when there is no connection.
+ */
+function SavedSchools({ onOpenSchool }: { readonly onOpenSchool: (schoolId: string) => void }) {
+  const { colors } = useTheme();
+  const { store, account, revision } = useOffline();
+  const [schools, setSchools] = useState<CachedSchool[]>([]);
+  const [todayIds, setTodayIds] = useState<string[]>([]);
+  const [query, setQuery] = useState('');
+  useEffect(() => {
+    if (!store || !account) return;
+    let isCurrent = true;
+    void Promise.all([store.schools(account.userId), store.plannedOn(account.userId, todayLocal())]).then(([all, planned]) => {
+      if (!isCurrent) return;
+      setSchools(all);
+      setTodayIds(planned.map((p) => p.schoolId));
+    });
+    return () => {
+      isCurrent = false;
+    };
+  }, [store, account, revision]);
+  const q = query.trim().toLowerCase();
+  const shown = q
+    ? schools.filter((s) => s.name.toLowerCase().includes(q) || s.code.includes(q) || s.district.toLowerCase().includes(q)).slice(0, SAVED_SHOWN)
+    : todayIds.map((id) => schools.find((s) => s.schoolId === id)).filter((s): s is CachedSchool => Boolean(s));
+  return (
+    <View style={styles.gapSmall}>
+      <Text style={[styles.strong, { color: colors.text }]}>{q ? 'Saved schools' : `Today’s visits (${todayIds.length})`}</Text>
+      <TextInput
+        value={query}
+        onChangeText={setQuery}
+        placeholder="Search your saved schools"
+        placeholderTextColor={colors.textSubtle}
+        accessibilityLabel="Search your saved schools"
+        style={[styles.search, { color: colors.text, borderColor: colors.border, backgroundColor: colors.card }]}
+      />
+      {shown.length === 0 ? (
+        <Text style={[styles.meta, { color: colors.textMuted }]}>{q ? 'No saved school matches.' : 'No visits saved for today. Search to open any of your schools.'}</Text>
+      ) : null}
+      {shown.map((item) => (
+        <Pressable key={item.schoolId} onPress={() => onOpenSchool(item.schoolId)} accessibilityRole="button" style={[styles.row, { borderColor: colors.border, backgroundColor: colors.card }]}>
+          <View style={styles.flex}>
+            <Text style={[styles.strong, { color: colors.text }]} numberOfLines={2}>
+              {item.name}
+            </Text>
+            <Text style={[styles.meta, { color: item.lat === null ? '#b45309' : colors.textMuted }]}>
+              {item.code} · {item.lat === null ? 'GPS location not captured' : item.locationStatus === 'verified' ? 'Verified location' : 'Location not yet verified'}
+            </Text>
+          </View>
+          <ChevronRight size={20} color={colors.textMuted} />
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+/** The sync queue and the offline schools' state; also reached from More, and from the top bar's Offline chip. */
+export function SyncQueueScreen({ onOpenSchool }: { readonly onOpenSchool?: (schoolId: string) => void } = {}) {
   const { colors } = useTheme();
   const { store, storeError, account, revision, pendingCount, packAt, isOnline, isSignedIn, lastSync, syncNow, refreshPack } = useOffline();
   const [captures, setCaptures] = useState<QueuedCapture[]>([]);
@@ -84,6 +144,8 @@ export function SyncQueueScreen() {
           </View>
         ) : null}
       </View>
+      {onOpenSchool ? <SavedSchools onOpenSchool={onOpenSchool} /> : null}
+      <Text style={[styles.strong, { color: colors.text }]}>Captures on this phone</Text>
       {captures.length === 0 ? <Text style={[styles.text, { color: colors.textMuted }]}>No captures yet on this phone.</Text> : null}
       {captures.map((c) => (
         <View key={c.id} style={[styles.card, { borderColor: colors.border, backgroundColor: colors.card }]}>
@@ -276,5 +338,6 @@ const styles = StyleSheet.create({
   back: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44 },
   backText: { fontFamily: fonts.semibold, fontSize: 15, color: BLUE },
   gap: { height: spacing.sm },
+  gapSmall: { gap: spacing.sm },
   signOut: { alignItems: 'center', minHeight: 44, justifyContent: 'center' },
 });

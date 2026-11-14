@@ -24,7 +24,8 @@ import { secureTokenStore } from '../auth/tokenStore';
 import { RoutePlannerService } from '../gen/edify/routes/v1/routes_pb';
 import { DEFAULT_POLICY } from './gpsMath';
 import type { GpsPolicy } from './gpsMath';
-import { COUNTED } from './queueLogic';
+import { COUNTED, repeatOf } from './queueLogic';
+import { metersBetween } from './gpsMath';
 import { openSqliteStore } from './sqliteStore';
 import type { CachedSchool, CaptureKind, CaptureTarget, OfflineStore, QueuedCapture } from './store';
 
@@ -384,6 +385,9 @@ export function OfflineProvider({ signedIn, api, isUnreachable, onReconnect, chi
         createdAt: now,
         updatedAt: now,
       };
+      // A repeat of a capture just made (a double press) is not filed again.
+      const repeated = repeatOf(capture, await store.captures(account.userId), metersBetween);
+      if (repeated) return repeated;
       await store.addCapture(capture);
       markChanged();
       if (isSignedIn && isOnline) {
