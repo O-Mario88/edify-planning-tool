@@ -50,7 +50,8 @@ export function sceneOf(itinerary: Itinerary | undefined): MapScene {
       };
     });
   const path = (stops[0]?.leg?.path ?? []).map((p) => [p.lng, p.lat] as [number, number]);
-  const legend: MapScene['legend'] = [{ label: 'Planned School', tone: PIN_TONES.planned }];
+  // A legend only explains pins that are there.
+  const legend: MapScene['legend'] = pins.length ? [{ label: 'Planned School', tone: PIN_TONES.planned }] : [];
   if (stops.some((s) => s.kind === 'recommended')) legend.push({ label: 'Recommended', tone: PIN_TONES.suggested });
   if (stops.some((s) => s.school?.status === 'completed')) legend.push({ label: 'Completed', tone: PIN_TONES.completed });
   return { pins, path, legend };
