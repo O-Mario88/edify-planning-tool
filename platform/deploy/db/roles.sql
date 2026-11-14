@@ -625,3 +625,8 @@ GRANT SELECT (reference, occurrence_count) ON admin_system_incident TO edify_gat
 -- The partner's Evidence page (internal/partnerassigned/evidence.go): when each
 -- upload arrived. Not the file, its name or its notes.
 GRANT SELECT (created_at) ON evidence_record TO edify_gateway_ro;
+
+-- Roles & Permissions matrix (internal/rolesmatrix): each permission's key and
+-- the roles that hold one. Not a permission's description.
+GRANT SELECT (id, key) ON permission TO edify_gateway_ro;
+GRANT SELECT (role, permission_id) ON role_permission TO edify_gateway_ro;
