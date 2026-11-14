@@ -38,7 +38,7 @@ type months struct {
 	by    map[int]float64
 }
 
-func (m *months) add(month int, v float64) {
+func (m *months) Add(month int, v float64) {
 	if m.by == nil {
 		m.by = map[int]float64{}
 	}
@@ -504,7 +504,7 @@ func (b *targetBook) phase(allocations []*allocation, m *measure) *months {
 			portion = *part / *whole
 		}
 		for _, month := range rows.order {
-			out.add(month, float64(rows.by[month]*portion))
+			out.Add(month, float64(rows.by[month]*portion))
 		}
 	}
 	if !phased {

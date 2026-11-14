@@ -162,19 +162,19 @@ func (v *pageView) blocks() []*screensv1.PageBlock {
 	content := el("div", "", preBlock(v.filters(scopes, opt.key, dashOfficer)), preBlock(v.tabsBlock()))
 	switch {
 	case len(r.roster.officers()) == 0:
-		content.add(emptyState(noOfficers))
+		content.Add(emptyState(noOfficers))
 	case v.tab == "summary":
-		content.add(v.summaryTab())
+		content.Add(v.summaryTab())
 	case v.tab == "weekly":
-		content.add(v.weeklyTab(opt))
+		content.Add(v.weeklyTab(opt))
 	case v.tab == "milestones":
-		content.add(v.milestonesPart(false))
+		content.Add(v.milestonesPart(false))
 	case v.tab == "dashboard":
-		content.add(v.dashboardTab(dash.view, dash.lead, dash.leadLabel, dash.sort, dashOfficer, dash.query))
+		content.Add(v.dashboardTab(dash.view, dash.lead, dash.leadLabel, dash.sort, dashOfficer, dash.query))
 	case v.tab == "month":
-		content.add(v.monthTab())
+		content.Add(v.monthTab())
 	default:
-		content.add(v.coreTab())
+		content.Add(v.coreTab())
 	}
 	return walk(el("main", "", content), nil)
 }
