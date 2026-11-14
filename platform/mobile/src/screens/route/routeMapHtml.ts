@@ -34,6 +34,10 @@ export interface MapScene {
   /** The road line [lng, lat], or none (the stops are then joined by a dashed straight line). */
   path: [number, number][];
   legend: { label: string; tone: string }[];
+  /** Join the pins with a line when there is no road line (a route); false for schools around one school. */
+  join?: boolean;
+  /** The pin drawn on top and named first (the school the map is about). */
+  primaryId?: string;
 }
 
 export function mapHtml(): string {
@@ -75,7 +79,10 @@ function place() {
   const frame = document.getElementById('map').getBoundingClientRect();
   const taken = [...document.querySelectorAll('[data-overlay]')].map((o) => o.getBoundingClientRect());
   const drops = markers.map((m) => m.getElement().querySelector('.drop').getBoundingClientRect());
-  markers.forEach((m, i) => {
+  // The primary pin is named first.
+  const order = markers.map((m, i) => i).sort((a, b) => (markers[b].getElement().dataset.primary ? 1 : 0) - (markers[a].getElement().dataset.primary ? 1 : 0));
+  order.forEach((i) => {
+    const m = markers[i];
     const pin = m.getElement(); const card = pin.querySelector('.card');
     for (const side of ['right', 'left', 'below', 'above']) {
       pin.dataset.label = side; const box = card.getBoundingClientRect();
@@ -94,7 +101,7 @@ function fit() {
 function line() {
   if (!scene) return { type: 'FeatureCollection', features: [] };
   const road = scene.path.length > 1;
-  const coords = road ? scene.path : scene.pins.map((p) => [p.lng, p.lat]);
+  const coords = road ? scene.path : scene.join === false ? [] : scene.pins.map((p) => [p.lng, p.lat]);
   return { type: 'FeatureCollection', features: coords.length < 2 ? [] : [{ type: 'Feature', properties: { road }, geometry: { type: 'LineString', coordinates: coords } }] };
 }
 function layers() {
@@ -108,13 +115,16 @@ function layers() {
 function draw(Marker, LngLatBounds) {
   markers.forEach((m) => m.remove()); markers = [];
   const bounds = new LngLatBounds();
-  for (const p of scene.pins) {
+  // The primary pin last, so it is drawn on top.
+  const ordered = [...scene.pins.filter((p) => p.id !== scene.primaryId), ...scene.pins.filter((p) => p.id === scene.primaryId)];
+  for (const p of ordered) {
     const el = document.createElement('button'); el.className = 'pin'; el.setAttribute('aria-label', p.order + ': ' + p.name);
     const drop = document.createElement('span'); drop.className = 'drop'; drop.style.background = p.tone;
     const n = document.createElement('span'); n.textContent = p.order; drop.append(n);
     const card = document.createElement('span'); card.className = 'card'; card.textContent = p.name;
     if (p.detail) { const s = document.createElement('small'); s.textContent = p.detail; card.append(s); }
     el.append(drop, card);
+    if (p.id === scene.primaryId) el.dataset.primary = '1';
     el.addEventListener('click', (e) => { e.stopPropagation(); post({ type: 'select', id: p.id }); });
     markers.push(new Marker({ element: el, anchor: 'bottom' }).setLngLat([p.lng, p.lat]).addTo(map));
     bounds.extend([p.lng, p.lat]);
@@ -122,7 +132,10 @@ function draw(Marker, LngLatBounds) {
   const legend = document.getElementById('legend'); legend.replaceChildren();
   for (const l of scene.legend) { const d = document.createElement('div'); const i = document.createElement('i'); i.style.background = l.tone; d.append(i, document.createTextNode(l.label)); legend.append(d); }
   extent = bounds.isEmpty() ? null : [bounds.getSouthWest().toArray(), bounds.getNorthEast().toArray()];
-  layers(); fit(); setTimeout(place, 350);
+  layers();
+  // No pins: back to the wide view, not wherever the last scene left it.
+  if (extent) fit(); else map.easeTo({ center: [32.58, 0.35], zoom: 9, duration: 300 });
+  setTimeout(place, 350);
 }
 try {
   const css = await (await checked('${CDN}/maplibre-gl.css', '${INTEGRITY.css}')).text();

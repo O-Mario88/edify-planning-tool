@@ -15,7 +15,7 @@ export const ROUTE_DETAILS_URL = 'route:details';
 
 /** The design's dark teal (the planner's chosen controls). */
 export const ROUTE_TEAL = '#0f4f52';
-export const PIN_TONES = { planned: '#1d6fe0', suggested: '#f59e0b', completed: '#1e3a8a', start: '#0284c7', other: '#94a3b8' } as const;
+export const PIN_TONES = { planned: '#1d6fe0', suggested: '#f59e0b', completed: '#1e3a8a', start: '#0284c7', nearby: '#0284c7', other: '#94a3b8' } as const;
 
 /**
  * Who plans field days: My Plan's readers (routeplan rules, planner_roles).
@@ -28,6 +28,19 @@ export function dateOf(url: string): string {
   const at = url.indexOf('?');
   const date = at < 0 ? '' : (new URLSearchParams(url.slice(at + 1)).get('date') ?? '');
   return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : '';
+}
+
+/** The school a route URL is around (route:planner?near=<id>), or ''. */
+export function nearOf(url: string): string {
+  const at = url.indexOf('?');
+  return at < 0 ? '' : (new URLSearchParams(url.slice(at + 1)).get('near') ?? '').slice(0, 64);
+}
+
+/** A route URL with its day and, when there is one, the school it is around. */
+export function routeUrl(base: string, date: string, near: string): string {
+  const q = new URLSearchParams({ date });
+  if (near) q.set('near', near);
+  return `${base}?${q.toString()}`;
 }
 
 export function isRouteUrl(url: string): boolean {

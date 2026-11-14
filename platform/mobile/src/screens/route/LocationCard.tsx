@@ -87,7 +87,7 @@ export function LocationCard({ schoolId, onOpenRoute }: LocationCardProps) {
               <Text style={styles.primaryText}>Get Directions</Text>
             </Pressable>
             {answer.canPlan && onOpenRoute ? (
-              <Pressable onPress={() => onOpenRoute(ROUTE_URL)} style={styles.outline} accessibilityRole="button">
+              <Pressable onPress={() => onOpenRoute(`${ROUTE_URL}?near=${encodeURIComponent(school.schoolId)}`)} style={styles.outline} accessibilityRole="button">
                 <Route size={18} color={PIN_TONES.planned} />
                 <Text style={styles.outlineText}>Find Nearby Schools</Text>
               </Pressable>

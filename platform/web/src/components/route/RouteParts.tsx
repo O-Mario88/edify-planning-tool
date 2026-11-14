@@ -191,7 +191,7 @@ export function NearbyCard({
               <button
                 type="button"
                 onClick={() => s.school && onFocus(s.school)}
-                className="grid h-[84px] w-[132px] shrink-0 place-items-center rounded-[10px] bg-gradient-to-br from-green-100 to-sky-100 text-green-700"
+                className="grid h-[84px] w-[132px] shrink-0 place-items-center rounded-[10px] bg-gradient-to-br from-blue-100 to-sky-100 text-[#1d6fe0]"
                 aria-label={`Show ${s.school?.name} on the map`}
               >
                 <RouteIcon name="school" className="h-10 w-10" />

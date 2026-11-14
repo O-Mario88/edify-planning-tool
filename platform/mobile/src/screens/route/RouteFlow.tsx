@@ -15,7 +15,7 @@ import type { GetFieldDayResponse, Itinerary, SchoolPin } from '../../gen/edify/
 import { fonts, spacing, useTheme } from '../../theme';
 import { PlanningDrawer } from '../../ui/planning/PlanningDrawer';
 import { chooseDirections } from './directions';
-import { PIN_TONES, ROUTE_DETAILS_URL, dateOf, legText, placedStops, shortName } from './routeData';
+import { PIN_TONES, ROUTE_DETAILS_URL, ROUTE_URL, dateOf, legText, nearOf, placedStops, routeUrl, shortName } from './routeData';
 import type { MapScene } from './routeMapHtml';
 import { RouteDetailsScreen, RoutePlannerScreen } from './RouteScreens';
 
@@ -57,14 +57,30 @@ export function sceneOf(itinerary: Itinerary | undefined): MapScene {
   return { pins, path, legend };
 }
 
+/** The map around one school: it (plain blue) and its eligible neighbours (lighter blue). */
+export function nearScene(day: GetFieldDayResponse): MapScene {
+  const pins: MapScene['pins'] = [];
+  const focus = day.focus;
+  if (focus?.point) pins.push({ id: focus.schoolId, order: '', name: shortName(focus.name), detail: '', lat: focus.point.lat, lng: focus.point.lng, tone: PIN_TONES.completed });
+  for (const s of day.suggestions) {
+    const p = s.school?.point;
+    if (!s.school || !p) continue;
+    pins.push({ id: s.school.schoolId, order: '', name: shortName(s.school.name), detail: `(${(Number(s.addedMeters) / 1000).toFixed(1)} km away)`, lat: p.lat, lng: p.lng, tone: PIN_TONES.nearby });
+  }
+  const legend: MapScene['legend'] = pins.length ? [{ label: 'This school', tone: PIN_TONES.completed }, { label: 'Nearby eligible', tone: PIN_TONES.nearby }] : [];
+  return { pins, path: [], legend, join: false, primaryId: focus?.schoolId };
+}
+
 export function RouteFlow({ url, onOpen, onOpenSchool }: RouteFlowProps) {
   const { api } = useSession();
   const { colors } = useTheme();
   const [date, setDateState] = useState(() => dateOf(url) || today());
+  // Find Nearby Schools: the school the planner is around.
+  const near = nearOf(url);
   // The day rides in the route's URL, so coming back from a school keeps it.
   const setDate = (next: string) => {
     setDateState(next);
-    onOpen(`${url.startsWith(ROUTE_DETAILS_URL) ? ROUTE_DETAILS_URL : 'route:planner'}?date=${next}`, 'Smart Route Planner');
+    onOpen(routeUrl(url.startsWith(ROUTE_DETAILS_URL) ? ROUTE_DETAILS_URL : ROUTE_URL, next, near), 'Smart Route Planner');
   };
   const [district, setDistrict] = useState('');
   const [day, setDay] = useState<GetFieldDayResponse | null>(null);
@@ -76,19 +92,19 @@ export function RouteFlow({ url, onOpen, onOpenSchool }: RouteFlowProps) {
   const [notice, setNotice] = useState('');
   const [isFieldDay, setIsFieldDay] = useState(false);
   const isDetails = url.startsWith(ROUTE_DETAILS_URL);
-  const dated = (base: string) => `${base}?date=${date}`;
+  const dated = (base: string) => routeUrl(base, date, near);
 
   const load = useCallback(async () => {
     setError('');
     try {
-      const answer = await api.call(RoutePlannerService.method.getFieldDay, { date, districtId: district, clusterId: '' });
+      const answer = await api.call(RoutePlannerService.method.getFieldDay, { date, districtId: district, clusterId: '', nearSchoolId: near });
       setDay(answer);
       setItinerary(answer.recommended);
       setNotice(answer.provider?.message ?? '');
     } catch (cause) {
       setError(cause instanceof ApiError ? cause.message : 'The route could not be loaded. Please try again.');
     }
-  }, [api, date, district]);
+  }, [api, date, district, near]);
 
   useEffect(() => {
     void load();
@@ -113,7 +129,7 @@ export function RouteFlow({ url, onOpen, onOpenSchool }: RouteFlowProps) {
     [api, date],
   );
 
-  const scene = useMemo(() => sceneOf(itinerary), [itinerary]);
+  const scene = useMemo(() => (day?.focus ? nearScene(day) : sceneOf(itinerary)), [day, itinerary]);
   const areaLabel = district ? (day?.districts.find((d) => d.value === district)?.label ?? '') : day?.areaLabel ?? '';
 
   const directions = chooseDirections;
@@ -177,6 +193,8 @@ export function RouteFlow({ url, onOpen, onOpenSchool }: RouteFlowProps) {
           onDistrict={setDistrict}
           onOptimise={() => plan(ids(itinerary), 'fastest', locked)}
           onOpenDetails={() => onOpen(dated(ROUTE_DETAILS_URL), 'Route Details')}
+          onClearNear={() => onOpen(routeUrl(ROUTE_URL, date, ''), 'Smart Route Planner')}
+          onAddToPlan={(id) => setScheduling(id)}
         />
       )}
       {scheduling ? (

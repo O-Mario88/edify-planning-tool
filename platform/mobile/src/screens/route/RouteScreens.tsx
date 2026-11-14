@@ -127,12 +127,16 @@ export function RoutePlannerScreen({
   onOptimise,
   onOpenDetails,
   onSelectSchool,
+  onClearNear,
+  onAddToPlan,
 }: Common & {
   readonly district: string;
   readonly onDate: (v: string) => void;
   readonly onDistrict: (v: string) => void;
   readonly onOptimise: () => void;
   readonly onOpenDetails: () => void;
+  readonly onClearNear: () => void;
+  readonly onAddToPlan: (schoolId: string) => void;
 }) {
   const { colors } = useTheme();
   const [view, setView] = useState<'map' | 'list'>('map');
@@ -174,11 +178,26 @@ export function RoutePlannerScreen({
           { key: 'list', label: 'List View', icon: <List size={20} color={view === 'list' ? '#fff' : colors.text} /> },
         ]}
       />
+      {day.focus ? (
+        <View style={styles.nearBanner} accessibilityRole="summary">
+          <Text style={styles.nearTitle}>
+            Schools near {day.focus.name} (ID {day.focus.code})
+          </Text>
+          <Text style={styles.nearText}>
+            {day.focus.point
+              ? 'The eligible schools around it, nearest first, on the map and below.'
+              : 'This school has no usable location, so nearby schools cannot be found. It still appears in every list and plan.'}
+          </Text>
+          <Pressable onPress={onClearNear} style={styles.nearButton} accessibilityRole="button">
+            <Text style={styles.outlineText}>Show my day</Text>
+          </Pressable>
+        </View>
+      ) : null}
       <Notice text={notice} />
       {view === 'map' ? (
         <View style={[styles.mapCard, { borderColor: colors.border }]}>
           <RouteMapView scene={scene} onSelect={onSelectSchool} />
-          {stops.length ? (
+          {stops.length && !day.focus ? (
             <Pressable onPress={onOpenDetails} style={styles.routeCard} accessibilityRole="button" accessibilityLabel="Open the recommended route">
               <CheckCircle2 size={26} color="#ffffff" fill="#1d6fe0" />
               <View>
@@ -196,6 +215,24 @@ export function RoutePlannerScreen({
           {stops.length ? <StopList stops={stops} onSelect={onSelectSchool} /> : <Text style={[styles.rowSub, { color: colors.textMuted }]}>No school visits are planned on {longDate(date)}.</Text>}
         </View>
       )}
+      {day.focus?.point ? (
+        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View style={styles.inline}>
+            <Star size={22} color="#0284c7" fill="#0284c7" />
+            <Text style={[styles.sectionTitle, styles.inlineText, { color: colors.text }]}>Schools Near {day.focus.name}</Text>
+          </View>
+          {day.suggestions.length === 0 ? <Text style={[styles.rowSub, { color: colors.textMuted }]}>No eligible schools near this school.</Text> : null}
+          {day.suggestions.map((sg) => (
+            <SuggestionRow
+              key={sg.school?.schoolId}
+              s={sg}
+              isAround
+              onAdd={() => sg.school && onAddToPlan(sg.school.schoolId)}
+              onSelect={() => sg.school && onSelectSchool(sg.school.schoolId)}
+            />
+          ))}
+        </View>
+      ) : null}
       <View style={[styles.figures, { backgroundColor: colors.surface, borderColor: colors.border }]}>
         <Figure icon={<Car size={26} color={colors.text} />} value={km(total.meters)} label="Distance" />
         <Figure icon={<Clock size={24} color={colors.text} />} value={hrMin(total.seconds)} label="Travel Time" />
@@ -218,23 +255,26 @@ export function RoutePlannerScreen({
   );
 }
 
-function SuggestionRow({ s, onAdd, onSelect }: { s: Suggestion; onAdd: () => void; onSelect: () => void }) {
+function SuggestionRow({ s, onAdd, onSelect, isAround = false }: { s: Suggestion; onAdd: () => void; onSelect: () => void; isAround?: boolean }) {
   const { colors } = useTheme();
   const high = s.label === 'High Priority';
   return (
     <View style={[styles.suggestion, { borderColor: colors.border }]}>
       <Pressable onPress={onSelect} style={styles.photo} accessibilityLabel={`Open ${s.school?.name}`}>
-        <School size={34} color="#15803d" />
+        <School size={34} color="#1d6fe0" />
       </Pressable>
       <View style={styles.flex}>
         <View style={styles.pillRow}>
           <Text style={[styles.rowTitle, { color: colors.text }]}>{s.school?.name}</Text>
+          <Text style={[styles.rowSub, { color: colors.textMuted }]}>ID {s.school?.code}</Text>
           <Text style={[styles.pill, high ? styles.pillHigh : styles.pillEligible]}>{s.label}</Text>
         </View>
         <View style={styles.inline}>
           <MapPin size={16} color={colors.textMuted} />
           <Text style={[styles.rowSub, styles.inlineText, { color: colors.text }]}>
-            {Number(s.addedMeters) < 100 ? 'On the way' : km(s.addedMeters)} (≈ {hrMin(s.addedSeconds)} detour{s.measure === 'road' ? '' : ', straight line'})
+            {isAround
+              ? `${km(s.addedMeters)} away • ${hrMin(s.addedSeconds)}${s.measure === 'road' ? '' : ' (straight line)'}`
+              : `${Number(s.addedMeters) < 100 ? 'On the way' : km(s.addedMeters)} (≈ ${hrMin(s.addedSeconds)} detour${s.measure === 'road' ? '' : ', straight line'})`}
           </Text>
         </View>
         <View style={styles.inline}>
@@ -530,11 +570,15 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   link: { fontFamily: fonts.semibold, fontSize: 15 },
   suggestion: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: spacing.sm },
-  photo: { width: 72, height: 72, borderRadius: 10, backgroundColor: '#dcfce7', alignItems: 'center', justifyContent: 'center' },
+  photo: { width: 72, height: 72, borderRadius: 10, backgroundColor: '#dbeafe', alignItems: 'center', justifyContent: 'center' },
   outline: { borderWidth: 2, borderColor: ROUTE_TEAL, borderRadius: radius.md, paddingHorizontal: 14, minHeight: 44, justifyContent: 'center' },
   outlineWide: { flexDirection: 'row', gap: 8, borderWidth: 1.5, borderColor: '#cbd5e1', borderRadius: radius.md, minHeight: 52, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
   outlineText: { fontFamily: fonts.semibold, fontSize: 15, color: ROUTE_TEAL },
   outlineDark: { fontFamily: fonts.semibold, fontSize: 17, color: '#0f172a' },
   buttons: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
+  nearBanner: { backgroundColor: '#eff6ff', borderColor: '#bfdbfe', borderWidth: 1, borderRadius: radius.lg, padding: spacing.md, gap: 6 },
+  nearTitle: { fontFamily: fonts.semibold, fontSize: 16, color: '#0f172a' },
+  nearText: { fontFamily: fonts.regular, fontSize: 14, color: '#1e293b' },
+  nearButton: { alignSelf: 'flex-start', borderWidth: 1.5, borderColor: '#1d6fe0', borderRadius: radius.sm, paddingHorizontal: 14, minHeight: 40, justifyContent: 'center', marginTop: 4 },
   footer: { flexDirection: 'row', gap: spacing.sm, padding: spacing.md, borderTopWidth: 1 },
 });

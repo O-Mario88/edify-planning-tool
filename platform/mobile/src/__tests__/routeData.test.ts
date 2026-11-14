@@ -1,7 +1,7 @@
 import { create } from '@bufbuild/protobuf';
 
 import { RouteLegSchema, RouteTotalsSchema, SchoolPinSchema } from '../gen/edify/routes/v1/routes_pb';
-import { ROUTE_URL, dateOf, directionsUrl, hrMin, isRouteUrl, legText, routeSection, shortName, totalFigures } from '../screens/route/routeData';
+import { ROUTE_URL, dateOf, directionsUrl, nearOf, routeUrl, hrMin, isRouteUrl, legText, routeSection, shortName, totalFigures } from '../screens/route/routeData';
 
 describe('the route planner in the app', () => {
   it('is listed for field staff only, natively', () => {
@@ -36,5 +36,14 @@ describe('the route keeps its day', () => {
     expect(dateOf('route:details?date=2026-11-17')).toBe('2026-11-17');
     expect(dateOf('route:planner')).toBe('');
     expect(dateOf('route:planner?date=17/11/2026')).toBe('');
+  });
+});
+
+describe('the planner can be about one school', () => {
+  it('carries the school with the day, and drops it when asked', () => {
+    expect(routeUrl('route:planner', '2026-11-17', 'abc')).toBe('route:planner?date=2026-11-17&near=abc');
+    expect(routeUrl('route:planner', '2026-11-17', '')).toBe('route:planner?date=2026-11-17');
+    expect(nearOf('route:planner?date=2026-11-17&near=abc')).toBe('abc');
+    expect(nearOf('route:planner')).toBe('');
   });
 });
