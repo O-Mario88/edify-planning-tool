@@ -122,3 +122,25 @@ func TestFilesizeIsDjangosFilesizeformat(t *testing.T) {
 		}
 	}
 }
+
+func TestAReportsPeriodIsItsDatesFilledFromItsYear(t *testing.T) {
+	jan := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	for want, x := range map[string]report{
+		"1 Jan 2026 – 30 Sep 2026": {fy: "2026", start: &jan},
+		"1 Oct 2026 – 30 Sep 2027": {fy: "2027"},
+		"All recorded enrolments":  {start: &jan},
+	} {
+		if got := periodLabel(x); got != want {
+			t.Errorf("periodLabel(%+v) = %q, want %q", x, got, want)
+		}
+	}
+}
+
+func TestARegisteredTileDrawsAFigureHelperWithItsTone(t *testing.T) {
+	if m := registryMetric("X", 1, "1 overdue", "warning", ""); m.Helper != "1 overdue" || m.Tone != "warning" || m.Note != "" {
+		t.Errorf("figure helper: %v", m)
+	}
+	if m := registryMetric("X", 0, "from released reports", "info", "/x"); m.Note != "from released reports" || m.Tone != "" || m.Href != "/x" {
+		t.Errorf("words helper: %v", m)
+	}
+}

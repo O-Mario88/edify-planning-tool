@@ -336,6 +336,209 @@
         }
       }
     },
+    "/ia/impact-reports/": {
+      "roles": {
+        "Accountant": {
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "page": true,
+          "strip": {
+            "label": "Impact Assessment",
+            "scrolls": true,
+            "tabs": [
+              {
+                "active": false,
+                "href": "/ia/dashboard/",
+                "label": "Overview"
+              },
+              {
+                "active": false,
+                "href": "/ia/framework/",
+                "label": "Framework & Strategy"
+              },
+              {
+                "active": false,
+                "href": "/ia/school-evidence/",
+                "label": "Baseline & Field Data"
+              },
+              {
+                "active": false,
+                "href": "/ia/stories/",
+                "label": "School Progress"
+              },
+              {
+                "active": false,
+                "href": "/ia/learning/",
+                "label": "Analysis & Learning"
+              },
+              {
+                "active": true,
+                "href": "/ia/impact-reports/",
+                "label": "Reporting & Accountability"
+              },
+              {
+                "active": false,
+                "href": "/country-planning-oversight/",
+                "label": "Data Quality & Verification"
+              }
+            ]
+          }
+        },
+        "BusinessTransformationOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "page": true,
+          "strip": {
+            "label": "Impact Assessment",
+            "scrolls": true,
+            "tabs": [
+              {
+                "active": false,
+                "href": "/ia/dashboard/",
+                "label": "Overview"
+              },
+              {
+                "active": false,
+                "href": "/ia/framework/",
+                "label": "Framework & Strategy"
+              },
+              {
+                "active": false,
+                "href": "/ia/school-evidence/",
+                "label": "Baseline & Field Data"
+              },
+              {
+                "active": false,
+                "href": "/ia/stories/",
+                "label": "School Progress"
+              },
+              {
+                "active": false,
+                "href": "/ia/learning/",
+                "label": "Analysis & Learning"
+              },
+              {
+                "active": true,
+                "href": "/ia/impact-reports/",
+                "label": "Reporting & Accountability"
+              },
+              {
+                "active": false,
+                "href": "/country-planning-oversight/",
+                "label": "Data Quality & Verification"
+              }
+            ]
+          }
+        },
+        "HumanResources": {
+          "page": false,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "page": true,
+          "strip": {
+            "label": "Impact Assessment",
+            "scrolls": true,
+            "tabs": [
+              {
+                "active": false,
+                "href": "/ia/dashboard/",
+                "label": "Overview"
+              },
+              {
+                "active": false,
+                "href": "/ia/framework/",
+                "label": "Framework & Strategy"
+              },
+              {
+                "active": false,
+                "href": "/ia/school-evidence/",
+                "label": "Baseline & Field Data"
+              },
+              {
+                "active": false,
+                "href": "/ia/stories/",
+                "label": "School Progress"
+              },
+              {
+                "active": false,
+                "href": "/ia/learning/",
+                "label": "Analysis & Learning"
+              },
+              {
+                "active": true,
+                "href": "/ia/impact-reports/",
+                "label": "Reporting & Accountability"
+              },
+              {
+                "active": false,
+                "href": "/country-planning-oversight/",
+                "label": "Data Quality & Verification"
+              }
+            ]
+          }
+        },
+        "MfiLoanOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "page": true,
+          "strip": {
+            "label": "Impact Assessment",
+            "scrolls": true,
+            "tabs": [
+              {
+                "active": true,
+                "href": "/ia/impact-reports/",
+                "label": "Reporting & Accountability"
+              },
+              {
+                "active": false,
+                "href": "/country-planning-oversight/",
+                "label": "Data Quality & Verification"
+              }
+            ]
+          }
+        }
+      }
+    },
     "/ia/partner-evidence/": {
       "roles": {
         "Accountant": {
@@ -876,6 +1079,54 @@
     "xlsx"
   ],
   "queue_page_size": 50,
+  "report_open_recommendations": [
+    "proposed",
+    "accepted",
+    "in_progress"
+  ],
+  "report_page_size": 50,
+  "report_programmes": {
+    "cross": "Across programmes",
+    "edtech": "Educational technology",
+    "lending": "Lending",
+    "training": "Christian training",
+    "visits": "School visits"
+  },
+  "report_rvp_statuses": [
+    "reviewed",
+    "released",
+    "superseded"
+  ],
+  "report_statuses": [
+    [
+      "draft",
+      "Draft"
+    ],
+    [
+      "submitted",
+      "Submitted for review"
+    ],
+    [
+      "returned",
+      "Returned"
+    ],
+    [
+      "reviewed",
+      "Reviewed"
+    ],
+    [
+      "released",
+      "Released"
+    ],
+    [
+      "withdrawn",
+      "Withdrawn"
+    ],
+    [
+      "superseded",
+      "Superseded"
+    ]
+  ],
   "required_evidence": {
     "cluster_meeting": [
       "attendance_form"

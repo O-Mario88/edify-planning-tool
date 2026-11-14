@@ -36,10 +36,11 @@ PAGES = {
     "/ia/analytics/": "ia_verification_analytics",
     "/ia/stories/": "ia_stories",
     "/ia/compare/": "ia_compare",
+    "/ia/impact-reports/": "impact_reports",
 }
 
 #: The pages that draw the IA workspace strip (partials/_section_nav.html).
-STRIP_PAGES = ("/ia/samples/", "/ia/stories/")
+STRIP_PAGES = ("/ia/samples/", "/ia/stories/", "/ia/impact-reports/")
 
 #: The roles ia_samples_view offers "Draw this week now" (can_draw).
 SAMPLE_DRAW_ROLES = ["ImpactAssessment", "CountryDirector", "Admin"]
@@ -67,6 +68,11 @@ def rules() -> dict:
     from apps.impact.models import DefinitionStatus
     from apps.targets.models import MSCSStatus
     from apps.targets.mscs_review import SPIRITUAL_DOMAINS
+    from apps.frontend.views.impact_report_views import (
+        PAGE_SIZE as IMPACT_REPORT_PAGE_SIZE,
+    )
+    from apps.impact import reports as impact_reports
+    from apps.impact.models import Programme, ReportStatus
     from apps.pl_review.services import LEAD_VERIFIED_ROLES
     from apps.mobile_feed.views import NOT_PASSED
 
@@ -137,6 +143,14 @@ def rules() -> dict:
         # (apps.pl_review.services.lead_verified_q), and the lead role.
         "lead_verified_roles": list(LEAD_VERIFIED_ROLES),
         "lead_role": EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+        # Impact Reports (apps.impact.reports): each status's label in order,
+        # the programmes, what an RVP reads, the open recommendation states,
+        # and the register's page size.
+        "report_statuses": [[k, str(v)] for k, v in ReportStatus.choices],
+        "report_programmes": {k: str(v) for k, v in Programme.choices},
+        "report_rvp_statuses": list(impact_reports.RVP_STATUSES),
+        "report_open_recommendations": list(impact_reports.OPEN_RECOMMENDATIONS),
+        "report_page_size": IMPACT_REPORT_PAGE_SIZE,
         "query_keys_not_passed": sorted(NOT_PASSED),
         # Who may open a school's profile, so a school's name is a link
         # (apps.frontend.templatetags.school_links._may_open_profiles).

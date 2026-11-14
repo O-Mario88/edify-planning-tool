@@ -65,6 +65,14 @@ var rules = func() (r struct {
 	// the roles whose work that is, and the lead role.
 	LeadVerifiedRoles []string `json:"lead_verified_roles"`
 	LeadRole          string   `json:"lead_role"`
+	// Impact Reports: each status and its label in order, the programmes,
+	// the statuses an RVP reads, the open recommendation states and the page
+	// size.
+	ReportStatuses            [][2]string       `json:"report_statuses"`
+	ReportProgrammes          map[string]string `json:"report_programmes"`
+	ReportRVPStatuses         []string          `json:"report_rvp_statuses"`
+	ReportOpenRecommendations []string          `json:"report_open_recommendations"`
+	ReportPageSize            int               `json:"report_page_size"`
 	// SchoolProfileRoles may open a school's profile.
 	SchoolProfileRoles []string `json:"school_profile_roles"`
 	// QueryKeysNotPassed are the query keys the feed never passes to a page.

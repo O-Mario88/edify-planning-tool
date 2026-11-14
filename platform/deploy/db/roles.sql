@@ -656,3 +656,10 @@ GRANT SELECT (author_id, reviewed_by_id) ON impact_outcome_area TO edify_gateway
 -- Evidence Compare (internal/iapages/compare.go): each upload's id (for its
 -- download link), original name and size. Not its storage path.
 GRANT SELECT (id, original_name, file_size) ON evidence_record TO edify_gateway_ro;
+
+-- Impact Reports (internal/iapages/reports.go): each report's title, period,
+-- programmes, version, author, reviewer and status; its recommendations' and
+-- releases' states. Not the report's methodology, findings or evidence.
+GRANT SELECT (title, created_at, programme_areas, fy, period_start, version, review_note, author_id, status, updated_at, reviewed_by_id, period_end, country) ON impact_report TO edify_gateway_ro;
+GRANT SELECT (report_id, status, due_date) ON impact_report_recommendation TO edify_gateway_ro;
+GRANT SELECT (audience, report_id, status) ON impact_report_release TO edify_gateway_ro;
