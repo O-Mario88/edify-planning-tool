@@ -8,6 +8,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pageheader"
 )
 
 // assignment is one hr_extra_assignment row as the page reads it.
@@ -226,13 +227,22 @@ const (
 		"and counted in performance separately from target achievement."
 )
 
+// assignHref is the Assign button's link as the feed gives it: the template
+// writes hx-get="…?fy={{ fy }}" unencoded, and the feed reads that query back
+// (_resolved: parse_qsl, blanks dropped, names in order), so a year holding
+// "&" loses what follows it.
+func assignHref(fy string) string {
+	query, _ := url.ParseQuery("fy=" + fy)
+	return pageheader.Href("/extra-work/assign-drawer", query)
+}
+
 // page is the whole answer, in the order the template draws it.
 func page(v view) *screensv1.GetPageResponse {
 	header := &screensv1.PageHeader{Eyebrow: "Performance", Title: title, Description: description}
 	if v.role.CanAssign {
 		header.Actions = append(header.Actions, &screensv1.PageAction{
 			Key: "assign_extra_work", Label: "Assign Extra Work", Primary: true, Enabled: true,
-			Href: "/extra-work/assign-drawer?fy=" + v.fy, Drawer: true,
+			Href: assignHref(v.fy), Drawer: true,
 		})
 	}
 	blocks := []*screensv1.PageBlock{}
