@@ -33,6 +33,7 @@ PAGES = {
     "/ia/history/": "ia_history",
     "/ia/partner-evidence/": "ia_partner_evidence",
     "/ia/samples/": "ia_samples",
+    "/ia/analytics/": "ia_verification_analytics",
 }
 
 #: The roles ia_samples_view offers "Draw this week now" (can_draw).
@@ -56,6 +57,7 @@ def rules() -> dict:
     from apps.activities.verification_sampling import sample_share_pct
     from apps.analytics.ia_collection import PAGE_SIZE as SAMPLE_PAGE_SIZE
     from apps.frontend.views.ia_views import QUEUE_PAGE_SIZE
+    from apps.core.pagination import TABLE_PAGE_SIZE
     from apps.mobile_feed.views import NOT_PASSED
 
     pages = {}
@@ -104,6 +106,8 @@ def rules() -> dict:
         "sample_draw_roles": SAMPLE_DRAW_ROLES,
         "sample_methods": dict(VerificationSample.METHOD_CHOICES),
         "sample_page_size": SAMPLE_PAGE_SIZE,
+        # Verification Analytics pages each of its tables (TABLE_PAGE_SIZE).
+        "table_page_size": TABLE_PAGE_SIZE,
         "query_keys_not_passed": sorted(NOT_PASSED),
         # Who may open a school's profile, so a school's name is a link
         # (apps.frontend.templatetags.school_links._may_open_profiles).

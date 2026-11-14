@@ -49,6 +49,9 @@ var rules = func() (r struct {
 	SampleDrawRoles []string          `json:"sample_draw_roles"`
 	SampleMethods   map[string]string `json:"sample_methods"`
 	SamplePageSize  int               `json:"sample_page_size"`
+	// TablePageSize is each Verification Analytics table's page
+	// (TABLE_PAGE_SIZE).
+	TablePageSize int `json:"table_page_size"`
 	// SchoolProfileRoles may open a school's profile.
 	SchoolProfileRoles []string `json:"school_profile_roles"`
 	// QueryKeysNotPassed are the query keys the feed never passes to a page.

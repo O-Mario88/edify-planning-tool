@@ -603,3 +603,7 @@ GRANT SELECT (evidence_profile_snapshot) ON activity TO edify_gateway_ro;
 GRANT SELECT (activity_id, kind, quarantined) ON evidence_record TO edify_gateway_ro;
 -- Sample Checks: each drawn sample, its check and its outcome.
 GRANT SELECT (id, subject_type, activity_id, ssa_record_id, method, original_verifier, sampled_at, status, outcome_note, checked_by, checked_at) ON ia_verification_sample TO edify_gateway_ro;
+
+-- Verification Analytics (internal/iapages/analytics.go): each decision's
+-- verification, verdict, verifier and time. Not its notes.
+GRANT SELECT (id, verification_id, decision, decided_by, decided_at) ON ia_verification_decision TO edify_gateway_ro;
