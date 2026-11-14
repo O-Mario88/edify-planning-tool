@@ -770,3 +770,18 @@ GRANT SELECT (est_cost_cents) ON activity TO edify_gateway_ro;
 -- (activities_roles.sql, edify_activities_rw).
 GRANT SELECT (id, case_type, country, severity, status, subject_staff_id, case_owner_id, investigator_id,
               is_confidential, opened_at, created_at, updated_at) ON hr_relations_case TO edify_gateway_ro;
+
+-- The target engine (internal/targets), for the pages that show a person's
+-- targets and progress: the target areas; an agreed review's priorities
+-- (which measured area, its annual figure, words, weight and order) and when
+-- the review changed; the explicit monthly targets; the target profile's
+-- annual figures the areas fall back on; the validated ledger's monthly
+-- quantities; and whether a ledger is marked for rebuilding (Go then hands the
+-- reader on: the existing engine rebuilds on that read).
+GRANT SELECT (id, key, label, weight, sort_order, active) ON target_area TO edify_gateway_ro;
+GRANT SELECT (updated_at) ON hr_performance_review TO edify_gateway_ro;
+GRANT SELECT (review_id, metric_key, target_number, outcome_statement, weight, sequence, created_at) ON hr_performance_priority TO edify_gateway_ro;
+GRANT SELECT (user_id, fy, month_of_fy, target, area_id) ON monthly_personal_target TO edify_gateway_ro;
+GRANT SELECT (staff_id, fy, visits_target, trainings_target, group_trainings_target, cluster_meetings_target, ssa_target) ON staff_target_profile TO edify_gateway_ro;
+GRANT SELECT (user_id, fy, validation_status, area_id, credited_month, quantity) ON target_achievement_ledger TO edify_gateway_ro;
+GRANT SELECT (owner_id, fy) ON target_ledger_dirty TO edify_gateway_ro;
