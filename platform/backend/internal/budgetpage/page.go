@@ -9,6 +9,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 )
 
 type view struct {
@@ -18,6 +19,12 @@ type view struct {
 	groups []*group
 	team   []member
 	now    time.Time
+
+	// The country's Budget.
+	country   bool
+	wf        workflow
+	fin       financeHealth
+	districts []district
 }
 
 func (v view) header() *screensv1.PageHeader {
@@ -95,6 +102,9 @@ func (v view) blocks() []*screensv1.PageBlock {
 		}}},
 		panel("", "", text("Calculated from the costed activities in weekly plans. Month, quarter and annual budgets roll up those planned costs.")),
 	}
+	if v.country && v.wf.priorPending != "" {
+		out = append(out, panel("", "", text(v.wf.priorPending+" budget is still awaiting RVP review. Preparing the current month is not blocked — periods are independent.")))
+	}
 	if len(v.team) > 0 {
 		people := "staff members"
 		if len(v.team) == 1 {
@@ -107,14 +117,18 @@ func (v view) blocks() []*screensv1.PageBlock {
 		out = append(out, panel("Team cost summary",
 			"Each person’s planned activity cost for this "+strings.ToLower(a.selected.label)+".", items...))
 	}
-	plan := panel("Activity cost plan",
-		"Costs come directly from scheduled planned activities and are grouped by activity and item. Training and meeting tables show sessions and participants.")
-	out = append(out, plan)
+	const planHelp = "Costs come directly from scheduled planned activities and are grouped by activity and item. Training and meeting tables show sessions and participants."
 	if len(v.groups) == 0 {
-		plan.GetPanel().Items = []*screensv1.PagePanelItem{
-			text("Choose another time view or schedule an activity to create its budget automatically."),
-		}
-		return out
+		out = append(out, panel("Activity cost plan", planHelp,
+			text("Choose another time view or schedule an activity to create its budget automatically.")))
+		return append(out, v.countryBlocks()...)
+	}
+	if v.country {
+		// The district filter beside the heading: the feed reads the heading's
+		// note as the panel's text, then the filter.
+		out = append(out, panel("Activity cost plan", "", text(planHelp)), v.districtFilter())
+	} else {
+		out = append(out, panel("Activity cost plan", planHelp))
 	}
 	var total, staff int64
 	for _, g := range v.groups {
@@ -122,11 +136,93 @@ func (v view) blocks() []*screensv1.PageBlock {
 		staff += g.staffTotal
 	}
 	out = append(out, panel("", "", figure("Grand total", ugx(total))), v.ledger(staff, total))
-	source := "My planned activities"
-	if a.budgetScope == "team" {
-		source = "Team planned activities"
+	source := map[string]string{
+		"my": "My planned activities", "team": "Team planned activities", "country": "Scheduled planned activities",
+	}[a.budgetScope]
+	out = append(out, panel("", "", text("Source: "+source+" · Total: "+ugx(total))))
+	return append(out, v.countryBlocks()...)
+}
+
+func (v view) districtFilter() *screensv1.PageBlock {
+	f := &screensv1.PageFilter{Name: "district", Label: "District", Value: "",
+		Options: []*screensv1.PageFilterOption{{Value: "", Label: "All districts"}}}
+	for _, d := range v.districts {
+		f.Options = append(f.Options, &screensv1.PageFilterOption{Value: d.id, Label: d.name})
 	}
-	return append(out, panel("", "", text("Source: "+source+" · Total: "+ugx(total))))
+	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Filters{Filters: &screensv1.PageFilters{
+		Filters: []*screensv1.PageFilter{f},
+		Hidden: map[string]string{
+			"fy": strconv.Itoa(v.a.fy), "date": v.a.anchor.Format(time.DateOnly), "period": v.a.period,
+		},
+	}}}
+}
+
+// countryBlocks are the country's Finance Health and, for a month, its
+// approval workflow and reconciliation.
+func (v view) countryBlocks() []*screensv1.PageBlock {
+	if !v.country {
+		return nil
+	}
+	f := v.fin
+	pct := int64(0)
+	if f.requested != 0 {
+		pct = pyPercentage(f.disbursed, f.requested)
+	}
+	money := ugx
+	fy := strconv.Itoa(v.a.fy)
+	out := []*screensv1.PageBlock{
+		{Kind: &screensv1.PageBlock_Section{Section: "Finance Health, FY " + fy}},
+		schoolprofile.Strip("Advance Pipeline", []schoolprofile.StripFigure{
+			{Label: "Requested", Value: money(f.requested), Helper: "Every advance in the pipeline"},
+			{Label: "Pending Confirmation", Value: money(f.pending)},
+			{Label: "Confirmed for Advance", Value: money(f.confirmed)},
+			{Label: "Disbursed", Value: money(f.disbursed), Helper: strconv.FormatInt(pct, 10) + "% of requested"},
+			{Label: "Accounted", Value: money(f.accounted)},
+			{Label: "Returned", Value: money(f.returned)},
+		}),
+		{Kind: &screensv1.PageBlock_Chart{Chart: &screensv1.PageChart{
+			Title: "Advances Requested by Quarter", Subtitle: "UGX requested against each quarter's activities",
+			Categories: []string{"Q1", "Q2", "Q3", "Q4"},
+			Series: []*screensv1.PageSeries{{Name: "Requested (UGX)", Values: []float64{
+				float64(f.quarters[0]), float64(f.quarters[1]), float64(f.quarters[2]), float64(f.quarters[3]),
+			}}},
+			AxisTitle: "UGX requested",
+		}}},
+	}
+	if v.a.period != "month" {
+		return out
+	}
+	w := v.wf
+	month := strconv.Itoa(w.month)
+	links := &screensv1.PageLinks{Links: []*screensv1.PageLink{
+		{Text: "View plan sources", Href: "/country-budget/plan-sources?fy=" + fy + "&month=" + month, Drawer: true},
+		{Text: "Submitted budgets", Href: "/country-budget/history?fy=" + fy},
+	}}
+	if isRVP(v.role) && !isCD(v.role) && w.status == "submitted_to_rvp" {
+		links.Links = append(links.Links, &screensv1.PageLink{
+			Text: "Return", Drawer: true,
+			Href: "/country-budget/return?budget_id=" + url.QueryEscape(w.id) + "&fy=" + fy + "&month=" + month,
+		})
+	}
+	approved := int64(0)
+	if in(rules.Country.ApprovedLimitStatuses, w.status) {
+		approved = w.operationalRequirement
+	}
+	r := w.rec
+	return append(out,
+		panel("Monthly Budget Approval", "Status: "+w.approvalStatus()+" · "+rules.Country.Months[w.month]+" FY "+fy,
+			&screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Links{Links: links}}),
+		panel("", "", text("Country operational request: "+ugx(w.total)+". New submissions contain only costs from planned activities. Previously submitted amounts remain in Submitted budgets.")),
+		panel("Disbursement and Accountability", "", text("Actual spending")),
+		schoolprofile.Strip("Performance overview", []schoolprofile.StripFigure{
+			{Label: "Approved Operating Limits", Value: ugxCompact(approved)},
+			{Label: "Committed", Value: ugxCompact(r.committed)},
+			{Label: "Amount Disbursed", Value: ugxCompact(r.disbursed)},
+			{Label: "Actual Accounted Spend", Value: ugxCompact(r.accounted)},
+			{Label: "Returned Balance", Value: ugxCompact(r.returned)},
+			{Label: "Reimbursements", Value: ugxCompact(r.reimbursed)},
+		}),
+	)
 }
 
 // ledger is partials/budgets/budget_group_tables.html as the feed reads

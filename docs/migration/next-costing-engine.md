@@ -82,4 +82,19 @@ integration tests, parity for all 29 accounts, hand-ons listed.
   several bodies or a footer (only the budget ledger has either), in the
   feed and in Go's `feeddom` alike.
 
-Next: the country Budget (approval workflow, Finance Health).
+- **Stage 2, the country's Budget** (`internal/budgetpage/country.go`; the
+  CD, RVP, Accountant, IA and Admin): the national ledger and the district
+  filter, Finance Health (the year's advance pipeline and the requests by
+  quarter), and for a month the approval status and its links (the RVP's
+  Return on a submitted month), the country request, the pending earlier
+  month and the reconciliation (committed, disbursed, accounted, returned,
+  reimbursed, the approved operating limit). The existing read writes (it
+  creates the month's budget and stores its live totals); Go does not
+  (owner, 2026-11-14: "Go reads it anyway", doc 68 §68.6) and shows what
+  that read would store. Golden: 28 answers of 9 accounts, 0 differing
+  (live, locked, approved and unrecorded months); a planted fault fails all
+  10 country month answers. Hand-ons added: a deployment of several
+  countries.
+
+Next: stage 3, pricing in Go read-only (the dual price and the session and
+visit recipes beside `internal/costing`).

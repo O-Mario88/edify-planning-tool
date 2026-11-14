@@ -29,6 +29,96 @@
     "training": "Training",
     "training_follow_up_visit": "Training Follow-up Visit"
   },
+  "country": {
+    "approval_status_labels": {
+      "admin_plan_added": "Ready for CD Review",
+      "approved_by_rvp": "RVP Approved",
+      "cd_review": "Ready for CD Review",
+      "closed": "Closed",
+      "disbursed": "Disbursed",
+      "draft_generated": "Draft",
+      "returned_by_rvp": "Returned by RVP",
+      "sent_to_accountant": "Sent to Accountant",
+      "submitted_to_rvp": "Submitted to RVP"
+    },
+    "approved_limit_statuses": [
+      "approved_by_rvp",
+      "closed",
+      "disbursed",
+      "sent_to_accountant"
+    ],
+    "cd_roles": [
+      "CountryDirector"
+    ],
+    "finance": {
+      "accounted": [
+        "accounted"
+      ],
+      "confirmed": [
+        "confirmed_for_advance"
+      ],
+      "disbursed": [
+        "disbursed",
+        "accountability_pending",
+        "accounted"
+      ],
+      "pending": [
+        "pending_responsible_confirmation",
+        "submitted",
+        "submitted_to_pl",
+        "submitted_to_cd"
+      ]
+    },
+    "home_country_id": "Uganda",
+    "locked_statuses": [
+      "approved_by_rvp",
+      "closed",
+      "disbursed",
+      "sent_to_accountant",
+      "submitted_to_rvp"
+    ],
+    "money_moved_statuses": [
+      "disbursed",
+      "accountability_pl_pending",
+      "accountability_pending",
+      "accounted",
+      "reimbursement_pl_pending",
+      "reimbursement_submitted",
+      "reimbursement_disbursed",
+      "reimbursed"
+    ],
+    "months": [
+      "",
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ],
+    "read_roles": [
+      "CountryDirector",
+      "RegionalVicePresident",
+      "Accountant",
+      "ImpactAssessment",
+      "Admin"
+    ],
+    "rvp_roles": [
+      "RegionalVicePresident"
+    ]
+  },
+  "country_ledger_roles": [
+    "CountryDirector",
+    "Admin",
+    "RegionalVicePresident",
+    "Accountant"
+  ],
   "day_rate_keys": [
     "lunch_per_day",
     "management_accommodation_per_night",

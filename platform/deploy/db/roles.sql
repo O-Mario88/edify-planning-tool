@@ -826,3 +826,10 @@ GRANT SELECT (id, activity_id, reason_code, status, current_operational_cost, pr
 GRANT SELECT (cost_setting_key, unit_cost, quantity, line_item_type, partner_id, responsible_user)
   ON activity_schedule_cost_line TO edify_gateway_ro;
 GRANT SELECT (rate_snapshot) ON daily_visit_batch TO edify_gateway_ro;
+
+-- The country's Budget (internal/budgetpage/country.go): the month's budget
+-- record's year, request and operating requirement, and each advance's
+-- activity, date and amounts (requested, disbursed, accounted, reimbursed).
+GRANT SELECT (fy, total_amount, operational_activity_requirement) ON monthly_work_plan_budget TO edify_gateway_ro;
+GRANT SELECT (activity_id, planned_date, responsible_user_id, amount, disbursed_amount, accounted_amount, reimbursed_amount)
+  ON advance_request TO edify_gateway_ro;

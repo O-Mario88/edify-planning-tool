@@ -132,7 +132,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if !ok || !r.Page {
 		return nil, true, pagegate.ErrNotAvailable
 	}
-	if r.Country || r.Strip {
+	if r.Strip {
 		return nil, false, nil
 	}
 	resp, err := s.build(ctx, p, r, query)
@@ -155,12 +155,17 @@ func (s *Service) build(ctx context.Context, p auth.Principal, r role, query url
 	if err != nil {
 		return nil, fmt.Errorf("budgetpage: resolving the reader's scope: %w", err)
 	}
-	if scope.CountryScope {
+	var owners []string
+	switch {
+	case r.Country && (scope.CountryScope || in(rules.CountryLedgerRoles, p.ActiveRole)):
+		// The country's Budget: every planned line, no owner.
+		a.budgetScope = "country"
+	case r.Country || scope.CountryScope:
 		return nil, errPassOn
-	}
-	owners, err := s.owners(ctx, p, scope, a.budgetScope == "team")
-	if err != nil {
-		return nil, err
+	default:
+		if owners, err = s.owners(ctx, p, scope, a.budgetScope == "team"); err != nil {
+			return nil, err
+		}
 	}
 	lines, err := s.lines(ctx, a, owners)
 	if err != nil {
@@ -183,6 +188,25 @@ func (s *Service) build(ctx context.Context, p auth.Principal, r role, query url
 		team = teamSummary(lines, names)
 	}
 	v := view{a: a, role: p.ActiveRole, export: r.Export, groups: gs, team: team, now: now}
+	if a.budgetScope == "country" {
+		several, err := s.multiCountry(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if several {
+			return nil, errPassOn
+		}
+		v.country = true
+		if v.wf, err = s.workflow(ctx, a.fy, int(a.anchor.Month())); err != nil {
+			return nil, err
+		}
+		if v.fin, err = s.financeHealth(ctx, a.fy); err != nil {
+			return nil, err
+		}
+		if v.districts, err = s.districts(ctx); err != nil {
+			return nil, err
+		}
+	}
 	return &screensv1.GetPageResponse{Header: v.header(), Blocks: v.blocks(), WebPath: Path}, nil
 }
 
@@ -229,8 +253,9 @@ func (s *Service) owners(ctx context.Context, p auth.Principal, scope schooldire
 
 // lines is the selected period's cost lines: of the page's years, of live
 // fundable dated activities, owned by the reader (or the line's activity
-// is theirs, or a partner's work they monitor), planned in the period (or
-// dated only by a month wholly inside it).
+// is theirs, or a partner's work they monitor; any owner when owners is
+// nil, the country's), planned in the period (or dated only by a month
+// wholly inside it).
 func (s *Service) lines(ctx context.Context, a ask, owners []string) ([]line, error) {
 	rows, err := s.db.Query(ctx, `
 		SELECT l.activity_id, COALESCE(l.responsible_user, ''), COALESCE(l.label, ''), COALESCE(l.cost_setting_key, ''),
@@ -245,7 +270,8 @@ func (s *Service) lines(ctx context.Context, a ask, owners []string) ([]line, er
 		  AND a.deleted_at IS NULL
 		  AND (a.scheduled_date IS NOT NULL OR a.planned_date IS NOT NULL)
 		  AND (a.status IS NULL OR NOT (a.status = ANY($2)))
-		  AND (l.responsible_user = ANY($3)
+		  AND ($3::text[] IS NULL
+		       OR l.responsible_user = ANY($3)
 		       OR (a.delivery_type = 'partner' AND a.monitored_by_staff_id = ANY($3))
 		       OR ((l.responsible_user IS NULL OR l.responsible_user = '')
 		           AND (a.responsible_staff_id = ANY($3)

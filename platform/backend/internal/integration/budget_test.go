@@ -15,7 +15,9 @@ import (
 // headcount, a meeting dated only by its month, the Admin category, a
 // monitored partner training, an unowned line, the week that crosses
 // 1 October, and work that draws nothing), by month, quarter and year,
-// both scopes, and a reader the page refuses. Skipped unless
+// both scopes, and a reader the page refuses; and the country's Budget
+// over advances and month budgets (locked, approved, and a month with none,
+// which the existing page creates as it reads and Go only reads). Skipped unless
 // EDIFY_BUDGET_GOLDEN names a file internal/budgetpage/testdata/golden.py
 // wrote today.
 func TestBudgetMatchesTheExistingFeedOverPlannedCostsTheSeedLacks(t *testing.T) {
@@ -36,7 +38,7 @@ func TestBudgetMatchesTheExistingFeedOverPlannedCostsTheSeedLacks(t *testing.T) 
 	}
 	ctx := context.Background()
 	// Only the golden's own rows (ids starting "gbg"), children first.
-	children := []string{"activity_schedule_cost_line", "activity", "daily_visit_batch"}
+	children := []string{"advance_request", "monthly_work_plan_budget", "activity_schedule_cost_line", "activity", "daily_visit_batch"}
 	clear := func() {
 		for _, table := range children {
 			if _, err := admin.Exec(ctx, `DELETE FROM "`+table+`" WHERE id LIKE 'gbg%'`); err != nil {

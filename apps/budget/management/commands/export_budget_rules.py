@@ -8,7 +8,11 @@ above it, whose Budget is the country's, and the name each role is shown
 under; the activity statuses that draw no money; the names of the activity
 types and the programme categories; the ledger's training and meeting
 types and the lines whose quantity is a headcount; and the day's shared
-rates (whose rate is the day's own). A change to any of them must be
+rates (whose rate is the day's own); and for the country's Budget, its
+home country, the states that lock the month's budget and those in which
+its requirement is an approved limit, each state's name, the readers of
+the workflow, the months, the advance statuses whose money has moved and
+the statuses each Finance Health figure counts. A change to any of them must be
 exported again; apps/budget/test_budget_rules_export.py fails until it is.
 
     python manage.py export_budget_rules
@@ -65,6 +69,32 @@ def rules() -> dict:
         "participant_line_types": sorted(services.LEDGER_PARTICIPANT_LINE_TYPES),
         "participant_setting_keys": sorted(services.LEDGER_PARTICIPANT_SETTING_KEYS),
         "day_rate_keys": sorted(KEY_LABELS),
+        "country": _country_rules(),
+        "country_ledger_roles": list(services.COUNTRY_LEDGER_ROLES),
+    }
+
+
+def _country_rules() -> dict:
+    from apps.analytics import cd_analytics_service as cd
+    from apps.fund_requests.models import MONEY_MOVED_ADVANCE_STATUSES
+    from apps.monthly_work_plan import country_budget_service as cb
+
+    return {
+        "home_country_id": cb.HOME_COUNTRY_ID,
+        "locked_statuses": sorted(cb.LOCKED_STATUSES),
+        "approved_limit_statuses": sorted(cb.APPROVED_LIMIT_STATUSES),
+        "approval_status_labels": dict(cb.APPROVAL_STATUS_LABELS),
+        "read_roles": list(cb.READ_ROLES),
+        "cd_roles": list(cb.CD_ROLES),
+        "rvp_roles": list(cb.RVP_ROLES),
+        "months": list(cb.MONTHS),
+        "money_moved_statuses": [str(s) for s in MONEY_MOVED_ADVANCE_STATUSES],
+        "finance": {
+            "pending": list(cd.FINANCE_PENDING_STATUSES),
+            "confirmed": list(cd.FINANCE_CONFIRMED_STATUSES),
+            "disbursed": list(cd.FINANCE_DISBURSED_STATUSES),
+            "accounted": list(cd.FINANCE_ACCOUNTED_STATUSES),
+        },
     }
 
 

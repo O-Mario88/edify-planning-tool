@@ -81,3 +81,36 @@ entries, every entry's test exists) and
   `go-allocations-plan-order` (owner, 2026-11-14: "Yes, plan order"): the
   existing Priorities page leaves its distributed priorities in whatever
   order the database planner returns; Go lists them in the plan's order.
+
+## 68.6 A difference no answer shows: the country Budget writes nothing (2026-11-14)
+
+Owner, 2026-11-14, asked whether the country Budget should stay with the
+existing application because its read writes: "Go reads it anyway".
+
+The existing page (`budget_view` → `get_country_monthly_budget`) creates the
+month's `monthly_work_plan_budget` row when there is none
+(`_get_or_create_budget`) and, while the month is not locked, writes its live
+totals back on every read (`_recompute_if_live`, `_apply_live_envelope`).
+`internal/budgetpage` (country.go) writes neither. It shows what that read
+would leave behind: a month with no row is a Draft, and a live month's
+request and operating requirement are its planned lines' cost
+(`_program_source`'s program total); a locked month shows its stored totals.
+
+So the answers are the same (golden: a live, a locked, an approved and an
+unrecorded month, 28 answers of 9 accounts, 0 differing) and no `intended.json`
+entry is needed; what differs is the database after the read:
+
+- A month first opened through Go has no row until the existing application
+  makes one: its Budget page (the read Go replaces there), the plan sources
+  drawer (`get_plan_sources`) and a Program Lead request's approval
+  (`approve_pl_monthly_request`) call `_get_or_create_budget`. The month's
+  actions (`send_to_rvp`, `approve`, `return_budget`,
+  `set_envelope_allocation`, `add_admin_line`) take the row's id, which the
+  web page has from its own read; the app does not show those forms (the
+  feed reads none of them), so Go's page never needs the id.
+- A live month's stored totals are as fresh as its last read through Django.
+  Three readers show them without recomputing: the RVP approvals drawer's
+  returned months (`rvp_views`, `returned_by_rvp` is live), System Health's
+  annual reconciliation (the sum of every month's `program_total`), and the
+  monthly budget list (`monthly_work_plan.services.list_budgets`). Locked
+  months, which the approval itself reads, are never recomputed by either.
