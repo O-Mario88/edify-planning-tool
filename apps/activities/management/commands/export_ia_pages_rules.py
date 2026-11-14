@@ -6,7 +6,7 @@ platform/backend/internal/iapages/rules.json: for each page Go answers, who
 may open it (the pages draw no workspace strip); which
 roles hold the IA verification permission (without it a reader sees only the
 work an Impact Assessment officer ran, `_ia_reach_q`); each activity
-type's label; the evidence each activity must carry; the partner queue's length; who is offered a queue's Export; and who may open a school's profile. A change to any of them must be exported again;
+type's label; the evidence each activity must carry; the partner queue's length; Sample Checks' strip, share, drawers and methods; who is offered a queue's Export; and who may open a school's profile. A change to any of them must be exported again;
 apps/activities/test_ia_pages_rules_export.py fails until it is.
 
     python manage.py export_ia_pages_rules
@@ -19,6 +19,7 @@ from pathlib import Path
 
 from django.core.management.base import BaseCommand
 
+from apps.audit.management.commands.export_decision_log_rules import strip
 from apps.schools.management.commands.export_school_directory_rules import (
     _role_user,
 )
@@ -31,7 +32,11 @@ PAGES = {
     "/ia/returned/": "ia_returned",
     "/ia/history/": "ia_history",
     "/ia/partner-evidence/": "ia_partner_evidence",
+    "/ia/samples/": "ia_samples",
 }
+
+#: The roles ia_samples_view offers "Draw this week now" (can_draw).
+SAMPLE_DRAW_ROLES = ["ImpactAssessment", "CountryDirector", "Admin"]
 
 
 def rules() -> dict:
@@ -47,6 +52,9 @@ def rules() -> dict:
         PROFILE_REQUIRED_EVIDENCE,
         REQUIRED_EVIDENCE,
     )
+    from apps.activities.ia_models import VerificationSample
+    from apps.activities.verification_sampling import sample_share_pct
+    from apps.analytics.ia_collection import PAGE_SIZE as SAMPLE_PAGE_SIZE
     from apps.frontend.views.ia_views import QUEUE_PAGE_SIZE
     from apps.mobile_feed.views import NOT_PASSED
 
@@ -55,9 +63,15 @@ def rules() -> dict:
         roles = {}
         for role in EdifyRole:
             user = _role_user(role.value)
+            page = RolePermissionService.can_view_page(user, permission) and bool(
+                can_open_url(user, path)
+            )
             roles[role.value] = {
-                "page": RolePermissionService.can_view_page(user, permission)
-                and bool(can_open_url(user, path)),
+                "page": page,
+                # Sample Checks draws the IA workspace strip; the others none.
+                "strip": strip(user, path, "partials/_section_nav.html")
+                if page and path == "/ia/samples/"
+                else None,
             }
         pages[path] = {"roles": roles}
     return {
@@ -84,6 +98,12 @@ def rules() -> dict:
             k: [str(kind) for kind in v] for k, v in PROFILE_REQUIRED_EVIDENCE.items()
         },
         "queue_page_size": QUEUE_PAGE_SIZE,
+        # Sample Checks: the share drawn, who may draw, how a check is made
+        # and the samples' page size.
+        "sample_share_pct": sample_share_pct(),
+        "sample_draw_roles": SAMPLE_DRAW_ROLES,
+        "sample_methods": dict(VerificationSample.METHOD_CHOICES),
+        "sample_page_size": SAMPLE_PAGE_SIZE,
         "query_keys_not_passed": sorted(NOT_PASSED),
         # Who may open a school's profile, so a school's name is a link
         # (apps.frontend.templatetags.school_links._may_open_profiles).

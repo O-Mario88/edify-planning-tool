@@ -47,208 +47,460 @@
     "/ia/duplicates/": {
       "roles": {
         "Accountant": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "Admin": {
-          "page": true
+          "page": true,
+          "strip": null
         },
         "BusinessTransformationOfficer": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "CCEO": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "ClusterLeader": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "CountryDirector": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "HumanResources": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "ImpactAssessment": {
-          "page": true
+          "page": true,
+          "strip": null
         },
         "MfiLoanOfficer": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "MfiPartnerAdmin": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "PartnerAdmin": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "PartnerFieldOfficer": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "Program Lead": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "ProjectCoordinator": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "RegionalProgramLead": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "RegionalVicePresident": {
-          "page": false
+          "page": false,
+          "strip": null
         }
       }
     },
     "/ia/history/": {
       "roles": {
         "Accountant": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "Admin": {
-          "page": true
+          "page": true,
+          "strip": null
         },
         "BusinessTransformationOfficer": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "CCEO": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "ClusterLeader": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "CountryDirector": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "HumanResources": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "ImpactAssessment": {
-          "page": true
+          "page": true,
+          "strip": null
         },
         "MfiLoanOfficer": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "MfiPartnerAdmin": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "PartnerAdmin": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "PartnerFieldOfficer": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "Program Lead": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "ProjectCoordinator": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "RegionalProgramLead": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "RegionalVicePresident": {
-          "page": false
+          "page": false,
+          "strip": null
         }
       }
     },
     "/ia/partner-evidence/": {
       "roles": {
         "Accountant": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "Admin": {
-          "page": true
+          "page": true,
+          "strip": null
         },
         "BusinessTransformationOfficer": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "CCEO": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "ClusterLeader": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "CountryDirector": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "HumanResources": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "ImpactAssessment": {
-          "page": true
+          "page": true,
+          "strip": null
         },
         "MfiLoanOfficer": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "MfiPartnerAdmin": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "PartnerAdmin": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "PartnerFieldOfficer": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "Program Lead": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "ProjectCoordinator": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "RegionalProgramLead": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "RegionalVicePresident": {
-          "page": false
+          "page": false,
+          "strip": null
         }
       }
     },
     "/ia/returned/": {
       "roles": {
         "Accountant": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "Admin": {
-          "page": true
+          "page": true,
+          "strip": null
         },
         "BusinessTransformationOfficer": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "CCEO": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "ClusterLeader": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "CountryDirector": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "HumanResources": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "ImpactAssessment": {
-          "page": true
+          "page": true,
+          "strip": null
         },
         "MfiLoanOfficer": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "MfiPartnerAdmin": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "PartnerAdmin": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "PartnerFieldOfficer": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "Program Lead": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "ProjectCoordinator": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "RegionalProgramLead": {
-          "page": false
+          "page": false,
+          "strip": null
         },
         "RegionalVicePresident": {
-          "page": false
+          "page": false,
+          "strip": null
+        }
+      }
+    },
+    "/ia/samples/": {
+      "roles": {
+        "Accountant": {
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "page": true,
+          "strip": {
+            "label": "Impact Assessment",
+            "scrolls": true,
+            "tabs": [
+              {
+                "active": false,
+                "href": "/ia/dashboard/",
+                "label": "Overview"
+              },
+              {
+                "active": false,
+                "href": "/ia/framework/",
+                "label": "Framework & Strategy"
+              },
+              {
+                "active": false,
+                "href": "/ia/school-evidence/",
+                "label": "Baseline & Field Data"
+              },
+              {
+                "active": false,
+                "href": "/ia/stories/",
+                "label": "School Progress"
+              },
+              {
+                "active": false,
+                "href": "/ia/learning/",
+                "label": "Analysis & Learning"
+              },
+              {
+                "active": false,
+                "href": "/ia/impact-reports/",
+                "label": "Reporting & Accountability"
+              },
+              {
+                "active": true,
+                "href": "/ia/samples/",
+                "label": "Data Quality & Verification"
+              }
+            ]
+          }
+        },
+        "BusinessTransformationOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "page": true,
+          "strip": {
+            "label": "Impact Assessment",
+            "scrolls": true,
+            "tabs": [
+              {
+                "active": false,
+                "href": "/ia/dashboard/",
+                "label": "Overview"
+              },
+              {
+                "active": false,
+                "href": "/ia/framework/",
+                "label": "Framework & Strategy"
+              },
+              {
+                "active": false,
+                "href": "/ia/school-evidence/",
+                "label": "Baseline & Field Data"
+              },
+              {
+                "active": false,
+                "href": "/ia/stories/",
+                "label": "School Progress"
+              },
+              {
+                "active": false,
+                "href": "/ia/learning/",
+                "label": "Analysis & Learning"
+              },
+              {
+                "active": false,
+                "href": "/ia/impact-reports/",
+                "label": "Reporting & Accountability"
+              },
+              {
+                "active": true,
+                "href": "/ia/samples/",
+                "label": "Data Quality & Verification"
+              }
+            ]
+          }
+        },
+        "HumanResources": {
+          "page": false,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "page": true,
+          "strip": {
+            "label": "Impact Assessment",
+            "scrolls": true,
+            "tabs": [
+              {
+                "active": false,
+                "href": "/ia/dashboard/",
+                "label": "Overview"
+              },
+              {
+                "active": false,
+                "href": "/ia/framework/",
+                "label": "Framework & Strategy"
+              },
+              {
+                "active": false,
+                "href": "/ia/school-evidence/",
+                "label": "Baseline & Field Data"
+              },
+              {
+                "active": false,
+                "href": "/ia/stories/",
+                "label": "School Progress"
+              },
+              {
+                "active": false,
+                "href": "/ia/learning/",
+                "label": "Analysis & Learning"
+              },
+              {
+                "active": false,
+                "href": "/ia/impact-reports/",
+                "label": "Reporting & Accountability"
+              },
+              {
+                "active": true,
+                "href": "/ia/samples/",
+                "label": "Data Quality & Verification"
+              }
+            ]
+          }
+        },
+        "MfiLoanOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "page": false,
+          "strip": null
         }
       }
     }
@@ -345,6 +597,17 @@
       "visit_form"
     ]
   },
+  "sample_draw_roles": [
+    "ImpactAssessment",
+    "CountryDirector",
+    "Admin"
+  ],
+  "sample_methods": {
+    "desk": "Desk re-check of the record",
+    "field": "Field back-check visit"
+  },
+  "sample_page_size": 50,
+  "sample_share_pct": 10,
   "school_profile_roles": [
     "Admin",
     "BusinessTransformationOfficer",
