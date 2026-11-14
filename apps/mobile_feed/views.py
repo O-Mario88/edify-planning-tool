@@ -1359,9 +1359,12 @@ def _run_page(
         user, path
     ):
         return None
-    response = match.func(
-        _page_get(user, path, params, headers), *match.args, **match.kwargs
-    )
+    # The web's handler gives every request its URL match; a page that reads
+    # it (Cost Intelligence is the Cost Catalogue under its own name) says
+    # here what it says on the web.
+    page_request = _page_get(user, path, params, headers)
+    page_request.resolver_match = match
+    response = match.func(page_request, *match.args, **match.kwargs)
     if hasattr(response, "render") and not getattr(response, "is_rendered", True):
         response.render()
     return response
