@@ -269,3 +269,8 @@ func Strip(title string, figures []StripFigure) *screensv1.PageBlock {
 // BriefHelper is apps.core.metrics.payload.brief_helper, for the other pages
 // whose context figures are drawn by components/context_metrics.html.
 func BriefHelper(helper string) string { return briefHelper(helper) }
+
+// CompactMoney is kpi_metrics.kpi_value's figure as a strip shows it ("UGX
+// 1.23M" for a million or more), for the other pages whose figures are drawn
+// by components/context_metrics.html.
+func CompactMoney(value string) string { return compactMoney(value) }

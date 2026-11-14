@@ -338,12 +338,36 @@ func ReadPanel(n *Node) *screensv1.PagePanel {
 			p.Subtitle = sub.text()
 		}
 	}
+	if header != nil && header != title {
+		for _, pill := range header.findAll(func(x *Node) bool { return x.tag == "span" && x.has("rounded-pill") }) {
+			p.Badges = append(p.Badges, &screensv1.PageBadge{Text: pill.text(), Tone: badgeTone(pill), Title: pill.Get("title")})
+		}
+	}
 	skip := map[*Node]bool{}
 	if header != nil {
 		skip[header] = true
 	}
 	p.Items = paired(PanelItems(n, skip, nil))
 	return p
+}
+
+// badgeTones is page_blocks.BADGE_TONES: a pill's tone by its background.
+var badgeTones = [][2]string{
+	{"bg-emerald", "good"}, {"bg-amber", "caution"}, {"bg-rose", "alert"},
+	{"bg-red", "alert"}, {"bg-sky", "info"}, {"bg-blue", "info"},
+}
+
+// badgeTone is page_blocks._badge_tone: the first marker any of the pill's
+// classes holds, else plain.
+func badgeTone(pill *Node) string {
+	for _, marker := range badgeTones {
+		for class := range pill.classes {
+			if strings.Contains(class, marker[0]) {
+				return marker[1]
+			}
+		}
+	}
+	return "plain"
 }
 
 func textItem(text, tone string) *screensv1.PagePanelItem {

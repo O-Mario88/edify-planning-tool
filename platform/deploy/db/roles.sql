@@ -750,3 +750,12 @@ GRANT SELECT (status, learner_count, created_at) ON bt_enrolment_snapshot TO edi
 -- monthly portfolio returns and their open row-level data issues.
 GRANT SELECT (id, reporting_month, source_type, valid_rows, total_rows, exception_rows, status, mfi_id) ON bt_portfolio_submission TO edify_gateway_ro;
 GRANT SELECT (submission_id, row_number, code, message, status) ON bt_portfolio_data_exception TO edify_gateway_ro;
+
+-- Partner Activities (internal/partnerworkspace): each organisation card's
+-- contact person and phone, the regions and interventions it works in (the
+-- first of each and every one) and how many catalogue activities it is
+-- recorded for; a hand-over's delivery date; and a partner activity's
+-- planned cost.
+GRANT SELECT (contact_person, phone, region_name, region_names, ssa_intervention, ssa_interventions, activity_codes) ON partner TO edify_gateway_ro;
+GRANT SELECT (scheduled_date) ON partner_assignment TO edify_gateway_ro;
+GRANT SELECT (est_cost_cents) ON activity TO edify_gateway_ro;

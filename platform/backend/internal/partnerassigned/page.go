@@ -154,6 +154,12 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	return page(path, schoolScoped, !member, kept, query), true, nil
 }
 
+// PartnerIDs is apps.core.scoping.resolve_partner_ids: the organisation the
+// reader acts as, for the other pages a partner login reads.
+func PartnerIDs(ctx context.Context, db schooldirectory.Querier, p auth.Principal) ([]string, error) {
+	return (&Service{db: db}).partnerIDs(ctx, p)
+}
+
 // partnerIDs is resolve_partner_ids: the organisation whose login this is,
 // else the one a team member's login belongs to (partner roles only), else
 // the first partner under the demo role-bridge, else none.
