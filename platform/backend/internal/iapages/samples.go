@@ -158,14 +158,7 @@ func samplesPage(p auth.Principal, role Role, list []sample, names map[string]st
 		// The draw is a form's submit button: the feed reads it with no link.
 		header.Actions = []*screensv1.PageAction{{Key: "draw_this_week_now", Label: "Draw this week now", Enabled: true}}
 	}
-	blocks := []*screensv1.PageBlock{}
-	if role.Strip != nil {
-		tabs := &screensv1.PageLinkTabs{Label: role.Strip.Label, Scrolls: role.Strip.Scrolls}
-		for _, t := range role.Strip.Tabs {
-			tabs.Tabs = append(tabs.Tabs, &screensv1.PageLinkTab{Label: t.Label, Href: t.Href, Active: t.Active})
-		}
-		blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_LinkTabs{LinkTabs: tabs}})
-	}
+	blocks := workspaceStrip(role)
 	blocks = append(blocks,
 		&screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{Title: "Samples"}}},
 		&screensv1.PageBlock{Kind: &screensv1.PageBlock_Filters{Filters: &screensv1.PageFilters{Filters: []*screensv1.PageFilter{

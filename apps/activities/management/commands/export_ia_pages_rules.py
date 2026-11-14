@@ -34,7 +34,11 @@ PAGES = {
     "/ia/partner-evidence/": "ia_partner_evidence",
     "/ia/samples/": "ia_samples",
     "/ia/analytics/": "ia_verification_analytics",
+    "/ia/stories/": "ia_stories",
 }
+
+#: The pages that draw the IA workspace strip (partials/_section_nav.html).
+STRIP_PAGES = ("/ia/samples/", "/ia/stories/")
 
 #: The roles ia_samples_view offers "Draw this week now" (can_draw).
 SAMPLE_DRAW_ROLES = ["ImpactAssessment", "CountryDirector", "Admin"]
@@ -57,7 +61,11 @@ def rules() -> dict:
     from apps.activities.verification_sampling import sample_share_pct
     from apps.analytics.ia_collection import PAGE_SIZE as SAMPLE_PAGE_SIZE
     from apps.frontend.views.ia_views import QUEUE_PAGE_SIZE
+    from apps.core.enums import SsaIntervention
     from apps.core.pagination import TABLE_PAGE_SIZE
+    from apps.impact.models import DefinitionStatus
+    from apps.targets.models import MSCSStatus
+    from apps.targets.mscs_review import SPIRITUAL_DOMAINS
     from apps.mobile_feed.views import NOT_PASSED
 
     pages = {}
@@ -70,9 +78,10 @@ def rules() -> dict:
             )
             roles[role.value] = {
                 "page": page,
-                # Sample Checks draws the IA workspace strip; the others none.
+                # Sample Checks and the stories draw the IA workspace strip;
+                # the others none.
                 "strip": strip(user, path, "partials/_section_nav.html")
-                if page and path == "/ia/samples/"
+                if page and path in STRIP_PAGES
                 else None,
             }
         pages[path] = {"roles": roles}
@@ -108,6 +117,19 @@ def rules() -> dict:
         "sample_page_size": SAMPLE_PAGE_SIZE,
         # Verification Analytics pages each of its tables (TABLE_PAGE_SIZE).
         "table_page_size": TABLE_PAGE_SIZE,
+        # Most Significant Change (apps.frontend.views.ia_stories_views and
+        # apps.targets.mscs_review): each story status's label, the
+        # intervention labels, the SSA domains that are spiritual formation,
+        # and the outcome-area statuses never offered and the one that is
+        # approved.
+        "story_statuses": [[v, str(label)] for v, label in MSCSStatus.choices],
+        "intervention_labels": {k: str(v) for k, v in SsaIntervention.choices},
+        "spiritual_domains": list(SPIRITUAL_DOMAINS),
+        "outcome_area_hidden_statuses": [
+            DefinitionStatus.RETIRED.value,
+            DefinitionStatus.SUPERSEDED.value,
+        ],
+        "outcome_area_approved_status": DefinitionStatus.APPROVED.value,
         "query_keys_not_passed": sorted(NOT_PASSED),
         # Who may open a school's profile, so a school's name is a link
         # (apps.frontend.templatetags.school_links._may_open_profiles).

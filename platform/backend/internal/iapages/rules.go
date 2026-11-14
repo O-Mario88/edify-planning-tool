@@ -23,7 +23,8 @@ var rulesJSON []byte
 // strip).
 type Role struct {
 	Page bool `json:"page"`
-	// Strip is the IA workspace strip (Sample Checks alone draws one).
+	// Strip is the IA workspace strip (Sample Checks and the stories draw
+	// one).
 	Strip *decisionlog.Strip `json:"strip"`
 }
 
@@ -52,6 +53,14 @@ var rules = func() (r struct {
 	// TablePageSize is each Verification Analytics table's page
 	// (TABLE_PAGE_SIZE).
 	TablePageSize int `json:"table_page_size"`
+	// Most Significant Change: each story status and its label (in order),
+	// the intervention labels, the SSA domains that are spiritual formation,
+	// and the outcome-area statuses never offered and the approved one.
+	StoryStatuses             [][2]string       `json:"story_statuses"`
+	InterventionLabels        map[string]string `json:"intervention_labels"`
+	SpiritualDomains          []string          `json:"spiritual_domains"`
+	OutcomeAreaHiddenStatuses []string          `json:"outcome_area_hidden_statuses"`
+	OutcomeAreaApprovedStatus string            `json:"outcome_area_approved_status"`
 	// SchoolProfileRoles may open a school's profile.
 	SchoolProfileRoles []string `json:"school_profile_roles"`
 	// QueryKeysNotPassed are the query keys the feed never passes to a page.

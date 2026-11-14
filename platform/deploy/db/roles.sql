@@ -607,3 +607,10 @@ GRANT SELECT (id, subject_type, activity_id, ssa_record_id, method, original_ver
 -- Verification Analytics (internal/iapages/analytics.go): each decision's
 -- verification, verdict, verifier and time. Not its notes.
 GRANT SELECT (id, verification_id, decision, decided_by, decided_at) ON ia_verification_decision TO edify_gateway_ro;
+
+-- Most Significant Change review (internal/iapages/stories.go): who reviewed
+-- a story and why it went back, a schoolless story's country, and the outcome
+-- areas a story may be tagged with and their SSA domains. Not the narrative.
+GRANT SELECT (reviewed_by, return_reason, country) ON mscs_story TO edify_gateway_ro;
+GRANT SELECT (id, code, name, version) ON impact_outcome_area TO edify_gateway_ro;
+GRANT SELECT (area_id, intervention) ON impact_outcome_area_domain TO edify_gateway_ro;

@@ -43,6 +43,21 @@
   "ia_verify_roles": [
     "ImpactAssessment"
   ],
+  "intervention_labels": {
+    "christlike_behaviour": "Christlike Behaviour",
+    "enrolment": "Enrolment",
+    "exposure_to_word_of_god": "Exposure to the Word of God",
+    "financial_health": "Financial Health",
+    "government_requirement": "Government Requirements",
+    "leadership": "Leadership",
+    "learning_environment": "Learning Environment",
+    "teaching_environment": "Teacher's Environment"
+  },
+  "outcome_area_approved_status": "approved",
+  "outcome_area_hidden_statuses": [
+    "retired",
+    "superseded"
+  ],
   "pages": {
     "/ia/analytics/": {
       "roles": {
@@ -571,6 +586,194 @@
           "strip": null
         }
       }
+    },
+    "/ia/stories/": {
+      "roles": {
+        "Accountant": {
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "page": true,
+          "strip": {
+            "label": "Impact Assessment",
+            "scrolls": true,
+            "tabs": [
+              {
+                "active": false,
+                "href": "/ia/dashboard/",
+                "label": "Overview"
+              },
+              {
+                "active": false,
+                "href": "/ia/framework/",
+                "label": "Framework & Strategy"
+              },
+              {
+                "active": false,
+                "href": "/ia/school-evidence/",
+                "label": "Baseline & Field Data"
+              },
+              {
+                "active": true,
+                "href": "/ia/stories/",
+                "label": "School Progress"
+              },
+              {
+                "active": false,
+                "href": "/ia/learning/",
+                "label": "Analysis & Learning"
+              },
+              {
+                "active": false,
+                "href": "/ia/impact-reports/",
+                "label": "Reporting & Accountability"
+              },
+              {
+                "active": false,
+                "href": "/country-planning-oversight/",
+                "label": "Data Quality & Verification"
+              }
+            ]
+          }
+        },
+        "BusinessTransformationOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "page": true,
+          "strip": {
+            "label": "Impact Assessment",
+            "scrolls": true,
+            "tabs": [
+              {
+                "active": false,
+                "href": "/ia/dashboard/",
+                "label": "Overview"
+              },
+              {
+                "active": false,
+                "href": "/ia/framework/",
+                "label": "Framework & Strategy"
+              },
+              {
+                "active": false,
+                "href": "/ia/school-evidence/",
+                "label": "Baseline & Field Data"
+              },
+              {
+                "active": true,
+                "href": "/ia/stories/",
+                "label": "School Progress"
+              },
+              {
+                "active": false,
+                "href": "/ia/learning/",
+                "label": "Analysis & Learning"
+              },
+              {
+                "active": false,
+                "href": "/ia/impact-reports/",
+                "label": "Reporting & Accountability"
+              },
+              {
+                "active": false,
+                "href": "/country-planning-oversight/",
+                "label": "Data Quality & Verification"
+              }
+            ]
+          }
+        },
+        "HumanResources": {
+          "page": false,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "page": true,
+          "strip": {
+            "label": "Impact Assessment",
+            "scrolls": true,
+            "tabs": [
+              {
+                "active": false,
+                "href": "/ia/dashboard/",
+                "label": "Overview"
+              },
+              {
+                "active": false,
+                "href": "/ia/framework/",
+                "label": "Framework & Strategy"
+              },
+              {
+                "active": false,
+                "href": "/ia/school-evidence/",
+                "label": "Baseline & Field Data"
+              },
+              {
+                "active": true,
+                "href": "/ia/stories/",
+                "label": "School Progress"
+              },
+              {
+                "active": false,
+                "href": "/ia/learning/",
+                "label": "Analysis & Learning"
+              },
+              {
+                "active": false,
+                "href": "/ia/impact-reports/",
+                "label": "Reporting & Accountability"
+              },
+              {
+                "active": false,
+                "href": "/country-planning-oversight/",
+                "label": "Data Quality & Verification"
+              }
+            ]
+          }
+        },
+        "MfiLoanOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "page": false,
+          "strip": null
+        }
+      }
     }
   },
   "profile_required_evidence": {
@@ -684,6 +887,36 @@
     "ImpactAssessment",
     "Program Lead",
     "ProjectCoordinator"
+  ],
+  "spiritual_domains": [
+    "christlike_behaviour",
+    "exposure_to_word_of_god"
+  ],
+  "story_statuses": [
+    [
+      "draft",
+      "Draft"
+    ],
+    [
+      "submitted",
+      "Submitted"
+    ],
+    [
+      "returned",
+      "Returned"
+    ],
+    [
+      "approved",
+      "Approved"
+    ],
+    [
+      "rejected",
+      "Rejected"
+    ],
+    [
+      "archived",
+      "Archived"
+    ]
   ],
   "table_page_size": 50
 }
