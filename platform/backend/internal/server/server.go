@@ -6,7 +6,9 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"connectrpc.com/connect"
@@ -64,6 +66,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/navigation"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/notificationcenter"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/oversightportfolio"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/ownedschema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/ownership"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partnerassigned"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partneroversight"
@@ -73,6 +76,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/perfcycle"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningoversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningpage"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/platformhealth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/plreview"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/policycompliance"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/programmeschools"
@@ -181,6 +185,13 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			partnerworkspace.NewService(pool, time.Now),
 			myteam.NewService(pool, time.Now),
 			myperformance.NewService(pool, time.Now),
+			platformhealth.NewService(pool, platformhealth.Facts{
+				Env: string(cfg.Env), Release: cfg.Release, Started: time.Now(), GoSaves: cfg.GoSaves.Names(),
+				ExistingApp: cfg.ExistingAppURL != "", RoutingProvider: cfg.Routing.Provider, OSRMURL: cfg.Routing.OSRMURL,
+				AnalyticsAddr: cfg.AnalyticsAddr, MailConfigured: cfg.Loans.SMTPAddr != "", DevMailbx: cfg.Loans.DevMailboxDir != "",
+			}, platformhealth.Probe{Pool: poolStat(pool), Reach: reach}, map[string]ownedschema.Spec{
+				schema.Name: schema.Spec, loanschema.Name: loanschema.Spec, routeschema.Name: routeschema.Spec,
+			}, time.Now),
 			myactions.NewService(pool, time.Now),
 			coreoversight.NewService(pool, time.Now),
 			myplan.NewService(pool, time.Now).WithTrainingSummary(trainingsummary.OwnSummary),
@@ -402,4 +413,35 @@ func ClusterActionFollowUp(cfg config.Config, pool *pgxpool.Pool, logger *slog.L
 	lead := clusterlead.NewService(store, time.Now, nil, logger)
 	actions := clusterlead.NewActions(clusterlead.NewOperations(lead, store), store, clusterActionConfig(cfg))
 	return actions, clusterlead.NewHTTPNoticeSender(cfg.ExistingAppURL, cfg.ClusterActions.InternalKey), clusterSchemaReady(pool)
+}
+
+// poolStat is the pool's figures for Platform Health.
+func poolStat(pool *pgxpool.Pool) func() platformhealth.PoolStat {
+	return func() platformhealth.PoolStat {
+		st := pool.Stat()
+		return platformhealth.PoolStat{Total: st.TotalConns(), Acquired: st.AcquiredConns(), Idle: st.IdleConns(), Max: st.MaxConns()}
+	}
+}
+
+// reach is whether an address answers within two seconds: any HTTP answer
+// for an http(s) URL, an open connection for tcp://host:port.
+func reach(ctx context.Context, rawURL string) error {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	if address, ok := strings.CutPrefix(rawURL, "tcp://"); ok {
+		conn, err := (&net.Dialer{}).DialContext(ctx, "tcp", address)
+		if err != nil {
+			return err
+		}
+		return conn.Close()
+	}
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
+	if err != nil {
+		return err
+	}
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return err
+	}
+	return response.Body.Close()
 }

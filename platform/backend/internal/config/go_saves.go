@@ -108,3 +108,21 @@ func loadGoSaves(env Environment, getenv func(string) string, existingApp, inter
 	}
 	return out, nil
 }
+
+// Names are the saves Go makes, as EDIFY_GO_SAVES names them, in order.
+func (g GoSaves) Names() []string {
+	out := []string{}
+	for _, s := range []struct {
+		on   bool
+		name string
+	}{
+		{g.ScheduleVisit, SaveScheduleVisit}, {g.RescheduleVisit, SaveRescheduleVisit}, {g.CancelVisit, SaveCancelVisit},
+		{g.EditVisit, SaveEditVisit}, {g.ScheduleTrainingPair, SaveScheduleTrainingPair}, {g.GroupReschedule, SaveGroupReschedule},
+		{g.GroupCancel, SaveGroupCancel}, {g.ScheduleGroupTraining, SaveScheduleGroupTraining}, {g.ScheduleClusterMeeting, SaveScheduleClusterMeeting},
+	} {
+		if s.on {
+			out = append(out, s.name)
+		}
+	}
+	return out
+}
