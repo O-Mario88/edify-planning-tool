@@ -53,6 +53,11 @@
     "learning_environment": "Learning Environment",
     "teaching_environment": "Teacher's Environment"
   },
+  "lead_role": "Program Lead",
+  "lead_verified_roles": [
+    "CCEO",
+    "Program Lead"
+  ],
   "outcome_area_approved_status": "approved",
   "outcome_area_hidden_statuses": [
     "retired",
@@ -83,6 +88,74 @@
         },
         "CountryDirector": {
           "page": true,
+          "strip": null
+        },
+        "HumanResources": {
+          "page": false,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "page": false,
+          "strip": null
+        }
+      }
+    },
+    "/ia/compare/": {
+      "roles": {
+        "Accountant": {
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "page": false,
           "strip": null
         },
         "HumanResources": {

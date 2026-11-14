@@ -61,6 +61,10 @@ var rules = func() (r struct {
 	SpiritualDomains          []string          `json:"spiritual_domains"`
 	OutcomeAreaHiddenStatuses []string          `json:"outcome_area_hidden_statuses"`
 	OutcomeAreaApprovedStatus string            `json:"outcome_area_approved_status"`
+	// Evidence Compare leaves out the staff work a Programme Lead verifies:
+	// the roles whose work that is, and the lead role.
+	LeadVerifiedRoles []string `json:"lead_verified_roles"`
+	LeadRole          string   `json:"lead_role"`
 	// SchoolProfileRoles may open a school's profile.
 	SchoolProfileRoles []string `json:"school_profile_roles"`
 	// QueryKeysNotPassed are the query keys the feed never passes to a page.

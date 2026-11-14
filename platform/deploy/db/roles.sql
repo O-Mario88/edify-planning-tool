@@ -652,3 +652,7 @@ GRANT SELECT (id, review_note, follow_up_min_days, follow_up_expected_days, foll
 GRANT SELECT (applicable_countries, verification_method, follow_up_days, measurement_profile_complete, impact_indicators) ON bt_loan_purpose TO edify_gateway_ro;
 GRANT SELECT (id, key, version, name, level, source, country, outcome_area_id, author_id, reviewed_by_id) ON impact_indicator_definition TO edify_gateway_ro;
 GRANT SELECT (author_id, reviewed_by_id) ON impact_outcome_area TO edify_gateway_ro;
+
+-- Evidence Compare (internal/iapages/compare.go): each upload's id (for its
+-- download link), original name and size. Not its storage path.
+GRANT SELECT (id, original_name, file_size) ON evidence_record TO edify_gateway_ro;

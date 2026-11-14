@@ -110,3 +110,15 @@ func TestAnalyticsTablesPageAtTheTablePageSize(t *testing.T) {
 		t.Errorf("second page: %v", got)
 	}
 }
+
+func TestFilesizeIsDjangosFilesizeformat(t *testing.T) {
+	n := func(v int64) *int64 { return &v }
+	for _, c := range []struct {
+		in   *int64
+		want string
+	}{{nil, "0 bytes"}, {n(1), "1 byte"}, {n(500), "500 bytes"}, {n(1024), "1.0 KB"}, {n(20480), "20.0 KB"}, {n(1572864), "1.5 MB"}} {
+		if got := filesize(c.in); got != c.want {
+			t.Errorf("filesize = %q, want %q", got, c.want)
+		}
+	}
+}

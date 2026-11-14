@@ -35,6 +35,7 @@ PAGES = {
     "/ia/samples/": "ia_samples",
     "/ia/analytics/": "ia_verification_analytics",
     "/ia/stories/": "ia_stories",
+    "/ia/compare/": "ia_compare",
 }
 
 #: The pages that draw the IA workspace strip (partials/_section_nav.html).
@@ -66,6 +67,7 @@ def rules() -> dict:
     from apps.impact.models import DefinitionStatus
     from apps.targets.models import MSCSStatus
     from apps.targets.mscs_review import SPIRITUAL_DOMAINS
+    from apps.pl_review.services import LEAD_VERIFIED_ROLES
     from apps.mobile_feed.views import NOT_PASSED
 
     pages = {}
@@ -130,6 +132,11 @@ def rules() -> dict:
             DefinitionStatus.SUPERSEDED.value,
         ],
         "outcome_area_approved_status": DefinitionStatus.APPROVED.value,
+        # Evidence Compare (ia_compare_view): the roles whose staff work a
+        # Programme Lead verifies, so IA's picker leaves it out
+        # (apps.pl_review.services.lead_verified_q), and the lead role.
+        "lead_verified_roles": list(LEAD_VERIFIED_ROLES),
+        "lead_role": EdifyRole.COUNTRY_PROGRAM_LEAD.value,
         "query_keys_not_passed": sorted(NOT_PASSED),
         # Who may open a school's profile, so a school's name is a link
         # (apps.frontend.templatetags.school_links._may_open_profiles).
