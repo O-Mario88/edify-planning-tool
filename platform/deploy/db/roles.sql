@@ -738,3 +738,10 @@ GRANT SELECT (responsible_authority, country_code, active) ON bt_compliance_requ
 -- changed (the register's Last Updated column and the partner dashboard).
 GRANT SELECT (amount_paid_during_period) ON bt_repayment_snapshot TO edify_gateway_ro;
 GRANT SELECT (last_repayment_data_date, updated_at) ON bt_mfi_loan TO edify_gateway_ro;
+
+-- BT Impact & Reports (internal/btpages/impact.go) and the portfolio's reach
+-- and impact figures (internal/btportfolio/metrics.go): an impact
+-- assessment's id (the Prepare drawer) and classification, and a verified
+-- baseline enrolment snapshot's learner count, status and order.
+GRANT SELECT (id, classification) ON bt_loan_impact_assessment TO edify_gateway_ro;
+GRANT SELECT (status, learner_count, created_at) ON bt_enrolment_snapshot TO edify_gateway_ro;

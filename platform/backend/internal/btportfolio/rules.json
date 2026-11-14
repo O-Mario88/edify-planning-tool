@@ -331,6 +331,10 @@
       ]
     ]
   },
+  "positive_impact": [
+    "strong_positive",
+    "positive"
+  ],
   "recommendation_kinds": [
     [
       "financial_health_training",
@@ -566,6 +570,15 @@
       "returned",
       "Returned"
     ]
+  ],
+  "school_profile_roles": [
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
   ],
   "summary_only_roles": [],
   "uganda_wide_roles": [

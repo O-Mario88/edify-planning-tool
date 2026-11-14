@@ -6,7 +6,8 @@ ledger) from what this command writes to
 platform/backend/internal/btportfolio/rules.json: who may open each page and
 which BT permissions each role holds; which roles read the whole Uganda
 portfolio, only summaries, or one lending partner's books; the role the
-workspace tabs are drawn for and who reads districts as links; the words for each case, recommendation, loan,
+workspace tabs are drawn for and who reads districts and schools as links;
+the words for each case, recommendation, loan,
 Salesforce, IA and impact status; and the registry labels of the portfolio
 figures; and the Loans register's application, repayment and frequency
 words. A change to any of them must be exported again;
@@ -98,6 +99,16 @@ def rules() -> dict:
             for r in EdifyRole
             if can_open_url(_role_user(r.value), "/districts/0")
         ),
+        # Who reads a school's name as a link to its profile (school_link).
+        "school_profile_roles": sorted(
+            r.value
+            for r in EdifyRole
+            if can_open_url(_role_user(r.value), "/schools/0")
+        ),
+        "positive_impact": [
+            str(m.LoanImpactStatus.STRONG_POSITIVE),
+            str(m.LoanImpactStatus.POSITIVE),
+        ],
         "case_statuses": choices(m.CaseStatus),
         "open_case_statuses": [str(s) for s in m.OPEN_CASE_STATUSES],
         "recommendation_kinds": choices(m.RecommendationKind),

@@ -17,15 +17,15 @@ const LoanFrom = `bt_mfi_loan l LEFT JOIN school s ON s.id = l.school_id LEFT JO
 
 // Metrics is the part of portfolio_metrics the pages read.
 type Metrics struct {
-	FY                                  string
-	LoansDisbursed, SchoolsImpacted     int
-	EdtechLoans                         int
-	ValueDisbursed                      ledger.Money
-	Outstanding, PAR30, PAR90           ledger.Money
-	AmountDue, AmountCollected          ledger.Money
-	InstallmentsDue, InstallmentsOnTime int
-	VerificationDue, VerificationDone   int
-	LedgerLoans                         int
+	FY                                                                 string
+	LoansDisbursed, SchoolsImpacted                                    int
+	EdtechLoans                                                        int
+	ValueDisbursed                                                     ledger.Money
+	Outstanding, PAR30, PAR90                                          ledger.Money
+	AmountDue, AmountCollected                                         ledger.Money
+	InstallmentsDue, InstallmentsOnTime                                int
+	VerificationDue, VerificationDone, StudentsReached, PositiveImpact int
+	LedgerLoans                                                        int
 }
 
 // money reads a numeric sum exactly; a NULL sum is zero.
@@ -104,6 +104,21 @@ WHERE d.loan_id = ANY($1) AND NOT EXISTS (SELECT 1 FROM bt_loan_disbursement_rev
 	if err := db.QueryRow(ctx, `SELECT count(*), count(*) FILTER (WHERE status = 'verified') FROM bt_loan_verification_requirement
 WHERE loan_id = ANY($1) AND due_date <= $2::date`, ids, day(local).Format(time.DateOnly)).Scan(&m.VerificationDue, &m.VerificationDone); err != nil {
 		return m, fmt.Errorf("btportfolio: counting the loan-use verifications: %w", err)
+	}
+	// Reach: each financed school's latest verified baseline enrolment over
+	// the loans disbursed in the period.
+	if err := db.QueryRow(ctx, `WITH disbursed AS (
+  SELECT l.id, l.school_id FROM bt_mfi_loan l WHERE l.id = ANY($1) AND EXISTS (
+    SELECT 1 FROM bt_loan_disbursement d WHERE d.loan_id = l.id AND d.value_date >= $2::date AND d.value_date < $3::date
+      AND NOT EXISTS (SELECT 1 FROM bt_loan_disbursement_reversal r WHERE r.disbursement_id = d.id)))
+SELECT COALESCE(sum((SELECT e.learner_count FROM bt_enrolment_snapshot e JOIN disbursed x ON x.id = e.loan_id
+  WHERE x.school_id = s.school_id AND e.kind = 'baseline' AND e.status = 'verified' ORDER BY e.as_of_date DESC, e.created_at DESC LIMIT 1)), 0)
+FROM (SELECT DISTINCT school_id FROM disbursed) s`, ids, start.Format(time.DateOnly), end.Format(time.DateOnly)).Scan(&m.StudentsReached); err != nil {
+		return m, fmt.Errorf("btportfolio: counting the students reached: %w", err)
+	}
+	if err := db.QueryRow(ctx, `SELECT count(DISTINCT loan_id) FROM bt_loan_impact_assessment
+WHERE loan_id = ANY($1) AND ia_status = 'verified' AND classification = ANY($2)`, ids, Rules.PositiveImpact).Scan(&m.PositiveImpact); err != nil {
+		return m, fmt.Errorf("btportfolio: counting the positive impact conclusions: %w", err)
 	}
 	return m, nil
 }

@@ -53,6 +53,8 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		return s.portfolio(ctx, p, path, query)
 	case LoansPath:
 		return s.loans(ctx, p, query)
+	case ImpactPath:
+		return s.impact(ctx, p, query)
 	}
 	return nil, false, nil
 }

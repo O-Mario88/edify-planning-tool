@@ -35,6 +35,8 @@ var Rules = func() (r struct {
 	MfiRoles            []string          `json:"mfi_roles"`
 	NavRole             string            `json:"nav_role"`
 	DistrictLinkRoles   []string          `json:"district_profile_roles"`
+	SchoolLinkRoles     []string          `json:"school_profile_roles"`
+	PositiveImpact      []string          `json:"positive_impact"`
 	CaseStatuses        [][2]string       `json:"case_statuses"`
 	OpenCaseStatuses    []string          `json:"open_case_statuses"`
 	RecommendationKinds [][2]string       `json:"recommendation_kinds"`
