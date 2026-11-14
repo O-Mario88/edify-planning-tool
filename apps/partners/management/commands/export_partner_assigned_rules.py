@@ -34,7 +34,21 @@ PAGES = {
     "/partner/assigned-schools": "partner_schools",
     "/partner/assigned-activities": "partner_assignments",
     "/partner/evidence": "partner_evidence",
+    "/partner/completed": "partner_activities",
 }
+
+#: partner_completed_payments_view: the statuses it lists and how many.
+COMPLETED_STATUSES = [
+    "completed",
+    "submitted_to_ia",
+    "awaiting_ia_verification",
+    "returned",
+    "returned_by_ia",
+    "ia_verified",
+    "accountant_confirmed",
+    "closed",
+]
+COMPLETED_LIMIT = 200
 
 #: partner_evidence_view: the newest uploads and the completed work still
 #: missing evidence it lists.
@@ -82,6 +96,17 @@ def rules() -> dict:
         "completed_work_statuses": list(COMPLETED_WORK_STATUSES),
         "evidence_limit": EVIDENCE_LIMIT,
         "missing_evidence_limit": MISSING_EVIDENCE_LIMIT,
+        # Completed Work & Payments.
+        "completed_statuses": COMPLETED_STATUSES,
+        "completed_limit": COMPLETED_LIMIT,
+        "profile_link_roles": {
+            kind: sorted(
+                role.value
+                for role in EdifyRole
+                if can_open_url(_role_user(role.value), f"/{kind}/row")
+            )
+            for kind in ("schools", "clusters")
+        },
     }
 
 

@@ -64,3 +64,29 @@ func TestEvidenceReadsTheMissingWorkAndRecentUploads(t *testing.T) {
 		t.Errorf("no uploads: %q", got)
 	}
 }
+
+func TestCompletedWorkWordsItsReviewAndPaymentForThePartner(t *testing.T) {
+	cases := []struct {
+		d     done
+		paid  []payment
+		stage string
+		ia    string
+		pay   string
+	}{
+		{done{status: "ia_verified"}, []payment{{kind: "advance"}, {kind: "clearance"}}, "", "Verified", "Paid"},
+		{done{status: "ia_verified"}, nil, "awaiting_accountant", "Verified", "Awaiting Accountant"},
+		{done{status: "closed"}, nil, "processing", "Verified", "Payment Processing"},
+		{done{status: "ia_verified"}, []payment{{kind: "advance"}}, "", "Verified", "Advance Paid — Balance Pending"},
+		{done{status: "accountant_confirmed"}, nil, "", "Verified", "Awaiting Payment"},
+		{done{status: "returned_by_ia"}, nil, "", "Returned for Correction", "Not Yet Eligible"},
+		{done{status: "completed"}, nil, "", "Under IA Review", "Not Yet Eligible"},
+	}
+	for _, c := range cases {
+		if ia, _, pay, _ := paymentState(c.d, c.paid, c.stage); ia != c.ia || pay != c.pay {
+			t.Errorf("%+v: %q %q", c, ia, pay)
+		}
+	}
+	if ugx(1250000) != "1,250,000" || ugx(999) != "999" || ugx(-1000) != "-1,000" {
+		t.Error("ugx")
+	}
+}

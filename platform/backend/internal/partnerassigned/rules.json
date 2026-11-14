@@ -36,6 +36,17 @@
     "cluster_training_ssa_collection",
     "training"
   ],
+  "completed_limit": 200,
+  "completed_statuses": [
+    "completed",
+    "submitted_to_ia",
+    "awaiting_ia_verification",
+    "returned",
+    "returned_by_ia",
+    "ia_verified",
+    "accountant_confirmed",
+    "closed"
+  ],
   "completed_work_statuses": [
     "ia_verified",
     "closed",
@@ -57,6 +68,12 @@
       "PartnerAdmin",
       "PartnerFieldOfficer"
     ],
+    "/partner/completed": [
+      "Admin",
+      "ImpactAssessment",
+      "PartnerAdmin",
+      "PartnerFieldOfficer"
+    ],
     "/partner/evidence": [
       "Admin",
       "ImpactAssessment",
@@ -66,6 +83,24 @@
   },
   "page_size": 50,
   "partner_role_bridge": false,
+  "profile_link_roles": {
+    "clusters": [
+      "Admin",
+      "CCEO",
+      "CountryDirector",
+      "ImpactAssessment",
+      "Program Lead"
+    ],
+    "schools": [
+      "Admin",
+      "BusinessTransformationOfficer",
+      "CCEO",
+      "CountryDirector",
+      "ImpactAssessment",
+      "Program Lead",
+      "ProjectCoordinator"
+    ]
+  },
   "purpose_labels": {
     "donor_visit": "Donor Visit",
     "in_school_coaching": "In-school Coaching Visit",

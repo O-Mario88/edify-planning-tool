@@ -673,3 +673,10 @@ GRANT SELECT (school_id, from_staff_id, to_staff_id, open_activity_decision, rea
 -- Data Quality Center (internal/dataquality): each open issue's school, kind,
 -- wrong value, suggested fix and whether someone holds it.
 GRANT SELECT (school_id, issue_type, status, field_name, current_value, suggested_fix, assigned_to, created_at) ON data_quality_issue TO edify_gateway_ro;
+
+-- Completed Work & Payments (internal/partnerassigned/completed.go): what was
+-- paid against partner work, its reference and date, and whether it sits on a
+-- live invoice. Not who paid or the invoice's file.
+GRANT SELECT (activity_id, payment_type, payment_reference, payment_date, amount_paid) ON partner_payment TO edify_gateway_ro;
+GRANT SELECT (activity_id, invoice_id) ON partner_invoice_item TO edify_gateway_ro;
+GRANT SELECT (id, status) ON partner_invoice TO edify_gateway_ro;
