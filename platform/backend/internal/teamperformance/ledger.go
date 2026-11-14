@@ -49,7 +49,7 @@ type stream struct {
 	by    map[string][]event
 }
 
-func (s *stream) add(holder string, e event) {
+func (s *stream) Add(holder string, e event) {
 	if s.by == nil {
 		s.by = map[string][]event{}
 	}
@@ -61,13 +61,13 @@ func (s *stream) add(holder string, e event) {
 
 type store map[string]*stream
 
-func (st store) add(key, holder string, e event) {
+func (st store) Add(key, holder string, e event) {
 	s := st[key]
 	if s == nil {
 		s = &stream{}
 		st[key] = s
 	}
-	s.add(holder, e)
+	s.Add(holder, e)
 }
 
 // facts is measures.Facts: what one piece of work was.
@@ -255,7 +255,7 @@ func (l *ledger) loadSchools(ctx context.Context, db schooldirectory.Querier, ow
 		if code != "" {
 			l.byCode[code] = pk
 		}
-		l.add(l.events, "new_schools", s, s.start, pk, 1, "")
+		l.Add(l.events, "new_schools", s, s.start, pk, 1, "")
 	}
 	return rows.Err()
 }
@@ -310,7 +310,7 @@ func (l *ledger) schoolOf(ref string) *school {
 
 // add is Ledger._add: an event in the year, filed under the school's holder
 // (or owner, for work at no school).
-func (l *ledger) add(st store, key string, s *school, d *day, unit string, qty int, owner string) {
+func (l *ledger) Add(st store, key string, s *school, d *day, unit string, qty int, owner string) {
 	if d == nil || d.Before(l.fyStart) || !d.Before(l.fyEnd) {
 		return
 	}
@@ -321,7 +321,7 @@ func (l *ledger) add(st store, key string, s *school, d *day, unit string, qty i
 	if holder == "" {
 		holder = noHolder
 	}
-	st.add(key, holder, event{*d, unit, qty})
+	st.Add(key, holder, event{*d, unit, qty})
 }
 
 // work is one activity row as the ledger reads it (_WORK_FIELDS).
@@ -434,10 +434,10 @@ func (l *ledger) credit(w *work, s *school, owner string, achieved, planned bool
 			continue
 		}
 		if achieved {
-			l.add(l.events, key, s, doneOn, ref, qty, owner)
+			l.Add(l.events, key, s, doneOn, ref, qty, owner)
 		}
 		if planned {
-			l.add(l.planned, key, s, plannedFor, ref, qty, owner)
+			l.Add(l.planned, key, s, plannedFor, ref, qty, owner)
 		}
 	}
 }
@@ -731,7 +731,7 @@ func (l *ledger) loadCorePackage(ctx context.Context, db schooldirectory.Querier
 					break
 				}
 				d := d
-				l.add(pass.st, fmt.Sprintf("core_%s_%d", k.kind, n+1), s, &d, s.pk, 1, "")
+				l.Add(pass.st, fmt.Sprintf("core_%s_%d", k.kind, n+1), s, &d, s.pk, 1, "")
 			}
 		}
 	}
@@ -795,8 +795,8 @@ func (l *ledger) loadSSA(ctx context.Context, db schooldirectory.Querier) error 
 			key = "ssa_core_baseline"
 		}
 		d := l.within(*when)
-		l.add(l.events, key, s, &d, s.pk, 1, "")
-		l.add(l.events, "ssa_all", s, &d, s.pk, 1, "")
+		l.Add(l.events, key, s, &d, s.pk, 1, "")
+		l.Add(l.events, "ssa_all", s, &d, s.pk, 1, "")
 	}
 	return rows.Err()
 }
@@ -820,15 +820,15 @@ func (l *ledger) loadEvidence(ctx context.Context, db schooldirectory.Querier) e
 		if s == nil {
 			continue
 		}
-		l.add(l.events, "dc_data", s, observed, s.pk, 1, "")
-		l.add(l.events, "metrics", s, observed, s.pk, 1, "")
+		l.Add(l.events, "dc_data", s, observed, s.pk, 1, "")
+		l.Add(l.events, "metrics", s, observed, s.pk, 1, "")
 		if groups != 0 {
-			l.add(l.events, "dc_clubs", s, observed, s.pk, 1, "")
+			l.Add(l.events, "dc_clubs", s, observed, s.pk, 1, "")
 			family := "dc_clubs_client"
 			if s.core {
 				family = "dc_clubs_core"
 			}
-			l.add(l.events, family, s, observed, s.pk, 1, "")
+			l.Add(l.events, family, s, observed, s.pk, 1, "")
 		}
 	}
 	rows.Close()
@@ -851,11 +851,11 @@ func (l *ledger) loadEvidence(ctx context.Context, db schooldirectory.Querier) e
 		if s == nil {
 			continue
 		}
-		l.add(l.events, "metrics", s, assessed, s.pk, 1, "")
+		l.Add(l.events, "metrics", s, assessed, s.pk, 1, "")
 		if kind == "onetest" {
-			l.add(l.events, "onetest", s, assessed, s.pk, 1, "")
+			l.Add(l.events, "onetest", s, assessed, s.pk, 1, "")
 		} else if kind == "national_exam" && s.core {
-			l.add(l.events, "core_exam_scores", s, assessed, s.pk, 1, "")
+			l.Add(l.events, "core_exam_scores", s, assessed, s.pk, 1, "")
 		}
 	}
 	rows.Close()
@@ -881,8 +881,8 @@ func (l *ledger) loadEvidence(ctx context.Context, db schooldirectory.Querier) e
 			return err
 		}
 		if s := l.schools[ref]; s != nil {
-			l.add(l.events, "enrolment", s, d, s.pk, 1, "")
-			l.add(l.events, "metrics", s, d, s.pk, 1, "")
+			l.Add(l.events, "enrolment", s, d, s.pk, 1, "")
+			l.Add(l.events, "metrics", s, d, s.pk, 1, "")
 		}
 	}
 	rows.Close()
@@ -905,8 +905,8 @@ func (l *ledger) loadEvidence(ctx context.Context, db schooldirectory.Querier) e
 			continue
 		}
 		in := l.within(*d)
-		l.add(l.events, "enrolment", s, &in, s.pk, 1, "")
-		l.add(l.events, "metrics", s, &in, s.pk, 1, "")
+		l.Add(l.events, "enrolment", s, &in, s.pk, 1, "")
+		l.Add(l.events, "metrics", s, &in, s.pk, 1, "")
 	}
 	return rows.Err()
 }
@@ -936,10 +936,10 @@ func (l *ledger) loadMSC(ctx context.Context, db schooldirectory.Querier, owners
 			if ref != "" || (owners != nil && !owners[officer]) {
 				continue
 			}
-			l.add(l.events, "msc", nil, d, id, 1, officer)
+			l.Add(l.events, "msc", nil, d, id, 1, officer)
 			continue
 		}
-		l.add(l.events, "msc", s, d, id, 1, "")
+		l.Add(l.events, "msc", s, d, id, 1, "")
 		l.reached(id, s)
 	}
 	return rows.Err()
@@ -964,12 +964,12 @@ func (l *ledger) loadLoans(ctx context.Context, db schooldirectory.Querier) erro
 		if s == nil {
 			continue
 		}
-		l.add(l.events, "loans", s, d, id, 1, "")
+		l.Add(l.events, "loans", s, d, id, 1, "")
 		key := "development_loans"
 		if edtech {
 			key = "edtech_loans"
 		}
-		l.add(l.events, key, s, d, id, 1, "")
+		l.Add(l.events, key, s, d, id, 1, "")
 	}
 	return rows.Err()
 }

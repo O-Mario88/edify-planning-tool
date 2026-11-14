@@ -38,7 +38,7 @@ func td(children ...any) *node { return el("td", "", children...) }
 func span(class string, children ...any) *node {
 	return el("span", class, children...)
 }
-func link(href string, children ...any) *node  { return el("a", "", children...).attr("href", href) }
+func link(href string, children ...any) *node  { return el("a", "", children...).Attr("href", href) }
 func para(class string, children ...any) *node { return el("p", class, children...) }
 
 func tr(cells ...*node) *node { return el("tr", "", cells) }
@@ -55,7 +55,7 @@ func headCells(labels ...string) []*node {
 func groupHead(label, count string) *node {
 	inner := span("tp-freeze", span("edify-group-head__label", label))
 	if count != "" {
-		inner.add(span("edify-group-head__count", count))
+		inner.Add(span("edify-group-head__count", count))
 	}
 	return tr(th(inner))
 }
@@ -243,7 +243,7 @@ func (v *pageView) summaryTab() []*node {
 	if len(bd.levels) > 1 {
 		nav := el("nav", "tp-subnav")
 		for _, level := range bd.levels {
-			nav.add(link2("?"+link([][2]string{{"by", level}}), "By "+rules.BreakdownLabels[level]))
+			nav.Add(link2("?"+link([][2]string{{"by", level}}), "By "+rules.BreakdownLabels[level]))
 		}
 		by := el("div", "tp-by", nav)
 		if bd.narrowedTo() != "" {
@@ -257,15 +257,15 @@ func (v *pageView) summaryTab() []*node {
 				}
 				what = span("", bd.inRegion+" · "+noun)
 			}
-			by.add(para("tp-trail", link2("?"+link([][2]string{{"by", bd.levels[0]}}), "All regions"), span("", "›"), what))
+			by.Add(para("tp-trail", link2("?"+link([][2]string{{"by", bd.levels[0]}}), "All regions"), span("", "›"), what))
 		} else if bd.below() != "" {
 			noun := "CCEOs"
 			if bd.level == levelRegion {
 				noun = "Programme Leads"
 			}
-			by.add(para("tp-note", "Open a "+pyLower(bd.label())+" to see its "+noun+"."))
+			by.Add(para("tp-note", "Open a "+pyLower(bd.label())+" to see its "+noun+"."))
 		}
-		regions.add(by)
+		regions.Add(by)
 	}
 	if len(bd.columns) == 0 {
 		var msg string
@@ -281,18 +281,18 @@ func (v *pageView) summaryTab() []*node {
 		default:
 			msg = "Nothing to break down by " + pyLower(bd.label()) + " yet."
 		}
-		regions.add(para("tp-note", msg))
+		regions.Add(para("tp-note", msg))
 	}
 	band := []*node{th(""), th(r.roster.homeLabel())}
 	for _, c := range bd.columns {
 		h := th()
 		if len(c.drill) > 0 {
-			h.add(link2("?"+link(c.drill), c.label))
+			h.Add(link2("?"+link(c.drill), c.label))
 		} else {
-			h.add(c.label)
+			h.Add(c.label)
 		}
 		if c.sub != "" {
-			h.add(" ", span("tp-muted", "· "+c.sub))
+			h.Add(" ", span("tp-muted", "· "+c.sub))
 		}
 		band = append(band, h)
 	}
@@ -306,19 +306,19 @@ func (v *pageView) summaryTab() []*node {
 		for _, a := range sec.areas {
 			row := tr(th(unitLabel(a.label, a.m.Unit)), td(num(a.target)), td(num(a.achieved)), td(span("tp-pct", pct(a.pct))), td(signed(a.change)))
 			for _, t := range a.teams {
-				row.add(td(num(t.target)), td(num(t.achieved)), td(span("tp-pct", pct(t.pct))))
+				row.Add(td(num(t.target)), td(num(t.achieved)), td(span("tp-pct", pct(t.pct))))
 			}
 			body = append(body, row)
 		}
 	}
-	regions.add(table([]*node{tr(band...), tr(headCells(labels...)...)}, body))
+	regions.Add(table([]*node{tr(band...), tr(headCells(labels...)...)}, body))
 	out = append(out, regions)
 
 	for _, sec := range sum.sections {
 		section := sec.section
 		out = append(out, el("h2", "tp-section-title", section))
 		pending := el("div", "tp-card", para("tp-note", "Loading the "+section+" charts…"))
-		pending.later = func() *node {
+		pending.Later = func() *node {
 			charts := r.sectionCharts(section, bd.level, bd.inRegion, bd.inLead)
 			if charts == nil {
 				return nil
@@ -339,7 +339,7 @@ func (v *pageView) summaryTab() []*node {
 		rows = append(rows, tr(th(d.label), td(num(d.cell.target)), td(num(d.cell.achieved)), td(signed(d.cell.variance())),
 			td(span("tp-pct", pct(d.cell.pct()))), td(status), td(d.target.source)))
 	}
-	delivery.add(table([]*node{tr(headCells("Milestone / Workstream", "Target", "Achieved", "Variance", "% Attained", "Status", "Target Source")...)}, rows))
+	delivery.Add(table([]*node{tr(headCells("Milestone / Workstream", "Target", "Achieved", "Variance", "% Attained", "Status", "Target Source")...)}, rows))
 	out = append(out, delivery)
 	return []*node{el("div", "tp-stack", out)}
 }
@@ -369,12 +369,12 @@ func chartsPart(areas []*area) *node {
 		}
 		row := el("div", "tp-area-row")
 		for _, c := range a.charts {
-			holder := el("div", "").attr("data-tp-chart", c.level)
-			holder.add(el("h3", "tp-chart-title", a.label+" by "+c.label))
-			holder.add(targetChart(c.bars, c.label)...)
-			row.add(holder)
+			holder := el("div", "").Attr("data-tp-chart", c.level)
+			holder.Add(el("h3", "tp-chart-title", a.label+" by "+c.label))
+			holder.Add(targetChart(c.bars, c.label)...)
+			row.Add(holder)
 		}
-		stack.add(el("section", "tp-card", cardHead(a.label+": Target vs. Achieved", meta), row))
+		stack.Add(el("section", "tp-card", cardHead(a.label+": Target vs. Achieved", meta), row))
 	}
 	root := el("#root", "", stack)
 	return root
@@ -386,21 +386,21 @@ func targetChart(bs []bar, heading string) []any {
 	for _, b := range bs {
 		label := span("tp-chart__label", b.label)
 		if b.place != "" {
-			label.add(el("br", ""), span("tp-muted", b.place))
+			label.Add(el("br", ""), span("tp-muted", b.place))
 		}
-		label.add(el("br", ""), num(b.achieved)+" / "+num(b.target))
-		chart.add(el("div", "tp-chart__group",
+		label.Add(el("br", ""), num(b.achieved)+" / "+num(b.target))
+		chart.Add(el("div", "tp-chart__group",
 			el("div", "tp-chart__bars",
-				span("tp-chart__bar tp-chart__bar--target").attr("title", b.label+" target: "+num(b.target)),
-				span("tp-chart__bar").attr("title", b.label+" achieved: "+num(b.achieved))),
-			label).attr("data-tp-bar", b.label))
+				span("tp-chart__bar tp-chart__bar--target").Attr("title", b.label+" target: "+num(b.target)),
+				span("tp-chart__bar").Attr("title", b.label+" achieved: "+num(b.achieved))),
+			label).Attr("data-tp-bar", b.label))
 	}
 	legend := el("div", "tp-chart-legend", span("is-target", "Target"), span("", "Achieved"))
 	rows := []*node{}
 	for _, b := range bs {
 		name := th(b.label)
 		if b.place != "" {
-			name.add(" ", span("tp-muted", "· "+b.place))
+			name.Add(" ", span("tp-muted", "· "+b.place))
 		}
 		rows = append(rows, tr(name, td(num(b.target)), td(num(b.achieved)), td(signed(b.variance)), td(span("tp-pct", pct(b.pct)))))
 	}
@@ -430,28 +430,28 @@ func (v *pageView) weeklyTab(opt scopeOption) []*node {
 			row := r.row(m, opt.scope)
 			line := tr(th(unitLabel(m.Label, m.Unit)))
 			if !m.Tracked {
-				line.add(td(notTracked), td(num(row.year.target)), td(), td(), td(), td(), td())
+				line.Add(td(notTracked), td(num(row.year.target)), td(), td(), td(), td(), td())
 				body = append(body, line)
 				continue
 			}
-			line.add(cellTDs(row.month))
+			line.Add(cellTDs(row.month))
 			for _, q := range row.quarters {
 				if q.future {
-					line.add(td(dash), td(num(q.planned)), td(dash), td(dash), td(dash))
+					line.Add(td(dash), td(num(q.planned)), td(dash), td(dash), td(dash))
 					continue
 				}
-				line.add(cellTDs(q.cell))
+				line.Add(cellTDs(q.cell))
 			}
-			line.add(cellTDs(row.year))
+			line.Add(cellTDs(row.year))
 			status := td()
 			if row.status != "" {
-				status.add(span("tp-chip", row.status))
+				status.Add(span("tp-chip", row.status))
 			}
-			line.add(status)
+			line.Add(status)
 			body = append(body, line)
 		}
 	}
-	card.add(table([]*node{tr(band...), tr(headCells(labels...)...)}, body), para("tp-note", weeklyNote))
+	card.Add(table([]*node{tr(band...), tr(headCells(labels...)...)}, body), para("tp-note", weeklyNote))
 	return []*node{card}
 }
 
@@ -485,7 +485,7 @@ func (v *pageView) milestonesPart(embedded bool) []*node {
 	per := v.per
 	stack := el("div", "tp-stack")
 	if !embedded {
-		stack.add(strip(
+		stack.Add(strip(
 			fig("Total Milestones", num(ptr(float64(sheet.count))), "Strategic targets tracked"),
 			fig("Priority Areas", num(ptr(float64(sheet.domainCount))), "Edify program domains"),
 			fig("Cumulative Target", num(ptr(sheet.toDateTarget)), "Planned targets to the end of "+per.label()),
@@ -504,29 +504,29 @@ func (v *pageView) milestonesPart(embedded bool) []*node {
 			line := tr(th(row.spec.Title, " ", span("tp-muted", "· "+row.spec.Mode)))
 			switch row.spec.Kind {
 			case kinds.Untracked:
-				line.add(td(notTracked), td(num(row.year.target)), td(), td())
+				line.Add(td(notTracked), td(num(row.year.target)), td(), td())
 			case kinds.Score:
-				line.add(td(scoreLine), td(dash), td(num(row.year.achieved)), td())
+				line.Add(td(scoreLine), td(dash), td(num(row.year.achieved)), td())
 			case kinds.Rate:
-				line.add(td(dash), td(dash), td(),
+				line.Add(td(dash), td(dash), td(),
 					td(pct(row.toDate.target)), td(pct(row.toDate.achieved)), td(span("tp-pct", pct(row.toDate.pct()))),
 					td(pct(row.year.target)), td(pct(row.year.achieved)), td(span("tp-pct", pct(row.year.pct()))))
 			default:
 				for _, c := range []cell{row.inPeriod, row.toDate, row.year} {
-					line.add(td(num(c.target)), td(num(c.achieved)), td(span("tp-pct", pct(c.pct()))))
+					line.Add(td(num(c.target)), td(num(c.achieved)), td(span("tp-pct", pct(c.pct()))))
 				}
 			}
-			line.add(td(span("tp-chip", row.status)), td(row.spec.Lead))
+			line.Add(td(span("tp-chip", row.status)), td(row.spec.Lead))
 			if row.tracker[0] != "" {
-				line.add(td(link(row.tracker[0], "↗ "+row.tracker[1])))
+				line.Add(td(link(row.tracker[0], "↗ "+row.tracker[1])))
 			} else {
-				line.add(td(span("tp-muted", dash)))
+				line.Add(td(span("tp-muted", dash)))
 			}
 			body = append(body, line)
 		}
 	}
-	card.add(table([]*node{tr(band...), tr(labels...)}, body), para("tp-note", milestoneNote))
-	stack.add(card)
+	card.Add(table([]*node{tr(band...), tr(labels...)}, body), para("tp-note", milestoneNote))
+	stack.Add(card)
 	return []*node{stack}
 }
 
@@ -551,9 +551,9 @@ func (v *pageView) dashboardTab(view, lead, leadLabel, sortKey string, officer *
 		if dashQuery != "" {
 			href += "&"
 		}
-		nav.add(link(href+"tab=dashboard&view="+dv[0], label))
+		nav.Add(link(href+"tab=dashboard&view="+dv[0], label))
 	}
-	stack.add(el("section", "tp-card",
+	stack.Add(el("section", "tp-card",
 		el("div", "", el("h2", "tp-dash-title", "CCEO Officer Performance & Strategic Milestones"),
 			para("tp-card__meta", "Regional Field Tracking · School Visits & Trainings · Recruitment · SSA Reviews · year to the end of "+per.monthLabel())),
 		nav))
@@ -562,11 +562,11 @@ func (v *pageView) dashboardTab(view, lead, leadLabel, sortKey string, officer *
 		chips := el("nav", "tp-chips", span("tp-chips__label", "Programme Lead"),
 			link(base, "All ", span("", strconv.Itoa(len(r.roster.officers())))))
 		for _, tm := range r.roster.teams {
-			chips.add(link(base+"&lead="+urlencodeFilter(tm.key), tm.label+" ", span("", strconv.Itoa(len(tm.officers)))))
+			chips.Add(link(base+"&lead="+urlencodeFilter(tm.key), tm.label+" ", span("", strconv.Itoa(len(tm.officers)))))
 		}
-		stack.add(chips)
+		stack.Add(chips)
 	}
-	stack.add(strip(
+	stack.Add(strip(
 		fig("Active CCEOs", num(ptr(float64(b.officers))), "Across "+strconv.Itoa(len(b.rollups))+" Programme Lead team"+plural(len(b.rollups))),
 		fig("Portfolio Schools", num(t["portfolio"]), pct(t["active_pct"])+" active"),
 		fig("Core Recruited", num(t["recruit"]), "New Core schools"),
@@ -585,10 +585,10 @@ func (v *pageView) dashboardTab(view, lead, leadLabel, sortKey string, officer *
 			if lead != "" {
 				href += "&lead=" + urlencodeFilter(lead)
 			}
-			sorts.add(link(href, s[1]))
+			sorts.Add(link(href, s[1]))
 		}
-		sorts.add(span("tp-chips__count", "Showing "+strconv.Itoa(b.officers)+" officer"+plural(b.officers)))
-		stack.add(sorts)
+		sorts.Add(span("tp-chips__count", "Showing "+strconv.Itoa(b.officers)+" officer"+plural(b.officers)))
+		stack.Add(sorts)
 		cards := el("div", "tp-cards")
 		for _, c := range b.cards {
 			f := c.f
@@ -596,7 +596,7 @@ func (v *pageView) dashboardTab(view, lead, leadLabel, sortKey string, officer *
 			if f["recruit_target"] != nil {
 				target = num(f["recruit_target"])
 			}
-			cards.add(el("article", "tp-card tp-officer",
+			cards.Add(el("article", "tp-card tp-officer",
 				el("header", "tp-officer__head", el("h3", "", c.o.name), span("tp-badge", orDash(c.region))),
 				para("tp-officer__meta", "Portfolio: ", el("strong", "", num(f["portfolio"])), " schools ("+pct(f["active_pct"])+" active)"),
 				el("div", "tp-stats",
@@ -608,20 +608,20 @@ func (v *pageView) dashboardTab(view, lead, leadLabel, sortKey string, officer *
 					link(deepLink(c.o.staffID), "Deep-Dive Scorecard →"))))
 		}
 		if len(b.cards) == 0 {
-			cards.add(emptyState("No officer in this team."))
+			cards.Add(emptyState("No officer in this team."))
 		}
-		stack.add(cards)
+		stack.Add(cards)
 	case "deep":
 		if officer != nil {
-			stack.add(v.deepDive(officer))
+			stack.Add(v.deepDive(officer))
 		}
 	case "milestones":
-		stack.add(v.milestonesPart(true))
+		stack.Add(v.milestonesPart(true))
 	case "leads":
 		cards := el("div", "tp-cards")
 		for _, roll := range b.rollups {
 			f := roll.f
-			cards.add(el("article", "tp-card tp-officer",
+			cards.Add(el("article", "tp-card tp-officer",
 				el("header", "tp-officer__head", el("h3", "", roll.t.label), span("tp-badge", strconv.Itoa(roll.officers)+" officer"+plural(roll.officers))),
 				para("tp-officer__meta", "Total portfolio: ", el("strong", "", num(f["portfolio"])), " schools · "+pct(f["active_pct"])+" active"),
 				el("div", "tp-stats",
@@ -630,7 +630,7 @@ func (v *pageView) dashboardTab(view, lead, leadLabel, sortKey string, officer *
 					stat("Recruitment", num(f["recruit"]), ""),
 					stat("SSA Reviews", num(f["ssa"]), ""))))
 		}
-		stack.add(cards)
+		stack.Add(cards)
 	default:
 		card := el("section", "tp-card", cardHead("Officer Performance Master Ledger",
 			"Year to the end of "+per.monthLabel()+" · the "+per.monthLabel()+" Summary's figures · "+strconv.Itoa(b.officers)+" officer"+plural(b.officers)))
@@ -654,8 +654,8 @@ func (v *pageView) dashboardTab(view, lead, leadLabel, sortKey string, officer *
 			td(num(t["recruit"])), td(num(t["baseline_ssa"])), td(num(t["ssa_cohort"])), td(num(t["ssa_client"])),
 			td(num(t["visits_core"])), td(num(t["visits_noncore"])), td(num(t["visits"])),
 			td(num(t["trainings_core"])), td(num(t["trainings_other"])), td(num(t["trainings"]))))
-		card.add(table([]*node{tr(head...)}, rows), para("tp-note", gridNote))
-		stack.add(card)
+		card.Add(table([]*node{tr(head...)}, rows), para("tp-note", gridNote))
+		stack.Add(card)
 	}
 	return []*node{stack}
 }
@@ -663,7 +663,7 @@ func (v *pageView) dashboardTab(view, lead, leadLabel, sortKey string, officer *
 func stat(label, value, small string) *node {
 	n := el("div", "tp-stat", span("tp-stat__label", label), el("strong", "", value))
 	if small != "" {
-		n.add(el("small", "", small))
+		n.Add(el("small", "", small))
 	}
 	return n
 }
@@ -702,7 +702,7 @@ func (v *pageView) deepDive(o *officer) []*node {
 	f := r.officerFigures(officerScope(o.staffID))
 	head := el("header", "tp-officer__head", el("h3", "", o.name), span("tp-badge", orDash(o.region)))
 	if teamLabel != "" {
-		head.add(span("tp-badge", teamLabel))
+		head.Add(span("tp-badge", teamLabel))
 	}
 	recruitTarget := "Not set"
 	if f["recruit_target"] != nil {
@@ -722,7 +722,7 @@ func (v *pageView) deepDive(o *officer) []*node {
 	sub := func(title, aside string) *node {
 		n := el("h4", "tp-panel__sub", title)
 		if aside != "" {
-			n.add(" ", span("", aside))
+			n.Add(" ", span("", aside))
 		}
 		return n
 	}
@@ -732,11 +732,11 @@ func (v *pageView) deepDive(o *officer) []*node {
 		if n == 4 {
 			label = "4+ Visits"
 		}
-		visitBoxes.add(box(label, num(f["core_visit_step_"+itoa(n)])))
+		visitBoxes.Add(box(label, num(f["core_visit_step_"+itoa(n)])))
 	}
 	trainingBoxes := el("div", "tp-boxes")
 	for n := 1; n <= 4; n++ {
-		trainingBoxes.add(box("Training "+itoa(n), num(f["core_training_step_"+itoa(n)])))
+		trainingBoxes.Add(box("Training "+itoa(n), num(f["core_training_step_"+itoa(n)])))
 	}
 	grid := el("div", "tp-deep-grid",
 		el("section", "tp-card tp-panel", panelHead("School Visits Breakdown", "Total: "+num(f["visits"])),
@@ -819,7 +819,7 @@ func (v *pageView) monthTab() []*node {
 	if s.unlisted != 0 {
 		note += " The national total also holds " + num(ptr(float64(s.unlisted))) + " school" + plural(s.unlisted) + " whose account owner is not an active CCEO or Programme Lead."
 	}
-	card.add(table([]*node{tr(band...), tr(labels...)}, body), para("tp-note", note))
+	card.Add(table([]*node{tr(band...), tr(labels...)}, body), para("tp-note", note))
 	return []*node{card}
 }
 
@@ -852,15 +852,15 @@ func (v *pageView) coreTab() []*node {
 	for _, line := range lines {
 		row := tr(th(line.o.name), td(orDash(line.region)), td(line.team), td(num(ptr(line.f.core))))
 		for _, k := range kinds {
-			row.add(kindCells(line.f.kinds[k[0]], true))
+			row.Add(kindCells(line.f.kinds[k[0]], true))
 		}
 		body = append(body, row)
 	}
 	grand := tr(th(r.roster.homeLabel()), td(), td(), td(num(ptr(total.core))))
 	for _, k := range kinds {
-		grand.add(kindCells(total.kinds[k[0]], false))
+		grand.Add(kindCells(total.kinds[k[0]], false))
 	}
 	body = append(body, grand)
-	card.add(table([]*node{tr(row1...), tr(row2...), tr(row3...)}, body))
+	card.Add(table([]*node{tr(row1...), tr(row2...), tr(row3...)}, body))
 	return []*node{el("div", "tp-stack", card, para("tp-muted", coreNote))}
 }

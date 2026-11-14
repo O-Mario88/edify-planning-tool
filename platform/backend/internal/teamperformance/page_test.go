@@ -258,7 +258,7 @@ func TestAChartIsReadFromItsBarsTitles(t *testing.T) {
 		{label: "Program Lead 1", target: nil, achieved: ptr(3)},
 		{label: "Program Lead 2", target: ptr(1200), achieved: ptr(0)},
 	})
-	holder := el("div", "", targetChart(bs, "Programme Lead")...).attr("data-tp-chart", "lead")
+	holder := el("div", "", targetChart(bs, "Programme Lead")...).Attr("data-tp-chart", "lead")
 	chart := chartOf(holder)
 	if chart == nil || !reflect.DeepEqual(chart.Categories, []string{"Program Lead 1", "Program Lead 2"}) {
 		t.Fatalf("%v", chart)
@@ -304,8 +304,8 @@ func TestAPanelPairsALabelWithItsFigure(t *testing.T) {
 func TestASentenceKeepsItsLeadItsLinksAndItsBlocks(t *testing.T) {
 	// page_blocks._sentences on
 	// <div data-tone="caution"><strong>Note</strong> see <a href="/x">the list</a>.<p>Apart</p>tail</div>
-	n := el("div", "", el("strong", "", "Note"), " see ", el("a", "", "the list").attr("href", "/x"), ".",
-		para("", "Apart"), "tail").attr("data-tone", "caution")
+	n := el("div", "", el("strong", "", "Note"), " see ", el("a", "", "the list").Attr("href", "/x"), ".",
+		para("", "Apart"), "tail").Attr("data-tone", "caution")
 	items := panelItems(n, map[*node]bool{}, nil)
 	if len(items) != 3 {
 		t.Fatalf("%d items", len(items))
