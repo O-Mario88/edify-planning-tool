@@ -46,6 +46,7 @@ var builders = map[string]func(context.Context, input) (register, error){
 	"/onboarding":            onboarding,
 	"/offboarding":           offboarding,
 	"/candidate-pipeline":    candidatePipeline,
+	"/recruitment":           recruitment,
 	"/compliance-register":   complianceRegister,
 	"/hr-audit-log":          hrAuditLog,
 	"/workforce-planning":    workforcePlanning,

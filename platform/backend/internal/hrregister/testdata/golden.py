@@ -18,7 +18,7 @@ rows, asks Go the same questions and compares each answer as a whole message.
 
 import json
 import os
-from datetime import timedelta
+from datetime import date, timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -86,6 +86,7 @@ PATHS = (
     "/onboarding",
     "/offboarding",
     "/candidate-pipeline",
+    "/recruitment",
     "/compliance-register",
     "/hr-audit-log",
     "/workforce-planning",
@@ -227,9 +228,19 @@ def file_candidates():
         Vacancy.objects.create(
             id=f"ghrv{i}",
             country=["Uganda", "Uganda", "Kenya", "Uganda", "Uganda"][i],
-            department=["Programmes", "Finance", "Programmes", "Logistics", "Admin"][i],
+            department=["Programmes", "Finance", "Programmes", "Logistics", ""][i],
             role=["Field Officer", "Accountant", "Driver", "Officer", "Clerk"][i],
             status=["open", "pending_approval", "open", "draft", "PENDING_APPROVAL"][i],
+            replacement_or_new_role=[
+                "replacement",
+                "replacement",
+                "new_role",
+                "replacement",
+                "new_role",
+            ][i],
+            target_start_date=[date(2027, 1, 10), None, date(2026, 12, 1), None, None][
+                i
+            ],
         )
         for i in range(5)
     ]

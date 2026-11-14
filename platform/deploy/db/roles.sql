@@ -510,3 +510,5 @@ GRANT SELECT (id, reference, title, category, status, reporter_role, route, crea
 GRANT SELECT (id, title, severity, status, affected_route, affected_component, last_detected_at) ON admin_system_incident TO edify_gateway_ro;
 GRANT SELECT (name, category, frequency_days, estimated_minutes, next_due_date) ON admin_maintenance_template TO edify_gateway_ro;
 GRANT SELECT (reference, title, category, status, scheduled_date, created_at) ON admin_ops_work_item TO edify_gateway_ro;
+-- Recruitment: a vacancy's type, target start and when it was requested (never its salary band or budget source).
+GRANT SELECT (replacement_or_new_role, target_start_date, created_at) ON hr_vacancy TO edify_gateway_ro;

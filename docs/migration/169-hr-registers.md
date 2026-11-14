@@ -259,6 +259,26 @@ Countries (distinct), Reviews due (the people's reviews whose legacy status
 is not "Completed" or "Closed"), Compliance gaps (their missing or expired
 records). The eyebrow is the shell's default, "Human Capital Operations".
 
+## 169.2p Recruitment & Vacancies
+
+`recruitment_view` (`/recruitment`): the vacancies of the reach's countries
+(`scope_by_country`) whose role, department, country or status code holds
+the search, newest first. Each row has the role · department (the role alone
+without one), the country, the type (Replacement or New Role), its
+applications, the target start (else "—") and the status's label. A pending,
+approved or open vacancy carries its Review drawer. The figures count the
+searched vacancies: Open, Pending approval, Replacements (live posts replacing
+a leaver) and Applications. "Request a vacancy" is shown only to Human
+Resources and Admin (the view passes it to them alone, exported as the page's
+`drawer_roles`) and only where its drawer opens. The "Candidate Pipeline" link
+button is not read by the feed. `deploy/db/roles.sql` adds a vacancy's type,
+target start and request time, never its salary band or budget source.
+
+Pages the HR shell draws that the app does not open natively are left to the
+existing application. Succession Planning, Culture & Engagement, Wellness and
+Payroll Readiness are not among the feed's `NATIVE_PAGES`, so the app opens
+them as web pages; answering them natively would change the app.
+
 ## 169.3 Rules, access and proof
 
 The doors, strips and buttons per register and role, the lifecycle labels,
