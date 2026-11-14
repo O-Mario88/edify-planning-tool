@@ -1758,3 +1758,21 @@ class GroupedTableTest(SimpleTestCase):
                 "Grand total",
             ],
         )
+
+    def test_a_headless_table_of_one_body_keeps_its_footer(self):
+        one_group = LEDGER.replace(
+            LEDGER[
+                LEDGER.index(
+                    '  <tbody>\n    <tr class="budget-ledger-band"><th colspan="6"><em>Training'
+                ) : LEDGER.index("  <tfoot>")
+            ],
+            "",
+        )
+        table = next(
+            b["table"] for b in page_blocks.read(one_group)["blocks"] if "table" in b
+        )
+
+        self.assertEqual(
+            [row["cells"][0]["text"] for row in table["rows"]],
+            ["School Visit 2 activities", "Lunch", "Grand total"],
+        )

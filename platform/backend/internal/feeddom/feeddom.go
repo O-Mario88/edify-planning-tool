@@ -275,8 +275,10 @@ func readTable(table *Node) *screensv1.PageTable {
 		}
 	}
 	body := table.find(func(x *Node) bool { return x.tag == "tbody" })
-	if body == nil || head == nil && len(table.findAll(func(x *Node) bool { return x.tag == "tbody" })) > 1 {
-		// A table without a head whose groups are its bodies is read whole.
+	if body == nil || head == nil && (len(table.findAll(func(x *Node) bool { return x.tag == "tbody" })) > 1 ||
+		table.find(func(x *Node) bool { return x.tag == "tfoot" }) != nil) {
+		// A table without a head whose groups are its bodies, or with a
+		// footer, is read whole.
 		body = table
 	}
 	for _, tr := range body.findAll(func(x *Node) bool { return x.tag == "tr" }) {
