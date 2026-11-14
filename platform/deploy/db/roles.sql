@@ -630,3 +630,7 @@ GRANT SELECT (created_at) ON evidence_record TO edify_gateway_ro;
 -- the roles that hold one. Not a permission's description.
 GRANT SELECT (id, key) ON permission TO edify_gateway_ro;
 GRANT SELECT (role, permission_id) ON role_permission TO edify_gateway_ro;
+
+-- Completion Reviews (internal/plreview): when a completion was submitted for
+-- review, to date its wait. Not its decision or notes.
+GRANT SELECT (activity_id, updated_at) ON activity_completion_verification TO edify_gateway_ro;
