@@ -5,10 +5,14 @@
 // .budget_view, apps.budget.services.budget_workspace and
 // pages/budgets/monthly.html).
 //
+// For a country reader it also builds the country's Budget: the national
+// ledger, the district filter, Finance Health, and for a month the monthly
+// approval workflow and its reconciliation (country.go).
+//
 // It reads; it never writes. It hands on to the existing application: a
-// country reader (their Budget carries the monthly approval workflow and
-// Finance Health), a reader with a section strip above the page, a reader
-// whose scope is the country, any query but the year, the date, the period,
+// reader with a section strip above the page, a reader outside the country
+// roles whose scope is the country, a deployment of several countries, any
+// query but the year, the date, the period,
 // the scope and the groups' page, a date or year that is not plainly one,
 // more groups than one page holds, and a day rate that is not a whole
 // number.
@@ -22,6 +26,8 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"math"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -47,6 +53,9 @@ var rules = func() (r struct {
 	ParticipantLineTypes   []string          `json:"participant_line_types"`
 	ParticipantSettingKeys []string          `json:"participant_setting_keys"`
 	DayRateKeys            []string          `json:"day_rate_keys"`
+	Country                countryRules      `json:"country"`
+	// CountryLedgerRoles read the country's ledger whatever their scope.
+	CountryLedgerRoles []string `json:"country_ledger_roles"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {
 		panic(fmt.Sprintf("budgetpage: rules.json: %v", err))
@@ -117,4 +126,31 @@ func activities(n int) string {
 		return fmt.Sprintf("%d activity", n)
 	}
 	return fmt.Sprintf("%d activities", n)
+}
+
+// ugxCompact is apps.core.metrics.format_ugx_compact: UGX 1.2M, UGX 850K,
+// UGX 640, to Python's float formatting.
+func ugxCompact(n int64) string {
+	sign := ""
+	if n < 0 {
+		sign, n = "-", -n
+	}
+	var text string
+	switch {
+	case n >= 1_000_000_000:
+		text = "UGX " + strconv.FormatFloat(float64(n)/1e9, 'f', 1, 64) + "B"
+	case n >= 1_000_000:
+		text = "UGX " + strconv.FormatFloat(float64(n)/1e6, 'f', 1, 64) + "M"
+	case n >= 1_000:
+		text = "UGX " + strconv.FormatFloat(float64(n)/1e3, 'f', 0, 64) + "K"
+	default:
+		text = ugx(n)
+	}
+	return sign + text
+}
+
+// pyPercentage is apps.core.metrics.percentage: round(a / b * 100), a half
+// to the even whole number, computed in that order.
+func pyPercentage(a, b int64) int64 {
+	return int64(math.RoundToEven(float64(a) / float64(b) * 100))
 }

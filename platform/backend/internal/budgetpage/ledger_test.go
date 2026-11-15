@@ -77,3 +77,17 @@ func TestAnEmptyLedgerSaysSo(t *testing.T) {
 		t.Fatalf("last block %v", last)
 	}
 }
+
+func TestTheCompactFiguresAreTheExistingFormatters(t *testing.T) {
+	for n, want := range map[int64]string{
+		0: "UGX 0", 640: "UGX 640", 5000: "UGX 5K", 130000: "UGX 130K", 5_530_000: "UGX 5.5M",
+		1_250_000_000: "UGX 1.2B", -95000: "-UGX 95K",
+	} {
+		if got := ugxCompact(n); got != want {
+			t.Errorf("ugxCompact(%d) = %q, want %q", n, got, want)
+		}
+	}
+	if pyPercentage(130000, 5_530_000) != 2 || pyPercentage(1, 8) != 12 || pyPercentage(3, 8) != 38 {
+		t.Errorf("percentages %d %d %d", pyPercentage(130000, 5_530_000), pyPercentage(1, 8), pyPercentage(3, 8))
+	}
+}

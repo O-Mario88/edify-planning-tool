@@ -1460,6 +1460,15 @@ def planned_lines_for_period(lines, start, end):
     return lines.filter(planned_period_q(start, end))
 
 
+#: The roles authorised to read the national ledger whatever their scope.
+COUNTRY_LEDGER_ROLES = (
+    "CountryDirector",
+    "Admin",
+    "RegionalVicePresident",
+    "Accountant",
+)
+
+
 def scoped_budget_lines(principal, query: dict, *, fiscal_years=None) -> dict:
     """The cost lines a Budget page reads for this principal and query, before
     the period is cut: role scope, My/Team/Country, the `staff` and `district`
@@ -1492,11 +1501,9 @@ def scoped_budget_lines(principal, query: dict, *, fiscal_years=None) -> dict:
     # The Consolidated Fund Allocation page asks for the whole-country roll-up.
     # Honour it only for roles authorised to see national finance data, so a
     # personal My Budget page cannot be widened by a query parameter.
-    country_allowed = scope.country_scope or getattr(principal, "active_role", "") in (
-        "CountryDirector",
-        "Admin",
-        "RegionalVicePresident",
-        "Accountant",
+    country_allowed = (
+        scope.country_scope
+        or getattr(principal, "active_role", "") in COUNTRY_LEDGER_ROLES
     )
     admin_allowed = getattr(principal, "active_role", "") in (
         "CountryDirector",

@@ -132,6 +132,18 @@ def _initials(name):
     return "".join(p[0].upper() for p in (name or "").split() if p)[:2] or "—"
 
 
+#: The advance statuses each Finance Health figure counts.
+FINANCE_PENDING_STATUSES = (
+    "pending_responsible_confirmation",
+    "submitted",
+    "submitted_to_pl",
+    "submitted_to_cd",
+)
+FINANCE_CONFIRMED_STATUSES = ("confirmed_for_advance",)
+FINANCE_DISBURSED_STATUSES = ("disbursed", "accountability_pending", "accounted")
+FINANCE_ACCOUNTED_STATUSES = ("accounted",)
+
+
 def country_for(user) -> str:
     """The country a principal's oversight is bounded to ("" = deployment)."""
     if user is None or not getattr(user, "active_role", None):
@@ -2649,20 +2661,10 @@ class CDAnalyticsService:
             return int(q.aggregate(s=Sum(field_name))["s"] or 0)
 
         requested = amt("amount")
-        pending = amt(
-            "amount",
-            [
-                "pending_responsible_confirmation",
-                "submitted",
-                "submitted_to_pl",
-                "submitted_to_cd",
-            ],
-        )
-        confirmed = amt("amount", ["confirmed_for_advance"])
-        disbursed = amt(
-            "disbursed_amount", ["disbursed", "accountability_pending", "accounted"]
-        )
-        accounted = amt("accounted_amount", ["accounted"])
+        pending = amt("amount", list(FINANCE_PENDING_STATUSES))
+        confirmed = amt("amount", list(FINANCE_CONFIRMED_STATUSES))
+        disbursed = amt("disbursed_amount", list(FINANCE_DISBURSED_STATUSES))
+        accounted = amt("accounted_amount", list(FINANCE_ACCOUNTED_STATUSES))
         returned = amt("returned_amount")
 
         # Quarterly disbursement trend for the tabbed line chart.

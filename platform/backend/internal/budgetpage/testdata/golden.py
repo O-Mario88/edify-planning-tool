@@ -15,9 +15,17 @@ Admin category, a partner training the CCEO monitors (its lump sum shown as
 the facilitation fee), a visit the CCEO is responsible for whose line names
 no owner, a cost line with no label, a visit at the end of September in the
 next year's ledger (the week that crosses 1 October), and a cancelled, a
-deleted and an undated activity that draw nothing. It asks the month, the
-quarter and the year, both scopes, and a reader the page refuses; writes the
-rows and the answers to GOLDEN_OUT and deletes the rows.
+deleted and an undated activity that draw nothing. For the country's Budget
+it files advances against those lines in April (disbursed, accounted with a
+return, confirmed, and one dated only by when it was raised and since
+reimbursed) and the months' budgets: March submitted to the RVP (pending
+before April), April returned (live, so priced afresh from its plan), May
+submitted (locked with its own totals), June approved. It asks the month,
+the quarter and the year, both scopes, the country readers on a live, a
+locked, an approved and an unrecorded month (July, whose budget the
+existing page creates as it reads; that row is deleted with the rest), and a
+reader the page refuses; writes the rows and the answers to GOLDEN_OUT and deletes the
+rows.
 internal/integration/budget_test.go files the same rows and compares.
 """
 
@@ -37,7 +45,13 @@ if not settings.DATABASES["default"]["NAME"].endswith("_test"):
 User = get_user_model()
 PATH = "/budget"
 #: Children first.
-TABLES = ("activity_schedule_cost_line", "activity", "daily_visit_batch")
+TABLES = (
+    "advance_request",
+    "monthly_work_plan_budget",
+    "activity_schedule_cost_line",
+    "activity",
+    "daily_visit_batch",
+)
 
 
 def clear():
@@ -244,6 +258,74 @@ def file_rows():
             label="Undated transport",
         )
 
+        cursor.execute("SELECT id FROM advance_request ORDER BY id LIMIT 1")
+        base_advance = cursor.fetchone()[0]
+
+        def advance(suffix, line_id, activity_id, **fields):
+            clone(
+                cursor,
+                "advance_request",
+                base_advance,
+                {
+                    "id": f"gbgr{suffix}",
+                    "budget_line_id": line_id,
+                    "activity_id": activity_id,
+                    "accountability_netsuite_id": None,
+                    "disbursed_amount": None,
+                    "accounted_amount": None,
+                    "returned_amount": None,
+                    "reimbursed_amount": None,
+                    "planned_date": "2026-04-15T10:00:00+03:00",
+                    **fields,
+                },
+            )
+
+        advance(
+            "1",
+            "gbgl01",
+            "gbga1",
+            status="disbursed",
+            amount=30000,
+            disbursed_amount=30000,
+        )
+        advance(
+            "2",
+            "gbgl03",
+            "gbga2",
+            status="accounted",
+            amount=100000,
+            disbursed_amount=100000,
+            accounted_amount=95000,
+            returned_amount=5000,
+        )
+        advance("3", "gbgl05", "gbga3", status="confirmed_for_advance", amount=75000)
+        advance(
+            "4",
+            "gbgl06",
+            "gbga4",
+            status="reimbursed",
+            amount=5000,
+            reimbursed_amount=5000,
+            planned_date=None,
+            created_at="2026-04-20T09:00:00+03:00",
+        )
+
+        def month_budget(suffix, key, status, total, requirement):
+            cursor.execute(
+                """INSERT INTO monthly_work_plan_budget (id, created_at, updated_at, country_id, fy, month_key,
+                   generated_at, status, program_total, admin_total, total_amount, activity_count,
+                   submission_version, country_funding_shortfall, deferred_amount,
+                   operational_activity_requirement, reference_configuration_missing_count,
+                   regional_standard_ceiling, strategic_reserve_requested)
+                   VALUES (%s, now(), now(), 'Uganda', '2026', %s, now(), %s, 0, 0, %s, 0, 1, 0, 0, %s, 0, 0, 0)""",
+                [f"gbgm{suffix}", key, status, total, requirement],
+            )
+
+        month_budget("03", "2026-03", "submitted_to_rvp", 111000, 111000)
+        month_budget("04", "2026-04", "returned_by_rvp", 999000, 888000)
+        month_budget("05", "2026-05", "submitted_to_rvp", 555000, 444000)
+        month_budget("06", "2026-06", "approved_by_rvp", 666000, 444000)
+
 
 def dump_rows():
     rows = {}
@@ -278,11 +360,41 @@ def questions():
         ],
         "cceo5@edify.org": [april],
         "hr@edify.org": [april],
+        "cd@edify.org": [
+            april,
+            {**april, "period": "quarter"},
+            {"fy": "2026", "date": "2026-05-12"},
+            {"fy": "2026", "date": "2026-06-03"},
+            {"fy": "2026", "date": "2026-07-20"},
+            {**april, "period": "fy"},
+        ],
+        "rvp@edify.org": [april, {"fy": "2026", "date": "2026-05-12"}],
+        "accountant@edify.org": [april],
+        "ia@edify.org": [{**april, "period": "fy"}, april],
+        "admin@edify.org": [april, {"fy": "2026", "date": "2026-07-20"}],
     }
+
+
+def budgets_before():
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT id FROM monthly_work_plan_budget")
+        return {row[0] for row in cursor.fetchall()}
+
+
+def drop_budgets_made_since(before):
+    """The budgets the existing page created as it read (get_or_create)."""
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT id FROM monthly_work_plan_budget")
+        made = [row[0] for row in cursor.fetchall() if row[0] not in before]
+        if made:
+            cursor.execute(
+                "DELETE FROM monthly_work_plan_budget WHERE id = ANY(%s)", [made]
+            )
 
 
 def main():
     clear()
+    before = budgets_before()
     try:
         file_rows()
         rows = dump_rows()
@@ -303,6 +415,7 @@ def main():
                     }
                 )
     finally:
+        drop_budgets_made_since(before)
         clear()
     with open(os.environ["GOLDEN_OUT"], "w") as handle:
         json.dump(

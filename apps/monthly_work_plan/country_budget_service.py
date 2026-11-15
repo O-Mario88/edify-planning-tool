@@ -1064,6 +1064,12 @@ def get_country_monthly_budget(principal, filters=None):
     }
 
 
+#: The states in which the month's operating requirement is an approved limit.
+APPROVED_LIMIT_STATUSES = frozenset(
+    {"approved_by_rvp", "sent_to_accountant", "disbursed", "closed"}
+)
+
+
 def _execution_context(budget, fy, principal) -> dict:
     """Reconciliation + forecast for the envelope's own page."""
     from . import reconciliation_service as recon
@@ -1077,8 +1083,7 @@ def _execution_context(budget, fy, principal) -> dict:
     role = getattr(principal, "active_role", None)
     approved_operating_limit = (
         int(budget.operational_activity_requirement or 0)
-        if budget.status
-        in {"approved_by_rvp", "sent_to_accountant", "disbursed", "closed"}
+        if budget.status in APPROVED_LIMIT_STATUSES
         else 0
     )
     return {
@@ -1146,18 +1151,22 @@ def _prior_month_pending(fy, current_month_key):
     return MONTHS[month_num] if 1 <= month_num <= 12 else prior.month_key
 
 
+#: What the Budget page calls each state of the month's country budget.
+APPROVAL_STATUS_LABELS = {
+    "draft_generated": "Draft",
+    "cd_review": "Ready for CD Review",
+    "admin_plan_added": "Ready for CD Review",
+    "submitted_to_rvp": "Submitted to RVP",
+    "returned_by_rvp": "Returned by RVP",
+    "approved_by_rvp": "RVP Approved",
+    "sent_to_accountant": "Sent to Accountant",
+    "disbursed": "Disbursed",
+    "closed": "Closed",
+}
+
+
 def _approval_status_label(status):
-    return {
-        "draft_generated": "Draft",
-        "cd_review": "Ready for CD Review",
-        "admin_plan_added": "Ready for CD Review",
-        "submitted_to_rvp": "Submitted to RVP",
-        "returned_by_rvp": "Returned by RVP",
-        "approved_by_rvp": "RVP Approved",
-        "sent_to_accountant": "Sent to Accountant",
-        "disbursed": "Disbursed",
-        "closed": "Closed",
-    }.get(status, "Draft")
+    return APPROVAL_STATUS_LABELS.get(status, "Draft")
 
 
 def _integrity_checks(lines, admin_lines, budget, source=None):
