@@ -141,6 +141,9 @@ func (s *Service) build(ctx context.Context, t trip) (*routesv1.Itinerary, Provi
 			note = noteFor(err)
 		}
 	}
+	// The times follow the legs the reader sees: the road through the chosen
+	// order, which can differ from the matrix the order was chosen on.
+	plan = Timed(plan.Order, stops, shownLegs(plan.Order, route, t.start != nil, m.seconds), startMinutes())
 	tot := out.Totals
 	tot.RoadComplete = true
 	prevLabel, prev := t.startLabel, -1
@@ -228,4 +231,22 @@ func plural(n int) string {
 		return ""
 	}
 	return "s"
+}
+
+// shownLegs is the travel to each stop of order as its leg shows it: the
+// road route's hop where it answered, else what the order was chosen on.
+func shownLegs(order []int, route Route, fromStart bool, fallback Cost) Cost {
+	hop := make(map[int]int, len(order))
+	for pos, i := range order {
+		hop[i] = pos
+		if !fromStart {
+			hop[i] = pos - 1
+		}
+	}
+	return func(prev, i int) int64 {
+		if h := hop[i]; h >= 0 && h < len(route.Legs) && route.Legs[h].OK {
+			return route.Legs[h].Seconds
+		}
+		return fallback(prev, i)
+	}
 }
