@@ -901,3 +901,13 @@ GRANT SELECT (partner_name) ON partner_payment TO edify_gateway_ro;
 -- straight to a provider and whether it carries a cost catalogue version
 -- (a plan without one needs review).
 GRANT SELECT (vendor_paid, catalogue_id) ON activity_schedule_cost_line TO edify_gateway_ro;
+
+-- Upload Center (internal/uploadcenter): the school and SSA import batches,
+-- who filed each document and when, whether it asks for agreement, its
+-- version's preview, and who each document is aimed at.
+GRANT SELECT (id, file_name, uploaded_by, status, total_rows, created_at) ON school_import_batch TO edify_gateway_ro;
+GRANT SELECT (file_name, status, total_rows) ON ssa_import_batch TO edify_gateway_ro;
+GRANT SELECT (created_by, created_at, agreement_required) ON document_asset TO edify_gateway_ro;
+GRANT SELECT (preview_status) ON document_version TO edify_gateway_ro;
+GRANT SELECT (document_id, role, country, partner_id, project_id, user_id, effective_from)
+  ON document_audience_rule TO edify_gateway_ro;

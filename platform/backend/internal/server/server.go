@@ -105,6 +105,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/teams"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/todos"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/trainingsummary"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/uploadcenter"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/workplan"
 )
 
@@ -213,6 +214,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			projectspage.NewService(pool, time.Now),
 			disbursements.NewService(pool, time.Now),
 			fundapprovals.NewService(pool, time.Now),
+			uploadcenter.NewService(pool, time.Now),
 			mypd.NewService(pool, time.Now, cfg.PageWrites.MyProfessionalDevelopment),
 			planningoversight.NewService(pool, time.Now),
 			oversightportfolio.NewService(pool, time.Now),

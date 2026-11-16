@@ -1,0 +1,376 @@
+{
+  "document_statuses": {
+    "approved": "Approved",
+    "archived": "Archived",
+    "blocked": "Publication Blocked",
+    "draft": "Draft",
+    "effective": "Effective",
+    "expired": "Expired",
+    "published": "Published",
+    "returned": "Returned for Correction",
+    "superseded": "Superseded",
+    "under_review": "Under Review"
+  },
+  "metric_labels": [
+    "Awaiting Review",
+    "Published",
+    "Overdue"
+  ],
+  "page_size": 50,
+  "preview_statuses": {
+    "failed": "Failed",
+    "not_required": "Not Required",
+    "not_supported": "Preview Unavailable",
+    "pending": "Pending",
+    "processing": "Processing",
+    "ready": "Ready"
+  },
+  "roles": {
+    "Accountant": {
+      "actions": [],
+      "admin_menu": false,
+      "documents_create": false,
+      "manage_acknowledgements": false,
+      "page": false,
+      "school_upload": false,
+      "slug": "ACCOUNTANT",
+      "ssa_upload": false,
+      "training_create": false
+    },
+    "Admin": {
+      "actions": [
+        {
+          "action_label": "Upload school data",
+          "category": "Structured import",
+          "description": "Add or update schools from the approved CSV or Excel template.",
+          "href": "/schools/upload",
+          "key": "schools",
+          "template_href": "/schools/upload/template",
+          "template_label": "Download template",
+          "title": "School Data",
+          "tone": "primary"
+        },
+        {
+          "action_label": "Upload SSA scores",
+          "category": "Structured import",
+          "description": "Import initial or monitoring SSA scores and validate every school match.",
+          "href": "/ssa/upload/",
+          "key": "ssa",
+          "template_href": "/ssa/upload/template",
+          "template_label": "Download template",
+          "title": "SSA Scores",
+          "tone": "primary"
+        },
+        {
+          "action_label": "Bulk Upload — School Visits",
+          "category": "Bulk completion",
+          "description": "Export the school visits planned for a month, quarter, date range or year — Activity ID, School ID and Planned Date — fill in the School Visit ID and Completed Date, and upload them back.",
+          "href": "/uploads/bulk-completion/visit",
+          "key": "bulk_visit",
+          "title": "Bulk Upload — School Visits",
+          "tone": "primary"
+        },
+        {
+          "action_label": "Bulk Upload — Trainings",
+          "category": "Bulk completion",
+          "description": "Export the trainings planned for a period, one line per invited school, fill in the Training ID, Completed Date and each school's counts, and upload them back.",
+          "href": "/uploads/bulk-completion/training",
+          "key": "bulk_training",
+          "title": "Bulk Upload — Trainings",
+          "tone": "primary"
+        },
+        {
+          "action_label": "Upload policy or manual",
+          "category": "Knowledge & compliance",
+          "description": "Create a governed document with audience, version and acknowledgement controls.",
+          "href": "/uploads/new",
+          "key": "policies",
+          "title": "Policy or Manual",
+          "tone": "document"
+        },
+        {
+          "action_label": "Upload training resource",
+          "category": "Knowledge & compliance",
+          "description": "Publish a presentation, guide or training file to the resource library.",
+          "href": "/uploads/new?kind=training",
+          "key": "training",
+          "title": "Training Resource",
+          "tone": "document"
+        }
+      ],
+      "admin_menu": true,
+      "documents_create": true,
+      "manage_acknowledgements": true,
+      "page": true,
+      "school_upload": true,
+      "slug": "ADMIN",
+      "ssa_upload": true,
+      "training_create": true
+    },
+    "BusinessTransformationOfficer": {
+      "actions": [],
+      "admin_menu": false,
+      "documents_create": false,
+      "manage_acknowledgements": false,
+      "page": false,
+      "school_upload": false,
+      "slug": "BUSINESS_TRANSFORMATION",
+      "ssa_upload": false,
+      "training_create": false
+    },
+    "CCEO": {
+      "actions": [],
+      "admin_menu": false,
+      "documents_create": false,
+      "manage_acknowledgements": false,
+      "page": false,
+      "school_upload": false,
+      "slug": "CCEO",
+      "ssa_upload": false,
+      "training_create": false
+    },
+    "ClusterLeader": {
+      "actions": [],
+      "admin_menu": false,
+      "documents_create": false,
+      "manage_acknowledgements": false,
+      "page": false,
+      "school_upload": false,
+      "slug": "CLUSTERLEADER",
+      "ssa_upload": false,
+      "training_create": false
+    },
+    "CountryDirector": {
+      "actions": [
+        {
+          "action_label": "Upload policy or manual",
+          "category": "Knowledge & compliance",
+          "description": "Create a governed document with audience, version and acknowledgement controls.",
+          "href": "/uploads/new",
+          "key": "policies",
+          "title": "Policy or Manual",
+          "tone": "document"
+        }
+      ],
+      "admin_menu": false,
+      "documents_create": true,
+      "manage_acknowledgements": false,
+      "page": true,
+      "school_upload": false,
+      "slug": "CD",
+      "ssa_upload": false,
+      "training_create": false
+    },
+    "HumanResources": {
+      "actions": [
+        {
+          "action_label": "Upload policy or manual",
+          "category": "Knowledge & compliance",
+          "description": "Create a governed document with audience, version and acknowledgement controls.",
+          "href": "/uploads/new",
+          "key": "policies",
+          "title": "Policy or Manual",
+          "tone": "document"
+        }
+      ],
+      "admin_menu": false,
+      "documents_create": true,
+      "manage_acknowledgements": true,
+      "page": true,
+      "school_upload": false,
+      "slug": "HR",
+      "ssa_upload": false,
+      "training_create": false
+    },
+    "ImpactAssessment": {
+      "actions": [
+        {
+          "action_label": "Upload school data",
+          "category": "Structured import",
+          "description": "Add or update schools from the approved CSV or Excel template.",
+          "href": "/schools/upload",
+          "key": "schools",
+          "template_href": "/schools/upload/template",
+          "template_label": "Download template",
+          "title": "School Data",
+          "tone": "primary"
+        },
+        {
+          "action_label": "Upload SSA scores",
+          "category": "Structured import",
+          "description": "Import initial or monitoring SSA scores and validate every school match.",
+          "href": "/ssa/upload/",
+          "key": "ssa",
+          "template_href": "/ssa/upload/template",
+          "template_label": "Download template",
+          "title": "SSA Scores",
+          "tone": "primary"
+        },
+        {
+          "action_label": "Bulk Upload — School Visits",
+          "category": "Bulk completion",
+          "description": "Export the school visits planned for a month, quarter, date range or year — Activity ID, School ID and Planned Date — fill in the School Visit ID and Completed Date, and upload them back.",
+          "href": "/uploads/bulk-completion/visit",
+          "key": "bulk_visit",
+          "title": "Bulk Upload — School Visits",
+          "tone": "primary"
+        },
+        {
+          "action_label": "Bulk Upload — Trainings",
+          "category": "Bulk completion",
+          "description": "Export the trainings planned for a period, one line per invited school, fill in the Training ID, Completed Date and each school's counts, and upload them back.",
+          "href": "/uploads/bulk-completion/training",
+          "key": "bulk_training",
+          "title": "Bulk Upload — Trainings",
+          "tone": "primary"
+        },
+        {
+          "action_label": "Upload policy or manual",
+          "category": "Knowledge & compliance",
+          "description": "Create a governed document with audience, version and acknowledgement controls.",
+          "href": "/uploads/new",
+          "key": "policies",
+          "title": "Policy or Manual",
+          "tone": "document"
+        },
+        {
+          "action_label": "Upload training resource",
+          "category": "Knowledge & compliance",
+          "description": "Publish a presentation, guide or training file to the resource library.",
+          "href": "/uploads/new?kind=training",
+          "key": "training",
+          "title": "Training Resource",
+          "tone": "document"
+        }
+      ],
+      "admin_menu": false,
+      "documents_create": true,
+      "manage_acknowledgements": true,
+      "page": true,
+      "school_upload": true,
+      "slug": "IA",
+      "ssa_upload": true,
+      "training_create": true
+    },
+    "MfiLoanOfficer": {
+      "actions": [],
+      "admin_menu": false,
+      "documents_create": false,
+      "manage_acknowledgements": false,
+      "page": false,
+      "school_upload": false,
+      "slug": "MFI_OFFICER",
+      "ssa_upload": false,
+      "training_create": false
+    },
+    "MfiPartnerAdmin": {
+      "actions": [],
+      "admin_menu": false,
+      "documents_create": false,
+      "manage_acknowledgements": false,
+      "page": false,
+      "school_upload": false,
+      "slug": "MFI_ADMIN",
+      "ssa_upload": false,
+      "training_create": false
+    },
+    "PartnerAdmin": {
+      "actions": [],
+      "admin_menu": false,
+      "documents_create": false,
+      "manage_acknowledgements": false,
+      "page": false,
+      "school_upload": false,
+      "slug": "PARTNER",
+      "ssa_upload": false,
+      "training_create": false
+    },
+    "PartnerFieldOfficer": {
+      "actions": [],
+      "admin_menu": false,
+      "documents_create": false,
+      "manage_acknowledgements": false,
+      "page": false,
+      "school_upload": false,
+      "slug": "PARTNER",
+      "ssa_upload": false,
+      "training_create": false
+    },
+    "Program Lead": {
+      "actions": [],
+      "admin_menu": false,
+      "documents_create": false,
+      "manage_acknowledgements": false,
+      "page": false,
+      "school_upload": false,
+      "slug": "PL",
+      "ssa_upload": false,
+      "training_create": false
+    },
+    "ProjectCoordinator": {
+      "actions": [],
+      "admin_menu": false,
+      "documents_create": false,
+      "manage_acknowledgements": false,
+      "page": false,
+      "school_upload": false,
+      "slug": "PROJECT_COORDINATOR",
+      "ssa_upload": false,
+      "training_create": false
+    },
+    "RegionalProgramLead": {
+      "actions": [],
+      "admin_menu": false,
+      "documents_create": false,
+      "manage_acknowledgements": false,
+      "page": false,
+      "school_upload": false,
+      "slug": "RPL",
+      "ssa_upload": false,
+      "training_create": false
+    },
+    "RegionalVicePresident": {
+      "actions": [
+        {
+          "action_label": "Upload policy or manual",
+          "category": "Knowledge & compliance",
+          "description": "Create a governed document with audience, version and acknowledgement controls.",
+          "href": "/uploads/new",
+          "key": "policies",
+          "title": "Policy or Manual",
+          "tone": "document"
+        }
+      ],
+      "admin_menu": false,
+      "documents_create": true,
+      "manage_acknowledgements": false,
+      "page": true,
+      "school_upload": false,
+      "slug": "RVP",
+      "ssa_upload": false,
+      "training_create": false
+    }
+  },
+  "school_import_statuses": {
+    "cancelled": "Cancelled",
+    "imported": "Imported",
+    "staged": "Staged"
+  },
+  "ssa_import_statuses": {
+    "cancelled": "Cancelled",
+    "imported": "Imported",
+    "staged": "Staged"
+  },
+  "training_types": [
+    "training_manual",
+    "training_presentation"
+  ],
+  "type_labels": {
+    "manual": "Manual",
+    "policy": "Policy",
+    "school_import": "School Import",
+    "ssa_import": "SSA Import",
+    "training_manual": "Training Manual",
+    "training_presentation": "Training Presentation"
+  }
+}
