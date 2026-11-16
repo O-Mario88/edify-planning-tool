@@ -23,10 +23,15 @@ type PastDue struct {
 	// Paged is a table longer than one page: the existing page draws its
 	// pager, which Go does not, so the caller passes the page on.
 	Paged bool
+	// Lead is a Programme Lead's: their own and their team's, Scope ("",
+	// "all", "own" or "team") naming whose plans the tables hold.
+	Lead                   bool
+	Scope                  string
+	count, owned, teamWork int
 }
 
-// Total is past_due_total_count.
-func (p PastDue) Total() int { return len(p.Visits) + len(p.Trainings) + len(p.Meetings) }
+// Total is past_due_total_count: every past-due plan, whoever's.
+func (p PastDue) Total() int { return p.count }
 
 type pastDueRow struct {
 	a                                    *activity
@@ -36,6 +41,10 @@ type pastDueRow struct {
 	placeURL, purpose, focus, expected   string
 	cost, salesforce, status, gap        string
 	plannedDay                           *time.Time
+	// isOwn is the reader's own work; ownerFirst addresses its officer.
+	isOwn        bool
+	ownerFirst   string
+	reminderSent bool
 }
 
 // pastWhere is the past-due rule over activity a: planned before today, or
@@ -125,6 +134,99 @@ AND a.status = ANY($4) AND `+pastWhere+` AND `+staffPlanWhere+order,
 		return res
 	}
 	out.Visits, out.Trainings, out.Meetings = pick(visits), pick(trainings), pick(meetings)
+	out.count = len(listed)
+	return out, nil
+}
+
+// PastDueScopes are the whose-plans a Lead's tables open on (PAST_DUE_SCOPES).
+var PastDueScopes = []string{"all", "own", "team"}
+
+// ReadTeamPastDue is get_past_due_dashboard_context for a Programme Lead:
+// their own and their team's live past-due work, the tables narrowed to
+// scope ("own", "team"; "all" or "" for both).
+func ReadTeamPastDue(ctx context.Context, db schooldirectory.Querier, own, team []string, now time.Time, scope string) (PastDue, error) {
+	if !in(PastDueScopes, scope) {
+		scope = ""
+	}
+	out := PastDue{Lead: true, Scope: scope}
+	ids := append([]string{}, own...)
+	for _, id := range team {
+		if !in(ids, id) {
+			ids = append(ids, id)
+		}
+	}
+	if len(ids) == 0 {
+		return out, nil
+	}
+	today := now.In(kampala).Format(time.DateOnly)
+	found, err := idsWhere(ctx, db, `SELECT a.id FROM activity a WHERE a.deleted_at IS NULL
+AND NOT COALESCE(a.status = ANY($4), false) AND `+pastWhere+` AND `+staffPlanWhere+`
+ORDER BY a.planned_date ASC, a.scheduled_date ASC, a.id ASC`,
+		ids, today, rules.Plan.PartnerOnlyStatuses, rules.PastDue.TerminalStatuses)
+	if err != nil || len(found) == 0 {
+		return out, err
+	}
+	acts, err := readActivities(ctx, db, found)
+	if err != nil {
+		return PastDue{}, err
+	}
+	extras, err := readPastDueExtras(ctx, db, found)
+	if err != nil {
+		return PastDue{}, err
+	}
+	byID := map[string]*activity{}
+	for _, a := range acts {
+		byID[a.id] = a
+	}
+	var listed []*activity
+	var tables [3][]*activity
+	for _, id := range found {
+		a := byID[id]
+		if a == nil {
+			continue
+		}
+		mineToo := in(own, str(a.staffID)) || (!isSet(a.staffID) && in(own, str(extras[id].monitored)))
+		out.count++
+		if mineToo {
+			out.owned++
+		} else {
+			out.teamWork++
+		}
+		if (scope == "own" && !mineToo) || (scope == "team" && mineToo) {
+			continue
+		}
+		listed = append(listed, a)
+		tables[tableIndex(a.activityType)] = append(tables[tableIndex(a.activityType)], a)
+	}
+	for _, t := range tables {
+		if len(t) > rules.PastDue.PageSize {
+			return PastDue{Paged: true}, nil
+		}
+	}
+	kinds, err := evidenceKinds(ctx, db, listed)
+	if err != nil {
+		return PastDue{}, err
+	}
+	marks := completions(listed, now.In(kampala), kinds)
+	rows, err := pastDueRows(ctx, db, listed, marks, own)
+	if err != nil {
+		return PastDue{}, err
+	}
+	reminded, err := idsWhere(ctx, db, `SELECT DISTINCT context_id FROM notification WHERE context_type = 'activity'
+AND context_id = ANY($1) AND source_event_type = 'pl_activity_overdue_reminder' AND resolved_at IS NULL`, found)
+	if err != nil {
+		return PastDue{}, err
+	}
+	pick := func(as []*activity) []*pastDueRow {
+		res := make([]*pastDueRow, 0, len(as))
+		for _, a := range as {
+			r := rows[a.id]
+			r.reminderSent = in(reminded, a.id)
+			res = append(res, r)
+		}
+		return res
+	}
+	out.Visits, out.Trainings, out.Meetings = pick(tables[0]), pick(tables[1]), pick(tables[2])
 	return out, nil
 }
 
@@ -254,6 +356,11 @@ func pastDueRows(ctx context.Context, db schooldirectory.Querier, acts []*activi
 				r.owner = "Staff"
 			}
 		}
+		r.isOwn = in(owners, str(a.staffID)) || (!isSet(a.staffID) && in(owners, str(e.monitored)))
+		r.ownerFirst = "Team Member"
+		if f := strings.Fields(r.owner); len(f) > 0 {
+			r.ownerFirst = f[0]
+		}
 		r.plannedDay = date(a.plannedDate)
 		if r.plannedDay == nil {
 			r.plannedDay = day(a.scheduledDate)
@@ -341,6 +448,11 @@ func PastDueBlocks(p PastDue) []*screensv1.PageBlock {
 		Badges: []*screensv1.PageBadge{{Text: fmt.Sprintf("%d past due", total), Tone: "alert"}},
 		Items:  []*screensv1.PagePanelItem{panelText("Past due plans requiring completion, rescheduling or cancellation")}}
 	blocks := []*screensv1.PageBlock{{Kind: &screensv1.PageBlock_Panel{Panel: head}}}
+	if p.Lead && total == 0 {
+		// The backlog's fold, empty, is read into the section's panel.
+		head.Items = append([]*screensv1.PagePanelItem{{Kind: &screensv1.PagePanelItem_Heading{
+			Heading: "All overdue plans, any age 0"}}}, head.Items...)
+	}
 	if total == 0 {
 		// The empty state is read into the section's own panel.
 		head.Items = append(head.Items,
@@ -348,12 +460,18 @@ func PastDueBlocks(p PastDue) []*screensv1.PageBlock {
 			panelText("All scheduled school visits, trainings, and cluster meetings are currently on track."))
 		return blocks
 	}
+	if p.Lead {
+		blocks = append(p.leadHead(), blocks...)
+	}
 	chips := &screensv1.PageChips{Name: "activeCategory", Label: "Which kind of plan", Value: "all", Chips: []*screensv1.PageChip{
 		{Value: "all", Label: "All Categories"},
 		{Value: "visits", Label: fmt.Sprintf("School Visits (%d)", len(p.Visits))},
 		{Value: "trainings", Label: fmt.Sprintf("Trainings (%d)", len(p.Trainings))},
 		{Value: "meetings", Label: fmt.Sprintf("Cluster Meetings (%d)", len(p.Meetings))},
 	}}
+	if p.Lead {
+		blocks = append(blocks, p.scopeBlock())
+	}
 	blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Chips{Chips: chips}})
 	blocks = append(blocks, pastDueTable("School Visits (Past Due)", "No past due school visits.", p.Visits,
 		columns("School ID", "School Name", "Activity", "Planned Date", "Executor", "Purpose of Visit",
@@ -365,6 +483,34 @@ func PastDueBlocks(p PastDue) []*screensv1.PageBlock {
 		columns("Cluster Name", "District", "Planned Date", "Executor", "Purpose (Meeting Topic)", "SSA Intervention",
 			"Participants", "Cost", "Salesforce ID", "Status", "Actions"), pastMeetingCells)...)
 	return blocks
+}
+
+// leadHead is the backlog's fold ("All overdue plans, any age" and its
+// count, read as a figure) before the section, and whose plans after its
+// head: chips, or links once a link has named whose plans the tables hold.
+func (p PastDue) leadHead() []*screensv1.PageBlock {
+	fold := &screensv1.PagePanel{Items: []*screensv1.PagePanelItem{{Kind: &screensv1.PagePanelItem_Rows{Rows: &screensv1.PageDataRows{
+		Rows: []*screensv1.PageDataRow{{Label: "All overdue plans, any age", Value: fmt.Sprint(p.count)}}}}}}}
+	return []*screensv1.PageBlock{{Kind: &screensv1.PageBlock_Panel{Panel: fold}}}
+}
+
+// scopeBlock is a Lead's whose-plans rail: All, My Plans, Team Plans.
+func (p PastDue) scopeBlock() *screensv1.PageBlock {
+	tabs := [3][2]string{{"all", fmt.Sprintf("All (%d)", p.count)}, {"own", fmt.Sprintf("My Plans (%d)", p.owned)},
+		{"team", fmt.Sprintf("Team Plans (%d)", p.teamWork)}}
+	if p.Scope != "" {
+		var links []*screensv1.PageLink
+		for _, t := range tabs {
+			links = append(links, &screensv1.PageLink{Text: t[1], Href: "?view=week&plans=" + t[0] + "#what-needs-you-now"})
+		}
+		return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{
+			Items: []*screensv1.PagePanelItem{{Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{Links: links}}}}}}}
+	}
+	chips := &screensv1.PageChips{Name: "activeScope", Label: "Whose plans", Value: "all"}
+	for _, t := range tabs {
+		chips.Chips = append(chips.Chips, &screensv1.PageChip{Value: t[0], Label: t[1]})
+	}
+	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Chips{Chips: chips}}
 }
 
 func panelText(t string) *screensv1.PagePanelItem {
@@ -389,7 +535,11 @@ func pastDueTable(title, empty string, rows []*pastDueRow, cols []*screensv1.Pag
 		if r.plannedDay != nil {
 			label += " on " + shownDay(r.plannedDay)
 		}
-		table.Rows = append(table.Rows, &screensv1.PageRow{Cells: cs, Tone: "overdue", PickId: r.a.id, PickLabel: label})
+		row := &screensv1.PageRow{Cells: cs, Tone: "overdue"}
+		if r.isOwn {
+			row.PickId, row.PickLabel = r.a.id, label
+		}
+		table.Rows = append(table.Rows, row)
 	}
 	if len(rows) == 0 {
 		table.Rows = []*screensv1.PageRow{{Cells: []*screensv1.PageCell{{Text: empty}}}}
@@ -401,7 +551,10 @@ func pastDueTable(title, empty string, rows []*pastDueRow, cols []*screensv1.Pag
 }
 
 func (r *pastDueRow) executor() *screensv1.PageCell {
-	return &screensv1.PageCell{Text: r.owner + " You"}
+	if r.isOwn {
+		return &screensv1.PageCell{Text: r.owner + " You"}
+	}
+	return &screensv1.PageCell{Text: r.owner}
 }
 
 func (r *pastDueRow) focusCell() *screensv1.PageCell {
@@ -421,6 +574,15 @@ func (r *pastDueRow) tail() []*screensv1.PageCell {
 	complete := "/my-plan/" + id + "/complete-drawer"
 	if r.gap != "" {
 		complete = "/activities/" + id + "/salesforce-id"
+	}
+	if !r.isOwn {
+		// A team member's: the reminder to them, sent or to send, which the
+		// feed reads as the button's words.
+		words := "Send to " + r.ownerFirst
+		if r.reminderSent {
+			words = "Sent to " + r.ownerFirst
+		}
+		return []*screensv1.PageCell{{Text: r.cost}, sf, badge(r.status, "primary"), {Text: words}}
 	}
 	menu := func(key, label, href string, drawer bool) *screensv1.PageAction {
 		return &screensv1.PageAction{Key: key, Label: label, Enabled: true, Href: href, Drawer: drawer}

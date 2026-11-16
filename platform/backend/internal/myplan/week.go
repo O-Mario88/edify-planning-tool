@@ -35,7 +35,11 @@ type Week struct {
 
 type weekRow struct {
 	*pastDueRow
-	own, overdue bool
+	overdue bool
+	// action is the one thing the row asks of its reader: "own" (the
+	// reader's own menu), "verify", "send", "sent" or "none".
+	action           string
+	sendName, sentOn string
 }
 
 // weekState is week_status.
@@ -216,7 +220,11 @@ ORDER BY a.planned_date ASC, a.scheduled_date ASC, a.id ASC`, owners, rules.Week
 			}
 			r.status = label
 			d := r.plannedDay
-			out = append(out, &weekRow{pastDueRow: r, own: l.state.action == "send",
+			action := "none"
+			if l.state.action == "send" {
+				action = "own"
+			}
+			out = append(out, &weekRow{pastDueRow: r, action: action,
 				overdue: d != nil && d.Before(w.Today) && l.state.open})
 		}
 		return out
@@ -299,8 +307,9 @@ func (w Week) rangeLabel() string {
 // first table's "Ordered by date" as the view rail's subtitle).
 func (w Week) HasTables() bool { return len(w.Visits)+len(w.Trainings)+len(w.Meetings) > 0 }
 
-// WeekBlocks are the week panel's blocks as the feed reads them.
-func WeekBlocks(w Week) []*screensv1.PageBlock {
+// head is the week's heading: which week, its range, what the page holds,
+// and the arrows to the weeks either side (each keeping whose tab is open).
+func (w Week) head(query func(who string, week time.Time, show string) string, who string) *screensv1.PagePanel {
 	current := w.Start.Equal(MondayOf(w.Today))
 	title := "Coming week"
 	switch {
@@ -310,15 +319,20 @@ func WeekBlocks(w Week) []*screensv1.PageBlock {
 		title = fmt.Sprintf("Week of %d %s", w.Start.Day(), w.Start.Format("Jan"))
 	}
 	previous := w.Start.AddDate(0, 0, -7)
-	arrows := []*screensv1.PageLink{{Text: "‹ Previous week", Href: w.query("me", previous, "")}}
+	arrows := []*screensv1.PageLink{{Text: "‹ Previous week", Href: query(who, previous, "")}}
 	if !current {
-		arrows = append(arrows, &screensv1.PageLink{Text: "This week", Href: w.query("me", MondayOf(w.Today), "")})
+		arrows = append(arrows, &screensv1.PageLink{Text: "This week", Href: query(who, MondayOf(w.Today), "")})
 	}
-	arrows = append(arrows, &screensv1.PageLink{Text: "Next week ›", Href: w.query("me", w.Start.AddDate(0, 0, 7), "")})
-	head := &screensv1.PagePanel{Title: title + " · " + w.rangeLabel(),
+	arrows = append(arrows, &screensv1.PageLink{Text: "Next week ›", Href: query(who, w.Start.AddDate(0, 0, 7), "")})
+	return &screensv1.PagePanel{Title: title + " · " + w.rangeLabel(),
 		Subtitle: fmt.Sprintf("Your work this week, what is overdue from the week of %d %s, and what your partners did.",
 			previous.Day(), previous.Format("Jan")),
 		Items: []*screensv1.PagePanelItem{linksItem(arrows...)}}
+}
+
+// WeekBlocks are the week panel's blocks as the feed reads them.
+func WeekBlocks(w Week) []*screensv1.PageBlock {
+	head := w.head(w.query, "me")
 	mine := "My activities"
 	if w.PastDue > 0 {
 		mine += fmt.Sprintf(" %d", w.PastDue)
@@ -351,13 +365,13 @@ func WeekBlocks(w Week) []*screensv1.PageBlock {
 	for _, t := range rules.Week.Tables {
 		titles[t[0]] = t[1]
 	}
-	blocks = append(blocks, weekTable(titles["visits"], w.Visits,
+	blocks = append(blocks, weekTable(titles["visits"], "", false, w.Visits,
 		columns("School ID", "School Name", "Activity", "Planned Date", "Completed Date", "Executor", "Purpose of Visit",
 			"Focus Intervention", "Cost", "Salesforce ID", "Status", "Actions"), weekVisitCells)...)
-	blocks = append(blocks, weekTable(titles["trainings"], w.Trainings,
+	blocks = append(blocks, weekTable(titles["trainings"], "", false, w.Trainings,
 		columns("School ID", "School / Cluster", "Cluster Planned From", "Executor", "Training Name", "Planned Date",
 			"Completed Date", "SSA Intervention", "Participants", "Cost", "Salesforce ID", "Status", "Actions"), weekTrainingCells)...)
-	blocks = append(blocks, weekTable(titles["meetings"], w.Meetings,
+	blocks = append(blocks, weekTable(titles["meetings"], "", false, w.Meetings,
 		columns("Cluster Name", "District", "Planned Date", "Completed Date", "Executor", "Purpose (Meeting Topic)",
 			"SSA Intervention", "Participants", "Cost", "Salesforce ID", "Status", "Actions"), weekMeetingCells)...)
 	return blocks
@@ -367,24 +381,32 @@ func linksItem(links ...*screensv1.PageLink) *screensv1.PagePanelItem {
 	return &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{Links: links}}}
 }
 
-// weekTable is a table that holds work, under its title band; an empty one
-// is not drawn on the officer's own week.
-func weekTable(title string, rows []*weekRow, cols []*screensv1.PageColumn,
+// weekTable is one table under its title band. An empty one is drawn as its
+// band alone, saying empty, where drawEmpty; otherwise not at all.
+func weekTable(title, empty string, drawEmpty bool, rows []*weekRow, cols []*screensv1.PageColumn,
 	cells func(*weekRow) []*screensv1.PageCell) []*screensv1.PageBlock {
-	if len(rows) == 0 {
+	if len(rows) == 0 && !drawEmpty {
 		return nil
+	}
+	note := "Ordered by date"
+	if len(rows) == 0 {
+		note = empty
 	}
 	band := &screensv1.PagePanel{Items: []*screensv1.PagePanelItem{
 		{Kind: &screensv1.PagePanelItem_Heading{Heading: title}},
-		panelText(fmt.Sprint(len(rows))), panelText("Ordered by date"),
+		panelText(fmt.Sprint(len(rows))), panelText(note),
 	}}
+	blocks := []*screensv1.PageBlock{{Kind: &screensv1.PageBlock_Panel{Panel: band}}}
+	if len(rows) == 0 {
+		return blocks
+	}
 	table := &screensv1.PageTable{Columns: cols}
 	for _, r := range rows {
 		row := &screensv1.PageRow{Cells: append(cells(r), r.weekTail()...)}
 		if r.overdue {
 			row.Tone = "overdue"
 		}
-		if r.own {
+		if r.action == "own" {
 			label := "Select " + orDefault(r.typeLabel, "activity")
 			if name := r.placeName(); name != "" {
 				label += " at " + name
@@ -396,21 +418,20 @@ func weekTable(title string, rows []*weekRow, cols []*screensv1.PageColumn,
 		}
 		table.Rows = append(table.Rows, row)
 	}
-	return []*screensv1.PageBlock{
-		{Kind: &screensv1.PageBlock_Panel{Panel: band}},
-		{Kind: &screensv1.PageBlock_Table{Table: table}},
-	}
+	return append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: table}})
 }
 
-// weekTail is Cost, Salesforce ID, Status and the row's one action: the
-// officer's own menu, or the record's details.
+// weekTail is Cost, Salesforce ID, Status and the row's one action. The
+// feed reads the officer's own menu as actions, and every other ask (Verify,
+// Send to, Sent to, View Details) as the button's words.
 func (r *weekRow) weekTail() []*screensv1.PageCell {
 	sf := &screensv1.PageCell{Text: "Not in SF"}
 	if r.salesforce != "" {
 		sf = &screensv1.PageCell{Text: r.salesforce}
 	}
-	action := &screensv1.PageCell{Text: "View Details"}
-	if r.own {
+	var action *screensv1.PageCell
+	switch r.action {
+	case "own":
 		id := r.a.id
 		menu := func(key, label, href string) *screensv1.PageAction {
 			return &screensv1.PageAction{Key: key, Label: label, Enabled: true, Href: href, Drawer: true}
@@ -421,6 +442,18 @@ func (r *weekRow) weekTail() []*screensv1.PageCell {
 			menu("danger", "Cancel Activity", "/my-plan/"+id+"/cancel-drawer"),
 			menu("menu", "View Details", "/my-plan/"+id),
 		}}
+	case "verify":
+		action = &screensv1.PageCell{Text: "Verify"}
+	case "send":
+		action = &screensv1.PageCell{Text: "Send to " + r.sendName}
+	case "sent":
+		words := "Sent to " + r.sendName
+		if r.sentOn != "" {
+			words += " · " + r.sentOn
+		}
+		action = &screensv1.PageCell{Text: words}
+	default:
+		action = &screensv1.PageCell{Text: "View Details"}
 	}
 	return []*screensv1.PageCell{{Text: r.cost}, sf, badge(r.status, "primary"), action}
 }
