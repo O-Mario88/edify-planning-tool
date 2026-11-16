@@ -1,0 +1,97 @@
+{
+  "accommodation_key": "secondary_accommodation_per_night",
+  "costing_profiles": {
+    "ADMIN_PARTNER_MEETING": [
+      "partner_activity",
+      ""
+    ],
+    "CLUSTER_MEETING": [
+      "cluster_meeting",
+      ""
+    ],
+    "CLUSTER_TRAINING": [
+      "cluster_training",
+      ""
+    ],
+    "CORE_SCHOOL_VISIT": [
+      "school_visit",
+      "core"
+    ],
+    "FIELD_TRAVEL": [
+      "field_event",
+      ""
+    ],
+    "GROUP_YOUTH_CAMP": [
+      "training",
+      ""
+    ],
+    "IN_SCHOOL_TRAINING": [
+      "in_school_training",
+      ""
+    ],
+    "ONETEST": [
+      "school_visit",
+      "onetest"
+    ],
+    "ONLINE_TRAINING": [
+      "training",
+      ""
+    ],
+    "PROGRAMME_EVENT": [
+      "programme_event",
+      ""
+    ],
+    "PROPRIETOR_CONFERENCE": [
+      "programme_event",
+      "proprietor_conference"
+    ],
+    "SSA_DATA_GATHERING": [
+      "baseline_ssa_visit",
+      ""
+    ],
+    "STAFF_SCHOOL_VISIT": [
+      "school_visit",
+      ""
+    ],
+    "STUDENT_CONFERENCE": [
+      "programme_event",
+      "student_conference"
+    ],
+    "TOT_TRAINING": [
+      "training",
+      "tot"
+    ]
+  },
+  "country": "Uganda",
+  "field_role_aliases": [
+    "cceo",
+    "pl",
+    "program lead",
+    "programme lead"
+  ],
+  "field_roles": [
+    "CCEO",
+    "Program Lead"
+  ],
+  "hq_primary_districts": [
+    "Kampala",
+    "Wakiso",
+    "Mukono"
+  ],
+  "management_accommodation_key": "management_accommodation_per_night",
+  "management_accommodation_roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+  ],
+  "operational_kind": "operational",
+  "published_status": "published",
+  "reference_kind": "reference"
+}

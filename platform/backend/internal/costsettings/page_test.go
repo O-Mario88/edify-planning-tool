@@ -1,6 +1,7 @@
 package costsettings
 
 import (
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pricing"
 	"net/url"
 	"reflect"
 	"testing"
@@ -14,15 +15,15 @@ func TestTheCardAnswersARenamedKeyAndKeepsOnlyCanonicalAndLinkedRates(t *testing
 		{key: "primary_transport_per_day", label: "Transport", unitCost: 10},
 		{key: "activity:x:snacks", label: "Snacks", unitCost: 3, itemID: strp("item1")},
 	})
-	if card.rates["lunch_per_day"] != 9 || card.rates["primary_transport_per_day"] != 10 || card.rates["activity:x:snacks"] != 3 {
-		t.Fatalf("rates %v", card.rates)
+	if card.Rates["lunch_per_day"] != 9 || card.Rates["primary_transport_per_day"] != 10 || card.Rates["activity:x:snacks"] != 3 {
+		t.Fatalf("rates %v", card.Rates)
 	}
-	if _, kept := card.rates["primary_lunch_per_day"]; kept {
+	if _, kept := card.Rates["primary_lunch_per_day"]; kept {
 		t.Fatal("the renamed key itself is priced")
 	}
 	keys := []string{}
-	for _, r := range card.order {
-		keys = append(keys, r.key)
+	for _, r := range card.Order {
+		keys = append(keys, r.Key)
 	}
 	// The renamed row answers last, after the rows read in the card's order.
 	if want := []string{"primary_transport_per_day", "activity:x:snacks", "primary_lunch_per_day"}; !reflect.DeepEqual(keys, want) {
@@ -31,10 +32,10 @@ func TestTheCardAnswersARenamedKeyAndKeepsOnlyCanonicalAndLinkedRates(t *testing
 }
 
 func TestCoverageListsALinkedCostAndHandsOnAnUnknownProfile(t *testing.T) {
-	card := pricedCard{
-		rates: map[string]int64{"primary_transport_per_day": 1, "lunch_per_day": 1, "activity:x:snacks": 5},
-		order: []rate{{key: "activity:x:snacks", label: "Snacks", itemID: strp("item1")}},
-	}
+	card := pricing.Resolve([]pricing.Setting{
+		{Key: "primary_transport_per_day", UnitCost: 1}, {Key: "lunch_per_day", UnitCost: 1},
+		{Key: "activity:x:snacks", Label: "Snacks", UnitCost: 5, ItemID: strp("item1")},
+	})
 	rows, ok := coverageOf([]item{{
 		id: "item1", name: "Visit", workflowKind: "school_visit", profile: "STAFF_SCHOOL_VISIT",
 		activityType: "school_visit", delivery: "school_visit", hasPrimary: true,
@@ -49,7 +50,7 @@ func TestCoverageListsALinkedCostAndHandsOnAnUnknownProfile(t *testing.T) {
 	if want := []string{"Transport Primary District", "Lunch", "Snacks"}; !reflect.DeepEqual(got.components, want) {
 		t.Fatalf("components %v, want %v", got.components, want)
 	}
-	unready, _ := coverageOf([]item{{id: "i2", workflowKind: "school_visit", profile: "ONETEST"}}, pricedCard{rates: map[string]int64{"lunch_per_day": 1}})
+	unready, _ := coverageOf([]item{{id: "i2", workflowKind: "school_visit", profile: "ONETEST"}}, pricing.Resolve([]pricing.Setting{{Key: "lunch_per_day", UnitCost: 1}}))
 	if unready[0].ready || unready[0].intervention != "Administrative / inherited" {
 		t.Fatalf("an activity missing its transport: %+v", unready[0])
 	}
