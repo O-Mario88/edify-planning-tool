@@ -157,6 +157,12 @@ WHERE block_type = 'STAFF_CONFERENCE' AND is_active AND start_date <= $1::date A
 	return out, nil
 }
 
+// BlackoutDays is get_blackout_dates_in_range for the other leave pages
+// (internal/personaltimeoff's impact preview).
+func BlackoutDays(ctx context.Context, db schooldirectory.Querier, s, e time.Time) ([]string, error) {
+	return blackoutDays(ctx, db, s, e)
+}
+
 // blackoutDays is get_blackout_dates_in_range: each blocked day of the
 // national calendar inside the leave, in order.
 func blackoutDays(ctx context.Context, db schooldirectory.Querier, s, e time.Time) ([]string, error) {
