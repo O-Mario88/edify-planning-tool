@@ -39,6 +39,10 @@ var rules = func() (r struct {
 	DailyBatchEligibleTypes      []string             `json:"daily_batch_eligible_types"`
 	DayPoolExtraTypes            []string             `json:"day_pool_extra_types"`
 	MixedTransportLabel          string               `json:"mixed_transport_label"`
+	OnlineTrainingTypes          []string             `json:"online_training_types"`
+	OnlineMode                   string               `json:"online_mode"`
+	CompanionGoneStatuses        []string             `json:"companion_gone_statuses"`
+	RebuildableWeeklyStatuses    []string             `json:"rebuildable_weekly_statuses"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {
 		panic(fmt.Sprintf("pricing: rules.json: %v", err))

@@ -64,11 +64,16 @@ func PlanDay(ctx context.Context, db Querier, batchID string) (Day, error) {
 	if err != nil {
 		return Day{}, fmt.Errorf("pricing: reading day %s: %w", batchID, err)
 	}
-	card, err := ReadCard(ctx, db, rules.OperationalKind, &b.date)
+	members, err := dayMembers(ctx, db, batchID)
 	if err != nil {
 		return Day{}, err
 	}
-	members, err := dayMembers(ctx, db, batchID)
+	return planDay(ctx, db, b, members)
+}
+
+// planDay plans the day b with these members (by id).
+func planDay(ctx context.Context, db Querier, b dayRow, members []dayMember) (Day, error) {
+	card, err := ReadCard(ctx, db, rules.OperationalKind, &b.date)
 	if err != nil {
 		return Day{}, err
 	}
