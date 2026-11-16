@@ -911,3 +911,20 @@ GRANT SELECT (created_by, created_at, agreement_required) ON document_asset TO e
 GRANT SELECT (preview_status) ON document_version TO edify_gateway_ro;
 GRANT SELECT (document_id, role, country, partner_id, project_id, user_id, effective_from)
   ON document_audience_rule TO edify_gateway_ro;
+
+-- Field Debrief Dashboard (internal/debriefs): each debrief's who, when,
+-- status, risk and completion, its title (and summary, which the search
+-- reads), the schools it names, who it was routed to, its linked
+-- activities, challenge types, open commitments, actions owed, peer
+-- solutions and the open insights. None of a debrief's narrative fields.
+GRANT SELECT (id, deleted_at, fy, date, status, risk_level, completion_status, submitted_by_user_id, submitted_by_role,
+  staff_id, partner_id, kind, debrief_type, title, summary, is_restricted_incident, linked_school_ids)
+  ON daily_debrief TO edify_gateway_ro;
+GRANT SELECT (debrief_id, recipient_user_id) ON daily_debrief_recipient TO edify_gateway_ro;
+GRANT SELECT (id, debrief_id, activity_id) ON daily_debrief_activity_link TO edify_gateway_ro;
+GRANT SELECT (debrief_id, challenge_type) ON daily_debrief_challenge TO edify_gateway_ro;
+GRANT SELECT (debrief_id, status) ON daily_debrief_commitment TO edify_gateway_ro;
+GRANT SELECT (owner_user_id, status, due_date) ON daily_debrief_action TO edify_gateway_ro;
+GRANT SELECT (debrief_id, author_user_id, suggestion, endorsed_by_user_ids, created_at)
+  ON daily_debrief_peer_solution TO edify_gateway_ro;
+GRANT SELECT (description, status, occurrence_count) ON daily_debrief_insight TO edify_gateway_ro;

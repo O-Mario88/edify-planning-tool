@@ -466,3 +466,18 @@ func swapAlias(clause string) string {
 	}
 	return "f.author_id = $2"
 }
+
+// TeamMemberIDs is team_member_ids for a lead who is not working in an
+// acting appointment: the People records of the officers they line-manage
+// (their own supervisees and, while they cover an absent lead, that lead's).
+func TeamMemberIDs(ctx context.Context, db schooldirectory.Querier, profileID string, now time.Time) ([]string, error) {
+	members, err := teamMembers(ctx, db, profileID, now)
+	if err != nil {
+		return nil, err
+	}
+	ids := make([]string, 0, len(members))
+	for _, m := range members {
+		ids = append(ids, m.staffID)
+	}
+	return ids, nil
+}
