@@ -1,50 +1,83 @@
 /**
- * A figure strip (components/context_metrics.html) as the web draws it on a
- * phone: one card of tiles two to a row, each its label, its figure and the
- * short line under it, with hairlines between them. The strip's title is not
- * shown on a phone; it is the card's name for a screen reader.
+ * A figure strip as separate tiles (owner, 2026-11-16: "the last image of
+ * tiles reference is what I want for the entire platform", the Smart Route
+ * Planner's figure cards): each tile a tinted icon, the figure, its label and
+ * the short line under it, with an info mark where the figure has a note. Two
+ * a row on a phone, the icon over the figure; on a tablet or wider, side by
+ * side, in even rows of at most five (figureTiles.tileColumns). The strip's title is the tiles' name for a
+ * screen reader; a titled strip (My Plan's Plan Breakdown by Period) shows
+ * its heading and the line under it over the tiles.
  */
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import type { ComponentType } from 'react';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import {
+  Banknote,
+  Calendar,
+  CalendarCheck,
+  ChartColumn,
+  Clock,
+  GraduationCap,
+  Info,
+  LayoutGrid,
+  Route,
+  School,
+  TriangleAlert,
+  Users,
+} from 'lucide-react-native';
 
 import type { PageMetric, PageStrip } from '../../gen/edify/screens/v1/page_pb';
 import { fonts, useTheme } from '../../theme';
+import type { Palette } from '../../theme';
+import { figureIcon, tileColumns } from './figureTiles';
+import type { FigureIconName } from './figureTiles';
 import { toneColor, usePageLink } from './shared';
 
-const PER_ROW = 2;
-const STRIP_SHADOW = '0px 3px 12px 0px rgba(15, 23, 42, 0.06)';
+type IconComponent = ComponentType<{ size?: number; color?: string }>;
+
+const ICONS: Readonly<Record<FigureIconName, IconComponent>> = {
+  school: School,
+  cluster: LayoutGrid,
+  route: Route,
+  clock: Clock,
+  calendar: Calendar,
+  check: CalendarCheck,
+  alert: TriangleAlert,
+  money: Banknote,
+  people: Users,
+  training: GraduationCap,
+  chart: ChartColumn,
+};
+
+const TILE_SHADOW = '0px 3px 12px 0px rgba(15, 23, 42, 0.06)';
+const GAP = 12;
+/** Below this width a tile's icon sits over its figure, leaving the label the tile's width. */
+const STACK_BELOW = 480;
+
+/** A tile's tint: its tone where it has one, else what its icon says. */
+function tintOf(colors: Palette, metric: PageMetric, icon: FigureIconName): string {
+  const toned = toneColor(colors, metric.tone);
+  if (toned) return toned;
+  if (icon === 'alert') return colors.danger;
+  if (icon === 'check') return colors.success;
+  return colors.primary;
+}
 
 export function PageStripView({ strip }: { readonly strip: PageStrip }) {
   const { colors } = useTheme();
-  const rows: PageMetric[][] = [];
-  strip.metrics.forEach((metric, index) => {
-    if (index % PER_ROW === 0) {
-      rows.push([]);
-    }
-    rows[rows.length - 1].push(metric);
-  });
-  const grid = (
-    <View
-      accessibilityLabel={strip.title}
-      style={[styles.card, { backgroundColor: colors.raised, borderColor: colors.raisedBorder }]}
-    >
-      {rows.map((row, rowIndex) => (
-        <View
-          key={row.map((m) => m.label).join('|')}
-          style={[styles.row, rowIndex > 0 && { borderTopWidth: 1, borderTopColor: colors.raisedBorder }]}
-        >
-          {row.map((metric, index) => (
-            <Tile key={metric.label} metric={metric} hasRule={index > 0} />
-          ))}
-          {row.length < PER_ROW ? <View style={styles.tile} /> : null}
+  const { width } = useWindowDimensions();
+  const columns = tileColumns(strip.metrics.length, width);
+  const tiles = (
+    <View accessibilityLabel={strip.title} style={styles.grid}>
+      {strip.metrics.map((metric) => (
+        <View key={metric.label} style={{ width: `${100 / columns}%`, padding: GAP / 2 }}>
+          <Tile metric={metric} stacked={width < STACK_BELOW} />
         </View>
       ))}
     </View>
   );
   if (!strip.subtitle) {
-    return grid;
+    return tiles;
   }
-  // A titled card of tiles (My Plan's Plan Breakdown by Period): its heading
-  // and the line under it, then the tiles in their own box.
   return (
     <View style={[styles.titled, { backgroundColor: colors.raised, borderColor: colors.raisedBorder }]}>
       <View style={styles.heading}>
@@ -53,15 +86,18 @@ export function PageStripView({ strip }: { readonly strip: PageStrip }) {
         </Text>
         <Text style={[styles.subtitle, { color: colors.textSubtle }]}>{strip.subtitle}</Text>
       </View>
-      {grid}
+      {tiles}
     </View>
   );
 }
 
-function Tile({ metric, hasRule }: { readonly metric: PageMetric; readonly hasRule: boolean }) {
+function Tile({ metric, stacked }: { readonly metric: PageMetric; readonly stacked: boolean }) {
   const { colors } = useTheme();
   const openLink = usePageLink();
-  const helperColor = toneColor(colors, metric.tone) ?? colors.textMuted;
+  const icon = figureIcon(metric.label);
+  const tint = tintOf(colors, metric, icon);
+  const Icon = ICONS[icon];
+  const valueColor = toneColor(colors, metric.tone) ?? colors.text;
   const label = [metric.label, metric.value, metric.helper || metric.note].filter(Boolean).join(', ');
   return (
     <Pressable
@@ -69,26 +105,53 @@ function Tile({ metric, hasRule }: { readonly metric: PageMetric; readonly hasRu
       disabled={!metric.href}
       accessibilityRole={metric.href ? 'link' : 'text'}
       accessibilityLabel={label}
-      style={({ pressed }) => [styles.tile, pressed && { backgroundColor: colors.primarySoft }]}
+      style={({ pressed }) => [
+        styles.tile,
+        stacked && styles.stacked,
+        { backgroundColor: pressed ? colors.primarySoft : colors.raised, borderColor: colors.raisedBorder },
+      ]}
     >
-      {hasRule ? <View style={[styles.rule, { backgroundColor: colors.raisedBorder }]} /> : null}
-      <Text style={[styles.label, { color: colors.textMuted }]}>{metric.label}</Text>
-      <Text style={[styles.value, { color: colors.text }]}>{metric.value}</Text>
-      {metric.helper ? <Text style={[styles.helper, { color: helperColor }]}>{metric.helper}</Text> : null}
+      <View style={[styles.icon, { backgroundColor: `${tint}1a` }]}>
+        <Icon size={20} color={tint} />
+      </View>
+      <View style={styles.words}>
+        <Text style={[styles.value, { color: valueColor }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+          {metric.value}
+        </Text>
+        <Text style={[styles.label, { color: colors.textMuted }]}>{metric.label}</Text>
+        {metric.helper ? <Text style={[styles.helper, { color: colors.textMuted }]}>{metric.helper}</Text> : null}
+      </View>
+      {metric.note ? (
+        <View style={stacked ? styles.infoCorner : undefined}>
+          <Info size={16} color={colors.textMuted} />
+        </View>
+      ) : null}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  titled: { borderWidth: 1, borderRadius: 10, padding: 16, gap: 12, boxShadow: STRIP_SHADOW },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', margin: -GAP / 2 },
+  titled: { borderWidth: 1, borderRadius: 10, padding: 16, gap: 12, boxShadow: TILE_SHADOW },
   heading: { gap: 2 },
   title: { fontFamily: fonts.semibold, fontSize: 15 },
   subtitle: { fontFamily: fonts.bold, fontSize: 12 },
-  card: { borderWidth: 1, borderRadius: 10, overflow: 'hidden', boxShadow: STRIP_SHADOW },
-  row: { flexDirection: 'row' },
-  tile: { flex: 1, alignItems: 'center', paddingVertical: 10, paddingHorizontal: 12, gap: 2 },
-  rule: { position: 'absolute', left: 0, top: 10, bottom: 10, width: 1 },
-  label: { fontFamily: fonts.medium, fontSize: 12, textAlign: 'center' },
-  value: { fontFamily: fonts.bold, fontSize: 20, lineHeight: 23, textAlign: 'center' },
-  helper: { fontFamily: fonts.medium, fontSize: 12, textAlign: 'center' },
+  tile: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    boxShadow: TILE_SHADOW,
+  },
+  stacked: { flexDirection: 'column', gap: 8 },
+  infoCorner: { position: 'absolute', top: 12, right: 12 },
+  icon: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  words: { flexGrow: 1, flexShrink: 1, minWidth: 0, gap: 1 },
+  value: { fontFamily: fonts.bold, fontSize: 20, lineHeight: 24 },
+  label: { fontFamily: fonts.medium, fontSize: 13 },
+  helper: { fontFamily: fonts.medium, fontSize: 12 },
 });

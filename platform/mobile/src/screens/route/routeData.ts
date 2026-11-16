@@ -6,7 +6,7 @@
  */
 import { create } from '@bufbuild/protobuf';
 
-import type { Itinerary, RouteLeg, RouteTotals, SchoolPin } from '../../gen/edify/routes/v1/routes_pb';
+import type { Itinerary, RouteLeg, RouteTotals, SavedFieldDay, SchoolPin } from '../../gen/edify/routes/v1/routes_pb';
 import type { NavSection } from '../../gen/edify/screens/v1/navigation_pb';
 import { NavItemSchema, NavSectionSchema } from '../../gen/edify/screens/v1/navigation_pb';
 
@@ -133,4 +133,30 @@ export function placedStops(itinerary: Itinerary | undefined): SchoolPin[] {
 /** "Nakasero P/S": the design's short name on a map card. */
 export function shortName(name: string): string {
   return name.replace(/\bPrimary School\b/i, 'P/S').replace(/\bPrimary\b$/i, 'P/S');
+}
+
+/** Where the reader's field day stands, and what they may press next (as the web's lib/routePlanner). */
+export interface FieldDayState {
+  readonly phase: 'unsaved' | 'saved' | 'started' | 'ended';
+  readonly running: boolean;
+  readonly canSave: boolean;
+  readonly canStart: boolean;
+}
+
+export function fieldDayState(saved: SavedFieldDay | undefined, date: string, todayDate: string): FieldDayState {
+  if (saved?.endedAt) return { phase: 'ended', running: false, canSave: false, canStart: false };
+  if (saved?.startedAt) return { phase: 'started', running: true, canSave: false, canStart: false };
+  return { phase: saved?.savedAt ? 'saved' : 'unsaved', running: false, canSave: true, canStart: date === todayDate };
+}
+
+/** Kampala is UTC+3 all year. */
+const KAMPALA_OFFSET_MS = 3 * 60 * 60 * 1000;
+
+/** "08:02": a recorded time on the Kampala clock; empty for none. */
+export function dayClock(rfc3339: string): string {
+  if (!rfc3339) return '';
+  const at = new Date(rfc3339).getTime();
+  if (Number.isNaN(at)) return '';
+  const local = new Date(at + KAMPALA_OFFSET_MS);
+  return `${String(local.getUTCHours()).padStart(2, '0')}:${String(local.getUTCMinutes()).padStart(2, '0')}`;
 }

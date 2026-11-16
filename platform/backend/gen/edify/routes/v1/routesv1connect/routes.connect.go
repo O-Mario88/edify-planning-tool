@@ -69,6 +69,12 @@ const (
 	// RoutePlannerServiceGetLocationHistoryProcedure is the fully-qualified name of the
 	// RoutePlannerService's GetLocationHistory RPC.
 	RoutePlannerServiceGetLocationHistoryProcedure = "/edify.routes.v1.RoutePlannerService/GetLocationHistory"
+	// RoutePlannerServiceSaveFieldDayProcedure is the fully-qualified name of the RoutePlannerService's
+	// SaveFieldDay RPC.
+	RoutePlannerServiceSaveFieldDayProcedure = "/edify.routes.v1.RoutePlannerService/SaveFieldDay"
+	// RoutePlannerServiceRecordFieldDayProcedure is the fully-qualified name of the
+	// RoutePlannerService's RecordFieldDay RPC.
+	RoutePlannerServiceRecordFieldDayProcedure = "/edify.routes.v1.RoutePlannerService/RecordFieldDay"
 )
 
 // RoutePlannerServiceClient is a client for the edify.routes.v1.RoutePlannerService service.
@@ -105,6 +111,14 @@ type RoutePlannerServiceClient interface {
 	ListLocationChanges(context.Context, *connect.Request[v1.ListLocationChangesRequest]) (*connect.Response[v1.ListLocationChangesResponse], error)
 	// One school's location history: every capture and report and its decision.
 	GetLocationHistory(context.Context, *connect.Request[v1.GetLocationHistoryRequest]) (*connect.Response[v1.GetLocationHistoryResponse], error)
+	// Save Plan: keep the reader's visiting order for a day, so the planner
+	// opens on it on any device. Saving again replaces it. Nothing is
+	// scheduled, moved or completed.
+	SaveFieldDay(context.Context, *connect.Request[v1.SaveFieldDayRequest]) (*connect.Response[v1.SaveFieldDayResponse], error)
+	// Start Field Day and what follows it: start the day (today only), arrive
+	// at and leave each stop, end the day. The times are the reader's record
+	// of the day; they complete no activity.
+	RecordFieldDay(context.Context, *connect.Request[v1.RecordFieldDayRequest]) (*connect.Response[v1.RecordFieldDayResponse], error)
 }
 
 // NewRoutePlannerServiceClient constructs a client for the edify.routes.v1.RoutePlannerService
@@ -190,6 +204,18 @@ func NewRoutePlannerServiceClient(httpClient connect.HTTPClient, baseURL string,
 			connect.WithSchema(routePlannerServiceMethods.ByName("GetLocationHistory")),
 			connect.WithClientOptions(opts...),
 		),
+		saveFieldDay: connect.NewClient[v1.SaveFieldDayRequest, v1.SaveFieldDayResponse](
+			httpClient,
+			baseURL+RoutePlannerServiceSaveFieldDayProcedure,
+			connect.WithSchema(routePlannerServiceMethods.ByName("SaveFieldDay")),
+			connect.WithClientOptions(opts...),
+		),
+		recordFieldDay: connect.NewClient[v1.RecordFieldDayRequest, v1.RecordFieldDayResponse](
+			httpClient,
+			baseURL+RoutePlannerServiceRecordFieldDayProcedure,
+			connect.WithSchema(routePlannerServiceMethods.ByName("RecordFieldDay")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -207,6 +233,8 @@ type routePlannerServiceClient struct {
 	getOfflinePack        *connect.Client[v1.GetOfflinePackRequest, v1.GetOfflinePackResponse]
 	listLocationChanges   *connect.Client[v1.ListLocationChangesRequest, v1.ListLocationChangesResponse]
 	getLocationHistory    *connect.Client[v1.GetLocationHistoryRequest, v1.GetLocationHistoryResponse]
+	saveFieldDay          *connect.Client[v1.SaveFieldDayRequest, v1.SaveFieldDayResponse]
+	recordFieldDay        *connect.Client[v1.RecordFieldDayRequest, v1.RecordFieldDayResponse]
 }
 
 // GetFieldDay calls edify.routes.v1.RoutePlannerService.GetFieldDay.
@@ -269,6 +297,16 @@ func (c *routePlannerServiceClient) GetLocationHistory(ctx context.Context, req 
 	return c.getLocationHistory.CallUnary(ctx, req)
 }
 
+// SaveFieldDay calls edify.routes.v1.RoutePlannerService.SaveFieldDay.
+func (c *routePlannerServiceClient) SaveFieldDay(ctx context.Context, req *connect.Request[v1.SaveFieldDayRequest]) (*connect.Response[v1.SaveFieldDayResponse], error) {
+	return c.saveFieldDay.CallUnary(ctx, req)
+}
+
+// RecordFieldDay calls edify.routes.v1.RoutePlannerService.RecordFieldDay.
+func (c *routePlannerServiceClient) RecordFieldDay(ctx context.Context, req *connect.Request[v1.RecordFieldDayRequest]) (*connect.Response[v1.RecordFieldDayResponse], error) {
+	return c.recordFieldDay.CallUnary(ctx, req)
+}
+
 // RoutePlannerServiceHandler is an implementation of the edify.routes.v1.RoutePlannerService
 // service.
 type RoutePlannerServiceHandler interface {
@@ -304,6 +342,14 @@ type RoutePlannerServiceHandler interface {
 	ListLocationChanges(context.Context, *connect.Request[v1.ListLocationChangesRequest]) (*connect.Response[v1.ListLocationChangesResponse], error)
 	// One school's location history: every capture and report and its decision.
 	GetLocationHistory(context.Context, *connect.Request[v1.GetLocationHistoryRequest]) (*connect.Response[v1.GetLocationHistoryResponse], error)
+	// Save Plan: keep the reader's visiting order for a day, so the planner
+	// opens on it on any device. Saving again replaces it. Nothing is
+	// scheduled, moved or completed.
+	SaveFieldDay(context.Context, *connect.Request[v1.SaveFieldDayRequest]) (*connect.Response[v1.SaveFieldDayResponse], error)
+	// Start Field Day and what follows it: start the day (today only), arrive
+	// at and leave each stop, end the day. The times are the reader's record
+	// of the day; they complete no activity.
+	RecordFieldDay(context.Context, *connect.Request[v1.RecordFieldDayRequest]) (*connect.Response[v1.RecordFieldDayResponse], error)
 }
 
 // NewRoutePlannerServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -385,6 +431,18 @@ func NewRoutePlannerServiceHandler(svc RoutePlannerServiceHandler, opts ...conne
 		connect.WithSchema(routePlannerServiceMethods.ByName("GetLocationHistory")),
 		connect.WithHandlerOptions(opts...),
 	)
+	routePlannerServiceSaveFieldDayHandler := connect.NewUnaryHandler(
+		RoutePlannerServiceSaveFieldDayProcedure,
+		svc.SaveFieldDay,
+		connect.WithSchema(routePlannerServiceMethods.ByName("SaveFieldDay")),
+		connect.WithHandlerOptions(opts...),
+	)
+	routePlannerServiceRecordFieldDayHandler := connect.NewUnaryHandler(
+		RoutePlannerServiceRecordFieldDayProcedure,
+		svc.RecordFieldDay,
+		connect.WithSchema(routePlannerServiceMethods.ByName("RecordFieldDay")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/edify.routes.v1.RoutePlannerService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case RoutePlannerServiceGetFieldDayProcedure:
@@ -411,6 +469,10 @@ func NewRoutePlannerServiceHandler(svc RoutePlannerServiceHandler, opts ...conne
 			routePlannerServiceListLocationChangesHandler.ServeHTTP(w, r)
 		case RoutePlannerServiceGetLocationHistoryProcedure:
 			routePlannerServiceGetLocationHistoryHandler.ServeHTTP(w, r)
+		case RoutePlannerServiceSaveFieldDayProcedure:
+			routePlannerServiceSaveFieldDayHandler.ServeHTTP(w, r)
+		case RoutePlannerServiceRecordFieldDayProcedure:
+			routePlannerServiceRecordFieldDayHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -466,4 +528,12 @@ func (UnimplementedRoutePlannerServiceHandler) ListLocationChanges(context.Conte
 
 func (UnimplementedRoutePlannerServiceHandler) GetLocationHistory(context.Context, *connect.Request[v1.GetLocationHistoryRequest]) (*connect.Response[v1.GetLocationHistoryResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.routes.v1.RoutePlannerService.GetLocationHistory is not implemented"))
+}
+
+func (UnimplementedRoutePlannerServiceHandler) SaveFieldDay(context.Context, *connect.Request[v1.SaveFieldDayRequest]) (*connect.Response[v1.SaveFieldDayResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.routes.v1.RoutePlannerService.SaveFieldDay is not implemented"))
+}
+
+func (UnimplementedRoutePlannerServiceHandler) RecordFieldDay(context.Context, *connect.Request[v1.RecordFieldDayRequest]) (*connect.Response[v1.RecordFieldDayResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.routes.v1.RoutePlannerService.RecordFieldDay is not implemented"))
 }

@@ -31,6 +31,8 @@ const (
 	RoutePlannerService_GetOfflinePack_FullMethodName        = "/edify.routes.v1.RoutePlannerService/GetOfflinePack"
 	RoutePlannerService_ListLocationChanges_FullMethodName   = "/edify.routes.v1.RoutePlannerService/ListLocationChanges"
 	RoutePlannerService_GetLocationHistory_FullMethodName    = "/edify.routes.v1.RoutePlannerService/GetLocationHistory"
+	RoutePlannerService_SaveFieldDay_FullMethodName          = "/edify.routes.v1.RoutePlannerService/SaveFieldDay"
+	RoutePlannerService_RecordFieldDay_FullMethodName        = "/edify.routes.v1.RoutePlannerService/RecordFieldDay"
 )
 
 // RoutePlannerServiceClient is the client API for RoutePlannerService service.
@@ -84,6 +86,14 @@ type RoutePlannerServiceClient interface {
 	ListLocationChanges(ctx context.Context, in *ListLocationChangesRequest, opts ...grpc.CallOption) (*ListLocationChangesResponse, error)
 	// One school's location history: every capture and report and its decision.
 	GetLocationHistory(ctx context.Context, in *GetLocationHistoryRequest, opts ...grpc.CallOption) (*GetLocationHistoryResponse, error)
+	// Save Plan: keep the reader's visiting order for a day, so the planner
+	// opens on it on any device. Saving again replaces it. Nothing is
+	// scheduled, moved or completed.
+	SaveFieldDay(ctx context.Context, in *SaveFieldDayRequest, opts ...grpc.CallOption) (*SaveFieldDayResponse, error)
+	// Start Field Day and what follows it: start the day (today only), arrive
+	// at and leave each stop, end the day. The times are the reader's record
+	// of the day; they complete no activity.
+	RecordFieldDay(ctx context.Context, in *RecordFieldDayRequest, opts ...grpc.CallOption) (*RecordFieldDayResponse, error)
 }
 
 type routePlannerServiceClient struct {
@@ -214,6 +224,26 @@ func (c *routePlannerServiceClient) GetLocationHistory(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *routePlannerServiceClient) SaveFieldDay(ctx context.Context, in *SaveFieldDayRequest, opts ...grpc.CallOption) (*SaveFieldDayResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SaveFieldDayResponse)
+	err := c.cc.Invoke(ctx, RoutePlannerService_SaveFieldDay_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *routePlannerServiceClient) RecordFieldDay(ctx context.Context, in *RecordFieldDayRequest, opts ...grpc.CallOption) (*RecordFieldDayResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RecordFieldDayResponse)
+	err := c.cc.Invoke(ctx, RoutePlannerService_RecordFieldDay_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RoutePlannerServiceServer is the server API for RoutePlannerService service.
 // All implementations must embed UnimplementedRoutePlannerServiceServer
 // for forward compatibility.
@@ -265,6 +295,14 @@ type RoutePlannerServiceServer interface {
 	ListLocationChanges(context.Context, *ListLocationChangesRequest) (*ListLocationChangesResponse, error)
 	// One school's location history: every capture and report and its decision.
 	GetLocationHistory(context.Context, *GetLocationHistoryRequest) (*GetLocationHistoryResponse, error)
+	// Save Plan: keep the reader's visiting order for a day, so the planner
+	// opens on it on any device. Saving again replaces it. Nothing is
+	// scheduled, moved or completed.
+	SaveFieldDay(context.Context, *SaveFieldDayRequest) (*SaveFieldDayResponse, error)
+	// Start Field Day and what follows it: start the day (today only), arrive
+	// at and leave each stop, end the day. The times are the reader's record
+	// of the day; they complete no activity.
+	RecordFieldDay(context.Context, *RecordFieldDayRequest) (*RecordFieldDayResponse, error)
 	mustEmbedUnimplementedRoutePlannerServiceServer()
 }
 
@@ -310,6 +348,12 @@ func (UnimplementedRoutePlannerServiceServer) ListLocationChanges(context.Contex
 }
 func (UnimplementedRoutePlannerServiceServer) GetLocationHistory(context.Context, *GetLocationHistoryRequest) (*GetLocationHistoryResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetLocationHistory not implemented")
+}
+func (UnimplementedRoutePlannerServiceServer) SaveFieldDay(context.Context, *SaveFieldDayRequest) (*SaveFieldDayResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SaveFieldDay not implemented")
+}
+func (UnimplementedRoutePlannerServiceServer) RecordFieldDay(context.Context, *RecordFieldDayRequest) (*RecordFieldDayResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RecordFieldDay not implemented")
 }
 func (UnimplementedRoutePlannerServiceServer) mustEmbedUnimplementedRoutePlannerServiceServer() {}
 func (UnimplementedRoutePlannerServiceServer) testEmbeddedByValue()                             {}
@@ -548,6 +592,42 @@ func _RoutePlannerService_GetLocationHistory_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RoutePlannerService_SaveFieldDay_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveFieldDayRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RoutePlannerServiceServer).SaveFieldDay(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RoutePlannerService_SaveFieldDay_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RoutePlannerServiceServer).SaveFieldDay(ctx, req.(*SaveFieldDayRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RoutePlannerService_RecordFieldDay_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RecordFieldDayRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RoutePlannerServiceServer).RecordFieldDay(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RoutePlannerService_RecordFieldDay_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RoutePlannerServiceServer).RecordFieldDay(ctx, req.(*RecordFieldDayRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RoutePlannerService_ServiceDesc is the grpc.ServiceDesc for RoutePlannerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -602,6 +682,14 @@ var RoutePlannerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetLocationHistory",
 			Handler:    _RoutePlannerService_GetLocationHistory_Handler,
+		},
+		{
+			MethodName: "SaveFieldDay",
+			Handler:    _RoutePlannerService_SaveFieldDay_Handler,
+		},
+		{
+			MethodName: "RecordFieldDay",
+			Handler:    _RoutePlannerService_RecordFieldDay_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

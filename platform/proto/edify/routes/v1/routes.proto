@@ -49,6 +49,14 @@ service RoutePlannerService {
   rpc ListLocationChanges(ListLocationChangesRequest) returns (ListLocationChangesResponse);
   // One school's location history: every capture and report and its decision.
   rpc GetLocationHistory(GetLocationHistoryRequest) returns (GetLocationHistoryResponse);
+  // Save Plan: keep the reader's visiting order for a day, so the planner
+  // opens on it on any device. Saving again replaces it. Nothing is
+  // scheduled, moved or completed.
+  rpc SaveFieldDay(SaveFieldDayRequest) returns (SaveFieldDayResponse);
+  // Start Field Day and what follows it: start the day (today only), arrive
+  // at and leave each stop, end the day. The times are the reader's record
+  // of the day; they complete no activity.
+  rpc RecordFieldDay(RecordFieldDayRequest) returns (RecordFieldDayResponse);
 }
 
 message Point {
@@ -200,6 +208,49 @@ message GetFieldDayResponse {
   string area_label = 9;
   // The school the suggestions are around, when one was asked for.
   SchoolPin focus = 10;
+  // The reader's saved order and the day's record; empty when never saved.
+  SavedFieldDay saved = 11;
+}
+
+// SavedFieldDay is the reader's own record of a day: the order they saved
+// and, once started, when they started, reached and left each stop, and
+// ended. Times are RFC 3339; empty is not yet.
+message SavedFieldDay {
+  repeated string school_ids = 1;
+  string saved_at = 2;
+  string started_at = 3;
+  string ended_at = 4;
+  repeated StopCheckIn stops = 5;
+}
+
+message StopCheckIn {
+  string school_id = 1;
+  string arrived_at = 2;
+  string left_at = 3;
+}
+
+message SaveFieldDayRequest {
+  string date = 1;
+  // The schools in the order the reader keeps.
+  repeated string school_ids = 2;
+}
+
+message SaveFieldDayResponse {
+  SavedFieldDay saved = 1;
+}
+
+message RecordFieldDayRequest {
+  string date = 1;
+  // start, arrive, leave or end.
+  string event = 2;
+  // The stop arrived at or left.
+  string school_id = 3;
+  // At start: the order the day runs in, saved with it.
+  repeated string school_ids = 4;
+}
+
+message RecordFieldDayResponse {
+  SavedFieldDay saved = 1;
 }
 
 message PlanRouteRequest {

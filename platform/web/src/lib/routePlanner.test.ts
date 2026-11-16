@@ -1,9 +1,9 @@
 import { create } from '@bufbuild/protobuf';
 import { describe, expect, it } from 'vitest';
 
-import { RouteLegSchema, RouteTotalsSchema, SchoolPinSchema } from '@/gen/edify/routes/v1/routes_pb';
+import { RouteLegSchema, RouteTotalsSchema, SavedFieldDaySchema, SchoolPinSchema } from '@/gen/edify/routes/v1/routes_pb';
 
-import { directionsUrl, hoursMinutes, hrMin, km, legFigures, measureLabel, pinTone, totalFigures } from './routePlanner';
+import { dayClock, directionsUrl, fieldDayState, hoursMinutes, hrMin, km, legFigures, measureLabel, pinTone, totalFigures } from './routePlanner';
 
 describe('figures are written as the designs write them', () => {
   it.each([
@@ -60,5 +60,28 @@ describe('a profile shows its own school as the plain blue pin', () => {
   it('whatever the school is on the plan', () => {
     expect(pinTone(create(SchoolPinSchema, { status: 'other' }), 'location')).toBe('planned');
     expect(pinTone(create(SchoolPinSchema, { status: 'other' }))).toBe('other');
+  });
+});
+
+describe('the field day', () => {
+  const today = '2026-11-18';
+
+  it('can be started only on its own day', () => {
+    expect(fieldDayState(undefined, today, today)).toMatchObject({ phase: 'unsaved', canStart: true, running: false });
+    expect(fieldDayState(undefined, '2026-11-19', today)).toMatchObject({ phase: 'unsaved', canStart: false });
+  });
+
+  it('runs from start to end, and keeps its order once started', () => {
+    const saved = create(SavedFieldDaySchema, { schoolIds: ['a'], savedAt: '2026-11-18T04:50:00Z' });
+    expect(fieldDayState(saved, today, today)).toMatchObject({ phase: 'saved', canStart: true, canSave: true });
+    const started = create(SavedFieldDaySchema, { ...saved, startedAt: '2026-11-18T05:02:00Z' });
+    expect(fieldDayState(started, today, today)).toMatchObject({ phase: 'started', running: true, canStart: false, canSave: false });
+    const ended = create(SavedFieldDaySchema, { ...started, endedAt: '2026-11-18T12:00:00Z' });
+    expect(fieldDayState(ended, today, today)).toMatchObject({ phase: 'ended', running: false, canStart: false, canSave: false });
+  });
+
+  it('writes its times on the Kampala clock', () => {
+    expect(dayClock('2026-11-18T05:02:00Z')).toBe('08:02');
+    expect(dayClock('')).toBe('');
   });
 });

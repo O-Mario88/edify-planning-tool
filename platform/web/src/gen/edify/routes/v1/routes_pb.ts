@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file edify/routes/v1/routes.proto.
  */
 export const file_edify_routes_v1_routes: GenFile = /*@__PURE__*/
-  fileDesc("ChxlZGlmeS9yb3V0ZXMvdjEvcm91dGVzLnByb3RvEg9lZGlmeS5yb3V0ZXMudjEiIQoFUG9pbnQSCwoDbGF0GAEgASgBEgsKA2xuZxgCIAEoASLIAgoJU2Nob29sUGluEhEKCXNjaG9vbF9pZBgBIAEoCRIMCgRjb2RlGAIgASgJEgwKBG5hbWUYAyABKAkSEAoIZGlzdHJpY3QYBCABKAkSDwoHY2x1c3RlchgFIAEoCRIOCgZzdGF0dXMYBiABKAkSEAoIY2F0ZWdvcnkYByABKAkSFwoPbG9jYXRpb25fc3RhdHVzGAggASgJEiUKBXBvaW50GAkgASgLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50EhMKC2FjdGl2aXR5X2lkGAogASgJEhQKDHBsYW5uZWRfdGltZRgLIAEoCRIYChBjYW5fb3Blbl9wcm9maWxlGAwgASgIEhgKEGxvY2F0aW9uX3ZlcnNpb24YDSABKAUSKAoIZW50cmFuY2UYDiABKAsyFi5lZGlmeS5yb3V0ZXMudjEuUG9pbnQi6gEKCFJvdXRlTGVnEhIKCmZyb21fbGFiZWwYASABKAkSFAoMdG9fc2Nob29sX2lkGAIgASgJEhwKFHN0cmFpZ2h0X2xpbmVfbWV0ZXJzGAMgASgDEhYKDnJvYWRfYXZhaWxhYmxlGAQgASgIEhMKC3JvYWRfbWV0ZXJzGAUgASgDEhQKDHJvYWRfc2Vjb25kcxgGIAEoAxIYChBlc3RpbWF0ZV9zZWNvbmRzGAcgASgDEiQKBHBhdGgYCCADKAsyFi5lZGlmeS5yb3V0ZXMudjEuUG9pbnQSEwoLcm9hZF9zdGF0dXMYCSABKAki7AEKDUl0aW5lcmFyeVN0b3ASDQoFb3JkZXIYASABKAUSKgoGc2Nob29sGAIgASgLMhouZWRpZnkucm91dGVzLnYxLlNjaG9vbFBpbhImCgNsZWcYAyABKAsyGS5lZGlmeS5yb3V0ZXMudjEuUm91dGVMZWcSDwoHYXJyaXZhbBgEIAEoCRIRCglkZXBhcnR1cmUYBSABKAkSFQoNdmlzaXRfbWludXRlcxgGIAEoBRIOCgZsb2NrZWQYByABKAgSDQoFZml4ZWQYCCABKAgSEAoIY29uZmxpY3QYCSABKAkSDAoEa2luZBgKIAEoCSLZAQoLUm91dGVUb3RhbHMSHAoUc3RyYWlnaHRfbGluZV9tZXRlcnMYASABKAMSEwoLcm9hZF9tZXRlcnMYAiABKAMSFAoMcm9hZF9zZWNvbmRzGAMgASgDEhUKDXJvYWRfY29tcGxldGUYBCABKAgSGAoQZXN0aW1hdGVfc2Vjb25kcxgFIAEoAxIVCg12aXNpdF9taW51dGVzGAYgASgFEhUKDWZpZWxkX21pbnV0ZXMYByABKAUSEAoIc2VsZWN0ZWQYCCABKAUSEAoIZmVhc2libGUYCSABKAUiiAIKCUl0aW5lcmFyeRIMCgRtb2RlGAEgASgJEhMKC3N0YXJ0X2xhYmVsGAIgASgJEiUKBXN0YXJ0GAMgASgLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50Ei0KBXN0b3BzGAQgAygLMh4uZWRpZnkucm91dGVzLnYxLkl0aW5lcmFyeVN0b3ASLAoGdG90YWxzGAUgASgLMhwuZWRpZnkucm91dGVzLnYxLlJvdXRlVG90YWxzEhEKCWNvbmZsaWN0cxgGIAMoCRITCgtleHBsYW5hdGlvbhgHIAEoCRIsCgh1bnBsYWNlZBgIIAMoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4iuQEKClN1Z2dlc3Rpb24SKgoGc2Nob29sGAEgASgLMhouZWRpZnkucm91dGVzLnYxLlNjaG9vbFBpbhIUCgxhZGRlZF9tZXRlcnMYAiABKAMSFQoNYWRkZWRfc2Vjb25kcxgDIAEoAxIPCgdtZWFzdXJlGAQgASgJEg4KBnJlYXNvbhgFIAEoCRINCgVsYWJlbBgGIAEoCRIQCghlbGlnaWJsZRgHIAEoCBIQCghmaXRzX2RheRgIIAEoCCJDCg5Qcm92aWRlclN0YXR1cxIMCgRuYW1lGAEgASgJEhIKCmNvbmZpZ3VyZWQYAiABKAgSDwoHbWVzc2FnZRgDIAEoCSIsCgxGaWx0ZXJPcHRpb24SDQoFdmFsdWUYASABKAkSDQoFbGFiZWwYAiABKAkiYwoSR2V0RmllbGREYXlSZXF1ZXN0EgwKBGRhdGUYASABKAkSEwoLZGlzdHJpY3RfaWQYAiABKAkSEgoKY2x1c3Rlcl9pZBgDIAEoCRIWCg5uZWFyX3NjaG9vbF9pZBgEIAEoCSKcAwoTR2V0RmllbGREYXlSZXNwb25zZRIMCgRkYXRlGAEgASgJEhIKCmRhdGVfbGFiZWwYAiABKAkSKwoHcGxhbm5lZBgDIAMoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4SLwoLcmVjb21tZW5kZWQYBCABKAsyGi5lZGlmeS5yb3V0ZXMudjEuSXRpbmVyYXJ5EjAKC3N1Z2dlc3Rpb25zGAUgAygLMhsuZWRpZnkucm91dGVzLnYxLlN1Z2dlc3Rpb24SMQoIcHJvdmlkZXIYBiABKAsyHy5lZGlmeS5yb3V0ZXMudjEuUHJvdmlkZXJTdGF0dXMSMAoJZGlzdHJpY3RzGAcgAygLMh0uZWRpZnkucm91dGVzLnYxLkZpbHRlck9wdGlvbhIvCghjbHVzdGVycxgIIAMoCzIdLmVkaWZ5LnJvdXRlcy52MS5GaWx0ZXJPcHRpb24SEgoKYXJlYV9sYWJlbBgJIAEoCRIpCgVmb2N1cxgKIAEoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4imQEKEFBsYW5Sb3V0ZVJlcXVlc3QSDAoEZGF0ZRgBIAEoCRISCgpzY2hvb2xfaWRzGAIgAygJEgwKBG1vZGUYAyABKAkSGQoRbG9ja2VkX3NjaG9vbF9pZHMYBCADKAkSJQoFc3RhcnQYBSABKAsyFi5lZGlmeS5yb3V0ZXMudjEuUG9pbnQSEwoLc3RhcnRfbGFiZWwYBiABKAkidQoRUGxhblJvdXRlUmVzcG9uc2USLQoJaXRpbmVyYXJ5GAEgASgLMhouZWRpZnkucm91dGVzLnYxLkl0aW5lcmFyeRIxCghwcm92aWRlchgCIAEoCzIfLmVkaWZ5LnJvdXRlcy52MS5Qcm92aWRlclN0YXR1cyKlAQoUR2V0U2Nob29sUGluc1JlcXVlc3QSKgoKc291dGhfd2VzdBgBIAEoCzIWLmVkaWZ5LnJvdXRlcy52MS5Qb2ludBIqCgpub3J0aF9lYXN0GAIgASgLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50EhMKC2Rpc3RyaWN0X2lkGAMgASgJEhIKCmNsdXN0ZXJfaWQYBCABKAkSDAoEZGF0ZRgFIAEoCSJUChVHZXRTY2hvb2xQaW5zUmVzcG9uc2USKAoEcGlucxgBIAMoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4SEQoJdHJ1bmNhdGVkGAIgASgIIkgKGEdldFNjaG9vbERpc3RhbmNlUmVxdWVzdBIWCg5mcm9tX3NjaG9vbF9pZBgBIAEoCRIUCgx0b19zY2hvb2xfaWQYAiABKAki3wEKGUdldFNjaG9vbERpc3RhbmNlUmVzcG9uc2USJgoDbGVnGAEgASgLMhkuZWRpZnkucm91dGVzLnYxLlJvdXRlTGVnEigKBGZyb20YAiABKAsyGi5lZGlmeS5yb3V0ZXMudjEuU2Nob29sUGluEiYKAnRvGAMgASgLMhouZWRpZnkucm91dGVzLnYxLlNjaG9vbFBpbhIxCghwcm92aWRlchgEIAEoCzIfLmVkaWZ5LnJvdXRlcy52MS5Qcm92aWRlclN0YXR1cxIVCg1jYWxjdWxhdGVkX2F0GAUgASgJIi0KGEdldFNjaG9vbExvY2F0aW9uUmVxdWVzdBIRCglzY2hvb2xfaWQYASABKAkiywMKGUdldFNjaG9vbExvY2F0aW9uUmVzcG9uc2USKgoGc2Nob29sGAEgASgLMhouZWRpZnkucm91dGVzLnYxLlNjaG9vbFBpbhIWCg5uZWFyYnlfc2Nob29scxgCIAEoBRIYChBuZWFyYnlfcmFkaXVzX2ttGAMgASgBEhAKCGNhbl9wbGFuGAQgASgIEhIKCmNhbl9yZXBvcnQYBSABKAgSNwoOcGVuZGluZ19yZXBvcnQYBiABKAsyHy5lZGlmeS5yb3V0ZXMudjEuTG9jYXRpb25SZXBvcnQSEwoLYWNjZXNzX25vdGUYByABKAkSEgoKY2FuX3JldmlldxgIIAEoCBIPCgd2ZXJzaW9uGAkgASgFEhMKC3ZlcmlmaWVkX2F0GAogASgJEhgKEHZlcmlmaWVkX2J5X25hbWUYCyABKAkSKAoIZW50cmFuY2UYDCABKAsyFi5lZGlmeS5yb3V0ZXMudjEuUG9pbnQSLgoGcG9saWN5GA0gASgLMh4uZWRpZnkucm91dGVzLnYxLkNhcHR1cmVQb2xpY3kSEwoLY2FuX2NhcHR1cmUYDiABKAgSGQoRbGFzdF9jb25maXJtZWRfYXQYDyABKAkiXwoNQ2FwdHVyZVBvbGljeRIOCgZnb29kX20YASABKAESEQoJY29uZmlybV9tGAIgASgBEhUKDWZyZXNoX3NlY29uZHMYAyABKAUSFAoMbGFyZ2VfbW92ZV9tGAQgASgFIsAECg5Mb2NhdGlvblJlcG9ydBIKCgJpZBgBIAEoCRIqCgZzY2hvb2wYAiABKAsyGi5lZGlmeS5yb3V0ZXMudjEuU2Nob29sUGluEgwKBGtpbmQYAyABKAkSKAoIcHJvcG9zZWQYBCABKAsyFi5lZGlmeS5yb3V0ZXMudjEuUG9pbnQSFAoMcG9pbnRfc291cmNlGAUgASgJEhIKCmFjY3VyYWN5X20YBiABKAESEwoLYWNjZXNzX25vdGUYByABKAkSDAoEbm90ZRgIIAEoCRIoCghwcmV2aW91cxgJIAEoCzIWLmVkaWZ5LnJvdXRlcy52MS5Qb2ludBIUCgxtb3ZlZF9tZXRlcnMYCiABKAMSDgoGc3RhdHVzGAsgASgJEhgKEHJlcG9ydGVkX2J5X25hbWUYDCABKAkSEwoLcmVwb3J0ZWRfYXQYDSABKAkSGAoQcmV2aWV3ZWRfYnlfbmFtZRgOIAEoCRITCgtyZXZpZXdlZF9hdBgPIAEoCRITCgtyZXZpZXdfbm90ZRgQIAEoCRIOCgZpc19vd24YESABKAgSDgoGdGFyZ2V0GBIgASgJEg0KBWZsYWdzGBMgAygJEhMKC2NhcHR1cmVkX2F0GBQgASgJEhYKDnJlc3VsdF92ZXJzaW9uGBUgASgFEhQKDGNhcHR1cmVfa2luZBgWIAEoCRIUCgxzYW1wbGVfY291bnQYFyABKAUSEAoIc3ByZWFkX20YGCABKAESFAoMYmFzZV92ZXJzaW9uGBkgASgFIqwCChxTdWJtaXRMb2NhdGlvbkNhcHR1cmVSZXF1ZXN0EhIKCmNhcHR1cmVfaWQYASABKAkSEQoJc2Nob29sX2lkGAIgASgJEg4KBnRhcmdldBgDIAEoCRIMCgRraW5kGAQgASgJEiUKBXBvaW50GAUgASgLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50EhQKDHBvaW50X3NvdXJjZRgGIAEoCRISCgphY2N1cmFjeV9tGAcgASgBEhMKC2NhcHR1cmVkX2F0GAggASgJEhQKDHNhbXBsZV9jb3VudBgJIAEoBRIQCghzcHJlYWRfbRgKIAEoARIUCgxiYXNlX3ZlcnNpb24YCyABKAUSDgoGcmVhc29uGAwgASgJEhMKC2FjY2Vzc19ub3RlGA0gASgJIrABCh1TdWJtaXRMb2NhdGlvbkNhcHR1cmVSZXNwb25zZRIwCgdjYXB0dXJlGAEgASgLMh8uZWRpZnkucm91dGVzLnYxLkxvY2F0aW9uUmVwb3J0Eg8KB291dGNvbWUYAiABKAkSDwoHdmVyc2lvbhgDIAEoBRIqCgZzY2hvb2wYBCABKAsyGi5lZGlmeS5yb3V0ZXMudjEuU2Nob29sUGluEg8KB21lc3NhZ2UYBSABKAkiJQoVR2V0T2ZmbGluZVBhY2tSZXF1ZXN0EgwKBGRheXMYASABKAUilQEKDU9mZmxpbmVTY2hvb2wSKgoGc2Nob29sGAEgASgLMhouZWRpZnkucm91dGVzLnYxLlNjaG9vbFBpbhITCgt2ZXJpZmllZF9hdBgCIAEoCRITCgthY2Nlc3Nfbm90ZRgDIAEoCRITCgtoYXNfcGVuZGluZxgEIAEoCBIZChFsYXN0X2NvbmZpcm1lZF9hdBgFIAEoCSJECgxQbGFubmVkVmlzaXQSDAoEZGF0ZRgBIAEoCRIRCglzY2hvb2xfaWQYAiABKAkSEwoLYWN0aXZpdHlfaWQYAyABKAki+wEKFkdldE9mZmxpbmVQYWNrUmVzcG9uc2USLwoHc2Nob29scxgBIAMoCzIeLmVkaWZ5LnJvdXRlcy52MS5PZmZsaW5lU2Nob29sEi4KB3BsYW5uZWQYAiADKAsyHS5lZGlmeS5yb3V0ZXMudjEuUGxhbm5lZFZpc2l0EhQKDGdlbmVyYXRlZF9hdBgDIAEoCRIuCgZwb2xpY3kYBCABKAsyHi5lZGlmeS5yb3V0ZXMudjEuQ2FwdHVyZVBvbGljeRITCgtjYW5fY2FwdHVyZRgFIAEoCBIRCgl0cnVuY2F0ZWQYBiABKAgSEgoKY2FuX3JldmlldxgHIAEoCCJ/Cg5Mb2NhdGlvbkNoYW5nZRIRCglzY2hvb2xfaWQYASABKAkSDgoGdGFyZ2V0GAIgASgJEg8KB3ZlcnNpb24YAyABKAUSJQoFcG9pbnQYBCABKAsyFi5lZGlmeS5yb3V0ZXMudjEuUG9pbnQSEgoKY2hhbmdlZF9hdBgFIAEoCSIrChpMaXN0TG9jYXRpb25DaGFuZ2VzUmVxdWVzdBINCgVzaW5jZRgBIAEoCSJcChtMaXN0TG9jYXRpb25DaGFuZ2VzUmVzcG9uc2USMAoHY2hhbmdlcxgBIAMoCzIfLmVkaWZ5LnJvdXRlcy52MS5Mb2NhdGlvbkNoYW5nZRILCgNub3cYAiABKAkiLgoZR2V0TG9jYXRpb25IaXN0b3J5UmVxdWVzdBIRCglzY2hvb2xfaWQYASABKAkiegoaR2V0TG9jYXRpb25IaXN0b3J5UmVzcG9uc2USKgoGc2Nob29sGAEgASgLMhouZWRpZnkucm91dGVzLnYxLlNjaG9vbFBpbhIwCgdlbnRyaWVzGAIgAygLMh8uZWRpZnkucm91dGVzLnYxLkxvY2F0aW9uUmVwb3J0Is4BChtSZXBvcnRTY2hvb2xMb2NhdGlvblJlcXVlc3QSEQoJc2Nob29sX2lkGAEgASgJEgwKBGtpbmQYAiABKAkSKAoIcHJvcG9zZWQYAyABKAsyFi5lZGlmeS5yb3V0ZXMudjEuUG9pbnQSFAoMcG9pbnRfc291cmNlGAQgASgJEhIKCmFjY3VyYWN5X20YBSABKAESEwoLYWNjZXNzX25vdGUYBiABKAkSDAoEbm90ZRgHIAEoCRIXCg9pZGVtcG90ZW5jeV9rZXkYCCABKAkiTwocUmVwb3J0U2Nob29sTG9jYXRpb25SZXNwb25zZRIvCgZyZXBvcnQYASABKAsyHy5lZGlmeS5yb3V0ZXMudjEuTG9jYXRpb25SZXBvcnQiLAoaTGlzdExvY2F0aW9uUmVwb3J0c1JlcXVlc3QSDgoGc3RhdHVzGAEgASgJIk8KG0xpc3RMb2NhdGlvblJlcG9ydHNSZXNwb25zZRIwCgdyZXBvcnRzGAEgAygLMh8uZWRpZnkucm91dGVzLnYxLkxvY2F0aW9uUmVwb3J0IlAKG1Jldmlld0xvY2F0aW9uUmVwb3J0UmVxdWVzdBIRCglyZXBvcnRfaWQYASABKAkSEAoIZGVjaXNpb24YAiABKAkSDAoEbm90ZRgDIAEoCSJPChxSZXZpZXdMb2NhdGlvblJlcG9ydFJlc3BvbnNlEi8KBnJlcG9ydBgBIAEoCzIfLmVkaWZ5LnJvdXRlcy52MS5Mb2NhdGlvblJlcG9ydDKTCgoTUm91dGVQbGFubmVyU2VydmljZRJYCgtHZXRGaWVsZERheRIjLmVkaWZ5LnJvdXRlcy52MS5HZXRGaWVsZERheVJlcXVlc3QaJC5lZGlmeS5yb3V0ZXMudjEuR2V0RmllbGREYXlSZXNwb25zZRJSCglQbGFuUm91dGUSIS5lZGlmeS5yb3V0ZXMudjEuUGxhblJvdXRlUmVxdWVzdBoiLmVkaWZ5LnJvdXRlcy52MS5QbGFuUm91dGVSZXNwb25zZRJeCg1HZXRTY2hvb2xQaW5zEiUuZWRpZnkucm91dGVzLnYxLkdldFNjaG9vbFBpbnNSZXF1ZXN0GiYuZWRpZnkucm91dGVzLnYxLkdldFNjaG9vbFBpbnNSZXNwb25zZRJqChFHZXRTY2hvb2xEaXN0YW5jZRIpLmVkaWZ5LnJvdXRlcy52MS5HZXRTY2hvb2xEaXN0YW5jZVJlcXVlc3QaKi5lZGlmeS5yb3V0ZXMudjEuR2V0U2Nob29sRGlzdGFuY2VSZXNwb25zZRJqChFHZXRTY2hvb2xMb2NhdGlvbhIpLmVkaWZ5LnJvdXRlcy52MS5HZXRTY2hvb2xMb2NhdGlvblJlcXVlc3QaKi5lZGlmeS5yb3V0ZXMudjEuR2V0U2Nob29sTG9jYXRpb25SZXNwb25zZRJzChRSZXBvcnRTY2hvb2xMb2NhdGlvbhIsLmVkaWZ5LnJvdXRlcy52MS5SZXBvcnRTY2hvb2xMb2NhdGlvblJlcXVlc3QaLS5lZGlmeS5yb3V0ZXMudjEuUmVwb3J0U2Nob29sTG9jYXRpb25SZXNwb25zZRJwChNMaXN0TG9jYXRpb25SZXBvcnRzEisuZWRpZnkucm91dGVzLnYxLkxpc3RMb2NhdGlvblJlcG9ydHNSZXF1ZXN0GiwuZWRpZnkucm91dGVzLnYxLkxpc3RMb2NhdGlvblJlcG9ydHNSZXNwb25zZRJzChRSZXZpZXdMb2NhdGlvblJlcG9ydBIsLmVkaWZ5LnJvdXRlcy52MS5SZXZpZXdMb2NhdGlvblJlcG9ydFJlcXVlc3QaLS5lZGlmeS5yb3V0ZXMudjEuUmV2aWV3TG9jYXRpb25SZXBvcnRSZXNwb25zZRJ2ChVTdWJtaXRMb2NhdGlvbkNhcHR1cmUSLS5lZGlmeS5yb3V0ZXMudjEuU3VibWl0TG9jYXRpb25DYXB0dXJlUmVxdWVzdBouLmVkaWZ5LnJvdXRlcy52MS5TdWJtaXRMb2NhdGlvbkNhcHR1cmVSZXNwb25zZRJhCg5HZXRPZmZsaW5lUGFjaxImLmVkaWZ5LnJvdXRlcy52MS5HZXRPZmZsaW5lUGFja1JlcXVlc3QaJy5lZGlmeS5yb3V0ZXMudjEuR2V0T2ZmbGluZVBhY2tSZXNwb25zZRJwChNMaXN0TG9jYXRpb25DaGFuZ2VzEisuZWRpZnkucm91dGVzLnYxLkxpc3RMb2NhdGlvbkNoYW5nZXNSZXF1ZXN0GiwuZWRpZnkucm91dGVzLnYxLkxpc3RMb2NhdGlvbkNoYW5nZXNSZXNwb25zZRJtChJHZXRMb2NhdGlvbkhpc3RvcnkSKi5lZGlmeS5yb3V0ZXMudjEuR2V0TG9jYXRpb25IaXN0b3J5UmVxdWVzdBorLmVkaWZ5LnJvdXRlcy52MS5HZXRMb2NhdGlvbkhpc3RvcnlSZXNwb25zZULYAQoTY29tLmVkaWZ5LnJvdXRlcy52MUILUm91dGVzUHJvdG9QAVpWZ2l0aHViLmNvbS9PLU1hcmlvODgvZWRpZnktcGxhbm5pbmctdG9vbC9wbGF0Zm9ybS9iYWNrZW5kL2dlbi9lZGlmeS9yb3V0ZXMvdjE7cm91dGVzdjGiAgNFUliqAg9FZGlmeS5Sb3V0ZXMuVjHKAg9FZGlmeVxSb3V0ZXNcVjHiAhtFZGlmeVxSb3V0ZXNcVjFcR1BCTWV0YWRhdGHqAhFFZGlmeTo6Um91dGVzOjpWMWIGcHJvdG8z");
+  fileDesc("ChxlZGlmeS9yb3V0ZXMvdjEvcm91dGVzLnByb3RvEg9lZGlmeS5yb3V0ZXMudjEiIQoFUG9pbnQSCwoDbGF0GAEgASgBEgsKA2xuZxgCIAEoASLIAgoJU2Nob29sUGluEhEKCXNjaG9vbF9pZBgBIAEoCRIMCgRjb2RlGAIgASgJEgwKBG5hbWUYAyABKAkSEAoIZGlzdHJpY3QYBCABKAkSDwoHY2x1c3RlchgFIAEoCRIOCgZzdGF0dXMYBiABKAkSEAoIY2F0ZWdvcnkYByABKAkSFwoPbG9jYXRpb25fc3RhdHVzGAggASgJEiUKBXBvaW50GAkgASgLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50EhMKC2FjdGl2aXR5X2lkGAogASgJEhQKDHBsYW5uZWRfdGltZRgLIAEoCRIYChBjYW5fb3Blbl9wcm9maWxlGAwgASgIEhgKEGxvY2F0aW9uX3ZlcnNpb24YDSABKAUSKAoIZW50cmFuY2UYDiABKAsyFi5lZGlmeS5yb3V0ZXMudjEuUG9pbnQi6gEKCFJvdXRlTGVnEhIKCmZyb21fbGFiZWwYASABKAkSFAoMdG9fc2Nob29sX2lkGAIgASgJEhwKFHN0cmFpZ2h0X2xpbmVfbWV0ZXJzGAMgASgDEhYKDnJvYWRfYXZhaWxhYmxlGAQgASgIEhMKC3JvYWRfbWV0ZXJzGAUgASgDEhQKDHJvYWRfc2Vjb25kcxgGIAEoAxIYChBlc3RpbWF0ZV9zZWNvbmRzGAcgASgDEiQKBHBhdGgYCCADKAsyFi5lZGlmeS5yb3V0ZXMudjEuUG9pbnQSEwoLcm9hZF9zdGF0dXMYCSABKAki7AEKDUl0aW5lcmFyeVN0b3ASDQoFb3JkZXIYASABKAUSKgoGc2Nob29sGAIgASgLMhouZWRpZnkucm91dGVzLnYxLlNjaG9vbFBpbhImCgNsZWcYAyABKAsyGS5lZGlmeS5yb3V0ZXMudjEuUm91dGVMZWcSDwoHYXJyaXZhbBgEIAEoCRIRCglkZXBhcnR1cmUYBSABKAkSFQoNdmlzaXRfbWludXRlcxgGIAEoBRIOCgZsb2NrZWQYByABKAgSDQoFZml4ZWQYCCABKAgSEAoIY29uZmxpY3QYCSABKAkSDAoEa2luZBgKIAEoCSLZAQoLUm91dGVUb3RhbHMSHAoUc3RyYWlnaHRfbGluZV9tZXRlcnMYASABKAMSEwoLcm9hZF9tZXRlcnMYAiABKAMSFAoMcm9hZF9zZWNvbmRzGAMgASgDEhUKDXJvYWRfY29tcGxldGUYBCABKAgSGAoQZXN0aW1hdGVfc2Vjb25kcxgFIAEoAxIVCg12aXNpdF9taW51dGVzGAYgASgFEhUKDWZpZWxkX21pbnV0ZXMYByABKAUSEAoIc2VsZWN0ZWQYCCABKAUSEAoIZmVhc2libGUYCSABKAUiiAIKCUl0aW5lcmFyeRIMCgRtb2RlGAEgASgJEhMKC3N0YXJ0X2xhYmVsGAIgASgJEiUKBXN0YXJ0GAMgASgLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50Ei0KBXN0b3BzGAQgAygLMh4uZWRpZnkucm91dGVzLnYxLkl0aW5lcmFyeVN0b3ASLAoGdG90YWxzGAUgASgLMhwuZWRpZnkucm91dGVzLnYxLlJvdXRlVG90YWxzEhEKCWNvbmZsaWN0cxgGIAMoCRITCgtleHBsYW5hdGlvbhgHIAEoCRIsCgh1bnBsYWNlZBgIIAMoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4iuQEKClN1Z2dlc3Rpb24SKgoGc2Nob29sGAEgASgLMhouZWRpZnkucm91dGVzLnYxLlNjaG9vbFBpbhIUCgxhZGRlZF9tZXRlcnMYAiABKAMSFQoNYWRkZWRfc2Vjb25kcxgDIAEoAxIPCgdtZWFzdXJlGAQgASgJEg4KBnJlYXNvbhgFIAEoCRINCgVsYWJlbBgGIAEoCRIQCghlbGlnaWJsZRgHIAEoCBIQCghmaXRzX2RheRgIIAEoCCJDCg5Qcm92aWRlclN0YXR1cxIMCgRuYW1lGAEgASgJEhIKCmNvbmZpZ3VyZWQYAiABKAgSDwoHbWVzc2FnZRgDIAEoCSIsCgxGaWx0ZXJPcHRpb24SDQoFdmFsdWUYASABKAkSDQoFbGFiZWwYAiABKAkiYwoSR2V0RmllbGREYXlSZXF1ZXN0EgwKBGRhdGUYASABKAkSEwoLZGlzdHJpY3RfaWQYAiABKAkSEgoKY2x1c3Rlcl9pZBgDIAEoCRIWCg5uZWFyX3NjaG9vbF9pZBgEIAEoCSLLAwoTR2V0RmllbGREYXlSZXNwb25zZRIMCgRkYXRlGAEgASgJEhIKCmRhdGVfbGFiZWwYAiABKAkSKwoHcGxhbm5lZBgDIAMoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4SLwoLcmVjb21tZW5kZWQYBCABKAsyGi5lZGlmeS5yb3V0ZXMudjEuSXRpbmVyYXJ5EjAKC3N1Z2dlc3Rpb25zGAUgAygLMhsuZWRpZnkucm91dGVzLnYxLlN1Z2dlc3Rpb24SMQoIcHJvdmlkZXIYBiABKAsyHy5lZGlmeS5yb3V0ZXMudjEuUHJvdmlkZXJTdGF0dXMSMAoJZGlzdHJpY3RzGAcgAygLMh0uZWRpZnkucm91dGVzLnYxLkZpbHRlck9wdGlvbhIvCghjbHVzdGVycxgIIAMoCzIdLmVkaWZ5LnJvdXRlcy52MS5GaWx0ZXJPcHRpb24SEgoKYXJlYV9sYWJlbBgJIAEoCRIpCgVmb2N1cxgKIAEoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4SLQoFc2F2ZWQYCyABKAsyHi5lZGlmeS5yb3V0ZXMudjEuU2F2ZWRGaWVsZERheSKIAQoNU2F2ZWRGaWVsZERheRISCgpzY2hvb2xfaWRzGAEgAygJEhAKCHNhdmVkX2F0GAIgASgJEhIKCnN0YXJ0ZWRfYXQYAyABKAkSEAoIZW5kZWRfYXQYBCABKAkSKwoFc3RvcHMYBSADKAsyHC5lZGlmeS5yb3V0ZXMudjEuU3RvcENoZWNrSW4iRQoLU3RvcENoZWNrSW4SEQoJc2Nob29sX2lkGAEgASgJEhIKCmFycml2ZWRfYXQYAiABKAkSDwoHbGVmdF9hdBgDIAEoCSI3ChNTYXZlRmllbGREYXlSZXF1ZXN0EgwKBGRhdGUYASABKAkSEgoKc2Nob29sX2lkcxgCIAMoCSJFChRTYXZlRmllbGREYXlSZXNwb25zZRItCgVzYXZlZBgBIAEoCzIeLmVkaWZ5LnJvdXRlcy52MS5TYXZlZEZpZWxkRGF5IlsKFVJlY29yZEZpZWxkRGF5UmVxdWVzdBIMCgRkYXRlGAEgASgJEg0KBWV2ZW50GAIgASgJEhEKCXNjaG9vbF9pZBgDIAEoCRISCgpzY2hvb2xfaWRzGAQgAygJIkcKFlJlY29yZEZpZWxkRGF5UmVzcG9uc2USLQoFc2F2ZWQYASABKAsyHi5lZGlmeS5yb3V0ZXMudjEuU2F2ZWRGaWVsZERheSKZAQoQUGxhblJvdXRlUmVxdWVzdBIMCgRkYXRlGAEgASgJEhIKCnNjaG9vbF9pZHMYAiADKAkSDAoEbW9kZRgDIAEoCRIZChFsb2NrZWRfc2Nob29sX2lkcxgEIAMoCRIlCgVzdGFydBgFIAEoCzIWLmVkaWZ5LnJvdXRlcy52MS5Qb2ludBITCgtzdGFydF9sYWJlbBgGIAEoCSJ1ChFQbGFuUm91dGVSZXNwb25zZRItCglpdGluZXJhcnkYASABKAsyGi5lZGlmeS5yb3V0ZXMudjEuSXRpbmVyYXJ5EjEKCHByb3ZpZGVyGAIgASgLMh8uZWRpZnkucm91dGVzLnYxLlByb3ZpZGVyU3RhdHVzIqUBChRHZXRTY2hvb2xQaW5zUmVxdWVzdBIqCgpzb3V0aF93ZXN0GAEgASgLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50EioKCm5vcnRoX2Vhc3QYAiABKAsyFi5lZGlmeS5yb3V0ZXMudjEuUG9pbnQSEwoLZGlzdHJpY3RfaWQYAyABKAkSEgoKY2x1c3Rlcl9pZBgEIAEoCRIMCgRkYXRlGAUgASgJIlQKFUdldFNjaG9vbFBpbnNSZXNwb25zZRIoCgRwaW5zGAEgAygLMhouZWRpZnkucm91dGVzLnYxLlNjaG9vbFBpbhIRCgl0cnVuY2F0ZWQYAiABKAgiSAoYR2V0U2Nob29sRGlzdGFuY2VSZXF1ZXN0EhYKDmZyb21fc2Nob29sX2lkGAEgASgJEhQKDHRvX3NjaG9vbF9pZBgCIAEoCSLfAQoZR2V0U2Nob29sRGlzdGFuY2VSZXNwb25zZRImCgNsZWcYASABKAsyGS5lZGlmeS5yb3V0ZXMudjEuUm91dGVMZWcSKAoEZnJvbRgCIAEoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4SJgoCdG8YAyABKAsyGi5lZGlmeS5yb3V0ZXMudjEuU2Nob29sUGluEjEKCHByb3ZpZGVyGAQgASgLMh8uZWRpZnkucm91dGVzLnYxLlByb3ZpZGVyU3RhdHVzEhUKDWNhbGN1bGF0ZWRfYXQYBSABKAkiLQoYR2V0U2Nob29sTG9jYXRpb25SZXF1ZXN0EhEKCXNjaG9vbF9pZBgBIAEoCSLLAwoZR2V0U2Nob29sTG9jYXRpb25SZXNwb25zZRIqCgZzY2hvb2wYASABKAsyGi5lZGlmeS5yb3V0ZXMudjEuU2Nob29sUGluEhYKDm5lYXJieV9zY2hvb2xzGAIgASgFEhgKEG5lYXJieV9yYWRpdXNfa20YAyABKAESEAoIY2FuX3BsYW4YBCABKAgSEgoKY2FuX3JlcG9ydBgFIAEoCBI3Cg5wZW5kaW5nX3JlcG9ydBgGIAEoCzIfLmVkaWZ5LnJvdXRlcy52MS5Mb2NhdGlvblJlcG9ydBITCgthY2Nlc3Nfbm90ZRgHIAEoCRISCgpjYW5fcmV2aWV3GAggASgIEg8KB3ZlcnNpb24YCSABKAUSEwoLdmVyaWZpZWRfYXQYCiABKAkSGAoQdmVyaWZpZWRfYnlfbmFtZRgLIAEoCRIoCghlbnRyYW5jZRgMIAEoCzIWLmVkaWZ5LnJvdXRlcy52MS5Qb2ludBIuCgZwb2xpY3kYDSABKAsyHi5lZGlmeS5yb3V0ZXMudjEuQ2FwdHVyZVBvbGljeRITCgtjYW5fY2FwdHVyZRgOIAEoCBIZChFsYXN0X2NvbmZpcm1lZF9hdBgPIAEoCSJfCg1DYXB0dXJlUG9saWN5Eg4KBmdvb2RfbRgBIAEoARIRCgljb25maXJtX20YAiABKAESFQoNZnJlc2hfc2Vjb25kcxgDIAEoBRIUCgxsYXJnZV9tb3ZlX20YBCABKAUiwAQKDkxvY2F0aW9uUmVwb3J0EgoKAmlkGAEgASgJEioKBnNjaG9vbBgCIAEoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4SDAoEa2luZBgDIAEoCRIoCghwcm9wb3NlZBgEIAEoCzIWLmVkaWZ5LnJvdXRlcy52MS5Qb2ludBIUCgxwb2ludF9zb3VyY2UYBSABKAkSEgoKYWNjdXJhY3lfbRgGIAEoARITCgthY2Nlc3Nfbm90ZRgHIAEoCRIMCgRub3RlGAggASgJEigKCHByZXZpb3VzGAkgASgLMhYuZWRpZnkucm91dGVzLnYxLlBvaW50EhQKDG1vdmVkX21ldGVycxgKIAEoAxIOCgZzdGF0dXMYCyABKAkSGAoQcmVwb3J0ZWRfYnlfbmFtZRgMIAEoCRITCgtyZXBvcnRlZF9hdBgNIAEoCRIYChByZXZpZXdlZF9ieV9uYW1lGA4gASgJEhMKC3Jldmlld2VkX2F0GA8gASgJEhMKC3Jldmlld19ub3RlGBAgASgJEg4KBmlzX293bhgRIAEoCBIOCgZ0YXJnZXQYEiABKAkSDQoFZmxhZ3MYEyADKAkSEwoLY2FwdHVyZWRfYXQYFCABKAkSFgoOcmVzdWx0X3ZlcnNpb24YFSABKAUSFAoMY2FwdHVyZV9raW5kGBYgASgJEhQKDHNhbXBsZV9jb3VudBgXIAEoBRIQCghzcHJlYWRfbRgYIAEoARIUCgxiYXNlX3ZlcnNpb24YGSABKAUirAIKHFN1Ym1pdExvY2F0aW9uQ2FwdHVyZVJlcXVlc3QSEgoKY2FwdHVyZV9pZBgBIAEoCRIRCglzY2hvb2xfaWQYAiABKAkSDgoGdGFyZ2V0GAMgASgJEgwKBGtpbmQYBCABKAkSJQoFcG9pbnQYBSABKAsyFi5lZGlmeS5yb3V0ZXMudjEuUG9pbnQSFAoMcG9pbnRfc291cmNlGAYgASgJEhIKCmFjY3VyYWN5X20YByABKAESEwoLY2FwdHVyZWRfYXQYCCABKAkSFAoMc2FtcGxlX2NvdW50GAkgASgFEhAKCHNwcmVhZF9tGAogASgBEhQKDGJhc2VfdmVyc2lvbhgLIAEoBRIOCgZyZWFzb24YDCABKAkSEwoLYWNjZXNzX25vdGUYDSABKAkisAEKHVN1Ym1pdExvY2F0aW9uQ2FwdHVyZVJlc3BvbnNlEjAKB2NhcHR1cmUYASABKAsyHy5lZGlmeS5yb3V0ZXMudjEuTG9jYXRpb25SZXBvcnQSDwoHb3V0Y29tZRgCIAEoCRIPCgd2ZXJzaW9uGAMgASgFEioKBnNjaG9vbBgEIAEoCzIaLmVkaWZ5LnJvdXRlcy52MS5TY2hvb2xQaW4SDwoHbWVzc2FnZRgFIAEoCSIlChVHZXRPZmZsaW5lUGFja1JlcXVlc3QSDAoEZGF5cxgBIAEoBSKVAQoNT2ZmbGluZVNjaG9vbBIqCgZzY2hvb2wYASABKAsyGi5lZGlmeS5yb3V0ZXMudjEuU2Nob29sUGluEhMKC3ZlcmlmaWVkX2F0GAIgASgJEhMKC2FjY2Vzc19ub3RlGAMgASgJEhMKC2hhc19wZW5kaW5nGAQgASgIEhkKEWxhc3RfY29uZmlybWVkX2F0GAUgASgJIkQKDFBsYW5uZWRWaXNpdBIMCgRkYXRlGAEgASgJEhEKCXNjaG9vbF9pZBgCIAEoCRITCgthY3Rpdml0eV9pZBgDIAEoCSL7AQoWR2V0T2ZmbGluZVBhY2tSZXNwb25zZRIvCgdzY2hvb2xzGAEgAygLMh4uZWRpZnkucm91dGVzLnYxLk9mZmxpbmVTY2hvb2wSLgoHcGxhbm5lZBgCIAMoCzIdLmVkaWZ5LnJvdXRlcy52MS5QbGFubmVkVmlzaXQSFAoMZ2VuZXJhdGVkX2F0GAMgASgJEi4KBnBvbGljeRgEIAEoCzIeLmVkaWZ5LnJvdXRlcy52MS5DYXB0dXJlUG9saWN5EhMKC2Nhbl9jYXB0dXJlGAUgASgIEhEKCXRydW5jYXRlZBgGIAEoCBISCgpjYW5fcmV2aWV3GAcgASgIIn8KDkxvY2F0aW9uQ2hhbmdlEhEKCXNjaG9vbF9pZBgBIAEoCRIOCgZ0YXJnZXQYAiABKAkSDwoHdmVyc2lvbhgDIAEoBRIlCgVwb2ludBgEIAEoCzIWLmVkaWZ5LnJvdXRlcy52MS5Qb2ludBISCgpjaGFuZ2VkX2F0GAUgASgJIisKGkxpc3RMb2NhdGlvbkNoYW5nZXNSZXF1ZXN0Eg0KBXNpbmNlGAEgASgJIlwKG0xpc3RMb2NhdGlvbkNoYW5nZXNSZXNwb25zZRIwCgdjaGFuZ2VzGAEgAygLMh8uZWRpZnkucm91dGVzLnYxLkxvY2F0aW9uQ2hhbmdlEgsKA25vdxgCIAEoCSIuChlHZXRMb2NhdGlvbkhpc3RvcnlSZXF1ZXN0EhEKCXNjaG9vbF9pZBgBIAEoCSJ6ChpHZXRMb2NhdGlvbkhpc3RvcnlSZXNwb25zZRIqCgZzY2hvb2wYASABKAsyGi5lZGlmeS5yb3V0ZXMudjEuU2Nob29sUGluEjAKB2VudHJpZXMYAiADKAsyHy5lZGlmeS5yb3V0ZXMudjEuTG9jYXRpb25SZXBvcnQizgEKG1JlcG9ydFNjaG9vbExvY2F0aW9uUmVxdWVzdBIRCglzY2hvb2xfaWQYASABKAkSDAoEa2luZBgCIAEoCRIoCghwcm9wb3NlZBgDIAEoCzIWLmVkaWZ5LnJvdXRlcy52MS5Qb2ludBIUCgxwb2ludF9zb3VyY2UYBCABKAkSEgoKYWNjdXJhY3lfbRgFIAEoARITCgthY2Nlc3Nfbm90ZRgGIAEoCRIMCgRub3RlGAcgASgJEhcKD2lkZW1wb3RlbmN5X2tleRgIIAEoCSJPChxSZXBvcnRTY2hvb2xMb2NhdGlvblJlc3BvbnNlEi8KBnJlcG9ydBgBIAEoCzIfLmVkaWZ5LnJvdXRlcy52MS5Mb2NhdGlvblJlcG9ydCIsChpMaXN0TG9jYXRpb25SZXBvcnRzUmVxdWVzdBIOCgZzdGF0dXMYASABKAkiTwobTGlzdExvY2F0aW9uUmVwb3J0c1Jlc3BvbnNlEjAKB3JlcG9ydHMYASADKAsyHy5lZGlmeS5yb3V0ZXMudjEuTG9jYXRpb25SZXBvcnQiUAobUmV2aWV3TG9jYXRpb25SZXBvcnRSZXF1ZXN0EhEKCXJlcG9ydF9pZBgBIAEoCRIQCghkZWNpc2lvbhgCIAEoCRIMCgRub3RlGAMgASgJIk8KHFJldmlld0xvY2F0aW9uUmVwb3J0UmVzcG9uc2USLwoGcmVwb3J0GAEgASgLMh8uZWRpZnkucm91dGVzLnYxLkxvY2F0aW9uUmVwb3J0MtMLChNSb3V0ZVBsYW5uZXJTZXJ2aWNlElgKC0dldEZpZWxkRGF5EiMuZWRpZnkucm91dGVzLnYxLkdldEZpZWxkRGF5UmVxdWVzdBokLmVkaWZ5LnJvdXRlcy52MS5HZXRGaWVsZERheVJlc3BvbnNlElIKCVBsYW5Sb3V0ZRIhLmVkaWZ5LnJvdXRlcy52MS5QbGFuUm91dGVSZXF1ZXN0GiIuZWRpZnkucm91dGVzLnYxLlBsYW5Sb3V0ZVJlc3BvbnNlEl4KDUdldFNjaG9vbFBpbnMSJS5lZGlmeS5yb3V0ZXMudjEuR2V0U2Nob29sUGluc1JlcXVlc3QaJi5lZGlmeS5yb3V0ZXMudjEuR2V0U2Nob29sUGluc1Jlc3BvbnNlEmoKEUdldFNjaG9vbERpc3RhbmNlEikuZWRpZnkucm91dGVzLnYxLkdldFNjaG9vbERpc3RhbmNlUmVxdWVzdBoqLmVkaWZ5LnJvdXRlcy52MS5HZXRTY2hvb2xEaXN0YW5jZVJlc3BvbnNlEmoKEUdldFNjaG9vbExvY2F0aW9uEikuZWRpZnkucm91dGVzLnYxLkdldFNjaG9vbExvY2F0aW9uUmVxdWVzdBoqLmVkaWZ5LnJvdXRlcy52MS5HZXRTY2hvb2xMb2NhdGlvblJlc3BvbnNlEnMKFFJlcG9ydFNjaG9vbExvY2F0aW9uEiwuZWRpZnkucm91dGVzLnYxLlJlcG9ydFNjaG9vbExvY2F0aW9uUmVxdWVzdBotLmVkaWZ5LnJvdXRlcy52MS5SZXBvcnRTY2hvb2xMb2NhdGlvblJlc3BvbnNlEnAKE0xpc3RMb2NhdGlvblJlcG9ydHMSKy5lZGlmeS5yb3V0ZXMudjEuTGlzdExvY2F0aW9uUmVwb3J0c1JlcXVlc3QaLC5lZGlmeS5yb3V0ZXMudjEuTGlzdExvY2F0aW9uUmVwb3J0c1Jlc3BvbnNlEnMKFFJldmlld0xvY2F0aW9uUmVwb3J0EiwuZWRpZnkucm91dGVzLnYxLlJldmlld0xvY2F0aW9uUmVwb3J0UmVxdWVzdBotLmVkaWZ5LnJvdXRlcy52MS5SZXZpZXdMb2NhdGlvblJlcG9ydFJlc3BvbnNlEnYKFVN1Ym1pdExvY2F0aW9uQ2FwdHVyZRItLmVkaWZ5LnJvdXRlcy52MS5TdWJtaXRMb2NhdGlvbkNhcHR1cmVSZXF1ZXN0Gi4uZWRpZnkucm91dGVzLnYxLlN1Ym1pdExvY2F0aW9uQ2FwdHVyZVJlc3BvbnNlEmEKDkdldE9mZmxpbmVQYWNrEiYuZWRpZnkucm91dGVzLnYxLkdldE9mZmxpbmVQYWNrUmVxdWVzdBonLmVkaWZ5LnJvdXRlcy52MS5HZXRPZmZsaW5lUGFja1Jlc3BvbnNlEnAKE0xpc3RMb2NhdGlvbkNoYW5nZXMSKy5lZGlmeS5yb3V0ZXMudjEuTGlzdExvY2F0aW9uQ2hhbmdlc1JlcXVlc3QaLC5lZGlmeS5yb3V0ZXMudjEuTGlzdExvY2F0aW9uQ2hhbmdlc1Jlc3BvbnNlEm0KEkdldExvY2F0aW9uSGlzdG9yeRIqLmVkaWZ5LnJvdXRlcy52MS5HZXRMb2NhdGlvbkhpc3RvcnlSZXF1ZXN0GisuZWRpZnkucm91dGVzLnYxLkdldExvY2F0aW9uSGlzdG9yeVJlc3BvbnNlElsKDFNhdmVGaWVsZERheRIkLmVkaWZ5LnJvdXRlcy52MS5TYXZlRmllbGREYXlSZXF1ZXN0GiUuZWRpZnkucm91dGVzLnYxLlNhdmVGaWVsZERheVJlc3BvbnNlEmEKDlJlY29yZEZpZWxkRGF5EiYuZWRpZnkucm91dGVzLnYxLlJlY29yZEZpZWxkRGF5UmVxdWVzdBonLmVkaWZ5LnJvdXRlcy52MS5SZWNvcmRGaWVsZERheVJlc3BvbnNlQtgBChNjb20uZWRpZnkucm91dGVzLnYxQgtSb3V0ZXNQcm90b1ABWlZnaXRodWIuY29tL08tTWFyaW84OC9lZGlmeS1wbGFubmluZy10b29sL3BsYXRmb3JtL2JhY2tlbmQvZ2VuL2VkaWZ5L3JvdXRlcy92MTtyb3V0ZXN2MaICA0VSWKoCD0VkaWZ5LlJvdXRlcy5WMcoCD0VkaWZ5XFJvdXRlc1xWMeICG0VkaWZ5XFJvdXRlc1xWMVxHUEJNZXRhZGF0YeoCEUVkaWZ5OjpSb3V0ZXM6OlYxYgZwcm90bzM");
 
 /**
  * @generated from message edify.routes.v1.Point
@@ -602,6 +602,13 @@ export type GetFieldDayResponse = Message<"edify.routes.v1.GetFieldDayResponse">
    * @generated from field: edify.routes.v1.SchoolPin focus = 10;
    */
   focus?: SchoolPin | undefined;
+
+  /**
+   * The reader's saved order and the day's record; empty when never saved.
+   *
+   * @generated from field: edify.routes.v1.SavedFieldDay saved = 11;
+   */
+  saved?: SavedFieldDay | undefined;
 };
 
 /**
@@ -610,6 +617,170 @@ export type GetFieldDayResponse = Message<"edify.routes.v1.GetFieldDayResponse">
  */
 export const GetFieldDayResponseSchema: GenMessage<GetFieldDayResponse> = /*@__PURE__*/
   messageDesc(file_edify_routes_v1_routes, 10);
+
+/**
+ * SavedFieldDay is the reader's own record of a day: the order they saved
+ * and, once started, when they started, reached and left each stop, and
+ * ended. Times are RFC 3339; empty is not yet.
+ *
+ * @generated from message edify.routes.v1.SavedFieldDay
+ */
+export type SavedFieldDay = Message<"edify.routes.v1.SavedFieldDay"> & {
+  /**
+   * @generated from field: repeated string school_ids = 1;
+   */
+  schoolIds: string[];
+
+  /**
+   * @generated from field: string saved_at = 2;
+   */
+  savedAt: string;
+
+  /**
+   * @generated from field: string started_at = 3;
+   */
+  startedAt: string;
+
+  /**
+   * @generated from field: string ended_at = 4;
+   */
+  endedAt: string;
+
+  /**
+   * @generated from field: repeated edify.routes.v1.StopCheckIn stops = 5;
+   */
+  stops: StopCheckIn[];
+};
+
+/**
+ * Describes the message edify.routes.v1.SavedFieldDay.
+ * Use `create(SavedFieldDaySchema)` to create a new message.
+ */
+export const SavedFieldDaySchema: GenMessage<SavedFieldDay> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 11);
+
+/**
+ * @generated from message edify.routes.v1.StopCheckIn
+ */
+export type StopCheckIn = Message<"edify.routes.v1.StopCheckIn"> & {
+  /**
+   * @generated from field: string school_id = 1;
+   */
+  schoolId: string;
+
+  /**
+   * @generated from field: string arrived_at = 2;
+   */
+  arrivedAt: string;
+
+  /**
+   * @generated from field: string left_at = 3;
+   */
+  leftAt: string;
+};
+
+/**
+ * Describes the message edify.routes.v1.StopCheckIn.
+ * Use `create(StopCheckInSchema)` to create a new message.
+ */
+export const StopCheckInSchema: GenMessage<StopCheckIn> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 12);
+
+/**
+ * @generated from message edify.routes.v1.SaveFieldDayRequest
+ */
+export type SaveFieldDayRequest = Message<"edify.routes.v1.SaveFieldDayRequest"> & {
+  /**
+   * @generated from field: string date = 1;
+   */
+  date: string;
+
+  /**
+   * The schools in the order the reader keeps.
+   *
+   * @generated from field: repeated string school_ids = 2;
+   */
+  schoolIds: string[];
+};
+
+/**
+ * Describes the message edify.routes.v1.SaveFieldDayRequest.
+ * Use `create(SaveFieldDayRequestSchema)` to create a new message.
+ */
+export const SaveFieldDayRequestSchema: GenMessage<SaveFieldDayRequest> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 13);
+
+/**
+ * @generated from message edify.routes.v1.SaveFieldDayResponse
+ */
+export type SaveFieldDayResponse = Message<"edify.routes.v1.SaveFieldDayResponse"> & {
+  /**
+   * @generated from field: edify.routes.v1.SavedFieldDay saved = 1;
+   */
+  saved?: SavedFieldDay | undefined;
+};
+
+/**
+ * Describes the message edify.routes.v1.SaveFieldDayResponse.
+ * Use `create(SaveFieldDayResponseSchema)` to create a new message.
+ */
+export const SaveFieldDayResponseSchema: GenMessage<SaveFieldDayResponse> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 14);
+
+/**
+ * @generated from message edify.routes.v1.RecordFieldDayRequest
+ */
+export type RecordFieldDayRequest = Message<"edify.routes.v1.RecordFieldDayRequest"> & {
+  /**
+   * @generated from field: string date = 1;
+   */
+  date: string;
+
+  /**
+   * start, arrive, leave or end.
+   *
+   * @generated from field: string event = 2;
+   */
+  event: string;
+
+  /**
+   * The stop arrived at or left.
+   *
+   * @generated from field: string school_id = 3;
+   */
+  schoolId: string;
+
+  /**
+   * At start: the order the day runs in, saved with it.
+   *
+   * @generated from field: repeated string school_ids = 4;
+   */
+  schoolIds: string[];
+};
+
+/**
+ * Describes the message edify.routes.v1.RecordFieldDayRequest.
+ * Use `create(RecordFieldDayRequestSchema)` to create a new message.
+ */
+export const RecordFieldDayRequestSchema: GenMessage<RecordFieldDayRequest> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 15);
+
+/**
+ * @generated from message edify.routes.v1.RecordFieldDayResponse
+ */
+export type RecordFieldDayResponse = Message<"edify.routes.v1.RecordFieldDayResponse"> & {
+  /**
+   * @generated from field: edify.routes.v1.SavedFieldDay saved = 1;
+   */
+  saved?: SavedFieldDay | undefined;
+};
+
+/**
+ * Describes the message edify.routes.v1.RecordFieldDayResponse.
+ * Use `create(RecordFieldDayResponseSchema)` to create a new message.
+ */
+export const RecordFieldDayResponseSchema: GenMessage<RecordFieldDayResponse> = /*@__PURE__*/
+  messageDesc(file_edify_routes_v1_routes, 16);
 
 /**
  * @generated from message edify.routes.v1.PlanRouteRequest
@@ -659,7 +830,7 @@ export type PlanRouteRequest = Message<"edify.routes.v1.PlanRouteRequest"> & {
  * Use `create(PlanRouteRequestSchema)` to create a new message.
  */
 export const PlanRouteRequestSchema: GenMessage<PlanRouteRequest> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 11);
+  messageDesc(file_edify_routes_v1_routes, 17);
 
 /**
  * @generated from message edify.routes.v1.PlanRouteResponse
@@ -681,7 +852,7 @@ export type PlanRouteResponse = Message<"edify.routes.v1.PlanRouteResponse"> & {
  * Use `create(PlanRouteResponseSchema)` to create a new message.
  */
 export const PlanRouteResponseSchema: GenMessage<PlanRouteResponse> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 12);
+  messageDesc(file_edify_routes_v1_routes, 18);
 
 /**
  * @generated from message edify.routes.v1.GetSchoolPinsRequest
@@ -718,7 +889,7 @@ export type GetSchoolPinsRequest = Message<"edify.routes.v1.GetSchoolPinsRequest
  * Use `create(GetSchoolPinsRequestSchema)` to create a new message.
  */
 export const GetSchoolPinsRequestSchema: GenMessage<GetSchoolPinsRequest> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 13);
+  messageDesc(file_edify_routes_v1_routes, 19);
 
 /**
  * @generated from message edify.routes.v1.GetSchoolPinsResponse
@@ -742,7 +913,7 @@ export type GetSchoolPinsResponse = Message<"edify.routes.v1.GetSchoolPinsRespon
  * Use `create(GetSchoolPinsResponseSchema)` to create a new message.
  */
 export const GetSchoolPinsResponseSchema: GenMessage<GetSchoolPinsResponse> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 14);
+  messageDesc(file_edify_routes_v1_routes, 20);
 
 /**
  * @generated from message edify.routes.v1.GetSchoolDistanceRequest
@@ -764,7 +935,7 @@ export type GetSchoolDistanceRequest = Message<"edify.routes.v1.GetSchoolDistanc
  * Use `create(GetSchoolDistanceRequestSchema)` to create a new message.
  */
 export const GetSchoolDistanceRequestSchema: GenMessage<GetSchoolDistanceRequest> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 15);
+  messageDesc(file_edify_routes_v1_routes, 21);
 
 /**
  * @generated from message edify.routes.v1.GetSchoolDistanceResponse
@@ -803,7 +974,7 @@ export type GetSchoolDistanceResponse = Message<"edify.routes.v1.GetSchoolDistan
  * Use `create(GetSchoolDistanceResponseSchema)` to create a new message.
  */
 export const GetSchoolDistanceResponseSchema: GenMessage<GetSchoolDistanceResponse> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 16);
+  messageDesc(file_edify_routes_v1_routes, 22);
 
 /**
  * @generated from message edify.routes.v1.GetSchoolLocationRequest
@@ -822,7 +993,7 @@ export type GetSchoolLocationRequest = Message<"edify.routes.v1.GetSchoolLocatio
  * Use `create(GetSchoolLocationRequestSchema)` to create a new message.
  */
 export const GetSchoolLocationRequestSchema: GenMessage<GetSchoolLocationRequest> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 17);
+  messageDesc(file_edify_routes_v1_routes, 23);
 
 /**
  * @generated from message edify.routes.v1.GetSchoolLocationResponse
@@ -930,7 +1101,7 @@ export type GetSchoolLocationResponse = Message<"edify.routes.v1.GetSchoolLocati
  * Use `create(GetSchoolLocationResponseSchema)` to create a new message.
  */
 export const GetSchoolLocationResponseSchema: GenMessage<GetSchoolLocationResponse> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 18);
+  messageDesc(file_edify_routes_v1_routes, 24);
 
 /**
  * The thresholds a capture is judged by; the device shows the same.
@@ -971,7 +1142,7 @@ export type CapturePolicy = Message<"edify.routes.v1.CapturePolicy"> & {
  * Use `create(CapturePolicySchema)` to create a new message.
  */
 export const CapturePolicySchema: GenMessage<CapturePolicy> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 19);
+  messageDesc(file_edify_routes_v1_routes, 25);
 
 /**
  * @generated from message edify.routes.v1.LocationReport
@@ -1136,7 +1307,7 @@ export type LocationReport = Message<"edify.routes.v1.LocationReport"> & {
  * Use `create(LocationReportSchema)` to create a new message.
  */
 export const LocationReportSchema: GenMessage<LocationReport> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 20);
+  messageDesc(file_edify_routes_v1_routes, 26);
 
 /**
  * @generated from message edify.routes.v1.SubmitLocationCaptureRequest
@@ -1225,7 +1396,7 @@ export type SubmitLocationCaptureRequest = Message<"edify.routes.v1.SubmitLocati
  * Use `create(SubmitLocationCaptureRequestSchema)` to create a new message.
  */
 export const SubmitLocationCaptureRequestSchema: GenMessage<SubmitLocationCaptureRequest> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 21);
+  messageDesc(file_edify_routes_v1_routes, 27);
 
 /**
  * @generated from message edify.routes.v1.SubmitLocationCaptureResponse
@@ -1269,7 +1440,7 @@ export type SubmitLocationCaptureResponse = Message<"edify.routes.v1.SubmitLocat
  * Use `create(SubmitLocationCaptureResponseSchema)` to create a new message.
  */
 export const SubmitLocationCaptureResponseSchema: GenMessage<SubmitLocationCaptureResponse> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 22);
+  messageDesc(file_edify_routes_v1_routes, 28);
 
 /**
  * @generated from message edify.routes.v1.GetOfflinePackRequest
@@ -1288,7 +1459,7 @@ export type GetOfflinePackRequest = Message<"edify.routes.v1.GetOfflinePackReque
  * Use `create(GetOfflinePackRequestSchema)` to create a new message.
  */
 export const GetOfflinePackRequestSchema: GenMessage<GetOfflinePackRequest> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 23);
+  messageDesc(file_edify_routes_v1_routes, 29);
 
 /**
  * @generated from message edify.routes.v1.OfflineSchool
@@ -1327,7 +1498,7 @@ export type OfflineSchool = Message<"edify.routes.v1.OfflineSchool"> & {
  * Use `create(OfflineSchoolSchema)` to create a new message.
  */
 export const OfflineSchoolSchema: GenMessage<OfflineSchool> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 24);
+  messageDesc(file_edify_routes_v1_routes, 30);
 
 /**
  * @generated from message edify.routes.v1.PlannedVisit
@@ -1356,7 +1527,7 @@ export type PlannedVisit = Message<"edify.routes.v1.PlannedVisit"> & {
  * Use `create(PlannedVisitSchema)` to create a new message.
  */
 export const PlannedVisitSchema: GenMessage<PlannedVisit> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 25);
+  messageDesc(file_edify_routes_v1_routes, 31);
 
 /**
  * @generated from message edify.routes.v1.GetOfflinePackResponse
@@ -1407,7 +1578,7 @@ export type GetOfflinePackResponse = Message<"edify.routes.v1.GetOfflinePackResp
  * Use `create(GetOfflinePackResponseSchema)` to create a new message.
  */
 export const GetOfflinePackResponseSchema: GenMessage<GetOfflinePackResponse> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 26);
+  messageDesc(file_edify_routes_v1_routes, 32);
 
 /**
  * @generated from message edify.routes.v1.LocationChange
@@ -1446,7 +1617,7 @@ export type LocationChange = Message<"edify.routes.v1.LocationChange"> & {
  * Use `create(LocationChangeSchema)` to create a new message.
  */
 export const LocationChangeSchema: GenMessage<LocationChange> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 27);
+  messageDesc(file_edify_routes_v1_routes, 33);
 
 /**
  * @generated from message edify.routes.v1.ListLocationChangesRequest
@@ -1465,7 +1636,7 @@ export type ListLocationChangesRequest = Message<"edify.routes.v1.ListLocationCh
  * Use `create(ListLocationChangesRequestSchema)` to create a new message.
  */
 export const ListLocationChangesRequestSchema: GenMessage<ListLocationChangesRequest> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 28);
+  messageDesc(file_edify_routes_v1_routes, 34);
 
 /**
  * @generated from message edify.routes.v1.ListLocationChangesResponse
@@ -1489,7 +1660,7 @@ export type ListLocationChangesResponse = Message<"edify.routes.v1.ListLocationC
  * Use `create(ListLocationChangesResponseSchema)` to create a new message.
  */
 export const ListLocationChangesResponseSchema: GenMessage<ListLocationChangesResponse> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 29);
+  messageDesc(file_edify_routes_v1_routes, 35);
 
 /**
  * @generated from message edify.routes.v1.GetLocationHistoryRequest
@@ -1506,7 +1677,7 @@ export type GetLocationHistoryRequest = Message<"edify.routes.v1.GetLocationHist
  * Use `create(GetLocationHistoryRequestSchema)` to create a new message.
  */
 export const GetLocationHistoryRequestSchema: GenMessage<GetLocationHistoryRequest> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 30);
+  messageDesc(file_edify_routes_v1_routes, 36);
 
 /**
  * @generated from message edify.routes.v1.GetLocationHistoryResponse
@@ -1530,7 +1701,7 @@ export type GetLocationHistoryResponse = Message<"edify.routes.v1.GetLocationHis
  * Use `create(GetLocationHistoryResponseSchema)` to create a new message.
  */
 export const GetLocationHistoryResponseSchema: GenMessage<GetLocationHistoryResponse> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 31);
+  messageDesc(file_edify_routes_v1_routes, 37);
 
 /**
  * @generated from message edify.routes.v1.ReportSchoolLocationRequest
@@ -1588,7 +1759,7 @@ export type ReportSchoolLocationRequest = Message<"edify.routes.v1.ReportSchoolL
  * Use `create(ReportSchoolLocationRequestSchema)` to create a new message.
  */
 export const ReportSchoolLocationRequestSchema: GenMessage<ReportSchoolLocationRequest> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 32);
+  messageDesc(file_edify_routes_v1_routes, 38);
 
 /**
  * @generated from message edify.routes.v1.ReportSchoolLocationResponse
@@ -1605,7 +1776,7 @@ export type ReportSchoolLocationResponse = Message<"edify.routes.v1.ReportSchool
  * Use `create(ReportSchoolLocationResponseSchema)` to create a new message.
  */
 export const ReportSchoolLocationResponseSchema: GenMessage<ReportSchoolLocationResponse> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 33);
+  messageDesc(file_edify_routes_v1_routes, 39);
 
 /**
  * @generated from message edify.routes.v1.ListLocationReportsRequest
@@ -1624,7 +1795,7 @@ export type ListLocationReportsRequest = Message<"edify.routes.v1.ListLocationRe
  * Use `create(ListLocationReportsRequestSchema)` to create a new message.
  */
 export const ListLocationReportsRequestSchema: GenMessage<ListLocationReportsRequest> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 34);
+  messageDesc(file_edify_routes_v1_routes, 40);
 
 /**
  * @generated from message edify.routes.v1.ListLocationReportsResponse
@@ -1641,7 +1812,7 @@ export type ListLocationReportsResponse = Message<"edify.routes.v1.ListLocationR
  * Use `create(ListLocationReportsResponseSchema)` to create a new message.
  */
 export const ListLocationReportsResponseSchema: GenMessage<ListLocationReportsResponse> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 35);
+  messageDesc(file_edify_routes_v1_routes, 41);
 
 /**
  * @generated from message edify.routes.v1.ReviewLocationReportRequest
@@ -1672,7 +1843,7 @@ export type ReviewLocationReportRequest = Message<"edify.routes.v1.ReviewLocatio
  * Use `create(ReviewLocationReportRequestSchema)` to create a new message.
  */
 export const ReviewLocationReportRequestSchema: GenMessage<ReviewLocationReportRequest> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 36);
+  messageDesc(file_edify_routes_v1_routes, 42);
 
 /**
  * @generated from message edify.routes.v1.ReviewLocationReportResponse
@@ -1689,7 +1860,7 @@ export type ReviewLocationReportResponse = Message<"edify.routes.v1.ReviewLocati
  * Use `create(ReviewLocationReportResponseSchema)` to create a new message.
  */
 export const ReviewLocationReportResponseSchema: GenMessage<ReviewLocationReportResponse> = /*@__PURE__*/
-  messageDesc(file_edify_routes_v1_routes, 37);
+  messageDesc(file_edify_routes_v1_routes, 43);
 
 /**
  * The Smart Route Planner (owner, 2026-11-14): a field day's schools on a
@@ -1837,6 +2008,30 @@ export const RoutePlannerService: GenService<{
     methodKind: "unary";
     input: typeof GetLocationHistoryRequestSchema;
     output: typeof GetLocationHistoryResponseSchema;
+  },
+  /**
+   * Save Plan: keep the reader's visiting order for a day, so the planner
+   * opens on it on any device. Saving again replaces it. Nothing is
+   * scheduled, moved or completed.
+   *
+   * @generated from rpc edify.routes.v1.RoutePlannerService.SaveFieldDay
+   */
+  saveFieldDay: {
+    methodKind: "unary";
+    input: typeof SaveFieldDayRequestSchema;
+    output: typeof SaveFieldDayResponseSchema;
+  },
+  /**
+   * Start Field Day and what follows it: start the day (today only), arrive
+   * at and leave each stop, end the day. The times are the reader's record
+   * of the day; they complete no activity.
+   *
+   * @generated from rpc edify.routes.v1.RoutePlannerService.RecordFieldDay
+   */
+  recordFieldDay: {
+    methodKind: "unary";
+    input: typeof RecordFieldDayRequestSchema;
+    output: typeof RecordFieldDayResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_edify_routes_v1_routes, 0);

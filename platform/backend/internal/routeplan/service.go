@@ -112,7 +112,16 @@ func (s *Service) GetFieldDay(ctx context.Context, req *connect.Request[routesv1
 		return nil, s.fail(ctx, err)
 	}
 	s.mark(p, planned)
+	saved, err := s.savedDay(ctx, p, day)
+	if err != nil {
+		return nil, s.fail(ctx, err)
+	}
 	t := trip{schools: planned, kinds: map[string]string{}, mode: ModeFastest}
+	if len(saved.order) > 0 {
+		if t, err = s.savedTrip(ctx, p, now, planned, saved.order); err != nil {
+			return nil, s.fail(ctx, err)
+		}
+	}
 	route, note := s.build(ctx, t)
 	district, cluster := req.Msg.GetDistrictId(), req.Msg.GetClusterId()
 	var focus *school
@@ -146,8 +155,8 @@ func (s *Service) GetFieldDay(ctx context.Context, req *connect.Request[routesv1
 		sg.School.CanOpenProfile = MayOpenProfile(p.ActiveRole)
 	}
 	// The best nearby school joins the day as a suggestion; not when the reader
-	// asked about one school's surroundings.
-	if focus == nil && len(suggestions) > 0 && suggestions[0].FitsDay && len(route.GetStops()) > 0 {
+	// asked about one school's surroundings, nor once they saved their order.
+	if focus == nil && len(saved.order) == 0 && len(suggestions) > 0 && suggestions[0].FitsDay && len(route.GetStops()) > 0 {
 		top := suggestions[0]
 		add, err := schoolsByID(ctx, s.db, p, now, []string{top.School.SchoolId})
 		if err != nil {
@@ -170,6 +179,9 @@ func (s *Service) GetFieldDay(ctx context.Context, req *connect.Request[routesv1
 		AreaLabel: area(planned)}
 	if focus != nil {
 		out.Focus = focus.pin
+	}
+	if saved.saved != nil || saved.started != nil {
+		out.Saved = saved.message()
 	}
 	for _, sc := range planned {
 		out.Planned = append(out.Planned, sc.pin)

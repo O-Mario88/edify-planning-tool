@@ -983,7 +983,9 @@ type GetFieldDayResponse struct {
 	Clusters    []*FilterOption `protobuf:"bytes,8,rep,name=clusters,proto3" json:"clusters,omitempty"`
 	AreaLabel   string          `protobuf:"bytes,9,opt,name=area_label,json=areaLabel,proto3" json:"area_label,omitempty"`
 	// The school the suggestions are around, when one was asked for.
-	Focus         *SchoolPin `protobuf:"bytes,10,opt,name=focus,proto3" json:"focus,omitempty"`
+	Focus *SchoolPin `protobuf:"bytes,10,opt,name=focus,proto3" json:"focus,omitempty"`
+	// The reader's saved order and the day's record; empty when never saved.
+	Saved         *SavedFieldDay `protobuf:"bytes,11,opt,name=saved,proto3" json:"saved,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1088,6 +1090,364 @@ func (x *GetFieldDayResponse) GetFocus() *SchoolPin {
 	return nil
 }
 
+func (x *GetFieldDayResponse) GetSaved() *SavedFieldDay {
+	if x != nil {
+		return x.Saved
+	}
+	return nil
+}
+
+// SavedFieldDay is the reader's own record of a day: the order they saved
+// and, once started, when they started, reached and left each stop, and
+// ended. Times are RFC 3339; empty is not yet.
+type SavedFieldDay struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SchoolIds     []string               `protobuf:"bytes,1,rep,name=school_ids,json=schoolIds,proto3" json:"school_ids,omitempty"`
+	SavedAt       string                 `protobuf:"bytes,2,opt,name=saved_at,json=savedAt,proto3" json:"saved_at,omitempty"`
+	StartedAt     string                 `protobuf:"bytes,3,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	EndedAt       string                 `protobuf:"bytes,4,opt,name=ended_at,json=endedAt,proto3" json:"ended_at,omitempty"`
+	Stops         []*StopCheckIn         `protobuf:"bytes,5,rep,name=stops,proto3" json:"stops,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SavedFieldDay) Reset() {
+	*x = SavedFieldDay{}
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SavedFieldDay) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SavedFieldDay) ProtoMessage() {}
+
+func (x *SavedFieldDay) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SavedFieldDay.ProtoReflect.Descriptor instead.
+func (*SavedFieldDay) Descriptor() ([]byte, []int) {
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *SavedFieldDay) GetSchoolIds() []string {
+	if x != nil {
+		return x.SchoolIds
+	}
+	return nil
+}
+
+func (x *SavedFieldDay) GetSavedAt() string {
+	if x != nil {
+		return x.SavedAt
+	}
+	return ""
+}
+
+func (x *SavedFieldDay) GetStartedAt() string {
+	if x != nil {
+		return x.StartedAt
+	}
+	return ""
+}
+
+func (x *SavedFieldDay) GetEndedAt() string {
+	if x != nil {
+		return x.EndedAt
+	}
+	return ""
+}
+
+func (x *SavedFieldDay) GetStops() []*StopCheckIn {
+	if x != nil {
+		return x.Stops
+	}
+	return nil
+}
+
+type StopCheckIn struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SchoolId      string                 `protobuf:"bytes,1,opt,name=school_id,json=schoolId,proto3" json:"school_id,omitempty"`
+	ArrivedAt     string                 `protobuf:"bytes,2,opt,name=arrived_at,json=arrivedAt,proto3" json:"arrived_at,omitempty"`
+	LeftAt        string                 `protobuf:"bytes,3,opt,name=left_at,json=leftAt,proto3" json:"left_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StopCheckIn) Reset() {
+	*x = StopCheckIn{}
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StopCheckIn) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StopCheckIn) ProtoMessage() {}
+
+func (x *StopCheckIn) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StopCheckIn.ProtoReflect.Descriptor instead.
+func (*StopCheckIn) Descriptor() ([]byte, []int) {
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *StopCheckIn) GetSchoolId() string {
+	if x != nil {
+		return x.SchoolId
+	}
+	return ""
+}
+
+func (x *StopCheckIn) GetArrivedAt() string {
+	if x != nil {
+		return x.ArrivedAt
+	}
+	return ""
+}
+
+func (x *StopCheckIn) GetLeftAt() string {
+	if x != nil {
+		return x.LeftAt
+	}
+	return ""
+}
+
+type SaveFieldDayRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Date  string                 `protobuf:"bytes,1,opt,name=date,proto3" json:"date,omitempty"`
+	// The schools in the order the reader keeps.
+	SchoolIds     []string `protobuf:"bytes,2,rep,name=school_ids,json=schoolIds,proto3" json:"school_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SaveFieldDayRequest) Reset() {
+	*x = SaveFieldDayRequest{}
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SaveFieldDayRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SaveFieldDayRequest) ProtoMessage() {}
+
+func (x *SaveFieldDayRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SaveFieldDayRequest.ProtoReflect.Descriptor instead.
+func (*SaveFieldDayRequest) Descriptor() ([]byte, []int) {
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *SaveFieldDayRequest) GetDate() string {
+	if x != nil {
+		return x.Date
+	}
+	return ""
+}
+
+func (x *SaveFieldDayRequest) GetSchoolIds() []string {
+	if x != nil {
+		return x.SchoolIds
+	}
+	return nil
+}
+
+type SaveFieldDayResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Saved         *SavedFieldDay         `protobuf:"bytes,1,opt,name=saved,proto3" json:"saved,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SaveFieldDayResponse) Reset() {
+	*x = SaveFieldDayResponse{}
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SaveFieldDayResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SaveFieldDayResponse) ProtoMessage() {}
+
+func (x *SaveFieldDayResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SaveFieldDayResponse.ProtoReflect.Descriptor instead.
+func (*SaveFieldDayResponse) Descriptor() ([]byte, []int) {
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *SaveFieldDayResponse) GetSaved() *SavedFieldDay {
+	if x != nil {
+		return x.Saved
+	}
+	return nil
+}
+
+type RecordFieldDayRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Date  string                 `protobuf:"bytes,1,opt,name=date,proto3" json:"date,omitempty"`
+	// start, arrive, leave or end.
+	Event string `protobuf:"bytes,2,opt,name=event,proto3" json:"event,omitempty"`
+	// The stop arrived at or left.
+	SchoolId string `protobuf:"bytes,3,opt,name=school_id,json=schoolId,proto3" json:"school_id,omitempty"`
+	// At start: the order the day runs in, saved with it.
+	SchoolIds     []string `protobuf:"bytes,4,rep,name=school_ids,json=schoolIds,proto3" json:"school_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecordFieldDayRequest) Reset() {
+	*x = RecordFieldDayRequest{}
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecordFieldDayRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecordFieldDayRequest) ProtoMessage() {}
+
+func (x *RecordFieldDayRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecordFieldDayRequest.ProtoReflect.Descriptor instead.
+func (*RecordFieldDayRequest) Descriptor() ([]byte, []int) {
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *RecordFieldDayRequest) GetDate() string {
+	if x != nil {
+		return x.Date
+	}
+	return ""
+}
+
+func (x *RecordFieldDayRequest) GetEvent() string {
+	if x != nil {
+		return x.Event
+	}
+	return ""
+}
+
+func (x *RecordFieldDayRequest) GetSchoolId() string {
+	if x != nil {
+		return x.SchoolId
+	}
+	return ""
+}
+
+func (x *RecordFieldDayRequest) GetSchoolIds() []string {
+	if x != nil {
+		return x.SchoolIds
+	}
+	return nil
+}
+
+type RecordFieldDayResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Saved         *SavedFieldDay         `protobuf:"bytes,1,opt,name=saved,proto3" json:"saved,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecordFieldDayResponse) Reset() {
+	*x = RecordFieldDayResponse{}
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecordFieldDayResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecordFieldDayResponse) ProtoMessage() {}
+
+func (x *RecordFieldDayResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecordFieldDayResponse.ProtoReflect.Descriptor instead.
+func (*RecordFieldDayResponse) Descriptor() ([]byte, []int) {
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *RecordFieldDayResponse) GetSaved() *SavedFieldDay {
+	if x != nil {
+		return x.Saved
+	}
+	return nil
+}
+
 type PlanRouteRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Date  string                 `protobuf:"bytes,1,opt,name=date,proto3" json:"date,omitempty"`
@@ -1106,7 +1466,7 @@ type PlanRouteRequest struct {
 
 func (x *PlanRouteRequest) Reset() {
 	*x = PlanRouteRequest{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[11]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1118,7 +1478,7 @@ func (x *PlanRouteRequest) String() string {
 func (*PlanRouteRequest) ProtoMessage() {}
 
 func (x *PlanRouteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[11]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1131,7 +1491,7 @@ func (x *PlanRouteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlanRouteRequest.ProtoReflect.Descriptor instead.
 func (*PlanRouteRequest) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{11}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *PlanRouteRequest) GetDate() string {
@@ -1186,7 +1546,7 @@ type PlanRouteResponse struct {
 
 func (x *PlanRouteResponse) Reset() {
 	*x = PlanRouteResponse{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[12]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1198,7 +1558,7 @@ func (x *PlanRouteResponse) String() string {
 func (*PlanRouteResponse) ProtoMessage() {}
 
 func (x *PlanRouteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[12]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1211,7 +1571,7 @@ func (x *PlanRouteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlanRouteResponse.ProtoReflect.Descriptor instead.
 func (*PlanRouteResponse) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{12}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *PlanRouteResponse) GetItinerary() *Itinerary {
@@ -1241,7 +1601,7 @@ type GetSchoolPinsRequest struct {
 
 func (x *GetSchoolPinsRequest) Reset() {
 	*x = GetSchoolPinsRequest{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[13]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1253,7 +1613,7 @@ func (x *GetSchoolPinsRequest) String() string {
 func (*GetSchoolPinsRequest) ProtoMessage() {}
 
 func (x *GetSchoolPinsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[13]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1266,7 +1626,7 @@ func (x *GetSchoolPinsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSchoolPinsRequest.ProtoReflect.Descriptor instead.
 func (*GetSchoolPinsRequest) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{13}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *GetSchoolPinsRequest) GetSouthWest() *Point {
@@ -1315,7 +1675,7 @@ type GetSchoolPinsResponse struct {
 
 func (x *GetSchoolPinsResponse) Reset() {
 	*x = GetSchoolPinsResponse{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[14]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1327,7 +1687,7 @@ func (x *GetSchoolPinsResponse) String() string {
 func (*GetSchoolPinsResponse) ProtoMessage() {}
 
 func (x *GetSchoolPinsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[14]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1340,7 +1700,7 @@ func (x *GetSchoolPinsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSchoolPinsResponse.ProtoReflect.Descriptor instead.
 func (*GetSchoolPinsResponse) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{14}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *GetSchoolPinsResponse) GetPins() []*SchoolPin {
@@ -1367,7 +1727,7 @@ type GetSchoolDistanceRequest struct {
 
 func (x *GetSchoolDistanceRequest) Reset() {
 	*x = GetSchoolDistanceRequest{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[15]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1379,7 +1739,7 @@ func (x *GetSchoolDistanceRequest) String() string {
 func (*GetSchoolDistanceRequest) ProtoMessage() {}
 
 func (x *GetSchoolDistanceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[15]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1392,7 +1752,7 @@ func (x *GetSchoolDistanceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSchoolDistanceRequest.ProtoReflect.Descriptor instead.
 func (*GetSchoolDistanceRequest) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{15}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *GetSchoolDistanceRequest) GetFromSchoolId() string {
@@ -1423,7 +1783,7 @@ type GetSchoolDistanceResponse struct {
 
 func (x *GetSchoolDistanceResponse) Reset() {
 	*x = GetSchoolDistanceResponse{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[16]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1435,7 +1795,7 @@ func (x *GetSchoolDistanceResponse) String() string {
 func (*GetSchoolDistanceResponse) ProtoMessage() {}
 
 func (x *GetSchoolDistanceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[16]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1448,7 +1808,7 @@ func (x *GetSchoolDistanceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSchoolDistanceResponse.ProtoReflect.Descriptor instead.
 func (*GetSchoolDistanceResponse) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{16}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *GetSchoolDistanceResponse) GetLeg() *RouteLeg {
@@ -1496,7 +1856,7 @@ type GetSchoolLocationRequest struct {
 
 func (x *GetSchoolLocationRequest) Reset() {
 	*x = GetSchoolLocationRequest{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[17]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1508,7 +1868,7 @@ func (x *GetSchoolLocationRequest) String() string {
 func (*GetSchoolLocationRequest) ProtoMessage() {}
 
 func (x *GetSchoolLocationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[17]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1521,7 +1881,7 @@ func (x *GetSchoolLocationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSchoolLocationRequest.ProtoReflect.Descriptor instead.
 func (*GetSchoolLocationRequest) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{17}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *GetSchoolLocationRequest) GetSchoolId() string {
@@ -1565,7 +1925,7 @@ type GetSchoolLocationResponse struct {
 
 func (x *GetSchoolLocationResponse) Reset() {
 	*x = GetSchoolLocationResponse{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[18]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1577,7 +1937,7 @@ func (x *GetSchoolLocationResponse) String() string {
 func (*GetSchoolLocationResponse) ProtoMessage() {}
 
 func (x *GetSchoolLocationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[18]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1590,7 +1950,7 @@ func (x *GetSchoolLocationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSchoolLocationResponse.ProtoReflect.Descriptor instead.
 func (*GetSchoolLocationResponse) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{18}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *GetSchoolLocationResponse) GetSchool() *SchoolPin {
@@ -1715,7 +2075,7 @@ type CapturePolicy struct {
 
 func (x *CapturePolicy) Reset() {
 	*x = CapturePolicy{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[19]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1727,7 +2087,7 @@ func (x *CapturePolicy) String() string {
 func (*CapturePolicy) ProtoMessage() {}
 
 func (x *CapturePolicy) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[19]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1740,7 +2100,7 @@ func (x *CapturePolicy) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CapturePolicy.ProtoReflect.Descriptor instead.
 func (*CapturePolicy) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{19}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *CapturePolicy) GetGoodM() float64 {
@@ -1819,7 +2179,7 @@ type LocationReport struct {
 
 func (x *LocationReport) Reset() {
 	*x = LocationReport{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[20]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1831,7 +2191,7 @@ func (x *LocationReport) String() string {
 func (*LocationReport) ProtoMessage() {}
 
 func (x *LocationReport) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[20]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1844,7 +2204,7 @@ func (x *LocationReport) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LocationReport.ProtoReflect.Descriptor instead.
 func (*LocationReport) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{20}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *LocationReport) GetId() string {
@@ -2049,7 +2409,7 @@ type SubmitLocationCaptureRequest struct {
 
 func (x *SubmitLocationCaptureRequest) Reset() {
 	*x = SubmitLocationCaptureRequest{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[21]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2061,7 +2421,7 @@ func (x *SubmitLocationCaptureRequest) String() string {
 func (*SubmitLocationCaptureRequest) ProtoMessage() {}
 
 func (x *SubmitLocationCaptureRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[21]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2074,7 +2434,7 @@ func (x *SubmitLocationCaptureRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitLocationCaptureRequest.ProtoReflect.Descriptor instead.
 func (*SubmitLocationCaptureRequest) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{21}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *SubmitLocationCaptureRequest) GetCaptureId() string {
@@ -2185,7 +2545,7 @@ type SubmitLocationCaptureResponse struct {
 
 func (x *SubmitLocationCaptureResponse) Reset() {
 	*x = SubmitLocationCaptureResponse{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[22]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2197,7 +2557,7 @@ func (x *SubmitLocationCaptureResponse) String() string {
 func (*SubmitLocationCaptureResponse) ProtoMessage() {}
 
 func (x *SubmitLocationCaptureResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[22]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2210,7 +2570,7 @@ func (x *SubmitLocationCaptureResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitLocationCaptureResponse.ProtoReflect.Descriptor instead.
 func (*SubmitLocationCaptureResponse) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{22}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *SubmitLocationCaptureResponse) GetCapture() *LocationReport {
@@ -2258,7 +2618,7 @@ type GetOfflinePackRequest struct {
 
 func (x *GetOfflinePackRequest) Reset() {
 	*x = GetOfflinePackRequest{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[23]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2270,7 +2630,7 @@ func (x *GetOfflinePackRequest) String() string {
 func (*GetOfflinePackRequest) ProtoMessage() {}
 
 func (x *GetOfflinePackRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[23]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2283,7 +2643,7 @@ func (x *GetOfflinePackRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetOfflinePackRequest.ProtoReflect.Descriptor instead.
 func (*GetOfflinePackRequest) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{23}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *GetOfflinePackRequest) GetDays() int32 {
@@ -2307,7 +2667,7 @@ type OfflineSchool struct {
 
 func (x *OfflineSchool) Reset() {
 	*x = OfflineSchool{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[24]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2319,7 +2679,7 @@ func (x *OfflineSchool) String() string {
 func (*OfflineSchool) ProtoMessage() {}
 
 func (x *OfflineSchool) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[24]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2332,7 +2692,7 @@ func (x *OfflineSchool) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OfflineSchool.ProtoReflect.Descriptor instead.
 func (*OfflineSchool) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{24}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *OfflineSchool) GetSchool() *SchoolPin {
@@ -2382,7 +2742,7 @@ type PlannedVisit struct {
 
 func (x *PlannedVisit) Reset() {
 	*x = PlannedVisit{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[25]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2394,7 +2754,7 @@ func (x *PlannedVisit) String() string {
 func (*PlannedVisit) ProtoMessage() {}
 
 func (x *PlannedVisit) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[25]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2407,7 +2767,7 @@ func (x *PlannedVisit) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlannedVisit.ProtoReflect.Descriptor instead.
 func (*PlannedVisit) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{25}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *PlannedVisit) GetDate() string {
@@ -2448,7 +2808,7 @@ type GetOfflinePackResponse struct {
 
 func (x *GetOfflinePackResponse) Reset() {
 	*x = GetOfflinePackResponse{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[26]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2460,7 +2820,7 @@ func (x *GetOfflinePackResponse) String() string {
 func (*GetOfflinePackResponse) ProtoMessage() {}
 
 func (x *GetOfflinePackResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[26]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2473,7 +2833,7 @@ func (x *GetOfflinePackResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetOfflinePackResponse.ProtoReflect.Descriptor instead.
 func (*GetOfflinePackResponse) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{26}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *GetOfflinePackResponse) GetSchools() []*OfflineSchool {
@@ -2539,7 +2899,7 @@ type LocationChange struct {
 
 func (x *LocationChange) Reset() {
 	*x = LocationChange{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[27]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2551,7 +2911,7 @@ func (x *LocationChange) String() string {
 func (*LocationChange) ProtoMessage() {}
 
 func (x *LocationChange) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[27]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2564,7 +2924,7 @@ func (x *LocationChange) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LocationChange.ProtoReflect.Descriptor instead.
 func (*LocationChange) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{27}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *LocationChange) GetSchoolId() string {
@@ -2612,7 +2972,7 @@ type ListLocationChangesRequest struct {
 
 func (x *ListLocationChangesRequest) Reset() {
 	*x = ListLocationChangesRequest{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[28]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2624,7 +2984,7 @@ func (x *ListLocationChangesRequest) String() string {
 func (*ListLocationChangesRequest) ProtoMessage() {}
 
 func (x *ListLocationChangesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[28]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2637,7 +2997,7 @@ func (x *ListLocationChangesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListLocationChangesRequest.ProtoReflect.Descriptor instead.
 func (*ListLocationChangesRequest) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{28}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *ListLocationChangesRequest) GetSince() string {
@@ -2658,7 +3018,7 @@ type ListLocationChangesResponse struct {
 
 func (x *ListLocationChangesResponse) Reset() {
 	*x = ListLocationChangesResponse{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[29]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2670,7 +3030,7 @@ func (x *ListLocationChangesResponse) String() string {
 func (*ListLocationChangesResponse) ProtoMessage() {}
 
 func (x *ListLocationChangesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[29]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2683,7 +3043,7 @@ func (x *ListLocationChangesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListLocationChangesResponse.ProtoReflect.Descriptor instead.
 func (*ListLocationChangesResponse) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{29}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *ListLocationChangesResponse) GetChanges() []*LocationChange {
@@ -2709,7 +3069,7 @@ type GetLocationHistoryRequest struct {
 
 func (x *GetLocationHistoryRequest) Reset() {
 	*x = GetLocationHistoryRequest{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[30]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2721,7 +3081,7 @@ func (x *GetLocationHistoryRequest) String() string {
 func (*GetLocationHistoryRequest) ProtoMessage() {}
 
 func (x *GetLocationHistoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[30]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2734,7 +3094,7 @@ func (x *GetLocationHistoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetLocationHistoryRequest.ProtoReflect.Descriptor instead.
 func (*GetLocationHistoryRequest) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{30}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *GetLocationHistoryRequest) GetSchoolId() string {
@@ -2755,7 +3115,7 @@ type GetLocationHistoryResponse struct {
 
 func (x *GetLocationHistoryResponse) Reset() {
 	*x = GetLocationHistoryResponse{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[31]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2767,7 +3127,7 @@ func (x *GetLocationHistoryResponse) String() string {
 func (*GetLocationHistoryResponse) ProtoMessage() {}
 
 func (x *GetLocationHistoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[31]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2780,7 +3140,7 @@ func (x *GetLocationHistoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetLocationHistoryResponse.ProtoReflect.Descriptor instead.
 func (*GetLocationHistoryResponse) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{31}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *GetLocationHistoryResponse) GetSchool() *SchoolPin {
@@ -2816,7 +3176,7 @@ type ReportSchoolLocationRequest struct {
 
 func (x *ReportSchoolLocationRequest) Reset() {
 	*x = ReportSchoolLocationRequest{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[32]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2828,7 +3188,7 @@ func (x *ReportSchoolLocationRequest) String() string {
 func (*ReportSchoolLocationRequest) ProtoMessage() {}
 
 func (x *ReportSchoolLocationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[32]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2841,7 +3201,7 @@ func (x *ReportSchoolLocationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportSchoolLocationRequest.ProtoReflect.Descriptor instead.
 func (*ReportSchoolLocationRequest) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{32}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *ReportSchoolLocationRequest) GetSchoolId() string {
@@ -2909,7 +3269,7 @@ type ReportSchoolLocationResponse struct {
 
 func (x *ReportSchoolLocationResponse) Reset() {
 	*x = ReportSchoolLocationResponse{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[33]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2921,7 +3281,7 @@ func (x *ReportSchoolLocationResponse) String() string {
 func (*ReportSchoolLocationResponse) ProtoMessage() {}
 
 func (x *ReportSchoolLocationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[33]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2934,7 +3294,7 @@ func (x *ReportSchoolLocationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportSchoolLocationResponse.ProtoReflect.Descriptor instead.
 func (*ReportSchoolLocationResponse) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{33}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *ReportSchoolLocationResponse) GetReport() *LocationReport {
@@ -2954,7 +3314,7 @@ type ListLocationReportsRequest struct {
 
 func (x *ListLocationReportsRequest) Reset() {
 	*x = ListLocationReportsRequest{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[34]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2966,7 +3326,7 @@ func (x *ListLocationReportsRequest) String() string {
 func (*ListLocationReportsRequest) ProtoMessage() {}
 
 func (x *ListLocationReportsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[34]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2979,7 +3339,7 @@ func (x *ListLocationReportsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListLocationReportsRequest.ProtoReflect.Descriptor instead.
 func (*ListLocationReportsRequest) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{34}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *ListLocationReportsRequest) GetStatus() string {
@@ -2998,7 +3358,7 @@ type ListLocationReportsResponse struct {
 
 func (x *ListLocationReportsResponse) Reset() {
 	*x = ListLocationReportsResponse{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[35]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3010,7 +3370,7 @@ func (x *ListLocationReportsResponse) String() string {
 func (*ListLocationReportsResponse) ProtoMessage() {}
 
 func (x *ListLocationReportsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[35]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3023,7 +3383,7 @@ func (x *ListLocationReportsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListLocationReportsResponse.ProtoReflect.Descriptor instead.
 func (*ListLocationReportsResponse) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{35}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *ListLocationReportsResponse) GetReports() []*LocationReport {
@@ -3046,7 +3406,7 @@ type ReviewLocationReportRequest struct {
 
 func (x *ReviewLocationReportRequest) Reset() {
 	*x = ReviewLocationReportRequest{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[36]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3058,7 +3418,7 @@ func (x *ReviewLocationReportRequest) String() string {
 func (*ReviewLocationReportRequest) ProtoMessage() {}
 
 func (x *ReviewLocationReportRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[36]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3071,7 +3431,7 @@ func (x *ReviewLocationReportRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReviewLocationReportRequest.ProtoReflect.Descriptor instead.
 func (*ReviewLocationReportRequest) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{36}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *ReviewLocationReportRequest) GetReportId() string {
@@ -3104,7 +3464,7 @@ type ReviewLocationReportResponse struct {
 
 func (x *ReviewLocationReportResponse) Reset() {
 	*x = ReviewLocationReportResponse{}
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[37]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3116,7 +3476,7 @@ func (x *ReviewLocationReportResponse) String() string {
 func (*ReviewLocationReportResponse) ProtoMessage() {}
 
 func (x *ReviewLocationReportResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_routes_v1_routes_proto_msgTypes[37]
+	mi := &file_edify_routes_v1_routes_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3129,7 +3489,7 @@ func (x *ReviewLocationReportResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReviewLocationReportResponse.ProtoReflect.Descriptor instead.
 func (*ReviewLocationReportResponse) Descriptor() ([]byte, []int) {
-	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{37}
+	return file_edify_routes_v1_routes_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *ReviewLocationReportResponse) GetReport() *LocationReport {
@@ -3236,7 +3596,7 @@ const file_edify_routes_v1_routes_proto_rawDesc = "" +
 	"districtId\x12\x1d\n" +
 	"\n" +
 	"cluster_id\x18\x03 \x01(\tR\tclusterId\x12$\n" +
-	"\x0enear_school_id\x18\x04 \x01(\tR\fnearSchoolId\"\x81\x04\n" +
+	"\x0enear_school_id\x18\x04 \x01(\tR\fnearSchoolId\"\xb7\x04\n" +
 	"\x13GetFieldDayResponse\x12\x12\n" +
 	"\x04date\x18\x01 \x01(\tR\x04date\x12\x1d\n" +
 	"\n" +
@@ -3250,7 +3610,35 @@ const file_edify_routes_v1_routes_proto_rawDesc = "" +
 	"\n" +
 	"area_label\x18\t \x01(\tR\tareaLabel\x120\n" +
 	"\x05focus\x18\n" +
-	" \x01(\v2\x1a.edify.routes.v1.SchoolPinR\x05focus\"\xd4\x01\n" +
+	" \x01(\v2\x1a.edify.routes.v1.SchoolPinR\x05focus\x124\n" +
+	"\x05saved\x18\v \x01(\v2\x1e.edify.routes.v1.SavedFieldDayR\x05saved\"\xb7\x01\n" +
+	"\rSavedFieldDay\x12\x1d\n" +
+	"\n" +
+	"school_ids\x18\x01 \x03(\tR\tschoolIds\x12\x19\n" +
+	"\bsaved_at\x18\x02 \x01(\tR\asavedAt\x12\x1d\n" +
+	"\n" +
+	"started_at\x18\x03 \x01(\tR\tstartedAt\x12\x19\n" +
+	"\bended_at\x18\x04 \x01(\tR\aendedAt\x122\n" +
+	"\x05stops\x18\x05 \x03(\v2\x1c.edify.routes.v1.StopCheckInR\x05stops\"b\n" +
+	"\vStopCheckIn\x12\x1b\n" +
+	"\tschool_id\x18\x01 \x01(\tR\bschoolId\x12\x1d\n" +
+	"\n" +
+	"arrived_at\x18\x02 \x01(\tR\tarrivedAt\x12\x17\n" +
+	"\aleft_at\x18\x03 \x01(\tR\x06leftAt\"H\n" +
+	"\x13SaveFieldDayRequest\x12\x12\n" +
+	"\x04date\x18\x01 \x01(\tR\x04date\x12\x1d\n" +
+	"\n" +
+	"school_ids\x18\x02 \x03(\tR\tschoolIds\"L\n" +
+	"\x14SaveFieldDayResponse\x124\n" +
+	"\x05saved\x18\x01 \x01(\v2\x1e.edify.routes.v1.SavedFieldDayR\x05saved\"}\n" +
+	"\x15RecordFieldDayRequest\x12\x12\n" +
+	"\x04date\x18\x01 \x01(\tR\x04date\x12\x14\n" +
+	"\x05event\x18\x02 \x01(\tR\x05event\x12\x1b\n" +
+	"\tschool_id\x18\x03 \x01(\tR\bschoolId\x12\x1d\n" +
+	"\n" +
+	"school_ids\x18\x04 \x03(\tR\tschoolIds\"N\n" +
+	"\x16RecordFieldDayResponse\x124\n" +
+	"\x05saved\x18\x01 \x01(\v2\x1e.edify.routes.v1.SavedFieldDayR\x05saved\"\xd4\x01\n" +
 	"\x10PlanRouteRequest\x12\x12\n" +
 	"\x04date\x18\x01 \x01(\tR\x04date\x12\x1d\n" +
 	"\n" +
@@ -3439,8 +3827,7 @@ const file_edify_routes_v1_routes_proto_rawDesc = "" +
 	"\bdecision\x18\x02 \x01(\tR\bdecision\x12\x12\n" +
 	"\x04note\x18\x03 \x01(\tR\x04note\"W\n" +
 	"\x1cReviewLocationReportResponse\x127\n" +
-	"\x06report\x18\x01 \x01(\v2\x1f.edify.routes.v1.LocationReportR\x06report2\x93\n" +
-	"\n" +
+	"\x06report\x18\x01 \x01(\v2\x1f.edify.routes.v1.LocationReportR\x06report2\xd3\v\n" +
 	"\x13RoutePlannerService\x12X\n" +
 	"\vGetFieldDay\x12#.edify.routes.v1.GetFieldDayRequest\x1a$.edify.routes.v1.GetFieldDayResponse\x12R\n" +
 	"\tPlanRoute\x12!.edify.routes.v1.PlanRouteRequest\x1a\".edify.routes.v1.PlanRouteResponse\x12^\n" +
@@ -3453,7 +3840,9 @@ const file_edify_routes_v1_routes_proto_rawDesc = "" +
 	"\x15SubmitLocationCapture\x12-.edify.routes.v1.SubmitLocationCaptureRequest\x1a..edify.routes.v1.SubmitLocationCaptureResponse\x12a\n" +
 	"\x0eGetOfflinePack\x12&.edify.routes.v1.GetOfflinePackRequest\x1a'.edify.routes.v1.GetOfflinePackResponse\x12p\n" +
 	"\x13ListLocationChanges\x12+.edify.routes.v1.ListLocationChangesRequest\x1a,.edify.routes.v1.ListLocationChangesResponse\x12m\n" +
-	"\x12GetLocationHistory\x12*.edify.routes.v1.GetLocationHistoryRequest\x1a+.edify.routes.v1.GetLocationHistoryResponseB\xd8\x01\n" +
+	"\x12GetLocationHistory\x12*.edify.routes.v1.GetLocationHistoryRequest\x1a+.edify.routes.v1.GetLocationHistoryResponse\x12[\n" +
+	"\fSaveFieldDay\x12$.edify.routes.v1.SaveFieldDayRequest\x1a%.edify.routes.v1.SaveFieldDayResponse\x12a\n" +
+	"\x0eRecordFieldDay\x12&.edify.routes.v1.RecordFieldDayRequest\x1a'.edify.routes.v1.RecordFieldDayResponseB\xd8\x01\n" +
 	"\x13com.edify.routes.v1B\vRoutesProtoP\x01ZVgithub.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/routes/v1;routesv1\xa2\x02\x03ERX\xaa\x02\x0fEdify.Routes.V1\xca\x02\x0fEdify\\Routes\\V1\xe2\x02\x1bEdify\\Routes\\V1\\GPBMetadata\xea\x02\x11Edify::Routes::V1b\x06proto3"
 
 var (
@@ -3468,7 +3857,7 @@ func file_edify_routes_v1_routes_proto_rawDescGZIP() []byte {
 	return file_edify_routes_v1_routes_proto_rawDescData
 }
 
-var file_edify_routes_v1_routes_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
+var file_edify_routes_v1_routes_proto_msgTypes = make([]protoimpl.MessageInfo, 44)
 var file_edify_routes_v1_routes_proto_goTypes = []any{
 	(*Point)(nil),                         // 0: edify.routes.v1.Point
 	(*SchoolPin)(nil),                     // 1: edify.routes.v1.SchoolPin
@@ -3481,33 +3870,39 @@ var file_edify_routes_v1_routes_proto_goTypes = []any{
 	(*FilterOption)(nil),                  // 8: edify.routes.v1.FilterOption
 	(*GetFieldDayRequest)(nil),            // 9: edify.routes.v1.GetFieldDayRequest
 	(*GetFieldDayResponse)(nil),           // 10: edify.routes.v1.GetFieldDayResponse
-	(*PlanRouteRequest)(nil),              // 11: edify.routes.v1.PlanRouteRequest
-	(*PlanRouteResponse)(nil),             // 12: edify.routes.v1.PlanRouteResponse
-	(*GetSchoolPinsRequest)(nil),          // 13: edify.routes.v1.GetSchoolPinsRequest
-	(*GetSchoolPinsResponse)(nil),         // 14: edify.routes.v1.GetSchoolPinsResponse
-	(*GetSchoolDistanceRequest)(nil),      // 15: edify.routes.v1.GetSchoolDistanceRequest
-	(*GetSchoolDistanceResponse)(nil),     // 16: edify.routes.v1.GetSchoolDistanceResponse
-	(*GetSchoolLocationRequest)(nil),      // 17: edify.routes.v1.GetSchoolLocationRequest
-	(*GetSchoolLocationResponse)(nil),     // 18: edify.routes.v1.GetSchoolLocationResponse
-	(*CapturePolicy)(nil),                 // 19: edify.routes.v1.CapturePolicy
-	(*LocationReport)(nil),                // 20: edify.routes.v1.LocationReport
-	(*SubmitLocationCaptureRequest)(nil),  // 21: edify.routes.v1.SubmitLocationCaptureRequest
-	(*SubmitLocationCaptureResponse)(nil), // 22: edify.routes.v1.SubmitLocationCaptureResponse
-	(*GetOfflinePackRequest)(nil),         // 23: edify.routes.v1.GetOfflinePackRequest
-	(*OfflineSchool)(nil),                 // 24: edify.routes.v1.OfflineSchool
-	(*PlannedVisit)(nil),                  // 25: edify.routes.v1.PlannedVisit
-	(*GetOfflinePackResponse)(nil),        // 26: edify.routes.v1.GetOfflinePackResponse
-	(*LocationChange)(nil),                // 27: edify.routes.v1.LocationChange
-	(*ListLocationChangesRequest)(nil),    // 28: edify.routes.v1.ListLocationChangesRequest
-	(*ListLocationChangesResponse)(nil),   // 29: edify.routes.v1.ListLocationChangesResponse
-	(*GetLocationHistoryRequest)(nil),     // 30: edify.routes.v1.GetLocationHistoryRequest
-	(*GetLocationHistoryResponse)(nil),    // 31: edify.routes.v1.GetLocationHistoryResponse
-	(*ReportSchoolLocationRequest)(nil),   // 32: edify.routes.v1.ReportSchoolLocationRequest
-	(*ReportSchoolLocationResponse)(nil),  // 33: edify.routes.v1.ReportSchoolLocationResponse
-	(*ListLocationReportsRequest)(nil),    // 34: edify.routes.v1.ListLocationReportsRequest
-	(*ListLocationReportsResponse)(nil),   // 35: edify.routes.v1.ListLocationReportsResponse
-	(*ReviewLocationReportRequest)(nil),   // 36: edify.routes.v1.ReviewLocationReportRequest
-	(*ReviewLocationReportResponse)(nil),  // 37: edify.routes.v1.ReviewLocationReportResponse
+	(*SavedFieldDay)(nil),                 // 11: edify.routes.v1.SavedFieldDay
+	(*StopCheckIn)(nil),                   // 12: edify.routes.v1.StopCheckIn
+	(*SaveFieldDayRequest)(nil),           // 13: edify.routes.v1.SaveFieldDayRequest
+	(*SaveFieldDayResponse)(nil),          // 14: edify.routes.v1.SaveFieldDayResponse
+	(*RecordFieldDayRequest)(nil),         // 15: edify.routes.v1.RecordFieldDayRequest
+	(*RecordFieldDayResponse)(nil),        // 16: edify.routes.v1.RecordFieldDayResponse
+	(*PlanRouteRequest)(nil),              // 17: edify.routes.v1.PlanRouteRequest
+	(*PlanRouteResponse)(nil),             // 18: edify.routes.v1.PlanRouteResponse
+	(*GetSchoolPinsRequest)(nil),          // 19: edify.routes.v1.GetSchoolPinsRequest
+	(*GetSchoolPinsResponse)(nil),         // 20: edify.routes.v1.GetSchoolPinsResponse
+	(*GetSchoolDistanceRequest)(nil),      // 21: edify.routes.v1.GetSchoolDistanceRequest
+	(*GetSchoolDistanceResponse)(nil),     // 22: edify.routes.v1.GetSchoolDistanceResponse
+	(*GetSchoolLocationRequest)(nil),      // 23: edify.routes.v1.GetSchoolLocationRequest
+	(*GetSchoolLocationResponse)(nil),     // 24: edify.routes.v1.GetSchoolLocationResponse
+	(*CapturePolicy)(nil),                 // 25: edify.routes.v1.CapturePolicy
+	(*LocationReport)(nil),                // 26: edify.routes.v1.LocationReport
+	(*SubmitLocationCaptureRequest)(nil),  // 27: edify.routes.v1.SubmitLocationCaptureRequest
+	(*SubmitLocationCaptureResponse)(nil), // 28: edify.routes.v1.SubmitLocationCaptureResponse
+	(*GetOfflinePackRequest)(nil),         // 29: edify.routes.v1.GetOfflinePackRequest
+	(*OfflineSchool)(nil),                 // 30: edify.routes.v1.OfflineSchool
+	(*PlannedVisit)(nil),                  // 31: edify.routes.v1.PlannedVisit
+	(*GetOfflinePackResponse)(nil),        // 32: edify.routes.v1.GetOfflinePackResponse
+	(*LocationChange)(nil),                // 33: edify.routes.v1.LocationChange
+	(*ListLocationChangesRequest)(nil),    // 34: edify.routes.v1.ListLocationChangesRequest
+	(*ListLocationChangesResponse)(nil),   // 35: edify.routes.v1.ListLocationChangesResponse
+	(*GetLocationHistoryRequest)(nil),     // 36: edify.routes.v1.GetLocationHistoryRequest
+	(*GetLocationHistoryResponse)(nil),    // 37: edify.routes.v1.GetLocationHistoryResponse
+	(*ReportSchoolLocationRequest)(nil),   // 38: edify.routes.v1.ReportSchoolLocationRequest
+	(*ReportSchoolLocationResponse)(nil),  // 39: edify.routes.v1.ReportSchoolLocationResponse
+	(*ListLocationReportsRequest)(nil),    // 40: edify.routes.v1.ListLocationReportsRequest
+	(*ListLocationReportsResponse)(nil),   // 41: edify.routes.v1.ListLocationReportsResponse
+	(*ReviewLocationReportRequest)(nil),   // 42: edify.routes.v1.ReviewLocationReportRequest
+	(*ReviewLocationReportResponse)(nil),  // 43: edify.routes.v1.ReviewLocationReportResponse
 }
 var file_edify_routes_v1_routes_proto_depIdxs = []int32{
 	0,  // 0: edify.routes.v1.SchoolPin.point:type_name -> edify.routes.v1.Point
@@ -3527,67 +3922,75 @@ var file_edify_routes_v1_routes_proto_depIdxs = []int32{
 	8,  // 14: edify.routes.v1.GetFieldDayResponse.districts:type_name -> edify.routes.v1.FilterOption
 	8,  // 15: edify.routes.v1.GetFieldDayResponse.clusters:type_name -> edify.routes.v1.FilterOption
 	1,  // 16: edify.routes.v1.GetFieldDayResponse.focus:type_name -> edify.routes.v1.SchoolPin
-	0,  // 17: edify.routes.v1.PlanRouteRequest.start:type_name -> edify.routes.v1.Point
-	5,  // 18: edify.routes.v1.PlanRouteResponse.itinerary:type_name -> edify.routes.v1.Itinerary
-	7,  // 19: edify.routes.v1.PlanRouteResponse.provider:type_name -> edify.routes.v1.ProviderStatus
-	0,  // 20: edify.routes.v1.GetSchoolPinsRequest.south_west:type_name -> edify.routes.v1.Point
-	0,  // 21: edify.routes.v1.GetSchoolPinsRequest.north_east:type_name -> edify.routes.v1.Point
-	1,  // 22: edify.routes.v1.GetSchoolPinsResponse.pins:type_name -> edify.routes.v1.SchoolPin
-	2,  // 23: edify.routes.v1.GetSchoolDistanceResponse.leg:type_name -> edify.routes.v1.RouteLeg
-	1,  // 24: edify.routes.v1.GetSchoolDistanceResponse.from:type_name -> edify.routes.v1.SchoolPin
-	1,  // 25: edify.routes.v1.GetSchoolDistanceResponse.to:type_name -> edify.routes.v1.SchoolPin
-	7,  // 26: edify.routes.v1.GetSchoolDistanceResponse.provider:type_name -> edify.routes.v1.ProviderStatus
-	1,  // 27: edify.routes.v1.GetSchoolLocationResponse.school:type_name -> edify.routes.v1.SchoolPin
-	20, // 28: edify.routes.v1.GetSchoolLocationResponse.pending_report:type_name -> edify.routes.v1.LocationReport
-	0,  // 29: edify.routes.v1.GetSchoolLocationResponse.entrance:type_name -> edify.routes.v1.Point
-	19, // 30: edify.routes.v1.GetSchoolLocationResponse.policy:type_name -> edify.routes.v1.CapturePolicy
-	1,  // 31: edify.routes.v1.LocationReport.school:type_name -> edify.routes.v1.SchoolPin
-	0,  // 32: edify.routes.v1.LocationReport.proposed:type_name -> edify.routes.v1.Point
-	0,  // 33: edify.routes.v1.LocationReport.previous:type_name -> edify.routes.v1.Point
-	0,  // 34: edify.routes.v1.SubmitLocationCaptureRequest.point:type_name -> edify.routes.v1.Point
-	20, // 35: edify.routes.v1.SubmitLocationCaptureResponse.capture:type_name -> edify.routes.v1.LocationReport
-	1,  // 36: edify.routes.v1.SubmitLocationCaptureResponse.school:type_name -> edify.routes.v1.SchoolPin
-	1,  // 37: edify.routes.v1.OfflineSchool.school:type_name -> edify.routes.v1.SchoolPin
-	24, // 38: edify.routes.v1.GetOfflinePackResponse.schools:type_name -> edify.routes.v1.OfflineSchool
-	25, // 39: edify.routes.v1.GetOfflinePackResponse.planned:type_name -> edify.routes.v1.PlannedVisit
-	19, // 40: edify.routes.v1.GetOfflinePackResponse.policy:type_name -> edify.routes.v1.CapturePolicy
-	0,  // 41: edify.routes.v1.LocationChange.point:type_name -> edify.routes.v1.Point
-	27, // 42: edify.routes.v1.ListLocationChangesResponse.changes:type_name -> edify.routes.v1.LocationChange
-	1,  // 43: edify.routes.v1.GetLocationHistoryResponse.school:type_name -> edify.routes.v1.SchoolPin
-	20, // 44: edify.routes.v1.GetLocationHistoryResponse.entries:type_name -> edify.routes.v1.LocationReport
-	0,  // 45: edify.routes.v1.ReportSchoolLocationRequest.proposed:type_name -> edify.routes.v1.Point
-	20, // 46: edify.routes.v1.ReportSchoolLocationResponse.report:type_name -> edify.routes.v1.LocationReport
-	20, // 47: edify.routes.v1.ListLocationReportsResponse.reports:type_name -> edify.routes.v1.LocationReport
-	20, // 48: edify.routes.v1.ReviewLocationReportResponse.report:type_name -> edify.routes.v1.LocationReport
-	9,  // 49: edify.routes.v1.RoutePlannerService.GetFieldDay:input_type -> edify.routes.v1.GetFieldDayRequest
-	11, // 50: edify.routes.v1.RoutePlannerService.PlanRoute:input_type -> edify.routes.v1.PlanRouteRequest
-	13, // 51: edify.routes.v1.RoutePlannerService.GetSchoolPins:input_type -> edify.routes.v1.GetSchoolPinsRequest
-	15, // 52: edify.routes.v1.RoutePlannerService.GetSchoolDistance:input_type -> edify.routes.v1.GetSchoolDistanceRequest
-	17, // 53: edify.routes.v1.RoutePlannerService.GetSchoolLocation:input_type -> edify.routes.v1.GetSchoolLocationRequest
-	32, // 54: edify.routes.v1.RoutePlannerService.ReportSchoolLocation:input_type -> edify.routes.v1.ReportSchoolLocationRequest
-	34, // 55: edify.routes.v1.RoutePlannerService.ListLocationReports:input_type -> edify.routes.v1.ListLocationReportsRequest
-	36, // 56: edify.routes.v1.RoutePlannerService.ReviewLocationReport:input_type -> edify.routes.v1.ReviewLocationReportRequest
-	21, // 57: edify.routes.v1.RoutePlannerService.SubmitLocationCapture:input_type -> edify.routes.v1.SubmitLocationCaptureRequest
-	23, // 58: edify.routes.v1.RoutePlannerService.GetOfflinePack:input_type -> edify.routes.v1.GetOfflinePackRequest
-	28, // 59: edify.routes.v1.RoutePlannerService.ListLocationChanges:input_type -> edify.routes.v1.ListLocationChangesRequest
-	30, // 60: edify.routes.v1.RoutePlannerService.GetLocationHistory:input_type -> edify.routes.v1.GetLocationHistoryRequest
-	10, // 61: edify.routes.v1.RoutePlannerService.GetFieldDay:output_type -> edify.routes.v1.GetFieldDayResponse
-	12, // 62: edify.routes.v1.RoutePlannerService.PlanRoute:output_type -> edify.routes.v1.PlanRouteResponse
-	14, // 63: edify.routes.v1.RoutePlannerService.GetSchoolPins:output_type -> edify.routes.v1.GetSchoolPinsResponse
-	16, // 64: edify.routes.v1.RoutePlannerService.GetSchoolDistance:output_type -> edify.routes.v1.GetSchoolDistanceResponse
-	18, // 65: edify.routes.v1.RoutePlannerService.GetSchoolLocation:output_type -> edify.routes.v1.GetSchoolLocationResponse
-	33, // 66: edify.routes.v1.RoutePlannerService.ReportSchoolLocation:output_type -> edify.routes.v1.ReportSchoolLocationResponse
-	35, // 67: edify.routes.v1.RoutePlannerService.ListLocationReports:output_type -> edify.routes.v1.ListLocationReportsResponse
-	37, // 68: edify.routes.v1.RoutePlannerService.ReviewLocationReport:output_type -> edify.routes.v1.ReviewLocationReportResponse
-	22, // 69: edify.routes.v1.RoutePlannerService.SubmitLocationCapture:output_type -> edify.routes.v1.SubmitLocationCaptureResponse
-	26, // 70: edify.routes.v1.RoutePlannerService.GetOfflinePack:output_type -> edify.routes.v1.GetOfflinePackResponse
-	29, // 71: edify.routes.v1.RoutePlannerService.ListLocationChanges:output_type -> edify.routes.v1.ListLocationChangesResponse
-	31, // 72: edify.routes.v1.RoutePlannerService.GetLocationHistory:output_type -> edify.routes.v1.GetLocationHistoryResponse
-	61, // [61:73] is the sub-list for method output_type
-	49, // [49:61] is the sub-list for method input_type
-	49, // [49:49] is the sub-list for extension type_name
-	49, // [49:49] is the sub-list for extension extendee
-	0,  // [0:49] is the sub-list for field type_name
+	11, // 17: edify.routes.v1.GetFieldDayResponse.saved:type_name -> edify.routes.v1.SavedFieldDay
+	12, // 18: edify.routes.v1.SavedFieldDay.stops:type_name -> edify.routes.v1.StopCheckIn
+	11, // 19: edify.routes.v1.SaveFieldDayResponse.saved:type_name -> edify.routes.v1.SavedFieldDay
+	11, // 20: edify.routes.v1.RecordFieldDayResponse.saved:type_name -> edify.routes.v1.SavedFieldDay
+	0,  // 21: edify.routes.v1.PlanRouteRequest.start:type_name -> edify.routes.v1.Point
+	5,  // 22: edify.routes.v1.PlanRouteResponse.itinerary:type_name -> edify.routes.v1.Itinerary
+	7,  // 23: edify.routes.v1.PlanRouteResponse.provider:type_name -> edify.routes.v1.ProviderStatus
+	0,  // 24: edify.routes.v1.GetSchoolPinsRequest.south_west:type_name -> edify.routes.v1.Point
+	0,  // 25: edify.routes.v1.GetSchoolPinsRequest.north_east:type_name -> edify.routes.v1.Point
+	1,  // 26: edify.routes.v1.GetSchoolPinsResponse.pins:type_name -> edify.routes.v1.SchoolPin
+	2,  // 27: edify.routes.v1.GetSchoolDistanceResponse.leg:type_name -> edify.routes.v1.RouteLeg
+	1,  // 28: edify.routes.v1.GetSchoolDistanceResponse.from:type_name -> edify.routes.v1.SchoolPin
+	1,  // 29: edify.routes.v1.GetSchoolDistanceResponse.to:type_name -> edify.routes.v1.SchoolPin
+	7,  // 30: edify.routes.v1.GetSchoolDistanceResponse.provider:type_name -> edify.routes.v1.ProviderStatus
+	1,  // 31: edify.routes.v1.GetSchoolLocationResponse.school:type_name -> edify.routes.v1.SchoolPin
+	26, // 32: edify.routes.v1.GetSchoolLocationResponse.pending_report:type_name -> edify.routes.v1.LocationReport
+	0,  // 33: edify.routes.v1.GetSchoolLocationResponse.entrance:type_name -> edify.routes.v1.Point
+	25, // 34: edify.routes.v1.GetSchoolLocationResponse.policy:type_name -> edify.routes.v1.CapturePolicy
+	1,  // 35: edify.routes.v1.LocationReport.school:type_name -> edify.routes.v1.SchoolPin
+	0,  // 36: edify.routes.v1.LocationReport.proposed:type_name -> edify.routes.v1.Point
+	0,  // 37: edify.routes.v1.LocationReport.previous:type_name -> edify.routes.v1.Point
+	0,  // 38: edify.routes.v1.SubmitLocationCaptureRequest.point:type_name -> edify.routes.v1.Point
+	26, // 39: edify.routes.v1.SubmitLocationCaptureResponse.capture:type_name -> edify.routes.v1.LocationReport
+	1,  // 40: edify.routes.v1.SubmitLocationCaptureResponse.school:type_name -> edify.routes.v1.SchoolPin
+	1,  // 41: edify.routes.v1.OfflineSchool.school:type_name -> edify.routes.v1.SchoolPin
+	30, // 42: edify.routes.v1.GetOfflinePackResponse.schools:type_name -> edify.routes.v1.OfflineSchool
+	31, // 43: edify.routes.v1.GetOfflinePackResponse.planned:type_name -> edify.routes.v1.PlannedVisit
+	25, // 44: edify.routes.v1.GetOfflinePackResponse.policy:type_name -> edify.routes.v1.CapturePolicy
+	0,  // 45: edify.routes.v1.LocationChange.point:type_name -> edify.routes.v1.Point
+	33, // 46: edify.routes.v1.ListLocationChangesResponse.changes:type_name -> edify.routes.v1.LocationChange
+	1,  // 47: edify.routes.v1.GetLocationHistoryResponse.school:type_name -> edify.routes.v1.SchoolPin
+	26, // 48: edify.routes.v1.GetLocationHistoryResponse.entries:type_name -> edify.routes.v1.LocationReport
+	0,  // 49: edify.routes.v1.ReportSchoolLocationRequest.proposed:type_name -> edify.routes.v1.Point
+	26, // 50: edify.routes.v1.ReportSchoolLocationResponse.report:type_name -> edify.routes.v1.LocationReport
+	26, // 51: edify.routes.v1.ListLocationReportsResponse.reports:type_name -> edify.routes.v1.LocationReport
+	26, // 52: edify.routes.v1.ReviewLocationReportResponse.report:type_name -> edify.routes.v1.LocationReport
+	9,  // 53: edify.routes.v1.RoutePlannerService.GetFieldDay:input_type -> edify.routes.v1.GetFieldDayRequest
+	17, // 54: edify.routes.v1.RoutePlannerService.PlanRoute:input_type -> edify.routes.v1.PlanRouteRequest
+	19, // 55: edify.routes.v1.RoutePlannerService.GetSchoolPins:input_type -> edify.routes.v1.GetSchoolPinsRequest
+	21, // 56: edify.routes.v1.RoutePlannerService.GetSchoolDistance:input_type -> edify.routes.v1.GetSchoolDistanceRequest
+	23, // 57: edify.routes.v1.RoutePlannerService.GetSchoolLocation:input_type -> edify.routes.v1.GetSchoolLocationRequest
+	38, // 58: edify.routes.v1.RoutePlannerService.ReportSchoolLocation:input_type -> edify.routes.v1.ReportSchoolLocationRequest
+	40, // 59: edify.routes.v1.RoutePlannerService.ListLocationReports:input_type -> edify.routes.v1.ListLocationReportsRequest
+	42, // 60: edify.routes.v1.RoutePlannerService.ReviewLocationReport:input_type -> edify.routes.v1.ReviewLocationReportRequest
+	27, // 61: edify.routes.v1.RoutePlannerService.SubmitLocationCapture:input_type -> edify.routes.v1.SubmitLocationCaptureRequest
+	29, // 62: edify.routes.v1.RoutePlannerService.GetOfflinePack:input_type -> edify.routes.v1.GetOfflinePackRequest
+	34, // 63: edify.routes.v1.RoutePlannerService.ListLocationChanges:input_type -> edify.routes.v1.ListLocationChangesRequest
+	36, // 64: edify.routes.v1.RoutePlannerService.GetLocationHistory:input_type -> edify.routes.v1.GetLocationHistoryRequest
+	13, // 65: edify.routes.v1.RoutePlannerService.SaveFieldDay:input_type -> edify.routes.v1.SaveFieldDayRequest
+	15, // 66: edify.routes.v1.RoutePlannerService.RecordFieldDay:input_type -> edify.routes.v1.RecordFieldDayRequest
+	10, // 67: edify.routes.v1.RoutePlannerService.GetFieldDay:output_type -> edify.routes.v1.GetFieldDayResponse
+	18, // 68: edify.routes.v1.RoutePlannerService.PlanRoute:output_type -> edify.routes.v1.PlanRouteResponse
+	20, // 69: edify.routes.v1.RoutePlannerService.GetSchoolPins:output_type -> edify.routes.v1.GetSchoolPinsResponse
+	22, // 70: edify.routes.v1.RoutePlannerService.GetSchoolDistance:output_type -> edify.routes.v1.GetSchoolDistanceResponse
+	24, // 71: edify.routes.v1.RoutePlannerService.GetSchoolLocation:output_type -> edify.routes.v1.GetSchoolLocationResponse
+	39, // 72: edify.routes.v1.RoutePlannerService.ReportSchoolLocation:output_type -> edify.routes.v1.ReportSchoolLocationResponse
+	41, // 73: edify.routes.v1.RoutePlannerService.ListLocationReports:output_type -> edify.routes.v1.ListLocationReportsResponse
+	43, // 74: edify.routes.v1.RoutePlannerService.ReviewLocationReport:output_type -> edify.routes.v1.ReviewLocationReportResponse
+	28, // 75: edify.routes.v1.RoutePlannerService.SubmitLocationCapture:output_type -> edify.routes.v1.SubmitLocationCaptureResponse
+	32, // 76: edify.routes.v1.RoutePlannerService.GetOfflinePack:output_type -> edify.routes.v1.GetOfflinePackResponse
+	35, // 77: edify.routes.v1.RoutePlannerService.ListLocationChanges:output_type -> edify.routes.v1.ListLocationChangesResponse
+	37, // 78: edify.routes.v1.RoutePlannerService.GetLocationHistory:output_type -> edify.routes.v1.GetLocationHistoryResponse
+	14, // 79: edify.routes.v1.RoutePlannerService.SaveFieldDay:output_type -> edify.routes.v1.SaveFieldDayResponse
+	16, // 80: edify.routes.v1.RoutePlannerService.RecordFieldDay:output_type -> edify.routes.v1.RecordFieldDayResponse
+	67, // [67:81] is the sub-list for method output_type
+	53, // [53:67] is the sub-list for method input_type
+	53, // [53:53] is the sub-list for extension type_name
+	53, // [53:53] is the sub-list for extension extendee
+	0,  // [0:53] is the sub-list for field type_name
 }
 
 func init() { file_edify_routes_v1_routes_proto_init() }
@@ -3601,7 +4004,7 @@ func file_edify_routes_v1_routes_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_edify_routes_v1_routes_proto_rawDesc), len(file_edify_routes_v1_routes_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   38,
+			NumMessages:   44,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -18,6 +18,7 @@ import {
   MapPin,
   Navigation,
   Play,
+  Save,
   School,
   SlidersHorizontal,
   Sparkles,
@@ -27,11 +28,12 @@ import {
   ArrowDownUp,
 } from 'lucide-react-native';
 
-import type { GetFieldDayResponse, Itinerary, ItineraryStop, Suggestion } from '../../gen/edify/routes/v1/routes_pb';
+import type { GetFieldDayResponse, Itinerary, ItineraryStop, SavedFieldDay, StopCheckIn, Suggestion } from '../../gen/edify/routes/v1/routes_pb';
 import { fonts, radius, spacing, useTheme } from '../../theme';
 import { DateField } from '../../ui/DateField';
 import { Select } from '../../ui/Select';
-import { PIN_TONES, ROUTE_TEAL, hrMin, km, legFigures, totalFigures } from './routeData';
+import { PIN_TONES, ROUTE_TEAL, dayClock, hrMin, km, legFigures, totalFigures } from './routeData';
+import type { FieldDayState } from './routeData';
 import type { MapScene } from './routeMapHtml';
 import { RouteMapView } from './RouteMapView';
 
@@ -298,26 +300,30 @@ export function RouteDetailsScreen({
   notice,
   isBusy,
   locked,
-  isFieldDay,
+  fieldDay,
+  saved,
+  onSave,
+  onRecord,
   onBack,
   onToggleLock,
   onRecalculate,
   onKeepOrder,
   onAddToPlan,
   onDirections,
-  onStartFieldDay,
   onRefresh,
   onSelectSchool,
 }: Common & {
   readonly locked: ReadonlySet<string>;
-  readonly isFieldDay: boolean;
+  readonly fieldDay: FieldDayState;
+  readonly saved: SavedFieldDay | undefined;
+  readonly onSave: () => void;
+  readonly onRecord: (event: 'start' | 'arrive' | 'leave' | 'end', schoolId?: string) => void;
   readonly onBack: () => void;
   readonly onToggleLock: (id: string) => void;
   readonly onRecalculate: () => void;
   readonly onKeepOrder: () => void;
   readonly onAddToPlan: (id: string) => void;
   readonly onDirections: () => void;
-  readonly onStartFieldDay: () => void;
   readonly onRefresh: () => void;
 }) {
   const { colors } = useTheme();
@@ -326,7 +332,9 @@ export function RouteDetailsScreen({
   const total = totalFigures(itinerary?.totals);
   const stops = itinerary?.stops ?? [];
   const conflicts = itinerary?.conflicts ?? [];
-  const next = stops.find((s) => s.school?.status !== 'completed');
+  const isFieldDay = fieldDay.running;
+  const checkIns = new Map((saved?.stops ?? []).map((c) => [c.schoolId, c]));
+  const next = stops.find((s) => s.school?.status !== 'completed' && !checkIns.get(s.school?.schoolId ?? '')?.leftAt);
   const nearby = allNearby ? day.suggestions : day.suggestions.slice(0, 1);
   return (
     <View style={[styles.flex, { backgroundColor: colors.bg }]}>
@@ -358,11 +366,13 @@ export function RouteDetailsScreen({
           <View style={[styles.banner, styles.bannerOk]}>
             <CheckCircle2 size={40} color="#ffffff" fill="#16a34a" />
             <View style={styles.flex}>
-              <Text style={styles.bannerTitle}>{isFieldDay ? 'Field day started' : 'Recommended Field Day'}</Text>
+              <Text style={styles.bannerTitle}>{bannerTitle(fieldDay, saved)}</Text>
               <Text style={styles.bannerText}>
                 {isFieldDay && next
-                  ? `Next: ${next.school?.name}. Complete each visit through its usual workflow; finished visits drop off this route.`
-                  : 'An efficient and feasible route based on your planned schools, school priorities and travel time.'}
+                  ? `Next: ${next.school?.name}. Mark each school as you arrive and leave; complete each visit through its usual workflow.`
+                  : fieldDay.phase === 'ended'
+                    ? 'Your arrival and departure times are kept with this day.'
+                    : 'An efficient and feasible route based on your planned schools, school priorities and travel time.'}
               </Text>
             </View>
           </View>
@@ -392,7 +402,7 @@ export function RouteDetailsScreen({
           <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.inline}>
               <ArrowDownUp size={22} color={colors.text} />
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Visit Sequence (Recommended)</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{fieldDay.phase === 'unsaved' ? 'Visit Sequence (Recommended)' : 'Visit Sequence'}</Text>
             </View>
             {stops.map((s, i) => {
               const f = legFigures(s.leg);
@@ -427,6 +437,15 @@ export function RouteDetailsScreen({
                       </Text>
                     </View>
                     {s.conflict ? <Text style={[styles.rowSub, { color: '#b91c1c' }]}>{s.conflict}</Text> : null}
+                    {fieldDay.phase === 'started' || fieldDay.phase === 'ended' ? (
+                      <StopCheckInRow
+                        checkIn={checkIns.get(s.school?.schoolId ?? '')}
+                        running={isFieldDay}
+                        busy={isBusy}
+                        onArrive={() => s.school && onRecord('arrive', s.school.schoolId)}
+                        onLeave={() => s.school && onRecord('leave', s.school.schoolId)}
+                      />
+                    ) : null}
                   </View>
                   <ChevronRight size={22} color={colors.text} />
                 </Pressable>
@@ -464,6 +483,12 @@ export function RouteDetailsScreen({
                 <Text style={styles.primaryText}>{isBusy ? 'Working…' : 'Recalculate'}</Text>
               </Pressable>
             </View>
+            {fieldDay.canSave ? (
+              <Pressable onPress={onSave} disabled={isBusy || !stops.length} style={styles.outlineWide} accessibilityRole="button">
+                <Save size={20} color="#0f172a" />
+                <Text style={styles.outlineText}>{fieldDay.phase === 'saved' ? `Save Plan (saved ${dayClock(saved?.savedAt ?? '')})` : 'Save Plan'}</Text>
+              </Pressable>
+            ) : null}
             {isFieldDay ? (
               <Pressable onPress={onRefresh} style={styles.outlineWide} accessibilityRole="button">
                 <Text style={styles.outlineText}>Refresh completed visits</Text>
@@ -494,16 +519,18 @@ export function RouteDetailsScreen({
           <Navigation size={22} color="#0f172a" fill="#0f172a" />
           <Text style={styles.outlineDark}>Get Directions</Text>
         </Pressable>
-        <Pressable onPress={onStartFieldDay} disabled={!stops.length} style={[styles.primarySmall, styles.flex]} accessibilityRole="button">
-          <Play size={20} color="#fff" fill="#fff" />
-          <Text style={styles.primaryText}>{isFieldDay ? 'Refresh Field Day' : 'Start Field Day'}</Text>
-        </Pressable>
+        <FieldDayButton fieldDay={fieldDay} saved={saved} busy={isBusy} hasStops={stops.length > 0} onSave={onSave} onRecord={onRecord} />
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  checkIns: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 6 },
+  checkInTimes: { fontFamily: fonts.semibold, fontSize: 13, color: '#15803d' },
+  checkInButton: { borderWidth: 2, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 4 },
+  checkInText: { fontFamily: fonts.semibold, fontSize: 13 },
+  ended: { backgroundColor: '#15803d' },
   flex: { flex: 1 },
   page: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xxl * 2 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
@@ -582,3 +609,84 @@ const styles = StyleSheet.create({
   nearButton: { alignSelf: 'flex-start', borderWidth: 1.5, borderColor: '#1d6fe0', borderRadius: radius.sm, paddingHorizontal: 14, minHeight: 40, justifyContent: 'center', marginTop: 4 },
   footer: { flexDirection: 'row', gap: spacing.sm, padding: spacing.md, borderTopWidth: 1 },
 });
+
+function bannerTitle(fieldDay: FieldDayState, saved: SavedFieldDay | undefined): string {
+  if (fieldDay.phase === 'started') return `Field day started ${dayClock(saved?.startedAt ?? '')}`;
+  if (fieldDay.phase === 'ended') return `Field day ended ${dayClock(saved?.endedAt ?? '')}`;
+  if (fieldDay.phase === 'saved') return `Your saved field day (${dayClock(saved?.savedAt ?? '')})`;
+  return 'Recommended Field Day';
+}
+
+/** The footer's field-day button: Start (today), Save Plan (another day), End, or the day's end. */
+function FieldDayButton({
+  fieldDay,
+  saved,
+  busy,
+  hasStops,
+  onSave,
+  onRecord,
+}: {
+  readonly fieldDay: FieldDayState;
+  readonly saved: SavedFieldDay | undefined;
+  readonly busy: boolean;
+  readonly hasStops: boolean;
+  readonly onSave: () => void;
+  readonly onRecord: (event: 'start' | 'end') => void;
+}) {
+  if (fieldDay.phase === 'ended') {
+    return (
+      <View style={[styles.primarySmall, styles.flex, styles.ended]} accessibilityRole="text">
+        <CheckCircle2 size={20} color="#fff" />
+        <Text style={styles.primaryText}>Ended {dayClock(saved?.endedAt ?? '')}</Text>
+      </View>
+    );
+  }
+  const [label, action, icon] = fieldDay.running
+    ? (['End Field Day', () => onRecord('end'), <CheckCircle2 key="end" size={20} color="#fff" />] as const)
+    : fieldDay.canStart
+      ? (['Start Field Day', () => onRecord('start'), <Play key="start" size={20} color="#fff" fill="#fff" />] as const)
+      : (['Save Plan', onSave, <Save key="save" size={20} color="#fff" />] as const);
+  return (
+    <Pressable onPress={action} disabled={busy || !hasStops} style={[styles.primarySmall, styles.flex]} accessibilityRole="button">
+      {icon}
+      <Text style={styles.primaryText}>{busy ? 'Working…' : label}</Text>
+    </Pressable>
+  );
+}
+
+/** A stop's arrival and departure on a started day, and its buttons while the day runs. */
+function StopCheckInRow({
+  checkIn,
+  running,
+  busy,
+  onArrive,
+  onLeave,
+}: {
+  readonly checkIn: StopCheckIn | undefined;
+  readonly running: boolean;
+  readonly busy: boolean;
+  readonly onArrive: () => void;
+  readonly onLeave: () => void;
+}) {
+  const { colors } = useTheme();
+  const tone = { borderColor: colors.primary };
+  const text = { color: colors.primary };
+  const times = [checkIn?.arrivedAt ? `Arrived ${dayClock(checkIn.arrivedAt)}` : '', checkIn?.leftAt ? `Left ${dayClock(checkIn.leftAt)}` : '']
+    .filter(Boolean)
+    .join(' · ');
+  return (
+    <View style={styles.checkIns}>
+      {times ? <Text style={styles.checkInTimes}>{times}</Text> : null}
+      {running && !checkIn?.arrivedAt ? (
+        <Pressable onPress={onArrive} disabled={busy} style={[styles.checkInButton, tone]} accessibilityRole="button" accessibilityLabel="Arrived">
+          <Text style={[styles.checkInText, text]}>Arrived</Text>
+        </Pressable>
+      ) : null}
+      {running && checkIn?.arrivedAt && !checkIn.leftAt ? (
+        <Pressable onPress={onLeave} disabled={busy} style={[styles.checkInButton, tone]} accessibilityRole="button" accessibilityLabel="Leaving">
+          <Text style={[styles.checkInText, text]}>Leaving</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
