@@ -1039,22 +1039,10 @@ def dashboard_view(request):
 
         # ── "This Week's Plan" — three real, actionable operating lists ────────
         _interv = dict(SsaIntervention.choices)
-        CLUSTER_TYPES = [
-            "cluster_meeting",
-            "cluster_training",
-            "cluster_training_ssa_collection",
-            "cluster_meeting_ssa_review",
-            "core_training",
-        ]
-        DONE_STATUSES = [
-            "completed",
-            "closed",
-            "cancelled",
-            "ia_verified",
-            "accountant_confirmed",
-            "submitted_to_pl",
-            "awaiting_ia_verification",
-        ]
+        from apps.my_plan.past_due_service import RETURNED_STATUSES
+
+        CLUSTER_TYPES = CCEO_CLUSTER_TYPES
+        DONE_STATUSES = CCEO_DONE_STATUSES
 
         # 1) Overdue From Last Week — uncompleted visits + cluster work now past
         #    due (combined into one list), each with a fix/reschedule action.
@@ -1076,7 +1064,7 @@ def dashboard_view(request):
                     f"/activities/{a.id}/complete",
                     True,
                 )
-            elif a.status in ("returned", "returned_by_pl", "returned_by_ia"):
+            elif a.status in RETURNED_STATUSES:
                 st, tone, lbl, url, primary = (
                     "Returned",
                     "danger",
@@ -1193,33 +1181,12 @@ def dashboard_view(request):
 
         cceo_kpi_items = [
             render_precomputed_metric_item(
-                "frontend_views_dashboard_views_completed_tasks",
-                str(completed_cnt),
-                helper="Activities done",
-                icon="check",
-                variant="success",
-            ),
-            render_precomputed_metric_item(
-                "frontend_views_dashboard_views_in_progress",
-                str(in_progress_cnt),
-                helper="Started, not yet verified",
-                icon="clock",
-                variant="info",
-            ),
-            render_precomputed_metric_item(
-                "frontend_views_dashboard_views_planned_tasks",
-                str(planned_cnt),
-                helper="Not started, date ahead",
-                icon="calendar",
-                variant="warning",
-            ),
-            render_precomputed_metric_item(
-                "frontend_views_dashboard_views_overdue_tasks",
-                str(overdue_cnt),
-                helper="Not started, date passed",
-                icon="warning",
-                variant="danger",
-            ),
+                metric, str(count), helper=helper, icon=icon, variant=variant
+            )
+            for (metric, helper, icon, variant), count in zip(
+                CCEO_KPI_METRICS,
+                (completed_cnt, in_progress_cnt, planned_cnt, overdue_cnt),
+            )
         ]
 
         if overdue_last_week:
@@ -1300,20 +1267,7 @@ def dashboard_view(request):
             active=dashboard_view,
             panel_id="cceo-dashboard-view",
             view_template="partials/dashboards/cceo/view.html",
-            tabs=[
-                (
-                    "week",
-                    "This Week",
-                    "Your overdue and this week's work, your days and your "
-                    "partners' week",
-                ),
-                (
-                    "operations",
-                    "Urgent schools",
-                    "Schools needing urgent attention this month",
-                ),
-                ("map", "Map", "The country map and its distribution table"),
-            ],
+            tabs=list(CCEO_VIEW_TABS),
             keep=(),
         )
         if dashboard_view == "map":
@@ -1709,6 +1663,66 @@ def dashboard_view(request):
     if view_explicit:
         remember_dashboard_view(response, role_key="admin", view=dashboard_view)
     return response
+
+
+#: The work a field officer's Home lists under its cluster activities this
+#: week (the Go gateway reads it through export_dashboard_rules).
+CCEO_CLUSTER_TYPES = [
+    "cluster_meeting",
+    "cluster_training",
+    "cluster_training_ssa_collection",
+    "cluster_meeting_ssa_review",
+    "core_training",
+]
+#: The states a field officer's Home leaves out of Do next's three lists:
+#: done, closed or cancelled.
+CCEO_DONE_STATUSES = [
+    "completed",
+    "closed",
+    "cancelled",
+    "ia_verified",
+    "accountant_confirmed",
+    "submitted_to_pl",
+    "awaiting_ia_verification",
+]
+#: The four figures of a field officer's "Week at a glance", in order.
+#: Each is (metric, helper line, icon, variant).
+CCEO_KPI_METRICS = (
+    (
+        "frontend_views_dashboard_views_completed_tasks",
+        "Activities done",
+        "check",
+        "success",
+    ),
+    (
+        "frontend_views_dashboard_views_in_progress",
+        "Started, not yet verified",
+        "clock",
+        "info",
+    ),
+    (
+        "frontend_views_dashboard_views_planned_tasks",
+        "Not started, date ahead",
+        "calendar",
+        "warning",
+    ),
+    (
+        "frontend_views_dashboard_views_overdue_tasks",
+        "Not started, date passed",
+        "warning",
+        "danger",
+    ),
+)
+#: A field officer's Home views: (key, label, description).
+CCEO_VIEW_TABS = (
+    (
+        "week",
+        "This Week",
+        "Your overdue and this week's work, your days and your partners' week",
+    ),
+    ("operations", "Urgent schools", "Schools needing urgent attention this month"),
+    ("map", "Map", "The country map and its distribution table"),
+)
 
 
 #: Pages the Project Coordinator reads as tabs of their dashboard (owner,

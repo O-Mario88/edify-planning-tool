@@ -59,7 +59,37 @@ type Rules struct {
 	Rows               RowRules        `json:"rows"`
 	Readiness          ReadinessRules  `json:"readiness"`
 	Tables             TableRules      `json:"tables"`
+	PastDue            PastDueRules    `json:"past_due"`
+	Week               WeekRules       `json:"week"`
 	months             []monthOption
+}
+
+// PastDueRules are what Home's "What needs you now" lists by
+// (export_my_plan_rules.past_due).
+type PastDueRules struct {
+	TerminalStatuses []string `json:"terminal_statuses"`
+	VisitTypes       []string `json:"visit_types"`
+	TrainingTypes    []string `json:"training_types"`
+	MeetingTypes     []string `json:"meeting_types"`
+	ReturnedStatuses []string `json:"returned_statuses"`
+	PageSize         int      `json:"page_size"`
+}
+
+// WeekRules are what a field officer's This Week lists by
+// (export_my_plan_rules.week).
+type WeekRules struct {
+	ReleasedStatuses     []string    `json:"released_statuses"`
+	WithIAStatuses       []string    `json:"with_ia_statuses"`
+	AwaitingLeadStatuses []string    `json:"awaiting_lead_statuses"`
+	NotSubmittedStatuses []string    `json:"not_submitted_statuses"`
+	SFMissingStatuses    []string    `json:"sf_missing_statuses"`
+	StartedStatuses      []string    `json:"started_statuses"`
+	ReturnedStatuses     []string    `json:"returned_statuses"`
+	OwnAwaitingLabel     string      `json:"own_awaiting_label"`
+	Tables               [][2]string `json:"tables"`
+	ShowFilters          []string    `json:"show_filters"`
+	WeekReach            int         `json:"week_reach"`
+	RowsPerPage          int         `json:"rows_per_page"`
 }
 
 // TableRules are what My Plan's own tables draw a row of finished work by

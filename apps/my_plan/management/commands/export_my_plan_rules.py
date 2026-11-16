@@ -101,6 +101,48 @@ def rules() -> dict:
         "rows": plan_rows(),
         "readiness": readiness(),
         "tables": plan_tables(),
+        "past_due": past_due(),
+        "week": week(),
+    }
+
+
+def week() -> dict:
+    """What a field officer's This Week lists (apps.analytics.pl_week_service
+    in its solo mode): the statuses each state reads, the three tables, the
+    figures a link may list and how far the week arrows reach."""
+    from apps.analytics import pl_week_service as w
+
+    return {
+        "released_statuses": list(w.RELEASED_STATUSES),
+        "with_ia_statuses": list(w.WITH_IA_STATUSES),
+        "awaiting_lead_statuses": list(w.AWAITING_LEAD_STATUSES),
+        "not_submitted_statuses": list(w.NOT_SUBMITTED_STATUSES),
+        "sf_missing_statuses": list(w.SF_MISSING_STATUSES),
+        "started_statuses": list(w.STARTED_STATUSES),
+        "returned_statuses": list(w.RETURNED_STATUSES),
+        "own_awaiting_label": w.OWN_AWAITING_LABEL,
+        "tables": [[key, title] for key, title in w.TABLES],
+        "show_filters": sorted(w.SHOW_FILTERS),
+        "week_reach": w.WEEK_REACH,
+        "rows_per_page": w.ROWS_PER_PAGE,
+    }
+
+
+def past_due() -> dict:
+    """What Home's "What needs you now" lists (apps.my_plan.past_due_service):
+    the states that are no longer past due, the three tables' activity
+    types, the statuses a row reads as Returned, and the page size each
+    table pages by ({% paginate %})."""
+    from apps.core.pagination import TABLE_PAGE_SIZE
+    from apps.my_plan import past_due_service as pd
+
+    return {
+        "terminal_statuses": sorted(pd.TERMINAL_OR_COMPLETED_STATUSES),
+        "visit_types": sorted(pd.VISIT_TYPES),
+        "training_types": sorted(pd.TRAINING_TYPES),
+        "meeting_types": sorted(pd.MEETING_TYPES),
+        "returned_statuses": list(pd.RETURNED_STATUSES),
+        "page_size": TABLE_PAGE_SIZE,
     }
 
 

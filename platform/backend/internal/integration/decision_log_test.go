@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -31,6 +32,17 @@ type goldenAnswer struct {
 	Body   json.RawMessage   `json:"body"`
 }
 
+// goldenSignIns counts the golden comparisons' sign-ins over the whole run.
+var goldenSignIns atomic.Int64
+
+// goldenAddress is a client address no other sign-in of the run uses: the
+// gateway limits sign-ins per address, and the golden comparisons together
+// sign in more often than one address is allowed to.
+func goldenAddress() string {
+	n := goldenSignIns.Add(1)
+	return fmt.Sprintf("10.9.%d.%d", 100+n/250, 1+n%250)
+}
+
 // compareGolden asks Go each question as its account and compares the
 // answer with the existing feed's as a whole message.
 func compareGolden(t *testing.T, path string, answers []goldenAnswer) {
@@ -41,7 +53,7 @@ func compareGolden(t *testing.T, path string, answers []goldenAnswer) {
 		token, ok := tokens[answer.Email]
 		if !ok {
 			borrowAccount(t, answer.Email)
-			result, err := signIn(t, signInClientAt(fmt.Sprintf("10.9.7.%d", len(tokens)+1)), answer.Email, seededPassword)
+			result, err := signIn(t, signInClientAt(goldenAddress()), answer.Email, seededPassword)
 			if err != nil || result.GetSession() == nil {
 				t.Fatalf("signing in %s: %v", answer.Email, err)
 			}
