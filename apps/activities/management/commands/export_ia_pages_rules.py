@@ -37,13 +37,83 @@ PAGES = {
     "/ia/stories/": "ia_stories",
     "/ia/compare/": "ia_compare",
     "/ia/impact-reports/": "impact_reports",
+    "/ia/lending-evidence/": "ia_lending_evidence",
 }
 
 #: The pages that draw the IA workspace strip (partials/_section_nav.html).
-STRIP_PAGES = ("/ia/samples/", "/ia/stories/", "/ia/impact-reports/")
+STRIP_PAGES = (
+    "/ia/samples/",
+    "/ia/stories/",
+    "/ia/impact-reports/",
+    "/ia/lending-evidence/",
+)
 
 #: The roles ia_samples_view offers "Draw this week now" (can_draw).
 SAMPLE_DRAW_ROLES = ["ImpactAssessment", "CountryDirector", "Admin"]
+
+
+def _lending() -> dict:
+    """Lending Evidence (apps.frontend.views.ia_lending_views over
+    apps.business_transformation.lending_impact): who sees the money, whose
+    loans each role reaches (scoped_impact_loans), the states and labels the
+    queues and conclusions carry, and the cohorts' evidence grade."""
+    from apps.analytics import evidence_strength as es
+    from apps.business_transformation import lending_impact as li
+    from apps.business_transformation.models import (
+        EnrolmentSnapshotKind,
+        IAValidationStatus,
+        ImpactEvidenceStatus,
+        LoanImpactStatus,
+        PurposeAllocationStatus,
+    )
+    from apps.core.permissions import Permission, has_permission
+    from apps.core.rbac import EdifyRole
+    from apps.frontend.views import ia_lending_views as views
+
+    def scope(role: str) -> str:
+        if role in li.MFI_ROLES:
+            return "mfi"
+        if role in li.COUNTRY_BOUND_ROLES:
+            return "country_bound"
+        if role in li.COUNTRY_ROLES:
+            return "country"
+        if role in {EdifyRole.CCEO.value, EdifyRole.COUNTRY_PROGRAM_LEAD.value}:
+            return "portfolio"
+        return "none"
+
+    return {
+        "money_roles": sorted(
+            role.value
+            for role in EdifyRole
+            if has_permission(
+                _role_user(role.value),
+                Permission.BUSINESS_TRANSFORMATION_SENSITIVE_VIEW.value,
+            )
+        ),
+        "scope": {role.value: scope(role.value) for role in EdifyRole},
+        "legacy_preparer": li.LEGACY_PREPARER,
+        "tabs": [list(t) for t in views.TABS],
+        "state_labels": dict(views.STATE_LABELS),
+        "classification_labels": {k: str(v) for k, v in LoanImpactStatus.choices},
+        "positive": [str(s) for s in views.POSITIVE],
+        "neutral": [str(s) for s in views.NEUTRAL],
+        "negative": str(LoanImpactStatus.NEGATIVE),
+        "snapshot_kinds": {k: str(v) for k, v in EnrolmentSnapshotKind.choices},
+        "baseline_kind": str(EnrolmentSnapshotKind.BASELINE),
+        "use_reported": str(PurposeAllocationStatus.REPORTED),
+        "evidence_reported": str(ImpactEvidenceStatus.REPORTED),
+        "evidence_verified": str(ImpactEvidenceStatus.VERIFIED),
+        "ia_pending": str(IAValidationStatus.PENDING),
+        "ia_returned": str(IAValidationStatus.RETURNED),
+        "ia_verified": str(IAValidationStatus.VERIFIED),
+        "min_n": es.MIN_N,
+        "grade_labels": {
+            "insufficient": es.LABELS[es.INSUFFICIENT],
+            "descriptive": es.LABELS[es.DESCRIPTIVE],
+        },
+        "page_size": views.PAGE_SIZE,
+        "cohort_caveat": views.COHORT_CAVEAT,
+    }
 
 
 def rules() -> dict:
@@ -95,6 +165,7 @@ def rules() -> dict:
         pages[path] = {"roles": roles}
     return {
         "pages": pages,
+        "lending": _lending(),
         "ia_verify_roles": sorted(
             role.value
             for role in EdifyRole
