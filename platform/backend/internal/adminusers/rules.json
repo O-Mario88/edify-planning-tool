@@ -1,0 +1,174 @@
+{
+  "filter_roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin",
+    "ClusterLeader"
+  ],
+  "interventions": {
+    "christlike_behaviour": "Christlike Behaviour",
+    "enrolment": "Enrolment",
+    "exposure_to_word_of_god": "Exposure to the Word of God",
+    "financial_health": "Financial Health",
+    "government_requirement": "Government Requirements",
+    "leadership": "Leadership",
+    "learning_environment": "Learning Environment",
+    "teaching_environment": "Teacher's Environment"
+  },
+  "page_size": 50,
+  "query_keys_not_passed": [
+    "csv",
+    "download",
+    "export",
+    "format",
+    "pdf",
+    "xlsx"
+  ],
+  "roles": {
+    "Accountant": {
+      "manages_partner_users": false,
+      "manages_partners": false,
+      "page": false,
+      "purges_partners": false,
+      "reads_everyone": false,
+      "strip": null
+    },
+    "Admin": {
+      "manages_partner_users": true,
+      "manages_partners": true,
+      "page": true,
+      "purges_partners": true,
+      "reads_everyone": true,
+      "strip": null
+    },
+    "BusinessTransformationOfficer": {
+      "manages_partner_users": false,
+      "manages_partners": false,
+      "page": false,
+      "purges_partners": false,
+      "reads_everyone": false,
+      "strip": null
+    },
+    "CCEO": {
+      "manages_partner_users": false,
+      "manages_partners": false,
+      "page": false,
+      "purges_partners": false,
+      "reads_everyone": false,
+      "strip": null
+    },
+    "ClusterLeader": {
+      "manages_partner_users": false,
+      "manages_partners": false,
+      "page": false,
+      "purges_partners": false,
+      "reads_everyone": false,
+      "strip": null
+    },
+    "CountryDirector": {
+      "manages_partner_users": false,
+      "manages_partners": true,
+      "page": false,
+      "purges_partners": false,
+      "reads_everyone": false,
+      "strip": null
+    },
+    "HumanResources": {
+      "manages_partner_users": false,
+      "manages_partners": false,
+      "page": false,
+      "purges_partners": false,
+      "reads_everyone": false,
+      "strip": null
+    },
+    "ImpactAssessment": {
+      "manages_partner_users": false,
+      "manages_partners": false,
+      "page": false,
+      "purges_partners": false,
+      "reads_everyone": false,
+      "strip": null
+    },
+    "MfiLoanOfficer": {
+      "manages_partner_users": false,
+      "manages_partners": false,
+      "page": false,
+      "purges_partners": false,
+      "reads_everyone": false,
+      "strip": null
+    },
+    "MfiPartnerAdmin": {
+      "manages_partner_users": false,
+      "manages_partners": false,
+      "page": false,
+      "purges_partners": false,
+      "reads_everyone": false,
+      "strip": null
+    },
+    "PartnerAdmin": {
+      "manages_partner_users": false,
+      "manages_partners": false,
+      "page": false,
+      "purges_partners": false,
+      "reads_everyone": false,
+      "strip": null
+    },
+    "PartnerFieldOfficer": {
+      "manages_partner_users": false,
+      "manages_partners": false,
+      "page": false,
+      "purges_partners": false,
+      "reads_everyone": false,
+      "strip": null
+    },
+    "Program Lead": {
+      "manages_partner_users": false,
+      "manages_partners": false,
+      "page": false,
+      "purges_partners": false,
+      "reads_everyone": false,
+      "strip": null
+    },
+    "ProjectCoordinator": {
+      "manages_partner_users": false,
+      "manages_partners": false,
+      "page": false,
+      "purges_partners": false,
+      "reads_everyone": false,
+      "strip": null
+    },
+    "RegionalProgramLead": {
+      "manages_partner_users": false,
+      "manages_partners": false,
+      "page": false,
+      "purges_partners": false,
+      "reads_everyone": false,
+      "strip": null
+    },
+    "RegionalVicePresident": {
+      "manages_partner_users": false,
+      "manages_partners": false,
+      "page": false,
+      "purges_partners": false,
+      "reads_everyone": false,
+      "strip": null
+    }
+  },
+  "user_setup_states": {
+    "configured": "Partner login configured",
+    "not_required": "No login required yet",
+    "pending": "User setup pending"
+  }
+}
