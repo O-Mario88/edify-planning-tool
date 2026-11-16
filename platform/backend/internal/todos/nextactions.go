@@ -11,8 +11,9 @@ import (
 )
 
 // NextAction is compute_next_action's answer for one activity: the step's
-// words and its kind ("view" when no owner step applies).
-type NextAction struct{ Text, Action string }
+// words, its kind ("view" when no owner step applies), where it opens and
+// the line that says why.
+type NextAction struct{ Text, Action, URL, Description string }
 
 // NextActions is my_plan.services.compute_next_action for each of the
 // activities, read as the To-Do builders read them (their school's SSA
@@ -52,7 +53,7 @@ FROM activity a LEFT OUTER JOIN school s ON s.id = a.school_id WHERE a.id = ANY(
 	for _, a := range list {
 		a.Advances = advances[a.ID]
 		na := computeNextAction(a, today)
-		out[a.ID] = NextAction{Text: na.Text, Action: na.Action}
+		out[a.ID] = NextAction{Text: na.Text, Action: na.Action, URL: na.URL, Description: na.Description}
 	}
 	return out, nil
 }
