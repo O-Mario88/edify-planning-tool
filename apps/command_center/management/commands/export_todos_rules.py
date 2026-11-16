@@ -488,6 +488,7 @@ def next_action_cases() -> list[str]:
             na["text"],
             na["action"],
             na["url"],
+            na["description"],
             ts._act_priority(activity, na["action"], CASE_TODAY),
             status[0],
         ]

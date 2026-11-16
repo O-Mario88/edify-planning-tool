@@ -70,7 +70,7 @@ func TestNextActionIsTheExistingOne(t *testing.T) {
 			}
 		}
 		na := computeNextAction(a, today)
-		got := []string{na.Text, na.Action, na.URL, actPriority(a, na.Action, today), actStatus(a, na.Action, today)}
+		got := []string{na.Text, na.Action, na.URL, na.Description, actPriority(a, na.Action, today), actStatus(a, na.Action, today)}
 		if strings.Join(got, "|") != answer {
 			t.Errorf("%s\n got %v\nwant %v", given, got, want)
 		}
