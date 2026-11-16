@@ -2094,6 +2094,11 @@ urlpatterns = [
     ),
     # Profile
     path("profile", staff_views.profile_view, name="profile"),
+    path(
+        "profile/password",
+        staff_views.profile_password_view,
+        name="profile_password",
+    ),
     # ── GROUP 2: Finance ──────────────────────────────────────────────────────
     path(
         "fund-requests",

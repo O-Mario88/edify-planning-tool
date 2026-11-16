@@ -295,12 +295,30 @@ def resend_invite(user_id: str, principal) -> dict:
     return {"ok": True, "inviteToken": token if not settings.IS_PRODUCTION else None}
 
 
+# Owner, 2026-11-16: the Admin reset their own password from the Users page
+# and was locked out. This reset is the one given to somebody else: a
+# one-time password, a forced change, every session signed out. Your own is
+# changed from your Profile, where you stay signed in.
+OWN_ACCOUNT_RESET_REFUSED = (
+    "This is your own account. Change your password from your Profile, "
+    "where you stay signed in."
+)
+
+
+def is_own_account(user_id: str, principal) -> bool:
+    """Is ``user_id`` the account ``principal`` is signed in with?"""
+    own = getattr(principal, "id", None) or getattr(principal, "user_id", None)
+    return own is not None and str(own) == str(user_id)
+
+
 def set_temporary_password(user_id: str, password: str, principal) -> dict:
     """Set an administrator-issued one-time password and revoke old sessions."""
     from apps.accounts.lockout_service import AuthenticationLockoutService
     from apps.accounts.models import RefreshToken
     from apps.core.security import validate_password
 
+    if is_own_account(user_id, principal):
+        raise BadRequest(OWN_ACCOUNT_RESET_REFUSED)
     with transaction.atomic():
         user = (
             User.objects.select_for_update()

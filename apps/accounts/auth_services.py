@@ -389,12 +389,29 @@ def reset_password(token: str, new_password: str, confirm: str) -> dict:
         user.password_reset_token_hash = None
         user.password_reset_expires = None
         user.password_set_at = timezone.now()
+        # The reset lifts a sign-in lock (owner, 2026-11-16: "make sure that
+        # the other is not locked out"). The lock stops someone guessing the
+        # password; this link proves the mailbox and replaces the password,
+        # so the guesses no longer matter. Left in place, a locked account
+        # was told its new password was invalid, and an escalated lock is
+        # one only an Admin may lift — circular when the Admin is the one
+        # locked out.
+        user.failed_login_count = 0
+        user.failed_login_streak_started_at = None
+        user.locked_until = None
+        user.lockout_cycle_count = 0
+        user.lockout_escalated = False
         user.save(
             update_fields=[
                 "password",
                 "password_reset_token_hash",
                 "password_reset_expires",
                 "password_set_at",
+                "failed_login_count",
+                "failed_login_streak_started_at",
+                "locked_until",
+                "lockout_cycle_count",
+                "lockout_escalated",
             ]
         )
         # Revoke all refresh tokens — forces a fresh login everywhere.

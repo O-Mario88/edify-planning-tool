@@ -392,6 +392,12 @@ Activate User Account
 </div>
 </div>
 
+{% if member.id == request.user.id %}
+<div class="pt-3 border-t border-slate-100 space-y-3">
+<p class="edify-text-caption text-slate-500 font-semibold">This is your own account. Change your password from your Profile, where you stay signed in.</p>
+<a href="/profile#change-password" class="flex w-full h-8 items-center justify-center edify-primary-solid edify-primary-hover text-white edify-text-caption font-semibold uppercase tracking-wider rounded-control shadow-sm transition-all">Change my password</a>
+</div>
+{% else %}
 <form method="POST" action="{% url 'frontend:admin_user_detail' member.id %}" class="pt-3 border-t border-slate-100 space-y-3" x-data="{ busy: false }" @submit="busy = true" @pageshow.window="busy = false">
 {% csrf_token %}
 <input type="hidden" name="action" value="reset_password">
@@ -418,6 +424,7 @@ Reset Password
 </button>
 <p class="edify-text-caption text-slate-400 font-semibold">User will be required to change this password on their next login.</p>
 </form>
+{% endif %}
 </div>
 
 <!-- Critical Danger Zone (Admin only — deletion is enforced server-side too) -->

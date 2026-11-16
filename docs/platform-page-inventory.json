@@ -1256,7 +1256,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 2561,
+      "bytes": 3296,
       "deprecated_alternatives": [],
       "example_pages": [
         "/admin-panel/users/<str:user_id>"
@@ -1275,7 +1275,9 @@
       ],
       "tables": 0,
       "template": "partials/admin/reset_password_drawer.html",
-      "variants": []
+      "variants": [
+        "info"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -26740,7 +26742,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "users",
-      "primary_action": "Reset password",
+      "primary_action": "Change my password",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "User detail/edit/actions.",
       "remediation": "No automated remediation outstanding",
@@ -83870,7 +83872,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.profile_view",
       "card_count": 0,
@@ -83943,7 +83945,7 @@
         "layouts/shell.html"
       ],
       "state_coverage": {
-        "disabled": false,
+        "disabled": true,
         "empty": false,
         "error": false,
         "loading": false
@@ -83968,6 +83970,100 @@
         "text-[14px]",
         "text-[20px]"
       ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.staff_views",
+      "backend_view": "apps.frontend.views.staff_views.profile_password_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:dashboard"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-ADB5BA2318",
+      "page_title": "Profile Password",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "dashboard",
+      "primary_action": "Profile Password",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Change your own password from the Profile, and stay signed in.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/profile/password",
+      "route_name": "profile_password",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.audit.services",
+        "apps.core.scoping",
+        "apps.core_schools.models",
+        "apps.geography.models",
+        "apps.notifications.models",
+        "apps.schools.models",
+        "apps.ssa.services",
+        "apps.targets.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -121128,6 +121224,18 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.staff_views.profile_password_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "dashboard",
+      "required_permissions": [],
+      "route": "/profile/password",
+      "route_name": "profile_password",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.programme_rollout_views.programme_rollout_view",
       "kind": "partial",
       "methods": [
@@ -124037,28 +124145,28 @@
   "summary": {
     "accessibility_contract_pass": 607,
     "activity_states": 24,
-    "all_routes": 1440,
+    "all_routes": 1441,
     "api_routes": 367,
     "component_templates": 669,
     "full_pages": 264,
     "mobile_contract_pass": 607,
-    "nonvisual_actions": 310,
+    "nonvisual_actions": 311,
     "page_types": {
       "administration-or-configuration": 23,
       "analytics": 7,
       "approval-or-verification": 19,
       "dashboard": 0,
-      "interaction-fragment": 650,
+      "interaction-fragment": 651,
       "operational-queue": 161,
       "planning-or-creation": 16,
       "record-detail": 30,
       "report": 49
     },
     "partials_and_drawers": 340,
-    "permission_gated": 936,
+    "permission_gated": 937,
     "permission_keys": 128,
     "roles": 15,
-    "routed_surfaces": 955,
+    "routed_surfaces": 956,
     "scheduled_jobs": 41,
     "severity_counts": {
       "critical": 0,
@@ -124067,7 +124175,7 @@
       "medium": 0
     },
     "tablet_contract_pass": 607,
-    "test_referenced": 864,
+    "test_referenced": 865,
     "theme_contract_pass": 607
   }
 }

@@ -1,8 +1,8 @@
 {
  "summary": {
-  "titled_cards": 621,
+  "titled_cards": 622,
   "templates": 232,
-  "distinct_titles": 595,
+  "distinct_titles": 596,
   "with_card_key": 13,
   "untitled_surfaces": 567,
   "untitled_chrome": 153,
@@ -406,14 +406,14 @@
   },
   {
    "template": "templates/pages/admin/user_detail.html",
-   "line": 425,
+   "line": 432,
    "title": "Danger Zone",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "bg-red-50/40 border border-red-100 rounded-surface p-5 shadow-sm space-y-4",
    "branch_path": [
     [
-     28,
+     29,
      0
     ]
    ]
@@ -2572,7 +2572,16 @@
   },
   {
    "template": "templates/pages/profile/index.html",
-   "line": 111,
+   "line": 116,
+   "title": "Change Password",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm scroll-mt-24",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/profile/index.html",
+   "line": 165,
    "title": "Recent Activity",
    "heading_level": 2,
    "has_card_key": false,
@@ -2586,7 +2595,7 @@
   },
   {
    "template": "templates/pages/profile/index.html",
-   "line": 133,
+   "line": 187,
    "title": "Acting appointment",
    "heading_level": 2,
    "has_card_key": false,
@@ -2600,7 +2609,7 @@
   },
   {
    "template": "templates/pages/profile/index.html",
-   "line": 141,
+   "line": 195,
    "title": "Switch Active Role",
    "heading_level": 2,
    "has_card_key": false,

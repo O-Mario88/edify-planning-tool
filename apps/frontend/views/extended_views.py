@@ -2273,6 +2273,7 @@ def admin_user_detail_view(request, user_id):
             "partials/admin/reset_password_drawer.html",
             {
                 "member": member,
+                "own_account": member.id == request.user.id,
                 "partner_organisation": login_organisation(member)
                 if partner_login
                 else None,

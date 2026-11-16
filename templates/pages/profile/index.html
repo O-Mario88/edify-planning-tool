@@ -106,6 +106,60 @@ class="edify-profile-field__value mt-1.5 w-full min-h-11 rounded-control border 
 </div>
 </div>
 
+<!-- Change Password -->
+{% comment %}
+Owner, 2026-11-16: "add the self password reset from the user profile". Your
+own password is changed here, where you stay signed in. The Users page's Reset
+password is the one an Admin gives somebody else, and done to yourself it
+signed the Admin out and locked them out.
+{% endcomment %}
+<div id="change-password" class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm scroll-mt-24">
+<div class="px-5 py-4 border-b border-slate-100">
+<h2 class="edify-profile-section-title">Change Password</h2>
+<p class="mt-1 edify-text-caption font-medium text-slate-500">You stay signed in here. Use the new password the next time you sign in; the Edify app asks you to sign in again.</p>
+</div>
+<form method="post" action="{% url 'frontend:profile_password' %}" class="px-5 py-4 space-y-4" x-data="{ busy: false }" @submit="busy = true" @pageshow.window="busy = false">
+{% csrf_token %}
+<div class="py-2 border-b border-slate-50">
+<label for="profile-password-current" class="edify-profile-field__label block">Current Password</label>
+<input
+id="profile-password-current"
+name="current_password"
+type="password"
+required
+autocomplete="current-password"
+class="edify-profile-field__value mt-1.5 w-full min-h-11 rounded-control border border-[var(--edify-border)] edify-surface px-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 edify-primary-focus-visible"
+>
+</div>
+<div class="py-2 border-b border-slate-50">
+<label for="profile-password-new" class="edify-profile-field__label block">New Password</label>
+<input
+id="profile-password-new"
+name="new_password"
+type="password"
+required
+autocomplete="new-password"
+class="edify-profile-field__value mt-1.5 w-full min-h-11 rounded-control border border-[var(--edify-border)] edify-surface px-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 edify-primary-focus-visible"
+>
+</div>
+<div class="py-2">
+<label for="profile-password-repeat" class="edify-profile-field__label block">Repeat New Password</label>
+<input
+id="profile-password-repeat"
+name="confirm_password"
+type="password"
+required
+autocomplete="new-password"
+class="edify-profile-field__value mt-1.5 w-full min-h-11 rounded-control border border-[var(--edify-border)] edify-surface px-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 edify-primary-focus-visible"
+>
+</div>
+<p class="edify-text-caption font-medium text-slate-500">At least 8 characters, with an uppercase letter, a lowercase letter, a number and a symbol.</p>
+<div class="flex justify-end pt-1">
+<button type="submit" :disabled="busy" :aria-busy="busy" x-text="busy ? 'Saving…' : 'Change Password'" class="min-h-11 rounded-control edify-primary-solid edify-primary-hover px-4 text-[12px] font-bold uppercase tracking-wider text-white transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 edify-primary-focus-visible">Change Password</button>
+</div>
+</form>
+</div>
+
 <!-- Recent Activity -->
 {% if recent %}
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">

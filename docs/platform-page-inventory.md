@@ -4,8 +4,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **955**
-- All registered routes: **1440**
+- Routed product surfaces: **956**
+- All registered routes: **1441**
 - API routes: **367**
 - Roles: **15**
 - Permission keys: **128**
@@ -14,8 +14,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Shared component templates: **669**
 - Full pages: **264**
 - Partials and drawers: **340**
-- Permission-gated surfaces: **936**
-- Referenced by automated tests: **864**
+- Permission-gated surfaces: **937**
+- Referenced by automated tests: **865**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -782,6 +782,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-7DD887F302 | /priorities/ssa-mapping/rules/<str:mapping_id>/review/save | Ssa Mapping Rule Review | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-63217B55B8 | /priority-dashboard | Priority Dashboard Redirect | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-5583719547 | /profile | My Profile | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-ADB5BA2318 | /profile/password | Profile Password | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-3AAA4674E0 | /programme-rollout | Programme Rollout | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-AD54323BA8 | /programme-rollout/schools | Programme Rollout Schools | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-7A0BD21D27 | /programme-schools | Programme Schools · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

@@ -13,6 +13,7 @@ from apps.core.activity_types import (
 from django.utils.html import escape
 from django.contrib import messages
 from django.shortcuts import render, redirect
+from django.views.decorators.http import require_http_methods
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from apps.core.permissions import (
@@ -1366,6 +1367,49 @@ def _update_own_profile(request):
         payload={"fields": changed},
     )
     messages.success(request, "Your profile has been updated.")
+    return redirect("frontend:profile")
+
+
+# A signed-in person has no reason to try many current passwords a minute;
+# a stolen session trying to learn the password behind it does.
+OWN_PASSWORD_CHANGES_PER_MIN = 5
+
+
+@require_http_methods(["POST"])
+@require_page_permission("dashboard")
+def profile_password_view(request):
+    """Change your own password from the Profile, and stay signed in.
+
+    No user id is read from the request: the account changed is always
+    request.user. update_session_auth_hash keeps this session open; every
+    other session of the account ends, because its password hash moved.
+    """
+    from django.contrib.auth import update_session_auth_hash
+
+    from apps.accounts.own_password import change_own_password
+    from apps.core.throttling import throttle_by_ip
+
+    if not throttle_by_ip(
+        request, name="auth.own_password", limit=OWN_PASSWORD_CHANGES_PER_MIN
+    ):
+        messages.error(request, "Too many attempts. Please wait a minute.")
+        return redirect("/profile#change-password")
+
+    refused = change_own_password(
+        request.user,
+        current=request.POST.get("current_password", ""),
+        new=request.POST.get("new_password", ""),
+        confirm=request.POST.get("confirm_password", ""),
+    )
+    if refused:
+        messages.error(request, " ".join(refused))
+        return redirect("/profile#change-password")
+
+    update_session_auth_hash(request, request.user)
+    messages.success(
+        request,
+        "Your password has been changed. Use it the next time you sign in.",
+    )
     return redirect("frontend:profile")
 
 
