@@ -157,6 +157,21 @@ class TravelProfileDerivationTest(TestCase):
         self.assertEqual(_field_event_district_type(self._activity(None)), "primary")
 
 
+def _amounts_by_component(activity) -> dict[str, int]:
+    """Each cost component's total, whatever months the event spans.
+
+    A run that crosses a month end stores a component once per month, under
+    its key plus "#mYYYYMM" (costing_service._programme_period_specs). The
+    tests schedule two weeks ahead, so from mid-November the three days ran
+    30 November to 2 December and a lookup by the bare key failed.
+    """
+    totals: dict[str, int] = {}
+    for line in activity.schedule_cost_lines.all():
+        key = line.cost_setting_key.split("#m", 1)[0]
+        totals[key] = totals.get(key, 0) + line.amount
+    return totals
+
+
 class FieldEventEndToEndTest(TestCase):
     """Plan a district meeting through the canonical funnel: per-day lines from
     the CD catalogue, straight into the owner's weekly fund request."""
@@ -247,14 +262,14 @@ class FieldEventEndToEndTest(TestCase):
         self.assertEqual(activity.event_district_id, self.away.id)
         self.assertFalse(activity.cost_missing)
 
-        lines = {l.cost_setting_key: l for l in activity.schedule_cost_lines.all()}
-        self.assertEqual(lines["secondary_transport_per_day"].amount, 3 * 60_000)
-        self.assertEqual(lines["lunch_per_day"].amount, 3 * 15_000)
+        lines = _amounts_by_component(activity)
+        self.assertEqual(lines["secondary_transport_per_day"], 3 * 60_000)
+        self.assertEqual(lines["lunch_per_day"], 3 * 15_000)
         # Three days away, two nights: the last day is the day home, with
         # no night and no dinner (owner, 2026-10-05).
-        self.assertEqual(lines["secondary_accommodation_per_night"].amount, 2 * 80_000)
-        self.assertEqual(lines["secondary_overnight_dinner_per_day"].amount, 2 * 12_000)
-        self.assertEqual(lines["secondary_breakfast_per_day"].amount, 3 * 8_000)
+        self.assertEqual(lines["secondary_accommodation_per_night"], 2 * 80_000)
+        self.assertEqual(lines["secondary_overnight_dinner_per_day"], 2 * 12_000)
+        self.assertEqual(lines["secondary_breakfast_per_day"], 3 * 8_000)
         # One Lunch row for every district, and no incidentals: the owner's
         # 2026-09-06 catalogue has neither a second lunch nor an incidentals row.
         self.assertNotIn("secondary_incidentals_per_day", lines)
@@ -291,6 +306,6 @@ class FieldEventEndToEndTest(TestCase):
             self.principal,
         )
         activity = Activity.objects.get(id=result["id"])
-        lines = {l.cost_setting_key: l for l in activity.schedule_cost_lines.all()}
+        lines = _amounts_by_component(activity)
         self.assertEqual(set(lines), {"primary_transport_per_day", "lunch_per_day"})
         self.assertEqual(activity.est_cost_cents, 35_000)
