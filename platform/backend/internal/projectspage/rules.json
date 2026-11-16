@@ -1,0 +1,357 @@
+{
+  "categories": [
+    [
+      "intervention_specific",
+      "Intervention Specific"
+    ],
+    [
+      "pilot",
+      "Pilot"
+    ],
+    [
+      "selective_limited",
+      "Selective Limited"
+    ]
+  ],
+  "delivered_statuses": [
+    "ia_verified",
+    "accountant_confirmed",
+    "completed",
+    "closed"
+  ],
+  "disbursed_payment_statuses": [
+    "accountant_cleared",
+    "paid",
+    "closed",
+    "netsuite_accountability"
+  ],
+  "doors": {
+    "Accountant": {
+      "create": false,
+      "export": true,
+      "opens": {
+        "/clusters": false,
+        "/projects/my-plan": false,
+        "/projects/planning": false
+      },
+      "page": false,
+      "profiles": false,
+      "strip": null
+    },
+    "Admin": {
+      "create": true,
+      "export": true,
+      "opens": {
+        "/clusters": true,
+        "/projects/my-plan": true,
+        "/projects/planning": true
+      },
+      "page": true,
+      "profiles": true,
+      "strip": null
+    },
+    "BusinessTransformationOfficer": {
+      "create": false,
+      "export": true,
+      "opens": {
+        "/clusters": false,
+        "/projects/my-plan": false,
+        "/projects/planning": false
+      },
+      "page": false,
+      "profiles": true,
+      "strip": null
+    },
+    "CCEO": {
+      "create": false,
+      "export": false,
+      "opens": {
+        "/clusters": true,
+        "/projects/my-plan": true,
+        "/projects/planning": true
+      },
+      "page": true,
+      "profiles": true,
+      "strip": null
+    },
+    "ClusterLeader": {
+      "create": false,
+      "export": false,
+      "opens": {
+        "/clusters": false,
+        "/projects/my-plan": false,
+        "/projects/planning": false
+      },
+      "page": false,
+      "profiles": false,
+      "strip": null
+    },
+    "CountryDirector": {
+      "create": true,
+      "export": true,
+      "opens": {
+        "/clusters": true,
+        "/projects/my-plan": true,
+        "/projects/planning": true
+      },
+      "page": true,
+      "profiles": true,
+      "strip": null
+    },
+    "HumanResources": {
+      "create": false,
+      "export": false,
+      "opens": {
+        "/clusters": false,
+        "/projects/my-plan": false,
+        "/projects/planning": false
+      },
+      "page": false,
+      "profiles": false,
+      "strip": null
+    },
+    "ImpactAssessment": {
+      "create": true,
+      "export": true,
+      "opens": {
+        "/clusters": true,
+        "/projects/my-plan": true,
+        "/projects/planning": true
+      },
+      "page": true,
+      "profiles": true,
+      "strip": null
+    },
+    "MfiLoanOfficer": {
+      "create": false,
+      "export": false,
+      "opens": {
+        "/clusters": false,
+        "/projects/my-plan": false,
+        "/projects/planning": false
+      },
+      "page": false,
+      "profiles": false,
+      "strip": null
+    },
+    "MfiPartnerAdmin": {
+      "create": false,
+      "export": false,
+      "opens": {
+        "/clusters": false,
+        "/projects/my-plan": false,
+        "/projects/planning": false
+      },
+      "page": false,
+      "profiles": false,
+      "strip": null
+    },
+    "PartnerAdmin": {
+      "create": false,
+      "export": false,
+      "opens": {
+        "/clusters": false,
+        "/projects/my-plan": false,
+        "/projects/planning": false
+      },
+      "page": false,
+      "profiles": false,
+      "strip": null
+    },
+    "PartnerFieldOfficer": {
+      "create": false,
+      "export": false,
+      "opens": {
+        "/clusters": false,
+        "/projects/my-plan": false,
+        "/projects/planning": false
+      },
+      "page": false,
+      "profiles": false,
+      "strip": null
+    },
+    "Program Lead": {
+      "create": false,
+      "export": true,
+      "opens": {
+        "/clusters": true,
+        "/projects/my-plan": true,
+        "/projects/planning": true
+      },
+      "page": true,
+      "profiles": true,
+      "strip": null
+    },
+    "ProjectCoordinator": {
+      "create": true,
+      "export": true,
+      "opens": {
+        "/clusters": false,
+        "/projects/my-plan": true,
+        "/projects/planning": true
+      },
+      "page": true,
+      "profiles": true,
+      "strip": {
+        "label": "Projects",
+        "scrolls": true,
+        "tabs": [
+          {
+            "active": true,
+            "href": "/projects",
+            "label": "Projects"
+          },
+          {
+            "active": false,
+            "href": "/projects/capacity",
+            "label": "Capacity"
+          }
+        ]
+      }
+    },
+    "RegionalProgramLead": {
+      "create": false,
+      "export": true,
+      "opens": {
+        "/clusters": false,
+        "/projects/my-plan": false,
+        "/projects/planning": false
+      },
+      "page": false,
+      "profiles": false,
+      "strip": null
+    },
+    "RegionalVicePresident": {
+      "create": false,
+      "export": true,
+      "opens": {
+        "/clusters": false,
+        "/projects/my-plan": false,
+        "/projects/planning": false
+      },
+      "page": false,
+      "profiles": false,
+      "strip": null
+    }
+  },
+  "interventions": [
+    [
+      "christlike_behaviour",
+      "Christlike Behaviour"
+    ],
+    [
+      "exposure_to_word_of_god",
+      "Exposure to the Word of God"
+    ],
+    [
+      "financial_health",
+      "Financial Health"
+    ],
+    [
+      "leadership",
+      "Leadership"
+    ],
+    [
+      "government_requirement",
+      "Government Requirements"
+    ],
+    [
+      "learning_environment",
+      "Learning Environment"
+    ],
+    [
+      "teaching_environment",
+      "Teacher's Environment"
+    ],
+    [
+      "enrolment",
+      "Enrolment"
+    ]
+  ],
+  "metric_labels": [
+    "Total Projects",
+    "Active Projects",
+    "Project Schools",
+    "Teachers Trained",
+    "Leaders Trained",
+    "Learners Reached",
+    "Assigned Partners",
+    "Budget Generated",
+    "Activities in My Plan",
+    "Evidence Pending",
+    "IA Pending",
+    "Closed Activities"
+  ],
+  "not_in_plan_statuses": [
+    "not_planned",
+    "closed",
+    "cancelled",
+    "rejected",
+    "deferred"
+  ],
+  "ssa_types": [
+    "ssa_activity",
+    "baseline_ssa_visit",
+    "partner_ssa_collection",
+    "cluster_training_ssa_collection",
+    "cluster_meeting_ssa_review",
+    "core_assessment_visit"
+  ],
+  "status_filter_labels": {
+    "at_risk": [
+      "At Risk"
+    ],
+    "behind": [
+      "Behind"
+    ],
+    "on_track": [
+      "On Track"
+    ],
+    "planning": [
+      "Planning"
+    ]
+  },
+  "status_filters": [
+    [
+      "on_track",
+      "On Track"
+    ],
+    [
+      "at_risk",
+      "At Risk"
+    ],
+    [
+      "behind",
+      "Behind"
+    ],
+    [
+      "planning",
+      "Planning"
+    ]
+  ],
+  "training_types": [
+    "cluster_training",
+    "cluster_training_ssa_collection",
+    "core_training",
+    "in_school_training",
+    "school_improvement_training",
+    "training"
+  ],
+  "visit_types": [
+    "baseline_ssa_visit",
+    "coaching_visit",
+    "core_assessment_visit",
+    "core_visit",
+    "donor_visit",
+    "follow_up_visit",
+    "in_school_coaching_visit",
+    "in_school_support",
+    "partner_ssa_collection",
+    "school_invitation",
+    "school_visit",
+    "school_visit_ssa_collection",
+    "social_visit",
+    "story_gathering_visit",
+    "training_follow_up_visit"
+  ]
+}
