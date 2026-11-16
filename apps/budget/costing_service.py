@@ -1305,16 +1305,41 @@ def _money_under(activity_ids) -> dict:
     }
 
 
+def repriceable_monthly_statuses() -> list:
+    """The monthly request states in which its activities may be priced
+    again. Any returned/rejected monthly status is back in the owner's hands
+    (matching services.submit's resubmittable set — the plain RETURNED trio
+    alone made every returned_by_* monthly request an un-fixable dead end)."""
+    from apps.fund_requests.models import FundRequestStatus
+
+    return [
+        FundRequestStatus.DRAFT,
+        FundRequestStatus.RETURNED,
+        FundRequestStatus.REJECTED,
+        FundRequestStatus.RETURNED_BY_PL,
+        FundRequestStatus.RETURNED_BY_CD,
+        FundRequestStatus.RETURNED_BY_RVP,
+        FundRequestStatus.RETURNED_BY_ACCOUNTANT,
+    ]
+
+
+def advance_with_accountant_statuses() -> tuple:
+    """An advance confirmed but not yet disbursed: frozen until the
+    accountant returns it."""
+    from apps.fund_requests.models import AdvanceRequestStatus
+
+    return (
+        AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE,
+        AdvanceRequestStatus.SUBMITTED_TO_ACCOUNTANT,
+    )
+
+
 def _ask_money_guards(activities, money: dict) -> None:
     """Refuse a re-pricing of any of these activities whose money has moved
     or is with someone: each asked in turn, and of each the same questions
     in the same order as when it was priced alone, so a day is refused for
     the same member and in the same words."""
-    from apps.fund_requests.models import (
-        MONEY_MOVED_ADVANCE_STATUSES,
-        AdvanceRequestStatus,
-        FundRequestStatus,
-    )
+    from apps.fund_requests.models import MONEY_MOVED_ADVANCE_STATUSES
     from apps.fund_requests.weekly_service import REBUILDABLE_WEEKLY_STATUSES
 
     # A planner's own change to the plan is not refused by a monthly
@@ -1324,19 +1349,7 @@ def _ask_money_guards(activities, money: dict) -> None:
     # so is anything under a request that is with the accountant or paid.
     from apps.fund_requests.plan_changes import follows_plan_change
 
-    # Any returned/rejected monthly status is back in the owner's hands
-    # (matching services.submit's resubmittable set — the plain RETURNED
-    # trio alone made every returned_by_* monthly request an un-fixable
-    # dead end).
-    repriceable_fr_statuses = [
-        FundRequestStatus.DRAFT,
-        FundRequestStatus.RETURNED,
-        FundRequestStatus.REJECTED,
-        FundRequestStatus.RETURNED_BY_PL,
-        FundRequestStatus.RETURNED_BY_CD,
-        FundRequestStatus.RETURNED_BY_RVP,
-        FundRequestStatus.RETURNED_BY_ACCOUNTANT,
-    ]
+    repriceable_fr_statuses = repriceable_monthly_statuses()
     advances_of = money["advances_of"]
     weekly_ids_of = money["weekly_ids_of"]
     locked_weekly = money["locked_weekly"]
@@ -1373,12 +1386,7 @@ def _ask_money_guards(activities, money: dict) -> None:
         # approved weekly request keeps its stale total with a missing line.
         # The unstick path is the accountant returning the advance.
         if any(
-            adv.status
-            in (
-                AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE,
-                AdvanceRequestStatus.SUBMITTED_TO_ACCOUNTANT,
-            )
-            for adv in locked_advances
+            adv.status in advance_with_accountant_statuses() for adv in locked_advances
         ):
             raise BadRequest(
                 "This activity's advance is already confirmed and sitting in the "

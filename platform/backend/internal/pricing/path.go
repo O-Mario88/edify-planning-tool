@@ -155,89 +155,22 @@ func fundingOwner(ctx context.Context, db Querier, responsible string) (string, 
 	return "", nil
 }
 
-// joinDay is attach_activity_to_batch read-only: the owner's day on the
-// visit's date with the visit on it. joined is false when there is no such
-// day yet and its rates are missing (the writer then prices the visit on
-// its own).
+// joinDay is attach_activity_to_batch read-only for a stored activity: the
+// owner's day on the visit's date with the visit on it. joined is false when
+// the writer prices the visit on its own instead.
 func joinDay(ctx context.Context, db Querier, activityID, owner string, date time.Time, unfundable bool) (Priced, bool, error) {
-	b := dayRow{user: owner, date: date}
-	var batchID string
-	err := db.QueryRow(ctx, `
-		SELECT id, COALESCE(district_type, ''), COALESCE(school_count, 0) FROM daily_visit_batch
-		WHERE responsible_user = $1 AND visit_date = $2 ORDER BY id LIMIT 1`, owner, date).
-		Scan(&batchID, &b.storedType, &b.schoolCount)
-	exists := err == nil
-	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		return Priced{}, false, fmt.Errorf("pricing: reading the visit's day: %w", err)
-	}
-	var locked bool
-	if err := db.QueryRow(ctx, `
-		SELECT EXISTS (SELECT 1 FROM weekly_fund_request WHERE responsible_user = $1
-		               AND week_start_date <= $2 AND week_end_date >= $2 AND NOT (status = ANY($3)))`,
-		owner, date, rules.RebuildableWeeklyStatuses).Scan(&locked); err != nil {
-		return Priced{}, false, fmt.Errorf("pricing: reading the week's request: %w", err)
-	}
-	if locked {
-		return Priced{}, true, ErrLockedWeek
-	}
-	var members []dayMember
-	if exists {
-		if members, err = dayMembers(ctx, db, batchID); err != nil {
-			return Priced{}, false, err
-		}
-	}
 	self, err := memberOf(ctx, db, activityID)
 	if err != nil {
 		return Priced{}, false, err
 	}
-	// The day's full rates, as attach_activity_to_batch asks before joining:
-	// secondary when any member is, no trip home. Missing, a day that exists
-	// refuses the visit; one that does not is not made.
-	traveller, err := readTraveller(ctx, db, owner)
-	if err != nil {
-		return Priced{}, false, err
-	}
-	dayType := "primary"
-	for _, m := range append(append([]dayMember{}, members...), self) {
-		if m.district == "" {
-			continue
-		}
-		t, err := traveller.districtType(ctx, db, m.district)
-		if err != nil {
-			return Priced{}, false, err
-		}
-		if t == "secondary" {
-			dayType = "secondary"
-		}
-	}
-	card, err := ReadCard(ctx, db, rules.OperationalKind, &date)
-	if err != nil {
-		return Priced{}, false, err
-	}
-	required, _ := costing.DayKeys(dayType, traveller.accommodationKey(), false)
-	for _, k := range required {
-		if _, ok := ratesOf(card)[k]; !ok {
-			if exists {
-				return Priced{}, true, &DayRefusal{Missing: []string{k}}
-			}
-			return Priced{}, false, nil
-		}
+	at, joined, err := attach(ctx, db, self, owner, date)
+	if err != nil || !joined {
+		return Priced{}, joined, err
 	}
 	if unfundable {
 		return Priced{}, true, ErrLeftAsPriced
 	}
-	present := false
-	for _, m := range members {
-		present = present || m.id == activityID
-	}
-	if !present {
-		members = append(members, self)
-		sort.Slice(members, func(i, j int) bool { return members[i].id < members[j].id })
-	}
-	if !exists {
-		b.storedType = dayType
-	}
-	day, err := planDay(ctx, db, b, members)
+	day, err := planDay(ctx, db, at.day, at.members)
 	if err != nil {
 		return Priced{}, true, err
 	}
@@ -247,6 +180,106 @@ func joinDay(ctx context.Context, db Querier, activityID, owner string, date tim
 		}
 	}
 	return Priced{}, true, fmt.Errorf("pricing: activity %s is not on its day", activityID)
+}
+
+// attachment is the day a visit joins: the day as it stands, and its live
+// fundable members with the visit among them, by id.
+type attachment struct {
+	day     dayRow
+	batchID string
+	exists  bool
+	members []dayMember
+}
+
+// attach is attach_activity_to_batch's answer, read-only: the day the visit
+// self joins on owner's date. joined is false where the existing writer
+// declines (the visit's district is neither primary nor secondary, or there
+// is no day yet and its rates are missing); the week's lock is ErrLockedWeek,
+// and a day that exists refuses a missing rate with a *DayRefusal.
+func attach(ctx context.Context, db Querier, self dayMember, owner string, date time.Time) (attachment, bool, error) {
+	at := attachment{day: dayRow{user: owner, date: date}}
+	traveller, err := readTraveller(ctx, db, owner)
+	if err != nil {
+		return at, false, err
+	}
+	typeOf := func(district string) (string, error) {
+		if district == "" {
+			return "", nil
+		}
+		return traveller.districtType(ctx, db, district)
+	}
+	own, err := typeOf(self.district)
+	if err != nil {
+		return at, false, err
+	}
+	if own != "" && own != "primary" && own != "secondary" {
+		return at, false, nil
+	}
+	err = db.QueryRow(ctx, `
+		SELECT id, COALESCE(district_type, ''), COALESCE(school_count, 0) FROM daily_visit_batch
+		WHERE responsible_user = $1 AND visit_date = $2 ORDER BY id LIMIT 1`, owner, date).
+		Scan(&at.batchID, &at.day.storedType, &at.day.schoolCount)
+	at.exists = err == nil
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return at, false, fmt.Errorf("pricing: reading the visit's day: %w", err)
+	}
+	var locked bool
+	if err := db.QueryRow(ctx, `
+		SELECT EXISTS (SELECT 1 FROM weekly_fund_request WHERE responsible_user = $1
+		               AND week_start_date <= $2 AND week_end_date >= $2 AND NOT (status = ANY($3)))`,
+		owner, date, rules.RebuildableWeeklyStatuses).Scan(&locked); err != nil {
+		return at, false, fmt.Errorf("pricing: reading the week's request: %w", err)
+	}
+	if locked {
+		return at, true, ErrLockedWeek
+	}
+	if at.exists {
+		if at.members, err = dayMembers(ctx, db, at.batchID); err != nil {
+			return at, false, err
+		}
+	}
+	// The day's full rates, as attach_activity_to_batch asks before joining:
+	// secondary when any member is, no trip home. Missing, a day that exists
+	// refuses the visit; one that does not is not made.
+	dayType := "primary"
+	for _, m := range append(append([]dayMember{}, at.members...), self) {
+		t, err := typeOf(m.district)
+		if err != nil {
+			return at, false, err
+		}
+		if t == "secondary" {
+			dayType = "secondary"
+		}
+	}
+	card, err := ReadCard(ctx, db, rules.OperationalKind, &date)
+	if err != nil {
+		return at, false, err
+	}
+	required, _ := costing.DayKeys(dayType, traveller.accommodationKey(), false)
+	var missing []string
+	for _, k := range required {
+		if _, ok := ratesOf(card)[k]; !ok {
+			missing = append(missing, k)
+		}
+	}
+	if len(missing) > 0 {
+		if at.exists {
+			return at, true, &DayRefusal{DistrictType: dayType, Missing: missing}
+		}
+		return at, false, nil
+	}
+	present := false
+	for _, m := range at.members {
+		present = present || m.id == self.id
+	}
+	if !present {
+		at.members = append(at.members, self)
+		sort.Slice(at.members, func(i, j int) bool { return at.members[i].id < at.members[j].id })
+	}
+	if !at.exists {
+		at.day.storedType = dayType
+	}
+	return at, true, nil
 }
 
 func memberOf(ctx context.Context, db Querier, activityID string) (dayMember, error) {

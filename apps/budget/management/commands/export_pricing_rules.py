@@ -13,7 +13,12 @@ the types whose personal per-diems join the day, and the name of a Mixed
 day's transport; and which way a stored activity is priced: the trainings a
 delivery online makes free, the statuses that mean an in-school Training's
 visit no longer makes the journey, and the states of a week's request in
-which its days may still be priced again. The
+which its days may still be priced again; and for the day check a save asks
+before it opens its transaction (gateway_relay._probe): what each missing
+rate is called, the advance states that lock a cost (money moved, or with the
+accountant), the monthly request states in which a cost may be priced again,
+the members whose transport share the provider is not owed, and what is said
+when a paid day's transport would change. The
 recipe itself is internal/costing (export_costing_rules). A change to any of
 them must be exported again; apps/budget/test_pricing_rules_export.py fails
 until it is.
@@ -35,7 +40,14 @@ def rules() -> dict:
     from django.conf import settings
 
     from apps.activities import online_training, pair_costing
-    from apps.budget.costing_service import _COSTING_PROFILES
+    from apps.budget.costing_service import (
+        _COSTING_PROFILES,
+        _KEY_LABEL,
+        advance_with_accountant_statuses,
+        repriceable_monthly_statuses,
+    )
+    from apps.fund_requests import vendor_channel
+    from apps.fund_requests.models import MONEY_MOVED_ADVANCE_STATUSES
     from apps.fund_requests.weekly_service import REBUILDABLE_WEEKLY_STATUSES
     from apps.budget.models import RateCardKind, RateCardStatus
     from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
@@ -66,6 +78,16 @@ def rules() -> dict:
         "online_mode": online_training.ONLINE,
         "companion_gone_statuses": list(pair_costing.COMPANION_GONE_STATUSES),
         "rebuildable_weekly_statuses": list(REBUILDABLE_WEEKLY_STATUSES),
+        "key_labels": dict(_KEY_LABEL),
+        "money_moved_advance_statuses": [str(s) for s in MONEY_MOVED_ADVANCE_STATUSES],
+        "advance_with_accountant_statuses": [
+            str(s) for s in advance_with_accountant_statuses()
+        ],
+        "repriceable_monthly_statuses": [
+            str(s) for s in repriceable_monthly_statuses()
+        ],
+        "transport_gone_statuses": list(vendor_channel.TRANSPORT_GONE_STATUSES),
+        "transport_paid": vendor_channel.TRANSPORT_PAID,
     }
 
 
