@@ -1,0 +1,162 @@
+{
+  "activity_types": {
+    "baseline_ssa_visit": "SSA Visit",
+    "cluster_meeting": "Cluster Meeting",
+    "cluster_meeting_ssa_review": "Cluster Meeting + SSA Review",
+    "cluster_training": "Cluster Training",
+    "cluster_training_ssa_collection": "Cluster Training + SSA Collection",
+    "coaching_visit": "Coaching Visit",
+    "core_assessment_visit": "Core Assessment Visit",
+    "core_training": "Core Training",
+    "core_visit": "Core Visit",
+    "donor_visit": "Donor Visit",
+    "field_event": "Field Event",
+    "follow_up_visit": "Follow-up Visit",
+    "in_school_coaching_visit": "In-school Coaching Visit",
+    "in_school_support": "In-school Support",
+    "in_school_training": "In-school Training",
+    "partner_activity": "Partner Activity",
+    "partner_ssa_collection": "Partner SSA Collection",
+    "programme_event": "Programme Event",
+    "project_activity": "Project Activity",
+    "school_improvement_training": "School Improvement Training",
+    "school_invitation": "School Invitation",
+    "school_visit": "School Visit",
+    "school_visit_ssa_collection": "School Visit + SSA Collection",
+    "social_visit": "Social Visit",
+    "ssa_activity": "SSA Activity",
+    "story_gathering_visit": "Gathering Story",
+    "training": "Training",
+    "training_follow_up_visit": "Training Follow-up Visit"
+  },
+  "challenge_types": {
+    "community_resistance": "Community Resistance",
+    "data_quality": "Data-Quality Problem",
+    "distance_route": "Distance or Route Problem",
+    "funds_delayed": "Funds Delayed",
+    "funds_insufficient": "Funds Insufficient",
+    "government_regulatory": "Government or Regulatory Issue",
+    "health_concern": "Health Concern",
+    "holiday_conflict": "Public Holiday Conflict",
+    "language_communication": "Language or Communication Problem",
+    "leader_unavailable": "School Leader Unavailable",
+    "low_attendance": "Low Attendance",
+    "materials_unavailable": "Materials Unavailable",
+    "no_transport": "No Transport",
+    "other": "Other",
+    "partner_delayed": "Partner Delayed",
+    "road_conditions": "Road Conditions",
+    "safety_concern": "Safety Concern",
+    "school_event_conflict": "School Event Conflict",
+    "ssa_form_issue": "SSA Form Issue",
+    "started_late": "Activity Started Late",
+    "teachers_unavailable": "Teachers Unavailable",
+    "technology_problem": "Technology Problem",
+    "transport_late": "Transport Came Late",
+    "weather": "Weather"
+  },
+  "completions": {
+    "cancelled": "Cancelled",
+    "completed_as_planned": "Completed as Planned",
+    "partially_completed": "Partially Completed",
+    "postponed": "Postponed",
+    "rescheduled": "Rescheduled",
+    "unsuccessful": "Unsuccessful"
+  },
+  "kinds": {
+    "activity": "Activity Debrief",
+    "daily": "Daily Field Debrief",
+    "incident": "Incident Debrief",
+    "partner": "Partner Debrief",
+    "supervision": "Supervision Debrief",
+    "weekly_summary": "Weekly Field Summary"
+  },
+  "metric_labels": [
+    "Debriefs Submitted",
+    "Activities Completed",
+    "Partially Completed",
+    "Unsuccessful / Cancelled",
+    "Action Required",
+    "Critical Escalations",
+    "Open Commitments",
+    "Peer Solutions"
+  ],
+  "page_size": 50,
+  "pages": {
+    "Accountant": false,
+    "Admin": true,
+    "BusinessTransformationOfficer": false,
+    "CCEO": true,
+    "ClusterLeader": false,
+    "CountryDirector": true,
+    "HumanResources": true,
+    "ImpactAssessment": true,
+    "MfiLoanOfficer": false,
+    "MfiPartnerAdmin": false,
+    "PartnerAdmin": true,
+    "PartnerFieldOfficer": true,
+    "Program Lead": true,
+    "ProjectCoordinator": true,
+    "RegionalProgramLead": false,
+    "RegionalVicePresident": true
+  },
+  "partner_roles": [
+    "PartnerAdmin",
+    "PartnerFieldOfficer"
+  ],
+  "reviewable_statuses": [
+    "submitted",
+    "updated"
+  ],
+  "risk_levels": [
+    [
+      "none",
+      "No Escalation"
+    ],
+    [
+      "monitor",
+      "Monitor"
+    ],
+    [
+      "pl_attention",
+      "PL Attention"
+    ],
+    [
+      "cd_attention",
+      "CD Attention"
+    ],
+    [
+      "ia_attention",
+      "IA Attention"
+    ],
+    [
+      "hr_attention",
+      "HR Attention"
+    ],
+    [
+      "finance_attention",
+      "Finance Attention"
+    ],
+    [
+      "critical",
+      "Critical Leadership Attention"
+    ]
+  ],
+  "statuses": {
+    "action_in_progress": "Action in Progress",
+    "action_required": "Action Required",
+    "archived": "Archived",
+    "clarification_requested": "Clarification Requested",
+    "closed": "Closed",
+    "draft": "Draft",
+    "escalated": "Escalated",
+    "leadership_review": "Leadership Review",
+    "merged": "Merged",
+    "resolved": "Resolved",
+    "restricted_incident": "Restricted Incident",
+    "returned": "Returned",
+    "reviewed": "Reviewed",
+    "submitted": "Submitted",
+    "updated": "Updated"
+  }
+}
