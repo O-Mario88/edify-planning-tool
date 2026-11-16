@@ -19,7 +19,8 @@ export const OFFLINE_QUEUE_URL = 'offline:queue';
 
 /** The design's dark teal (the planner's chosen controls). */
 export const ROUTE_TEAL = '#0f4f52';
-export const PIN_TONES = { planned: '#1d6fe0', suggested: '#f59e0b', completed: '#1e3a8a', start: '#0284c7', nearby: '#0284c7', other: '#94a3b8' } as const;
+/** Blue family only on the map, as on the web (owner, 2026-11-14 and 2026-11-16). */
+export const PIN_TONES = { planned: '#1d6fe0', suggested: '#0284c7', completed: '#1e3a8a', start: '#0284c7', nearby: '#0284c7', other: '#94a3b8' } as const;
 
 /**
  * Who plans field days: My Plan's readers (routeplan rules, planner_roles).
