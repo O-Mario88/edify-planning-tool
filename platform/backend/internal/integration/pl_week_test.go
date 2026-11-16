@@ -17,6 +17,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dashboard"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/staffactivity"
 )
 
 // plDashboardTables is what the lead's golden files, in the order it files them.
@@ -41,6 +42,17 @@ func weekSlice(blocks []*screensv1.PageBlock) []*screensv1.PageBlock {
 		return nil
 	}
 	return blocks[from:to]
+}
+
+// staffActivitySlice is the existing page's Staff Activity Log: from its
+// head to the end.
+func staffActivitySlice(blocks []*screensv1.PageBlock) []*screensv1.PageBlock {
+	for i, b := range blocks {
+		if b.GetPanel().GetTitle() == "Staff Activity" {
+			return blocks[i:]
+		}
+	}
+	return nil
 }
 
 // The existing feed's Programme Lead This Week and backlog over team work
@@ -119,6 +131,20 @@ func TestTheLeadsWeekMatchesTheExistingFeed(t *testing.T) {
 			differing++
 			t.Errorf("%v: the header differs:\n go:       %s\n existing: %s", answer.Query,
 				protojson.Format(header), protojson.Format(want.GetHeader()))
+		}
+		embed, servedEmbed, err := staffactivity.NewService(gateway, time.Now).TeamEmbed(ctx, snoozer(t, answer.Email), url.Values{})
+		if err != nil || !servedEmbed {
+			t.Fatalf("%v: the Staff Activity Log: %v (drawn %v)", answer.Query, err, servedEmbed)
+		}
+		if log := staffActivitySlice(want.GetBlocks()); !proto.Equal(&screensv1.GetPageResponse{Blocks: embed}, &screensv1.GetPageResponse{Blocks: log}) {
+			differing++
+			g, w := protojson.Format(&screensv1.GetPageResponse{Blocks: embed}), protojson.Format(&screensv1.GetPageResponse{Blocks: log})
+			at := 0
+			for at < len(g) && at < len(w) && g[at] == w[at] {
+				at++
+			}
+			t.Errorf("%v: the Staff Activity Log differs at byte %d:\n go:       …%s\n existing: …%s", answer.Query, at,
+				g[max(at-300, 0):min(at+300, len(g))], w[max(at-300, 0):min(at+300, len(w))])
 		}
 		got := &screensv1.GetPageResponse{Blocks: blocks}
 		existing := &screensv1.GetPageResponse{Blocks: weekSlice(want.GetBlocks())}

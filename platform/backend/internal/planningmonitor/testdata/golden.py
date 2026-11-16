@@ -211,14 +211,21 @@ def file_rows():
     ClusterActivityAttendance.objects.create(
         activity_id=P + "G1", school=s3, invited=True
     )
-    # A hand-over the Partner has not dated.
-    PartnerAssignment.objects.create(
-        id=P + "H1",
-        partner=partner,
-        school=s5,
-        status="assigned",
-        assigning_staff_id=paul.id,
-        monitoring_staff_id=paul.id,
+    # A hand-over the Partner has not dated. bulk_create skips the post_save
+    # bookkeeping: its audit row is sealed into the hash chain the moment it
+    # is written and outlives clear(), and the gateway hands a log reader on
+    # over a hand-over it cannot read the school of.
+    PartnerAssignment.objects.bulk_create(
+        [
+            PartnerAssignment(
+                id=P + "H1",
+                partner=partner,
+                school=s5,
+                status="assigned",
+                assigning_staff_id=paul.id,
+                monitoring_staff_id=paul.id,
+            )
+        ]
     )
     SsaRecord.objects.create(
         id=P + "R1",
