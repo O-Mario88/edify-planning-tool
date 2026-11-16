@@ -13,6 +13,8 @@
       "feed_opens": true,
       "lens_tabs_country": [],
       "lens_tabs_team": [],
+      "map_feed_opens": false,
+      "map_page": false,
       "page": true,
       "portfolio": false
     },
@@ -73,6 +75,8 @@
           "label": "Target Performance"
         }
       ],
+      "map_feed_opens": true,
+      "map_page": true,
       "page": true,
       "portfolio": true
     },
@@ -81,6 +85,8 @@
       "feed_opens": false,
       "lens_tabs_country": [],
       "lens_tabs_team": [],
+      "map_feed_opens": false,
+      "map_page": false,
       "page": false,
       "portfolio": false
     },
@@ -89,6 +95,8 @@
       "feed_opens": false,
       "lens_tabs_country": [],
       "lens_tabs_team": [],
+      "map_feed_opens": false,
+      "map_page": false,
       "page": false,
       "portfolio": false
     },
@@ -97,6 +105,8 @@
       "feed_opens": false,
       "lens_tabs_country": [],
       "lens_tabs_team": [],
+      "map_feed_opens": false,
+      "map_page": false,
       "page": false,
       "portfolio": false
     },
@@ -157,6 +167,8 @@
           "label": "Target Performance"
         }
       ],
+      "map_feed_opens": true,
+      "map_page": true,
       "page": true,
       "portfolio": true
     },
@@ -165,6 +177,8 @@
       "feed_opens": true,
       "lens_tabs_country": [],
       "lens_tabs_team": [],
+      "map_feed_opens": false,
+      "map_page": false,
       "page": true,
       "portfolio": false
     },
@@ -245,6 +259,8 @@
           "label": "Target Performance"
         }
       ],
+      "map_feed_opens": true,
+      "map_page": true,
       "page": true,
       "portfolio": true
     },
@@ -253,6 +269,8 @@
       "feed_opens": false,
       "lens_tabs_country": [],
       "lens_tabs_team": [],
+      "map_feed_opens": false,
+      "map_page": false,
       "page": false,
       "portfolio": false
     },
@@ -261,6 +279,8 @@
       "feed_opens": false,
       "lens_tabs_country": [],
       "lens_tabs_team": [],
+      "map_feed_opens": false,
+      "map_page": false,
       "page": false,
       "portfolio": false
     },
@@ -269,6 +289,8 @@
       "feed_opens": false,
       "lens_tabs_country": [],
       "lens_tabs_team": [],
+      "map_feed_opens": false,
+      "map_page": false,
       "page": false,
       "portfolio": false
     },
@@ -277,6 +299,8 @@
       "feed_opens": false,
       "lens_tabs_country": [],
       "lens_tabs_team": [],
+      "map_feed_opens": false,
+      "map_page": false,
       "page": false,
       "portfolio": false
     },
@@ -337,6 +361,8 @@
           "label": "Target Performance"
         }
       ],
+      "map_feed_opens": false,
+      "map_page": false,
       "page": true,
       "portfolio": true
     },
@@ -345,6 +371,8 @@
       "feed_opens": false,
       "lens_tabs_country": [],
       "lens_tabs_team": [],
+      "map_feed_opens": false,
+      "map_page": false,
       "page": false,
       "portfolio": false
     },
@@ -395,6 +423,8 @@
           "label": "Target Performance"
         }
       ],
+      "map_feed_opens": false,
+      "map_page": false,
       "page": true,
       "portfolio": true
     },
@@ -403,6 +433,8 @@
       "feed_opens": true,
       "lens_tabs_country": [],
       "lens_tabs_team": [],
+      "map_feed_opens": true,
+      "map_page": true,
       "page": true,
       "portfolio": false
     }
@@ -445,6 +477,8 @@
           "label": "Schools & Coverage"
         }
       ],
+      "map_feed_opens": true,
+      "map_page": true,
       "page": true,
       "portfolio": true
     }

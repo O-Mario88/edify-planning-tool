@@ -44,6 +44,10 @@ type Doors struct {
 	// The strip above the lens, for a reader of the country and for a team.
 	LensTabsCountry []LensTab `json:"lens_tabs_country"`
 	LensTabsTeam    []LensTab `json:"lens_tabs_team"`
+	// The Country Map (/country-map/): its page permission (country_map)
+	// and whether the feed opens it.
+	MapPage      bool `json:"map_page"`
+	MapFeedOpens bool `json:"map_feed_opens"`
 }
 
 // Rules is rules.json.

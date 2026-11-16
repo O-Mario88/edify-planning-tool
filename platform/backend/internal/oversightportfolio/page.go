@@ -19,7 +19,7 @@ const (
 	countryDescription = "Every school in the country portfolio, under the Programme Lead and the CCEO who hold it — and what is planned on each."
 	teamDescription    = "Every school your team holds, under the Programme Lead and the CCEO who hold it — and what is planned on each."
 	emptyMessage       = "Widen the filters, or choose another fiscal year."
-	unplannedHref      = Path + "?view=portfolio&planned=unplanned"
+	unplannedQuery     = "?view=portfolio&planned=unplanned"
 )
 
 func isAlnum(r rune) bool { return unicode.IsLetter(r) || unicode.IsDigit(r) }
@@ -35,6 +35,9 @@ func ugx(n int64) string { return "UGX " + closedschools.Comma(n) }
 
 // view is one reading of the lens: what was asked and what was found.
 type view struct {
+	// base is the page the lens is drawn on (Planning Oversight or the
+	// Country Map); its links go back to it.
+	base        string
 	country     bool
 	fy          string
 	years       []string
@@ -91,7 +94,7 @@ func stripBlock(v view) *screensv1.PageBlock {
 		{Label: "Schools In Portfolio", Value: closedschools.Comma(int64(t.schools)),
 			Helper: fmt.Sprintf("%d lead%s · %d officer%s", t.leads, plural(t.leads), t.officers, plural(t.officers))},
 		{Label: "Schools With A Plan", Value: planned, Helper: fmt.Sprintf("%d of %d schools", t.planned, t.schools)},
-		{Label: "Schools With No Plan", Value: closedschools.Comma(int64(t.schools - t.planned)), Helper: "Nothing planned all year", Link: unplannedHref},
+		{Label: "Schools With No Plan", Value: closedschools.Comma(int64(t.schools - t.planned)), Helper: "Nothing planned all year", Link: v.base + unplannedQuery},
 		{Label: "Portfolio Planned Budget", Value: ugx(t.budget), Helper: fmt.Sprintf("Across %d planned activities", t.activities)},
 	}
 	tones := []string{"neutral", "neutral", unplannedTone, "neutral"}
