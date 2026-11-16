@@ -48,6 +48,10 @@ import (
 // Path is the page Go answers.
 const Path = "/my-performance"
 
+// PrioritiesPath is the same page behind the Priorities door
+// (target_distribution_views.priorities_workspace_page), with its own gate.
+const PrioritiesPath = "/priorities"
+
 //go:embed rules.json
 var rulesJSON []byte
 
@@ -56,6 +60,11 @@ var rules = func() (r struct {
 		Page  bool            `json:"page"`
 		Strip json.RawMessage `json:"strip"`
 	} `json:"roles"`
+	// PrioritiesRoles are the same page's doors at /priorities.
+	PrioritiesRoles map[string]struct {
+		Page  bool            `json:"page"`
+		Strip json.RawMessage `json:"strip"`
+	} `json:"priorities_roles"`
 	ManagerRoles        []string          `json:"manager_roles"`
 	DistributeRoles     []string          `json:"distribute_roles"`
 	DistributeTeamRoles []string          `json:"distribute_team_roles"`
@@ -102,14 +111,30 @@ var errPassOn = errors.New("myperformance: the existing page answers this reader
 
 // Build answers /my-performance; every other path is not its own.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
-	if path != Path {
+	doors := rules.Roles
+	switch path {
+	case Path:
+	case PrioritiesPath:
+		doors = rules.PrioritiesRoles
+	default:
 		return nil, false, nil
 	}
-	role, ok := rules.Roles[p.ActiveRole]
+	role, ok := doors[p.ActiveRole]
 	if !ok || !role.Page {
 		return nil, true, pagegate.ErrNotAvailable
 	}
-	resp, err := s.build(ctx, p, query, len(role.Strip) > 0 && string(role.Strip) != "null")
+	strip, err := stripBlock(role.Strip)
+	if err != nil {
+		return nil, true, err
+	}
+	resp, err := s.build(ctx, p, query, false)
+	if err == nil {
+		resp.WebPath = path
+		if strip != nil {
+			// partials/_section_nav.html, above the page.
+			resp.Blocks = append([]*screensv1.PageBlock{strip}, resp.Blocks...)
+		}
+	}
 	if errors.Is(err, errPassOn) {
 		return nil, false, nil
 	}
@@ -117,6 +142,30 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		return nil, true, err
 	}
 	return resp, true, nil
+}
+
+// stripBlock is the workspace strip as the feed reads it, or nil.
+func stripBlock(raw json.RawMessage) (*screensv1.PageBlock, error) {
+	if len(raw) == 0 || string(raw) == "null" {
+		return nil, nil
+	}
+	var strip struct {
+		Label   string `json:"label"`
+		Scrolls bool   `json:"scrolls"`
+		Tabs    []struct {
+			Label  string `json:"label"`
+			Href   string `json:"href"`
+			Active bool   `json:"active"`
+		} `json:"tabs"`
+	}
+	if err := json.Unmarshal(raw, &strip); err != nil {
+		return nil, fmt.Errorf("myperformance: the strip in the rules: %w", err)
+	}
+	tabs := &screensv1.PageLinkTabs{Label: strip.Label, Scrolls: strip.Scrolls}
+	for _, t := range strip.Tabs {
+		tabs.Tabs = append(tabs.Tabs, &screensv1.PageLinkTab{Label: t.Label, Href: t.Href, Active: t.Active})
+	}
+	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_LinkTabs{LinkTabs: tabs}}, nil
 }
 
 func (s *Service) build(ctx context.Context, p auth.Principal, query url.Values, strip bool) (*screensv1.GetPageResponse, error) {

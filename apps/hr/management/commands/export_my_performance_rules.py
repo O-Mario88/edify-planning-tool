@@ -27,6 +27,9 @@ from apps.schools.management.commands.export_school_directory_rules import (
 
 EXPORT_PATH = Path("platform/backend/internal/myperformance/rules.json")
 PATH = "/my-performance"
+#: The Priorities door (target_distribution_views.priorities_workspace_page):
+#: the same page behind its own gate as well, with its own strip.
+PRIORITIES_PATH = "/priorities"
 
 #: my_performance_view's own lists, as it writes them.
 MANAGER_ROLES = [
@@ -86,8 +89,18 @@ def rules() -> dict:
             and bool(can_open_url(user, PATH)),
             "strip": strip(user, PATH, "partials/_section_nav.html"),
         }
+    priorities = {}
+    for role in EdifyRole:
+        user = _role_user(role.value)
+        priorities[role.value] = {
+            "page": RolePermissionService.can_view_page(user, "priorities_master")
+            and RolePermissionService.can_view_page(user, "my_performance")
+            and bool(can_open_url(user, PRIORITIES_PATH)),
+            "strip": strip(user, PRIORITIES_PATH, "partials/_section_nav.html"),
+        }
     return {
         "roles": roles,
+        "priorities_roles": priorities,
         "manager_roles": MANAGER_ROLES,
         "distribute_roles": DISTRIBUTE_ROLES,
         "distribute_team_roles": DISTRIBUTE_TEAM_ROLES,

@@ -49,9 +49,19 @@ func TestMyPerformanceMatchesTheExistingFeed(t *testing.T) {
 			}
 		}
 	}
-	answers := []goldenAnswer{}
+	// The page at its own door and behind the Priorities door.
+	byPath := map[string][]goldenAnswer{}
 	for _, a := range golden.Answers {
-		answers = append(answers, goldenAnswer{Email: a.Email, Query: a.Query, Status: a.Status, Body: a.Body})
+		path := a.Path
+		if path == "" {
+			path = "/my-performance"
+		}
+		byPath[path] = append(byPath[path], goldenAnswer{Email: a.Email, Query: a.Query, Status: a.Status, Body: a.Body})
 	}
-	compareGolden(t, "/my-performance", answers)
+	for _, path := range []string{"/my-performance", "/priorities"} {
+		if len(byPath[path]) == 0 {
+			t.Fatalf("the golden asks nothing of %s", path)
+		}
+		compareGolden(t, path, byPath[path])
+	}
 }

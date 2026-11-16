@@ -24,6 +24,92 @@
     "HR",
     "Admin"
   ],
+  "priorities_roles": {
+    "Accountant": {
+      "page": false,
+      "strip": null
+    },
+    "Admin": {
+      "page": true,
+      "strip": null
+    },
+    "BusinessTransformationOfficer": {
+      "page": false,
+      "strip": null
+    },
+    "CCEO": {
+      "page": true,
+      "strip": null
+    },
+    "ClusterLeader": {
+      "page": false,
+      "strip": null
+    },
+    "CountryDirector": {
+      "page": true,
+      "strip": null
+    },
+    "HumanResources": {
+      "page": true,
+      "strip": null
+    },
+    "ImpactAssessment": {
+      "page": true,
+      "strip": null
+    },
+    "MfiLoanOfficer": {
+      "page": false,
+      "strip": null
+    },
+    "MfiPartnerAdmin": {
+      "page": false,
+      "strip": null
+    },
+    "PartnerAdmin": {
+      "page": false,
+      "strip": null
+    },
+    "PartnerFieldOfficer": {
+      "page": false,
+      "strip": null
+    },
+    "Program Lead": {
+      "page": true,
+      "strip": null
+    },
+    "ProjectCoordinator": {
+      "page": true,
+      "strip": {
+        "label": "My Performance",
+        "scrolls": true,
+        "tabs": [
+          {
+            "active": true,
+            "href": "/priorities",
+            "label": "Priorities"
+          },
+          {
+            "active": false,
+            "href": "/my-targets",
+            "label": "Targets"
+          },
+          {
+            "active": false,
+            "href": "/my-professional-development",
+            "label": "My Professional Development"
+          }
+        ]
+      }
+    },
+    "RegionalProgramLead": {
+      "page": false,
+      "strip": null
+    },
+    "RegionalVicePresident": {
+      "page": true,
+      "strip": null
+    }
+  },
   "roles": {
     "Accountant": {
       "page": true,

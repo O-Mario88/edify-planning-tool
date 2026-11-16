@@ -31,6 +31,7 @@ if not settings.DATABASES["default"]["NAME"].endswith("_test"):
 
 User = get_user_model()
 PATH = "/my-performance"
+PRIORITIES_PATH = "/priorities"
 TABLES = ("hr_development_plan_item", "hr_value_commitment")
 READERS = [
     "cceo1@edify.org",
@@ -103,17 +104,19 @@ def main():
         answers = []
         for email in READERS:
             user = User.objects.get(email=email)
-            for query in queries:
-                status, body = read_page(user, PATH, query)
-                answers.append(
-                    {
-                        "email": email,
-                        "path": PATH,
-                        "query": query,
-                        "status": status,
-                        "body": body,
-                    }
-                )
+            # The same page behind the Priorities door, with its own gate.
+            for path in (PATH, PRIORITIES_PATH):
+                for query in queries:
+                    status, body = read_page(user, path, query)
+                    answers.append(
+                        {
+                            "email": email,
+                            "path": path,
+                            "query": query,
+                            "status": status,
+                            "body": body,
+                        }
+                    )
     finally:
         clear()
     with open(os.environ["GOLDEN_OUT"], "w") as handle:
