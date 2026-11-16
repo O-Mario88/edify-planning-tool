@@ -144,3 +144,23 @@ Each such page writes through its own role with exactly the columns the
 existing write touches, behind its own switch (off by default, development
 and shadow databases only), and is proved by the rows the existing read
 leaves behind as well as by the page it answers.
+
+## 68.8 The Field Debrief Dashboard's tabs (2026-11-16)
+
+The existing feed draws every tab of the dashboard's team and partner table
+with the rows of the tab that is open: each tab's own rows are fetched only
+by the browser, so on the phone "My Debriefs", "Escalated" and the rest all
+repeat the tab asked for. Owner, 2026-11-16: "Fix the tabs". Go
+(`internal/debriefs`) gives each tab its own rows, the asked tab open.
+
+- Entry `go-debrief-tabs`: the seven tab tables'
+  `.blocks[7].segments[i].blocks[0].table.rows` on `/debriefs`, any question.
+  A row list has no pattern worth naming, so the entry is held narrow by its
+  page and fields rather than by its patterns.
+- Unit test: `internal/debriefs.TestEachDebriefTabHoldsItsOwnRows` (and
+  `TestAnUnknownTabLeavesEveryTabClosed`).
+- The golden (`internal/debriefs/testdata/golden.py`) asks every page again
+  with each tab open and keeps that tab's table; the integration test puts
+  each into its tab before comparing, so every tab is held to the rows the
+  existing page lists for it: 26 answers of 10 accounts, 0 differing. With
+  the old behaviour planted back, 24 of the 26 differ.

@@ -25,7 +25,9 @@ var debriefTables = []string{
 // solution and an open insight), for every reader it opens for with each
 // tab, range, filter and page, and for a reader it refuses. Skipped unless
 // EDIFY_DEBRIEFS_GOLDEN names a file internal/debriefs/testdata/golden.py
-// wrote within the half hour.
+// wrote within the half hour. The existing feed draws every tab with the open
+// tab's rows; Go gives each tab its own (owner, 2026-11-16: "Fix the tabs"),
+// so each tab is compared with the existing page asked with that tab open.
 func TestTheDebriefDashboardMatchesTheExistingFeedOverDebriefsTheSeedLacks(t *testing.T) {
 	path := os.Getenv("EDIFY_DEBRIEFS_GOLDEN")
 	if path == "" {
@@ -36,8 +38,15 @@ func TestTheDebriefDashboardMatchesTheExistingFeedOverDebriefsTheSeedLacks(t *te
 		t.Fatal(err)
 	}
 	var golden struct {
-		hrRegisterGolden
-		Written time.Time `json:"written"`
+		Rows    map[string][]json.RawMessage `json:"rows"`
+		Written time.Time                    `json:"written"`
+		Answers []struct {
+			Email     string            `json:"email"`
+			Query     map[string]string `json:"query"`
+			Status    int               `json:"status"`
+			Body      json.RawMessage   `json:"body"`
+			TabTables []json.RawMessage `json:"tab_tables"`
+		} `json:"answers"`
 	}
 	if err := json.Unmarshal(raw, &golden); err != nil {
 		t.Fatal(err)
@@ -65,10 +74,46 @@ func TestTheDebriefDashboardMatchesTheExistingFeedOverDebriefsTheSeedLacks(t *te
 	}
 	answers := []goldenAnswer{}
 	for _, a := range golden.Answers {
-		answers = append(answers, goldenAnswer{Email: a.Email, Query: a.Query, Status: a.Status, Body: a.Body})
+		body, err := ownTabs(a.Body, a.TabTables)
+		if err != nil {
+			t.Fatalf("%s %v: %v", a.Email, a.Query, err)
+		}
+		answers = append(answers, goldenAnswer{Email: a.Email, Query: a.Query, Status: a.Status, Body: body})
 	}
 	if len(answers) == 0 {
 		t.Fatal("the golden asks nothing of the dashboard")
 	}
 	compareGolden(t, "/debriefs", answers)
+}
+
+// ownTabs is the existing answer with each tab holding the table the
+// existing page shows when that tab is the one open.
+func ownTabs(body json.RawMessage, tables []json.RawMessage) (json.RawMessage, error) {
+	if len(tables) == 0 {
+		return body, nil
+	}
+	var page map[string]any
+	if err := json.Unmarshal(body, &page); err != nil {
+		return nil, err
+	}
+	blocks, _ := page["blocks"].([]any)
+	for _, b := range blocks {
+		block, _ := b.(map[string]any)
+		segs, ok := block["segments"].(map[string]any)
+		if !ok {
+			continue
+		}
+		list, _ := segs["segments"].([]any)
+		if len(list) != len(tables) {
+			return nil, fmt.Errorf("%d tabs but %d tab tables", len(list), len(tables))
+		}
+		for i, seg := range list {
+			var own any
+			if err := json.Unmarshal(tables[i], &own); err != nil {
+				return nil, err
+			}
+			seg.(map[string]any)["blocks"] = own
+		}
+	}
+	return json.Marshal(page)
 }
