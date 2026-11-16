@@ -132,6 +132,15 @@ func (s *Service) build(ctx context.Context, p auth.Principal, fy string, month 
 	if err != nil {
 		return nil, err
 	}
+	if !exist {
+		// The milestone table reads the reader's approved allocations of
+		// the year whatever their milestone's state.
+		if err := s.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM hr_milestone_allocation a
+JOIN hr_priority_milestone m ON m.id = a.milestone_id JOIN hr_strategic_priority sp ON sp.id = m.priority_id
+WHERE a.employee_id = $1 AND a.status = 'approved' AND sp.fy = $2)`, p.StaffProfileID, fy).Scan(&exist); err != nil {
+			return nil, fmt.Errorf("mytargets: the reader's allocations: %w", err)
+		}
+	}
 	if exist {
 		// Approved allocations draw the distributed contract, the milestone
 		// table and the planning feed, which Go does not draw yet.
