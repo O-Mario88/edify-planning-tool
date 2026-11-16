@@ -118,6 +118,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if err != nil {
 		return nil, true, err
 	}
+	v.base = Path
 	return page(v, years), true, nil
 }
 

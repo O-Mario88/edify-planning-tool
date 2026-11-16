@@ -1,7 +1,8 @@
 """Write the Team/Country Portfolio lens's rules for the Go gateway.
 
-Go builds the portfolio lens of Planning Oversight
-(/team-planning-oversight/?view=portfolio: oversight_views.
+Go builds the portfolio lens of Planning Oversight, and the Country Map that
+draws the same portfolio under its map
+(/team-planning-oversight/?view=portfolio and /country-map/: oversight_views.
 team_planning_oversight_view, _portfolio_context, _portfolio_kpis and
 apps.planning.portfolio_service.country_portfolio) from the vocabularies this
 command writes to platform/backend/internal/oversightportfolio/rules.json: who
@@ -48,6 +49,7 @@ def doors() -> dict:
     from apps.core.permissions import RolePermissionService, can_open_url
     from apps.core.rbac import EdifyRole
     from apps.frontend.views.oversight_views import (
+        COUNTRY_MAP_PATH,
         TEAM_OVERSIGHT_PATH,
         is_country_reader,
         team_available_lenses,
@@ -65,6 +67,10 @@ def doors() -> dict:
                 for page in ("team_planning_oversight", "team_targets")
             ),
             "feed_opens": bool(can_open_url(user, TEAM_OVERSIGHT_PATH)),
+            # The Country Map (/country-map/), which draws the same portfolio
+            # under the map: its page permission and whether the feed opens it.
+            "map_page": RolePermissionService.can_view_page(user, "country_map"),
+            "map_feed_opens": bool(can_open_url(user, COUNTRY_MAP_PATH)),
             "portfolio": lenses["portfolio"],
             "country_reader": bool(is_country_reader(user)),
             "lens_tabs_country": _tabs(available, True),
