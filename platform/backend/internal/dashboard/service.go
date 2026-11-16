@@ -5,10 +5,14 @@
 // officer's past-due work) and the officer's own week
 // (apps.analytics.pl_week_service, solo).
 //
+// It builds a Programme Lead's Home too (leadpage.go): This Week carrying the
+// Planning Monitor and the Staff Activity Log.
+//
 // It reads; it never writes. It answers the officer's own tab of This Week
-// for any week; it hands on the other views (Urgent schools, Map), the other
-// tabs (My week, My partners), a pressed figure, a paged table and every
-// other role. The statuses, labels, views and doors are exported to
+// for any week, and the lead's team tabs; it hands on the other views
+// (Urgent schools, Map, the lead's Priorities to Collaboration), the other
+// tabs (My week, My partners, the lead's Me and Partners), a pressed figure,
+// a paged table, an acting seat and every other role. The statuses, labels, views and doors are exported to
 // rules.json by `manage.py export_dashboard_rules`;
 // apps/frontend/test_dashboard_rules_export.py fails when the two differ.
 package dashboard
@@ -139,8 +143,11 @@ func served(query url.Values) bool {
 	return true
 }
 
-// Build answers /dashboard for a field officer.
+// Build answers /dashboard for a field officer or a Programme Lead.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if path == Path && p.ActiveRole == rules.Lead.Role {
+		return s.buildLead(ctx, p, query)
+	}
 	if path != Path || p.ActiveRole != rules.Officer.Role || !served(query) {
 		return nil, false, nil
 	}

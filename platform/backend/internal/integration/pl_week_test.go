@@ -55,6 +55,22 @@ func staffActivitySlice(blocks []*screensv1.PageBlock) []*screensv1.PageBlock {
 	return nil
 }
 
+// samePage is 0 when got is want, else 1 with the first place they part.
+func samePage(t *testing.T, where string, got, want *screensv1.GetPageResponse) int {
+	t.Helper()
+	if proto.Equal(got, want) {
+		return 0
+	}
+	g, w := protojson.Format(got), protojson.Format(want)
+	at := 0
+	for at < len(g) && at < len(w) && g[at] == w[at] {
+		at++
+	}
+	t.Errorf("%s differs at byte %d:\n go:       …%s\n existing: …%s", where, at,
+		g[max(at-300, 0):min(at+300, len(g))], w[max(at-300, 0):min(at+300, len(w))])
+	return 1
+}
+
 // The existing feed's Programme Lead This Week and backlog over team work
 // the seed lacks — past-due work of every state, a reminder already sent,
 // the lead's own, this week's work asking each thing of the lead, an
@@ -136,28 +152,15 @@ func TestTheLeadsWeekMatchesTheExistingFeed(t *testing.T) {
 		if err != nil || !servedEmbed {
 			t.Fatalf("%v: the Staff Activity Log: %v (drawn %v)", answer.Query, err, servedEmbed)
 		}
-		if log := staffActivitySlice(want.GetBlocks()); !proto.Equal(&screensv1.GetPageResponse{Blocks: embed}, &screensv1.GetPageResponse{Blocks: log}) {
-			differing++
-			g, w := protojson.Format(&screensv1.GetPageResponse{Blocks: embed}), protojson.Format(&screensv1.GetPageResponse{Blocks: log})
-			at := 0
-			for at < len(g) && at < len(w) && g[at] == w[at] {
-				at++
-			}
-			t.Errorf("%v: the Staff Activity Log differs at byte %d:\n go:       …%s\n existing: …%s", answer.Query, at,
-				g[max(at-300, 0):min(at+300, len(g))], w[max(at-300, 0):min(at+300, len(w))])
+		differing += samePage(t, fmt.Sprintf("%v: the Staff Activity Log", answer.Query),
+			&screensv1.GetPageResponse{Blocks: embed}, &screensv1.GetPageResponse{Blocks: staffActivitySlice(want.GetBlocks())})
+		differing += samePage(t, fmt.Sprintf("%v: the week", answer.Query),
+			&screensv1.GetPageResponse{Blocks: blocks}, &screensv1.GetPageResponse{Blocks: weekSlice(want.GetBlocks())})
+		page, servedPage, err := dashboard.NewService(gateway, time.Now).Build(ctx, snoozer(t, answer.Email), dashboard.Path, query)
+		if err != nil || !servedPage {
+			t.Fatalf("%v: the whole page: %v (drawn %v)", answer.Query, err, servedPage)
 		}
-		got := &screensv1.GetPageResponse{Blocks: blocks}
-		existing := &screensv1.GetPageResponse{Blocks: weekSlice(want.GetBlocks())}
-		if !proto.Equal(got, existing) {
-			differing++
-			g, w := protojson.Format(got), protojson.Format(existing)
-			at := 0
-			for at < len(g) && at < len(w) && g[at] == w[at] {
-				at++
-			}
-			t.Errorf("%v differs at byte %d:\n go:       …%s\n existing: …%s", answer.Query, at,
-				g[max(at-300, 0):min(at+300, len(g))], w[max(at-300, 0):min(at+300, len(w))])
-		}
+		differing += samePage(t, fmt.Sprintf("%v: the whole page", answer.Query), page, want)
 	}
 	t.Logf("%d answers compared, %d differing", compared, differing)
 	if compared == 0 {
