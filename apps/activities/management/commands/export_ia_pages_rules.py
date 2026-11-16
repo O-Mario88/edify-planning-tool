@@ -38,6 +38,7 @@ PAGES = {
     "/ia/compare/": "ia_compare",
     "/ia/impact-reports/": "impact_reports",
     "/ia/lending-evidence/": "ia_lending_evidence",
+    "/ia/verification/": "ia_verification_queue",
 }
 
 #: The pages that draw the IA workspace strip (partials/_section_nav.html).
@@ -46,6 +47,7 @@ STRIP_PAGES = (
     "/ia/stories/",
     "/ia/impact-reports/",
     "/ia/lending-evidence/",
+    "/ia/verification/",
 )
 
 #: The roles ia_samples_view offers "Draw this week now" (can_draw).
