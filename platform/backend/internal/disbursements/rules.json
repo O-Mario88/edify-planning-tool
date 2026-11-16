@@ -1,0 +1,268 @@
+{
+  "activity_types": {
+    "baseline_ssa_visit": "SSA Visit",
+    "cluster_meeting": "Cluster Meeting",
+    "cluster_meeting_ssa_review": "Cluster Meeting + SSA Review",
+    "cluster_training": "Cluster Training",
+    "cluster_training_ssa_collection": "Cluster Training + SSA Collection",
+    "coaching_visit": "Coaching Visit",
+    "core_assessment_visit": "Core Assessment Visit",
+    "core_training": "Core Training",
+    "core_visit": "Core Visit",
+    "donor_visit": "Donor Visit",
+    "field_event": "Field Event",
+    "follow_up_visit": "Follow-up Visit",
+    "in_school_coaching_visit": "In-school Coaching Visit",
+    "in_school_support": "In-school Support",
+    "in_school_training": "In-school Training",
+    "partner_activity": "Partner Activity",
+    "partner_ssa_collection": "Partner SSA Collection",
+    "programme_event": "Programme Event",
+    "project_activity": "Project Activity",
+    "school_improvement_training": "School Improvement Training",
+    "school_invitation": "School Invitation",
+    "school_visit": "School Visit",
+    "school_visit_ssa_collection": "School Visit + SSA Collection",
+    "social_visit": "Social Visit",
+    "ssa_activity": "SSA Activity",
+    "story_gathering_visit": "Gathering Story",
+    "training": "Training",
+    "training_follow_up_visit": "Training Follow-up Visit"
+  },
+  "advance_approved_undisbursed": [
+    "confirmed_for_advance",
+    "submitted_to_accountant",
+    "self_funded_pending_reimbursement"
+  ],
+  "advance_pre_approval": [
+    "draft_from_schedule",
+    "pending_responsible_confirmation"
+  ],
+  "category_order": [
+    "Admin Budget",
+    "Staff School Visits",
+    "Partner School Visits",
+    "Cluster Meetings",
+    "Cluster Trainings",
+    "In-School Trainings",
+    "SSA Support Visits",
+    "Field Events",
+    "Other"
+  ],
+  "cluster_meeting_types": [
+    "cluster_meeting",
+    "cluster_meeting_ssa_review"
+  ],
+  "cluster_training_types": [
+    "cluster_training",
+    "cluster_training_ssa_collection"
+  ],
+  "doors": {
+    "Accountant": {
+      "export": true,
+      "page": true
+    },
+    "Admin": {
+      "export": true,
+      "page": true
+    },
+    "BusinessTransformationOfficer": {
+      "export": true,
+      "page": false
+    },
+    "CCEO": {
+      "export": false,
+      "page": false
+    },
+    "ClusterLeader": {
+      "export": false,
+      "page": false
+    },
+    "CountryDirector": {
+      "export": true,
+      "page": false
+    },
+    "HumanResources": {
+      "export": false,
+      "page": false
+    },
+    "ImpactAssessment": {
+      "export": true,
+      "page": false
+    },
+    "MfiLoanOfficer": {
+      "export": false,
+      "page": false
+    },
+    "MfiPartnerAdmin": {
+      "export": false,
+      "page": false
+    },
+    "PartnerAdmin": {
+      "export": false,
+      "page": false
+    },
+    "PartnerFieldOfficer": {
+      "export": false,
+      "page": false
+    },
+    "Program Lead": {
+      "export": true,
+      "page": false
+    },
+    "ProjectCoordinator": {
+      "export": true,
+      "page": false
+    },
+    "RegionalProgramLead": {
+      "export": true,
+      "page": false
+    },
+    "RegionalVicePresident": {
+      "export": true,
+      "page": false
+    }
+  },
+  "line_type_labels": {
+    "cluster_meeting_participant_meals": "Participant Meals",
+    "facilitation": "Facilitation",
+    "lump_sum": "Lump Sum",
+    "lunch": "Participant Meals",
+    "mobilisation": "Mobilisation",
+    "participant_meals": "Participant Meals",
+    "transport": "Transport / Field Travel",
+    "venue": "Venue"
+  },
+  "metric_labels": [
+    "Total Funds This Month",
+    "Pending Disbursement",
+    "Disbursed Today",
+    "Awaiting Approval Completion"
+  ],
+  "mix_colours": {
+    "Admin Budget": "#64748b",
+    "Cluster Meetings": "var(--edify-accent)",
+    "Cluster Trainings": "var(--edify-warn)",
+    "Field Events": "#64748b",
+    "In-School Trainings": "var(--edify-warn)",
+    "Other": "#94a3b8",
+    "Partner School Visits": "#8b5cf6",
+    "SSA Support Visits": "#0d9488",
+    "Staff School Visits": "var(--edify-success)"
+  },
+  "money_moved_advance_statuses": [
+    "disbursed",
+    "accountability_pl_pending",
+    "accountability_pending",
+    "accounted",
+    "reimbursement_pl_pending",
+    "reimbursement_submitted",
+    "reimbursement_disbursed",
+    "reimbursed"
+  ],
+  "monthly_pending_approval": [
+    "approved_by_cd",
+    "approved_by_pl",
+    "approved_by_rvp",
+    "submitted",
+    "submitted_to_cd",
+    "submitted_to_pl",
+    "submitted_to_rvp"
+  ],
+  "monthly_pending_disbursement": [
+    "sent_to_accountant"
+  ],
+  "monthly_returned": [
+    "rejected",
+    "returned",
+    "returned_by_accountant",
+    "returned_by_cd",
+    "returned_by_pl",
+    "returned_by_rvp"
+  ],
+  "months": [
+    "",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
+  ],
+  "non_fundable_statuses": [
+    "cancelled",
+    "rejected",
+    "deferred",
+    "awaiting_owner_approval"
+  ],
+  "partner_payable_statuses": [
+    "none",
+    "ia_confirmed",
+    "disbursed"
+  ],
+  "ssa_visit_types": [
+    "baseline_ssa_visit",
+    "school_visit_ssa_collection",
+    "partner_ssa_collection",
+    "ssa_activity",
+    "core_assessment_visit"
+  ],
+  "status_options": [
+    "Pending Approval",
+    "Pending Disbursement",
+    "Held",
+    "Disbursed",
+    "Awaiting Reconciliation",
+    "Returned",
+    "Closed"
+  ],
+  "status_sort": {
+    "Awaiting Reconciliation": 3,
+    "Closed": 6,
+    "Disbursed": 4,
+    "Held": 1,
+    "Pending Approval": 2,
+    "Pending Disbursement": 0,
+    "Returned": 5
+  },
+  "status_tones": {
+    "Awaiting Reconciliation": "info",
+    "Closed": "neutral",
+    "Disbursed": "success",
+    "Held": "warning",
+    "Pending Approval": "neutral",
+    "Pending Disbursement": "warning",
+    "Returned": "danger"
+  },
+  "training_types": [
+    "cluster_training",
+    "cluster_training_ssa_collection",
+    "core_training",
+    "in_school_training",
+    "school_improvement_training",
+    "training"
+  ],
+  "visit_types": [
+    "baseline_ssa_visit",
+    "coaching_visit",
+    "core_assessment_visit",
+    "core_visit",
+    "donor_visit",
+    "follow_up_visit",
+    "in_school_coaching_visit",
+    "in_school_support",
+    "partner_ssa_collection",
+    "school_invitation",
+    "school_visit",
+    "school_visit_ssa_collection",
+    "social_visit",
+    "story_gathering_visit",
+    "training_follow_up_visit"
+  ]
+}

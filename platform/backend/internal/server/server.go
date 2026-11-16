@@ -44,6 +44,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/coverage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dataquality"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/decisionlog"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/disbursements"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/escalations"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/extrawork"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/feed"
@@ -209,6 +210,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			teamperformance.NewService(pool, time.Now),
 			projectmonitoring.NewService(pool, time.Now),
 			projectspage.NewService(pool, time.Now),
+			disbursements.NewService(pool, time.Now),
 			mypd.NewService(pool, time.Now, cfg.PageWrites.MyProfessionalDevelopment),
 			planningoversight.NewService(pool, time.Now),
 			oversightportfolio.NewService(pool, time.Now),
