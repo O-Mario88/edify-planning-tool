@@ -961,3 +961,9 @@ GRANT SELECT (week_start_date, school_id) ON activity_schedule_cost_line TO edif
 -- User Management (internal/adminusers): a partner organisation's email,
 -- expertise and training areas, as its row in the partner table shows them.
 GRANT SELECT (email, expertise_areas, trains_on) ON partner TO edify_gateway_ro;
+
+-- Personal Time Off (internal/personaltimeoff): a balance's used, pending and
+-- approved days, which the page checks against their recalculation before
+-- answering (it answers only when the existing page's rewrite would change
+-- nothing).
+GRANT SELECT (used, pending, approved) ON leave_balance TO edify_gateway_ro;
