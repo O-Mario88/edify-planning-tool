@@ -27,6 +27,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/adminops"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/approvalhistory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/btpages"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/budgetpage"
@@ -219,6 +220,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			uploadcenter.NewService(pool, time.Now),
 			debriefs.NewService(pool, time.Now),
 			cpdlearning.NewService(pool, time.Now),
+			approvalhistory.NewService(pool),
 			mypd.NewService(pool, time.Now, cfg.PageWrites.MyProfessionalDevelopment),
 			planningoversight.NewService(pool, time.Now),
 			oversightportfolio.NewService(pool, time.Now),
