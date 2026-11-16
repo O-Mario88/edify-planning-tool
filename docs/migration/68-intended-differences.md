@@ -114,3 +114,25 @@ entry is needed; what differs is the database after the read:
   annual reconciliation (the sum of every month's `program_total`), and the
   monthly budget list (`monthly_work_plan.services.list_budgets`). Locked
   months, which the approval itself reads, are never recomputed by either.
+
+## 68.7 Not a difference: pages whose read writes, and Go writes the same (2026-11-16)
+
+"Go never writes on a read" has these exceptions, each the owner's decision,
+because the existing page writes when it is opened and its readers depend on
+what that write leaves:
+
+- The Help Centre (owner, 2026-11-16: "Go makes the same writes"): the home
+  marks published guides past their review date as review due
+  (`mark_review_due_articles`), and on a database with no page-to-guide links
+  fills them (`sync_route_contexts`). Not built in Go yet: the app's feed does
+  not offer the Help pages.
+- My Targets and My Professional Development (owner, 2026-11-16: "Same
+  writes"): My Targets rebuilds the reader's achievement ledger
+  (`TargetAchievementService.rebuild`), My Professional Development syncs the
+  reader's course tracking (`PDCourseTrackingService.sync_all`), each before
+  the page reads.
+
+Each such page writes through its own role with exactly the columns the
+existing write touches, behind its own switch (off by default, development
+and shadow databases only), and is proved by the rows the existing read
+leaves behind as well as by the page it answers.
