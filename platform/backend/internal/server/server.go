@@ -42,6 +42,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/coreoversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/costsettings"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/coverage"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/cpdlearning"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dataquality"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/debriefs"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/decisionlog"
@@ -217,6 +218,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			fundapprovals.NewService(pool, time.Now),
 			uploadcenter.NewService(pool, time.Now),
 			debriefs.NewService(pool, time.Now),
+			cpdlearning.NewService(pool, time.Now),
 			mypd.NewService(pool, time.Now, cfg.PageWrites.MyProfessionalDevelopment),
 			planningoversight.NewService(pool, time.Now),
 			oversightportfolio.NewService(pool, time.Now),

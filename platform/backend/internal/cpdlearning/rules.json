@@ -1,0 +1,409 @@
+{
+  "certificate_labels": {
+    "awaiting": "Awaiting Certificate",
+    "bamboohr": "Uploaded on BambooHR",
+    "none": "No Certificate",
+    "uploaded": "Uploaded, not on BambooHR"
+  },
+  "committed_statuses": [
+    "submitted_to_supervisor",
+    "submitted_to_hr",
+    "pending_exception",
+    "submitted_to_cd",
+    "approved_pending_funding",
+    "disbursed",
+    "enrollment_pending",
+    "enrollment_confirmed",
+    "in_progress",
+    "ended",
+    "marked_complete",
+    "certificate_uploaded",
+    "bamboohr_confirmed",
+    "accountability_submitted",
+    "awaiting_hr_signoff"
+  ],
+  "course_types": {
+    "hybrid": "Hybrid",
+    "in_person": "In Person",
+    "online": "Online"
+  },
+  "eligible_roles": [
+    [
+      "CCEO",
+      "CCEO"
+    ],
+    [
+      "Program Lead",
+      "Program Lead"
+    ],
+    [
+      "CountryDirector",
+      "Country Director"
+    ],
+    [
+      "RegionalVicePresident",
+      "Regional VP"
+    ],
+    [
+      "ImpactAssessment",
+      "IA Advisor"
+    ],
+    [
+      "Accountant",
+      "Accountant"
+    ],
+    [
+      "HumanResources",
+      "HR Officer"
+    ],
+    [
+      "ProjectCoordinator",
+      "Project Coordinator"
+    ],
+    [
+      "Admin",
+      "Admin"
+    ]
+  ],
+  "employee_done_statuses": [
+    "certificate_uploaded",
+    "bamboohr_confirmed",
+    "accountability_submitted",
+    "accountability_cleared",
+    "awaiting_hr_signoff"
+  ],
+  "fund_applied_statuses": [
+    "submitted_to_supervisor",
+    "returned_by_supervisor",
+    "submitted_to_hr",
+    "returned_by_hr",
+    "pending_exception",
+    "submitted_to_cd"
+  ],
+  "fund_completed_statuses": [
+    "marked_complete",
+    "certificate_uploaded",
+    "bamboohr_confirmed",
+    "accountability_submitted",
+    "accountability_cleared",
+    "awaiting_hr_signoff",
+    "completed_closed"
+  ],
+  "fund_in_progress_statuses": [
+    "enrollment_confirmed",
+    "in_progress",
+    "ended",
+    "deferred"
+  ],
+  "fund_processing_statuses": [
+    "approved_pending_funding",
+    "approved_unfunded",
+    "disbursed",
+    "enrollment_pending"
+  ],
+  "fund_status_labels": {
+    "applied": "Applied",
+    "completed": "Completed",
+    "in_progress": "In Progress",
+    "not_applied": "Not Applied",
+    "processing": "Being Processed"
+  },
+  "funded_types": [
+    "fully_funded",
+    "partially_funded"
+  ],
+  "in_progress_statuses": [
+    "enrollment_confirmed",
+    "in_progress"
+  ],
+  "metric_labels": [
+    "Total Annual PD Allocation",
+    "Funds Committed",
+    "Funds Accounted For",
+    "Staff Enrolled",
+    "Courses In Progress",
+    "Pending Certificate Uploads",
+    "Pending Accountability",
+    "HR Sign-Off Pending"
+  ],
+  "next_actions": {
+    "accountability_cleared": "Awaiting HR Sign-Off",
+    "accountability_submitted": "Awaiting Finance Clearance",
+    "approved_pending_funding": "Awaiting Disbursement",
+    "approved_unfunded": "Confirm Enrollment",
+    "awaiting_hr_signoff": "View HR Sign-Off",
+    "bamboohr_confirmed": "Submit Accountability",
+    "certificate_uploaded": "Confirm BambooHR Upload",
+    "completed_closed": "Completed",
+    "disbursed": "Confirm Fund Receipt",
+    "draft": "Continue Draft",
+    "ended": "Mark Course Complete",
+    "enrollment_confirmed": "Open Course",
+    "enrollment_pending": "Confirm Enrollment",
+    "in_progress": "Open Course",
+    "marked_complete": "Upload Certificate",
+    "pending_exception": "Awaiting Exception Approval",
+    "returned_by_hr": "Fix Returned Request",
+    "returned_by_supervisor": "Fix Returned Request",
+    "submitted_to_cd": "Awaiting Country Director",
+    "submitted_to_hr": "Awaiting HR",
+    "submitted_to_supervisor": "Awaiting Supervisor"
+  },
+  "not_applied_statuses": [
+    "draft",
+    "rejected",
+    "cancelled",
+    "withdrawn"
+  ],
+  "not_started_statuses": [
+    "submitted_to_supervisor",
+    "submitted_to_hr",
+    "pending_exception",
+    "submitted_to_cd",
+    "approved_pending_funding",
+    "approved_unfunded",
+    "disbursed",
+    "enrollment_pending"
+  ],
+  "on_bamboohr_statuses": [
+    "bamboohr_confirmed",
+    "accountability_submitted",
+    "accountability_cleared",
+    "awaiting_hr_signoff",
+    "completed_closed"
+  ],
+  "pending_accountability_statuses": [
+    "bamboohr_confirmed",
+    "accountability_submitted"
+  ],
+  "pending_certificate_statuses": [
+    "ended",
+    "marked_complete"
+  ],
+  "reminders": [
+    [
+      "due",
+      "Due Soon"
+    ],
+    [
+      "overdue",
+      "Overdue"
+    ]
+  ],
+  "roles": {
+    "Accountant": {
+      "adjust_allocation": false,
+      "page": false,
+      "sign_off": false,
+      "staff_links": false,
+      "strip": null,
+      "team_view": false
+    },
+    "Admin": {
+      "adjust_allocation": true,
+      "page": true,
+      "sign_off": true,
+      "staff_links": true,
+      "strip": null,
+      "team_view": false
+    },
+    "BusinessTransformationOfficer": {
+      "adjust_allocation": false,
+      "page": false,
+      "sign_off": false,
+      "staff_links": false,
+      "strip": null,
+      "team_view": false
+    },
+    "CCEO": {
+      "adjust_allocation": false,
+      "page": false,
+      "sign_off": false,
+      "staff_links": false,
+      "strip": null,
+      "team_view": false
+    },
+    "ClusterLeader": {
+      "adjust_allocation": false,
+      "page": false,
+      "sign_off": false,
+      "staff_links": false,
+      "strip": null,
+      "team_view": false
+    },
+    "CountryDirector": {
+      "adjust_allocation": false,
+      "page": true,
+      "sign_off": false,
+      "staff_links": true,
+      "strip": null,
+      "team_view": false
+    },
+    "HumanResources": {
+      "adjust_allocation": true,
+      "page": true,
+      "sign_off": true,
+      "staff_links": true,
+      "strip": null,
+      "team_view": false
+    },
+    "ImpactAssessment": {
+      "adjust_allocation": false,
+      "page": true,
+      "sign_off": false,
+      "staff_links": true,
+      "strip": null,
+      "team_view": false
+    },
+    "MfiLoanOfficer": {
+      "adjust_allocation": false,
+      "page": false,
+      "sign_off": false,
+      "staff_links": false,
+      "strip": null,
+      "team_view": false
+    },
+    "MfiPartnerAdmin": {
+      "adjust_allocation": false,
+      "page": false,
+      "sign_off": false,
+      "staff_links": false,
+      "strip": null,
+      "team_view": false
+    },
+    "PartnerAdmin": {
+      "adjust_allocation": false,
+      "page": false,
+      "sign_off": false,
+      "staff_links": false,
+      "strip": null,
+      "team_view": false
+    },
+    "PartnerFieldOfficer": {
+      "adjust_allocation": false,
+      "page": false,
+      "sign_off": false,
+      "staff_links": false,
+      "strip": null,
+      "team_view": false
+    },
+    "Program Lead": {
+      "adjust_allocation": false,
+      "page": true,
+      "sign_off": false,
+      "staff_links": true,
+      "strip": {
+        "label": "Performance & Coaching",
+        "scrolls": true,
+        "tabs": [
+          {
+            "active": false,
+            "href": "/team/coaching",
+            "label": "Coaching"
+          },
+          {
+            "active": false,
+            "href": "/performance-reviews",
+            "label": "Performance Reviews"
+          },
+          {
+            "active": false,
+            "href": "/recovery-plans",
+            "label": "Recovery Plans"
+          },
+          {
+            "active": true,
+            "href": "/cpd-learning",
+            "label": "Professional Development"
+          },
+          {
+            "active": false,
+            "href": "/policy-compliance",
+            "label": "Policy Compliance"
+          }
+        ]
+      },
+      "team_view": true
+    },
+    "ProjectCoordinator": {
+      "adjust_allocation": false,
+      "page": false,
+      "sign_off": false,
+      "staff_links": false,
+      "strip": null,
+      "team_view": false
+    },
+    "RegionalProgramLead": {
+      "adjust_allocation": false,
+      "page": false,
+      "sign_off": false,
+      "staff_links": false,
+      "strip": null,
+      "team_view": false
+    },
+    "RegionalVicePresident": {
+      "adjust_allocation": false,
+      "page": true,
+      "sign_off": false,
+      "staff_links": true,
+      "strip": null,
+      "team_view": false
+    }
+  },
+  "signed_off_statuses": [
+    "completed_closed"
+  ],
+  "status_buckets": [
+    [
+      "not_started",
+      "Not Started"
+    ],
+    [
+      "in_progress",
+      "In Progress"
+    ],
+    [
+      "pending_certificate",
+      "Pending Certificate"
+    ],
+    [
+      "completed",
+      "Completed"
+    ],
+    [
+      "signed_off",
+      "Signed Off"
+    ],
+    [
+      "inactive",
+      "Inactive / Returned"
+    ]
+  ],
+  "statuses": {
+    "accountability_cleared": "Accountability Cleared",
+    "accountability_submitted": "Accountability Submitted",
+    "approved_pending_funding": "Approved — Pending Finance",
+    "approved_unfunded": "Approved",
+    "awaiting_hr_signoff": "Awaiting HR Sign-Off",
+    "bamboohr_confirmed": "BambooHR Upload Confirmed",
+    "cancelled": "Cancelled",
+    "certificate_uploaded": "Certificate Uploaded",
+    "completed_closed": "Completed and Closed",
+    "deferred": "Deferred",
+    "disbursed": "Funds Disbursed",
+    "draft": "Draft",
+    "ended": "Course Ended",
+    "enrollment_confirmed": "Enrollment Confirmed",
+    "enrollment_pending": "Enrollment Pending",
+    "in_progress": "Course In Progress",
+    "marked_complete": "Employee Marked Complete",
+    "pending_exception": "Pending Exception Approval",
+    "rejected": "Rejected",
+    "returned_by_hr": "Returned by HR",
+    "returned_by_supervisor": "Returned by Supervisor",
+    "submitted_to_cd": "Awaiting Country Director",
+    "submitted_to_hr": "Submitted to HR",
+    "submitted_to_supervisor": "Submitted to Supervisor",
+    "withdrawn": "Withdrawn"
+  }
+}
