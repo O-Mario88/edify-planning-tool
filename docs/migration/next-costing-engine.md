@@ -96,5 +96,26 @@ integration tests, parity for all 29 accounts, hand-ons listed.
   10 country month answers. Hand-ons added: a deployment of several
   countries.
 
-Next: stage 3, pricing in Go read-only (the dual price and the session and
-visit recipes beside `internal/costing`).
+- **Stage 3a, an activity priced on its own** (`internal/pricing`, rules from
+  `manage.py export_pricing_rules`): `StoredInput` builds what the single
+  cost writer prices a stored activity with (`_costing_input`: the district
+  type by who travels, field staff against their primary district and head
+  office against the Kampala, Wakiso and Mukono zone; the traveller's night
+  rate by the roles held; a field event's destination; the materials, the
+  headcount and the days), and `Price` is `calculate_dual` (the operational
+  and reference cards in force on the activity's day, the linked costs, the
+  below-minimum, missing-reference and material-difference warnings, the
+  viability). Oracle: `internal/pricing/testdata/oracle.py` files a newer
+  operational card in force for ten days of April (a threshold, a rate below
+  its minimum, a rate left out, a linked cost) and a dearer reference card,
+  and prices every live activity; `pricing_oracle_test.go` (EDIFY_PRICING_ORACLE)
+  prices them with Go through the gateway's role: 264 activities, 0
+  differing; a planted fault in the threshold failed the 91 it touches. The
+  seed has no secondary-district work, so those district and night-rate
+  branches are held by unit tests. `costsettings` now resolves its card
+  through `pricing.Resolve` (its golden still 15/0). Not yet: the day a
+  visit shares with others (the Daily Visit Batch pool and its shares), an
+  in-school Training carried by its visit, an online training's zero.
+
+Next: stage 3b, the day pool (`apps.daily_visit_batches.pricing`) and the
+two zero cases, with the same oracle.

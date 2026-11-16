@@ -833,3 +833,8 @@ GRANT SELECT (rate_snapshot) ON daily_visit_batch TO edify_gateway_ro;
 GRANT SELECT (fy, total_amount, operational_activity_requirement) ON monthly_work_plan_budget TO edify_gateway_ro;
 GRANT SELECT (activity_id, planned_date, responsible_user_id, amount, disbursed_amount, accounted_amount, reimbursed_amount)
   ON advance_request TO edify_gateway_ro;
+
+-- Pricing a stored activity (internal/pricing): the materials it plans, and
+-- the dates a rate card is in force and its material-difference threshold.
+GRANT SELECT (printing_pages, photocopy_pages, photocopy_copies) ON activity TO edify_gateway_ro;
+GRANT SELECT (effective_from, effective_to, material_difference_threshold_bps) ON cost_catalogue TO edify_gateway_ro;

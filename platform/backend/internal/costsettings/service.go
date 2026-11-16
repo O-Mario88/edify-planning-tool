@@ -14,6 +14,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/costing"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pricing"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -143,17 +144,10 @@ func (s *Service) catalogue(ctx context.Context) (*catalogue, error) {
 	return &c, nil
 }
 
-// pricedCard is _read_rate_card: the rates by key, and the settings each
-// came from in the card's order (for the costs linked to one activity).
-type pricedCard struct {
-	rates map[string]int64
-	order []rate
-}
-
 // rates reads the card's rows once, in the model's order (label): the rows
 // the register SHOWS (visible_rates), and the card it PRICES with
 // (pricing_rates, with every renamed key answered by its canonical one).
-func (s *Service) rates(ctx context.Context, catalogueID string) ([]rate, pricedCard, error) {
+func (s *Service) rates(ctx context.Context, catalogueID string) ([]rate, *pricing.Card, error) {
 	renamed := []string{}
 	for _, a := range costing.Aliases() {
 		renamed = append(renamed, a.Old...)
@@ -167,7 +161,7 @@ func (s *Service) rates(ctx context.Context, catalogueID string) ([]rate, priced
 		  AND (cs.key = ANY($2) OR cs.key = ANY($3) OR cs.catalogue_item_id IS NOT NULL)
 		ORDER BY cs.label, cs.id`, catalogueID, costing.CanonicalRateKeys(), renamed)
 	if err != nil {
-		return nil, pricedCard{}, fmt.Errorf("costsettings: reading the card's rates: %w", err)
+		return nil, nil, fmt.Errorf("costsettings: reading the card's rates: %w", err)
 	}
 	all, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (rate, error) {
 		var r rate
@@ -175,7 +169,7 @@ func (s *Service) rates(ctx context.Context, catalogueID string) ([]rate, priced
 		return r, err
 	})
 	if err != nil {
-		return nil, pricedCard{}, fmt.Errorf("costsettings: reading the card's rates: %w", err)
+		return nil, nil, fmt.Errorf("costsettings: reading the card's rates: %w", err)
 	}
 	shown := []rate{}
 	for _, r := range all {
@@ -186,41 +180,14 @@ func (s *Service) rates(ctx context.Context, catalogueID string) ([]rate, priced
 	return shown, priceCard(all), nil
 }
 
-// priceCard is _read_rate_card over rows in the card's order: one setting a
-// key (the last row of a key wins its place's value, as a dict does), each
-// renamed key answered by its canonical one, then only the canonical and
-// the linked kept.
-func priceCard(rows []rate) pricedCard {
-	keys := []string{}
-	byKey := map[string]rate{}
-	for _, r := range rows {
-		if _, seen := byKey[r.key]; !seen {
-			keys = append(keys, r.key)
-		}
-		byKey[r.key] = r
+// priceCard is the card the register prices with (pricing.Resolve over the
+// rows in the card's order).
+func priceCard(rows []rate) *pricing.Card {
+	settings := make([]pricing.Setting, len(rows))
+	for i, r := range rows {
+		settings[i] = pricing.Setting{Key: r.key, Label: r.label, UnitCost: r.unitCost, ApprovedMinimum: r.minimum, ItemID: r.itemID}
 	}
-	for _, a := range costing.Aliases() {
-		if _, ok := byKey[a.Key]; ok {
-			continue
-		}
-		for _, old := range a.Old {
-			if r, ok := byKey[old]; ok {
-				keys = append(keys, a.Key)
-				byKey[a.Key] = r
-				break
-			}
-		}
-	}
-	card := pricedCard{rates: map[string]int64{}}
-	for _, key := range keys {
-		r := byKey[key]
-		if !costing.IsCanonical(key) && r.itemID == nil {
-			continue
-		}
-		card.rates[key] = r.unitCost
-		card.order = append(card.order, r)
-	}
-	return card
+	return pricing.Resolve(settings)
 }
 
 // items is effective_items() ordered by name, each with its first active

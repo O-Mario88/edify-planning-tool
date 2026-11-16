@@ -9,6 +9,7 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterpage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/costing"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pricing"
 )
 
 // covered is one row of activity_cost_coverage.
@@ -23,7 +24,7 @@ type covered struct {
 // participant, with the costs linked to it. ok is false when an activity
 // carries a costing profile the engine does not know (the existing page
 // refuses the request).
-func coverageOf(items []item, card pricedCard) ([]covered, bool) {
+func coverageOf(items []item, card *pricing.Card) ([]covered, bool) {
 	out := make([]covered, 0, len(items))
 	for _, it := range items {
 		a := costing.Activity{
@@ -37,12 +38,8 @@ func coverageOf(items []item, card pricedCard) ([]covered, bool) {
 			}
 			a.ActivityType, a.CostingKind = resolved[0], resolved[1]
 		}
-		for _, r := range card.order {
-			if r.itemID != nil && *r.itemID == it.id {
-				a.LinkedRates = append(a.LinkedRates, [2]string{r.key, r.label})
-			}
-		}
-		cost := costing.CostForActivity(a, card.rates)
+		a.LinkedRates = card.LinkedRates(it.id)
+		cost := costing.CostForActivity(a, card.Rates)
 		c := covered{
 			name:         it.name,
 			activityType: display(rules.ActivityTypes, &it.activityType),
