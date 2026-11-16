@@ -117,5 +117,23 @@ integration tests, parity for all 29 accounts, hand-ons listed.
   visit shares with others (the Daily Visit Batch pool and its shares), an
   in-school Training carried by its visit, an online training's zero.
 
-Next: stage 3b, the day pool (`apps.daily_visit_batches.pricing`) and the
-two zero cases, with the same oracle.
+- **Stage 3b, the day a visit shares** (`pricing.PlanDay`): the day's live
+  members by id, Primary, Secondary or Mixed from where each happens for the
+  day's traveller, the rates a Mixed day fetches (the secondary district's,
+  its transport named Mixed), the day the traveller comes home (away the day
+  before, not the day after: no night and no dinner), the pool and the
+  refusal of a day whose card lacks one of its rates, each rate split exactly
+  across the members (the remainder to the first), and each member's own
+  lines that are not the day's. Oracle:
+  `internal/pricing/testdata/day_oracle.py` files seven days (a primary day
+  split three ways with a cancelled member left out, a Mixed day, two
+  secondary days in a row, a day refused for its missing lunch, an empty day,
+  a day of a OneTest visit and a cluster meeting) and plans them with
+  `_plan_day`; `day_oracle_test.go` (EDIFY_DAY_ORACLE): 7 days, 0 differing; a
+  planted fault in the split failed the three-way day. Go does not settle a
+  neighbouring day (a write); it reads the neighbours only to know whether
+  this day is the trip home.
+
+Next: stage 3c, which way a stored activity is priced (an online training at
+nothing, an in-school Training carried by its visit, a pooled visit by its
+day, anything else on its own), then stage 4 needs the owner's go-ahead.

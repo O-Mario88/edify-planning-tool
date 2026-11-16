@@ -838,3 +838,7 @@ GRANT SELECT (activity_id, planned_date, responsible_user_id, amount, disbursed_
 -- the dates a rate card is in force and its material-difference threshold.
 GRANT SELECT (printing_pages, photocopy_pages, photocopy_copies) ON activity TO edify_gateway_ro;
 GRANT SELECT (effective_from, effective_to, material_difference_threshold_bps) ON cost_catalogue TO edify_gateway_ro;
+
+-- The day a visit shares, priced read-only (internal/pricing/day.go): the
+-- district type it was last priced as and how many schools it held.
+GRANT SELECT (district_type, school_count) ON daily_visit_batch TO edify_gateway_ro;
