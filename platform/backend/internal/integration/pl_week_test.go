@@ -106,6 +106,15 @@ func TestTheLeadsWeekMatchesTheExistingFeed(t *testing.T) {
 			t.Fatal(err)
 		}
 		compared++
+		strip, err := dashboard.LeadPulse(ctx, gateway, snoozer(t, answer.Email), "2027", time.Now())
+		if err != nil {
+			t.Fatalf("%v: the team pulse: %v", answer.Query, err)
+		}
+		if existing := want.GetBlocks()[1]; !proto.Equal(strip, existing) {
+			differing++
+			t.Errorf("%v: the team pulse differs:\n go:       %s\n existing: %s", answer.Query,
+				protojson.Format(strip), protojson.Format(existing))
+		}
 		got := &screensv1.GetPageResponse{Blocks: blocks}
 		existing := &screensv1.GetPageResponse{Blocks: weekSlice(want.GetBlocks())}
 		if !proto.Equal(got, existing) {

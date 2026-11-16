@@ -74,8 +74,38 @@ def officer() -> dict:
     }
 
 
+def lead() -> dict:
+    """What a Programme Lead's Home reads by
+    (apps.analytics.pl_dashboard_service): its views, the statuses and types
+    the team pulse counts, how many of each list it reads, and the pages its
+    figures and cards open."""
+    from apps.analytics import pl_dashboard_service as pl
+    from apps.core.rbac import EdifyRole
+    from apps.hr.leave_services import _APPROVER_SENIORITY
+    from apps.schools.lifecycle_models import OPERATING_STATUSES
+
+    return {
+        "role": EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+        "default_view": pl.DEFAULT_VIEW,
+        "views": list(pl.VIEWS),
+        "view_aliases": dict(pl.VIEW_ALIASES),
+        "view_tabs": [[key, label] for key, label, _ in pl.VIEW_TABS],
+        "released_statuses": list(pl.RELEASED_STATUSES),
+        "partner_settled_statuses": list(pl.PARTNER_SETTLED_STATUSES),
+        "completed_statuses": list(pl.COMPLETED_STATUSES),
+        "training_types": list(pl.TRAINING_TYPES),
+        "ssa_collection_types": list(pl.SSA_COLLECTION_TYPES),
+        "operating_statuses": [str(s) for s in OPERATING_STATUSES],
+        "approver_seniority": dict(_APPROVER_SENIORITY),
+        "list_rows": pl.LIST_ROWS,
+        "delegated_back_days": pl.DELEGATED_BACK_DAYS,
+        "attention_limit": pl.ATTENTION_LIMIT,
+        "team_oversight_url": pl.TEAM_OVERSIGHT_URL,
+    }
+
+
 def rules() -> dict:
-    return {"officer": officer()}
+    return {"officer": officer(), "lead": lead()}
 
 
 def rendered() -> str:

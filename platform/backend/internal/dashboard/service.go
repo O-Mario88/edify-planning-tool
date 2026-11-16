@@ -53,12 +53,31 @@ var rules = func() (r struct {
 		Views              [][2]string     `json:"views"`
 		Opens              map[string]bool `json:"opens"`
 	} `json:"officer"`
+	Lead struct {
+		Role                   string            `json:"role"`
+		DefaultView            string            `json:"default_view"`
+		Views                  []string          `json:"views"`
+		ViewAliases            map[string]string `json:"view_aliases"`
+		ViewTabs               [][2]string       `json:"view_tabs"`
+		ReleasedStatuses       []string          `json:"released_statuses"`
+		PartnerSettledStatuses []string          `json:"partner_settled_statuses"`
+		CompletedStatuses      []string          `json:"completed_statuses"`
+		TrainingTypes          []string          `json:"training_types"`
+		SSACollectionTypes     []string          `json:"ssa_collection_types"`
+		OperatingStatuses      []string          `json:"operating_statuses"`
+		ApproverSeniority      map[string]int    `json:"approver_seniority"`
+		ListRows               int               `json:"list_rows"`
+		DelegatedBackDays      int               `json:"delegated_back_days"`
+		AttentionLimit         int               `json:"attention_limit"`
+		TeamOversightURL       string            `json:"team_oversight_url"`
+	} `json:"lead"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {
 		panic(fmt.Sprintf("dashboard: reading rules.json: %v", err))
 	}
 	o := r.Officer
-	if o.Role == "" || len(o.Metrics) != 4 || len(o.Views) == 0 || len(o.DoneStatuses) == 0 {
+	if o.Role == "" || len(o.Metrics) != 4 || len(o.Views) == 0 || len(o.DoneStatuses) == 0 ||
+		r.Lead.Role == "" || len(r.Lead.ViewTabs) == 0 || len(r.Lead.OperatingStatuses) == 0 || r.Lead.ListRows == 0 {
 		panic("dashboard: rules.json lacks the role, the figures, the views or the statuses")
 	}
 	return r

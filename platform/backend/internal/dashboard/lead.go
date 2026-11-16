@@ -63,21 +63,9 @@ func (o officer) ids() []string {
 // under, for the past-due list.
 func leadPeople(ctx context.Context, db schooldirectory.Querier, p auth.Principal, start, now time.Time) (people []myplan.TeamPerson, team []string, err error) {
 	people = []myplan.TeamPerson{{Key: "me", Name: "You", StaffID: p.StaffProfileID, IDs: myplan.OwnerIDs(p), Me: true}}
-	supervised, err := supervisedOfficers(ctx, db, p, now)
+	supervised, onTeam, team, err := leadTeam(ctx, db, p, now)
 	if err != nil {
 		return nil, nil, err
-	}
-	members, err := trainingsummary.TeamMembers(ctx, db, p.StaffProfileID, now)
-	if err != nil {
-		return nil, nil, err
-	}
-	onTeam := map[string]bool{}
-	for _, m := range members {
-		onTeam[m.StaffID] = true
-		team = append(team, m.StaffID)
-		if m.UserID != "" {
-			team = append(team, m.UserID)
-		}
 	}
 	busy, err := othersWithWork(ctx, db, supervised, onTeam, start)
 	if err != nil {
@@ -94,6 +82,50 @@ func leadPeople(ctx context.Context, db schooldirectory.Querier, p auth.Principa
 		}
 	}
 	return people, team, nil
+}
+
+// leadTeam is who reports to the lead (resolve_pl_scope's cceos, by name),
+// which of them the lead line-manages (team_members), and every id the
+// line-managed team's work is filed under.
+func leadTeam(ctx context.Context, db schooldirectory.Querier, p auth.Principal, now time.Time) ([]officer, map[string]bool, []string, error) {
+	supervised, err := supervisedOfficers(ctx, db, p, now)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	members, err := trainingsummary.TeamMembers(ctx, db, p.StaffProfileID, now)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	onTeam := map[string]bool{}
+	var team []string
+	for _, m := range members {
+		onTeam[m.StaffID] = true
+		team = append(team, m.StaffID)
+		if m.UserID != "" {
+			team = append(team, m.UserID)
+		}
+	}
+	return supervised, onTeam, team, nil
+}
+
+// LeadPulse is the lead's team pulse, for the comparison with the existing
+// page's strip before the dashboard around it is Go's.
+func LeadPulse(ctx context.Context, db schooldirectory.Querier, p auth.Principal, fy string, now time.Time) (*screensv1.PageBlock, error) {
+	local := now.In(kampala)
+	today := time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC)
+	supervised, onTeam, _, err := leadTeam(ctx, db, p, now)
+	if err != nil {
+		return nil, err
+	}
+	c, err := readLeadCtx(ctx, db, p, fy, now, today, supervised, onTeam)
+	if err != nil {
+		return nil, err
+	}
+	pulse, err := (&Service{db: db, now: func() time.Time { return now }}).readPulse(ctx, c)
+	if err != nil {
+		return nil, err
+	}
+	return pulse.strip(fy), nil
 }
 
 // othersWithWork is which officers off the team hold their own work dated in

@@ -1,4 +1,108 @@
 {
+  "lead": {
+    "approver_seniority": {
+      "cceo": 1,
+      "cd": 3,
+      "pl": 2,
+      "rvp": 4
+    },
+    "attention_limit": 4,
+    "completed_statuses": [
+      "completed",
+      "closed",
+      "ia_verified",
+      "accountant_confirmed",
+      "salesforce_id_required",
+      "awaiting_ia_verification",
+      "submitted_to_pl",
+      "evidence_accepted"
+    ],
+    "default_view": "week",
+    "delegated_back_days": 14,
+    "list_rows": 6,
+    "operating_statuses": [
+      "active",
+      "reopened"
+    ],
+    "partner_settled_statuses": [
+      "cancelled",
+      "rejected",
+      "deferred",
+      "not_planned",
+      "closed",
+      "ia_verified",
+      "awaiting_ia_verification",
+      "submitted_to_pl"
+    ],
+    "released_statuses": [
+      "cancelled",
+      "rejected",
+      "deferred",
+      "not_planned"
+    ],
+    "role": "Program Lead",
+    "ssa_collection_types": [
+      "ssa_activity",
+      "baseline_ssa_visit",
+      "school_visit_ssa_collection",
+      "cluster_training_ssa_collection",
+      "cluster_meeting_ssa_review",
+      "partner_ssa_collection",
+      "core_assessment_visit"
+    ],
+    "team_oversight_url": "/team-planning-oversight/",
+    "training_types": [
+      "training",
+      "in_school_training",
+      "school_improvement_training",
+      "cluster_training",
+      "core_training",
+      "cluster_training_ssa_collection"
+    ],
+    "view_aliases": {
+      "operations": "team",
+      "today": "week"
+    },
+    "view_tabs": [
+      [
+        "week",
+        "This Week"
+      ],
+      [
+        "map",
+        "Map"
+      ],
+      [
+        "priorities",
+        "Priorities"
+      ],
+      [
+        "team",
+        "Team"
+      ],
+      [
+        "coaching",
+        "Coaching"
+      ],
+      [
+        "programmes",
+        "Programmes"
+      ],
+      [
+        "collaboration",
+        "Collaboration"
+      ]
+    ],
+    "views": [
+      "week",
+      "map",
+      "priorities",
+      "team",
+      "coaching",
+      "programmes",
+      "collaboration"
+    ]
+  },
   "officer": {
     "cluster_types": [
       "cluster_meeting",
