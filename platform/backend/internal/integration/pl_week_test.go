@@ -20,7 +20,7 @@ import (
 )
 
 // plDashboardTables is what the lead's golden files, in the order it files them.
-var plDashboardTables = []string{"activity", "leave", "notification"}
+var plDashboardTables = []string{"activity", "leave", "notification", "leadership_escalation", "cd_flag", "target_catchup_plan"}
 
 // weekSlice is the existing page's This Week and backlog: from the week's
 // heading to the Staff Activity Log after it.
@@ -106,7 +106,7 @@ func TestTheLeadsWeekMatchesTheExistingFeed(t *testing.T) {
 			t.Fatal(err)
 		}
 		compared++
-		strip, err := dashboard.LeadPulse(ctx, gateway, snoozer(t, answer.Email), "2027", time.Now())
+		strip, header, err := dashboard.LeadPulse(ctx, gateway, snoozer(t, answer.Email), "2027", time.Now())
 		if err != nil {
 			t.Fatalf("%v: the team pulse: %v", answer.Query, err)
 		}
@@ -114,6 +114,11 @@ func TestTheLeadsWeekMatchesTheExistingFeed(t *testing.T) {
 			differing++
 			t.Errorf("%v: the team pulse differs:\n go:       %s\n existing: %s", answer.Query,
 				protojson.Format(strip), protojson.Format(existing))
+		}
+		if !proto.Equal(header, want.GetHeader()) {
+			differing++
+			t.Errorf("%v: the header differs:\n go:       %s\n existing: %s", answer.Query,
+				protojson.Format(header), protojson.Format(want.GetHeader()))
 		}
 		got := &screensv1.GetPageResponse{Blocks: blocks}
 		existing := &screensv1.GetPageResponse{Blocks: weekSlice(want.GetBlocks())}

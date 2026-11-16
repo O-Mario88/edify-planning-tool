@@ -70,6 +70,15 @@ var rules = func() (r struct {
 		DelegatedBackDays      int               `json:"delegated_back_days"`
 		AttentionLimit         int               `json:"attention_limit"`
 		TeamOversightURL       string            `json:"team_oversight_url"`
+		CCEOBacklogStatuses    []string          `json:"cceo_backlog_statuses"`
+		NotInPlanStatuses      []string          `json:"not_in_plan_statuses"`
+		VisitTypes             []string          `json:"visit_types"`
+		ClusterMeetingTypes    []string          `json:"cluster_meeting_types"`
+		SchoolCapacity         int               `json:"cceo_school_capacity"`
+		WeeklyCapacity         int               `json:"cceo_weekly_activity_capacity"`
+		LeaveLookaheadDays     int               `json:"leave_lookahead_days"`
+		CardURLs               map[string]string `json:"card_urls"`
+		Opens                  map[string]bool   `json:"opens"`
 	} `json:"lead"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {

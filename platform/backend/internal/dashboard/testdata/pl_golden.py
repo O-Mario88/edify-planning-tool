@@ -29,7 +29,9 @@ from django.utils import timezone as dj_timezone
 from apps.accounts.models import Leave, StaffProfile
 from apps.activities.models import Activity
 from apps.mobile_feed.views import read_page
+from apps.flags.models import CdFlag, LeadershipEscalation
 from apps.notifications.models import Notification
+from apps.targets.models import CatchUpPlan, TargetArea
 
 if not settings.DATABASES["default"]["NAME"].endswith("_test"):
     raise SystemExit("pl_golden.py runs only against a _test database")
@@ -39,7 +41,14 @@ PATH = "/dashboard"
 P = "gpld"
 TODAY = dj_timezone.localdate()
 MONDAY = TODAY - timedelta(days=TODAY.weekday())
-TABLES = ("activity", "leave", "notification")
+TABLES = (
+    "activity",
+    "leave",
+    "notification",
+    "leadership_escalation",
+    "cd_flag",
+    "target_catchup_plan",
+)
 LEAD = "pl1@edify.org"
 
 
@@ -133,6 +142,51 @@ def file_rows():
         status="approved",
         reason="Golden leave",
         coverage_status="Not Required",
+    )
+    # What needs the lead now: an escalation to them past its SLA, a
+    # Country Director flag past its due date, a catch-up plan to approve and
+    # late partner work their officer monitors.
+    officer = User.objects.get(email="cceo@edify.org")
+    head = User.objects.get(email=LEAD)
+    LeadershipEscalation.objects.create(
+        id=P + "E1",
+        raised_by_user_id=officer.id,
+        addressed_role="PL",
+        assigned_to_user_id=head.id,
+        category="other",
+        subject="Golden escalation",
+        detail="Golden escalation",
+    )
+    LeadershipEscalation.objects.filter(id=P + "E1").update(
+        created_at=dj_timezone.now() - timedelta(days=30)
+    )
+    CdFlag.objects.create(
+        id=P + "F1",
+        raised_by_user_id=head.id,
+        assigned_to_user_id=head.id,
+        category="other",
+        note="Golden flag",
+        status="open",
+        due_date=(TODAY - timedelta(days=2)).isoformat(),
+    )
+    CatchUpPlan.objects.create(
+        id=P + "C1",
+        pl_user_id=head.id,
+        staff_user_id=officer.id,
+        area=TargetArea.objects.first(),
+        fy="2027",
+        month_of_fy=2,
+        status="submitted",
+    )
+    Activity.objects.create(
+        id=P + "Q1",
+        activity_type="school_visit",
+        status="partner_scheduled",
+        delivery_type="partner",
+        monitored_by_staff_id=paul.id,
+        planned_date=TODAY - timedelta(days=5),
+        fy="2027",
+        school=school,
     )
     return paul
 

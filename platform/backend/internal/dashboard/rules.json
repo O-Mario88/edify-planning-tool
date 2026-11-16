@@ -7,6 +7,27 @@
       "rvp": 4
     },
     "attention_limit": 4,
+    "card_urls": {
+      "escalations": "/escalations",
+      "partner_oversight": "/partner-oversight/",
+      "quality_flags": "/quality-checks",
+      "regional_coaching": "/cce-leadership/coaching",
+      "team_availability": "/leave/team-availability",
+      "team_targets": "/team-targets",
+      "training_feedback": "/cce-leadership/feedback"
+    },
+    "cceo_backlog_statuses": [
+      "returned_by_pl",
+      "returned_by_ia",
+      "salesforce_id_required",
+      "awaiting_ia_verification"
+    ],
+    "cceo_school_capacity": 50,
+    "cceo_weekly_activity_capacity": 12,
+    "cluster_meeting_types": [
+      "cluster_meeting",
+      "cluster_meeting_ssa_review"
+    ],
     "completed_statuses": [
       "completed",
       "closed",
@@ -19,7 +40,24 @@
     ],
     "default_view": "week",
     "delegated_back_days": 14,
+    "leave_lookahead_days": 7,
     "list_rows": 6,
+    "not_in_plan_statuses": [
+      "cancelled",
+      "rejected",
+      "deferred",
+      "not_planned"
+    ],
+    "opens": {
+      "/cce-leadership/coaching": true,
+      "/cce-leadership/feedback": true,
+      "/escalations": true,
+      "/leave/team-availability": true,
+      "/partner-oversight/": true,
+      "/quality-checks": true,
+      "/team-planning-oversight/": true,
+      "/team-targets": true
+    },
     "operating_statuses": [
       "active",
       "reopened"
@@ -101,6 +139,23 @@
       "coaching",
       "programmes",
       "collaboration"
+    ],
+    "visit_types": [
+      "school_visit",
+      "follow_up_visit",
+      "coaching_visit",
+      "in_school_support",
+      "donor_visit",
+      "story_gathering_visit",
+      "school_invitation",
+      "social_visit",
+      "training_follow_up_visit",
+      "in_school_coaching_visit",
+      "core_visit",
+      "core_assessment_visit",
+      "baseline_ssa_visit",
+      "school_visit_ssa_collection",
+      "partner_ssa_collection"
     ]
   },
   "officer": {

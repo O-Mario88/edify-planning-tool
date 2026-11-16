@@ -108,24 +108,29 @@ func leadTeam(ctx context.Context, db schooldirectory.Querier, p auth.Principal,
 	return supervised, onTeam, team, nil
 }
 
-// LeadPulse is the lead's team pulse, for the comparison with the existing
-// page's strip before the dashboard around it is Go's.
-func LeadPulse(ctx context.Context, db schooldirectory.Querier, p auth.Principal, fy string, now time.Time) (*screensv1.PageBlock, error) {
+// LeadPulse is the lead's team pulse and header, for the comparison with
+// the existing page's before the dashboard around them is Go's.
+func LeadPulse(ctx context.Context, db schooldirectory.Querier, p auth.Principal, fy string, now time.Time) (*screensv1.PageBlock, *screensv1.PageHeader, error) {
 	local := now.In(kampala)
 	today := time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC)
 	supervised, onTeam, _, err := leadTeam(ctx, db, p, now)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	c, err := readLeadCtx(ctx, db, p, fy, now, today, supervised, onTeam)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	pulse, err := (&Service{db: db, now: func() time.Time { return now }}).readPulse(ctx, c)
+	s := &Service{db: db, now: func() time.Time { return now }}
+	pulse, err := s.readPulse(ctx, c)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return pulse.strip(fy), nil
+	cards, err := s.attention(ctx, c, pulseEscalations{pulse.escalations.ToDecide, pulse.escalations.Overdue})
+	if err != nil {
+		return nil, nil, err
+	}
+	return pulse.strip(fy), leadHeader(cards, fy), nil
 }
 
 // othersWithWork is which officers off the team hold their own work dated in

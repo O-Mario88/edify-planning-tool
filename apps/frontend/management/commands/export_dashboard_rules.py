@@ -79,7 +79,9 @@ def lead() -> dict:
     (apps.analytics.pl_dashboard_service): its views, the statuses and types
     the team pulse counts, how many of each list it reads, and the pages its
     figures and cards open."""
+    from apps.analytics import pl_analytics_service as analytics
     from apps.analytics import pl_dashboard_service as pl
+    from apps.core.permissions import can_open_url
     from apps.core.rbac import EdifyRole
     from apps.hr.leave_services import _APPROVER_SENIORITY
     from apps.schools.lifecycle_models import OPERATING_STATUSES
@@ -101,6 +103,39 @@ def lead() -> dict:
         "delegated_back_days": pl.DELEGATED_BACK_DAYS,
         "attention_limit": pl.ATTENTION_LIMIT,
         "team_oversight_url": pl.TEAM_OVERSIGHT_URL,
+        # The attention cards (leadership_attention) and what they read.
+        "cceo_backlog_statuses": list(analytics.CCEO_BACKLOG_STATUSES),
+        "not_in_plan_statuses": list(analytics.NOT_IN_PLAN_ACTIVITY_STATUSES),
+        "visit_types": list(analytics.VISIT_TYPES),
+        "cluster_meeting_types": list(analytics.CLUSTER_MEETING_TYPES),
+        "cceo_school_capacity": pl.CCEO_SCHOOL_CAPACITY,
+        "cceo_weekly_activity_capacity": pl.CCEO_WEEKLY_ACTIVITY_CAPACITY,
+        "leave_lookahead_days": pl.LEAVE_LOOKAHEAD_DAYS,
+        "card_urls": {
+            "escalations": pl.ESCALATIONS_URL,
+            "quality_flags": pl.QUALITY_FLAGS_URL,
+            "training_feedback": pl.TRAINING_FEEDBACK_URL,
+            "regional_coaching": pl.REGIONAL_COACHING_URL,
+            "team_targets": pl.TEAM_TARGETS_URL,
+            "team_availability": pl.TEAM_AVAILABILITY_URL,
+            "partner_oversight": pl.PARTNER_OVERSIGHT_URL,
+        },
+        # Which of the pages the header may offer a lead opens for them.
+        "opens": {
+            path: bool(
+                can_open_url(_role_user(EdifyRole.COUNTRY_PROGRAM_LEAD.value), path)
+            )
+            for path in (
+                pl.ESCALATIONS_URL,
+                pl.QUALITY_FLAGS_URL,
+                pl.TRAINING_FEEDBACK_URL,
+                pl.REGIONAL_COACHING_URL,
+                pl.TEAM_TARGETS_URL,
+                pl.TEAM_AVAILABILITY_URL,
+                pl.PARTNER_OVERSIGHT_URL,
+                pl.TEAM_OVERSIGHT_URL,
+            )
+        },
     }
 
 

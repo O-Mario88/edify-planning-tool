@@ -528,7 +528,7 @@ GRANT SELECT (author_id) ON cce_team_guidance TO edify_gateway_ro;
 GRANT SELECT (assigned_to_user_id) ON cd_flag TO edify_gateway_ro;
 GRANT SELECT (id) ON partner_invoice TO edify_gateway_ro;
 GRANT SELECT (program_lead_user_id) ON planning_oversight_follow_up TO edify_gateway_ro;
-GRANT SELECT (pl_user_id) ON target_catchup_plan TO edify_gateway_ro;
+GRANT SELECT (pl_user_id, status, staff_user_id) ON target_catchup_plan TO edify_gateway_ro;
 GRANT SELECT (author_id) ON partner_engagement TO edify_gateway_ro;
 
 -- Impact Assessment's To-Do queue (docs/migration/56): what IA's own
