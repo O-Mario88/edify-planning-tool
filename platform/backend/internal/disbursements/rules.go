@@ -97,6 +97,13 @@ func monthlyStatus(status string, accountabilitySubmitted, accountabilityReviewe
 	return pendingApproval
 }
 
+// WeeklyStatus is a weekly request's stage label as weekly_status_buckets
+// gives it: its status, whether an advance behind it waits on accountability,
+// and whether the request's accountability was submitted and reviewed.
+func WeeklyStatus(status string, pendingAccountability, accountabilitySubmitted, accountabilityReviewed bool) string {
+	return weeklyStatus(status, pendingAccountability, accountabilitySubmitted, accountabilityReviewed)
+}
+
 // weeklyStatus is _weekly_status.
 func weeklyStatus(status string, pendingAccountability, accountabilitySubmitted, accountabilityReviewed bool) string {
 	switch status {

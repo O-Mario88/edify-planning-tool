@@ -951,3 +951,9 @@ GRANT SELECT (project_type) ON project_school_assignment TO edify_gateway_ro;
 -- by the existing application (apps.routes.SchoolGeoPoint), which the planner
 -- prefers over the directory's coordinates.
 GRANT SELECT (school_id, latitude, longitude) ON school_geo_point TO edify_gateway_ro;
+
+-- Weekly Advance Request (internal/weeklyrequest): a request's return
+-- reason, funding source and accounted amount, and the week and school a
+-- cost line is filed under (the mission status and the district filter).
+GRANT SELECT (return_reason, funding_source, accounted_amount) ON weekly_fund_request TO edify_gateway_ro;
+GRANT SELECT (week_start_date, school_id) ON activity_schedule_cost_line TO edify_gateway_ro;
