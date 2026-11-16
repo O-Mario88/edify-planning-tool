@@ -34,7 +34,22 @@ from django.utils import timezone as dj_timezone
 
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment
 from apps.activities.models import Activity
-from apps.hr.models import PerformancePriority, PerformanceReview
+from decimal import Decimal
+
+from apps.activity_catalogue.models import ActivityCatalogueItem
+from apps.hr.models import (
+    ActivityPriorityLink,
+    MilestoneActivityRule,
+    MilestoneAllocation,
+    MilestoneMetricDefinition,
+    MilestonePeriodTarget,
+    MilestoneProgressCredit,
+    PerformancePriority,
+    PerformanceReview,
+    PriorityMilestone,
+    StrategicPriority,
+    StrategicPriorityCycle,
+)
 from apps.core_schools.models import CorePlan
 from apps.mobile_feed.views import read_page
 from apps.professional_development.models import ProfessionalDevelopmentRequest
@@ -63,8 +78,18 @@ TODAY = dj_timezone.localdate()
 NOW = Cal.current()
 FY = NOW["fy"]
 MONTH = NOW["month_of_fy"]
+#: The year after, where the officer holds approved milestone allocations.
+NEXT = str(int(FY) + 1)
 #: Children first; the ledger is found by its sources, not its ids.
 TABLES = (
+    "hr_activity_priority_link",
+    "hr_milestone_progress_credit",
+    "hr_milestone_period_target",
+    "hr_milestone_allocation",
+    "hr_milestone_activity_rule",
+    "hr_priority_milestone",
+    "hr_strategic_priority",
+    "hr_strategic_priority_cycle",
     "ssa_score",
     "staff_school_assignment",
     "core_plan",
@@ -85,9 +110,171 @@ def clear():
             cursor.execute(f'DELETE FROM "{table}" WHERE id LIKE %s', [P + "%"])
 
 
-def day_of(month, day=10):
-    start, _ = Cal.month_range(FY, month)
+def day_of(month, day=10, fy=None):
+    start, _ = Cal.month_range(fy or FY, month)
     return start + timedelta(days=day - 1)
+
+
+def file_allocations(officer, schools):
+    """NEXT's governed priorities: one the officer holds approved
+    allocations on (a distinct-schools count phased by month and quarter, a
+    capped coverage rate, and a count on a milestone since retired), one
+    ready for allocation; work on the milestones' catalogue items, credited,
+    one credit reversed; and a planning link."""
+    c1, c2 = list(ActivityCatalogueItem.objects.order_by("id")[:2])
+    definition = MilestoneMetricDefinition.objects.order_by("id").first()
+    StrategicPriorityCycle.objects.bulk_create(
+        [StrategicPriorityCycle(id=P + "Y1", financial_year=NEXT, title="Golden cycle")]
+    )
+
+    def priority(key, seq, title):
+        return StrategicPriority.objects.create(
+            id=P + key,
+            fy=NEXT,
+            level="country",
+            country_id="Uganda",
+            title=title,
+            status="published",
+            sequence=seq,
+            cycle_id=P + "Y1",
+        )
+
+    grow, quality = (
+        priority("G1", 1, "Grow the programme"),
+        priority("G2", 2, "Raise quality"),
+    )
+
+    def milestone(key, pr, measurement, target, unit, weight, **extra):
+        return PriorityMilestone.objects.create(
+            id=P + key,
+            priority=pr,
+            code=P.upper() + key,
+            source_order=int(key[1:]),
+            title=f"Golden milestone {key}",
+            measurement_type=measurement,
+            target_value=Decimal(target),
+            target_unit=unit,
+            weight=Decimal(weight),
+            active=extra.pop("active", True),
+            metric_definition=definition,
+            definition_status="approved",
+            **extra,
+        )
+
+    m1 = milestone("M1", grow, "count", "40", "schools", "30")
+    m2 = milestone("M2", grow, "percentage", "80", "%", "20", cap_at_100=True)
+    m3 = milestone("M3", grow, "count", "9", "schools", "5", active=False)
+    milestone("M4", quality, "count", "10", "schools", "10")
+    rule = {}
+    for key, m, basis, item in (
+        ("R1", m1, "UNIQUE_SCHOOLS_SUPPORTED", c1),
+        ("R2", m2, "PERCENT_OF_ELIGIBLE_SCHOOLS", c2),
+        ("R3", m3, "UNIQUE_SCHOOLS_SUPPORTED", c1),
+    ):
+        rule[key] = MilestoneActivityRule.objects.create(
+            id=P + key, milestone=m, counting_basis=basis, catalogue_item=item
+        )
+
+    def allocate(key, m, target, weight, **extra):
+        return MilestoneAllocation.objects.create(
+            id=P + key,
+            milestone=m,
+            allocated_to_type="employee",
+            employee=officer,
+            allocated_target=Decimal(target),
+            weight=Decimal(weight),
+            status="approved",
+            effective_date=TODAY,
+            **extra,
+        )
+
+    a1 = allocate("A1", m1, "12", "60")
+    a2 = allocate("A2", m2, "80", "40", denominator=Decimal("20"))
+    allocate("A3", m3, "5", "0")
+    targets = []
+    for m in range(1, 13):
+        start, end = Cal.month_range(NEXT, m)
+        for a, planned, achieved in (
+            (a1, "1", "0"),
+            (a2, "80", "25" if m == 1 else "0"),
+        ):
+            targets.append(
+                MilestonePeriodTarget(
+                    id=f"{P}T{a.id[-1]}{m:02d}",
+                    milestone=a.milestone,
+                    allocation=a,
+                    scope="employee",
+                    employee=officer,
+                    period_type="month",
+                    period_start=start,
+                    period_end=end - timedelta(days=1),
+                    planned_value=Decimal(planned),
+                    achievement_percentage=Decimal(achieved),
+                )
+            )
+    for q in (1, 2, 3, 4):
+        start, _ = Cal.month_range(NEXT, q * 3 - 2)
+        _, end = Cal.month_range(NEXT, q * 3)
+        targets.append(
+            MilestonePeriodTarget(
+                id=f"{P}Q1{q}",
+                milestone=m1,
+                allocation=a1,
+                scope="employee",
+                employee=officer,
+                period_type="quarter",
+                period_start=start,
+                period_end=end - timedelta(days=1),
+                planned_value=Decimal("3"),
+                actual_value=Decimal("2") if q == 1 else Decimal("0"),
+            )
+        )
+    MilestonePeriodTarget.objects.bulk_create(targets)
+
+    def work(key, item, school, status, month):
+        return Activity.objects.create(
+            id=P + key,
+            activity_type="school_visit",
+            catalogue_item=item,
+            school=school,
+            fy=NEXT,
+            status=status,
+            delivery_type="staff",
+            responsible_staff_id=officer.id,
+            planned_date=day_of(month, fy=NEXT),
+        )
+
+    v1 = work("V1", c1, schools[0], "ia_verified", 1)
+    v2 = work("V2", c1, schools[1], "ia_verified", 2)
+    v3 = work("V3", c2, schools[2], "ia_verified", 1)
+    v4 = work("V4", c1, schools[0], "scheduled", 3)
+    v5 = work("V5", c1, schools[2], "ia_verified", 4)
+    MilestoneProgressCredit.objects.bulk_create(
+        [
+            MilestoneProgressCredit(
+                id=P + key,
+                rule=rule[r],
+                activity=act,
+                credited_value=Decimal("1"),
+                credited_at=dj_timezone.now(),
+                reversed_at=reversed_at,
+            )
+            for key, r, act, reversed_at in (
+                ("C1", "R1", v1, None),
+                ("C2", "R1", v2, None),
+                ("C3", "R2", v3, None),
+                ("C4", "R3", v1, None),
+                ("C5", "R1", v5, dj_timezone.now()),
+            )
+        ]
+    )
+    ActivityPriorityLink.objects.bulk_create(
+        [
+            ActivityPriorityLink(
+                id=P + "L1", activity=v4, allocation=a1, linked_by=officer.user_id
+            )
+        ]
+    )
 
 
 def file_rows():
@@ -226,7 +413,9 @@ def file_rows():
     )
     SsaScore.objects.bulk_create(
         [
-            SsaScore(id=f"{P}X1", ssa_record=scored, intervention="leadership", score=4.5),
+            SsaScore(
+                id=f"{P}X1", ssa_record=scored, intervention="leadership", score=4.5
+            ),
             SsaScore(id=f"{P}X2", ssa_record=scored, intervention="enrolment", score=7),
             SsaScore(
                 id=f"{P}X3", ssa_record=scored, intervention="financial_health", score=9
@@ -250,10 +439,12 @@ def file_rows():
             )
         ]
     )
+    file_allocations(officer, held)
     users = list(User.objects.filter(email__in=[OFFICER, EMPTY]))
     refresh_many(users, FY)
+    refresh_many(users, NEXT)
     left = TargetLedgerDirty.objects.filter(
-        owner_id__in=[officer.id, officer.user_id], fy=FY
+        owner_id__in=[officer.id, officer.user_id], fy__in=[FY, NEXT]
     )
     if left.exists():
         raise SystemExit("the ledger is still marked after the refresh")
@@ -281,6 +472,9 @@ QUERIES = [
     (OFFICER, {"month": "1"}),
     (OFFICER, {"fy": str(int(FY) - 1)}),
     (EMPTY, {}),
+    (OFFICER, {"fy": NEXT}),
+    (OFFICER, {"fy": NEXT, "month": "4"}),
+    (EMPTY, {"fy": NEXT}),
 ]
 
 clear()

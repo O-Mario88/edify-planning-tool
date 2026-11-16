@@ -133,8 +133,8 @@ func creditField(bases map[string]bool) string {
 
 // aggregateCredits is aggregate_credits_by_milestone over the live credits
 // of the milestones' active rules whose activity is in the scope.
-func aggregateCredits(ctx context.Context, db schooldirectory.Querier, basesOf map[string]map[string]bool, _ string, scope string, scopeArgs []any) (map[string]*big.Rat, error) {
-	out := map[string]*big.Rat{}
+func aggregateCredits(ctx context.Context, db schooldirectory.Querier, basesOf map[string]map[string]bool, _ string, scope string, scopeArgs []any) (map[string]*string, error) {
+	out := map[string]*string{}
 	for mid, bases := range basesOf {
 		args := append([]any{}, scopeArgs...)
 		args = append(args, mid)
@@ -158,7 +158,7 @@ SELECT SUM(v)::text FROM (
 		if err != nil {
 			return nil, fmt.Errorf("allocations: reading a milestone's credits: %w", err)
 		}
-		out[mid] = rat(value)
+		out[mid] = value
 	}
 	return out, nil
 }

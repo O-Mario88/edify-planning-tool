@@ -16,8 +16,7 @@ import (
 
 // strategicPriorities is strategic_priority_overview for the reader, as
 // partials/targets/strategic_priority_overview.html draws it: nothing when
-// the year has no governed priorities. A priority ready for allocation or
-// allocated is handed on (its badge is not drawn yet).
+// the year has no governed priorities.
 func strategicPriorities(ctx context.Context, db schooldirectory.Querier, pg *page) ([]*screensv1.PageBlock, error) {
 	rows, err := db.Query(ctx, `
 SELECT sp.title, sp.sequence,
@@ -42,12 +41,17 @@ ORDER BY sp.sequence, sp.title`, pg.fy, pg.p.StaffProfileID)
 		if err := rows.Scan(&title, &sequence, &milestones, &ready, &allocated); err != nil {
 			return nil, fmt.Errorf("mytargets: the strategic priorities: %w", err)
 		}
-		if allocated > 0 || ready > 0 {
-			return nil, fmt.Errorf("strategic: %w", errPassOn)
+		// The feed reads the success pill as "good" and the others as plain.
+		badge := &screensv1.PageBadge{Text: "Definition in progress", Tone: "plain"}
+		switch {
+		case allocated > 0:
+			badge = &screensv1.PageBadge{Text: "Allocated", Tone: "good"}
+		case ready > 0:
+			badge.Text = "Ready for allocation"
 		}
 		records = append(records, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Record{Record: &screensv1.PageRecord{
 			Title: title, Subtitle: fmt.Sprintf("Priority %d", sequence),
-			Badges: []*screensv1.PageBadge{{Text: "Definition in progress", Tone: "plain"}},
+			Badges: []*screensv1.PageBadge{badge},
 			Facts: []*screensv1.PageFact{{Label: "Milestones", Value: strconv.Itoa(milestones)},
 				{Label: "In this scope", Value: strconv.Itoa(allocated)}},
 		}}})
@@ -93,10 +97,9 @@ WHERE a.staff_id = $1 AND a.fy = $2 AND a.is_active AND p.deleted_at IS NULL AND
 type portfolioRow struct{ title, action, url string }
 
 // priorityPortfolio is priority_portfolio as
-// partials/targets/priority_portfolio.html draws it. The planning feed is
-// the year's approved milestone allocations, which a year Go draws has none
-// of.
-func priorityPortfolio(ctx context.Context, db schooldirectory.Querier, pg *page) (*screensv1.PageBlock, error) {
+// partials/targets/priority_portfolio.html draws it; the planning feed is
+// the reader's approved milestones.
+func priorityPortfolio(ctx context.Context, db schooldirectory.Querier, pg *page, planning []portfolioRow) (*screensv1.PageBlock, error) {
 	ssa, err := ssaFocus(ctx, db, pg)
 	if err != nil {
 		return nil, err
@@ -116,7 +119,7 @@ func priorityPortfolio(ctx context.Context, db schooldirectory.Querier, pg *page
 	for _, g := range []struct {
 		label string
 		rows  []portfolioRow
-	}{{"Planning feed", nil}, {"SSA focus", ssa}, {"Manual priorities", manual}, {"Professional development", development}} {
+	}{{"Planning feed", planning}, {"SSA focus", ssa}, {"Manual priorities", manual}, {"Professional development", development}} {
 		panel.Items = append(panel.Items, heading(g.label), toned(strconv.Itoa(len(g.rows)), "neutral"))
 		if len(g.rows) == 0 {
 			panel.Items = append(panel.Items, text("Nothing open for FY"+pg.fy+"."))

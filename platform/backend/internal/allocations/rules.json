@@ -1,13 +1,66 @@
 {
+  "achievement_bands": [
+    {
+      "bound": "90",
+      "inclusive": false,
+      "key": "not_met",
+      "label": "Not Met the Target",
+      "tone": "danger"
+    },
+    {
+      "bound": "100",
+      "inclusive": false,
+      "key": "met_some",
+      "label": "Met Some of the Target",
+      "tone": "warning"
+    },
+    {
+      "bound": "100",
+      "inclusive": true,
+      "key": "met",
+      "label": "Met the Target",
+      "tone": "success"
+    },
+    {
+      "bound": "150",
+      "inclusive": false,
+      "key": "exceeded",
+      "label": "Exceeded",
+      "tone": "success"
+    }
+  ],
   "completed_work_statuses": [
     "ia_verified",
     "closed",
     "accountant_confirmed",
     "completed"
   ],
+  "far_exceeded": [
+    "far_exceeded",
+    "Far Exceeded",
+    "info"
+  ],
   "leader_bases": [
     "SCHOOL_LEADERS_TRAINED"
   ],
+  "non_scoring_states": {
+    "configuration_required": [
+      "Configuration Required",
+      "warning"
+    ],
+    "non_scoreable": [
+      "Non-scoreable",
+      "neutral"
+    ],
+    "not_applicable": [
+      "Not Applicable",
+      "neutral"
+    ],
+    "not_started": [
+      "Not started",
+      "neutral"
+    ]
+  },
   "planned_output_statuses": [
     "planned",
     "scheduled",

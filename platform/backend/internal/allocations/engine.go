@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pydecimal"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -40,8 +41,18 @@ var rules = func() (r struct {
 	PlannedStatuses    []string            `json:"planned_output_statuses"`
 	CompletedStatuses  []string            `json:"completed_work_statuses"`
 	SchoolTypeFamilies map[string][]string `json:"school_type_families"`
+	AchievementBands   []struct {
+		Bound     string `json:"bound"`
+		Inclusive bool   `json:"inclusive"`
+		Key       string `json:"key"`
+		Label     string `json:"label"`
+		Tone      string `json:"tone"`
+	} `json:"achievement_bands"`
+	FarExceeded      [3]string            `json:"far_exceeded"`
+	NonScoringStates map[string][2]string `json:"non_scoring_states"`
 }) {
-	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.RateTypes) == 0 || len(r.SchoolBases) == 0 || len(r.PlannedStatuses) == 0 {
+	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.RateTypes) == 0 || len(r.SchoolBases) == 0 || len(r.PlannedStatuses) == 0 ||
+		len(r.AchievementBands) == 0 || len(r.NonScoringStates) == 0 {
 		panic(fmt.Sprintf("allocations: the embedded rules are unreadable: %v", err))
 	}
 	return r
@@ -64,9 +75,12 @@ type Progress struct {
 type Row struct {
 	ID, Title, Priority, Unit, Source string
 	Target, Actual                    *big.Rat
-	Pct                               *float64
-	Weight                            float64
-	Progress                          *Progress
+	// TargetDec and ActualDec are the same figures as the existing engine's
+	// Decimals carry them, for a template that prints them as they are.
+	TargetDec, ActualDec pydecimal.Decimal
+	Pct                  *float64
+	Weight               float64
+	Progress             *Progress
 }
 
 // Contract is the reader's approved contract for the year.
@@ -108,21 +122,44 @@ type allocation struct {
 	code                                                             string
 	allocated, denominator, weight, milestoneWeight, milestoneTarget *big.Rat
 	capAt100                                                         bool
-	periods                                                          []period
-}
-
-type period struct {
-	start   time.Time
-	planned *big.Rat
+	// The Decimals of the allocated target, the denominator and the
+	// milestone's target.
+	allocatedDec, denominatorDec, milestoneTargetDec pydecimal.Decimal
+	// months are the allocation's monthly targets in the window read.
+	months []pydecimal.Decimal
 }
 
 type rule struct {
 	milestoneID, basis, catalogue, project, executor, method, schoolType, intervention string
 }
 
+// Window is a reporting period of the contract (reporting_period): its
+// first and last days, and whether it is a part of the year (a month or a
+// quarter, whose targets are the monthly targets inside it).
+type Window struct {
+	Start, End time.Time
+	Part       bool
+}
+
+// Year is the whole of fy.
+func Year(fy string) Window {
+	n, _ := strconv.Atoi(fy)
+	return Window{Start: time.Date(n-1, time.October, 1, 0, 0, 0, 0, time.UTC), End: time.Date(n, time.September, 30, 0, 0, 0, 0, time.UTC)}
+}
+
 // Read is allocation_priorities(user, fy) for the reader's own contract over
 // the whole year, with the plan's progress.
 func Read(ctx context.Context, db schooldirectory.Querier, p auth.Principal, fy string, now time.Time, today time.Time) (Contract, error) {
+	return read(ctx, db, p, fy, Year(fy), true, now, today)
+}
+
+// ReadWindow is allocation_priorities(user, fy, month=…|quarter=…,
+// include_plans=False): the contract over a period of the year.
+func ReadWindow(ctx context.Context, db schooldirectory.Querier, p auth.Principal, fy string, w Window, now time.Time) (Contract, error) {
+	return read(ctx, db, p, fy, w, false, now, now)
+}
+
+func read(ctx context.Context, db schooldirectory.Querier, p auth.Principal, fy string, w Window, plans bool, now time.Time, today time.Time) (Contract, error) {
 	c := Contract{Scope: ScopeLabel(p.ActiveRole)}
 	if p.StaffProfileID == "" {
 		return Contract{Scope: "Assigned priorities"}, nil
@@ -131,8 +168,7 @@ func Read(ctx context.Context, db schooldirectory.Querier, p auth.Principal, fy 
 	if err != nil || !exist {
 		return c, err
 	}
-	n, _ := strconv.Atoi(fy)
-	start, end := time.Date(n-1, time.October, 1, 0, 0, 0, 0, time.UTC), time.Date(n, time.September, 30, 0, 0, 0, 0, time.UTC)
+	start, end := w.Start, w.End
 	countryScope := slices.Contains(countryRoles, p.ActiveRole)
 	// The existing queryset sets no order: its rows come in whatever order
 	// the planner reaches them, which moves with the select list and the
@@ -195,10 +231,16 @@ func Read(ctx context.Context, db schooldirectory.Querier, p auth.Principal, fy 
 	if err != nil {
 		return c, err
 	}
+	if w.Part {
+		if err := readMonths(ctx, db, groups, start, end); err != nil {
+			return c, err
+		}
+	}
 	type entry struct {
-		group       []allocation
-		target, den *big.Rat
-		bases       map[string]bool
+		group             []allocation
+		target, den       *big.Rat
+		targetDec, denDec pydecimal.Decimal
+		bases             map[string]bool
 	}
 	entries := []entry{}
 	byCountry, countryOrder := map[string][]int{}, []string{}
@@ -206,9 +248,23 @@ func Read(ctx context.Context, db schooldirectory.Querier, p auth.Principal, fy 
 		g := groups[mid]
 		m := g[0]
 		target, den, rateNum := new(big.Rat), new(big.Rat), new(big.Rat)
+		targetDec, denDec, rateNumDec := pydecimal.Zero(), pydecimal.Zero(), pydecimal.Zero()
 		rate := slices.Contains(rules.RateTypes, m.measurement)
 		for _, a := range g {
-			target.Add(target, a.allocated) // the whole year: no quarter or month
+			if rate || !w.Part {
+				target.Add(target, a.allocated)
+				targetDec = targetDec.Add(a.allocatedDec)
+			} else {
+				part := pydecimal.Zero()
+				for _, v := range a.months {
+					part = part.Add(v)
+				}
+				target.Add(target, part.Rat())
+				targetDec = targetDec.Add(part)
+			}
+			// allocation.denominator or Decimal(0)
+			denDec = denDec.Add(a.denominatorDec)
+			rateNumDec = rateNumDec.Add(a.allocatedDec.Mul(a.denominatorDec))
 			if a.denominator != nil {
 				den.Add(den, a.denominator)
 				rateNum.Add(rateNum, new(big.Rat).Mul(a.allocated, a.denominator))
@@ -218,8 +274,10 @@ func Read(ctx context.Context, db schooldirectory.Querier, p auth.Principal, fy 
 			switch {
 			case countryScope:
 				target = orZero(m.milestoneTarget)
+				targetDec = m.milestoneTargetDec
 			case den.Sign() != 0:
 				target = new(big.Rat).Quo(rateNum, den)
+				targetDec = rateNumDec.Div(denDec)
 			}
 		}
 		bases := map[string]bool{}
@@ -230,9 +288,9 @@ func Read(ctx context.Context, db schooldirectory.Querier, p auth.Principal, fy 
 			countryOrder = append(countryOrder, m.countryID)
 		}
 		byCountry[m.countryID] = append(byCountry[m.countryID], len(entries))
-		entries = append(entries, entry{group: g, target: target, den: den, bases: bases})
+		entries = append(entries, entry{group: g, target: target, den: den, targetDec: targetDec, denDec: denDec, bases: bases})
 	}
-	progressOf, verifiedOf := map[string]*Progress{}, map[string]*big.Rat{}
+	progressOf, verifiedOf := map[string]*Progress{}, map[string]*string{}
 	for _, cid := range countryOrder {
 		scope, sargs := activityScope(cid, countryScope, owners, fy, start, end)
 		ms := []string{}
@@ -242,12 +300,14 @@ func Read(ctx context.Context, db schooldirectory.Querier, p auth.Principal, fy 
 			ms = append(ms, mid)
 			targets[mid] = entries[i].target
 		}
-		plan, err := planProgress(ctx, db, ms, groups, rulesOf, fy, scope, sargs, targets, today)
-		if err != nil {
-			return c, err
-		}
-		for k, v := range plan {
-			progressOf[k] = v
+		if plans {
+			plan, err := planProgress(ctx, db, ms, groups, rulesOf, fy, scope, sargs, targets, today)
+			if err != nil {
+				return c, err
+			}
+			for k, v := range plan {
+				progressOf[k] = v
+			}
 		}
 		bases := map[string]map[string]bool{}
 		for _, i := range byCountry[cid] {
@@ -263,19 +323,28 @@ func Read(ctx context.Context, db schooldirectory.Querier, p auth.Principal, fy 
 	}
 	for _, e := range entries {
 		m := e.group[0]
-		actual := orZero(verifiedOf[m.milestoneID])
+		actual := orZero(rat(verifiedOf[m.milestoneID]))
+		actualDec := pydecimal.Zero()
+		if t := verifiedOf[m.milestoneID]; t != nil {
+			if d, err := pydecimal.Parse(*t); err == nil && d.Sign() != 0 {
+				actualDec = d
+			}
+		}
 		verifiedUnits := actual
 		configured := len(e.bases) > 0 && len(families(e.bases)) == 1
 		rate := slices.Contains(rules.RateTypes, m.measurement)
 		if rate {
 			if e.den.Sign() != 0 {
 				actual = new(big.Rat).Mul(new(big.Rat).Quo(actual, e.den), big.NewRat(100, 1))
+				actualDec = actualDec.Div(e.denDec).Mul(pydecimal.Int(100))
 			} else {
 				actual = new(big.Rat)
+				actualDec = pydecimal.Zero()
 			}
 			configured = configured && e.den.Sign() != 0
 			if m.capAt100 && actual.Cmp(big.NewRat(100, 1)) > 0 {
 				actual = big.NewRat(100, 1)
+				actualDec = pydecimal.Int(100)
 			}
 		}
 		var pct *float64
@@ -317,7 +386,7 @@ func Read(ctx context.Context, db schooldirectory.Querier, p auth.Principal, fy 
 			weight, _ = m.milestoneWeight.Float64()
 		}
 		c.Rows = append(c.Rows, Row{ID: m.milestoneID, Title: m.title, Priority: m.priority, Unit: m.unit, Source: "Approved allocation",
-			Target: e.target, Actual: actual, Pct: pct, Weight: weight, Progress: progress})
+			Target: e.target, Actual: actual, TargetDec: e.targetDec, ActualDec: actualDec, Pct: pct, Weight: weight, Progress: progress})
 	}
 	eligible, withTarget, ready := 0, 0, true
 	totalW, sum := 0.0, 0.0
@@ -431,6 +500,55 @@ SELECT id FROM ids UNION SELECT sp.user_id FROM staff_profile sp WHERE sp.id IN 
 	return out, rows.Err()
 }
 
+// decOf is a numeric's text as a Decimal; nothing (or unreadable text) as
+// Decimal(0).
+func decOf(s *string) pydecimal.Decimal {
+	if s == nil {
+		return pydecimal.Zero()
+	}
+	d, err := pydecimal.Parse(*s)
+	if err != nil {
+		return pydecimal.Zero()
+	}
+	return d
+}
+
+// readMonths files each allocation's monthly targets that start inside the
+// window.
+func readMonths(ctx context.Context, db schooldirectory.Querier, groups map[string][]allocation, start, end time.Time) error {
+	ids := []string{}
+	for _, g := range groups {
+		for _, a := range g {
+			ids = append(ids, a.id)
+		}
+	}
+	rows, err := db.Query(ctx, `SELECT allocation_id, planned_value::text FROM hr_milestone_period_target
+WHERE allocation_id = ANY($1) AND period_type = 'month' AND period_start >= $2::date AND period_start <= $3::date`, ids, start, end)
+	if err != nil {
+		return fmt.Errorf("allocations: reading the monthly targets: %w", err)
+	}
+	defer rows.Close()
+	months := map[string][]pydecimal.Decimal{}
+	for rows.Next() {
+		var id string
+		var planned *string
+		if err := rows.Scan(&id, &planned); err != nil {
+			return fmt.Errorf("allocations: reading a monthly target: %w", err)
+		}
+		months[id] = append(months[id], decOf(planned))
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	for k, g := range groups {
+		for i := range g {
+			g[i].months = months[g[i].id]
+		}
+		groups[k] = g
+	}
+	return nil
+}
+
 func rat(s *string) *big.Rat {
 	if s == nil {
 		return nil
@@ -464,6 +582,7 @@ WHERE (`+where+`)`, args...)
 			return nil, fmt.Errorf("allocations: reading an allocation: %w", err)
 		}
 		a.allocated, a.denominator, a.weight, a.milestoneWeight, a.milestoneTarget = orZero(rat(allocated)), rat(den), rat(weight), rat(mweight), rat(mtarget)
+		a.allocatedDec, a.denominatorDec, a.milestoneTargetDec = decOf(allocated), decOf(den), decOf(mtarget)
 		out = append(out, a)
 	}
 	rows.Close()

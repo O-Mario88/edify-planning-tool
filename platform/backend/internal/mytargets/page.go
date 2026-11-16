@@ -12,7 +12,6 @@ import (
 	"unicode"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
-	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/allocations"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/targets"
@@ -128,33 +127,20 @@ func (s *Service) build(ctx context.Context, p auth.Principal, fy string, month 
 			pg.month = pg.currentMonth
 		}
 	}
-	exist, err := allocations.Exist(ctx, s.db, fy)
-	if err != nil {
-		return nil, err
-	}
-	if !exist {
-		// The milestone table reads the reader's approved allocations of
-		// the year whatever their milestone's state.
-		if err := s.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM hr_milestone_allocation a
-JOIN hr_priority_milestone m ON m.id = a.milestone_id JOIN hr_strategic_priority sp ON sp.id = m.priority_id
-WHERE a.employee_id = $1 AND a.status = 'approved' AND sp.fy = $2)`, p.StaffProfileID, fy).Scan(&exist); err != nil {
-			return nil, fmt.Errorf("mytargets: the reader's allocations: %w", err)
-		}
-	}
-	if exist {
-		// Approved allocations draw the distributed contract, the milestone
-		// table and the planning feed, which Go does not draw yet.
-		return nil, errPassOn
-	}
+	var err error
 	if pg.roster, err = targets.Prepare(ctx, s.db, []targets.Person{pg.person}, fy, nil); err != nil {
 		return nil, err
 	}
-	blocks := append([]*screensv1.PageBlock{pg.filters()}, distributedSummary()...)
+	c, err := readContract(ctx, s.db, pg)
+	if err != nil {
+		return nil, err
+	}
+	blocks := append([]*screensv1.PageBlock{pg.filters()}, c.distributedSummary()...)
 	figures, err := pg.figures(ctx, s.db)
 	if err != nil {
 		return nil, err
 	}
-	blocks = append(blocks, figures.top(pg)...)
+	blocks = append(blocks, figures.top(pg, c)...)
 	if opens(p.ActiveRole, "/priorities") {
 		blocks = append(blocks, textPanel("", "Open distributed priorities →"))
 	}
@@ -168,11 +154,12 @@ WHERE a.employee_id = $1 AND a.status = 'approved' AND sp.fy = $2)`, p.StaffProf
 		return nil, err
 	}
 	blocks = append(blocks, projects)
-	portfolio, err := priorityPortfolio(ctx, s.db, pg)
+	portfolio, err := priorityPortfolio(ctx, s.db, pg, c.planningRows(fy))
 	if err != nil {
 		return nil, err
 	}
-	blocks = append(blocks, portfolio, milestonesPanel())
+	blocks = append(blocks, portfolio)
+	blocks = append(blocks, c.table()...)
 	blocks = append(blocks, figures.charts(pg)...)
 	blocks = append(blocks, figures.focusPanel())
 	tracker, err := coreTracker(ctx, s.db, pg)
@@ -219,20 +206,6 @@ func (pg *page) filters() *screensv1.PageBlock {
 	}
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Filters{Filters: &screensv1.PageFilters{
 		Filters: []*screensv1.PageFilter{year, month}}}}
-}
-
-// distributedSummary is partials/hr/distributed_summary.html for a reader
-// with no approved contract.
-func distributedSummary() []*screensv1.PageBlock {
-	cols := []*screensv1.PageColumn{}
-	for _, c := range []string{"Priority", "Scope", "Target", "Verified", "Achievement"} {
-		cols = append(cols, &screensv1.PageColumn{Label: c})
-	}
-	return []*screensv1.PageBlock{
-		textPanel("Distributed priority performance", "No configured score for this reporting scope"),
-		{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{Columns: cols, Rows: []*screensv1.PageRow{
-			{Cells: []*screensv1.PageCell{{Text: "No approved distributed priorities in this record."}}}}}}},
-	}
 }
 
 func milestonesPanel() *screensv1.PageBlock {

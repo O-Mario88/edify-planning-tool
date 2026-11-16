@@ -8,10 +8,11 @@
 //
 // It reads; it never writes. The existing page rebuilds the reader's
 // achievement ledger first; the target engine (internal/targets) hands the
-// page on whenever that rebuild would change anything. It also hands on a
-// year with approved milestone allocations, a strategic priority past
-// definition, an assigned Project, a role shown a section strip, a reader
-// without a People record, a partner, and any query it does not read. The
+// page on whenever that rebuild would change anything. It also hands on an
+// assigned Project, a team's or Project's allocation among the reader's own,
+// a milestone with no metric definition, a list longer than one page, a role
+// shown a section strip, a reader without a People record, a partner, and
+// any query it does not read. The
 // labels, statuses and doors are exported to rules.json by `manage.py
 // export_my_targets_rules`; apps/targets/test_my_targets_rules_export.py
 // fails when the two differ.

@@ -205,9 +205,21 @@ func pctText(p *int) string {
 	return strconv.Itoa(*p) + "%"
 }
 
-// top is the performance priorities (or their absence) and the period
-// matrix.
-func (f *figures) top(pg *page) []*screensv1.PageBlock {
+// top is the performance priorities (or their absence), the period matrix
+// of the agreed priorities and the approved milestones, and the contract's
+// own matrix.
+func (f *figures) top(pg *page, c contract) []*screensv1.PageBlock {
+	out := []*screensv1.PageBlock{f.priorities(pg)}
+	if len(f.cards) > 0 || len(c.milestones) > 0 {
+		out = append(out,
+			&screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{Title: "Cumulative progress by time period"}}},
+			f.matrix(pg, c), textPanel("", f.weighting()))
+	}
+	return append(out, c.matrix(pg)...)
+}
+
+// priorities is the agreed priorities' tiles, or their absence.
+func (f *figures) priorities(pg *page) *screensv1.PageBlock {
 	if len(f.cards) == 0 {
 		panel := &screensv1.PagePanel{
 			Title: "No measurable performance priorities agreed for FY " + pg.fy,
@@ -216,7 +228,7 @@ func (f *figures) top(pg *page) []*screensv1.PageBlock {
 		if opens(pg.p.ActiveRole, "/my-performance") {
 			panel.Items = append(panel.Items, links(&screensv1.PageLink{Text: "Open My Performance →", Href: "/my-performance"}))
 		}
-		return []*screensv1.PageBlock{{Kind: &screensv1.PageBlock_Panel{Panel: panel}}}
+		return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: panel}}
 	}
 	strip := &screensv1.PageStrip{Title: "Performance priorities"}
 	for _, c := range f.cards {
@@ -236,32 +248,13 @@ func (f *figures) top(pg *page) []*screensv1.PageBlock {
 		}
 		strip.Metrics = append(strip.Metrics, m)
 	}
-	return []*screensv1.PageBlock{
-		{Kind: &screensv1.PageBlock_Strip{Strip: strip}},
-		{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{Title: "Cumulative progress by time period"}}},
-		f.matrix(pg),
-		textPanel("", f.weighting()),
-	}
+	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Strip{Strip: strip}}
 }
 
-// matrix is partials/targets/_period_matrix.html for the agreed priorities.
-func (f *figures) matrix(pg *page) *screensv1.PageBlock {
-	monthName := strings.Fields(targets.MonthLabel(pg.fy, pg.month))[0]
-	n, _ := strconv.Atoi(pg.fy)
-	heads := [][2]string{{monthName, "Monthly"}}
-	for _, q := range []string{"Q1", "Q2", "Q3", "Q4"} {
-		heads = append(heads, [2]string{q, targets.QuarterLabel(pg.fy, q)})
-	}
-	heads = append(heads, [2]string{fmt.Sprintf("FY %d/%s", n-1, pg.fy[len(pg.fy)-2:]), "Full Year"})
-	cols := []*screensv1.PageColumn{{Label: "Cumulative progress by time period Target · achieved · share"}}
-	for _, h := range heads {
-		cols = append(cols, &screensv1.PageColumn{Label: h[0] + " " + h[1]})
-	}
-	for range heads {
-		for _, l := range []string{"Target", "Achieved", "%"} {
-			cols = append(cols, &screensv1.PageColumn{Label: l})
-		}
-	}
+// matrix is partials/targets/_period_matrix.html for the agreed priorities
+// and the approved milestones.
+func (f *figures) matrix(pg *page, c contract) *screensv1.PageBlock {
+	cols := matrixColumns(pg)
 	tg, ach := f.series[0], f.series[1]
 	rows := []*screensv1.PageRow{}
 	for _, a := range f.areas {
@@ -273,6 +266,7 @@ func (f *figures) matrix(pg *page) *screensv1.PageBlock {
 		}
 		rows = append(rows, &screensv1.PageRow{Cells: cells})
 	}
+	rows = append(rows, c.milestoneRows()...)
 	overall := []*screensv1.PageCell{{Text: "Operational overall progress"}}
 	for _, pr := range f.periods {
 		overall = append(overall, &screensv1.PageCell{Text: strconv.Itoa(pr.pct) + "%"})

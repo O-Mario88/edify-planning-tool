@@ -20,7 +20,10 @@ import (
 // myTargetsTables is what the golden files, parents first, and the column
 // its rows are found by (the ledger by its sources).
 var myTargetsTables = [][2]string{
-	{"mscs_story", "id"}, {"ssa_record", "id"}, {"activity", "id"}, {"monthly_personal_target", "id"},
+	{"hr_strategic_priority_cycle", "id"}, {"hr_strategic_priority", "id"}, {"hr_priority_milestone", "id"},
+	{"hr_milestone_activity_rule", "id"}, {"hr_milestone_allocation", "id"}, {"hr_milestone_period_target", "id"},
+	{"mscs_story", "id"}, {"ssa_record", "id"}, {"activity", "id"}, {"hr_milestone_progress_credit", "id"},
+	{"hr_activity_priority_link", "id"}, {"monthly_personal_target", "id"},
 	{"hr_performance_review", "id"}, {"hr_performance_priority", "id"}, {"pd_request", "id"}, {"core_plan", "id"},
 	{"staff_school_assignment", "id"}, {"ssa_score", "id"}, {"target_achievement_ledger", "source_id"},
 }
@@ -28,7 +31,8 @@ var myTargetsTables = [][2]string{
 // The existing feed's My Targets for an officer with agreed priorities,
 // work in every state the ledger and the gap reasons tell apart, Core
 // Schools and the portfolio's groups, for this month, an earlier month and
-// the year before, and for an officer with no agreement — each page whole.
+// the year before, and for an officer with no agreement; and in the year
+// after, approved milestone allocations of every kind — each page whole.
 // Skipped unless EDIFY_MY_TARGETS_GOLDEN names a file
 // internal/mytargets/testdata/golden.py wrote within the last half hour.
 func TestMyTargetsMatchesTheExistingFeed(t *testing.T) {

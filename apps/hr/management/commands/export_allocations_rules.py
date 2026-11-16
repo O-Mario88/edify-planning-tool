@@ -5,8 +5,9 @@ Go reads a person's approved priority contract (apps.hr.accountability
 .milestone_plan_progress) from what this command writes to
 platform/backend/internal/allocations/rules.json: the measurement types that
 are rates; the counting bases of each unit family; the statuses that are
-planned output and completed work; and the school types each rule family
-reaches. A change to any of them must be exported again;
+planned output and completed work; the school types each rule family
+reaches; and the achievement bands and states classify_achievement names a
+milestone's progress by. A change to any of them must be exported again;
 apps/hr/test_allocations_rules_export.py fails until it is.
 
     python manage.py export_allocations_rules
@@ -36,6 +37,22 @@ def rules() -> dict:
         "school_type_families": {
             "core": list(target_distribution.CORE_FAMILY),
             "client": list(target_distribution.CLIENT_FAMILY),
+        },
+        # classify_achievement's bands, lowest first, and its other states.
+        "achievement_bands": [
+            {
+                "bound": str(bound),
+                "inclusive": inclusive,
+                "key": key,
+                "label": label,
+                "tone": tone,
+            }
+            for bound, inclusive, key, label, tone in target_distribution.ACHIEVEMENT_BANDS
+        ],
+        "far_exceeded": list(target_distribution.FAR_EXCEEDED),
+        "non_scoring_states": {
+            key: list(value)
+            for key, value in target_distribution.NON_SCORING_STATES.items()
         },
     }
 

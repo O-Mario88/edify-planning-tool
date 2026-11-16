@@ -976,3 +976,10 @@ GRANT SELECT (requires_definition, metric_definition_id) ON hr_priority_mileston
 GRANT SELECT (baseline_average) ON core_plan TO edify_gateway_ro;
 GRANT SELECT (source_rule_id) ON hr_performance_priority TO edify_gateway_ro;
 GRANT SELECT (fy) ON project_staff_assignment TO edify_gateway_ro;
+-- …and, for a reader's approved milestone allocations: each period
+-- target's end, verified actual and achievement, the milestone's metric
+-- name (the table's data source), and the planning links from work to an
+-- allocation (its linked activities).
+GRANT SELECT (period_end, actual_value, achievement_percentage) ON hr_milestone_period_target TO edify_gateway_ro;
+GRANT SELECT (id, canonical_label) ON hr_milestone_metric_definition TO edify_gateway_ro;
+GRANT SELECT (allocation_id, activity_id) ON hr_activity_priority_link TO edify_gateway_ro;
