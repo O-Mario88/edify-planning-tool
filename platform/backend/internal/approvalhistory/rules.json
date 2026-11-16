@@ -1,0 +1,92 @@
+{
+  "page_size": 50,
+  "query_keys_not_passed": [
+    "csv",
+    "download",
+    "export",
+    "format",
+    "pdf",
+    "xlsx"
+  ],
+  "roles": {
+    "Accountant": {
+      "page": true,
+      "strip": null
+    },
+    "Admin": {
+      "page": true,
+      "strip": null
+    },
+    "BusinessTransformationOfficer": {
+      "page": false,
+      "strip": null
+    },
+    "CCEO": {
+      "page": false,
+      "strip": null
+    },
+    "ClusterLeader": {
+      "page": false,
+      "strip": null
+    },
+    "CountryDirector": {
+      "page": false,
+      "strip": null
+    },
+    "HumanResources": {
+      "page": false,
+      "strip": null
+    },
+    "ImpactAssessment": {
+      "page": true,
+      "strip": null
+    },
+    "MfiLoanOfficer": {
+      "page": false,
+      "strip": null
+    },
+    "MfiPartnerAdmin": {
+      "page": false,
+      "strip": null
+    },
+    "PartnerAdmin": {
+      "page": false,
+      "strip": null
+    },
+    "PartnerFieldOfficer": {
+      "page": false,
+      "strip": null
+    },
+    "Program Lead": {
+      "page": false,
+      "strip": null
+    },
+    "ProjectCoordinator": {
+      "page": false,
+      "strip": null
+    },
+    "RegionalProgramLead": {
+      "page": false,
+      "strip": null
+    },
+    "RegionalVicePresident": {
+      "page": false,
+      "strip": null
+    }
+  },
+  "status_initialisms": {
+    "Bt": "BT",
+    "Cd": "CD",
+    "Edtech": "EdTech",
+    "Hr": "HR",
+    "Ia": "IA",
+    "Mfi": "MFI",
+    "Netsuite": "NetSuite",
+    "Nssf": "NSSF",
+    "Pl": "PL",
+    "Rvp": "RVP",
+    "Salesforce": "Salesforce",
+    "Ssa": "SSA",
+    "Ura": "URA"
+  }
+}
