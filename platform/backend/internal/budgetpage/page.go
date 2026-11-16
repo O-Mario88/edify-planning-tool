@@ -229,8 +229,14 @@ func (v view) countryBlocks() []*screensv1.PageBlock {
 // it: every group's band, its column names, its rows and its subtotal, then
 // the grand total.
 func (v view) ledger(staff, total int64) *screensv1.PageBlock {
+	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{Rows: ledgerRows(v.groups, staff, total)}}}
+}
+
+// ledgerRows is the ledger's rows: each group's band, column names, rows
+// and subtotal, then the grand total.
+func ledgerRows(gs []*group, staff, total int64) []*screensv1.PageRow {
 	t := &screensv1.PageTable{}
-	for _, g := range v.groups {
+	for _, g := range gs {
 		count, people := "No. of Days", "No. of Persons"
 		switch g.kind {
 		case "meeting":
@@ -264,7 +270,7 @@ func (v view) ledger(staff, total int64) *screensv1.PageBlock {
 		t.Rows = append(t.Rows, cells(g.label+" subtotal", ugx(g.staffTotal), ugx(g.total)))
 	}
 	t.Rows = append(t.Rows, cells("Grand total", ugx(staff), ugx(total)))
-	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: t}}
+	return t.Rows
 }
 
 func contains(list []string, s string) bool {
