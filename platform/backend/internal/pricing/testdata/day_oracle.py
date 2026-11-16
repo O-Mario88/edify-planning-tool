@@ -322,4 +322,6 @@ def main():
     print(f"{len(days)} days planned")
 
 
-main()
+# Loaded for its fixtures alone (stored_oracle.py), it files nothing itself.
+if __name__ != "day_fixtures":
+    main()

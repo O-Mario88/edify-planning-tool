@@ -134,6 +134,21 @@ integration tests, parity for all 29 accounts, hand-ons listed.
   neighbouring day (a write); it reads the neighbours only to know whether
   this day is the trip home.
 
-Next: stage 3c, which way a stored activity is priced (an online training at
-nothing, an in-school Training carried by its visit, a pooled visit by its
-day, anything else on its own), then stage 4 needs the owner's go-ahead.
+- **Stage 3c, which way a stored activity is priced** (`pricing.PriceStored`,
+  `_price_activity` read-only): an online training at nothing, an in-school
+  Training whose visit still makes the journey at nothing or its partner's
+  fee, a visit that pools (a funding owner, staff delivery, a pooled type)
+  by the day it would join (that day's members and itself; a locked week and
+  a day without its rates refused, a day that does not exist yet and lacks
+  its rates priced alone, a visit that draws no money left as priced), and
+  anything else on its own. Oracle from the writer itself:
+  `internal/pricing/testdata/stored_oracle.py` files day_oracle's days, runs
+  `reprice_activity` for every live activity in a rolled-back transaction
+  and reads the lines it writes; `stored_pricing_test.go`
+  (EDIFY_STORED_ORACLE): 276 activities, 0 differing (132 by their day, 142
+  alone, 1 left as priced, 1 refused); with pooling turned off 13 differ.
+  The seed holds no online training and no in-school Training pair, so those
+  two paths are not yet compared with the writer.
+
+Stage 3 is done but for those two paths. Next: stage 4, Go saves price
+their own work, which writes money and needs the owner's go-ahead.

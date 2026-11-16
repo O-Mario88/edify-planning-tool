@@ -1,5 +1,10 @@
 {
   "accommodation_key": "secondary_accommodation_per_night",
+  "companion_gone_statuses": [
+    "cancelled",
+    "rejected",
+    "deferred"
+  ],
   "costing_profiles": {
     "ADMIN_PARTNER_MEETING": [
       "partner_activity",
@@ -127,7 +132,22 @@
     "deferred",
     "awaiting_owner_approval"
   ],
+  "online_mode": "online",
+  "online_training_types": [
+    "cluster_training",
+    "cluster_training_ssa_collection",
+    "core_training",
+    "in_school_training",
+    "school_improvement_training",
+    "training"
+  ],
   "operational_kind": "operational",
   "published_status": "published",
+  "rebuildable_weekly_statuses": [
+    "pending_responsible_confirmation",
+    "returned_by_pl",
+    "returned_by_cd",
+    "returned_by_accountant"
+  ],
   "reference_kind": "reference"
 }

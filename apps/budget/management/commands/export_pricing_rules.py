@@ -10,7 +10,10 @@ away is paid at the second accommodation rate, and the two rates; and which
 rate cards price work (the country, the kinds and the published status);
 and for the day a visit shares: the activity statuses that draw no money,
 the types whose personal per-diems join the day, and the name of a Mixed
-day's transport. The
+day's transport; and which way a stored activity is priced: the trainings a
+delivery online makes free, the statuses that mean an in-school Training's
+visit no longer makes the journey, and the states of a week's request in
+which its days may still be priced again. The
 recipe itself is internal/costing (export_costing_rules). A change to any of
 them must be exported again; apps/budget/test_pricing_rules_export.py fails
 until it is.
@@ -31,7 +34,9 @@ EXPORT_PATH = Path("platform/backend/internal/pricing/rules.json")
 def rules() -> dict:
     from django.conf import settings
 
+    from apps.activities import online_training, pair_costing
     from apps.budget.costing_service import _COSTING_PROFILES
+    from apps.fund_requests.weekly_service import REBUILDABLE_WEEKLY_STATUSES
     from apps.budget.models import RateCardKind, RateCardStatus
     from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
     from apps.daily_visit_batches import districts, pricing
@@ -57,6 +62,10 @@ def rules() -> dict:
         "daily_batch_eligible_types": sorted(pricing.DAILY_BATCH_ELIGIBLE_TYPES),
         "day_pool_extra_types": sorted(pricing.DAY_POOL_EXTRA_TYPES),
         "mixed_transport_label": pricing.MIXED_TRANSPORT_LABEL,
+        "online_training_types": sorted(online_training.ONLINE_TRAINING_TYPES),
+        "online_mode": online_training.ONLINE,
+        "companion_gone_statuses": list(pair_costing.COMPANION_GONE_STATUSES),
+        "rebuildable_weekly_statuses": list(REBUILDABLE_WEEKLY_STATUSES),
     }
 
 

@@ -842,3 +842,7 @@ GRANT SELECT (effective_from, effective_to, material_difference_threshold_bps) O
 -- The day a visit shares, priced read-only (internal/pricing/day.go): the
 -- district type it was last priced as and how many schools it held.
 GRANT SELECT (district_type, school_count) ON daily_visit_batch TO edify_gateway_ro;
+
+-- Which way a stored activity is priced (internal/pricing/path.go): whether
+-- its day's week has left its owner's hands.
+GRANT SELECT (week_end_date) ON weekly_fund_request TO edify_gateway_ro;
