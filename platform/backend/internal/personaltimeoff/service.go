@@ -133,21 +133,21 @@ type balance struct {
 type cover struct{ name, start, end string }
 
 type view struct {
-	r                                         role
-	today                                     time.Time
-	balances                                  []balance
-	leaves                                    []leave
-	reviewers                                 map[string]string
-	labels                                    map[string]string
-	pending, mine, delegated                  []cover
-	blocks                                    [][3]string
-	heat                                      []leavetracker.HeatRow
-	tracker                                   []leave
-	trackerBalances                           map[[2]string]int
-	teamAway, teamTotal, coverActive          int
-	impact                                    *impact
-	ptoRemaining, ptoEntitlement, ptoUsed     int
-	pendingCount, upcomingCount, pastCount    int
+	r                                      role
+	today                                  time.Time
+	balances                               []balance
+	leaves                                 []leave
+	reviewers                              map[string]string
+	labels                                 map[string]string
+	pending, mine, delegated               []cover
+	blocks                                 [][3]string
+	heat                                   []leavetracker.HeatRow
+	tracker                                []leave
+	trackerBalances                        map[[2]string]int
+	teamAway, teamTotal, coverActive       int
+	impact                                 *impact
+	ptoRemaining, ptoEntitlement, ptoUsed  int
+	pendingCount, upcomingCount, pastCount int
 }
 
 // impact is LeaveImpactPreviewService.preview_impact's figures.
