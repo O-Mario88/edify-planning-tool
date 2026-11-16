@@ -946,3 +946,8 @@ GRANT SELECT (created_at, partner_id, invoice_type, period_start, period_end, en
 -- Special Projects Planning (internal/projectplanning): the project type an
 -- enrolment was given, beside the project's own category.
 GRANT SELECT (project_type) ON project_school_assignment TO edify_gateway_ro;
+
+-- Smart Route Planner (internal/routeplan): a school's corrected point, kept
+-- by the existing application (apps.routes.SchoolGeoPoint), which the planner
+-- prefers over the directory's coordinates.
+GRANT SELECT (school_id, latitude, longitude) ON school_geo_point TO edify_gateway_ro;
