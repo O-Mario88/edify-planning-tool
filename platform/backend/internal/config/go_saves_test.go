@@ -178,3 +178,22 @@ func TestTheClusterMeetingSaveIsOffUnlessNamed(t *testing.T) {
 		}
 	}
 }
+
+func TestPagesThatWriteAreOffUnlessNamedAndOnlyInDevelopmentOrStaging(t *testing.T) {
+	for _, c := range []struct {
+		env, names string
+		on, fails  bool
+	}{
+		{"development", "", false, false},
+		{"development", "my_professional_development", true, false},
+		{"staging", "my_professional_development", true, false},
+		{"development", "my_targets", false, true},
+		{"production", "my_professional_development", false, true},
+		{"test", "my_professional_development", false, true},
+	} {
+		got, err := loadPageWrites(Environment(c.env), env(map[string]string{"EDIFY_GO_PAGE_WRITES": c.names}))
+		if (err != nil) != c.fails || got.MyProfessionalDevelopment != c.on {
+			t.Errorf("%s %q: %+v %v", c.env, c.names, got, err)
+		}
+	}
+}

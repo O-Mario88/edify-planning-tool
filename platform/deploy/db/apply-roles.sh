@@ -75,4 +75,6 @@ psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/todo_roles.sql"
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/todo_unsnooze_roles.sql"
 # The presence stamp for requests Go answers: one narrow function, its columns only.
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/presence_roles.sql"
+# My Professional Development's read writes the same rows the existing read does.
+psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/mypd_roles.sql"
 echo "done"

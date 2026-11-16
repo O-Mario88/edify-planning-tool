@@ -1,0 +1,236 @@
+{
+  "active_statuses": [
+    "disbursed",
+    "approved_unfunded",
+    "enrollment_pending",
+    "enrollment_confirmed",
+    "in_progress",
+    "ended"
+  ],
+  "closed_statuses": [
+    "completed_closed",
+    "rejected",
+    "cancelled",
+    "withdrawn"
+  ],
+  "committed_statuses": [
+    "submitted_to_supervisor",
+    "submitted_to_hr",
+    "pending_exception",
+    "submitted_to_cd",
+    "approved_pending_funding",
+    "disbursed",
+    "enrollment_pending",
+    "enrollment_confirmed",
+    "in_progress",
+    "ended",
+    "marked_complete",
+    "certificate_uploaded",
+    "bamboohr_confirmed",
+    "accountability_submitted",
+    "awaiting_hr_signoff"
+  ],
+  "course_types": {
+    "hybrid": "Hybrid",
+    "in_person": "In Person",
+    "online": "Online"
+  },
+  "document_types": {
+    "certificate": "Certificate",
+    "transcript": "Transcript"
+  },
+  "doors": {
+    "Accountant": {
+      "page": true,
+      "strip": null
+    },
+    "Admin": {
+      "page": true,
+      "strip": null
+    },
+    "BusinessTransformationOfficer": {
+      "page": false,
+      "strip": null
+    },
+    "CCEO": {
+      "page": true,
+      "strip": null
+    },
+    "ClusterLeader": {
+      "page": false,
+      "strip": null
+    },
+    "CountryDirector": {
+      "page": true,
+      "strip": null
+    },
+    "HumanResources": {
+      "page": true,
+      "strip": null
+    },
+    "ImpactAssessment": {
+      "page": true,
+      "strip": null
+    },
+    "MfiLoanOfficer": {
+      "page": false,
+      "strip": null
+    },
+    "MfiPartnerAdmin": {
+      "page": false,
+      "strip": null
+    },
+    "PartnerAdmin": {
+      "page": false,
+      "strip": null
+    },
+    "PartnerFieldOfficer": {
+      "page": false,
+      "strip": null
+    },
+    "Program Lead": {
+      "page": true,
+      "strip": null
+    },
+    "ProjectCoordinator": {
+      "page": true,
+      "strip": {
+        "label": "My Performance",
+        "scrolls": true,
+        "tabs": [
+          {
+            "active": false,
+            "href": "/priorities",
+            "label": "Priorities"
+          },
+          {
+            "active": false,
+            "href": "/my-targets",
+            "label": "Targets"
+          },
+          {
+            "active": true,
+            "href": "/my-professional-development",
+            "label": "My Professional Development"
+          }
+        ]
+      }
+    },
+    "RegionalProgramLead": {
+      "page": false,
+      "strip": null
+    },
+    "RegionalVicePresident": {
+      "page": true,
+      "strip": null
+    }
+  },
+  "funded_types": [
+    "fully_funded",
+    "partially_funded"
+  ],
+  "in_progress_event": "pd_course_in_progress",
+  "metric_labels": [
+    "Annual PD Allocation",
+    "Committed Amount",
+    "Funds Used (Accounted)",
+    "Remaining Fund",
+    "Active Courses",
+    "Certificates Pending",
+    "Accountability Pending",
+    "Completed Courses"
+  ],
+  "next_actions": {
+    "accountability_cleared": "Awaiting HR Sign-Off",
+    "accountability_submitted": "Awaiting Finance Clearance",
+    "approved_pending_funding": "Awaiting Disbursement",
+    "approved_unfunded": "Confirm Enrollment",
+    "awaiting_hr_signoff": "View HR Sign-Off",
+    "bamboohr_confirmed": "Submit Accountability",
+    "certificate_uploaded": "Confirm BambooHR Upload",
+    "completed_closed": "Completed",
+    "disbursed": "Confirm Fund Receipt",
+    "draft": "Continue Draft",
+    "ended": "Mark Course Complete",
+    "enrollment_confirmed": "Open Course",
+    "enrollment_pending": "Confirm Enrollment",
+    "in_progress": "Open Course",
+    "marked_complete": "Upload Certificate",
+    "pending_exception": "Awaiting Exception Approval",
+    "returned_by_hr": "Fix Returned Request",
+    "returned_by_supervisor": "Fix Returned Request",
+    "submitted_to_cd": "Awaiting Country Director",
+    "submitted_to_hr": "Awaiting HR",
+    "submitted_to_supervisor": "Awaiting Supervisor"
+  },
+  "self_funded": "self_funded",
+  "starting_event": "pd_course_starting",
+  "status_labels": {
+    "accountability_cleared": "Accountability Cleared",
+    "accountability_submitted": "Accountability Submitted",
+    "approved_pending_funding": "Approved — Pending Finance",
+    "approved_unfunded": "Approved",
+    "awaiting_hr_signoff": "Awaiting HR Sign-Off",
+    "bamboohr_confirmed": "BambooHR Upload Confirmed",
+    "cancelled": "Cancelled",
+    "certificate_uploaded": "Certificate Uploaded",
+    "completed_closed": "Completed and Closed",
+    "deferred": "Deferred",
+    "disbursed": "Funds Disbursed",
+    "draft": "Draft",
+    "ended": "Course Ended",
+    "enrollment_confirmed": "Enrollment Confirmed",
+    "enrollment_pending": "Enrollment Pending",
+    "in_progress": "Course In Progress",
+    "marked_complete": "Employee Marked Complete",
+    "pending_exception": "Pending Exception Approval",
+    "rejected": "Rejected",
+    "returned_by_hr": "Returned by HR",
+    "returned_by_supervisor": "Returned by Supervisor",
+    "submitted_to_cd": "Awaiting Country Director",
+    "submitted_to_hr": "Submitted to HR",
+    "submitted_to_supervisor": "Submitted to Supervisor",
+    "withdrawn": "Withdrawn"
+  },
+  "step_index": {
+    "accountability_cleared": 10,
+    "accountability_submitted": 9,
+    "approved_pending_funding": 4,
+    "approved_unfunded": 5,
+    "awaiting_hr_signoff": 10,
+    "bamboohr_confirmed": 9,
+    "cancelled": 0,
+    "certificate_uploaded": 8,
+    "completed_closed": 11,
+    "deferred": 6,
+    "disbursed": 5,
+    "draft": -1,
+    "ended": 7,
+    "enrollment_confirmed": 6,
+    "enrollment_pending": 5,
+    "in_progress": 6,
+    "marked_complete": 7,
+    "pending_exception": 2,
+    "rejected": 2,
+    "returned_by_hr": 2,
+    "returned_by_supervisor": 1,
+    "submitted_to_cd": 3,
+    "submitted_to_hr": 2,
+    "submitted_to_supervisor": 1,
+    "withdrawn": 6
+  },
+  "timeline_steps": [
+    "Request Submitted",
+    "Approved by Supervisor",
+    "Approved by HR",
+    "Authorized by Country Director",
+    "Funds Disbursed",
+    "Enrollment Confirmed",
+    "Course In Progress",
+    "Upload Certificate",
+    "BambooHR Upload Confirmation",
+    "Accountability & Expense ID",
+    "HR Sign Off",
+    "Completed & Closed"
+  ]
+}

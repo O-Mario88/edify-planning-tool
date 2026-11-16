@@ -96,6 +96,10 @@ type Config struct {
 
 	// GoSaves names the saves Go makes (EDIFY_GO_SAVES); all off by default.
 	GoSaves GoSaves
+
+	// PageWrites names the pages whose read writes that Go builds
+	// (EDIFY_GO_PAGE_WRITES); all off by default.
+	PageWrites PageWrites
 }
 
 // LoadGuard reads only what the production-protection guard needs, for a
@@ -170,6 +174,9 @@ func Load(getenv func(string) string) (Config, error) {
 		return Config{}, err
 	}
 	if cfg.GoSaves, err = loadGoSaves(env, getenv, cfg.ExistingAppURL, cfg.ClusterActions.InternalKey); err != nil {
+		return Config{}, err
+	}
+	if cfg.PageWrites, err = loadPageWrites(env, getenv); err != nil {
 		return Config{}, err
 	}
 	return cfg, nil
