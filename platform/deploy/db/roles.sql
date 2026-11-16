@@ -928,3 +928,11 @@ GRANT SELECT (owner_user_id, status, due_date) ON daily_debrief_action TO edify_
 GRANT SELECT (debrief_id, author_user_id, suggestion, endorsed_by_user_ids, created_at)
   ON daily_debrief_peer_solution TO edify_gateway_ro;
 GRANT SELECT (description, status, occurrence_count) ON daily_debrief_insight TO edify_gateway_ro;
+
+-- Professional Development Dashboard (internal/cpdlearning): each course's
+-- holder, supervisor and country, its proof and accountability marks, each
+-- person's allocation and country, and the roles' default allocations.
+GRANT SELECT (position, supervisor_name, country, accountability_reviewed_at, certification_expected, bamboohr_uploaded)
+  ON pd_request TO edify_gateway_ro;
+GRANT SELECT (id, country) ON pd_allocation TO edify_gateway_ro;
+GRANT SELECT (role, fy, country, currency, annual_allocation_cents) ON pd_role_allocation TO edify_gateway_ro;
