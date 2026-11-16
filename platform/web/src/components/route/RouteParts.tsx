@@ -5,8 +5,8 @@
  */
 import type { ReactNode } from 'react';
 
-import type { Itinerary, ItineraryStop, SchoolPin, Suggestion } from '@/gen/edify/routes/v1/routes_pb';
-import { fieldSeconds, hoursMinutes, km, legFigures, measureLabel, pinTone, totalFigures } from '@/lib/routePlanner';
+import type { Itinerary, ItineraryStop, SavedFieldDay, SchoolPin, StopCheckIn, Suggestion } from '@/gen/edify/routes/v1/routes_pb';
+import { dayClock, fieldSeconds, hoursMinutes, km, legFigures, measureLabel, pinTone, totalFigures } from '@/lib/routePlanner';
 
 import { TONES } from './RouteMap';
 import { RouteIcon } from './RouteIcons';
@@ -87,8 +87,59 @@ function StopNumber({ stop }: { stop: ItineraryStop }) {
 }
 
 /** Recommended Route: the stops in order with their legs and arrival times. */
-export function RouteList({ itinerary, onFocus }: { itinerary: Itinerary | undefined; onFocus: (pin: SchoolPin) => void }) {
+/** A stop's arrival and departure on a started day, and its buttons while the day runs. */
+function StopCheckInRow({
+  schoolId,
+  checkIn,
+  running,
+  busy,
+  onRecord,
+}: {
+  schoolId: string;
+  checkIn: StopCheckIn | undefined;
+  running: boolean;
+  busy: boolean;
+  onRecord: (event: 'arrive' | 'leave', schoolId: string) => void;
+}) {
+  const times = [checkIn?.arrivedAt ? `Arrived ${dayClock(checkIn.arrivedAt)}` : '', checkIn?.leftAt ? `Left ${dayClock(checkIn.leftAt)}` : '']
+    .filter(Boolean)
+    .join(' · ');
+  const button = 'rounded-[10px] border-2 border-[#1d6fe0] px-3 py-1 text-[13px] font-semibold text-[#1d6fe0] hover:bg-blue-50 disabled:opacity-50';
+  return (
+    <span className="mt-2 flex flex-wrap items-center gap-2">
+      {times ? <span className="text-[13px] font-medium text-green-700">{times}</span> : null}
+      {running && !checkIn?.arrivedAt ? (
+        <button type="button" disabled={busy} onClick={() => onRecord('arrive', schoolId)} className={button}>
+          Arrived
+        </button>
+      ) : null}
+      {running && checkIn?.arrivedAt && !checkIn.leftAt ? (
+        <button type="button" disabled={busy} onClick={() => onRecord('leave', schoolId)} className={button}>
+          Leaving
+        </button>
+      ) : null}
+    </span>
+  );
+}
+
+export function RouteList({
+  itinerary,
+  onFocus,
+  fieldDay,
+  running = false,
+  busy = false,
+  onRecord = () => undefined,
+}: {
+  itinerary: Itinerary | undefined;
+  onFocus: (pin: SchoolPin) => void;
+  /** The started (or ended) day's record; none before Start Field Day. */
+  fieldDay?: SavedFieldDay;
+  running?: boolean;
+  busy?: boolean;
+  onRecord?: (event: 'arrive' | 'leave', schoolId: string) => void;
+}) {
   const stops = itinerary?.stops ?? [];
+  const checkIns = new Map((fieldDay?.stops ?? []).map((c) => [c.schoolId, c]));
   if (stops.length === 0) {
     return <p className="px-6 py-8 text-center text-[var(--edify-text-muted)]">No school visits are planned on this day. Choose another date, or add a nearby school.</p>;
   }
@@ -98,18 +149,23 @@ export function RouteList({ itinerary, onFocus }: { itinerary: Itinerary | undef
       {stops.map((stop) => (
         <li key={stop.school?.schoolId} className="relative flex items-start gap-4 border-b border-[var(--edify-border)] py-3.5 last:border-b-0">
           <StopNumber stop={stop} />
-          <button type="button" onClick={() => stop.school && onFocus(stop.school)} className="min-w-0 flex-1 text-left">
-            <span className="flex flex-wrap items-center gap-x-2 text-[16px] font-semibold leading-snug text-[var(--edify-text)]">
-              {stop.school?.name}
-              {stop.kind === 'recommended' ? <span className="rounded-full bg-sky-50 px-2 py-0.5 text-[12px] font-semibold text-sky-700">Suggested</span> : null}
-              {stop.school?.status === 'completed' ? <span className="rounded-full bg-green-600 px-2 py-0.5 text-[12px] font-semibold text-white">Completed</span> : null}
-            </span>
-            <span className="mt-0.5 block text-[14px] text-[var(--edify-text-muted)]">
-              {stopFigures(stop)}
-              <span className="ml-2 text-[13px]">ID {stop.school?.code}</span>
-            </span>
-            {stop.conflict ? <span className="mt-1 block text-[14px] font-medium text-[var(--edify-danger-text)]">{stop.conflict}</span> : null}
-          </button>
+          <div className="min-w-0 flex-1">
+            <button type="button" onClick={() => stop.school && onFocus(stop.school)} className="w-full text-left">
+              <span className="flex flex-wrap items-center gap-x-2 text-[16px] font-semibold leading-snug text-[var(--edify-text)]">
+                {stop.school?.name}
+                {stop.kind === 'recommended' ? <span className="rounded-full bg-sky-50 px-2 py-0.5 text-[12px] font-semibold text-sky-700">Suggested</span> : null}
+                {stop.school?.status === 'completed' ? <span className="rounded-full bg-green-600 px-2 py-0.5 text-[12px] font-semibold text-white">Completed</span> : null}
+              </span>
+              <span className="mt-0.5 block text-[14px] text-[var(--edify-text-muted)]">
+                {stopFigures(stop)}
+                <span className="ml-2 text-[13px]">ID {stop.school?.code}</span>
+              </span>
+              {stop.conflict ? <span className="mt-1 block text-[14px] font-medium text-[var(--edify-danger-text)]">{stop.conflict}</span> : null}
+            </button>
+            {fieldDay && stop.school ? (
+              <StopCheckInRow schoolId={stop.school.schoolId} checkIn={checkIns.get(stop.school.schoolId)} running={running} busy={busy} onRecord={onRecord} />
+            ) : null}
+          </div>
           <span className="shrink-0 pt-1 text-[14px] text-[var(--edify-text)]">Arr. {stop.arrival}</span>
         </li>
       ))}

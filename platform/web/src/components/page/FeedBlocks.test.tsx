@@ -186,7 +186,30 @@ describe('record cards and kinds not drawn yet', () => {
   });
 
   it('says so for a kind it does not draw', () => {
-    expect(draw({ blocks: [{ chips: { name: 'cat', label: 'x' } }] })).toContain('not drawn here yet');
+    expect(draw({ blocks: [{ calendar: { year: 2026, month: 11 } }] })).toContain('not drawn here yet');
+  });
+
+  it('draws a list of rows with their keys, titles, lines, pills and buttons, and the chips over them', () => {
+    const html = draw({
+      blocks: [
+        { chips: { name: 'cat', label: 'Category', value: 'all', chips: [{ value: 'all', label: 'All', count: '2' }, { value: 'Finance', label: 'Finance', count: '1' }] } },
+        {
+          list: {
+            title: 'Do next',
+            count: '2 open',
+            items: [
+              { title: 'Approve advance', lines: ['Week 47'], badges: [{ text: 'Critical', tone: 'alert' }], actions: [{ label: 'Open', href: '/fund-approvals', key: 'button' }], keys: { cat: 'Finance' }, tone: 'alert' },
+              { title: 'Plan visits', lines: ['12 schools'], keys: { cat: 'Planning' } },
+            ],
+          },
+        },
+      ],
+    });
+    expect(html).toContain('aria-pressed="true"');
+    expect(html).toContain('>Do next</h2>');
+    expect(html).toContain('data-list-row="{&quot;cat&quot;:&quot;Finance&quot;}"');
+    expect(html).toMatch(/Approve advance.*Week 47.*Critical.*href="\/fund-approvals"[^>]*>Open</s);
+    expect(html).not.toContain('not drawn here yet');
   });
 });
 

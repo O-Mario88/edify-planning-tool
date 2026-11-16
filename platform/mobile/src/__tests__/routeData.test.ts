@@ -1,7 +1,7 @@
 import { create } from '@bufbuild/protobuf';
 
-import { RouteLegSchema, RouteTotalsSchema, SchoolPinSchema } from '../gen/edify/routes/v1/routes_pb';
-import { LOCATION_REPORTS_URL, OFFLINE_QUEUE_URL, ROUTE_URL, dateOf, directionsUrl, nearOf, routeUrl, hrMin, isRouteUrl, legText, routeSection, shortName, totalFigures } from '../screens/route/routeData';
+import { RouteLegSchema, RouteTotalsSchema, SavedFieldDaySchema, SchoolPinSchema } from '../gen/edify/routes/v1/routes_pb';
+import { LOCATION_REPORTS_URL, OFFLINE_QUEUE_URL, ROUTE_URL, dateOf, dayClock, directionsUrl, fieldDayState, nearOf, routeUrl, hrMin, isRouteUrl, legText, routeSection, shortName, totalFigures } from '../screens/route/routeData';
 
 describe('the route planner in the app', () => {
   it('is listed for field staff only, natively', () => {
@@ -53,5 +53,23 @@ describe('the planner can be about one school', () => {
     expect(routeUrl('route:planner', '2026-11-17', '')).toBe('route:planner?date=2026-11-17');
     expect(nearOf('route:planner?date=2026-11-17&near=abc')).toBe('abc');
     expect(nearOf('route:planner')).toBe('');
+  });
+});
+
+describe('the field day, as the web keeps it', () => {
+  const today = '2026-11-18';
+
+  it('starts only on its own day, and keeps its order once started', () => {
+    expect(fieldDayState(undefined, today, today)).toMatchObject({ phase: 'unsaved', canStart: true });
+    expect(fieldDayState(undefined, '2026-11-19', today)).toMatchObject({ canStart: false, canSave: true });
+    const started = create(SavedFieldDaySchema, { schoolIds: ['a'], savedAt: '2026-11-18T05:00:00Z', startedAt: '2026-11-18T05:02:00Z' });
+    expect(fieldDayState(started, today, today)).toMatchObject({ phase: 'started', running: true, canSave: false });
+    const ended = create(SavedFieldDaySchema, { ...started, endedAt: '2026-11-18T12:00:00Z' });
+    expect(fieldDayState(ended, today, today)).toMatchObject({ phase: 'ended', running: false });
+  });
+
+  it('writes recorded times on the Kampala clock', () => {
+    expect(dayClock('2026-11-18T05:02:00Z')).toBe('08:02');
+    expect(dayClock('')).toBe('');
   });
 });

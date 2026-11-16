@@ -4,7 +4,7 @@
  * the existing route engine's planning estimate for time. Nothing here makes
  * a figure up.
  */
-import type { Itinerary, RouteLeg, RouteTotals, SchoolPin } from '@/gen/edify/routes/v1/routes_pb';
+import type { Itinerary, RouteLeg, RouteTotals, SavedFieldDay, SchoolPin } from '@/gen/edify/routes/v1/routes_pb';
 
 export type Measure = 'road' | 'straight_line';
 
@@ -103,4 +103,35 @@ export function pinTone(pin: SchoolPin, kind?: string): 'planned' | 'suggested' 
   if (kind === 'recommended' || pin.status === 'suggested') return 'suggested';
   if (pin.status === 'planned') return 'planned';
   return 'other';
+}
+
+/** Where the reader's field day stands, and what they may press next. */
+export interface FieldDayState {
+  phase: 'unsaved' | 'saved' | 'started' | 'ended';
+  /** Started and not ended: stops can be arrived at and left. */
+  running: boolean;
+  canSave: boolean;
+  canStart: boolean;
+}
+
+/** The field day as Save Plan and Start Field Day read it (2026-11-16). */
+export function fieldDayState(saved: SavedFieldDay | undefined, date: string, today: string): FieldDayState {
+  if (saved?.endedAt) return { phase: 'ended', running: false, canSave: false, canStart: false };
+  if (saved?.startedAt) return { phase: 'started', running: true, canSave: false, canStart: false };
+  return { phase: saved?.savedAt ? 'saved' : 'unsaved', running: false, canSave: true, canStart: date === today };
+}
+
+const KAMPALA_CLOCK = new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Kampala', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+const KAMPALA_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Kampala', year: 'numeric', month: '2-digit', day: '2-digit' });
+
+/** "08:02": a recorded time on the Kampala clock; empty for none. */
+export function dayClock(rfc3339: string): string {
+  if (!rfc3339) return '';
+  const at = new Date(rfc3339);
+  return Number.isNaN(at.getTime()) ? '' : KAMPALA_CLOCK.format(at);
+}
+
+/** Today's date in Kampala ("2026-11-18"), as the gateway's days are. */
+export function kampalaToday(now: Date = new Date()): string {
+  return KAMPALA_DAY.format(now);
 }

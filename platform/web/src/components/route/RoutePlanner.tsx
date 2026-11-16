@@ -6,6 +6,10 @@
  * each leg, the field day's totals, and the eligible schools near the route.
  * Reordering, selecting and optimising only change this view; the official
  * plan changes through the existing Schedule visit drawer (Add to Plan).
+ * Save Plan keeps the reader's order for the day on the server, so the
+ * planner opens on it on any device; Start Field Day records the day's start,
+ * each stop's arrival and departure, and its end (2026-11-16). Neither
+ * schedules, moves or completes an activity.
  */
 import { create, fromJson, toJson } from '@bufbuild/protobuf';
 import type { JsonValue } from '@bufbuild/protobuf';
@@ -20,9 +24,11 @@ import {
   GetSchoolPinsResponseSchema,
   PlanRouteRequestSchema,
   PlanRouteResponseSchema,
+  RecordFieldDayResponseSchema,
+  SaveFieldDayResponseSchema,
 } from '@/gen/edify/routes/v1/routes_pb';
-import type { GetSchoolDistanceResponse, Itinerary, SchoolPin, Suggestion } from '@/gen/edify/routes/v1/routes_pb';
-import { directionsUrl, hoursMinutes, km, legFigures, placedStops, totalFigures } from '@/lib/routePlanner';
+import type { GetSchoolDistanceResponse, Itinerary, SavedFieldDay, SchoolPin, Suggestion } from '@/gen/edify/routes/v1/routes_pb';
+import { dayClock, directionsUrl, fieldDayState, hoursMinutes, kampalaToday, km, legFigures, placedStops, totalFigures } from '@/lib/routePlanner';
 
 import { RouteMap } from './RouteMap';
 import { DayVerdict, KpiRow, NearbyCard, RouteList, RouteSummary, UnplacedNote } from './RouteParts';
@@ -30,18 +36,28 @@ import { RouteIcon } from './RouteIcons';
 
 const card = 'rounded-[16px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] shadow-[0_1px_2px_rgba(15,23,42,0.04)]';
 
-async function ask(op: 'plan' | 'pins' | 'distance' | 'changes', request: JsonValue): Promise<JsonValue> {
-  const res = await fetch('/route-planner', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ op, request }),
-  });
-  const body = await res.json();
+const post = (op: string, request: JsonValue) =>
+  fetch('/route-planner', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ op, request }) });
+
+/**
+ * Renews an expired session (/auth/refresh sets the new cookies and sends
+ * the reader back); false when the reader has to sign in again.
+ */
+async function renewSession(): Promise<boolean> {
+  const answer = await fetch(`/auth/refresh?next=${encodeURIComponent(window.location.pathname)}`, { credentials: 'same-origin' });
+  return answer.ok && !new URL(answer.url).pathname.startsWith('/login');
+}
+
+async function ask(op: 'plan' | 'pins' | 'distance' | 'changes' | 'save' | 'record', request: JsonValue): Promise<JsonValue> {
+  let res = await post(op, request);
+  if (res.status === 401) {
+    if (!(await renewSession())) throw new Error('Your session has ended. Sign in again to carry on.');
+    res = await post(op, request);
+  }
+  const body = await res.json().catch(() => null);
   if (!res.ok) throw new Error(typeof body?.error === 'string' && body.error.length > 3 ? body.error : 'The route could not be worked out.');
   return body;
 }
-
-const savedKey = (date: string) => `edify.route.${date}`;
 
 /** How often an open planner checks for location changes. */
 const LOCATION_CHANGES_EVERY_MS = 60_000;
@@ -59,6 +75,8 @@ export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster, 
   const router = useRouter();
   const day = useMemo(() => fromJson(GetFieldDayResponseSchema, dayJson), [dayJson]);
   const [itinerary, setItinerary] = useState<Itinerary | undefined>(day.recommended);
+  const [saved, setSaved] = useState<SavedFieldDay | undefined>(day.saved);
+  const fieldDay = fieldDayState(saved, day.date, kampalaToday());
   const [view, setView] = useState<'map' | 'list'>('map');
   const [show, setShow] = useState({ planned: true, suggested: true, nearby: false });
   const [nearbyPins, setNearbyPins] = useState<SchoolPin[]>([]);
@@ -130,30 +148,32 @@ export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster, 
 
   const ids = (it: Itinerary | undefined) => (it?.stops ?? []).map((s) => s.school!.schoolId).concat((it?.unplaced ?? []).map((p) => p.schoolId));
 
-  // A route order this reader saved for the day comes back when they return.
-  useEffect(() => {
-    let saved: unknown = null;
+  // Save Plan: the order on screen, kept on the server for this day.
+  const save = async () => {
+    setBusy(true);
     try {
-      saved = JSON.parse(window.localStorage.getItem(savedKey(day.date)) ?? 'null');
-    } catch {
-      return undefined; // no saved order on this device
+      const answer = fromJson(SaveFieldDayResponseSchema, await ask('save', { date: day.date, schoolIds: ids(itinerary) }));
+      setSaved(answer.saved);
+      setMessage(`Plan saved at ${dayClock(answer.saved?.savedAt ?? '')}. It opens in this order on any device. Your official plan is unchanged; use Add to Plan to schedule a school.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'The plan could not be saved. Please try again.');
+    } finally {
+      setBusy(false);
     }
-    const current = ids(day.recommended);
-    if (!Array.isArray(saved) || saved.length !== current.length || !saved.every((id) => current.includes(id)) || saved.join() === current.join()) {
-      return undefined;
-    }
-    const order = saved as string[];
-    const timer = setTimeout(() => void plan(order, 'as_given'), 0);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [day]);
+  };
 
-  const save = () => {
+  // Start Field Day, a stop's arrival or departure, and the day's end.
+  const record = async (event: 'start' | 'arrive' | 'leave' | 'end', schoolId = '') => {
+    setBusy(true);
     try {
-      window.localStorage.setItem(savedKey(day.date), JSON.stringify(ids(itinerary)));
-      setMessage('Route order saved on this device. Your official plan is unchanged; use Add to Plan to schedule a school.');
-    } catch {
-      setMessage('This browser could not save the route order.');
+      const request = { date: day.date, event, schoolId, schoolIds: event === 'start' ? ids(itinerary) : [] };
+      const answer = fromJson(RecordFieldDayResponseSchema, await ask('record', request));
+      setSaved(answer.saved);
+      setMessage(event === 'start' ? `Field day started at ${dayClock(answer.saved?.startedAt ?? '')}. Mark each school as you arrive and leave.` : null);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'The field day could not be saved. Please try again.');
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -252,9 +272,7 @@ export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster, 
               aria-label="Field day date"
             />
           </label>
-          <button type="button" onClick={save} className="flex h-14 items-center gap-3 rounded-[12px] bg-[#1d6fe0] px-6 text-[16px] font-semibold text-white hover:bg-[#1760c4]">
-            <RouteIcon name="save" className="h-6 w-6" /> Save Plan
-          </button>
+          <FieldDayButtons fieldDay={fieldDay} saved={saved} busy={busy} hasStops={Boolean(itinerary?.stops.length)} onSave={save} onRecord={record} />
         </div>
       </header>
 
@@ -391,22 +409,22 @@ export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster, 
           <section className={`${card} pb-5`} aria-labelledby="recommended-title">
             <header className="flex items-center justify-between px-6 pt-5">
               <h2 id="recommended-title" className="flex items-center gap-3 sm:whitespace-nowrap text-[20px] font-semibold text-[var(--edify-text)]">
-                <RouteIcon name="trophy" className="h-7 w-7 text-amber-500" /> Recommended Route
+                <RouteIcon name="trophy" className="h-7 w-7 text-amber-500" /> {fieldDay.phase === 'unsaved' ? 'Recommended Route' : 'Your Saved Route'}
               </h2>
               {itinerary?.stops.length ? (
                 <span className="flex items-center gap-2 rounded-full bg-green-50 px-3 py-1.5 text-[14px] font-semibold text-green-700">
-                  <RouteIcon name="check" className="h-4 w-4 rounded-full bg-green-600 p-0.5 text-white" strokeWidth={3} /> Recommended
+                  <RouteIcon name="check" className="h-4 w-4 rounded-full bg-green-600 p-0.5 text-white" strokeWidth={3} /> {fieldDay.phase === 'unsaved' ? 'Recommended' : 'Saved'}
                 </span>
               ) : null}
             </header>
             <div className="mt-2">
-              <RouteList itinerary={itinerary} onFocus={onPick} />
+              <RouteList itinerary={itinerary} onFocus={onPick} fieldDay={fieldDay.running || fieldDay.phase === 'ended' ? saved : undefined} running={fieldDay.running} busy={busy} onRecord={record} />
             </div>
             <RouteSummary itinerary={itinerary} />
             <div className="mt-5 grid grid-cols-2 gap-3 px-6">
               <button
                 type="button"
-                disabled={busy || !itinerary?.stops.length}
+                disabled={busy || !itinerary?.stops.length || !fieldDay.canSave}
                 onClick={() => plan(ids(itinerary), 'fastest')}
                 className="flex h-14 items-center justify-center gap-3 rounded-[12px] border-2 border-[#1d6fe0] text-[16px] font-semibold text-[#1d6fe0] hover:bg-blue-50 disabled:opacity-50"
               >
@@ -561,3 +579,59 @@ function ListView({ itinerary, onMove, busy }: { itinerary: Itinerary | undefine
   );
 }
 
+
+/** Save Plan, Start Field Day and End Field Day, with when each happened. */
+function FieldDayButtons({
+  fieldDay,
+  saved,
+  busy,
+  hasStops,
+  onSave,
+  onRecord,
+}: {
+  fieldDay: ReturnType<typeof fieldDayState>;
+  saved: SavedFieldDay | undefined;
+  busy: boolean;
+  hasStops: boolean;
+  onSave: () => void;
+  onRecord: (event: 'start' | 'end') => void;
+}) {
+  const quiet = 'flex h-14 items-center gap-3 rounded-[12px] border-2 border-[#1d6fe0] px-5 text-[16px] font-semibold text-[#1d6fe0] hover:bg-blue-50 disabled:opacity-50';
+  const solid = 'flex h-14 items-center gap-3 rounded-[12px] bg-[#1d6fe0] px-6 text-[16px] font-semibold text-white hover:bg-[#1760c4] disabled:opacity-50';
+  if (fieldDay.phase === 'ended') {
+    return (
+      <span className="flex h-14 items-center gap-2 rounded-[12px] bg-green-50 px-5 text-[15px] font-semibold text-green-700" role="status">
+        <RouteIcon name="check" className="h-5 w-5" /> Field day ended {dayClock(saved?.endedAt ?? '')}
+      </span>
+    );
+  }
+  if (fieldDay.running) {
+    return (
+      <>
+        <span className="flex h-14 items-center gap-2 rounded-[12px] bg-green-50 px-5 text-[15px] font-semibold text-green-700" role="status">
+          <span className="h-2.5 w-2.5 rounded-full bg-green-600" aria-hidden="true" /> Field day started {dayClock(saved?.startedAt ?? '')}
+        </span>
+        <button type="button" disabled={busy} onClick={() => onRecord('end')} className={solid}>
+          <RouteIcon name="check" className="h-6 w-6" /> End Field Day
+        </button>
+      </>
+    );
+  }
+  return (
+    <>
+      {fieldDay.phase === 'saved' ? (
+        <span className="text-[14px] font-medium text-[var(--edify-text-muted)]" role="status">
+          Saved {dayClock(saved?.savedAt ?? '')}
+        </span>
+      ) : null}
+      <button type="button" disabled={busy || !hasStops} onClick={onSave} className={fieldDay.canStart ? quiet : solid}>
+        <RouteIcon name="save" className="h-6 w-6" /> Save Plan
+      </button>
+      {fieldDay.canStart ? (
+        <button type="button" disabled={busy || !hasStops} onClick={() => onRecord('start')} className={solid}>
+          <RouteIcon name="navigate" className="h-6 w-6" /> Start Field Day
+        </button>
+      ) : null}
+    </>
+  );
+}

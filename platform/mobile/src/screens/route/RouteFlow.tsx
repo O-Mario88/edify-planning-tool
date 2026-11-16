@@ -4,6 +4,9 @@
  * (itinerary, nearby schools, directions, the field day). Re-ordering and
  * optimising change this route only; Add to Plan opens the existing Schedule
  * visit drawer, which is the only way a school joins the official plan.
+ * Save Plan keeps the order for the day on the server (it opens on it on any
+ * device); Start Field Day records the start, each stop's arrival and
+ * departure, and the end (2026-11-16). Neither completes a visit.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
@@ -11,11 +14,11 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { ApiError } from '../../api/connect';
 import { useSession } from '../../auth/SessionContext';
 import { RoutePlannerService } from '../../gen/edify/routes/v1/routes_pb';
-import type { GetFieldDayResponse, Itinerary, SchoolPin } from '../../gen/edify/routes/v1/routes_pb';
+import type { GetFieldDayResponse, Itinerary, SavedFieldDay, SchoolPin } from '../../gen/edify/routes/v1/routes_pb';
 import { fonts, spacing, useTheme } from '../../theme';
 import { PlanningDrawer } from '../../ui/planning/PlanningDrawer';
 import { chooseDirections } from './directions';
-import { PIN_TONES, ROUTE_DETAILS_URL, ROUTE_URL, dateOf, legText, nearOf, placedStops, routeUrl, shortName } from './routeData';
+import { PIN_TONES, ROUTE_DETAILS_URL, ROUTE_URL, dateOf, dayClock, fieldDayState, legText, nearOf, placedStops, routeUrl, shortName } from './routeData';
 import type { MapScene } from './routeMapHtml';
 import { RouteDetailsScreen, RoutePlannerScreen } from './RouteScreens';
 
@@ -90,7 +93,7 @@ export function RouteFlow({ url, onOpen, onOpenSchool }: RouteFlowProps) {
   const [locked, setLocked] = useState<ReadonlySet<string>>(new Set());
   const [scheduling, setScheduling] = useState<string | null>(null);
   const [notice, setNotice] = useState('');
-  const [isFieldDay, setIsFieldDay] = useState(false);
+  const [saved, setSaved] = useState<SavedFieldDay | undefined>(undefined);
   const isDetails = url.startsWith(ROUTE_DETAILS_URL);
   const dated = (base: string) => routeUrl(base, date, near);
 
@@ -100,6 +103,7 @@ export function RouteFlow({ url, onOpen, onOpenSchool }: RouteFlowProps) {
       const answer = await api.call(RoutePlannerService.method.getFieldDay, { date, districtId: district, clusterId: '', nearSchoolId: near });
       setDay(answer);
       setItinerary(answer.recommended);
+      setSaved(answer.saved);
       setNotice(answer.provider?.message ?? '');
     } catch (cause) {
       setError(cause instanceof ApiError ? cause.message : 'The route could not be loaded. Please try again.');
@@ -128,6 +132,43 @@ export function RouteFlow({ url, onOpen, onOpenSchool }: RouteFlowProps) {
     },
     [api, date],
   );
+
+  const fieldDay = fieldDayState(saved, date, today());
+  const isFieldDay = fieldDay.running;
+
+  // Save Plan: the order on screen, kept on the server for this day.
+  const save = async () => {
+    setIsBusy(true);
+    try {
+      const answer = await api.call(RoutePlannerService.method.saveFieldDay, { date, schoolIds: ids(itinerary) });
+      setSaved(answer.saved);
+      setNotice(`Plan saved at ${dayClock(answer.saved?.savedAt ?? '')}. It opens in this order on any device.`);
+    } catch (cause) {
+      setNotice(cause instanceof ApiError ? cause.message : 'The plan could not be saved. Please try again.');
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  // Start Field Day, a stop's arrival or departure, and the day's end.
+  const record = async (event: 'start' | 'arrive' | 'leave' | 'end', schoolId = '') => {
+    setIsBusy(true);
+    try {
+      const answer = await api.call(RoutePlannerService.method.recordFieldDay, {
+        date,
+        event,
+        schoolId,
+        schoolIds: event === 'start' ? ids(itinerary) : [],
+      });
+      setSaved(answer.saved);
+      setNotice(event === 'start' ? 'Field day started. Mark each school as you arrive and leave.' : event === 'end' ? 'Field day ended.' : '');
+      if (event === 'start' || event === 'end') void load();
+    } catch (cause) {
+      setNotice(cause instanceof ApiError ? cause.message : 'The field day could not be saved. Please try again.');
+    } finally {
+      setIsBusy(false);
+    }
+  };
 
   const scene = useMemo(() => (day?.focus ? nearScene(day) : sceneOf(itinerary)), [day, itinerary]);
   const areaLabel = district ? (day?.districts.find((d) => d.value === district)?.label ?? '') : day?.areaLabel ?? '';
@@ -159,7 +200,9 @@ export function RouteFlow({ url, onOpen, onOpenSchool }: RouteFlowProps) {
     isBusy,
     onSelectSchool: onOpenSchool,
   };
-  const remaining = (itinerary?.stops ?? []).filter((s) => s.school?.status !== 'completed').map((s) => s.school!);
+  const left = new Set((saved?.stops ?? []).filter((c) => c.leftAt).map((c) => c.schoolId));
+  // On a running day, directions and re-planning skip schools already done or left.
+  const remaining = (itinerary?.stops ?? []).filter((s) => s.school?.status !== 'completed' && !left.has(s.school?.schoolId ?? '')).map((s) => s.school!);
 
   return (
     <View style={styles.flex}>
@@ -167,7 +210,10 @@ export function RouteFlow({ url, onOpen, onOpenSchool }: RouteFlowProps) {
         <RouteDetailsScreen
           {...common}
           locked={locked}
-          isFieldDay={isFieldDay}
+          fieldDay={fieldDay}
+          saved={saved}
+          onSave={() => void save()}
+          onRecord={(event, schoolId) => void record(event, schoolId)}
           onBack={() => onOpen(dated('route:planner'), 'Smart Route Planner')}
           onToggleLock={(id) => {
             const next = new Set(locked);
@@ -179,10 +225,6 @@ export function RouteFlow({ url, onOpen, onOpenSchool }: RouteFlowProps) {
           onKeepOrder={() => plan(ids(itinerary), 'as_given', locked)}
           onAddToPlan={(id) => setScheduling(id)}
           onDirections={() => directions(isFieldDay ? remaining : placedStops(itinerary))}
-          onStartFieldDay={() => {
-            setIsFieldDay(true);
-            void load();
-          }}
           onRefresh={() => void load()}
         />
       ) : (

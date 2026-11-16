@@ -13,7 +13,9 @@ import { Pager } from '../blocks/Pager';
 import { TabRail } from '../blocks/TabRail';
 import { Icon } from '../shell/icons';
 import { FeedChart } from './FeedChart';
+import { FeedChips } from './FeedChips';
 import { FeedFacts } from './FeedFacts';
+import { FeedForm, FeedList } from './FeedList';
 import { FeedPanel } from './FeedPanel';
 import { FeedRail } from './FeedRail';
 import { FeedRecord } from './FeedRecord';
@@ -121,6 +123,12 @@ export function FeedBlocks({ blocks, pagePath, drawerHref, selectable, clearFilt
                 }))}
               />
             );
+          case 'list':
+            return <FeedList key={index} list={kind.value} resolve={resolve} hrefOf={hrefOf} />;
+          case 'chips':
+            return <FeedChips key={index} chips={kind.value} />;
+          case 'form':
+            return <FeedForm key={index} form={kind.value} drawerHref={drawerHref} />;
           case 'empty':
           case 'scopeLine':
             return <p key={index} className="text-[length:var(--edify-text-label-size)] font-medium text-[var(--edify-text-muted)]">{kind.value}</p>;

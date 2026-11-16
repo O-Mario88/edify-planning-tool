@@ -33,9 +33,21 @@ export async function askPage(path: string, query: Record<string, string>): Prom
   });
 }
 
-export async function FeedPage({ path, query }: { path: string; query: Record<string, string> }) {
+/**
+ * The first answer among the page's spellings: some pages are answered only
+ * as "/x/" (the finance pages), others only as "/x".
+ */
+async function askFirst(paths: readonly string[], query: Record<string, string>): Promise<GetPageResponse | null> {
+  for (const path of paths) {
+    const answer = await askPage(path, query);
+    if (answer) return answer;
+  }
+  return null;
+}
+
+export async function FeedPage({ path, query, alsoAs = [] }: { path: string; query: Record<string, string>; alsoAs?: readonly string[] }) {
   const existingWebUrl = environment().existingWebUrl;
-  const answer = await askPage(path, query);
+  const answer = await askFirst([path, ...alsoAs], query);
   const existingHref = drawerPageHref(existingWebUrl, path, query);
   if (!answer) return <NotMovedYet href={existingHref} />;
   const pagePath = answer.webPath || path;
