@@ -8,7 +8,8 @@
 // FieldDebriefService.scoped_queryset, as the existing feed reads them).
 //
 // The existing feed shows every tab of the table with the rows of the tab
-// asked for; Go draws the same.
+// asked for; Go gives each tab its own rows (owner, 2026-11-16: "Fix the
+// tabs").
 //
 // It reads; it never writes. It hands the page on for a partner reader (the
 // partners a partner login acts as are not read here), a reader working in

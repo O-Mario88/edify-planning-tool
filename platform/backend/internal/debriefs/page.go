@@ -586,8 +586,8 @@ var tabs = [][2]string{
 	{"escalated", "Escalated"}, {"peer_solutions", "Peer Solutions"},
 }
 
-// table is the team and partner table: the asked tab's rows, drawn under
-// every tab as the feed draws them. ok is false past one page.
+// table is the team and partner table: every tab with its own rows, the
+// asked tab open. ok is false when a tab runs past one page.
 func (r *reader) table(ctx context.Context, p auth.Principal, a ask) (*screensv1.PageBlock, bool, error) {
 	lead := p.ActiveRole == "Program Lead"
 	awaiting := []debrief{}
@@ -607,53 +607,66 @@ func (r *reader) table(ctx context.Context, p auth.Principal, a ask) (*screensv1
 			return nil, false, err
 		}
 	}
-	var shown []debrief
-	if a.tab == "awaiting_review" {
-		shown = awaiting
-	} else {
-		extra := ""
-		args := []any{p.UserID}
-		switch a.tab {
-		case "mine":
-			extra = "AND d.submitted_by_user_id = $USER"
-		case "team":
-			extra = "AND NOT (d.submitted_by_user_id = $USER) AND NOT (d.debrief_type = 'partner')"
-		case "partner":
-			extra = "AND d.debrief_type = 'partner'"
-		case "escalated":
-			extra = "AND (d.status IN ('escalated', 'action_required') OR d.risk_level IN ('cd_attention', 'critical', 'hr_attention', 'ia_attention'))"
-		case "peer_solutions":
-			extra = "AND EXISTS (SELECT 1 FROM daily_debrief_peer_solution ps WHERE ps.debrief_id = d.id)"
-		}
-		saved := r.sc.args
-		if strings.Contains(extra, "$USER") {
-			r.sc.args = append(slices.Clone(saved), args...)
-			extra = strings.ReplaceAll(extra, "$USER", fmt.Sprintf("$%d", len(r.sc.args)))
-		}
-		rows, err := r.debriefs(ctx, a.start, a.end, extra)
-		r.sc.args = saved
-		if err != nil {
-			return nil, false, err
-		}
-		shown = rows
-	}
-	if len(shown) > rules.PageSize {
-		return nil, false, nil
-	}
-	t, err := r.tableBlock(ctx, shown, a.tab)
-	if err != nil {
-		return nil, false, err
-	}
-	segs := &screensv1.PageSegments{}
 	labels := slices.Clone(tabs)
 	if lead {
 		labels = append([][2]string{{"awaiting_review", fmt.Sprintf("Awaiting my review (%d)", len(awaiting))}}, labels...)
 	}
+	tables := map[string]*screensv1.PageBlock{}
 	for _, l := range labels {
-		segs.Segments = append(segs.Segments, &screensv1.PageSegment{Label: l[1], Active: l[0] == a.tab,
-			Blocks: []*screensv1.PageBlock{t}})
+		rows := awaiting
+		if l[0] != "awaiting_review" {
+			var err error
+			if rows, err = r.tabRows(ctx, p.UserID, a, l[0]); err != nil {
+				return nil, false, err
+			}
+		}
+		if len(rows) > rules.PageSize {
+			return nil, false, nil
+		}
+		t, err := r.tableBlock(ctx, rows, l[0])
+		if err != nil {
+			return nil, false, err
+		}
+		tables[l[0]] = t
 	}
-	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Segments{Segments: segs}}, true, nil
+	return tabSegments(labels, a.tab, tables), true, nil
+}
+
+// tabSegments is the table's tabs, each holding its own rows; the asked
+// tab is the one open. The existing feed draws every tab with the open
+// tab's rows (owner, 2026-11-16: "Fix the tabs"; go-debrief-tabs in
+// internal/parity/intended.json).
+func tabSegments(labels [][2]string, active string, tables map[string]*screensv1.PageBlock) *screensv1.PageBlock {
+	segs := &screensv1.PageSegments{}
+	for _, l := range labels {
+		segs.Segments = append(segs.Segments, &screensv1.PageSegment{Label: l[1], Active: l[0] == active,
+			Blocks: []*screensv1.PageBlock{tables[l[0]]}})
+	}
+	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Segments{Segments: segs}}
+}
+
+// tabRows is _apply_tab: the period's scoped debriefs a tab lists.
+func (r *reader) tabRows(ctx context.Context, user string, a ask, tab string) ([]debrief, error) {
+	extra := ""
+	switch tab {
+	case "mine":
+		extra = "AND d.submitted_by_user_id = $USER"
+	case "team":
+		extra = "AND NOT (d.submitted_by_user_id = $USER) AND NOT (d.debrief_type = 'partner')"
+	case "partner":
+		extra = "AND d.debrief_type = 'partner'"
+	case "escalated":
+		extra = "AND (d.status IN ('escalated', 'action_required') OR d.risk_level IN ('cd_attention', 'critical', 'hr_attention', 'ia_attention'))"
+	case "peer_solutions":
+		extra = "AND EXISTS (SELECT 1 FROM daily_debrief_peer_solution ps WHERE ps.debrief_id = d.id)"
+	}
+	saved := r.sc.args
+	defer func() { r.sc.args = saved }()
+	if strings.Contains(extra, "$USER") {
+		r.sc.args = append(slices.Clone(saved), user)
+		extra = strings.ReplaceAll(extra, "$USER", fmt.Sprintf("$%d", len(r.sc.args)))
+	}
+	return r.debriefs(ctx, a.start, a.end, extra)
 }
 
 // tableBlock is partials/debriefs/dashboard_table.html's table.

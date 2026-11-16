@@ -15,7 +15,9 @@ sits a whole number of days and one minute before the file is written, so
 the answers hold for half an hour. It asks the page of every reader it
 opens for with each tab, range, filter and page, and of readers it refuses;
 writes the rows and the answers to GOLDEN_OUT and deletes the rows.
-internal/integration/debriefs_test.go files the same rows and compares.
+Each answer also keeps every tab's own table, asked with that tab open:
+internal/integration/debriefs_test.go files the same rows and compares Go's
+tabs with those (owner, 2026-11-16: "Fix the tabs").
 """
 
 import json
@@ -285,16 +287,52 @@ def dump_rows():
     return out
 
 
-def ask(reader, query):
+def read(reader, query):
     with transaction.atomic():
         status, body = read_page(reader, PATH, query)
         transaction.set_rollback(True)
+    return status, body
+
+
+#: Each tab's key by its label (the review queue's label carries a count).
+TAB_KEYS = {
+    "All Debriefs": "all",
+    "My Debriefs": "mine",
+    "Team Debriefs": "team",
+    "Partner Debriefs": "partner",
+    "Escalated": "escalated",
+    "Peer Solutions": "peer_solutions",
+}
+
+
+def ask(reader, query):
+    """The page as asked, and each tab's own table: the existing feed draws
+    every tab with the open tab's rows, so each tab is asked on its own and
+    its open table kept (owner, 2026-11-16: "Fix the tabs")."""
+    status, body = read(reader, query)
+    tab_tables = []
+    for block in (body or {}).get("blocks", []):
+        if "segments" not in block:
+            continue
+        for segment in block["segments"]["segments"]:
+            label = segment["label"]
+            key = (
+                "awaiting_review"
+                if label.startswith("Awaiting my review")
+                else TAB_KEYS[label]
+            )
+            _, own = read(reader, {**query, "tab": key})
+            opened = next(b for b in own["blocks"] if "segments" in b)["segments"][
+                "segments"
+            ]
+            tab_tables.append(next(s for s in opened if s["active"])["blocks"])
     return {
         "email": reader.email,
         "path": PATH,
         "query": query,
         "status": status,
         "body": body,
+        "tab_tables": tab_tables,
     }
 
 

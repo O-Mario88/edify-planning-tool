@@ -61,5 +61,27 @@
     "defect": "Priorities' distributed priorities come from a queryset with no order (apps.hr.accountability._allocation_priorities), so the rows follow the database planner, which moves with the select list and the data; the same contract can list in different orders.",
     "decision": "Owner, 2026-11-14: 'Yes, plan order' (milestones in the plan's order: the priority's sequence, then the milestone's).",
     "test": "internal/allocations.TestTheContractListsMilestonesInThePlansOrder"
+  },
+  {
+    "id": "go-debrief-tabs",
+    "tool": "page",
+    "where": "/debriefs",
+    "questions": [
+      "*"
+    ],
+    "fields": [
+      ".blocks[7].segments[0].blocks[0].table.rows",
+      ".blocks[7].segments[1].blocks[0].table.rows",
+      ".blocks[7].segments[2].blocks[0].table.rows",
+      ".blocks[7].segments[3].blocks[0].table.rows",
+      ".blocks[7].segments[4].blocks[0].table.rows",
+      ".blocks[7].segments[5].blocks[0].table.rows",
+      ".blocks[7].segments[6].blocks[0].table.rows"
+    ],
+    "existing": "(?s)\\[.*",
+    "go": "(?s).*\\]",
+    "defect": "The Field Debrief Dashboard's feed draws every tab of the team and partner table with the open tab's rows: each tab's own rows are loaded only by the browser, so on the phone 'My Debriefs', 'Escalated' and the rest all repeat the tab asked for.",
+    "decision": "Owner, 2026-11-16: 'Fix the tabs'.",
+    "test": "internal/debriefs.TestEachDebriefTabHoldsItsOwnRows"
   }
 ]
