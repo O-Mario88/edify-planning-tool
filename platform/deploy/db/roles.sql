@@ -942,3 +942,7 @@ GRANT SELECT (role, fy, country, currency, annual_allocation_cents) ON pd_role_a
 -- document is on file, and when it came in.
 GRANT SELECT (created_at, partner_id, invoice_type, period_start, period_end, entered_total, payable_amount, stored_name)
   ON partner_invoice TO edify_gateway_ro;
+
+-- Special Projects Planning (internal/projectplanning): the project type an
+-- enrolment was given, beside the project's own category.
+GRANT SELECT (project_type) ON project_school_assignment TO edify_gateway_ro;
