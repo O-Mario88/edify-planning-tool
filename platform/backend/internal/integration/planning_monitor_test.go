@@ -8,8 +8,14 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 	"testing"
 	"time"
+
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
+
+	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningmonitor"
 )
@@ -17,7 +23,7 @@ import (
 // planningMonitorTables is what the monitor's golden files, in order, and
 // the column each table's rows are found by.
 var planningMonitorTables = [][2]string{
-	{"school", "id"}, {"school_cluster_assignment", "school_id"}, {"project", "id"}, {"activity", "id"},
+	{"school", "id"}, {"school_cluster_assignment", "school_id"}, {"staff_school_assignment", "id"}, {"project", "id"}, {"activity", "id"},
 	{"cluster_activity_attendance", "activity_id"}, {"partner_assignment", "id"}, {"ssa_record", "id"},
 	{"project_school_assignment", "id"},
 }
@@ -195,4 +201,36 @@ func TestThePlanningMonitorFiguresAreTheExistingServices(t *testing.T) {
 	}
 	differing += sameJSON(t, "the ledger", ledger, golden.Monitor.Ledger)
 	t.Logf("the monitor compared, %d figures differing", differing)
+
+	// The monitor as the lead's dashboard carries it: from its section to
+	// the week's heading after it.
+	want := &screensv1.GetPageResponse{}
+	if err := protojson.Unmarshal(golden.Answers[0].Body, want); err != nil {
+		t.Fatal(err)
+	}
+	from, to := -1, len(want.GetBlocks())
+	for i, b := range want.GetBlocks() {
+		if b.GetSection() == "Planning Monitor" && from < 0 {
+			from = i
+		}
+		if from >= 0 && i > from && b.GetSection() == "" && strings.Contains(b.GetPanel().GetTitle(), " · ") {
+			to = i
+			break
+		}
+	}
+	if from < 0 {
+		t.Fatal("the existing dashboard carries no Planning Monitor")
+	}
+	got := &screensv1.GetPageResponse{Blocks: planningmonitor.Blocks(m, ledger)}
+	existing := &screensv1.GetPageResponse{Blocks: want.GetBlocks()[from:to]}
+	t.Logf("the monitor's %d blocks compared (Go drew %d)", len(existing.GetBlocks()), len(got.GetBlocks()))
+	if !proto.Equal(got, existing) {
+		g, w := protojson.Format(got), protojson.Format(existing)
+		at := 0
+		for at < len(g) && at < len(w) && g[at] == w[at] {
+			at++
+		}
+		t.Errorf("the monitor's blocks differ at byte %d:\n go:       …%s\n existing: …%s", at,
+			g[max(at-400, 0):min(at+300, len(g))], w[max(at-400, 0):min(at+300, len(w))])
+	}
 }

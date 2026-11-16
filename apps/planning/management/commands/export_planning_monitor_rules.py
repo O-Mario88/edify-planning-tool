@@ -36,6 +36,7 @@ def rules() -> dict:
     )
     from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES
     from apps.core.enums import ExecutorType
+    from apps.frontend.views import oversight_views
     from apps.partners.models import PartnerAssignment
     from apps.planning import monitor_roster as roster
     from apps.planning import planning_monitor as monitor
@@ -108,7 +109,39 @@ def rules() -> dict:
         "gap_figures": dict(monitor.GAP_FIGURES),
         "ledger": [list(line) for line in readiness.LEDGER],
         "pillar_labels": dict(readiness.PILLAR_LABELS),
+        # The monitor's figures' names (oversight_views._monitor_kpis), as
+        # the metric registry gives them.
+        "kpi_labels": kpi_labels(),
+        "monitor_tabs": [list(tab) for tab in oversight_views.MONITOR_TABS],
     }
+
+
+#: The monitor's figures: the three read as shares, the four as counts.
+KPI_SHARES = (
+    "monitor_visits_planned_share",
+    "monitor_schools_with_visit",
+    "monitor_schools_with_training",
+)
+KPI_COUNTS = (
+    "monitor_schools_unplanned",
+    "monitor_schools_not_clustered",
+    "monitor_partner_share",
+    "monitor_schools_in_projects",
+)
+
+
+def kpi_labels() -> dict:
+    from apps.core.metrics import MetricValue, render_kpi_item
+
+    labels = {
+        key: render_kpi_item(key, MetricValue.ratio(1, 1), helper="")["label"]
+        for key in KPI_SHARES
+    }
+    labels |= {
+        key: render_kpi_item(key, MetricValue.measured(1), helper="")["label"]
+        for key in KPI_COUNTS
+    }
+    return labels
 
 
 def rendered() -> str:

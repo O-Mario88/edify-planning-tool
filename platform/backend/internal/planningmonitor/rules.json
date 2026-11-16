@@ -92,6 +92,15 @@
     ]
   ],
   "kind_ssa": "ssa_support",
+  "kpi_labels": {
+    "monitor_partner_share": "Schools Handed To Partners",
+    "monitor_schools_in_projects": "Schools In Special Projects",
+    "monitor_schools_not_clustered": "Schools Not Clustered",
+    "monitor_schools_unplanned": "Schools With No Visit Or Training",
+    "monitor_schools_with_training": "Schools Planned For Training",
+    "monitor_schools_with_visit": "Schools With A Visit Planned",
+    "monitor_visits_planned_share": "Visits Planned Against Target"
+  },
   "ledger": [
     [
       "staff_visit",
@@ -302,6 +311,20 @@
     [
       "no_ssa",
       "No confirmed SSA this year"
+    ]
+  ],
+  "monitor_tabs": [
+    [
+      "readiness",
+      "Planned and remaining"
+    ],
+    [
+      "detail",
+      "Planning detail"
+    ],
+    [
+      "schools",
+      "Schools and checks"
     ]
   ],
   "no_lead": [

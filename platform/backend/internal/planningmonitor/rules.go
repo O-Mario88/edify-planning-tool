@@ -82,6 +82,8 @@ var rules = func() (r struct {
 	GapFigures                  map[string]string      `json:"gap_figures"`
 	Ledger                      [][3]any               `json:"ledger"`
 	PillarLabels                map[string]string      `json:"pillar_labels"`
+	KPILabels                   map[string]string      `json:"kpi_labels"`
+	MonitorTabs                 [][2]string            `json:"monitor_tabs"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {
 		panic(fmt.Sprintf("planningmonitor: reading rules.json: %v", err))

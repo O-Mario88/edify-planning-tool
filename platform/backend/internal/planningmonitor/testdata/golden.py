@@ -29,7 +29,7 @@ from django.contrib.auth import get_user_model
 from django.db import connection, transaction
 from django.utils import timezone as dj_timezone
 
-from apps.accounts.models import StaffProfile
+from apps.accounts.models import StaffProfile, StaffSchoolAssignment
 from apps.activities.models import Activity, ClusterActivityAttendance
 from apps.clusters.models import Cluster
 from apps.mobile_feed.views import read_page
@@ -53,6 +53,7 @@ TABLES = (
     # Written by the school's own save (a signal), and so part of the world
     # the existing page reads.
     "school_cluster_assignment",
+    "staff_school_assignment",
     "project",
     "activity",
     "cluster_activity_attendance",
@@ -134,6 +135,17 @@ def file_rows():
     school("S8", "champion")
     school("S9", "core", clustered=False)
     s10 = school("S10", "client", holder=deo)
+    # A school in the lead's scope that nobody holds: the monitor's
+    # Unassigned row, under a team of its own.
+    unheld = School.objects.create(
+        id=P + "S11",
+        school_id="GPM-S11",
+        name="Golden monitor school S11",
+        school_type="client",
+        district_id=cluster.district_id,
+        region_id=cluster.region_id,
+    )
+    StaffSchoolAssignment.objects.create(id=P + "Z1", staff=paul, school_id=unheld.id)
 
     def activity(key, at, kind="school_visit", status="scheduled", days=5, **extra):
         Activity.objects.create(
