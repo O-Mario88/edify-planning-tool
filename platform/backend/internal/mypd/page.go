@@ -168,10 +168,9 @@ func (s *Service) write(ctx context.Context, sp staff, fy string, today time.Tim
 			return fmt.Errorf("mypd: moving course %s on: %w", m.id, err)
 		}
 		// notifications.services.resolve_condition for the reminders the
-		// clock ends.
-		if _, err := tx.Exec(ctx, `UPDATE notification SET resolved_at = now(), status = 'archived', action_required = false,
-			updated_at = now() WHERE source_event_type = ANY($1) AND context_id = $2 AND resolved_at IS NULL
-			AND context_type = 'pd_request'`, satisfied, m.id); err != nil {
+		// clock ends, through its one narrow function
+		// (deploy/db/mypd_roles.sql).
+		if _, err := tx.Exec(ctx, `SELECT gateway_pd.close_course_reminders($1, $2)`, m.id, satisfied); err != nil {
 			return fmt.Errorf("mypd: closing course %s's reminders: %w", m.id, err)
 		}
 	}

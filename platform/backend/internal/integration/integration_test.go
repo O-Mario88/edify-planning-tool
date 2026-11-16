@@ -563,6 +563,14 @@ func TestGatewayRoleCanNeitherWriteNorReadSecrets(t *testing.T) {
 		"become the presence owner":         rw + `SET ROLE edify_presence_owner`,
 		"read a snooze's words":             `SELECT title FROM command_center_todo_snooze LIMIT 1`,
 		"write a Today decision":            rw + `INSERT INTO command_center_today_action (id) VALUES ('x')`,
+		// My Professional Development's read (deploy/db/mypd_roles.sql): a
+		// course's status alone, a new allocation alone, reminders only
+		// through gateway_pd.close_course_reminders.
+		"change a PD course's words":   rw + `UPDATE pd_request SET course_name = course_name`,
+		"change an allocation's money": rw + `UPDATE pd_allocation SET annual_allocation = annual_allocation`,
+		"remove an allocation":         rw + `DELETE FROM pd_allocation`,
+		"remove a PD course":           rw + `DELETE FROM pd_request`,
+		"become the reminders owner":   rw + `SET ROLE edify_pd_reminders_owner`,
 	}
 	for name, statement := range statements {
 		t.Run(name, func(t *testing.T) {
