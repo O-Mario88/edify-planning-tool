@@ -19,9 +19,9 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/budgetpage"
+	fw "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/fundworkspace"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
-	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 )
 
 // PagePath is the dashboard's path.
@@ -132,21 +132,20 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		return nil, true, err
 	}
 	blocks := []*screensv1.PageBlock{filterBlock(a, now), f.strip()}
-	if len(visible) == 0 {
-		blocks = append(blocks, panel("", text("No fund items match your filters"),
-			text("Change the month or status, or clear the search.")))
-	} else {
+	tabs := []*screensv1.PageLink{}
+	for _, it := range visible {
+		tabs = append(tabs, &screensv1.PageLink{Text: it.name,
+			Href: fmt.Sprintf("/disbursements/detail?item=%s&fy=%s&month=%d", it.key, a.fy, a.month)})
+	}
+	blocks = append(blocks, fw.Queue("Consolidated Fund Queue", tabs,
+		"No fund items match your filters", "Change the month or status, or clear the search.")...)
+	if len(visible) > 0 {
 		sel := visible[0]
 		for _, it := range visible {
 			if it.key == a.selected {
 				sel = it
 				break
 			}
-		}
-		tabs := &screensv1.PageLinks{}
-		for _, it := range visible {
-			tabs.Links = append(tabs.Links, &screensv1.PageLink{Text: it.name,
-				Href: fmt.Sprintf("/disbursements/detail?item=%s&fy=%s&month=%d", it.key, a.fy, a.month)})
 		}
 		detail, ok, err := detailTable(ctx, s.db, sel)
 		if err != nil {
@@ -155,10 +154,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		if !ok {
 			return nil, false, nil
 		}
-		blocks = append(blocks,
-			panel("", text(fmt.Sprintf("Consolidated Fund Queue %d", len(visible)))),
-			panel("", &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Links{Links: tabs}}),
-			detail)
+		blocks = append(blocks, detail)
 	}
 	m, err := mixOf(ctx, s.db, all)
 	if err != nil {
@@ -168,9 +164,9 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if err != nil {
 		return nil, true, err
 	}
-	blocks = append(blocks, f.side(a, all))
-	blocks = append(blocks, mixBlocks(a, m)...)
-	blocks = append(blocks, recent)
+	blocks = append(blocks, f.side(a, all),
+		fw.Mix(fmt.Sprintf("Disbursement Mix (%s)", rules.Months[a.month]), m.labels, m.totals),
+		fw.Recent("Recent Disbursement Activity", recent, "/accounts/audit-log"))
 
 	h := &screensv1.PageHeader{
 		Title:       "Fund Disbursement Dashboard",
@@ -184,19 +180,6 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 }
 
 func filterBlock(a ask, now time.Time) *screensv1.PageBlock {
-	years := schooldirectory.FYOptions(now)
-	if !slices.Contains(years, a.fy) {
-		years = append(years, a.fy)
-	}
-	sort.Sort(sort.Reverse(sort.StringSlice(years)))
-	fy := &screensv1.PageFilter{Name: "fy", Label: "Fiscal year", Value: a.fy, Caption: "Financial Year"}
-	for _, y := range years {
-		fy.Options = append(fy.Options, &screensv1.PageFilterOption{Value: y, Label: y})
-	}
-	month := &screensv1.PageFilter{Name: "month", Label: "Month", Value: strconv.Itoa(a.month)}
-	for i := 1; i <= 12; i++ {
-		month.Options = append(month.Options, &screensv1.PageFilterOption{Value: strconv.Itoa(i), Label: rules.Months[i]})
-	}
 	status := &screensv1.PageFilter{Name: "status", Label: "Status", Caption: "Fund Status",
 		Options: []*screensv1.PageFilterOption{{Value: "", Label: "All Statuses"}}}
 	for _, o := range rules.StatusOptions {
@@ -206,7 +189,8 @@ func filterBlock(a ask, now time.Time) *screensv1.PageBlock {
 		}
 	}
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Filters{Filters: &screensv1.PageFilters{
-		Filters: []*screensv1.PageFilter{fy, month, status}}}}
+		Filters: []*screensv1.PageFilter{fw.YearFilter(schooldirectory.FYOptions(now), a.fy),
+			fw.MonthFilter(rules.Months, a.month), status}}}}
 }
 
 // figures is what the strip and the month's panel read.
@@ -259,25 +243,17 @@ func plural(n int, one, many string) string {
 
 func (f figures) strip() *screensv1.PageBlock {
 	ugx := budgetpage.UGXCompact
-	values := []string{ugx(f.total), ugx(f.pendingDisb), ugx(f.disbToday), ugx(f.awaiting)}
-	helpers := []string{plural(f.items, "item", "items"), plural(f.pendingCount, "request", "requests"),
-		"Released today", fmt.Sprintf("%d in approval chain", f.awaitingCount)}
-	strip := &screensv1.PageStrip{Title: "Disbursement context"}
-	for i, label := range rules.MetricLabels {
-		m := &screensv1.PageMetric{Label: label, Value: values[i], Helper: helpers[i]}
-		if brief := schoolprofile.BriefHelper(helpers[i]); brief != helpers[i] {
-			m.Helper, m.Note = brief, helpers[i]
-		}
-		strip.Metrics = append(strip.Metrics, m)
-	}
-	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Strip{Strip: strip}}
+	return fw.Strip("Disbursement context", rules.MetricLabels,
+		[]string{ugx(f.total), ugx(f.pendingDisb), ugx(f.disbToday), ugx(f.awaiting)},
+		[]string{plural(f.items, "item", "items"), plural(f.pendingCount, "request", "requests"),
+			"Released today", fmt.Sprintf("%d in approval chain", f.awaitingCount)})
 }
 
 // pyRound is Python's round() to a whole number: a half to the even one.
 func pyRound(x float64) int64 { return int64(math.RoundToEven(x)) }
 
-// side is the month's panel as the feed reads it: the allocation and its
-// use, then the disbursement rate (the month's rows are not read).
+// side is the month's panel: the allocation and its use, then the
+// disbursement rate over the whole queue.
 func (f figures) side(a ask, all []item) *screensv1.PageBlock {
 	ugx := budgetpage.UGXCompact
 	committed := f.pendingDisb + f.heldAmt
@@ -290,83 +266,22 @@ func (f figures) side(a ask, all []item) *screensv1.PageBlock {
 	if pct > 100 {
 		state = "Over plan"
 	}
-	items := []*screensv1.PagePanelItem{
-		heading(rules.Months[a.month] + " Allocation & Utilization"),
-		text(state),
-		{Kind: &screensv1.PagePanelItem_Rows{Rows: &screensv1.PageDataRows{Rows: []*screensv1.PageDataRow{
-			{Label: "Total Allocation", Value: ugx(f.allocation)}}}}},
-		text(fmt.Sprintf("Utilized · committed %s · available %s", ugx(committed), ugx(available))),
-		text(fmt.Sprintf("%s (%d%%)", ugx(f.disbursedMonth), min(pct, 100))),
-		links(&screensv1.PageLink{Text: "View budget overview", Href: "/budgets/overview"}),
-		heading("Disbursement Rate This Month"),
-	}
 	counts := map[string]int64{}
 	for _, it := range all {
 		counts[it.status]++
 	}
-	approved := counts[disbursed] + counts[awaitingRecon] + counts[closed]
-	back := counts[returned]
-	waiting := counts[pendingDisbursement] + counts[held] + counts[pendingApproval]
-	total := approved + back + waiting
-	if total == 0 {
-		items = append(items, text("No fund items this month yet."))
-	} else {
-		pcts := []struct {
-			label string
-			value int64
-		}{{"Approved", approved}, {"Returned", back}, {"Pending", waiting}}
-		rows := &screensv1.PageDataRows{}
-		legend := []*screensv1.PageLink{}
-		for _, p := range pcts {
-			v := fmt.Sprintf("%d%%", budgetpage.Percentage(p.value, total))
-			rows.Rows = append(rows.Rows, &screensv1.PageDataRow{Label: p.label, Value: v})
-			legend = append(legend, &screensv1.PageLink{Text: p.label + v})
-		}
-		items = append(items, text(fmt.Sprintf("%d%% · Disbursed", budgetpage.Percentage(approved, total))),
-			&screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Rows{Rows: rows}}, links(legend...))
-	}
-	return panel("All Fund Types This Month", items...)
-}
-
-// mixBlocks is fund_workspace.budget_mix drawn: a share for each of the five
-// largest labels (the rest folded into Other), each share's figure when it
-// is 7% or more, then the legend; the empty state when nothing is costed.
-func mixBlocks(a ask, m *mix) []*screensv1.PageBlock {
-	title := fmt.Sprintf("Disbursement Mix (%s)", rules.Months[a.month])
-	ordered := []labelled{}
-	for _, l := range m.labels {
-		if m.totals[l] != 0 {
-			ordered = append(ordered, labelled{label: l, total: m.totals[l]})
-		}
-	}
-	sort.SliceStable(ordered, func(i, j int) bool { return ordered[i].total > ordered[j].total })
-	if len(ordered) > 5 {
-		var rest int64
-		for _, l := range ordered[5:] {
-			rest += l.total
-		}
-		ordered = append(ordered[:5:5], labelled{label: "Other", total: rest})
-	}
-	if len(ordered) == 0 {
-		// The card's empty state, read as an empty table under the card's
-		// title (its two lines run together).
-		return []*screensv1.PageBlock{{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{
-			Title: title, EmptyMessage: "No costed activities this monthThe budget mix fills in as plans are costed."}}}}
-	}
-	var total int64
-	for _, l := range ordered {
-		total += l.total
-	}
-	items := []*screensv1.PagePanelItem{}
-	legend := []*screensv1.PageLink{}
-	for _, l := range ordered {
-		pct := budgetpage.Percentage(l.total, total)
-		if pct >= 7 {
-			items = append(items, text(fmt.Sprintf("%d%%", pct)))
-		}
-		legend = append(legend, &screensv1.PageLink{Text: l.label + budgetpage.UGXCompact(l.total)})
-	}
-	return []*screensv1.PageBlock{panel(title, append(items, links(legend...))...)}
+	return fw.Side("All Fund Types This Month",
+		fw.Progress{
+			Title: rules.Months[a.month] + " Allocation & Utilization", Status: state, Allocation: ugx(f.allocation),
+			Caption:  fmt.Sprintf("Utilized · committed %s · available %s", ugx(committed), ugx(available)),
+			Approved: ugx(f.disbursedMonth), Pct: pct, Link: "/budgets/overview", LinkLabel: "View budget overview",
+		},
+		fw.Rate{
+			Title: "Disbursement Rate This Month", Subline: "Disbursed", Empty: "No fund items this month yet.",
+			Approved: counts[disbursed] + counts[awaitingRecon] + counts[closed],
+			Returned: counts[returned],
+			Pending:  counts[pendingDisbursement] + counts[held] + counts[pendingApproval],
+		})
 }
 
 type event struct {
@@ -377,7 +292,7 @@ type event struct {
 // recent is _recent: the latest disbursements, partner payments and
 // returned plans, newest first, six at most, by the names the queue
 // learned.
-func (s *Service) recent(ctx context.Context, q *queue) (*screensv1.PageBlock, error) {
+func (s *Service) recent(ctx context.Context, q *queue) ([]string, error) {
 	events := []event{}
 	read := func(sql string, each func(r pgx.Rows) (event, bool, error), args ...any) error {
 		rows, err := s.db.Query(ctx, sql, args...)
@@ -448,33 +363,13 @@ func (s *Service) recent(ctx context.Context, q *queue) (*screensv1.PageBlock, e
 		return nil, err
 	}
 	sort.SliceStable(events, func(i, j int) bool { return events[i].at.After(events[j].at) })
-	list := []*screensv1.PageLink{}
+	lines := []string{}
 	for i, e := range events {
 		if i == 6 {
 			break
 		}
-		list = append(list, &screensv1.PageLink{Text: fmt.Sprintf("%s — %s %s %s %s", e.who, e.what,
-			strings.ToLower(e.action), e.amount, e.at.UTC().Format("Jan 2, 3:04 PM"))})
+		lines = append(lines, fmt.Sprintf("%s — %s %s %s %s", e.who, e.what,
+			strings.ToLower(e.action), e.amount, e.at.UTC().Format("Jan 2, 3:04 PM")))
 	}
-	if len(list) == 0 {
-		list = append(list, &screensv1.PageLink{Text: "No decisions recorded yet."})
-	}
-	list = append(list, &screensv1.PageLink{Text: "View all activity", Href: "/accounts/audit-log"})
-	return panel("Recent Disbursement Activity", links(list...)), nil
-}
-
-func panel(title string, items ...*screensv1.PagePanelItem) *screensv1.PageBlock {
-	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{Title: title, Items: items}}}
-}
-
-func text(t string) *screensv1.PagePanelItem {
-	return &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Text{Text: t}}
-}
-
-func heading(t string) *screensv1.PagePanelItem {
-	return &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Heading{Heading: t}}
-}
-
-func links(ls ...*screensv1.PageLink) *screensv1.PagePanelItem {
-	return &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{Links: ls}}}
+	return lines, nil
 }

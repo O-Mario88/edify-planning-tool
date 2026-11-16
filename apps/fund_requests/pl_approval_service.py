@@ -229,6 +229,22 @@ WEEKLY_STATUS_LABELS = {
 }
 
 
+#: What the action row says of a request this approver cannot act on, by
+#: the request's status (None: no request yet).
+WAITING_HINTS = {
+    None: "Auto-generated from the schedule — waiting for the CCEO to send it for approval.",
+    "pending_responsible_confirmation": "Auto-generated from the schedule — waiting for the CCEO to send it for approval.",
+    "not_requested": "The CCEO marked this week as not requested.",
+    "submitted_to_cd": "Escalated — awaiting the Country Director.",
+    "confirmed_for_advance": "Approved — at the Accountant for processing and disbursement.",
+    "disbursed": "Disbursed — awaiting the CCEO's receipt confirmation and accountability.",
+    "self_funded": "Marked self-funded — reimbursement follows accountability.",
+    "returned_by_pl": "Returned for correction — waiting for a corrected re-submission.",
+    "returned_by_cd": "Returned for correction — waiting for a corrected re-submission.",
+    "returned_by_accountant": "Returned by the Accountant — waiting for a corrected re-submission.",
+}
+
+
 def _week_floor(d):
     from datetime import timedelta
 
@@ -965,18 +981,7 @@ def _selected_detail(p, week_start):
             }
         )
 
-    hints = {
-        None: "Auto-generated from the schedule — waiting for the CCEO to send it for approval.",
-        "pending_responsible_confirmation": "Auto-generated from the schedule — waiting for the CCEO to send it for approval.",
-        "not_requested": "The CCEO marked this week as not requested.",
-        "submitted_to_cd": "Escalated — awaiting the Country Director.",
-        "confirmed_for_advance": "Approved — at the Accountant for processing and disbursement.",
-        "disbursed": "Disbursed — awaiting the CCEO's receipt confirmation and accountability.",
-        "self_funded": "Marked self-funded — reimbursement follows accountability.",
-        "returned_by_pl": "Returned for correction — waiting for a corrected re-submission.",
-        "returned_by_cd": "Returned for correction — waiting for a corrected re-submission.",
-        "returned_by_accountant": "Returned by the Accountant — waiting for a corrected re-submission.",
-    }
+    hints = WAITING_HINTS
 
     # §4/§5 Daily Field Cost (School Visit): the weighted School Visit Cost
     # Allocation and planned per-school figure come from the week's day

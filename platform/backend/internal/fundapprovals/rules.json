@@ -1,0 +1,234 @@
+{
+  "activity_types": {
+    "baseline_ssa_visit": "SSA Visit",
+    "cluster_meeting": "Cluster Meeting",
+    "cluster_meeting_ssa_review": "Cluster Meeting + SSA Review",
+    "cluster_training": "Cluster Training",
+    "cluster_training_ssa_collection": "Cluster Training + SSA Collection",
+    "coaching_visit": "Coaching Visit",
+    "core_assessment_visit": "Core Assessment Visit",
+    "core_training": "Core Training",
+    "core_visit": "Core Visit",
+    "donor_visit": "Donor Visit",
+    "field_event": "Field Event",
+    "follow_up_visit": "Follow-up Visit",
+    "in_school_coaching_visit": "In-school Coaching Visit",
+    "in_school_support": "In-school Support",
+    "in_school_training": "In-school Training",
+    "partner_activity": "Partner Activity",
+    "partner_ssa_collection": "Partner SSA Collection",
+    "programme_event": "Programme Event",
+    "project_activity": "Project Activity",
+    "school_improvement_training": "School Improvement Training",
+    "school_invitation": "School Invitation",
+    "school_visit": "School Visit",
+    "school_visit_ssa_collection": "School Visit + SSA Collection",
+    "social_visit": "Social Visit",
+    "ssa_activity": "SSA Activity",
+    "story_gathering_visit": "Gathering Story",
+    "training": "Training",
+    "training_follow_up_visit": "Training Follow-up Visit"
+  },
+  "cd_approval_roles": [
+    "Program Lead",
+    "ProjectCoordinator",
+    "ImpactAssessment",
+    "Accountant"
+  ],
+  "cluster_meeting_types": [
+    "cluster_meeting",
+    "cluster_meeting_ssa_review"
+  ],
+  "cluster_training_types": [
+    "cluster_training",
+    "cluster_training_ssa_collection"
+  ],
+  "doors": {
+    "Accountant": {
+      "export": true,
+      "page": false
+    },
+    "Admin": {
+      "export": true,
+      "page": true
+    },
+    "BusinessTransformationOfficer": {
+      "export": true,
+      "page": false
+    },
+    "CCEO": {
+      "export": false,
+      "page": false
+    },
+    "ClusterLeader": {
+      "export": false,
+      "page": false
+    },
+    "CountryDirector": {
+      "export": true,
+      "page": true
+    },
+    "HumanResources": {
+      "export": false,
+      "page": false
+    },
+    "ImpactAssessment": {
+      "export": true,
+      "page": false
+    },
+    "MfiLoanOfficer": {
+      "export": false,
+      "page": false
+    },
+    "MfiPartnerAdmin": {
+      "export": false,
+      "page": false
+    },
+    "PartnerAdmin": {
+      "export": false,
+      "page": false
+    },
+    "PartnerFieldOfficer": {
+      "export": false,
+      "page": false
+    },
+    "Program Lead": {
+      "export": true,
+      "page": true
+    },
+    "ProjectCoordinator": {
+      "export": true,
+      "page": false
+    },
+    "RegionalProgramLead": {
+      "export": true,
+      "page": false
+    },
+    "RegionalVicePresident": {
+      "export": true,
+      "page": false
+    }
+  },
+  "hints": {
+    "": "Auto-generated from the schedule — waiting for the CCEO to send it for approval.",
+    "confirmed_for_advance": "Approved — at the Accountant for processing and disbursement.",
+    "disbursed": "Disbursed — awaiting the CCEO's receipt confirmation and accountability.",
+    "not_requested": "The CCEO marked this week as not requested.",
+    "pending_responsible_confirmation": "Auto-generated from the schedule — waiting for the CCEO to send it for approval.",
+    "returned_by_accountant": "Returned by the Accountant — waiting for a corrected re-submission.",
+    "returned_by_cd": "Returned for correction — waiting for a corrected re-submission.",
+    "returned_by_pl": "Returned for correction — waiting for a corrected re-submission.",
+    "self_funded": "Marked self-funded — reimbursement follows accountability.",
+    "submitted_to_cd": "Escalated — awaiting the Country Director."
+  },
+  "metric_labels": [
+    "Requested This Week",
+    "Awaiting Your Approval",
+    "Approved This Week",
+    "Returned for Review"
+  ],
+  "mix_colours": {
+    "Admin Budget": "#64748b",
+    "Cluster Meetings": "var(--edify-accent)",
+    "Cluster Trainings": "var(--edify-warn)",
+    "Field Events": "#64748b",
+    "In-School Trainings": "var(--edify-warn)",
+    "Other": "#94a3b8",
+    "Partner School Visits": "#8b5cf6",
+    "SSA Support Visits": "#0d9488",
+    "Staff School Visits": "var(--edify-success)"
+  },
+  "months": [
+    "",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
+  ],
+  "ssa_visit_types": [
+    "baseline_ssa_visit",
+    "school_visit_ssa_collection",
+    "partner_ssa_collection",
+    "ssa_activity",
+    "core_assessment_visit"
+  ],
+  "status_labels": {
+    "": [
+      "Awaiting CCEO Send",
+      "info"
+    ],
+    "confirmed_for_advance": [
+      "At Accountant",
+      "success"
+    ],
+    "disbursed": [
+      "Disbursed",
+      "success"
+    ],
+    "not_requested": [
+      "Not Requested",
+      "info"
+    ],
+    "pending_responsible_confirmation": [
+      "Awaiting CCEO Send",
+      "info"
+    ],
+    "returned_by_accountant": [
+      "Returned",
+      "danger"
+    ],
+    "returned_by_cd": [
+      "Returned",
+      "danger"
+    ],
+    "returned_by_pl": [
+      "Returned",
+      "danger"
+    ],
+    "self_funded": [
+      "Self-funded",
+      "info"
+    ],
+    "submitted_to_cd": [
+      "Awaiting CD",
+      "info"
+    ],
+    "submitted_to_pl": [
+      "Awaiting Approval",
+      "warning"
+    ]
+  },
+  "training_types": [
+    "cluster_training",
+    "cluster_training_ssa_collection",
+    "core_training",
+    "in_school_training",
+    "school_improvement_training",
+    "training"
+  ],
+  "visit_types": [
+    "baseline_ssa_visit",
+    "coaching_visit",
+    "core_assessment_visit",
+    "core_visit",
+    "donor_visit",
+    "follow_up_visit",
+    "in_school_coaching_visit",
+    "in_school_support",
+    "partner_ssa_collection",
+    "school_invitation",
+    "school_visit",
+    "school_visit_ssa_collection",
+    "social_visit",
+    "story_gathering_visit",
+    "training_follow_up_visit"
+  ]
+}
