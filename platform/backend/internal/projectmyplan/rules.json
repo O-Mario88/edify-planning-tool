@@ -1,0 +1,205 @@
+{
+  "active_exclusions": [
+    "cancelled",
+    "closed",
+    "not_planned",
+    "rejected"
+  ],
+  "activity_types": {
+    "baseline_ssa_visit": "SSA Visit",
+    "cluster_meeting": "Cluster Meeting",
+    "cluster_meeting_ssa_review": "Cluster Meeting + SSA Review",
+    "cluster_training": "Cluster Training",
+    "cluster_training_ssa_collection": "Cluster Training + SSA Collection",
+    "coaching_visit": "Coaching Visit",
+    "core_assessment_visit": "Core Assessment Visit",
+    "core_training": "Core Training",
+    "core_visit": "Core Visit",
+    "donor_visit": "Donor Visit",
+    "field_event": "Field Event",
+    "follow_up_visit": "Follow-up Visit",
+    "in_school_coaching_visit": "In-school Coaching Visit",
+    "in_school_support": "In-school Support",
+    "in_school_training": "In-school Training",
+    "partner_activity": "Partner Activity",
+    "partner_ssa_collection": "Partner SSA Collection",
+    "programme_event": "Programme Event",
+    "project_activity": "Project Activity",
+    "school_improvement_training": "School Improvement Training",
+    "school_invitation": "School Invitation",
+    "school_visit": "School Visit",
+    "school_visit_ssa_collection": "School Visit + SSA Collection",
+    "social_visit": "Social Visit",
+    "ssa_activity": "SSA Activity",
+    "story_gathering_visit": "Gathering Story",
+    "training": "Training",
+    "training_follow_up_visit": "Training Follow-up Visit"
+  },
+  "complete_label": "Complete",
+  "delivered_statuses": [
+    "ia_verified",
+    "accountant_confirmed",
+    "completed",
+    "closed"
+  ],
+  "evidence_statuses": {
+    "accepted": "Accepted",
+    "none": "None",
+    "rejected": "Rejected",
+    "returned": "Returned",
+    "uploaded": "Uploaded"
+  },
+  "interventions": {
+    "christlike_behaviour": "Christlike Behaviour",
+    "enrolment": "Enrolment",
+    "exposure_to_word_of_god": "Exposure to the Word of God",
+    "financial_health": "Financial Health",
+    "government_requirement": "Government Requirements",
+    "leadership": "Leadership",
+    "learning_environment": "Learning Environment",
+    "teaching_environment": "Teacher's Environment"
+  },
+  "meeting_types": [
+    "cluster_meeting",
+    "cluster_meeting_ssa_review"
+  ],
+  "metric_labels": [
+    "Planned This Week",
+    "Planned This Month",
+    "Planned This Quarter",
+    "Planned This FY",
+    "School Visits Scheduled",
+    "Partner Activities",
+    "Project Trainings",
+    "Completion Readiness",
+    "Budget Created",
+    "Fund Request Synced",
+    "Evidence Pending",
+    "IA Review Pending"
+  ],
+  "officer_completed_statuses": [
+    "accountant_confirmed",
+    "awaiting_ia_verification",
+    "closed",
+    "completed",
+    "ia_verified",
+    "submitted_to_pl"
+  ],
+  "returned_states": [
+    "returned",
+    "returned_by_ia",
+    "returned_by_pl"
+  ],
+  "review_states": [
+    "accountant_confirmed",
+    "awaiting_ia_verification",
+    "ia_verified",
+    "submitted_to_pl"
+  ],
+  "roles": {
+    "Accountant": {
+      "page": false,
+      "strip": null
+    },
+    "Admin": {
+      "page": true,
+      "strip": null
+    },
+    "BusinessTransformationOfficer": {
+      "page": false,
+      "strip": null
+    },
+    "CCEO": {
+      "page": true,
+      "strip": null
+    },
+    "ClusterLeader": {
+      "page": false,
+      "strip": null
+    },
+    "CountryDirector": {
+      "page": true,
+      "strip": null
+    },
+    "HumanResources": {
+      "page": false,
+      "strip": null
+    },
+    "ImpactAssessment": {
+      "page": true,
+      "strip": null
+    },
+    "MfiLoanOfficer": {
+      "page": false,
+      "strip": null
+    },
+    "MfiPartnerAdmin": {
+      "page": false,
+      "strip": null
+    },
+    "PartnerAdmin": {
+      "page": false,
+      "strip": null
+    },
+    "PartnerFieldOfficer": {
+      "page": false,
+      "strip": null
+    },
+    "Program Lead": {
+      "page": true,
+      "strip": null
+    },
+    "ProjectCoordinator": {
+      "page": true,
+      "strip": {
+        "label": "My Plan",
+        "scrolls": true,
+        "tabs": [
+          {
+            "active": true,
+            "href": "/projects/my-plan",
+            "label": "My Plan"
+          },
+          {
+            "active": false,
+            "href": "/calendar",
+            "label": "Calendar"
+          }
+        ]
+      }
+    },
+    "RegionalProgramLead": {
+      "page": false,
+      "strip": null
+    },
+    "RegionalVicePresident": {
+      "page": false,
+      "strip": null
+    }
+  },
+  "training_types": [
+    "training",
+    "in_school_training",
+    "school_improvement_training",
+    "cluster_training",
+    "core_training",
+    "cluster_training_ssa_collection"
+  ],
+  "visit_types": [
+    "school_visit",
+    "follow_up_visit",
+    "coaching_visit",
+    "in_school_support",
+    "donor_visit",
+    "story_gathering_visit",
+    "school_invitation",
+    "social_visit",
+    "training_follow_up_visit",
+    "in_school_coaching_visit",
+    "core_visit",
+    "core_assessment_visit",
+    "baseline_ssa_visit",
+    "school_visit_ssa_collection",
+    "partner_ssa_collection"
+  ]
+}
