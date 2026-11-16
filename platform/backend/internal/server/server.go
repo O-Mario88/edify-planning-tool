@@ -79,6 +79,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/ownership"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partnerassigned"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partneroversight"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partnerpayments"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partnerusers"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partnerworkspace"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/peopledirectory"
@@ -223,6 +224,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			cpdlearning.NewService(pool, time.Now),
 			approvalhistory.NewService(pool),
 			batchpayments.NewService(pool, time.Now),
+			partnerpayments.NewService(pool),
 			mypd.NewService(pool, time.Now, cfg.PageWrites.MyProfessionalDevelopment),
 			planningoversight.NewService(pool, time.Now),
 			oversightportfolio.NewService(pool, time.Now),
