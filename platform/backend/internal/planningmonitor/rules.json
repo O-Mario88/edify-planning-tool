@@ -1,0 +1,494 @@
+{
+  "assigned_to_partner": "assigned_to_partner",
+  "cceo_role": "CCEO",
+  "certified_partner_agency": "certified_partner_agency",
+  "client_types": [
+    "client",
+    "core_trained",
+    "core_graduate"
+  ],
+  "cluster_meeting_types": [
+    "cluster_meeting",
+    "cluster_meeting_ssa_review"
+  ],
+  "companion_purpose": "in_school_training_delivery_visit",
+  "core_partner": 2,
+  "core_staff_visits": 2,
+  "core_types": [
+    "core"
+  ],
+  "current_ssa_statuses": [
+    "confirmed"
+  ],
+  "data_collection_purposes": [
+    "ssa_support"
+  ],
+  "data_collection_types": [
+    "school_visit_ssa_collection",
+    "baseline_ssa_visit",
+    "partner_ssa_collection",
+    "ssa_activity",
+    "core_assessment_visit"
+  ],
+  "dated_by_partner": "partner",
+  "delivered_statuses": [
+    "accountant_confirmed",
+    "closed",
+    "ia_verified"
+  ],
+  "gap_columns": [
+    [
+      "not_clustered",
+      "Not clustered",
+      "warning"
+    ],
+    [
+      "no_visit",
+      "No visit",
+      "danger"
+    ],
+    [
+      "no_training",
+      "No training",
+      "danger"
+    ],
+    [
+      "no_both",
+      "Neither",
+      "danger"
+    ]
+  ],
+  "gap_figures": {
+    "no_visit": "unplanned"
+  },
+  "gaps": [
+    [
+      "no_both",
+      "Not planned for visits or training"
+    ],
+    [
+      "no_visit",
+      "No visit planned"
+    ],
+    [
+      "no_training",
+      "No training planned"
+    ],
+    [
+      "not_clustered",
+      "Not clustered"
+    ],
+    [
+      "no_partner",
+      "Beyond staff reach, no partner"
+    ],
+    [
+      "staff_scheduled",
+      "Scheduled for a visit by staff"
+    ],
+    [
+      "staff_and_partner",
+      "Scheduled by staff and also with a Partner"
+    ]
+  ],
+  "kind_ssa": "ssa_support",
+  "ledger": [
+    [
+      "staff_visit",
+      "Staff visits on a person's row",
+      false
+    ],
+    [
+      "partner_visit",
+      "Partner visits at a school on the rows",
+      false
+    ],
+    [
+      "partner_no_visit_school",
+      "Partner visits at a school that takes none, such as a Champion (not counted)",
+      false
+    ],
+    [
+      "cluster",
+      "Group trainings and cluster meetings (schools with training)",
+      false
+    ],
+    [
+      "training",
+      "In-school trainings (schools with training)",
+      false
+    ],
+    [
+      "companion",
+      "The visit an in-school training writes beside itself",
+      false
+    ],
+    [
+      "data_collection",
+      "SSA Support assigned to a Partner (not counted)",
+      false
+    ],
+    [
+      "outreach",
+      "Donor, story, social and invitation visits (not counted)",
+      false
+    ],
+    [
+      "outside_ssa",
+      "Work under a project no SSA intervention measures",
+      false
+    ],
+    [
+      "other",
+      "Other work with no visit or training to count",
+      false
+    ],
+    [
+      "off_roster",
+      "Counted staff visits planned by somebody on no row",
+      true
+    ],
+    [
+      "off_schools",
+      "Partner visits at a school on no row",
+      true
+    ]
+  ],
+  "lists": [
+    [
+      "all",
+      "Schools held"
+    ],
+    [
+      "core",
+      "Core schools"
+    ],
+    [
+      "client",
+      "Client, Core Trained and Core Graduate schools"
+    ],
+    [
+      "visited",
+      "With a visit planned"
+    ],
+    [
+      "staff_queue",
+      "The staff queue: Core schools, and schools not in a Partner's hands"
+    ],
+    [
+      "staff_visits_left",
+      "Still owed a staff visit"
+    ],
+    [
+      "core_staff_visits",
+      "Core schools with a staff visit planned"
+    ],
+    [
+      "core_staff_visits_left",
+      "Core schools short of two staff visits"
+    ],
+    [
+      "client_staff_visits",
+      "Client schools with a staff visit planned"
+    ],
+    [
+      "client_staff_visits_left",
+      "Client schools with no staff visit planned"
+    ],
+    [
+      "core_visits_over",
+      "Core schools with more than two staff visits or two Partner visits"
+    ],
+    [
+      "client_staff_and_partner",
+      "Client schools scheduled by staff and also with a Partner: booked twice"
+    ],
+    [
+      "core_staff_trainings",
+      "Core schools with a staff training in their package"
+    ],
+    [
+      "core_staff_trainings_left",
+      "Core schools short of two staff trainings"
+    ],
+    [
+      "training",
+      "In a group or in-school training"
+    ],
+    [
+      "training_due",
+      "Schools that take a training"
+    ],
+    [
+      "with_partner",
+      "In a Partner's hands"
+    ],
+    [
+      "partner_queue",
+      "The Partner's queue: Core schools, and schools staff have not scheduled"
+    ],
+    [
+      "partner_left",
+      "Not yet handed to a Partner"
+    ],
+    [
+      "partner_dated",
+      "With a Partner visit dated"
+    ],
+    [
+      "partner_waiting",
+      "Awaiting the Partner's date"
+    ],
+    [
+      "partner_visits_left",
+      "Still owed a Partner visit"
+    ],
+    [
+      "core_partner_visits",
+      "Core schools with a Partner visit in their package"
+    ],
+    [
+      "core_partner_visits_left",
+      "Core schools short of two Partner visits"
+    ],
+    [
+      "core_partner_trainings",
+      "Core schools with a Partner training in their package"
+    ],
+    [
+      "core_partner_trainings_left",
+      "Core schools short of two Partner trainings"
+    ],
+    [
+      "in_project",
+      "In a project"
+    ],
+    [
+      "not_in_project",
+      "Not in a project"
+    ],
+    [
+      "project_added",
+      "Added to a project by the person who holds them"
+    ],
+    [
+      "fully_planned",
+      "Fully planned"
+    ],
+    [
+      "partly_planned",
+      "Partly planned"
+    ],
+    [
+      "not_yet_planned",
+      "Not yet planned"
+    ],
+    [
+      "duplicates",
+      "Booked more than once"
+    ],
+    [
+      "core_no_partner_half",
+      "Core schools without their Partner half"
+    ],
+    [
+      "not_visited",
+      "No visit completed this year"
+    ],
+    [
+      "not_trained",
+      "No training completed this year"
+    ],
+    [
+      "no_ssa",
+      "No confirmed SSA this year"
+    ]
+  ],
+  "no_lead": [
+    "__no_lead__",
+    "No Programme Lead"
+  ],
+  "officer_completed_statuses": [
+    "accountant_confirmed",
+    "awaiting_ia_verification",
+    "closed",
+    "completed",
+    "ia_verified",
+    "submitted_to_pl"
+  ],
+  "open_project_statuses": [
+    "active",
+    "proposed",
+    "scaling",
+    "under_review"
+  ],
+  "operating_statuses": [
+    "active",
+    "reopened"
+  ],
+  "outreach_purposes": [
+    "donor_visit",
+    "story_gathering",
+    "school_invitation",
+    "social_visit"
+  ],
+  "outreach_types": [
+    "donor_visit",
+    "story_gathering_visit",
+    "school_invitation",
+    "social_visit"
+  ],
+  "pillar_labels": {
+    "partner": "Partner assignment",
+    "project": "Project assignment",
+    "trainings": "Trainings",
+    "visits": "Visits"
+  },
+  "planned_states": [
+    "accountant_confirmed",
+    "awaiting_ia_verification",
+    "closed",
+    "completed",
+    "completion_started",
+    "evidence_accepted",
+    "evidence_uploaded",
+    "ia_verified",
+    "in_progress",
+    "partner_scheduled",
+    "planned",
+    "rescheduled",
+    "returned_by_ia",
+    "returned_by_pl",
+    "salesforce_id_required",
+    "scheduled",
+    "submitted_to_pl"
+  ],
+  "program_lead_role": "Program Lead",
+  "purpose_kinds": {
+    "in_school_coaching": "in_school_training",
+    "in_school_training": "in_school_training",
+    "training_follow_up": "follow_up"
+  },
+  "requirements": {
+    "champion": {
+      "either_trainings": 0,
+      "either_visits": 0,
+      "partner_trainings": 0,
+      "partner_visits": 0,
+      "staff_trainings": 0,
+      "staff_visits": 0
+    },
+    "client": {
+      "either_trainings": 1,
+      "either_visits": 1,
+      "partner_trainings": 0,
+      "partner_visits": 0,
+      "staff_trainings": 0,
+      "staff_visits": 0
+    },
+    "core": {
+      "either_trainings": 0,
+      "either_visits": 0,
+      "partner_trainings": 2,
+      "partner_visits": 2,
+      "staff_trainings": 2,
+      "staff_visits": 2
+    },
+    "core_graduate": {
+      "either_trainings": 1,
+      "either_visits": 1,
+      "partner_trainings": 0,
+      "partner_visits": 0,
+      "staff_trainings": 0,
+      "staff_visits": 0
+    },
+    "core_trained": {
+      "either_trainings": 1,
+      "either_visits": 1,
+      "partner_trainings": 0,
+      "partner_visits": 0,
+      "staff_trainings": 0,
+      "staff_visits": 0
+    }
+  },
+  "role_codes": {
+    "CCEO": "CCEO",
+    "Program Lead": "PL"
+  },
+  "role_labels": {
+    "CCEO": "CCEO",
+    "PL": "Programme Lead"
+  },
+  "rules_version": "2026-10-03.2",
+  "school_training_types": [
+    "training",
+    "in_school_training",
+    "school_improvement_training",
+    "core_training"
+  ],
+  "trained_types": [
+    "core",
+    "client",
+    "core_trained",
+    "core_graduate"
+  ],
+  "training_types": [
+    "training",
+    "in_school_training",
+    "school_improvement_training",
+    "cluster_training",
+    "core_training",
+    "cluster_training_ssa_collection"
+  ],
+  "type_kinds": {
+    "coaching_visit": "follow_up",
+    "core_visit": "follow_up",
+    "follow_up_visit": "follow_up",
+    "in_school_coaching_visit": "in_school_training",
+    "in_school_support": "follow_up",
+    "in_school_training": "in_school_training",
+    "school_visit": "follow_up",
+    "training_follow_up_visit": "follow_up"
+  },
+  "type_labels": {
+    "champion": "Champion",
+    "client": "Client",
+    "core": "Core",
+    "core_graduate": "Core Graduate",
+    "core_trained": "Core Trained"
+  },
+  "type_order": [
+    "core",
+    "client",
+    "core_trained",
+    "core_graduate",
+    "champion"
+  ],
+  "unassigned": [
+    "__unassigned__",
+    "Unassigned"
+  ],
+  "unscheduled_handover_statuses": [
+    "assigned",
+    "pending_scheduling"
+  ],
+  "visit_shape_types": [
+    "in_school_training",
+    "in_school_coaching_visit",
+    "training_follow_up_visit",
+    "follow_up_visit",
+    "school_visit",
+    "coaching_visit",
+    "in_school_support",
+    "core_visit",
+    "school_visit_ssa_collection",
+    "baseline_ssa_visit",
+    "partner_ssa_collection",
+    "ssa_activity",
+    "core_assessment_visit"
+  ],
+  "visit_targets": {
+    "CCEO": 560,
+    "PL": 280
+  }
+}
