@@ -33,7 +33,13 @@ def ask(reader, query):
     with transaction.atomic():
         status, body = read_page(reader, PATH, query)
         transaction.set_rollback(True)
-    return {"email": reader.email, "path": PATH, "query": query, "status": status, "body": body}
+    return {
+        "email": reader.email,
+        "path": PATH,
+        "query": query,
+        "status": status,
+        "body": body,
+    }
 
 
 def second_page(body):
@@ -48,11 +54,13 @@ def second_page(body):
 
 with connection.cursor() as cursor:
     cursor.execute(
-        "SELECT sp.id FROM staff_profile sp JOIN \"user\" u ON u.id = sp.user_id "
+        'SELECT sp.id FROM staff_profile sp JOIN "user" u ON u.id = sp.user_id '
         "WHERE u.email = 'pl1@edify.org'"
     )
     lead = cursor.fetchone()
-    cursor.execute("SELECT id FROM district WHERE sub_region_id IS NOT NULL ORDER BY name LIMIT 1")
+    cursor.execute(
+        "SELECT id FROM district WHERE sub_region_id IS NOT NULL ORDER BY name LIMIT 1"
+    )
     district = cursor.fetchone()
 
 director = User.objects.get(email="cd@edify.org")
@@ -85,5 +93,11 @@ for email in (
         answers.append(ask(reader, {}))
 
 with open(os.environ["GOLDEN_OUT"], "w") as handle:
-    json.dump({"rows": {}, "answers": answers}, handle, ensure_ascii=False, indent=1, default=str)
+    json.dump(
+        {"rows": {}, "answers": answers},
+        handle,
+        ensure_ascii=False,
+        indent=1,
+        default=str,
+    )
 print(f"{len(answers)} pages asked")

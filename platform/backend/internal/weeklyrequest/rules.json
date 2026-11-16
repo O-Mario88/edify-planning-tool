@@ -1,0 +1,209 @@
+{
+  "everyone_staff": "all",
+  "non_fundable_statuses": [
+    "awaiting_owner_approval",
+    "cancelled",
+    "deferred",
+    "rejected"
+  ],
+  "purpose_interventions": {
+    "christlike_behaviour": "Christlike Behaviour",
+    "enrolment": "Enrolment",
+    "exposure_to_word_of_god": "Exposure to the Word of God",
+    "financial_health": "Financial Health",
+    "government_requirement": "Government Requirements",
+    "leadership": "Leadership",
+    "learning_environment": "Learning Environment",
+    "teaching_environment": "Teacher's Environment"
+  },
+  "roles": {
+    "Accountant": {
+      "add_activity": false,
+      "clears_escalated": false,
+      "export": true,
+      "monthly_request": true,
+      "page": true,
+      "payment_act": true,
+      "reports": false,
+      "strip": null
+    },
+    "Admin": {
+      "add_activity": true,
+      "clears_escalated": false,
+      "export": true,
+      "monthly_request": true,
+      "page": true,
+      "payment_act": false,
+      "reports": true,
+      "strip": null
+    },
+    "BusinessTransformationOfficer": {
+      "add_activity": false,
+      "clears_escalated": false,
+      "export": false,
+      "monthly_request": false,
+      "page": false,
+      "payment_act": false,
+      "reports": false,
+      "strip": null
+    },
+    "CCEO": {
+      "add_activity": true,
+      "clears_escalated": false,
+      "export": true,
+      "monthly_request": false,
+      "page": true,
+      "payment_act": false,
+      "reports": false,
+      "strip": null
+    },
+    "ClusterLeader": {
+      "add_activity": false,
+      "clears_escalated": false,
+      "export": false,
+      "monthly_request": false,
+      "page": false,
+      "payment_act": false,
+      "reports": false,
+      "strip": null
+    },
+    "CountryDirector": {
+      "add_activity": true,
+      "clears_escalated": true,
+      "export": true,
+      "monthly_request": true,
+      "page": true,
+      "payment_act": false,
+      "reports": true,
+      "strip": null
+    },
+    "HumanResources": {
+      "add_activity": true,
+      "clears_escalated": false,
+      "export": false,
+      "monthly_request": false,
+      "page": false,
+      "payment_act": false,
+      "reports": false,
+      "strip": null
+    },
+    "ImpactAssessment": {
+      "add_activity": true,
+      "clears_escalated": false,
+      "export": true,
+      "monthly_request": true,
+      "page": true,
+      "payment_act": false,
+      "reports": true,
+      "strip": null
+    },
+    "MfiLoanOfficer": {
+      "add_activity": false,
+      "clears_escalated": false,
+      "export": false,
+      "monthly_request": false,
+      "page": false,
+      "payment_act": false,
+      "reports": false,
+      "strip": null
+    },
+    "MfiPartnerAdmin": {
+      "add_activity": false,
+      "clears_escalated": false,
+      "export": false,
+      "monthly_request": false,
+      "page": false,
+      "payment_act": false,
+      "reports": false,
+      "strip": null
+    },
+    "PartnerAdmin": {
+      "add_activity": false,
+      "clears_escalated": false,
+      "export": false,
+      "monthly_request": false,
+      "page": false,
+      "payment_act": false,
+      "reports": false,
+      "strip": null
+    },
+    "PartnerFieldOfficer": {
+      "add_activity": false,
+      "clears_escalated": false,
+      "export": false,
+      "monthly_request": false,
+      "page": false,
+      "payment_act": false,
+      "reports": false,
+      "strip": null
+    },
+    "Program Lead": {
+      "add_activity": true,
+      "clears_escalated": false,
+      "export": true,
+      "monthly_request": false,
+      "page": true,
+      "payment_act": false,
+      "reports": false,
+      "strip": null
+    },
+    "ProjectCoordinator": {
+      "add_activity": true,
+      "clears_escalated": false,
+      "export": true,
+      "monthly_request": true,
+      "page": true,
+      "payment_act": false,
+      "reports": true,
+      "strip": {
+        "label": "Finance",
+        "scrolls": true,
+        "tabs": [
+          {
+            "active": false,
+            "href": "/budget",
+            "label": "Budget"
+          },
+          {
+            "active": true,
+            "href": "/fund-requests/weekly",
+            "label": "Weekly Advance Request"
+          },
+          {
+            "active": false,
+            "href": "/work-plan",
+            "label": "Work Plan"
+          }
+        ]
+      }
+    },
+    "RegionalProgramLead": {
+      "add_activity": false,
+      "clears_escalated": false,
+      "export": false,
+      "monthly_request": false,
+      "page": false,
+      "payment_act": false,
+      "reports": false,
+      "strip": null
+    },
+    "RegionalVicePresident": {
+      "add_activity": false,
+      "clears_escalated": false,
+      "export": false,
+      "monthly_request": true,
+      "page": false,
+      "payment_act": false,
+      "reports": true,
+      "strip": null
+    }
+  },
+  "stage_labels": [
+    "Weekly plan",
+    "Advance request",
+    "Supervisor approval",
+    "Accountant disbursement",
+    "Bank-message confirmation",
+    "Accountability"
+  ]
+}
