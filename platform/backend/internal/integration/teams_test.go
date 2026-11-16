@@ -308,6 +308,18 @@ WHERE deleted_at IS NULL AND school_id = $1 LIMIT 1`, schools[0].GetSchoolId()).
 		t.Fatalf("a member's own login: %v %+v", err, login)
 	}
 	member := sessionOf(t, "go.test.amina@partner.test", "Partner#2026x")
+	// Removing a member anonymises the account and keeps it; the test's own
+	// account goes once the test is done, or every run would leave another
+	// "Go Test Amina" on the Users page.
+	t.Cleanup(func() {
+		id := member.GetAccount().GetUserId()
+		for _, sql := range []string{`DELETE FROM refresh_token WHERE user_id = $1`, `DELETE FROM login_event WHERE user_id = $1`,
+			`DELETE FROM "user" WHERE id = $1`} {
+			if _, err := admin.Exec(context.Background(), sql, id); err != nil {
+				t.Errorf("removing the test member's account: %v", err)
+			}
+		}
+	})
 	if member.GetAccount().GetActiveRole() != "PartnerFieldOfficer" {
 		t.Fatalf("the member's login works as %q", member.GetAccount().GetActiveRole())
 	}

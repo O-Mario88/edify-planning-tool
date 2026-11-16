@@ -61,6 +61,9 @@ TRAINING_TYPES = frozenset(
     }
 )
 
+#: The statuses a past-due row reads as Returned.
+RETURNED_STATUSES = ("returned", "returned_by_pl", "returned_by_ia")
+
 MEETING_TYPES = frozenset(
     {
         "cluster_meeting",
@@ -403,7 +406,7 @@ def _build_rows(activity_ids, *, own_ids, today) -> list[dict[str, Any]]:
             status_lbl = gap
             status_tone = "warning"
             status_class = "bg-amber-50 text-amber-700 border-amber-200"
-        elif a.status in ("returned", "returned_by_pl", "returned_by_ia"):
+        elif a.status in RETURNED_STATUSES:
             status_lbl = "Returned"
             status_tone = "danger"
             status_class = "bg-rose-50 text-rose-700 border-rose-200"

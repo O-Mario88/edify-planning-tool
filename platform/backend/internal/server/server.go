@@ -46,6 +46,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/costsettings"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/coverage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/cpdlearning"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dashboard"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dataquality"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/debriefs"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/decisionlog"
@@ -239,6 +240,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			weeklyrequest.NewService(pool, time.Now),
 			adminusers.NewService(pool),
 			personaltimeoff.NewService(pool, time.Now),
+			dashboard.NewService(pool, time.Now),
 			partneroversight.NewService(pool, time.Now),
 			hrregister.NewService(pool, time.Now).WithAccessLog(pool, logger),
 			leavepolicies.NewService(pool, time.Now),
