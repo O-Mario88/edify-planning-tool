@@ -58,6 +58,108 @@
     "CCEO",
     "Program Lead"
   ],
+  "lending": {
+    "baseline_kind": "baseline",
+    "classification_labels": {
+      "baseline_required": "Baseline Required",
+      "due": "Due",
+      "early_progress": "Early Progress",
+      "insufficient_evidence": "Insufficient Evidence",
+      "mixed": "Mixed Impact",
+      "negative": "Negative Impact",
+      "no_change": "No Measurable Change",
+      "not_due": "Not Due",
+      "positive": "Positive Impact",
+      "strong_positive": "Strong Positive Impact",
+      "under_review": "Under Review"
+    },
+    "cohort_caveat": "Cohorts are compared within their own disbursement year and purpose. A cohort whose loans have run for less than the purpose's follow-up window is immature: its conclusions are early, not final.",
+    "evidence_reported": "reported",
+    "evidence_verified": "verified",
+    "grade_labels": {
+      "descriptive": "Descriptive (before and after only)",
+      "insufficient": "Insufficient evidence"
+    },
+    "ia_pending": "pending",
+    "ia_returned": "returned",
+    "ia_verified": "verified",
+    "legacy_preparer": "server-evidence-compiler",
+    "min_n": 8,
+    "money_roles": [
+      "BusinessTransformationOfficer",
+      "CountryDirector",
+      "ImpactAssessment",
+      "MfiLoanOfficer",
+      "MfiPartnerAdmin",
+      "RegionalVicePresident"
+    ],
+    "negative": "negative",
+    "neutral": [
+      "mixed",
+      "no_change"
+    ],
+    "page_size": 50,
+    "positive": [
+      "strong_positive",
+      "positive",
+      "early_progress"
+    ],
+    "scope": {
+      "Accountant": "none",
+      "Admin": "none",
+      "BusinessTransformationOfficer": "country_bound",
+      "CCEO": "portfolio",
+      "ClusterLeader": "none",
+      "CountryDirector": "country_bound",
+      "HumanResources": "none",
+      "ImpactAssessment": "country_bound",
+      "MfiLoanOfficer": "mfi",
+      "MfiPartnerAdmin": "mfi",
+      "PartnerAdmin": "none",
+      "PartnerFieldOfficer": "none",
+      "Program Lead": "portfolio",
+      "ProjectCoordinator": "none",
+      "RegionalProgramLead": "none",
+      "RegionalVicePresident": "country"
+    },
+    "snapshot_kinds": {
+      "baseline": "Baseline",
+      "follow_up": "Follow-up"
+    },
+    "state_labels": {
+      "awaiting": "Awaiting verification",
+      "returned": "Returned to preparer",
+      "to_prepare": "To prepare",
+      "verified": "Verified"
+    },
+    "tabs": [
+      [
+        "use",
+        "Loan use"
+      ],
+      [
+        "enrolment",
+        "Enrolment"
+      ],
+      [
+        "outputs",
+        "Purpose outputs"
+      ],
+      [
+        "teachers",
+        "Teacher completion"
+      ],
+      [
+        "conclusions",
+        "Impact conclusions"
+      ],
+      [
+        "cohorts",
+        "Financed cohorts"
+      ]
+    ],
+    "use_reported": "reported"
+  },
   "outcome_area_approved_status": "approved",
   "outcome_area_hidden_statuses": [
     "retired",
@@ -536,6 +638,194 @@
               }
             ]
           }
+        }
+      }
+    },
+    "/ia/lending-evidence/": {
+      "roles": {
+        "Accountant": {
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "page": true,
+          "strip": {
+            "label": "Impact Assessment",
+            "scrolls": true,
+            "tabs": [
+              {
+                "active": false,
+                "href": "/ia/dashboard/",
+                "label": "Overview"
+              },
+              {
+                "active": false,
+                "href": "/ia/framework/",
+                "label": "Framework & Strategy"
+              },
+              {
+                "active": false,
+                "href": "/ia/school-evidence/",
+                "label": "Baseline & Field Data"
+              },
+              {
+                "active": false,
+                "href": "/ia/stories/",
+                "label": "School Progress"
+              },
+              {
+                "active": true,
+                "href": "/ia/lending-evidence/",
+                "label": "Analysis & Learning"
+              },
+              {
+                "active": false,
+                "href": "/ia/impact-reports/",
+                "label": "Reporting & Accountability"
+              },
+              {
+                "active": false,
+                "href": "/country-planning-oversight/",
+                "label": "Data Quality & Verification"
+              }
+            ]
+          }
+        },
+        "BusinessTransformationOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "page": true,
+          "strip": {
+            "label": "Impact Assessment",
+            "scrolls": true,
+            "tabs": [
+              {
+                "active": false,
+                "href": "/ia/dashboard/",
+                "label": "Overview"
+              },
+              {
+                "active": false,
+                "href": "/ia/framework/",
+                "label": "Framework & Strategy"
+              },
+              {
+                "active": false,
+                "href": "/ia/school-evidence/",
+                "label": "Baseline & Field Data"
+              },
+              {
+                "active": false,
+                "href": "/ia/stories/",
+                "label": "School Progress"
+              },
+              {
+                "active": true,
+                "href": "/ia/lending-evidence/",
+                "label": "Analysis & Learning"
+              },
+              {
+                "active": false,
+                "href": "/ia/impact-reports/",
+                "label": "Reporting & Accountability"
+              },
+              {
+                "active": false,
+                "href": "/country-planning-oversight/",
+                "label": "Data Quality & Verification"
+              }
+            ]
+          }
+        },
+        "HumanResources": {
+          "page": false,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "page": true,
+          "strip": {
+            "label": "Impact Assessment",
+            "scrolls": true,
+            "tabs": [
+              {
+                "active": false,
+                "href": "/ia/dashboard/",
+                "label": "Overview"
+              },
+              {
+                "active": false,
+                "href": "/ia/framework/",
+                "label": "Framework & Strategy"
+              },
+              {
+                "active": false,
+                "href": "/ia/school-evidence/",
+                "label": "Baseline & Field Data"
+              },
+              {
+                "active": false,
+                "href": "/ia/stories/",
+                "label": "School Progress"
+              },
+              {
+                "active": true,
+                "href": "/ia/lending-evidence/",
+                "label": "Analysis & Learning"
+              },
+              {
+                "active": false,
+                "href": "/ia/impact-reports/",
+                "label": "Reporting & Accountability"
+              },
+              {
+                "active": false,
+                "href": "/country-planning-oversight/",
+                "label": "Data Quality & Verification"
+              }
+            ]
+          }
+        },
+        "MfiLoanOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "page": false,
+          "strip": null
         }
       }
     },

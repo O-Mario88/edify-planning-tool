@@ -872,3 +872,15 @@ GRANT SELECT (updated_at, institution, course_type, course_category, start_date,
 GRANT SELECT (staff_id, fy, annual_allocation, currency) ON pd_allocation TO edify_gateway_ro;
 GRANT SELECT (id, request_id, original_name, document_type, status, created_at) ON pd_certificate TO edify_gateway_ro;
 GRANT SELECT (id, recipient_id, category, status, context_id) ON message TO edify_gateway_ro;
+
+-- Lending Evidence (internal/iapages/lending.go): the reported loan use,
+-- purpose outputs and teacher completions waiting for Impact Assessment, and
+-- a conclusion's return note and filing order. The teacher is an anonymised
+-- reference only.
+GRANT SELECT (purpose_id, status, reported_amount, intended_output, updated_at) ON bt_loan_purpose_allocation TO edify_gateway_ro;
+GRANT SELECT (evidence_reference) ON bt_enrolment_snapshot TO edify_gateway_ro;
+GRANT SELECT (id, allocation_id, asset_type, planned_quantity, reported_quantity, reported_operational_quantity,
+  evidence_reference, status, updated_at) ON bt_purpose_asset_output TO edify_gateway_ro;
+GRANT SELECT (id, loan_id, anonymized_reference, programme, institution, completed_on, evidence_reference, status)
+  ON bt_teacher_degree_beneficiary TO edify_gateway_ro;
+GRANT SELECT (ia_note, created_at) ON bt_loan_impact_assessment TO edify_gateway_ro;
