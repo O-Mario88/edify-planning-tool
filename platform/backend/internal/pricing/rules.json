@@ -63,6 +63,35 @@
     ]
   },
   "country": "Uganda",
+  "daily_batch_eligible_types": [
+    "baseline_ssa_visit",
+    "coaching_visit",
+    "core_assessment_visit",
+    "core_visit",
+    "donor_visit",
+    "follow_up_visit",
+    "in_school_coaching_visit",
+    "in_school_support",
+    "partner_ssa_collection",
+    "school_invitation",
+    "school_visit",
+    "school_visit_ssa_collection",
+    "social_visit",
+    "story_gathering_visit",
+    "training_follow_up_visit"
+  ],
+  "day_pool_extra_types": [
+    "cluster_meeting",
+    "cluster_meeting_ssa_review",
+    "cluster_training",
+    "cluster_training_ssa_collection",
+    "core_training",
+    "field_event",
+    "in_school_training",
+    "programme_event",
+    "school_improvement_training",
+    "training"
+  ],
   "field_role_aliases": [
     "cceo",
     "pl",
@@ -90,6 +119,13 @@
     "ProjectCoordinator",
     "RegionalProgramLead",
     "RegionalVicePresident"
+  ],
+  "mixed_transport_label": "Transport Mixed District",
+  "non_fundable_statuses": [
+    "cancelled",
+    "rejected",
+    "deferred",
+    "awaiting_owner_approval"
   ],
   "operational_kind": "operational",
   "published_status": "published",

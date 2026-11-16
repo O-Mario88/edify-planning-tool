@@ -223,3 +223,18 @@ func IsCanonical(key string) bool {
 	_, ok := rules.rateLabels[key]
 	return ok
 }
+
+// DayKeys is apps.daily_visit_batches.pricing.day_keys and the optional
+// keys after them: the rates one day away fetches in that district, with
+// the traveller's night rate (an unknown one is the CCEO's), and without the
+// night and the dinner on the day the traveller comes home.
+func DayKeys(district, accommodationKey string, returnDay bool) (required, optional []string) {
+	return dayKeys(district, accommodationKey, returnDay), append([]string(nil), rules.dayOptional[district]...)
+}
+
+// DayLabel is the day line's name (KEY_LABELS), and whether the key is one
+// of the day's own rates.
+func DayLabel(key string) (string, bool) {
+	l, ok := rules.dayLabels[key]
+	return l, ok
+}

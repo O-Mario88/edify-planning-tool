@@ -7,7 +7,10 @@ platform/backend/internal/pricing/rules.json: the Activity Catalogue's
 costing profiles; which roles are field staff (read against their primary
 district) and the head-office zone everyone else is read against; whose night
 away is paid at the second accommodation rate, and the two rates; and which
-rate cards price work (the country, the kinds and the published status). The
+rate cards price work (the country, the kinds and the published status);
+and for the day a visit shares: the activity statuses that draw no money,
+the types whose personal per-diems join the day, and the name of a Mixed
+day's transport. The
 recipe itself is internal/costing (export_costing_rules). A change to any of
 them must be exported again; apps/budget/test_pricing_rules_export.py fails
 until it is.
@@ -30,6 +33,7 @@ def rules() -> dict:
 
     from apps.budget.costing_service import _COSTING_PROFILES
     from apps.budget.models import RateCardKind, RateCardStatus
+    from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
     from apps.daily_visit_batches import districts, pricing
 
     return {
@@ -49,6 +53,10 @@ def rules() -> dict:
         "operational_kind": RateCardKind.OPERATIONAL.value,
         "reference_kind": RateCardKind.REFERENCE.value,
         "published_status": RateCardStatus.PUBLISHED.value,
+        "non_fundable_statuses": list(NON_FUNDABLE_ACTIVITY_STATUSES),
+        "daily_batch_eligible_types": sorted(pricing.DAILY_BATCH_ELIGIBLE_TYPES),
+        "day_pool_extra_types": sorted(pricing.DAY_POOL_EXTRA_TYPES),
+        "mixed_transport_label": pricing.MIXED_TRANSPORT_LABEL,
     }
 
 
