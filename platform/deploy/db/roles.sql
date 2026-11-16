@@ -896,3 +896,8 @@ GRANT SELECT (fy, total_amount, disbursed_amount, accountability_submitted_at, a
 GRANT SELECT (line_item_type, description, quantity, unit_cost, total_cost) ON weekly_fund_request_line TO edify_gateway_ro;
 GRANT SELECT (fy, month) ON advance_request TO edify_gateway_ro;
 GRANT SELECT (partner_name) ON partner_payment TO edify_gateway_ro;
+
+-- Fund Approvals (internal/fundapprovals): whether a cost line is paid
+-- straight to a provider and whether it carries a cost catalogue version
+-- (a plan without one needs review).
+GRANT SELECT (vendor_paid, catalogue_id) ON activity_schedule_cost_line TO edify_gateway_ro;
