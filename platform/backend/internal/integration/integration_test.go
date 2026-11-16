@@ -73,6 +73,8 @@ const (
 	todoUnsnoozeRolesFile = "../../../deploy/db/todo_unsnooze_roles.sql"
 	// The presence stamp for requests Go answers: one narrow function.
 	presenceRolesFile = "../../../deploy/db/presence_roles.sql"
+	// My Professional Development's read writes (owner, 2026-11-16).
+	mypdRolesFile = "../../../deploy/db/mypd_roles.sql"
 	// Where the loan portal's emails go in this run.
 	publicBaseURL = "http://127.0.0.1:9"
 )
@@ -264,6 +266,13 @@ func prepareGatewayRole(ctx context.Context) (string, error) {
 		return "", err
 	}
 	if _, err := conn.Conn().PgConn().Exec(ctx, string(presenceRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	mypdRoles, err := os.ReadFile(filepath.FromSlash(mypdRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(mypdRoles)).ReadAll(); err != nil {
 		return "", err
 	}
 	buffer := make([]byte, 24)

@@ -199,6 +199,11 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		// Snoozing a To-Do from Today (docs/migration/50;
 		// deploy/db/todo_roles.sql): the person's snooze row.
 		filepath.Join(root, "internal", "todosnooze") + sep: {"command_center_todo_snooze"},
+		// My Professional Development's read writes what the existing read
+		// writes (owner, 2026-11-16: "Same writes"; docs/migration/68 §68.7;
+		// deploy/db/mypd_roles.sql): a course moved on by its dates, the
+		// reminders that closes, the year's allocation.
+		filepath.Join(root, "internal", "mypd") + sep: {"pd_request", "notification", "pd_allocation"},
 	}
 	mechanics := filepath.Join(root, "internal", "ownedschema") + sep
 	// The lint describes the DDL it allows as patterns; it runs none.

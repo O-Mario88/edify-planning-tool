@@ -129,8 +129,16 @@ what that write leaves:
 - My Targets and My Professional Development (owner, 2026-11-16: "Same
   writes"): My Targets rebuilds the reader's achievement ledger
   (`TargetAchievementService.rebuild`), My Professional Development syncs the
-  reader's course tracking (`PDCourseTrackingService.sync_all`), each before
-  the page reads.
+  reader's course tracking (`PDCourseTrackingService.sync_all`: a course
+  moves on by its dates, and the reminders that ends are closed) and makes
+  the year's allocation when there is none
+  (`StaffPDService.get_or_create_allocation`, for whatever year is asked),
+  each before the page reads. Built: `internal/mypd`, behind
+  `EDIFY_GO_PAGE_WRITES=my_professional_development`; its golden compares the
+  page and the rows the read leaves (9 answers of 5 accounts, 0 differing;
+  planted faults in the allocation, the action tiles and both date edges are
+  each caught). Not covered: a reader with no staff profile (Go passes the
+  page on) and a course table past one page (passed on).
 
 Each such page writes through its own role with exactly the columns the
 existing write touches, behind its own switch (off by default, development

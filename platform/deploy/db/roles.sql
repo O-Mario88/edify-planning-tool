@@ -861,3 +861,14 @@ GRANT SELECT (batch_id, status, amount) ON transport_payment TO edify_gateway_ro
 GRANT SELECT (category, budget_ceiling_ugx) ON project TO edify_gateway_ro;
 GRANT SELECT (fiscal_year) ON activity TO edify_gateway_ro;
 GRANT SELECT (project_id, partner_id) ON project_partner_assignment TO edify_gateway_ro;
+
+-- My Professional Development (internal/mypd): the reader's courses, their
+-- dates and money, the year's allocation, the proof on file and the
+-- messages from HR.
+GRANT SELECT (updated_at, institution, course_type, course_category, start_date, end_date, funding_type, currency,
+  requested_amount_cents, accounted_amount, returned_amount, accountability_netsuite_id, marked_complete_at,
+  supervisor_reviewed_at, hr_reviewed_at, enrollment_confirmed_at, bamboohr_uploaded_at, accountability_submitted_at,
+  signed_off_at) ON pd_request TO edify_gateway_ro;
+GRANT SELECT (staff_id, fy, annual_allocation, currency) ON pd_allocation TO edify_gateway_ro;
+GRANT SELECT (id, request_id, original_name, document_type, status, created_at) ON pd_certificate TO edify_gateway_ro;
+GRANT SELECT (id, recipient_id, category, status, context_id) ON message TO edify_gateway_ro;
