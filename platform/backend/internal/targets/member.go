@@ -157,3 +157,16 @@ func (r *Roster) Member(p Person, today time.Time) Member {
 	}
 	return out
 }
+
+// Pace is expected_pace_pct for p: the share of the period's working days
+// (neither a public holiday of the year nor one of p's leave days) gone at
+// today; 0 before the period, 100 after it.
+func (r *Roster) Pace(p Person, start, end, today time.Time) int {
+	return calendar{holidays: r.holidays, leave: r.leave[p.StaffID]}.expectedPace(start, end, today)
+}
+
+// QuarterLabel is quarter_label: "Oct – Dec".
+func QuarterLabel(fy, quarter string) string {
+	start, end := QuarterRange(fy, quarter)
+	return start.Format("Jan") + " – " + end.AddDate(0, 0, -1).Format("Jan")
+}

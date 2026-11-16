@@ -73,6 +73,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/mypd"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myperformance"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myplan"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/mytargets"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myteam"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/navigation"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/notificationcenter"
@@ -241,6 +242,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			adminusers.NewService(pool),
 			personaltimeoff.NewService(pool, time.Now),
 			dashboard.NewService(pool, time.Now),
+			mytargets.NewService(pool, time.Now),
 			partneroversight.NewService(pool, time.Now),
 			hrregister.NewService(pool, time.Now).WithAccessLog(pool, logger),
 			leavepolicies.NewService(pool, time.Now),

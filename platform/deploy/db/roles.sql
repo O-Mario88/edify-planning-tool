@@ -967,3 +967,12 @@ GRANT SELECT (email, expertise_areas, trains_on) ON partner TO edify_gateway_ro;
 -- answering (it answers only when the existing page's rewrite would change
 -- nothing).
 GRANT SELECT (used, pending, approved) ON leave_balance TO edify_gateway_ro;
+
+-- My Targets (internal/mytargets): whether a milestone still needs
+-- defining and has its metric (a strategic priority's ready milestones), a
+-- Core School's baseline SSA average, whether an agreed priority came from a
+-- source rule (the manual priorities), and a Project assignment's year.
+GRANT SELECT (requires_definition, metric_definition_id) ON hr_priority_milestone TO edify_gateway_ro;
+GRANT SELECT (baseline_average) ON core_plan TO edify_gateway_ro;
+GRANT SELECT (source_rule_id) ON hr_performance_priority TO edify_gateway_ro;
+GRANT SELECT (fy) ON project_staff_assignment TO edify_gateway_ro;

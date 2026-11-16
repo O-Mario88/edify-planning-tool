@@ -1,0 +1,342 @@
+{
+  "area_sources": {
+    "cluster_meetings": [
+      "activity",
+      [
+        "cluster_meeting",
+        "cluster_meeting_ssa_review"
+      ]
+    ],
+    "cluster_trainings": [
+      "activity",
+      [
+        "cluster_training",
+        "cluster_training_ssa_collection",
+        "core_training",
+        "in_school_training",
+        "school_improvement_training",
+        "training"
+      ]
+    ],
+    "mscs": [
+      "mscs",
+      []
+    ],
+    "school_visits": [
+      "activity",
+      [
+        "baseline_ssa_visit",
+        "coaching_visit",
+        "core_assessment_visit",
+        "core_visit",
+        "donor_visit",
+        "follow_up_visit",
+        "in_school_coaching_visit",
+        "in_school_support",
+        "partner_ssa_collection",
+        "school_invitation",
+        "school_visit",
+        "school_visit_ssa_collection",
+        "social_visit",
+        "story_gathering_visit",
+        "training_follow_up_visit"
+      ]
+    ],
+    "ssa_completed": [
+      "ssa_record",
+      []
+    ]
+  },
+  "at_risk_band": 20,
+  "cluster_meeting_types": [
+    "cluster_meeting",
+    "cluster_meeting_ssa_review"
+  ],
+  "completed_statuses": [
+    "accountant_confirmed",
+    "awaiting_ia_verification",
+    "closed",
+    "completed",
+    "evidence_accepted",
+    "ia_verified",
+    "salesforce_id_required",
+    "submitted_to_pl"
+  ],
+  "intervention_labels": {
+    "christlike_behaviour": "Christlike Behaviour",
+    "enrolment": "Enrolment",
+    "exposure_to_word_of_god": "Exposure to the Word of God",
+    "financial_health": "Financial Health",
+    "government_requirement": "Government Requirements",
+    "leadership": "Leadership",
+    "learning_environment": "Learning Environment",
+    "teaching_environment": "Teacher's Environment"
+  },
+  "live_project_statuses": [
+    "active",
+    "paused",
+    "proposed",
+    "scaling",
+    "under_review"
+  ],
+  "next_actions": {
+    "cluster_meetings": [
+      "Open Planning",
+      "/planning"
+    ],
+    "cluster_trainings": [
+      "Open Planning",
+      "/planning"
+    ],
+    "mscs": [
+      "Submit MSCS",
+      "?mscs=new"
+    ],
+    "school_visits": [
+      "Open Planning",
+      "/planning"
+    ],
+    "ssa_completed": [
+      "Open My Plan",
+      "/my-plan"
+    ]
+  },
+  "on_track_band": 5,
+  "opens": {
+    "/my-performance": [
+      "Accountant",
+      "Admin",
+      "CCEO",
+      "CountryDirector",
+      "HumanResources",
+      "ImpactAssessment",
+      "Program Lead",
+      "ProjectCoordinator",
+      "RegionalVicePresident"
+    ],
+    "/priorities": [
+      "Admin",
+      "CCEO",
+      "CountryDirector",
+      "HumanResources",
+      "ImpactAssessment",
+      "Program Lead",
+      "ProjectCoordinator",
+      "RegionalProgramLead",
+      "RegionalVicePresident"
+    ]
+  },
+  "operating_statuses": [
+    "active",
+    "reopened"
+  ],
+  "page_roles": [
+    "Admin",
+    "CCEO",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator"
+  ],
+  "pd_status_labels": {
+    "accountability_cleared": "Accountability Cleared",
+    "accountability_submitted": "Accountability Submitted",
+    "approved_pending_funding": "Approved — Pending Finance",
+    "approved_unfunded": "Approved",
+    "awaiting_hr_signoff": "Awaiting HR Sign-Off",
+    "bamboohr_confirmed": "BambooHR Upload Confirmed",
+    "cancelled": "Cancelled",
+    "certificate_uploaded": "Certificate Uploaded",
+    "completed_closed": "Completed and Closed",
+    "deferred": "Deferred",
+    "disbursed": "Funds Disbursed",
+    "draft": "Draft",
+    "ended": "Course Ended",
+    "enrollment_confirmed": "Enrollment Confirmed",
+    "enrollment_pending": "Enrollment Pending",
+    "in_progress": "Course In Progress",
+    "marked_complete": "Employee Marked Complete",
+    "pending_exception": "Pending Exception Approval",
+    "rejected": "Rejected",
+    "returned_by_hr": "Returned by HR",
+    "returned_by_supervisor": "Returned by Supervisor",
+    "submitted_to_cd": "Awaiting Country Director",
+    "submitted_to_hr": "Submitted to HR",
+    "submitted_to_supervisor": "Submitted to Supervisor",
+    "withdrawn": "Withdrawn"
+  },
+  "priority_status_labels": {
+    "achieved": "Achieved",
+    "at_risk": "At risk",
+    "not_assessed": "Not assessed",
+    "off_track": "Off track",
+    "on_track": "On track"
+  },
+  "project_completed_states": [
+    "accountant_confirmed",
+    "closed",
+    "completed",
+    "ia_verified"
+  ],
+  "reader": "{reader}",
+  "responsibility_labels": {
+    "execute": "Execute",
+    "supervise": "Supervise"
+  },
+  "returned_for_correction_statuses": [
+    "returned_by_ia",
+    "returned_by_pl"
+  ],
+  "returned_statuses": [
+    "cancelled",
+    "rejected",
+    "returned_by_ia",
+    "returned_by_pl"
+  ],
+  "school_focus_labels": {
+    "all": "Client and Core Schools",
+    "client": "Client Schools",
+    "core": "Core Schools"
+  },
+  "school_types": [
+    [
+      "champion",
+      "Champion"
+    ],
+    [
+      "client",
+      "Client"
+    ],
+    [
+      "core",
+      "Core"
+    ],
+    [
+      "core_graduate",
+      "Core Graduate"
+    ],
+    [
+      "core_trained",
+      "Core Trained"
+    ]
+  ],
+  "ssa_bands": [
+    [
+      10.0,
+      "Strong",
+      "perfect"
+    ],
+    [
+      8.0,
+      "Strong",
+      "success"
+    ],
+    [
+      6.0,
+      "Improving",
+      "lime"
+    ],
+    [
+      5.0,
+      "Warning",
+      "warning"
+    ],
+    [
+      0.0,
+      "Critical",
+      "danger"
+    ]
+  ],
+  "ssa_homes": {
+    "Accountant": {
+      "href": "/cluster-oversight/ssa",
+      "label": "Cluster Oversight"
+    },
+    "Admin": {
+      "href": "/country-profile?tab=ssa",
+      "label": "Country Profile"
+    },
+    "BusinessTransformationOfficer": {
+      "href": "/dashboard",
+      "label": "Dashboard"
+    },
+    "CCEO": {
+      "href": "/cluster-oversight/ssa",
+      "label": "Cluster Oversight"
+    },
+    "ClusterLeader": {
+      "href": "/dashboard",
+      "label": "Dashboard"
+    },
+    "CountryDirector": {
+      "href": "/country-profile?tab=ssa",
+      "label": "Country Profile"
+    },
+    "HumanResources": {
+      "href": "/dashboard",
+      "label": "Dashboard"
+    },
+    "ImpactAssessment": {
+      "href": "/country-profile?tab=ssa",
+      "label": "Country Profile"
+    },
+    "MfiLoanOfficer": {
+      "href": "/dashboard",
+      "label": "Dashboard"
+    },
+    "MfiPartnerAdmin": {
+      "href": "/dashboard",
+      "label": "Dashboard"
+    },
+    "PartnerAdmin": {
+      "href": "/dashboard",
+      "label": "Dashboard"
+    },
+    "PartnerFieldOfficer": {
+      "href": "/dashboard",
+      "label": "Dashboard"
+    },
+    "Program Lead": {
+      "href": "/staff/{reader}?tab=ssa",
+      "label": "My Profile"
+    },
+    "ProjectCoordinator": {
+      "href": "/projects/analytics",
+      "label": "Project Analytics"
+    },
+    "RegionalProgramLead": {
+      "href": "/cluster-oversight/ssa",
+      "label": "Cluster Oversight"
+    },
+    "RegionalVicePresident": {
+      "href": "/country-profile?tab=ssa",
+      "label": "Country Profile"
+    }
+  },
+  "training_types": [
+    "cluster_training",
+    "cluster_training_ssa_collection",
+    "core_training",
+    "in_school_training",
+    "school_improvement_training",
+    "training"
+  ],
+  "visit_types": [
+    "baseline_ssa_visit",
+    "coaching_visit",
+    "core_assessment_visit",
+    "core_visit",
+    "donor_visit",
+    "follow_up_visit",
+    "in_school_coaching_visit",
+    "in_school_support",
+    "partner_ssa_collection",
+    "school_invitation",
+    "school_visit",
+    "school_visit_ssa_collection",
+    "social_visit",
+    "story_gathering_visit",
+    "training_follow_up_visit"
+  ]
+}
