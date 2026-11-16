@@ -957,3 +957,7 @@ GRANT SELECT (school_id, latitude, longitude) ON school_geo_point TO edify_gatew
 -- cost line is filed under (the mission status and the district filter).
 GRANT SELECT (return_reason, funding_source, accounted_amount) ON weekly_fund_request TO edify_gateway_ro;
 GRANT SELECT (week_start_date, school_id) ON activity_schedule_cost_line TO edify_gateway_ro;
+
+-- User Management (internal/adminusers): a partner organisation's email,
+-- expertise and training areas, as its row in the partner table shows them.
+GRANT SELECT (email, expertise_areas, trains_on) ON partner TO edify_gateway_ro;
