@@ -12,11 +12,20 @@ import (
 )
 
 // DayRefusal is a day the existing pricing refuses: its card lacks a rate
-// the day needs, or a member's costing profile is unknown.
-type DayRefusal struct{ Missing []string }
+// the day needs (compute_daily_pool), for a day of DistrictType.
+type DayRefusal struct {
+	DistrictType string
+	Missing      []string
+}
 
 func (e *DayRefusal) Error() string {
 	return "pricing: the day's rate card is missing " + strings.Join(e.Missing, ", ")
+}
+
+// Message is compute_daily_pool's refusal, in its own words.
+func (e *DayRefusal) Message() string {
+	return fmt.Sprintf("Cost Catalogue is missing required rate(s) for %s district visits: %s. "+
+		"Ask the CD to add them in Cost Settings.", e.DistrictType, strings.Join(e.Missing, ", "))
 }
 
 // Share is one rate of the day's pool.
@@ -73,6 +82,16 @@ func PlanDay(ctx context.Context, db Querier, batchID string) (Day, error) {
 
 // planDay plans the day b with these members (by id).
 func planDay(ctx context.Context, db Querier, b dayRow, members []dayMember) (Day, error) {
+	d, err := dayPool(ctx, db, b, members)
+	if err != nil {
+		return d, err
+	}
+	return withMemberCosts(ctx, db, d, members)
+}
+
+// dayPool is _plan_day with_recipes=False: the day's kind, whether it is the
+// trip home, and its pool, or the day's refusal.
+func dayPool(ctx context.Context, db Querier, b dayRow, members []dayMember) (Day, error) {
 	card, err := ReadCard(ctx, db, rules.OperationalKind, &b.date)
 	if err != nil {
 		return Day{}, err
@@ -129,7 +148,7 @@ func planDay(ctx context.Context, db Querier, b dayRow, members []dayMember) (Da
 		}
 	}
 	if len(missing) > 0 {
-		return d, &DayRefusal{Missing: missing}
+		return d, &DayRefusal{DistrictType: d.DistrictType, Missing: missing}
 	}
 	for _, k := range required {
 		d.Pool = append(d.Pool, Share{Key: k, Amount: rates[k]})
@@ -139,6 +158,15 @@ func planDay(ctx context.Context, db Querier, b dayRow, members []dayMember) (Da
 			d.Pool = append(d.Pool, Share{Key: k, Amount: v})
 		}
 	}
+	return d, nil
+}
+
+// withMemberCosts is what _write_day_lines writes each member of the day d:
+// its share of every rate of the pool, then its own lines that are not the
+// day's.
+func withMemberCosts(ctx context.Context, db Querier, d Day, members []dayMember) (Day, error) {
+	card := d.Card
+	rates := ratesOf(card)
 	n := len(members)
 	for i, m := range members {
 		in, err := StoredInput(ctx, db, m.id)

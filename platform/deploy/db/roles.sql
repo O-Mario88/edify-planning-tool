@@ -846,3 +846,11 @@ GRANT SELECT (district_type, school_count) ON daily_visit_batch TO edify_gateway
 -- Which way a stored activity is priced (internal/pricing/path.go): whether
 -- its day's week has left its owner's hands.
 GRANT SELECT (week_end_date) ON weekly_fund_request TO edify_gateway_ro;
+
+-- Stage 4a: Go's own day check reads the finance guards a day's members are
+-- asked (costing_service._ask_money_guards: the monthly requests carrying
+-- their lines) and whether the day's transport was paid
+-- (vendor_channel.paid_transport_amounts).
+GRANT SELECT (id) ON fund_request TO edify_gateway_ro;
+GRANT SELECT (fund_request_id, activity_schedule_cost_line_id) ON fund_request_item TO edify_gateway_ro;
+GRANT SELECT (batch_id, status, amount) ON transport_payment TO edify_gateway_ro;

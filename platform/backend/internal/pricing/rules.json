@@ -1,5 +1,9 @@
 {
   "accommodation_key": "secondary_accommodation_per_night",
+  "advance_with_accountant_statuses": [
+    "confirmed_for_advance",
+    "submitted_to_accountant"
+  ],
   "companion_gone_statuses": [
     "cancelled",
     "rejected",
@@ -112,6 +116,62 @@
     "Wakiso",
     "Mukono"
   ],
+  "key_labels": {
+    "accommodation": "Accommodation per night",
+    "breakfast": "Breakfast",
+    "client_partner_visit": "Client Partner Visit",
+    "client_staff_visit": "Client Staff Visit",
+    "cluster_meeting_cost": "Cluster meeting participant meal cost",
+    "cluster_meeting_participant_meal_cost_per_head": "Participant snacks",
+    "cluster_meetings_trainings": "Cluster Meetings/ Trainings",
+    "cluster_meetings_trainings_meals": "Cluster Meeting - Participant Meals",
+    "core_partner_visit": "Core Partner Visit",
+    "core_staff_visit": "Core Staff Visit",
+    "dinner": "Dinner",
+    "group_training_facilitation_fee": "Facilitation fee",
+    "group_training_meals": "Group Training - Participant Meals",
+    "group_training_participant_meal_cost_per_head": "Participant meals",
+    "group_training_venue_cost": "Venue fee",
+    "lunch": "Lunch",
+    "lunch_per_day": "Lunch",
+    "management_accommodation_per_night": "Accommodation per night for staff other than a CCEO (Program Lead, Country Director, Impact Assessment, Accountant and other staff)",
+    "meals_per_participant": "Group training participant meal cost",
+    "mobilisation_per_participant": "Mobilisation cost per participant",
+    "onetest": "OneTest",
+    "partner_meetings": "Partner Meetings",
+    "partner_training_lump_sum": "Partner training/facilitation rate",
+    "partner_visit_lump_sum": "Partner visit rate",
+    "partner_visit_rate": "Partner visit rate",
+    "photocopying_training_materials": "Photocopying training materials",
+    "primary_lunch_per_day": "Primary district daily lunch pool",
+    "primary_transport_per_day": "Primary district daily transport pool",
+    "printing_training_materials": "Printing training materials",
+    "programme_accommodation_per_night": "Programme accommodation (per night)",
+    "programme_facilitation_per_day": "Programme facilitation (per day)",
+    "programme_materials_per_participant": "Programme materials",
+    "programme_participant_meal_cost_per_head": "Programme participant meals",
+    "programme_transport_per_day": "Programme transport (per day)",
+    "programme_venue_per_day": "Programme event venue (per day)",
+    "project_partner_lump_sum": "Project partner rate",
+    "proprietor_conference": "Proprietor Conference",
+    "school_visit_cost_per_school": "School visit cost per school",
+    "school_visit_cost_per_school_primary": "School visit cost per school (primary)",
+    "school_visit_cost_per_school_secondary": "School visit cost per school (secondary)",
+    "secondary_accommodation_per_night": "Secondary district accommodation per night",
+    "secondary_breakfast_per_day": "Breakfast",
+    "secondary_incidentals_per_day": "Secondary district incidentals (optional)",
+    "secondary_lunch_per_day": "Secondary district daily lunch pool",
+    "secondary_overnight_dinner_per_day": "Secondary district overnight dinner",
+    "secondary_transport_per_day": "Secondary district daily transport pool",
+    "ssa_support": "SSA Support",
+    "staff_visit_transport_primary": "Staff visit transport (primary district)",
+    "staff_visit_transport_secondary": "Staff visit transport (secondary district)",
+    "student_conference": "Student Conference",
+    "tot_trainings": "TOT trainings",
+    "tot_trainings_meals": "TOT trainings - Meals",
+    "training_session_fee": "Facilitation fee",
+    "venue": "Venue cost"
+  },
   "management_accommodation_key": "management_accommodation_per_night",
   "management_accommodation_roles": [
     "Accountant",
@@ -126,6 +186,16 @@
     "RegionalVicePresident"
   ],
   "mixed_transport_label": "Transport Mixed District",
+  "money_moved_advance_statuses": [
+    "disbursed",
+    "accountability_pl_pending",
+    "accountability_pending",
+    "accounted",
+    "reimbursement_pl_pending",
+    "reimbursement_submitted",
+    "reimbursement_disbursed",
+    "reimbursed"
+  ],
   "non_fundable_statuses": [
     "cancelled",
     "rejected",
@@ -149,5 +219,20 @@
     "returned_by_cd",
     "returned_by_accountant"
   ],
-  "reference_kind": "reference"
+  "reference_kind": "reference",
+  "repriceable_monthly_statuses": [
+    "draft",
+    "returned",
+    "rejected",
+    "returned_by_pl",
+    "returned_by_cd",
+    "returned_by_rvp",
+    "returned_by_accountant"
+  ],
+  "transport_gone_statuses": [
+    "cancelled",
+    "deferred",
+    "rejected"
+  ],
+  "transport_paid": "Transport for this day has already been paid. Finance must reconcile it before changing the daily allocation."
 }

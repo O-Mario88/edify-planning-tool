@@ -86,6 +86,9 @@ def set_accommodation_vendor_paid(line_id: str, vendor_paid: bool, principal) ->
     return {"id": line.id, "vendorPaid": line.vendor_paid}
 
 
+#: A day's members whose share of its transport the provider is not owed.
+TRANSPORT_GONE_STATUSES = ("cancelled", "deferred", "rejected")
+
 TRANSPORT_PAID = (
     "Transport for this day has already been paid. Finance must reconcile it "
     "before changing the daily allocation."
@@ -125,7 +128,7 @@ def _school_transport(batch, pool, allocate_component) -> int:
     )
     members = list(
         batch.activities.filter(deleted_at__isnull=True)
-        .exclude(status__in=["cancelled", "deferred", "rejected"])
+        .exclude(status__in=TRANSPORT_GONE_STATUSES)
         .order_by("id")
     )
     # Only school-anchored transport goes to the provider. Other members'

@@ -187,5 +187,43 @@ save's) before the next starts:
    obligation, and the planner-change notes; then `costs-to-follow` retires
    for the saves that no longer need it.
 
+### 4a so far (2026-11-16)
+
+`pricing.DayCheck` (internal/pricing/check.go) answers `gateway_relay._probe`
+read-only: an online training (no preview, no day); the preview's refusal
+(`_preview_refusal`, the missing rates named as `_KEY_LABEL` names them, the
+head count asked for first); whether the day pools the visit; then, for the
+day it joins, `attach_activity_to_batch`'s refusals (the week sent for
+approval, a missing rate on a day that exists; a day not yet made with its
+rates missing, or a district that is neither primary nor secondary, does not
+pool) and `_assert_days_can_follow` for that one day (the day's own rates,
+a paid transport the day would now owe differently, then each member's
+finance guards in order: money moved on an advance, an advance with the
+accountant, a weekly or a monthly request carrying its lines that has left
+its owner's hands). The day join is shared with `PriceStored` (`attach`).
+
+The rules it reads are exported (`export_pricing_rules`: the rate labels, the
+advance and monthly states, the transport members, the paid-transport
+words); the guard's two status lists became named helpers
+(`repriceable_monthly_statuses`, `advance_with_accountant_statuses`) and
+`_school_transport`'s statuses `vendor_channel.TRANSPORT_GONE_STATUSES`,
+unchanged. The gateway reads three more finance columns (roles.sql).
+
+Proved: `testdata/check_oracle.py` asks the probe of 239 saves on the test
+database (every filed day, each finance guard, a sent week, a paid transport
+at the wrong and the right amount, every catalogue item at a school or a
+cluster with and without a head count and online, every member of staff at
+three schools); `integration/day_check_test.go` asks Go: 0 differing. Three
+planted faults (the transport share, the weekly guard, the head count) were
+each caught.
+
+Not covered yet: the preview's missing-rate wording is reached only for the
+head count (the test card is complete); an online training's cost revision
+is still the relay's (it is written, so it goes with 4b). Go's check orders
+the visit among the day's members by the id the save will insert, where the
+probe used the id Django gave its rolled-back copy; only a paid transport's
+remainder shilling can depend on it. Next: the switch, asking both and
+logging any difference, before Go's answer is used.
+
 Production stays as it is: no deploy, no production database, no merge into
 `main` without the owner's approval.

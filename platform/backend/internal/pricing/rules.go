@@ -43,11 +43,17 @@ var rules = func() (r struct {
 	OnlineMode                   string               `json:"online_mode"`
 	CompanionGoneStatuses        []string             `json:"companion_gone_statuses"`
 	RebuildableWeeklyStatuses    []string             `json:"rebuildable_weekly_statuses"`
+	KeyLabels                    map[string]string    `json:"key_labels"`
+	MoneyMovedAdvanceStatuses    []string             `json:"money_moved_advance_statuses"`
+	AdvanceWithAccountant        []string             `json:"advance_with_accountant_statuses"`
+	RepriceableMonthlyStatuses   []string             `json:"repriceable_monthly_statuses"`
+	TransportGoneStatuses        []string             `json:"transport_gone_statuses"`
+	TransportPaid                string               `json:"transport_paid"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {
 		panic(fmt.Sprintf("pricing: rules.json: %v", err))
 	}
-	if r.AccommodationKey == "" || r.OperationalKind == "" || len(r.FieldRoles) == 0 {
+	if r.AccommodationKey == "" || r.OperationalKind == "" || len(r.FieldRoles) == 0 || r.TransportPaid == "" {
 		panic("pricing: rules.json lacks its accommodation rate, card kinds or field roles")
 	}
 	return r
