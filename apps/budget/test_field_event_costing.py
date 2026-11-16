@@ -224,6 +224,12 @@ class FieldEventEndToEndTest(TestCase):
         item = ActivityCatalogueItem.objects.get(stable_code="FIELD_DISTRICT_MEETING")
         start = date.today() + timedelta(days=14)
         start -= timedelta(days=start.weekday())  # Monday, a clean week bucket
+        # Keep the three days inside one month: a trip across a month end is
+        # costed as one line a month (secondary_transport_per_day#m202611 and
+        # #m202612), which this test does not ask about. It failed on
+        # 2026-11-16, when two weeks ahead was Mon 30 Nov – Wed 2 Dec.
+        if (start + timedelta(days=2)).month != start.month:
+            start += timedelta(days=7)
         end = start + timedelta(days=2)  # two nights away
 
         result = schedule_programme_activity(
