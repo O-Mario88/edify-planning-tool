@@ -582,6 +582,10 @@ func PlainText(item *screensv1.PagePanelItem) (string, bool) {
 	return t.Text, true
 }
 
+// Paired is _paired for a page that builds its panel's lines itself: a label
+// line followed by its figure is a data row, consecutive rows one list.
+func Paired(items []*screensv1.PagePanelItem) []*screensv1.PagePanelItem { return paired(items) }
+
 func paired(items []*screensv1.PagePanelItem) []*screensv1.PagePanelItem {
 	out := []*screensv1.PagePanelItem{}
 	for i := 0; i < len(items); {

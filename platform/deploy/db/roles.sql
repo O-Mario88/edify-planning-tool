@@ -854,3 +854,10 @@ GRANT SELECT (week_end_date) ON weekly_fund_request TO edify_gateway_ro;
 GRANT SELECT (id) ON fund_request TO edify_gateway_ro;
 GRANT SELECT (fund_request_id, activity_schedule_cost_line_id) ON fund_request_item TO edify_gateway_ro;
 GRANT SELECT (batch_id, status, amount) ON transport_payment TO edify_gateway_ro;
+
+-- The Special Projects page (internal/projectspage): a project's type and
+-- ceiling, an activity's fiscal year (the page's year reads either), and
+-- the partners linked to each project.
+GRANT SELECT (category, budget_ceiling_ugx) ON project TO edify_gateway_ro;
+GRANT SELECT (fiscal_year) ON activity TO edify_gateway_ro;
+GRANT SELECT (project_id, partner_id) ON project_partner_assignment TO edify_gateway_ro;
