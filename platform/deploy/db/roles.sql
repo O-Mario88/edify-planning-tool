@@ -1027,3 +1027,6 @@ GRANT SELECT (status, uploaded_by) ON upload_batch TO edify_gateway_ro;
 GRANT SELECT (baseline_ssa_id, follow_up_score) ON project_school_assignment TO edify_gateway_ro;
 GRANT SELECT (id, code, name, version) ON impact_outcome_area TO edify_gateway_ro;
 GRANT SELECT (area_id, intervention) ON impact_outcome_area_domain TO edify_gateway_ro;
+-- Programme Rollout (internal/programmerollout): whether the Regional Lead
+-- observed a training in the year.
+GRANT SELECT (fy) ON cce_regional_engagement TO edify_gateway_ro;
