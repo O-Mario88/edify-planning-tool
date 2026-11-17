@@ -39,6 +39,7 @@ PAGES = {
     "/ia/impact-reports/": "impact_reports",
     "/ia/lending-evidence/": "ia_lending_evidence",
     "/ia/verification/": "ia_verification_queue",
+    "/ia/dashboard/": "ia_dashboard",
 }
 
 #: The pages that draw the IA workspace strip (partials/_section_nav.html).
@@ -48,6 +49,7 @@ STRIP_PAGES = (
     "/ia/impact-reports/",
     "/ia/lending-evidence/",
     "/ia/verification/",
+    "/ia/dashboard/",
 )
 
 #: The roles ia_samples_view offers "Draw this week now" (can_draw).
@@ -118,6 +120,45 @@ def _lending() -> dict:
     }
 
 
+def _dashboard() -> dict:
+    """The IA dashboard (ia_dashboard_view) as Go draws its Today and
+    Operations views: the view rail's labels, the header tiles' labels and
+    drill-downs, who may open a record's review (the primary action), and the
+    thresholds and states its exceptions count."""
+    from apps.activities.ia_todos import DUPLICATE_OPEN_STATUS, UNMATCHED_OPEN_STATUSES
+    from apps.core.metrics import MetricValue, render_metric
+    from apps.core.rbac import EdifyRole
+    from apps.frontend.views import ia_views as views
+    from apps.frontend.templatetags.frontend_filters import can_open
+    from apps.schools.lifecycle_models import OPERATING_STATUSES
+
+    return {
+        "tabs": [[key, label] for key, label, _ in views.IA_DASHBOARD_TABS],
+        "default_view": views.IA_DASHBOARD_DEFAULT_VIEW,
+        "metrics": [
+            [render_metric(key, MetricValue.measured(0)).label, url]
+            for key, url in views.IA_HEADER_METRICS
+        ],
+        "review_open_roles": sorted(
+            role.value
+            for role in EdifyRole
+            if can_open(_role_user(role.value), "/ia/verification/x/")
+        ),
+        "queue_open_roles": sorted(
+            role.value
+            for role in EdifyRole
+            if can_open(_role_user(role.value), "/ia/verification/")
+        ),
+        "district_ssa_target": views.IA_DISTRICT_SSA_TARGET,
+        "return_overdue_days": views.IA_RETURN_OVERDUE_DAYS,
+        "failed_upload_statuses": list(views.IA_FAILED_UPLOAD_STATUSES),
+        "school_duplicate_statuses": list(views.IA_SCHOOL_DUPLICATE_STATUSES),
+        "unmatched_open_statuses": list(UNMATCHED_OPEN_STATUSES),
+        "duplicate_open_status": DUPLICATE_OPEN_STATUS,
+        "operating_statuses": [str(s) for s in OPERATING_STATUSES],
+    }
+
+
 def rules() -> dict:
     from apps.activities.models import ActivityType
     from apps.core.permissions import (
@@ -168,6 +209,7 @@ def rules() -> dict:
     return {
         "pages": pages,
         "lending": _lending(),
+        "dashboard": _dashboard(),
         "ia_verify_roles": sorted(
             role.value
             for role in EdifyRole

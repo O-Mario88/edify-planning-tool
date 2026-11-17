@@ -98,6 +98,25 @@ IA_CRITICAL_ACTIVITY_TYPES = ("core_visit", "core_training", "baseline_ssa_visit
 #: accountant_confirmed, a finance state IA does not act on.
 IA_REVIEWABLE_STATUSES = ("completed", "ia_verified", "closed")
 
+#: The dashboard's six header tiles, each with the queue it drills into.
+IA_HEADER_METRICS = (
+    ("ia_awaiting_verification", "/ia/verification/"),
+    ("ia_evidence_ready_for_review", "/ia/verification/?evidence=ready"),
+    ("ia_salesforce_verification_pending", "/ia/verification/?sf_id=missing"),
+    ("ia_returned_for_correction", "/ia/returned/"),
+    ("ia_unmatched_ssa_records", "/ssa/unmatched"),
+    ("ia_verification_overdue", "/ia/verification/?age=overdue"),
+)
+#: A district is below target when fewer than this share of its schools
+#: have this year's SSA done.
+IA_DISTRICT_SSA_TARGET = 0.5
+#: Work returned for correction longer ago than this many days is overdue.
+IA_RETURN_OVERDUE_DAYS = 7
+#: Upload batches that failed validation.
+IA_FAILED_UPLOAD_STATUSES = ("failed", "rejected")
+#: A school flagged as a duplicate, for the exceptions.
+IA_SCHOOL_DUPLICATE_STATUSES = ("potential", "confirmed")
+
 
 # ── What a verifier's pages count (IA review, owner, 2026-09-13) ─────────────
 # Impact Assessment is country-bound, and nobody verifies their own work. Every
@@ -1132,38 +1151,18 @@ def _ia_header_context(request) -> dict:
 
     last_batch = _ia_uploads(request).order_by("-created_at").first()
 
+    header_values = (
+        queue_counts["waiting"],
+        queue_counts["evidence_ready"],
+        ledger_counts["missing_sf"],
+        ledger_counts["returned_open"],
+        unmatched_ssa_cnt,
+        queue_counts["overdue"],
+    )
     kpi_strip_items = render_strip(
         [
-            render_metric(
-                "ia_awaiting_verification",
-                MetricValue.measured(queue_counts["waiting"]),
-                drilldown_url="/ia/verification/",
-            ),
-            render_metric(
-                "ia_evidence_ready_for_review",
-                MetricValue.measured(queue_counts["evidence_ready"]),
-                drilldown_url="/ia/verification/?evidence=ready",
-            ),
-            render_metric(
-                "ia_salesforce_verification_pending",
-                MetricValue.measured(ledger_counts["missing_sf"]),
-                drilldown_url="/ia/verification/?sf_id=missing",
-            ),
-            render_metric(
-                "ia_returned_for_correction",
-                MetricValue.measured(ledger_counts["returned_open"]),
-                drilldown_url="/ia/returned/",
-            ),
-            render_metric(
-                "ia_unmatched_ssa_records",
-                MetricValue.measured(unmatched_ssa_cnt),
-                drilldown_url="/ssa/unmatched",
-            ),
-            render_metric(
-                "ia_verification_overdue",
-                MetricValue.measured(queue_counts["overdue"]),
-                drilldown_url="/ia/verification/?age=overdue",
-            ),
+            render_metric(key, MetricValue.measured(value), drilldown_url=url)
+            for (key, url), value in zip(IA_HEADER_METRICS, header_values, strict=True)
         ]
     )
     date_range = (
@@ -1614,7 +1613,7 @@ def _ia_operations_context(request, header: dict) -> dict:
             "id", filter=Q(current_fy_ssa_status__in=["scheduled", "partner_assigned"])
         ),
         duplicates=Count(
-            "id", filter=Q(duplicate_status__in=["potential", "confirmed"])
+            "id", filter=Q(duplicate_status__in=IA_SCHOOL_DUPLICATE_STATUSES)
         ),
         not_clean=Count("id", filter=~Q(data_quality_status="Clean")),
         quality_avg=Avg("data_quality_score"),
@@ -1672,14 +1671,17 @@ def _ia_operations_context(request, header: dict) -> dict:
         )
         .filter(total__gt=0)
     )
-    districts_below_target = sum(1 for d in district_stats if d.done / d.total < 0.5)
+    districts_below_target = sum(
+        1 for d in district_stats if d.done / d.total < IA_DISTRICT_SSA_TARGET
+    )
 
     # ── Alerts / Exceptions (only real, non-zero conditions) ────────────────
     overdue_returns = activities.filter(
-        status=ActivityStatus.RETURNED_BY_IA, updated_at__lt=now - timedelta(days=7)
+        status=ActivityStatus.RETURNED_BY_IA,
+        updated_at__lt=now - timedelta(days=IA_RETURN_OVERDUE_DAYS),
     ).count()
     failed_uploads = (
-        _ia_uploads(request).filter(status__in=["failed", "rejected"]).count()
+        _ia_uploads(request).filter(status__in=IA_FAILED_UPLOAD_STATUSES).count()
     )
     exceptions = [
         e

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"strconv"
 	"strings"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
@@ -264,5 +263,3 @@ func (pg *page) queuePager() *screensv1.PageBlock {
 	}
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Pager{Pager: &screensv1.PagePager{Pages: []*screensv1.PagePagerPage{prev, next}}}}
 }
-
-var _ = strconv.Itoa

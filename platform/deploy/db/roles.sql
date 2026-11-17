@@ -1014,3 +1014,10 @@ GRANT SELECT (label, sequence) ON hr_milestone_target_component TO edify_gateway
 -- intervention.
 GRANT SELECT (follow_up_average) ON core_plan TO edify_gateway_ro;
 GRANT SELECT (owner, assigned_partner_name, intervention) ON core_activity_slot TO edify_gateway_ro;
+-- Impact Assessment's dashboard (internal/iapages/dashboard.go): evidence
+-- waiting for a decision, the unmatched SSA rows' placing, and the upload
+-- batches that failed.
+GRANT SELECT (status) ON evidence_record TO edify_gateway_ro;
+GRANT SELECT (batch_id, suggested_school_id) ON unmatched_ssa_record TO edify_gateway_ro;
+GRANT SELECT (id, uploaded_by) ON ssa_import_batch TO edify_gateway_ro;
+GRANT SELECT (status, uploaded_by) ON upload_batch TO edify_gateway_ro;

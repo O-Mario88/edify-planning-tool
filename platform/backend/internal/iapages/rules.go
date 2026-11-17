@@ -79,6 +79,8 @@ var rules = func() (r struct {
 	QueryKeysNotPassed []string `json:"query_keys_not_passed"`
 	// Lending is Lending Evidence's vocabulary (lending.go).
 	Lending lendingRules `json:"lending"`
+	// Dashboard is the IA dashboard's vocabulary (dashboard.go).
+	Dashboard dashboardRules `json:"dashboard"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.Pages) == 0 || len(r.IAVerifyRoles) == 0 || len(r.ActivityTypes) == 0 {
 		panic(fmt.Sprintf("iapages: the embedded rules are unreadable: %v", err))

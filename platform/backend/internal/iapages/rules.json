@@ -29,6 +29,90 @@
     "training": "Training",
     "training_follow_up_visit": "Training Follow-up Visit"
   },
+  "dashboard": {
+    "default_view": "outcomes",
+    "district_ssa_target": 0.5,
+    "duplicate_open_status": "potential",
+    "failed_upload_statuses": [
+      "failed",
+      "rejected"
+    ],
+    "metrics": [
+      [
+        "Awaiting IA Verification",
+        "/ia/verification/"
+      ],
+      [
+        "Evidence Ready for Review",
+        "/ia/verification/?evidence=ready"
+      ],
+      [
+        "Salesforce Verification Pending",
+        "/ia/verification/?sf_id=missing"
+      ],
+      [
+        "Returned for Correction",
+        "/ia/returned/"
+      ],
+      [
+        "Unmatched SSA Records",
+        "/ssa/unmatched"
+      ],
+      [
+        "Verification Overdue",
+        "/ia/verification/?age=overdue"
+      ]
+    ],
+    "operating_statuses": [
+      "active",
+      "reopened"
+    ],
+    "queue_open_roles": [
+      "Admin",
+      "CountryDirector",
+      "ImpactAssessment"
+    ],
+    "return_overdue_days": 7,
+    "review_open_roles": [
+      "Admin",
+      "CountryDirector",
+      "ImpactAssessment"
+    ],
+    "school_duplicate_statuses": [
+      "potential",
+      "confirmed"
+    ],
+    "tabs": [
+      [
+        "outcomes",
+        "Outcomes"
+      ],
+      [
+        "today",
+        "Today"
+      ],
+      [
+        "collection",
+        "Collection"
+      ],
+      [
+        "reports",
+        "Impact reports"
+      ],
+      [
+        "map",
+        "Map"
+      ],
+      [
+        "operations",
+        "Operations"
+      ]
+    ],
+    "unmatched_open_statuses": [
+      "pending",
+      "hold"
+    ]
+  },
   "export_roles": [
     "Accountant",
     "Admin",
@@ -267,6 +351,194 @@
         "ImpactAssessment": {
           "page": true,
           "strip": null
+        },
+        "MfiLoanOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "page": false,
+          "strip": null
+        }
+      }
+    },
+    "/ia/dashboard/": {
+      "roles": {
+        "Accountant": {
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "page": true,
+          "strip": {
+            "label": "Impact Assessment",
+            "scrolls": true,
+            "tabs": [
+              {
+                "active": true,
+                "href": "/ia/dashboard/",
+                "label": "Overview"
+              },
+              {
+                "active": false,
+                "href": "/ia/framework/",
+                "label": "Framework & Strategy"
+              },
+              {
+                "active": false,
+                "href": "/ia/school-evidence/",
+                "label": "Baseline & Field Data"
+              },
+              {
+                "active": false,
+                "href": "/ia/stories/",
+                "label": "School Progress"
+              },
+              {
+                "active": false,
+                "href": "/ia/learning/",
+                "label": "Analysis & Learning"
+              },
+              {
+                "active": false,
+                "href": "/ia/impact-reports/",
+                "label": "Reporting & Accountability"
+              },
+              {
+                "active": false,
+                "href": "/country-planning-oversight/",
+                "label": "Data Quality & Verification"
+              }
+            ]
+          }
+        },
+        "BusinessTransformationOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "page": true,
+          "strip": {
+            "label": "Impact Assessment",
+            "scrolls": true,
+            "tabs": [
+              {
+                "active": true,
+                "href": "/ia/dashboard/",
+                "label": "Overview"
+              },
+              {
+                "active": false,
+                "href": "/ia/framework/",
+                "label": "Framework & Strategy"
+              },
+              {
+                "active": false,
+                "href": "/ia/school-evidence/",
+                "label": "Baseline & Field Data"
+              },
+              {
+                "active": false,
+                "href": "/ia/stories/",
+                "label": "School Progress"
+              },
+              {
+                "active": false,
+                "href": "/ia/learning/",
+                "label": "Analysis & Learning"
+              },
+              {
+                "active": false,
+                "href": "/ia/impact-reports/",
+                "label": "Reporting & Accountability"
+              },
+              {
+                "active": false,
+                "href": "/country-planning-oversight/",
+                "label": "Data Quality & Verification"
+              }
+            ]
+          }
+        },
+        "HumanResources": {
+          "page": false,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "page": true,
+          "strip": {
+            "label": "Impact Assessment",
+            "scrolls": true,
+            "tabs": [
+              {
+                "active": true,
+                "href": "/ia/dashboard/",
+                "label": "Overview"
+              },
+              {
+                "active": false,
+                "href": "/ia/framework/",
+                "label": "Framework & Strategy"
+              },
+              {
+                "active": false,
+                "href": "/ia/school-evidence/",
+                "label": "Baseline & Field Data"
+              },
+              {
+                "active": false,
+                "href": "/ia/stories/",
+                "label": "School Progress"
+              },
+              {
+                "active": false,
+                "href": "/ia/learning/",
+                "label": "Analysis & Learning"
+              },
+              {
+                "active": false,
+                "href": "/ia/impact-reports/",
+                "label": "Reporting & Accountability"
+              },
+              {
+                "active": false,
+                "href": "/country-planning-oversight/",
+                "label": "Data Quality & Verification"
+              }
+            ]
+          }
         },
         "MfiLoanOfficer": {
           "page": false,
