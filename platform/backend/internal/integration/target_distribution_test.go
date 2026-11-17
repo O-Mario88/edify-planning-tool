@@ -74,14 +74,7 @@ func TestTargetDistributionMatchesTheExistingFeed(t *testing.T) {
 	}
 	clear()
 	t.Cleanup(clear)
-	for _, table := range targetDistributionTables {
-		for _, row := range golden.Rows[table] {
-			sql := fmt.Sprintf(`INSERT INTO %s SELECT * FROM json_populate_record(NULL::%s, $1::json)`, table, table)
-			if _, err := admin.Exec(ctx, sql, string(row)); err != nil {
-				t.Fatalf("filing a %s row: %v", table, err)
-			}
-		}
-	}
+	fileGoldenRows(t, ctx, targetDistributionTables, golden.Rows)
 	served := []goldenAnswer{}
 	handedOn := 0
 	for _, answer := range golden.Answers {
