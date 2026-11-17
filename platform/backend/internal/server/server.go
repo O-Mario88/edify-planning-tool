@@ -112,6 +112,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/ssaverify"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/staffactivity"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/staffsetup"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/targetdistribution"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/teamperformance"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/teams"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/todos"
@@ -243,6 +244,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			personaltimeoff.NewService(pool, time.Now),
 			dashboard.NewService(pool, time.Now),
 			mytargets.NewService(pool, time.Now),
+			targetdistribution.NewService(pool, time.Now),
 			partneroversight.NewService(pool, time.Now),
 			hrregister.NewService(pool, time.Now).WithAccessLog(pool, logger),
 			leavepolicies.NewService(pool, time.Now),

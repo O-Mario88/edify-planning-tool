@@ -991,3 +991,8 @@ GRANT SELECT (school_focus) ON project TO edify_gateway_ro;
 -- memory, as the existing rebuild would write it: each row's source and the
 -- day it credits. Go reads it; it never writes the ledger.
 GRANT SELECT (source_type, source_id, activity_date) ON target_achievement_ledger TO edify_gateway_ro;
+-- Uganda Target Distribution (internal/targetdistribution): the cycles' years
+-- and states (the year the page opens on and its year filter), and whether a
+-- year holds staged priority imports.
+GRANT SELECT (financial_year, status) ON hr_strategic_priority_cycle TO edify_gateway_ro;
+GRANT SELECT (id, fy, country_id) ON hr_priority_import_batch TO edify_gateway_ro;

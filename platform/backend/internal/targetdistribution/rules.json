@@ -1,0 +1,53 @@
+{
+  "max_fy_year": 2100,
+  "min_fy_year": 2000,
+  "roles": {
+    "Admin": {
+      "import": true,
+      "tabs": [
+        [
+          "Priority Setting",
+          "/strategic-priorities"
+        ],
+        [
+          "Target Distribution",
+          "/target-distribution"
+        ],
+        [
+          "My Team",
+          "/target-distribution/team"
+        ],
+        [
+          "Team Guidance",
+          "/priorities/guidance"
+        ]
+      ]
+    },
+    "CountryDirector": {
+      "import": false,
+      "tabs": [
+        [
+          "Priority Setting",
+          "/strategic-priorities"
+        ],
+        [
+          "Target Distribution",
+          "/target-distribution"
+        ]
+      ]
+    },
+    "ImpactAssessment": {
+      "import": true,
+      "tabs": [
+        [
+          "Priority Setting",
+          "/strategic-priorities"
+        ],
+        [
+          "Target Distribution",
+          "/target-distribution"
+        ]
+      ]
+    }
+  }
+}
