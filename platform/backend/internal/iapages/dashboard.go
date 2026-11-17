@@ -20,27 +20,28 @@ const DashboardPath = "/ia/dashboard/"
 // dashboardRules is the dashboard's vocabulary (export_ia_pages_rules
 // _dashboard).
 type dashboardRules struct {
-	Tabs                    [][2]string  `json:"tabs"`
-	DefaultView             string       `json:"default_view"`
-	Metrics                 [][2]string  `json:"metrics"`
-	ReviewOpenRoles         []string     `json:"review_open_roles"`
-	QueueOpenRoles          []string     `json:"queue_open_roles"`
-	DistrictSSATarget       float64      `json:"district_ssa_target"`
-	ReturnOverdueDays       int          `json:"return_overdue_days"`
-	FailedUploadStatuses    []string     `json:"failed_upload_statuses"`
-	SchoolDuplicateStatuses []string     `json:"school_duplicate_statuses"`
-	UnmatchedOpenStatuses   []string     `json:"unmatched_open_statuses"`
-	DuplicateOpenStatus     string       `json:"duplicate_open_status"`
-	OperatingStatuses       []string     `json:"operating_statuses"`
-	Outcomes                outcomeRules `json:"outcomes"`
+	Tabs                    [][2]string     `json:"tabs"`
+	DefaultView             string          `json:"default_view"`
+	Metrics                 [][2]string     `json:"metrics"`
+	ReviewOpenRoles         []string        `json:"review_open_roles"`
+	QueueOpenRoles          []string        `json:"queue_open_roles"`
+	DistrictSSATarget       float64         `json:"district_ssa_target"`
+	ReturnOverdueDays       int             `json:"return_overdue_days"`
+	FailedUploadStatuses    []string        `json:"failed_upload_statuses"`
+	SchoolDuplicateStatuses []string        `json:"school_duplicate_statuses"`
+	UnmatchedOpenStatuses   []string        `json:"unmatched_open_statuses"`
+	DuplicateOpenStatus     string          `json:"duplicate_open_status"`
+	OperatingStatuses       []string        `json:"operating_statuses"`
+	Outcomes                outcomeRules    `json:"outcomes"`
+	Collection              collectionRules `json:"collection"`
 }
 
-// handedOnViews are the views Go does not draw yet: Collection and Map stay
-// with the existing application.
-var handedOnViews = []string{"collection", "map"}
+// handedOnViews are the views Go does not draw yet: Map stays with the
+// existing application.
+var handedOnViews = []string{"map"}
 
 // dashboardKeys are the query keys the dashboard reads.
-var dashboardKeys = []string{"view", "project", "fy"}
+var dashboardKeys = []string{"view", "project", "fy", "state", "district", "owner", "school_type", "collection_page"}
 
 // queueCard is one of the oldest waiting records (the phone's queue).
 type queueCard struct {
@@ -99,6 +100,12 @@ func (s *Service) dashboard(ctx context.Context, p auth.Principal, role Role, qu
 	switch view {
 	case "outcomes":
 		blocks, served, err := s.outcomes(ctx, scope, query, now)
+		if err != nil || !served {
+			return nil, served, err
+		}
+		viewBlocks = blocks
+	case "collection":
+		blocks, served, err := s.collection(ctx, p, scope, query, now)
 		if err != nil || !served {
 			return nil, served, err
 		}

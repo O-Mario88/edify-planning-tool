@@ -120,6 +120,27 @@ def _lending() -> dict:
     }
 
 
+def _collection() -> dict:
+    """The dashboard's Collection view (apps.analytics.ia_collection): each
+    state's label, next step and order, the statuses it is read from, the
+    projects whose enrolments make the segment, and the page."""
+    from apps.analytics import ia_collection as c
+    from apps.core.enums import VerificationStatus
+    from apps.projects.models import LIVE_PROJECT_STATUSES
+
+    return {
+        "states": [[key, meta[0], meta[1]] for key, meta in c.STATES.items()],
+        "work_states": list(c.WORK_STATES),
+        "operating_statuses": list(c.COLLECTION_OPERATING_STATUSES),
+        "open_statuses": list(c.OPEN_COLLECTION_STATUSES),
+        "delivered_statuses": list(c.DELIVERED_STATUSES),
+        "live_project_statuses": sorted(str(s) for s in LIVE_PROJECT_STATUSES),
+        "verification_labels": dict(VerificationStatus.choices),
+        "page_size": c.PAGE_SIZE,
+        "page_param": c.PAGE_PARAM,
+    }
+
+
 def _outcomes() -> dict:
     """The dashboard's Outcomes view (apps.analytics.ia_workflow): the SSA
     domains in order, the enrolment states' words, the measured
@@ -187,6 +208,7 @@ def _dashboard() -> dict:
         "duplicate_open_status": DUPLICATE_OPEN_STATUS,
         "operating_statuses": [str(s) for s in OPERATING_STATUSES],
         "outcomes": _outcomes(),
+        "collection": _collection(),
     }
 
 

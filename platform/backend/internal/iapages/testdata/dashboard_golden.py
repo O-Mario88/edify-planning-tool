@@ -1,6 +1,6 @@
 """Write dashboard_golden.json: Impact Assessment's dashboard
-(/ia/dashboard/) on its Outcomes (the default), Today, Impact reports and
-Operations views as
+(/ia/dashboard/) on its Outcomes (the default), Today, Collection, Impact
+reports and Operations views as
 the existing feed reads it, over verification work and project enrolments the
 development seed does not hold.
 
@@ -301,11 +301,21 @@ try:
         first_project = cursor.fetchone()[0]
     OUTCOMES.append({"project": first_project})
     OUTCOMES.append({"view": "reports", "project": first_project})
+    # A filtered worklist that runs past a page hands on (its pager keeps the
+    # request's query order), so the filters asked here fit on one page.
+    COLLECTION = [
+        {"view": "collection"},
+        {"view": "collection", "collection_page": "2"},
+        {"view": "collection", "collection_page": "99"},
+        {"view": "collection", "state": "pending_verification"},
+        {"view": "collection", "school_type": "core"},
+        {"view": "collection", "project": first_project},
+    ]
     OUTCOMES.append({"project": first_project, "fy": "2026", "view": "outcomes"})
     readers = {
-        "ia@edify.org": VIEWS + OUTCOMES,
-        "cd@edify.org": VIEWS[:2] + OUTCOMES[:2],
-        "admin@edify.org": VIEWS[:2] + OUTCOMES[:2],
+        "ia@edify.org": VIEWS + OUTCOMES + COLLECTION,
+        "cd@edify.org": VIEWS[:2] + OUTCOMES[:2] + COLLECTION[:1],
+        "admin@edify.org": VIEWS[:2] + OUTCOMES[:2] + COLLECTION[:1],
         "rvp@edify.org": VIEWS[:1],
         "pl1@edify.org": VIEWS[:1],
         "cceo@edify.org": VIEWS[:1],

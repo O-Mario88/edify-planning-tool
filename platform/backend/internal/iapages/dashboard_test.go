@@ -31,16 +31,33 @@ func TestTheDashboardWeekIsTheServersWeek(t *testing.T) {
 	}
 }
 
-// Collection and Map, and a query the dashboard does not
+// Map, and a query the dashboard does not
 // read, go to the existing application before anything is read.
 func TestTheDashboardHandsOnTheViewsItDoesNotDraw(t *testing.T) {
 	s := &Service{}
-	for _, raw := range []string{"view=map", "view=collection", "view= Map ",
-		"view=today&page=2", "view=operations&gap=missing", "page=2"} {
+	for _, raw := range []string{"view=map", "view= Map ",
+		"view=today&page=2", "view=collection&gap=missing", "page=2"} {
 		query, _ := url.ParseQuery(raw)
 		resp, served, err := s.dashboard(context.Background(), auth.Principal{ActiveRole: "ImpactAssessment"}, Role{Page: true}, query)
 		if served || resp != nil || err != nil {
 			t.Errorf("%q: served %v, %v", raw, served, err)
+		}
+	}
+}
+
+// A paged worklist's links carry the request's query in its own order, so
+// it is drawn only when the pager carries one key besides its own.
+func TestThePagerCarriesTheQueryOnlyWhenItsOrderIsKnown(t *testing.T) {
+	cases := map[string]int{
+		"view=collection":                              1,
+		"view=collection&collection_page=2":            1,
+		"view=collection&state=follow_up_due":          2,
+		"view=collection&district=d&collection_page=3": 2,
+	}
+	for raw, want := range cases {
+		query, _ := url.ParseQuery(raw)
+		if got := carriedKeys(query, "collection_page"); got != want {
+			t.Errorf("%q: %d, want %d", raw, got, want)
 		}
 	}
 }

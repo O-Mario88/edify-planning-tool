@@ -30,6 +30,100 @@
     "training_follow_up_visit": "Training Follow-up Visit"
   },
   "dashboard": {
+    "collection": {
+      "delivered_statuses": [
+        "evidence_uploaded",
+        "evidence_accepted",
+        "salesforce_id_required",
+        "submitted_to_pl",
+        "awaiting_ia_verification",
+        "ia_verified",
+        "accountant_confirmed",
+        "completed",
+        "closed"
+      ],
+      "live_project_statuses": [
+        "active",
+        "paused",
+        "proposed",
+        "scaling",
+        "under_review"
+      ],
+      "open_statuses": [
+        "awaiting_owner_approval",
+        "planned",
+        "scheduled",
+        "rescheduled",
+        "assigned_to_partner",
+        "partner_scheduled",
+        "in_progress",
+        "completion_started",
+        "evidence_uploaded"
+      ],
+      "operating_statuses": [
+        "active",
+        "reopened"
+      ],
+      "page_param": "collection_page",
+      "page_size": 50,
+      "states": [
+        [
+          "returned",
+          "Returned for correction",
+          "The collector re-keys the scores a verifier returned."
+        ],
+        [
+          "pending_verification",
+          "Pending verification",
+          "A verifier other than the collector confirms the scores."
+        ],
+        [
+          "partner_pending",
+          "Partner collection pending",
+          "The partner's SSA Support is under way or awaiting confirmation."
+        ],
+        [
+          "visit_completed_without_scores",
+          "Visit completed without scores",
+          "An SSA visit this year closed with a reason; ask the owner to collect."
+        ],
+        [
+          "collection_scheduled",
+          "Collection scheduled",
+          "An SSA collection visit is planned."
+        ],
+        [
+          "follow_up_due",
+          "Follow-up due",
+          "Confirmed before, nothing confirmed this financial year."
+        ],
+        [
+          "never_assessed",
+          "Never assessed",
+          "No confirmed SSA exists: the baseline is missing."
+        ],
+        [
+          "up_to_date",
+          "Confirmed this year",
+          "A confirmed SSA exists for this financial year."
+        ]
+      ],
+      "verification_labels": {
+        "confirmed": "Confirmed",
+        "flagged": "Flagged",
+        "pending": "Pending",
+        "returned": "Returned"
+      },
+      "work_states": [
+        "returned",
+        "pending_verification",
+        "partner_pending",
+        "visit_completed_without_scores",
+        "collection_scheduled",
+        "follow_up_due",
+        "never_assessed"
+      ]
+    },
     "default_view": "outcomes",
     "district_ssa_target": 0.5,
     "duplicate_open_status": "potential",
