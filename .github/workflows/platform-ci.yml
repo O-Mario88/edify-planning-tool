@@ -290,8 +290,10 @@ jobs:
       - name: Expo project health
         run: npx expo-doctor
 
+      # npm audit --audit-level=high, but for the advisories platform/tools/
+      # npm-audit.mjs lists, each until its review date.
       - name: Dependency audit
-        run: npm audit --audit-level=high
+        run: node ../tools/npm-audit.mjs
 
       # Proves the JavaScript compiles for both platforms. It is NOT a native
       # build: signed iOS and Android binaries are built and verified through
@@ -342,8 +344,10 @@ jobs:
       - name: Build
         run: npm run build
 
+      # npm audit --audit-level=high, but for the advisories platform/tools/
+      # npm-audit.mjs lists, each until its review date.
       - name: Dependency audit
-        run: npm audit --audit-level=high
+        run: node ../tools/npm-audit.mjs
 
       # The browser comparison with the existing web (e2e/, npm run
       # test:compare) needs the existing web, the gateway and seed accounts on
