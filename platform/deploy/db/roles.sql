@@ -1036,3 +1036,6 @@ GRANT SELECT (secondary_focus_interventions) ON activity TO edify_gateway_ro;
 -- Programme Rollout: the partner engagement a Programme Lead recorded in
 -- answer to a Regional Lead's recommendation, and when.
 GRANT SELECT (source_engagement_id, held_on) ON partner_engagement TO edify_gateway_ro;
+-- Core Schools' Team Core Oversight lens (internal/coreschools): whether an
+-- ask about a school is already open for the year.
+GRANT SELECT (fy) ON team_action TO edify_gateway_ro;

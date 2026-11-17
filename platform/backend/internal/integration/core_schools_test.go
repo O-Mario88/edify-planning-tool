@@ -15,13 +15,14 @@ import (
 
 // coreSchoolsTables is what the golden files, parents first: the packages
 // the page's own heal would make, found and cleared by their ids.
-var coreSchoolsTables = []string{"core_plan", "core_school_profile", "core_activity_slot"}
+var coreSchoolsTables = []string{"activity", "core_plan", "core_school_profile", "core_activity_slot"}
 
 // The existing feed's Core Schools Planning, with its three lazily drawn
 // tabs, for the CCEO who holds the core schools (this year and the one
 // before, the pages and sizes, each filter and a search), a CCEO who holds
 // none, the Programme Lead, the Accountant, IA and the Admin, and the
-// partner login it refuses; the Team Core Oversight lens is handed on.
+// partner login it refuses, and the Programme Lead's Team Core Oversight
+// lens over a delivery chain on its first schools.
 // Skipped unless EDIFY_CORE_SCHOOLS_GOLDEN names a file
 // internal/coreschools/testdata/golden.py wrote within the hour.
 func TestCoreSchoolsMatchesTheExistingFeed(t *testing.T) {
@@ -73,12 +74,5 @@ func TestCoreSchoolsMatchesTheExistingFeed(t *testing.T) {
 			}
 		}
 	}
-	served := []goldenAnswer{}
-	for _, answer := range golden.Answers {
-		if answer.Query["lens"] == "oversight" {
-			continue
-		}
-		served = append(served, answer)
-	}
-	compareGolden(t, coreschools.Path, served)
+	compareGolden(t, coreschools.Path, golden.Answers)
 }

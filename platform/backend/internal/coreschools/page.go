@@ -49,6 +49,8 @@ type page struct {
 	performanceFigures *performanceFigures
 	// programmeRows is whether a programme table has a row to tick.
 	programmeRows bool
+	// oversight is the read-only Team Core Oversight lens.
+	oversight bool
 }
 
 // Build answers /core-schools; every other path is not its own.
@@ -136,17 +138,16 @@ func (s *Service) build(ctx context.Context, p auth.Principal, d door, query url
 	if pg.hasTeamCore, err = s.teamCore(ctx, pg.scope); err != nil {
 		return nil, err
 	}
-	if query.Get("lens") == "oversight" && pg.hasTeamCore {
-		return nil, fmt.Errorf("the oversight lens: %w", errPassOn)
-	}
-	pending, err := healPending(ctx, s.db, pg.scope, false, pg.fy, pg.operational)
+	// A lens the reader cannot hold falls back to their own schools.
+	pg.oversight = query.Get("lens") == "oversight" && pg.hasTeamCore
+	pending, err := healPending(ctx, s.db, pg.scope, pg.oversight, pg.fy, pg.operational)
 	if err != nil {
 		return nil, err
 	}
 	if pending {
 		return nil, fmt.Errorf("the packages would be healed: %w", errPassOn)
 	}
-	if pg.all, err = coreSchools(ctx, s.db, pg.scope, false, pg.f); err != nil {
+	if pg.all, err = coreSchools(ctx, s.db, pg.scope, pg.oversight, pg.f); err != nil {
 		return nil, err
 	}
 	pg.pages = max(1, (len(pg.all)+pg.perPage-1)/pg.perPage)
@@ -155,7 +156,10 @@ func (s *Service) build(ctx context.Context, p auth.Principal, d door, query url
 	}
 	start := (pg.number - 1) * pg.perPage
 	pg.shown = pg.all[start:min(start+pg.perPage, len(pg.all))]
-	pg.tick = d.tick()
+	pg.tick = d.tick() && !pg.oversight
+	if pg.oversight {
+		return pg.oversightResponse(ctx)
+	}
 	return pg.response(ctx)
 }
 
@@ -215,9 +219,31 @@ func (pg *page) response(ctx context.Context) (*screensv1.GetPageResponse, error
 func (pg *page) lensTabs() *screensv1.PageBlock {
 	size := strconv.Itoa(pg.perPage)
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_LinkTabs{LinkTabs: &screensv1.PageLinkTabs{Tabs: []*screensv1.PageLinkTab{
-		{Label: "My Core Schools", Href: "/core-schools?fy=" + pg.fy + "&per_page=" + size, Active: true},
-		{Label: "Team Core Oversight", Href: "/core-schools?lens=oversight&fy=" + pg.fy + "&per_page=" + size},
+		{Label: "My Core Schools", Href: "/core-schools?fy=" + pg.fy + "&per_page=" + size, Active: !pg.oversight},
+		{Label: "Team Core Oversight", Href: "/core-schools?lens=oversight&fy=" + pg.fy + "&per_page=" + size, Active: pg.oversight},
 	}}}}
+}
+
+// oversightResponse is the Team Core Oversight lens: the rail, the filters,
+// the strip over the team's core schools, then one read-only table and the
+// programme tables. Nothing on it plans, so nothing is ticked.
+func (pg *page) oversightResponse(ctx context.Context) (*screensv1.GetPageResponse, error) {
+	filters, err := pg.filterBlock(ctx)
+	if err != nil {
+		return nil, err
+	}
+	strip, err := pg.kpis(ctx)
+	if err != nil {
+		return nil, err
+	}
+	tables, err := pg.oversightBlocks(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &screensv1.GetPageResponse{WebPath: Path, Header: &screensv1.PageHeader{
+		Eyebrow: "Schools & Field", Title: "Team Core Oversight",
+		Description: "Read-only view of the core packages your CCEOs are responsible for. Ask the owner to act — you cannot plan their work here.",
+	}, Blocks: append([]*screensv1.PageBlock{pg.lensTabs(), filters, strip}, tables...)}, nil
 }
 
 // selection is partials/schools/bulk_bar.html's doors for the ticked set.

@@ -116,6 +116,24 @@ def rules() -> dict:
         "slot_ordinals": {str(k): v for k, v in CORE_SLOT_ORDINALS.items()},
         # may_plan_school: the roles that may plan at any school.
         "country_scheduling_roles": sorted(COUNTRY_SCHEDULING_ROLES),
+        **_oversight(),
+    }
+
+
+def _oversight() -> dict:
+    """The Team Core Oversight lens (CoreTeamOversightService.build_rows):
+    the statuses a delivered activity has, the asks a supervisor can send
+    about a school and the states in which one is still open."""
+    from apps.core.activity_types import COMPLETED_WORK_STATUSES
+    from apps.core_schools.core_planning_services import CoreTeamOversightService
+    from apps.planning.action_models import ACTIVE_STATES
+
+    return {
+        "completed_statuses": sorted(str(s) for s in COMPLETED_WORK_STATUSES),
+        "action_active_states": sorted(str(s) for s in ACTIVE_STATES),
+        "oversight_blockers": [
+            key for key, _label, _severity, _tone in CoreTeamOversightService._BLOCKERS
+        ],
     }
 
 

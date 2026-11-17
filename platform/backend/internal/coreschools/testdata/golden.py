@@ -13,8 +13,10 @@ carry_packages_forward) — a write Go does not make, so Go hands such a read
 on. This first heals every core school for the operational year and the one
 before by those same services, as a first read would, so the page's own
 heal finds nothing to do. It then asks the page as the CCEO who holds the
-core schools, a CCEO who holds none, the Programme Lead (both lenses), the
-Accountant, IA and the Admin, for the operational year and the one before,
+core schools, a CCEO who holds none, the Programme Lead (both lenses, the
+oversight lens over the delivery chain this files on its first schools,
+paged, sized, filtered and searched), the Country Director whose oversight
+lens falls back, the Accountant, IA and the Admin, for the operational year and the one before,
 the second page, a page size, each filter and a search, and writes the rows
 the page reads (the rows the transaction added, in the order they are
 stored) and the answers to GOLDEN_OUT.
@@ -40,8 +42,9 @@ User = get_user_model()
 PATH = "/core-schools"
 FY = get_operational_fy()
 EARLIER = str(int(FY) - 1)
-#: The tables the heal writes and the page reads, parents first.
-TABLES = ("core_plan", "core_school_profile", "core_activity_slot")
+#: The tables the heal writes and the page reads, parents first, and the
+#: activities the oversight lens's delivery chain reads.
+TABLES = ("activity", "core_plan", "core_school_profile", "core_activity_slot")
 
 
 def ids():
@@ -62,6 +65,69 @@ def heal():
             pass
         while CoreSchoolsService.carry_packages_forward(schools, fy):
             pass
+
+
+def file_delivery():
+    """The delivery chain on the first core schools the Programme Lead's
+    oversight lens lists: one school's core visits and trainings with
+    evidence outstanding, a delivered one missing its Salesforce ID and
+    awaiting payment, one awaiting IA and a cancelled one; the next's all
+    clear."""
+    lead = User.objects.get(email="pl1@edify.org")
+    schools = list(
+        CoreSchoolsService.get_core_schools(
+            lead, {"fy": FY}, lens="oversight"
+        ).values_list("id", flat=True)[:2]
+    )
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT id FROM activity WHERE activity_type = 'school_visit' AND deleted_at IS NULL ORDER BY id LIMIT 1"
+        )
+        base = cursor.fetchone()[0]
+        stamp = dj_timezone.now().isoformat()
+        for n, (school, kind, status, evidence, salesforce, payment) in enumerate(
+            (
+                (schools[0], "core_visit", "scheduled", "pending", "", "not_due"),
+                (schools[0], "core_training", "completed", "uploaded", "", "pending"),
+                (
+                    schools[0],
+                    "core_visit",
+                    "awaiting_ia_verification",
+                    "not_uploaded",
+                    "SF-1",
+                    "not_due",
+                ),
+                (schools[0], "core_visit", "cancelled", "pending", "", "pending"),
+                (
+                    schools[1],
+                    "core_training",
+                    "ia_verified",
+                    "uploaded",
+                    "SF-2",
+                    "paid",
+                ),
+            ),
+            start=1,
+        ):
+            overrides = {
+                "id": f"gcsa{n:02d}",
+                "fy": FY,
+                "school_id": school,
+                "activity_type": kind,
+                "status": status,
+                "evidence_status": evidence,
+                "salesforce_activity_id": salesforce,
+                "payment_status": payment,
+                "paired_school_visit_id": None,
+                "daily_visit_batch_id": None,
+                "created_at": stamp,
+                "updated_at": stamp,
+            }
+            cursor.execute(
+                'INSERT INTO "activity" SELECT (json_populate_record(NULL::"activity", '
+                '(row_to_json(t)::jsonb || %s::jsonb)::json)).* FROM "activity" t WHERE id = %s',
+                [json.dumps(overrides), base],
+            )
 
 
 def dump_rows(before):
@@ -105,6 +171,7 @@ def ask(reader, query):
 with transaction.atomic():
     before = ids()
     heal()
+    file_delivery()
     rows = dump_rows(before)
     officer = User.objects.get(email="cceo@edify.org")
     first = ask(officer, {})
@@ -131,8 +198,18 @@ with transaction.atomic():
         ("cceo8@edify.org", [{}]),
         (
             "pl1@edify.org",
-            [{}, {"lens": "oversight"}, {"lens": "oversight", "page": "2"}],
+            [
+                {},
+                {"lens": "oversight"},
+                {"lens": "oversight", "page": "2"},
+                {"lens": "oversight", "per_page": "10", "page": "4"},
+                {"lens": "oversight", "fy": EARLIER},
+                {"lens": "oversight", "ssa_status": "done"},
+                {"lens": "oversight", "school_type_filter": "champion"},
+                {"lens": "oversight", "q": "primary"},
+            ],
         ),
+        ("cd@edify.org", [{"lens": "oversight"}]),
         ("accountant@edify.org", [{}]),
         ("ia@edify.org", [{}]),
         ("admin@edify.org", [{}, {"fy": EARLIER}]),

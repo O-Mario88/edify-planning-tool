@@ -66,9 +66,13 @@ var rules = func() (r struct {
 	ActivityStatusLabels   map[string]string `json:"activity_status_labels"`
 	SlotOrdinals           map[string]string `json:"slot_ordinals"`
 	CountrySchedulingRoles []string          `json:"country_scheduling_roles"`
+	CompletedStatuses      []string          `json:"completed_statuses"`
+	ActionActiveStates     []string          `json:"action_active_states"`
+	OversightBlockers      []string          `json:"oversight_blockers"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.Roles) == 0 || len(r.PageSizes) == 0 ||
-		len(r.Interventions) == 0 || len(r.ProgrammeTypes) == 0 || len(r.SlotOrdinals) != 4 {
+		len(r.Interventions) == 0 || len(r.ProgrammeTypes) == 0 || len(r.SlotOrdinals) != 4 ||
+		len(r.CompletedStatuses) == 0 || len(r.ActionActiveStates) == 0 || len(r.OversightBlockers) == 0 {
 		panic(fmt.Sprintf("coreschools: the embedded rules are unreadable: %v", err))
 	}
 	return r

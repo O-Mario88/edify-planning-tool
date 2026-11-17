@@ -1,4 +1,12 @@
 {
+  "action_active_states": [
+    "acknowledged",
+    "blocked",
+    "escalated",
+    "in_progress",
+    "open",
+    "overdue"
+  ],
   "activity_status_labels": {
     "accountant_confirmed": "Accountant Confirmed",
     "assigned_to_partner": "Assigned to Partner",
@@ -70,6 +78,12 @@
     "cluster_training",
     "cluster_training_ssa_collection"
   ],
+  "completed_statuses": [
+    "accountant_confirmed",
+    "closed",
+    "completed",
+    "ia_verified"
+  ],
   "country_scheduling_roles": [
     "Admin",
     "CountryDirector",
@@ -128,6 +142,10 @@
   ],
   "outreach_only_types": [
     "champion"
+  ],
+  "oversight_blockers": [
+    "core_assessment_missing",
+    "core_package_behind"
   ],
   "page_size_default": 50,
   "page_sizes": [

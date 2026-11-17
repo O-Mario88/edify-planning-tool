@@ -101,7 +101,7 @@ ORDER BY p.name`, rules.PartnerReleased)
 			selectFilter("partner_assigned", "Partner assignment status", "Partner status", f.partnerAssigned,
 				[]option{{"All", "All"}, {"assigned", "Partner Assigned"}, {"unassigned", "Not Assigned"}}),
 		},
-		Hidden: map[string]string{"page": strconv.Itoa(pg.number), "per_page": strconv.Itoa(pg.perPage)},
+		Hidden: pg.hidden(),
 	}}}, nil
 }
 
@@ -213,3 +213,13 @@ SELECT avg(average_score) FROM (
 }
 
 var _ = slices.Contains[[]string]
+
+// hidden is the filter form's hidden inputs: the page, its size and, on the
+// read-only lens, the lens.
+func (pg *page) hidden() map[string]string {
+	out := map[string]string{"page": strconv.Itoa(pg.number), "per_page": strconv.Itoa(pg.perPage)}
+	if pg.oversight {
+		out["lens"] = "oversight"
+	}
+	return out
+}

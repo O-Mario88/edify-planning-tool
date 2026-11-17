@@ -30,7 +30,7 @@ func (pg *page) programmeSchools(ctx context.Context, kind string) ([]school, er
 		return nil, nil
 	}
 	a := &sqlArgs{}
-	parts := []string{lensClause(pg.scope, false, a), "s.deleted_at IS NULL", "s.school_type = " + a.arg(kind)}
+	parts := []string{lensClause(pg.scope, pg.oversight, a), "s.deleted_at IS NULL", "s.school_type = " + a.arg(kind)}
 	if f.q != "" {
 		p := a.arg(likeArg(f.q))
 		parts = append(parts, fmt.Sprintf(`(s.name ILIKE %[1]s OR s.school_id ILIKE %[1]s OR d.name ILIKE %[1]s OR s.account_owner_name_raw ILIKE %[1]s)`, p))
@@ -199,7 +199,7 @@ func (pg *page) programme(ctx context.Context) ([]*screensv1.PageBlock, error) {
 				planned = strings.Join(lines, " ")
 			}
 			action := &screensv1.PageCell{Text: "View", Href: "/schools/" + sc.code}
-			if pg.mayPlan(sc) {
+			if !pg.oversight && pg.mayPlan(sc) {
 				action = &screensv1.PageCell{Text: "Schedule"}
 			}
 			row := &screensv1.PageRow{Cells: append(cells, &screensv1.PageCell{Text: planned}, action)}
