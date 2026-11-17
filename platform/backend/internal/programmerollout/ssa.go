@@ -3,7 +3,6 @@ package programmerollout
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"slices"
 	"sort"
 	"strconv"
@@ -384,7 +383,7 @@ func (s *Service) selfAssessments(ctx context.Context, sc *scope, fy string) ([]
 		all[id] = true
 	}
 	summary := countStates(all, states)
-	carry := "fy=" + url.QueryEscape(fy)
+	carry := sc.carry
 	drawer := func(state string, n int) string {
 		if n == 0 {
 			return ""

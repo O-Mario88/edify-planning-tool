@@ -144,7 +144,7 @@ func (s *Service) weakRows(ctx context.Context, sc *scope, fy string, portfolio 
 		return nil, true, err
 	}
 	own := map[string]bool{}
-	if sc.lead != nil {
+	if sc.lead != nil && !sc.support {
 		own = sc.lead.schools
 	}
 	rows := []weakRow{}

@@ -36,8 +36,9 @@ func TestThePageDecidesItsDoorsBeforeReading(t *testing.T) {
 		p     auth.Principal
 		query string
 	}{
-		{auth.Principal{ActiveRole: "Admin"}, ""},
-		{auth.Principal{ActiveRole: "ImpactAssessment"}, ""},
+		{auth.Principal{ActiveRole: "Admin", InActingAppointment: true}, ""},
+		{auth.Principal{ActiveRole: "ImpactAssessment"}, "lead=sp9&course_page=2"},
+		{auth.Principal{ActiveRole: "Admin"}, "view=ssa&member=sp2"},
 		{auth.Principal{ActiveRole: "Program Lead", StaffProfileID: "sp1", InActingAppointment: true}, ""},
 		{auth.Principal{ActiveRole: "Program Lead"}, ""},
 		{lead, "view=ssa&cluster_page=2"},

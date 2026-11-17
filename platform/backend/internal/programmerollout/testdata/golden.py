@@ -33,6 +33,10 @@ if not settings.DATABASES["default"]["NAME"].endswith("_test"):
 
 User = get_user_model()
 PATH = "/programme-rollout"
+#: The second and third Programme Leads' staff profiles, chosen by the Admin
+#: and Impact Assessment.
+PL2 = "cmw9p7b6a00e4s8ekhefr"
+PL3 = "cmw9p7bf200eymgekhexn"
 NOW = dj_timezone.now()
 TODAY = dj_timezone.localdate()
 TABLES = (
@@ -387,7 +391,7 @@ def file_spiritual(cursor, work, on, officer, partner, stamp):
         "GROUP BY r.school_id ORDER BY r.school_id",
         [officer],
     )
-    both = alone = None
+    both = alone = strong = None
     for school_id, order in cursor.fetchall():
         weakest = order.split(",")[:3]
         pair = {"christlike_behaviour", "exposure_to_word_of_god"} & set(weakest)
@@ -395,13 +399,18 @@ def file_spiritual(cursor, work, on, officer, partner, stamp):
             both = school_id
         elif pair == {"exposure_to_word_of_god"} and alone is None:
             alone = school_id
+        elif not pair and strong is None:
+            strong = school_id
     lead = User.objects.get(email="pl2@edify.org")
     colleague = sorted(team_members(lead), key=lambda p: p.id)[0].id
-    for index, school_id in enumerate((both, alone), start=1):
+    for index, (school_id, staff_id) in enumerate(
+        ((both, colleague), (alone, colleague), (strong, lead.staff_profile.id)),
+        start=1,
+    ):
         cursor.execute(
             "INSERT INTO staff_school_assignment (id, created_at, updated_at, school_id, staff_id) "
             "VALUES (%s, %s, %s, %s, %s)",
-            [f"gprt{index:02d}", stamp, stamp, school_id, colleague],
+            [f"gprt{index:02d}", stamp, stamp, school_id, staff_id],
         )
     work(
         activity_type="school_visit",
@@ -509,6 +518,14 @@ try:
         ("pl2@edify.org", {"view": "spiritual", "fy": "2027", "weak_page": "3"}),
         ("pl2@edify.org", {}),
         ("pl2@edify.org", {"view": "ssa"}),
+        ("admin@edify.org", {}),
+        ("admin@edify.org", {"view": "ssa"}),
+        ("admin@edify.org", {"view": "spiritual"}),
+        ("admin@edify.org", {"lead": PL2}),
+        ("admin@edify.org", {"lead": PL2, "view": "spiritual"}),
+        ("admin@edify.org", {"lead": PL2, "view": "ssa", "fy": "2026"}),
+        ("ia@edify.org", {"lead": "bogus", "view": "ssa"}),
+        ("ia@edify.org", {"lead": f" {PL3} "}),
         ("cceo@edify.org", {}),
         ("accountant@edify.org", {}),
     ):

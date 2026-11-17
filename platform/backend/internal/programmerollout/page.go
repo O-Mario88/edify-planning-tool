@@ -47,8 +47,9 @@ func NewService(pool *pgxpool.Pool, now func() time.Time) *Service {
 	return &Service{db: pool, now: now}
 }
 
-// Build draws every view for a Programme Lead in their own seat. A lead
-// chosen by the Admin or IA, an acting seat, a query key the page does not
+// Build draws every view for a Programme Lead in their own seat, and for the
+// Admin or Impact Assessment reading the lead they choose. A lead with no
+// officers (warned on the page), no Programme Lead to choose, an acting seat, a query key the page does not
 // read, a Regional Lead observation of the year on the Trainings or
 // Spiritual Formation view, a table running past a page (but the weak
 // schools'), and a pager carrying more than one key hand on; the path with
@@ -63,13 +64,26 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if !slices.Contains(rules.PageRoles, p.ActiveRole) {
 		return nil, true, pagegate.ErrNotAvailable
 	}
-	if p.ActiveRole != rules.ProgramLead || p.InActingAppointment || p.StaffProfileID == "" {
+	if p.InActingAppointment {
 		return nil, false, nil
 	}
+	chooser := slices.Contains(rules.LeadChoosers, p.ActiveRole)
 	for key := range query {
-		if key != "view" && key != "fy" && key != weakPageParam {
+		if key != "view" && key != "fy" && key != weakPageParam && (key != "lead" || !chooser) {
 			return nil, false, nil
 		}
+	}
+	lead := leadChoice{staffID: p.StaffProfileID, userID: p.UserID}
+	var options [][2]string
+	switch {
+	case chooser:
+		var found bool
+		var err error
+		if lead, options, found, err = s.chooseLead(ctx, strings.TrimSpace(query.Get("lead"))); err != nil || !found {
+			return nil, err != nil, err
+		}
+	case p.ActiveRole != rules.ProgramLead || p.StaffProfileID == "":
+		return nil, false, nil
 	}
 	view := strings.ToLower(strings.TrimSpace(query.Get("view")))
 	if !slices.Contains(rules.Views, view) {
@@ -91,10 +105,23 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 			return nil, false, nil
 		}
 	}
-	sc, err := readScope(ctx, s.db, p.StaffProfileID, p.UserID, now)
+	sc, err := readScope(ctx, s.db, lead.staffID, lead.userID, now)
 	if err != nil {
 		return nil, true, err
 	}
+	if !chooser && len(sc.officers) == 0 {
+		// The lead is warned that nobody is assigned to them yet.
+		return nil, false, nil
+	}
+	carried := url.Values{"fy": {fy}}
+	if chooser {
+		sc.support = true
+		if sc.lead != nil {
+			sc.lead.support = true
+		}
+		carried.Set("lead", lead.staffID)
+	}
+	sc.carry = carried.Encode()
 	var blocks []*screensv1.PageBlock
 	served := true
 	switch view {
@@ -122,16 +149,36 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		Eyebrow: "Programme implementation", Title: "Programme Rollout",
 		Description: "Coordinate the rollout of training programmes, school self-assessments and spiritual transformation interventions across your team.",
 		Badges: []*screensv1.PageBadge{
-			{Text: fmt.Sprintf("%d %s · %s %s", len(sc.officers), plural(len(sc.officers), "officer"), intcomma(len(sc.schools)), plural(len(sc.schools), "school")), Tone: "plain"},
+			{Text: reachText(sc), Tone: "plain"},
 			{Tone: "plain"},
 		},
 		Actions: []*screensv1.PageAction{{Key: "open_planning_oversight", Label: "Open Planning Oversight", Enabled: true,
 			Href: "/team-planning-oversight/?fy=" + fy}},
 	}
-	return &screensv1.GetPageResponse{Header: header, WebPath: Path, Blocks: []*screensv1.PageBlock{
-		{Kind: &screensv1.PageBlock_Filters{Filters: &screensv1.PageFilters{Filters: []*screensv1.PageFilter{year}, Hidden: map[string]string{"view": view}}}},
-		{Kind: &screensv1.PageBlock_Segments{Segments: segments}},
-	}}, true, nil
+	filters := []*screensv1.PageFilter{year}
+	page := []*screensv1.PageBlock{}
+	if chooser {
+		choose := &screensv1.PageFilter{Name: "lead", Label: "Programme Lead", Value: lead.staffID}
+		for _, o := range options {
+			choose.Options = append(choose.Options, &screensv1.PageFilterOption{Value: o[0], Label: o[1]})
+		}
+		filters = []*screensv1.PageFilter{choose, year}
+		page = append(page, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{Items: []*screensv1.PagePanelItem{
+			panelText("You are reading "+sc.leadName+"'s team as they see it. Choose another Programme Lead in the filters.", "")}}}})
+	}
+	page = append([]*screensv1.PageBlock{{Kind: &screensv1.PageBlock_Filters{Filters: &screensv1.PageFilters{Filters: filters, Hidden: map[string]string{"view": view}}}}},
+		append(page, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Segments{Segments: segments}})...)
+	return &screensv1.GetPageResponse{Header: header, WebPath: Path, Blocks: page}, true, nil
+}
+
+// reachText is the header's reach badge: the lead an administrator reads,
+// the officers and the schools.
+func reachText(sc *scope) string {
+	text := fmt.Sprintf("%d %s · %s %s", len(sc.officers), plural(len(sc.officers), "officer"), intcomma(len(sc.schools)), plural(len(sc.schools), "school"))
+	if sc.support {
+		return sc.leadName + " · " + text
+	}
+	return text
 }
 
 func plural(n int, word string) string {
@@ -240,7 +287,7 @@ func (s *Service) trainings(ctx context.Context, sc *scope, fy string, today tim
 	summary := folded(rows, reached)
 	portfolio := len(sc.schools)
 	untrained := portfolio - len(trained)
-	carry := "fy=" + url.QueryEscape(fy)
+	carry := sc.carry
 	trainedValue, trainedHelper, trainedTone, trainedHref := "—", "No schools in the portfolio", "success", ""
 	if portfolio > 0 {
 		trainedValue, trainedHelper = strconv.Itoa(len(trained)), fmt.Sprintf("of %d · %d not yet trained", portfolio, untrained)
@@ -351,7 +398,7 @@ func (s *Service) trainings(ctx context.Context, sc *scope, fy string, today tim
 		name := &screensv1.PageCell{Text: m.name}
 		owner := m.staffID
 		if m.isLead {
-			name.Text, owner = "Your own portfolio", "mine"
+			name.Text, owner = memberName(m), "mine"
 		} else {
 			name.Href = "/staff/" + m.userID + "?from=" + Path
 		}
@@ -521,8 +568,13 @@ func deliveredBy(sc *scope, n names, r training) string {
 	return "Edify staff"
 }
 
+// memberName is _member_name: the lead's own row is "Your own portfolio",
+// or "{name} (own portfolio)" to an administrator reading the team.
 func memberName(m *member) string {
-	if m.isLead {
+	switch {
+	case m.isLead && m.support:
+		return m.name + " (own portfolio)"
+	case m.isLead:
 		return "Your own portfolio"
 	}
 	return m.name

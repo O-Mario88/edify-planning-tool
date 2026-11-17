@@ -14,7 +14,10 @@ import (
 type member struct {
 	staffID, userID, name string
 	isLead                bool
-	schools               map[string]bool
+	// support is an administrator reading the lead's team: the lead's own
+	// row is named for them.
+	support bool
+	schools map[string]bool
 }
 
 func (m *member) ids() []string {
@@ -38,6 +41,10 @@ type scope struct {
 	schools                           map[string]school
 	ownerByID                         map[string]string
 	ownersBySchool                    map[string][]string
+	// support is an administrator reading a lead's team (support_view).
+	support bool
+	// carry is carry_query: the year, and the lead an administrator reads.
+	carry string
 }
 
 func (s *scope) everyone() []*member {
