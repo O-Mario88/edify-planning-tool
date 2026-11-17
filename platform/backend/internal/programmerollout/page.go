@@ -47,11 +47,11 @@ func NewService(pool *pgxpool.Pool, now func() time.Time) *Service {
 	return &Service{db: pool, now: now}
 }
 
-// Build draws the Trainings view for a Programme Lead in their own seat.
-// The Self-Assessments and Spiritual Formation views, a lead chosen by the
-// Admin or IA, an acting seat, a query key the page does not read, any
-// Regional Lead observation of the year, and a table running past a page
-// hand on; the path with a trailing slash is not a page.
+// Build draws the Trainings and Self-Assessments views for a Programme Lead
+// in their own seat. The Spiritual Formation view, a lead chosen by the Admin
+// or IA, an acting seat, a query key the page does not read, a Regional Lead
+// observation of the year on the Trainings view, and a table running past a
+// page hand on; the path with a trailing slash is not a page.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
 	if path == Path+"/" {
 		return nil, true, pagegate.ErrNotAvailable
@@ -74,7 +74,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if !slices.Contains(rules.Views, view) {
 		view = rules.DefaultView
 	}
-	if view != "trainings" {
+	if view == "spiritual" {
 		return nil, false, nil
 	}
 	now := s.now()
@@ -83,21 +83,29 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if !slices.Contains(years, fy) {
 		fy = schooldirectory.OperationalFY(now)
 	}
-	var observed bool
-	if err := s.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM cce_regional_engagement WHERE kind = $1 AND fy = $2)`,
-		rules.ObservationKind, fy).Scan(&observed); err != nil {
-		return nil, true, fmt.Errorf("programmerollout: reading the observations: %w", err)
-	}
-	if observed {
-		return nil, false, nil
+	if view == "trainings" {
+		var observed bool
+		if err := s.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM cce_regional_engagement WHERE kind = $1 AND fy = $2)`,
+			rules.ObservationKind, fy).Scan(&observed); err != nil {
+			return nil, true, fmt.Errorf("programmerollout: reading the observations: %w", err)
+		}
+		if observed {
+			return nil, false, nil
+		}
 	}
 	sc, err := readScope(ctx, s.db, p.StaffProfileID, p.UserID, now)
 	if err != nil {
 		return nil, true, err
 	}
-	t := now.In(nairobi)
-	today := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
-	blocks, served, err := s.trainings(ctx, sc, fy, today)
+	var blocks []*screensv1.PageBlock
+	served := true
+	if view == "ssa" {
+		blocks, served, err = s.selfAssessments(ctx, sc, fy)
+	} else {
+		t := now.In(nairobi)
+		today := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
+		blocks, served, err = s.trainings(ctx, sc, fy, today)
+	}
 	if err != nil || !served {
 		return nil, served, err
 	}

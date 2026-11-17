@@ -35,15 +35,19 @@ User = get_user_model()
 PATH = "/programme-rollout"
 NOW = dj_timezone.now()
 TODAY = dj_timezone.localdate()
-TABLES = (("activity", "id"), ("cluster_activity_attendance", "activity_id"))
+TABLES = (
+    ("activity", "id"),
+    ("cluster_activity_attendance", "activity_id"),
+    ("ssa_record", "id"),
+    ("ssa_score", "ssa_record_id"),
+    ("partner_assignment", "id"),
+)
 
 
 def clear():
     with connection.cursor() as cursor:
-        cursor.execute(
-            "DELETE FROM cluster_activity_attendance WHERE activity_id LIKE 'gpr%%'"
-        )
-        cursor.execute("DELETE FROM activity WHERE id LIKE 'gpr%%'")
+        for table, column in reversed(TABLES):
+            cursor.execute(f"DELETE FROM {table} WHERE {column} LIKE 'gpr%%'")
 
 
 def one(cursor, sql, args=()):
@@ -182,6 +186,193 @@ def file_rows():
             "invited, attended, is_guest, recorded_by) VALUES (%s, %s, %s, %s, true, true, false, '')",
             [stamp, stamp, cluster, schools[0][0]],
         )
+        file_ssa(cursor, work, on, officer, partner, stamp)
+
+
+def file_ssa(cursor, work, on, officer, partner, stamp):
+    """The Self-Assessments view's facts over schools with no confirmed SSA
+    this year, each cluster's schools apart: records pending, flagged, deleted
+    and newly confirmed with scores; collections at a school scheduled, held
+    and cancelled; a cluster collection with nobody recorded and one with an
+    invitation and a recorded school; a partner hand-over at a school, one at
+    a cluster by its catalogue item, and one already scheduled."""
+    cursor.execute(
+        "SELECT s.id, s.cluster_id FROM staff_school_assignment a JOIN school s ON s.id = a.school_id "
+        "WHERE a.staff_id = %s AND s.deleted_at IS NULL AND s.cluster_id IS NOT NULL "
+        "AND s.operational_status IN ('active', 'reopened') AND NOT EXISTS (SELECT 1 FROM ssa_record r "
+        "WHERE r.school_id = s.id AND r.fy = '2027' AND r.deleted_at IS NULL) ORDER BY s.cluster_id, s.id",
+        [officer],
+    )
+    by_cluster = {}
+    for school_id, cluster_id in cursor.fetchall():
+        by_cluster.setdefault(cluster_id, []).append(school_id)
+    clusters = sorted(by_cluster)
+    # Single-school facts come from clusters the cluster-wide facts leave alone.
+    single = [sid for c in clusters[3:] for sid in by_cluster[c]]
+    invited = by_cluster[clusters[1]]
+    confirmed_school = one_confirmed(cursor, officer)
+    base_record = one(
+        cursor,
+        "SELECT id FROM ssa_record WHERE verification_status = 'confirmed' AND deleted_at IS NULL ORDER BY id LIMIT 1",
+    )
+    n = 0
+
+    def record(school_id, **fields):
+        nonlocal n
+        n += 1
+        overrides = {
+            "id": f"gprs{n:02d}",
+            "school_id": school_id,
+            "fy": "2027",
+            "quarter": "Q1",
+            "date_of_ssa": on(-15) + "T09:00:00+00:00",
+            "verification_status": "pending",
+            "source_activity_id": None,
+            "salesforce_id": None,
+            "deleted_at": None,
+            "created_at": stamp,
+            "updated_at": stamp,
+            **fields,
+        }
+        cursor.execute(
+            'INSERT INTO "ssa_record" SELECT (json_populate_record(NULL::"ssa_record", '
+            '(row_to_json(t)::jsonb || %s::jsonb)::json)).* FROM "ssa_record" t WHERE id = %s',
+            [json.dumps(overrides, default=str), base_record],
+        )
+        return overrides["id"]
+
+    record(single[0])
+    record(single[1], verification_status="flagged")
+    record(single[2], deleted_at=stamp)
+    scored = record(single[3], verification_status="confirmed", average_score=7.25)
+    for index, (intervention, score) in enumerate(
+        (
+            ("christlike_behaviour", 8.25),
+            ("exposure_to_word_of_god", 6.75),
+            ("financial_health", 4.0),
+            ("leadership", 9.5),
+        )
+    ):
+        cursor.execute(
+            "INSERT INTO ssa_score (id, created_at, updated_at, ssa_record_id, intervention, score) "
+            "VALUES (%s, %s, %s, %s, %s, %s)",
+            [f"{scored}x{index}", stamp, stamp, scored, intervention, score],
+        )
+
+    collection = {"fy": "2027", "focus_intervention": "", "school_id": None}
+    work(
+        activity_type="school_visit_ssa_collection",
+        status="scheduled",
+        planned_date=on(6),
+        **{**collection, "school_id": single[4]},
+    )
+    work(
+        activity_type="baseline_ssa_visit",
+        status="completed",
+        planned_date=on(-9),
+        **{**collection, "school_id": single[5]},
+    )
+    work(
+        activity_type="ssa_activity",
+        status="cancelled",
+        planned_date=on(3),
+        **{**collection, "school_id": single[6]},
+    )
+    work(
+        activity_type="school_visit_ssa_collection",
+        status="scheduled",
+        planned_date=on(4),
+        **{**collection, "school_id": confirmed_school},
+    )
+    work(
+        activity_type="cluster_training_ssa_collection",
+        status="partner_scheduled",
+        planned_date=on(8),
+        delivery_type="partner",
+        assigned_partner_id=partner,
+        responsible_staff_id=None,
+        monitored_by_staff_id=None,
+        **{**collection, "cluster_id": clusters[0]},
+    )
+    reviewed = work(
+        activity_type="cluster_meeting_ssa_review",
+        status="evidence_uploaded",
+        planned_date=on(-4),
+        responsible_staff_id=None,
+        monitored_by_staff_id=None,
+        attended_school_ids=[invited[1]],
+        **{**collection, "cluster_id": clusters[1]},
+    )
+    cursor.execute(
+        "INSERT INTO cluster_activity_attendance (created_at, updated_at, activity_id, school_id, "
+        "invited, attended, is_guest, recorded_by) VALUES (%s, %s, %s, %s, true, false, false, '')",
+        [stamp, stamp, reviewed, invited[0]],
+    )
+
+    base_assignment = one(
+        cursor, "SELECT id FROM partner_assignment ORDER BY id LIMIT 1"
+    )
+    workflow_item = one(
+        cursor,
+        "SELECT id FROM activity_catalogue_item WHERE workflow_kind = 'school_visit_ssa_collection' ORDER BY id LIMIT 1",
+    )
+    m = 0
+
+    def assignment(**fields):
+        nonlocal m
+        m += 1
+        overrides = {
+            "id": f"gpra{m:02d}",
+            "status": "assigned",
+            "partner_id": partner,
+            "school_id": None,
+            "cluster_id": None,
+            "catalogue_item_id": None,
+            "expected_activity_type": "",
+            "scheduled_activity_id": None,
+            "source_activity_id": None,
+            "source_ssa_id": None,
+            "replaces_assignment_id": None,
+            "support_type": None,
+            "visit_number": None,
+            "training_number": None,
+            "purpose_of_visit": "",
+            "created_at": stamp,
+            "updated_at": stamp,
+            **fields,
+        }
+        cursor.execute(
+            'INSERT INTO "partner_assignment" SELECT (json_populate_record(NULL::"partner_assignment", '
+            '(row_to_json(t)::jsonb || %s::jsonb)::json)).* FROM "partner_assignment" t WHERE id = %s',
+            [json.dumps(overrides, default=str), base_assignment],
+        )
+
+    assignment(school_id=single[7], expected_activity_type="partner_ssa_collection")
+    assignment(
+        cluster_id=clusters[2],
+        status="pending_scheduling",
+        catalogue_item_id=workflow_item,
+    )
+    assignment(
+        school_id=single[8],
+        status="partner_scheduled",
+        expected_activity_type="partner_ssa_collection",
+    )
+    assignment(
+        school_id=single[9],
+        expected_activity_type="partner_ssa_collection",
+        created_at="2025-06-01T08:00:00+00:00",
+    )
+
+
+def one_confirmed(cursor, officer):
+    return one(
+        cursor,
+        "SELECT r.school_id FROM ssa_record r JOIN staff_school_assignment a ON a.school_id = r.school_id "
+        "WHERE a.staff_id = %s AND r.fy = '2027' AND r.verification_status = 'confirmed' AND r.deleted_at IS NULL "
+        "ORDER BY r.school_id LIMIT 1",
+        [officer],
+    )
 
 
 def dump_rows():
@@ -206,6 +397,9 @@ try:
         ("pl1@edify.org", {"view": " Trainings "}),
         ("pl1@edify.org", {"fy": "2026"}),
         ("pl1@edify.org", {"fy": "bogus"}),
+        ("pl1@edify.org", {"view": "ssa"}),
+        ("pl1@edify.org", {"view": "SSA", "fy": "2026"}),
+        ("pl1@edify.org", {"view": "ssa", "fy": "2025"}),
         ("cceo@edify.org", {}),
         ("accountant@edify.org", {}),
     ):

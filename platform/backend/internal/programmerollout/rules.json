@@ -94,6 +94,68 @@
     "school_improvement_training",
     "core_training"
   ],
+  "ssa": {
+    "awaiting_record_statuses": [
+      "pending",
+      "flagged"
+    ],
+    "collection_types": [
+      "ssa_activity",
+      "baseline_ssa_visit",
+      "school_visit_ssa_collection",
+      "cluster_training_ssa_collection",
+      "cluster_meeting_ssa_review",
+      "partner_ssa_collection",
+      "core_assessment_visit"
+    ],
+    "confirmed_status": "confirmed",
+    "matrix_interventions": [
+      [
+        "christlike_behaviour",
+        "Christlike Behaviour",
+        "CB"
+      ],
+      [
+        "exposure_to_word_of_god",
+        "Exposure to the Word of God",
+        "WOG"
+      ],
+      [
+        "financial_health",
+        "Financial Health",
+        "FH"
+      ],
+      [
+        "leadership",
+        "Leadership",
+        "LSHIP"
+      ],
+      [
+        "government_requirement",
+        "Government Requirements",
+        "GR"
+      ],
+      [
+        "learning_environment",
+        "Learning Environment",
+        "LE"
+      ],
+      [
+        "teaching_environment",
+        "Teacher's Environment",
+        "TE"
+      ],
+      [
+        "enrolment",
+        "Enrolment",
+        "ENR"
+      ]
+    ],
+    "unscheduled_assignment_statuses": [
+      "assigned",
+      "pending_scheduling"
+    ]
+  },
   "status_labels": {
     "accountant_confirmed": "Accountant Confirmed",
     "assigned_to_partner": "Assigned to Partner",

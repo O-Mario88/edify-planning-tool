@@ -3,6 +3,7 @@ package programmerollout
 import (
 	"context"
 	"fmt"
+	"math"
 	"slices"
 	"sort"
 	"time"
@@ -128,11 +129,13 @@ type fold struct {
 	deliveredShare                                                                      *int
 }
 
+// percentage is apps.core.metrics.percentage: round(n / d * 100), halves to
+// even, or nil when there is nothing to be a percentage of.
 func percentage(n, d int) *int {
 	if d == 0 {
 		return nil
 	}
-	v := int(float64(n)/float64(d)*100 + 0.5)
+	v := int(math.RoundToEven(float64(n) / float64(d) * 100))
 	return &v
 }
 

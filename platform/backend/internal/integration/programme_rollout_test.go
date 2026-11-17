@@ -15,7 +15,8 @@ import (
 
 // programmeRolloutTables is what the golden files, parents first, each with
 // the column its rows are found by.
-var programmeRolloutTables = [][2]string{{"activity", "id"}, {"cluster_activity_attendance", "activity_id"}}
+var programmeRolloutTables = [][2]string{{"activity", "id"}, {"cluster_activity_attendance", "activity_id"},
+	{"ssa_record", "id"}, {"ssa_score", "ssa_record_id"}, {"partner_assignment", "id"}}
 
 // The existing feed's Programme Rollout on its Trainings view over the
 // team's trainings the seed lacks (delivered at a school and at a cluster by

@@ -78,6 +78,25 @@ def rules() -> dict:
         "observation_kind": str(EngagementKind.TRAINING_OBSERVATION),
         "page_size": TABLE_PAGE_SIZE,
         "officer_rows": OFFICER_ROWS,
+        "ssa": _ssa(),
+    }
+
+
+def _ssa() -> dict:
+    """The Self-Assessments view: the record and assignment statuses each
+    state reads, the collection types, and the heatmap's columns."""
+    from apps.analytics import programme_rollout_service as rollout
+    from apps.analytics.pl_analytics_service import SSA_INTERVENTIONS
+    from apps.partners.models import PartnerAssignment
+
+    return {
+        "confirmed_status": rollout.SSA_CONFIRMED,
+        "awaiting_record_statuses": list(rollout.SSA_AWAITING_RECORD_STATUSES),
+        "collection_types": list(rollout._ssa_collection_types()),
+        "unscheduled_assignment_statuses": list(PartnerAssignment.UNSCHEDULED_STATUSES),
+        "matrix_interventions": [
+            [value, label, code] for value, label, code in SSA_INTERVENTIONS
+        ],
     }
 
 

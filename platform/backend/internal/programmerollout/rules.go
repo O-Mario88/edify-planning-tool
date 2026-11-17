@@ -46,8 +46,15 @@ var rules = func() (r struct {
 	ObservationKind           string            `json:"observation_kind"`
 	PageSize                  int               `json:"page_size"`
 	OfficerRows               int               `json:"officer_rows"`
+	SSA                       struct {
+		ConfirmedStatus               string      `json:"confirmed_status"`
+		AwaitingRecordStatuses        []string    `json:"awaiting_record_statuses"`
+		CollectionTypes               []string    `json:"collection_types"`
+		UnscheduledAssignmentStatuses []string    `json:"unscheduled_assignment_statuses"`
+		MatrixInterventions           [][3]string `json:"matrix_interventions"`
+	} `json:"ssa"`
 }) {
-	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.PageRoles) == 0 || len(r.TrainingTypes) == 0 || r.PageSize == 0 {
+	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.PageRoles) == 0 || len(r.TrainingTypes) == 0 || r.PageSize == 0 || len(r.SSA.CollectionTypes) == 0 || len(r.SSA.MatrixInterventions) == 0 {
 		panic(fmt.Sprintf("programmerollout: the embedded rules are unreadable: %v", err))
 	}
 	return r
