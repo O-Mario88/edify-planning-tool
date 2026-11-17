@@ -32,7 +32,7 @@ func TestCountriesAreIsolated(t *testing.T) {
 			`DELETE FROM country_registry.country_membership WHERE user_id LIKE 'gcty%'`,
 			`DELETE FROM school WHERE id LIKE 'gcty%'`,
 			`UPDATE country_registry.country SET state = 'draft', activated_on = NULL WHERE code = 'KE'`,
-			`UPDATE country_registry.country_membership SET revoked_at = NULL, revoked_by = NULL WHERE revoked_by = 'gcty'`,
+			`UPDATE country_registry.country_membership SET revoked_at = NULL, revoked_by = NULL, revoke_reason = NULL WHERE revoked_by = 'gcty'`,
 		} {
 			if _, err := admin.Exec(ctx, sql); err != nil {
 				t.Errorf("%s: %v", sql, err)
@@ -181,7 +181,7 @@ SELECT gen_random_uuid(), 'gcty-kenyan', id, true, current_date, 'gcty', 'isolat
 
 	// A Country Director whose membership of Uganda is revoked reaches
 	// nothing, rather than the whole platform an empty country would mean.
-	exec(`UPDATE country_registry.country_membership SET revoked_at = now(), revoked_by = 'gcty' WHERE user_id = $1`, cdUser)
+	exec(`UPDATE country_registry.country_membership SET revoked_at = now(), revoked_by = 'gcty', revoke_reason = 'Isolation test' WHERE user_id = $1`, cdUser)
 	if all, _ := reach(); all != 0 {
 		t.Errorf("a Country Director with no membership of Uganda reaches %d schools", all)
 	}

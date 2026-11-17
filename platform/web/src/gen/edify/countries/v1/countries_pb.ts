@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file edify/countries/v1/countries.proto.
  */
 export const file_edify_countries_v1_countries: GenFile = /*@__PURE__*/
-  fileDesc("CiJlZGlmeS9jb3VudHJpZXMvdjEvY291bnRyaWVzLnByb3RvEhJlZGlmeS5jb3VudHJpZXMudjEiiQEKB0NvdW50cnkSCgoCaWQYASABKAkSDAoEY29kZRgCIAEoCRIMCgRuYW1lGAMgASgJEg0KBXN0YXRlGAQgASgJEhQKDGFjdGl2YXRlZF9vbhgFIAEoCRIxCgZjb25maWcYBiABKAsyIS5lZGlmeS5jb3VudHJpZXMudjEuQ291bnRyeUNvbmZpZyLaAgoNQ291bnRyeUNvbmZpZxIPCgd2ZXJzaW9uGAEgASgFEhgKEGRlZmF1bHRfbGFuZ3VhZ2UYAiABKAkSEQoJbGFuZ3VhZ2VzGAMgAygJEhUKDWN1cnJlbmN5X2NvZGUYBCABKAkSHAoUY3VycmVuY3lfbWlub3JfdW5pdHMYBSABKAUSEQoJdGltZV96b25lGAYgASgJEhMKC2RhdGVfZm9ybWF0GAcgASgJEhEKCWNhbGVuZGFycxgIIAMoCRIWCg5meV9zdGFydF9tb250aBgJIAEoBRIWCg5lZmZlY3RpdmVfZnJvbRgKIAEoCRIXCg9lZmZlY3RpdmVfdW50aWwYCyABKAkSEgoKY2hhbmdlZF9ieRgMIAEoCRIVCg1jaGFuZ2VfcmVhc29uGA0gASgJEhMKC2FwcHJvdmVkX2J5GA4gASgJEhIKCmNyZWF0ZWRfYXQYDyABKAkiFgoUTGlzdENvdW50cmllc1JlcXVlc3QiRwoVTGlzdENvdW50cmllc1Jlc3BvbnNlEi4KCWNvdW50cmllcxgBIAMoCzIbLmVkaWZ5LmNvdW50cmllcy52MS5Db3VudHJ5Ii8KF0dldENvdW50cnlDb25maWdSZXF1ZXN0EhQKDGNvdW50cnlfY29kZRgBIAEoCSJ9ChhHZXRDb3VudHJ5Q29uZmlnUmVzcG9uc2USLAoHY291bnRyeRgBIAEoCzIbLmVkaWZ5LmNvdW50cmllcy52MS5Db3VudHJ5EjMKCHZlcnNpb25zGAIgAygLMiEuZWRpZnkuY291bnRyaWVzLnYxLkNvdW50cnlDb25maWcilgIKGlJlY29yZENvdW50cnlDb25maWdSZXF1ZXN0EhQKDGNvdW50cnlfY29kZRgBIAEoCRIYChBkZWZhdWx0X2xhbmd1YWdlGAIgASgJEhEKCWxhbmd1YWdlcxgDIAMoCRIVCg1jdXJyZW5jeV9jb2RlGAQgASgJEhwKFGN1cnJlbmN5X21pbm9yX3VuaXRzGAUgASgFEhEKCXRpbWVfem9uZRgGIAEoCRITCgtkYXRlX2Zvcm1hdBgHIAEoCRIRCgljYWxlbmRhcnMYCCADKAkSFgoOZnlfc3RhcnRfbW9udGgYCSABKAUSFgoOZWZmZWN0aXZlX2Zyb20YCiABKAkSFQoNY2hhbmdlX3JlYXNvbhgLIAEoCSKAAQobUmVjb3JkQ291bnRyeUNvbmZpZ1Jlc3BvbnNlEiwKB2NvdW50cnkYASABKAsyGy5lZGlmeS5jb3VudHJpZXMudjEuQ291bnRyeRIzCghyZWNvcmRlZBgCIAEoCzIhLmVkaWZ5LmNvdW50cmllcy52MS5Db3VudHJ5Q29uZmlnMt0CCg5Db3VudHJ5U2VydmljZRJkCg1MaXN0Q291bnRyaWVzEiguZWRpZnkuY291bnRyaWVzLnYxLkxpc3RDb3VudHJpZXNSZXF1ZXN0GikuZWRpZnkuY291bnRyaWVzLnYxLkxpc3RDb3VudHJpZXNSZXNwb25zZRJtChBHZXRDb3VudHJ5Q29uZmlnEisuZWRpZnkuY291bnRyaWVzLnYxLkdldENvdW50cnlDb25maWdSZXF1ZXN0GiwuZWRpZnkuY291bnRyaWVzLnYxLkdldENvdW50cnlDb25maWdSZXNwb25zZRJ2ChNSZWNvcmRDb3VudHJ5Q29uZmlnEi4uZWRpZnkuY291bnRyaWVzLnYxLlJlY29yZENvdW50cnlDb25maWdSZXF1ZXN0Gi8uZWRpZnkuY291bnRyaWVzLnYxLlJlY29yZENvdW50cnlDb25maWdSZXNwb25zZULwAQoWY29tLmVkaWZ5LmNvdW50cmllcy52MUIOQ291bnRyaWVzUHJvdG9QAVpcZ2l0aHViLmNvbS9PLU1hcmlvODgvZWRpZnktcGxhbm5pbmctdG9vbC9wbGF0Zm9ybS9iYWNrZW5kL2dlbi9lZGlmeS9jb3VudHJpZXMvdjE7Y291bnRyaWVzdjGiAgNFQ1iqAhJFZGlmeS5Db3VudHJpZXMuVjHKAhJFZGlmeVxDb3VudHJpZXNcVjHiAh5FZGlmeVxDb3VudHJpZXNcVjFcR1BCTWV0YWRhdGHqAhRFZGlmeTo6Q291bnRyaWVzOjpWMWIGcHJvdG8z");
+  fileDesc("CiJlZGlmeS9jb3VudHJpZXMvdjEvY291bnRyaWVzLnByb3RvEhJlZGlmeS5jb3VudHJpZXMudjEiiQEKB0NvdW50cnkSCgoCaWQYASABKAkSDAoEY29kZRgCIAEoCRIMCgRuYW1lGAMgASgJEg0KBXN0YXRlGAQgASgJEhQKDGFjdGl2YXRlZF9vbhgFIAEoCRIxCgZjb25maWcYBiABKAsyIS5lZGlmeS5jb3VudHJpZXMudjEuQ291bnRyeUNvbmZpZyLaAgoNQ291bnRyeUNvbmZpZxIPCgd2ZXJzaW9uGAEgASgFEhgKEGRlZmF1bHRfbGFuZ3VhZ2UYAiABKAkSEQoJbGFuZ3VhZ2VzGAMgAygJEhUKDWN1cnJlbmN5X2NvZGUYBCABKAkSHAoUY3VycmVuY3lfbWlub3JfdW5pdHMYBSABKAUSEQoJdGltZV96b25lGAYgASgJEhMKC2RhdGVfZm9ybWF0GAcgASgJEhEKCWNhbGVuZGFycxgIIAMoCRIWCg5meV9zdGFydF9tb250aBgJIAEoBRIWCg5lZmZlY3RpdmVfZnJvbRgKIAEoCRIXCg9lZmZlY3RpdmVfdW50aWwYCyABKAkSEgoKY2hhbmdlZF9ieRgMIAEoCRIVCg1jaGFuZ2VfcmVhc29uGA0gASgJEhMKC2FwcHJvdmVkX2J5GA4gASgJEhIKCmNyZWF0ZWRfYXQYDyABKAkiFgoUTGlzdENvdW50cmllc1JlcXVlc3QiRwoVTGlzdENvdW50cmllc1Jlc3BvbnNlEi4KCWNvdW50cmllcxgBIAMoCzIbLmVkaWZ5LmNvdW50cmllcy52MS5Db3VudHJ5Ii8KF0dldENvdW50cnlDb25maWdSZXF1ZXN0EhQKDGNvdW50cnlfY29kZRgBIAEoCSJ9ChhHZXRDb3VudHJ5Q29uZmlnUmVzcG9uc2USLAoHY291bnRyeRgBIAEoCzIbLmVkaWZ5LmNvdW50cmllcy52MS5Db3VudHJ5EjMKCHZlcnNpb25zGAIgAygLMiEuZWRpZnkuY291bnRyaWVzLnYxLkNvdW50cnlDb25maWcilgIKGlJlY29yZENvdW50cnlDb25maWdSZXF1ZXN0EhQKDGNvdW50cnlfY29kZRgBIAEoCRIYChBkZWZhdWx0X2xhbmd1YWdlGAIgASgJEhEKCWxhbmd1YWdlcxgDIAMoCRIVCg1jdXJyZW5jeV9jb2RlGAQgASgJEhwKFGN1cnJlbmN5X21pbm9yX3VuaXRzGAUgASgFEhEKCXRpbWVfem9uZRgGIAEoCRITCgtkYXRlX2Zvcm1hdBgHIAEoCRIRCgljYWxlbmRhcnMYCCADKAkSFgoOZnlfc3RhcnRfbW9udGgYCSABKAUSFgoOZWZmZWN0aXZlX2Zyb20YCiABKAkSFQoNY2hhbmdlX3JlYXNvbhgLIAEoCSKAAQobUmVjb3JkQ291bnRyeUNvbmZpZ1Jlc3BvbnNlEiwKB2NvdW50cnkYASABKAsyGy5lZGlmeS5jb3VudHJpZXMudjEuQ291bnRyeRIzCghyZWNvcmRlZBgCIAEoCzIhLmVkaWZ5LmNvdW50cmllcy52MS5Db3VudHJ5Q29uZmlnIsACCgpNZW1iZXJzaGlwEgoKAmlkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkSFAoMY291bnRyeV9jb2RlGAMgASgJEhQKDGNvdW50cnlfbmFtZRgEIAEoCRIVCg1jb3VudHJ5X3N0YXRlGAUgASgJEhIKCmlzX2RlZmF1bHQYBiABKAgSFgoOZWZmZWN0aXZlX2Zyb20YByABKAkSFwoPZWZmZWN0aXZlX3VudGlsGAggASgJEhIKCmdyYW50ZWRfYnkYCSABKAkSFAoMZ3JhbnRfcmVhc29uGAogASgJEhIKCmdyYW50ZWRfYXQYCyABKAkSEgoKcmV2b2tlZF9ieRgMIAEoCRISCgpyZXZva2VkX2F0GA0gASgJEhUKDXJldm9rZV9yZWFzb24YDiABKAkSEAoIaW5fZm9yY2UYDyABKAgiKQoWTGlzdE1lbWJlcnNoaXBzUmVxdWVzdBIPCgd1c2VyX2lkGAEgASgJIk4KF0xpc3RNZW1iZXJzaGlwc1Jlc3BvbnNlEjMKC21lbWJlcnNoaXBzGAEgAygLMh4uZWRpZnkuY291bnRyaWVzLnYxLk1lbWJlcnNoaXAigAEKFkdyYW50TWVtYmVyc2hpcFJlcXVlc3QSDwoHdXNlcl9pZBgBIAEoCRIUCgxjb3VudHJ5X2NvZGUYAiABKAkSFgoOZWZmZWN0aXZlX2Zyb20YAyABKAkSFwoPZWZmZWN0aXZlX3VudGlsGAQgASgJEg4KBnJlYXNvbhgFIAEoCSJKChdHcmFudE1lbWJlcnNoaXBSZXNwb25zZRIvCgdncmFudGVkGAEgASgLMh4uZWRpZnkuY291bnRyaWVzLnYxLk1lbWJlcnNoaXAiQAoXUmV2b2tlTWVtYmVyc2hpcFJlcXVlc3QSFQoNbWVtYmVyc2hpcF9pZBgBIAEoCRIOCgZyZWFzb24YAiABKAkiSwoYUmV2b2tlTWVtYmVyc2hpcFJlc3BvbnNlEi8KB3Jldm9rZWQYASABKAsyHi5lZGlmeS5jb3VudHJpZXMudjEuTWVtYmVyc2hpcDKkBQoOQ291bnRyeVNlcnZpY2USZAoNTGlzdENvdW50cmllcxIoLmVkaWZ5LmNvdW50cmllcy52MS5MaXN0Q291bnRyaWVzUmVxdWVzdBopLmVkaWZ5LmNvdW50cmllcy52MS5MaXN0Q291bnRyaWVzUmVzcG9uc2USbQoQR2V0Q291bnRyeUNvbmZpZxIrLmVkaWZ5LmNvdW50cmllcy52MS5HZXRDb3VudHJ5Q29uZmlnUmVxdWVzdBosLmVkaWZ5LmNvdW50cmllcy52MS5HZXRDb3VudHJ5Q29uZmlnUmVzcG9uc2USdgoTUmVjb3JkQ291bnRyeUNvbmZpZxIuLmVkaWZ5LmNvdW50cmllcy52MS5SZWNvcmRDb3VudHJ5Q29uZmlnUmVxdWVzdBovLmVkaWZ5LmNvdW50cmllcy52MS5SZWNvcmRDb3VudHJ5Q29uZmlnUmVzcG9uc2USagoPTGlzdE1lbWJlcnNoaXBzEiouZWRpZnkuY291bnRyaWVzLnYxLkxpc3RNZW1iZXJzaGlwc1JlcXVlc3QaKy5lZGlmeS5jb3VudHJpZXMudjEuTGlzdE1lbWJlcnNoaXBzUmVzcG9uc2USagoPR3JhbnRNZW1iZXJzaGlwEiouZWRpZnkuY291bnRyaWVzLnYxLkdyYW50TWVtYmVyc2hpcFJlcXVlc3QaKy5lZGlmeS5jb3VudHJpZXMudjEuR3JhbnRNZW1iZXJzaGlwUmVzcG9uc2USbQoQUmV2b2tlTWVtYmVyc2hpcBIrLmVkaWZ5LmNvdW50cmllcy52MS5SZXZva2VNZW1iZXJzaGlwUmVxdWVzdBosLmVkaWZ5LmNvdW50cmllcy52MS5SZXZva2VNZW1iZXJzaGlwUmVzcG9uc2VC8AEKFmNvbS5lZGlmeS5jb3VudHJpZXMudjFCDkNvdW50cmllc1Byb3RvUAFaXGdpdGh1Yi5jb20vTy1NYXJpbzg4L2VkaWZ5LXBsYW5uaW5nLXRvb2wvcGxhdGZvcm0vYmFja2VuZC9nZW4vZWRpZnkvY291bnRyaWVzL3YxO2NvdW50cmllc3YxogIDRUNYqgISRWRpZnkuQ291bnRyaWVzLlYxygISRWRpZnlcQ291bnRyaWVzXFYx4gIeRWRpZnlcQ291bnRyaWVzXFYxXEdQQk1ldGFkYXRh6gIURWRpZnk6OkNvdW50cmllczo6VjFiBnByb3RvMw");
 
 /**
  * Country is one registered country.
@@ -343,6 +343,251 @@ export const RecordCountryConfigResponseSchema: GenMessage<RecordCountryConfigRe
   messageDesc(file_edify_countries_v1_countries, 7);
 
 /**
+ * Membership is one account's membership of one country. It is not access to
+ * every record of that country: the account's role, scope and portfolio
+ * still decide that. Nothing is ever rewritten: a revoked membership keeps
+ * who granted it, who revoked it and why.
+ *
+ * @generated from message edify.countries.v1.Membership
+ */
+export type Membership = Message<"edify.countries.v1.Membership"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string user_id = 2;
+   */
+  userId: string;
+
+  /**
+   * @generated from field: string country_code = 3;
+   */
+  countryCode: string;
+
+  /**
+   * @generated from field: string country_name = 4;
+   */
+  countryName: string;
+
+  /**
+   * The country's lifecycle state: a membership of a country that is not
+   * Active gives no access yet.
+   *
+   * @generated from field: string country_state = 5;
+   */
+  countryState: string;
+
+  /**
+   * @generated from field: bool is_default = 6;
+   */
+  isDefault: boolean;
+
+  /**
+   * YYYY-MM-DD.
+   *
+   * @generated from field: string effective_from = 7;
+   */
+  effectiveFrom: string;
+
+  /**
+   * YYYY-MM-DD, the first day it no longer applies; empty while open-ended.
+   *
+   * @generated from field: string effective_until = 8;
+   */
+  effectiveUntil: string;
+
+  /**
+   * @generated from field: string granted_by = 9;
+   */
+  grantedBy: string;
+
+  /**
+   * @generated from field: string grant_reason = 10;
+   */
+  grantReason: string;
+
+  /**
+   * RFC 3339.
+   *
+   * @generated from field: string granted_at = 11;
+   */
+  grantedAt: string;
+
+  /**
+   * Empty while not revoked.
+   *
+   * @generated from field: string revoked_by = 12;
+   */
+  revokedBy: string;
+
+  /**
+   * @generated from field: string revoked_at = 13;
+   */
+  revokedAt: string;
+
+  /**
+   * @generated from field: string revoke_reason = 14;
+   */
+  revokeReason: string;
+
+  /**
+   * Whether it gives the account its country today: not revoked, in its
+   * dates, and the country Active.
+   *
+   * @generated from field: bool in_force = 15;
+   */
+  inForce: boolean;
+};
+
+/**
+ * Describes the message edify.countries.v1.Membership.
+ * Use `create(MembershipSchema)` to create a new message.
+ */
+export const MembershipSchema: GenMessage<Membership> = /*@__PURE__*/
+  messageDesc(file_edify_countries_v1_countries, 8);
+
+/**
+ * @generated from message edify.countries.v1.ListMembershipsRequest
+ */
+export type ListMembershipsRequest = Message<"edify.countries.v1.ListMembershipsRequest"> & {
+  /**
+   * The account; empty for the reader's own.
+   *
+   * @generated from field: string user_id = 1;
+   */
+  userId: string;
+};
+
+/**
+ * Describes the message edify.countries.v1.ListMembershipsRequest.
+ * Use `create(ListMembershipsRequestSchema)` to create a new message.
+ */
+export const ListMembershipsRequestSchema: GenMessage<ListMembershipsRequest> = /*@__PURE__*/
+  messageDesc(file_edify_countries_v1_countries, 9);
+
+/**
+ * @generated from message edify.countries.v1.ListMembershipsResponse
+ */
+export type ListMembershipsResponse = Message<"edify.countries.v1.ListMembershipsResponse"> & {
+  /**
+   * @generated from field: repeated edify.countries.v1.Membership memberships = 1;
+   */
+  memberships: Membership[];
+};
+
+/**
+ * Describes the message edify.countries.v1.ListMembershipsResponse.
+ * Use `create(ListMembershipsResponseSchema)` to create a new message.
+ */
+export const ListMembershipsResponseSchema: GenMessage<ListMembershipsResponse> = /*@__PURE__*/
+  messageDesc(file_edify_countries_v1_countries, 10);
+
+/**
+ * @generated from message edify.countries.v1.GrantMembershipRequest
+ */
+export type GrantMembershipRequest = Message<"edify.countries.v1.GrantMembershipRequest"> & {
+  /**
+   * @generated from field: string user_id = 1;
+   */
+  userId: string;
+
+  /**
+   * UG, KE, RW or ET.
+   *
+   * @generated from field: string country_code = 2;
+   */
+  countryCode: string;
+
+  /**
+   * YYYY-MM-DD, today or later; empty for today.
+   *
+   * @generated from field: string effective_from = 3;
+   */
+  effectiveFrom: string;
+
+  /**
+   * YYYY-MM-DD after effective_from; empty for open-ended.
+   *
+   * @generated from field: string effective_until = 4;
+   */
+  effectiveUntil: string;
+
+  /**
+   * Why the account works in this country (required, at most 500 characters).
+   *
+   * @generated from field: string reason = 5;
+   */
+  reason: string;
+};
+
+/**
+ * Describes the message edify.countries.v1.GrantMembershipRequest.
+ * Use `create(GrantMembershipRequestSchema)` to create a new message.
+ */
+export const GrantMembershipRequestSchema: GenMessage<GrantMembershipRequest> = /*@__PURE__*/
+  messageDesc(file_edify_countries_v1_countries, 11);
+
+/**
+ * @generated from message edify.countries.v1.GrantMembershipResponse
+ */
+export type GrantMembershipResponse = Message<"edify.countries.v1.GrantMembershipResponse"> & {
+  /**
+   * @generated from field: edify.countries.v1.Membership granted = 1;
+   */
+  granted?: Membership | undefined;
+};
+
+/**
+ * Describes the message edify.countries.v1.GrantMembershipResponse.
+ * Use `create(GrantMembershipResponseSchema)` to create a new message.
+ */
+export const GrantMembershipResponseSchema: GenMessage<GrantMembershipResponse> = /*@__PURE__*/
+  messageDesc(file_edify_countries_v1_countries, 12);
+
+/**
+ * @generated from message edify.countries.v1.RevokeMembershipRequest
+ */
+export type RevokeMembershipRequest = Message<"edify.countries.v1.RevokeMembershipRequest"> & {
+  /**
+   * @generated from field: string membership_id = 1;
+   */
+  membershipId: string;
+
+  /**
+   * Why it is revoked (required, at most 500 characters).
+   *
+   * @generated from field: string reason = 2;
+   */
+  reason: string;
+};
+
+/**
+ * Describes the message edify.countries.v1.RevokeMembershipRequest.
+ * Use `create(RevokeMembershipRequestSchema)` to create a new message.
+ */
+export const RevokeMembershipRequestSchema: GenMessage<RevokeMembershipRequest> = /*@__PURE__*/
+  messageDesc(file_edify_countries_v1_countries, 13);
+
+/**
+ * @generated from message edify.countries.v1.RevokeMembershipResponse
+ */
+export type RevokeMembershipResponse = Message<"edify.countries.v1.RevokeMembershipResponse"> & {
+  /**
+   * @generated from field: edify.countries.v1.Membership revoked = 1;
+   */
+  revoked?: Membership | undefined;
+};
+
+/**
+ * Describes the message edify.countries.v1.RevokeMembershipResponse.
+ * Use `create(RevokeMembershipResponseSchema)` to create a new message.
+ */
+export const RevokeMembershipResponseSchema: GenMessage<RevokeMembershipResponse> = /*@__PURE__*/
+  messageDesc(file_edify_countries_v1_countries, 14);
+
+/**
  * Edify Global (docs/migration/80-multi-country-phase-0.md): the countries
  * the platform serves and each one's settings. A country's settings are
  * versioned: a change records a new version from a date, the one before it
@@ -385,6 +630,37 @@ export const CountryService: GenService<{
     methodKind: "unary";
     input: typeof RecordCountryConfigRequestSchema;
     output: typeof RecordCountryConfigResponseSchema;
+  },
+  /**
+   * An account's country memberships, past and present, newest first. An
+   * Admin reads anyone's; anyone else only their own.
+   *
+   * @generated from rpc edify.countries.v1.CountryService.ListMemberships
+   */
+  listMemberships: {
+    methodKind: "unary";
+    input: typeof ListMembershipsRequestSchema;
+    output: typeof ListMembershipsResponseSchema;
+  },
+  /**
+   * Grant an account a country from a date (Admin only, never their own).
+   *
+   * @generated from rpc edify.countries.v1.CountryService.GrantMembership
+   */
+  grantMembership: {
+    methodKind: "unary";
+    input: typeof GrantMembershipRequestSchema;
+    output: typeof GrantMembershipResponseSchema;
+  },
+  /**
+   * Revoke a membership, keeping its record (Admin only, never their own).
+   *
+   * @generated from rpc edify.countries.v1.CountryService.RevokeMembership
+   */
+  revokeMembership: {
+    methodKind: "unary";
+    input: typeof RevokeMembershipRequestSchema;
+    output: typeof RevokeMembershipResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_edify_countries_v1_countries, 0);

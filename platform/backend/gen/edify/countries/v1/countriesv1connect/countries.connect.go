@@ -42,6 +42,15 @@ const (
 	// CountryServiceRecordCountryConfigProcedure is the fully-qualified name of the CountryService's
 	// RecordCountryConfig RPC.
 	CountryServiceRecordCountryConfigProcedure = "/edify.countries.v1.CountryService/RecordCountryConfig"
+	// CountryServiceListMembershipsProcedure is the fully-qualified name of the CountryService's
+	// ListMemberships RPC.
+	CountryServiceListMembershipsProcedure = "/edify.countries.v1.CountryService/ListMemberships"
+	// CountryServiceGrantMembershipProcedure is the fully-qualified name of the CountryService's
+	// GrantMembership RPC.
+	CountryServiceGrantMembershipProcedure = "/edify.countries.v1.CountryService/GrantMembership"
+	// CountryServiceRevokeMembershipProcedure is the fully-qualified name of the CountryService's
+	// RevokeMembership RPC.
+	CountryServiceRevokeMembershipProcedure = "/edify.countries.v1.CountryService/RevokeMembership"
 )
 
 // CountryServiceClient is a client for the edify.countries.v1.CountryService service.
@@ -52,6 +61,13 @@ type CountryServiceClient interface {
 	GetCountryConfig(context.Context, *connect.Request[v1.GetCountryConfigRequest]) (*connect.Response[v1.GetCountryConfigResponse], error)
 	// Record a new settings version for a country that is not yet Active.
 	RecordCountryConfig(context.Context, *connect.Request[v1.RecordCountryConfigRequest]) (*connect.Response[v1.RecordCountryConfigResponse], error)
+	// An account's country memberships, past and present, newest first. An
+	// Admin reads anyone's; anyone else only their own.
+	ListMemberships(context.Context, *connect.Request[v1.ListMembershipsRequest]) (*connect.Response[v1.ListMembershipsResponse], error)
+	// Grant an account a country from a date (Admin only, never their own).
+	GrantMembership(context.Context, *connect.Request[v1.GrantMembershipRequest]) (*connect.Response[v1.GrantMembershipResponse], error)
+	// Revoke a membership, keeping its record (Admin only, never their own).
+	RevokeMembership(context.Context, *connect.Request[v1.RevokeMembershipRequest]) (*connect.Response[v1.RevokeMembershipResponse], error)
 }
 
 // NewCountryServiceClient constructs a client for the edify.countries.v1.CountryService service. By
@@ -83,6 +99,24 @@ func NewCountryServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(countryServiceMethods.ByName("RecordCountryConfig")),
 			connect.WithClientOptions(opts...),
 		),
+		listMemberships: connect.NewClient[v1.ListMembershipsRequest, v1.ListMembershipsResponse](
+			httpClient,
+			baseURL+CountryServiceListMembershipsProcedure,
+			connect.WithSchema(countryServiceMethods.ByName("ListMemberships")),
+			connect.WithClientOptions(opts...),
+		),
+		grantMembership: connect.NewClient[v1.GrantMembershipRequest, v1.GrantMembershipResponse](
+			httpClient,
+			baseURL+CountryServiceGrantMembershipProcedure,
+			connect.WithSchema(countryServiceMethods.ByName("GrantMembership")),
+			connect.WithClientOptions(opts...),
+		),
+		revokeMembership: connect.NewClient[v1.RevokeMembershipRequest, v1.RevokeMembershipResponse](
+			httpClient,
+			baseURL+CountryServiceRevokeMembershipProcedure,
+			connect.WithSchema(countryServiceMethods.ByName("RevokeMembership")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -91,6 +125,9 @@ type countryServiceClient struct {
 	listCountries       *connect.Client[v1.ListCountriesRequest, v1.ListCountriesResponse]
 	getCountryConfig    *connect.Client[v1.GetCountryConfigRequest, v1.GetCountryConfigResponse]
 	recordCountryConfig *connect.Client[v1.RecordCountryConfigRequest, v1.RecordCountryConfigResponse]
+	listMemberships     *connect.Client[v1.ListMembershipsRequest, v1.ListMembershipsResponse]
+	grantMembership     *connect.Client[v1.GrantMembershipRequest, v1.GrantMembershipResponse]
+	revokeMembership    *connect.Client[v1.RevokeMembershipRequest, v1.RevokeMembershipResponse]
 }
 
 // ListCountries calls edify.countries.v1.CountryService.ListCountries.
@@ -108,6 +145,21 @@ func (c *countryServiceClient) RecordCountryConfig(ctx context.Context, req *con
 	return c.recordCountryConfig.CallUnary(ctx, req)
 }
 
+// ListMemberships calls edify.countries.v1.CountryService.ListMemberships.
+func (c *countryServiceClient) ListMemberships(ctx context.Context, req *connect.Request[v1.ListMembershipsRequest]) (*connect.Response[v1.ListMembershipsResponse], error) {
+	return c.listMemberships.CallUnary(ctx, req)
+}
+
+// GrantMembership calls edify.countries.v1.CountryService.GrantMembership.
+func (c *countryServiceClient) GrantMembership(ctx context.Context, req *connect.Request[v1.GrantMembershipRequest]) (*connect.Response[v1.GrantMembershipResponse], error) {
+	return c.grantMembership.CallUnary(ctx, req)
+}
+
+// RevokeMembership calls edify.countries.v1.CountryService.RevokeMembership.
+func (c *countryServiceClient) RevokeMembership(ctx context.Context, req *connect.Request[v1.RevokeMembershipRequest]) (*connect.Response[v1.RevokeMembershipResponse], error) {
+	return c.revokeMembership.CallUnary(ctx, req)
+}
+
 // CountryServiceHandler is an implementation of the edify.countries.v1.CountryService service.
 type CountryServiceHandler interface {
 	// The countries the reader may see, each with the settings in force today.
@@ -116,6 +168,13 @@ type CountryServiceHandler interface {
 	GetCountryConfig(context.Context, *connect.Request[v1.GetCountryConfigRequest]) (*connect.Response[v1.GetCountryConfigResponse], error)
 	// Record a new settings version for a country that is not yet Active.
 	RecordCountryConfig(context.Context, *connect.Request[v1.RecordCountryConfigRequest]) (*connect.Response[v1.RecordCountryConfigResponse], error)
+	// An account's country memberships, past and present, newest first. An
+	// Admin reads anyone's; anyone else only their own.
+	ListMemberships(context.Context, *connect.Request[v1.ListMembershipsRequest]) (*connect.Response[v1.ListMembershipsResponse], error)
+	// Grant an account a country from a date (Admin only, never their own).
+	GrantMembership(context.Context, *connect.Request[v1.GrantMembershipRequest]) (*connect.Response[v1.GrantMembershipResponse], error)
+	// Revoke a membership, keeping its record (Admin only, never their own).
+	RevokeMembership(context.Context, *connect.Request[v1.RevokeMembershipRequest]) (*connect.Response[v1.RevokeMembershipResponse], error)
 }
 
 // NewCountryServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -143,6 +202,24 @@ func NewCountryServiceHandler(svc CountryServiceHandler, opts ...connect.Handler
 		connect.WithSchema(countryServiceMethods.ByName("RecordCountryConfig")),
 		connect.WithHandlerOptions(opts...),
 	)
+	countryServiceListMembershipsHandler := connect.NewUnaryHandler(
+		CountryServiceListMembershipsProcedure,
+		svc.ListMemberships,
+		connect.WithSchema(countryServiceMethods.ByName("ListMemberships")),
+		connect.WithHandlerOptions(opts...),
+	)
+	countryServiceGrantMembershipHandler := connect.NewUnaryHandler(
+		CountryServiceGrantMembershipProcedure,
+		svc.GrantMembership,
+		connect.WithSchema(countryServiceMethods.ByName("GrantMembership")),
+		connect.WithHandlerOptions(opts...),
+	)
+	countryServiceRevokeMembershipHandler := connect.NewUnaryHandler(
+		CountryServiceRevokeMembershipProcedure,
+		svc.RevokeMembership,
+		connect.WithSchema(countryServiceMethods.ByName("RevokeMembership")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/edify.countries.v1.CountryService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case CountryServiceListCountriesProcedure:
@@ -151,6 +228,12 @@ func NewCountryServiceHandler(svc CountryServiceHandler, opts ...connect.Handler
 			countryServiceGetCountryConfigHandler.ServeHTTP(w, r)
 		case CountryServiceRecordCountryConfigProcedure:
 			countryServiceRecordCountryConfigHandler.ServeHTTP(w, r)
+		case CountryServiceListMembershipsProcedure:
+			countryServiceListMembershipsHandler.ServeHTTP(w, r)
+		case CountryServiceGrantMembershipProcedure:
+			countryServiceGrantMembershipHandler.ServeHTTP(w, r)
+		case CountryServiceRevokeMembershipProcedure:
+			countryServiceRevokeMembershipHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -170,4 +253,16 @@ func (UnimplementedCountryServiceHandler) GetCountryConfig(context.Context, *con
 
 func (UnimplementedCountryServiceHandler) RecordCountryConfig(context.Context, *connect.Request[v1.RecordCountryConfigRequest]) (*connect.Response[v1.RecordCountryConfigResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.countries.v1.CountryService.RecordCountryConfig is not implemented"))
+}
+
+func (UnimplementedCountryServiceHandler) ListMemberships(context.Context, *connect.Request[v1.ListMembershipsRequest]) (*connect.Response[v1.ListMembershipsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.countries.v1.CountryService.ListMemberships is not implemented"))
+}
+
+func (UnimplementedCountryServiceHandler) GrantMembership(context.Context, *connect.Request[v1.GrantMembershipRequest]) (*connect.Response[v1.GrantMembershipResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.countries.v1.CountryService.GrantMembership is not implemented"))
+}
+
+func (UnimplementedCountryServiceHandler) RevokeMembership(context.Context, *connect.Request[v1.RevokeMembershipRequest]) (*connect.Response[v1.RevokeMembershipResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.countries.v1.CountryService.RevokeMembership is not implemented"))
 }

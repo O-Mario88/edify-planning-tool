@@ -18,6 +18,14 @@ service CountryService {
   rpc GetCountryConfig(GetCountryConfigRequest) returns (GetCountryConfigResponse);
   // Record a new settings version for a country that is not yet Active.
   rpc RecordCountryConfig(RecordCountryConfigRequest) returns (RecordCountryConfigResponse);
+
+  // An account's country memberships, past and present, newest first. An
+  // Admin reads anyone's; anyone else only their own.
+  rpc ListMemberships(ListMembershipsRequest) returns (ListMembershipsResponse);
+  // Grant an account a country from a date (Admin only, never their own).
+  rpc GrantMembership(GrantMembershipRequest) returns (GrantMembershipResponse);
+  // Revoke a membership, keeping its record (Admin only, never their own).
+  rpc RevokeMembership(RevokeMembershipRequest) returns (RevokeMembershipResponse);
 }
 
 // Country is one registered country.
@@ -101,4 +109,69 @@ message RecordCountryConfigRequest {
 message RecordCountryConfigResponse {
   Country country = 1;
   CountryConfig recorded = 2;
+}
+
+// Membership is one account's membership of one country. It is not access to
+// every record of that country: the account's role, scope and portfolio
+// still decide that. Nothing is ever rewritten: a revoked membership keeps
+// who granted it, who revoked it and why.
+message Membership {
+  string id = 1;
+  string user_id = 2;
+  string country_code = 3;
+  string country_name = 4;
+  // The country's lifecycle state: a membership of a country that is not
+  // Active gives no access yet.
+  string country_state = 5;
+  bool is_default = 6;
+  // YYYY-MM-DD.
+  string effective_from = 7;
+  // YYYY-MM-DD, the first day it no longer applies; empty while open-ended.
+  string effective_until = 8;
+  string granted_by = 9;
+  string grant_reason = 10;
+  // RFC 3339.
+  string granted_at = 11;
+  // Empty while not revoked.
+  string revoked_by = 12;
+  string revoked_at = 13;
+  string revoke_reason = 14;
+  // Whether it gives the account its country today: not revoked, in its
+  // dates, and the country Active.
+  bool in_force = 15;
+}
+
+message ListMembershipsRequest {
+  // The account; empty for the reader's own.
+  string user_id = 1;
+}
+
+message ListMembershipsResponse {
+  repeated Membership memberships = 1;
+}
+
+message GrantMembershipRequest {
+  string user_id = 1;
+  // UG, KE, RW or ET.
+  string country_code = 2;
+  // YYYY-MM-DD, today or later; empty for today.
+  string effective_from = 3;
+  // YYYY-MM-DD after effective_from; empty for open-ended.
+  string effective_until = 4;
+  // Why the account works in this country (required, at most 500 characters).
+  string reason = 5;
+}
+
+message GrantMembershipResponse {
+  Membership granted = 1;
+}
+
+message RevokeMembershipRequest {
+  string membership_id = 1;
+  // Why it is revoked (required, at most 500 characters).
+  string reason = 2;
+}
+
+message RevokeMembershipResponse {
+  Membership revoked = 1;
 }

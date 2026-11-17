@@ -22,6 +22,9 @@ const (
 	CountryService_ListCountries_FullMethodName       = "/edify.countries.v1.CountryService/ListCountries"
 	CountryService_GetCountryConfig_FullMethodName    = "/edify.countries.v1.CountryService/GetCountryConfig"
 	CountryService_RecordCountryConfig_FullMethodName = "/edify.countries.v1.CountryService/RecordCountryConfig"
+	CountryService_ListMemberships_FullMethodName     = "/edify.countries.v1.CountryService/ListMemberships"
+	CountryService_GrantMembership_FullMethodName     = "/edify.countries.v1.CountryService/GrantMembership"
+	CountryService_RevokeMembership_FullMethodName    = "/edify.countries.v1.CountryService/RevokeMembership"
 )
 
 // CountryServiceClient is the client API for CountryService service.
@@ -44,6 +47,13 @@ type CountryServiceClient interface {
 	GetCountryConfig(ctx context.Context, in *GetCountryConfigRequest, opts ...grpc.CallOption) (*GetCountryConfigResponse, error)
 	// Record a new settings version for a country that is not yet Active.
 	RecordCountryConfig(ctx context.Context, in *RecordCountryConfigRequest, opts ...grpc.CallOption) (*RecordCountryConfigResponse, error)
+	// An account's country memberships, past and present, newest first. An
+	// Admin reads anyone's; anyone else only their own.
+	ListMemberships(ctx context.Context, in *ListMembershipsRequest, opts ...grpc.CallOption) (*ListMembershipsResponse, error)
+	// Grant an account a country from a date (Admin only, never their own).
+	GrantMembership(ctx context.Context, in *GrantMembershipRequest, opts ...grpc.CallOption) (*GrantMembershipResponse, error)
+	// Revoke a membership, keeping its record (Admin only, never their own).
+	RevokeMembership(ctx context.Context, in *RevokeMembershipRequest, opts ...grpc.CallOption) (*RevokeMembershipResponse, error)
 }
 
 type countryServiceClient struct {
@@ -84,6 +94,36 @@ func (c *countryServiceClient) RecordCountryConfig(ctx context.Context, in *Reco
 	return out, nil
 }
 
+func (c *countryServiceClient) ListMemberships(ctx context.Context, in *ListMembershipsRequest, opts ...grpc.CallOption) (*ListMembershipsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListMembershipsResponse)
+	err := c.cc.Invoke(ctx, CountryService_ListMemberships_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *countryServiceClient) GrantMembership(ctx context.Context, in *GrantMembershipRequest, opts ...grpc.CallOption) (*GrantMembershipResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GrantMembershipResponse)
+	err := c.cc.Invoke(ctx, CountryService_GrantMembership_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *countryServiceClient) RevokeMembership(ctx context.Context, in *RevokeMembershipRequest, opts ...grpc.CallOption) (*RevokeMembershipResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RevokeMembershipResponse)
+	err := c.cc.Invoke(ctx, CountryService_RevokeMembership_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CountryServiceServer is the server API for CountryService service.
 // All implementations must embed UnimplementedCountryServiceServer
 // for forward compatibility.
@@ -104,6 +144,13 @@ type CountryServiceServer interface {
 	GetCountryConfig(context.Context, *GetCountryConfigRequest) (*GetCountryConfigResponse, error)
 	// Record a new settings version for a country that is not yet Active.
 	RecordCountryConfig(context.Context, *RecordCountryConfigRequest) (*RecordCountryConfigResponse, error)
+	// An account's country memberships, past and present, newest first. An
+	// Admin reads anyone's; anyone else only their own.
+	ListMemberships(context.Context, *ListMembershipsRequest) (*ListMembershipsResponse, error)
+	// Grant an account a country from a date (Admin only, never their own).
+	GrantMembership(context.Context, *GrantMembershipRequest) (*GrantMembershipResponse, error)
+	// Revoke a membership, keeping its record (Admin only, never their own).
+	RevokeMembership(context.Context, *RevokeMembershipRequest) (*RevokeMembershipResponse, error)
 	mustEmbedUnimplementedCountryServiceServer()
 }
 
@@ -122,6 +169,15 @@ func (UnimplementedCountryServiceServer) GetCountryConfig(context.Context, *GetC
 }
 func (UnimplementedCountryServiceServer) RecordCountryConfig(context.Context, *RecordCountryConfigRequest) (*RecordCountryConfigResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RecordCountryConfig not implemented")
+}
+func (UnimplementedCountryServiceServer) ListMemberships(context.Context, *ListMembershipsRequest) (*ListMembershipsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListMemberships not implemented")
+}
+func (UnimplementedCountryServiceServer) GrantMembership(context.Context, *GrantMembershipRequest) (*GrantMembershipResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GrantMembership not implemented")
+}
+func (UnimplementedCountryServiceServer) RevokeMembership(context.Context, *RevokeMembershipRequest) (*RevokeMembershipResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RevokeMembership not implemented")
 }
 func (UnimplementedCountryServiceServer) mustEmbedUnimplementedCountryServiceServer() {}
 func (UnimplementedCountryServiceServer) testEmbeddedByValue()                        {}
@@ -198,6 +254,60 @@ func _CountryService_RecordCountryConfig_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CountryService_ListMemberships_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListMembershipsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CountryServiceServer).ListMemberships(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CountryService_ListMemberships_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CountryServiceServer).ListMemberships(ctx, req.(*ListMembershipsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CountryService_GrantMembership_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GrantMembershipRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CountryServiceServer).GrantMembership(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CountryService_GrantMembership_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CountryServiceServer).GrantMembership(ctx, req.(*GrantMembershipRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CountryService_RevokeMembership_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevokeMembershipRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CountryServiceServer).RevokeMembership(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CountryService_RevokeMembership_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CountryServiceServer).RevokeMembership(ctx, req.(*RevokeMembershipRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CountryService_ServiceDesc is the grpc.ServiceDesc for CountryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -216,6 +326,18 @@ var CountryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RecordCountryConfig",
 			Handler:    _CountryService_RecordCountryConfig_Handler,
+		},
+		{
+			MethodName: "ListMemberships",
+			Handler:    _CountryService_ListMemberships_Handler,
+		},
+		{
+			MethodName: "GrantMembership",
+			Handler:    _CountryService_GrantMembership_Handler,
+		},
+		{
+			MethodName: "RevokeMembership",
+			Handler:    _CountryService_RevokeMembership_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

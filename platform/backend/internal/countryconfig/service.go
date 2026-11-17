@@ -1,8 +1,9 @@
 // Package countryconfig answers CountryService (edify.countries.v1): the
-// countries the platform serves and their versioned settings, read from and
-// recorded in the Go-owned country_registry schema (internal/country). It
-// touches no table of the existing application except to read the reader's
-// profile country.
+// countries the platform serves, their versioned settings and which accounts
+// belong to which country, read from and recorded in the Go-owned
+// country_registry schema (internal/country). It writes no table of the
+// existing application; it reads only whether an account exists and which
+// country its profile names.
 package countryconfig
 
 import (

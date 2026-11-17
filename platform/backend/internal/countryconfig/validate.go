@@ -65,7 +65,7 @@ func settingsOf(r *countriesv1.RecordCountryConfigRequest) (settings, error) {
 		codes("calendars", s.calendars, len(calendarNames), func(c string) bool { return slices.Contains(calendarNames, c) }),
 		check(slices.Contains(s.calendars, "gregorian"), "calendars must include gregorian, the calendar dates are kept in"),
 		check(s.fyStartMonth >= 1 && s.fyStartMonth <= 12, "fy_start_month must be 1 to 12"),
-		day(s.from),
+		day("effective_from", s.from),
 		check(s.reason != "", "change_reason is required"),
 		check(utf8.RuneCountInString(s.reason) <= maxReason, fmt.Sprintf("change_reason must be at most %d characters", maxReason)),
 	}
@@ -104,12 +104,13 @@ func zone(name string) error {
 	return nil
 }
 
-func day(raw string) error {
+// day checks that field holds a YYYY-MM-DD date, or nothing.
+func day(field, raw string) error {
 	if raw == "" {
 		return nil
 	}
 	if _, err := time.Parse(time.DateOnly, raw); err != nil {
-		return refusal("effective_from must be YYYY-MM-DD")
+		return refusal(field + " must be YYYY-MM-DD")
 	}
 	return nil
 }

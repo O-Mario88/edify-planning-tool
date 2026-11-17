@@ -6,7 +6,7 @@ country-specific configuration, securely isolated country data.* Phase 0 of
 that instruction asks for an audit and the architecture decisions before any
 schema change. This document is that Phase 0. The owner approved Phase 1
 on §7's recommended defaults on 2026-11-17 ("Yes, start Phase 1"); what has
-been built since, on the development copies only, is §8.
+been built since, on the development copies only, is §8 to §10.
 
 Everything below was measured on 2026-11-17 against the development copy
 `edify_gorn_test` and the code on `feature/edify-go-rn-migration`. No
@@ -280,6 +280,72 @@ version and a bad zone are refused, and two Kenyan versions follow one
 another with the first ending when the second starts. The whole integration
 suite and every golden unchanged (0 differing); school parity `PARITY OK`.
 
-Still to come in Phase 1: membership management (granting and revoking a
-country to an account, through the same keyed writes) and the Admin pages
-for countries and settings, which follow the Go backend.
+Membership management followed in §10.
+
+## 10. Phase 1, third step: country memberships (2026-11-18)
+
+Owner, 2026-11-18: "Yes, memberships".
+
+Three calls join `CountryService` (served by
+`internal/countryconfig/membership.go`):
+
+| Call | Who | What |
+|---|---|---|
+| `ListMemberships` | Any signed-in reader for their own account; an Admin for anyone's | Every membership the account has had, newest first, revoked ones included, each saying whether it gives the account its country today (not revoked, within its dates, the country Active) |
+| `GrantMembership` | Admin only, never for their own account | A country for an account from a date (today or later), open-ended or until a later date, with a reason |
+| `RevokeMembership` | Admin only, never for their own account | Marks a membership revoked, with who, when and why; the row is kept |
+
+What a grant refuses, before anything is written:
+
+- an account that does not exist or is deleted, a country that does not
+  exist, and an Archived country;
+- a start in the past, or an end not after the start;
+- dates that overlap a membership of the same country that is not revoked;
+- a revoked or ended membership of the same country from the same day (the
+  registry keeps one row per account, country and start day; a new grant
+  starts another day);
+- the first membership of an account that has none, when it is not the
+  country the account's profile names. Such an account works in its profile's
+  country (§8); its first membership replaces that, so granting Kenya alone to
+  someone who works in Uganda through their profile would silently take
+  Uganda away. The Admin grants Uganda first, then Kenya.
+
+An account's first membership in force is its default; later ones are not.
+Changing which is the default is not built (nothing chooses by it yet beyond
+ordering).
+
+Every write runs in one transaction declared for the membership's country
+alone (`country.WriteFor`), so row-level security refuses a row of any
+other country, and holds an advisory lock on the account so two grants for
+the same account cannot both pass the checks. Revoking an account's last
+membership fails closed: the account then works in no country, and its
+profile does not give one back.
+
+Migration 0004 adds `revoke_reason` to `country_membership`, and a check
+that a membership is revoked exactly when it has a non-empty reason, so the
+table itself refuses a revocation without one. It was applied to
+`edify_gorn_test`, `edify_gorn_dev` and `edify_gorn_route` only; no row
+existed that it could reject.
+
+A membership is still not access to every record of its country: the
+account's role, scope and portfolio decide that, and carrying a role and
+scope per country is Phase 3.
+
+Proof: `internal/countryconfig/membership_test.go` (a good grant and 10
+malformed ones); `internal/integration/country_membership_test.go`, with an
+officer whose memberships are taken away for the test and put back exactly
+after: reading is one's own unless an Admin; a Country Director cannot grant
+or revoke; an Admin cannot grant themselves or revoke their own; a missing
+reason, a written date, an end before the start, a past date, an unknown
+country and an unknown account are refused; Kenya before Uganda is refused for
+an officer who works in Uganda through their profile; Uganda then lands as
+the default and in force, a second overlapping Uganda is refused, a Draft
+Kenya lands but is not in force and gives no access; a revocation needs a
+reason, keeps its record, cannot be repeated and blocks a re-grant from the
+same day; revoking the last membership leaves the officer no country; and the
+table refuses a revocation without a reason. The whole integration suite and
+every golden unchanged (0 differing); school parity `PARITY OK` (24 accounts
+served, 13 refused, 700 rows).
+
+Still to come in Phase 1: the Admin pages for countries, settings and
+memberships, which follow the Go backend.
