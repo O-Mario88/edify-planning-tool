@@ -40,17 +40,48 @@ type rosterPerson struct {
 	lead            bool
 }
 
+// rosterTeam is one of rules.roster's teams: a Lead and their CCEOs, or the
+// CCEOs with no Lead.
+type rosterTeam struct {
+	lead   Lead
+	people []rosterPerson
+	noLead bool
+}
+
 // leadTeam is monitor_roster for a Programme Lead: themselves, then the
 // CCEOs they supervise by name (rules.roster's team whose Lead is one of
 // wanted), the people the planning rulebook follows by the role they hold.
 func (m *monitor) leadTeam(ctx context.Context, wanted []string) (*Lead, []rosterPerson, error) {
+	teams, err := m.roster(ctx, "")
+	if err != nil {
+		return nil, nil, err
+	}
+	for _, t := range teams {
+		if !t.noLead && intersects(t.people[0].ids, wanted) {
+			lead := t.lead
+			return &lead, t.people, nil
+		}
+	}
+	return nil, nil, nil
+}
+
+// roster is rules.roster: every Programme Lead with their CCEOs (a CCEO on
+// several Leads' lines under the first by name), then the CCEOs with no
+// Lead; country keeps the people to their country (or none recorded).
+func (m *monitor) roster(ctx context.Context, country string) ([]rosterTeam, error) {
+	args := []any{[]string{rules.ProgramLeadRole, rules.CCEORole}}
+	where := ""
+	if country != "" {
+		args = append(args, country)
+		where = " AND (sp.country = $2 OR sp.country = '')"
+	}
 	rows, err := m.db.Query(ctx, `SELECT sp.id, COALESCE(sp.user_id, ''), COALESCE(NULLIF(u.name, ''), NULLIF(u.email, ''), sp.id),
   COALESCE(u.active_role, ''), COALESCE(u.roles, '{}')
 FROM staff_profile sp JOIN "user" u ON u.id = sp.user_id
 WHERE sp.deleted_at IS NULL AND u.is_active AND u.deleted_at IS NULL
-AND (u.roles && $1::varchar[] OR u.active_role = ANY($1))`, []string{rules.ProgramLeadRole, rules.CCEORole})
+AND (u.roles && $1::varchar[] OR u.active_role = ANY($1))`+where, args...)
 	if err != nil {
-		return nil, nil, fmt.Errorf("planningmonitor: the roster: %w", err)
+		return nil, fmt.Errorf("planningmonitor: the roster: %w", err)
 	}
 	people := map[string]rosterPerson{}
 	for rows.Next() {
@@ -58,7 +89,7 @@ AND (u.roles && $1::varchar[] OR u.active_role = ANY($1))`, []string{rules.Progr
 		var roles []string
 		if err := rows.Scan(&id, &user, &name, &active, &roles); err != nil {
 			rows.Close()
-			return nil, nil, fmt.Errorf("planningmonitor: the roster: %w", err)
+			return nil, fmt.Errorf("planningmonitor: the roster: %w", err)
 		}
 		role := planningRole(roles, active)
 		if role == "" {
@@ -72,7 +103,7 @@ AND (u.roles && $1::varchar[] OR u.active_role = ANY($1))`, []string{rules.Progr
 	}
 	rows.Close()
 	if err := rows.Err(); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	var leads []rosterPerson
 	for _, p := range people {
@@ -103,13 +134,13 @@ AND (u.roles && $1::varchar[] OR u.active_role = ANY($1))`, []string{rules.Progr
 	links, err := m.db.Query(ctx, `SELECT supervisor_id, supervisee_id FROM staff_supervisor_assignment
 WHERE supervisor_id = ANY($1) AND supervisee_id = ANY($2)`, leadKeys, keys)
 	if err != nil {
-		return nil, nil, fmt.Errorf("planningmonitor: the reporting lines: %w", err)
+		return nil, fmt.Errorf("planningmonitor: the reporting lines: %w", err)
 	}
 	for links.Next() {
 		var sup, sub string
 		if err := links.Scan(&sup, &sub); err != nil {
 			links.Close()
-			return nil, nil, fmt.Errorf("planningmonitor: the reporting lines: %w", err)
+			return nil, fmt.Errorf("planningmonitor: the reporting lines: %w", err)
 		}
 		if people[sub].lead || sup == sub {
 			continue
@@ -119,10 +150,8 @@ WHERE supervisor_id = ANY($1) AND supervisee_id = ANY($2)`, leadKeys, keys)
 		}
 	}
 	links.Close()
+	teams := []rosterTeam{}
 	for _, l := range leads {
-		if !intersects(l.ids, wanted) {
-			continue
-		}
 		var members []rosterPerson
 		for sub, sup := range placed {
 			if sup == l.key {
@@ -130,9 +159,19 @@ WHERE supervisor_id = ANY($1) AND supervisee_id = ANY($2)`, leadKeys, keys)
 			}
 		}
 		byName(members)
-		return &Lead{Key: l.key, Name: l.name}, append([]rosterPerson{l}, members...), nil
+		teams = append(teams, rosterTeam{lead: Lead{Key: l.key, Name: l.name}, people: append([]rosterPerson{l}, members...)})
 	}
-	return nil, nil, nil
+	var loose []rosterPerson
+	for _, p := range people {
+		if _, ok := placed[p.key]; !ok && !p.lead {
+			loose = append(loose, p)
+		}
+	}
+	if len(loose) > 0 {
+		byName(loose)
+		teams = append(teams, rosterTeam{lead: Lead{Key: rules.NoLead[0], Name: rules.NoLead[1]}, people: loose, noLead: true})
+	}
+	return teams, nil
 }
 
 func intersects(a, b []string) bool {
@@ -156,9 +195,23 @@ func planningRole(roles []string, active string) string {
 	return ""
 }
 
-// people is _people: the roster's rows, then a row for whoever else holds a
-// school in scope, then Unassigned for the schools nobody holds.
+// people is _people for a Programme Lead's team (the roster team whose
+// Lead is one of wanted).
 func (m *monitor) people(ctx context.Context, wanted []string) error {
+	team, members, err := m.leadTeam(ctx, wanted)
+	if err != nil {
+		return err
+	}
+	teams := []rosterTeam{}
+	if team != nil {
+		teams = append(teams, rosterTeam{lead: *team, people: members})
+	}
+	return m.peopleOf(ctx, teams)
+}
+
+// peopleOf is _people: the roster's rows, then a row for whoever else holds
+// a school in scope, then Unassigned for the schools nobody holds.
+func (m *monitor) peopleOf(ctx context.Context, teams []rosterTeam) error {
 	m.officers, m.leadsByKey = map[string]*Officer{}, map[string]*Lead{}
 	leadFor := func(key, name string) *Lead {
 		if l, ok := m.leadsByKey[key]; ok {
@@ -174,13 +227,9 @@ func (m *monitor) people(ctx context.Context, wanted []string) error {
 		m.officers[key] = o
 		l.Officers = append(l.Officers, o)
 	}
-	team, members, err := m.leadTeam(ctx, wanted)
-	if err != nil {
-		return err
-	}
-	if team != nil {
-		l := leadFor(team.Key, team.Name)
-		for _, p := range members {
+	for _, t := range teams {
+		l := leadFor(t.lead.Key, t.lead.Name)
+		for _, p := range t.people {
 			if _, ok := m.officers[p.key]; !ok {
 				add(l, p.key, p.name, p.role, p.ids, rules.VisitTargets[p.role])
 			}

@@ -28,6 +28,30 @@ def _values(items) -> list[str]:
     return [str(getattr(item, "value", item)) for item in items]
 
 
+def _page() -> dict:
+    from apps.core.permissions import RolePermissionService, can_open_url
+    from apps.core.rbac import EdifyRole
+    from apps.core.scoping import COUNTRY_ROLES
+    from apps.frontend.views import dashboard_embed, oversight_views
+    from apps.schools.management.commands.export_school_directory_rules import (
+        _role_user,
+    )
+
+    return {
+        "roles": sorted(
+            role.value
+            for role in EdifyRole
+            if RolePermissionService.can_view_page(
+                _role_user(role.value), "planning_monitor"
+            )
+            and can_open_url(_role_user(role.value), "/planning-monitor/")
+        ),
+        "country_roles": sorted(COUNTRY_ROLES),
+        "dashboard_role": dashboard_embed.PROGRAM_LEAD,
+        "oversight_roles": sorted(oversight_views.MONITORS_ON_OVERSIGHT_ROLES),
+    }
+
+
 def rules() -> dict:
     from apps.activities.cluster_attendance import SCHOOL_TRAINING_TYPES
     from apps.activities.completion_columns import (
@@ -50,6 +74,9 @@ def rules() -> dict:
 
     return {
         "rules_version": book.RULES_VERSION,
+        # /planning-monitor/ on its own: who opens it, who reads it as the
+        # country (or a superuser), and the roles it sends elsewhere.
+        "page": _page(),
         "program_lead_role": book.PROGRAM_LEAD_ROLE,
         "cceo_role": book.CCEO_ROLE,
         "role_codes": {

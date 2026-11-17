@@ -422,8 +422,10 @@ func (m *Monitor) Ledger(ctx context.Context, db schooldirectory.Querier) (map[s
 	b := &sql{}
 	q := fmt.Sprintf(`SELECT COALESCE(a.activity_type, ''), COALESCE(a.purpose_type, ''), COALESCE(a.delivery_type, ''),
   COALESCE(a.school_id, ''), COALESCE(a.cluster_id, ''), COALESCE(a.responsible_staff_id, ''), COALESCE(a.project_id, '')
-FROM activity a WHERE a.fy = %s AND %s AND (a.responsible_staff_id = ANY(%s) OR a.school_id = ANY(%s))`,
-		b.arg(m.FY), b.planned(), b.arg(ids), b.arg(schoolIDs))
+FROM activity a WHERE a.fy = %s AND %s`, b.arg(m.FY), b.planned())
+	if !m.wholeCountry {
+		q += fmt.Sprintf(` AND (a.responsible_staff_id = ANY(%s) OR a.school_id = ANY(%s))`, b.arg(ids), b.arg(schoolIDs))
+	}
 	counts := map[string]int{}
 	rows, err := db.Query(ctx, q, b.args...)
 	if err != nil {

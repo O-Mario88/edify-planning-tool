@@ -84,6 +84,15 @@ var rules = func() (r struct {
 	PillarLabels                map[string]string      `json:"pillar_labels"`
 	KPILabels                   map[string]string      `json:"kpi_labels"`
 	MonitorTabs                 [][2]string            `json:"monitor_tabs"`
+	// Page is /planning-monitor/ on its own: who opens it, who reads it as
+	// the country, the role it sends to the dashboard and those it sends to
+	// Planning Oversight.
+	Page struct {
+		Roles          []string `json:"roles"`
+		CountryRoles   []string `json:"country_roles"`
+		DashboardRole  string   `json:"dashboard_role"`
+		OversightRoles []string `json:"oversight_roles"`
+	} `json:"page"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {
 		panic(fmt.Sprintf("planningmonitor: reading rules.json: %v", err))

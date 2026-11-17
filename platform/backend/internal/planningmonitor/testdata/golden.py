@@ -318,6 +318,31 @@ try:
         monitor = monitor_of(reader)
         status, body = read_page(reader, "/dashboard", {})
         transaction.set_rollback(True)
+    # The page on its own: the country for the Country Director and the
+    # Admin, the dashboard's section for the Lead, nothing for an officer.
+    page_answers = []
+    for email, query in (
+        ("cd@edify.org", {}),
+        ("cd@edify.org", {"fy": "2026"}),
+        ("cd@edify.org", {"view": "planning"}),
+        ("admin@edify.org", {}),
+        (LEAD, {}),
+        ("cceo@edify.org", {}),
+    ):
+        with transaction.atomic():
+            page_status, page_body = read_page(
+                User.objects.get(email=email), "/planning-monitor/", query
+            )
+            transaction.set_rollback(True)
+        page_answers.append(
+            {
+                "email": email,
+                "path": "/planning-monitor/",
+                "query": query,
+                "status": page_status,
+                "body": page_body,
+            }
+        )
 finally:
     clear()
 
@@ -336,6 +361,7 @@ with open(os.environ["GOLDEN_OUT"], "w", encoding="utf-8") as out:
                     "body": body,
                 }
             ],
+            "page_answers": page_answers,
         },
         out,
         ensure_ascii=False,

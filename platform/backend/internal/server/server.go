@@ -89,6 +89,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/peopledirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/perfcycle"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/personaltimeoff"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningmonitor"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningoversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningpage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/platformhealth"
@@ -250,6 +251,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			prioritiesmaster.NewService(pool, time.Now),
 			coreschools.NewService(pool, time.Now),
 			acting.NewPage(pool, time.Now),
+			planningmonitor.NewPage(pool, time.Now),
 			partneroversight.NewService(pool, time.Now),
 			hrregister.NewService(pool, time.Now).WithAccessLog(pool, logger),
 			leavepolicies.NewService(pool, time.Now),

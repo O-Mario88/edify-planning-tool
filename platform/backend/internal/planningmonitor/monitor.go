@@ -26,6 +26,9 @@ type Monitor struct {
 	Leads []*Lead
 	// outside are the projects no SSA intervention measures.
 	outside []string
+	// wholeCountry is a country reader's monitor: its ledger reads every
+	// planned activity of the year.
+	wholeCountry bool
 }
 
 // Officers is everybody on the monitor (the totals' people).
@@ -92,10 +95,7 @@ func Read(ctx context.Context, db schooldirectory.Querier, p auth.Principal, fy 
 	if outside == nil {
 		outside = []string{}
 	}
-	m := &monitor{db: db, fy: fy, operational: operationalFY(now.UTC()), outside: outside,
-		directory: func(ctx context.Context, ids []string) (map[string]oversightportfolio.Owner, error) {
-			return oversightportfolio.StaffDirectory(ctx, db, ids)
-		}}
+	m := newMonitor(db, fy, now, outside)
 	schoolIDs := scope.SchoolIDs
 	if schoolIDs == nil {
 		schoolIDs = []string{}
@@ -107,6 +107,62 @@ func Read(ctx context.Context, db schooldirectory.Querier, p auth.Principal, fy 
 	if err := m.people(ctx, own); err != nil {
 		return nil, err
 	}
+	return m.finish(ctx)
+}
+
+func newMonitor(db schooldirectory.Querier, fy string, now time.Time, outside []string) *monitor {
+	return &monitor{db: db, fy: fy, operational: operationalFY(now.UTC()), outside: outside,
+		directory: func(ctx context.Context, ids []string) (map[string]oversightportfolio.Owner, error) {
+			return oversightportfolio.StaffDirectory(ctx, db, ids)
+		}}
+}
+
+// ReadCountry is planning_monitor for a country reader (the Country
+// Director, the Admin): every school in their analytics scope, under every
+// team of the country's roster, then the CCEOs with no Lead.
+func ReadCountry(ctx context.Context, db schooldirectory.Querier, p auth.Principal, fy string, now time.Time) (*Monitor, error) {
+	if p.InActingAppointment {
+		return nil, ErrNotDrawn
+	}
+	scope, err := schooldirectory.ResolveScope(ctx, db, p, now)
+	if err != nil {
+		return nil, err
+	}
+	if !scope.CountryScope {
+		return nil, ErrNotDrawn
+	}
+	outside, err := visitgate.ProjectsOutsideSSA(ctx, db, schoolprofile.GateRules())
+	if err != nil {
+		return nil, err
+	}
+	if outside == nil {
+		outside = []string{}
+	}
+	m := newMonitor(db, fy, now, outside)
+	args := []any{}
+	base := schooldirectory.AnalyticsReach(scope, &args)
+	if err := m.readSchools(ctx, base, args); err != nil {
+		return nil, err
+	}
+	teams, err := m.roster(ctx, scope.Country)
+	if err != nil {
+		return nil, err
+	}
+	if err := m.peopleOf(ctx, teams); err != nil {
+		return nil, err
+	}
+	monitor, err := m.finish(ctx)
+	if err != nil {
+		return nil, err
+	}
+	monitor.wholeCountry = true
+	return monitor, nil
+}
+
+// finish files each school under its holder's row and counts the year's
+// work.
+func (m *monitor) finish(ctx context.Context) (*Monitor, error) {
+	fy, outside := m.fy, m.outside
 	for _, s := range append(append([]*School{}, m.schoolOrder...), m.outreachOrder...) {
 		o := m.officers[s.OfficerID]
 		if o == nil {

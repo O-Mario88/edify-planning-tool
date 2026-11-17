@@ -234,3 +234,52 @@ func TestThePlanningMonitorFiguresAreTheExistingServices(t *testing.T) {
 			g[max(at-400, 0):min(at+300, len(g))], w[max(at-400, 0):min(at+300, len(w))])
 	}
 }
+
+// The existing feed's Planning Monitor page on its own, over the same rows:
+// the country for the Country Director (each year, the Planning tab named)
+// and the Admin, the dashboard's section for the Programme Lead, and the
+// officer it refuses.
+func TestThePlanningMonitorPageMatchesTheExistingFeed(t *testing.T) {
+	path := os.Getenv("EDIFY_PLANNING_MONITOR_GOLDEN")
+	if path == "" {
+		t.Skip("EDIFY_PLANNING_MONITOR_GOLDEN is not set")
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var golden struct {
+		Written     time.Time                    `json:"written"`
+		Rows        map[string][]json.RawMessage `json:"rows"`
+		PageAnswers []goldenAnswer               `json:"page_answers"`
+	}
+	if err := json.Unmarshal(raw, &golden); err != nil {
+		t.Fatal(err)
+	}
+	if time.Since(golden.Written) > 30*time.Minute {
+		t.Skipf("the golden was written at %s; write it again", golden.Written)
+	}
+	if len(golden.PageAnswers) == 0 {
+		t.Skip("the golden asks nothing of the page")
+	}
+	ctx := context.Background()
+	unfile := func() {
+		for i := len(planningMonitorTables) - 1; i >= 0; i-- {
+			table, column := planningMonitorTables[i][0], planningMonitorTables[i][1]
+			if _, err := admin.Exec(ctx, fmt.Sprintf(`DELETE FROM %s WHERE %s LIKE 'gpm%%'`, table, column)); err != nil {
+				t.Errorf("clearing %s: %v", table, err)
+			}
+		}
+	}
+	unfile()
+	t.Cleanup(unfile)
+	for _, tc := range planningMonitorTables {
+		for _, row := range golden.Rows[tc[0]] {
+			sql := fmt.Sprintf(`INSERT INTO %s SELECT * FROM json_populate_record(NULL::%s, $1::json)`, tc[0], tc[0])
+			if _, err := admin.Exec(ctx, sql, string(row)); err != nil {
+				t.Fatalf("filing a %s row: %v", tc[0], err)
+			}
+		}
+	}
+	compareGolden(t, "/planning-monitor/", golden.PageAnswers)
+}

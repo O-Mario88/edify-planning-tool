@@ -106,6 +106,9 @@ type view struct {
 	total   Readiness
 	ledger  map[string]any
 	monitor string
+	// byLead is a reader who follows several Leads' teams (groups_by_lead):
+	// a person's plans and Partner work open under their Lead.
+	byLead bool
 }
 
 // gapURL is the address a count opens: the gap or list, whose schools, and
@@ -138,6 +141,37 @@ func Blocks(m *Monitor, ledger map[string]any) []*screensv1.PageBlock {
 		}}}},
 		v.filters(),
 		v.strip(),
+	}
+	tabs := &screensv1.PagePanel{}
+	for _, t := range rules.MonitorTabs {
+		tabs.Items = append(tabs.Items, &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Text{Text: t[1]}})
+	}
+	blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: tabs}})
+	return append(blocks, v.readinessTable(), v.inventoryTable(), v.ledgerTable(), v.checksTable(), v.detailTable())
+}
+
+// CountryBlocks is the country reader's page (pages/oversight/
+// planning_monitor.html): the tabs, the country's strip, the year, lead and
+// gap filters, then the same tables.
+func CountryBlocks(m *Monitor, ledger map[string]any, years []string) []*screensv1.PageBlock {
+	v := view{m: m, fy: m.FY, total: m.Readiness(), ledger: ledger, monitor: monitorPath + "?view=monitor&fy=" + m.FY, byLead: true}
+	filters := v.filters()
+	f := filters.GetFilters()
+	year := &screensv1.PageFilter{Name: "fy", Label: "Financial year", Value: v.fy, Caption: "FY"}
+	for _, y := range years {
+		year.Options = append(year.Options, &screensv1.PageFilterOption{Value: y, Label: "FY " + y})
+	}
+	f.Filters = append([]*screensv1.PageFilter{year}, f.Filters...)
+	f.Hidden = map[string]string{"view": "monitor"}
+	strip := v.strip()
+	strip.GetStrip().Title = "Country planning monitor"
+	blocks := []*screensv1.PageBlock{
+		{Kind: &screensv1.PageBlock_LinkTabs{LinkTabs: &screensv1.PageLinkTabs{Tabs: []*screensv1.PageLinkTab{
+			{Label: "Planning", Href: monitorPath + "?view=planning", Active: true},
+			{Label: "Execution & Completion", Href: monitorPath + "?view=execution"},
+		}}}},
+		strip,
+		filters,
 	}
 	tabs := &screensv1.PagePanel{}
 	for _, t := range rules.MonitorTabs {
@@ -503,7 +537,10 @@ func (v view) detailRow(name *cell, f map[string]any, staff Line, scope string, 
 	}
 	if person != nil && rules.RoleLabels[person.Role] != "" {
 		owner := "owner=" + person.Key
-		if person.Role == rules.RoleCodes[rules.ProgramLeadRole] {
+		switch {
+		case v.byLead:
+			owner = "program_lead=" + person.LeadID
+		case person.Role == rules.RoleCodes[rules.ProgramLeadRole]:
 			owner = "owner=mine"
 		}
 		visits.link(intcomma(get("staff_visits")), plansPath+"?period=fy&fy="+v.fy+"&"+owner+"&activity=visits", planTone)
@@ -541,7 +578,11 @@ func (v view) detailRow(name *cell, f map[string]any, staff Line, scope string, 
 	partner := &cell{}
 	partnerTone := fmt.Sprint(f["partner_tone"])
 	if person != nil && rules.RoleLabels[person.Role] != "" {
-		partner.link(intcomma(get("partner_schools")), partnersPath+"?period=fy&fy="+v.fy+"&member="+person.Key, partnerTone)
+		lead := ""
+		if v.byLead {
+			lead = "&program_lead=" + person.LeadID
+		}
+		partner.link(intcomma(get("partner_schools")), partnersPath+"?period=fy&fy="+v.fy+lead+"&member="+person.Key, partnerTone)
 	} else {
 		partner.count(get("partner_schools"), v.gapURL("with_partner", scope, ""), partnerTone, "")
 	}

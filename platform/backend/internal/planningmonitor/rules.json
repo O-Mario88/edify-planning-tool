@@ -361,6 +361,27 @@
     "school_invitation",
     "social_visit"
   ],
+  "page": {
+    "country_roles": [
+      "Accountant",
+      "Admin",
+      "BusinessTransformationOfficer",
+      "CountryDirector",
+      "ImpactAssessment"
+    ],
+    "dashboard_role": "Program Lead",
+    "oversight_roles": [
+      "ImpactAssessment"
+    ],
+    "roles": [
+      "Admin",
+      "CountryDirector",
+      "ImpactAssessment",
+      "Program Lead",
+      "RegionalProgramLead",
+      "RegionalVicePresident"
+    ]
+  },
   "pillar_labels": {
     "partner": "Partner assignment",
     "project": "Project assignment",
