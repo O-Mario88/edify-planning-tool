@@ -96,6 +96,8 @@ var rules = func() (r struct {
 		// CountryLensRoles read the whole country (resolve_oversight_scope);
 		// CountryRoles also call it the country's (is_country_reader).
 		CountryLensRoles []string `json:"country_lens_roles"`
+		// RegionLensRoles read the Leads their region's schools are held under.
+		RegionLensRoles []string `json:"region_lens_roles"`
 	} `json:"page"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {

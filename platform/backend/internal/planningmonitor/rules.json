@@ -381,6 +381,9 @@
     "oversight_roles": [
       "ImpactAssessment"
     ],
+    "region_lens_roles": [
+      "RegionalProgramLead"
+    ],
     "roles": [
       "Admin",
       "CountryDirector",

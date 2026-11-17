@@ -162,6 +162,54 @@ func ReadCountry(ctx context.Context, db schooldirectory.Querier, p auth.Princip
 	return monitor, nil
 }
 
+// ReadRegion is planning_monitor for a reader whose lens is their region (the
+// Regional Programme Lead): the region's schools, under every Programme Lead
+// those schools are held under (monitor_roster's lead_ids_hint), the CCEOs
+// with no Lead left to the country.
+func ReadRegion(ctx context.Context, db schooldirectory.Querier, p auth.Principal, fy string, now time.Time) (*Monitor, error) {
+	if p.InActingAppointment {
+		return nil, ErrNotDrawn
+	}
+	scope, err := schooldirectory.ResolveScope(ctx, db, p, now)
+	if err != nil {
+		return nil, err
+	}
+	if !scope.RegionScope {
+		return nil, ErrNotDrawn
+	}
+	outside, err := visitgate.ProjectsOutsideSSA(ctx, db, schoolprofile.GateRules())
+	if err != nil {
+		return nil, err
+	}
+	if outside == nil {
+		outside = []string{}
+	}
+	m := newMonitor(db, fy, now, outside)
+	args := []any{}
+	base := schooldirectory.AnalyticsReach(scope, &args)
+	if err := m.readSchools(ctx, base, args); err != nil {
+		return nil, err
+	}
+	hint := []string{}
+	for _, s := range append(append([]*School{}, m.schoolOrder...), m.outreachOrder...) {
+		hint = append(hint, s.LeadID)
+	}
+	all, err := m.roster(ctx, "")
+	if err != nil {
+		return nil, err
+	}
+	teams := []rosterTeam{}
+	for _, t := range all {
+		if !t.noLead && intersects(t.people[0].ids, hint) {
+			teams = append(teams, t)
+		}
+	}
+	if err := m.peopleOf(ctx, teams); err != nil {
+		return nil, err
+	}
+	return m.finish(ctx)
+}
+
 // finish files each school under its holder's row and counts the year's
 // work.
 func (m *monitor) finish(ctx context.Context) (*Monitor, error) {

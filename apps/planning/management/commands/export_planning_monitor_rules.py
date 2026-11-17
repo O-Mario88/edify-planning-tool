@@ -56,6 +56,13 @@ def _page() -> dict:
             for role in EdifyRole
             if resolve_oversight_scope(_role_user(role.value)).is_country
         ),
+        # The roles whose lens is their region's: the Programme Leads the
+        # region's schools are held under (monitor_roster lead_ids_hint).
+        "region_lens_roles": sorted(
+            role.value
+            for role in EdifyRole
+            if resolve_oversight_scope(_role_user(role.value)).kind == "region"
+        ),
         "dashboard_role": dashboard_embed.PROGRAM_LEAD,
         "oversight_roles": sorted(oversight_views.MONITORS_ON_OVERSIGHT_ROLES),
         # Where a reader who keeps the monitors as Planning Oversight tabs is

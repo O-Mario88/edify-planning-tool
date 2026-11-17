@@ -329,6 +329,8 @@ try:
         (LEAD, {}),
         ("cceo@edify.org", {}),
         ("rvp@edify.org", {}),
+        ("regional-lead@edify.org", {}),
+        ("regional-lead@edify.org", {"fy": "2026"}),
         ("rvp@edify.org", {"fy": "2026"}),
         ("ia@edify.org", {}),
         ("ia@edify.org", {"view": "execution"}),

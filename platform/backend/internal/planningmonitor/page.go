@@ -70,7 +70,8 @@ func (pg *Page) Build(ctx context.Context, p auth.Principal, path string, query 
 	if slices.Contains(page.OversightRoles, p.ActiveRole) {
 		return toOversight(query)
 	}
-	if !slices.Contains(page.CountryLensRoles, p.ActiveRole) {
+	region := slices.Contains(page.RegionLensRoles, p.ActiveRole)
+	if !region && !slices.Contains(page.CountryLensRoles, p.ActiveRole) {
 		return nil, false, nil
 	}
 	for key, values := range query {
@@ -110,7 +111,11 @@ func (pg *Page) Build(ctx context.Context, p auth.Principal, path string, query 
 	if !slices.Contains(years, fy) {
 		return nil, false, nil
 	}
-	m, err := ReadCountry(ctx, pg.db, p, fy, now)
+	read := ReadCountry
+	if region {
+		read = ReadRegion
+	}
+	m, err := read(ctx, pg.db, p, fy, now)
 	if errors.Is(err, ErrNotDrawn) {
 		return nil, false, nil
 	}
