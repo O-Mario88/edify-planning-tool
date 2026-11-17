@@ -996,3 +996,11 @@ GRANT SELECT (source_type, source_id, activity_date) ON target_achievement_ledge
 -- year holds staged priority imports.
 GRANT SELECT (financial_year, status) ON hr_strategic_priority_cycle TO edify_gateway_ro;
 GRANT SELECT (id, fy, country_id) ON hr_priority_import_batch TO edify_gateway_ro;
+-- …and a year's Uganda master: each milestone's allocation method, owner,
+-- confirmation flag and source text, each priority's code and state, an
+-- allocation's quarterly state, component split and Project, and the
+-- milestones' target components (the reconciliation).
+GRANT SELECT (allocation_method, responsible_role, needs_confirmation, source_text) ON hr_priority_milestone TO edify_gateway_ro;
+GRANT SELECT (code, status) ON hr_strategic_priority TO edify_gateway_ro;
+GRANT SELECT (quarter_status, component_split, project_id) ON hr_milestone_allocation TO edify_gateway_ro;
+GRANT SELECT (id, milestone_id, code, target_value) ON hr_milestone_target_component TO edify_gateway_ro;

@@ -4,9 +4,12 @@ Go builds /target-distribution
 (apps.frontend.views.target_distribution_views.target_distribution_page) from
 what this command writes to
 platform/backend/internal/targetdistribution/rules.json: which roles may open
-the page and which may import country priorities (the view's own gates); the
-Priorities rail each role is shown above the view (priority_workspace_tabs);
-and the years a requested FY may name. A change to any of them must be
+the page and which may import country priorities (the view's own gates);
+which act as the Country Director and which distribute (the view's _is_cd
+and _is_ia_distributor); the Priorities rail each role is shown above the
+view (priority_workspace_tabs); the years a requested FY may name; and, for
+the master, the allocation methods' names, the measures that add up and
+the published state. A change to any of them must be
 exported again; apps/hr/test_target_distribution_rules_export.py fails until
 it is.
 
@@ -46,9 +49,17 @@ def _tabs(user) -> list[list[str]] | None:
 
 
 def rules() -> dict:
+    from types import SimpleNamespace
+
     from apps.core.permissions import RolePermissionService, has_permission
     from apps.core.rbac import EdifyRole, Permission
     from apps.frontend.views.hr_views import MAX_FY_YEAR, MIN_FY_YEAR
+    from apps.frontend.views.target_distribution_views import (
+        _is_cd,
+        _is_ia_distributor,
+    )
+    from apps.hr import target_distribution
+    from apps.hr.models import MilestoneAllocationMethod, StrategicPriorityStatus
     from apps.schools.management.commands.export_school_directory_rules import (
         _role_user,
     )
@@ -66,11 +77,16 @@ def rules() -> dict:
                 user, Permission.STRATEGIC_PRIORITIES_IMPORT.value
             ),
             "tabs": _tabs(user),
+            "director": _is_cd(SimpleNamespace(user=user)),
+            "distributor": _is_ia_distributor(SimpleNamespace(user=user)),
         }
     return {
         "roles": roles,
         "min_fy_year": MIN_FY_YEAR,
         "max_fy_year": MAX_FY_YEAR,
+        "method_labels": dict(MilestoneAllocationMethod.choices),
+        "summable": sorted(target_distribution.SUMMABLE_MEASUREMENTS),
+        "published": StrategicPriorityStatus.PUBLISHED.value,
     }
 
 

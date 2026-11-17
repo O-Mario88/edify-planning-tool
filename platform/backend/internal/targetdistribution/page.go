@@ -5,11 +5,17 @@
 // the Priorities rail): the year's country master and its distribution to
 // Programme Leads.
 //
-// It reads; it never writes. It draws a year with no master yet: the year
-// filter, the import form for a reader who may import, the rail and the empty
-// state. A year that has a master, staged imports for a reader who may see
-// them, any query besides the year, a year the view would not read as asked,
-// and a reader with one view are handed on. The doors, the import permission
+// It reads; it never writes. It draws the year filter, the import form for
+// a reader who may import and the rail, then the year's master — its
+// distribution command and workflow, its figures, the Country Director's
+// publication gate and the milestones table with its filters, method tabs
+// and pager, each milestone's plan-linked progress and its holders'
+// verified roll-up — or the empty state when the year has none. Staged
+// imports for a reader who may see them, a query key the view does not read,
+// a year or page the view would not read as Go does, a pager over a
+// many-part ask, a search beyond ASCII, an approved Project or country
+// allocation, a published master with nothing to distribute, and a reader
+// with one view are handed on. The doors, the import permission
 // and each role's rail are exported to rules.json by `manage.py
 // export_target_distribution_rules`;
 // apps/hr/test_target_distribution_rules_export.py fails when the two differ.
@@ -42,15 +48,24 @@ const country = "Uganda"
 //go:embed rules.json
 var rulesJSON []byte
 
+// door is what a role is given on the page.
+type door struct {
+	Import      bool        `json:"import"`
+	Tabs        [][2]string `json:"tabs"`
+	Director    bool        `json:"director"`
+	Distributor bool        `json:"distributor"`
+}
+
 var rules = func() (r struct {
-	Roles map[string]struct {
-		Import bool        `json:"import"`
-		Tabs   [][2]string `json:"tabs"`
-	} `json:"roles"`
-	MinFYYear int `json:"min_fy_year"`
-	MaxFYYear int `json:"max_fy_year"`
+	Roles        map[string]door   `json:"roles"`
+	MinFYYear    int               `json:"min_fy_year"`
+	MaxFYYear    int               `json:"max_fy_year"`
+	MethodLabels map[string]string `json:"method_labels"`
+	Summable     []string          `json:"summable"`
+	Published    string            `json:"published"`
 }) {
-	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.Roles) == 0 || r.MaxFYYear == 0 {
+	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.Roles) == 0 || r.MaxFYYear == 0 ||
+		len(r.MethodLabels) == 0 || len(r.Summable) == 0 || r.Published == "" {
 		panic(fmt.Sprintf("targetdistribution: the embedded rules are unreadable: %v", err))
 	}
 	return r
@@ -78,7 +93,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if !ok {
 		return nil, true, pagegate.ErrNotAvailable
 	}
-	resp, err := s.build(ctx, role.Import, role.Tabs, query)
+	resp, err := s.build(ctx, role, query)
 	if errors.Is(err, errPassOn) {
 		return nil, false, nil
 	}
@@ -88,14 +103,14 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	return resp, true, nil
 }
 
-func (s *Service) build(ctx context.Context, canImport bool, tabs [][2]string, query url.Values) (*screensv1.GetPageResponse, error) {
-	for key, values := range query {
-		if key != "fy" && strings.Join(values, "") != "" {
-			return nil, fmt.Errorf("the query %q: %w", key, errPassOn)
-		}
+func (s *Service) build(ctx context.Context, role door, query url.Values) (*screensv1.GetPageResponse, error) {
+	sel, err := selectionOf(query)
+	if err != nil {
+		return nil, err
 	}
+	sel.role = role
 	// One tab is not a rail: the view is drawn on its own.
-	if len(tabs) < 2 {
+	if len(role.Tabs) < 2 {
 		return nil, fmt.Errorf("one view: %w", errPassOn)
 	}
 	raw := strings.TrimSpace(query.Get("fy"))
@@ -107,31 +122,40 @@ func (s *Service) build(ctx context.Context, canImport bool, tabs [][2]string, q
 	if err != nil {
 		return nil, err
 	}
-	var hasMaster, staged bool
-	if err := s.db.QueryRow(ctx, `
-SELECT EXISTS (SELECT 1 FROM hr_strategic_priority WHERE fy = $1 AND level = 'country' AND country_id = $2 AND cycle_id IS NOT NULL),
-       EXISTS (SELECT 1 FROM hr_priority_import_batch WHERE fy = $1 AND country_id = $2)`, fy, country).Scan(&hasMaster, &staged); err != nil {
-		return nil, fmt.Errorf("targetdistribution: reading the year's master: %w", err)
+	var staged bool
+	if err := s.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM hr_priority_import_batch WHERE fy = $1 AND country_id = $2)`,
+		fy, country).Scan(&staged); err != nil {
+		return nil, fmt.Errorf("targetdistribution: reading the year's imports: %w", err)
 	}
-	if hasMaster {
-		return nil, fmt.Errorf("a master: %w", errPassOn)
-	}
-	if canImport && staged {
+	if role.Import && staged {
 		return nil, fmt.Errorf("staged imports: %w", errPassOn)
+	}
+	now := s.now()
+	ws, err := readWorkspace(ctx, s.db, fy, time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC))
+	if err != nil {
+		return nil, err
 	}
 	if !slices.Contains(years, fy) {
 		years = append(years, fy)
 	}
 	view := []*screensv1.PageBlock{yearFilter(fy, years)}
-	if canImport {
+	if role.Import {
 		view = append(view, importForm())
 	}
-	view = append(view, rail(tabs, raw),
-		&screensv1.PageBlock{Kind: &screensv1.PageBlock_Empty{
+	view = append(view, rail(role.Tabs, raw))
+	if ws == nil {
+		view = append(view, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Empty{
 			Empty: "Import the confirmed country priorities into the database before opening distribution."}})
+	} else {
+		master, err := ws.masterBlocks(role, sel)
+		if err != nil {
+			return nil, err
+		}
+		view = append(view, master...)
+	}
 	// The feed reads the rail's panel under each of its tabs.
 	segments := &screensv1.PageSegments{}
-	for _, t := range tabs {
+	for _, t := range role.Tabs {
 		segments.Segments = append(segments.Segments, &screensv1.PageSegment{Label: t[0], Active: t[1] == Path, Blocks: view})
 	}
 	return &screensv1.GetPageResponse{

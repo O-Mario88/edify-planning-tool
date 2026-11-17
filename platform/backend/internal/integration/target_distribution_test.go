@@ -14,14 +14,20 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/targetdistribution"
 )
 
-// targetDistributionTables is what the golden files, parents first.
-var targetDistributionTables = []string{"hr_strategic_priority_cycle", "hr_priority_import_batch", "hr_strategic_priority"}
+// targetDistributionTables is what the golden files, parents first: the
+// rows its transaction added, found and cleared by their ids.
+var targetDistributionTables = []string{
+	"hr_strategic_priority_cycle", "hr_milestone_metric_definition", "hr_strategic_priority", "hr_priority_milestone",
+	"hr_milestone_target_component", "hr_milestone_activity_rule", "hr_milestone_allocation", "hr_milestone_period_target",
+	"hr_priority_import_batch", "activity",
+}
 
 // The existing feed's Uganda Target Distribution for IA, the Country Director
-// and the Admin over years with no master (with no year asked, a draft
-// cycle's year, a year with staged imports and the seed's own year), and the
-// CCEO it refuses; a year with a master, and staged imports for a reader who
-// may see them, are handed on. Skipped unless EDIFY_TARGET_DISTRIBUTION_GOLDEN
+// and the Admin — with no year asked, over years with no master (a draft
+// cycle's year, a year with staged imports, the seed's own year), a master
+// with no milestones, the Uganda master in draft, and the Uganda master
+// published and part distributed — and the CCEO it refuses; staged imports
+// for a reader who may see them are handed on. Skipped unless EDIFY_TARGET_DISTRIBUTION_GOLDEN
 // names a file internal/targetdistribution/testdata/golden.py wrote within the
 // hour.
 func TestTargetDistributionMatchesTheExistingFeed(t *testing.T) {
@@ -46,10 +52,23 @@ func TestTargetDistributionMatchesTheExistingFeed(t *testing.T) {
 	}
 	skipWhenStale(t, golden.Written)
 	ctx := context.Background()
+	idsOf := map[string][]string{}
+	for _, table := range targetDistributionTables {
+		for _, row := range golden.Rows[table] {
+			var r struct {
+				ID string `json:"id"`
+			}
+			if err := json.Unmarshal(row, &r); err != nil {
+				t.Fatal(err)
+			}
+			idsOf[table] = append(idsOf[table], r.ID)
+		}
+	}
 	clear := func() {
 		for i := len(targetDistributionTables) - 1; i >= 0; i-- {
-			if _, err := admin.Exec(ctx, fmt.Sprintf(`DELETE FROM %s WHERE id LIKE 'gtd%%'`, targetDistributionTables[i])); err != nil {
-				t.Errorf("clearing %s: %v", targetDistributionTables[i], err)
+			table := targetDistributionTables[i]
+			if _, err := admin.Exec(ctx, fmt.Sprintf(`DELETE FROM %s WHERE id::text = ANY($1)`, table), idsOf[table]); err != nil {
+				t.Errorf("clearing %s: %v", table, err)
 			}
 		}
 	}
