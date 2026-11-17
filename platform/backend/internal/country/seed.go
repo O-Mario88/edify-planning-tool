@@ -35,6 +35,11 @@ type Seeded struct {
 // ids; run again, it adds only what is missing. by is who ran it.
 func SeedLegacy(ctx context.Context, tx pgx.Tx, by string) (Seeded, error) {
 	var out Seeded
+	// The countries and their names first, as a platform write; then the
+	// rows of every registered country.
+	if err := WriteFor(ctx, tx, true); err != nil {
+		return out, err
+	}
 	exec := func(what string, n *int64, sql string, args ...any) error {
 		tag, err := tx.Exec(ctx, sql, args...)
 		if err != nil {
@@ -57,6 +62,10 @@ ON CONFLICT (alias) DO NOTHING`, alias, c.code, by); err != nil {
 				return out, err
 			}
 		}
+	}
+	if _, err := tx.Exec(ctx, `SELECT set_config('edify.write_countries', string_agg(id::text, ','), true)
+FROM country_registry.country`); err != nil {
+		return out, fmt.Errorf("country: declaring the countries seeded: %w", err)
 	}
 	// Uganda as the platform runs today: English, whole shillings, East
 	// African time, financial years from October.

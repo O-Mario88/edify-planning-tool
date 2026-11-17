@@ -168,6 +168,10 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		// Location reports and captures: field_routes only, never the
 		// existing school coordinates (owner, 2026-11-14).
 		filepath.Join(root, "internal", "routeplan") + sep: "field_routes.",
+		// Edify Global's registry (docs/migration/80 §8): the legacy seed and
+		// the country settings API, under the registry's row-level security.
+		filepath.Join(root, "internal", "country") + sep:       "country_registry.",
+		filepath.Join(root, "internal", "countryconfig") + sep: "country_registry.",
 	}
 	// Signing in and account administration, which Go owns (owner brief,
 	// 2026-11-11), write the existing account tables, and the audit chain

@@ -222,9 +222,64 @@ Proof:
   differing; school parity with the existing API, 24 accounts served and 13
   refused, 700 rows, `PARITY OK`.
 
-Not yet built in Phase 1: RLS on the Go-owned tables (it needs a narrow,
-reviewed extension of the schema lint, which today refuses the words it
-uses); the country configuration API (Connect); membership management. The
-other modules that compare `scope.Country` as text are Uganda-correct and
-fail closed through `NoCountry`; carrying the registry through them is
+The other modules that compare `scope.Country` as text are Uganda-correct
+and fail closed through `NoCountry`; carrying the registry through them is
 Phase 3.
+
+## 9. Phase 1, second step: row-level security and the settings API (2026-11-17)
+
+Owner, 2026-11-17: "Continue Phase 1 with RLS and the config API".
+
+**Row-level security** (`internal/country/schema/migrations/0002_row_security.sql`)
+is switched on and forced on all five registry tables, so it binds the owner
+role as well as the gateway's. Reading stays open to the registry's roles:
+a reader's and a school's country are resolved from these rows before any
+country is known, and the resolution falls back to the region or profile
+only where a row is absent, so hiding another country's rows would turn
+"not yours" into "no country" and fail open. Writing is keyed: a
+transaction declares the countries it writes for (`edify.write_countries`)
+and whether it may change the countries themselves (`edify.platform_write`),
+through `country.WriteFor`; a row of any other country is refused, and a
+transaction that declares nothing writes nothing. The legacy seed declares
+what it writes, so it runs under the policies too. 0003 lets the gateway read
+the migration ledger, as `field_routes` and `school_loans` do.
+
+The schema lint (`internal/ownedschema/lint.go`) was extended for exactly
+this: `ALTER TABLE <own table> ENABLE|FORCE ROW LEVEL SECURITY` and
+`CREATE POLICY` on an own table, for SELECT, INSERT or UPDATE (never
+DELETE or ALL), held by the schema's writer or owner role only, whose
+expressions read no table and call only `current_setting`,
+`string_to_array` and `coalesce`. Switching it off, `NO FORCE`, `ALTER POLICY`,
+a policy on another schema, for another role or for `public` are all refused
+(`internal/ownedschema/lint_test.go`).
+
+**The settings API**: `edify.countries.v1.CountryService`
+(`platform/proto/edify/countries/v1/countries.proto`, served by
+`internal/countryconfig`):
+
+| Call | Who | What |
+|---|---|---|
+| `ListCountries` | Any signed-in reader | An Admin sees every country; anyone else the Active countries their account belongs to (or, with no membership at all, their profile's). Each with the settings in force today |
+| `GetCountryConfig` | Same | Every settings version of a country the reader may see, newest first; a country they may not see answers "not found" |
+| `RecordCountryConfig` | Admin only | A new version for a country that is not Active, from today or later and after every version already recorded; the open version ends that day. Languages, ISO currency, minor units 0–3, an IANA time zone, a known date format, calendars (Gregorian always, Ethiopian beside it), FY month 1–12 and a reason are checked first. Written under row-level security declared for that country alone, with the recorder and the reason on the version |
+
+An Active country's settings (Uganda's) are refused outright: they change
+only through an approved change, which is not built. Nothing reads the
+settings yet, so no existing behaviour can move.
+
+Proof: `internal/countryconfig/validate_test.go` (pilot settings for Kenya
+and Ethiopia accepted, 19 malformed ones refused);
+`internal/integration/country_config_test.go`: as the gateway's own role,
+a write declaring no country is refused, Kenya's settings land only when
+declared for Kenya, Uganda's settings and a school placed in Uganda are
+refused when declared for Kenya, a country is changed only by a platform
+session, and the seed runs; through the API, the Admin sees four countries,
+the Country Director and an officer see Uganda alone, a non-Admin cannot
+record, Uganda cannot be changed, a past date, a date not after the last
+version and a bad zone are refused, and two Kenyan versions follow one
+another with the first ending when the second starts. The whole integration
+suite and every golden unchanged (0 differing); school parity `PARITY OK`.
+
+Still to come in Phase 1: membership management (granting and revoking a
+country to an account, through the same keyed writes) and the Admin pages
+for countries and settings, which follow the Go backend.

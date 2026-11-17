@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package edify.countries.v1;
+
+// Edify Global (docs/migration/80-multi-country-phase-0.md): the countries
+// the platform serves and each one's settings. A country's settings are
+// versioned: a change records a new version from a date, the one before it
+// ends that day, and nothing recorded is ever rewritten.
+//
+// Who sees what: an Admin sees every country; anyone else the Active
+// countries their account belongs to. Only an Admin records settings, and
+// only for a country that is not yet Active: an Active country's settings
+// (Uganda's) change only through an approved change, which is not built.
+service CountryService {
+  // The countries the reader may see, each with the settings in force today.
+  rpc ListCountries(ListCountriesRequest) returns (ListCountriesResponse);
+  // One country's settings: every version recorded, newest first.
+  rpc GetCountryConfig(GetCountryConfigRequest) returns (GetCountryConfigResponse);
+  // Record a new settings version for a country that is not yet Active.
+  rpc RecordCountryConfig(RecordCountryConfigRequest) returns (RecordCountryConfigResponse);
+}
+
+// Country is one registered country.
+message Country {
+  // The registry's internal id.
+  string id = 1;
+  // The stable code: UG, KE, RW or ET.
+  string code = 2;
+  string name = 3;
+  // draft, validated, ready_for_pilot, active, suspended or archived.
+  string state = 4;
+  // YYYY-MM-DD, set once the country is Active.
+  string activated_on = 5;
+  // The settings in force today; unset while none is.
+  CountryConfig config = 6;
+}
+
+// CountryConfig is one version of a country's settings.
+message CountryConfig {
+  int32 version = 1;
+  // A language code (en, sw, rw, am …), one of languages.
+  string default_language = 2;
+  repeated string languages = 3;
+  // ISO 4217, e.g. UGX.
+  string currency_code = 4;
+  // Digits after the decimal point amounts are kept in (0 for UGX).
+  int32 currency_minor_units = 5;
+  // IANA, e.g. Africa/Kampala.
+  string time_zone = 6;
+  // In the platform's existing notation, e.g. "j M Y".
+  string date_format = 7;
+  // gregorian, and ethiopian where it is shown beside it.
+  repeated string calendars = 8;
+  // 1–12: the month a financial year starts.
+  int32 fy_start_month = 9;
+  // YYYY-MM-DD; effective_until is empty while the version has no end.
+  string effective_from = 10;
+  string effective_until = 11;
+  // The account that recorded it, and why.
+  string changed_by = 12;
+  string change_reason = 13;
+  // Empty until an approved-change step exists.
+  string approved_by = 14;
+  // RFC 3339.
+  string created_at = 15;
+}
+
+message ListCountriesRequest {}
+
+message ListCountriesResponse {
+  repeated Country countries = 1;
+}
+
+message GetCountryConfigRequest {
+  string country_code = 1;
+}
+
+message GetCountryConfigResponse {
+  Country country = 1;
+  // Every version recorded, newest first.
+  repeated CountryConfig versions = 2;
+}
+
+message RecordCountryConfigRequest {
+  string country_code = 1;
+  string default_language = 2;
+  repeated string languages = 3;
+  string currency_code = 4;
+  int32 currency_minor_units = 5;
+  string time_zone = 6;
+  string date_format = 7;
+  repeated string calendars = 8;
+  int32 fy_start_month = 9;
+  // YYYY-MM-DD, today or later and after every version already recorded;
+  // today when empty.
+  string effective_from = 10;
+  // Required: what the change is for.
+  string change_reason = 11;
+}
+
+message RecordCountryConfigResponse {
+  Country country = 1;
+  CountryConfig recorded = 2;
+}

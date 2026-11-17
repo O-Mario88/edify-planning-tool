@@ -16,6 +16,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/clusters/v1/clustersv1connect"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/countries/v1/countriesv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/identity/v1/identityv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/loans/v1/loansv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/messaging/v1/messagingv1connect"
@@ -46,6 +47,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/coreschools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/costsettings"
 	countryschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country/schema"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/countryconfig"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/coverage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/cpdlearning"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dashboard"
@@ -307,6 +309,10 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	mux.Handle(screensv1connect.NewPageDrawerServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewExportServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewNotificationCenterServiceHandler(notificationcenter.NewHandler(notificationcenter.NewService(pool, notificationcenter.EmailConfigured(nil)), logger), options...))
+	// Edify Global's countries and their versioned settings
+	// (docs/migration/80 §8), from the Go-owned country_registry.
+	mux.Handle(countriesv1connect.NewCountryServiceHandler(countryconfig.NewService(pool,
+		func(ctx context.Context) error { return countryschema.Spec.Ready(ctx, pool) }, logger), options...))
 	mux.Handle(routesv1connect.NewRoutePlannerServiceHandler(routeplan.NewService(pool,
 		routeplan.RouterFor(cfg.Routing.Provider, cfg.Routing.OSRMURL, cfg.Routing.GoogleKey, cfg.Routing.DailyLimit, time.Now),
 		time.Now, logger).WithVerification(pool, routesSchemaReady(pool)), options...))

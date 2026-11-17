@@ -12,6 +12,7 @@ package country
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -36,6 +37,23 @@ const (
 // Country is one registered country.
 type Country struct {
 	ID, Code, Name, State string
+}
+
+// WriteFor declares, for the rest of tx, which countries it writes rows for
+// (registry ids) and whether it may change the countries and their names
+// themselves. The registry's row-level security
+// (schema/migrations/0002_row_security.sql) refuses any other write, so a
+// transaction that declares nothing writes nothing.
+func WriteFor(ctx context.Context, tx pgx.Tx, platform bool, countryIDs ...string) error {
+	flag := ""
+	if platform {
+		flag = "on"
+	}
+	if _, err := tx.Exec(ctx, `SELECT set_config('edify.write_countries', $1, true), set_config('edify.platform_write', $2, true)`,
+		strings.Join(countryIDs, ","), flag); err != nil {
+		return fmt.Errorf("country: declaring the countries written: %w", err)
+	}
+	return nil
 }
 
 // current is "in force today" for an effective-dated row aliased r.
@@ -63,6 +81,26 @@ ORDER BY m.is_default DESC, c.code`, userID, StateActive)
 		out = append(out, c)
 	}
 	return out, rows.Err()
+}
+
+// Readable are the Active countries an account works in, by code: those it
+// currently belongs to, or, for an account with no membership at all, the
+// country its profile names (profileName, as staff_profile.country holds it).
+func Readable(ctx context.Context, q Querier, userID, profileName string) ([]Country, error) {
+	rows, err := q.Query(ctx, `SELECT c.id::text, c.code, c.name, c.state FROM country_registry.country c
+WHERE c.state = $3 AND (EXISTS (
+    SELECT 1 FROM country_registry.country_membership m
+    WHERE m.country_id = c.id AND m.user_id = $1 AND m.revoked_at IS NULL AND `+current("m")+`)
+  OR (NOT EXISTS (SELECT 1 FROM country_registry.country_membership m WHERE m.user_id = $1)
+    AND EXISTS (SELECT 1 FROM country_registry.country_alias a WHERE a.country_id = c.id AND a.alias = $2)))
+ORDER BY c.code`, userID, profileName, StateActive)
+	if err != nil {
+		return nil, fmt.Errorf("country: reading the account's countries: %w", err)
+	}
+	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (Country, error) {
+		var c Country
+		return c, row.Scan(&c.ID, &c.Code, &c.Name, &c.State)
+	})
 }
 
 // ReaderCountryIDs is the registry id of the country a country-wide reader
