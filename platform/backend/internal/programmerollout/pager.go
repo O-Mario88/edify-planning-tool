@@ -129,3 +129,38 @@ func pageOf(query url.Values, param string, total int) (number, pages, start, en
 	start = (number - 1) * rules.PageSize
 	return number, pages, start, min(start+rules.PageSize, total)
 }
+
+// pageParams are the page's tables' own page keys, which the page reads.
+var pageParams = []string{"course_page", "upcoming_page", "recommendation_page", "cluster_page",
+	"rollout_matrix_rows_page", weakPageParam, "rollout_programmes_page", "rollout_deliverers_page", "biblical_page"}
+
+// paged is one {% paginate %} table and components/table_pager.html after
+// it: the window of rows on the page asked for, and the pager panel when
+// there is more than one page. A pager that would carry more than one
+// other query key hands on (ok false).
+func paged(query url.Values, param string, total int) (start, end int, pager *screensv1.PageBlock, ok bool) {
+	number, pages, start, end := pageOf(query, param, total)
+	if pages <= 1 {
+		return start, end, nil, true
+	}
+	carried, ok := carriedQuery(query, param)
+	if !ok {
+		return 0, 0, nil, false
+	}
+	return start, end, panelPager(number, pages, total, end-start, carried, param), true
+}
+
+// withPager is a table's blocks: the table, then its pager when it has one.
+func withPager(t *screensv1.PageTable, pager *screensv1.PageBlock) []*screensv1.PageBlock {
+	blocks := []*screensv1.PageBlock{table(t)}
+	if pager != nil {
+		blocks = append(blocks, pager)
+	}
+	return blocks
+}
+
+// firstOfficers is `officers|slice:":60"`: the officers' tables show the
+// first rows only, with no pager.
+func firstOfficers(people []*member) []*member {
+	return people[:min(len(people), rules.OfficerRows)]
+}

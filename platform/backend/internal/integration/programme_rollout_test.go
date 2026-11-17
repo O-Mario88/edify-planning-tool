@@ -15,7 +15,7 @@ import (
 
 // programmeRolloutTables is what the golden files, parents first, each with
 // the column its rows are found by.
-var programmeRolloutTables = [][2]string{{"user", "id"}, {"staff_profile", "id"}, {"activity", "id"}, {"cluster_activity_attendance", "activity_id"},
+var programmeRolloutTables = [][2]string{{"user", "id"}, {"staff_profile", "id"}, {"activity_catalogue_item", "id"}, {"activity", "id"}, {"cluster_activity_attendance", "activity_id"},
 	{"ssa_record", "id"}, {"ssa_score", "ssa_record_id"}, {"partner_assignment", "id"}, {"staff_school_assignment", "id"},
 	{"cce_regional_engagement", "id"}, {"partner_engagement", "id"}}
 

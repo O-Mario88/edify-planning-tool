@@ -68,7 +68,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	}
 	chooser := slices.Contains(rules.LeadChoosers, p.ActiveRole)
 	for key := range query {
-		if key != "view" && key != "fy" && key != weakPageParam && (key != "lead" || !chooser) {
+		if key != "view" && key != "fy" && !slices.Contains(pageParams, key) && (key != "lead" || !chooser) {
 			return nil, false, nil
 		}
 	}
@@ -111,13 +111,13 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	served := true
 	switch view {
 	case "ssa":
-		blocks, served, err = s.selfAssessments(ctx, sc, fy)
+		blocks, served, err = s.selfAssessments(ctx, sc, fy, query)
 	case "spiritual":
 		blocks, served, err = s.spiritual(ctx, sc, fy, query)
 	default:
 		t := now.In(nairobi)
 		today := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
-		blocks, served, err = s.trainings(ctx, sc, fy, today)
+		blocks, served, err = s.trainings(ctx, sc, fy, today, query)
 	}
 	if err != nil || !served {
 		return nil, served, err
@@ -240,7 +240,7 @@ func day(t time.Time, layout string) string {
 
 // trainings is the Trainings view's blocks (trainings_rollout and
 // partials/programme_rollout/trainings.html).
-func (s *Service) trainings(ctx context.Context, sc *scope, fy string, today time.Time) ([]*screensv1.PageBlock, bool, error) {
+func (s *Service) trainings(ctx context.Context, sc *scope, fy string, today time.Time, query url.Values) ([]*screensv1.PageBlock, bool, error) {
 	rows, err := sc.trainingRows(ctx, s.db, fy)
 	if err != nil {
 		return nil, true, err
@@ -352,12 +352,13 @@ func (s *Service) trainings(ctx context.Context, sc *scope, fy string, today tim
 		courseRows = append(courseRows, courseRow{fold: folded(byCourse[""], reached), observed: foldObservations(observedByCourse[""]),
 			name: "Training with no course named", category: "—", abbr: "—"})
 	}
-	if len(courseRows) > rules.PageSize {
+	start, end, coursePager, ok := paged(query, "course_page", len(courseRows))
+	if !ok {
 		return nil, false, nil
 	}
 	ct := &screensv1.PageTable{Columns: columns("Course", "Category", "Intervention", "Planned", "Delivered", "Schools reached",
 		"Teachers and leaders", "Staff · partner", "Regional Lead rating", "Open recommendations")}
-	for _, c := range courseRows {
+	for _, c := range courseRows[start:end] {
 		ct.Rows = append(ct.Rows, &screensv1.PageRow{Cells: []*screensv1.PageCell{cell(c.name), cell(c.category), cell(c.abbr),
 			num(c.planned), num(c.delivered), num(c.schoolsReached), num(c.teachers + c.leaders),
 			cell(fmt.Sprintf("%d · %d", c.byStaff, c.byPartner)), cell(courseRating(c.observed)), cell(strconv.Itoa(c.observed.open))}})
@@ -365,7 +366,7 @@ func (s *Service) trainings(ctx context.Context, sc *scope, fy string, today tim
 	if len(courseRows) == 0 {
 		empty(ct, "No training course is active in the catalogue.", "Courses appear here once the Training Catalogue holds them, with zeros until the team plans one.")
 	}
-	blocks = append(blocks, titled("Trainings by course"), table(ct))
+	blocks = append(append(blocks, titled("Trainings by course")), withPager(ct, coursePager)...)
 
 	// By officer.
 	byOwner := map[string][]training{}
@@ -379,12 +380,9 @@ func (s *Service) trainings(ctx context.Context, sc *scope, fy string, today tim
 		attributed[k] = true
 	}
 	people := sc.rows(attributed)
-	if len(people) > rules.OfficerRows {
-		return nil, false, nil
-	}
 	ot := &screensv1.PageTable{Columns: columns("Officer", "Planned", "Delivered", "Held, in review", "Schools trained",
 		"Teachers and leaders", "Staff · partner", "Next training", "")}
-	for _, m := range people {
+	for _, m := range firstOfficers(people) {
 		f := folded(byOwner[m.staffID], reached)
 		here := 0
 		for id := range m.schools {
@@ -432,11 +430,12 @@ func (s *Service) trainings(ctx context.Context, sc *scope, fy string, today tim
 			Text: "Schools trained counts a verified training at the school or a confirmed attendance at a verified cluster training, the rule every page uses. Oversight opens the officer's plan in Team Oversight, read-only."}}}}}})
 
 	// The next days.
-	if len(soon) > rules.PageSize {
+	start, end, upcomingPager, ok := paged(query, "upcoming_page", len(soon))
+	if !ok {
 		return nil, false, nil
 	}
 	ut := &screensv1.PageTable{Columns: columns("Date", "Training", "School ID", "School or cluster", "Delivered by", "Intervention", "State", "")}
-	for _, r := range soon {
+	for _, r := range soon[start:end] {
 		when := ""
 		if r.planned != nil {
 			when = day(*r.planned, " Jan")
@@ -471,20 +470,16 @@ func (s *Service) trainings(ctx context.Context, sc *scope, fy string, today tim
 	if len(soon) == 0 {
 		empty(ut, "No team training is scheduled in the next 30 days.", "Officers schedule trainings from Planning; partner trainings appear once the partner sets a date.")
 	}
-	blocks = append(blocks, titled(fmt.Sprintf("Trainings in the next %d days", rules.UpcomingDays)), table(ut))
+	blocks = append(append(blocks, titled(fmt.Sprintf("Trainings in the next %d days", rules.UpcomingDays))), withPager(ut, upcomingPager)...)
 
 	// The Regional Lead's observations.
-	byDeliverer, ok := observationsByDeliverer(obs, names, sc)
-	recommended, okRecs, err := s.recommendations(ctx, sc, obs, byID, names)
-	if err != nil {
-		return nil, true, err
+	recommended, ok, err := s.recommendations(ctx, sc, obs, byID, names, query)
+	if err != nil || !ok {
+		return nil, err != nil, err
 	}
-	if !ok || !okRecs {
-		return nil, false, nil
-	}
-	blocks = append(blocks, titled("Regional Lead observations"), table(byDeliverer),
-		titled("Strengthen or replace recommendations"), table(recommended))
-	return blocks, true, nil
+	blocks = append(blocks, titled("Regional Lead observations"), table(observationsByDeliverer(obs, names, sc)),
+		titled("Strengthen or replace recommendations"))
+	return append(blocks, recommended...), true, nil
 }
 
 // trainingName is _training_name: the course, else the activity's own name,

@@ -37,14 +37,13 @@ func TestThePageDecidesItsDoorsBeforeReading(t *testing.T) {
 		query string
 	}{
 		{auth.Principal{ActiveRole: "Admin", InActingAppointment: true}, ""},
-		{auth.Principal{ActiveRole: "ImpactAssessment"}, "lead=sp9&course_page=2"},
+		{auth.Principal{ActiveRole: "ImpactAssessment"}, "lead=sp9&member=sp2"},
 		{auth.Principal{ActiveRole: "Admin"}, "view=ssa&member=sp2"},
 		{auth.Principal{ActiveRole: "Program Lead", StaffProfileID: "sp1", InActingAppointment: true}, ""},
 		{auth.Principal{ActiveRole: "Program Lead"}, ""},
-		{lead, "view=ssa&cluster_page=2"},
-		{lead, "view=ssa&rollout_matrix_rows_page=2"},
-		{lead, "view=spiritual&biblical_page=2"},
-		{lead, "course_page=2"},
+		{lead, "view=ssa&member=sp2"},
+		{lead, "view=spiritual&kind=ssa_not_planned"},
+		{lead, "page=2"},
 		{lead, "lead=sp9"},
 	} {
 		query, _ := url.ParseQuery(c.query)

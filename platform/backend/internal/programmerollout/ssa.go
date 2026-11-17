@@ -3,6 +3,7 @@ package programmerollout
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"slices"
 	"sort"
 	"strconv"
@@ -371,9 +372,9 @@ type clusterRow struct {
 }
 
 // selfAssessments is the Self-Assessments view's blocks (ssa_rollout, the
-// view's tiles and partials/programme_rollout/ssa.html). A table running
-// past a page hands on.
-func (s *Service) selfAssessments(ctx context.Context, sc *scope, fy string) ([]*screensv1.PageBlock, bool, error) {
+// view's tiles and partials/programme_rollout/ssa.html), its tables a page
+// at a time.
+func (s *Service) selfAssessments(ctx context.Context, sc *scope, fy string, query url.Values) ([]*screensv1.PageBlock, bool, error) {
 	states, err := s.ssaStates(ctx, sc, fy)
 	if err != nil {
 		return nil, true, err
@@ -415,12 +416,9 @@ func (s *Service) selfAssessments(ctx context.Context, sc *scope, fy string) ([]
 
 	// By officer.
 	people := sc.rows(nil)
-	if len(people) > rules.OfficerRows {
-		return nil, false, nil
-	}
 	ot := &screensv1.PageTable{Columns: columns("Officer", "Portfolio schools", "Confirmed SSA", "Awaiting PL verification",
 		"Scheduled or with a partner", "Not yet planned", "")}
-	for _, m := range people {
+	for _, m := range firstOfficers(people) {
 		c := countStates(m.schools, states)
 		name := &screensv1.PageCell{Text: memberName(m)}
 		owner := m.staffID
@@ -477,9 +475,6 @@ func (s *Service) selfAssessments(ctx context.Context, sc *scope, fy string) ([]
 		}
 		byCluster[key][id] = true
 	}
-	if len(byCluster) > rules.PageSize {
-		return nil, false, nil
-	}
 	names, err := s.clusterNames(ctx, sc.clusterIDs())
 	if err != nil {
 		return nil, true, err
@@ -529,9 +524,13 @@ func (s *Service) selfAssessments(ctx context.Context, sc *scope, fy string) ([]
 		}
 		return a.name < b.name
 	})
+	start, end, clusterPager, ok := paged(query, "cluster_page", len(clusterRows))
+	if !ok {
+		return nil, false, nil
+	}
 	ct := &screensv1.PageTable{Columns: columns("Cluster", "Officers", "Schools", "Confirmed SSA", "Awaiting PL verification",
 		"Scheduled or with a partner", "Not yet planned", "")}
-	for _, r := range clusterRows {
+	for _, r := range clusterRows[start:end] {
 		officers := r.officers
 		if officers == "" {
 			officers = "—"
@@ -547,14 +546,15 @@ func (s *Service) selfAssessments(ctx context.Context, sc *scope, fy string) ([]
 	if len(clusterRows) == 0 {
 		empty(ct, "No portfolio school is in a cluster yet.", "")
 	}
-	blocks = append(blocks, titled("SSA rollout by cluster"), table(ct))
+	blocks = append(append(blocks, titled("SSA rollout by cluster")), withPager(ct, clusterPager)...)
 
 	// The cluster × intervention heatmap.
 	heat, err := s.matrix(ctx, sc, fy)
 	if err != nil {
 		return nil, true, err
 	}
-	if len(heat) > rules.PageSize {
+	start, end, heatPager, ok := paged(query, "rollout_matrix_rows_page", len(heat))
+	if !ok {
 		return nil, false, nil
 	}
 	labels := []string{"Cluster"}
@@ -565,7 +565,7 @@ func (s *Service) selfAssessments(ctx context.Context, sc *scope, fy string) ([]
 		}
 	}
 	ht := &screensv1.PageTable{Columns: columns(append(labels, "Overall")...)}
-	for _, r := range heat {
+	for _, r := range heat[start:end] {
 		cells := []*screensv1.PageCell{cell(r.name)}
 		for _, v := range r.cells {
 			cells = append(cells, scoreCell(v))
@@ -575,7 +575,7 @@ func (s *Service) selfAssessments(ctx context.Context, sc *scope, fy string) ([]
 	if len(heat) == 0 {
 		empty(ht, "No confirmed SSA in your clusters yet.", "The heatmap fills in as Impact Assessment confirms the team's assessments.")
 	}
-	blocks = append(blocks, titled("SSA intervention heatmap"), table(ht))
+	blocks = append(append(blocks, titled("SSA intervention heatmap")), withPager(ht, heatPager)...)
 	return blocks, true, nil
 }
 

@@ -45,41 +45,43 @@ type deliverer struct {
 }
 
 // spiritual is the Spiritual Formation view's blocks (spiritual_rollout, the
-// view's tiles and partials/programme_rollout/spiritual.html). A plan control
-// on the lead's own weak school, a table running past a page other than the
-// weak schools', and a weak-schools pager carrying more than one key hand on;
-// any Regional Lead observation of the year is handed on before this.
+// view's tiles and partials/programme_rollout/spiritual.html), each long
+// table a page at a time. A pager carrying more than one other query key
+// hands on.
 func (s *Service) spiritual(ctx context.Context, sc *scope, fy string, query url.Values) ([]*screensv1.PageBlock, bool, error) {
 	f, served, err := s.spiritualFacts(ctx, sc, fy)
 	if err != nil || !served {
 		return nil, served, err
 	}
 	people := sc.rows(nil)
-	if len(people) > rules.OfficerRows || len(f.programmes) > rules.PageSize || len(f.deliverers) > rules.PageSize ||
-		len(f.observations) > rules.PageSize {
+	weakStart, weakEnd, weakPager, ok := paged(query, weakPageParam, len(f.weak))
+	if !ok {
 		return nil, false, nil
 	}
-	number, pages, start, end := pageOf(query, weakPageParam, len(f.weak))
-	var pager *screensv1.PageBlock
-	if pages > 1 {
-		carried, ok := carriedQuery(query, weakPageParam)
-		if !ok {
-			return nil, false, nil
-		}
-		pager = panelPager(number, pages, len(f.weak), end-start, carried, weakPageParam)
+	programmeStart, programmeEnd, programmePager, ok := paged(query, "rollout_programmes_page", len(f.programmes))
+	if !ok {
+		return nil, false, nil
+	}
+	delivererStart, delivererEnd, delivererPager, ok := paged(query, "rollout_deliverers_page", len(f.deliverers))
+	if !ok {
+		return nil, false, nil
+	}
+	biblicalStart, biblicalEnd, biblicalPager, ok := paged(query, "biblical_page", len(f.observations))
+	if !ok {
+		return nil, false, nil
 	}
 	blocks := []*screensv1.PageBlock{strip("Rollout at a glance", spiritualTiles(f)),
-		titled("Christlike Behaviour and the Word of God"), pairFigures(f), table(officerPairTable(f, people, fy))}
-	blocks = append(blocks, titled("Schools weakest in "+pairText(" or ")), table(weakTable(f.weak[start:end], len(f.weak) == 0)))
-	if pager != nil {
-		blocks = append(blocks, pager)
-	}
+		titled("Christlike Behaviour and the Word of God"), pairFigures(f), table(officerPairTable(f, firstOfficers(people), fy)),
+		titled("Schools weakest in " + pairText(" or "))}
+	blocks = append(blocks, withPager(weakTable(f.weak[weakStart:weakEnd], len(f.weak) == 0), weakPager)...)
 	blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{Items: []*screensv1.PagePanelItem{
-		panelText("A response is any activity this year at the school, or at its cluster, whose focus or secondary interventions include the weak area. Plan is offered on your own schools only; an officer plans their own.", "")}}}})
-	blocks = append(blocks, titled("Spiritual programmes"), table(programmeTable(f.programmes)),
-		titled("Delivered by officers and partners"), table(delivererTable(f.deliverers)),
-		titled("Biblical integration ratings"), table(biblicalTable(f, sc)))
-	return blocks, true, nil
+		panelText("A response is any activity this year at the school, or at its cluster, whose focus or secondary interventions include the weak area. Plan is offered on your own schools only; an officer plans their own.", "")}}}},
+		titled("Spiritual programmes"))
+	blocks = append(blocks, withPager(programmeTable(f.programmes[programmeStart:programmeEnd]), programmePager)...)
+	blocks = append(blocks, titled("Delivered by officers and partners"))
+	blocks = append(blocks, withPager(delivererTable(f.deliverers[delivererStart:delivererEnd]), delivererPager)...)
+	blocks = append(blocks, titled("Biblical integration ratings"))
+	return append(blocks, withPager(biblicalTable(f, sc, f.observations[biblicalStart:biblicalEnd]), biblicalPager)...), true, nil
 }
 
 // pairText is the pair's abbreviations joined: "CB or WOG".
@@ -158,9 +160,9 @@ func (f *spiritualFacts) spiritualObservations() []observation {
 
 // biblicalTable is "Biblical integration ratings": every shared observation
 // of the year, latest first, with its Biblical integration rating.
-func biblicalTable(f *spiritualFacts, sc *scope) *screensv1.PageTable {
+func biblicalTable(f *spiritualFacts, sc *scope, rows []observation) *screensv1.PageTable {
 	t := &screensv1.PageTable{Columns: columns("Training", "Delivered by", "Observed", "Biblical integration", "Recommendation", "State")}
-	for _, o := range f.observations {
+	for _, o := range rows {
 		activity := training{}
 		if o.activity != nil {
 			activity = *o.activity

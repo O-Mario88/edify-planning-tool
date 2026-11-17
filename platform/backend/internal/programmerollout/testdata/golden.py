@@ -42,6 +42,7 @@ TODAY = dj_timezone.localdate()
 TABLES = (
     ("user", "id"),
     ("staff_profile", "id"),
+    ("activity_catalogue_item", "id"),
     ("activity", "id"),
     ("cluster_activity_attendance", "activity_id"),
     ("ssa_record", "id"),
@@ -222,6 +223,42 @@ def file_rows():
         file_ssa(cursor, work, on, officer, partner, stamp)
         file_spiritual(cursor, work, on, officer, partner, stamp)
         file_observations(cursor, on, partner, stamp)
+        file_pages(cursor, work, on, stamp)
+
+
+def file_pages(cursor, work, on, stamp):
+    """Enough for the long tables to run past a page: 50 more Christian
+    Transformation courses, each with a training planned months ahead (the
+    course and the programme tables), and 55 trainings in the next days
+    (the upcoming table)."""
+    for i in range(1, 51):
+        course = f"gprc{i:02d}"
+        cursor.execute(
+            'INSERT INTO "activity_catalogue_item" SELECT (json_populate_record(NULL::"activity_catalogue_item", '
+            "(row_to_json(t)::jsonb || %s::jsonb)::json)).* FROM activity_catalogue_item t WHERE id = %s",
+            [
+                json.dumps(
+                    {
+                        "id": course,
+                        "stable_code": f"GPR_FAITH_{i:02d}",
+                        "display_name": f"Faith Formation {i:02d}",
+                        "standard_support": False,
+                        "created_at": stamp,
+                        "updated_at": stamp,
+                    }
+                ),
+                CHRISTIAN_COURSE,
+            ],
+        )
+        work(
+            activity_type="training",
+            status="planned",
+            planned_date=on(45 + i),
+            training_course_id=course,
+            focus_intervention="exposure_to_word_of_god",
+        )
+    for i in range(55):
+        work(activity_type="training", status="scheduled", planned_date=on(1 + i % 25))
 
 
 def file_ssa(cursor, work, on, officer, partner, stamp):
@@ -542,7 +579,7 @@ def file_observations(cursor, on, partner, stamp):
         n += 1
         row = {
             "id": f"gpro{n:02d}",
-            "created_at": f"2026-11-01T08:{n:02d}:00+00:00",
+            "created_at": f"2026-11-01T08:{n // 60:02d}:{n % 60:02d}+00:00",
             "updated_at": stamp,
             "author_id": author,
             "kind": "training_observation",
@@ -607,6 +644,17 @@ def file_observations(cursor, on, partner, stamp):
         program_lead_ids=["cmw9p7b6a00e4s8ekhefr"],
     )
     observe(-300, course, "strengthen", (3, 3, 3, 3, 3), fy="2026")
+    # Enough asked-for changes for the recommendations and the Biblical
+    # integration tables to run past a page.
+    for i in range(52):
+        observe(
+            -30 - i % 20,
+            None,
+            ("strengthen", "replace")[i % 2],
+            (1 + i % 4, None, None, None, None),
+            subject=f"Workshop {i:02d}",
+            acknowledged_at=stamp if i % 3 == 0 else None,
+        )
 
     for index, (source, held, author_id) in enumerate(
         (
@@ -661,9 +709,9 @@ try:
         ("pl1@edify.org", {"view": "ssa", "fy": "2025"}),
         ("pl1@edify.org", {"view": "spiritual"}),
         ("pl1@edify.org", {"view": " Spiritual "}),
-        ("pl1@edify.org", {"view": "spiritual", "weak_page": "2"}),
-        ("pl1@edify.org", {"view": "spiritual", "weak_page": "99"}),
-        ("pl1@edify.org", {"view": "spiritual", "weak_page": "x"}),
+        ("pl1@edify.org", {"recommendation_page": "99"}),
+        ("pl1@edify.org", {"upcoming_page": "x"}),
+        ("pl1@edify.org", {"course_page": "0"}),
         ("pl2@edify.org", {"view": "spiritual"}),
         ("pl2@edify.org", {"view": "spiritual", "fy": "2026"}),
         ("pl2@edify.org", {"view": "spiritual", "fy": "2025"}),
@@ -673,6 +721,9 @@ try:
         (SOLO, {}),
         (SOLO, {"view": "ssa"}),
         (SOLO, {"view": "spiritual"}),
+        ("pl1@edify.org", {"course_page": "2"}),
+        ("pl1@edify.org", {"upcoming_page": "2"}),
+        ("pl1@edify.org", {"recommendation_page": "2"}),
         ("admin@edify.org", {}),
         ("admin@edify.org", {"view": "ssa"}),
         ("admin@edify.org", {"view": "spiritual"}),
