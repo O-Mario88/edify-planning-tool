@@ -265,6 +265,11 @@ type weakRow struct {
 	id, code, name, officer, cluster, weak, responses, state string
 	lowest                                                   float64
 	hasGap                                                   bool
+	// firstMissing is the first weak area with nothing planned, which the
+	// lead's own school's Plan control opens on.
+	firstMissing string
+	// planURL is that control's drawer, on the lead's own schools only.
+	planURL string
 }
 
 // officerScores is each member's flat average of the pair per cycle.

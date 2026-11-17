@@ -98,10 +98,6 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if err != nil {
 		return nil, true, err
 	}
-	if !chooser && len(sc.officers) == 0 {
-		// The lead is warned that nobody is assigned to them yet.
-		return nil, false, nil
-	}
 	carried := url.Values{"fy": {fy}}
 	if chooser {
 		sc.support = true
@@ -152,8 +148,10 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 			choose.Options = append(choose.Options, &screensv1.PageFilterOption{Value: o[0], Label: o[1]})
 		}
 		filters = []*screensv1.PageFilter{choose, year}
+	}
+	if notice := noticeText(sc); notice != "" {
 		page = append(page, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{Items: []*screensv1.PagePanelItem{
-			panelText("You are reading "+sc.leadName+"'s team as they see it. Choose another Programme Lead in the filters.", "")}}}})
+			panelText(notice, "")}}}})
 	}
 	page = append([]*screensv1.PageBlock{{Kind: &screensv1.PageBlock_Filters{Filters: &screensv1.PageFilters{Filters: filters, Hidden: map[string]string{"view": view}}}}},
 		append(page, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Segments{Segments: segments}})...)
@@ -584,4 +582,16 @@ func memberName(m *member) string {
 		return "Your own portfolio"
 	}
 	return m.name
+}
+
+// noticeText is _notice: an administrator is told whose team they read; a
+// lead nobody reports to yet that the page shows their own portfolio only.
+func noticeText(sc *scope) string {
+	switch {
+	case sc.support:
+		return "You are reading " + sc.leadName + "'s team as they see it. Choose another Programme Lead in the filters."
+	case len(sc.officers) == 0:
+		return "No officers are assigned to you yet, so this page shows your own portfolio only. HR records who you supervise on the staff profile."
+	}
+	return ""
 }

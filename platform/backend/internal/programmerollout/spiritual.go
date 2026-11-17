@@ -204,7 +204,9 @@ func (s *Service) weakRows(ctx context.Context, sc *scope, fy string, portfolio 
 	for id, items := range weak {
 		row := weakSchool(sc, id, items, answered, clusterNames)
 		if row.hasGap && own[id] {
-			return nil, false, nil
+			// The lead plans their own portfolio only; a supervised school is
+			// the officer's to plan.
+			row.planURL = "/planning/schedule-modal?school_id=" + id + "&focus_intervention=" + row.firstMissing
 		}
 		rows = append(rows, row)
 	}
@@ -236,6 +238,9 @@ func weakSchool(sc *scope, id string, items []weakItem, answered map[[2]string][
 		parts = append(parts, abbr(w.code)+" "+strconv.FormatFloat(schooldirectory.PyRound1(w.score), 'f', 1, 64))
 		found := answered[[2]string{id, w.code}]
 		if len(found) == 0 {
+			if missing == 0 {
+				row.firstMissing = w.code
+			}
 			missing++
 			continue
 		}
@@ -513,9 +518,16 @@ func weakTable(rows []weakRow, none bool) *screensv1.PageTable {
 		if ref := strings.TrimSpace(r.code); ref != "" && r.name != "" {
 			name.Href = "/schools/" + url.PathEscape(ref)
 		}
+		actions := []*screensv1.PageAction{{Key: "button", Label: "School", Primary: true, Enabled: true, Href: "/schools/" + r.id}}
+		if r.planURL != "" {
+			// School and Plan are one Actions menu (owner, 2026-09-26).
+			actions = []*screensv1.PageAction{
+				{Key: "menu", Label: "School", Enabled: true, Href: "/schools/" + r.id},
+				{Key: "menu", Label: "Plan", Enabled: true, Href: r.planURL, Drawer: true},
+			}
+		}
 		t.Rows = append(t.Rows, &screensv1.PageRow{Cells: []*screensv1.PageCell{cell(orDash(r.code)), name, cell(orDash(r.officer)),
-			cell(orElse(r.cluster, "Not in a cluster")), cell(r.weak), cell(r.responses), cell(r.state),
-			{Actions: []*screensv1.PageAction{{Key: "button", Label: "School", Primary: true, Enabled: true, Href: "/schools/" + r.id}}}}})
+			cell(orElse(r.cluster, "Not in a cluster")), cell(r.weak), cell(r.responses), cell(r.state), {Actions: actions}}})
 	}
 	if none {
 		empty(t, "No portfolio school has the spiritual pair among its three weakest interventions.", "Schools appear here from their latest confirmed SSA.")

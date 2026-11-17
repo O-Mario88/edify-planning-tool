@@ -40,6 +40,8 @@ PL3 = "cmw9p7bf200eymgekhexn"
 NOW = dj_timezone.now()
 TODAY = dj_timezone.localdate()
 TABLES = (
+    ("user", "id"),
+    ("staff_profile", "id"),
     ("activity", "id"),
     ("cluster_activity_attendance", "activity_id"),
     ("ssa_record", "id"),
@@ -54,7 +56,7 @@ TABLES = (
 def clear():
     with connection.cursor() as cursor:
         for table, column in reversed(TABLES):
-            cursor.execute(f"DELETE FROM {table} WHERE {column} LIKE 'gpr%%'")
+            cursor.execute(f"DELETE FROM \"{table}\" WHERE {column} LIKE 'gpr%%'")
 
 
 def one(cursor, sql, args=()):
@@ -63,8 +65,32 @@ def one(cursor, sql, args=()):
     return row[0] if row else None
 
 
+#: A Programme Lead nobody reports to yet, filed as a copy of the first
+#: lead's account (and so signed in with the same password).
+SOLO = "solo-lead@edify.test"
+
+
+def file_solo_lead(cursor):
+    cursor.execute(
+        'INSERT INTO "user" SELECT (json_populate_record(NULL::"user", '
+        "(row_to_json(t)::jsonb || %s::jsonb)::json)).* FROM \"user\" t WHERE email = 'pl1@edify.org'",
+        [json.dumps({"id": "gprlead01", "email": SOLO, "name": "Solo Lead"})],
+    )
+    cursor.execute(
+        'INSERT INTO "staff_profile" SELECT (json_populate_record(NULL::"staff_profile", '
+        "(row_to_json(t)::jsonb || %s::jsonb)::json)).* FROM staff_profile t WHERE id = %s",
+        [
+            json.dumps(
+                {"id": "gprsp01", "user_id": "gprlead01", "staff_number": "GPR-SOLO"}
+            ),
+            PL1,
+        ],
+    )
+
+
 def file_rows():
     with connection.cursor() as cursor:
+        file_solo_lead(cursor)
         officer = one(
             cursor,
             'SELECT sp.id FROM staff_profile sp JOIN "user" u ON u.id = sp.user_id '
@@ -394,7 +420,7 @@ def file_spiritual(cursor, work, on, officer, partner, stamp):
         "GROUP BY r.school_id ORDER BY r.school_id",
         [officer],
     )
-    both = alone = strong = None
+    both = alone = strong = own_weak = None
     for school_id, order in cursor.fetchall():
         weakest = order.split(",")[:3]
         pair = {"christlike_behaviour", "exposure_to_word_of_god"} & set(weakest)
@@ -404,10 +430,18 @@ def file_spiritual(cursor, work, on, officer, partner, stamp):
             alone = school_id
         elif not pair and strong is None:
             strong = school_id
+        elif pair and own_weak is None:
+            # The lead's own weak school with nothing planned: a Plan control.
+            own_weak = school_id
     lead = User.objects.get(email="pl2@edify.org")
     colleague = sorted(team_members(lead), key=lambda p: p.id)[0].id
     for index, (school_id, staff_id) in enumerate(
-        ((both, colleague), (alone, colleague), (strong, lead.staff_profile.id)),
+        (
+            (both, colleague),
+            (alone, colleague),
+            (strong, lead.staff_profile.id),
+            (own_weak, lead.staff_profile.id),
+        ),
         start=1,
     ):
         cursor.execute(
@@ -605,7 +639,7 @@ def dump_rows():
     with connection.cursor() as cursor:
         for table, column in TABLES:
             cursor.execute(
-                f"SELECT row_to_json(t)::text FROM {table} t WHERE {column} LIKE 'gpr%%' ORDER BY ctid"
+                f"SELECT row_to_json(t)::text FROM \"{table}\" t WHERE {column} LIKE 'gpr%%' ORDER BY ctid"
             )
             out[table] = [json.loads(r[0]) for r in cursor.fetchall()]
     return out
@@ -636,6 +670,9 @@ try:
         ("pl2@edify.org", {"view": "spiritual", "fy": "2027", "weak_page": "3"}),
         ("pl2@edify.org", {}),
         ("pl2@edify.org", {"view": "ssa"}),
+        (SOLO, {}),
+        (SOLO, {"view": "ssa"}),
+        (SOLO, {"view": "spiritual"}),
         ("admin@edify.org", {}),
         ("admin@edify.org", {"view": "ssa"}),
         ("admin@edify.org", {"view": "spiritual"}),

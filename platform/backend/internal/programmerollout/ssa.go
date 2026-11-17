@@ -558,8 +558,11 @@ func (s *Service) selfAssessments(ctx context.Context, sc *scope, fy string) ([]
 		return nil, false, nil
 	}
 	labels := []string{"Cluster"}
+	// A team with no schools has no matrix at all, so no intervention heads.
 	for _, col := range rules.SSA.MatrixInterventions {
-		labels = append(labels, col[2])
+		if len(sc.schools) > 0 {
+			labels = append(labels, col[2])
+		}
 	}
 	ht := &screensv1.PageTable{Columns: columns(append(labels, "Overall")...)}
 	for _, r := range heat {
