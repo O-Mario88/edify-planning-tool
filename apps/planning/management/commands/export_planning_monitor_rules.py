@@ -33,6 +33,7 @@ def _page() -> dict:
     from apps.core.rbac import EdifyRole
     from apps.core.scoping import COUNTRY_ROLES
     from apps.frontend.views import dashboard_embed, oversight_views
+    from apps.planning.oversight_service import resolve_oversight_scope
     from apps.schools.management.commands.export_school_directory_rules import (
         _role_user,
     )
@@ -47,6 +48,14 @@ def _page() -> dict:
             and can_open_url(_role_user(role.value), "/planning-monitor/")
         ),
         "country_roles": sorted(COUNTRY_ROLES),
+        # The roles whose oversight lens is the whole country
+        # (resolve_oversight_scope): a country reader's page, called the
+        # country's only for COUNTRY_ROLES (is_country_reader).
+        "country_lens_roles": sorted(
+            role.value
+            for role in EdifyRole
+            if resolve_oversight_scope(_role_user(role.value)).is_country
+        ),
         "dashboard_role": dashboard_embed.PROGRAM_LEAD,
         "oversight_roles": sorted(oversight_views.MONITORS_ON_OVERSIGHT_ROLES),
         # Where a reader who keeps the monitors as Planning Oversight tabs is

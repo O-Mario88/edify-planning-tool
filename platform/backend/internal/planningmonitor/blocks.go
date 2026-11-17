@@ -153,7 +153,7 @@ func Blocks(m *Monitor, ledger map[string]any) []*screensv1.PageBlock {
 // CountryBlocks is the country reader's page (pages/oversight/
 // planning_monitor.html): the tabs, the country's strip, the year, lead and
 // gap filters, then the same tables.
-func CountryBlocks(m *Monitor, ledger map[string]any, years []string) []*screensv1.PageBlock {
+func CountryBlocks(m *Monitor, ledger map[string]any, years []string, countryReader bool) []*screensv1.PageBlock {
 	v := view{m: m, fy: m.FY, total: m.Readiness(), ledger: ledger, monitor: monitorPath + "?view=monitor&fy=" + m.FY, byLead: true}
 	filters := v.filters()
 	f := filters.GetFilters()
@@ -164,7 +164,9 @@ func CountryBlocks(m *Monitor, ledger map[string]any, years []string) []*screens
 	f.Filters = append([]*screensv1.PageFilter{year}, f.Filters...)
 	f.Hidden = map[string]string{"view": "monitor"}
 	strip := v.strip()
-	strip.GetStrip().Title = "Country planning monitor"
+	if countryReader {
+		strip.GetStrip().Title = "Country planning monitor"
+	}
 	blocks := []*screensv1.PageBlock{
 		{Kind: &screensv1.PageBlock_LinkTabs{LinkTabs: &screensv1.PageLinkTabs{Tabs: []*screensv1.PageLinkTab{
 			{Label: "Planning", Href: monitorPath + "?view=planning", Active: true},

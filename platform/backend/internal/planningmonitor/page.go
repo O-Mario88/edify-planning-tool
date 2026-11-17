@@ -3,6 +3,7 @@ package planningmonitor
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/url"
 	"slices"
 	"strings"
@@ -69,7 +70,7 @@ func (pg *Page) Build(ctx context.Context, p auth.Principal, path string, query 
 	if slices.Contains(page.OversightRoles, p.ActiveRole) {
 		return toOversight(query)
 	}
-	if !slices.Contains(page.CountryRoles, p.ActiveRole) {
+	if !slices.Contains(page.CountryLensRoles, p.ActiveRole) {
 		return nil, false, nil
 	}
 	for key, values := range query {
@@ -79,6 +80,17 @@ func (pg *Page) Build(ctx context.Context, p auth.Principal, path string, query 
 		case key == "view" && (v == "" || strings.ToLower(v) == "planning" || strings.ToLower(v) == "monitor"):
 		case v == "":
 		default:
+			return nil, false, nil
+		}
+	}
+	countryReader := slices.Contains(page.CountryRoles, p.ActiveRole)
+	if !countryReader {
+		// A superuser is a country reader whatever their role.
+		var superuser bool
+		if err := pg.db.QueryRow(ctx, `SELECT COALESCE(is_superuser, FALSE) FROM "user" WHERE id = $1`, p.UserID).Scan(&superuser); err != nil {
+			return nil, true, fmt.Errorf("planningmonitor: reading the reader: %w", err)
+		}
+		if superuser {
 			return nil, false, nil
 		}
 	}
@@ -112,7 +124,7 @@ func (pg *Page) Build(ctx context.Context, p auth.Principal, path string, query 
 	header := &screensv1.PageHeader{Title: "Planning Monitor",
 		Description: "Each Programme Lead's and CCEO's year against the visits it should hold — 280 and 560 — their partner work, " +
 			"the schools planned for training, and the schools nobody has planned for yet."}
-	return &screensv1.GetPageResponse{Header: header, Blocks: CountryBlocks(m, ledger, years), WebPath: PagePath}, true, nil
+	return &screensv1.GetPageResponse{Header: header, Blocks: CountryBlocks(m, ledger, years, countryReader), WebPath: PagePath}, true, nil
 }
 
 // toOversight is _to_planning_monitor for a reader who keeps the monitors as

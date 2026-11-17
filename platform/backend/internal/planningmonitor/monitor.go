@@ -128,7 +128,10 @@ func ReadCountry(ctx context.Context, db schooldirectory.Querier, p auth.Princip
 	if err != nil {
 		return nil, err
 	}
-	if !scope.CountryScope {
+	// The Regional Vice President reads the country lens too (a summary-only
+	// scope); with regions assigned, which schools Django's monitor narrows
+	// to is not proven here, so that reader is not drawn.
+	if !scope.CountryScope && !(scope.SummaryOnly && len(scope.RegionIDs) == 0) {
 		return nil, ErrNotDrawn
 	}
 	outside, err := visitgate.ProjectsOutsideSSA(ctx, db, schoolprofile.GateRules())

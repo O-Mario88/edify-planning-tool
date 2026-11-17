@@ -362,6 +362,13 @@
     "social_visit"
   ],
   "page": {
+    "country_lens_roles": [
+      "Accountant",
+      "Admin",
+      "CountryDirector",
+      "ImpactAssessment",
+      "RegionalVicePresident"
+    ],
     "country_roles": [
       "Accountant",
       "Admin",
