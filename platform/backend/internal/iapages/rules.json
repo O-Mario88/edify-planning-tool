@@ -30,6 +30,11 @@
     "training_follow_up_visit": "Training Follow-up Visit"
   },
   "dashboard": {
+    "achieved_statuses": [
+      "ia_verified",
+      "closed",
+      "accountant_confirmed"
+    ],
     "collection": {
       "delivered_statuses": [
         "evidence_uploaded",
@@ -220,6 +225,11 @@
         "upcoming": "Current FY SSA missing (upcoming)"
       }
     },
+    "performance_excluded_statuses": [
+      "cancelled",
+      "rejected",
+      "deferred"
+    ],
     "queue_open_roles": [
       "Admin",
       "CountryDirector",

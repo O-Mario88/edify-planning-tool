@@ -98,6 +98,9 @@ IA_CRITICAL_ACTIVITY_TYPES = ("core_visit", "core_training", "baseline_ssa_visit
 #: accountant_confirmed, a finance state IA does not act on.
 IA_REVIEWABLE_STATUSES = ("completed", "ia_verified", "closed")
 
+#: Plans that are not going ahead, left out of the Map view's roll-ups.
+IA_PERFORMANCE_EXCLUDED_STATUSES = ("cancelled", "rejected", "deferred")
+
 #: The dashboard's six header tiles, each with the queue it drills into.
 IA_HEADER_METRICS = (
     ("ia_awaiting_verification", "/ia/verification/"),
@@ -1298,7 +1301,7 @@ def _ia_performance_activities(request):
     return (
         _ia_activities(request)
         .filter(fy=get_operational_fy())
-        .exclude(status__in=("cancelled", "rejected", "deferred"))
+        .exclude(status__in=IA_PERFORMANCE_EXCLUDED_STATUSES)
     )
 
 

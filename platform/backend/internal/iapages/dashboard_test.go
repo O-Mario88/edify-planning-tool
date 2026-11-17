@@ -31,12 +31,11 @@ func TestTheDashboardWeekIsTheServersWeek(t *testing.T) {
 	}
 }
 
-// Map, and a query the dashboard does not
-// read, go to the existing application before anything is read.
+// A query the dashboard does not read goes to the existing application
+// before anything is read.
 func TestTheDashboardHandsOnTheViewsItDoesNotDraw(t *testing.T) {
 	s := &Service{}
-	for _, raw := range []string{"view=map", "view= Map ",
-		"view=today&page=2", "view=collection&gap=missing", "page=2"} {
+	for _, raw := range []string{"view=today&page=2", "view=collection&gap=missing", "page=2", "view=map&sort=name"} {
 		query, _ := url.ParseQuery(raw)
 		resp, served, err := s.dashboard(context.Background(), auth.Principal{ActiveRole: "ImpactAssessment"}, Role{Page: true}, query)
 		if served || resp != nil || err != nil {

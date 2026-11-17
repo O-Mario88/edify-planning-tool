@@ -182,6 +182,7 @@ def _dashboard() -> dict:
     from apps.frontend.views import ia_views as views
     from apps.frontend.templatetags.frontend_filters import can_open
     from apps.schools.lifecycle_models import OPERATING_STATUSES
+    from apps.targets.performance import ACHIEVED_STATUSES
 
     return {
         "tabs": [[key, label] for key, label, _ in views.IA_DASHBOARD_TABS],
@@ -209,6 +210,9 @@ def _dashboard() -> dict:
         "operating_statuses": [str(s) for s in OPERATING_STATUSES],
         "outcomes": _outcomes(),
         "collection": _collection(),
+        # The Map view's roll-ups: the plans left out, and the done-states.
+        "performance_excluded_statuses": list(views.IA_PERFORMANCE_EXCLUDED_STATUSES),
+        "achieved_statuses": list(ACHIEVED_STATUSES),
     }
 
 

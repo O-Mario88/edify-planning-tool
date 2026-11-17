@@ -149,3 +149,14 @@ func (c *CountryMap) Build(ctx context.Context, p auth.Principal, path string, q
 		WebPath: CountryMapPath,
 	}, true, nil
 }
+
+// MapCard is the country map card (partials/analytics/regional_performance.html)
+// as the feed reads it, for another page that draws it (the IA dashboard's
+// Map view).
+func MapCard(ctx context.Context, db schooldirectory.Querier) ([]*screensv1.PageBlock, error) {
+	districts, subregions, schools, err := mapTotals(ctx, db)
+	if err != nil {
+		return nil, err
+	}
+	return mapBlocks(districts, subregions, schools), nil
+}

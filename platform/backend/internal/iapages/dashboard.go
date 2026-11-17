@@ -34,11 +34,11 @@ type dashboardRules struct {
 	OperatingStatuses       []string        `json:"operating_statuses"`
 	Outcomes                outcomeRules    `json:"outcomes"`
 	Collection              collectionRules `json:"collection"`
+	// PerformanceExcludedStatuses and AchievedStatuses are the Map view's
+	// roll-ups: the plans left out, and the done-states.
+	PerformanceExcludedStatuses []string `json:"performance_excluded_statuses"`
+	AchievedStatuses            []string `json:"achieved_statuses"`
 }
-
-// handedOnViews are the views Go does not draw yet: Map stays with the
-// existing application.
-var handedOnViews = []string{"map"}
 
 // dashboardKeys are the query keys the dashboard reads.
 var dashboardKeys = []string{"view", "project", "fy", "state", "district", "owner", "school_type", "collection_page"}
@@ -80,9 +80,6 @@ func (s *Service) dashboard(ctx context.Context, p auth.Principal, role Role, qu
 	if !slices.ContainsFunc(rules.Dashboard.Tabs, func(t [2]string) bool { return t[0] == view }) {
 		view = rules.Dashboard.DefaultView
 	}
-	if slices.Contains(handedOnViews, view) {
-		return nil, false, nil
-	}
 	now := s.now()
 	scope, err := schooldirectory.ResolveScope(ctx, s.db, p, now)
 	if err != nil {
@@ -100,6 +97,12 @@ func (s *Service) dashboard(ctx context.Context, p auth.Principal, role Role, qu
 	switch view {
 	case "outcomes":
 		blocks, served, err := s.outcomes(ctx, scope, query, now)
+		if err != nil || !served {
+			return nil, served, err
+		}
+		viewBlocks = blocks
+	case "map":
+		blocks, served, err := s.mapView(ctx, scope, where, args, now)
 		if err != nil || !served {
 			return nil, served, err
 		}
