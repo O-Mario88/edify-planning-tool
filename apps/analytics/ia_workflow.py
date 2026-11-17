@@ -58,6 +58,10 @@ PORTFOLIO_LIMITATION = (
     "before-and-after change is description, not proof that a programme caused it."
 )
 
+#: What the project cohorts' period reads: every enrolment is measured over
+#: its own window, not the page's year.
+COHORT_PERIOD = "All recorded project enrolments; each uses its own assessment window"
+
 #: Enrolment states whose measured change is movement in the expected
 #: direction (improved) or its opposite (declined); "maintained strong" and
 #: "no change" are measured but are neither, so they carry a neutral tone.
@@ -332,7 +336,7 @@ def outcome_workspace(user, query):
         "limitation": LIMITATION,
         "generated_at": timezone.now().isoformat(),
         "scope_label": scope.country or "Assigned access scope",
-        "period": "All recorded project enrolments; each uses its own assessment window",
+        "period": COHORT_PERIOD,
         "fy": fy,
         "fy_options": fy_choices,
         # Evaluated by the template only where the Outcomes view renders it.

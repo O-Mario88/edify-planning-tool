@@ -1021,3 +1021,9 @@ GRANT SELECT (status) ON evidence_record TO edify_gateway_ro;
 GRANT SELECT (batch_id, suggested_school_id) ON unmatched_ssa_record TO edify_gateway_ro;
 GRANT SELECT (id, uploaded_by) ON ssa_import_batch TO edify_gateway_ro;
 GRANT SELECT (status, uploaded_by) ON upload_batch TO edify_gateway_ro;
+-- The IA dashboard's Outcomes view (internal/iapages/outcomes.go): each
+-- enrolment's previous FY SSA and current FY score, and the approved outcome
+-- areas with their SSA domains.
+GRANT SELECT (baseline_ssa_id, follow_up_score) ON project_school_assignment TO edify_gateway_ro;
+GRANT SELECT (id, code, name, version) ON impact_outcome_area TO edify_gateway_ro;
+GRANT SELECT (area_id, intervention) ON impact_outcome_area_domain TO edify_gateway_ro;

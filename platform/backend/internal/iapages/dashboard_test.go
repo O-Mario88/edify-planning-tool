@@ -31,12 +31,12 @@ func TestTheDashboardWeekIsTheServersWeek(t *testing.T) {
 	}
 }
 
-// Go draws the Today and Operations views; every other view, and a query it
-// does not read, goes to the existing application before anything is read.
+// Collection, Impact reports and Map, and a query the dashboard does not
+// read, go to the existing application before anything is read.
 func TestTheDashboardHandsOnTheViewsItDoesNotDraw(t *testing.T) {
 	s := &Service{}
-	for _, raw := range []string{"", "view=outcomes", "view=map", "view=collection", "view=reports", "view=framework",
-		"view=today&page=2", "view=operations&gap=missing"} {
+	for _, raw := range []string{"view=map", "view=collection", "view=reports", "view= Map ",
+		"view=today&page=2", "view=operations&gap=missing", "page=2"} {
 		query, _ := url.ParseQuery(raw)
 		resp, served, err := s.dashboard(context.Background(), auth.Principal{ActiveRole: "ImpactAssessment"}, Role{Page: true}, query)
 		if served || resp != nil || err != nil {

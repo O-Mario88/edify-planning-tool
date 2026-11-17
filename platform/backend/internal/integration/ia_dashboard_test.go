@@ -12,14 +12,16 @@ import (
 )
 
 // iaDashboardTables is what the golden files, parents first.
-var iaDashboardTables = []string{"activity", "ssa_record", "upload_batch", "unmatched_ssa_record", "ia_duplicate_activity", "evidence_record"}
+var iaDashboardTables = []string{"activity", "ssa_record", "project_school_assignment", "upload_batch", "unmatched_ssa_record", "ia_duplicate_activity", "evidence_record"}
 
-// The existing feed's Impact Assessment dashboard on its Today and
-// Operations views, over verification work the seed lacks (waiting,
-// overdue, cluster-wide and never-stamped work, work the queue leaves out,
-// returned work, a duplicate, evidence, a pending SSA, an unmatched row and
-// a failed upload), for the readers the page opens for and those it refuses.
-// The other views stay with the existing application. The ages move with
+// The existing feed's Impact Assessment dashboard on its Outcomes (each
+// year, a project cohort), Today and Operations views, over verification
+// work the seed lacks (waiting, overdue, cluster-wide and never-stamped
+// work, work the queue leaves out, returned work, a duplicate, evidence, a
+// pending SSA, an unmatched row and a failed upload) and project enrolments
+// measured, under review and awaiting their follow-up, for the readers the
+// page opens for and those it refuses. Collection, Impact reports and Map
+// stay with the existing application. The ages move with
 // the clock, so the answers hold for half an hour. Skipped unless
 // EDIFY_IA_DASHBOARD_GOLDEN names a file internal/iapages/testdata/
 // dashboard_golden.py wrote within the half hour.

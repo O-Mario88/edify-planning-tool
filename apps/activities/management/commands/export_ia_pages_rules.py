@@ -120,6 +120,36 @@ def _lending() -> dict:
     }
 
 
+def _outcomes() -> dict:
+    """The dashboard's Outcomes view (apps.analytics.ia_workflow): the SSA
+    domains in order, the enrolment states' words, the measured
+    classifications, the evidence floor, the change rule's words and the
+    statuses an outcome area and a measurement rule are read in."""
+    from apps.activity_catalogue.models import MappingStatus
+    from apps.analytics import evidence_strength
+    from apps.analytics import ia_workflow as workflow
+    from apps.core.enums import SsaIntervention
+    from apps.impact.models import DefinitionStatus
+    from apps.projects.ssa_impact import MEASURED
+    from apps.ssa import change_rules
+
+    return {
+        "interventions": [[code, label] for code, label in SsaIntervention.choices],
+        "state_labels": workflow.STATE_LABELS,
+        "measured": [str(m) for m in MEASURED],
+        "limitation": workflow.LIMITATION,
+        "portfolio_limitation": workflow.PORTFOLIO_LIMITATION,
+        "cohort_period": workflow.COHORT_PERIOD,
+        "rule_sentence": change_rules.RULE_SENTENCE,
+        "fallback_label": change_rules.FALLBACK_LABEL,
+        "min_interval_days": change_rules.MIN_INTERVAL_DAYS,
+        "min_n": evidence_strength.MIN_N,
+        "insufficient_label": evidence_strength.LABELS[evidence_strength.INSUFFICIENT],
+        "area_approved_status": str(DefinitionStatus.APPROVED),
+        "rule_published_status": str(MappingStatus.PUBLISHED),
+    }
+
+
 def _dashboard() -> dict:
     """The IA dashboard (ia_dashboard_view) as Go draws its Today and
     Operations views: the view rail's labels, the header tiles' labels and
@@ -156,6 +186,7 @@ def _dashboard() -> dict:
         "unmatched_open_statuses": list(UNMATCHED_OPEN_STATUSES),
         "duplicate_open_status": DUPLICATE_OPEN_STATUS,
         "operating_statuses": [str(s) for s in OPERATING_STATUSES],
+        "outcomes": _outcomes(),
     }
 
 

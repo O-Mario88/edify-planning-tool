@@ -1,6 +1,7 @@
 """Write dashboard_golden.json: Impact Assessment's dashboard
-(/ia/dashboard/) on its Today and Operations views as the existing feed
-reads it, over verification work the development seed does not hold.
+(/ia/dashboard/) on its Outcomes (the default), Today and Operations views as
+the existing feed reads it, over verification work and project enrolments the
+development seed does not hold.
 
     DATABASE_URL=postgresql://localhost:5432/edify_gorn_test \\
     GOLDEN_OUT=/path/to/dashboard_golden.json \\
@@ -15,7 +16,9 @@ only the Country Director, standing in, sees); the work the queue leaves out
 (partner-delivered, no Salesforce ID); delivered work with no Salesforce ID;
 work returned for correction a day and ten days ago. Beside them: a
 potential duplicate, an uploaded evidence file, a pending SSA record, an
-unmatched SSA row and a failed upload batch. Every submission time sits half
+unmatched SSA row and a failed upload batch; and project enrolments
+measured from a confirmed SSA to a later one (improved, declined, kept
+strong), under review, and with follow-ups overdue, due today and to come. Every submission time sits half
 an hour from an hour, so the answers hold for half an hour after the file is
 written. It asks each view of the readers the page opens for and those it
 refuses, writes the rows and the answers to GOLDEN_OUT and deletes the rows.
@@ -43,6 +46,7 @@ NOW = dj_timezone.now()
 TABLES = (
     "activity",
     "ssa_record",
+    "project_school_assignment",
     "upload_batch",
     "unmatched_ssa_record",
     "ia_duplicate_activity",
@@ -187,6 +191,73 @@ def file_rows():
             "('gidE1', %s, %s, 'photo', 'local://gid/e1.jpg', %s, 'uploaded', 'local', 'clean', false, 'none', 0, %s)",
             [stamp, stamp, ia_user, first],
         )
+        enrolments(cursor, one, stamp)
+
+
+def enrolments(cursor, one, stamp):
+    """Project enrolments the seed lacks, at operating schools no project
+    holds, each measured from the school's confirmed FY2026 SSA: improved,
+    declined and kept strong to a later confirmed SSA, a follow-up under
+    review, and follow-ups overdue, due today and to come."""
+    project = one(
+        "SELECT id FROM project WHERE deleted_at IS NULL ORDER BY name LIMIT 1"
+    )
+    base = one("SELECT id FROM project_school_assignment ORDER BY id LIMIT 1")
+    cursor.execute(
+        "SELECT s.id, r.id FROM school s JOIN ssa_record r ON r.school_id = s.id AND r.fy = '2026' "
+        "AND r.verification_status = 'confirmed' AND r.deleted_at IS NULL "
+        "WHERE s.deleted_at IS NULL AND s.operational_status = 'active' AND s.region_id IS NOT NULL "
+        "AND s.id NOT IN (SELECT school_id FROM project_school_assignment) ORDER BY s.id LIMIT 7"
+    )
+    picked = cursor.fetchall()
+    today = dj_timezone.localdate()
+    later = (NOW - timedelta(hours=2)).isoformat()
+    cases = [
+        ("improved", 4.5, 7.25, None),
+        ("declined", 8.0, 6.5, None),
+        ("maintained_strong", 9.0, 9.0, None),
+        ("not_yet_measurable", 5.0, 6.0, None),
+        ("not_yet_measurable", 5.0, None, (today - timedelta(days=3)).isoformat()),
+        ("not_yet_measurable", 5.0, None, today.isoformat()),
+        ("not_yet_measurable", 5.0, None, (today + timedelta(days=9)).isoformat()),
+    ]
+    for n, ((school, record), (classification, before, after, due)) in enumerate(
+        zip(picked, cases), start=1
+    ):
+        follow_up = None
+        if after is not None:
+            follow_up = f"gidS{n + 1}"
+            clone(
+                cursor,
+                "ssa_record",
+                record,
+                {
+                    "id": follow_up,
+                    "fy": "2032",
+                    "date_of_ssa": later,
+                    "created_at": stamp,
+                    "updated_at": stamp,
+                },
+            )
+        clone(
+            cursor,
+            "project_school_assignment",
+            base,
+            {
+                "id": f"gidP{n}",
+                "project_id": project,
+                "school_id": school,
+                "matched_intervention": "leadership",
+                "baseline_ssa_id": record,
+                "baseline_score": before,
+                "follow_up_ssa_id": follow_up,
+                "follow_up_score": after,
+                "impact_classification": classification,
+                "follow_up_due_on": due,
+                "created_at": stamp,
+                "updated_at": stamp,
+            },
+        )
 
 
 def dump_rows():
@@ -200,6 +271,15 @@ def dump_rows():
     return out
 
 
+OUTCOMES = [
+    {},
+    {"view": "outcomes"},
+    {"fy": "2026"},
+    {"fy": "2028"},
+    {"fy": "2025"},
+    {"view": "framework"},
+]
+
 VIEWS = [
     {"view": "today"},
     {"view": "operations"},
@@ -212,10 +292,17 @@ answers = []
 try:
     file_rows()
     rows = dump_rows()
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT id FROM project WHERE deleted_at IS NULL ORDER BY name LIMIT 1"
+        )
+        first_project = cursor.fetchone()[0]
+    OUTCOMES.append({"project": first_project})
+    OUTCOMES.append({"project": first_project, "fy": "2026", "view": "outcomes"})
     readers = {
-        "ia@edify.org": VIEWS,
-        "cd@edify.org": VIEWS[:2],
-        "admin@edify.org": VIEWS[:2],
+        "ia@edify.org": VIEWS + OUTCOMES,
+        "cd@edify.org": VIEWS[:2] + OUTCOMES[:1],
+        "admin@edify.org": VIEWS[:2] + OUTCOMES[:1],
         "rvp@edify.org": VIEWS[:1],
         "pl1@edify.org": VIEWS[:1],
         "cceo@edify.org": VIEWS[:1],

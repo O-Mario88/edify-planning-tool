@@ -67,6 +67,65 @@
       "active",
       "reopened"
     ],
+    "outcomes": {
+      "area_approved_status": "approved",
+      "cohort_period": "All recorded project enrolments; each uses its own assessment window",
+      "fallback_label": "Any change (no approved threshold)",
+      "insufficient_label": "Insufficient evidence",
+      "interventions": [
+        [
+          "christlike_behaviour",
+          "Christlike Behaviour"
+        ],
+        [
+          "exposure_to_word_of_god",
+          "Exposure to the Word of God"
+        ],
+        [
+          "financial_health",
+          "Financial Health"
+        ],
+        [
+          "leadership",
+          "Leadership"
+        ],
+        [
+          "government_requirement",
+          "Government Requirements"
+        ],
+        [
+          "learning_environment",
+          "Learning Environment"
+        ],
+        [
+          "teaching_environment",
+          "Teacher's Environment"
+        ],
+        [
+          "enrolment",
+          "Enrolment"
+        ]
+      ],
+      "limitation": "Recorded project-school assessments only; schools may occur in several projects. SSA scores are school-level proxies, not direct proof of student transformation or causal programme effects. Missing evidence is excluded from measured outcomes. Results use stored classifications and mapping versions, not a new evaluation.",
+      "measured": [
+        "improved",
+        "no_change",
+        "declined",
+        "maintained_strong"
+      ],
+      "min_interval_days": 120,
+      "min_n": 8,
+      "portfolio_limitation": "Schools with a confirmed SSA in both years, compared on the same domains. SSA scores are the school's self-assessment, read as school-level proxies; a before-and-after change is description, not proof that a programme caused it.",
+      "rule_published_status": "published",
+      "rule_sentence": "Improved and declined follow the published IA measurement rule for each SSA domain (the school's country first, then the deployment rule); where no threshold is approved any movement counts, and readings less than 120 days apart are not compared.",
+      "state_labels": {
+        "baseline_missing": "Previous FY SSA missing",
+        "due": "Current FY SSA missing (due today)",
+        "not_scheduled": "Current FY SSA missing",
+        "overdue": "Current FY SSA missing (overdue)",
+        "upcoming": "Current FY SSA missing (upcoming)"
+      }
+    },
     "queue_open_roles": [
       "Admin",
       "CountryDirector",

@@ -20,26 +20,27 @@ const DashboardPath = "/ia/dashboard/"
 // dashboardRules is the dashboard's vocabulary (export_ia_pages_rules
 // _dashboard).
 type dashboardRules struct {
-	Tabs                    [][2]string `json:"tabs"`
-	DefaultView             string      `json:"default_view"`
-	Metrics                 [][2]string `json:"metrics"`
-	ReviewOpenRoles         []string    `json:"review_open_roles"`
-	QueueOpenRoles          []string    `json:"queue_open_roles"`
-	DistrictSSATarget       float64     `json:"district_ssa_target"`
-	ReturnOverdueDays       int         `json:"return_overdue_days"`
-	FailedUploadStatuses    []string    `json:"failed_upload_statuses"`
-	SchoolDuplicateStatuses []string    `json:"school_duplicate_statuses"`
-	UnmatchedOpenStatuses   []string    `json:"unmatched_open_statuses"`
-	DuplicateOpenStatus     string      `json:"duplicate_open_status"`
-	OperatingStatuses       []string    `json:"operating_statuses"`
+	Tabs                    [][2]string  `json:"tabs"`
+	DefaultView             string       `json:"default_view"`
+	Metrics                 [][2]string  `json:"metrics"`
+	ReviewOpenRoles         []string     `json:"review_open_roles"`
+	QueueOpenRoles          []string     `json:"queue_open_roles"`
+	DistrictSSATarget       float64      `json:"district_ssa_target"`
+	ReturnOverdueDays       int          `json:"return_overdue_days"`
+	FailedUploadStatuses    []string     `json:"failed_upload_statuses"`
+	SchoolDuplicateStatuses []string     `json:"school_duplicate_statuses"`
+	UnmatchedOpenStatuses   []string     `json:"unmatched_open_statuses"`
+	DuplicateOpenStatus     string       `json:"duplicate_open_status"`
+	OperatingStatuses       []string     `json:"operating_statuses"`
+	Outcomes                outcomeRules `json:"outcomes"`
 }
 
-// dashboardViews are the views Go draws; the others (Outcomes, the default,
-// Collection, Impact reports and Map) stay with the existing application.
-var dashboardViews = []string{"today", "operations"}
+// handedOnViews are the views Go does not draw yet: Collection, Impact
+// reports and Map stay with the existing application.
+var handedOnViews = []string{"collection", "reports", "map"}
 
 // dashboardKeys are the query keys the dashboard reads.
-var dashboardKeys = []string{"view", "project"}
+var dashboardKeys = []string{"view", "project", "fy"}
 
 // queueCard is one of the oldest waiting records (the phone's queue).
 type queueCard struct {
@@ -72,8 +73,13 @@ func (s *Service) dashboard(ctx context.Context, p auth.Principal, role Role, qu
 			return nil, false, nil
 		}
 	}
+	// resolve_dashboard_view: a view the page knows, else the default (the
+	// app sends no remembered view).
 	view := strings.ToLower(strings.TrimSpace(query.Get("view")))
-	if !slices.Contains(dashboardViews, view) {
+	if !slices.ContainsFunc(rules.Dashboard.Tabs, func(t [2]string) bool { return t[0] == view }) {
+		view = rules.Dashboard.DefaultView
+	}
+	if slices.Contains(handedOnViews, view) {
 		return nil, false, nil
 	}
 	now := s.now()
@@ -90,7 +96,14 @@ func (s *Service) dashboard(ctx context.Context, p auth.Principal, role Role, qu
 		return nil, true, err
 	}
 	viewBlocks := []*screensv1.PageBlock{panelOf("", textItem("Loading your day…"))}
-	if view == "operations" {
+	switch view {
+	case "outcomes":
+		blocks, served, err := s.outcomes(ctx, scope, query, now)
+		if err != nil || !served {
+			return nil, served, err
+		}
+		viewBlocks = blocks
+	case "operations":
 		ops, err := s.dashboardOperations(ctx, scope, where, args, h, now)
 		if err != nil {
 			return nil, true, err
