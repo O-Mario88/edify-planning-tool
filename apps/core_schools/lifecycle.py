@@ -8,6 +8,14 @@ from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
 from apps.planning.visit_gate import OUTREACH_ONLY_SCHOOL_TYPES, PROGRAMME_SCHOOL_TYPES
 
 CORE_LIFECYCLE_TYPES = ("core", *PROGRAMME_SCHOOL_TYPES)
+#: Work a programme school's row does not list: it is not going ahead.
+WORK_EXCLUDED_STATUSES = (
+    "cancelled",
+    "rejected",
+    "deferred",
+    "not_planned",
+    "awaiting_owner_approval",
+)
 
 
 def school_work(schools, fy):
@@ -37,15 +45,7 @@ def school_work(schools, fy):
             fy=str(fy),
             activity_type__in=VISIT_TYPES + TRAINING_TYPES,
         )
-        .exclude(
-            status__in=(
-                "cancelled",
-                "rejected",
-                "deferred",
-                "not_planned",
-                "awaiting_owner_approval",
-            )
-        )
+        .exclude(status__in=WORK_EXCLUDED_STATUSES)
         .order_by("planned_date", "id")
         # The five columns the rows below read. A country's programme schools
         # carry thousands of activities, and loading every one of Activity's

@@ -43,6 +43,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterpage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/config"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/coreoversight"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/coreschools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/costsettings"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/coverage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/cpdlearning"
@@ -247,6 +248,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			mytargets.NewService(pool, time.Now),
 			targetdistribution.NewService(pool, time.Now),
 			prioritiesmaster.NewService(pool, time.Now),
+			coreschools.NewService(pool, time.Now),
 			partneroversight.NewService(pool, time.Now),
 			hrregister.NewService(pool, time.Now).WithAccessLog(pool, logger),
 			leavepolicies.NewService(pool, time.Now),

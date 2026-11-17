@@ -143,6 +143,36 @@ def package_marks(slots) -> list[dict]:
 # How many missing CorePlan rows one page load will repair. See the call site.
 SELF_HEAL_BATCH = 50
 
+#: The slot states the right panel's Attention Needed counts as done.
+RECOMMENDATION_DONE_STATUSES = frozenset(
+    {
+        "Completed",
+        "Accountant Confirmed",
+        "iaVerify",
+        "ia_verified",
+        "accountant_confirmed",
+    }
+)
+#: Intervention Impact: the activity states that count a school as
+#: supported, and the slot states that count its package work as done.
+IMPACT_ACTIVE_STATUSES = (
+    "planned",
+    "scheduled",
+    "rescheduled",
+    "partner_scheduled",
+    "in_progress",
+    "completed",
+    "accountant_confirmed",
+)
+IMPACT_COMPLETED_STATUSES = (
+    "Completed",
+    "Accountant Confirmed",
+    "accountant_confirmed",
+    "ia_verified",
+    "IA Verified",
+    "iaVerify",
+)
+
 CORE_SLOT_ORDINALS = {
     1: "First",
     2: "Second",
@@ -1811,23 +1841,8 @@ class CoreInterventionImpactService:
         """Prepares rows for bottom table Intervention Support & Impact."""
         school_ids = list(core_schools_qs.values_list("school_id", flat=True))
 
-        active_statuses = [
-            "planned",
-            "scheduled",
-            "rescheduled",
-            "partner_scheduled",
-            "in_progress",
-            "completed",
-            "accountant_confirmed",
-        ]
-        completed_statuses = [
-            "Completed",
-            "Accountant Confirmed",
-            "accountant_confirmed",
-            "ia_verified",
-            "IA Verified",
-            "iaVerify",
-        ]
+        active_statuses = list(IMPACT_ACTIVE_STATUSES)
+        completed_statuses = list(IMPACT_COMPLETED_STATUSES)
 
         # Every metric below is batched across all intervention codes. The old
         # implementation repeated the same 8–10 queries once per row.
@@ -2222,13 +2237,7 @@ class CoreRecommendationService:
 
         # Count over the prefetched slot lists in Python (a .filter() here would
         # re-query per plan) and bulk-load the schools once.
-        done_statuses = {
-            "Completed",
-            "Accountant Confirmed",
-            "iaVerify",
-            "ia_verified",
-            "accountant_confirmed",
-        }
+        done_statuses = RECOMMENDATION_DONE_STATUSES
         plans = list(plans)
         schools_by_id = {
             s.school_id: s

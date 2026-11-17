@@ -1009,3 +1009,8 @@ GRANT SELECT (id, milestone_id, code, target_value) ON hr_milestone_target_compo
 -- its components' names and order.
 GRANT SELECT (recurrence_per_month, due_date, target_source_text) ON hr_priority_milestone TO edify_gateway_ro;
 GRANT SELECT (label, sequence) ON hr_milestone_target_component TO edify_gateway_ro;
+-- Core Schools Planning (internal/coreschools): a package's follow-up
+-- average (the staff and partner outcomes), and each slot's side, partner and
+-- intervention.
+GRANT SELECT (follow_up_average) ON core_plan TO edify_gateway_ro;
+GRANT SELECT (owner, assigned_partner_name, intervention) ON core_activity_slot TO edify_gateway_ro;
