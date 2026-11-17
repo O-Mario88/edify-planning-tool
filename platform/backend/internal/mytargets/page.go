@@ -23,9 +23,9 @@ const Path = "/my-targets"
 // errPassOn is a reader or a year Go does not draw yet.
 var errPassOn = errors.New("mytargets: passed to the existing application")
 
-// drawnRoles are the staff roles Go draws the page for: a partner's page
-// and the Project Coordinator's (shown a section strip) are handed on.
-var drawnRoles = []string{"Admin", "CCEO", "ImpactAssessment", "Program Lead"}
+// drawnRoles are the staff roles Go draws the page for: a partner's page is
+// handed on.
+var drawnRoles = []string{"Admin", "CCEO", "ImpactAssessment", "Program Lead", "ProjectCoordinator"}
 
 var local = func() *time.Location {
 	z, err := time.LoadLocation("Africa/Nairobi")
@@ -135,7 +135,13 @@ func (s *Service) build(ctx context.Context, p auth.Principal, fy string, month 
 	if err != nil {
 		return nil, err
 	}
-	blocks := append([]*screensv1.PageBlock{pg.filters()}, c.distributedSummary()...)
+	blocks := []*screensv1.PageBlock{}
+	if st := rules.Strips[p.ActiveRole]; st != nil {
+		// partials/_section_nav.html, which the feed reads above the page.
+		blocks = append(blocks, st.block())
+	}
+	blocks = append(blocks, pg.filters())
+	blocks = append(blocks, c.distributedSummary()...)
 	figures, err := pg.figures(ctx, s.db)
 	if err != nil {
 		return nil, err
@@ -153,7 +159,7 @@ func (s *Service) build(ctx context.Context, p auth.Principal, fy string, month 
 	if err != nil {
 		return nil, err
 	}
-	blocks = append(blocks, projects)
+	blocks = append(blocks, projects...)
 	portfolio, err := priorityPortfolio(ctx, s.db, pg, c.planningRows(fy))
 	if err != nil {
 		return nil, err

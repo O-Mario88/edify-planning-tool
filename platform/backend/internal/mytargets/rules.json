@@ -314,6 +314,35 @@
       "label": "Country Profile"
     }
   },
+  "strips": {
+    "Admin": null,
+    "CCEO": null,
+    "ImpactAssessment": null,
+    "PartnerAdmin": null,
+    "PartnerFieldOfficer": null,
+    "Program Lead": null,
+    "ProjectCoordinator": {
+      "label": "My Performance",
+      "scrolls": true,
+      "tabs": [
+        {
+          "active": false,
+          "href": "/priorities",
+          "label": "Priorities"
+        },
+        {
+          "active": true,
+          "href": "/my-targets",
+          "label": "Targets"
+        },
+        {
+          "active": false,
+          "href": "/my-professional-development",
+          "label": "My Professional Development"
+        }
+      ]
+    }
+  },
   "training_types": [
     "cluster_training",
     "cluster_training_ssa_collection",

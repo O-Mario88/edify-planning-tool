@@ -71,27 +71,6 @@ ORDER BY sp.sequence, sp.title`, pg.fy, pg.p.StaffProfileID)
 	return append(out, textPanel("", "Milestones still in definition remain visible here, but they do not create targets, reduce achievement, or generate risk.")), nil
 }
 
-// projectPriorities is staff_project_priorities as
-// partials/targets/project_priorities.html draws it; an assigned Project is
-// handed on (its card is not drawn yet).
-func projectPriorities(ctx context.Context, db schooldirectory.Querier, pg *page) (*screensv1.PageBlock, error) {
-	var assigned bool
-	if err := db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM project_staff_assignment a JOIN project p ON p.id = a.project_id
-WHERE a.staff_id = $1 AND a.fy = $2 AND a.is_active AND p.deleted_at IS NULL AND p.status = ANY($3))`,
-		pg.p.StaffProfileID, pg.fy, rules.LiveProjectStatuses).Scan(&assigned); err != nil {
-		return nil, fmt.Errorf("mytargets: the assigned Projects: %w", err)
-	}
-	if assigned {
-		return nil, fmt.Errorf("projects: %w", errPassOn)
-	}
-	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{
-		Title:    "Assigned Project Priorities",
-		Subtitle: "Projects assigned by IA, the Country Director, or Admin become planning priorities. They remain separate from weighted achievement until an approved target allocation exists.",
-		Items: []*screensv1.PagePanelItem{text("No Projects assigned as priorities"),
-			text("When IA, the Country Director, or Admin assigns a Project, it will appear here with its eligible school-planning action.")},
-	}}}, nil
-}
-
 // portfolioRow is one row of a priority group, as the feed reads it: its
 // action, where the action goes, and its title.
 type portfolioRow struct{ title, action, url string }

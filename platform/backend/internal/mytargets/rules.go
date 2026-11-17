@@ -8,11 +8,11 @@
 //
 // It reads; it never writes. The existing page rebuilds the reader's
 // achievement ledger first; the target engine (internal/targets) hands the
-// page on whenever that rebuild would change anything. It also hands on an
-// assigned Project, a team's or Project's allocation among the reader's own,
-// a milestone with no metric definition, a list longer than one page, a role
-// shown a section strip, a reader without a People record, a partner, and
-// any query it does not read. The
+// page on whenever that rebuild would change anything. It also hands on a
+// team's or Project's allocation among the reader's own, a milestone with no
+// metric definition, a list longer than one page, several assigned Project
+// cards the feed reads apart, a reader without a People record, a partner,
+// and any query it does not read. The
 // labels, statuses and doors are exported to rules.json by `manage.py
 // export_my_targets_rules`; apps/targets/test_my_targets_rules_export.py
 // fails when the two differ.
@@ -23,6 +23,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
+
+	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 )
 
 //go:embed rules.json
@@ -49,16 +51,40 @@ var rules = func() (r struct {
 	SchoolFocusLabels      map[string]string    `json:"school_focus_labels"`
 	ResponsibilityLabels   map[string]string    `json:"responsibility_labels"`
 	ProjectCompletedStates []string             `json:"project_completed_states"`
+	SchoolTypes            [][2]string          `json:"school_types"`
+	// Strips are partials/_section_nav.html above the page, by role: the
+	// workspace strip as the feed reads it, or nil.
+	Strips map[string]*strip `json:"strips"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {
 		panic(fmt.Sprintf("mytargets: reading rules.json: %v", err))
 	}
 	if len(r.PageRoles) == 0 || len(r.NextActions) == 0 || len(r.AreaSources) == 0 || len(r.SSABands) == 0 ||
-		len(r.OperatingStatuses) == 0 || r.Reader == "" {
+		len(r.OperatingStatuses) == 0 || r.Reader == "" || len(r.SchoolTypes) == 0 || len(r.Strips) == 0 {
 		panic("mytargets: rules.json lacks the roles, the actions, the sources or the bands")
 	}
 	return r
 }()
+
+// strip is a role's workspace strip as the feed reads it (a linkTabs block).
+type strip struct {
+	Label   string `json:"label"`
+	Scrolls bool   `json:"scrolls"`
+	Tabs    []struct {
+		Label  string `json:"label"`
+		Href   string `json:"href"`
+		Active bool   `json:"active"`
+	} `json:"tabs"`
+}
+
+// block is the strip as a page block.
+func (s *strip) block() *screensv1.PageBlock {
+	tabs := &screensv1.PageLinkTabs{Label: s.Label, Scrolls: s.Scrolls}
+	for _, t := range s.Tabs {
+		tabs.Tabs = append(tabs.Tabs, &screensv1.PageLinkTab{Label: t.Label, Href: t.Href, Active: t.Active})
+	}
+	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_LinkTabs{LinkTabs: tabs}}
+}
 
 type link struct {
 	Href  string `json:"href"`

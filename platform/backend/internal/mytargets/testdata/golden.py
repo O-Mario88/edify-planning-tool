@@ -12,8 +12,9 @@ each state the ledger and the gap reasons tell apart (verified with their
 Activity SF ID, done without it, awaiting verification, returned,
 scheduled), a training this month, a confirmed SSA and an approved MSCS; three operating schools assigned
 to the officer, two of them Core Schools with packages part done, one with a
-confirmed SSA scored below Strong in two interventions; and a professional
-development request. It
+confirmed SSA scored below Strong in two interventions; a professional
+development request; and three Projects assigned to the officer (two live,
+one completed), the first also assigned to a Project Coordinator. It
 then brings the officers' ledgers up to date as any reading page does
 (refresh_many), so the page's own rebuild finds nothing to change; asks the
 page for this month, an earlier month, another year and an officer with no
@@ -52,6 +53,11 @@ from apps.hr.models import (
 )
 from apps.core_schools.models import CorePlan
 from apps.mobile_feed.views import read_page
+from apps.projects.models import (
+    Project,
+    ProjectSchoolAssignment,
+    ProjectStaffAssignment,
+)
 from apps.professional_development.models import ProfessionalDevelopmentRequest
 from apps.schools.lifecycle_models import OPERATING_STATUSES
 from apps.schools.models import School
@@ -74,6 +80,8 @@ PATH = "/my-targets"
 P = "gmt"
 OFFICER = "cceo7@edify.org"
 EMPTY = "cceo8@edify.org"
+#: A Project Coordinator, shown the workspace strip above the page.
+COORDINATOR = "coordinator@edify.org"
 TODAY = dj_timezone.localdate()
 NOW = Cal.current()
 FY = NOW["fy"]
@@ -92,6 +100,8 @@ TABLES = (
     "hr_strategic_priority_cycle",
     "ssa_score",
     "staff_school_assignment",
+    "project_school_assignment",
+    "project_staff_assignment",
     "core_plan",
     "pd_request",
     "hr_performance_priority",
@@ -100,6 +110,7 @@ TABLES = (
     "activity",
     "ssa_record",
     "mscs_story",
+    "project",
 )
 
 
@@ -277,6 +288,108 @@ def file_allocations(officer, schools):
     )
 
 
+def file_projects(officer, held):
+    """Three Projects assigned to the officer this year: a live one with two
+    of the officer's schools (and one school that is not theirs), a planned
+    and a completed activity of the officer's and one the officer monitors;
+    a live one without a code, schools or interventions; and a completed
+    one, which the page leaves out. The Project Coordinator is assigned the
+    first."""
+    coordinator = StaffProfile.objects.get(user__email=COORDINATOR)
+    Project.objects.bulk_create(
+        [
+            Project(
+                id=P + "J1",
+                code="GMT-LIT",
+                name="Golden Literacy",
+                status="active",
+                school_focus="client",
+                target_interventions=["leadership", "enrolment"],
+                intervention="financial_health",
+            ),
+            Project(
+                id=P + "J2",
+                name="Golden Pilot",
+                status="proposed",
+                school_focus="all",
+                target_interventions=[],
+            ),
+            Project(
+                id=P + "J3",
+                code="GMT-OLD",
+                name="Golden Archive",
+                status="completed",
+                school_focus="core",
+                target_interventions=[],
+            ),
+        ]
+    )
+    other = (
+        School.objects.filter(deleted_at__isnull=True)
+        .exclude(id__in=[s.id for s in held])
+        .order_by("id")
+        .first()
+    )
+    ProjectSchoolAssignment.objects.bulk_create(
+        [
+            ProjectSchoolAssignment(
+                id=f"{P}Q{i}", project_id=P + "J1", school_id=sch.id
+            )
+            for i, sch in enumerate([held[0], held[1], other], start=1)
+        ]
+    )
+    ProjectStaffAssignment.objects.bulk_create(
+        [
+            ProjectStaffAssignment(
+                id=P + "K1",
+                project_id=P + "J1",
+                staff_id=officer.id,
+                fy=FY,
+                responsibility="execute",
+                assigned_by_role="ImpactAssessment",
+                start_date=day_of(1),
+                due_date=day_of(12, 20),
+            ),
+            ProjectStaffAssignment(
+                id=P + "K2",
+                project_id=P + "J2",
+                staff_id=officer.id,
+                fy=FY,
+                responsibility="supervise",
+                assigned_by_role="Admin",
+            ),
+            ProjectStaffAssignment(
+                id=P + "K3",
+                project_id=P + "J3",
+                staff_id=officer.id,
+                fy=FY,
+            ),
+            ProjectStaffAssignment(
+                id=P + "K4",
+                project_id=P + "J1",
+                staff_id=coordinator.id,
+                fy=FY,
+            ),
+        ]
+    )
+    for key, status, extra in [
+        ("JA1", "completed", {"responsible_staff_id": officer.id}),
+        ("JA2", "scheduled", {"responsible_staff_id": officer.id}),
+        ("JA3", "scheduled", {"monitored_by_staff_id": officer.user_id}),
+    ]:
+        Activity.objects.create(
+            id=P + key,
+            activity_type="school_visit",
+            status=status,
+            delivery_type="staff",
+            planned_date=day_of(MONTH),
+            fy=FY,
+            school=held[0],
+            project_id=P + "J1",
+            **extra,
+        )
+
+
 def file_rows():
     officer = StaffProfile.objects.get(user__email=OFFICER)
     area = {a.key: a for a in TargetArea.objects.all()}
@@ -440,7 +553,8 @@ def file_rows():
         ]
     )
     file_allocations(officer, held)
-    users = list(User.objects.filter(email__in=[OFFICER, EMPTY]))
+    file_projects(officer, held)
+    users = list(User.objects.filter(email__in=[OFFICER, EMPTY, COORDINATOR]))
     refresh_many(users, FY)
     refresh_many(users, NEXT)
     left = TargetLedgerDirty.objects.filter(
@@ -475,6 +589,7 @@ QUERIES = [
     (OFFICER, {"fy": NEXT}),
     (OFFICER, {"fy": NEXT, "month": "4"}),
     (EMPTY, {"fy": NEXT}),
+    (COORDINATOR, {}),
 ]
 
 clear()

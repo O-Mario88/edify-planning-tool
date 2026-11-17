@@ -6,9 +6,9 @@ apps.targets.my_targets.MyTargetQueryService.get_page) from the target engine
 platform/backend/internal/mytargets/rules.json: who may open the page and the
 pages it links to; the pace bands; each area's next action and the activity
 types its gap reasons read; the workflow statuses those reasons tell apart;
-where each role's SSA link goes; the Project, school-type, intervention and
-status names the priorities sections print; the SSA score bands; and the
-operating statuses. A change to any of them must be exported again;
+where each role's SSA link goes; the workspace strip each role is shown;
+the Project, school-type, intervention and status names the priorities
+sections print; the SSA score bands; and the operating statuses. A change to any of them must be exported again;
 apps/targets/test_my_targets_rules_export.py fails until it is.
 
     python manage.py export_my_targets_rules
@@ -88,12 +88,21 @@ def rules() -> dict:
     def roles(test) -> list[str]:
         return sorted(r.value for r in EdifyRole if test(_role_user(r.value)))
 
+    from apps.audit.management.commands.export_decision_log_rules import strip
+
     responsibility = ProjectStaffAssignment._meta.get_field("responsibility")
+    page_roles = roles(
+        lambda u: RolePermissionService.can_view_page(u, PAGE_PERMISSION)
+        and bool(can_open_url(u, PAGE_PATH))
+    )
     return {
-        "page_roles": roles(
-            lambda u: RolePermissionService.can_view_page(u, PAGE_PERMISSION)
-            and bool(can_open_url(u, PAGE_PATH))
-        ),
+        "page_roles": page_roles,
+        # partials/_section_nav.html above the page: the workspace strip
+        # each role is shown, as the feed reads it, or None.
+        "strips": {
+            role: strip(_role_user(role), PAGE_PATH, "partials/_section_nav.html")
+            for role in page_roles
+        },
         "opens": {
             path: roles(lambda u, path=path: bool(can_open_url(u, path)))
             for path in LINKED_PAGES

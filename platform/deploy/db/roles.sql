@@ -983,3 +983,7 @@ GRANT SELECT (fy) ON project_staff_assignment TO edify_gateway_ro;
 GRANT SELECT (period_end, actual_value, achievement_percentage) ON hr_milestone_period_target TO edify_gateway_ro;
 GRANT SELECT (id, canonical_label) ON hr_milestone_metric_definition TO edify_gateway_ro;
 GRANT SELECT (allocation_id, activity_id) ON hr_activity_priority_link TO edify_gateway_ro;
+-- …and the reader's assigned Projects (its Project priorities): each
+-- assignment's responsibility, the Project's school focus.
+GRANT SELECT (id, responsibility) ON project_staff_assignment TO edify_gateway_ro;
+GRANT SELECT (school_focus) ON project TO edify_gateway_ro;

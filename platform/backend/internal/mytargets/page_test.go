@@ -75,3 +75,43 @@ func TestFiguresAndTitlesPrintAsPython(t *testing.T) {
 		}
 	}
 }
+
+// The card counts its words as card_grids reads them (rendered cards:
+// 34, 31 and 47 words), and its lines print as the template draws them.
+func TestAProjectCardCountsItsWordsAsTheFeedReadsThem(t *testing.T) {
+	card := func(code, name string, interventions []string, byType map[string]int, activities int) project {
+		return project{name: name, code: code, responsibility: "Execute", focus: "Client and Core Schools",
+			interventions: interventions, schools: 12, activities: activities, completed: 7, byType: byType}
+	}
+	cases := []struct {
+		card              project
+		words             int
+		status, breakdown string
+	}{
+		{card("A-1", "One Two", []string{"Leadership", "Financial Health"}, map[string]int{"client": 3, "core": 2}, 140), 34, "In progress", "3 Client · 2 Core"},
+		{card("", "Three", nil, map[string]int{}, 140), 31, "In progress", "No schools assigned"},
+		{card("Z", "Long Project Name Here", []string{"Leadership", "Enrolment", "Financial Health", "Christlike Behaviour",
+			"Learning Environment", "Government Requirement"}, map[string]int{"client": 3, "core": 9}, 140), 47, "In progress", "3 Client · 9 Core"},
+	}
+	for _, c := range cases {
+		if got := c.card.words(); got != c.words {
+			t.Errorf("%s: %d words, want %d", c.card.name, got, c.words)
+		}
+		if got := c.card.status(); got != c.status {
+			t.Errorf("%s: status %q, want %q", c.card.name, got, c.status)
+		}
+		if got := c.card.breakdown(); got != c.breakdown {
+			t.Errorf("%s: breakdown %q, want %q", c.card.name, got, c.breakdown)
+		}
+	}
+	empty := card("", "Four", nil, map[string]int{}, 0)
+	if empty.eyebrow() != "Project priority" || empty.interventionLine() != "No intervention declared" {
+		t.Errorf("an uncoded card without interventions: %q, %q", empty.eyebrow(), empty.interventionLine())
+	}
+	if empty.schools = 0; empty.status() != "Schools needed" {
+		t.Errorf("no schools, no activities: %q", empty.status())
+	}
+	if empty.schools = 1; empty.status() != "Ready to plan" {
+		t.Errorf("schools, no activities: %q", empty.status())
+	}
+}
