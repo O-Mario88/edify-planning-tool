@@ -354,7 +354,7 @@ func (f *figures) focusPanel() *screensv1.PageBlock {
 // the area's month back, from its pipeline.
 func gapReason(ctx context.Context, db schooldirectory.Querier, pg *page, area string, start, end time.Time) (string, error) {
 	var pendingSF, iaPending, returned, provisional, scheduled int
-	ids := []string{pg.p.UserID, pg.p.StaffProfileID}
+	ids := pg.userIDs()
 	src := rules.AreaSources[area]
 	switch src.Kind {
 	case "activity":

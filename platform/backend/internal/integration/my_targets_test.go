@@ -34,7 +34,8 @@ var myTargetsTables = [][2]string{
 // Schools and the portfolio's groups, for this month, an earlier month and
 // the year before, and for an officer with no agreement; Projects assigned
 // to the officer and to a Project Coordinator, who is shown the workspace
-// strip; and in the year after, approved milestone allocations of every
+// strip; a partner's two logins, which have no People record; and in the
+// year after, approved milestone allocations of every
 // kind — each page whole.
 // Skipped unless EDIFY_MY_TARGETS_GOLDEN names a file
 // internal/mytargets/testdata/golden.py wrote within the last half hour.

@@ -23,10 +23,6 @@ const Path = "/my-targets"
 // errPassOn is a reader or a year Go does not draw yet.
 var errPassOn = errors.New("mytargets: passed to the existing application")
 
-// drawnRoles are the staff roles Go draws the page for: a partner's page is
-// handed on.
-var drawnRoles = []string{"Admin", "CCEO", "ImpactAssessment", "Program Lead", "ProjectCoordinator"}
-
 var local = func() *time.Location {
 	z, err := time.LoadLocation("Africa/Nairobi")
 	if err != nil {
@@ -92,8 +88,7 @@ func choose(query url.Values, now time.Time) (fy string, month int, ok bool) {
 
 // Build answers /my-targets.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
-	if path != Path || !slices.Contains(drawnRoles, p.ActiveRole) || !slices.Contains(rules.PageRoles, p.ActiveRole) ||
-		p.StaffProfileID == "" || p.InActingAppointment {
+	if path != Path || !slices.Contains(rules.PageRoles, p.ActiveRole) || p.InActingAppointment {
 		return nil, false, nil
 	}
 	now := s.now()
@@ -180,6 +175,15 @@ func (s *Service) build(ctx context.Context, p auth.Principal, fy string, month 
 		Dialogs: dialogs(),
 		WebPath: Path,
 	}, nil
+}
+
+// userIDs are _user_ids: the reader's login and, when they have one, their
+// People record.
+func (pg *page) userIDs() []string {
+	if pg.p.StaffProfileID == "" {
+		return []string{pg.p.UserID}
+	}
+	return []string{pg.p.UserID, pg.p.StaffProfileID}
 }
 
 // operationalFY is get_operational_fy: the year starts on 1 October.

@@ -18,6 +18,10 @@ import (
 // partials/targets/strategic_priority_overview.html draws it: nothing when
 // the year has no governed priorities.
 func strategicPriorities(ctx context.Context, db schooldirectory.Querier, pg *page) ([]*screensv1.PageBlock, error) {
+	if pg.p.StaffProfileID == "" {
+		// Read only for a People record (a partner's login has none).
+		return nil, nil
+	}
 	rows, err := db.Query(ctx, `
 SELECT sp.title, sp.sequence,
        count(DISTINCT m.id),
@@ -79,6 +83,14 @@ type portfolioRow struct{ title, action, url string }
 // partials/targets/priority_portfolio.html draws it; the planning feed is
 // the reader's approved milestones.
 func priorityPortfolio(ctx context.Context, db schooldirectory.Querier, pg *page, planning []portfolioRow) (*screensv1.PageBlock, error) {
+	panel := &screensv1.PagePanel{
+		Title:    "My Priority Portfolio",
+		Subtitle: "Your planning, school assessment, agreed priorities and professional development in one place.",
+	}
+	if pg.p.StaffProfileID == "" {
+		// Without a People record the portfolio has no groups.
+		return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: panel}}, nil
+	}
 	ssa, err := ssaFocus(ctx, db, pg)
 	if err != nil {
 		return nil, err
@@ -90,10 +102,6 @@ func priorityPortfolio(ctx context.Context, db schooldirectory.Querier, pg *page
 	development, err := developmentPriorities(ctx, db, pg)
 	if err != nil {
 		return nil, err
-	}
-	panel := &screensv1.PagePanel{
-		Title:    "My Priority Portfolio",
-		Subtitle: "Your planning, school assessment, agreed priorities and professional development in one place.",
 	}
 	for _, g := range []struct {
 		label string

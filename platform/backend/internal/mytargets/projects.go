@@ -153,6 +153,9 @@ func projectPriorities(ctx context.Context, db schooldirectory.Querier, pg *page
 // is responsible for or monitors.
 func assignedProjects(ctx context.Context, db schooldirectory.Querier, pg *page) ([]project, error) {
 	staffID, fy := pg.p.StaffProfileID, pg.fy
+	if staffID == "" {
+		return nil, nil
+	}
 	rows, err := db.Query(ctx, `
 SELECT p.id, p.name, coalesce(p.code, ''), p.school_focus, a.responsibility,
        coalesce(p.target_interventions, '[]'::jsonb), coalesce(p.intervention, '')

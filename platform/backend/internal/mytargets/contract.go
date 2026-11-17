@@ -46,6 +46,10 @@ func readContract(ctx context.Context, db schooldirectory.Querier, pg *page) (co
 	if len(c.annual().Rows) > pageRows {
 		return c, errPassOn
 	}
+	if pg.p.StaffProfileID == "" {
+		// personal_milestone_targets is read only for a People record.
+		return c, nil
+	}
 	milestones, err := allocations.Personal(ctx, db, pg.p.StaffProfileID, pg.fy, pg.month)
 	if errors.Is(err, allocations.ErrNotDrawn) {
 		return c, errPassOn

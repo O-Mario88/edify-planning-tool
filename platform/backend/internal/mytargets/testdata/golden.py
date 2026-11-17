@@ -15,6 +15,8 @@ to the officer, two of them Core Schools with packages part done, one with a
 confirmed SSA scored below Strong in two interventions; a professional
 development request; and three Projects assigned to the officer (two live,
 one completed), the first also assigned to a Project Coordinator. It
+also asks for the page of a partner's field officer and administrator,
+logins without a People record. It
 then brings the officers' ledgers up to date as any reading page does
 (refresh_many), so the page's own rebuild finds nothing to change; asks the
 page for this month, an earlier month, another year and an officer with no
@@ -82,6 +84,9 @@ OFFICER = "cceo7@edify.org"
 EMPTY = "cceo8@edify.org"
 #: A Project Coordinator, shown the workspace strip above the page.
 COORDINATOR = "coordinator@edify.org"
+#: A partner's field officer and its administrator: logins without a People
+#: record.
+PARTNERS = ["partner@edify.org", "partner-admin@edify.org"]
 TODAY = dj_timezone.localdate()
 NOW = Cal.current()
 FY = NOW["fy"]
@@ -554,7 +559,9 @@ def file_rows():
     )
     file_allocations(officer, held)
     file_projects(officer, held)
-    users = list(User.objects.filter(email__in=[OFFICER, EMPTY, COORDINATOR]))
+    users = list(
+        User.objects.filter(email__in=[OFFICER, EMPTY, COORDINATOR, *PARTNERS])
+    )
     refresh_many(users, FY)
     refresh_many(users, NEXT)
     left = TargetLedgerDirty.objects.filter(
@@ -590,6 +597,7 @@ QUERIES = [
     (OFFICER, {"fy": NEXT, "month": "4"}),
     (EMPTY, {"fy": NEXT}),
     (COORDINATOR, {}),
+    *[(partner, {}) for partner in PARTNERS],
 ]
 
 clear()

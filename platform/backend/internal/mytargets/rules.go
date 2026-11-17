@@ -11,8 +11,10 @@
 // page on whenever that rebuild would change anything. It also hands on a
 // team's or Project's allocation among the reader's own, a milestone with no
 // metric definition, a list longer than one page, several assigned Project
-// cards the feed reads apart, a reader without a People record, a partner,
-// and any query it does not read. The
+// cards the feed reads apart, and any query it does not read. A reader
+// without a People record (a partner's login) is drawn as the existing page
+// draws them: without the strategic priorities, Projects, milestones or
+// portfolio groups. The
 // labels, statuses and doors are exported to rules.json by `manage.py
 // export_my_targets_rules`; apps/targets/test_my_targets_rules_export.py
 // fails when the two differ.
