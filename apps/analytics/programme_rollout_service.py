@@ -1507,7 +1507,7 @@ def spiritual_rollout(principal, scope: RolloutScope, fy: str, today: date) -> d
                 else "",
             }
         )
-    weak_rows.sort(key=lambda r: (not r["has_gap"], r["lowest"], r["name"]))
+    weak_rows.sort(key=_weak_order)
 
     officers = []
     for member in scope.rows():
@@ -1676,6 +1676,14 @@ def spiritual_rollout(principal, scope: RolloutScope, fy: str, today: date) -> d
         "families": [{"key": key, "name": label} for key, label in SPIRITUAL_FAMILIES],
         "observations": latest,
     }
+
+
+def _weak_order(row: dict) -> tuple:
+    """The weak schools' order: without a planned response first, the lowest
+    score first, by name, then by school, so two schools of one name and
+    score keep one order whatever order the database returned them in (the
+    Go gateway draws the same list, internal/programmerollout)."""
+    return (not row["has_gap"], row["lowest"], row["name"], row["school_id"])
 
 
 def _rating_labels() -> dict:

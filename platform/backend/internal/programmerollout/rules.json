@@ -94,6 +94,30 @@
     "school_improvement_training",
     "core_training"
   ],
+  "spiritual": {
+    "camp_catalogue_type": "youth_camp",
+    "cc_sel_code": "CC_SEL",
+    "christian_transformation": "Christian Transformation",
+    "families": [
+      [
+        "christian_transformation",
+        "Christian Transformation"
+      ],
+      [
+        "cc_sel",
+        "CC-SEL"
+      ],
+      [
+        "camp",
+        "Camps"
+      ]
+    ],
+    "interventions": [
+      "christlike_behaviour",
+      "exposure_to_word_of_god"
+    ],
+    "weakest_count": 3
+  },
   "ssa": {
     "awaiting_record_statuses": [
       "pending",

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/url"
+	"slices"
 	"testing"
 	"time"
 
@@ -41,7 +42,7 @@ func TestThePageDecidesItsDoorsBeforeReading(t *testing.T) {
 		{auth.Principal{ActiveRole: "Program Lead"}, ""},
 		{lead, "view=ssa&cluster_page=2"},
 		{lead, "view=ssa&rollout_matrix_rows_page=2"},
-		{lead, "view=spiritual"},
+		{lead, "view=spiritual&biblical_page=2"},
 		{lead, "course_page=2"},
 		{lead, "lead=sp9"},
 	} {
@@ -71,6 +72,47 @@ func TestSSAScoreAbsorbsSummationNoise(t *testing.T) {
 		in := c.in
 		if got := ssaScore(&in); *got != c.want {
 			t.Errorf("ssaScore(%v) = %v, want %v", c.in, *got, c.want)
+		}
+	}
+}
+
+// A pager carries every other query value; with more than one key Django
+// keeps the request's own order, which Go cannot recover, so it hands on.
+func TestCarriedQueryHandsOnMoreThanOneKey(t *testing.T) {
+	for _, c := range []struct {
+		query, want string
+		ok          bool
+	}{
+		{"", "", true},
+		{"weak_page=3", "", true},
+		{"view=spiritual&weak_page=2", "view=spiritual&", true},
+		{"view=+Spiritual+", "view=+Spiritual+&", true},
+		{"view=spiritual&fy=", "view=spiritual&", true},
+		{"view=spiritual&fy=2027", "", false},
+	} {
+		query, _ := url.ParseQuery(c.query)
+		got, ok := carriedQuery(query, weakPageParam)
+		if got != c.want || ok != c.ok {
+			t.Errorf("%q: %q %v, want %q %v", c.query, got, ok, c.want, c.ok)
+		}
+	}
+}
+
+// make_pagination_window(window_size=1): every page up to seven, then the
+// ends, the neighbours and a gap.
+func TestPageWindow(t *testing.T) {
+	for _, c := range []struct {
+		current, pages int
+		want           []int
+	}{
+		{1, 7, []int{1, 2, 3, 4, 5, 6, 7}},
+		{1, 9, []int{1, 2, 0, 9}},
+		{5, 9, []int{1, 0, 4, 5, 6, 0, 9}},
+		{9, 9, []int{1, 0, 8, 9}},
+		{3, 9, []int{1, 2, 3, 4, 0, 9}},
+	} {
+		if got := pageWindow(c.current, c.pages); !slices.Equal(got, c.want) {
+			t.Errorf("pageWindow(%d, %d) = %v, want %v", c.current, c.pages, got, c.want)
 		}
 	}
 }

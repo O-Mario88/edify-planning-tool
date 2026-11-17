@@ -79,6 +79,23 @@ def rules() -> dict:
         "page_size": TABLE_PAGE_SIZE,
         "officer_rows": OFFICER_ROWS,
         "ssa": _ssa(),
+        "spiritual": _spiritual(),
+    }
+
+
+def _spiritual() -> dict:
+    """The Spiritual Formation view: the pair, how many weakest
+    interventions a school is judged on, and how a catalogue item joins a
+    programme family."""
+    from apps.analytics import programme_rollout_service as rollout
+
+    return {
+        "interventions": list(rollout.SPIRITUAL_INTERVENTIONS),
+        "weakest_count": rollout.WEAKEST_COUNT,
+        "christian_transformation": rollout.CHRISTIAN_TRANSFORMATION,
+        "cc_sel_code": rollout.CC_SEL_CODE,
+        "camp_catalogue_type": rollout.CAMP_CATALOGUE_TYPE,
+        "families": [[key, label] for key, label in rollout.SPIRITUAL_FAMILIES],
     }
 
 

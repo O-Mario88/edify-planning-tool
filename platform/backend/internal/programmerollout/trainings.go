@@ -125,8 +125,8 @@ func reach(ctx context.Context, db schooldirectory.Querier, rows []training) (ma
 
 // fold is _fold: a group of trainings' figures.
 type fold struct {
-	planned, delivered, inReview, schoolsReached, teachers, leaders, byStaff, byPartner int
-	deliveredShare                                                                      *int
+	planned, delivered, inReview, toDeliver, schoolsReached, teachers, leaders, byStaff, byPartner int
+	deliveredShare                                                                                 *int
 }
 
 // percentage is apps.core.metrics.percentage: round(n / d * 100), halves to
@@ -146,6 +146,9 @@ func folded(rows []training, reached map[string]map[string]bool) fold {
 	for _, r := range rows {
 		if slices.Contains(rules.InReviewStatuses, r.status) {
 			f.inReview++
+		}
+		if slices.Contains(rules.LiveStatuses, r.status) {
+			f.toDeliver++
 		}
 		if !slices.Contains(rules.CompletedStatuses, r.status) {
 			continue

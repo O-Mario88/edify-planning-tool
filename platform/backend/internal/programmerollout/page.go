@@ -47,11 +47,12 @@ func NewService(pool *pgxpool.Pool, now func() time.Time) *Service {
 	return &Service{db: pool, now: now}
 }
 
-// Build draws the Trainings and Self-Assessments views for a Programme Lead
-// in their own seat. The Spiritual Formation view, a lead chosen by the Admin
-// or IA, an acting seat, a query key the page does not read, a Regional Lead
-// observation of the year on the Trainings view, and a table running past a
-// page hand on; the path with a trailing slash is not a page.
+// Build draws every view for a Programme Lead in their own seat. A lead
+// chosen by the Admin or IA, an acting seat, a query key the page does not
+// read, a Regional Lead observation of the year on the Trainings or
+// Spiritual Formation view, a table running past a page (but the weak
+// schools'), and a pager carrying more than one key hand on; the path with
+// a trailing slash is not a page.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
 	if path == Path+"/" {
 		return nil, true, pagegate.ErrNotAvailable
@@ -66,7 +67,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		return nil, false, nil
 	}
 	for key := range query {
-		if key != "view" && key != "fy" {
+		if key != "view" && key != "fy" && key != weakPageParam {
 			return nil, false, nil
 		}
 	}
@@ -74,16 +75,13 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if !slices.Contains(rules.Views, view) {
 		view = rules.DefaultView
 	}
-	if view == "spiritual" {
-		return nil, false, nil
-	}
 	now := s.now()
 	years := schooldirectory.FYOptions(now)
 	fy := strings.TrimSpace(query.Get("fy"))
 	if !slices.Contains(years, fy) {
 		fy = schooldirectory.OperationalFY(now)
 	}
-	if view == "trainings" {
+	if view != "ssa" {
 		var observed bool
 		if err := s.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM cce_regional_engagement WHERE kind = $1 AND fy = $2)`,
 			rules.ObservationKind, fy).Scan(&observed); err != nil {
@@ -99,9 +97,12 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	}
 	var blocks []*screensv1.PageBlock
 	served := true
-	if view == "ssa" {
+	switch view {
+	case "ssa":
 		blocks, served, err = s.selfAssessments(ctx, sc, fy)
-	} else {
+	case "spiritual":
+		blocks, served, err = s.spiritual(ctx, sc, fy, query)
+	default:
 		t := now.In(nairobi)
 		today := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
 		blocks, served, err = s.trainings(ctx, sc, fy, today)

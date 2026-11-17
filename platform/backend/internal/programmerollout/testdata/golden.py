@@ -41,6 +41,7 @@ TABLES = (
     ("ssa_record", "id"),
     ("ssa_score", "ssa_record_id"),
     ("partner_assignment", "id"),
+    ("staff_school_assignment", "id"),
 )
 
 
@@ -187,6 +188,7 @@ def file_rows():
             [stamp, stamp, cluster, schools[0][0]],
         )
         file_ssa(cursor, work, on, officer, partner, stamp)
+        file_spiritual(cursor, work, on, officer, partner, stamp)
 
 
 def file_ssa(cursor, work, on, officer, partner, stamp):
@@ -365,6 +367,102 @@ def file_ssa(cursor, work, on, officer, partner, stamp):
     )
 
 
+def file_spiritual(cursor, work, on, officer, partner, stamp):
+    """The Spiritual Formation view's facts: two schools outside any cluster
+    whose only confirmed SSA is last year's, one weak in both of the pair and
+    answered in one (its focus), one weak in the Word of God alone and
+    answered by a secondary focus, both shared with an officer of the second
+    Programme Lead; and the team's Christian Transformation course delivered,
+    a CC-SEL session a partner has dated, a camp held in review and a
+    cancelled one."""
+    from apps.hr.team_roster import team_members
+
+    cursor.execute(
+        "SELECT r.school_id, string_agg(x.intervention, ',' ORDER BY x.score, x.intervention) "
+        "FROM ssa_record r JOIN ssa_score x ON x.ssa_record_id = r.id JOIN school s ON s.id = r.school_id "
+        "JOIN staff_school_assignment a ON a.school_id = s.id AND a.staff_id = %s "
+        "WHERE r.fy = '2026' AND r.verification_status = 'confirmed' AND r.deleted_at IS NULL "
+        "AND s.cluster_id IS NULL AND s.deleted_at IS NULL AND s.operational_status IN ('active', 'reopened') "
+        "AND NOT EXISTS (SELECT 1 FROM ssa_record o WHERE o.school_id = s.id AND o.fy = '2027') "
+        "GROUP BY r.school_id ORDER BY r.school_id",
+        [officer],
+    )
+    both = alone = None
+    for school_id, order in cursor.fetchall():
+        weakest = order.split(",")[:3]
+        pair = {"christlike_behaviour", "exposure_to_word_of_god"} & set(weakest)
+        if len(pair) == 2 and both is None:
+            both = school_id
+        elif pair == {"exposure_to_word_of_god"} and alone is None:
+            alone = school_id
+    lead = User.objects.get(email="pl2@edify.org")
+    colleague = sorted(team_members(lead), key=lambda p: p.id)[0].id
+    for index, school_id in enumerate((both, alone), start=1):
+        cursor.execute(
+            "INSERT INTO staff_school_assignment (id, created_at, updated_at, school_id, staff_id) "
+            "VALUES (%s, %s, %s, %s, %s)",
+            [f"gprt{index:02d}", stamp, stamp, school_id, colleague],
+        )
+    work(
+        activity_type="school_visit",
+        status="scheduled",
+        planned_date=on(12),
+        school_id=both,
+        focus_intervention="christlike_behaviour",
+        activity_name_snapshot="Character follow-up visit",
+    )
+    work(
+        activity_type="school_visit",
+        status="planned",
+        planned_date=None,
+        school_id=alone,
+        focus_intervention="leadership",
+        secondary_focus_interventions=["exposure_to_word_of_god"],
+    )
+    work(
+        activity_type="school_visit",
+        status="cancelled",
+        planned_date=on(1),
+        school_id=both,
+        focus_intervention="exposure_to_word_of_god",
+    )
+    christian = "cmw9p6zjg00u2wieihg9o"
+    work(
+        activity_type="in_school_training",
+        status="completed",
+        planned_date=on(-6),
+        training_course_id=christian,
+        teachers_attended=5,
+    )
+    work(
+        activity_type="cluster_training",
+        status="partner_scheduled",
+        planned_date=on(9),
+        catalogue_item_id="cmw9p6zui00zapceihg6m",
+        delivery_type="partner",
+        assigned_partner_id=partner,
+        responsible_staff_id=None,
+        monitored_by_staff_id=officer,
+        school_id=None,
+        cluster_id=one(
+            cursor,
+            "SELECT cluster_id FROM school WHERE cluster_id IS NOT NULL ORDER BY id LIMIT 1",
+        ),
+    )
+    work(
+        activity_type="training",
+        status="submitted_to_pl",
+        planned_date=on(-2),
+        catalogue_item_id="cmw9p6zst00z4rbeihgve",
+    )
+    work(
+        activity_type="training",
+        status="cancelled",
+        planned_date=on(-1),
+        catalogue_item_id="cmw9p6zt500ttxweihgpq",
+    )
+
+
 def one_confirmed(cursor, officer):
     return one(
         cursor,
@@ -400,6 +498,17 @@ try:
         ("pl1@edify.org", {"view": "ssa"}),
         ("pl1@edify.org", {"view": "SSA", "fy": "2026"}),
         ("pl1@edify.org", {"view": "ssa", "fy": "2025"}),
+        ("pl1@edify.org", {"view": "spiritual"}),
+        ("pl1@edify.org", {"view": " Spiritual "}),
+        ("pl1@edify.org", {"view": "spiritual", "weak_page": "2"}),
+        ("pl1@edify.org", {"view": "spiritual", "weak_page": "99"}),
+        ("pl1@edify.org", {"view": "spiritual", "weak_page": "x"}),
+        ("pl2@edify.org", {"view": "spiritual"}),
+        ("pl2@edify.org", {"view": "spiritual", "fy": "2026"}),
+        ("pl2@edify.org", {"view": "spiritual", "fy": "2025"}),
+        ("pl2@edify.org", {"view": "spiritual", "fy": "2027", "weak_page": "3"}),
+        ("pl2@edify.org", {}),
+        ("pl2@edify.org", {"view": "ssa"}),
         ("cceo@edify.org", {}),
         ("accountant@edify.org", {}),
     ):

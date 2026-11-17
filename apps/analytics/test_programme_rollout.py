@@ -686,6 +686,18 @@ class SpiritualTest(RolloutFixture):
         self.assertIn(f"focus_intervention={WOG}", own1["plan_url"])
         self.assertEqual(self.data["summary"]["weak_without_plan"], 2)
 
+    def test_weak_schools_of_one_name_and_score_keep_one_order(self):
+        rows = [
+            {"has_gap": True, "lowest": 1.6, "name": "Kasawo", "school_id": "s2"},
+            {"has_gap": False, "lowest": 1.0, "name": "Aloi", "school_id": "s0"},
+            {"has_gap": True, "lowest": 1.6, "name": "Kasawo", "school_id": "s1"},
+            {"has_gap": True, "lowest": 1.2, "name": "Zebra", "school_id": "s3"},
+        ]
+        self.assertEqual(
+            [r["school_id"] for r in sorted(rows, key=rollout._weak_order)],
+            ["s3", "s1", "s2", "s0"],
+        )
+
     def test_spiritual_programmes_by_family_and_deliverer(self):
         programmes = {r["id"]: r for r in self.data["programmes"]}
         self.assertEqual(

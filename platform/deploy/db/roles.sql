@@ -1030,3 +1030,6 @@ GRANT SELECT (area_id, intervention) ON impact_outcome_area_domain TO edify_gate
 -- Programme Rollout (internal/programmerollout): whether the Regional Lead
 -- observed a training in the year.
 GRANT SELECT (fy) ON cce_regional_engagement TO edify_gateway_ro;
+-- Programme Rollout's Spiritual Formation view: a response to a weak
+-- spiritual area may name it as a secondary focus.
+GRANT SELECT (secondary_focus_interventions) ON activity TO edify_gateway_ro;
