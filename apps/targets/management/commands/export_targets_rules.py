@@ -6,9 +6,10 @@ what this command writes to platform/backend/internal/targets/rules.json:
 which performance metric feeds which target area; the official areas (a
 missing one is repaired on read, which Go hands on); which StaffTargetProfile
 columns each area's annual fallback adds; the review stages that are not yet
-an agreement; the pace bands; the quarter and month names. A change to any of
-them must be exported again; apps/targets/test_targets_rules_export.py fails
-until it is.
+an agreement; the pace bands; the quarter and month names; and the sources
+and workflow states the ledger rebuild credits (which Go works out in memory
+for a ledger marked stale). A change to any of them must be exported again;
+apps/targets/test_targets_rules_export.py fails until it is.
 
     python manage.py export_targets_rules
 """
@@ -53,8 +54,14 @@ def rules() -> dict:
     from apps.targets import team_targets
     from apps.targets.fy_calendar import MONTH_LABELS, QUARTERS
     from apps.targets.my_targets import (
+        AREA_SOURCES,
+        COMPLETED_STATUSES,
+        IA_VERIFIED_STATUSES,
+        MSCS_CREDITED_STATUSES,
+        MSCS_PENDING_STATUSES,
         OFFICIAL_TARGET_AREAS,
         PERFORMANCE_METRIC_TO_AREA,
+        RETURNED_STATUSES,
     )
 
     return {
@@ -70,6 +77,20 @@ def rules() -> dict:
         },
         "quarters": list(QUARTERS),
         "month_labels": list(MONTH_LABELS),
+        # TargetAchievementService._rebuild: each area's source, in the
+        # order it is credited, and the workflow states that credit,
+        # reverse or leave a source pending.
+        "rebuild": {
+            "sources": [
+                [area, kind, sorted(str(t) for t in types) if types else []]
+                for area, (kind, types) in AREA_SOURCES.items()
+            ],
+            "returned": sorted(RETURNED_STATUSES),
+            "completed": sorted(str(s) for s in COMPLETED_STATUSES),
+            "ia_verified": sorted(IA_VERIFIED_STATUSES),
+            "mscs_credited": sorted(MSCS_CREDITED_STATUSES),
+            "mscs_pending": sorted(MSCS_PENDING_STATUSES),
+        },
     }
 
 

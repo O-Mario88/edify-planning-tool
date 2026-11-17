@@ -14,16 +14,19 @@ scheduled), a training this month, a confirmed SSA and an approved MSCS; three o
 to the officer, two of them Core Schools with packages part done, one with a
 confirmed SSA scored below Strong in two interventions; a professional
 development request; and three Projects assigned to the officer (two live,
-one completed), the first also assigned to a Project Coordinator. It
-also asks for the page of a partner's field officer and administrator,
-logins without a People record. It
-then brings the officers' ledgers up to date as any reading page does
-(refresh_many), so the page's own rebuild finds nothing to change; asks the
-page for this month, an earlier month, another year and an officer with no
-agreement; writes the rows (the ledger rows the refresh wrote among them,
-found by their sources) and the answers to GOLDEN_OUT and deletes the rows.
-Dates sit around the day it was written, so
-internal/integration/my_targets_test.go compares within half an hour.
+one completed), the first also assigned to a Project Coordinator.
+
+It then brings the officers' ledgers up to date as any reading page does
+(refresh_many), then changes some of the officer's work of the year without
+the signals that mark the ledger and marks it by hand, so the page's own
+rebuild has something to do on every read of that year (each read rolls
+back). It asks the page for this month, an earlier month, another year, an
+officer with no agreement, the year after, a Project Coordinator and a
+partner's field officer and administrator (logins without a People
+record); writes the rows (the stored ledger rows and the mark among them)
+and the answers to GOLDEN_OUT and deletes the rows. Dates sit around the day
+it was written, so internal/integration/my_targets_test.go compares within
+half an hour.
 """
 
 import json
@@ -119,8 +122,17 @@ TABLES = (
 )
 
 
+def officer_owners():
+    """The officer's account and People record: a ledger mark names either."""
+    officer = StaffProfile.objects.get(user__email=OFFICER)
+    return [officer.user_id, officer.id]
+
+
 def clear():
     TargetAchievementLedger.objects.filter(source_id__startswith=P).delete()
+    TargetLedgerDirty.objects.filter(
+        owner_id__in=officer_owners(), fy__in=[FY, NEXT]
+    ).delete()
     with connection.cursor() as cursor:
         for table in TABLES:
             cursor.execute(f'DELETE FROM "{table}" WHERE id LIKE %s', [P + "%"])
@@ -569,6 +581,49 @@ def file_rows():
     )
     if left.exists():
         raise SystemExit("the ledger is still marked after the refresh")
+    file_stale(officer)
+
+
+def file_stale(officer):
+    """Change the officer's sources after the refresh without the signals
+    that mark the ledger, then mark it as those saves would: so the page
+    rebuilds on every read (and the read's rollback undoes it). A visit is
+    verified with its Activity SF ID, one is returned by IA, one moves to
+    another month, a done visit is deleted, the approved story is rejected
+    and a confirmed SSA is collected."""
+    visits = Activity.objects.filter(id__startswith=P)
+    visits.filter(id=P + "A7").update(
+        status="ia_verified", salesforce_activity_id="SVE-GMT7"
+    )
+    visits.filter(id=P + "A1").update(status="returned_by_ia")
+    visits.filter(id=P + "A2").update(planned_date=day_of(2))
+    visits.filter(id=P + "A4").update(deleted_at=dj_timezone.now())
+    MostSignificantChangeStory.objects.filter(id=P + "M1").update(status="rejected")
+    # One SSA a school a year: a school with none this year.
+    school = (
+        School.objects.filter(deleted_at__isnull=True)
+        .exclude(id__in=SsaRecord.objects.filter(fy=FY).values("school_id"))
+        .order_by("id")
+        .first()
+    )
+    SsaRecord.objects.bulk_create(
+        [
+            SsaRecord(
+                id=P + "S3",
+                school=school,
+                date_of_ssa=day_of(MONTH, 3),
+                fy=FY,
+                quarter=Cal.quarter_of_month(MONTH),
+                uploaded_by=officer.user_id,
+                collected_by_user_id=officer.user_id,
+                verification_status="confirmed",
+                average_score=6.5,
+            )
+        ]
+    )
+    TargetLedgerDirty.objects.create(
+        owner_id=officer.user_id, fy=FY, marked_at=dj_timezone.now()
+    )
 
 
 def dump_rows():
@@ -585,6 +640,11 @@ def dump_rows():
         rows["target_achievement_ledger"] = [
             json.loads(r[0]) for r in cursor.fetchall()
         ]
+        cursor.execute(
+            "SELECT row_to_json(t)::text FROM target_ledger_dirty t WHERE owner_id = ANY(%s) ORDER BY id",
+            [officer_owners()],
+        )
+        rows["target_ledger_dirty"] = [json.loads(r[0]) for r in cursor.fetchall()]
     return rows
 
 

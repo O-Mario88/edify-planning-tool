@@ -5,9 +5,11 @@
 // lead line-manages with their delivery, targets, SSA coverage, what waits
 // on the lead, review, coaching, leave, overdue policies and risk.
 //
-// It reads; it never writes. The existing page rebuilds an officer's target
-// ledger when it is marked stale (targets.ErrHandOn): that reader is passed
-// on to the existing page, which writes as it always has (owner, 2026-11-14).
+// It reads; it never writes (owner, 2026-11-14). The existing page rebuilds
+// an officer's target ledger when it is marked stale; the target engine works
+// that rebuild out in memory and the existing page stays the ledger's only
+// writer. What the engine cannot read (targets.ErrHandOn) passes the reader
+// on to the existing page.
 //
 // The doors, statuses and words are exported to rules.json by `manage.py
 // export_my_team_rules`; apps/hr/test_my_team_rules_export.py fails when the

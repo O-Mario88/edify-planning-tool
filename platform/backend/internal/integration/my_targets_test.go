@@ -18,7 +18,8 @@ import (
 )
 
 // myTargetsTables is what the golden files, parents first, and the column
-// its rows are found by (the ledger by its sources).
+// its rows are found by (the ledger by its sources; a ledger mark, which
+// names the officer, is cleared by its owner and year as well).
 var myTargetsTables = [][2]string{
 	{"hr_strategic_priority_cycle", "id"}, {"hr_strategic_priority", "id"}, {"hr_priority_milestone", "id"},
 	{"hr_milestone_activity_rule", "id"}, {"hr_milestone_allocation", "id"}, {"hr_milestone_period_target", "id"},
@@ -26,7 +27,7 @@ var myTargetsTables = [][2]string{
 	{"hr_activity_priority_link", "id"}, {"monthly_personal_target", "id"},
 	{"hr_performance_review", "id"}, {"hr_performance_priority", "id"}, {"pd_request", "id"}, {"core_plan", "id"},
 	{"staff_school_assignment", "id"}, {"project_staff_assignment", "id"}, {"project_school_assignment", "id"},
-	{"ssa_score", "id"}, {"target_achievement_ledger", "source_id"},
+	{"ssa_score", "id"}, {"target_achievement_ledger", "source_id"}, {"target_ledger_dirty", "owner_id"},
 }
 
 // The existing feed's My Targets for an officer with agreed priorities,
@@ -34,8 +35,9 @@ var myTargetsTables = [][2]string{
 // Schools and the portfolio's groups, for this month, an earlier month and
 // the year before, and for an officer with no agreement; Projects assigned
 // to the officer and to a Project Coordinator, who is shown the workspace
-// strip; a partner's two logins, which have no People record; and in the
-// year after, approved milestone allocations of every
+// strip; a partner's two logins, which have no People record; the officer's
+// year read with its ledger marked stale after work changed (Go works the
+// rebuild out in memory); and in the year after, approved milestone allocations of every
 // kind — each page whole.
 // Skipped unless EDIFY_MY_TARGETS_GOLDEN names a file
 // internal/mytargets/testdata/golden.py wrote within the last half hour.
@@ -63,11 +65,32 @@ func TestMyTargetsMatchesTheExistingFeed(t *testing.T) {
 		t.Skipf("the golden was written at %s; write it again", golden.Written)
 	}
 	ctx := context.Background()
+	// The ledger mark names the officer, not a "gmt" row: it is found by
+	// its owner and year.
+	var marks []struct {
+		Owner string `json:"owner_id"`
+		FY    string `json:"fy"`
+	}
+	for _, row := range golden.Rows["target_ledger_dirty"] {
+		var m struct {
+			Owner string `json:"owner_id"`
+			FY    string `json:"fy"`
+		}
+		if err := json.Unmarshal(row, &m); err != nil {
+			t.Fatal(err)
+		}
+		marks = append(marks, m)
+	}
 	clear := func() {
 		for i := len(myTargetsTables) - 1; i >= 0; i-- {
 			table, column := myTargetsTables[i][0], myTargetsTables[i][1]
 			if _, err := admin.Exec(ctx, fmt.Sprintf(`DELETE FROM %s WHERE %s LIKE 'gmt%%'`, table, column)); err != nil {
 				t.Errorf("clearing %s: %v", table, err)
+			}
+		}
+		for _, m := range marks {
+			if _, err := admin.Exec(ctx, `DELETE FROM target_ledger_dirty WHERE owner_id = $1 AND fy = $2`, m.Owner, m.FY); err != nil {
+				t.Errorf("clearing a ledger mark: %v", err)
 			}
 		}
 	}

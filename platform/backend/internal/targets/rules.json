@@ -55,6 +55,90 @@
     "Q3",
     "Q4"
   ],
+  "rebuild": {
+    "completed": [
+      "accountant_confirmed",
+      "awaiting_ia_verification",
+      "closed",
+      "completed",
+      "evidence_accepted",
+      "ia_verified",
+      "salesforce_id_required",
+      "submitted_to_pl"
+    ],
+    "ia_verified": [
+      "accountant_confirmed",
+      "closed",
+      "ia_verified"
+    ],
+    "mscs_credited": [
+      "approved"
+    ],
+    "mscs_pending": [
+      "draft",
+      "returned",
+      "submitted"
+    ],
+    "returned": [
+      "cancelled",
+      "rejected",
+      "returned_by_ia",
+      "returned_by_pl"
+    ],
+    "sources": [
+      [
+        "school_visits",
+        "activity",
+        [
+          "baseline_ssa_visit",
+          "coaching_visit",
+          "core_assessment_visit",
+          "core_visit",
+          "donor_visit",
+          "follow_up_visit",
+          "in_school_coaching_visit",
+          "in_school_support",
+          "partner_ssa_collection",
+          "school_invitation",
+          "school_visit",
+          "school_visit_ssa_collection",
+          "social_visit",
+          "story_gathering_visit",
+          "training_follow_up_visit"
+        ]
+      ],
+      [
+        "cluster_meetings",
+        "activity",
+        [
+          "cluster_meeting",
+          "cluster_meeting_ssa_review"
+        ]
+      ],
+      [
+        "cluster_trainings",
+        "activity",
+        [
+          "cluster_training",
+          "cluster_training_ssa_collection",
+          "core_training",
+          "in_school_training",
+          "school_improvement_training",
+          "training"
+        ]
+      ],
+      [
+        "ssa_completed",
+        "ssa_record",
+        []
+      ],
+      [
+        "mscs",
+        "mscs",
+        []
+      ]
+    ]
+  },
   "unagreed_stages": [
     "not_started",
     "priorities_draft",

@@ -987,3 +987,7 @@ GRANT SELECT (allocation_id, activity_id) ON hr_activity_priority_link TO edify_
 -- assignment's responsibility, the Project's school focus.
 GRANT SELECT (id, responsibility) ON project_staff_assignment TO edify_gateway_ro;
 GRANT SELECT (school_focus) ON project TO edify_gateway_ro;
+-- The target engine (internal/targets) works out a ledger marked stale in
+-- memory, as the existing rebuild would write it: each row's source and the
+-- day it credits. Go reads it; it never writes the ledger.
+GRANT SELECT (source_type, source_id, activity_date) ON target_achievement_ledger TO edify_gateway_ro;

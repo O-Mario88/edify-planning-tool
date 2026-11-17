@@ -13,6 +13,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/feeddom"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/targets"
 )
@@ -169,6 +170,14 @@ func (s *Service) build(ctx context.Context, p auth.Principal, fy string, month 
 	}
 	blocks = append(blocks, tracker...)
 	blocks = append(blocks, textPanel("", "Last refreshed "+now.In(local).Format("02 Jan 2006 15:04")))
+	// The feed reads a label line followed by a figure as a data row in
+	// every panel (page_blocks._paired): the focus panel's "Submit MSCS →"
+	// before the next area's rank, for one.
+	for _, b := range blocks {
+		if panel := b.GetPanel(); panel != nil {
+			panel.Items = feeddom.Paired(panel.Items)
+		}
+	}
 	return &screensv1.GetPageResponse{
 		Header:  header(),
 		Blocks:  blocks,

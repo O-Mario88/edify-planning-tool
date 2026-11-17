@@ -66,7 +66,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	today := time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC)
 	rows, items, err := s.roster(ctx, p, fy, today, now)
 	if errors.Is(err, targets.ErrHandOn) {
-		// The existing page rebuilds a stale ledger on this read.
+		// A read the target engine does not answer (a missing official area).
 		return nil, false, nil
 	}
 	if err != nil {

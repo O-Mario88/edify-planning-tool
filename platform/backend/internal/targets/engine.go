@@ -47,7 +47,8 @@ func Prepare(ctx context.Context, db schooldirectory.Querier, people []Person, f
 	if err != nil {
 		return nil, err
 	}
-	if err := ledgerCurrent(ctx, db, people, fy); err != nil {
+	stale, err := staleLedgers(ctx, db, people, fy)
+	if err != nil {
 		return nil, err
 	}
 	if err := r.readAreas(ctx, db, people, canonical); err != nil {
@@ -55,6 +56,11 @@ func Prepare(ctx context.Context, db schooldirectory.Querier, people []Person, f
 	}
 	if err := r.readFigures(ctx, db, people); err != nil {
 		return nil, err
+	}
+	if len(stale) > 0 {
+		if err := r.projectLedger(ctx, db, stale, canonical, r.areaKeys(people)); err != nil {
+			return nil, err
+		}
 	}
 	start, end := FYRange(fy)
 	r.holidays, err = calendarpage.PublicHolidayDays(ctx, db, start, end.AddDate(0, 0, -1))
@@ -111,9 +117,10 @@ func activeAreas(ctx context.Context, db schooldirectory.Querier) (map[string]bo
 	return active, nil
 }
 
-// ledgerCurrent is refresh_many's question: a mark for any of them (by
-// account or People record) means the existing engine rebuilds on this read.
-func ledgerCurrent(ctx context.Context, db schooldirectory.Querier, people []Person, fy string) error {
+// staleLedgers is refresh_many's question: the people with a mark for the
+// year (by account or People record), whose ledger the existing engine
+// rebuilds on this read.
+func staleLedgers(ctx context.Context, db schooldirectory.Querier, people []Person, fy string) ([]Person, error) {
 	owners := []string{}
 	for _, p := range people {
 		owners = append(owners, p.UserID)
@@ -121,15 +128,30 @@ func ledgerCurrent(ctx context.Context, db schooldirectory.Querier, people []Per
 			owners = append(owners, p.StaffID)
 		}
 	}
-	var stale bool
-	if err := db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM target_ledger_dirty WHERE fy = $1 AND owner_id = ANY($2))`,
-		fy, owners).Scan(&stale); err != nil {
-		return fmt.Errorf("targets: reading the ledger marks: %w", err)
+	rows, err := db.Query(ctx, `SELECT DISTINCT owner_id FROM target_ledger_dirty WHERE fy = $1 AND owner_id = ANY($2)`, fy, owners)
+	if err != nil {
+		return nil, fmt.Errorf("targets: reading the ledger marks: %w", err)
 	}
-	if stale {
-		return fmt.Errorf("%w: a ledger is marked for rebuilding", ErrHandOn)
+	defer rows.Close()
+	marked := map[string]bool{}
+	for rows.Next() {
+		var owner string
+		if err := rows.Scan(&owner); err != nil {
+			return nil, fmt.Errorf("targets: reading a ledger mark: %w", err)
+		}
+		marked[owner] = true
 	}
-	return nil
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("targets: reading the ledger marks: %w", err)
+	}
+	stale, seen := []Person{}, map[string]bool{}
+	for _, p := range people {
+		if (marked[p.UserID] || (p.StaffID != "" && marked[p.StaffID])) && !seen[p.UserID] {
+			seen[p.UserID] = true
+			stale = append(stale, p)
+		}
+	}
+	return stale, nil
 }
 
 // readAreas is priority_target_areas_for_users: the latest agreed review's
@@ -224,16 +246,11 @@ ORDER BY t.user_id, a.sort_order, t.month_of_fy`, legacy, r.FY)
 // readFigures reads the explicit monthly targets, the target profiles and
 // the validated ledger of everyone's areas.
 func (r *Roster) readFigures(ctx context.Context, db schooldirectory.Querier, people []Person) error {
-	users, staff, keys := []string{}, []string{}, []string{}
+	users, staff, keys := []string{}, []string{}, r.areaKeys(people)
 	for _, p := range people {
 		users = append(users, p.UserID)
 		if p.StaffID != "" {
 			staff = append(staff, p.StaffID)
-		}
-		for _, a := range r.areas[p.UserID] {
-			if !slices.Contains(keys, a.Key) {
-				keys = append(keys, a.Key)
-			}
 		}
 	}
 	rows, err := db.Query(ctx, `
@@ -307,6 +324,19 @@ WHERE l.user_id = ANY($1) AND l.fy = $2 AND l.validation_status = 'validated' AN
 		r.ledger[user][key] = s
 	}
 	return lrow.Err()
+}
+
+// areaKeys are the areas anyone of people is measured on.
+func (r *Roster) areaKeys(people []Person) []string {
+	keys := []string{}
+	for _, p := range people {
+		for _, a := range r.areas[p.UserID] {
+			if !slices.Contains(keys, a.Key) {
+				keys = append(keys, a.Key)
+			}
+		}
+	}
+	return keys
 }
 
 // readLeave is each person's approved leave spans (start and end as ISO

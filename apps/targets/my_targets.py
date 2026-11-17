@@ -55,6 +55,10 @@ from apps.analytics.pl_analytics_service import (
 IA_VERIFIED_STATUSES = ("ia_verified", "closed", "accountant_confirmed")
 
 RETURNED_STATUSES = ("returned_by_pl", "returned_by_ia", "cancelled", "rejected")
+#: A story credits once approved and is pending while still in these
+#: states; any other (rejected, archived) reverses its credit.
+MSCS_CREDITED_STATUSES = ("approved",)
+MSCS_PENDING_STATUSES = ("submitted", "returned", "draft")
 #: Of those, the work sent back to be corrected and submitted again. Work
 #: that was cancelled or rejected is not waiting on anybody (owner,
 #: 2026-10-08: cancelled work does not count).
@@ -783,9 +787,9 @@ class TargetAchievementService:
 
         # ── MSCS: only APPROVED stories count, credited by story date ───────
         for story in sources.mscs.get(user.id, ()):
-            if story.status == "approved":
+            if story.status in MSCS_CREDITED_STATUSES:
                 status = "validated"
-            elif story.status in ("submitted", "returned", "draft"):
+            elif story.status in MSCS_PENDING_STATUSES:
                 status = "provisional"
             else:  # rejected / archived
                 status = "reversed"

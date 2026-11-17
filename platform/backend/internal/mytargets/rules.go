@@ -7,8 +7,9 @@
 // Project priorities, the priority portfolio and the Core School tracker.
 //
 // It reads; it never writes. The existing page rebuilds the reader's
-// achievement ledger first; the target engine (internal/targets) hands the
-// page on whenever that rebuild would change anything. It also hands on a
+// achievement ledger first when it is marked stale; the target engine
+// (internal/targets) works that rebuild out in memory instead, and the
+// existing application stays the ledger's only writer. It hands on a
 // team's or Project's allocation among the reader's own, a milestone with no
 // metric definition, a list longer than one page, several assigned Project
 // cards the feed reads apart, and any query it does not read. A reader
