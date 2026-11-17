@@ -49,6 +49,9 @@ def _page() -> dict:
         "country_roles": sorted(COUNTRY_ROLES),
         "dashboard_role": dashboard_embed.PROGRAM_LEAD,
         "oversight_roles": sorted(oversight_views.MONITORS_ON_OVERSIGHT_ROLES),
+        # Where a reader who keeps the monitors as Planning Oversight tabs is
+        # sent (_to_planning_monitor).
+        "oversight_path": oversight_views.TEAM_OVERSIGHT_PATH,
     }
 
 

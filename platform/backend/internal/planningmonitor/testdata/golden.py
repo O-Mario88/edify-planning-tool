@@ -328,6 +328,11 @@ try:
         ("admin@edify.org", {}),
         (LEAD, {}),
         ("cceo@edify.org", {}),
+        ("ia@edify.org", {}),
+        ("ia@edify.org", {"view": "execution"}),
+        ("ia@edify.org", {"view": "Planning"}),
+        ("ia@edify.org", {"fy": "2026"}),
+        ("ia@edify.org", {"program_lead": "a b"}),
     ):
         with transaction.atomic():
             page_status, page_body = read_page(

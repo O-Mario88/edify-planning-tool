@@ -92,6 +92,7 @@ var rules = func() (r struct {
 		CountryRoles   []string `json:"country_roles"`
 		DashboardRole  string   `json:"dashboard_role"`
 		OversightRoles []string `json:"oversight_roles"`
+		OversightPath  string   `json:"oversight_path"`
 	} `json:"page"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {

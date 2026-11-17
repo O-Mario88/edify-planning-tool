@@ -43,8 +43,9 @@ func NewPage(db schooldirectory.Querier, now func() time.Time) *Page { return &P
 // Build draws the Planning tab for a country reader (the Country Director,
 // the Admin) and sends a Programme Lead to their dashboard's section. The
 // Execution tab, a chosen Lead or gap (whose list files follow-ups), the
-// data form, IA (whose monitors are Planning Oversight tabs) and the
-// regional readers hand on; the path without its slash is not a page.
+// data form and the regional readers hand on; IA, whose monitors are
+// Planning Oversight tabs, is sent to the same tab there. The path without
+// its slash is not a page.
 func (pg *Page) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
 	if path == strings.TrimSuffix(PagePath, "/") {
 		return nil, true, pagegate.ErrNotAvailable
@@ -65,7 +66,10 @@ func (pg *Page) Build(ctx context.Context, p auth.Principal, path string, query 
 		}
 		return &screensv1.GetPageResponse{Redirect: dashboardSection}, true, nil
 	}
-	if slices.Contains(page.OversightRoles, p.ActiveRole) || !slices.Contains(page.CountryRoles, p.ActiveRole) {
+	if slices.Contains(page.OversightRoles, p.ActiveRole) {
+		return toOversight(query)
+	}
+	if !slices.Contains(page.CountryRoles, p.ActiveRole) {
 		return nil, false, nil
 	}
 	for key, values := range query {
@@ -109,4 +113,35 @@ func (pg *Page) Build(ctx context.Context, p auth.Principal, path string, query 
 		Description: "Each Programme Lead's and CCEO's year against the visits it should hold — 280 and 560 — their partner work, " +
 			"the schools planned for training, and the schools nobody has planned for yet."}
 	return &screensv1.GetPageResponse{Header: header, Blocks: CountryBlocks(m, ledger, years), WebPath: PagePath}, true, nil
+}
+
+// toOversight is _to_planning_monitor for a reader who keeps the monitors as
+// Planning Oversight tabs: the same query, its view the tab's. Django keeps
+// the request's own key order, which url.Values does not, so a query with
+// more than one other key, or a key given twice, hands on, as does the data
+// form.
+func toOversight(query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	view := "monitor"
+	if strings.ToLower(strings.TrimSpace(query.Get("view"))) == "execution" {
+		view = "execution"
+	}
+	other := []string{}
+	for key, values := range query {
+		switch {
+		case key == "format" || len(values) != 1:
+			return nil, false, nil
+		case key != "view":
+			other = append(other, url.QueryEscape(key)+"="+url.QueryEscape(values[0]))
+		}
+	}
+	if len(other) > 1 {
+		return nil, false, nil
+	}
+	pairs := append(other, "view="+view)
+	if _, given := query["view"]; given && len(other) == 1 {
+		// Django replaces the view where the request gave it, which may be
+		// before or after the other key.
+		return nil, false, nil
+	}
+	return &screensv1.GetPageResponse{Redirect: rules.Page.OversightPath + "?" + strings.Join(pairs, "&")}, true, nil
 }
