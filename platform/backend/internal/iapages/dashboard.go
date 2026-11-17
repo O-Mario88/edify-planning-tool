@@ -35,9 +35,9 @@ type dashboardRules struct {
 	Outcomes                outcomeRules `json:"outcomes"`
 }
 
-// handedOnViews are the views Go does not draw yet: Collection, Impact
-// reports and Map stay with the existing application.
-var handedOnViews = []string{"collection", "reports", "map"}
+// handedOnViews are the views Go does not draw yet: Collection and Map stay
+// with the existing application.
+var handedOnViews = []string{"collection", "map"}
 
 // dashboardKeys are the query keys the dashboard reads.
 var dashboardKeys = []string{"view", "project", "fy"}
@@ -99,6 +99,12 @@ func (s *Service) dashboard(ctx context.Context, p auth.Principal, role Role, qu
 	switch view {
 	case "outcomes":
 		blocks, served, err := s.outcomes(ctx, scope, query, now)
+		if err != nil || !served {
+			return nil, served, err
+		}
+		viewBlocks = blocks
+	case "reports":
+		blocks, served, err := s.reportsView(ctx, p, scope, query, now)
 		if err != nil || !served {
 			return nil, served, err
 		}

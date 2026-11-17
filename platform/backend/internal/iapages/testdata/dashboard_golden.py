@@ -1,5 +1,6 @@
 """Write dashboard_golden.json: Impact Assessment's dashboard
-(/ia/dashboard/) on its Outcomes (the default), Today and Operations views as
+(/ia/dashboard/) on its Outcomes (the default), Today, Impact reports and
+Operations views as
 the existing feed reads it, over verification work and project enrolments the
 development seed does not hold.
 
@@ -273,6 +274,7 @@ def dump_rows():
 
 OUTCOMES = [
     {},
+    {"view": "reports"},
     {"view": "outcomes"},
     {"fy": "2026"},
     {"fy": "2028"},
@@ -298,11 +300,12 @@ try:
         )
         first_project = cursor.fetchone()[0]
     OUTCOMES.append({"project": first_project})
+    OUTCOMES.append({"view": "reports", "project": first_project})
     OUTCOMES.append({"project": first_project, "fy": "2026", "view": "outcomes"})
     readers = {
         "ia@edify.org": VIEWS + OUTCOMES,
-        "cd@edify.org": VIEWS[:2] + OUTCOMES[:1],
-        "admin@edify.org": VIEWS[:2] + OUTCOMES[:1],
+        "cd@edify.org": VIEWS[:2] + OUTCOMES[:2],
+        "admin@edify.org": VIEWS[:2] + OUTCOMES[:2],
         "rvp@edify.org": VIEWS[:1],
         "pl1@edify.org": VIEWS[:1],
         "cceo@edify.org": VIEWS[:1],
