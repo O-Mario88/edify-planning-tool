@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -242,20 +243,22 @@ func ratOf(s *string) *big.Rat {
 }
 
 // readActivities is each milestone's activityDisplay: its rules' catalogue
-// names, in the order the rules come, once each; else its title. The
-// rules carry no order of their own, so they are read as the existing
-// prefetch reads them.
+// names, once each, in target_distribution.rule_order (catalogue item, then
+// project, one without a project last); else its title.
 func readActivities(ctx context.Context, db schooldirectory.Querier, rows []*row, ids []string) error {
-	rs, err := db.Query(ctx, `SELECT milestone_id, catalogue_item_id FROM hr_milestone_activity_rule WHERE milestone_id = ANY($1)`, ids)
+	rs, err := db.Query(ctx, `SELECT milestone_id, catalogue_item_id, project_id FROM hr_milestone_activity_rule WHERE milestone_id = ANY($1)`, ids)
 	if err != nil {
 		return fmt.Errorf("targetdistribution: reading the activity rules: %w", err)
 	}
-	type rule struct{ milestone, item string }
+	type rule struct {
+		milestone, item string
+		project         *string
+	}
 	list, items := []rule{}, []string{}
 	for rs.Next() {
 		var r rule
 		var item *string
-		if err := rs.Scan(&r.milestone, &item); err != nil {
+		if err := rs.Scan(&r.milestone, &item, &r.project); err != nil {
 			rs.Close()
 			return fmt.Errorf("targetdistribution: reading an activity rule: %w", err)
 		}
@@ -269,6 +272,16 @@ func readActivities(ctx context.Context, db schooldirectory.Querier, rows []*row
 	if err := rs.Err(); err != nil {
 		return fmt.Errorf("targetdistribution: reading the activity rules: %w", err)
 	}
+	sort.SliceStable(list, func(i, j int) bool {
+		a, b := list[i], list[j]
+		if a.item != b.item {
+			return a.item < b.item
+		}
+		if (a.project == nil) != (b.project == nil) {
+			return a.project != nil
+		}
+		return a.project != nil && *a.project < *b.project
+	})
 	names := map[string]string{}
 	ns, err := db.Query(ctx, `SELECT id, coalesce(display_name, '') FROM activity_catalogue_item WHERE id = ANY($1)`, items)
 	if err != nil {

@@ -852,6 +852,16 @@ def _reconcile_rows(
     }
 
 
+def rule_order(rule) -> tuple:
+    """A milestone's activity rules in their unique index's order: by
+    catalogue item, then project, a rule without a project last."""
+    return (
+        str(rule.catalogue_item_id or ""),
+        rule.project_id is None,
+        str(rule.project_id or ""),
+    )
+
+
 def _display_name(allocation: MilestoneAllocation) -> str:
     if allocation.employee_id and getattr(allocation.employee, "user", None):
         return allocation.employee.user.name
@@ -2180,7 +2190,10 @@ def country_distribution_workspace(fy: str, *, country_id: str = "Uganda") -> di
                     context=recommendation_context,
                 )
             catalogue_names = []
-            for rule in milestone.activity_rules.all():
+            # The rules carry no order; read them in their unique index's
+            # order (catalogue item, then project) so the names do not move
+            # with the query plan.
+            for rule in sorted(milestone.activity_rules.all(), key=rule_order):
                 item = getattr(rule, "catalogue_item", None)
                 name = getattr(item, "display_name", "") if item else ""
                 if name and name not in catalogue_names:
