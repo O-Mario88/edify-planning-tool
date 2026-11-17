@@ -229,6 +229,10 @@ def file_rows():
         activity("c", "cluster_meeting", "staff", WEEK + timedelta(days=1), c)
         activity("c", "ssa_activity", "staff", WEEK + timedelta(days=2), c)
         activity("d", "school_visit", "staff", WEEK + timedelta(days=2), d)
+        # A second visit, so the month's visits never cost the same as its
+        # SSA visits: two categories that tie are listed in whatever order
+        # the database returns their cost lines, on either page.
+        activity("d", "school_visit", "staff", WEEK + timedelta(days=2), c)
         activity("e", "ssa_activity", "staff", WEEK + timedelta(days=3), e)
         activity("e", "cluster_meeting", "staff", NEXT_WEEK + timedelta(days=1), e)
         activity("a", "ssa_activity", "staff", NEXT_WEEK + timedelta(days=2), a)
