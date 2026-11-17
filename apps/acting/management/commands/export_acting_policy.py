@@ -52,8 +52,27 @@ def policy() -> dict:
                 "granted": granted(entry),
             }
             for entry in ACTING_ROLES.values()
-        ]
+        ],
+        "page_roles": page_roles(),
     }
+
+
+def page_roles() -> list[str]:
+    """The roles the Acting Leadership page opens to."""
+    from apps.core.permissions import RolePermissionService, can_open_url
+    from apps.core.rbac import EdifyRole
+    from apps.schools.management.commands.export_school_directory_rules import (
+        _role_user,
+    )
+
+    return sorted(
+        role.value
+        for role in EdifyRole
+        if RolePermissionService.can_view_page(
+            _role_user(role.value), "acting_leadership"
+        )
+        and can_open_url(_role_user(role.value), "/acting-leadership")
+    )
 
 
 def rendered() -> str:

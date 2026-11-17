@@ -1,4 +1,12 @@
 {
+  "page_roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "Program Lead"
+  ],
   "roles": [
     {
       "acting_role": "Program Lead",
