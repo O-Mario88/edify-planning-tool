@@ -16,6 +16,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"regexp"
 )
 
 //go:embed rules.json
@@ -61,8 +62,16 @@ var rules = func() (r struct {
 		CampCatalogueType       string      `json:"camp_catalogue_type"`
 		Families                [][2]string `json:"families"`
 	} `json:"spiritual"`
+	Observations struct {
+		Criteria              []string          `json:"criteria"`
+		ChangeRecommendations []string          `json:"change_recommendations"`
+		RecommendationLabels  map[string]string `json:"recommendation_labels"`
+		RatingLabels          map[string]string `json:"rating_labels"`
+		DelivererRows         int               `json:"deliverer_rows"`
+	} `json:"observations"`
 }) {
-	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.PageRoles) == 0 || len(r.TrainingTypes) == 0 || r.PageSize == 0 || len(r.SSA.CollectionTypes) == 0 || len(r.SSA.MatrixInterventions) == 0 || len(r.Spiritual.Interventions) != 2 || len(r.Spiritual.Families) != 3 {
+	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.PageRoles) == 0 || len(r.TrainingTypes) == 0 || r.PageSize == 0 || len(r.SSA.CollectionTypes) == 0 || len(r.SSA.MatrixInterventions) == 0 || len(r.Spiritual.Interventions) != 2 || len(r.Spiritual.Families) != 3 ||
+		len(r.Observations.Criteria) == 0 || !criteriaAreColumns(r.Observations.Criteria) {
 		panic(fmt.Sprintf("programmerollout: the embedded rules are unreadable: %v", err))
 	}
 	return r
@@ -75,3 +84,16 @@ func abbr(code string) string {
 	}
 	return code
 }
+
+// criteriaAreColumns is whether every rubric criterion names a rating
+// column, as the observation query reads them by name.
+func criteriaAreColumns(criteria []string) bool {
+	for _, c := range criteria {
+		if !ratingColumn.MatchString(c) {
+			return false
+		}
+	}
+	return true
+}
+
+var ratingColumn = regexp.MustCompile(`^rating_[a-z_]+$`)

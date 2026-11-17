@@ -76,6 +76,32 @@
     "deferred"
   ],
   "observation_kind": "training_observation",
+  "observations": {
+    "change_recommendations": [
+      "strengthen",
+      "replace"
+    ],
+    "criteria": [
+      "rating_biblical_integration",
+      "rating_need_alignment",
+      "rating_facilitation",
+      "rating_participation",
+      "rating_application"
+    ],
+    "deliverer_rows": 30,
+    "rating_labels": {
+      "1": "1 \u00b7 Not evident",
+      "2": "2 \u00b7 Emerging",
+      "3": "3 \u00b7 Established",
+      "4": "4 \u00b7 Exemplary"
+    },
+    "recommendation_labels": {
+      "continue": "Continue as delivered",
+      "economize": "Economize the delivery",
+      "replace": "Replace the training",
+      "strengthen": "Strengthen with the training partner"
+    }
+  },
   "officer_rows": 60,
   "operating_statuses": [
     "active",

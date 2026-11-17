@@ -46,6 +46,8 @@ TABLES = (
     ("ssa_score", "ssa_record_id"),
     ("partner_assignment", "id"),
     ("staff_school_assignment", "id"),
+    ("cce_regional_engagement", "id"),
+    ("partner_engagement", "id"),
 )
 
 
@@ -193,6 +195,7 @@ def file_rows():
         )
         file_ssa(cursor, work, on, officer, partner, stamp)
         file_spiritual(cursor, work, on, officer, partner, stamp)
+        file_observations(cursor, on, partner, stamp)
 
 
 def file_ssa(cursor, work, on, officer, partner, stamp):
@@ -470,6 +473,121 @@ def file_spiritual(cursor, work, on, officer, partner, stamp):
         planned_date=on(-1),
         catalogue_item_id="cmw9p6zt500ttxweihgpq",
     )
+
+
+PL1 = "cmw9p7axf00zhz7ekherr"
+CHRISTIAN_COURSE = "cmw9p6zjg00u2wieihg9o"
+CC_SEL = "cmw9p6zui00zapceihg6m"
+
+
+def file_observations(cursor, on, partner, stamp):
+    """The Regional Lead's observations: shared with the first lead, of an
+    officer's course (strengthen, open, answered by two partner follow-ups),
+    a partner's cluster training (replace, answered), the Christian
+    Transformation course (continue), a workshop with no training named
+    (strengthen, open) and the partner's CC-SEL session (economize, not
+    rated); one unshared, one shared with the second lead only and one of
+    last year."""
+    author = one(
+        cursor, "SELECT id FROM \"user\" WHERE email = 'regional-lead@edify.org'"
+    )
+    lead_user = one(cursor, "SELECT user_id FROM staff_profile WHERE id = %s", [PL1])
+
+    def activity(where):
+        return one(
+            cursor,
+            f"SELECT id FROM activity WHERE id LIKE 'gpr%%' AND {where} ORDER BY id LIMIT 1",
+        )
+
+    n = 0
+
+    def observe(
+        held, activity_id=None, recommendation="continue", ratings=(None,) * 5, **fields
+    ):
+        nonlocal n
+        n += 1
+        row = {
+            "id": f"gpro{n:02d}",
+            "created_at": f"2026-11-01T08:{n:02d}:00+00:00",
+            "updated_at": stamp,
+            "author_id": author,
+            "kind": "training_observation",
+            "held_on": on(held),
+            "fy": "2027",
+            "country": "Uganda",
+            "program_lead_ids": [PL1],
+            "subject": f"Observation {n}",
+            "notes": "",
+            "agreed_actions": "",
+            "recommendation": recommendation,
+            "feedback": "",
+            "feedback_shared_at": stamp,
+            "acknowledged_at": None,
+            "lead_response": "",
+            "activity_id": activity_id,
+            "rating_biblical_integration": ratings[0],
+            "rating_need_alignment": ratings[1],
+            "rating_facilitation": ratings[2],
+            "rating_participation": ratings[3],
+            "rating_application": ratings[4],
+            **fields,
+        }
+        cursor.execute(
+            'INSERT INTO "cce_regional_engagement" SELECT * FROM json_populate_record(NULL::"cce_regional_engagement", %s::json)',
+            [json.dumps(row, default=str)],
+        )
+        return row["id"]
+
+    course = activity(
+        "activity_type = 'in_school_training' AND training_course_id IS NOT NULL AND training_course_id <> %s"
+        % repr(CHRISTIAN_COURSE)
+    )
+    strengthen = observe(-10, course, "strengthen", (3, 2, 3, 4, None))
+    replaced = observe(
+        -18,
+        activity("activity_type = 'cluster_training' AND status = 'ia_verified'"),
+        "replace",
+        (1, 2, 2, 1, 2),
+        acknowledged_at=stamp,
+    )
+    observe(
+        -5,
+        activity(f"training_course_id = '{CHRISTIAN_COURSE}'"),
+        "continue",
+        (4, 4, 3, 4, 4),
+    )
+    observe(
+        -5,
+        None,
+        "strengthen",
+        (2, None, None, None, None),
+        subject="District leaders' workshop",
+    )
+    observe(-1, activity(f"catalogue_item_id = '{CC_SEL}'"), "economize")
+    observe(-3, course, "strengthen", (1, 1, 1, 1, 1), feedback_shared_at=None)
+    observe(
+        -3,
+        course,
+        "replace",
+        (2, 2, 2, 2, 2),
+        program_lead_ids=["cmw9p7b6a00e4s8ekhefr"],
+    )
+    observe(-300, course, "strengthen", (3, 3, 3, 3, 3), fy="2026")
+
+    for index, (source, held, author_id) in enumerate(
+        (
+            (strengthen, on(-2), lead_user),
+            (strengthen, on(-6), lead_user),
+            (replaced, on(-1), author),
+        ),
+        start=1,
+    ):
+        cursor.execute(
+            "INSERT INTO partner_engagement (created_at, updated_at, id, author_id, author_role, kind, held_on, fy, country, "
+            "subject, notes, agreed_improvements, follow_up_note, partner_id, source_engagement_id) "
+            "VALUES (%s, %s, %s, %s, 'Program Lead', 'quality_follow_up', %s, '2027', 'Uganda', '', '', '', '', %s, %s)",
+            [stamp, stamp, f"gprp{index:02d}", author_id, held, partner, source],
+        )
 
 
 def one_confirmed(cursor, officer):

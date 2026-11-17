@@ -24,6 +24,11 @@ type spiritualFacts struct {
 	deliverers   []*deliverer
 	delivered    int
 	toDeliver    int
+	// The Regional Lead's shared observations, and what naming them needs.
+	observations []observation
+	catalogue    map[string]programme
+	courses      map[string]course
+	names        names
 }
 
 // programmeRow is one programme of "Spiritual programmes".
@@ -50,7 +55,8 @@ func (s *Service) spiritual(ctx context.Context, sc *scope, fy string, query url
 		return nil, served, err
 	}
 	people := sc.rows(nil)
-	if len(people) > rules.OfficerRows || len(f.programmes) > rules.PageSize || len(f.deliverers) > rules.PageSize {
+	if len(people) > rules.OfficerRows || len(f.programmes) > rules.PageSize || len(f.deliverers) > rules.PageSize ||
+		len(f.observations) > rules.PageSize {
 		return nil, false, nil
 	}
 	number, pages, start, end := pageOf(query, weakPageParam, len(f.weak))
@@ -72,9 +78,7 @@ func (s *Service) spiritual(ctx context.Context, sc *scope, fy string, query url
 		panelText("A response is any activity this year at the school, or at its cluster, whose focus or secondary interventions include the weak area. Plan is offered on your own schools only; an officer plans their own.", "")}}}})
 	blocks = append(blocks, titled("Spiritual programmes"), table(programmeTable(f.programmes)),
 		titled("Delivered by officers and partners"), table(delivererTable(f.deliverers)),
-		titled("Biblical integration ratings"),
-		table(empty(&screensv1.PageTable{Columns: columns("Training", "Delivered by", "Observed", "Biblical integration", "Recommendation", "State")},
-			"No observation has been shared with you this year.", "Biblical integration is the first criterion the Regional Lead rates on every training observed.")))
+		titled("Biblical integration ratings"), table(biblicalTable(f, sc)))
 	return blocks, true, nil
 }
 
@@ -123,7 +127,56 @@ func (s *Service) spiritualFacts(ctx context.Context, sc *scope, fy string) (*sp
 	if err := s.readProgrammes(ctx, sc, fy, f); err != nil {
 		return nil, true, err
 	}
+	if f.observations, err = s.observations(ctx, sc, fy); err != nil {
+		return nil, true, err
+	}
+	referenced := []string{}
+	for _, o := range f.observations {
+		if o.courseID != "" {
+			referenced = append(referenced, o.courseID)
+		}
+	}
+	if _, f.courses, err = courses(ctx, s.db, referenced); err != nil {
+		return nil, true, err
+	}
+	if f.names, err = s.names(ctx, sc, observationTrainings(f.observations)); err != nil {
+		return nil, true, err
+	}
 	return f, true, nil
+}
+
+// spiritualObservations is the observations of a spiritual programme.
+func (f *spiritualFacts) spiritualObservations() []observation {
+	out := []observation{}
+	for _, o := range f.observations {
+		if _, ok := f.catalogue[o.courseID]; ok && o.courseID != "" {
+			out = append(out, o)
+		}
+	}
+	return out
+}
+
+// biblicalTable is "Biblical integration ratings": every shared observation
+// of the year, latest first, with its Biblical integration rating.
+func biblicalTable(f *spiritualFacts, sc *scope) *screensv1.PageTable {
+	t := &screensv1.PageTable{Columns: columns("Training", "Delivered by", "Observed", "Biblical integration", "Recommendation", "State")}
+	for _, o := range f.observations {
+		activity := training{}
+		if o.activity != nil {
+			activity = *o.activity
+		}
+		rating := "Not rated"
+		if o.biblical != nil && *o.biblical != 0 {
+			rating = rules.Observations.RatingLabels[strconv.Itoa(*o.biblical)]
+		}
+		t.Rows = append(t.Rows, &screensv1.PageRow{Cells: []*screensv1.PageCell{cell(observedTraining(o, f.courses)),
+			cell(deliveredBy(sc, f.names, activity)), cell(day(o.heldOn, " Jan 2006")), cell(rating),
+			cell(orDash(rules.Observations.RecommendationLabels[o.recommendation])), cell(feedbackState(o, sc))}})
+	}
+	if len(f.observations) == 0 {
+		empty(t, "No observation has been shared with you this year.", "Biblical integration is the first criterion the Regional Lead rates on every training observed.")
+	}
+	return t
 }
 
 // weakRows is the weak schools as the table lists them: without a planned
@@ -266,6 +319,7 @@ ORDER BY a.planned_date ASC NULLS LAST, a.id`, args); err != nil {
 		}
 	}
 	f.deliverers = deliverersOf(sc, rows, catalogue, partners.partners)
+	f.catalogue = catalogue
 	return nil
 }
 
@@ -343,7 +397,7 @@ func spiritualTiles(f *spiritualFacts) []tile {
 			fmt.Sprintf("of %d with %s among the three weakest", len(f.weak), pairText(" or ")), gapTone, ""},
 		tile{"Spiritual Programmes Delivered", strconv.Itoa(f.delivered),
 			fmt.Sprintf("Christian Transformation, CC-SEL and camps · %d still to deliver", f.toDeliver), "info", ""},
-		tile{"Biblical Integration Rating", "—", "across 0 Regional Lead observations", "info", ""},
+		biblicalTile(f),
 	)
 }
 
@@ -378,7 +432,16 @@ func pairFigures(f *spiritualFacts) *screensv1.PageBlock {
 	items = append(items,
 		panelText("Weak schools without a plan", ""), panelText(intcomma(f.gaps)+" of "+intcomma(len(f.weak)), ""),
 		panelText("Spiritual pair among the three weakest", ""),
-		panelText("Biblical integration", ""), panelText("No data", ""), panelText("Regional Lead, on 0 spiritual programmes", ""))
+	)
+	spiritual := f.spiritualObservations()
+	if b := foldObservations(spiritual).biblical; b != nil {
+		items = append(items, &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Rows{Rows: &screensv1.PageDataRows{Rows: []*screensv1.PageDataRow{
+			{Label: "Biblical integration", Value: pyFloat(*b) + " / 4"}}}}})
+	} else {
+		items = append(items, panelText("Biblical integration", ""), panelText("No data", ""))
+	}
+	items = append(items,
+		panelText(fmt.Sprintf("Regional Lead, on %d spiritual %s", len(spiritual), plural(len(spiritual), "programme")), ""))
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{Items: items}}}
 }
 
@@ -511,4 +574,19 @@ func rowsWithPartners(rows []training) []training {
 		}
 	}
 	return out
+}
+
+// biblicalTile is the Biblical Integration Rating tile: the average over
+// every shared observation of the year.
+func biblicalTile(f *spiritualFacts) tile {
+	value, tone := "—", "info"
+	b := foldObservations(f.observations).biblical
+	if b != nil {
+		value = pyFloat(*b) + " / 4"
+		if *b >= 3 {
+			tone = "success"
+		}
+	}
+	n := len(f.observations)
+	return tile{"Biblical Integration Rating", value, fmt.Sprintf("across %d Regional Lead %s", n, plural(n, "observation")), tone, ""}
 }

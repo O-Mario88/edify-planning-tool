@@ -1033,3 +1033,6 @@ GRANT SELECT (fy) ON cce_regional_engagement TO edify_gateway_ro;
 -- Programme Rollout's Spiritual Formation view: a response to a weak
 -- spiritual area may name it as a secondary focus.
 GRANT SELECT (secondary_focus_interventions) ON activity TO edify_gateway_ro;
+-- Programme Rollout: the partner engagement a Programme Lead recorded in
+-- answer to a Regional Lead's recommendation, and when.
+GRANT SELECT (source_engagement_id, held_on) ON partner_engagement TO edify_gateway_ro;

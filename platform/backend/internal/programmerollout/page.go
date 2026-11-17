@@ -49,11 +49,10 @@ func NewService(pool *pgxpool.Pool, now func() time.Time) *Service {
 
 // Build draws every view for a Programme Lead in their own seat, and for the
 // Admin or Impact Assessment reading the lead they choose. A lead with no
-// officers (warned on the page), no Programme Lead to choose, an acting seat, a query key the page does not
-// read, a Regional Lead observation of the year on the Trainings or
-// Spiritual Formation view, a table running past a page (but the weak
-// schools'), and a pager carrying more than one key hand on; the path with
-// a trailing slash is not a page.
+// officers (warned on the page), no Programme Lead to choose, an acting
+// seat, a query key the page does not read, a table running past what it
+// shows (but the weak schools'), and a pager carrying more than one key
+// hand on; the path with a trailing slash is not a page.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
 	if path == Path+"/" {
 		return nil, true, pagegate.ErrNotAvailable
@@ -94,16 +93,6 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	fy := strings.TrimSpace(query.Get("fy"))
 	if !slices.Contains(years, fy) {
 		fy = schooldirectory.OperationalFY(now)
-	}
-	if view != "ssa" {
-		var observed bool
-		if err := s.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM cce_regional_engagement WHERE kind = $1 AND fy = $2)`,
-			rules.ObservationKind, fy).Scan(&observed); err != nil {
-			return nil, true, fmt.Errorf("programmerollout: reading the observations: %w", err)
-		}
-		if observed {
-			return nil, false, nil
-		}
 	}
 	sc, err := readScope(ctx, s.db, lead.staffID, lead.userID, now)
 	if err != nil {
@@ -266,10 +255,19 @@ func (s *Service) trainings(ctx context.Context, sc *scope, fy string, today tim
 	if err != nil {
 		return nil, true, err
 	}
+	obs, err := s.observations(ctx, sc, fy)
+	if err != nil {
+		return nil, true, err
+	}
 	referenced := []string{}
 	for _, r := range append(append([]training{}, rows...), soon...) {
 		if id := r.courseID(); id != "" {
 			referenced = append(referenced, id)
+		}
+	}
+	for _, o := range obs {
+		if o.courseID != "" {
+			referenced = append(referenced, o.courseID)
 		}
 	}
 	list, byID, err := courses(ctx, s.db, referenced)
@@ -280,11 +278,16 @@ func (s *Service) trainings(ctx context.Context, sc *scope, fy string, today tim
 	if err != nil {
 		return nil, true, err
 	}
-	names, err := s.names(ctx, sc, soon)
+	names, err := s.names(ctx, sc, append(append([]training{}, soon...), observationTrainings(obs)...))
 	if err != nil {
 		return nil, true, err
 	}
 	summary := folded(rows, reached)
+	observed := foldObservations(obs)
+	observedByCourse := map[string][]observation{}
+	for _, o := range obs {
+		observedByCourse[o.courseID] = append(observedByCourse[o.courseID], o)
+	}
 	portfolio := len(sc.schools)
 	untrained := portfolio - len(trained)
 	carry := sc.carry
@@ -304,7 +307,7 @@ func (s *Service) trainings(ctx context.Context, sc *scope, fy string, today tim
 		{"Portfolio Schools Trained", trainedValue, trainedHelper, trainedTone, trainedHref},
 		{"Teachers and Leaders Trained", strconv.Itoa(summary.teachers + summary.leaders), fmt.Sprintf("%d teachers · %d leaders", summary.teachers, summary.leaders), "info", ""},
 		{"Trainings Due in 30 Days", strconv.Itoa(len(soon)), "scheduled across the team", "info", ""},
-		{"Open Training Recommendations", "0", "strengthen or replace, not yet answered", "info", ""},
+		{"Open Training Recommendations", strconv.Itoa(observed.open), "strengthen or replace, not yet answered", openTone(observed.open), ""},
 	})}
 
 	// By intervention: all eight, the spiritual pair first.
@@ -343,11 +346,13 @@ func (s *Service) trainings(ctx context.Context, sc *scope, fy string, today tim
 		if c.intervention != "" {
 			a = abbr(c.intervention)
 		}
-		courseRows = append(courseRows, courseRow{fold: folded(byCourse[c.id], reached), name: c.name, category: category, abbr: a})
+		courseRows = append(courseRows, courseRow{fold: folded(byCourse[c.id], reached), observed: foldObservations(observedByCourse[c.id]),
+			name: c.name, category: category, abbr: a})
 	}
 	sortCourses(courseRows)
 	if len(byCourse[""]) > 0 {
-		courseRows = append(courseRows, courseRow{fold: folded(byCourse[""], reached), name: "Training with no course named", category: "—", abbr: "—"})
+		courseRows = append(courseRows, courseRow{fold: folded(byCourse[""], reached), observed: foldObservations(observedByCourse[""]),
+			name: "Training with no course named", category: "—", abbr: "—"})
 	}
 	if len(courseRows) > rules.PageSize {
 		return nil, false, nil
@@ -357,7 +362,7 @@ func (s *Service) trainings(ctx context.Context, sc *scope, fy string, today tim
 	for _, c := range courseRows {
 		ct.Rows = append(ct.Rows, &screensv1.PageRow{Cells: []*screensv1.PageCell{cell(c.name), cell(c.category), cell(c.abbr),
 			num(c.planned), num(c.delivered), num(c.schoolsReached), num(c.teachers + c.leaders),
-			cell(fmt.Sprintf("%d · %d", c.byStaff, c.byPartner)), cell("Not observed"), cell("0")}})
+			cell(fmt.Sprintf("%d · %d", c.byStaff, c.byPartner)), cell(courseRating(c.observed)), cell(strconv.Itoa(c.observed.open))}})
 	}
 	if len(courseRows) == 0 {
 		empty(ct, "No training course is active in the catalogue.", "Courses appear here once the Training Catalogue holds them, with zeros until the team plans one.")
@@ -470,16 +475,17 @@ func (s *Service) trainings(ctx context.Context, sc *scope, fy string, today tim
 	}
 	blocks = append(blocks, titled(fmt.Sprintf("Trainings in the next %d days", rules.UpcomingDays)), table(ut))
 
-	// The Regional Lead's observations: none shared this year (any other year
-	// is handed on before this is drawn).
-	blocks = append(blocks,
-		titled("Regional Lead observations"),
-		table(empty(&screensv1.PageTable{Columns: columns("Delivered by", "Observed", "Rating", "Biblical integration", "Open")},
-			"No observation has been shared with you this year.", "The Regional Lead's feedback on a training appears here once it is shared.")),
-		titled("Strengthen or replace recommendations"),
-		table(empty(&screensv1.PageTable{Columns: columns("Training", "Delivered by", "Observed", "Recommendation", "Rating", "State", "Partner follow-up")},
-			"No training was recommended for strengthening or replacement this year.", "")),
-	)
+	// The Regional Lead's observations.
+	byDeliverer, ok := observationsByDeliverer(obs, names, sc)
+	recommended, okRecs, err := s.recommendations(ctx, sc, obs, byID, names)
+	if err != nil {
+		return nil, true, err
+	}
+	if !ok || !okRecs {
+		return nil, false, nil
+	}
+	blocks = append(blocks, titled("Regional Lead observations"), table(byDeliverer),
+		titled("Strengthen or replace recommendations"), table(recommended))
 	return blocks, true, nil
 }
 

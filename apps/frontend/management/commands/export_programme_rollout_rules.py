@@ -80,6 +80,34 @@ def rules() -> dict:
         "officer_rows": OFFICER_ROWS,
         "ssa": _ssa(),
         "spiritual": _spiritual(),
+        "observations": _observations(),
+    }
+
+
+#: The observations-by-deliverer table shows this many rows
+#: (partials/programme_rollout/trainings.html `|slice:":30"`).
+OBSERVATION_DELIVERER_ROWS = 30
+
+
+def _observations() -> dict:
+    """The Regional Lead's shared observations: the rubric's ratings in
+    order, the words for a rating and a recommendation, and which
+    recommendations ask for a change."""
+    from apps.analytics import programme_rollout_service as rollout
+    from apps.cce_leadership.models import (
+        OBSERVATION_CRITERIA,
+        RATING_SCALE,
+        ObservationRecommendation,
+    )
+
+    return {
+        "criteria": [name for name, _label, _hint in OBSERVATION_CRITERIA],
+        "change_recommendations": list(rollout.CHANGE_RECOMMENDATIONS),
+        "recommendation_labels": {
+            str(k): str(v) for k, v in ObservationRecommendation.choices
+        },
+        "rating_labels": {str(k): str(v) for k, v in RATING_SCALE},
+        "deliverer_rows": OBSERVATION_DELIVERER_ROWS,
     }
 
 

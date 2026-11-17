@@ -274,5 +274,6 @@ func sortCourses(rows []courseRow) {
 // courseRow is one course of the Trainings by course table.
 type courseRow struct {
 	fold
+	observed             observationFold
 	name, category, abbr string
 }
