@@ -3,6 +3,8 @@ package schooldirectory
 import (
 	"fmt"
 	"strings"
+
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 )
 
 // sqlb builds a WHERE clause with numbered parameters.
@@ -33,16 +35,16 @@ func (b *sqlb) clone() *sqlb {
 // not closed.
 const operating = `s.deleted_at IS NULL AND s.operational_status IN ('active', 'reopened')`
 
-// inCountry is school_in_country_q: a school's region is in the country, or
-// it has no region and its owner is of the country, has none, or has a
-// profile with no country (unplaced_school_q).
-func (b *sqlb) inCountry(country string) string {
-	c := b.arg(country)
-	return fmt.Sprintf(`EXISTS (SELECT 1 FROM region r WHERE r.id = s.region_id AND r.country = %[1]s)
- OR (s.region_id IS NULL AND (
-   s.account_owner_id IN (SELECT id FROM staff_profile WHERE country = %[1]s AND deleted_at IS NULL)
-   OR s.account_owner_id IS NULL OR s.account_owner_id = ''
-   OR s.account_owner_id IN (SELECT id FROM staff_profile WHERE (country IS NULL OR country = '') AND deleted_at IS NULL)))`, c)
+// inCountry is school_in_country_q read through Edify Global's registry: the
+// school belongs to the Active country the existing tables name country
+// (country.SchoolIn). Its explicit country decides; without one, its
+// region's, or with no region its holder's. Unlike school_in_country_q, a
+// school with neither region nor a holder of the country is in no country,
+// not in every one (docs/migration/80-multi-country-phase-0.md, §1.2).
+func (b *sqlb) inCountry(name string) string {
+	c := b.arg(name)
+	return country.SchoolIn("s", fmt.Sprintf(`ARRAY(SELECT a.country_id::text FROM country_registry.country_alias a
+  JOIN country_registry.country c ON c.id = a.country_id WHERE a.alias = %s AND c.state = '%s')`, c, country.StateActive))
 }
 
 // scopeBase is school_queryset(scope, direct_only=True).

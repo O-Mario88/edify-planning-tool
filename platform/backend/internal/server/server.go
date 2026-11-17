@@ -45,6 +45,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/coreoversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/coreschools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/costsettings"
+	countryschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/coverage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/cpdlearning"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dashboard"
@@ -217,6 +218,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 				AnalyticsAddr: cfg.AnalyticsAddr, MailConfigured: cfg.Loans.SMTPAddr != "", DevMailbx: cfg.Loans.DevMailboxDir != "",
 			}, platformhealth.Probe{Pool: poolStat(pool), Reach: reach}, map[string]ownedschema.Spec{
 				schema.Name: schema.Spec, loanschema.Name: loanschema.Spec, routeschema.Name: routeschema.Spec,
+				countryschema.Name: countryschema.Spec,
 			}, time.Now),
 			myactions.NewService(pool, time.Now),
 			coreoversight.NewService(pool, time.Now),

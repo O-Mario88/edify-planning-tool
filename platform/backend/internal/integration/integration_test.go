@@ -42,9 +42,13 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/config"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
+	countryschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dbguard"
 	loanschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/server"
+
+	"github.com/jackc/pgx/v5"
 )
 
 const (
@@ -57,6 +61,8 @@ const (
 	clusterRolesFile = "../../../deploy/db/cluster_roles.sql"
 	// The School Loan Application Portal's schema and roles (Go-owned).
 	loanRolesFile = "../../../deploy/db/loan_roles.sql"
+	// Edify Global's country registry.
+	countryRolesFile = "../../../deploy/db/country_roles.sql"
 	// Signing in, which Go owns: exactly the existing sign-in's columns.
 	identityRolesFile = "../../../deploy/db/identity_roles.sql"
 	// The Decision Log's narrow view of the audit chain.
@@ -210,6 +216,22 @@ func prepareGatewayRole(ctx context.Context) (string, error) {
 		return "", err
 	}
 	if _, err := loanschema.Spec.Apply(ctx, conn.Conn(), conn.Conn().Config().Database); err != nil {
+		return "", err
+	}
+	// Edify Global's country registry: its roles, its migrations, then the
+	// legacy seed (every existing school and account in Uganda), exactly as
+	// schemactl migrate and countryctl seed-legacy apply them.
+	countryRoles, err := os.ReadFile(filepath.FromSlash(countryRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(countryRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	if _, err := countryschema.Spec.Apply(ctx, conn.Conn(), conn.Conn().Config().Database); err != nil {
+		return "", err
+	}
+	if err := seedCountries(ctx, conn.Conn()); err != nil {
 		return "", err
 	}
 	identityRoles, err := os.ReadFile(filepath.FromSlash(identityRolesFile))
@@ -841,4 +863,19 @@ func TestReadinessAgainstTheRealDatabase(t *testing.T) {
 	if response.StatusCode != http.StatusOK {
 		t.Fatalf("readiness: %d", response.StatusCode)
 	}
+}
+
+// seedCountries is countryctl seed-legacy on the test database: the
+// countries, Uganda's settings, and every school and account the seed holds
+// mapped to Uganda. Run again, it adds only what is missing.
+func seedCountries(ctx context.Context, conn *pgx.Conn) error {
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(context.Background()) }()
+	if _, err := country.SeedLegacy(ctx, tx, "integration"); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
 }

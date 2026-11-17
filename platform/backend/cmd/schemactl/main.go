@@ -27,6 +27,7 @@ import (
 
 	clusterschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/config"
+	countryschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dbguard"
 	loanschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/ownedschema"
@@ -40,6 +41,7 @@ const (
 
 var schemas = map[string]ownedschema.Spec{
 	clusterschema.Name: clusterschema.Spec,
+	countryschema.Name: countryschema.Spec,
 	loanschema.Name:    loanschema.Spec,
 	routeschema.Name:   routeschema.Spec,
 }

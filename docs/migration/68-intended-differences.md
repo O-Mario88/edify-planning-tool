@@ -164,3 +164,23 @@ repeat the tab asked for. Owner, 2026-11-16: "Fix the tabs". Go
   each into its tab before comparing, so every tab is held to the rows the
   existing page lists for it: 26 answers of 10 accounts, 0 differing. With
   the old behaviour planted back, 24 of the 26 differ.
+
+## 68.9 A school of no country reaches no country reader (2026-11-17)
+
+Owner, 2026-11-17, approving Edify Global's Phase 1 (doc 80 §7, decision 3):
+a school with no region and no holder is visible to no country until it is
+assigned one. The existing scope (`apps.core.scoping`) lets every country
+reader see such a school, which with a second country would show it to
+both. Go (`internal/country.SchoolIn`, read by the School Directory's country
+bound) places a school by its explicit `country_registry.school_country`
+row, else its region's country, else its holder's, and otherwise in none.
+
+Also new and with no existing counterpart: a country reader whose account no
+longer belongs to their profile's country (a revoked membership) reaches
+nothing rather than the whole platform.
+
+No answer differs today, so no `intended.json` entry is needed: on the
+development copies every live school has a region (0 of 700 without one) and
+an explicit UG row from the seed, and the goldens and school parity are
+unchanged. The isolation test
+(`internal/integration/country_isolation_test.go`) holds both rules.

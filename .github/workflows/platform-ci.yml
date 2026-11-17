@@ -215,6 +215,13 @@ jobs:
           platform/deploy/db/apply-roles.sh
           psql "$ADMIN_URL" --set ON_ERROR_STOP=1 \
             --command "ALTER ROLE edify_gateway PASSWORD '${CI_GATEWAY_PASSWORD}'"
+          # Edify Global's country registry: every school directory read
+          # goes through it. Both commands are idempotent.
+          (cd platform/backend && \
+            EDIFY_MIGRATE_DATABASE_URL="$ADMIN_URL" go run ./cmd/schemactl migrate \
+              --schema=country_registry --confirm-database=edify_ci_test && \
+            EDIFY_MIGRATE_DATABASE_URL="$ADMIN_URL" go run ./cmd/countryctl seed-legacy \
+              --confirm-database=edify_ci_test)
           (cd platform/backend && go build -o /tmp/gateway ./cmd/gateway)
           EDIFY_DATABASE_URL="postgresql://edify_gateway:${CI_GATEWAY_PASSWORD}@localhost:5432/edify_ci_test" \
             /tmp/gateway > /tmp/gateway.log 2>&1 &

@@ -4,8 +4,9 @@ Owner instruction, 2026-11-17: *Edify Global — one platform, four countries
 (Uganda, Kenya, Rwanda, Ethiopia), same programs, same roles,
 country-specific configuration, securely isolated country data.* Phase 0 of
 that instruction asks for an audit and the architecture decisions before any
-schema change. This document is that Phase 0. **Nothing in it has been built
-or applied**; the decisions in §7 wait on the owner.
+schema change. This document is that Phase 0. The owner approved Phase 1
+on §7's recommended defaults on 2026-11-17 ("Yes, start Phase 1"); what has
+been built since, on the development copies only, is §8.
 
 Everything below was measured on 2026-11-17 against the development copy
 `edify_gorn_test` and the code on `feature/edify-go-rn-migration`. No
@@ -183,3 +184,47 @@ measurement.
    internal id behind each?
 7. **Where Phase 1 starts**: begin the Go `country_registry` schema now, on
    this branch, alongside the remaining migration work?
+
+## 8. Phase 1, first step: the country registry (2026-11-17)
+
+Owner, 2026-11-17: "Yes, start Phase 1", on §7's recommended defaults:
+decisions 1 (shared database, Go authorization, RLS on Go-owned tables),
+2 (every existing record is Uganda's), 3 (a school with no region and no
+holder belongs to no country) and 6 (codes `UG`, `KE`, `RW`, `ET`).
+Decisions 4 (ETB precision) and 5 (financial years for KE, RW, ET) stay
+open; nothing built so far depends on them.
+
+Built on `feature/edify-go-rn-migration`, applied to `edify_gorn_test`,
+`edify_gorn_dev` and `edify_gorn_route` only. No existing table is altered
+and no existing row is written.
+
+| Piece | Where |
+|---|---|
+| Go-owned schema `country_registry` (owner `edify_country_owner`, writer `edify_country_rw`, both NOLOGIN), migration 0001: `country`, `country_config_version`, `country_alias`, `school_country`, `country_membership` | `platform/backend/internal/country/schema`, `platform/deploy/db/country_roles.sql`; applied by `schemactl migrate --schema=country_registry` |
+| The legacy seed: UG Active with today's settings (English, UGX with no minor unit, Africa/Kampala, FY from October); KE, RW, ET Draft with no settings; the names `Uganda`/`UG` etc. as aliases; every existing school and account mapped to UG. Idempotent | `internal/country/seed.go`, `countryctl seed-legacy --confirm-database=NAME` (refuses production, a URL the guard refuses, and a database other than the one named) |
+| Country resolution: a school's explicit country first, else its region's, else (no region) its holder's; none otherwise. A reader's profile country counts only while the account belongs to that Active country, or has no membership at all (an account the existing application made after the seed) | `internal/country/country.go` (`SchoolIn`, `ReaderCountryIDs`) |
+| The School Directory's country bound (`inCountry`) reads the registry; a country reader whose account does not belong to their profile's country is given `NoCountry`, which every module comparing `scope.Country` finds in no record | `internal/schooldirectory/query.go`, `scope.go` |
+
+Proof:
+
+- The lint tests: the migrations load and pass the Go-owned-schema lint,
+  which refuses a country column on `school` or `staff_profile`, a foreign
+  key into the existing tables and a grant to any other role
+  (`internal/country/schema/lint_test.go`).
+- Isolation (`internal/integration/country_isolation_test.go`): with a
+  synthetic Kenyan school and a school of no country, Uganda holds neither,
+  Kenya holds only its own; Uganda's Country Director reaches exactly
+  Uganda's schools; an account that belongs to Kenya alone does not read
+  Uganda; a Draft country is worked in by nobody, and once Active by its
+  members; a Country Director whose Uganda membership is revoked reaches no
+  school (not every school).
+- Uganda unchanged: the whole integration suite and every golden, 0
+  differing; school parity with the existing API, 24 accounts served and 13
+  refused, 700 rows, `PARITY OK`.
+
+Not yet built in Phase 1: RLS on the Go-owned tables (it needs a narrow,
+reviewed extension of the schema lint, which today refuses the words it
+uses); the country configuration API (Connect); membership management. The
+other modules that compare `scope.Country` as text are Uganda-correct and
+fail closed through `NoCountry`; carrying the registry through them is
+Phase 3.

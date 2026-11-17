@@ -10,6 +10,8 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 )
 
 // Querier is the read the directory needs; *pgxpool.Pool satisfies it.
@@ -33,7 +35,8 @@ type Scope struct {
 	Role, UserID, StaffID string
 	CountryScope          bool
 	// Country bounds a country-scoped role; empty means unbounded (Admin, or
-	// a country role with no country on its profile).
+	// a country role with no country on its profile), NoCountry that the
+	// account does not belong to its profile's country.
 	Country     string
 	RegionScope bool
 	RegionIDs   []string
@@ -51,6 +54,11 @@ type Scope struct {
 	OwnDistrictIDs     []string
 	SupervisedStaffIDs []string
 }
+
+// NoCountry is the country of a reader whose profile names a country the
+// account does not belong to (internal/country): no record carries it. It
+// is passed to SQL as text, so it must stay valid UTF-8 without NUL bytes.
+const NoCountry = "∅ no country membership"
 
 func uniq(items []string) []string {
 	seen := map[string]bool{}
@@ -142,6 +150,20 @@ WHERE psa.project_id IN (
 		}
 		if country != nil {
 			s.Country = strings.TrimSpace(*country)
+		}
+		if s.Country != "" {
+			// Edify Global: the profile's country counts only while the
+			// account belongs to it (internal/country). Otherwise the reader
+			// is bounded to a country no record carries, so every reader of
+			// s.Country — the directory's and each module's own — finds
+			// nothing, rather than the empty "unbounded" it would mean.
+			ids, err := registry.ReaderCountryIDs(ctx, q, s.UserID, s.Country)
+			if err != nil {
+				return s, err
+			}
+			if len(ids) == 0 {
+				s.Country = NoCountry
+			}
 		}
 	}
 	return s, nil
