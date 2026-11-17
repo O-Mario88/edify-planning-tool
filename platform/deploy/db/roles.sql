@@ -1004,3 +1004,8 @@ GRANT SELECT (allocation_method, responsible_role, needs_confirmation, source_te
 GRANT SELECT (code, status) ON hr_strategic_priority TO edify_gateway_ro;
 GRANT SELECT (quarter_status, component_split, project_id) ON hr_milestone_allocation TO edify_gateway_ro;
 GRANT SELECT (id, milestone_id, code, target_value) ON hr_milestone_target_component TO edify_gateway_ro;
+-- Uganda Priorities (internal/prioritiesmaster): how a milestone's target
+-- reads (a monthly recurrence, a due date, the source's target text) and
+-- its components' names and order.
+GRANT SELECT (recurrence_per_month, due_date, target_source_text) ON hr_priority_milestone TO edify_gateway_ro;
+GRANT SELECT (label, sequence) ON hr_milestone_target_component TO edify_gateway_ro;

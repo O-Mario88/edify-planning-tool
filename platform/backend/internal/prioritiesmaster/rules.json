@@ -1,0 +1,95 @@
+{
+  "max_fy_year": 2100,
+  "min_fy_year": 2000,
+  "roles": {
+    "Admin": {
+      "lead": false,
+      "runner": true,
+      "scoped": false,
+      "tabs": null
+    },
+    "CCEO": {
+      "lead": false,
+      "runner": false,
+      "scoped": true,
+      "tabs": null
+    },
+    "CountryDirector": {
+      "lead": false,
+      "runner": true,
+      "scoped": false,
+      "tabs": null
+    },
+    "HumanResources": {
+      "lead": false,
+      "runner": false,
+      "scoped": false,
+      "tabs": [
+        [
+          "Priority Setting",
+          "/strategic-priorities"
+        ],
+        [
+          "Target Distribution",
+          "/priorities/master"
+        ]
+      ]
+    },
+    "ImpactAssessment": {
+      "lead": false,
+      "runner": true,
+      "scoped": false,
+      "tabs": null
+    },
+    "Program Lead": {
+      "lead": true,
+      "runner": false,
+      "scoped": true,
+      "tabs": [
+        [
+          "Priority Setting",
+          "/strategic-priorities"
+        ],
+        [
+          "Target Distribution",
+          "/priorities/master"
+        ],
+        [
+          "My Team",
+          "/target-distribution/team"
+        ],
+        [
+          "Team Guidance",
+          "/priorities/guidance"
+        ]
+      ]
+    },
+    "ProjectCoordinator": {
+      "lead": false,
+      "runner": false,
+      "scoped": true,
+      "tabs": null
+    },
+    "RegionalProgramLead": {
+      "lead": false,
+      "runner": false,
+      "scoped": false,
+      "tabs": null
+    },
+    "RegionalVicePresident": {
+      "lead": false,
+      "runner": false,
+      "scoped": false,
+      "tabs": [
+        [
+          "Priority Setting",
+          "/strategic-priorities"
+        ],
+        [
+          "Target Distribution",
+          "/priorities/master"
+        ]
+      ]
+    }
+  }
+}

@@ -2,6 +2,7 @@ package allocations
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"time"
 
@@ -40,4 +41,22 @@ func HolderActual(ctx context.Context, db schooldirectory.Querier, milestone, ho
 		bases[r.basis] = true
 	}
 	return rangeActual(ctx, db, milestone, bases, owners, []periodRow{{start: start, end: end}})
+}
+
+// MeterValue is components/meter.html's value (meta=False) as the feed reads
+// it: "—" with no rule, "Not started" or "Nothing planned" with no work, the
+// share completed, or the counts when there is no target.
+func MeterValue(p *Progress) string {
+	switch {
+	case p == nil:
+		return "—"
+	case !p.HasWork && p.Completed == 0 && p.Planned == 0:
+		if !p.Started {
+			return "Not started"
+		}
+		return "Nothing planned"
+	case p.Pct != nil:
+		return FloatFormatFloat(*p.Pct, 0) + "%"
+	}
+	return fmt.Sprintf("%d done · %d planned", p.Completed, p.Planned)
 }

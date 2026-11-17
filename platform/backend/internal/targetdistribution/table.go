@@ -135,7 +135,7 @@ func (ws *workspace) cells(r *row, number int, sel selection) []*screensv1.PageC
 	return []*screensv1.PageCell{
 		{Text: strconv.Itoa(number)}, {Text: r.priority.title}, {Text: r.title, Strong: true}, {Text: r.activity},
 		{Text: orDash(r.target)}, {Text: unit}, {Text: orDash(r.core)}, {Text: orDash(r.client)}, {Text: method},
-		{Text: owner}, {Text: balance}, {Text: meter(r.plan) + " " + r.rollup()}, {Text: r.status},
+		{Text: owner}, {Text: balance}, {Text: allocations.MeterValue(r.plan) + " " + r.rollup()}, {Text: r.status},
 		{Text: sel.rowAction(ws, r) + " " + details},
 	}
 }
@@ -157,22 +157,6 @@ func (sel selection) rowAction(ws *workspace, r *row) string {
 		return "Confirm source figure"
 	}
 	return "—"
-}
-
-// meter is components/meter.html's value.
-func meter(p *allocations.Progress) string {
-	switch {
-	case p == nil:
-		return "—"
-	case !p.HasWork && p.Completed == 0 && p.Planned == 0:
-		if !p.Started {
-			return "Not started"
-		}
-		return "Nothing planned"
-	case p.Pct != nil:
-		return allocations.FloatFormatFloat(*p.Pct, 0) + "%"
-	}
-	return fmt.Sprintf("%d done · %d planned", p.Completed, p.Planned)
 }
 
 // rollup is the approved allocations' roll-up beside the meter.

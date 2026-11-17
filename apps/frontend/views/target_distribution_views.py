@@ -778,6 +778,17 @@ def priorities_workspace_page(request):
     return my_performance_view(request)
 
 
+#: The roles that run the master: /priorities/master sends them to the
+#: distribution workspace, which is the same rows with the controls.
+MASTER_RUNNER_ROLES = (
+    EdifyRole.IMPACT_ASSESSMENT.value,
+    EdifyRole.COUNTRY_DIRECTOR.value,
+    EdifyRole.ADMIN.value,
+)
+#: The readers whose target column is their own approved allocation.
+SCOPED_VIEWER_ROLES = {"Program Lead", "CCEO", "ProjectCoordinator"}
+
+
 @require_page_permission("priorities_master")
 def priorities_master_page(request):
     """The Uganda Master Priority Plan, in the source's own four columns:
@@ -795,11 +806,7 @@ def priorities_master_page(request):
     sub-pages under /priorities/ — is untouched.
     """
 
-    if getattr(request.user, "active_role", "") in (
-        EdifyRole.IMPACT_ASSESSMENT.value,
-        EdifyRole.COUNTRY_DIRECTOR.value,
-        EdifyRole.ADMIN.value,
-    ):
+    if getattr(request.user, "active_role", "") in MASTER_RUNNER_ROLES:
         query = request.META.get("QUERY_STRING", "")
         return redirect(
             f"/target-distribution?{query}" if query else "/target-distribution"
@@ -853,8 +860,7 @@ def priorities_master_page(request):
 
     # Role scoping: PL and CCEO read their own approved allocation.
     role = getattr(request.user, "active_role", "")
-    scoped_roles = {"Program Lead", "CCEO", "ProjectCoordinator"}
-    is_scoped_viewer = role in scoped_roles
+    is_scoped_viewer = role in SCOPED_VIEWER_ROLES
     my_values: dict[str, Decimal] = {}
     my_status: dict[str, str] = {}
     # A Program Lead holds two figures per milestone: the team target Impact
