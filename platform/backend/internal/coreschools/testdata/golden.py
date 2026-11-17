@@ -42,9 +42,17 @@ User = get_user_model()
 PATH = "/core-schools"
 FY = get_operational_fy()
 EARLIER = str(int(FY) - 1)
+#: The year after, healed too: a year with no assessment yet.
+LATER = str(int(FY) + 1)
 #: The tables the heal writes and the page reads, parents first, and the
 #: activities the oversight lens's delivery chain reads.
-TABLES = ("activity", "core_plan", "core_school_profile", "core_activity_slot")
+TABLES = (
+    "activity",
+    "core_plan",
+    "core_school_profile",
+    "core_activity_slot",
+    "team_action",
+)
 
 
 def ids():
@@ -60,7 +68,7 @@ def heal():
     """Every core school's package for both years, as a first read gives it."""
     reader = User.objects.get(email="admin@edify.org")
     schools = active_schools().filter(school_type="core")
-    for fy in (FY, EARLIER):
+    for fy in (FY, EARLIER, LATER):
         while CoreSchoolsService.self_heal_plans(schools, fy, reader):
             pass
         while CoreSchoolsService.carry_packages_forward(schools, fy):
@@ -130,6 +138,40 @@ def file_delivery():
             )
 
 
+def file_blockers():
+    """On the oversight lens's third school, every slot of this year's
+    package taken (a complete package: nothing to ask); on its fourth, an
+    open ask already sent to its CCEO about the package."""
+    from apps.planning.action_models import ActionState, TeamAction
+
+    lead = User.objects.get(email="pl1@edify.org")
+    schools = list(
+        CoreSchoolsService.get_core_schools(
+            lead, {"fy": FY}, lens="oversight"
+        ).values_list("id", "school_id", "account_owner_id")[:4]
+    )
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "UPDATE core_activity_slot SET status = 'scheduled' WHERE core_plan_id IN "
+            "(SELECT id FROM core_plan WHERE school_id = %s AND fy = %s)",
+            [schools[2][1], FY],
+        )
+    now = dj_timezone.now()
+    TeamAction.objects.create(
+        issue_type="core_package_behind",
+        school_id=schools[3][0],
+        fy=FY,
+        sender_id=lead.id,
+        sender_role="Program Lead",
+        recipient_id=schools[3][2] or "",
+        recipient_role="CCEO",
+        requested_action="Plan the rest of the core package",
+        workflow_route="/core-schools",
+        state=ActionState.OPEN,
+        detected_at=now,
+    )
+
+
 def dump_rows(before):
     after = ids()
     rows = {}
@@ -172,6 +214,7 @@ with transaction.atomic():
     before = ids()
     heal()
     file_delivery()
+    file_blockers()
     rows = dump_rows(before)
     officer = User.objects.get(email="cceo@edify.org")
     first = ask(officer, {})
@@ -204,6 +247,7 @@ with transaction.atomic():
                 {"lens": "oversight", "page": "2"},
                 {"lens": "oversight", "per_page": "10", "page": "4"},
                 {"lens": "oversight", "fy": EARLIER},
+                {"lens": "oversight", "fy": LATER},
                 {"lens": "oversight", "ssa_status": "done"},
                 {"lens": "oversight", "school_type_filter": "champion"},
                 {"lens": "oversight", "q": "primary"},

@@ -7,6 +7,17 @@
     "open",
     "overdue"
   ],
+  "action_state_labels": {
+    "acknowledged": "Acknowledged",
+    "blocked": "Blocked",
+    "cancelled": "Cancelled",
+    "escalated": "Escalated",
+    "in_progress": "In progress",
+    "open": "Open",
+    "overdue": "Overdue",
+    "resolved": "Resolved",
+    "returned": "Returned to sender"
+  },
   "activity_status_labels": {
     "accountant_confirmed": "Accountant Confirmed",
     "assigned_to_partner": "Assigned to Partner",

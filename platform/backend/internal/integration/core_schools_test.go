@@ -15,7 +15,7 @@ import (
 
 // coreSchoolsTables is what the golden files, parents first: the packages
 // the page's own heal would make, found and cleared by their ids.
-var coreSchoolsTables = []string{"activity", "core_plan", "core_school_profile", "core_activity_slot"}
+var coreSchoolsTables = []string{"activity", "core_plan", "core_school_profile", "core_activity_slot", "team_action"}
 
 // The existing feed's Core Schools Planning, with its three lazily drawn
 // tabs, for the CCEO who holds the core schools (this year and the one

@@ -68,6 +68,7 @@ var rules = func() (r struct {
 	CountrySchedulingRoles []string          `json:"country_scheduling_roles"`
 	CompletedStatuses      []string          `json:"completed_statuses"`
 	ActionActiveStates     []string          `json:"action_active_states"`
+	ActionStateLabels      map[string]string `json:"action_state_labels"`
 	OversightBlockers      []string          `json:"oversight_blockers"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.Roles) == 0 || len(r.PageSizes) == 0 ||

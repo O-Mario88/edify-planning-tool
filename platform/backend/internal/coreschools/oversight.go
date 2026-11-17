@@ -30,11 +30,11 @@ func (d deliveryState) chips() []string {
 // oversightFacts are build_rows' three lookups over the page's schools: the
 // partners supporting each, its delivery chain, and whether an ask has
 // already been sent about any of them.
-func (pg *page) oversightFacts(ctx context.Context, pks []string) (map[string]int, map[string]deliveryState, bool, error) {
+func (pg *page) oversightFacts(ctx context.Context, pks []string) (map[string]int, map[string]deliveryState, map[[2]string]string, error) {
 	partners, err := counts(ctx, pg.db, `SELECT school_id, count(*) FROM partner_assignment
 WHERE school_id = ANY($1) AND NOT COALESCE(status = ANY($2), FALSE) GROUP BY school_id`, pks, rules.PartnerReleased)
 	if err != nil {
-		return nil, nil, false, err
+		return nil, nil, nil, err
 	}
 	rows, err := pg.db.Query(ctx, `SELECT school_id,
   count(*) FILTER (WHERE evidence_status IN ('', 'pending', 'not_uploaded')),
@@ -44,7 +44,7 @@ WHERE school_id = ANY($1) AND NOT COALESCE(status = ANY($2), FALSE) GROUP BY sch
 FROM activity WHERE school_id = ANY($1) AND fy = $2 AND activity_type IN ('core_visit', 'core_training') AND deleted_at IS NULL
   AND status IS DISTINCT FROM 'cancelled' GROUP BY school_id`, pks, pg.fy, rules.CompletedStatuses)
 	if err != nil {
-		return nil, nil, false, fmt.Errorf("coreschools: reading the delivery chain: %w", err)
+		return nil, nil, nil, fmt.Errorf("coreschools: reading the delivery chain: %w", err)
 	}
 	delivery := map[string]deliveryState{}
 	for rows.Next() {
@@ -52,26 +52,40 @@ FROM activity WHERE school_id = ANY($1) AND fy = $2 AND activity_type IN ('core_
 		var d deliveryState
 		if err := rows.Scan(&id, &d.evidence, &d.salesforce, &d.ia, &d.finance); err != nil {
 			rows.Close()
-			return nil, nil, false, fmt.Errorf("coreschools: reading a delivery chain: %w", err)
+			return nil, nil, nil, fmt.Errorf("coreschools: reading a delivery chain: %w", err)
 		}
 		delivery[id] = d
 	}
 	rows.Close()
 	if err := rows.Err(); err != nil {
-		return nil, nil, false, fmt.Errorf("coreschools: reading the delivery chain: %w", err)
+		return nil, nil, nil, fmt.Errorf("coreschools: reading the delivery chain: %w", err)
 	}
-	var sent bool
-	if err := pg.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM team_action WHERE school_id = ANY($1) AND fy = $2 AND state = ANY($3)
-  AND issue_type = ANY($4))`, pks, pg.fy, rules.ActionActiveStates, rules.OversightBlockers).Scan(&sent); err != nil {
-		return nil, nil, false, fmt.Errorf("coreschools: reading the asks sent: %w", err)
+	sent := map[[2]string]string{}
+	asks, err := pg.db.Query(ctx, `SELECT school_id, issue_type, state FROM team_action WHERE school_id = ANY($1) AND fy = $2
+  AND state = ANY($3) AND issue_type = ANY($4)`, pks, pg.fy, rules.ActionActiveStates, rules.OversightBlockers)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("coreschools: reading the asks sent: %w", err)
 	}
-	return partners, delivery, sent, nil
+	defer asks.Close()
+	for asks.Next() {
+		var school, issue, state string
+		if err := asks.Scan(&school, &issue, &state); err != nil {
+			return nil, nil, nil, fmt.Errorf("coreschools: reading an ask sent: %w", err)
+		}
+		key := [2]string{school, issue}
+		if _, twice := sent[key]; twice {
+			// build_rows keeps whichever the database returned last.
+			return nil, nil, nil, fmt.Errorf("two open asks about one school: %w", errPassOn)
+		}
+		sent[key] = state
+	}
+	return partners, delivery, sent, asks.Err()
 }
 
 // oversightBlocks is partials/core_schools/team_oversight.html as the feed
 // reads it: the read-only table of the team's core schools on this page and
-// its count, then the programme tables. An ask already sent shows as a link
-// the feed reads differently, and hands on.
+// its count, then the programme tables. Two open asks about one school and
+// blocker hand on.
 func (pg *page) oversightBlocks(ctx context.Context) ([]*screensv1.PageBlock, error) {
 	rows, err := pg.matrixRows(ctx, pg.shown)
 	if err != nil {
@@ -82,16 +96,13 @@ func (pg *page) oversightBlocks(ctx context.Context) ([]*screensv1.PageBlock, er
 	if err != nil {
 		return nil, err
 	}
-	if sent {
-		return nil, fmt.Errorf("an ask already sent: %w", errPassOn)
-	}
 	t := &screensv1.PageTable{Title: fmt.Sprintf("Team Core Schools (%d)", len(pg.all)), Subtitle: "Read-Only Team Oversight"}
 	if len(rows) == 0 {
 		t.EmptyMessage = "Nothing to oversee here No core schools in your team match these filters."
 	} else {
 		t.Columns = columnsOf("School ID", "School", "Responsible CCEO", "Assessment", "Visits", "Trainings", "Partner", "Delivery", "Blocker", "Action")
 		for _, r := range rows {
-			t.Rows = append(t.Rows, &screensv1.PageRow{Cells: oversightCells(r, partners[r.id], delivery[r.id])})
+			t.Rows = append(t.Rows, &screensv1.PageRow{Cells: oversightCells(r, partners[r.id], delivery[r.id], sent)})
 		}
 		first := (pg.number-1)*pg.perPage + 1
 		t.Footnote = fmt.Sprintf("Showing %d–%d of %d", first, first+len(pg.shown)-1, len(pg.all))
@@ -104,7 +115,7 @@ func (pg *page) oversightBlocks(ctx context.Context) ([]*screensv1.PageBlock, er
 }
 
 // oversightCells is one school's row of the read-only table.
-func oversightCells(r row, partner int, d deliveryState) []*screensv1.PageCell {
+func oversightCells(r row, partner int, d deliveryState, sent map[[2]string]string) []*screensv1.PageCell {
 	code := ""
 	if r.code == "" {
 		code = "—"
@@ -129,12 +140,23 @@ func oversightCells(r row, partner int, d deliveryState) []*screensv1.PageCell {
 	if flags == "" {
 		flags = "Clear"
 	}
-	blocker, action := "No blocker", &screensv1.PageCell{Text: "Nothing to ask"}
+	// The ask the blocker carries is a POST form, and "Nothing to ask" a
+	// caption, neither of which the feed reads; an ask already sent is a
+	// link to the sent actions.
+	blocker, key := "No blocker", ""
 	switch {
 	case assessment != "Complete":
-		blocker, action = "Assessment due", &screensv1.PageCell{}
+		blocker, key = "Assessment due", rules.OversightBlockers[0]
 	case !r.packageComplete:
-		blocker, action = "Package behind", &screensv1.PageCell{}
+		blocker, key = "Package behind", rules.OversightBlockers[1]
+	}
+	action := &screensv1.PageCell{}
+	if state, ok := sent[[2]string{r.id, key}]; ok && key != "" {
+		label := rules.ActionStateLabels[state]
+		if label == "" {
+			label = state
+		}
+		action.Actions = []*screensv1.PageAction{{Key: "button", Label: "View Action · " + label, Primary: true, Enabled: true, Href: "/actions/sent"}}
 	}
 	return []*screensv1.PageCell{{Text: code}, {Text: r.name + " " + district, Href: "/schools/" + r.code}, owner, {Text: assessment},
 		{Text: fmt.Sprintf("%d / %d", r.visits, r.visitsTarget)}, {Text: fmt.Sprintf("%d / %d", r.trainings, r.trainingsTarget)},
