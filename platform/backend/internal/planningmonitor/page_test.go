@@ -33,9 +33,9 @@ func TestThePageDecidesItsDoorsBeforeReading(t *testing.T) {
 	}{
 		{"ImpactAssessment", "format=json", false}, {"ImpactAssessment", "fy=2026&gap=no_visit", false},
 		{"ImpactAssessment", "view=execution&fy=2026", false}, {"ImpactAssessment", "fy=2026&fy=2027", false},
-		{"RegionalVicePresident", "view=execution", false}, {"RegionalProgramLead", "gap=no_visit", false},
+		{"RegionalVicePresident", "view=execution&list=overdue", false}, {"RegionalProgramLead", "gap=no_visit", false},
 		{"CountryDirector", "", true}, {"Program Lead", "fy=2026", false},
-		{"CountryDirector", "view=execution", false}, {"CountryDirector", "gap=no_visit", false},
+		{"CountryDirector", "view=execution&program_lead=x", false}, {"CountryDirector", "gap=no_visit", false},
 		{"CountryDirector", "program_lead=x", false}, {"CountryDirector", "format=json", false},
 	} {
 		query, _ := url.ParseQuery(c.query)

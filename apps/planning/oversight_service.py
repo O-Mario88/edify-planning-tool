@@ -272,6 +272,24 @@ def _both_id_spaces(staff_ids) -> set[str]:
     return ids | {u for u in user_ids if u} | {s for s in staff_for_users if s}
 
 
+def _lens_roles() -> tuple[frozenset, frozenset]:
+    """The roles whose oversight lens is the whole country, and those whose
+    lens is their region's (the Go gateway reads both, see
+    apps.planning.management.commands.export_planning_monitor_rules)."""
+    from apps.core.rbac import EdifyRole
+
+    country = frozenset(
+        {
+            EdifyRole.COUNTRY_DIRECTOR.value,
+            EdifyRole.REGIONAL_VICE_PRESIDENT.value,
+            EdifyRole.IMPACT_ASSESSMENT.value,
+            EdifyRole.PROGRAM_ACCOUNTANT.value,
+            EdifyRole.ADMIN.value,
+        }
+    )
+    return country, frozenset({EdifyRole.REGIONAL_PROGRAM_LEAD.value})
+
+
 def resolve_oversight_scope(principal) -> OversightScope:
     """The oversight lens for this principal.
 
@@ -280,21 +298,15 @@ def resolve_oversight_scope(principal) -> OversightScope:
     an oversight lens here — the pages are gated on the role as well, so this
     is the second of two gates rather than the only one.
     """
-    from apps.core.rbac import EdifyRole
     from apps.core.scoping import owner_ids, resolve_user_scope
 
     role = getattr(principal, "active_role", "") or ""
+    country_roles, region_roles = _lens_roles()
 
     # Before resolving the team, not after: a country lens does not need a
     # supervisee list, and building one cost two queries on every load of the
     # largest page in the product.
-    if role in (
-        EdifyRole.COUNTRY_DIRECTOR.value,
-        EdifyRole.REGIONAL_VICE_PRESIDENT.value,
-        EdifyRole.IMPACT_ASSESSMENT.value,
-        EdifyRole.PROGRAM_ACCOUNTANT.value,
-        EdifyRole.ADMIN.value,
-    ) or getattr(principal, "is_superuser", False):
+    if role in country_roles or getattr(principal, "is_superuser", False):
         return OversightScope(kind="country")
 
     # The Regional Programme Lead reads their region's countries: every
@@ -303,7 +315,7 @@ def resolve_oversight_scope(principal) -> OversightScope:
     # the geography an administrator assigns (apps.core.scoping
     # `_regional_reach`); with none assigned it is every country, and the page
     # says so.
-    if role == EdifyRole.REGIONAL_PROGRAM_LEAD.value:
+    if role in region_roles:
         from apps.core.scoping import resolve_user_scope as _resolve
 
         return OversightScope(

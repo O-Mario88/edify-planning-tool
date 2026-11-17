@@ -36,6 +36,86 @@
     "closed",
     "ia_verified"
   ],
+  "execution": {
+    "awaiting_pl_statuses": [
+      "awaiting_ia_verification",
+      "submitted_to_pl"
+    ],
+    "kpi_labels": {
+      "execution_awaiting_pl": "Completed Work Awaiting PL Approval",
+      "execution_complete_share": "Delivered Work Complete",
+      "execution_due_delivered": "Due Work Delivered",
+      "execution_overdue": "Past Date, Not Delivered",
+      "execution_partner_delivered": "Partner Activities Delivered",
+      "execution_visits_delivered_target": "Visits Completed Against Target"
+    },
+    "list_columns": [
+      [
+        "overdue",
+        "Past date",
+        "danger"
+      ],
+      [
+        "missing_salesforce",
+        "No SF ID",
+        "warning"
+      ],
+      [
+        "awaiting_pl",
+        "Awaiting PL Approval",
+        "info"
+      ],
+      [
+        "returned",
+        "Returned",
+        "danger"
+      ]
+    ],
+    "lists": [
+      [
+        "overdue",
+        "Past date, not delivered"
+      ],
+      [
+        "missing_salesforce",
+        "Delivered, missing the Salesforce ID"
+      ],
+      [
+        "awaiting_pl",
+        "Completed, awaiting PL approval"
+      ],
+      [
+        "returned",
+        "Returned for correction"
+      ]
+    ],
+    "live_statuses": [
+      "accountant_confirmed",
+      "assigned_to_partner",
+      "awaiting_ia_verification",
+      "closed",
+      "completed",
+      "completion_started",
+      "evidence_accepted",
+      "evidence_uploaded",
+      "ia_verified",
+      "in_progress",
+      "partner_scheduled",
+      "planned",
+      "rescheduled",
+      "returned",
+      "returned_by_ia",
+      "returned_by_pl",
+      "salesforce_id_required",
+      "scheduled",
+      "submitted_to_pl"
+    ],
+    "returned_statuses": [
+      "returned",
+      "returned_by_ia",
+      "returned_by_pl"
+    ]
+  },
   "gap_columns": [
     [
       "not_clustered",

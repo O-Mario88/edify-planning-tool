@@ -84,6 +84,15 @@ var rules = func() (r struct {
 	PillarLabels                map[string]string      `json:"pillar_labels"`
 	KPILabels                   map[string]string      `json:"kpi_labels"`
 	MonitorTabs                 [][2]string            `json:"monitor_tabs"`
+	// Execution is the Execution & Completion tab (execution_monitor).
+	Execution struct {
+		LiveStatuses       []string          `json:"live_statuses"`
+		ReturnedStatuses   []string          `json:"returned_statuses"`
+		AwaitingPLStatuses []string          `json:"awaiting_pl_statuses"`
+		Lists              [][2]string       `json:"lists"`
+		ListColumns        [][3]string       `json:"list_columns"`
+		KPILabels          map[string]string `json:"kpi_labels"`
+	} `json:"execution"`
 	// Page is /planning-monitor/ on its own: who opens it, who reads it as
 	// the country, the role it sends to the dashboard and those it sends to
 	// Planning Oversight.

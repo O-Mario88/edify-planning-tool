@@ -197,6 +197,52 @@ def file_rows():
     # officer at their own school.
     activity("A10", s6, kind="in_school_training", days=9)
     activity("A11", s10, owner=deo.id)
+    # What only the Execution & Completion tab reads: a visit returned for
+    # correction, one past its date, an in-school training completed with no
+    # Salesforce ID and awaiting the lead's approval, a cluster meeting held
+    # and approved, a donor visit handed in (named, not counted), a Partner's
+    # visit delivered, and the lead's own visit approved.
+    activity("A12", s3, status="returned_by_pl", days=-3)
+    activity("A13", s5, days=-4)
+    activity("A14", s4, kind="in_school_training", status="submitted_to_pl", days=-2)
+    activity(
+        "A15",
+        s6,
+        kind="donor_visit",
+        status="completed",
+        days=-1,
+        salesforce_activity_id="SVE-GPM15",
+    )
+    activity(
+        "A16",
+        s3,
+        status="ia_verified",
+        days=-2,
+        delivery="partner",
+        owner=None,
+        monitored_by_staff_id=paul.id,
+        assigned_partner_id=partner.id,
+        partner_date_set_by="partner",
+    )
+    activity(
+        "A17",
+        s1,
+        status="ia_verified",
+        days=-5,
+        owner=StaffProfile.objects.get(user__email=LEAD).id,
+        salesforce_activity_id="SVE-GPM17",
+    )
+    Activity.objects.create(
+        id=P + "G2",
+        activity_type="cluster_meeting",
+        status="ia_verified",
+        delivery_type="staff",
+        responsible_staff_id=paul.id,
+        planned_date=TODAY - timedelta(days=6),
+        fy=FY,
+        cluster=cluster,
+        salesforce_activity_id="SVE-GPMG2",
+    )
     # A group training the third Core school is invited to.
     Activity.objects.create(
         id=P + "G1",
@@ -328,6 +374,11 @@ try:
         ("admin@edify.org", {}),
         (LEAD, {}),
         ("cceo@edify.org", {}),
+        ("cd@edify.org", {"view": "execution"}),
+        ("cd@edify.org", {"view": "Execution", "fy": "2026"}),
+        ("admin@edify.org", {"view": "execution"}),
+        ("rvp@edify.org", {"view": "execution"}),
+        ("regional-lead@edify.org", {"view": "execution"}),
         ("rvp@edify.org", {}),
         ("regional-lead@edify.org", {}),
         ("regional-lead@edify.org", {"fy": "2026"}),

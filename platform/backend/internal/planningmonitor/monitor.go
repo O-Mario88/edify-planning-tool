@@ -29,6 +29,8 @@ type Monitor struct {
 	// wholeCountry is a country reader's monitor: its ledger reads every
 	// planned activity of the year.
 	wholeCountry bool
+	// teams are monitor_roster's teams: the people the Execution tab follows.
+	teams []rosterTeam
 }
 
 // Officers is everybody on the monitor (the totals' people).
@@ -53,6 +55,7 @@ type monitor struct {
 	officers                   map[string]*Officer
 	leadsByKey                 map[string]*Lead
 	leadOrder                  []*Lead
+	teams                      []rosterTeam
 }
 
 func (m *monitor) allOfficers() []*Officer {
@@ -227,7 +230,7 @@ func (m *monitor) finish(ctx context.Context) (*Monitor, error) {
 		}
 	}
 	if len(m.officers) == 0 {
-		return &Monitor{FY: fy, outside: outside}, nil
+		return &Monitor{FY: fy, outside: outside, teams: m.teams}, nil
 	}
 	for _, count := range []func(context.Context) error{m.countPlannedVisits, m.countPartnerWork, m.countProjectPlaces} {
 		if err := count(ctx); err != nil {
@@ -250,7 +253,7 @@ func (m *monitor) finish(ctx context.Context) (*Monitor, error) {
 		return 0
 	}
 	sort.SliceStable(leads, func(i, j int) bool { return rank(leads[i]) < rank(leads[j]) })
-	return &Monitor{FY: fy, Leads: leads, outside: outside}, nil
+	return &Monitor{FY: fy, Leads: leads, outside: outside, teams: m.teams}, nil
 }
 
 func contains(list []string, v string) bool {

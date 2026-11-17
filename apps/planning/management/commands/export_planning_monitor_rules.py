@@ -33,7 +33,7 @@ def _page() -> dict:
     from apps.core.rbac import EdifyRole
     from apps.core.scoping import COUNTRY_ROLES
     from apps.frontend.views import dashboard_embed, oversight_views
-    from apps.planning.oversight_service import resolve_oversight_scope
+    from apps.planning.oversight_service import _lens_roles as lens_roles
     from apps.schools.management.commands.export_school_directory_rules import (
         _role_user,
     )
@@ -51,18 +51,10 @@ def _page() -> dict:
         # The roles whose oversight lens is the whole country
         # (resolve_oversight_scope): a country reader's page, called the
         # country's only for COUNTRY_ROLES (is_country_reader).
-        "country_lens_roles": sorted(
-            role.value
-            for role in EdifyRole
-            if resolve_oversight_scope(_role_user(role.value)).is_country
-        ),
+        "country_lens_roles": sorted(lens_roles()[0]),
         # The roles whose lens is their region's: the Programme Leads the
         # region's schools are held under (monitor_roster lead_ids_hint).
-        "region_lens_roles": sorted(
-            role.value
-            for role in EdifyRole
-            if resolve_oversight_scope(_role_user(role.value)).kind == "region"
-        ),
+        "region_lens_roles": sorted(lens_roles()[1]),
         "dashboard_role": dashboard_embed.PROGRAM_LEAD,
         "oversight_roles": sorted(oversight_views.MONITORS_ON_OVERSIGHT_ROLES),
         # Where a reader who keeps the monitors as Planning Oversight tabs is
@@ -159,6 +151,43 @@ def rules() -> dict:
         # the metric registry gives them.
         "kpi_labels": kpi_labels(),
         "monitor_tabs": [list(tab) for tab in oversight_views.MONITOR_TABS],
+        "execution": _execution(),
+    }
+
+
+#: The Execution & Completion tab's figures (oversight_views._execution_kpis).
+EXECUTION_SHARES = (
+    "execution_visits_delivered_target",
+    "execution_due_delivered",
+    "execution_complete_share",
+    "execution_partner_delivered",
+)
+EXECUTION_COUNTS = ("execution_overdue", "execution_awaiting_pl")
+
+
+def _execution() -> dict:
+    """The Execution & Completion tab (apps.planning.execution_monitor): the
+    statuses it reads work by, the follow-up lists and columns, and its
+    figures' names."""
+    from apps.core.metrics import MetricValue, render_kpi_item
+    from apps.planning import execution_monitor as execution
+    from apps.planning.oversight_service import LIVE_ACTIVITY_STATUSES
+
+    labels = {
+        key: render_kpi_item(key, MetricValue.ratio(1, 1), helper="")["label"]
+        for key in EXECUTION_SHARES
+    }
+    labels |= {
+        key: render_kpi_item(key, MetricValue.measured(1), helper="")["label"]
+        for key in EXECUTION_COUNTS
+    }
+    return {
+        "live_statuses": sorted(_values(LIVE_ACTIVITY_STATUSES)),
+        "returned_statuses": sorted(execution.RETURNED_STATUSES),
+        "awaiting_pl_statuses": sorted(execution.AWAITING_PL_STATUSES),
+        "lists": [list(item) for item in execution.LISTS],
+        "list_columns": [list(column) for column in execution.LIST_COLUMNS],
+        "kpi_labels": labels,
     }
 
 

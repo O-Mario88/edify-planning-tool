@@ -212,7 +212,7 @@ func (m *monitor) people(ctx context.Context, wanted []string) error {
 // peopleOf is _people: the roster's rows, then a row for whoever else holds
 // a school in scope, then Unassigned for the schools nobody holds.
 func (m *monitor) peopleOf(ctx context.Context, teams []rosterTeam) error {
-	m.officers, m.leadsByKey = map[string]*Officer{}, map[string]*Lead{}
+	m.officers, m.leadsByKey, m.teams = map[string]*Officer{}, map[string]*Lead{}, teams
 	leadFor := func(key, name string) *Lead {
 		if l, ok := m.leadsByKey[key]; ok {
 			return l

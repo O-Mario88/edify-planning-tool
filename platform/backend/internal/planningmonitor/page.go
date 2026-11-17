@@ -74,11 +74,12 @@ func (pg *Page) Build(ctx context.Context, p auth.Principal, path string, query 
 	if !region && !slices.Contains(page.CountryLensRoles, p.ActiveRole) {
 		return nil, false, nil
 	}
+	execution := strings.ToLower(strings.TrimSpace(query.Get("view"))) == "execution"
 	for key, values := range query {
-		v := strings.TrimSpace(strings.Join(values, ""))
+		v := strings.ToLower(strings.TrimSpace(strings.Join(values, "")))
 		switch {
 		case key == "fy":
-		case key == "view" && (v == "" || strings.ToLower(v) == "planning" || strings.ToLower(v) == "monitor"):
+		case key == "view" && (v == "" || v == "planning" || v == "monitor" || v == "execution"):
 		case v == "":
 		default:
 			return nil, false, nil
@@ -98,6 +99,10 @@ func (pg *Page) Build(ctx context.Context, p auth.Principal, path string, query 
 	now := pg.now()
 	years := schooldirectory.FYOptions(now)
 	fy := strings.TrimSpace(query.Get("fy"))
+	if fy == "" && execution {
+		// Execution happens in the running year.
+		fy = schooldirectory.OperationalFY(now)
+	}
 	if fy == "" {
 		next, err := workplan.NextOpenFY(ctx, pg.db, now.In(nairobi), nairobi)
 		if err != nil {
@@ -121,6 +126,16 @@ func (pg *Page) Build(ctx context.Context, p auth.Principal, path string, query 
 	}
 	if err != nil {
 		return nil, true, err
+	}
+	if execution {
+		t := now.In(nairobi)
+		x, err := readExecution(ctx, pg.db, m, fy, time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC), region)
+		if err != nil {
+			return nil, true, err
+		}
+		return &screensv1.GetPageResponse{Header: &screensv1.PageHeader{Title: "Planning Monitor",
+			Description: "Each Programme Lead's and CCEO's plan as it is delivered, completed with its Salesforce ID and form, and verified — and what is past its date."},
+			Blocks: executionBlocks(x, fy, years, countryReader), WebPath: PagePath}, true, nil
 	}
 	ledger, err := m.Ledger(ctx, pg.db)
 	if err != nil {
