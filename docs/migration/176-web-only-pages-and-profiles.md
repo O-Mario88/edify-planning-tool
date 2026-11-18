@@ -460,3 +460,32 @@ seeded from one real visit (edify_gorn_test only, removed after): two
 awaiting (one filed by the Country Director), one declined with a note, two
 approved with and without one. For ten readers, two refused, and two
 queries: **20 answers, 0 differing**; and with none, in the suite.
+
+## 176.18 The visits log (2026-11-18)
+
+`/visits` (`staff_views.visits_log_view`, `pages/visits/index.html`) is
+drawn in Go by the new `stafflogs` package. Its rules come from
+`export_staff_logs_rules` (each role's door, `my_plan`, and whether a
+school's name opens its profile; the visit types; the completed and
+not-yet-finished statuses; the hundred-row limit; `status_label`'s
+initialisms), kept current by `apps/frontend/test_staff_logs_rules_export.py`.
+
+- The reader's own visits, by user id as the view asks, latest planned
+  first (an undated visit first, as `DESC` sorts), the first hundred,
+  filtered by `status` (as given) and by school or cluster name (`q`
+  trimmed, `icontains`).
+- The header counts the hundred: completed, and pending (scheduled,
+  rescheduled, in progress, completion started; "started" is neither).
+- Each row: the School ID (written in after the page is drawn, so the feed
+  reads it empty; `—` without a school), the school or "No school" with the
+  cluster or `—`, linked to the school for a reader who may open one, else
+  to the cluster; the type and status as `status_label` writes them, as
+  badges; the planned day (`N j, Y`, else `—`); and View to the plan.
+- Fifty a page under `visits_page`. With none, the empty card, which the
+  feed reads with the page's Schedule link.
+
+Proof: 61 visits seeded from one real visit (edify_gorn_test only, removed
+after): every status the page reads, no school, no date, a training, a
+deleted visit, fifty more for a second page, and two for a Partner who may
+not open schools. Nine queries for seven readers, two refused: **63
+answers, 0 differing**; and over the seed's own visits, in the suite.

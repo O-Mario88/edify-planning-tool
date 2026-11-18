@@ -1,0 +1,113 @@
+{
+  "completed_statuses": [
+    "ia_verified",
+    "closed",
+    "accountant_confirmed",
+    "completed"
+  ],
+  "not_finished_statuses": [
+    "scheduled",
+    "rescheduled",
+    "in_progress",
+    "completion_started"
+  ],
+  "roles": {
+    "Accountant": {
+      "open_school": false,
+      "visits": true
+    },
+    "Admin": {
+      "open_school": true,
+      "visits": true
+    },
+    "BusinessTransformationOfficer": {
+      "open_school": true,
+      "visits": false
+    },
+    "CCEO": {
+      "open_school": true,
+      "visits": true
+    },
+    "ClusterLeader": {
+      "open_school": false,
+      "visits": false
+    },
+    "CountryDirector": {
+      "open_school": true,
+      "visits": true
+    },
+    "HumanResources": {
+      "open_school": false,
+      "visits": false
+    },
+    "ImpactAssessment": {
+      "open_school": true,
+      "visits": true
+    },
+    "MfiLoanOfficer": {
+      "open_school": false,
+      "visits": false
+    },
+    "MfiPartnerAdmin": {
+      "open_school": false,
+      "visits": false
+    },
+    "PartnerAdmin": {
+      "open_school": false,
+      "visits": true
+    },
+    "PartnerFieldOfficer": {
+      "open_school": false,
+      "visits": true
+    },
+    "Program Lead": {
+      "open_school": true,
+      "visits": true
+    },
+    "ProjectCoordinator": {
+      "open_school": true,
+      "visits": true
+    },
+    "RegionalProgramLead": {
+      "open_school": false,
+      "visits": false
+    },
+    "RegionalVicePresident": {
+      "open_school": false,
+      "visits": false
+    }
+  },
+  "row_limit": 100,
+  "status_initialisms": {
+    "Bt": "BT",
+    "Cd": "CD",
+    "Edtech": "EdTech",
+    "Hr": "HR",
+    "Ia": "IA",
+    "Mfi": "MFI",
+    "Netsuite": "NetSuite",
+    "Nssf": "NSSF",
+    "Pl": "PL",
+    "Rvp": "RVP",
+    "Salesforce": "Salesforce",
+    "Ssa": "SSA",
+    "Ura": "URA"
+  },
+  "visit_types": [
+    "school_visit",
+    "follow_up_visit",
+    "coaching_visit",
+    "in_school_support",
+    "donor_visit",
+    "story_gathering_visit",
+    "school_invitation",
+    "social_visit",
+    "training_follow_up_visit",
+    "in_school_coaching_visit",
+    "core_visit",
+    "core_assessment_visit",
+    "baseline_ssa_visit",
+    "school_visit_ssa_collection",
+    "partner_ssa_collection"
+  ]
+}
