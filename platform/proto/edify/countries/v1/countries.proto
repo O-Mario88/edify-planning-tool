@@ -48,6 +48,12 @@ service CountryService {
   // Add a unit to a country that is not yet Active (Admin only), under a
   // parent of a higher level in the same country.
   rpc AddAdminUnit(AddAdminUnitRequest) returns (AddAdminUnitResponse);
+
+  // Preview a country's school list before anything is imported (Admin
+  // only; docs/migration/80 §27): each row placed in the country's own
+  // geography and said to be ready, a School ID the country already holds,
+  // a repeat of an earlier row, rejected or blank. Nothing is written.
+  rpc PreviewSchoolImport(PreviewSchoolImportRequest) returns (PreviewSchoolImportResponse);
 }
 
 // Country is one registered country.
@@ -367,4 +373,52 @@ message AddAdminUnitRequest {
 
 message AddAdminUnitResponse {
   AdminUnit unit = 1;
+}
+
+message PreviewSchoolImportRequest {
+  string country_code = 1;
+  // Ends in .csv or .xlsx.
+  string file_name = 2;
+  // The file, at most 900 KB and 10,000 rows. The first row names the
+  // columns: School ID and School Name are required; the country's levels
+  // are named by their labels (District, Sub-county); a national school ID
+  // (EMIS) is read apart from the School ID.
+  bytes content = 3;
+}
+
+message SchoolImportColumn {
+  string header = 1;
+  // What the column was read as (school_id, name, a level's label); empty
+  // for a column not used.
+  string taken_as = 2;
+}
+
+message SchoolImportRow {
+  // The row's line in the file; the header is line 1.
+  int32 line = 1;
+  string school_id = 2;
+  string name = 3;
+  // Kept apart from the School ID, which it never replaces.
+  string national_id = 4;
+  // ready, existing, duplicate, rejected or skipped.
+  string status = 5;
+  string school_type = 6;
+  // The units the row is placed in, top first.
+  repeated string units = 7;
+  // Why a row is rejected, and the warnings on any other.
+  repeated string messages = 8;
+}
+
+message SchoolImportCounts {
+  int32 ready = 1;
+  int32 existing = 2;
+  int32 duplicate = 3;
+  int32 rejected = 4;
+  int32 skipped = 5;
+}
+
+message PreviewSchoolImportResponse {
+  repeated SchoolImportColumn columns = 1;
+  repeated SchoolImportRow rows = 2;
+  SchoolImportCounts counts = 3;
 }

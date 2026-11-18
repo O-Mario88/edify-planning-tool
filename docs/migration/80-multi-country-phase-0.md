@@ -1228,3 +1228,68 @@ only as uuids, the query length).
 
 The pages, the Admin's country geography tab and the location pickers, come
 with the Next.js and Expo migration, which reads these calls.
+
+## 27. Phase 2, third step: previewing a country's school list (2026-11-18)
+
+Phase 2 calls for a country-aware school import with a dry run, duplicates
+and rejects (§8). Its dry run is now built: `CountryService.PreviewSchoolImport`
+in `internal/schoolimport`. It is Admin only, for any country the Admin may
+see. It writes nothing, so Uganda's list can be previewed too.
+
+**Reading the file.** The preview reads a `.csv` or `.xlsx` file of at most
+900 KB and 10,000 rows. The gateway takes requests of 1 MiB and that limit
+is kept. XLSX is read with Go's standard library, so the gateway gains no
+dependency. It reads the first worksheet, shared and inline text, and cell
+positions, so skipped columns and rows stay in place. Each part may unpack
+to 40 MB at most, so a small file cannot expand into a huge one.
+
+**Columns.** Headers are normalised as in the existing upload
+(`upload_mapping.normalize_header`), and the existing columns are kept:
+School ID, School Name, Current Partner Type, Enrolment and Phone. The
+geography columns are the country's own levels, named by their label or
+canonical word. For Uganda these are Region, District and Sub County as
+today; for Kenya they would be County and Sub-county. A national school ID
+(EMIS and the like) is read into its own field and never replaces the
+School ID.
+
+**What a row comes to:**
+
+| Status | When |
+|---|---|
+| `ready` | A new school |
+| `existing` | Its School ID is a school this country already holds. An import would update that school, never re-number it |
+| `duplicate` | Its School ID is on an earlier line |
+| `rejected` | The School ID or name is missing; the School ID is held by another country's school; or a required level is missing, not found or ambiguous |
+| `skipped` | The row is blank |
+
+Each level is placed under the unit above it, any number of levels down,
+since a file may leave optional levels out. An optional level that is not
+found, or found more than once, is a warning. Warnings are also given for:
+
+- a name the country's schools already have;
+- the same name twice in the same place in the file;
+- a national ID repeated in the file;
+- an unknown partner type, which is taken as Client, as today.
+
+Proof: `internal/schoolimport/schoolimport_test.go` covers the reader (CSV
+with a byte-order mark, XLSX with shared and inline text and gaps, and each
+refused file) and every status and warning over a small two-region country.
+`internal/integration/country_school_import_test.go` previews through the
+gateway as an Admin:
+
+- An existing Ugandan school's row is `existing`, placed in its own region,
+  district and sub-county, with its EMIS kept apart.
+- A new School ID in the same place is `ready`.
+- A row with no region is rejected, as Uganda requires one.
+- The Ugandan School ID offered for Kenya is rejected as another country's.
+- A Country Director is refused, a file with no School ID column is
+  refused, and the number of schools is unchanged.
+
+The integration harness now also migrates the field route schema and seeds
+the geography, as `countryctl seed-legacy` does. CI's database had no
+`field_routes` before, which failed §24's test there.
+
+Next: the import itself, which writes. Like every Go write that replaces a
+Django one, it waits to be proved against Django's in shadow first (the
+saves cut-over rule). Until then a non-Ugandan school list can be
+previewed, not imported.

@@ -69,6 +69,9 @@ const (
 	// CountryServiceAddAdminUnitProcedure is the fully-qualified name of the CountryService's
 	// AddAdminUnit RPC.
 	CountryServiceAddAdminUnitProcedure = "/edify.countries.v1.CountryService/AddAdminUnit"
+	// CountryServicePreviewSchoolImportProcedure is the fully-qualified name of the CountryService's
+	// PreviewSchoolImport RPC.
+	CountryServicePreviewSchoolImportProcedure = "/edify.countries.v1.CountryService/PreviewSchoolImport"
 )
 
 // CountryServiceClient is a client for the edify.countries.v1.CountryService service.
@@ -106,6 +109,11 @@ type CountryServiceClient interface {
 	// Add a unit to a country that is not yet Active (Admin only), under a
 	// parent of a higher level in the same country.
 	AddAdminUnit(context.Context, *connect.Request[v1.AddAdminUnitRequest]) (*connect.Response[v1.AddAdminUnitResponse], error)
+	// Preview a country's school list before anything is imported (Admin
+	// only; docs/migration/80 §27): each row placed in the country's own
+	// geography and said to be ready, a School ID the country already holds,
+	// a repeat of an earlier row, rejected or blank. Nothing is written.
+	PreviewSchoolImport(context.Context, *connect.Request[v1.PreviewSchoolImportRequest]) (*connect.Response[v1.PreviewSchoolImportResponse], error)
 }
 
 // NewCountryServiceClient constructs a client for the edify.countries.v1.CountryService service. By
@@ -191,6 +199,12 @@ func NewCountryServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(countryServiceMethods.ByName("AddAdminUnit")),
 			connect.WithClientOptions(opts...),
 		),
+		previewSchoolImport: connect.NewClient[v1.PreviewSchoolImportRequest, v1.PreviewSchoolImportResponse](
+			httpClient,
+			baseURL+CountryServicePreviewSchoolImportProcedure,
+			connect.WithSchema(countryServiceMethods.ByName("PreviewSchoolImport")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -208,6 +222,7 @@ type countryServiceClient struct {
 	listAdminUnits       *connect.Client[v1.ListAdminUnitsRequest, v1.ListAdminUnitsResponse]
 	defineAdminUnitLevel *connect.Client[v1.DefineAdminUnitLevelRequest, v1.DefineAdminUnitLevelResponse]
 	addAdminUnit         *connect.Client[v1.AddAdminUnitRequest, v1.AddAdminUnitResponse]
+	previewSchoolImport  *connect.Client[v1.PreviewSchoolImportRequest, v1.PreviewSchoolImportResponse]
 }
 
 // ListCountries calls edify.countries.v1.CountryService.ListCountries.
@@ -270,6 +285,11 @@ func (c *countryServiceClient) AddAdminUnit(ctx context.Context, req *connect.Re
 	return c.addAdminUnit.CallUnary(ctx, req)
 }
 
+// PreviewSchoolImport calls edify.countries.v1.CountryService.PreviewSchoolImport.
+func (c *countryServiceClient) PreviewSchoolImport(ctx context.Context, req *connect.Request[v1.PreviewSchoolImportRequest]) (*connect.Response[v1.PreviewSchoolImportResponse], error) {
+	return c.previewSchoolImport.CallUnary(ctx, req)
+}
+
 // CountryServiceHandler is an implementation of the edify.countries.v1.CountryService service.
 type CountryServiceHandler interface {
 	// The countries the reader may see, each with the settings in force today.
@@ -305,6 +325,11 @@ type CountryServiceHandler interface {
 	// Add a unit to a country that is not yet Active (Admin only), under a
 	// parent of a higher level in the same country.
 	AddAdminUnit(context.Context, *connect.Request[v1.AddAdminUnitRequest]) (*connect.Response[v1.AddAdminUnitResponse], error)
+	// Preview a country's school list before anything is imported (Admin
+	// only; docs/migration/80 §27): each row placed in the country's own
+	// geography and said to be ready, a School ID the country already holds,
+	// a repeat of an earlier row, rejected or blank. Nothing is written.
+	PreviewSchoolImport(context.Context, *connect.Request[v1.PreviewSchoolImportRequest]) (*connect.Response[v1.PreviewSchoolImportResponse], error)
 }
 
 // NewCountryServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -386,6 +411,12 @@ func NewCountryServiceHandler(svc CountryServiceHandler, opts ...connect.Handler
 		connect.WithSchema(countryServiceMethods.ByName("AddAdminUnit")),
 		connect.WithHandlerOptions(opts...),
 	)
+	countryServicePreviewSchoolImportHandler := connect.NewUnaryHandler(
+		CountryServicePreviewSchoolImportProcedure,
+		svc.PreviewSchoolImport,
+		connect.WithSchema(countryServiceMethods.ByName("PreviewSchoolImport")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/edify.countries.v1.CountryService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case CountryServiceListCountriesProcedure:
@@ -412,6 +443,8 @@ func NewCountryServiceHandler(svc CountryServiceHandler, opts ...connect.Handler
 			countryServiceDefineAdminUnitLevelHandler.ServeHTTP(w, r)
 		case CountryServiceAddAdminUnitProcedure:
 			countryServiceAddAdminUnitHandler.ServeHTTP(w, r)
+		case CountryServicePreviewSchoolImportProcedure:
+			countryServicePreviewSchoolImportHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -467,4 +500,8 @@ func (UnimplementedCountryServiceHandler) DefineAdminUnitLevel(context.Context, 
 
 func (UnimplementedCountryServiceHandler) AddAdminUnit(context.Context, *connect.Request[v1.AddAdminUnitRequest]) (*connect.Response[v1.AddAdminUnitResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.countries.v1.CountryService.AddAdminUnit is not implemented"))
+}
+
+func (UnimplementedCountryServiceHandler) PreviewSchoolImport(context.Context, *connect.Request[v1.PreviewSchoolImportRequest]) (*connect.Response[v1.PreviewSchoolImportResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.countries.v1.CountryService.PreviewSchoolImport is not implemented"))
 }

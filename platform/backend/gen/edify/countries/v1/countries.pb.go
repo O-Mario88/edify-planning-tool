@@ -2335,6 +2335,366 @@ func (x *AddAdminUnitResponse) GetUnit() *AdminUnit {
 	return nil
 }
 
+type PreviewSchoolImportRequest struct {
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	CountryCode string                 `protobuf:"bytes,1,opt,name=country_code,json=countryCode,proto3" json:"country_code,omitempty"`
+	// Ends in .csv or .xlsx.
+	FileName string `protobuf:"bytes,2,opt,name=file_name,json=fileName,proto3" json:"file_name,omitempty"`
+	// The file, at most 900 KB and 10,000 rows. The first row names the
+	// columns: School ID and School Name are required; the country's levels
+	// are named by their labels (District, Sub-county); a national school ID
+	// (EMIS) is read apart from the School ID.
+	Content       []byte `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PreviewSchoolImportRequest) Reset() {
+	*x = PreviewSchoolImportRequest{}
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PreviewSchoolImportRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PreviewSchoolImportRequest) ProtoMessage() {}
+
+func (x *PreviewSchoolImportRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PreviewSchoolImportRequest.ProtoReflect.Descriptor instead.
+func (*PreviewSchoolImportRequest) Descriptor() ([]byte, []int) {
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *PreviewSchoolImportRequest) GetCountryCode() string {
+	if x != nil {
+		return x.CountryCode
+	}
+	return ""
+}
+
+func (x *PreviewSchoolImportRequest) GetFileName() string {
+	if x != nil {
+		return x.FileName
+	}
+	return ""
+}
+
+func (x *PreviewSchoolImportRequest) GetContent() []byte {
+	if x != nil {
+		return x.Content
+	}
+	return nil
+}
+
+type SchoolImportColumn struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Header string                 `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
+	// What the column was read as (school_id, name, a level's label); empty
+	// for a column not used.
+	TakenAs       string `protobuf:"bytes,2,opt,name=taken_as,json=takenAs,proto3" json:"taken_as,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SchoolImportColumn) Reset() {
+	*x = SchoolImportColumn{}
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SchoolImportColumn) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SchoolImportColumn) ProtoMessage() {}
+
+func (x *SchoolImportColumn) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SchoolImportColumn.ProtoReflect.Descriptor instead.
+func (*SchoolImportColumn) Descriptor() ([]byte, []int) {
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *SchoolImportColumn) GetHeader() string {
+	if x != nil {
+		return x.Header
+	}
+	return ""
+}
+
+func (x *SchoolImportColumn) GetTakenAs() string {
+	if x != nil {
+		return x.TakenAs
+	}
+	return ""
+}
+
+type SchoolImportRow struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The row's line in the file; the header is line 1.
+	Line     int32  `protobuf:"varint,1,opt,name=line,proto3" json:"line,omitempty"`
+	SchoolId string `protobuf:"bytes,2,opt,name=school_id,json=schoolId,proto3" json:"school_id,omitempty"`
+	Name     string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	// Kept apart from the School ID, which it never replaces.
+	NationalId string `protobuf:"bytes,4,opt,name=national_id,json=nationalId,proto3" json:"national_id,omitempty"`
+	// ready, existing, duplicate, rejected or skipped.
+	Status     string `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`
+	SchoolType string `protobuf:"bytes,6,opt,name=school_type,json=schoolType,proto3" json:"school_type,omitempty"`
+	// The units the row is placed in, top first.
+	Units []string `protobuf:"bytes,7,rep,name=units,proto3" json:"units,omitempty"`
+	// Why a row is rejected, and the warnings on any other.
+	Messages      []string `protobuf:"bytes,8,rep,name=messages,proto3" json:"messages,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SchoolImportRow) Reset() {
+	*x = SchoolImportRow{}
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SchoolImportRow) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SchoolImportRow) ProtoMessage() {}
+
+func (x *SchoolImportRow) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SchoolImportRow.ProtoReflect.Descriptor instead.
+func (*SchoolImportRow) Descriptor() ([]byte, []int) {
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *SchoolImportRow) GetLine() int32 {
+	if x != nil {
+		return x.Line
+	}
+	return 0
+}
+
+func (x *SchoolImportRow) GetSchoolId() string {
+	if x != nil {
+		return x.SchoolId
+	}
+	return ""
+}
+
+func (x *SchoolImportRow) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *SchoolImportRow) GetNationalId() string {
+	if x != nil {
+		return x.NationalId
+	}
+	return ""
+}
+
+func (x *SchoolImportRow) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *SchoolImportRow) GetSchoolType() string {
+	if x != nil {
+		return x.SchoolType
+	}
+	return ""
+}
+
+func (x *SchoolImportRow) GetUnits() []string {
+	if x != nil {
+		return x.Units
+	}
+	return nil
+}
+
+func (x *SchoolImportRow) GetMessages() []string {
+	if x != nil {
+		return x.Messages
+	}
+	return nil
+}
+
+type SchoolImportCounts struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Ready         int32                  `protobuf:"varint,1,opt,name=ready,proto3" json:"ready,omitempty"`
+	Existing      int32                  `protobuf:"varint,2,opt,name=existing,proto3" json:"existing,omitempty"`
+	Duplicate     int32                  `protobuf:"varint,3,opt,name=duplicate,proto3" json:"duplicate,omitempty"`
+	Rejected      int32                  `protobuf:"varint,4,opt,name=rejected,proto3" json:"rejected,omitempty"`
+	Skipped       int32                  `protobuf:"varint,5,opt,name=skipped,proto3" json:"skipped,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SchoolImportCounts) Reset() {
+	*x = SchoolImportCounts{}
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SchoolImportCounts) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SchoolImportCounts) ProtoMessage() {}
+
+func (x *SchoolImportCounts) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SchoolImportCounts.ProtoReflect.Descriptor instead.
+func (*SchoolImportCounts) Descriptor() ([]byte, []int) {
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *SchoolImportCounts) GetReady() int32 {
+	if x != nil {
+		return x.Ready
+	}
+	return 0
+}
+
+func (x *SchoolImportCounts) GetExisting() int32 {
+	if x != nil {
+		return x.Existing
+	}
+	return 0
+}
+
+func (x *SchoolImportCounts) GetDuplicate() int32 {
+	if x != nil {
+		return x.Duplicate
+	}
+	return 0
+}
+
+func (x *SchoolImportCounts) GetRejected() int32 {
+	if x != nil {
+		return x.Rejected
+	}
+	return 0
+}
+
+func (x *SchoolImportCounts) GetSkipped() int32 {
+	if x != nil {
+		return x.Skipped
+	}
+	return 0
+}
+
+type PreviewSchoolImportResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Columns       []*SchoolImportColumn  `protobuf:"bytes,1,rep,name=columns,proto3" json:"columns,omitempty"`
+	Rows          []*SchoolImportRow     `protobuf:"bytes,2,rep,name=rows,proto3" json:"rows,omitempty"`
+	Counts        *SchoolImportCounts    `protobuf:"bytes,3,opt,name=counts,proto3" json:"counts,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PreviewSchoolImportResponse) Reset() {
+	*x = PreviewSchoolImportResponse{}
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PreviewSchoolImportResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PreviewSchoolImportResponse) ProtoMessage() {}
+
+func (x *PreviewSchoolImportResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PreviewSchoolImportResponse.ProtoReflect.Descriptor instead.
+func (*PreviewSchoolImportResponse) Descriptor() ([]byte, []int) {
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *PreviewSchoolImportResponse) GetColumns() []*SchoolImportColumn {
+	if x != nil {
+		return x.Columns
+	}
+	return nil
+}
+
+func (x *PreviewSchoolImportResponse) GetRows() []*SchoolImportRow {
+	if x != nil {
+		return x.Rows
+	}
+	return nil
+}
+
+func (x *PreviewSchoolImportResponse) GetCounts() *SchoolImportCounts {
+	if x != nil {
+		return x.Counts
+	}
+	return nil
+}
+
 var File_edify_countries_v1_countries_proto protoreflect.FileDescriptor
 
 const file_edify_countries_v1_countries_proto_rawDesc = "" +
@@ -2540,8 +2900,35 @@ const file_edify_countries_v1_countries_proto_rawDesc = "" +
 	"\rofficial_name\x18\x04 \x01(\tR\fofficialName\x12#\n" +
 	"\rofficial_code\x18\x05 \x01(\tR\fofficialCode\"I\n" +
 	"\x14AddAdminUnitResponse\x121\n" +
-	"\x04unit\x18\x01 \x01(\v2\x1d.edify.countries.v1.AdminUnitR\x04unit2\xc7\n" +
-	"\n" +
+	"\x04unit\x18\x01 \x01(\v2\x1d.edify.countries.v1.AdminUnitR\x04unit\"v\n" +
+	"\x1aPreviewSchoolImportRequest\x12!\n" +
+	"\fcountry_code\x18\x01 \x01(\tR\vcountryCode\x12\x1b\n" +
+	"\tfile_name\x18\x02 \x01(\tR\bfileName\x12\x18\n" +
+	"\acontent\x18\x03 \x01(\fR\acontent\"G\n" +
+	"\x12SchoolImportColumn\x12\x16\n" +
+	"\x06header\x18\x01 \x01(\tR\x06header\x12\x19\n" +
+	"\btaken_as\x18\x02 \x01(\tR\atakenAs\"\xe2\x01\n" +
+	"\x0fSchoolImportRow\x12\x12\n" +
+	"\x04line\x18\x01 \x01(\x05R\x04line\x12\x1b\n" +
+	"\tschool_id\x18\x02 \x01(\tR\bschoolId\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1f\n" +
+	"\vnational_id\x18\x04 \x01(\tR\n" +
+	"nationalId\x12\x16\n" +
+	"\x06status\x18\x05 \x01(\tR\x06status\x12\x1f\n" +
+	"\vschool_type\x18\x06 \x01(\tR\n" +
+	"schoolType\x12\x14\n" +
+	"\x05units\x18\a \x03(\tR\x05units\x12\x1a\n" +
+	"\bmessages\x18\b \x03(\tR\bmessages\"\x9a\x01\n" +
+	"\x12SchoolImportCounts\x12\x14\n" +
+	"\x05ready\x18\x01 \x01(\x05R\x05ready\x12\x1a\n" +
+	"\bexisting\x18\x02 \x01(\x05R\bexisting\x12\x1c\n" +
+	"\tduplicate\x18\x03 \x01(\x05R\tduplicate\x12\x1a\n" +
+	"\brejected\x18\x04 \x01(\x05R\brejected\x12\x18\n" +
+	"\askipped\x18\x05 \x01(\x05R\askipped\"\xd8\x01\n" +
+	"\x1bPreviewSchoolImportResponse\x12@\n" +
+	"\acolumns\x18\x01 \x03(\v2&.edify.countries.v1.SchoolImportColumnR\acolumns\x127\n" +
+	"\x04rows\x18\x02 \x03(\v2#.edify.countries.v1.SchoolImportRowR\x04rows\x12>\n" +
+	"\x06counts\x18\x03 \x01(\v2&.edify.countries.v1.SchoolImportCountsR\x06counts2\xbf\v\n" +
 	"\x0eCountryService\x12d\n" +
 	"\rListCountries\x12(.edify.countries.v1.ListCountriesRequest\x1a).edify.countries.v1.ListCountriesResponse\x12m\n" +
 	"\x10GetCountryConfig\x12+.edify.countries.v1.GetCountryConfigRequest\x1a,.edify.countries.v1.GetCountryConfigResponse\x12v\n" +
@@ -2554,7 +2941,8 @@ const file_edify_countries_v1_countries_proto_rawDesc = "" +
 	"\x13ListAdminUnitLevels\x12..edify.countries.v1.ListAdminUnitLevelsRequest\x1a/.edify.countries.v1.ListAdminUnitLevelsResponse\x12g\n" +
 	"\x0eListAdminUnits\x12).edify.countries.v1.ListAdminUnitsRequest\x1a*.edify.countries.v1.ListAdminUnitsResponse\x12y\n" +
 	"\x14DefineAdminUnitLevel\x12/.edify.countries.v1.DefineAdminUnitLevelRequest\x1a0.edify.countries.v1.DefineAdminUnitLevelResponse\x12a\n" +
-	"\fAddAdminUnit\x12'.edify.countries.v1.AddAdminUnitRequest\x1a(.edify.countries.v1.AddAdminUnitResponseB\xf0\x01\n" +
+	"\fAddAdminUnit\x12'.edify.countries.v1.AddAdminUnitRequest\x1a(.edify.countries.v1.AddAdminUnitResponse\x12v\n" +
+	"\x13PreviewSchoolImport\x12..edify.countries.v1.PreviewSchoolImportRequest\x1a/.edify.countries.v1.PreviewSchoolImportResponseB\xf0\x01\n" +
 	"\x16com.edify.countries.v1B\x0eCountriesProtoP\x01Z\\github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/countries/v1;countriesv1\xa2\x02\x03ECX\xaa\x02\x12Edify.Countries.V1\xca\x02\x12Edify\\Countries\\V1\xe2\x02\x1eEdify\\Countries\\V1\\GPBMetadata\xea\x02\x14Edify::Countries::V1b\x06proto3"
 
 var (
@@ -2569,7 +2957,7 @@ func file_edify_countries_v1_countries_proto_rawDescGZIP() []byte {
 	return file_edify_countries_v1_countries_proto_rawDescData
 }
 
-var file_edify_countries_v1_countries_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
+var file_edify_countries_v1_countries_proto_msgTypes = make([]protoimpl.MessageInfo, 37)
 var file_edify_countries_v1_countries_proto_goTypes = []any{
 	(*Country)(nil),                      // 0: edify.countries.v1.Country
 	(*CountryConfig)(nil),                // 1: edify.countries.v1.CountryConfig
@@ -2603,6 +2991,11 @@ var file_edify_countries_v1_countries_proto_goTypes = []any{
 	(*DefineAdminUnitLevelResponse)(nil), // 29: edify.countries.v1.DefineAdminUnitLevelResponse
 	(*AddAdminUnitRequest)(nil),          // 30: edify.countries.v1.AddAdminUnitRequest
 	(*AddAdminUnitResponse)(nil),         // 31: edify.countries.v1.AddAdminUnitResponse
+	(*PreviewSchoolImportRequest)(nil),   // 32: edify.countries.v1.PreviewSchoolImportRequest
+	(*SchoolImportColumn)(nil),           // 33: edify.countries.v1.SchoolImportColumn
+	(*SchoolImportRow)(nil),              // 34: edify.countries.v1.SchoolImportRow
+	(*SchoolImportCounts)(nil),           // 35: edify.countries.v1.SchoolImportCounts
+	(*PreviewSchoolImportResponse)(nil),  // 36: edify.countries.v1.PreviewSchoolImportResponse
 }
 var file_edify_countries_v1_countries_proto_depIdxs = []int32{
 	1,  // 0: edify.countries.v1.Country.config:type_name -> edify.countries.v1.CountryConfig
@@ -2624,35 +3017,40 @@ var file_edify_countries_v1_countries_proto_depIdxs = []int32{
 	23, // 16: edify.countries.v1.ListAdminUnitsResponse.trail:type_name -> edify.countries.v1.AdminUnit
 	22, // 17: edify.countries.v1.DefineAdminUnitLevelResponse.level:type_name -> edify.countries.v1.AdminUnitLevel
 	23, // 18: edify.countries.v1.AddAdminUnitResponse.unit:type_name -> edify.countries.v1.AdminUnit
-	2,  // 19: edify.countries.v1.CountryService.ListCountries:input_type -> edify.countries.v1.ListCountriesRequest
-	4,  // 20: edify.countries.v1.CountryService.GetCountryConfig:input_type -> edify.countries.v1.GetCountryConfigRequest
-	6,  // 21: edify.countries.v1.CountryService.RecordCountryConfig:input_type -> edify.countries.v1.RecordCountryConfigRequest
-	12, // 22: edify.countries.v1.CountryService.ListMemberships:input_type -> edify.countries.v1.ListMembershipsRequest
-	14, // 23: edify.countries.v1.CountryService.GrantMembership:input_type -> edify.countries.v1.GrantMembershipRequest
-	16, // 24: edify.countries.v1.CountryService.RevokeMembership:input_type -> edify.countries.v1.RevokeMembershipRequest
-	18, // 25: edify.countries.v1.CountryService.AssignCountryRole:input_type -> edify.countries.v1.AssignCountryRoleRequest
-	20, // 26: edify.countries.v1.CountryService.RevokeCountryRole:input_type -> edify.countries.v1.RevokeCountryRoleRequest
-	24, // 27: edify.countries.v1.CountryService.ListAdminUnitLevels:input_type -> edify.countries.v1.ListAdminUnitLevelsRequest
-	26, // 28: edify.countries.v1.CountryService.ListAdminUnits:input_type -> edify.countries.v1.ListAdminUnitsRequest
-	28, // 29: edify.countries.v1.CountryService.DefineAdminUnitLevel:input_type -> edify.countries.v1.DefineAdminUnitLevelRequest
-	30, // 30: edify.countries.v1.CountryService.AddAdminUnit:input_type -> edify.countries.v1.AddAdminUnitRequest
-	3,  // 31: edify.countries.v1.CountryService.ListCountries:output_type -> edify.countries.v1.ListCountriesResponse
-	5,  // 32: edify.countries.v1.CountryService.GetCountryConfig:output_type -> edify.countries.v1.GetCountryConfigResponse
-	7,  // 33: edify.countries.v1.CountryService.RecordCountryConfig:output_type -> edify.countries.v1.RecordCountryConfigResponse
-	13, // 34: edify.countries.v1.CountryService.ListMemberships:output_type -> edify.countries.v1.ListMembershipsResponse
-	15, // 35: edify.countries.v1.CountryService.GrantMembership:output_type -> edify.countries.v1.GrantMembershipResponse
-	17, // 36: edify.countries.v1.CountryService.RevokeMembership:output_type -> edify.countries.v1.RevokeMembershipResponse
-	19, // 37: edify.countries.v1.CountryService.AssignCountryRole:output_type -> edify.countries.v1.AssignCountryRoleResponse
-	21, // 38: edify.countries.v1.CountryService.RevokeCountryRole:output_type -> edify.countries.v1.RevokeCountryRoleResponse
-	25, // 39: edify.countries.v1.CountryService.ListAdminUnitLevels:output_type -> edify.countries.v1.ListAdminUnitLevelsResponse
-	27, // 40: edify.countries.v1.CountryService.ListAdminUnits:output_type -> edify.countries.v1.ListAdminUnitsResponse
-	29, // 41: edify.countries.v1.CountryService.DefineAdminUnitLevel:output_type -> edify.countries.v1.DefineAdminUnitLevelResponse
-	31, // 42: edify.countries.v1.CountryService.AddAdminUnit:output_type -> edify.countries.v1.AddAdminUnitResponse
-	31, // [31:43] is the sub-list for method output_type
-	19, // [19:31] is the sub-list for method input_type
-	19, // [19:19] is the sub-list for extension type_name
-	19, // [19:19] is the sub-list for extension extendee
-	0,  // [0:19] is the sub-list for field type_name
+	33, // 19: edify.countries.v1.PreviewSchoolImportResponse.columns:type_name -> edify.countries.v1.SchoolImportColumn
+	34, // 20: edify.countries.v1.PreviewSchoolImportResponse.rows:type_name -> edify.countries.v1.SchoolImportRow
+	35, // 21: edify.countries.v1.PreviewSchoolImportResponse.counts:type_name -> edify.countries.v1.SchoolImportCounts
+	2,  // 22: edify.countries.v1.CountryService.ListCountries:input_type -> edify.countries.v1.ListCountriesRequest
+	4,  // 23: edify.countries.v1.CountryService.GetCountryConfig:input_type -> edify.countries.v1.GetCountryConfigRequest
+	6,  // 24: edify.countries.v1.CountryService.RecordCountryConfig:input_type -> edify.countries.v1.RecordCountryConfigRequest
+	12, // 25: edify.countries.v1.CountryService.ListMemberships:input_type -> edify.countries.v1.ListMembershipsRequest
+	14, // 26: edify.countries.v1.CountryService.GrantMembership:input_type -> edify.countries.v1.GrantMembershipRequest
+	16, // 27: edify.countries.v1.CountryService.RevokeMembership:input_type -> edify.countries.v1.RevokeMembershipRequest
+	18, // 28: edify.countries.v1.CountryService.AssignCountryRole:input_type -> edify.countries.v1.AssignCountryRoleRequest
+	20, // 29: edify.countries.v1.CountryService.RevokeCountryRole:input_type -> edify.countries.v1.RevokeCountryRoleRequest
+	24, // 30: edify.countries.v1.CountryService.ListAdminUnitLevels:input_type -> edify.countries.v1.ListAdminUnitLevelsRequest
+	26, // 31: edify.countries.v1.CountryService.ListAdminUnits:input_type -> edify.countries.v1.ListAdminUnitsRequest
+	28, // 32: edify.countries.v1.CountryService.DefineAdminUnitLevel:input_type -> edify.countries.v1.DefineAdminUnitLevelRequest
+	30, // 33: edify.countries.v1.CountryService.AddAdminUnit:input_type -> edify.countries.v1.AddAdminUnitRequest
+	32, // 34: edify.countries.v1.CountryService.PreviewSchoolImport:input_type -> edify.countries.v1.PreviewSchoolImportRequest
+	3,  // 35: edify.countries.v1.CountryService.ListCountries:output_type -> edify.countries.v1.ListCountriesResponse
+	5,  // 36: edify.countries.v1.CountryService.GetCountryConfig:output_type -> edify.countries.v1.GetCountryConfigResponse
+	7,  // 37: edify.countries.v1.CountryService.RecordCountryConfig:output_type -> edify.countries.v1.RecordCountryConfigResponse
+	13, // 38: edify.countries.v1.CountryService.ListMemberships:output_type -> edify.countries.v1.ListMembershipsResponse
+	15, // 39: edify.countries.v1.CountryService.GrantMembership:output_type -> edify.countries.v1.GrantMembershipResponse
+	17, // 40: edify.countries.v1.CountryService.RevokeMembership:output_type -> edify.countries.v1.RevokeMembershipResponse
+	19, // 41: edify.countries.v1.CountryService.AssignCountryRole:output_type -> edify.countries.v1.AssignCountryRoleResponse
+	21, // 42: edify.countries.v1.CountryService.RevokeCountryRole:output_type -> edify.countries.v1.RevokeCountryRoleResponse
+	25, // 43: edify.countries.v1.CountryService.ListAdminUnitLevels:output_type -> edify.countries.v1.ListAdminUnitLevelsResponse
+	27, // 44: edify.countries.v1.CountryService.ListAdminUnits:output_type -> edify.countries.v1.ListAdminUnitsResponse
+	29, // 45: edify.countries.v1.CountryService.DefineAdminUnitLevel:output_type -> edify.countries.v1.DefineAdminUnitLevelResponse
+	31, // 46: edify.countries.v1.CountryService.AddAdminUnit:output_type -> edify.countries.v1.AddAdminUnitResponse
+	36, // 47: edify.countries.v1.CountryService.PreviewSchoolImport:output_type -> edify.countries.v1.PreviewSchoolImportResponse
+	35, // [35:48] is the sub-list for method output_type
+	22, // [22:35] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_edify_countries_v1_countries_proto_init() }
@@ -2666,7 +3064,7 @@ func file_edify_countries_v1_countries_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_edify_countries_v1_countries_proto_rawDesc), len(file_edify_countries_v1_countries_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   32,
+			NumMessages:   37,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

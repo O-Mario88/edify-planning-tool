@@ -31,6 +31,7 @@ const (
 	CountryService_ListAdminUnits_FullMethodName       = "/edify.countries.v1.CountryService/ListAdminUnits"
 	CountryService_DefineAdminUnitLevel_FullMethodName = "/edify.countries.v1.CountryService/DefineAdminUnitLevel"
 	CountryService_AddAdminUnit_FullMethodName         = "/edify.countries.v1.CountryService/AddAdminUnit"
+	CountryService_PreviewSchoolImport_FullMethodName  = "/edify.countries.v1.CountryService/PreviewSchoolImport"
 )
 
 // CountryServiceClient is the client API for CountryService service.
@@ -80,6 +81,11 @@ type CountryServiceClient interface {
 	// Add a unit to a country that is not yet Active (Admin only), under a
 	// parent of a higher level in the same country.
 	AddAdminUnit(ctx context.Context, in *AddAdminUnitRequest, opts ...grpc.CallOption) (*AddAdminUnitResponse, error)
+	// Preview a country's school list before anything is imported (Admin
+	// only; docs/migration/80 §27): each row placed in the country's own
+	// geography and said to be ready, a School ID the country already holds,
+	// a repeat of an earlier row, rejected or blank. Nothing is written.
+	PreviewSchoolImport(ctx context.Context, in *PreviewSchoolImportRequest, opts ...grpc.CallOption) (*PreviewSchoolImportResponse, error)
 }
 
 type countryServiceClient struct {
@@ -210,6 +216,16 @@ func (c *countryServiceClient) AddAdminUnit(ctx context.Context, in *AddAdminUni
 	return out, nil
 }
 
+func (c *countryServiceClient) PreviewSchoolImport(ctx context.Context, in *PreviewSchoolImportRequest, opts ...grpc.CallOption) (*PreviewSchoolImportResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PreviewSchoolImportResponse)
+	err := c.cc.Invoke(ctx, CountryService_PreviewSchoolImport_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CountryServiceServer is the server API for CountryService service.
 // All implementations must embed UnimplementedCountryServiceServer
 // for forward compatibility.
@@ -257,6 +273,11 @@ type CountryServiceServer interface {
 	// Add a unit to a country that is not yet Active (Admin only), under a
 	// parent of a higher level in the same country.
 	AddAdminUnit(context.Context, *AddAdminUnitRequest) (*AddAdminUnitResponse, error)
+	// Preview a country's school list before anything is imported (Admin
+	// only; docs/migration/80 §27): each row placed in the country's own
+	// geography and said to be ready, a School ID the country already holds,
+	// a repeat of an earlier row, rejected or blank. Nothing is written.
+	PreviewSchoolImport(context.Context, *PreviewSchoolImportRequest) (*PreviewSchoolImportResponse, error)
 	mustEmbedUnimplementedCountryServiceServer()
 }
 
@@ -302,6 +323,9 @@ func (UnimplementedCountryServiceServer) DefineAdminUnitLevel(context.Context, *
 }
 func (UnimplementedCountryServiceServer) AddAdminUnit(context.Context, *AddAdminUnitRequest) (*AddAdminUnitResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method AddAdminUnit not implemented")
+}
+func (UnimplementedCountryServiceServer) PreviewSchoolImport(context.Context, *PreviewSchoolImportRequest) (*PreviewSchoolImportResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method PreviewSchoolImport not implemented")
 }
 func (UnimplementedCountryServiceServer) mustEmbedUnimplementedCountryServiceServer() {}
 func (UnimplementedCountryServiceServer) testEmbeddedByValue()                        {}
@@ -540,6 +564,24 @@ func _CountryService_AddAdminUnit_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CountryService_PreviewSchoolImport_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PreviewSchoolImportRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CountryServiceServer).PreviewSchoolImport(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CountryService_PreviewSchoolImport_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CountryServiceServer).PreviewSchoolImport(ctx, req.(*PreviewSchoolImportRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CountryService_ServiceDesc is the grpc.ServiceDesc for CountryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -594,6 +636,10 @@ var CountryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddAdminUnit",
 			Handler:    _CountryService_AddAdminUnit_Handler,
+		},
+		{
+			MethodName: "PreviewSchoolImport",
+			Handler:    _CountryService_PreviewSchoolImport_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
