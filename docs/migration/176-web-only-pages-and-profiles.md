@@ -418,3 +418,18 @@ removed after): planned-only, in progress, completed, cancelled, partner
 and staff work the officer monitors, a December visit, and two either side
 of midnight on 30 November. Eight queries for nine readers: **72 answers,
 0 differing**; and over the seed's own work, in the suite.
+
+## 176.16 The Fiscal Year Overview (2026-11-18)
+
+`/fy` (`extended_views.fy_overview_view`, `pages/fy/index.html`) is drawn
+in Go by `schoolprofile` (`fy_overview.go`), behind the `planning` door the
+Districts directory uses.
+
+- The operating schools; the schools with a live SSA record this
+  operational year (SSA Pending is the difference); the work in the plan
+  (not cancelled or otherwise out of it) and the completed work, and the
+  rate between them, `round()` as Python rounds it (half to even).
+- The KPI strip ("Performance overview") and the `FY<year> Summary` line.
+
+Proof: two queries for ten readers, three of them refused: **20 answers,
+0 differing**.

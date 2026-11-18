@@ -153,6 +153,9 @@ func (sp *ScopePages) Build(ctx context.Context, p auth.Principal, path string, 
 	if path == districtsPath {
 		return sp.directory(ctx, p, query)
 	}
+	if path == fyOverviewPath {
+		return sp.fyOverview(ctx, p)
+	}
 	if !strings.HasPrefix(path, districtPrefix) {
 		return nil, false, nil
 	}
