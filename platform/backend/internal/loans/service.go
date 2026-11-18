@@ -19,6 +19,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/config"
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 )
 
 var _ loansv1connect.LoanReferralServiceHandler = (*Service)(nil)
@@ -91,6 +92,57 @@ func (s *Service) staffCall(ctx context.Context) (auth.Principal, access, error)
 }
 
 func (s *Service) today() time.Time { return dayOf(s.now()) }
+
+// inReach refuses an application outside the caller's country as not found
+// (docs/migration/80, §20).
+func (s *Service) inReach(ctx context.Context, p auth.Principal, applicationID string) error {
+	bound := countryBound(p)
+	if bound == nil {
+		return nil
+	}
+	var ok bool
+	if err := s.store.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM school_loans.application a LEFT JOIN school s ON s.id = a.school_id
+  WHERE a.id::text = $1 AND `+registry.SchoolHeldIn("s", "$2")+`)`, applicationID, bound).Scan(&ok); err != nil {
+		return s.internal(ctx, err)
+	}
+	if !ok {
+		return apierr.New(ctx, connect.CodeNotFound, apierr.ReasonNotFound, "No such application.")
+	}
+	return nil
+}
+
+// lenderInReach says whether a lender (its partner organisation) works in
+// the caller's country (country.PartnerIn); every lender for an unbounded
+// caller.
+func (s *Service) lenderInReach(ctx context.Context, p auth.Principal, partnerID string) (bool, error) {
+	bound := countryBound(p)
+	if bound == nil {
+		return true, nil
+	}
+	var ok bool
+	if err := s.store.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM partner p WHERE p.id = $1 AND `+registry.PartnerIn("p", "$2")+`)`,
+		partnerID, bound).Scan(&ok); err != nil {
+		return false, s.internal(ctx, err)
+	}
+	return ok, nil
+}
+
+// schoolInReach refuses a school outside the caller's country as not found.
+func (s *Service) schoolInReach(ctx context.Context, p auth.Principal, schoolID string) error {
+	bound := countryBound(p)
+	if bound == nil || strings.TrimSpace(schoolID) == "" {
+		return nil
+	}
+	var ok bool
+	if err := s.store.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM school s WHERE s.id = $1 AND `+registry.SchoolHeldIn("s", "$2")+`)`,
+		schoolID, bound).Scan(&ok); err != nil {
+		return s.internal(ctx, err)
+	}
+	if !ok {
+		return apierr.New(ctx, connect.CodeNotFound, apierr.ReasonNotFound, "No such school.")
+	}
+	return nil
+}
 
 func isoDate(raw string) (time.Time, error) {
 	if strings.TrimSpace(raw) == "" {
@@ -175,7 +227,7 @@ func choices() (statuses, deliveries, purposes []*loansv1.Choice) {
 
 // ListLoanApplications is one page of the filtered applications.
 func (s *Service) ListLoanApplications(ctx context.Context, request *connect.Request[loansv1.ListLoanApplicationsRequest]) (*connect.Response[loansv1.ListLoanApplicationsResponse], error) {
-	_, granted, err := s.staffCall(ctx)
+	principal, granted, err := s.staffCall(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -184,6 +236,7 @@ func (s *Service) ListLoanApplications(ctx context.Context, request *connect.Req
 		return nil, err
 	}
 	filter.SummaryOnly = granted.summaryOnly
+	filter.CountryIDs = countryBound(principal)
 	page := int(request.Msg.GetPage())
 	if page < 1 {
 		page = 1
@@ -213,8 +266,11 @@ func (s *Service) ListLoanApplications(ctx context.Context, request *connect.Req
 
 // GetLoanApplication is one application in full, for the caller's role.
 func (s *Service) GetLoanApplication(ctx context.Context, request *connect.Request[loansv1.GetLoanApplicationRequest]) (*connect.Response[loansv1.GetLoanApplicationResponse], error) {
-	_, granted, err := s.staffCall(ctx)
+	principal, granted, err := s.staffCall(ctx)
 	if err != nil {
+		return nil, err
+	}
+	if err := s.inReach(ctx, principal, request.Msg.GetId()); err != nil {
 		return nil, err
 	}
 	referral, err := s.store.Referral(ctx, request.Msg.GetId(), "")
@@ -379,6 +435,9 @@ func (s *Service) RecordFollowUp(ctx context.Context, request *connect.Request[l
 	if err != nil {
 		return nil, err
 	}
+	if err := s.inReach(ctx, principal, request.Msg.GetApplicationId()); err != nil {
+		return nil, err
+	}
 	if !granted.followsUp {
 		return nil, denied(ctx, "Only a BTO records follow-ups with lenders.")
 	}
@@ -416,6 +475,9 @@ func (s *Service) RecordOversightNote(ctx context.Context, request *connect.Requ
 	if err != nil {
 		return nil, err
 	}
+	if err := s.inReach(ctx, principal, request.Msg.GetApplicationId()); err != nil {
+		return nil, err
+	}
 	if !granted.oversight {
 		return nil, denied(ctx, "Oversight notes are for the Country Director and the RVP.")
 	}
@@ -443,6 +505,9 @@ func (s *Service) RecordOversightNote(ctx context.Context, request *connect.Requ
 func (s *Service) UpdateTracking(ctx context.Context, request *connect.Request[loansv1.UpdateTrackingRequest]) (*connect.Response[loansv1.UpdateTrackingResponse], error) {
 	principal, granted, err := s.staffCall(ctx)
 	if err != nil {
+		return nil, err
+	}
+	if err := s.inReach(ctx, principal, request.Msg.GetApplicationId()); err != nil {
 		return nil, err
 	}
 	if !granted.followsUp {
@@ -503,6 +568,9 @@ func (s *Service) ResolveSchoolMatch(ctx context.Context, request *connect.Reque
 	if err != nil {
 		return nil, err
 	}
+	if err := s.inReach(ctx, principal, request.Msg.GetApplicationId()); err != nil {
+		return nil, err
+	}
 	if !granted.followsUp {
 		return nil, denied(ctx, "Only a BTO resolves school matches.")
 	}
@@ -539,6 +607,9 @@ func (s *Service) ResendToLender(ctx context.Context, request *connect.Request[l
 	if err != nil {
 		return nil, err
 	}
+	if err := s.inReach(ctx, principal, request.Msg.GetApplicationId()); err != nil {
+		return nil, err
+	}
 	if !granted.followsUp {
 		return nil, denied(ctx, "Only a BTO sends an application again.")
 	}
@@ -556,6 +627,9 @@ func (s *Service) ResendToLender(ctx context.Context, request *connect.Request[l
 func (s *Service) RecordCorrection(ctx context.Context, request *connect.Request[loansv1.RecordCorrectionRequest]) (*connect.Response[loansv1.RecordCorrectionResponse], error) {
 	principal, granted, err := s.staffCall(ctx)
 	if err != nil {
+		return nil, err
+	}
+	if err := s.inReach(ctx, principal, request.Msg.GetApplicationId()); err != nil {
 		return nil, err
 	}
 	if !granted.followsUp {
@@ -604,6 +678,9 @@ func (s *Service) LinkRegisteredLoan(ctx context.Context, request *connect.Reque
 	if err != nil {
 		return nil, err
 	}
+	if err := s.inReach(ctx, principal, request.Msg.GetApplicationId()); err != nil {
+		return nil, err
+	}
 	if !granted.followsUp {
 		return nil, denied(ctx, "Only a BTO links registered loans.")
 	}
@@ -640,6 +717,9 @@ func (s *Service) CreateInvitation(ctx context.Context, request *connect.Request
 	if err != nil {
 		return nil, err
 	}
+	if err := s.schoolInReach(ctx, principal, request.Msg.GetSchoolId()); err != nil {
+		return nil, err
+	}
 	if !granted.followsUp {
 		return nil, denied(ctx, "Only a BTO creates school invitation links.")
 	}
@@ -667,7 +747,7 @@ func (s *Service) CreateInvitation(ctx context.Context, request *connect.Request
 // ExportLoanApplications is the filtered list as CSV, with only the fields
 // the caller's role sees.
 func (s *Service) ExportLoanApplications(ctx context.Context, request *connect.Request[loansv1.ExportLoanApplicationsRequest]) (*connect.Response[loansv1.ExportLoanApplicationsResponse], error) {
-	_, granted, err := s.staffCall(ctx)
+	principal, granted, err := s.staffCall(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -676,6 +756,7 @@ func (s *Service) ExportLoanApplications(ctx context.Context, request *connect.R
 		return nil, err
 	}
 	filter.SummaryOnly = granted.summaryOnly
+	filter.CountryIDs = countryBound(principal)
 	rows, err := s.store.ExportRows(ctx, filter, s.today())
 	if err != nil {
 		return nil, s.internal(ctx, err)
@@ -748,8 +829,11 @@ func safeCells(record []string) []string {
 // GetSchoolLoanHistory is a directory school's loan history (BTO and
 // Country Director: the RVP sees totals only).
 func (s *Service) GetSchoolLoanHistory(ctx context.Context, request *connect.Request[loansv1.GetSchoolLoanHistoryRequest]) (*connect.Response[loansv1.GetSchoolLoanHistoryResponse], error) {
-	_, granted, err := s.staffCall(ctx)
+	principal, granted, err := s.staffCall(ctx)
 	if err != nil {
+		return nil, err
+	}
+	if err := s.schoolInReach(ctx, principal, request.Msg.GetSchoolId()); err != nil {
 		return nil, err
 	}
 	if !granted.full {
@@ -797,13 +881,15 @@ func wholeShillings(value *float64) int64 {
 // GetLoanDashboard is the totals, breakdowns and measures of the filtered
 // applications.
 func (s *Service) GetLoanDashboard(ctx context.Context, request *connect.Request[loansv1.GetLoanDashboardRequest]) (*connect.Response[loansv1.GetLoanDashboardResponse], error) {
-	if _, _, err := s.staffCall(ctx); err != nil {
+	principal, _, err := s.staffCall(ctx)
+	if err != nil {
 		return nil, err
 	}
 	filter, err := filterFrom(ctx, request.Msg.GetFilter())
 	if err != nil {
 		return nil, err
 	}
+	filter.CountryIDs = countryBound(principal)
 	now := s.now()
 	totals, err := s.store.Totals(ctx, filter, now)
 	if err != nil {
@@ -860,7 +946,7 @@ func channelMessage(c Channel) *loansv1.LenderChannel {
 
 // ListLenderChannels lists the Loan Partners and how each receives referrals.
 func (s *Service) ListLenderChannels(ctx context.Context, _ *connect.Request[loansv1.ListLenderChannelsRequest]) (*connect.Response[loansv1.ListLenderChannelsResponse], error) {
-	_, granted, err := s.staffCall(ctx)
+	principal, granted, err := s.staffCall(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -870,6 +956,11 @@ func (s *Service) ListLenderChannels(ctx context.Context, _ *connect.Request[loa
 	}
 	response := &loansv1.ListLenderChannelsResponse{CanManage: granted.managesLender}
 	for _, channel := range channels {
+		if ok, err := s.lenderInReach(ctx, principal, channel.PartnerID); err != nil {
+			return nil, err
+		} else if !ok {
+			continue
+		}
 		message := channelMessage(channel)
 		if !granted.managesLender {
 			message.DeliveryEmail = maskEmail(message.DeliveryEmail)
@@ -890,6 +981,11 @@ func (s *Service) SaveLenderChannel(ctx context.Context, request *connect.Reques
 		return nil, denied(ctx, "Lenders' receiving addresses are the Country Director's to manage.")
 	}
 	msg := request.Msg
+	if ok, err := s.lenderInReach(ctx, principal, msg.GetPartnerId()); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, apierr.New(ctx, connect.CodeNotFound, apierr.ReasonNotFound, "No such lender.")
+	}
 	token, err := s.store.SaveChannel(ctx, ChannelUpdate{
 		PartnerID: msg.GetPartnerId(), DeliveryEmail: msg.GetDeliveryEmail(), Description: msg.GetDescription(),
 		ReferralsEnabled: msg.GetReferralsEnabled(), ActorID: principal.UserID, ActorName: principal.Name,
@@ -953,6 +1049,11 @@ func (s *Service) SendChannelConfirmation(ctx context.Context, request *connect.
 	}
 	if !granted.managesLender {
 		return nil, denied(ctx, "Lenders' receiving addresses are the Country Director's to manage.")
+	}
+	if ok, err := s.lenderInReach(ctx, principal, request.Msg.GetPartnerId()); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, apierr.New(ctx, connect.CodeNotFound, apierr.ReasonNotFound, "No such lender.")
 	}
 	token, email, err := s.store.RenewConfirmation(ctx, request.Msg.GetPartnerId(), principal.UserID, principal.Name, s.now())
 	if err != nil {

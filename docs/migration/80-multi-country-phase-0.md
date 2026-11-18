@@ -6,7 +6,7 @@ country-specific configuration, securely isolated country data.* Phase 0 of
 that instruction asks for an audit and the architecture decisions before any
 schema change. This document is that Phase 0. The owner approved Phase 1
 on §7's recommended defaults on 2026-11-17 ("Yes, start Phase 1"); what has
-been built since, on the development copies only, is §8 to §19.
+been built since, on the development copies only, is §8 to §20.
 
 Everything below was measured on 2026-11-17 against the development copy
 `edify_gorn_test` and the code on `feature/edify-go-rn-migration`. No
@@ -895,4 +895,46 @@ integration suite, 0 differing; school parity `PARITY OK`.
 Not in this step: the cost settings tables' "UGX" column labels (the rate
 card's own currency follows when a country's card is recorded); loans,
 which are their own step.
+
+## 20. Phase 3, eighth step: the country through loans (2026-11-18)
+
+Chosen next by me under the owner's standing instruction of 2026-11-18
+("I will leave you to make the next decision for the next task"). No table
+is added or changed and no row is written; Go code only.
+
+School loans are Go's own (`school_loans` schema, `internal/loans`). The
+existing permission model gave the Business Transformation Officer, the
+Country Director and the RVP every application. The BTO and the RVP are
+regional roles and keep every country (§15); the Country Director is a
+country role, so their reach is now their country's:
+
+| Call | For the Country Director |
+|---|---|
+| Applications list, export, dashboard totals, breakdowns and measures (one `Filter`) | Applications at a school of their country (`country.SchoolHeldIn`) |
+| One application (open, follow up, oversight note, tracking, match, resend, correction, link a registered loan) | Refused as "No such application." when it is another country's |
+| A school's loan history, a school invitation | Refused as "No such school." when the school is another country's |
+| Lender receiving addresses (list, save, send confirmation) | The lenders whose partner organisation works in their country (`country.PartnerIn`); another country's refused as "No such lender." |
+
+**Unplaced records** (`country.SchoolHeldIn`): an application not yet
+matched to a school, or at a school the registry places in no country, is
+Uganda's, as everything the existing application holds is. A lender whose
+partner has no recorded country is Uganda's (§17).
+
+**Currency.** Loan amounts stay in the schema's UGX columns
+(`requested_amount_ugx` and the rest). Another country's applications
+cannot be made yet: the public form resolves the school's district,
+sub-county and parish against Uganda's places, and other countries' places
+come with Phase 2's geography. Recording an application's currency comes
+with that.
+
+Proof: `internal/integration/country_loans_test.go`, with Kenya Active, a
+lender recorded in Kenya, another unrecorded (so Uganda's), an application
+submitted through the public form and not yet matched (so Uganda's), and
+an officer who is Country Director in Kenya alone: Kenya's Country Director
+does not list the application, is refused it by its id, manages only the
+Kenyan lender's address and is refused the Ugandan lender's confirmation;
+Uganda's Country Director lists and opens the application and manages only
+the Ugandan lender. The loan suites (portal, follow-ups, sharing,
+statements, existing terms), the whole integration suite and every golden
+unchanged; school parity `PARITY OK`.
 

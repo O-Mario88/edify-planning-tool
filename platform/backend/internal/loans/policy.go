@@ -7,6 +7,7 @@ import (
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 )
 
 // Role values of the existing system (apps/core/rbac.py, EdifyRole).
@@ -73,6 +74,21 @@ func staff(ctx context.Context) (auth.Principal, access, error) {
 		return auth.Principal{}, access{}, denied(ctx, "Your role cannot see school loan referrals.")
 	}
 	return principal, granted, nil
+}
+
+// countryBound is the countries a staff caller's loan records are kept to
+// (docs/migration/80, §20): nil — every country — for the regional roles
+// (the BTO and the RVP work across every country, §15) and the Admin; the
+// one the Country Director works in, or one id that matches no country
+// while they work in none.
+func countryBound(p auth.Principal) []string {
+	switch {
+	case registry.IsRegional(p.ActiveRole) || p.ActiveRole == "Admin":
+		return nil
+	case p.Country != nil:
+		return []string{p.Country.ID}
+	}
+	return []string{""}
 }
 
 func denied(ctx context.Context, message string) error {

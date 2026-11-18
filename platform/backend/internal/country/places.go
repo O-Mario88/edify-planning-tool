@@ -130,3 +130,14 @@ func ActivityRowIn(activity, ids string) string {
 	return fmt.Sprintf(`EXISTS (SELECT 1 FROM activity rax LEFT JOIN school ras ON ras.id = rax.school_id
     LEFT JOIN cluster racl ON racl.id = rax.cluster_id WHERE rax.id = %s AND %s)`, activity, ActivityHeldIn("rax", "ras", "racl", ids))
 }
+
+// SchoolHeldIn is SchoolIn for readers the existing application serves
+// across the whole platform (school loans): a school the registry places in
+// no country at all — or none, for a record not matched to a school — is held
+// by the country whose roles are the existing profile's (Uganda), as with
+// ActivityHeldIn (docs/migration/80, §20).
+func SchoolHeldIn(school, ids string) string {
+	return fmt.Sprintf(`(%s OR (NOT %s AND EXISTS (SELECT 1 FROM country_registry.country shc
+    WHERE shc.id::text = ANY(%s) AND shc.roles_source = '%s')))`,
+		SchoolIn(school, ids), SchoolIn(school, "ARRAY(SELECT anys.id::text FROM country_registry.country anys)"), ids, RolesFromProfile)
+}

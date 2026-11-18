@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 )
 
 // Filter narrows the staff's lists, dashboard and export.
@@ -26,6 +28,9 @@ type Filter struct {
 	// SummaryOnly: the caller does not see directors' names, so a search
 	// never matches on one.
 	SummaryOnly bool
+	// CountryIDs keep the applications to the caller's country (countryBound);
+	// nil is every country.
+	CountryIDs []string
 }
 
 const pageSize = 50
@@ -79,6 +84,9 @@ func (f Filter) where(today time.Time) (string, []any) {
 	}
 	if f.MaxRequested > 0 {
 		add(`a.requested_amount_ugx <= $?`, f.MaxRequested)
+	}
+	if f.CountryIDs != nil {
+		add(registry.SchoolHeldIn("s", "$?"), f.CountryIDs)
 	}
 	if f.NeedsFollowUp {
 		add(`a.status IN `+openStatuses+` AND (a.next_follow_up_on IS NULL OR a.next_follow_up_on < $?)`, today)
