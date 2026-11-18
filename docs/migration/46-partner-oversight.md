@@ -476,3 +476,37 @@ The supervised staff now travel with the workspace for every lens.
 Proof: two fixture trainings waiting for review, one complete and one whose
 Salesforce ID is not in, each offered to pl2: **624 answers of 10
 accounts, 0 differing**.
+
+## 46.17 The withdrawal queue (2026-11-18)
+
+Withdrawal requests are no longer handed on. A request is one a CCEO raised
+about work a Partner has already scheduled
+(`partner_oversight_service.withdrawal_requests`). Go draws the queue after
+the tiles. It opens with a heading panel, "Withdrawal requests (N)", and its
+one line, then a panel for each request. Each panel says:
+
+- the school and the Partner;
+- the kind and the reason, plus whose it is when it is not the Partner's;
+- the explanation the Partner sees;
+- the internal note, when there is one;
+- the proposed next step, with the planned cost and "Committed money" when
+  the money was locked at withdrawal.
+
+A reader the role rules do not let decide requests (`reviews_withdrawals`)
+also reads "Awaiting the supervising Programme Lead's decision."
+
+Which requests a reader sees depends on the lens:
+
+- a team's lens shows the requests addressed to its leads;
+- a region's lens shows those whose school, or whose hand-over's cluster,
+  is in the region;
+- the country's lens shows them all.
+
+Requests come oldest first, at most a hundred. The labels for the reason,
+whose it is and the next step are exported from the model's choices into
+`rules.json`.
+
+The gateway reads only the columns the queue needs (`roles.sql`).
+
+Proof: one requested withdrawal of a dated hand-over, addressed to pl2:
+461 of the **624 answers of 10 accounts** show it, **0 differing**.

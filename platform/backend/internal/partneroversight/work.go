@@ -76,9 +76,6 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 	if err != nil {
 		return nil, true, err
 	}
-	if held, err := handedOn(ctx, s.db, staff, w.regions); err != nil || held {
-		return nil, !held, err
-	}
 	today := dateOf(now.In(zone))
 	items, err := readItems(ctx, s.db, staff, w.regions, years, today)
 	if err != nil {
@@ -99,6 +96,9 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 	}
 
 	v := &workView{w: w, today: today, years: years}
+	if v.requests, err = readRequests(ctx, s.db, staff, w.regions); err != nil {
+		return nil, true, err
+	}
 	if countryLens {
 		// One Programme Lead's team at a time (_program_lead_tabs over
 		// system_program_leads): the first tab opens when none is asked.
@@ -334,25 +334,6 @@ FROM partner WHERE id = $1`, v.partner).Scan(&contact); err != nil && !errors.Is
 		}}
 	}
 	return out, true, nil
-}
-
-// handedOn is whether the reader's page holds what this piece hands on
-// before any row is read: a withdrawal request their team must decide, or a
-// group training or meeting a Partner facilitates for the team in the
-// years read.
-func handedOn(ctx context.Context, db schooldirectory.Querier, staff, regions []string) (bool, error) {
-	var held bool
-	err := db.QueryRow(ctx, `
-SELECT EXISTS (SELECT 1 FROM partner_assignment_withdrawal w
-      LEFT JOIN school ws ON ws.id = w.school_id
-      LEFT JOIN partner_assignment wa ON wa.id = w.assignment_id LEFT JOIN cluster wc ON wc.id = wa.cluster_id
-      WHERE w.state = $1 AND ($2::text[] IS NULL OR w.supervising_pl_id = ANY($2))
-        AND ($3::text[] IS NULL OR ws.region_id = ANY($3) OR wc.region_id = ANY($3)))`,
-		rules.WithdrawalRequested, staff, regions).Scan(&held)
-	if err != nil {
-		return false, fmt.Errorf("partneroversight: reading what the page hands on: %w", err)
-	}
-	return held, nil
 }
 
 // narrow is build_items' period narrowing: a month by the work's day (else

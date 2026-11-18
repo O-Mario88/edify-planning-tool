@@ -63,6 +63,7 @@ TABLES = (
     "partner_assignment",
     "activity_schedule_cost_line",
     "evidence_record",
+    "partner_assignment_withdrawal",
 )
 
 
@@ -414,6 +415,21 @@ def file_rows():
         facilitated(14, status="planned", days=-4)
         facilitated(15, status="awaiting_ia_verification", days=-8, sf="TS-GPO-15")
         facilitated(16, status="ia_verified", days=-12, sf="TS-GPO-16")
+        # A CCEO's request to take dated work back from the Partner, waiting
+        # on their Programme Lead (pl2).
+        lead = User.objects.get(email="pl2@edify.org").staff_profile.id
+        cursor.execute(
+            "INSERT INTO partner_assignment_withdrawal (id, requested_by, requested_by_role, requested_at,"
+            " responsible_cceo_id, supervising_pl_id, kind, state, reason_category, partner_facing_reason,"
+            " internal_note, attribution, disposition, assignment_state_at_withdrawal,"
+            " activity_state_at_withdrawal, financial_state_at_withdrawal, original_planned_cost,"
+            " partner_response, assignment_id, partner_id, school_id, linked_activity_id, created_at, updated_at)"
+            " VALUES ('gpoW1', %s, 'CCEO', %s, %s, %s, 'recall_scheduled', 'requested', 'scheduling_delay',"
+            " 'The visit has been moved twice and the school needs it before exams.', 'Raised at the cluster meeting',"
+            " 'partner', 'reassign_partner', 'scheduled', 'partner_scheduled', 'unlocked', 42000, '',"
+            " 'gpoH2', %s, %s, 'gpoA2', %s, %s)",
+            [cceo, NOW, cceo, lead, PARTNER, schools[2], NOW, NOW],
+        )
         # Two waiting for the officer's Programme Lead: one complete, one
         # whose Salesforce ID is not in.
         facilitated(22, status="submitted_to_pl", days=-2, sf="TS-GPO-22")

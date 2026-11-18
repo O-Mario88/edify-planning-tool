@@ -1047,3 +1047,6 @@ GRANT SELECT (source_name) ON activity_catalogue_item TO edify_gateway_ro;
 -- Partner Monitoring through a region's lens: the school or hand-over a
 -- withdrawal request names, to place it in the reader's regions.
 GRANT SELECT (school_id, assignment_id) ON partner_assignment_withdrawal TO edify_gateway_ro;
+-- Partner Monitoring's withdrawal queue: each request a CCEO raised, why,
+-- whose it is, what happens next and the money it carries.
+GRANT SELECT (id, requested_at, kind, reason_category, partner_facing_reason, internal_note, attribution, disposition, original_planned_cost, financial_state_at_withdrawal, partner_id) ON partner_assignment_withdrawal TO edify_gateway_ro;

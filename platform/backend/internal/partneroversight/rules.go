@@ -61,6 +61,8 @@ type Role struct {
 	ResolvesReturns bool `json:"resolves_returns"`
 	// WithdrawsPartnerWork is offered a Core school's Withdraw school.
 	WithdrawsPartnerWork bool `json:"withdraws_partner_work"`
+	// ReviewsWithdrawals decides the withdrawal queue's requests.
+	ReviewsWithdrawals bool `json:"reviews_withdrawals"`
 	// VerifiesIA holds Impact Assessment's verification authority.
 	VerifiesIA bool `json:"verifies_ia"`
 }
@@ -150,6 +152,9 @@ type WithdrawalRules struct {
 	Paid                []string          `json:"paid"`
 	Labels              map[string]string `json:"labels"`
 	WithdrawFromPartner string            `json:"withdraw_from_partner"`
+	ReasonLabels        map[string]string `json:"reason_labels"`
+	AttributionLabels   map[string]string `json:"attribution_labels"`
+	DispositionLabels   map[string]string `json:"disposition_labels"`
 }
 
 // CompletionRules are the completion columns' statuses and words.

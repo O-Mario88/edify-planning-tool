@@ -108,7 +108,7 @@ const partnerOversightGoldenEnv = "EDIFY_PARTNER_OVERSIGHT_GOLDEN"
 // partnerOversightTables is the order the golden's rows are filed in (a
 // row before the rows that point at it) and, reversed, the order they
 // leave.
-var partnerOversightTables = []string{"partner", "activity", "partner_assignment", "activity_schedule_cost_line", "evidence_record"}
+var partnerOversightTables = []string{"partner", "activity", "partner_assignment", "activity_schedule_cost_line", "evidence_record", "partner_assignment_withdrawal"}
 
 // filePartnerOversightGolden reads the golden, files its rows and returns
 // its answers; the rows leave when the test ends.

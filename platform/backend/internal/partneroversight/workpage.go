@@ -37,6 +37,7 @@ type workView struct {
 	w          workspace
 	today      time.Time
 	leads      []leadTab
+	requests   []request
 	partners   []partnerTab
 	partner    string
 	partnerTab *partnerTab
@@ -136,6 +137,9 @@ func (v *workView) blocks() []*screensv1.PageBlock {
 		blocks = append(blocks, v.partnerPanel())
 	}
 	blocks = append(blocks, v.memberTabs(), v.tiles())
+	if len(v.requests) > 0 {
+		blocks = append(blocks, v.requestBlocks()...)
+	}
 	switch {
 	case v.partnerTab == nil:
 		blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Empty{Empty: emptyWork}})

@@ -88,6 +88,10 @@ def roles() -> dict:
             # Verify & Confirm on work waiting for IA verification
             # (RolePermissionService.can_verify_ia's matrix half).
             "verifies_ia": has_permission(user, Permission.IA_VERIFY.value),
+            # The withdrawal queue's Approve and Reject.
+            "reviews_withdrawals": has_permission(
+                user, Permission.PARTNER_WITHDRAWAL_REVIEW.value
+            ),
             # The Core Schools table's Withdraw school (_prepare_core_actions).
             "withdraws_partner_work": has_permission(
                 user, Permission.PARTNER_ASSIGNMENT_WITHDRAW.value
@@ -178,7 +182,12 @@ def work() -> dict:
     from apps.partners import purposes
     from apps.partners import withdrawal_service as withdrawal
     from apps.partners.models import PartnerAssignment
-    from apps.partners.withdrawal_models import WithdrawalKind
+    from apps.partners.withdrawal_models import (
+        WithdrawalAttribution,
+        WithdrawalDisposition,
+        WithdrawalKind,
+        WithdrawalReason,
+    )
     from apps.planning import partner_oversight_service as service
     from apps.planning import partner_risk_service as risk
     from apps.planning.country_oversight.rules import DATED_BY_STAFF
@@ -213,6 +222,10 @@ def work() -> dict:
             "paid": list(withdrawal._PAID_STATUSES),
             "labels": {kind.value: kind.label for kind in WithdrawalKind},
             "withdraw_from_partner": withdrawal.WITHDRAW_FROM_PARTNER,
+            # The queue's words: why, whose it is, and what happens next.
+            "reason_labels": dict(WithdrawalReason.choices),
+            "attribution_labels": dict(WithdrawalAttribution.choices),
+            "disposition_labels": dict(WithdrawalDisposition.choices),
         },
         "dated_by_staff": DATED_BY_STAFF,
         # SSA Support is confirmed in its own drawer

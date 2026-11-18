@@ -57,6 +57,7 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": false,
+      "reviews_withdrawals": false,
       "school_profiles": false,
       "verifies_ia": false,
       "withdraws_partner_work": false
@@ -72,6 +73,7 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": true,
+      "reviews_withdrawals": true,
       "school_profiles": true,
       "verifies_ia": false,
       "withdraws_partner_work": true
@@ -87,6 +89,7 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": false,
+      "reviews_withdrawals": false,
       "school_profiles": true,
       "verifies_ia": false,
       "withdraws_partner_work": false
@@ -102,6 +105,7 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": true,
+      "reviews_withdrawals": false,
       "school_profiles": true,
       "verifies_ia": false,
       "withdraws_partner_work": true
@@ -117,6 +121,7 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": false,
+      "reviews_withdrawals": false,
       "school_profiles": false,
       "verifies_ia": false,
       "withdraws_partner_work": false
@@ -132,6 +137,7 @@
       "reads_own_engagements": false,
       "records_engagements": true,
       "resolves_returns": false,
+      "reviews_withdrawals": true,
       "school_profiles": true,
       "verifies_ia": false,
       "withdraws_partner_work": true
@@ -147,6 +153,7 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": false,
+      "reviews_withdrawals": false,
       "school_profiles": false,
       "verifies_ia": false,
       "withdraws_partner_work": false
@@ -162,6 +169,7 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": true,
+      "reviews_withdrawals": true,
       "school_profiles": true,
       "verifies_ia": true,
       "withdraws_partner_work": true
@@ -177,6 +185,7 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": false,
+      "reviews_withdrawals": false,
       "school_profiles": false,
       "verifies_ia": false,
       "withdraws_partner_work": false
@@ -192,6 +201,7 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": false,
+      "reviews_withdrawals": false,
       "school_profiles": false,
       "verifies_ia": false,
       "withdraws_partner_work": false
@@ -207,6 +217,7 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": false,
+      "reviews_withdrawals": false,
       "school_profiles": false,
       "verifies_ia": false,
       "withdraws_partner_work": false
@@ -222,6 +233,7 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": false,
+      "reviews_withdrawals": false,
       "school_profiles": false,
       "verifies_ia": false,
       "withdraws_partner_work": false
@@ -237,6 +249,7 @@
       "reads_own_engagements": true,
       "records_engagements": true,
       "resolves_returns": true,
+      "reviews_withdrawals": true,
       "school_profiles": true,
       "verifies_ia": false,
       "withdraws_partner_work": true
@@ -252,6 +265,7 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": true,
+      "reviews_withdrawals": false,
       "school_profiles": true,
       "verifies_ia": false,
       "withdraws_partner_work": true
@@ -267,6 +281,7 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": false,
+      "reviews_withdrawals": false,
       "school_profiles": false,
       "verifies_ia": false,
       "withdraws_partner_work": false
@@ -282,6 +297,7 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": false,
+      "reviews_withdrawals": false,
       "school_profiles": false,
       "verifies_ia": false,
       "withdraws_partner_work": false
@@ -535,10 +551,24 @@
       "training_follow_up_visit"
     ],
     "withdrawal": {
+      "attribution_labels": {
+        "edify": "Edify-attributable",
+        "external": "External circumstance",
+        "partner": "Partner-attributable",
+        "school": "School-attributable"
+      },
       "closed": [
         "completed",
         "closed"
       ],
+      "disposition_labels": {
+        "cancel_support": "Cancel support",
+        "escalate": "Escalate to Country Director",
+        "hold_for_review": "Hold for review",
+        "reassign_partner": "Assign to another Partner",
+        "return_to_planning": "Return to CCEO Planning",
+        "schedule_as_staff": "Schedule as staff"
+      },
       "evidence": [
         "evidence_uploaded",
         "evidence_accepted",
@@ -577,6 +607,33 @@
         "netsuite_accountability",
         "closed"
       ],
+      "reason_labels": {
+        "capacity": "Partner capacity constraint",
+        "communication": "Communication breakdown",
+        "conduct": "Conduct or integrity concern",
+        "distance": "Distance or travel constraint",
+        "duplicate_assignment": "Duplicate assignment",
+        "incorrect_assignment": "Incorrect school or activity",
+        "missed_deadline": "Missed activity deadline",
+        "not_scheduled": "Partner has not scheduled",
+        "other": "Other documented reason",
+        "out_of_scope": "Assignment outside partner scope",
+        "partner_requested_release": "Partner requested release",
+        "partner_unavailable": "Partner unavailable",
+        "poor_evidence": "Poor evidence quality",
+        "poor_quality": "Poor quality of work",
+        "programme_change": "Project or programme change",
+        "repeated_evidence_return": "Repeated evidence return",
+        "repeated_reschedule": "Repeated rescheduling",
+        "safeguarding": "Safeguarding concern",
+        "safety": "Safety or access concern",
+        "scheduling_delay": "Repeated scheduling delay",
+        "school_complaint": "School complaint",
+        "school_requested_change": "School requested a change",
+        "school_unavailable": "School unavailable",
+        "strategic_reallocation": "Strategic reallocation",
+        "support_not_required": "Support no longer required"
+      },
       "withdraw_from_partner": "Withdraw from partner"
     }
   },
