@@ -47,6 +47,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/countryctx"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dbguard"
 	loanschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans/schema"
+	routeschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/routeplan/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/server"
 
 	"github.com/jackc/pgx/v5"
@@ -62,6 +63,8 @@ const (
 	clusterRolesFile = "../../../deploy/db/cluster_roles.sql"
 	// The School Loan Application Portal's schema and roles (Go-owned).
 	loanRolesFile = "../../../deploy/db/loan_roles.sql"
+	// The Smart Route Planner's schema and roles (Go-owned).
+	routesRolesFile = "../../../deploy/db/routes_roles.sql"
 	// Edify Global's country registry.
 	countryRolesFile = "../../../deploy/db/country_roles.sql"
 	// Signing in, which Go owns: exactly the existing sign-in's columns.
@@ -219,6 +222,16 @@ func prepareGatewayRole(ctx context.Context) (string, error) {
 		return "", err
 	}
 	if _, err := loanschema.Spec.Apply(ctx, conn.Conn(), conn.Conn().Config().Database); err != nil {
+		return "", err
+	}
+	routesRoles, err := os.ReadFile(filepath.FromSlash(routesRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(routesRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	if _, err := routeschema.Spec.Apply(ctx, conn.Conn(), conn.Conn().Config().Database); err != nil {
 		return "", err
 	}
 	// Edify Global's country registry: its roles, its migrations, then the
@@ -878,6 +891,9 @@ func seedCountries(ctx context.Context, conn *pgx.Conn) error {
 	}
 	defer func() { _ = tx.Rollback(context.Background()) }()
 	if _, err := country.SeedLegacy(ctx, tx, "integration"); err != nil {
+		return err
+	}
+	if _, err := country.SeedGeography(ctx, tx, "integration"); err != nil {
 		return err
 	}
 	return tx.Commit(ctx)
