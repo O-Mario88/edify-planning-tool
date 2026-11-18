@@ -218,3 +218,41 @@ Proof: the districts' Activities tab for the Admin, the Country Director and
 Impact Assessment, with the second page, a page past the end and the
 Completed segment, plus the Central sub-region's for the field readers:
 **54 + 18 answers, 0 differing**.
+
+## 176.9 The records behind a figure (2026-11-18)
+
+A figure's records (`?what=`, `profile_records.records`) open under the
+figure's own tab, with `what` kept among the filters' hidden fields. Each
+table is fifty records a page (`rec_<key>`), and a table of sums closes
+every page with its totals, which do not count as records. Go draws:
+
+- **The work:** the eighteen kinds of visit, training, meeting and project
+  work (`_work_kinds`), newest first, each with who delivered it.
+- **Enrolment and its growth:** school by school, the year before, this
+  year, the change and the figure on the profile.
+- **Learning results:** the assessments.
+- **SSA:** the year's confirmed records, and one intervention's school by
+  school with the work that named it. An unknown intervention shows that no
+  record is open.
+- **Stories:** all, or the approved only.
+- **Hand-overs:** at each stage.
+- **Partners:** those serving the schools.
+- **Teachers and leaders:** those trained (the schools' own in-school
+  trainings, then the attendance register of group sessions), and those at
+  cluster meetings, each table closing with its sums.
+- **Loans and Business Transformation cases:** for a reader of the loan
+  register, who sees the loans `scoped_loans` gives them; anyone else is
+  told no record is open to them.
+
+**Still handed on:** the cluster sessions, attendance and absences. The gateway now reads `cluster_activity_attendance.id`, the
+register's own order.
+
+The record titles, their home tabs and the activity types' labels are
+exported (`engine.scope.records`, `work_records`, `activity_type_labels`).
+
+Proof: every work kind for FY 2026 plus the other kinds, with their pages,
+over Mukono, Kamuli and the Central sub-region, for the Country Director
+and a Programme Lead: **126 + 126 answers, 0 differing**. The trained, case
+and loan records, over Mukono and the sub-region for four readers: **48
+answers, 0 differing**. The seed has no rows for these, so only their empty
+tables are proven; the closing sums' shape is the cluster register's.

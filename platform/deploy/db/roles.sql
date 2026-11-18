@@ -1058,3 +1058,5 @@ GRANT SELECT (assigned_partner_id) ON core_activity_slot TO edify_gateway_ro;
 GRANT SELECT (id, kind, fy, country, subject, agreed_improvements, follow_up_due, follow_up_done_at, shared_with_partner_at, partner_id, created_at) ON partner_engagement TO edify_gateway_ro;
 -- The Sub-region profile: the region a sub-region sits in.
 GRANT SELECT (region_id) ON sub_region TO edify_gateway_ro;
+-- The profiles' records of teachers and leaders: the register's own order.
+GRANT SELECT (id) ON cluster_activity_attendance TO edify_gateway_ro;

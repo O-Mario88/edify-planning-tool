@@ -699,6 +699,36 @@
     "rule_sentence": "Improved and declined follow the published IA measurement rule for each SSA domain (the school's country first, then the deployment rule); where no threshold is approved any movement counts, and readings less than 120 days apart are not compared.",
     "school_pairs_shown": 4,
     "scope": {
+      "activity_type_labels": {
+        "baseline_ssa_visit": "SSA Visit",
+        "cluster_meeting": "Cluster Meeting",
+        "cluster_meeting_ssa_review": "Cluster Meeting + SSA Review",
+        "cluster_training": "Cluster Training",
+        "cluster_training_ssa_collection": "Cluster Training + SSA Collection",
+        "coaching_visit": "Coaching Visit",
+        "core_assessment_visit": "Core Assessment Visit",
+        "core_training": "Core Training",
+        "core_visit": "Core Visit",
+        "donor_visit": "Donor Visit",
+        "field_event": "Field Event",
+        "follow_up_visit": "Follow-up Visit",
+        "in_school_coaching_visit": "In-school Coaching Visit",
+        "in_school_support": "In-school Support",
+        "in_school_training": "In-school Training",
+        "partner_activity": "Partner Activity",
+        "partner_ssa_collection": "Partner SSA Collection",
+        "programme_event": "Programme Event",
+        "project_activity": "Project Activity",
+        "school_improvement_training": "School Improvement Training",
+        "school_invitation": "School Invitation",
+        "school_visit": "School Visit",
+        "school_visit_ssa_collection": "School Visit + SSA Collection",
+        "social_visit": "Social Visit",
+        "ssa_activity": "SSA Activity",
+        "story_gathering_visit": "Gathering Story",
+        "training": "Training",
+        "training_follow_up_visit": "Training Follow-up Visit"
+      },
       "default_country": "Uganda",
       "fy_choices": 3,
       "leadership_key": "leadership",
@@ -830,6 +860,160 @@
       ],
       "ranked": 5,
       "ranking_method": "Ranked by the average confirmed SSA score of the year shown; where two are level, the bigger change since the year before comes first, then the name. A school or cluster with no confirmed SSA in the year is not ranked.",
+      "records": {
+        "at_meetings": [
+          "overview",
+          "Teachers and school leaders at cluster meetings"
+        ],
+        "cases": [
+          "overview",
+          "Business Transformation cases"
+        ],
+        "cluster_absent": [
+          "clusters",
+          "Schools absent from sessions in a row"
+        ],
+        "cluster_attendance": [
+          "clusters",
+          "Attendance at cluster sessions"
+        ],
+        "cluster_sessions": [
+          "clusters",
+          "Sessions held"
+        ],
+        "enrolment": [
+          "overview",
+          "Enrolment"
+        ],
+        "enrolment_growth": [
+          "overview",
+          "Enrolment growth"
+        ],
+        "handovers": [
+          "overview",
+          "Hand-overs a partner holds"
+        ],
+        "handovers_awaiting": [
+          "overview",
+          "Awaiting the partner's date"
+        ],
+        "handovers_completed": [
+          "overview",
+          "Completed by the partner"
+        ],
+        "handovers_dated": [
+          "overview",
+          "Dated by the partner"
+        ],
+        "intervention": [
+          "ssa",
+          "SSA intervention"
+        ],
+        "leaders_trained": [
+          "overview",
+          "School leaders trained"
+        ],
+        "learning": [
+          "overview",
+          "Learning results"
+        ],
+        "loans": [
+          "overview",
+          "School loans"
+        ],
+        "meetings": [
+          "activities",
+          "Cluster meetings in the plan"
+        ],
+        "meetings_done": [
+          "activities",
+          "Cluster meetings held"
+        ],
+        "meetings_overdue": [
+          "activities",
+          "Cluster meetings past their date"
+        ],
+        "meetings_upcoming": [
+          "activities",
+          "Cluster meetings still to come"
+        ],
+        "partners": [
+          "overview",
+          "Partners"
+        ],
+        "project_overdue": [
+          "activities",
+          "Project work past its date"
+        ],
+        "ssa": [
+          "ssa",
+          "Confirmed SSA records"
+        ],
+        "stories": [
+          "overview",
+          "Most Significant Change stories"
+        ],
+        "stories_approved": [
+          "overview",
+          "Approved stories"
+        ],
+        "teachers_trained": [
+          "overview",
+          "Teachers trained"
+        ],
+        "trainings": [
+          "activities",
+          "Trainings in the plan"
+        ],
+        "trainings_done": [
+          "activities",
+          "Trainings completed"
+        ],
+        "trainings_group": [
+          "activities",
+          "Group trainings in the plan"
+        ],
+        "trainings_group_done": [
+          "activities",
+          "Group trainings completed"
+        ],
+        "trainings_in_school": [
+          "activities",
+          "In-school trainings in the plan"
+        ],
+        "trainings_in_school_done": [
+          "activities",
+          "In-school trainings completed"
+        ],
+        "trainings_online": [
+          "activities",
+          "Online trainings in the plan"
+        ],
+        "trainings_online_done": [
+          "activities",
+          "Online trainings completed"
+        ],
+        "trainings_overdue": [
+          "activities",
+          "Trainings past their date"
+        ],
+        "trainings_partner": [
+          "activities",
+          "In-school trainings dated by a partner"
+        ],
+        "visits": [
+          "activities",
+          "School visits in the plan"
+        ],
+        "visits_done": [
+          "activities",
+          "School visits completed"
+        ],
+        "visits_overdue": [
+          "activities",
+          "School visits past their date"
+        ]
+      },
       "school_type_order": [
         "champion",
         "client",
@@ -989,7 +1173,27 @@
         "no_training",
         "no_visit"
       ],
-      "team_label": "Team"
+      "team_label": "Team",
+      "work_records": [
+        "visits",
+        "visits_done",
+        "visits_overdue",
+        "trainings",
+        "trainings_done",
+        "trainings_overdue",
+        "project_overdue",
+        "trainings_in_school",
+        "trainings_in_school_done",
+        "trainings_partner",
+        "trainings_group",
+        "trainings_group_done",
+        "trainings_online",
+        "trainings_online_done",
+        "meetings",
+        "meetings_done",
+        "meetings_upcoming",
+        "meetings_overdue"
+      ]
     },
     "ssa_target": 10.0,
     "state_tones": {

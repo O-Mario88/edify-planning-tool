@@ -253,7 +253,20 @@ func (s *Service) scopePage(ctx context.Context, p auth.Principal, page scopePag
 	if !contains(sections, tab) {
 		tab = sections[0]
 	}
-	if !scopeTabsInGo[tab] || query.Get("what") != "" {
+	// The records behind a figure, drawn under the figure's own tab.
+	what := query.Get("what")
+	if record, ok := rules.Engine.Scope.Records[what]; ok {
+		tab = record[0]
+		if !contains(sections, tab) {
+			tab = "overview"
+		}
+		if !recordsInGo[what] && !contains(rules.Engine.Scope.WorkRecords, what) {
+			return nil, false, nil
+		}
+	} else {
+		what = ""
+	}
+	if !scopeTabsInGo[tab] {
 		return nil, false, nil
 	}
 	l := lens{tab: tab, fy: fy, period: period, running: running, window: periodWindow(fy, period), base: page.base, query: query}
@@ -281,7 +294,10 @@ func (s *Service) scopePage(ctx context.Context, p auth.Principal, page scopePag
 		Description: pr.scopeLine(page.lead, l)}
 	facts := append(page.facts(pr), &screensv1.PageFact{Label: "Fiscal Year", Value: fyLabel(fy)})
 	filters := scopeFilters(l)
-	if tab == "schools" {
+	if what != "" {
+		filters.GetFilters().Hidden["what"] = what
+	}
+	if tab == "schools" && what == "" {
 		// The Schools tab's Show list, and the sub-county a part's row opened.
 		show := query.Get("show")
 		if _, ok := rules.Engine.Scope.ShowLabels[show]; !ok {
@@ -302,6 +318,14 @@ func (s *Service) scopePage(ctx context.Context, p auth.Principal, page scopePag
 		filters,
 	}
 	var selection *screensv1.PageSelection
+	if what != "" {
+		tables, err := s.recordBlocks(ctx, btReader{p: p, scope: reader, doors: rules.Doors[p.ActiveRole]}, pr, l, what, query.Get("key"), kampalaDay(now))
+		if err != nil {
+			return nil, true, err
+		}
+		blocks = append(blocks, tables...)
+		tab = ""
+	}
 	switch tab {
 	case "overview":
 		blocks = append(blocks, pr.overview(l)...)

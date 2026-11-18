@@ -424,7 +424,7 @@ def scope_rules() -> dict:
     from apps.analytics import profile_records
     from apps.core.enums import SchoolType
     from apps.frontend.views import profile_views
-    from apps.core.enums import SsaIntervention
+    from apps.core.enums import ActivityType, SsaIntervention
     from apps.planning.fy_policy import default_country
     from apps.schools.lifecycle_models import OPERATING_STATUSES
 
@@ -444,6 +444,11 @@ def scope_rules() -> dict:
         "school_type_order": [value for value, _label in SchoolType.choices],
         "online_mode": profile_records.ONLINE,
         "fy_choices": 3,
+        # The records behind a figure (profile_records.RECORDS): each one's
+        # home tab and title; the work kinds among them.
+        "records": {key: list(value) for key, value in profile_records.RECORDS.items()},
+        "work_records": list(profile_records._work_kinds()),
+        "activity_type_labels": dict(ActivityType.choices),
         # training_ceilings.country_of with no country on the reader's profile.
         "default_country": default_country(),
         # The Country profile's Needs Attention line for districts whose

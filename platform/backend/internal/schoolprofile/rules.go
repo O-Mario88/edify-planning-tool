@@ -183,24 +183,27 @@ type engineRules struct {
 // the operating schools, each kind's sections and levels, the rankings'
 // sentences and the Schools tab's lists.
 type scopeRules struct {
-	OperatingStatuses []string            `json:"operating_statuses"`
-	Sections          [][2]string         `json:"sections"`
-	SectionsOf        map[string][]string `json:"sections_of"`
-	TeamLabel         string              `json:"team_label"`
-	LevelsOf          map[string][]string `json:"levels_of"`
-	LevelLabels       map[string]string   `json:"level_labels"`
-	PeriodOptions     [][2]string         `json:"period_options"`
-	ShowLabels        map[string]string   `json:"show_labels"`
-	ShowOrder         []string            `json:"show_order"`
-	Ranked            int                 `json:"ranked"`
-	RankingMethod     string              `json:"ranking_method"`
-	MoversMethod      string              `json:"movers_method"`
-	SchoolTypeOrder   []string            `json:"school_type_order"`
-	OnlineMode        string              `json:"online_mode"`
-	FYChoices         int                 `json:"fy_choices"`
-	DefaultCountry    string              `json:"default_country"`
-	LowLeadership     float64             `json:"low_leadership"`
-	LeadershipKey     string              `json:"leadership_key"`
+	OperatingStatuses  []string             `json:"operating_statuses"`
+	Sections           [][2]string          `json:"sections"`
+	SectionsOf         map[string][]string  `json:"sections_of"`
+	TeamLabel          string               `json:"team_label"`
+	LevelsOf           map[string][]string  `json:"levels_of"`
+	LevelLabels        map[string]string    `json:"level_labels"`
+	PeriodOptions      [][2]string          `json:"period_options"`
+	ShowLabels         map[string]string    `json:"show_labels"`
+	ShowOrder          []string             `json:"show_order"`
+	Ranked             int                  `json:"ranked"`
+	RankingMethod      string               `json:"ranking_method"`
+	MoversMethod       string               `json:"movers_method"`
+	SchoolTypeOrder    []string             `json:"school_type_order"`
+	OnlineMode         string               `json:"online_mode"`
+	FYChoices          int                  `json:"fy_choices"`
+	DefaultCountry     string               `json:"default_country"`
+	LowLeadership      float64              `json:"low_leadership"`
+	LeadershipKey      string               `json:"leadership_key"`
+	Records            map[string][2]string `json:"records"`
+	WorkRecords        []string             `json:"work_records"`
+	ActivityTypeLabels map[string]string    `json:"activity_type_labels"`
 }
 
 var rules = mustLoad()
