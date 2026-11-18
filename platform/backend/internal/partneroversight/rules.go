@@ -6,12 +6,17 @@
 // partner_oversight.html with partials/oversight/partner_workspace.html) and
 // the app's feed reads it (apps.mobile_feed).
 //
-// This first piece answers a field officer or a Programme Lead whose
-// workspace holds no partner work: the page as it opens for them, with its
-// filters, team-member tabs, headline tiles, empty state and (for a
-// Programme Lead) the partnership register. A reader with any partner work in
-// reach, or whom the page reads through the country or a region, is passed
-// to the existing application (served=false).
+// It answers a field officer or a Programme Lead in their own seat (the
+// team lens): with no partner work, the page as it opens (page.go); with
+// partner work (work.go, build.go, workpage.go), the Partner tabs with their
+// follow-up recommendations, the team-member tabs, the headline tiles with
+// the Planning Monitor's Partner target, and the open tab's table of the
+// chosen Partner's work. A reader the page reads through the country or a
+// region, and what work.go names (work waiting for IA verification, Core
+// schools, Special Project work, a decided hand-back, facilitated
+// trainings, withdrawal requests, the Clusters tab, an activity filter, a
+// table past one page, engagements recorded), is passed to the existing
+// application (served=false).
 //
 // The vocabularies it is built from are the existing ones, exported to
 // rules.json by `manage.py export_partner_oversight_rules`;
@@ -47,6 +52,12 @@ type Role struct {
 	ReadsOwnEngagements bool `json:"reads_own_engagements"`
 	// ObservationsTile adds the Regional Lead observations tile.
 	ObservationsTile bool `json:"observations_tile"`
+	// SchoolProfiles and ClusterProfiles link a row's school and cluster
+	// names to their profiles.
+	SchoolProfiles  bool `json:"school_profiles"`
+	ClusterProfiles bool `json:"cluster_profiles"`
+	// ResolvesReturns is offered Resolve Exception on a hand-back.
+	ResolvesReturns bool `json:"resolves_returns"`
 }
 
 // Tile is one headline tile as the feed reads it.
@@ -78,6 +89,81 @@ type Rules struct {
 	ZeroTiles                    []Tile               `json:"zero_tiles"`
 	ZeroTilesWithTarget          []Tile               `json:"zero_tiles_with_target"`
 	QueryKeysNotPassed           []string             `json:"query_keys_not_passed"`
+	Work                         Work                 `json:"work"`
+}
+
+// Work are the vocabularies a row of partner work is read with
+// (partner_oversight_service, withdrawal_service, completion_columns,
+// partner_risk_service).
+type Work struct {
+	UnscheduledStatuses []string          `json:"unscheduled_statuses"`
+	InProgress          []string          `json:"in_progress"`
+	EvidenceReview      []string          `json:"evidence_review"`
+	AwaitingIA          []string          `json:"awaiting_ia"`
+	Complete            []string          `json:"complete"`
+	NotStarted          []string          `json:"not_started"`
+	ReturnedToPartner   []string          `json:"returned_to_partner"`
+	Paid                []string          `json:"paid"`
+	PaymentProcessing   []string          `json:"payment_processing"`
+	DataGatheringTypes  []string          `json:"data_gathering_types"`
+	DataGatheringLabel  string            `json:"data_gathering_label"`
+	Withdrawal          WithdrawalRules   `json:"withdrawal"`
+	DatedByStaff        string            `json:"dated_by_staff"`
+	VisitTypes          []string          `json:"visit_types"`
+	TrainingTypes       []string          `json:"training_types"`
+	ClusterMeetingTypes []string          `json:"cluster_meeting_types"`
+	PlannedStatuses     []string          `json:"planned_statuses"`
+	ActivityTypeLabels  map[string]string `json:"activity_type_labels"`
+	InterventionLabels  map[string]string `json:"intervention_labels"`
+	PurposeLabels       map[string]string `json:"purpose_labels"`
+	Completion          CompletionRules   `json:"completion"`
+	FollowUp            FollowUpRules     `json:"follow_up"`
+	Risk                RiskRules         `json:"risk"`
+}
+
+// FollowUpRules are partners_needing_follow_up's vocabularies: the
+// recommendations it keeps, the schools and activities the Country
+// Director Analytics read, and the hand-overs that are no longer a
+// Partner's school.
+type FollowUpRules struct {
+	Recommendations   []string `json:"recommendations"`
+	OperatingStatuses []string `json:"operating_statuses"`
+	NotInPlan         []string `json:"not_in_plan"`
+	Completed         []string `json:"completed"`
+	Released          []string `json:"released"`
+}
+
+// WithdrawalRules are resolve_kind's statuses and action_label's words.
+type WithdrawalRules struct {
+	NotStarted          []string          `json:"not_started"`
+	InProgress          []string          `json:"in_progress"`
+	Evidence            []string          `json:"evidence"`
+	IACleared           []string          `json:"ia_cleared"`
+	Closed              []string          `json:"closed"`
+	Paid                []string          `json:"paid"`
+	Labels              map[string]string `json:"labels"`
+	WithdrawFromPartner string            `json:"withdraw_from_partner"`
+}
+
+// CompletionRules are the completion columns' statuses and words.
+type CompletionRules struct {
+	OfficerCompleted   []string          `json:"officer_completed"`
+	CompletedWork      []string          `json:"completed_work"`
+	AttendanceTypes    []string          `json:"attendance_types"`
+	EvidenceKindLabels map[string]string `json:"evidence_kind_labels"`
+	MissingSF          string            `json:"missing_sf"`
+	MissingEvidence    string            `json:"missing_evidence"`
+	MissingBoth        string            `json:"missing_both"`
+}
+
+// RiskRules are partner_risk_service's grace days.
+type RiskRules struct {
+	ScheduleGraceDays       int `json:"schedule_grace_days"`
+	ApproachingDays         int `json:"approaching_days"`
+	EvidenceGraceDays       int `json:"evidence_grace_days"`
+	ReviewGraceDays         int `json:"review_grace_days"`
+	PaymentGraceDays        int `json:"payment_grace_days"`
+	IAVerificationGraceDays int `json:"ia_verification_grace_days"`
 }
 
 var rules = mustLoad(rulesJSON)
@@ -91,6 +177,9 @@ func mustLoad(raw []byte) Rules {
 		if _, ok := r.EngagementMetricWords[key]; !ok {
 			panic("partneroversight: rules.json lacks the engagement tile " + key)
 		}
+	}
+	if len(r.Work.Complete) == 0 || len(r.Work.Withdrawal.Labels) == 0 || r.Work.Completion.MissingBoth == "" {
+		panic("partneroversight: rules.json lacks the work vocabularies")
 	}
 	if len(r.ZeroTiles) == 0 || len(r.ZeroTiles) != len(r.ZeroTilesWithTarget) || len(r.WorkTabs) == 0 {
 		panic("partneroversight: rules.json lacks the tiles or the work tabs")

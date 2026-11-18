@@ -47,6 +47,7 @@
   "returned_to_staff": "returned_to_staff",
   "roles": {
     "Accountant": {
+      "cluster_profiles": false,
       "create_partner": false,
       "engagement_register": false,
       "lens": "country",
@@ -54,9 +55,12 @@
       "own_work_only": false,
       "page": true,
       "reads_own_engagements": false,
-      "records_engagements": false
+      "records_engagements": false,
+      "resolves_returns": false,
+      "school_profiles": false
     },
     "Admin": {
+      "cluster_profiles": true,
       "create_partner": true,
       "engagement_register": true,
       "lens": "country",
@@ -64,9 +68,12 @@
       "own_work_only": false,
       "page": true,
       "reads_own_engagements": false,
-      "records_engagements": false
+      "records_engagements": false,
+      "resolves_returns": true,
+      "school_profiles": true
     },
     "BusinessTransformationOfficer": {
+      "cluster_profiles": false,
       "create_partner": false,
       "engagement_register": false,
       "lens": "team",
@@ -74,9 +81,12 @@
       "own_work_only": false,
       "page": false,
       "reads_own_engagements": false,
-      "records_engagements": false
+      "records_engagements": false,
+      "resolves_returns": false,
+      "school_profiles": true
     },
     "CCEO": {
+      "cluster_profiles": true,
       "create_partner": false,
       "engagement_register": false,
       "lens": "team",
@@ -84,9 +94,12 @@
       "own_work_only": true,
       "page": true,
       "reads_own_engagements": false,
-      "records_engagements": false
+      "records_engagements": false,
+      "resolves_returns": true,
+      "school_profiles": true
     },
     "ClusterLeader": {
+      "cluster_profiles": false,
       "create_partner": false,
       "engagement_register": false,
       "lens": "team",
@@ -94,9 +107,12 @@
       "own_work_only": false,
       "page": false,
       "reads_own_engagements": false,
-      "records_engagements": false
+      "records_engagements": false,
+      "resolves_returns": false,
+      "school_profiles": false
     },
     "CountryDirector": {
+      "cluster_profiles": true,
       "create_partner": true,
       "engagement_register": true,
       "lens": "country",
@@ -104,9 +120,12 @@
       "own_work_only": false,
       "page": true,
       "reads_own_engagements": false,
-      "records_engagements": true
+      "records_engagements": true,
+      "resolves_returns": false,
+      "school_profiles": true
     },
     "HumanResources": {
+      "cluster_profiles": false,
       "create_partner": false,
       "engagement_register": false,
       "lens": "team",
@@ -114,9 +133,12 @@
       "own_work_only": false,
       "page": false,
       "reads_own_engagements": false,
-      "records_engagements": false
+      "records_engagements": false,
+      "resolves_returns": false,
+      "school_profiles": false
     },
     "ImpactAssessment": {
+      "cluster_profiles": true,
       "create_partner": true,
       "engagement_register": true,
       "lens": "country",
@@ -124,9 +146,12 @@
       "own_work_only": false,
       "page": true,
       "reads_own_engagements": false,
-      "records_engagements": false
+      "records_engagements": false,
+      "resolves_returns": true,
+      "school_profiles": true
     },
     "MfiLoanOfficer": {
+      "cluster_profiles": false,
       "create_partner": false,
       "engagement_register": false,
       "lens": "team",
@@ -134,9 +159,12 @@
       "own_work_only": false,
       "page": false,
       "reads_own_engagements": false,
-      "records_engagements": false
+      "records_engagements": false,
+      "resolves_returns": false,
+      "school_profiles": false
     },
     "MfiPartnerAdmin": {
+      "cluster_profiles": false,
       "create_partner": false,
       "engagement_register": false,
       "lens": "team",
@@ -144,9 +172,12 @@
       "own_work_only": false,
       "page": false,
       "reads_own_engagements": false,
-      "records_engagements": false
+      "records_engagements": false,
+      "resolves_returns": false,
+      "school_profiles": false
     },
     "PartnerAdmin": {
+      "cluster_profiles": false,
       "create_partner": false,
       "engagement_register": false,
       "lens": "team",
@@ -154,9 +185,12 @@
       "own_work_only": false,
       "page": false,
       "reads_own_engagements": false,
-      "records_engagements": false
+      "records_engagements": false,
+      "resolves_returns": false,
+      "school_profiles": false
     },
     "PartnerFieldOfficer": {
+      "cluster_profiles": false,
       "create_partner": false,
       "engagement_register": false,
       "lens": "team",
@@ -164,9 +198,12 @@
       "own_work_only": false,
       "page": false,
       "reads_own_engagements": false,
-      "records_engagements": false
+      "records_engagements": false,
+      "resolves_returns": false,
+      "school_profiles": false
     },
     "Program Lead": {
+      "cluster_profiles": true,
       "create_partner": false,
       "engagement_register": true,
       "lens": "team",
@@ -174,9 +211,12 @@
       "own_work_only": false,
       "page": true,
       "reads_own_engagements": true,
-      "records_engagements": true
+      "records_engagements": true,
+      "resolves_returns": true,
+      "school_profiles": true
     },
     "ProjectCoordinator": {
+      "cluster_profiles": false,
       "create_partner": false,
       "engagement_register": false,
       "lens": "team",
@@ -184,9 +224,12 @@
       "own_work_only": false,
       "page": false,
       "reads_own_engagements": false,
-      "records_engagements": false
+      "records_engagements": false,
+      "resolves_returns": true,
+      "school_profiles": true
     },
     "RegionalProgramLead": {
+      "cluster_profiles": false,
       "create_partner": false,
       "engagement_register": false,
       "lens": "region",
@@ -194,9 +237,12 @@
       "own_work_only": false,
       "page": true,
       "reads_own_engagements": false,
-      "records_engagements": false
+      "records_engagements": false,
+      "resolves_returns": false,
+      "school_profiles": false
     },
     "RegionalVicePresident": {
+      "cluster_profiles": false,
       "create_partner": false,
       "engagement_register": false,
       "lens": "country",
@@ -204,7 +250,9 @@
       "own_work_only": false,
       "page": true,
       "reads_own_engagements": false,
-      "records_engagements": false
+      "records_engagements": false,
+      "resolves_returns": false,
+      "school_profiles": false
     }
   },
   "roster_lead_role": "Program Lead",
@@ -217,6 +265,278 @@
     "returned"
   ],
   "withdrawal_requested": "requested",
+  "work": {
+    "activity_type_labels": {
+      "baseline_ssa_visit": "SSA Visit",
+      "cluster_meeting": "Cluster Meeting",
+      "cluster_meeting_ssa_review": "Cluster Meeting + SSA Review",
+      "cluster_training": "Cluster Training",
+      "cluster_training_ssa_collection": "Cluster Training + SSA Collection",
+      "coaching_visit": "Coaching Visit",
+      "core_assessment_visit": "Core Assessment Visit",
+      "core_training": "Core Training",
+      "core_visit": "Core Visit",
+      "donor_visit": "Donor Visit",
+      "field_event": "Field Event",
+      "follow_up_visit": "Follow-up Visit",
+      "in_school_coaching_visit": "In-school Coaching Visit",
+      "in_school_support": "In-school Support",
+      "in_school_training": "In-school Training",
+      "partner_activity": "Partner Activity",
+      "partner_ssa_collection": "Partner SSA Collection",
+      "programme_event": "Programme Event",
+      "project_activity": "Project Activity",
+      "school_improvement_training": "School Improvement Training",
+      "school_invitation": "School Invitation",
+      "school_visit": "School Visit",
+      "school_visit_ssa_collection": "School Visit + SSA Collection",
+      "social_visit": "Social Visit",
+      "ssa_activity": "SSA Activity",
+      "story_gathering_visit": "Gathering Story",
+      "training": "Training",
+      "training_follow_up_visit": "Training Follow-up Visit"
+    },
+    "awaiting_ia": [
+      "awaiting_ia_verification",
+      "salesforce_id_required"
+    ],
+    "cluster_meeting_types": [
+      "cluster_meeting",
+      "cluster_meeting_ssa_review"
+    ],
+    "complete": [
+      "ia_verified",
+      "accountant_confirmed",
+      "completed",
+      "closed"
+    ],
+    "completion": {
+      "attendance_types": [
+        "cluster_meeting",
+        "cluster_meeting_ssa_review",
+        "cluster_training",
+        "cluster_training_ssa_collection",
+        "core_training",
+        "in_school_training",
+        "school_improvement_training",
+        "training"
+      ],
+      "completed_work": [
+        "accountant_confirmed",
+        "closed",
+        "completed",
+        "ia_verified"
+      ],
+      "evidence_kind_labels": {
+        "assessment_form": "Assessment Form",
+        "attendance_form": "Attendance Form",
+        "coaching_notes": "Coaching Notes",
+        "evaluation_form": "Evaluation Form",
+        "meeting_minutes": "Meeting Minutes",
+        "pdf": "PDF",
+        "photo": "Photo",
+        "project_report": "Project Report",
+        "resolutions": "Resolutions",
+        "school_stamp": "School Stamp",
+        "visit_form": "Visit Form"
+      },
+      "missing_both": "Not Complete",
+      "missing_evidence": "Missing evidence",
+      "missing_sf": "Missing Salesforce ID",
+      "officer_completed": [
+        "accountant_confirmed",
+        "awaiting_ia_verification",
+        "closed",
+        "completed",
+        "ia_verified",
+        "submitted_to_pl"
+      ]
+    },
+    "data_gathering_label": "Data Gathering",
+    "data_gathering_types": [
+      "baseline_ssa_visit",
+      "partner_ssa_collection",
+      "school_visit_ssa_collection"
+    ],
+    "dated_by_staff": "staff",
+    "evidence_review": [
+      "evidence_uploaded",
+      "submitted_to_pl",
+      "returned_by_pl"
+    ],
+    "follow_up": {
+      "completed": [
+        "completed",
+        "closed",
+        "ia_verified",
+        "accountant_confirmed",
+        "salesforce_id_required",
+        "awaiting_ia_verification",
+        "submitted_to_pl",
+        "evidence_accepted"
+      ],
+      "not_in_plan": [
+        "cancelled",
+        "rejected",
+        "deferred",
+        "not_planned"
+      ],
+      "operating_statuses": [
+        "active",
+        "reopened"
+      ],
+      "recommendations": [
+        "Quality Review",
+        "Capacity Review",
+        "Put Under Review"
+      ],
+      "released": [
+        "returned_to_staff",
+        "returned",
+        "cancelled"
+      ]
+    },
+    "in_progress": [
+      "in_progress",
+      "completion_started"
+    ],
+    "intervention_labels": {
+      "christlike_behaviour": "Christlike Behaviour",
+      "enrolment": "Enrolment",
+      "exposure_to_word_of_god": "Exposure to the Word of God",
+      "financial_health": "Financial Health",
+      "government_requirement": "Government Requirements",
+      "leadership": "Leadership",
+      "learning_environment": "Learning Environment",
+      "teaching_environment": "Teacher's Environment"
+    },
+    "not_started": [
+      "planned",
+      "scheduled",
+      "rescheduled",
+      "partner_scheduled",
+      "assigned_to_partner"
+    ],
+    "paid": [
+      "paid",
+      "closed",
+      "netsuite_accountability"
+    ],
+    "payment_processing": [
+      "pl_approval_required",
+      "pl_approved",
+      "accountant_cleared",
+      "disbursed"
+    ],
+    "planned_statuses": [
+      "assigned_to_partner",
+      "completion_started",
+      "in_progress",
+      "partner_scheduled",
+      "planned",
+      "rescheduled",
+      "scheduled"
+    ],
+    "purpose_labels": {
+      "donor_visit": "Donor Visit",
+      "in_school_coaching": "In-school Coaching Visit",
+      "in_school_training": "In-school Training",
+      "in_school_training_delivery_visit": "In-school Training Delivery Visit",
+      "in_school_training_ssa": "In-school Training + SSA Collection",
+      "school_invitation": "School Invitation",
+      "social_visit": "Social Visit",
+      "ssa_support": "SSA Support",
+      "story_gathering": "Content/Story Collection",
+      "training_follow_up": "Training Follow Up"
+    },
+    "returned_to_partner": [
+      "returned",
+      "returned_by_pl",
+      "returned_by_ia"
+    ],
+    "risk": {
+      "approaching_days": 3,
+      "evidence_grace_days": 3,
+      "ia_verification_grace_days": 5,
+      "payment_grace_days": 14,
+      "review_grace_days": 5,
+      "schedule_grace_days": 7
+    },
+    "training_types": [
+      "cluster_training",
+      "cluster_training_ssa_collection",
+      "core_training",
+      "in_school_training",
+      "school_improvement_training",
+      "training"
+    ],
+    "unscheduled_statuses": [
+      "assigned",
+      "pending_scheduling"
+    ],
+    "visit_types": [
+      "baseline_ssa_visit",
+      "coaching_visit",
+      "core_assessment_visit",
+      "core_visit",
+      "donor_visit",
+      "follow_up_visit",
+      "in_school_coaching_visit",
+      "in_school_support",
+      "partner_ssa_collection",
+      "school_invitation",
+      "school_visit",
+      "school_visit_ssa_collection",
+      "social_visit",
+      "story_gathering_visit",
+      "training_follow_up_visit"
+    ],
+    "withdrawal": {
+      "closed": [
+        "completed",
+        "closed"
+      ],
+      "evidence": [
+        "evidence_uploaded",
+        "evidence_accepted",
+        "submitted_to_pl",
+        "returned_by_pl",
+        "salesforce_id_required",
+        "awaiting_ia_verification",
+        "returned_by_ia"
+      ],
+      "ia_cleared": [
+        "ia_verified",
+        "accountant_confirmed"
+      ],
+      "in_progress": [
+        "in_progress",
+        "completion_started"
+      ],
+      "labels": {
+        "blocked": "Not available in this state",
+        "payment_hold": "Place payment on hold",
+        "quality_review": "Withdraw for quality review",
+        "recall_scheduled": "Recall scheduled activity",
+        "suspend_in_progress": "Suspend delivery and review",
+        "withdraw_unscheduled": "Withdraw assignment"
+      },
+      "not_started": [
+        "planned",
+        "scheduled",
+        "partner_scheduled",
+        "rescheduled",
+        "assigned_to_partner"
+      ],
+      "paid": [
+        "paid",
+        "disbursed",
+        "netsuite_accountability",
+        "closed"
+      ],
+      "withdraw_from_partner": "Withdraw from partner"
+    }
+  },
   "work_tabs": [
     "schools",
     "core",

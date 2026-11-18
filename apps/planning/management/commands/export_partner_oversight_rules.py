@@ -77,6 +77,14 @@ def roles() -> dict:
             # The Regional Lead observations tile and its follow-ups.
             "observations_tile": engagement_services._role(user)
             == engagement_services.PROGRAM_LEAD,
+            # The row links (apps.frontend.templatetags.school_links): a
+            # school's and a cluster's name open its profile for a reader
+            # who may open one.
+            "school_profiles": bool(can_open_url(user, "/schools/0")),
+            "cluster_profiles": bool(can_open_url(user, "/clusters/0")),
+            "resolves_returns": has_permission(
+                user, Permission.PARTNER_RETURN_RESOLVE.value
+            ),
         }
     return out
 
@@ -145,6 +153,89 @@ def rules() -> dict:
         "zero_tiles": zero_tiles(None),
         "zero_tiles_with_target": zero_tiles(zero_target),
         "query_keys_not_passed": sorted(NOT_PASSED),
+        "work": work(),
+    }
+
+
+def work() -> dict:
+    """The vocabularies the page's rows are read with: each phase's statuses
+    (partner_oversight_service), the withdrawal each state permits
+    (withdrawal_service.resolve_kind, action_label), the activity families
+    and their labels, the purposes, the completion columns' words
+    (apps.activities.completion_columns) and the risk rules' grace days
+    (partner_risk_service)."""
+    from apps.activities import completion_columns as completion
+    from apps.core import activity_types
+    from apps.core.enums import ActivityType, EvidenceKind, SsaIntervention
+    from apps.partners import purposes
+    from apps.partners import withdrawal_service as withdrawal
+    from apps.partners.models import PartnerAssignment
+    from apps.partners.withdrawal_models import WithdrawalKind
+    from apps.planning import partner_oversight_service as service
+    from apps.planning import partner_risk_service as risk
+    from apps.planning.country_oversight.rules import DATED_BY_STAFF
+    from apps.planning.school_planning_badges import PLANNED_STATUSES
+    from apps.analytics.pl_analytics_service import (
+        COMPLETED_STATUSES as ANALYTICS_COMPLETED,
+    )
+    from apps.core.activity_types import NOT_IN_PLAN_ACTIVITY_STATUSES
+    from apps.planning.partner_follow_up import FOLLOW_UP
+    from apps.schools.lifecycle_models import OPERATING_STATUSES
+
+    return {
+        "unscheduled_statuses": list(PartnerAssignment.UNSCHEDULED_STATUSES),
+        "in_progress": list(service._IN_PROGRESS_STATUSES),
+        "evidence_review": list(service._EVIDENCE_REVIEW_STATUSES),
+        "awaiting_ia": list(service._AWAITING_IA_STATUSES),
+        "complete": list(service._COMPLETE_STATUSES),
+        "not_started": list(service._NOT_STARTED_STATUSES),
+        "returned_to_partner": list(service._RETURNED_TO_PARTNER_STATUSES),
+        "paid": list(service._PAID_STATUSES),
+        "payment_processing": list(service._PAYMENT_PROCESSING_STATUSES),
+        "data_gathering_types": sorted(service._DATA_GATHERING_TYPES),
+        "data_gathering_label": service.DATA_GATHERING_LABEL,
+        "withdrawal": {
+            "not_started": list(withdrawal._NOT_STARTED_STATUSES),
+            "in_progress": list(withdrawal._IN_PROGRESS_STATUSES),
+            "evidence": list(withdrawal._EVIDENCE_STATUSES),
+            "ia_cleared": list(withdrawal._IA_CLEARED_STATUSES),
+            "closed": list(withdrawal._CLOSED_STATUSES),
+            "paid": list(withdrawal._PAID_STATUSES),
+            "labels": {kind.value: kind.label for kind in WithdrawalKind},
+            "withdraw_from_partner": withdrawal.WITHDRAW_FROM_PARTNER,
+        },
+        "dated_by_staff": DATED_BY_STAFF,
+        "visit_types": sorted(activity_types.VISIT_TYPES),
+        "training_types": sorted(activity_types.TRAINING_TYPES),
+        "cluster_meeting_types": sorted(activity_types.CLUSTER_MEETING_TYPES),
+        "planned_statuses": sorted(PLANNED_STATUSES),
+        "activity_type_labels": {c.value: c.label for c in ActivityType},
+        "intervention_labels": {c.value: c.label for c in SsaIntervention},
+        "purpose_labels": dict(purposes._LABELS),
+        "completion": {
+            "officer_completed": sorted(completion.OFFICER_COMPLETED_STATUSES),
+            "completed_work": sorted(activity_types.COMPLETED_WORK_STATUSES),
+            "attendance_types": sorted(completion._ATTENDANCE_TYPES),
+            "evidence_kind_labels": {c.value: c.label for c in EvidenceKind},
+            "missing_sf": completion.MISSING_SF,
+            "missing_evidence": completion.MISSING_EVIDENCE,
+            "missing_both": completion.MISSING_BOTH,
+        },
+        "follow_up": {
+            "recommendations": list(FOLLOW_UP),
+            "operating_statuses": [str(s) for s in OPERATING_STATUSES],
+            "not_in_plan": list(NOT_IN_PLAN_ACTIVITY_STATUSES),
+            "completed": list(ANALYTICS_COMPLETED),
+            "released": list(PartnerAssignment.RELEASED_STATUSES),
+        },
+        "risk": {
+            "schedule_grace_days": risk.SCHEDULE_GRACE_DAYS,
+            "approaching_days": risk.APPROACHING_DAYS,
+            "evidence_grace_days": risk.EVIDENCE_GRACE_DAYS,
+            "review_grace_days": risk.REVIEW_GRACE_DAYS,
+            "payment_grace_days": risk.PAYMENT_GRACE_DAYS,
+            "ia_verification_grace_days": risk.IA_VERIFICATION_GRACE_DAYS,
+        },
     }
 
 

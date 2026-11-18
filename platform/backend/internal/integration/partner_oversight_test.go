@@ -3,8 +3,14 @@
 package integration
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"os"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
 )
@@ -57,23 +63,148 @@ func TestPartnerOversightALeadWithNoPartnerWorkSeesTheirTeamAndRegister(t *testi
 	}
 }
 
-func TestPartnerOversightPassesOnPartnerWorkAndRefusesOthers(t *testing.T) {
+func TestPartnerOversightPassesOnWhatGoDoesNotDrawAndRefusesOthers(t *testing.T) {
 	borrowAccount(t, "cceo1@edify.org")
-	borrowAccount(t, "pl1@edify.org")
+	borrowAccount(t, "cd@edify.org")
 	borrowAccount(t, "business-transformation@edify.org")
 	officer := sessionOf(t, "cceo1@edify.org", seededPassword).GetAccessToken()
-	// cceo1's completed FY 2026 Partner work is the existing application's.
-	if _, err := pageOf(officer, partnerOversightPath, map[string]string{"fy": "2026"}); connect.CodeOf(err) != connect.CodeUnavailable {
-		t.Errorf("cceo1 in FY 2026: got %v, want the page passed on", err)
+	// cceo1's completed FY 2026 Partner work is Go's (the golden compares
+	// it); the Core schools tab under it is the existing application's.
+	if _, err := pageOf(officer, partnerOversightPath, map[string]string{"fy": "2026"}); err != nil {
+		t.Errorf("cceo1 in FY 2026: %v", err)
+	}
+	var core int
+	if err := admin.QueryRow(context.Background(), `SELECT count(*) FROM partner_assignment pa
+JOIN school s ON s.id = pa.school_id JOIN "user" u ON u.id = pa.monitoring_staff_id
+WHERE u.email = 'cceo1@edify.org' AND s.school_type = 'core'`).Scan(&core); err != nil {
+		t.Fatal(err)
+	}
+	if core > 0 {
+		if _, err := pageOf(officer, partnerOversightPath, map[string]string{"fy": "2026", "work": "core"}); connect.CodeOf(err) != connect.CodeUnavailable {
+			t.Errorf("the Core schools tab: got %v, want the page passed on", err)
+		}
 	}
 	// A custom period from the export drawer is too.
 	if _, err := pageOf(officer, partnerOversightPath, map[string]string{"period_type": "fy"}); connect.CodeOf(err) != connect.CodeUnavailable {
 		t.Errorf("custom period: got %v, want the page passed on", err)
 	}
-	if _, err := pageOf(sessionOf(t, "pl1@edify.org", seededPassword).GetAccessToken(), partnerOversightPath, nil); connect.CodeOf(err) != connect.CodeUnavailable {
-		t.Errorf("pl1's team holds Partner work: got %v, want the page passed on", err)
+	// The country's lens is not drawn yet.
+	if _, err := pageOf(sessionOf(t, "cd@edify.org", seededPassword).GetAccessToken(), partnerOversightPath, nil); connect.CodeOf(err) != connect.CodeUnavailable {
+		t.Errorf("the Country Director: got %v, want the page passed on", err)
 	}
 	if _, err := pageOf(sessionOf(t, "business-transformation@edify.org", seededPassword).GetAccessToken(), partnerOversightPath, nil); connect.CodeOf(err) != connect.CodeNotFound {
 		t.Errorf("Business Transformation: got %v, want not found", err)
 	}
+}
+
+// partnerOversightGoldenEnv names a file of the existing feed's answers for
+// Partner Monitoring with partner work in it (internal/partneroversight/
+// testdata/golden.py writes it). Without it the comparison is skipped.
+const partnerOversightGoldenEnv = "EDIFY_PARTNER_OVERSIGHT_GOLDEN"
+
+// partnerOversightTables is the order the golden's rows are filed in (a
+// row before the rows that point at it) and, reversed, the order they
+// leave.
+var partnerOversightTables = []string{"partner", "activity", "partner_assignment", "activity_schedule_cost_line", "evidence_record"}
+
+// filePartnerOversightGolden reads the golden, files its rows and returns
+// its answers; the rows leave when the test ends.
+func filePartnerOversightGolden(t *testing.T) []goldenAnswer {
+	t.Helper()
+	path := os.Getenv(partnerOversightGoldenEnv)
+	if path == "" {
+		t.Skip(partnerOversightGoldenEnv + " is not set")
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var golden hrRegisterGolden
+	if err := json.Unmarshal(raw, &golden); err != nil {
+		t.Fatal(err)
+	}
+	kampala, err := time.LoadLocation("Africa/Kampala")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if golden.Today != time.Now().In(kampala).Format(time.DateOnly) {
+		t.Skipf("the golden answers were written on %s; their dates have moved", golden.Today)
+	}
+	ctx := context.Background()
+	clear := func() {
+		for i := len(partnerOversightTables) - 1; i >= 0; i-- {
+			if _, err := admin.Exec(ctx, fmt.Sprintf(`DELETE FROM %s WHERE id LIKE 'gpo%%'`, partnerOversightTables[i])); err != nil {
+				t.Errorf("clearing %s: %v", partnerOversightTables[i], err)
+			}
+		}
+	}
+	clear()
+	t.Cleanup(clear)
+	for _, table := range partnerOversightTables {
+		for _, row := range golden.Rows[table] {
+			if _, err := admin.Exec(ctx, fmt.Sprintf(`INSERT INTO %s SELECT * FROM json_populate_record(NULL::%s, $1::json)`, table, table), string(row)); err != nil {
+				t.Fatalf("filing a %s row: %v", table, err)
+			}
+		}
+	}
+	answers := []goldenAnswer{}
+	for _, a := range golden.Answers {
+		answers = append(answers, goldenAnswer{Email: a.Email, Query: a.Query, Status: a.Status,
+			Body: periodInUse(t, a.Body, a.Query)})
+	}
+	if len(answers) == 0 {
+		t.Fatal("the golden asks nothing of Partner Monitoring")
+	}
+	return answers
+}
+
+// periodInUse is the existing answer with its period select showing the
+// period in use, as Go draws it (internal/parity/intended.json
+// go-fix-period-select-partner: the existing feed always reads "week").
+func periodInUse(t *testing.T, body json.RawMessage, query map[string]string) json.RawMessage {
+	t.Helper()
+	var page map[string]any
+	if err := json.Unmarshal(body, &page); err != nil {
+		t.Fatal(err)
+	}
+	blocks, _ := page["blocks"].([]any)
+	if len(blocks) == 0 {
+		return body
+	}
+	first, _ := blocks[0].(map[string]any)
+	bar, _ := first["filters"].(map[string]any)
+	selects, _ := bar["filters"].([]any)
+	if len(selects) == 0 {
+		return body
+	}
+	kind := strings.ToLower(strings.TrimSpace(query["period"]))
+	switch kind {
+	case "week", "month", "quarter", "fy":
+	default:
+		month, err := strconv.Atoi(strings.TrimSpace(query["month"]))
+		quarter := strings.ToUpper(strings.TrimSpace(query["quarter"]))
+		switch {
+		case err == nil && month >= 1 && month <= 12:
+			kind = "month"
+		case quarter == "Q1" || quarter == "Q2" || quarter == "Q3" || quarter == "Q4":
+			kind = "quarter"
+		default:
+			kind = "fy"
+		}
+	}
+	selects[0].(map[string]any)["value"] = kind
+	out, err := json.Marshal(page)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return out
+}
+
+
+// The existing feed's Partner Monitoring over work in each state the page
+// reads apart (internal/partneroversight/testdata/golden.py files it) and
+// over the seed's completed FY 2026 work, for the officers and Programme
+// Leads whose teams hold it.
+func TestPartnerOversightWithPartnerWorkMatchesTheExistingFeed(t *testing.T) {
+	compareGolden(t, partnerOversightPath, filePartnerOversightGolden(t))
 }

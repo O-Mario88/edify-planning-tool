@@ -1,6 +1,13 @@
 package planningmonitor
 
-import "math"
+import (
+	"context"
+	"math"
+	"time"
+
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
+)
 
 // A person's figures (OfficerMonitor's properties), each folded from their
 // schools, and a team's (LeadMonitor), each the sum of its people's but for
@@ -258,5 +265,42 @@ func (s *School) Figures() map[string]any {
 		"training_done": s.TrainingDone, "in_project": s.InProject, "project_places": s.ProjectPlaces,
 		"core_partner_visits": s.CorePartnerVisits, "core_partner_trainings": s.CorePartnerTrn,
 		"core_staff_trainings": s.CoreStaffTrainings, "ssa_done": s.SSADone,
+	}
+}
+
+// PartnerTarget is the Partner's visit target across everybody on the
+// monitor (oversight_views._partner_visit_target over planning_monitor's
+// totals, each a sum over the people): the target, its Core part, the part
+// beyond staff capacity, and how much of it a Partner holds. ok is false
+// when the monitor has nobody on it.
+func (m *Monitor) PartnerTarget() (target, core, beyond, held int, ok bool) {
+	officers := m.Officers()
+	if len(officers) == 0 {
+		return 0, 0, 0, 0, false
+	}
+	for _, o := range officers {
+		core += o.corePartnerTarget()
+		beyond += o.partnerNeeded()
+		held += o.partnerSchools() + o.sum(func(s *School) int {
+			if s.isCore() {
+				return s.CorePartnerVisits
+			}
+			return 0
+		})
+	}
+	return core + beyond, core, beyond, held, true
+}
+
+// PartnerTargetReader reads the Partner target of a reader's monitor for
+// Partner Monitoring (internal/partneroversight, which this package reads,
+// so it is given this rather than calling Read itself).
+func PartnerTargetReader(db schooldirectory.Querier) func(context.Context, auth.Principal, string, time.Time) (int, int, int, int, bool, error) {
+	return func(ctx context.Context, p auth.Principal, fy string, now time.Time) (int, int, int, int, bool, error) {
+		m, err := Read(ctx, db, p, fy, now)
+		if err != nil {
+			return 0, 0, 0, 0, false, err
+		}
+		t, c, b, h, ok := m.PartnerTarget()
+		return t, c, b, h, ok, nil
 	}
 }

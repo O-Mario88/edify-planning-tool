@@ -148,3 +148,85 @@ lenses with Programme Lead tabs, acting readers, register rows, observations and
 the export drawer, and the other partner pages the backlog item names (Partners list, allowance drawer).
 A superuser in a team role reads the country on the web; Go cannot read `is_superuser` (it is protected)
 and would draw them as a team reader — there is none in the seed.
+
+## 46.7 Partner work on the team lens (2026-11-18)
+
+Go now draws the page for a field officer or a Programme Lead whose
+workspace holds partner work (`internal/partneroversight`).
+
+**The rows** are `partner_oversight_service.build_items` for the team lens:
+
+- **Which work:** every hand-over the team may oversee that is still the
+  Partner's (not `left_partner_q`). The team is the reader and, for a lead,
+  the people they supervise, in both id spaces. The years read are the
+  planning horizon, with a hand-over still open read whichever year it was
+  made. Partner-delivered activities that no hand-over points at are read
+  too.
+- **What each row carries:** the staff directory (the officer, and the
+  Country Programme Lead they report to); the activity's day, status,
+  evidence, Salesforce, IA and payment; its cost; and the three words of
+  `describe_work` (training, purpose, SSA intervention).
+- **What follows from them:** the withdrawal its state permits
+  (`withdrawal_service.resolve_kind` and `action_label`, with
+  `dating_policy`), its risks (`partner_risk_service`), and the completion
+  columns (`completion_columns`, a Partner's forms read through
+  `gateway_read.activity_evidence_kind`).
+- **Narrowing:** the period's month, quarter or week narrows the rows.
+
+**The page** is drawn as the feed reads `partner_workspace.html`:
+
+- **Partner tabs:** each tab's count carries the Country Director
+  Analytics' follow-up recommendation, `partners_needing_follow_up`,
+  ported (the SSA cycles, each Partner's planned and done work, and its
+  schools' SSA movement).
+- **Team-member tabs and the Status filter:** the tabs come with their
+  counts, and the Status filter counts each phase.
+- **Headline tiles:** these come from the rows shown, and the first carries
+  the Planning Monitor's Partner target for a Programme Lead. The target is
+  read through `planningmonitor.PartnerTargetReader`, which the server
+  supplies to this package because the monitor already imports it.
+- **The chosen Partner's card:** one table titled with the Partner's name,
+  its status chips as the subtitle. The open tab's table holds the Schools
+  assigned columns or the activity columns, with each row's link, cells,
+  Actions and details. The footnote says when the year reads forward, and
+  the response carries the Withdraw selected bar.
+
+`rules.json` gains the vocabularies all of this reads (`work`), and each
+role's profile links and Resolve permission. `roles.sql` grants the gateway
+three more columns: `partner_assignment.resolution` and
+`return_reason_category`, and `activity_catalogue_item.source_name`.
+
+**Still handed on:**
+
+- the country and region lenses;
+- work waiting for IA verification, since its reviewer's Verify and Return
+  depend on the reader;
+- Special Project work, which is its coordinator's;
+- a hand-back already decided;
+- the Core schools and Clusters tabs;
+- group trainings a Partner facilitates;
+- withdrawal requests;
+- an activity filter;
+- a table past one page;
+- recorded engagements;
+- custom periods.
+
+Proof: `internal/partneroversight/testdata/golden.py`. Over the seed's
+completed FY 2026 work and a fixture Partner in this year, the golden files
+work in every state the page tells apart:
+
+- waiting for a date, inside and past its grace;
+- dated by the Partner ahead;
+- dated by staff and passed;
+- in progress;
+- evidence uploaded;
+- an undecided hand-back;
+- verified and awaiting payment;
+- a Partner training with no hand-over.
+
+It asks cceo1, cceo2, pl1 and pl2 with every Partner, team-member and work
+tab, every status and every kind of period. The integration test files the
+same rows: **192 answers, 0 differing**. That is after the one recorded
+intended difference, `go-fix-period-select-partner`, where Go's period
+select shows the period in use. `internal/partneroversight/item_test.go`
+covers each state's words, withdrawals and risks.

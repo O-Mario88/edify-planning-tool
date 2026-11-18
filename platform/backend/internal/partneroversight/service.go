@@ -23,6 +23,17 @@ var ErrNotAvailable = pagegate.ErrNotAvailable
 type Service struct {
 	db  schooldirectory.Querier
 	now func() time.Time
+	// target is the Planning Monitor's Partner visit target for the reader
+	// (internal/planningmonitor, which reads this package, so it is given
+	// rather than called): target, Core part, beyond staff capacity, held
+	// by a Partner, and whether the monitor has anybody on it.
+	target func(context.Context, auth.Principal, string, time.Time) (int, int, int, int, bool, error)
+}
+
+// WithTarget gives the service the Planning Monitor's Partner target.
+func (s *Service) WithTarget(read func(context.Context, auth.Principal, string, time.Time) (int, int, int, int, bool, error)) *Service {
+	s.target = read
+	return s
 }
 
 // NewService wires the service to the database it reads.
@@ -46,6 +57,9 @@ type workspace struct {
 	members     []member
 	withTarget  bool
 	fyOptions   []string
+	// partnerAsked and memberAsked are the Partner and team member the
+	// link asks for, before they are checked against the work.
+	partnerAsked, memberAsked string
 }
 
 // Build answers path for p with the page's query. served is false for a
@@ -90,12 +104,13 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		return nil, true, err
 	}
 	busy, err := anyPartnerWork(ctx, s.db, team, nonNil(scope.SchoolIDs), per.fy, per.fy == schooldirectory.OperationalFY(now))
-	if err != nil || busy {
-		return nil, !busy, err
+	if err != nil {
+		return nil, true, err
 	}
 	if role.EngagementRegister {
-		if busy, err = anyEngagement(ctx, s.db, p.UserID); err != nil || busy {
-			return nil, !busy, err
+		engaged, err := anyEngagement(ctx, s.db, p.UserID)
+		if err != nil || engaged {
+			return nil, !engaged, err
 		}
 	}
 	w := workspace{role: role, period: per, status: query.Get("status"), fyOptions: schooldirectory.FYOptions(now)}
@@ -111,7 +126,13 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		w.member = "all"
 	}
 	w.work = workTab(strings.TrimSpace(query.Get("work")))
-	return page(w), true, nil
+	if !busy {
+		return page(w), true, nil
+	}
+	w.work = strings.TrimSpace(query.Get("work"))
+	w.partnerAsked = strings.TrimSpace(query.Get("partner"))
+	w.memberAsked = strings.TrimSpace(query.Get("member"))
+	return s.work(ctx, p, w, own, scope.SupervisedStaffIDs, strings.TrimSpace(query.Get("activity_type")), now)
 }
 
 // drawn is whether this piece draws the reader at all: a field officer or a

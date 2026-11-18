@@ -1039,3 +1039,8 @@ GRANT SELECT (source_engagement_id, held_on) ON partner_engagement TO edify_gate
 -- Core Schools' Team Core Oversight lens (internal/coreschools): whether an
 -- ask about a school is already open for the year.
 GRANT SELECT (fy) ON team_action TO edify_gateway_ro;
+-- Partner Monitoring with partner work (internal/partneroversight): whether a
+-- hand-back has been decided and why it came back, and a course's name as
+-- its source gave it where it has no display name.
+GRANT SELECT (resolution, return_reason_category) ON partner_assignment TO edify_gateway_ro;
+GRANT SELECT (source_name) ON activity_catalogue_item TO edify_gateway_ro;
