@@ -3719,14 +3719,14 @@
             {
               "icon": 15,
               "label": "Country Oversight",
-              "native": false,
+              "native": true,
               "page_key": "country_planning_oversight",
               "url": "/country-planning-oversight/"
             },
             {
               "icon": 27,
               "label": "Country Map",
-              "native": false,
+              "native": true,
               "page_key": "country_map",
               "url": "/country-map/"
             },

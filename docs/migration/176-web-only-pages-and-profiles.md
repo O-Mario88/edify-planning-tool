@@ -709,3 +709,30 @@ Still not drawn in Go: `/messages` and `/settings`, which the web app now
 opens in the existing web instead of a 404. Settings turns on the
 reader's two-step state (in force, required by policy, the channels), which
 the seeded accounts cannot show without breaking the suite's sign-ins.
+
+## 176.27 The Regional Lead opens Country Oversight and the Country Map (2026-11-18)
+
+The Regional Programme Lead's sidebar offered Country Oversight and the
+Country Map, and both pages refused them, in the existing application as in
+Go. The owner decided (2026-11-18): "Give them access". `PAGE_PERMISSIONS`
+now grants `RPL` `country_planning_oversight` and `country_map`
+(`apps/core/navigation.py`), held by `apps/core/test_regional_lead_country_pages.py`.
+
+What follows from the grant, each re-exported for Go:
+
+- Navigation: both links are native for the Regional Lead.
+- Planning Oversight's country door and the Country Map's doors open.
+- The Country Profile, gated by Country Oversight, opens for them.
+- Project Monitoring's consolidated tables follow the same permission.
+- My Targets' SSA figure links to the Country Profile rather than Cluster
+  Oversight.
+- The Regional Lead was on the owner's list of roles who land on Country
+  Oversight and landed on Home only for want of the page: they now land on
+  Country Oversight, as the CD, IA and RVP do.
+
+The pages are country-wide with no role branch, so the Regional Lead reads
+them as the RVP does. Proof: the four pages for the Regional Lead, the RVP
+and the CD, three queries each, against the existing pages: the Country Map
+and Project Monitoring 9 answers each, 0 differing; Country Oversight's
+lenses and the Country Profile's Overview stay the existing application's
+for every reader, as before.

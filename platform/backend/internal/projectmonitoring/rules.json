@@ -126,7 +126,7 @@
       }
     },
     "RegionalProgramLead": {
-      "consolidated": false,
+      "consolidated": true,
       "export": true,
       "page": false,
       "profiles": false,

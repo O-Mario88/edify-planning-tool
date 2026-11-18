@@ -235,7 +235,11 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # "Send to <PL>" action gates on `may_delegate(..., country=True)`, which
     # an IA does not pass, and both exports carry
     # `@require_export_permission`. Nothing on this page edits an activity.
-    "country_planning_oversight": {CD, RVP, IA, ADMIN},
+    #
+    # The Regional Programme Lead too (owner, 2026-11-18: "Give them
+    # access"): their sidebar offered the page and the page refused them; the
+    # regional roles work across every country.
+    "country_planning_oversight": {CD, RVP, RPL, IA, ADMIN},
     # Staff Activity Log (owner, 2026-09-29), replacing Who's Online: a
     # Programme Lead reads the people they supervise, the Country Director the
     # country grouped by Programme Lead, the Admin the country for technical
@@ -244,7 +248,7 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # The country map and, under it, the country portfolio (owner,
     # 2026-09-28: the portfolio left Country Oversight's tabs for the map
     # page). The same readers as Country Oversight.
-    "country_map": {CD, RVP, IA, ADMIN},
+    "country_map": {CD, RVP, RPL, IA, ADMIN},
     # The Planning Monitor, a page of its own under the Dashboard (owner,
     # 2026-09-29: "move the [monitor] on its own page and add it to the side
     # bar and place it below the Dashboard. Do the same for PL"): each

@@ -483,10 +483,12 @@ class RegionalProgramLeadTest(TestCase):
         self.client.force_login(self.rpl)
         self.assertEqual(self.client.get("/work-plan/add").status_code, 403)
 
-    def test_it_cannot_reach_the_country_lens(self):
+    def test_it_reaches_the_country_lens(self):
+        # Their sidebar offered Country Oversight and the page refused them
+        # (owner, 2026-11-18: "Give them access").
         self.client.force_login(self.rpl)
         self.assertEqual(
-            self.client.get("/country-planning-oversight/")["Location"], "/dashboard"
+            self.client.get("/country-planning-oversight/").status_code, 200
         )
 
 

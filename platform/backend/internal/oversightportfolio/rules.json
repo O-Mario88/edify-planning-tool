@@ -423,8 +423,8 @@
           "label": "Target Performance"
         }
       ],
-      "map_feed_opens": false,
-      "map_page": false,
+      "map_feed_opens": true,
+      "map_page": true,
       "page": true,
       "portfolio": true
     },

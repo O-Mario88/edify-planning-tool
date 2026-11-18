@@ -57,16 +57,16 @@ class CountryOversightLandingTest(TestCase):
         )
         self.assertEqual(response["Location"], COUNTRY_OVERSIGHT)
 
-    def test_a_listed_role_without_the_page_lands_on_home(self):
-        # The Regional Programme Lead is on the owner's list but does not
-        # hold Country Oversight (a country-wide page; their lens is a
-        # region): Home, never an access-denied page, until they are given it.
+    def test_the_regional_lead_lands_there_now_they_hold_the_page(self):
+        # The Regional Programme Lead is on the owner's list and landed on
+        # Home only while they did not hold Country Oversight; they were
+        # given it (owner, 2026-11-18: "Give them access").
         user = self._user(EdifyRole.REGIONAL_PROGRAM_LEAD)
-        self.assertFalse(
+        self.assertTrue(
             RolePermissionService.can_view_page(user, "country_planning_oversight")
         )
         self.client.force_login(user)
-        self.assertEqual(self.client.get("/")["Location"], "/home")
+        self.assertEqual(self.client.get("/")["Location"], COUNTRY_OVERSIGHT)
 
     def test_everyone_else_still_lands_on_home(self):
         for role in (EdifyRole.COUNTRY_PROGRAM_LEAD, EdifyRole.CCEO):

@@ -556,7 +556,7 @@
       "bt_sensitive": false,
       "cluster_oversight": true,
       "core_schools": false,
-      "country_profile": false,
+      "country_profile": true,
       "decisions": false,
       "delete_school": false,
       "enter_ssa": false,

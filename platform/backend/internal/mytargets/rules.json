@@ -306,8 +306,8 @@
       "label": "Project Analytics"
     },
     "RegionalProgramLead": {
-      "href": "/cluster-oversight/ssa",
-      "label": "Cluster Oversight"
+      "href": "/country-profile?tab=ssa",
+      "label": "Country Profile"
     },
     "RegionalVicePresident": {
       "href": "/country-profile?tab=ssa",
