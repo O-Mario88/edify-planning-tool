@@ -1,0 +1,101 @@
+{
+  "awaiting": "awaiting_owner_approval",
+  "roles": {
+    "Accountant": {
+      "open_district": true,
+      "open_school": false,
+      "page": true,
+      "requester": true
+    },
+    "Admin": {
+      "open_district": true,
+      "open_school": true,
+      "page": true,
+      "requester": false
+    },
+    "BusinessTransformationOfficer": {
+      "open_district": false,
+      "open_school": true,
+      "page": false,
+      "requester": false
+    },
+    "CCEO": {
+      "open_district": true,
+      "open_school": true,
+      "page": true,
+      "requester": false
+    },
+    "ClusterLeader": {
+      "open_district": false,
+      "open_school": false,
+      "page": false,
+      "requester": false
+    },
+    "CountryDirector": {
+      "open_district": true,
+      "open_school": true,
+      "page": true,
+      "requester": false
+    },
+    "HumanResources": {
+      "open_district": false,
+      "open_school": false,
+      "page": false,
+      "requester": false
+    },
+    "ImpactAssessment": {
+      "open_district": true,
+      "open_school": true,
+      "page": true,
+      "requester": false
+    },
+    "MfiLoanOfficer": {
+      "open_district": false,
+      "open_school": false,
+      "page": false,
+      "requester": false
+    },
+    "MfiPartnerAdmin": {
+      "open_district": false,
+      "open_school": false,
+      "page": false,
+      "requester": false
+    },
+    "PartnerAdmin": {
+      "open_district": false,
+      "open_school": false,
+      "page": false,
+      "requester": false
+    },
+    "PartnerFieldOfficer": {
+      "open_district": false,
+      "open_school": false,
+      "page": false,
+      "requester": false
+    },
+    "Program Lead": {
+      "open_district": true,
+      "open_school": true,
+      "page": true,
+      "requester": false
+    },
+    "ProjectCoordinator": {
+      "open_district": true,
+      "open_school": true,
+      "page": true,
+      "requester": false
+    },
+    "RegionalProgramLead": {
+      "open_district": false,
+      "open_school": false,
+      "page": false,
+      "requester": false
+    },
+    "RegionalVicePresident": {
+      "open_district": false,
+      "open_school": false,
+      "page": false,
+      "requester": false
+    }
+  }
+}

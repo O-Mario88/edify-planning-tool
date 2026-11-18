@@ -433,3 +433,30 @@ Districts directory uses.
 
 Proof: two queries for ten readers, three of them refused: **20 answers,
 0 differing**.
+
+## 176.17 Visit Requests (2026-11-18)
+
+`/planning/visit-requests` (`visit_request_views.visit_requests_page` over
+`apps.planning.visit_requests`, `pages/planning/visit_requests.html`) is
+drawn in Go by the new `visitrequests` package. Its rules come from
+`export_visit_requests_rules` (each role's page, whether it files requests,
+whether school and district names open their profiles; the awaiting
+status), kept current by `apps/planning/test_visit_requests_rules_export.py`.
+
+- The owner's queue: requests awaiting the reader under either of their ids,
+  by planned day then filing, each read as "<requester> asks to visit
+  <school>" over "<kind> • <day> • <district>". The decision forms are the
+  existing application's; with none, the empty state's sentence.
+- The requester's own (the Accountant by role, anyone by rows already
+  filed): newest first, fifty at most, with the owner asked and the
+  decision and its note. The School ID is written in after the page is
+  drawn, so the feed reads it empty. The queue is shown to a requester only
+  when something waits on them.
+- Names: the requester by staff or user id, else "A staff member"; the
+  owner by staff profile, else "the school's owner".
+
+The gateway reads `activity.owner_decision_note`. Proof: five requests
+seeded from one real visit (edify_gorn_test only, removed after): two
+awaiting (one filed by the Country Director), one declined with a note, two
+approved with and without one. For ten readers, two refused, and two
+queries: **20 answers, 0 differing**; and with none, in the suite.

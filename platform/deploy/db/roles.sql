@@ -1069,3 +1069,5 @@ GRANT SELECT (region_id) ON calendar_block TO edify_gateway_ro;
 -- Temporary Leave Coverage Assignments: the scope, the revocation and the
 -- order the page lists them in.
 GRANT SELECT (scope, revoked_at, created_at) ON temporary_coverage_assignment TO edify_gateway_ro;
+-- Visit Requests: the owner's note on a decided request.
+GRANT SELECT (owner_decision_note) ON activity TO edify_gateway_ro;

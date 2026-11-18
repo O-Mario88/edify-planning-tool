@@ -125,6 +125,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/todos"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/trainingsummary"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/uploadcenter"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/visitrequests"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/weeklyrequest"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/workplan"
 )
@@ -262,6 +263,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			schoolprofile.NewScopePages(pool, time.Now).WithClusterCards(clusterCards{clusteroversight.CardReader{DB: pool}}),
 			hrregister.NewService(pool, time.Now).WithAccessLog(pool, logger),
 			leavepolicies.NewService(pool, time.Now),
+			visitrequests.NewService(pool, time.Now),
 			iapages.NewService(pool, time.Now),
 			ccelead.NewService(pool, time.Now),
 			extrawork.NewService(pool, time.Now),
