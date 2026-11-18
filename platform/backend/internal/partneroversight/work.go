@@ -31,6 +31,7 @@ import (
 func (s *Service) work(ctx context.Context, p auth.Principal, w workspace, own []string, supervised []string,
 	activityType string, now time.Time) (*screensv1.GetPageResponse, bool, error) {
 	w.activityType = activityType
+	w.supervised = supervised
 	staff := own
 	if !w.role.OwnWorkOnly {
 		var err error
@@ -46,7 +47,7 @@ func (s *Service) work(ctx context.Context, p auth.Principal, w workspace, own [
 // one Programme Lead's team at a time. country is the reader's scope's
 // country, "" for the whole deployment.
 func (s *Service) country(ctx context.Context, p auth.Principal, role Role, per period, query url.Values,
-	country string, regions []string, now time.Time) (*screensv1.GetPageResponse, bool, error) {
+	country string, regions, supervised []string, now time.Time) (*screensv1.GetPageResponse, bool, error) {
 	if country == schooldirectory.NoCountry {
 		return nil, false, nil
 	}
@@ -57,7 +58,7 @@ func (s *Service) country(ctx context.Context, p auth.Principal, role Role, per 
 		}
 	}
 	w := workspace{role: role, period: per, status: query.Get("status"), fyOptions: schooldirectory.FYOptions(now),
-		country: country, regions: regions, withTarget: true}
+		country: country, regions: regions, supervised: supervised, withTarget: true}
 	w.programLead = strings.TrimSpace(query.Get("program_lead"))
 	w.work = strings.TrimSpace(query.Get("work"))
 	w.partnerAsked = strings.TrimSpace(query.Get("partner"))
@@ -256,10 +257,6 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 	for _, t := range partnerTrainings {
 		if (member == "all" || trainingKey(t) == member) && (w.activityType == "" || t.activityType == w.activityType) &&
 			(w.status == "" || t.deliveryPhase() == w.status) {
-			if t.awaitsReview() {
-				// Its Programme Lead's Confirm and Return depend on who reads.
-				return nil, false, nil
-			}
 			v.trainings = append(v.trainings, t)
 		}
 	}
@@ -271,6 +268,9 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 		return nil, true, err
 	}
 	if err := s.markReviewable(ctx, p, w.role, own, v.shown); err != nil {
+		return nil, true, err
+	}
+	if err := s.markTrainingReviews(ctx, p, w.supervised, v.trainings); err != nil {
 		return nil, true, err
 	}
 	orderForMonitoring(v.shown)

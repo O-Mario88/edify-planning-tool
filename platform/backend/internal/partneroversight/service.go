@@ -68,6 +68,9 @@ type workspace struct {
 	// country is the reader's scope's country ("" the whole deployment),
 	// which the Partners' follow-ups are read in.
 	country string
+	// supervised are the staff the reader supervises (the scope's, active
+	// cover included), whose completions a lead reviews.
+	supervised []string
 	// activityType is the activity filter a link carries
 	// (filter_workspace's activity_type), "" for none.
 	activityType string
@@ -111,6 +114,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if err != nil {
 		return nil, true, err
 	}
+	supervised := scope.SupervisedStaffIDs
 	// The widest team any of the page's sources reads: the reader and the
 	// people they supervise (the Planning Monitor counts a CCEO's too).
 	team, err := bothIDSpaces(ctx, s.db, append(append([]string{}, own...), scope.SupervisedStaffIDs...))
@@ -122,7 +126,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		if role.Lens == "region" {
 			regions = nonNil(scope.RegionIDs)
 		}
-		return s.country(ctx, p, role, per, query, scope.Country, regions, now)
+		return s.country(ctx, p, role, per, query, scope.Country, regions, supervised, now)
 	}
 	busy, err := anyPartnerWork(ctx, s.db, team, nonNil(scope.SchoolIDs), per.fy, per.fy == schooldirectory.OperationalFY(now))
 	if err != nil {

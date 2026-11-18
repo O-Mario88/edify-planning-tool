@@ -8,6 +8,7 @@ import (
 	"time"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -24,6 +25,10 @@ type training struct {
 	day                              *time.Time
 	fee                              int64
 	cceoID, cceoName, plID           string
+	// owner is the staff member the completion belongs to (the officer,
+	// else the monitor), and canReview whether the reader may decide it.
+	owner     string
+	canReview bool
 	// The completion columns.
 	salesforceID              string
 	isComplete, showsComplete bool
@@ -138,6 +143,7 @@ WHERE a.id = ANY($1)`, ids)
 			partnerID: m.partnerID, partnerName: m.partnerName, place: m.place, district: m.district,
 			day: a.day(), fee: m.fee, cceoName: dir.names[owner]}
 		t.cceoID = owner
+		t.owner = first(a.responsible, a.monitor)
 		if c, ok := dir.canonical[owner]; ok {
 			t.cceoID = c
 		}
@@ -197,7 +203,19 @@ func (v *workView) trainingsBlocks(list []*training) []*screensv1.PageBlock {
 		// The record-action mark sits on the button's wrapper, not the
 		// cell, so the feed reads the lone link as the cell's text.
 		action := &screensv1.PageCell{Text: "View activity", Href: "/activities/" + t.activityID}
-		if t.withIA() {
+		switch {
+		case t.awaitsReview() && t.canReview:
+			menu := []*screensv1.PageAction{}
+			if t.isComplete {
+				menu = append(menu, &screensv1.PageAction{Key: "menu", Label: "Confirm Verification", Enabled: true,
+					Href: "/pl/review-queue/" + t.activityID + "/drawer?from=partner-trainings", Drawer: true})
+			}
+			menu = append(menu,
+				&screensv1.PageAction{Key: "menu", Label: "Return", Enabled: true,
+					Href: "/pl/review-queue/" + t.activityID + "/return-drawer", Drawer: true},
+				&screensv1.PageAction{Key: "menu", Label: "View activity", Enabled: true, Href: "/activities/" + t.activityID})
+			action = &screensv1.PageCell{Actions: menu}
+		case t.withIA():
 			action = &screensv1.PageCell{Text: "With Impact Assessment"}
 		}
 		row := &screensv1.PageRow{Cells: []*screensv1.PageCell{
@@ -214,4 +232,44 @@ func (v *workView) trainingsBlocks(list []*training) []*screensv1.PageBlock {
 		{Kind: &screensv1.PageBlock_Section{Section: "Trainings and meetings facilitated (" + strconv.Itoa(len(list)) + ")"}},
 		{Kind: &screensv1.PageBlock_Table{Table: table}},
 	}
+}
+
+// markTrainingReviews is _mark_reviewable: of the trainings waiting for
+// their Programme Lead (submitted_to_pl), the ones this reader may confirm
+// or return (pl_review.services.review_rule): the Admin any; a lead the
+// work of the staff they supervise, in both id spaces, and their own staff
+// work while the lead role is the one held and in use.
+func (s *Service) markTrainingReviews(ctx context.Context, p auth.Principal, supervised []string, list []*training) error {
+	waiting := false
+	for _, t := range list {
+		waiting = waiting || t.awaitsReview()
+	}
+	if !waiting {
+		return nil
+	}
+	admin := p.ActiveRole == "Admin"
+	reviewable, err := bothIDSpaces(ctx, s.db, nonEmpty(supervised))
+	if err != nil {
+		return err
+	}
+	if len(supervised) == 0 {
+		reviewable = nil
+	}
+	own := nonEmpty([]string{p.UserID, p.StaffProfileID})
+	clearsOwn := p.ActiveRole == rules.RosterLeadRole && contains(p.Roles, rules.RosterLeadRole)
+	for _, t := range list {
+		if !t.awaitsReview() {
+			continue
+		}
+		switch {
+		case admin:
+			t.canReview = true
+		case t.owner == "":
+		case contains(own, t.owner):
+			t.canReview = clearsOwn
+		default:
+			t.canReview = contains(reviewable, t.owner)
+		}
+	}
+	return nil
 }

@@ -414,6 +414,10 @@ def file_rows():
         facilitated(14, status="planned", days=-4)
         facilitated(15, status="awaiting_ia_verification", days=-8, sf="TS-GPO-15")
         facilitated(16, status="ia_verified", days=-12, sf="TS-GPO-16")
+        # Two waiting for the officer's Programme Lead: one complete, one
+        # whose Salesforce ID is not in.
+        facilitated(22, status="submitted_to_pl", days=-2, sf="TS-GPO-22")
+        facilitated(23, status="submitted_to_pl", days=-3)
         # A Core school whose visit a staff member dated: still the
         # Partner's to schedule, so it may be withdrawn.
         handover(

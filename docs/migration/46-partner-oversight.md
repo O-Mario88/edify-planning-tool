@@ -455,3 +455,24 @@ through `visitgate.ProjectsOutsideSSA`).
 Proof: a project hand-over waiting on the Partner and dated project work.
 It is locked for every reader but admin and ia: **624 answers of 10
 accounts, 0 differing**.
+
+## 46.16 A facilitated training's review (2026-11-18)
+
+A training a Partner facilitates is no longer handed on while it waits for
+the officer's Programme Lead (`submitted_to_pl`). Its Action is the review
+menu for the readers `pl_review.services.review_rule` lets decide it:
+
+- the Admin;
+- a lead, for the work of the staff they supervise, in both id spaces,
+  active cover included;
+- a lead's own staff work, while the lead role is both held and in use.
+
+The work belongs to its officer, else its monitor. The menu offers Confirm
+Verification once the training is complete, then Return, and View activity.
+Anyone else reads the plain View activity link.
+
+The supervised staff now travel with the workspace for every lens.
+
+Proof: two fixture trainings waiting for review, one complete and one whose
+Salesforce ID is not in, each offered to pl2: **624 answers of 10
+accounts, 0 differing**.
