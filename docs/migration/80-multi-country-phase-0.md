@@ -6,7 +6,7 @@ country-specific configuration, securely isolated country data.* Phase 0 of
 that instruction asks for an audit and the architecture decisions before any
 schema change. This document is that Phase 0. The owner approved Phase 1
 on §7's recommended defaults on 2026-11-17 ("Yes, start Phase 1"); what has
-been built since, on the development copies only, is §8 to §18.
+been built since, on the development copies only, is §8 to §19.
 
 Everything below was measured on 2026-11-17 against the development copy
 `edify_gorn_test` and the code on `feature/edify-go-rn-migration`. No
@@ -839,4 +839,60 @@ whole integration suite and every golden; school parity `PARITY OK`.
 Not in this step: the other pages that write UGX (fund approvals,
 disbursements, partner payments, the cost settings tables) move with
 advances and payments; ETB minor units (decision 4); a cross-country view.
+
+## 19. Phase 3, seventh step: the country through advances (2026-11-18)
+
+Owner instruction: *"Advances"* (Phase 3's next step). No table is added
+or changed and no row of the existing application is written; Go code only.
+
+The money pages of the advance workflow read every country's money and
+wrote it all as UGX. They now read the country the request is made in, in
+its currency. The Admin and the regional roles read the country they work
+in, so money is never summed across countries (as the Budget, §18).
+
+| Page | Kept to the country |
+|---|---|
+| Fund Disbursement Dashboard (`/disbursements`, Accountant, Admin) | The month's monthly fund plans and weekly advances (by whose they are, `country.AccountIn`), the partner work awaiting payment and the reimbursement claims (by their activity, `country.ActivityRowIn`), the month's figures (released today, disbursed, allocation) and the recent activity |
+| Weekly Fund Requests (a country reader's view) | The requests (`AccountIn` on whose they are), the activities and the cost lines (`ActivityRowIn`) |
+| Partner Payment Queue | The PL-confirmed invoices of the country's partners (`country.PartnerIn`) and the verified partner work (`ActivityRowIn`) |
+| Batch Payments Center | As before for a country reader, and now also the Admin's and regional roles' working country |
+| Fund Approvals | Already the approver's team (§13); its money is now in the country's currency |
+
+**Work no country holds** (`country.ActivityHeldIn`, used by these pages and
+by the Budget of §18). The existing application reads its money pages
+across the whole platform, not by country, so they show work that the
+activity rule (`ActivityIn`) places in no country at all: no school, no
+cluster, and a responsible person whose profile names no country (a
+cluster-wide partner activity, for one). Such work is held by Uganda, as
+everything that application holds is Uganda's; work placed in a country
+stays that country's. The Partner Payments golden caught the gap (a
+cluster-wide partner activity missing from Uganda's queue) before the rule
+was added. Planning and SSA readers keep `ActivityIn`, as the existing
+`activity_country_q` leaves such work out.
+
+**Who an account works for** (`country.AccountIn`): a membership of the
+country in force, or, for an account the existing application made after
+the registry was seeded (no membership at all), Uganda, as everything
+that application holds is Uganda's.
+
+**Currency.** The country's currency is now read with the country the
+request is made in (`country.Work.Currency`, from its settings in force),
+and every amount on these pages, their tables' column labels, the shared
+ledgers (`budgetpage.CostLineLedger`, `WeeklyRequestLedger`) and the
+budget-mix legend (`fundworkspace.Mix`) are written in it
+(`budgetpage.In`, `CompactIn`, `CurrencyCode`, `CurrencyFrom`): UGX
+wherever no currency is recorded, so Uganda's pages are unchanged.
+
+Proof: `internal/integration/country_advances_test.go`, with Kenya Active
+and keeping its money in KES, a Kenyan and a Ugandan monthly fund plan
+awaiting disbursement (77,777 and 88,888), and an officer who is
+Accountant in Kenya alone: Kenya's dashboard holds Kenya's plan alone, as
+`KES 78K`, and no UGX; Uganda's Accountant sees Uganda's alone, as
+`UGX 89K`, and no KES. Uganda unchanged: the Disbursement, Fund Approvals,
+Weekly Request, Batch Payments and Partner Payments goldens and the whole
+integration suite, 0 differing; school parity `PARITY OK`.
+
+Not in this step: the cost settings tables' "UGX" column labels (the rate
+card's own currency follows when a country's card is recorded); loans,
+which are their own step.
 

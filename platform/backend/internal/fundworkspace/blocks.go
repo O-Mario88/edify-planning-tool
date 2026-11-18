@@ -90,7 +90,7 @@ func Side(title string, p Progress, r Rate) *screensv1.PageBlock {
 // folded into Other), each share's figure when it is 7% or more, then the
 // legend; the card's empty state, read as an empty table, when nothing is
 // costed. labels is the order the page first met each label.
-func Mix(title string, labels []string, totals map[string]int64) *screensv1.PageBlock {
+func Mix(title, currency string, labels []string, totals map[string]int64) *screensv1.PageBlock {
 	type share struct {
 		label string
 		total int64
@@ -123,7 +123,7 @@ func Mix(title string, labels []string, totals map[string]int64) *screensv1.Page
 		if pct := budgetpage.Percentage(s.total, total); pct >= 7 {
 			items = append(items, Text(fmt.Sprintf("%d%%", pct)))
 		}
-		legend = append(legend, &screensv1.PageLink{Text: s.label + budgetpage.UGXCompact(s.total)})
+		legend = append(legend, &screensv1.PageLink{Text: s.label + budgetpage.CompactIn(currency, s.total)})
 	}
 	return Panel(title, append(items, Links(legend...))...)
 }

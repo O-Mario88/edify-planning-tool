@@ -93,3 +93,40 @@ WHERE v.country_id = $1::uuid AND `+current("v")+` ORDER BY v.effective_from DES
 	}
 	return code, nil
 }
+
+// AccountIn is the SQL that the account whose id the expression user names
+// works in the country whose registry id the placeholder id holds (text):
+// it has a membership of it in force, or — an account the existing
+// application made after the registry was seeded — no membership at all and
+// the country's roles are the existing profile's (Uganda), as everything
+// that application holds is Uganda's (docs/migration/80, §19).
+func AccountIn(user, id string) string {
+	return fmt.Sprintf(`(EXISTS (SELECT 1 FROM country_registry.country_membership am
+    WHERE am.user_id = %[1]s AND am.country_id::text = %[2]s AND am.revoked_at IS NULL AND `+current("am")+`)
+  OR (NOT EXISTS (SELECT 1 FROM country_registry.country_membership am WHERE am.user_id = %[1]s)
+    AND EXISTS (SELECT 1 FROM country_registry.country ac WHERE ac.id::text = %[2]s AND ac.roles_source = '%[3]s')))`,
+		user, id, RolesFromProfile)
+}
+
+// ActivityHeldIn is ActivityIn for the money pages, which the existing
+// application reads across the whole platform rather than by country:
+// work that ActivityIn places in no country at all (no school, no cluster
+// and no country-bound responsible person) is held by the country whose
+// roles are the existing profile's (Uganda), as everything that application
+// holds is Uganda's (docs/migration/80, §19). Planning and SSA readers keep
+// ActivityIn, as the existing activity_country_q leaves such work out.
+func ActivityHeldIn(a, s, cl, ids string) string {
+	return fmt.Sprintf(`(%s OR (NOT %s AND EXISTS (SELECT 1 FROM country_registry.country hc
+    WHERE hc.id::text = ANY(%s) AND hc.roles_source = '%s')))`,
+		ActivityIn(a, s, cl, ids), ActivityIn(a, s, cl, "ARRAY(SELECT anyc.id::text FROM country_registry.country anyc)"), ids, RolesFromProfile)
+}
+
+// ActivityRowIn is ActivityHeldIn for a reader that holds only an
+// activity's id (the expression activity, e.g. an advance's activity_id):
+// that activity, with its school and cluster, belongs to one of the
+// countries whose registry ids the placeholder ids holds (a text[]
+// argument).
+func ActivityRowIn(activity, ids string) string {
+	return fmt.Sprintf(`EXISTS (SELECT 1 FROM activity rax LEFT JOIN school ras ON ras.id = rax.school_id
+    LEFT JOIN cluster racl ON racl.id = rax.cluster_id WHERE rax.id = %s AND %s)`, activity, ActivityHeldIn("rax", "ras", "racl", ids))
+}

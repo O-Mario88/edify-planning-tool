@@ -7,6 +7,8 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -75,7 +77,7 @@ func ledgerFrom(ctx context.Context, db schooldirectory.Querier, sql string, arg
 		// The ledger's {% empty %} row, then its grand total.
 		return []*screensv1.PageRow{
 			cells("No costed activities in this period. Schedule activities in My Plan to populate this budget."),
-			cells("Grand total", ugx(0), ugx(0)),
+			cells("Grand total", inCurrency(CurrencyFrom(ctx), 0), inCurrency(CurrencyFrom(ctx), 0)),
 		}, true, nil
 	}
 	var staff, total int64
@@ -83,8 +85,33 @@ func ledgerFrom(ctx context.Context, db schooldirectory.Querier, sql string, arg
 		staff += g.staffTotal
 		total += g.total
 	}
-	return ledgerRows("UGX", gs, staff, total), true, nil
+	return ledgerRows(CurrencyFrom(ctx), gs, staff, total), true, nil
 }
+
+// CurrencyCode is the ISO code of the money of the country w (the request's
+// country): its recorded currency, UGX wherever none is recorded
+// (docs/migration/80, §19).
+func CurrencyCode(w *country.Work) string {
+	if w == nil || w.Currency == "" {
+		return "UGX"
+	}
+	return w.Currency
+}
+
+// CurrencyFrom is CurrencyCode of the country the request is made in, read
+// from its caller; UGX without one.
+func CurrencyFrom(ctx context.Context) string {
+	if p, ok := auth.PrincipalFrom(ctx); ok {
+		return CurrencyCode(p.Country)
+	}
+	return "UGX"
+}
+
+// In is the ugx filter in the currency code: KES 24,000.
+func In(code string, n int64) string { return inCurrency(code, n) }
+
+// CompactIn is format_ugx_compact in the currency code: KES 1.2M.
+func CompactIn(code string, n int64) string { return compactIn(code, n) }
 
 // UGX is the ugx template filter: UGX 24,000.
 func UGX(n int64) string { return ugx(n) }

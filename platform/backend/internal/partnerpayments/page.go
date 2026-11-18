@@ -28,6 +28,7 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/budgetpage"
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/fundworkspace"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
@@ -108,11 +109,18 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if len(query) > 0 || (len(role.Strip) > 0 && string(role.Strip) != "null") {
 		return nil, false, nil
 	}
-	invoices, err := s.invoices(ctx)
+	// The request's country's partners and work only (docs/migration/80,
+	// §19); the Admin and the regional roles read the country they work in.
+	var countryIDs []string
+	if p.Country != nil {
+		countryIDs = []string{p.Country.ID}
+	}
+	code := budgetpage.CurrencyCode(p.Country)
+	invoices, err := s.invoices(ctx, countryIDs)
 	if err != nil {
 		return nil, true, err
 	}
-	works, err := s.works(ctx)
+	works, err := s.works(ctx, countryIDs)
 	if err != nil {
 		return nil, true, err
 	}
@@ -125,11 +133,11 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if len(invoices) > 0 {
 		out = append(out, fundworkspace.Panel("Partner Invoices — Awaiting Payment", fundworkspace.Text(
 			"Confirmed by the Programme Lead against the plan. Each invoice is written from the plan's costs; the payable instalment is derived from them.")),
-			invoiceTable(invoices, role))
+			invoiceTable(invoices, role, code))
 	}
 	out = append(out, fundworkspace.Panel("Verified — Awaiting Clearance",
 		fundworkspace.Text("The partner finished and IA verified the work; the remaining balance clears here.")),
-		workTable(works, role))
+		workTable(works, role, code))
 	dialog := &screensv1.PageDialog{Key: "payOpen", Title: "Process Partner Payment ·", Blocks: []*screensv1.PageBlock{
 		fundworkspace.Panel("Process Partner Payment ·"),
 		fundworkspace.Panel("", fundworkspace.Text("Confirm Payment"), fundworkspace.Text("Cancel")),
@@ -139,12 +147,14 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 
 // invoices is every invoice the Programme Lead confirmed, oldest first,
 // with its partner's name (its id when no live partner has it) and items.
-func (s *Service) invoices(ctx context.Context) ([]invoice, error) {
+func (s *Service) invoices(ctx context.Context, countryIDs []string) ([]invoice, error) {
 	rows, err := s.db.Query(ctx, `
 SELECT i.id, i.partner_id, COALESCE((SELECT p.name FROM partner p WHERE p.id = i.partner_id AND p.deleted_at IS NULL), i.partner_id),
   i.invoice_type, i.created_at, i.period_start, i.period_end,
   (SELECT COUNT(*) FROM partner_invoice_item it WHERE it.invoice_id = i.id), i.entered_total, i.payable_amount, i.stored_name <> ''
-FROM partner_invoice i WHERE i.status = 'confirmed_by_pl' ORDER BY i.created_at`)
+FROM partner_invoice i WHERE i.status = 'confirmed_by_pl'
+  AND ($1::text[] IS NULL OR EXISTS (SELECT 1 FROM partner ip WHERE ip.id = i.partner_id AND `+registry.PartnerIn("ip", "$1")+`))
+ORDER BY i.created_at`, countryIDs)
 	if err != nil {
 		return nil, fmt.Errorf("partnerpayments: reading the invoices: %w", err)
 	}
@@ -162,7 +172,7 @@ FROM partner_invoice i WHERE i.status = 'confirmed_by_pl' ORDER BY i.created_at`
 // works is the live partner work IA verified with a payable payment status,
 // latest first (the activity's own ordering), with its planned cost, what
 // was paid on it, its partner's and responsible person's names.
-func (s *Service) works(ctx context.Context) ([]work, error) {
+func (s *Service) works(ctx context.Context, countryIDs []string) ([]work, error) {
 	rows, err := s.db.Query(ctx, `
 SELECT a.id, a.activity_type, COALESCE(a.assigned_partner_id, ''),
   COALESCE((SELECT p.name FROM partner p WHERE p.id = a.assigned_partner_id AND p.deleted_at IS NULL), NULLIF(a.assigned_partner_id, ''), '—'),
@@ -175,7 +185,8 @@ SELECT a.id, a.activity_type, COALESCE(a.assigned_partner_id, ''),
 FROM activity a LEFT JOIN school s ON s.id = a.school_id
 WHERE a.deleted_at IS NULL AND a.delivery_type = 'partner' AND NOT (a.status = ANY($1))
   AND a.status = 'ia_verified' AND a.payment_status = ANY($2)
-ORDER BY a.created_at DESC`, rules.NonFundableStatuses, rules.PartnerPayableStatuses)
+  AND ($3::text[] IS NULL OR `+registry.ActivityRowIn("a.id", "$3")+`)
+ORDER BY a.created_at DESC`, rules.NonFundableStatuses, rules.PartnerPayableStatuses, countryIDs)
 	if err != nil {
 		return nil, fmt.Errorf("partnerpayments: reading the verified work: %w", err)
 	}
@@ -200,7 +211,8 @@ func menu(items ...[2]string) *screensv1.PageCell {
 	return c
 }
 
-// amount is the ugx_amount filter: the whole figure with thousands commas.
+// amount is the ugx_amount filter: the whole figure with thousands commas,
+// its currency written in the column's label.
 func amount(n int64) string { return strings.TrimPrefix(budgetpage.UGX(n), "UGX ") }
 
 func plural(n int) string {
@@ -210,9 +222,9 @@ func plural(n int) string {
 	return "ies"
 }
 
-func invoiceTable(invoices []invoice, role roleRules) *screensv1.PageBlock {
+func invoiceTable(invoices []invoice, role roleRules, code string) *screensv1.PageBlock {
 	t := &screensv1.PageTable{Columns: []*screensv1.PageColumn{
-		{Label: "Invoice"}, {Label: "Period"}, {Label: "Payable (UGX)", Numeric: true}, {Label: "Reference"}, {Label: "Actions", Numeric: true}}}
+		{Label: "Invoice"}, {Label: "Period"}, {Label: "Payable (" + code + ")", Numeric: true}, {Label: "Reference"}, {Label: "Actions", Numeric: true}}}
 	for _, v := range invoices {
 		who := cell(v.partner)
 		if role.PartnerLinks && v.partner != "" && strings.TrimSpace(v.partnerID) != "" {
@@ -238,7 +250,7 @@ func invoiceTable(invoices []invoice, role roleRules) *screensv1.PageBlock {
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: t}}
 }
 
-func workTable(works []work, role roleRules) *screensv1.PageBlock {
+func workTable(works []work, role roleRules, currency string) *screensv1.PageBlock {
 	t := &screensv1.PageTable{Columns: []*screensv1.PageColumn{
 		{Label: "Partner"}, {Label: "Activity"}, {Label: "School ID"}, {Label: "School / Cluster"}, {Label: "Assigned Staff"},
 		{Label: "Activity Date"}, {Label: "IA Status"}, {Label: "Payment Amount"}, {Label: "Actions", Numeric: true}}}
@@ -270,7 +282,7 @@ func workTable(works []work, role roleRules) *screensv1.PageBlock {
 		if w.scheduled != nil {
 			date = w.scheduled.In(zone).Format("Jan 02, 2006")
 		}
-		balance := budgetpage.UGX(max(w.planned-w.paid, 0))
+		balance := budgetpage.In(currency, max(w.planned-w.paid, 0))
 		if w.paid != 0 {
 			balance += " Advance paid " + amount(w.paid)
 		}

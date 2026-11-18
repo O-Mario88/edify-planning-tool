@@ -99,8 +99,14 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if err != nil {
 		return nil, true, fmt.Errorf("batchpayments: resolving the reader's scope: %w", err)
 	}
+	// A country reader's money is the request's country's (docs/migration/
+	// 80, §19): the Admin and the regional roles read the country they work
+	// in, so money is never summed across countries.
 	var country []string
-	if scope.CountryScope && scope.Country != "" {
+	switch {
+	case scope.CountryScope && p.Country != nil:
+		country = []string{p.Country.ID}
+	case scope.CountryScope && scope.Country != "":
 		country = scope.CountryIDs()
 	}
 	advances, err := s.read(ctx, country, `a.delivery_type = 'staff' AND NOT (a.payment_status = ANY($2))
@@ -116,7 +122,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	}
 	h := &screensv1.PageHeader{Eyebrow: "Finance", Title: "Batch Payments Center",
 		Description: "Export payment files for confirmed advances and verified Partner work. Staff reimbursements remain in the Disbursement Dashboard through receipt confirmation."}
-	return &screensv1.GetPageResponse{Header: h, Blocks: blocks(advances, partners), WebPath: PagePath}, true, nil
+	return &screensv1.GetPageResponse{Header: h, Blocks: blocks(budgetpage.CurrencyCode(p.Country), advances, partners), WebPath: PagePath}, true, nil
 }
 
 // read is the live work matching where, in the reader's country when the
@@ -163,7 +169,7 @@ func kind(p payment) string {
 
 // panelFor is one tab's card: its heading with the export action, the
 // select-all line and the work, or the words for none.
-func panelFor(heading, export, empty string, list []payment, line func(payment) (string, string)) []*screensv1.PageBlock {
+func panelFor(code, heading, export, empty string, list []payment, line func(payment) (string, string)) []*screensv1.PageBlock {
 	out := []*screensv1.PageBlock{fundworkspace.Panel(heading, fundworkspace.Text("None selected"),
 		fundworkspace.Links(&screensv1.PageLink{Text: fmt.Sprintf("Export all eligible (%d)", len(list)), Href: "?export=" + export}))}
 	if len(list) == 0 {
@@ -172,13 +178,13 @@ func panelFor(heading, export, empty string, list []payment, line func(payment) 
 	items := []*screensv1.PagePanelItem{}
 	for _, p := range list {
 		first, second := line(p)
-		items = append(items, fundworkspace.Text(first), fundworkspace.Text(second), fundworkspace.Text(budgetpage.UGX(p.amount)))
+		items = append(items, fundworkspace.Text(first), fundworkspace.Text(second), fundworkspace.Text(budgetpage.In(code, p.amount)))
 	}
 	return append(out, fundworkspace.Panel("", fundworkspace.Text("Select all in this list")), fundworkspace.Panel("", feeddom.Paired(items)...))
 }
 
-func blocks(advances, partners []payment) []*screensv1.PageBlock {
-	advanceBlocks := panelFor("Batch Advances ready for payment file", "advances", "No pending advances for batch payment.", advances,
+func blocks(code string, advances, partners []payment) []*screensv1.PageBlock {
+	advanceBlocks := panelFor(code, "Batch Advances ready for payment file", "advances", "No pending advances for batch payment.", advances,
 		func(p payment) (string, string) {
 			place := p.school
 			if !p.hasSchool {
@@ -186,7 +192,7 @@ func blocks(advances, partners []payment) []*screensv1.PageBlock {
 			}
 			return "#" + short(p.id) + " • " + kind(p), place
 		})
-	partnerBlocks := panelFor("Batch Partner Payments ready for payment file", "partners", "No pending partner payments for batch payout.", partners,
+	partnerBlocks := panelFor(code, "Batch Partner Payments ready for payment file", "partners", "No pending partner payments for batch payout.", partners,
 		func(p payment) (string, string) { return p.partner + " • #" + short(p.id), kind(p) })
 	segments := &screensv1.PageSegments{Caption: "Finance", Segments: []*screensv1.PageSegment{
 		{Label: fmt.Sprintf("Advances (%d)", len(advances)), Blocks: advanceBlocks},

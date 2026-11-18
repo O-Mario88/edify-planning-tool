@@ -10,6 +10,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -40,6 +41,11 @@ const (
 type queue struct {
 	db    schooldirectory.Querier
 	names map[string]string
+	// countryID keeps the queue to the request's country (docs/migration/80,
+	// §19): nil reads every country, as the existing page does; countryIDs
+	// is the same as the text[] the activity clauses take.
+	countryID  any
+	countryIDs []string
 }
 
 func (q *queue) read(ctx context.Context, fy string, month int) ([]item, error) {
@@ -116,8 +122,9 @@ func (q *queue) monthly(ctx context.Context, fy string, month int) ([]item, erro
 		SELECT id, COALESCE(submitted_by_user_id, ''), COALESCE(submitted_by_role, ''), activity_count,
 		       total_amount, status, accountability_submitted_at IS NOT NULL, accountability_reviewed_at IS NOT NULL
 		FROM fund_request
-		WHERE period = 'monthly' AND fy = $1 AND period_key = $2 AND NOT (status = 'draft')`,
-		fy, fy+"-M"+strconv.Itoa(month))
+		WHERE period = 'monthly' AND fy = $1 AND period_key = $2 AND NOT (status = 'draft')
+		  AND ($3::text IS NULL OR `+registry.AccountIn("submitted_by_user_id", "$3")+`)`,
+		fy, fy+"-M"+strconv.Itoa(month), q.countryID)
 	if err != nil {
 		return nil, fmt.Errorf("disbursements: reading the monthly plans: %w", err)
 	}
@@ -166,7 +173,8 @@ func (q *queue) weekly(ctx context.Context, fy string, month int) ([]item, error
 		               WHERE s.weekly_fund_request_id = w.id AND r.status = 'accountability_pending')
 		FROM weekly_fund_request w
 		WHERE w.fy = $1 AND EXTRACT(MONTH FROM w.week_start_date) = $2
-		  AND NOT (w.status IN ('not_requested', 'cancelled'))`, fy, month)
+		  AND NOT (w.status IN ('not_requested', 'cancelled'))
+		  AND ($3::text IS NULL OR `+registry.AccountIn("w.responsible_user", "$3")+`)`, fy, month, q.countryID)
 	if err != nil {
 		return nil, fmt.Errorf("disbursements: reading the weekly advances: %w", err)
 	}
@@ -215,8 +223,9 @@ func (q *queue) partner(ctx context.Context) ([]item, error) {
 		LEFT JOIN school s ON s.id = a.school_id
 		WHERE a.deleted_at IS NULL AND a.delivery_type = 'partner' AND a.status = 'ia_verified'
 		  AND a.payment_status = ANY($1)
+		  AND ($2::text[] IS NULL OR `+registry.ActivityRowIn("a.id", "$2")+`)
 		ORDER BY a.created_at DESC
-		LIMIT 200`, rules.PartnerPayableStatuses)
+		LIMIT 200`, rules.PartnerPayableStatuses, q.countryIDs)
 	if err != nil {
 		return nil, fmt.Errorf("disbursements: reading the partner payments: %w", err)
 	}
@@ -248,8 +257,9 @@ func (q *queue) reimbursements(ctx context.Context) ([]item, error) {
 		FROM advance_request r
 		JOIN activity a ON a.id = r.activity_id
 		WHERE r.status = 'reimbursement_submitted'
+		  AND ($1::text[] IS NULL OR `+registry.ActivityRowIn("r.activity_id", "$1")+`)
 		ORDER BY r.created_at DESC
-		LIMIT 25`)
+		LIMIT 25`, q.countryIDs)
 	if err != nil {
 		return nil, fmt.Errorf("disbursements: reading the reimbursement claims: %w", err)
 	}
@@ -287,9 +297,10 @@ func shortDay(d time.Time) string { return d.Format("Jan 2") }
 
 // busiestMonth is the month of the year's first monthly plan (by id), the
 // month the page opens on when its own is empty and none was asked for.
-func busiestMonth(ctx context.Context, db schooldirectory.Querier, fy string) (int, error) {
+func busiestMonth(ctx context.Context, db schooldirectory.Querier, fy string, countryID any) (int, error) {
 	var key string
-	err := db.QueryRow(ctx, `SELECT period_key FROM fund_request WHERE period = 'monthly' AND fy = $1 ORDER BY id LIMIT 1`, fy).Scan(&key)
+	err := db.QueryRow(ctx, `SELECT period_key FROM fund_request WHERE period = 'monthly' AND fy = $1
+  AND ($2::text IS NULL OR `+registry.AccountIn("submitted_by_user_id", "$2")+`) ORDER BY id LIMIT 1`, fy, countryID).Scan(&key)
 	if err == pgx.ErrNoRows {
 		return 0, nil
 	}

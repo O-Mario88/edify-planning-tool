@@ -286,7 +286,7 @@ func (s *Service) lines(ctx context.Context, a ask, owners []string) ([]line, er
 		LEFT JOIN school s ON s.id = a.school_id
 		LEFT JOIN cluster cl ON cl.id = a.cluster_id
 		WHERE l.fiscal_year = ANY($1)
-		  AND ($7::text[] IS NULL OR `+registry.ActivityIn("a", "s", "cl", "$7")+`)
+		  AND ($7::text[] IS NULL OR `+registry.ActivityHeldIn("a", "s", "cl", "$7")+`)
 		  AND a.deleted_at IS NULL
 		  AND (a.scheduled_date IS NOT NULL OR a.planned_date IS NOT NULL)
 		  AND (a.status IS NULL OR NOT (a.status = ANY($2)))

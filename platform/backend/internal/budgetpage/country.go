@@ -151,7 +151,7 @@ func (s *Service) monthProgramTotal(ctx context.Context, countryIDs []string, fy
 		FROM activity_schedule_cost_line l JOIN activity a ON a.id = l.activity_id
 		LEFT JOIN school s ON s.id = a.school_id LEFT JOIN cluster cl ON cl.id = a.cluster_id
 		WHERE a.deleted_at IS NULL AND l.fiscal_year = $1
-		  AND ($6::text[] IS NULL OR `+registry.ActivityIn("a", "s", "cl", "$6")+`)
+		  AND ($6::text[] IS NULL OR `+registry.ActivityHeldIn("a", "s", "cl", "$6")+`)
 		  AND (a.scheduled_date IS NOT NULL OR a.planned_date IS NOT NULL)
 		  AND (a.status IS NULL OR NOT (a.status = ANY($2)))
 		  AND (l.planned_date BETWEEN $3 AND $4 OR (l.planned_date IS NULL AND l.month = ANY($5)))`,
@@ -183,7 +183,7 @@ func (s *Service) reconcile(ctx context.Context, countryIDs []string, key string
 		WHERE ((ar.planned_date >= $1 AND ar.planned_date < $2)
 		   OR (ar.planned_date IS NULL AND ar.created_at >= $1 AND ar.created_at < $2))
 		  AND ($4::text[] IS NULL OR EXISTS (SELECT 1 FROM activity a LEFT JOIN school s ON s.id = a.school_id
-		    LEFT JOIN cluster cl ON cl.id = a.cluster_id WHERE a.id = ar.activity_id AND `+registry.ActivityIn("a", "s", "cl", "$4")+`))`,
+		    LEFT JOIN cluster cl ON cl.id = a.cluster_id WHERE a.id = ar.activity_id AND `+registry.ActivityHeldIn("a", "s", "cl", "$4")+`))`,
 		start, end, rules.Country.MoneyMovedStatuses, countryIDs,
 	).Scan(&r.committed, &r.disbursed, &r.accounted, &r.returned, &r.reimbursed)
 	if err != nil {
@@ -209,7 +209,7 @@ func (s *Service) financeHealth(ctx context.Context, fy int, countryIDs []string
 		       COALESCE(sum(r.amount) FILTER (WHERE a.quarter = 'Q4'), 0)
 		FROM advance_request r JOIN activity a ON a.id = r.activity_id
 		LEFT JOIN school s ON s.id = a.school_id LEFT JOIN cluster cl ON cl.id = a.cluster_id
-		WHERE a.fy = $1 AND a.deleted_at IS NULL AND ($6::text[] IS NULL OR `+registry.ActivityIn("a", "s", "cl", "$6")+`)`,
+		WHERE a.fy = $1 AND a.deleted_at IS NULL AND ($6::text[] IS NULL OR `+registry.ActivityHeldIn("a", "s", "cl", "$6")+`)`,
 		fmt.Sprint(fy), c.Pending, c.Confirmed, c.Disbursed, c.Accounted, countryIDs,
 	).Scan(&f.requested, &f.pending, &f.confirmed, &f.disbursed, &f.accounted, &f.returned,
 		&f.quarters[0], &f.quarters[1], &f.quarters[2], &f.quarters[3])

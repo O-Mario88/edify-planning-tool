@@ -212,7 +212,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if month == nil {
 		return nil, false, nil
 	}
-	blocks := []*screensv1.PageBlock{s.filters(a, plans, week, weeks, now), strip(plans, awaiting)}
+	blocks := []*screensv1.PageBlock{s.filters(a, plans, week, weeks, now), strip(plans, awaiting, budgetpage.CurrencyCode(p.Country))}
 	weekISO := week.Format(time.DateOnly)
 	tabs := []*screensv1.PageLink{}
 	for _, pl := range queue {
@@ -411,7 +411,7 @@ func requestsWord(n int) string {
 
 // strip is the week's money across every plan: requested, awaiting this
 // approver, approved and returned.
-func strip(plans []plan, awaiting string) *screensv1.PageBlock {
+func strip(plans []plan, awaiting, code string) *screensv1.PageBlock {
 	var sums [4]int64
 	var counts [4]int
 	for _, pl := range plans {
@@ -428,7 +428,7 @@ func strip(plans []plan, awaiting string) *screensv1.PageBlock {
 	}
 	values, helpers := []string{}, []string{}
 	for i := range sums {
-		values = append(values, budgetpage.UGXCompact(sums[i]))
+		values = append(values, budgetpage.CompactIn(code, sums[i]))
 		helpers = append(helpers, requestsWord(counts[i]))
 	}
 	return fw.Strip("Approval context", rules.MetricLabels, values, helpers)

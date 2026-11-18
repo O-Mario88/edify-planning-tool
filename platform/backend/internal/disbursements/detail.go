@@ -178,7 +178,7 @@ func forEach(rows pgx.Rows, each func(pgx.Rows) error) error {
 // the feed reads it: the item's name and kind, its action row's words, the
 // approval hint under it, and the ledger or the breakdown. ok is false when
 // the ledger or breakdown runs past one page.
-func detailTable(ctx context.Context, db schooldirectory.Querier, it item) (*screensv1.PageBlock, bool, error) {
+func detailTable(ctx context.Context, db schooldirectory.Querier, it item, code string) (*screensv1.PageBlock, bool, error) {
 	t := &screensv1.PageTable{Title: it.name + " — " + it.kindLabel}
 	var ok bool
 	var err error
@@ -192,8 +192,8 @@ func detailTable(ctx context.Context, db schooldirectory.Querier, it item) (*scr
 		t.Rows, ok, err = budgetpage.WeeklyRequestLedger(ctx, db, it.id)
 	default:
 		t.Columns = []*screensv1.PageColumn{{Label: "Activity Category"}, {Label: "Planned Qty"},
-			{Label: "Unit Cost (UGX)"}, {Label: "Total (UGX)"}}
-		t.Rows, ok, err = breakdown(ctx, db, it)
+			{Label: "Unit Cost (" + code + ")"}, {Label: "Total (" + code + ")"}}
+		t.Rows, ok, err = breakdown(ctx, db, it, code)
 	}
 	if err != nil || !ok {
 		return nil, ok, err
@@ -222,7 +222,7 @@ func planLines(ctx context.Context, db schooldirectory.Querier, plan string) ([]
 }
 
 // breakdown is _partner_detail's and _reimb_detail's table body.
-func breakdown(ctx context.Context, db schooldirectory.Querier, it item) ([]*screensv1.PageRow, bool, error) {
+func breakdown(ctx context.Context, db schooldirectory.Querier, it item, code string) ([]*screensv1.PageRow, bool, error) {
 	out := []*screensv1.PageRow{}
 	if it.kind == kindPartner {
 		rows, err := db.Query(ctx, `
@@ -237,7 +237,7 @@ func breakdown(ctx context.Context, db schooldirectory.Querier, it item) ([]*scr
 			if err := r.Scan(&label, &qty, &unit, &amount); err != nil {
 				return err
 			}
-			out = append(out, breakdownRow(label, qty, unit, amount))
+			out = append(out, breakdownRow(code, label, qty, unit, amount))
 			return nil
 		})
 		if err != nil {
@@ -250,9 +250,9 @@ func breakdown(ctx context.Context, db schooldirectory.Querier, it item) ([]*scr
 			Scan(&amount, &accounted); err != nil {
 			return nil, false, fmt.Errorf("disbursements: reading the claim: %w", err)
 		}
-		out = append(out, breakdownRow("Approved budget", 1, amount, amount))
+		out = append(out, breakdownRow(code, "Approved budget", 1, amount, amount))
 		if accounted != nil {
-			out = append(out, breakdownRow("Actual spend (claimed)", 1, *accounted, *accounted))
+			out = append(out, breakdownRow(code, "Actual spend (claimed)", 1, *accounted, *accounted))
 		}
 	}
 	if len(out) > breakdownPageSize {
@@ -264,12 +264,12 @@ func breakdown(ctx context.Context, db schooldirectory.Querier, it item) ([]*scr
 	return out, true, nil
 }
 
-func breakdownRow(label string, qty, unit, total int64) *screensv1.PageRow {
+func breakdownRow(code, label string, qty, unit, total int64) *screensv1.PageRow {
 	q := "—"
 	if qty != 0 {
 		q = strconv.FormatInt(qty, 10)
 	}
-	return row(label, q, budgetpage.UGX(unit), budgetpage.UGX(total))
+	return row(label, q, budgetpage.In(code, unit), budgetpage.In(code, total))
 }
 
 func row(texts ...string) *screensv1.PageRow {

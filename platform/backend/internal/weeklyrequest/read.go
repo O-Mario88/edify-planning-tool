@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 )
 
 // args collects a query's arguments.
@@ -21,6 +23,9 @@ func (sc scope) requests(a ask, q *args) string {
 	where := []string{"w.fy = " + q.add(sc.fy)}
 	if sc.owners != nil {
 		where = append(where, "w.responsible_user = ANY("+q.add(sc.owners)+")")
+	}
+	if sc.countryID != nil {
+		where = append(where, registry.AccountIn("w.responsible_user", q.add(sc.countryID)+"::text"))
 	}
 	if a.district != "" {
 		where = append(where, "w.responsible_user IN (SELECT user_id FROM staff_profile WHERE primary_district_id = "+
@@ -41,6 +46,9 @@ func (sc scope) activities(a ask, q *args) string {
 	if sc.actors != nil {
 		where = append(where, "a.responsible_staff_id = ANY("+q.add(sc.actors)+")")
 	}
+	if sc.countryIDs != nil {
+		where = append(where, registry.ActivityRowIn("a.id", q.add(sc.countryIDs)))
+	}
 	if a.district != "" {
 		where = append(where, "a.school_id IN (SELECT id FROM school WHERE district_id = "+q.add(a.district)+")")
 	}
@@ -57,6 +65,9 @@ func (sc scope) lines(a ask, q *args) string {
 	where := []string{"l.fiscal_year = " + q.add(sc.fy)}
 	if sc.owners != nil {
 		where = append(where, "l.responsible_user = ANY("+q.add(sc.owners)+")")
+	}
+	if sc.countryIDs != nil {
+		where = append(where, registry.ActivityRowIn("l.activity_id", q.add(sc.countryIDs)))
 	}
 	if a.district != "" {
 		where = append(where, "l.school_id IN (SELECT id FROM school WHERE district_id = "+q.add(a.district)+")")

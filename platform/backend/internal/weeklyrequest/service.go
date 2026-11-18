@@ -143,10 +143,19 @@ type scope struct {
 	actors     []string // the activities' responsible staff ids; nil is anyone
 	supervised []string // supervised_user_ids
 	staff      string   // the staff filter after pinning
+	// countryID and countryIDs keep a country reader to the request's
+	// country (docs/migration/80, §19); nil is every country.
+	countryID  any
+	countryIDs []string
 }
 
 func (s *Service) scopeFor(ctx context.Context, p auth.Principal, sc schooldirectory.Scope, a ask, fy string) (scope, error) {
 	out := scope{fy: fy, country: sc.CountryScope}
+	if sc.CountryScope && p.Country != nil {
+		// The Admin and the regional roles read the country they work in, so
+		// money is never summed across countries.
+		out.countryID, out.countryIDs = p.Country.ID, []string{p.Country.ID}
+	}
 	if !sc.CountryScope {
 		me := p.UserID
 		if me == "" {

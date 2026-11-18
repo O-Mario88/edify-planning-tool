@@ -19,6 +19,7 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/budgetpage"
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	fw "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/fundworkspace"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
@@ -94,13 +95,19 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		a.month, a.monthAsked = n, true
 	}
 
+	// The request's country's money only (docs/migration/80, §19); the
+	// Admin and the regional roles read the country they work in.
 	q := &queue{db: s.db, names: map[string]string{}}
+	if p.Country != nil {
+		q.countryID, q.countryIDs = p.Country.ID, []string{p.Country.ID}
+	}
+	code := budgetpage.CurrencyCode(p.Country)
 	all, err := q.read(ctx, a.fy, a.month)
 	if err != nil {
 		return nil, true, err
 	}
 	if len(all) == 0 && !a.monthAsked {
-		m, err := busiestMonth(ctx, s.db, a.fy)
+		m, err := busiestMonth(ctx, s.db, a.fy, q.countryID)
 		if err != nil {
 			return nil, true, err
 		}
@@ -127,7 +134,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		visible = append(visible, it)
 	}
 
-	f, err := s.figures(ctx, a, all, today)
+	f, err := s.figures(ctx, a, q, all, today)
 	if err != nil {
 		return nil, true, err
 	}
@@ -147,7 +154,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 				break
 			}
 		}
-		detail, ok, err := detailTable(ctx, s.db, sel)
+		detail, ok, err := detailTable(ctx, s.db, sel, code)
 		if err != nil {
 			return nil, true, err
 		}
@@ -165,7 +172,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		return nil, true, err
 	}
 	blocks = append(blocks, f.side(a, all),
-		fw.Mix(fmt.Sprintf("Disbursement Mix (%s)", rules.Months[a.month]), m.labels, m.totals),
+		fw.Mix(fmt.Sprintf("Disbursement Mix (%s)", rules.Months[a.month]), code, m.labels, m.totals),
 		fw.Recent("Recent Disbursement Activity", recent, "/accounts/audit-log"))
 
 	h := &screensv1.PageHeader{
@@ -198,10 +205,11 @@ type figures struct {
 	total, pendingDisb, awaiting, heldAmt, disbToday int64
 	items, pendingCount, awaitingCount               int
 	allocation, disbursedMonth                       int64
+	currency                                         string
 }
 
-func (s *Service) figures(ctx context.Context, a ask, all []item, today time.Time) (figures, error) {
-	f := figures{items: len(all)}
+func (s *Service) figures(ctx context.Context, a ask, q *queue, all []item, today time.Time) (figures, error) {
+	f := figures{items: len(all), currency: budgetpage.CurrencyFrom(ctx)}
 	for _, it := range all {
 		f.total += it.amount
 		switch it.status {
@@ -218,15 +226,19 @@ func (s *Service) figures(ctx context.Context, a ask, all []item, today time.Tim
 	day := today.Format(time.DateOnly)
 	err := s.db.QueryRow(ctx, `
 		SELECT COALESCE((SELECT SUM(COALESCE(NULLIF(disbursed_amount, 0), total_amount)) FROM fund_request
-		                 WHERE period = 'monthly' AND (disbursed_at AT TIME ZONE 'Africa/Nairobi')::date = $1::date), 0)
+		                 WHERE period = 'monthly' AND (disbursed_at AT TIME ZONE 'Africa/Nairobi')::date = $1::date
+		                   AND ($6::text IS NULL OR `+registry.AccountIn("submitted_by_user_id", "$6")+`)), 0)
 		     + COALESCE((SELECT SUM(COALESCE(NULLIF(disbursed_amount, 0), total_amount)) FROM weekly_fund_request
-		                 WHERE (disbursed_at AT TIME ZONE 'Africa/Nairobi')::date = $1::date), 0),
+		                 WHERE (disbursed_at AT TIME ZONE 'Africa/Nairobi')::date = $1::date
+		                   AND ($6::text IS NULL OR `+registry.AccountIn("responsible_user", "$6")+`)), 0),
 		       COALESCE((SELECT SUM(disbursed_amount) FROM advance_request
-		                 WHERE fy = $2 AND month = $3 AND status = ANY($4)), 0),
+		                 WHERE fy = $2 AND month = $3 AND status = ANY($4)
+		                   AND ($7::text[] IS NULL OR `+registry.ActivityRowIn("activity_id", "$7")+`)), 0),
 		       COALESCE((SELECT SUM(l.amount) FROM activity_schedule_cost_line l JOIN activity a ON a.id = l.activity_id
 		                 WHERE a.fy = $2 AND l.month = $3 AND a.deleted_at IS NULL
-		                   AND (a.status IS NULL OR NOT (a.status = ANY($5)))), 0)`,
-		day, a.fy, a.month, rules.MoneyMovedAdvanceStatuses, rules.NonFundableStatuses).
+		                   AND (a.status IS NULL OR NOT (a.status = ANY($5)))
+		                   AND ($7::text[] IS NULL OR `+registry.ActivityRowIn("a.id", "$7")+`)), 0)`,
+		day, a.fy, a.month, rules.MoneyMovedAdvanceStatuses, rules.NonFundableStatuses, q.countryID, q.countryIDs).
 		Scan(&f.disbToday, &f.disbursedMonth, &f.allocation)
 	if err != nil {
 		return f, fmt.Errorf("disbursements: reading the month's money: %w", err)
@@ -242,7 +254,7 @@ func plural(n int, one, many string) string {
 }
 
 func (f figures) strip() *screensv1.PageBlock {
-	ugx := budgetpage.UGXCompact
+	ugx := func(n int64) string { return budgetpage.CompactIn(f.currency, n) }
 	return fw.Strip("Disbursement context", rules.MetricLabels,
 		[]string{ugx(f.total), ugx(f.pendingDisb), ugx(f.disbToday), ugx(f.awaiting)},
 		[]string{plural(f.items, "item", "items"), plural(f.pendingCount, "request", "requests"),
@@ -255,7 +267,7 @@ func pyRound(x float64) int64 { return int64(math.RoundToEven(x)) }
 // side is the month's panel: the allocation and its use, then the
 // disbursement rate over the whole queue.
 func (f figures) side(a ask, all []item) *screensv1.PageBlock {
-	ugx := budgetpage.UGXCompact
+	ugx := func(n int64) string { return budgetpage.CompactIn(f.currency, n) }
 	committed := f.pendingDisb + f.heldAmt
 	available := max(0, f.allocation-f.disbursedMonth-committed)
 	var pct int64
@@ -307,14 +319,16 @@ func (s *Service) recent(ctx context.Context, q *queue) ([]string, error) {
 			return err
 		})
 	}
+	code := budgetpage.CurrencyFrom(ctx)
 	money := func(disbursed *int64, total int64) string {
 		if disbursed != nil && *disbursed != 0 {
-			return budgetpage.UGXCompact(*disbursed)
+			return budgetpage.CompactIn(code, *disbursed)
 		}
-		return budgetpage.UGXCompact(total)
+		return budgetpage.CompactIn(code, total)
 	}
 	err := read(`SELECT COALESCE(submitted_by_user_id, ''), period_key, disbursed_amount, total_amount, disbursed_at
-		FROM fund_request WHERE period = 'monthly' AND disbursed_at IS NOT NULL ORDER BY disbursed_at DESC LIMIT 6`,
+		FROM fund_request WHERE period = 'monthly' AND disbursed_at IS NOT NULL
+		  AND ($1::text IS NULL OR `+registry.AccountIn("submitted_by_user_id", "$1")+`) ORDER BY disbursed_at DESC LIMIT 6`,
 		func(r pgx.Rows) (event, bool, error) {
 			var owner, key string
 			var amount *int64
@@ -322,10 +336,11 @@ func (s *Service) recent(ctx context.Context, q *queue) ([]string, error) {
 			var at time.Time
 			err := r.Scan(&owner, &key, &amount, &total, &at)
 			return event{q.name(owner, "CCEO"), key + " Fund Plan", "Disbursed", money(amount, total), at}, err == nil, err
-		})
+		}, q.countryID)
 	if err == nil {
 		err = read(`SELECT COALESCE(responsible_user, ''), week_start_date, disbursed_amount, total_amount, disbursed_at
-			FROM weekly_fund_request WHERE disbursed_at IS NOT NULL ORDER BY disbursed_at DESC LIMIT 6`,
+			FROM weekly_fund_request WHERE disbursed_at IS NOT NULL
+			  AND ($1::text IS NULL OR `+registry.AccountIn("responsible_user", "$1")+`) ORDER BY disbursed_at DESC LIMIT 6`,
 			func(r pgx.Rows) (event, bool, error) {
 				var owner string
 				var start, at time.Time
@@ -333,21 +348,23 @@ func (s *Service) recent(ctx context.Context, q *queue) ([]string, error) {
 				var total int64
 				err := r.Scan(&owner, &start, &amount, &total, &at)
 				return event{q.name(owner, "Staff"), "Weekly Advance " + shortDay(start), "Disbursed", money(amount, total), at}, err == nil, err
-			})
+			}, q.countryID)
 	}
 	if err == nil {
-		err = read(`SELECT partner_name, amount_paid, payment_date FROM partner_payment ORDER BY payment_date DESC LIMIT 4`,
+		err = read(`SELECT partner_name, amount_paid, payment_date FROM partner_payment
+			WHERE ($1::text[] IS NULL OR `+registry.ActivityRowIn("activity_id", "$1")+`) ORDER BY payment_date DESC LIMIT 4`,
 			func(r pgx.Rows) (event, bool, error) {
 				var e event
 				var paid int64
 				err := r.Scan(&e.who, &paid, &e.at)
-				e.what, e.action, e.amount = "Partner Payment", "Paid", budgetpage.UGXCompact(paid)
+				e.what, e.action, e.amount = "Partner Payment", "Paid", budgetpage.CompactIn(code, paid)
 				return e, err == nil, err
-			})
+			}, q.countryIDs)
 	}
 	if err == nil {
 		err = read(`SELECT COALESCE(submitted_by_user_id, ''), period_key, total_amount, reviewed_at
 			FROM fund_request WHERE period = 'monthly' AND status = 'returned_by_accountant'
+			  AND ($1::text IS NULL OR `+registry.AccountIn("submitted_by_user_id", "$1")+`)
 			ORDER BY reviewed_at DESC LIMIT 3`,
 			func(r pgx.Rows) (event, bool, error) {
 				var owner, key string
@@ -356,8 +373,8 @@ func (s *Service) recent(ctx context.Context, q *queue) ([]string, error) {
 				if err := r.Scan(&owner, &key, &total, &at); err != nil || at == nil {
 					return event{}, false, err
 				}
-				return event{q.name(owner, "CCEO"), key + " Fund Plan", "Returned", budgetpage.UGXCompact(total), *at}, true, nil
-			})
+				return event{q.name(owner, "CCEO"), key + " Fund Plan", "Returned", budgetpage.CompactIn(code, total), *at}, true, nil
+			}, q.countryID)
 	}
 	if err != nil {
 		return nil, err

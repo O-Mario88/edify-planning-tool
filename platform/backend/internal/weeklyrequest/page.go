@@ -133,16 +133,24 @@ func (v *view) filters() *screensv1.PageBlock {
 		Filters: fs, Hidden: map[string]string{"period_tab": "week"}}}}
 }
 
+// money and compact write amounts in the request's country's currency
+// (docs/migration/80, §19).
+func (v *view) money(n int64) string { return budgetpage.In(budgetpage.CurrencyCode(v.p.Country), n) }
+
+func (v *view) compact(n int64) string {
+	return budgetpage.CompactIn(budgetpage.CurrencyCode(v.p.Country), n)
+}
+
 func requests(n int) string { return fmt.Sprintf("%d request%s", n, plural(n, "", "s")) }
 
 func (v *view) strip() *screensv1.PageBlock {
 	figures := []schoolprofile.StripFigure{
-		{Label: "Total Requested This Month", Value: budgetpage.UGXCompact(v.thisMonth), Helper: "No prior-month baseline"},
-		{Label: "Awaiting Approval", Value: budgetpage.UGXCompact(v.awaiting.total), Helper: requests(v.awaiting.count)},
-		{Label: "Approved", Value: budgetpage.UGXCompact(v.approved.total), Helper: requests(v.approved.count)},
-		{Label: "Ready for Disbursement", Value: budgetpage.UGXCompact(v.ready.total), Helper: requests(v.ready.count)},
-		{Label: "Returned for Review", Value: budgetpage.UGXCompact(v.returned.total), Helper: requests(v.returned.count)},
-		{Label: "Accountability Pending", Value: budgetpage.UGXCompact(v.pendingAcct.total), Helper: requests(v.pendingAcct.count)},
+		{Label: "Total Requested This Month", Value: v.compact(v.thisMonth), Helper: "No prior-month baseline"},
+		{Label: "Awaiting Approval", Value: v.compact(v.awaiting.total), Helper: requests(v.awaiting.count)},
+		{Label: "Approved", Value: v.compact(v.approved.total), Helper: requests(v.approved.count)},
+		{Label: "Ready for Disbursement", Value: v.compact(v.ready.total), Helper: requests(v.ready.count)},
+		{Label: "Returned for Review", Value: v.compact(v.returned.total), Helper: requests(v.returned.count)},
+		{Label: "Accountability Pending", Value: v.compact(v.pendingAcct.total), Helper: requests(v.pendingAcct.count)},
 	}
 	b := schoolprofile.Strip("Request and budget context", figures)
 	if v.lastMonth > 0 {
@@ -304,7 +312,7 @@ func (v *view) insightsBlocks() []*screensv1.PageBlock {
 	in := v.insights
 	items := []*screensv1.PagePanelItem{
 		text("This Week"), text(fmt.Sprintf("%d requests generated from My Plan", in.week.count)),
-		text("Total value: " + budgetpage.UGX(in.week.total)),
+		text("Total value: " + v.money(in.week.total)),
 		text("Attention Needed"), text(fmt.Sprintf("%d Items", in.attention)),
 		text(fmt.Sprintf("• %d request%s awaiting responsible confirmation", in.attention, plural(in.attention, "", "s"))),
 		text(fmt.Sprintf("• %d activit%s marked self-funded", in.selfFunded, plural(in.selfFunded, "y", "ies"))),
@@ -334,7 +342,7 @@ func (v *view) breakdownBlock() *screensv1.PageBlock {
 	labels := []string{"This Week", "This Month", "This Quarter (" + v.quarter + ")", "This FY (" + v.fy + ")"}
 	items := []*screensv1.PagePanelItem{}
 	for i, t := range v.breakdown {
-		items = append(items, figureRow(labels[i], budgetpage.UGX(t.total)), text(requests(t.count)))
+		items = append(items, figureRow(labels[i], v.money(t.total)), text(requests(t.count)))
 	}
 	return panel("Request Breakdown by Period", "", items...)
 }

@@ -111,7 +111,9 @@ func (s *Service) month(ctx context.Context, a ask, officers []officer, ids []st
 	if waiting > 0 {
 		state = fmt.Sprintf("%d waiting", waiting)
 	}
-	ugx := budgetpage.UGXCompact
+	// The request's country's currency (docs/migration/80, §19).
+	code := budgetpage.CurrencyFrom(ctx)
+	ugx := func(n int64) string { return budgetpage.CompactIn(code, n) }
 	return &monthBlocks{
 		side: fw.Side("This Month",
 			fw.Progress{
@@ -124,7 +126,7 @@ func (s *Service) month(ctx context.Context, a ask, officers []officer, ids []st
 				Title: "Approval Rate This Month", Subline: "Approval Rate", Empty: "No decisions recorded this month yet.",
 				Approved: approved, Returned: back, Pending: waiting,
 			}),
-		mix:    fw.Mix(fmt.Sprintf("Approval Insights / Budget Mix (%s)", monthName), labels, totals),
+		mix:    fw.Mix(fmt.Sprintf("Approval Insights / Budget Mix (%s)", monthName), code, labels, totals),
 		recent: fw.Recent("Recent Approval Activity", recent, ""),
 	}, nil
 }
@@ -172,7 +174,7 @@ func (s *Service) recent(ctx context.Context, subjects []string, now time.Time) 
 			verb = "returned for review"
 		}
 		lines = append(lines, fmt.Sprintf("%s — %s Fund Plan %s %s %s", name, weekStart.Format("Jan"), verb,
-			budgetpage.UGXCompact(money), whenLabel(at.In(zone), today)))
+			budgetpage.CompactIn(budgetpage.CurrencyFrom(ctx), money), whenLabel(at.In(zone), today)))
 		return nil
 	})
 	if err != nil {

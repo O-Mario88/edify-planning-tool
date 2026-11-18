@@ -45,6 +45,9 @@ type Work struct {
 	// Roles are the roles in force there, oldest first; read only when the
 	// country's roles come from the registry.
 	Roles []Assigned
+	// Currency is the ISO code the country keeps its money in, from its
+	// settings in force; "" when none are (docs/migration/80, §19).
+	Currency string
 }
 
 // FromRegistry says whether the country's roles are the registry's.
@@ -54,7 +57,9 @@ func (w *Work) FromRegistry() bool { return w != nil && w.RolesSource == RolesFr
 // default membership in force first, then the others by code; for an account
 // with no membership at all, the Active country its profile names
 // ($2, staff_profile.country as the existing table holds it).
-var workingSQL = `SELECT id, code, name, state, roles_source, membership_id FROM (
+var workingSQL = `SELECT id, code, name, state, roles_source, membership_id,
+  COALESCE((SELECT v.currency_code FROM country_registry.country_config_version v
+    WHERE v.country_id::text = w.id AND ` + current("v") + ` ORDER BY v.effective_from DESC LIMIT 1), '') FROM (
   SELECT c.id::text, c.code, c.name, c.state, c.roles_source, m.id::text AS membership_id, 0 AS rank, NOT m.is_default AS later
   FROM country_registry.country_membership m JOIN country_registry.country c ON c.id = m.country_id
   WHERE m.user_id = $1 AND m.revoked_at IS NULL AND ` + current("m") + ` AND c.state = 'active'
@@ -73,7 +78,7 @@ var workingSQL = `SELECT id, code, name, state, roles_source, membership_id FROM
 // there holds no role in it.
 func Working(ctx context.Context, q Querier, userID, profileCountry string) (*Work, error) {
 	w := &Work{}
-	err := q.QueryRow(ctx, workingSQL, userID, profileCountry).Scan(&w.ID, &w.Code, &w.Name, &w.State, &w.RolesSource, &w.MembershipID)
+	err := q.QueryRow(ctx, workingSQL, userID, profileCountry).Scan(&w.ID, &w.Code, &w.Name, &w.State, &w.RolesSource, &w.MembershipID, &w.Currency)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
