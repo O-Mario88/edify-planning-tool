@@ -399,6 +399,37 @@ def engine_rules() -> dict:
             }
             for school_type in ["", *(value for value, _ in SchoolType.choices)]
         },
+        # The profiles of a set of schools (a district, a sub-region, the
+        # country, a cluster, a person, a partner): profile_views and the
+        # engine's sections, levels, rankings and periods.
+        "scope": scope_rules(),
+    }
+
+
+def scope_rules() -> dict:
+    """What a profile of many schools reads (frontend.views.profile_views
+    and apps.analytics.profile_intelligence beyond one school)."""
+    from apps.analytics import profile_intelligence as engine
+    from apps.analytics import profile_records
+    from apps.core.enums import SchoolType
+    from apps.frontend.views import profile_views
+    from apps.schools.lifecycle_models import OPERATING_STATUSES
+
+    return {
+        "operating_statuses": [str(s.value) for s in OPERATING_STATUSES],
+        "sections": [list(pair) for pair in profile_views.SECTIONS],
+        "sections_of": {k: list(v) for k, v in profile_views.SECTIONS_OF.items()},
+        "team_label": profile_views._TEAM_LABEL,
+        "levels_of": {k: list(v) for k, v in engine.LEVELS_OF.items()},
+        "level_labels": dict(engine._LEVEL_LABELS),
+        "period_options": [list(pair) for pair in engine.period_options()],
+        "show_labels": dict(engine.SHOW_LABELS),
+        "ranked": engine.RANKED,
+        "ranking_method": engine.RANKING_METHOD,
+        "movers_method": engine.MOVERS_METHOD,
+        "school_type_order": [value for value, _label in SchoolType.choices],
+        "online_mode": profile_records.ONLINE,
+        "fy_choices": 3,
     }
 
 

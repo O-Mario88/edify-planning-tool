@@ -634,6 +634,286 @@
     },
     "rule_sentence": "Improved and declined follow the published IA measurement rule for each SSA domain (the school's country first, then the deployment rule); where no threshold is approved any movement counts, and readings less than 120 days apart are not compared.",
     "school_pairs_shown": 4,
+    "scope": {
+      "fy_choices": 3,
+      "level_labels": {
+        "clusters": "Clusters",
+        "districts": "Districts",
+        "schools": "Schools",
+        "staff": "Team members",
+        "sub_regions": "Sub-regions"
+      },
+      "levels_of": {
+        "cluster": [
+          "schools"
+        ],
+        "country": [
+          "sub_regions",
+          "districts",
+          "clusters",
+          "schools"
+        ],
+        "district": [
+          "clusters",
+          "schools"
+        ],
+        "partner": [
+          "districts",
+          "clusters",
+          "schools"
+        ],
+        "program_lead": [
+          "staff",
+          "districts",
+          "clusters",
+          "schools"
+        ],
+        "project": [
+          "districts",
+          "clusters",
+          "schools"
+        ],
+        "school": [],
+        "staff": [
+          "districts",
+          "clusters",
+          "schools"
+        ],
+        "sub_region": [
+          "districts",
+          "clusters",
+          "schools"
+        ]
+      },
+      "movers_method": "Improving and declining are read by the change in average confirmed SSA score since the previous year, by the one improvement rule; the biggest change comes first. One with no score in either year is in neither list.",
+      "online_mode": "online",
+      "operating_statuses": [
+        "active",
+        "reopened"
+      ],
+      "period_options": [
+        [
+          "",
+          "Full year"
+        ],
+        [
+          "Q1",
+          "Q1 (Oct\u2013Dec)"
+        ],
+        [
+          "Q2",
+          "Q2 (Jan\u2013Mar)"
+        ],
+        [
+          "Q3",
+          "Q3 (Apr\u2013Jun)"
+        ],
+        [
+          "Q4",
+          "Q4 (Jul\u2013Sep)"
+        ],
+        [
+          "M1",
+          "Oct"
+        ],
+        [
+          "M2",
+          "Nov"
+        ],
+        [
+          "M3",
+          "Dec"
+        ],
+        [
+          "M4",
+          "Jan"
+        ],
+        [
+          "M5",
+          "Feb"
+        ],
+        [
+          "M6",
+          "Mar"
+        ],
+        [
+          "M7",
+          "Apr"
+        ],
+        [
+          "M8",
+          "May"
+        ],
+        [
+          "M9",
+          "Jun"
+        ],
+        [
+          "M10",
+          "Jul"
+        ],
+        [
+          "M11",
+          "Aug"
+        ],
+        [
+          "M12",
+          "Sep"
+        ]
+      ],
+      "ranked": 5,
+      "ranking_method": "Ranked by the average confirmed SSA score of the year shown; where two are level, the bigger change since the year before comes first, then the name. A school or cluster with no confirmed SSA in the year is not ranked.",
+      "school_type_order": [
+        "champion",
+        "client",
+        "core",
+        "core_graduate",
+        "core_trained"
+      ],
+      "sections": [
+        [
+          "overview",
+          "Overview"
+        ],
+        [
+          "ssa",
+          "SSA"
+        ],
+        [
+          "sub_regions",
+          "Sub-regions"
+        ],
+        [
+          "districts",
+          "Districts"
+        ],
+        [
+          "sub_counties",
+          "Sub-counties"
+        ],
+        [
+          "staff",
+          "Staff"
+        ],
+        [
+          "clusters",
+          "Clusters"
+        ],
+        [
+          "schools",
+          "Schools"
+        ],
+        [
+          "activities",
+          "Activities"
+        ],
+        [
+          "projects",
+          "Projects"
+        ],
+        [
+          "academic",
+          "Academic"
+        ],
+        [
+          "stories",
+          "Stories"
+        ]
+      ],
+      "sections_of": {
+        "cluster": [
+          "overview",
+          "schools",
+          "activities",
+          "projects"
+        ],
+        "country": [
+          "overview",
+          "ssa",
+          "sub_regions",
+          "districts",
+          "staff",
+          "clusters",
+          "schools",
+          "activities",
+          "projects"
+        ],
+        "district": [
+          "overview",
+          "ssa",
+          "sub_counties",
+          "staff",
+          "clusters",
+          "schools",
+          "activities",
+          "projects"
+        ],
+        "partner": [
+          "overview",
+          "ssa",
+          "districts",
+          "clusters",
+          "schools",
+          "activities",
+          "projects"
+        ],
+        "program_lead": [
+          "overview",
+          "ssa",
+          "staff",
+          "districts",
+          "clusters",
+          "schools",
+          "activities",
+          "projects"
+        ],
+        "project": [
+          "overview",
+          "ssa",
+          "districts",
+          "clusters",
+          "schools"
+        ],
+        "school": [
+          "overview",
+          "ssa",
+          "activities",
+          "academic",
+          "stories",
+          "projects"
+        ],
+        "staff": [
+          "overview",
+          "ssa",
+          "districts",
+          "clusters",
+          "schools",
+          "activities",
+          "projects"
+        ],
+        "sub_region": [
+          "overview",
+          "ssa",
+          "districts",
+          "staff",
+          "clusters",
+          "schools",
+          "activities",
+          "projects"
+        ]
+      },
+      "show_labels": {
+        "all": "All schools",
+        "awaiting_partner": "Awaiting a partner's date",
+        "declined": "SSA declined",
+        "improved": "SSA improved",
+        "no_ssa": "No SSA this year",
+        "no_training": "No training in the plan",
+        "no_visit": "No visit in the plan",
+        "unplanned": "Nothing planned this year"
+      },
+      "team_label": "Team"
+    },
     "ssa_target": 10.0,
     "state_tones": {
       "baseline_missing": "warning",
