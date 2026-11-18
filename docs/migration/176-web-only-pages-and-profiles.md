@@ -691,3 +691,21 @@ every one of the Admin's 118 links fetched in the signed-in web app, after
 the fix, 200 but `/home`, `/messages` and `/settings`. The Regional Lead's
 sidebar offers Country Oversight and the Country Map, which the existing
 application refuses them too: a question for the owner.
+
+## 176.26 Home in the web app (2026-11-18)
+
+`/home` is drawn by the web app from the gateway's `HomeScreenService`, the
+same answers the phone app's Home reads (`src/app/(app)/home/page.tsx`,
+`src/lib/homeScreen.ts`): the greeting over the day, the financial year and
+the role; the overview figures, each filled from the queue (or the To-Do
+figures, when the queue says they follow) by its key; the priority actions
+with their due day, state and action; the reader's upcoming work when they
+have a plan; and their shortcuts. A reader who does not use Home is sent
+where they start (`redirect_url`). Home's tone words are read as the page's
+(brand and info as info, caution as warning, alert as danger, good as
+success, plain as none).
+
+Still not drawn in Go: `/messages` and `/settings`, which the web app now
+opens in the existing web instead of a 404. Settings turns on the
+reader's two-step state (in force, required by policy, the channels), which
+the seeded accounts cannot show without breaking the suite's sign-ins.
