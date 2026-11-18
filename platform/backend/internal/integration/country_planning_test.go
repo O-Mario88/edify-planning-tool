@@ -86,8 +86,8 @@ SELECT gen_random_uuid(), m.id, $2::uuid, $1, $3, $4, 'gcpl', 'Planning test' FR
 	// at each, in this year, held by the officer.
 	var baseSchool, baseActivity string
 	if err := admin.QueryRow(ctx, `SELECT (SELECT id FROM school WHERE deleted_at IS NULL ORDER BY id LIMIT 1),
-  (SELECT id FROM activity WHERE deleted_at IS NULL AND status = 'scheduled' AND school_id IS NOT NULL ORDER BY id LIMIT 1)`).Scan(&baseSchool, &baseActivity); err != nil {
-		t.Fatal(err)
+  (SELECT id FROM activity WHERE deleted_at IS NULL AND school_id IS NOT NULL ORDER BY status = 'scheduled' DESC, id LIMIT 1)`).Scan(&baseSchool, &baseActivity); err != nil {
+		t.Fatalf("a school and a school's activity to copy: %v", err)
 	}
 	fy := schooldirectory.OperationalFY(time.Now())
 	for _, s := range []struct{ id, name, code string }{{"gcplKE", "Gcpl Kenyan School", "KE"}, {"gcplUG", "Gcpl Orphan School", "UG"}} {
