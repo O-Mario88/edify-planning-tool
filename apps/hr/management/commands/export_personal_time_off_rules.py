@@ -31,6 +31,8 @@ EXPORT_PATH = Path("platform/backend/internal/personaltimeoff/rules.json")
 PAGE_PERMISSION = "personal_time_off"
 PATH = "/personal-time-off/"
 TEAM_AVAILABILITY = "/leave/team-availability"
+COVERAGE_PERMISSION = "leave_coverage"
+COVERAGE_PATH = "/leave/coverage"
 HOLIDAYS_PERMISSION = "public_holidays"
 HOLIDAYS_PATH = "/public-holidays"
 #: public_holidays_view's is_editor.
@@ -68,8 +70,25 @@ def roles() -> dict:
             ),
             "team_availability": bool(can_open_url(user, TEAM_AVAILABILITY)),
             "holidays": holidays(user),
+            "coverage": coverage(user),
         }
     return out
+
+
+def coverage(user) -> dict:
+    """What a role is given on /leave/coverage (leave_views.
+    leave_coverage_view): the page and its workspace strip."""
+    from apps.core.permissions import RolePermissionService, can_open_url
+
+    page = RolePermissionService.can_view_page(user, COVERAGE_PERMISSION) and bool(
+        can_open_url(user, COVERAGE_PATH)
+    )
+    return {
+        "page": page,
+        "strip": strip(user, COVERAGE_PATH, "partials/_section_nav.html")
+        if page
+        else None,
+    }
 
 
 def holidays(user) -> dict:

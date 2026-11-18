@@ -366,3 +366,28 @@ blocks (two upcoming holidays, a past one, blackouts with and without a
 description, a conference, regional events with and without a region, a
 custom block and an inactive one), for ten readers and both queries:
 **20 answers, 0 differing**; and with no blocks, in the suite.
+
+## 176.14 Temporary Leave Coverage Assignments (2026-11-18)
+
+`/leave/coverage` (`leave_views.leave_coverage_view`,
+`pages/leave/leave_coverage.html`) is drawn in Go by `personaltimeoff`
+(`coverage.go`).
+
+- The exported rules give each role the page (`leave_coverage`) and its
+  Leave strip.
+- Every assignment, newest made first. A Programme Lead's are those they
+  cover or are covered in, by their staff profile; without one, none.
+  `q` (trimmed) matches either side's name or email as `icontains` does.
+- Each side is the name over the active role; the window is written in
+  Kampala time (`Y-m-d H:i`); the scope and the status are badges. The
+  status is `active` inside a live window, else `revoked` once revoked,
+  else `expired`. A live one carries the Revoke confirmation as the feed
+  reads it, the rest "No actions". Revoking is the existing application's.
+- Fifty a page under `coverages_page`; no assignment is the one-cell
+  "No coverage assignments configured." row.
+
+The gateway reads `temporary_coverage_assignment (scope, revoked_at,
+created_at)`. Proof: over four seeded assignments (live, revoked, ended,
+not yet begun; edify_gorn_test only, removed after), six queries for
+eleven readers, two of them refused: **66 answers, 0 differing**; and
+with none, in the suite.

@@ -94,11 +94,7 @@ func (s *Service) holidays(ctx context.Context, p auth.Principal, query url.Valu
 	}
 	out := []*screensv1.PageBlock{}
 	if st := h.Strip; st != nil {
-		tabs := &screensv1.PageLinkTabs{Label: st.Label, Scrolls: st.Scrolls}
-		for _, t := range st.Tabs {
-			tabs.Tabs = append(tabs.Tabs, &screensv1.PageLinkTab{Label: t.Label, Href: t.Href, Active: t.Active})
-		}
-		out = append(out, &screensv1.PageBlock{Kind: &screensv1.PageBlock_LinkTabs{LinkTabs: tabs}})
+		out = append(out, stripBlock(st))
 	}
 	out = append(out, holidayPanels(blocks, upcoming, today)...)
 	header := &screensv1.PageHeader{Eyebrow: "Time & Availability", Title: "Public Holidays & Blackout Dates",

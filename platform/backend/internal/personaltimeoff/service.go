@@ -56,6 +56,7 @@ type role struct {
 	LeavePolicies    bool               `json:"leave_policies"`
 	TeamAvailability bool               `json:"team_availability"`
 	Holidays         holidaysRole       `json:"holidays"`
+	Coverage         coverageRole       `json:"coverage"`
 }
 
 var rules = func() (r struct {
@@ -94,6 +95,9 @@ var errPassOn = errors.New("personaltimeoff: handed on")
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
 	if path == HolidaysPath {
 		return s.holidays(ctx, p, query)
+	}
+	if path == CoveragePath {
+		return s.coveragePage(ctx, p, query)
 	}
 	if path != Path {
 		return nil, false, nil

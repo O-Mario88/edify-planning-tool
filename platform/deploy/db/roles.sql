@@ -1066,3 +1066,6 @@ GRANT SELECT (id) ON cluster_activity_attendance TO edify_gateway_ro;
 GRANT SELECT (school_id, core_start_fy) ON core_school_profile TO edify_gateway_ro;
 -- Public Holidays & Blackout Dates: the region a regional event applies to.
 GRANT SELECT (region_id) ON calendar_block TO edify_gateway_ro;
+-- Temporary Leave Coverage Assignments: the scope, the revocation and the
+-- order the page lists them in.
+GRANT SELECT (scope, revoked_at, created_at) ON temporary_coverage_assignment TO edify_gateway_ro;
