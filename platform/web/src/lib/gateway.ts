@@ -57,3 +57,21 @@ export function messageOf(error: unknown, fallback: string): string {
   if (error instanceof ConnectError && error.rawMessage) return error.rawMessage;
   return fallback;
 }
+
+/** The HTTP status a browser route answers a gateway refusal with. */
+export function httpStatusOf(error: unknown): number {
+  if (!(error instanceof ConnectError)) return 502;
+  switch (error.code) {
+    case Code.InvalidArgument:
+    case Code.FailedPrecondition:
+      return 400;
+    case Code.AlreadyExists:
+      return 409;
+    case Code.NotFound:
+      return 404;
+    case Code.PermissionDenied:
+      return 403;
+    default:
+      return 502;
+  }
+}

@@ -40,6 +40,8 @@ const ROW_TONES: Readonly<Record<string, string>> = {
   done: 'bg-[var(--edify-success-light,#ecfdf5)]',
   overdue: 'bg-[var(--edify-danger-light,#fff1f2)]',
   dayoff: 'bg-[var(--edify-warning-light)]',
+  // The record the rest of the page is about (the account whose memberships are open).
+  selected: 'bg-[var(--brand-primary-soft)]',
 };
 
 const CELL = 'whitespace-nowrap px-3 py-2 align-middle first:pl-4 last:pr-4';

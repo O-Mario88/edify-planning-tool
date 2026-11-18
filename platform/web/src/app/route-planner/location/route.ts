@@ -1,6 +1,5 @@
 import { fromJson, toJson } from '@bufbuild/protobuf';
 import type { JsonValue } from '@bufbuild/protobuf';
-import { Code, ConnectError } from '@connectrpc/connect';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
@@ -16,7 +15,7 @@ import {
   ReviewLocationReportResponseSchema,
   RoutePlannerService,
 } from '@/gen/edify/routes/v1/routes_pb';
-import { gatewayClient, isUnauthenticated, messageOf } from '@/lib/gateway';
+import { gatewayClient, httpStatusOf, isUnauthenticated, messageOf } from '@/lib/gateway';
 import { isSameOrigin } from '@/lib/routes';
 import { ACCESS_COOKIE } from '@/lib/session';
 
@@ -61,23 +60,7 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     if (isUnauthenticated(error)) return NextResponse.json({ error: 'signed_out' }, { status: 401 });
-    const status = error instanceof ConnectError ? statusOf(error.code) : 502;
-    return NextResponse.json({ error: messageOf(error, 'The report could not be sent. Please try again.') }, { status });
+    return NextResponse.json({ error: messageOf(error, 'The report could not be sent. Please try again.') }, { status: httpStatusOf(error) });
   }
 }
 
-function statusOf(code: Code): number {
-  switch (code) {
-    case Code.InvalidArgument:
-    case Code.FailedPrecondition:
-      return 400;
-    case Code.AlreadyExists:
-      return 409;
-    case Code.NotFound:
-      return 404;
-    case Code.PermissionDenied:
-      return 403;
-    default:
-      return 502;
-  }
-}

@@ -6,7 +6,7 @@ country-specific configuration, securely isolated country data.* Phase 0 of
 that instruction asks for an audit and the architecture decisions before any
 schema change. This document is that Phase 0. The owner approved Phase 1
 on §7's recommended defaults on 2026-11-17 ("Yes, start Phase 1"); what has
-been built since, on the development copies only, is §8 to §10.
+been built since, on the development copies only, is §8 to §11.
 
 Everything below was measured on 2026-11-17 against the development copy
 `edify_gorn_test` and the code on `feature/edify-go-rn-migration`. No
@@ -347,5 +347,49 @@ table refuses a revocation without a reason. The whole integration suite and
 every golden unchanged (0 differing); school parity `PARITY OK` (24 accounts
 served, 13 refused, 700 rows).
 
-Still to come in Phase 1: the Admin pages for countries, settings and
-memberships, which follow the Go backend.
+The Admin pages that use these calls are §11.
+
+## 11. Phase 1, fourth step: the Admin pages (2026-11-18)
+
+Owner instruction: *"Continue Phase 1 with the Admin pages."* Three pages in
+the Next.js web app, on the calls of §9 and §10. They change nothing the
+gateway would not; every write still goes through `CountryService`, which
+decides who may.
+
+| Page | Path | What it does |
+|---|---|---|
+| Countries | `/countries` | Every registered country: code, name, state, the day it became Active, and the settings in force (language, currency, time zone, financial-year start, version). Each name opens its country. |
+| Country | `/countries/{code}` | The country's facts and every settings version ever recorded, newest first, with who recorded it, when and why. While the country is Draft, Validated or Ready for pilot, the **Record New Settings** form; for Uganda (Active) the page says its settings change only through an approved change, which is not built. |
+| Memberships | `/countries/memberships` | Find an account by name or email (`AccountAdminService.ListAccounts`), then see every membership it ever had (revoked ones with who revoked them and why), **Grant a Country** (country, start, optional end, reason) and **Revoke membership** from the row's one Actions menu, which asks the reason in place. An Admin's own memberships show no actions. |
+
+Only an account working as Admin sees the pages; anyone else is told they
+are for Admins. The navigation still mirrors the existing application's
+(navigation `rules.json`), so the pages are not in the sidebar yet, as
+`/platform-health` is not: they are reached at `/countries`, and from each
+other through the Countries / Memberships tabs.
+
+The browser posts to `/country-admin` (same origin only, as Verify
+Location's route), which asks the gateway as the signed-in reader. The
+forms check what they can before sending (a three-letter currency, language
+codes, a default among the languages, a start that is not in the past and is
+after the latest version, an end after the start, a reason of at most 500
+characters) and show the gateway's own refusal otherwise, such as an
+overlapping grant. A save redraws the tables in place; nothing reloads the
+page.
+
+Proof: `src/lib/countryAdmin.test.ts` (11 cases: state rules, the tables'
+words, membership status, account search rows, and each form check); the web
+app's whole unit suite (30 files), `tsc` and `eslint` clean. In the browser,
+on `edify_gorn_route` through the gateway on 8090: a CCEO account was told
+the pages are for Admins; as Admin, the Countries table, Kenya's page,
+recording a Kenya version (shown at once with the Admin's name and reason),
+a second same-day version refused, a 30-day Kenya grant for an officer
+(shown as not in force: Draft country), an overlapping grant refused, a
+revocation refused without a reason and then kept with its reason, the
+Admin's own memberships with no actions, and the 375 px phone layout with
+tables that scroll whole. The test rows were removed from `edify_gorn_route`
+afterwards and the officer's membership put back as it was.
+
+Not built: the pages in the React Native app; a sidebar link (it waits for
+the navigation to move to Go); choosing which membership is an account's
+default; role and scope per country (Phase 3).

@@ -15,6 +15,8 @@ export interface RowAction {
   readonly enabled: boolean;
   readonly reason: string;
   readonly href: string;
+  /** Runs on the page instead of opening href (a revocation asks its reason in place). */
+  readonly onSelect?: () => void;
 }
 
 export function RowActions({ subject, actions }: { subject: string; actions: readonly RowAction[] }) {
@@ -48,7 +50,20 @@ export function RowActions({ subject, actions }: { subject: string; actions: rea
       {open ? (
         <div role="menu" className="absolute right-0 top-full z-40 mt-1 min-w-52 rounded-[var(--radius-surface)] border border-[var(--edify-border)] bg-[var(--edify-surface)] py-1 shadow-lg">
           {actions.map((action) =>
-            action.enabled ? (
+            action.enabled && action.onSelect ? (
+              <button
+                key={action.key}
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setOpen(false);
+                  action.onSelect?.();
+                }}
+                className="block w-full px-4 py-2 text-left text-[13px] font-semibold text-[var(--edify-text)] hover:bg-[var(--edify-surface-muted)]"
+              >
+                {action.label}
+              </button>
+            ) : action.enabled ? (
               <a key={action.key} role="menuitem" href={action.href} className="block px-4 py-2 text-[13px] font-semibold text-[var(--edify-text)] hover:bg-[var(--edify-surface-muted)]">
                 {action.label}
               </a>
