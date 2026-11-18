@@ -70,7 +70,7 @@ describe('Planning blocks', () => {
   });
 
   it('draws a group heading row across the table', () => {
-    expect(html).toMatch(/<tr[^>]*data-heading="true"><th colSpan="6"[^>]*>Program Lead 1 · Paul N. 75 schools<\/th>/);
+    expect(html).toMatch(/<tr class="edify-group-head" data-heading="true"><th colSpan="6" scope="colgroup"><span class="edify-group-head__label">Program Lead 1 · Paul N. 75 schools<\/span><\/th>/);
   });
 
   it('links every school name to its profile and gives the row a tick box', () => {
@@ -126,13 +126,13 @@ describe('My Plan blocks', () => {
     expect(html).toContain('Readiness 75% · 0 schools held');
     expect(html).toMatch(/<th scope="col" class="[^"]*text-right[^"]*">Planned<\/th>/);
     expect(html).toContain('href="/my-plan?list=staff_visits_left#plan-list"');
-    expect(html).toContain('text-[var(--edify-warning-text)]');
+    expect(html).toContain('class="edify-status-text" data-edify-tone="warning"');
     expect(html).toContain('Your target is 560 visits a year.');
   });
 
   it('draws an empty table as its sentence and its way out, with the count', () => {
     expect(html).toContain('No school visits planned for this period.');
-    expect(html).toMatch(/href="\/planning"[^>]*>Open Planning →<\/a>/);
+    expect(html).toMatch(/href="\/planning"[^>]*>Open Planning <span aria-hidden="true">→<\/span><\/a>/);
     expect(html).toMatch(/data-count="true">0</);
   });
 

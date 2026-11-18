@@ -71,3 +71,33 @@ const RECORD_FACT: Readonly<Record<string, string>> = {
 export function recordFactTone(tone: string): string {
   return RECORD_FACT[tone] ?? (textTone(tone) || 'text-[var(--edify-accent-text)]');
 }
+
+/**
+ * The existing web's own tone for a figure in a table
+ * (`.edify-status-text[data-edify-tone=…]`): danger, warning, success, info
+ * or neutral; empty for an untoned figure.
+ */
+const EDIFY_TONE: Readonly<Record<string, string>> = {
+  danger: 'danger',
+  alert: 'danger',
+  rose: 'danger',
+  warning: 'warning',
+  caution: 'warning',
+  attention: 'warning',
+  amber: 'warning',
+  success: 'success',
+  positive: 'success',
+  good: 'success',
+  green: 'success',
+  lime: 'success',
+  info: 'info',
+  primary: 'info',
+  blue: 'info',
+  neutral: 'neutral',
+  plain: 'neutral',
+  slate: 'neutral',
+};
+
+export function edifyTone(tone: string): string {
+  return EDIFY_TONE[tone] ?? '';
+}

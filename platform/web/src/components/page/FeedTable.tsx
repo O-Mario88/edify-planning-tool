@@ -19,7 +19,7 @@ import { actionHref, isActionsCell, isHeadingRow, resolveHref, splitActions } fr
 import { Badge } from '../blocks/Badge';
 import { PlanningChips } from '../blocks/PlanningChips';
 import { RowActions } from '../blocks/RowActions';
-import { textTone } from '../blocks/tones';
+import { edifyTone, textTone } from '../blocks/tones';
 import { Icon } from '../shell/icons';
 import { FeedPanel } from './FeedPanel';
 import { Pager } from '../blocks/Pager';
@@ -44,15 +44,23 @@ const ROW_TONES: Readonly<Record<string, string>> = {
   selected: 'bg-[var(--brand-primary-soft)]',
 };
 
-const CELL = 'whitespace-nowrap px-3 py-2 align-middle first:pl-4 last:pr-4';
+const CELL = 'px-3 py-2';
 
 function CellText({ cell, resolve }: { cell: PageCell; resolve: (href: string) => string }) {
   const href = resolve(cell.href);
   if (cell.pills.length) return <PlanningChips pills={cell.pills} />;
   if (cell.badge) return <Badge tone={cell.tone}>{cell.text}</Badge>;
-  const text = <span className={`${cell.strong ? 'font-semibold' : ''} ${textTone(cell.tone)}`}>{cell.text}</span>;
+  // The existing table's toned figure (`.edify-status-text[data-edify-tone]`).
+  const tone = edifyTone(cell.tone);
+  const text = tone ? (
+    <span className={cell.strong ? 'edify-status-text font-semibold' : 'edify-status-text'} data-edify-tone={tone}>
+      {cell.text}
+    </span>
+  ) : (
+    <span className={cell.strong ? 'font-semibold' : undefined}>{cell.text}</span>
+  );
   return href ? (
-    <Link href={href} className="font-medium text-[var(--brand-primary-text)] hover:underline dark:text-[var(--edify-accent-text)]">
+    <Link href={href} className="no-underline hover:opacity-90 font-semibold edify-primary-text">
       {text}
     </Link>
   ) : (
@@ -130,20 +138,25 @@ export function FeedTable({ table, pagePath, drawerHref, selectable, footer }: F
   const titled = Boolean(table.title || table.count);
 
   return (
-    <section aria-label={table.title || undefined} data-block="table" className="overflow-hidden rounded-[10px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] shadow-[var(--edify-shadow-sm)]">
+    <section aria-label={table.title || undefined} data-block="table" className="card p-0 overflow-hidden">
       {titled ? (
-        <header className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-[var(--edify-border)] bg-[var(--edify-surface-muted)] px-4 py-2.5">
-          <h2 className="text-[length:var(--edify-text-title-size)] font-bold">{table.title}</h2>
-          {table.subtitle ? <span className="text-[length:var(--edify-text-label-size)] font-medium sm:ml-auto">{table.subtitle}</span> : null}
-          {table.count ? <span className={`text-[length:var(--edify-text-label-size)] font-semibold ${table.subtitle ? '' : 'ml-auto'}`} data-count>{table.count}</span> : null}
+        <header className="edify-table-titlebar flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3">
+          <h3>{table.title}</h3>
+          {table.subtitle || table.count ? (
+            <span className="tabular-nums">
+              {table.subtitle}
+              {table.subtitle && table.count ? ' · ' : ''}
+              {table.count ? <span data-count>{table.count}</span> : null}
+            </span>
+          ) : null}
         </header>
       ) : null}
       {table.rows.length ? (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[44rem] border-collapse text-left text-[13.7px]">
+          <table className="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll">
             {table.columns.length ? (
               <thead>
-                <tr className="border-b border-[var(--edify-border)] text-[length:var(--edify-text-label-size)]">
+                <tr>
                   {ticks ? (
                     <th scope="col" className={`${CELL} w-8`}>
                       <input
@@ -162,7 +175,7 @@ export function FeedTable({ table, pagePath, drawerHref, selectable, footer }: F
                   ) : null}
                   {opens ? <th scope="col" className={`${CELL} w-6`}><span className="sr-only">Details</span></th> : null}
                   {table.columns.map((column) => (
-                    <th key={column.label} scope="col" className={`${CELL} whitespace-nowrap font-bold ${column.numeric ? 'text-right' : ''}`}>
+                    <th key={column.label} scope="col" className={`${CELL} ${column.numeric ? 'text-right' : ''}`}>
                       {column.label}
                     </th>
                   ))}
@@ -173,8 +186,10 @@ export function FeedTable({ table, pagePath, drawerHref, selectable, footer }: F
               {table.rows.map((row, index) => {
                 if (isHeadingRow(row, table.columns)) {
                   return (
-                    <tr key={index} className="border-b border-[var(--edify-border)] bg-[var(--edify-surface-muted)]" data-heading>
-                      <th colSpan={span} scope="rowgroup" className={`${CELL} font-bold`}>{row.cells[0]?.text}</th>
+                    <tr key={index} className="edify-group-head" data-heading>
+                      <th colSpan={span} scope="colgroup">
+                        <span className="edify-group-head__label">{row.cells[0]?.text}</span>
+                      </th>
                     </tr>
                   );
                 }
@@ -183,7 +198,7 @@ export function FeedTable({ table, pagePath, drawerHref, selectable, footer }: F
                 const hasDetails = row.details.length > 0 || row.detailBlocks.length > 0;
                 return (
                   <Fragment key={index}>
-                    <tr className={`border-b border-[var(--edify-table-divider)] ${ROW_TONES[row.tone] ?? ''}`} data-row={row.pickId || undefined} data-tone={row.tone || undefined}>
+                    <tr className={ROW_TONES[row.tone] ?? undefined} data-row={row.pickId || undefined} data-tone={row.tone || undefined}>
                       {ticks ? (
                         <td className={CELL}>
                           {row.pickId ? (
@@ -208,7 +223,11 @@ export function FeedTable({ table, pagePath, drawerHref, selectable, footer }: F
                         </td>
                       ) : null}
                       {row.cells.map((cell, cellIndex) => (
-                        <td key={cellIndex} className={`${CELL} ${table.columns[cellIndex]?.numeric ? 'text-right' : ''} ${isActionsCell(cell) ? 'w-px whitespace-nowrap' : ''}`}>
+                        <td
+                          key={cellIndex}
+                          className={`${CELL} ${table.columns[cellIndex]?.numeric ? 'text-right tabular-nums' : ''} ${isActionsCell(cell) ? 'w-px' : ''}`}
+                          data-label={table.columns[cellIndex]?.label || undefined}
+                        >
                           {isActionsCell(cell) ? <CellActions actions={cell.actions} subject={subject} hrefOf={hrefOf} /> : <CellText cell={cell} resolve={resolve} />}
                         </td>
                       ))}
@@ -221,19 +240,26 @@ export function FeedTable({ table, pagePath, drawerHref, selectable, footer }: F
           </table>
         </div>
       ) : (
-        <p className="px-4 py-5 text-[length:var(--edify-text-label-size)] font-medium" data-empty>
-          {table.emptyMessage}
+        // The existing empty state on a line (components/empty_state.html, line="true").
+        <div className="edify-empty-state edify-empty-state--line" data-empty>
+          <span className="edify-empty-state__mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              />
+            </svg>
+          </span>
+          <p className="edify-empty-state__message">{table.emptyMessage}</p>
           {table.emptyAction && emptyHref ? (
-            <>
-              {' '}
-              <a href={emptyHref} className="ml-1 font-semibold text-[var(--brand-primary-text)] underline dark:text-[var(--edify-accent-text)]">
-                {table.emptyAction.label} →
-              </a>
-            </>
+            <a href={emptyHref} className="font-semibold edify-primary-text edify-primary-text-hover underline underline-offset-2">
+              {table.emptyAction.label} <span aria-hidden="true">→</span>
+            </a>
           ) : null}
-        </p>
+        </div>
       )}
-      {table.footnote ? <p className="border-t border-[var(--edify-table-divider)] px-4 py-3 text-[length:var(--edify-text-label-size)] font-medium">{table.footnote}</p> : null}
+      {table.footnote ? <p className="border-t edify-border-top px-4 py-3 edify-text-caption edify-text-muted">{table.footnote}</p> : null}
       {table.pager ? <Pager pager={{ ...table.pager, pages: table.pager.pages.map((page) => ({ ...page, href: resolve(page.href) })) }} /> : null}
       {footer}
     </section>
