@@ -179,7 +179,7 @@ func (s *Service) build(ctx context.Context, p auth.Principal, fy string, month 
 		}
 	}
 	return &screensv1.GetPageResponse{
-		Header:  header(),
+		Header:  header(pg.fy),
 		Blocks:  blocks,
 		Dialogs: dialogs(),
 		WebPath: Path,
@@ -203,13 +203,17 @@ func operationalFY(day time.Time) string {
 	return strconv.Itoa(day.Year())
 }
 
-func header() *screensv1.PageHeader {
+// header is the page's band: Submit MSCS opens its dialog, and Export
+// Report downloads the year's file (templates/pages/targets/index.html).
+func header(fy string) *screensv1.PageHeader {
 	return &screensv1.PageHeader{
 		Eyebrow:     "Performance",
 		Title:       "My Targets",
 		Description: "Track your personal performance across monthly, quarterly, and financial-year targets.",
-		Actions: []*screensv1.PageAction{{Key: "submit_mscs", Label: "Submit MSCS", Enabled: true,
-			Href: "#dialog=showMscs", Drawer: true}},
+		Actions: []*screensv1.PageAction{
+			{Key: "submit_mscs", Label: "Submit MSCS", Enabled: true, Href: "#dialog=showMscs", Drawer: true},
+			{Key: "export_report", Label: "Export Report", Enabled: true, Href: "/my-targets/export?fy=" + url.QueryEscape(fy), Download: true},
+		},
 	}
 }
 

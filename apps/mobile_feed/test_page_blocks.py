@@ -1525,6 +1525,22 @@ LINK_HEADER = """
 """
 
 
+HCOS_HEADER = """
+<main>
+<div class="edify-page-header">
+  <div class="edify-page-header__lead"><h1 class="edify-page-title">Recruitment &amp; Vacancies</h1></div>
+  <div class="hcos-hero__actions edify-page-header__controls">
+    <button type="button" class="hcos-button hcos-button--primary" hx-get="/recruitment/new" hx-target="#drawer-container"><span>Request a vacancy</span></button>
+    <a class="hcos-button hcos-button--secondary" href="/candidate-pipeline"><span>Candidate Pipeline</span> <span aria-hidden="true">→</span></a>
+    <a class="hcos-button hcos-button--secondary" href="/dashboard">HR overview</a>
+    <a href="/uploads" class="h-8 px-3.5 rounded-control border text-[12px] font-bold"><svg></svg> <span>Upload Center</span></a>
+    <div class="relative"><div class="fixed w-44" style="display: none;"><a href="?export=xlsx" class="block px-4 py-2">Export to Excel (.xlsx)</a></div></div>
+  </div>
+</div>
+</main>
+"""
+
+
 def _actions(page: dict) -> list[tuple]:
     return [
         (a["key"], a["label"], a["primary"], a["href"], a["drawer"], a["download"])
@@ -1597,6 +1613,37 @@ class HeaderActionsTest(SimpleTestCase):
                     True,
                     False,
                 ),
+            ],
+        )
+
+    def test_hr_and_directory_header_links_are_actions(self):
+        # The HR pages draw their header links as .hcos-button, the School
+        # Directory as rounded-control links: both are the header's buttons
+        # (the live Recruitment and School Directory headers). A menu's own
+        # links inside the slot are not.
+        page = page_blocks.read(HCOS_HEADER, path="/recruitment")
+
+        self.assertEqual(
+            _actions(page),
+            [
+                (
+                    "request_a_vacancy",
+                    "Request a vacancy",
+                    True,
+                    "/recruitment/new",
+                    True,
+                    False,
+                ),
+                (
+                    "candidate_pipeline",
+                    "Candidate Pipeline →",
+                    False,
+                    "/candidate-pipeline",
+                    False,
+                    False,
+                ),
+                ("hr_overview", "HR overview", False, "/dashboard", False, False),
+                ("upload_center", "Upload Center", False, "/uploads", False, False),
             ],
         )
 

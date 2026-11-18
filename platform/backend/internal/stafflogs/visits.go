@@ -123,7 +123,9 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	}
 	header := &screensv1.PageHeader{Eyebrow: "Planning", Title: "School Visits",
 		Description: fmt.Sprintf("%d visits · %d completed · %d pending", len(visits), completed, pending),
-		Badges:      []*screensv1.PageBadge{}, Actions: []*screensv1.PageAction{}}
+		Badges:      []*screensv1.PageBadge{},
+		// The header's Schedule link, for every reader (templates/pages/visits/index.html).
+		Actions: []*screensv1.PageAction{{Key: "schedule", Label: "Schedule", Enabled: true, Href: "/planning/schedule?action=visit"}}}
 	blocks := append([]*screensv1.PageBlock{statusFilter(statusOptions, status)}, visitBlocks(visits, d, query)...)
 	return &screensv1.GetPageResponse{Header: header, Blocks: blocks, WebPath: VisitsPath}, true, nil
 }

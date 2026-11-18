@@ -199,8 +199,10 @@ def _role_home(home: Node) -> dict:
     }
 
 
-#: The classes that draw a header control as a button (a link among them).
-HEADER_BUTTON_CLASSES = ("btn", "edify-action-button")
+#: The classes that draw a header control as a button (a link among them):
+#: the shared ones, the HR pages' .hcos-button, and the rounded links the
+#: School Directory draws as its header buttons.
+HEADER_BUTTON_CLASSES = ("btn", "edify-action-button", "hcos-button", "rounded-control")
 #: A link whose path ends here downloads a file (Staff Activity's Export).
 DOWNLOAD_PATH_END = "/export"
 
@@ -257,6 +259,7 @@ def _header_action(node: Node, path: str) -> dict:
         "key": _slug(label),
         "label": label,
         "primary": node.has("edify-primary-solid")
+        or node.has("hcos-button--primary")
         or (node.has("edify-action-button") and node.has("primary")),
         "enabled": enabled,
         "reason": "" if enabled else node.get("title"),

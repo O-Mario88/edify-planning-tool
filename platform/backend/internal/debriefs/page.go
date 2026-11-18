@@ -184,8 +184,14 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	blocks = append(blocks, trend, donut, challengePanel(challenges), center,
 		&screensv1.PageBlock{Kind: &screensv1.PageBlock_Section{Section: "Team & Partner Debriefs"}},
 		table, recent, solutions, riskBlock(rows), highlights)
+	// The header's two links, drawn as buttons for every reader
+	// (templates/pages/debriefs/dashboard.html).
 	h := &screensv1.PageHeader{Eyebrow: "My Work", Title: "Field Debrief Dashboard",
-		Description: "Real-time field intelligence from your team and partners to drive action and improve impact."}
+		Description: "Real-time field intelligence from your team and partners to drive action and improve impact.",
+		Actions: []*screensv1.PageAction{
+			{Key: "weekly_report", Label: "Weekly Report", Enabled: true, Href: "/debriefs/weekly-report"},
+			{Key: "new_field_debrief", Label: "New Field Debrief", Primary: true, Enabled: true, Href: "/debriefs/submit"},
+		}}
 	return &screensv1.GetPageResponse{Header: h, Blocks: blocks, WebPath: PagePath}, true, nil
 }
 

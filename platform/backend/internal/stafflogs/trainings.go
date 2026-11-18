@@ -115,7 +115,9 @@ func (s *Service) trainings(ctx context.Context, p auth.Principal, query url.Val
 	}
 	header := &screensv1.PageHeader{Eyebrow: "Planning", Title: "Group Trainings",
 		Description: fmt.Sprintf("%d sessions · %d completed", len(list), completed),
-		Badges:      []*screensv1.PageBadge{}, Actions: []*screensv1.PageAction{}}
+		Badges:      []*screensv1.PageBadge{},
+		// The header's Schedule link, for every reader (templates/pages/trainings/index.html).
+		Actions: []*screensv1.PageAction{{Key: "schedule", Label: "Schedule", Enabled: true, Href: "/planning/schedule?action=training"}}}
 	blocks := append([]*screensv1.PageBlock{statusFilter(trainingStatusOptions, status)}, trainingBlocks(list, d, query)...)
 	return &screensv1.GetPageResponse{Header: header, Blocks: blocks, WebPath: TrainingsPath}, true, nil
 }
