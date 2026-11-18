@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -229,7 +230,7 @@ func projectTrainingIDs(ctx context.Context, q schooldirectory.Querier) ([]strin
 }
 
 // trainingRows is training_summary._training_rows.
-func trainingRows(ctx context.Context, q schooldirectory.Querier, staff []profile, fy, country string, now time.Time) ([]row, error) {
+func trainingRows(ctx context.Context, q schooldirectory.Querier, staff []profile, fy string, country place, now time.Time) ([]row, error) {
 	owners, err := countryIdentities(ctx, q, country)
 	if err != nil {
 		return nil, err
@@ -238,7 +239,7 @@ func trainingRows(ctx context.Context, q schooldirectory.Querier, staff []profil
 	if err != nil || len(planned) == 0 {
 		return nil, err
 	}
-	ceilings, err := countryCeilings(ctx, q, fy, country)
+	ceilings, err := countryCeilings(ctx, q, fy, country.name)
 	if err != nil {
 		return nil, err
 	}
@@ -345,7 +346,7 @@ func catalogueMode(method string) string {
 }
 
 // buildRows is training_summary.build.
-func buildRows(ctx context.Context, q schooldirectory.Querier, staff []profile, fy, country string, now time.Time) ([]row, error) {
+func buildRows(ctx context.Context, q schooldirectory.Querier, staff []profile, fy string, country place, now time.Time) ([]row, error) {
 	trainings, err := trainingRows(ctx, q, staff, fy, country, now)
 	if err != nil {
 		return nil, err
@@ -439,8 +440,8 @@ func teamsInOrder(officers []profile, leadOf map[string]string, leadIDs []string
 
 // forReader is training_summary.for_reader for a Programme Lead or a reader
 // of the country.
-func forReader(ctx context.Context, q schooldirectory.Querier, role, userID, staffProfileID, fy, lead string, doors Doors, now time.Time, withRows bool) (summary, error) {
-	country, err := readerCountry(ctx, q, userID)
+func forReader(ctx context.Context, q schooldirectory.Querier, in *registry.Work, role, userID, staffProfileID, fy, lead string, doors Doors, now time.Time, withRows bool) (summary, error) {
+	country, err := readerPlace(ctx, q, userID, in)
 	if err != nil {
 		return summary{}, err
 	}

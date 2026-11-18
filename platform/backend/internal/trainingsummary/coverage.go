@@ -10,6 +10,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -586,15 +587,20 @@ func trainingsCommitted(ctx context.Context, q schooldirectory.Querier, staff []
 // coverageProfiles is training_summary.coverage_profiles: the summary's
 // columns, or for a reader of the whole country with no team chosen,
 // every staff profile of the country (and of none), left staff included.
-func coverageProfiles(ctx context.Context, q schooldirectory.Querier, s summary, country string) ([]profile, error) {
+func coverageProfiles(ctx context.Context, q schooldirectory.Querier, s summary, country place) ([]profile, error) {
 	if !s.countryLinks || s.lead != "" {
 		return s.staff, nil
 	}
 	sql := `SELECT ` + profileColumns + ` FROM staff_profile sp JOIN "user" u ON sp.user_id = u.id WHERE sp.deleted_at IS NULL`
 	args := []any{}
-	if country != "" {
+	switch {
+	case country.fromRegistry:
+		// Everyone who works in the country (docs/migration/80, §22).
+		sql += ` AND ` + registry.AccountIn("sp.user_id", "$1::text")
+		args = append(args, country.id)
+	case country.name != "":
 		sql += ` AND (sp.country = $1 OR sp.country = $2)`
-		args = append(args, country, "")
+		args = append(args, country.name, "")
 	}
 	out, err := profiles(ctx, q, sql, args...)
 	if err != nil {

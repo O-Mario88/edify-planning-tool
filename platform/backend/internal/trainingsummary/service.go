@@ -89,7 +89,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if !slices.Contains(years, fy) {
 		fy = schooldirectory.OperationalFY(now)
 	}
-	summary, err := forReader(ctx, s.db, p.ActiveRole, p.UserID, p.StaffProfileID, fy,
+	summary, err := forReader(ctx, s.db, p.Country, p.ActiveRole, p.UserID, p.StaffProfileID, fy,
 		strings.TrimSpace(query.Get("program_lead")), doors, now, tab == tabSummary)
 	if err != nil {
 		return nil, true, err
@@ -127,7 +127,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 // coverage_profiles, and the filters it adds.
 func (s *Service) schoolsTab(ctx context.Context, p auth.Principal, summary summary, years []string, query url.Values,
 	doors Doors, now time.Time) (*screensv1.PageBlock, *screensv1.PageBlock, error) {
-	country, err := readerCountry(ctx, s.db, p.UserID)
+	country, err := readerPlace(ctx, s.db, p.UserID, p.Country)
 	if err != nil {
 		return nil, nil, err
 	}

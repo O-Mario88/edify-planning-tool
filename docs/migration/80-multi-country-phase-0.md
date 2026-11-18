@@ -6,7 +6,7 @@ country-specific configuration, securely isolated country data.* Phase 0 of
 that instruction asks for an audit and the architecture decisions before any
 schema change. This document is that Phase 0. The owner approved Phase 1
 on §7's recommended defaults on 2026-11-17 ("Yes, start Phase 1"); what has
-been built since, on the development copies only, is §8 to §21.
+been built since, on the development copies only, is §8 to §22.
 
 Everything below was measured on 2026-11-17 against the development copy
 `edify_gorn_test` and the code on `feature/edify-go-rn-migration`. No
@@ -967,4 +967,30 @@ integration tests, the whole integration suite and every golden unchanged;
 school parity `PARITY OK`. (The inbox's own proof against the existing
 page writes, since the existing page marks conversations read, so it is run
 only on a shadow copy and was not run for this step.)
+
+## 22. Phase 3, tenth step: the country through trainings (2026-11-18)
+
+Chosen next by me under the owner's standing instruction. Go code only.
+
+The Training Summary (Planning Oversight → Training Summary, with its
+Country Ceilings, staff and schools tabs) took its country from the
+reader's profile text. It now reads a **place** (`trainingsummary.place`):
+
+| | A country whose roles are the existing profile's (Uganda) | A country whose roles come from the registry |
+|---|---|---|
+| Country name (the Country Ceilings' key, `training_country_ceiling.country`) | The profile's country, else the platform's default, as today | The country the reader works in |
+| The country's officers (the CCEOs and Programme Leads it lists) | The profile rule as today | The people holding CCEO or Programme Lead there (`country.HoldsRoleIn`), with the roles they hold there |
+| Whose plans count (`_country_identities`) and the Schools tab's staff | The profile rule as today | The accounts that work in the country (`country.AccountIn`) |
+
+Proof: `internal/integration/country_trainings_test.go`, with Kenya Active
+and an Impact Assessment officer and a CCEO who work in Kenya alone:
+Kenya's Training Summary offers only the Programme Lead of Kenya's CCEO,
+and Uganda's offers the Leads of Uganda's officers. The Training Summary's
+own tests, the whole integration suite and every golden unchanged; school
+parity `PARITY OK`.
+
+With this step, Phase 3's areas named in §6 have been carried through
+(planning, SSA, clusters, partners, budgets, advances, loans,
+notifications, trainings), except the financial year per country, which
+waits on owner decision 5.
 

@@ -10,6 +10,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -184,6 +185,24 @@ WHERE pa.status = ANY($3) AND pa.project_id IS NULL AND pa.school_id IS NOT NULL
 
 // readerCountry is training_ceilings.country_of: the reader's profile's
 // country, else the platform's.
+// place is the country a training summary is read for: its name (the
+// existing tables' key), and, where its roles come from the registry, its
+// registry id (docs/migration/80, §22).
+type place struct {
+	name, id     string
+	fromRegistry bool
+}
+
+// readerPlace is the reader's country: the one they work in where its roles
+// come from the registry, otherwise readerCountry exactly as today.
+func readerPlace(ctx context.Context, q schooldirectory.Querier, userID string, in *registry.Work) (place, error) {
+	if in.FromRegistry() {
+		return place{name: in.Name, id: in.ID, fromRegistry: true}, nil
+	}
+	name, err := readerCountry(ctx, q, userID)
+	return place{name: name}, err
+}
+
 func readerCountry(ctx context.Context, q schooldirectory.Querier, userID string) (string, error) {
 	var country *string
 	err := q.QueryRow(ctx, `SELECT country FROM staff_profile WHERE user_id = $1`, userID).Scan(&country)
@@ -208,8 +227,14 @@ func isSuperuser(ctx context.Context, q schooldirectory.Querier, userID string) 
 
 // countryIdentities is _country_identities: every id a plan may name its
 // owner by, for the country's staff.
-func countryIdentities(ctx context.Context, q schooldirectory.Querier, country string) ([]string, error) {
-	rows, err := q.Query(ctx, `SELECT id, user_id FROM staff_profile WHERE deleted_at IS NULL AND (country = $1 OR country = '')`, country)
+func countryIdentities(ctx context.Context, q schooldirectory.Querier, country place) ([]string, error) {
+	sql, arg := `SELECT id, user_id FROM staff_profile WHERE deleted_at IS NULL AND (country = $1 OR country = '')`, any(country.name)
+	if country.fromRegistry {
+		// The people who work in the country, by membership.
+		sql, arg = `SELECT id, user_id FROM staff_profile WHERE deleted_at IS NULL AND user_id IS NOT NULL AND `+
+			registry.AccountIn("user_id", "$1::text"), country.id
+	}
+	rows, err := q.Query(ctx, sql, arg)
 	if err != nil {
 		return nil, fmt.Errorf("trainingsummary: reading the country's staff: %w", err)
 	}
@@ -250,11 +275,24 @@ func holdsSQL(role string) string {
 
 // countryOfficers is training_summary.country_officers, before its sort:
 // the country's live CCEOs and Programme Leads.
-func countryOfficers(ctx context.Context, q schooldirectory.Querier, country string) ([]profile, error) {
+func countryOfficers(ctx context.Context, q schooldirectory.Querier, country place) ([]profile, error) {
+	if country.fromRegistry {
+		// The CCEOs and Programme Leads of the country, by the roles held
+		// there, with those roles.
+		out, err := profiles(ctx, q, `SELECT sp.id, sp.user_id, COALESCE(u.name, ''), COALESCE(u.email, ''), `+
+			registry.RolesIn("u.id", "$2::text")+`, ''
+FROM staff_profile sp JOIN "user" u ON sp.user_id = u.id
+WHERE sp.deleted_at IS NULL AND u.deleted_at IS NULL AND u.is_active AND `+registry.HoldsRoleIn("u.id", "$2::text", "$1::varchar[]"),
+			[]string{rules.CCEORole, rules.ProgramLeadRole}, country.id)
+		if err != nil {
+			return nil, fmt.Errorf("trainingsummary: reading the country's officers: %w", err)
+		}
+		return out, nil
+	}
 	out, err := profiles(ctx, q, `SELECT `+profileColumns+` FROM staff_profile sp JOIN "user" u ON sp.user_id = u.id
 WHERE sp.deleted_at IS NULL AND (`+holdsSQL("$1")+` OR `+holdsSQL("$2")+`)
   AND u.deleted_at IS NULL AND u.is_active AND (sp.country = $3 OR sp.country = '')`,
-		rules.CCEORole, rules.ProgramLeadRole, country)
+		rules.CCEORole, rules.ProgramLeadRole, country.name)
 	if err != nil {
 		return nil, fmt.Errorf("trainingsummary: reading the country's officers: %w", err)
 	}
