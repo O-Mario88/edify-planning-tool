@@ -34,27 +34,21 @@ export function FeedChips({ chips }: { chips: PageChips }) {
       (row as HTMLElement).hidden = !rowShows(rowKeys(row), chips.name, value);
     });
   }, [chips.name, value]);
+  // The existing tab rail of buttons (data-edify-tablist, the To-Do page's
+  // Category and Priority), drawn by the existing stylesheets.
   return (
-    <div ref={rail} role="group" aria-label={chips.label || 'Filter'} data-block="chips" className="flex flex-wrap gap-2">
-      {chips.chips.map((chip) => {
-        const chosen = chip.value === value;
-        return (
-          <button
-            key={chip.value}
-            type="button"
-            aria-pressed={chosen}
-            onClick={() => setValue(chip.value)}
-            className={`flex h-9 items-center gap-2 rounded-full border px-4 text-[13px] font-semibold ${
-              chosen
-                ? 'border-[var(--edify-accent)] bg-[var(--edify-accent)] text-white'
-                : 'border-[var(--edify-border)] bg-[var(--edify-card-surface)] text-[var(--edify-text)] hover:bg-[var(--brand-primary-soft)]'
-            }`}
-          >
-            {chip.label}
-            {chip.count ? <span className={chosen ? 'opacity-80' : 'text-[var(--edify-text-muted)]'}>{chip.count}</span> : null}
-          </button>
-        );
-      })}
+    <div ref={rail} data-edify-tablist="" role="group" aria-label={chips.label || 'Filter'} data-block="chips" className="max-w-full">
+      {chips.chips.map((chip) => (
+        <button key={chip.value} type="button" data-edify-tab="" className="edify-tab" aria-pressed={chip.value === value} onClick={() => setValue(chip.value)}>
+          {chip.label}
+          {chip.count ? (
+            <>
+              {' '}
+              <span data-edify-tab-count="">{chip.count}</span>
+            </>
+          ) : null}
+        </button>
+      ))}
     </div>
   );
 }

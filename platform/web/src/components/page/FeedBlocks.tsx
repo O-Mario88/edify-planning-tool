@@ -96,7 +96,7 @@ export function FeedBlocks({ blocks, pagePath, drawerHref, selectable, clearFilt
             return <FeedRecord key={index} record={kind.value} pagePath={pagePath} drawerHref={drawerHref} />;
           case 'pager':
             return (
-              <div key={index} className="overflow-hidden rounded-[10px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)]">
+              <div key={index} className="overflow-hidden card">
                 {pagerOf(block)}
               </div>
             );

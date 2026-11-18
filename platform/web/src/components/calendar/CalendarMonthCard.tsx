@@ -135,7 +135,7 @@ export function CalendarMonthCard({ month, query, view, today, eyebrow, dayEmpty
   return (
     <>
       {view === 'month' ? <CalendarPhone month={month} today={today} eyebrow={eyebrow} query={query} dayEmpty={dayEmpty} /> : null}
-      <section aria-label={month.title} data-block="calendar-month" className={`overflow-hidden rounded-[10px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] shadow-[var(--edify-shadow-sm)] ${view === 'month' ? 'max-lg:hidden' : ''}`}>
+      <section aria-label={month.title} data-block="calendar-month" className={`overflow-hidden card ${view === 'month' ? 'max-lg:hidden' : ''}`}>
         <Toolbar month={month} query={query} view={view} />
         {view === 'month' ? <Grid month={month} today={today} /> : <CalendarAgenda month={month} today={today} days={busy} empty={month.empty} />}
         <Legend />

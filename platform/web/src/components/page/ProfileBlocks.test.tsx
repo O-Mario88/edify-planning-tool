@@ -86,7 +86,7 @@ describe('the profile’s blocks', () => {
       },
       true,
     );
-    expect(html).toMatch(/aria-selected="true"[^>]*><span>Planned<\/span><span data-segment-count="true">1<\/span>/);
+    expect(html).toMatch(/data-edify-tab="" aria-pressed="true">Planned <span data-edify-tab-count="" data-segment-count="">1<\/span>/);
     expect(html).toContain('data-pick="a1"');
     expect(html).toMatch(/role="tabpanel" hidden=""[^>]*>.*Leadership coaching/);
     expect(html).not.toContain('not-drawn');

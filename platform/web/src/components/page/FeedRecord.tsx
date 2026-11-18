@@ -92,7 +92,7 @@ export function FeedRecord({ record, pagePath, drawerHref }: FeedRecordProps) {
   }
 
   return (
-    <article data-block="record" className="rounded-[10px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] px-4 py-3 shadow-[var(--edify-shadow-sm)]">
+    <article data-block="record" className="card px-4 py-3 shadow-[var(--edify-shadow-sm)]">
       <header className="flex flex-wrap items-center gap-2">
         {opens ? (
           <button

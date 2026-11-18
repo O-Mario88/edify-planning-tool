@@ -68,7 +68,7 @@ function Part({ part, resolve }: { part: PageRailPart; resolve: Resolve }) {
 
 export function FeedRail({ rail, resolve }: { rail: PageRail; resolve: Resolve }) {
   return (
-    <aside aria-label={rail.title || 'Insights'} data-block="rail" className="rounded-[10px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] p-4 shadow-[var(--edify-shadow-sm)]">
+    <aside aria-label={rail.title || 'Insights'} data-block="rail" className="card p-4 shadow-[var(--edify-shadow-sm)]">
       {rail.title ? <h2 className="text-[length:var(--edify-text-title-size)] font-bold">{rail.title}</h2> : null}
       {rail.subtitle ? <p className="text-[length:var(--edify-text-micro-size)] font-medium text-[var(--edify-text-muted)]">{rail.subtitle}</p> : null}
       <div className="mt-3 space-y-4 lg:divide-y lg:divide-[var(--edify-border)] lg:[&>section+section]:pt-4">

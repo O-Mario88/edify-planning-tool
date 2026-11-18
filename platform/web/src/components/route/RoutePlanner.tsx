@@ -343,14 +343,14 @@ export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster, 
               <div className={`${filtersOpen ? 'block' : 'hidden'} md:block`}>
               <label className="mt-4 block text-[14px] font-semibold">
                 District
-                <select value={district} onChange={(e) => go({ district: e.target.value })} className="mt-2 h-12 w-full rounded-[10px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] px-3 text-[14px] font-normal">
+                <select value={district} onChange={(e) => go({ district: e.target.value })} className="mt-2 h-12 w-full card px-3 text-[14px] font-normal">
                   <option value="">All Districts</option>
                   {day.districts.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
                 </select>
               </label>
               <label className="mt-4 block text-[14px] font-semibold">
                 Cluster
-                <select value={cluster} onChange={(e) => go({ cluster: e.target.value })} className="mt-2 h-12 w-full rounded-[10px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] px-3 text-[14px] font-normal">
+                <select value={cluster} onChange={(e) => go({ cluster: e.target.value })} className="mt-2 h-12 w-full card px-3 text-[14px] font-normal">
                   <option value="">All Clusters</option>
                   {day.clusters.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                 </select>

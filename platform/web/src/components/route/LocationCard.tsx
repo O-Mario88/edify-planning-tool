@@ -45,7 +45,7 @@ export function LocationCard({ answer: json }: { answer: JsonValue }) {
   // Directions go to the entrance when the school has one.
   const directions = directionsUrl([answer.entrance ? create(SchoolPinSchema, { ...school, point: answer.entrance }) : school]);
   return (
-    <section className="rounded-[10px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] p-4" aria-labelledby="location-title" data-block="school-location">
+    <section className="card p-4" aria-labelledby="location-title" data-block="school-location">
       <h2 id="location-title" className="flex items-center gap-2 text-[16px] font-semibold">
         <RouteIcon name="pin" className="h-5 w-5 text-[#1d6fe0]" /> Location &amp; Directions
       </h2>

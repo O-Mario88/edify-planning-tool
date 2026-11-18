@@ -21,7 +21,7 @@ function Choice({ on, children }: { on: boolean; children: React.ReactNode }) {
 
 export function DeliverySettings({ delivery, existingWebUrl }: { delivery: NotificationDelivery; existingWebUrl: string }) {
   return (
-    <section id="delivery-settings" aria-labelledby="delivery-settings-heading" className="space-y-4 rounded-[10px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] p-4 shadow-[var(--edify-shadow-sm)]">
+    <section id="delivery-settings" aria-labelledby="delivery-settings-heading" className="space-y-4 card p-4 shadow-[var(--edify-shadow-sm)]">
       <div>
         <h2 id="delivery-settings-heading" className="text-[15px] font-bold">How you are told</h2>
         <p className="text-[13px] text-[var(--edify-text-muted)]">Everything is always here in Edify. Choose where else it reaches you.</p>

@@ -22,7 +22,7 @@ export function FeedChart({ chart }: { chart: PageChart }) {
   const axis = chartAxis(chart);
   const twoSeries = chart.series.length === 2;
   return (
-    <section aria-label={chart.title || 'Chart'} data-block="chart" className="rounded-[10px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] p-4 shadow-[var(--edify-shadow-sm)]">
+    <section aria-label={chart.title || 'Chart'} data-block="chart" className="card p-4 shadow-[var(--edify-shadow-sm)]">
       {chart.title ? <h2 className="text-[length:var(--edify-text-title-size)] font-bold">{chart.title}</h2> : null}
       {chart.subtitle ? <p className="text-[length:var(--edify-text-label-size)] font-medium text-[var(--edify-text-muted)]">{chart.subtitle}</p> : null}
       {twoSeries ? (

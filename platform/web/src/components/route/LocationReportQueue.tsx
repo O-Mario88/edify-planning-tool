@@ -57,7 +57,7 @@ export function LocationReportQueue({ status, answer: json }: QueueProps) {
       ) : (
         <ul className="mt-4 space-y-3">
           {reports.map((r) => (
-            <li key={r.id} className="rounded-[10px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] p-4" data-block="location-report">
+            <li key={r.id} className="card p-4" data-block="location-report">
               <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
                 <Link href={`/schools/${encodeURIComponent(r.school?.schoolId ?? '')}`} className="text-[16px] font-semibold text-[#1d6fe0] hover:underline">
                   {r.school?.name}
