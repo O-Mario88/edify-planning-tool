@@ -30,6 +30,7 @@ from dataclasses import dataclass, field
 from datetime import date
 
 from django.db.models import Q
+from django.utils import timezone
 from django.urls import reverse
 
 from apps.core.activity_types import VISIT_TYPES, TRAINING_TYPES, CLUSTER_MEETING_TYPES
@@ -1164,7 +1165,13 @@ def _item_for(assignment, costs, directory) -> PartnerOversightItem:
         purpose_label=purpose,
         intervention_label=intervention,
         project_name=getattr(assignment.project, "name", "") or "",
-        assignment_date=assignment.created_at.date() if assignment.created_at else None,
+        # The Kampala day it was made (apps.core.clock), not the UTC day,
+        # which is a day behind from 00:00 to 03:00 EAT.
+        assignment_date=(
+            timezone.localtime(assignment.created_at).date()
+            if assignment.created_at
+            else None
+        ),
         assignment_status=assignment.status,
         return_reason_category=assignment.return_reason_category or "",
         return_reason=assignment.return_reason or "",

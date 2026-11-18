@@ -624,3 +624,21 @@ class PartnerTeamWorkspaceTest(PartnerOversightFixture):
         ):
             items = svc.build_items(self.cceo_user, fy=self.fy)
         self.assertEqual([i.partner_assignment_id for i in items], [own.id])
+
+
+class TheAssignmentDayIsTheLocalDayTest(PartnerOversightFixture):
+    """A hand-over is dated the Kampala day it was made, as every "today" is
+    (apps.core.clock): one made at 00:30 EAT on 9 October was dated the 8th,
+    the UTC day, which the Go gateway's comparison caught after midnight."""
+
+    def test_a_handover_made_after_local_midnight_is_dated_that_day(self):
+        from datetime import datetime
+        from datetime import timezone as dt_timezone
+
+        assignment = self.assign()
+        made = datetime(2026, 10, 8, 21, 30, tzinfo=dt_timezone.utc)  # 00:30 EAT, 9 Oct
+        PartnerAssignment.objects.filter(id=assignment.id).update(created_at=made)
+
+        item = svc.build_item_by_assignment(assignment.id)
+
+        self.assertEqual(item.assignment_date, date(2026, 10, 9))
