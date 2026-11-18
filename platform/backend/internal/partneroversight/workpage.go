@@ -35,6 +35,7 @@ type target struct{ target, core, beyond, held int }
 type workView struct {
 	w          workspace
 	today      time.Time
+	leads      []leadTab
 	partners   []partnerTab
 	partner    string
 	partnerTab *partnerTab
@@ -120,6 +121,9 @@ func workTabOpen(tables []workTable, requested string, core int) string {
 func (v *workView) blocks() []*screensv1.PageBlock {
 	w := v.w
 	blocks := []*screensv1.PageBlock{v.filters()}
+	if len(v.leads) > 0 {
+		blocks = append(blocks, v.leadPanel())
+	}
 	if len(v.partners) > 0 {
 		blocks = append(blocks, v.partnerPanel())
 	}

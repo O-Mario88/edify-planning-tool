@@ -36,7 +36,7 @@ func page(w workspace) *screensv1.GetPageResponse {
 	header := &screensv1.PageHeader{Eyebrow: eyebrow, Title: title, Description: description}
 	if w.role.CreatePartner {
 		header.Actions = []*screensv1.PageAction{{
-			Key: "add_partner_organisation", Label: "Add Partner Organisation",
+			Key: "add_partner_organisation", Label: "Add Partner Organisation", Primary: true,
 			Enabled: true, Href: "/partners/create", Drawer: true,
 		}}
 	}

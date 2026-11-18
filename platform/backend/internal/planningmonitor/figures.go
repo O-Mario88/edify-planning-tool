@@ -2,10 +2,13 @@ package planningmonitor
 
 import (
 	"context"
+	"errors"
 	"math"
+	"slices"
 	"time"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partneroversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -296,7 +299,17 @@ func (m *Monitor) PartnerTarget() (target, core, beyond, held int, ok bool) {
 // so it is given this rather than calling Read itself).
 func PartnerTargetReader(db schooldirectory.Querier) func(context.Context, auth.Principal, string, time.Time) (int, int, int, int, bool, error) {
 	return func(ctx context.Context, p auth.Principal, fy string, now time.Time) (int, int, int, int, bool, error) {
-		m, err := Read(ctx, db, p, fy, now)
+		read := Read
+		switch {
+		case slices.Contains(rules.Page.RegionLensRoles, p.ActiveRole):
+			read = ReadRegion
+		case slices.Contains(rules.Page.CountryLensRoles, p.ActiveRole):
+			read = ReadCountry
+		}
+		m, err := read(ctx, db, p, fy, now)
+		if errors.Is(err, ErrNotDrawn) {
+			return 0, 0, 0, 0, false, partneroversight.ErrTargetNotDrawn
+		}
 		if err != nil {
 			return 0, 0, 0, 0, false, err
 		}

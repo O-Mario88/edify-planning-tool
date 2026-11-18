@@ -230,3 +230,37 @@ same rows: **192 answers, 0 differing**. That is after the one recorded
 intended difference, `go-fix-period-select-partner`, where Go's period
 select shows the period in use. `internal/partneroversight/item_test.go`
 covers each state's words, withdrawals and risks.
+
+## 46.8 The country's lens (2026-11-18)
+
+Go now draws the page for the readers it reads through the whole country:
+the Country Director, Admin, Impact Assessment, the Accountant and the RVP
+(`partner_oversight_service._resolve_scope` "country"). For them:
+
+- **The work** is every Partner's: the hand-overs and Partner activities
+  of the country, with no team filter.
+- **The Programme Lead strip** is `_program_lead_tabs` over
+  `system_program_leads`. There is a tab for every staff member holding the
+  Programme Lead role, with the work their teams hold, and Unassigned for
+  work no lead supervises. The first tab opens when none is asked for.
+  The Partner and team-member tabs, the tiles and the card then read that
+  lead's team, and the team-member tabs are the lead's roster.
+- **The follow-ups** are read in the reader's scope's country.
+- **The Partner target** comes from the reader's own Planning Monitor:
+  `ReadCountry` for the country's readers, `ReadRegion` for a region's,
+  `Read` for a Programme Lead. A monitor this application does not draw
+  hands the page on.
+- **The header's Add Partner Organisation** is the primary action, as in
+  the existing page; the empty page now marks it too.
+
+A country whose roles come from the registry is not drawn through this lens
+yet. The register with engagements in it is still handed on: any engagement
+recorded, or any Regional Lead observation asking for one.
+
+Proof: the golden of §46.7 now also asks cd, admin, ia, accountant and rvp,
+with every Programme Lead tab and the Partner, team-member, work, status
+and period questions under them: **487 answers of 9 accounts, 0
+differing**.
+
+Still handed on: the region's lens (the Regional Programme Lead), and the
+list in §46.7.

@@ -2,9 +2,12 @@ package partneroversight
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/url"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
@@ -32,6 +35,37 @@ func (s *Service) work(ctx context.Context, p auth.Principal, w workspace, own [
 			return nil, true, err
 		}
 	}
+	return s.draw(ctx, p, w, staff, now)
+}
+
+// country draws the page through the country's lens (Country Director,
+// Admin, Impact Assessment, the Accountant, the RVP): every Partner's work,
+// one Programme Lead's team at a time. country is the reader's scope's
+// country, "" for the whole deployment.
+func (s *Service) country(ctx context.Context, p auth.Principal, role Role, per period, query url.Values,
+	country string, now time.Time) (*screensv1.GetPageResponse, bool, error) {
+	if strings.TrimSpace(query.Get("activity_type")) != "" || country == schooldirectory.NoCountry {
+		return nil, false, nil
+	}
+	if role.EngagementRegister {
+		engaged, err := anyEngagementAtAll(ctx, s.db)
+		if err != nil || engaged {
+			return nil, !engaged, err
+		}
+	}
+	w := workspace{role: role, period: per, status: query.Get("status"), fyOptions: schooldirectory.FYOptions(now),
+		country: country, withTarget: true}
+	w.programLead = strings.TrimSpace(query.Get("program_lead"))
+	w.work = strings.TrimSpace(query.Get("work"))
+	w.partnerAsked = strings.TrimSpace(query.Get("partner"))
+	w.memberAsked = strings.TrimSpace(query.Get("member"))
+	return s.draw(ctx, p, w, nil, now)
+}
+
+// draw reads the work of staff (nil for every Partner's work in the
+// country) and draws the page, or hands it on.
+func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff []string, now time.Time) (*screensv1.GetPageResponse, bool, error) {
+	countryLens := staff == nil
 	operational, _ := strconv.Atoi(schooldirectory.OperationalFY(now))
 	years, err := schoolplanning.Horizon(ctx, s.db, p.Country, w.period.fy, operational, w.fyOptions, now)
 	if err != nil {
@@ -49,12 +83,28 @@ func (s *Service) work(ctx context.Context, p auth.Principal, w workspace, own [
 	if err := annotate(ctx, s.db, items, today); err != nil {
 		return nil, true, err
 	}
-	follow, err := followUps(ctx, s.db, "", w.period.fy)
+	follow, err := followUps(ctx, s.db, w.country, w.period.fy)
 	if err != nil {
 		return nil, true, err
 	}
 
 	v := &workView{w: w, today: today, years: years}
+	if countryLens {
+		// One Programme Lead's team at a time (_program_lead_tabs over
+		// system_program_leads): the first tab opens when none is asked.
+		leads, err := systemProgramLeads(ctx, s.db)
+		if err != nil {
+			return nil, true, err
+		}
+		var rows []*item
+		v.leads, w.programLead, rows = leadTabs(leads, items, w.programLead)
+		items = rows
+		v.w.programLead = w.programLead
+		if w.members, err = roster(ctx, s.db, w.programLead); err != nil {
+			return nil, true, err
+		}
+		v.w.members = w.members
+	}
 	counts := map[string]int{}
 	names := map[string]string{}
 	for _, i := range items {
@@ -176,6 +226,9 @@ func (s *Service) work(ctx context.Context, p auth.Principal, w workspace, own [
 			return nil, false, nil
 		}
 		t, c, b, h, ok, err := s.target(ctx, p, strconv.Itoa(operational), now)
+		if errors.Is(err, ErrTargetNotDrawn) {
+			return nil, false, nil
+		}
 		if err != nil {
 			return nil, true, err
 		}
@@ -186,7 +239,7 @@ func (s *Service) work(ctx context.Context, p auth.Principal, w workspace, own [
 	header := &screensv1.PageHeader{Eyebrow: eyebrow, Title: title, Description: description}
 	if w.role.CreatePartner {
 		header.Actions = []*screensv1.PageAction{{
-			Key: "add_partner_organisation", Label: "Add Partner Organisation",
+			Key: "add_partner_organisation", Label: "Add Partner Organisation", Primary: true,
 			Enabled: true, Href: "/partners/create", Drawer: true,
 		}}
 	}
@@ -206,11 +259,12 @@ func (s *Service) work(ctx context.Context, p auth.Principal, w workspace, own [
 func handedOn(ctx context.Context, db schooldirectory.Querier, staff, years []string) (bool, error) {
 	var held bool
 	err := db.QueryRow(ctx, `
-SELECT EXISTS (SELECT 1 FROM partner_assignment_withdrawal w WHERE w.state = $1 AND w.supervising_pl_id = ANY($2))
+SELECT EXISTS (SELECT 1 FROM partner_assignment_withdrawal w WHERE w.state = $1
+      AND ($2::text[] IS NULL OR w.supervising_pl_id = ANY($2)))
     OR EXISTS (SELECT 1 FROM activity a LEFT JOIN cluster c ON c.id = a.cluster_id
       WHERE a.deleted_at IS NULL AND COALESCE(a.facilitating_partner_id, '') <> ''
         AND a.status <> ALL($3) AND a.fy = ANY($4)
-        AND (a.responsible_staff_id = ANY($2) OR c.responsible_staff_id = ANY($2)))`,
+        AND ($2::text[] IS NULL OR a.responsible_staff_id = ANY($2) OR c.responsible_staff_id = ANY($2)))`,
 		rules.WithdrawalRequested, staff, []string{"cancelled", "rejected", "deferred"}, years).Scan(&held)
 	if err != nil {
 		return false, fmt.Errorf("partneroversight: reading what the page hands on: %w", err)

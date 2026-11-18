@@ -181,3 +181,18 @@ func contains(list []string, v string) bool {
 	}
 	return false
 }
+
+// anyEngagementAtAll is whether the partnership register a country reader
+// sees could hold a row: any engagement recorded, or any Regional Lead
+// observation asking for one. The register with rows is not drawn yet.
+func anyEngagementAtAll(ctx context.Context, db schooldirectory.Querier) (bool, error) {
+	var found bool
+	err := db.QueryRow(ctx, `
+SELECT EXISTS (SELECT 1 FROM partner_engagement)
+    OR EXISTS (SELECT 1 FROM cce_regional_engagement r WHERE r.recommendation = ANY($1))`,
+		rules.PartnerActionRecommendations).Scan(&found)
+	if err != nil {
+		return false, fmt.Errorf("partneroversight: reading the partnership register: %w", err)
+	}
+	return found, nil
+}

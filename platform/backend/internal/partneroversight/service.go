@@ -2,6 +2,7 @@ package partneroversight
 
 import (
 	"context"
+	"errors"
 	"net/url"
 	"strings"
 	"time"
@@ -29,6 +30,10 @@ type Service struct {
 	// by a Partner, and whether the monitor has anybody on it.
 	target func(context.Context, auth.Principal, string, time.Time) (int, int, int, int, bool, error)
 }
+
+// ErrTargetNotDrawn is the Planning Monitor's answer for a reader whose
+// monitor this application does not draw yet: the page is handed on.
+var ErrTargetNotDrawn = errors.New("partneroversight: the reader's Planning Monitor is not drawn")
 
 // WithTarget gives the service the Planning Monitor's Partner target.
 func (s *Service) WithTarget(read func(context.Context, auth.Principal, string, time.Time) (int, int, int, int, bool, error)) *Service {
@@ -60,6 +65,9 @@ type workspace struct {
 	// partnerAsked and memberAsked are the Partner and team member the
 	// link asks for, before they are checked against the work.
 	partnerAsked, memberAsked string
+	// country is the reader's scope's country ("" the whole deployment),
+	// which the Partners' follow-ups are read in.
+	country string
 }
 
 // Build answers path for p with the page's query. served is false for a
@@ -103,6 +111,9 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if err != nil {
 		return nil, true, err
 	}
+	if role.Lens == "country" {
+		return s.country(ctx, p, role, per, query, scope.Country, now)
+	}
 	busy, err := anyPartnerWork(ctx, s.db, team, nonNil(scope.SchoolIDs), per.fy, per.fy == schooldirectory.OperationalFY(now))
 	if err != nil {
 		return nil, true, err
@@ -138,7 +149,15 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 // drawn is whether this piece draws the reader at all: a field officer or a
 // Programme Lead in their own role, reading through their team.
 func drawn(p auth.Principal, role Role) bool {
-	if role.Lens != "team" || p.Acting != nil || p.InActingAppointment {
+	if p.Acting != nil || p.InActingAppointment {
+		return false
+	}
+	if role.Lens == "country" {
+		// The country lens of a country whose roles come from the registry
+		// is not drawn yet (docs/migration/80).
+		return p.Country == nil || !p.Country.FromRegistry()
+	}
+	if role.Lens != "team" {
 		return false
 	}
 	return p.ActiveRole == rules.PlanningCCEORole || p.ActiveRole == rules.PlanningLeadRole

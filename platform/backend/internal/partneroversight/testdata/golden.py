@@ -13,7 +13,7 @@ ahead, work a staff member dated that has passed, work in progress,
 evidence uploaded, a hand-back nobody has decided, verified work awaiting
 payment, and a Partner training no hand-over points at. Each carries a cost
 where it is scheduled, and the forms the Partner uploaded. It asks the page
-of the field officers and Programme Leads, over that work and over the
+of the field officers, Programme Leads and the country's readers, over that work and over the
 development seed's completed FY 2026 work, with each Partner, team member,
 work tab and status, and each kind of period; writes the rows and the
 answers to GOLDEN_OUT and deletes the rows.
@@ -39,7 +39,19 @@ User = get_user_model()
 PATH = "/partner-oversight/"
 NOW = dj_timezone.now()
 TODAY = dj_timezone.localdate()
-READERS = ["cceo1@edify.org", "cceo2@edify.org", "pl1@edify.org", "pl2@edify.org"]
+READERS = [
+    "cceo1@edify.org",
+    "cceo2@edify.org",
+    "pl1@edify.org",
+    "pl2@edify.org",
+    # The country's lens: every Partner's work, one Programme Lead's team at
+    # a time.
+    "cd@edify.org",
+    "admin@edify.org",
+    "ia@edify.org",
+    "accountant@edify.org",
+    "rvp@edify.org",
+]
 FY = {"period": "fy", "fy": "2026"}
 PARTNER = "gpoP1"
 # A row before the rows that point at it; reversed, the order they leave.

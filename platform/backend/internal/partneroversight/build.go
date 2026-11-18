@@ -44,7 +44,7 @@ LEFT JOIN activity_catalogue_item ci ON ci.id = pa.catalogue_item_id
 LEFT JOIN activity sa ON sa.id = pa.source_activity_id
 LEFT JOIN activity_catalogue_item sc ON sc.id = sa.training_course_id
 WHERE NOT (pa.status = ANY($2) OR (pa.status = $3 AND pa.resolved_at IS NOT NULL))
-  AND (pa.monitoring_staff_id = ANY($1) OR pa.assigning_staff_id = ANY($1)
+  AND ($1::text[] IS NULL OR pa.monitoring_staff_id = ANY($1) OR pa.assigning_staff_id = ANY($1)
     OR s.account_owner_id = ANY($1) OR c.responsible_staff_id = ANY($1))`
 
 // activity is the fields of an activity the page reads.
@@ -305,8 +305,8 @@ func describe(w work) (training, purpose, intervention string) {
 	return training, purpose, intervention
 }
 
-// readItems is build_items for a team lens over the years read, before the
-// period narrows them.
+// readItems is build_items for a team lens (team nil: the country's) over
+// the years read, before the period narrows them.
 func readItems(ctx context.Context, db schooldirectory.Querier, team []string, years []string, today time.Time) ([]*item, error) {
 	rows, err := db.Query(ctx, assignmentSQL, team, rules.LeftPartnerStatuses, rules.ReturnedToStaff)
 	if err != nil {
@@ -391,7 +391,7 @@ func readItems(ctx context.Context, db schooldirectory.Querier, team []string, y
 	}
 	unassigned, err := readActivities(ctx, db, `a.deleted_at IS NULL AND a.delivery_type = $1
   AND COALESCE(a.assigned_partner_id, '') <> '' AND a.status <> ALL($2) AND a.fy = ANY($3) AND NOT (a.id = ANY($4))
-  AND (a.monitored_by_staff_id = ANY($5) OR a.responsible_staff_id = ANY($5)
+  AND ($5::text[] IS NULL OR a.monitored_by_staff_id = ANY($5) OR a.responsible_staff_id = ANY($5)
     OR s.account_owner_id = ANY($5) OR c.responsible_staff_id = ANY($5))
 ORDER BY a.id`, rules.PartnerDelivery, []string{"cancelled", "rejected", "deferred"}, years, keptActivities, team)
 	if err != nil {
