@@ -73,7 +73,9 @@ export function AssignRoleForm({ membership, choices, regions, onClose, onAssign
           ))}
         </select>
         <span className={HINT}>
-          The account works in {membership.countryName} only in the roles assigned here, while this membership is in force.
+          The account works in {membership.countryName} only in the roles assigned here, while this membership is in force. The regional roles
+          (Regional Vice President, Regional HR Director, Regional Programme Lead, Business Transformation Officer) work across every country:
+          they come from the account&apos;s profile and are not assigned here.
         </span>
       </label>
       {regional ? (

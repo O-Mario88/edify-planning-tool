@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -31,15 +32,14 @@ type reach struct {
 	viewer string
 }
 
-// hrDirector and programmeLeads are apps.hr.reach's role names.
-const hrDirector = "HumanResources"
-
+// programmeLeads are apps.hr.reach's Programme Lead role names.
 var programmeLeads = []string{"Program Lead", "ProgramLead"}
 
 // peopleReach is people_reach: Admin (or a superuser) reads the
-// organisation; the Regional HR Director the countries their assigned
-// geography names, else the country on their own People record, else
-// nothing; a Programme Lead their own team; anyone else the country on their
+// organisation; a regional role, the Regional HR Director among them, the
+// People records of every registered country (owner, 2026-11-18: the
+// regional roles "should have access to all the countries"; the existing
+// rule read the countries the director's geography named); a Programme Lead their own team; anyone else the country on their
 // own People record, else nothing. Someone working in an acting appointment
 // never reaches here (the page service passes them on). The viewer's own
 // People record is read as user.staff_profile reads it: deleted or not.
@@ -56,6 +56,15 @@ WHERE u.id = $1`, p.UserID).Scan(&superuser, &viewer, &country)
 	if p.ActiveRole == "Admin" || superuser {
 		return reach{kind: reachAll}, nil
 	}
+	if registry.IsRegional(p.ActiveRole) {
+		// Every country, not everything (docs/migration/80, §15): a People
+		// record that names no registered country stays the Admin's.
+		names, err := everyCountryName(ctx, db)
+		if err != nil {
+			return reach{}, err
+		}
+		return reach{kind: reachCountries, countries: names}, nil
+	}
 	// Edify Global (docs/migration/80, §12): in a country whose roles come
 	// from the registry, a role held there reaches that country's People
 	// records (a Programme Lead still their own team), not the countries
@@ -70,16 +79,7 @@ WHERE u.id = $1`, p.UserID).Scan(&superuser, &viewer, &country)
 	if country != nil {
 		own = strings.TrimSpace(*country)
 	}
-	switch {
-	case p.ActiveRole == hrDirector:
-		countries, err := directorCountries(ctx, db, viewer)
-		if err != nil {
-			return reach{}, err
-		}
-		if len(countries) > 0 {
-			return reach{kind: reachCountries, countries: countries}, nil
-		}
-	case slices.Contains(programmeLeads, p.ActiveRole) && viewer != nil:
+	if slices.Contains(programmeLeads, p.ActiveRole) && viewer != nil {
 		return reach{kind: reachTeam, viewer: *viewer}, nil
 	}
 	if own != "" {
@@ -88,27 +88,18 @@ WHERE u.id = $1`, p.UserID).Scan(&superuser, &viewer, &country)
 	return reach{kind: reachNone}, nil
 }
 
-// directorCountries is _director_countries: the countries of the regions the
-// director's geography assignments name (directly, or through a district).
-func directorCountries(ctx context.Context, db schooldirectory.Querier, viewer *string) ([]string, error) {
-	if viewer == nil {
-		return nil, nil
-	}
-	rows, err := db.Query(ctx, `
-SELECT DISTINCT r.country FROM region r
-WHERE r.country <> '' AND r.id IN (
-  SELECT region_id FROM staff_geography_assignment WHERE staff_id = $1 AND region_id IS NOT NULL
-  UNION
-  SELECT d.region_id FROM staff_geography_assignment a JOIN district d ON d.id = a.district_id WHERE a.staff_id = $1)
-ORDER BY r.country`, *viewer)
+// everyCountryName is every name the registry gives a country (Uganda,
+// UG, …), as the existing People records hold them.
+func everyCountryName(ctx context.Context, db schooldirectory.Querier) ([]string, error) {
+	rows, err := db.Query(ctx, `SELECT alias FROM country_registry.country_alias ORDER BY alias`)
 	if err != nil {
-		return nil, fmt.Errorf("hrregister: reading the director's countries: %w", err)
+		return nil, fmt.Errorf("hrregister: reading the countries: %w", err)
 	}
-	countries, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	names, err := pgx.CollectRows(rows, pgx.RowTo[string])
 	if err != nil {
-		return nil, fmt.Errorf("hrregister: reading the director's countries: %w", err)
+		return nil, fmt.Errorf("hrregister: reading the countries: %w", err)
 	}
-	return countries, nil
+	return names, nil
 }
 
 // profiles is scope_profiles over the live People records of live accounts

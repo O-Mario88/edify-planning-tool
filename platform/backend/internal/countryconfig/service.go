@@ -74,6 +74,19 @@ func (s *Service) visible(ctx context.Context, p auth.Principal) ([]country.Coun
 			return c, row.Scan(&c.ID, &c.Code, &c.Name, &c.State)
 		})
 	}
+	if country.IsRegional(p.ActiveRole) {
+		// A regional role works across every country (docs/migration/80,
+		// §15): every Active one.
+		rows, err := s.db.Query(ctx, `SELECT id::text, code, name, state FROM country_registry.country WHERE state = $1 ORDER BY code`,
+			country.StateActive)
+		if err != nil {
+			return nil, fmt.Errorf("countryconfig: reading the countries: %w", err)
+		}
+		return pgx.CollectRows(rows, func(row pgx.CollectableRow) (country.Country, error) {
+			var c country.Country
+			return c, row.Scan(&c.ID, &c.Code, &c.Name, &c.State)
+		})
+	}
 	var profile string
 	if p.StaffProfileID != "" {
 		var name *string

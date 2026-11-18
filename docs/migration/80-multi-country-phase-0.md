@@ -6,7 +6,7 @@ country-specific configuration, securely isolated country data.* Phase 0 of
 that instruction asks for an audit and the architecture decisions before any
 schema change. This document is that Phase 0. The owner approved Phase 1
 on §7's recommended defaults on 2026-11-17 ("Yes, start Phase 1"); what has
-been built since, on the development copies only, is §8 to §14.
+been built since, on the development copies only, is §8 to §15.
 
 Everything below was measured on 2026-11-17 against the development copy
 `edify_gorn_test` and the code on `feature/edify-go-rn-migration`. No
@@ -647,4 +647,52 @@ existing rules; per-country change rules already exist as
 `activity_intervention_mapping.country` and now apply by the registry
 country); the IA pages outside SSA (stories, reports, verification reach),
 which keep their text rule until they are carried.
+
+## 15. The regional roles work across every country (2026-11-18)
+
+Owner, 2026-11-18: *"All the regional roles like RVP, HR, RegionalProgram
+Leads, Business Transformation Officer, should have access to all the
+countries."*
+
+The four regional roles are `RegionalVicePresident`, `HumanResources` (the
+Regional HR Director), `RegionalProgramLead` and
+`BusinessTransformationOfficer` (`country.IsRegional`). Like Admin they are
+the platform's, not one country's:
+
+| Where | Rule |
+|---|---|
+| Holding the role (`auth.rolesInCountry`) | A regional role comes from the account's profile in the existing application, as today. In a country whose roles come from the registry, the account keeps its regional roles beside the roles assigned there, and is not refused there for holding only a regional role |
+| Assigning roles per country (`AssignCountryRole`, the Memberships page) | A regional role is refused ("… works across every country: it comes from the account's profile, not from one country") and never offered; the Assign role form says so. A regional role assigned earlier is never treated as held in that country (`HeldInCountry`) |
+| Reach (`schooldirectory.resolveScope`) | The Regional Vice President and Regional Programme Lead reach every region of every country (the existing rule reached only the countries their assigned regions were in); the Business Transformation Officer, a country-wide role, is bounded by no country, as the Admin is |
+| The People register (`hrregister`, and the Debrief dashboard that reads it) | A regional role, the Regional HR Director among them, reads the People records of every registered country (every name the registry gives a country); a record that names no registered country stays the Admin's. The existing rule read the countries the director's geography named; that branch is removed |
+| The country list (`ListCountries`) | A reader working in a regional role sees every Active country |
+
+Every page that reads the directory's scope follows: the BT pages and
+to-dos, the RVP and RPL dashboards and oversight pages, and the planning
+and SSA readers of §13 and §14.
+
+For Uganda the data does not change what these roles see while Uganda is
+the only Active country with schools, regions and people: every region is
+Uganda's, every school is mapped to Uganda and every People record names
+Uganda. It changes what they would see once another country has records,
+which is the owner's intent.
+
+A first version gave the Regional HR Director the Admin's reach (every
+People record, live or not, of any country or none); the Debrief dashboard's
+golden caught it (one answer differing for the HR Director), and the reach
+is now every country's records, which is what the owner asked for.
+
+Proof: `internal/auth/auth_test.go` (a regional role kept beside Kenya's
+assigned roles; an account holding only a regional role is not refused in
+Kenya; a regional role is never held through one country);
+`internal/countryconfig/roles_test.go` (each regional role refused per
+country and not offered); `internal/integration/country_roles_test.go`
+(each regional role refused through the API; a Regional Programme Lead
+working in Kenya reaches both Kenya's and Uganda's regions and no country
+bound); the whole integration suite and every golden, and school parity.
+
+Consequences to note: per-country region scope (`scope_type = regions`)
+now has no role that uses it, since both roles that cover regions are
+regional; it stays in the schema for a country-level regional role should
+one be defined.
 

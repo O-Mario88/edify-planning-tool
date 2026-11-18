@@ -208,7 +208,9 @@ func (a *Authenticator) Authenticate(ctx context.Context, header string) (Princi
 // made in. Where that country's roles are the existing profile's (Uganda's),
 // or the account is an Admin (a platform role, held in no one country), or it
 // works in no Active country, nothing changes. Where they come from the
-// registry, the account holds exactly the roles assigned to it there: its
+// registry, the account holds the roles assigned to it there and, from its
+// profile, any regional role (country.IsRegional: those work across every
+// country, as Admin does): its
 // stored role counts only when it is one of them, the first assigned
 // otherwise, and an acting appointment (the existing application's, made
 // in Uganda) does not travel. false when it holds no role there at all.
@@ -218,8 +220,13 @@ func rolesInCountry(account Account) (Account, bool) {
 	}
 	roles := []string{}
 	for _, held := range account.Country.Roles {
-		if held.Role != roleAdmin && !slices.Contains(roles, held.Role) {
+		if held.Role != roleAdmin && !country.IsRegional(held.Role) && !slices.Contains(roles, held.Role) {
 			roles = append(roles, held.Role)
+		}
+	}
+	for _, role := range account.Roles {
+		if country.IsRegional(role) && !slices.Contains(roles, role) {
+			roles = append(roles, role)
 		}
 	}
 	if len(roles) == 0 {
@@ -237,7 +244,9 @@ func rolesInCountry(account Account) (Account, bool) {
 // request is made in, when that country's roles come from the registry; the
 // role's scope there is the assignment's, not the existing profile's.
 func (a Account) HeldInCountry() (country.Assigned, bool) {
-	if !a.Country.FromRegistry() {
+	// A regional role is never held in one country: it works across every
+	// one (country.IsRegional), even where an older assignment names it.
+	if !a.Country.FromRegistry() || country.IsRegional(a.ActiveRole) {
 		return country.Assigned{}, false
 	}
 	for _, held := range a.Country.Roles {

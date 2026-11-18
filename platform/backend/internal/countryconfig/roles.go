@@ -53,6 +53,7 @@ func roleOf(r *countriesv1.AssignCountryRoleRequest) (roleAsked, error) {
 		check(membershipID.MatchString(a.membershipID), "membership_id must be a membership's id"),
 		check(rbac.IsRole(a.role), "role must be one of the roles the platform defines"),
 		check(a.role != roleAdmin, "Admin is the platform's own role: it is not held in one country"),
+		check(!country.IsRegional(a.role), peopledirectory.RoleLabel(a.role)+" works across every country: it comes from the account's profile, not from one country"),
 		check(regionsWellFormed, "region_ids must be region ids"),
 		reasonOf("reason", a.reason),
 	}
@@ -69,7 +70,7 @@ func roleOf(r *countriesv1.AssignCountryRoleRequest) (roleAsked, error) {
 func assignableRoles() []*countriesv1.AssignableRole {
 	out := []*countriesv1.AssignableRole{}
 	for _, role := range rbac.Roles() {
-		if role != roleAdmin {
+		if role != roleAdmin && !country.IsRegional(role) {
 			out = append(out, &countriesv1.AssignableRole{Role: role, ScopeType: schooldirectory.ScopeTypeOf(role),
 				Label: peopledirectory.RoleLabel(role)})
 		}

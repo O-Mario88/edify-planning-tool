@@ -164,17 +164,33 @@ func TestRolesInCountry(t *testing.T) {
 	acting := &ActingAppointment{AppointmentID: "a1", AppointeeRole: "CCEO", InCapacity: true}
 	account := Account{UserID: "u1", Roles: []string{"CCEO", "Program Lead"}, ActiveRole: "Program Lead", Acting: acting,
 		Country: &country.Work{Country: country.Country{Code: "KE", Name: "Kenya"}, RolesSource: country.RolesFromRegistry,
-			Roles: []country.Assigned{{Role: "CCEO"}, {Role: "CCEO"}, {Role: "RegionalProgramLead", RegionIDs: []string{"r1"}}}}}
+			Roles: []country.Assigned{{Role: "CCEO"}, {Role: "CCEO"}, {Role: "ImpactAssessment"}, {Role: "RegionalProgramLead"}}}}
 	got, ok := rolesInCountry(account)
-	if !ok || strings.Join(got.Roles, ",") != "CCEO,RegionalProgramLead" || got.ActiveRole != "CCEO" || got.Acting != nil {
+	if !ok || strings.Join(got.Roles, ",") != "CCEO,ImpactAssessment" || got.ActiveRole != "CCEO" || got.Acting != nil {
 		t.Errorf("in Kenya: %+v (%v); want the roles assigned there, the first active, no acting appointment", got, ok)
 	}
 	if held, ok := got.HeldInCountry(); !ok || held.Role != "CCEO" {
 		t.Errorf("the role held in Kenya: %+v (%v)", held, ok)
 	}
+	// A regional role assigned in one country (none can be now) is not held
+	// there: it is the profile's, across every country.
 	got.ActiveRole = "RegionalProgramLead"
-	if held, _ := got.HeldInCountry(); strings.Join(held.RegionIDs, ",") != "r1" {
-		t.Errorf("the regional role's regions: %+v", held)
+	if held, ok := got.HeldInCountry(); ok {
+		t.Errorf("a regional role is held through Kenya: %+v", held)
+	}
+
+	// A regional role on the profile works across every country, so it is
+	// kept beside the roles assigned there (owner, 2026-11-18).
+	regional := account
+	regional.Roles, regional.ActiveRole = []string{"CCEO", "RegionalVicePresident"}, "RegionalVicePresident"
+	if got, ok := rolesInCountry(regional); !ok || got.ActiveRole != "RegionalVicePresident" ||
+		strings.Join(got.Roles, ",") != "CCEO,ImpactAssessment,RegionalVicePresident" {
+		t.Errorf("a regional role in Kenya: %+v (%v)", got, ok)
+	}
+	onlyRegional := regional
+	onlyRegional.Country = &country.Work{Country: country.Country{Code: "KE", Name: "Kenya"}, RolesSource: country.RolesFromRegistry}
+	if got, ok := rolesInCountry(onlyRegional); !ok || strings.Join(got.Roles, ",") != "RegionalVicePresident" {
+		t.Errorf("a regional role with nothing assigned in Kenya is refused or changed: %+v (%v)", got, ok)
 	}
 
 	account.Country.RolesSource = country.RolesFromProfile

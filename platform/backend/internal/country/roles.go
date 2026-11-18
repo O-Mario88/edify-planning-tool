@@ -97,3 +97,21 @@ WHERE membership_id = $1::uuid AND revoked_at IS NULL ORDER BY granted_at, role_
 	}
 	return w, nil
 }
+
+// regionalRoles work across every country (owner, 2026-11-18: "All the
+// regional roles like RVP, HR, RegionalProgram Leads, Business
+// Transformation Officer, should have access to all the countries"). Like
+// Admin they are the platform's, held through the account's profile in the
+// existing application rather than in one country, and their reach is not
+// bounded by a country (docs/migration/80, §15).
+var regionalRoles = []string{"RegionalVicePresident", "HumanResources", "RegionalProgramLead", "BusinessTransformationOfficer"}
+
+// IsRegional says whether role works across every country.
+func IsRegional(role string) bool {
+	for _, r := range regionalRoles {
+		if r == role {
+			return true
+		}
+	}
+	return false
+}

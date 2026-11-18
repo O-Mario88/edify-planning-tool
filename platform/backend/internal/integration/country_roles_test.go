@@ -20,7 +20,8 @@ import (
 
 // Role and scope per country (docs/migration/80-multi-country-phase-0.md
 // §12). Uganda's roles stay each account's profile; in Kenya an account
-// works only in the roles an Admin assigned it there, with that role's
+// works only in the roles an Admin assigned it there (never a regional role,
+// which works across every country), with that role's
 // scope, and with none it is refused. The officer's memberships are taken
 // away for the test and put back exactly after; every other row it files
 // starts "gcrl" and is removed, and Kenya is Draft again.
@@ -131,14 +132,16 @@ ORDER BY u.id DESC LIMIT 1`).Scan(&adminID, &cdID, &officerID, &officerStaff, &u
 	requireCode(t, err, connect.CodeFailedPrecondition, "")
 	_, err = assign(asAdmin, kenya.GetId(), "Admin")
 	requireCode(t, err, connect.CodeInvalidArgument, "")
-	_, err = assign(asAdmin, kenya.GetId(), "RegionalProgramLead")
-	requireCode(t, err, connect.CodeInvalidArgument, "")
-	_, err = assign(asAdmin, kenya.GetId(), "RegionalProgramLead", ugRegion)
-	requireCode(t, err, connect.CodeFailedPrecondition, "")
+	// The regional roles work across every country (owner, 2026-11-18):
+	// none is assigned in one.
+	for _, role := range []string{"RegionalVicePresident", "HumanResources", "RegionalProgramLead", "BusinessTransformationOfficer"} {
+		_, err = assign(asAdmin, kenya.GetId(), role, "gcrlKE")
+		requireCode(t, err, connect.CodeInvalidArgument, "")
+	}
 	_, err = assign(asAdmin, "00000000-0000-4000-8000-000000000000", "CCEO")
 	requireCode(t, err, connect.CodeNotFound, "")
 
-	// A role in Kenya, then a regional one; the same role twice is refused.
+	// A role in Kenya, then a second; the same role twice is refused.
 	got, err := assign(asAdmin, kenya.GetId(), "CCEO")
 	if err != nil {
 		t.Fatal(err)
@@ -150,18 +153,18 @@ ORDER BY u.id DESC LIMIT 1`).Scan(&adminID, &cdID, &officerID, &officerStaff, &u
 	officerRole := got.GetRoles()[0].GetId()
 	_, err = assign(asAdmin, kenya.GetId(), "CCEO")
 	requireCode(t, err, connect.CodeFailedPrecondition, "")
-	got, err = assign(asAdmin, kenya.GetId(), "RegionalProgramLead", "gcrlKE")
+	got, err = assign(asAdmin, kenya.GetId(), "ImpactAssessment")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if r := got.GetRoles()[0]; r.GetRole() != "RegionalProgramLead" || !slices.Equal(r.GetRegionNames(), []string{"Gcrl Nairobi"}) {
-		t.Errorf("the regional role %+v", r)
+	if r := got.GetRoles()[0]; r.GetRole() != "ImpactAssessment" || r.GetScopeType() != country.ScopeCountry {
+		t.Errorf("the second role %+v", r)
 	}
 
 	// While the officer works in Uganda (the default, Active), the profile
 	// decides: nothing assigned in Kenya applies.
 	s, err := session()
-	if err != nil || s.GetActiveRole() != "CCEO" || slices.Contains(s.GetRoles(), "RegionalProgramLead") {
+	if err != nil || s.GetActiveRole() != "CCEO" || slices.Contains(s.GetRoles(), "ImpactAssessment") {
 		t.Fatalf("in Uganda: %+v (%v)", s, err)
 	}
 
@@ -173,8 +176,8 @@ ORDER BY u.id DESC LIMIT 1`).Scan(&adminID, &cdID, &officerID, &officerStaff, &u
 		t.Fatal(err)
 	}
 	s, err = session()
-	if err != nil || s.GetActiveRole() != "CCEO" || !slices.Equal(s.GetRoles(), []string{"CCEO", "RegionalProgramLead"}) {
-		t.Fatalf("in Kenya: %+v (%v), want CCEO and RegionalProgramLead", s, err)
+	if err != nil || s.GetActiveRole() != "CCEO" || !slices.Equal(s.GetRoles(), []string{"CCEO", "ImpactAssessment"}) {
+		t.Fatalf("in Kenya: %+v (%v), want CCEO and Impact Assessment", s, err)
 	}
 
 	// The scope is Kenya's: the officer's portfolio in the existing tables
@@ -185,7 +188,7 @@ ORDER BY u.id DESC LIMIT 1`).Scan(&adminID, &cdID, &officerID, &officerStaff, &u
 	}
 	principal := func(role string) auth.Principal {
 		return auth.Principal{Account: auth.Account{UserID: officerID, StaffProfileID: officerStaff, ActiveRole: role,
-			Roles: []string{"CCEO", "RegionalProgramLead"}, Country: work}}
+			Roles: []string{"CCEO", "ImpactAssessment", "RegionalProgramLead"}, Country: work}}
 	}
 	scope, err := schooldirectory.ResolveScope(ctx, admin, principal("CCEO"), time.Now())
 	if err != nil {
@@ -195,12 +198,21 @@ ORDER BY u.id DESC LIMIT 1`).Scan(&adminID, &cdID, &officerID, &officerStaff, &u
 		t.Errorf("as Kenya's officer the portfolio holds %d own and %d schools, want none of Uganda's",
 			len(scope.OwnSchoolIDs), len(scope.SchoolIDs))
 	}
+	scope, err = schooldirectory.ResolveScope(ctx, admin, principal("ImpactAssessment"), time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if scope.Country != "Kenya" || !scope.CountryFromRegistry {
+		t.Errorf("as Kenya's Impact Assessment the country is %q (registry %v)", scope.Country, scope.CountryFromRegistry)
+	}
+	// A regional role, from the profile, reaches every country's regions,
+	// even while the account works in Kenya.
 	scope, err = schooldirectory.ResolveScope(ctx, admin, principal("RegionalProgramLead"), time.Now())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !slices.Equal(scope.RegionIDs, []string{"gcrlKE"}) {
-		t.Errorf("as Kenya's regional lead the regions are %v, want Kenya's", scope.RegionIDs)
+	if !slices.Contains(scope.RegionIDs, "gcrlKE") || !slices.Contains(scope.RegionIDs, ugRegion) || scope.Country != "" {
+		t.Errorf("a regional lead reaches %v (country %q), want Kenya's and Uganda's regions", scope.RegionIDs, scope.Country)
 	}
 
 	// Revoking: a reason is required, the record is kept, and with no role
@@ -216,7 +228,7 @@ ORDER BY u.id DESC LIMIT 1`).Scan(&adminID, &cdID, &officerID, &officerStaff, &u
 	}
 	_, err = revokeRole(officerRole, "Again")
 	requireCode(t, err, connect.CodeFailedPrecondition, "")
-	if _, err := revokeRole(got.GetRoles()[0].GetId(), "No regional work yet"); err != nil {
+	if _, err := revokeRole(got.GetRoles()[0].GetId(), "No assessment work yet"); err != nil {
 		t.Fatal(err)
 	}
 	_, err = session()

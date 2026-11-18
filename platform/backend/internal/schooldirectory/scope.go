@@ -163,9 +163,22 @@ WHERE psa.project_id IN (
 		}
 	}
 	if s.RegionScope {
-		if s.RegionIDs, err = regionalReach(ctx, q, s.RegionIDs); err != nil {
+		assigned := s.RegionIDs
+		if registry.IsRegional(s.Role) {
+			// A regional role reaches every country's regions
+			// (docs/migration/80, §15), not only those of the countries its
+			// assigned regions are in.
+			assigned = nil
+		}
+		if s.RegionIDs, err = regionalReach(ctx, q, assigned); err != nil {
 			return s, err
 		}
+	}
+	if registry.IsRegional(s.Role) {
+		// A regional role is bounded by no country (docs/migration/80, §15):
+		// a country-wide one (the Business Transformation Officer) reads every
+		// country, as the Admin does.
+		return s, nil
 	}
 	if s.CountryScope && s.Role != roleAdmin && inRegistry {
 		s.Country, s.CountryID, s.CountryFromRegistry = p.Country.Name, p.Country.ID, true
