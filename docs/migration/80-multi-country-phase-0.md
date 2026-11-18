@@ -1105,3 +1105,84 @@ suite, every golden and school parity are unchanged.
 
 The existing application's own tables cannot be altered, so their isolation
 stays with the Go checks until Go owns them.
+
+## 25. Phase 2, first step: the geographic registry (2026-11-18)
+
+The owner's strongest recommendation (2026-11-18) was to build the
+Geographic Registry with Country Configuration and Country Membership,
+before the remaining operational modules. Its foundation is now built.
+
+**Schema.** `country_registry` migration 0007 adds three tables, the design
+of §3:
+
+- `admin_unit_type`: each country's levels. Each has a canonical word, the
+  country's own label, a level number, whether it is required, and the
+  dates it is in effect. A country has one live type per word and per
+  level.
+- `admin_unit`: each country's units. Each has an official name, localised
+  names, an official code, a parent, validity dates, a source and a
+  verification status. A unit taken from an existing table also records
+  that table and its id (`existing_table`, `existing_id`).
+- `admin_unit_relationship`: effective-dated ties between units outside the
+  tree.
+
+Composite keys keep a unit, its type, its parent and both ends of a
+relationship in one country. Go is to refuse loops. Reads are open, as the
+registry's other reference data is (§9), and a country's rows are written
+only under `edify.write_countries` for that country.
+
+**Uganda mapped in by id.** `country.SeedGeography`, run by
+`countryctl seed-legacy` (CI runs it too), registers Uganda's seven levels:
+
+| Level | Type | Required |
+|---|---|---|
+| 1 | region | yes |
+| 2 | sub_region | no |
+| 3 | district | yes |
+| 4 | county | no |
+| 5 | sub_county | no |
+| 6 | parish | no |
+| 7 | village | no |
+
+Region and district are required because a cluster needs a district and a
+district its region in the existing tables. The seed then maps every
+existing row as a unit, which points at that row and never copies over or
+rewrites it:
+
+- **Parent:** the parent named in the existing row. A district goes under
+  its sub-region, else its region. A sub-county goes under its county, else
+  its district.
+- **Country:** a region takes the country its row names, read through
+  `country_alias`. Every other unit takes its parent's country.
+- **Official code:** the P-code, or the existing code where there is no
+  P-code. A code is kept only where it is unique at its level.
+- **Verification status:** `verified` only where the row's own source says
+  so (UBOS sources, or a `VERIFIED` sub-region confidence).
+
+A row with a blank name, a parent that is not mapped, or a region naming a
+country with no levels yet is left out and reported. Run again, the seed
+adds only what is missing.
+
+**Reconciliation.** `country.Reconcile`, and
+`countryctl reconcile-geography`, which only reads, compare each existing
+geography table with the registry one to one. For each table they report
+the rows it holds, the rows mapped, units renamed or moved since, and the
+first unmapped ids; the command fails unless all of them match. On the three
+local copies, all 4,403 units reconcile one to one: 4 regions, 10
+sub-regions, 136 districts, 2,562 sub-counties and 1,691 parishes. These
+copies hold no counties or villages.
+
+Proof: `internal/integration/country_geography_test.go`, run in a
+rolled-back transaction:
+
+- The seed maps every row and a second run adds nothing.
+- Every table reconciles, and every mapped unit is Uganda's, at its own
+  table's level.
+- As the gateway's role: a write declared for Uganda adds a Ugandan unit.
+  A write declared for Kenya is refused adding one and changes none.
+- A Kenyan unit under a Ugandan parent is refused by the composite key.
+
+Next: Go reads the registry for geography: country-aware unit lists and
+pickers, Admin pages for a country's levels and units, and the cycle
+check. A country-aware school import follows (dry run, duplicates,
+rejects), keeping the School ID apart from any national ID (§8, Phase 2).

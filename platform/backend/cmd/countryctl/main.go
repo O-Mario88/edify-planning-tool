@@ -1,9 +1,12 @@
 // Command countryctl seeds Edify Global's country registry on a development,
 // test or staging database: the countries (UG Active; KE, RW, ET Draft),
 // Uganda's settings as the platform runs today, and every existing school
-// and account mapped to Uganda (internal/country SeedLegacy). It writes only
-// country_registry's tables and reads only the existing school and account
-// ids. Run again, it adds only what is missing.
+// and account mapped to Uganda (internal/country SeedLegacy), and Uganda's
+// levels of administrative units with every existing unit mapped in by id
+// (SeedGeography). It writes only country_registry's tables and reads only
+// the existing school, account and geography rows. Run again, it adds only
+// what is missing. reconcile-geography only reads: it compares every
+// existing geography table with the registry one to one.
 //
 //	EDIFY_ENV=development \
 //	EDIFY_MIGRATE_DATABASE_URL=postgresql://localhost:5432/edify_gorn_dev \
@@ -45,8 +48,8 @@ func main() {
 }
 
 func run(args []string) error {
-	if len(args) == 0 || args[0] != "seed-legacy" {
-		return errors.New("usage: countryctl seed-legacy --confirm-database=NAME")
+	if len(args) == 0 || (args[0] != "seed-legacy" && args[0] != "reconcile-geography") {
+		return errors.New("usage: countryctl seed-legacy --confirm-database=NAME | countryctl reconcile-geography --confirm-database=NAME")
 	}
 	flags := flag.NewFlagSet(args[0], flag.ContinueOnError)
 	confirm := flags.String("confirm-database", "", "the database name the run is meant for")
@@ -83,6 +86,9 @@ func run(args []string) error {
 		return fmt.Errorf("country_registry is at version %d, this build needs %d: run schemactl migrate first",
 			version, countryschema.Spec.Required())
 	}
+	if args[0] == "reconcile-geography" {
+		return reconcileGeography(ctx, conn, *confirm)
+	}
 	tx, err := conn.Begin(ctx)
 	if err != nil {
 		return err
@@ -92,10 +98,39 @@ func run(args []string) error {
 	if err != nil {
 		return err
 	}
+	geography, err := country.SeedGeography(ctx, tx, seededBy)
+	if err != nil {
+		return err
+	}
 	if err := tx.Commit(ctx); err != nil {
 		return err
 	}
-	fmt.Printf("seeded %s: %d countries, %d settings, %d names, %d schools, %d memberships, %d role sources, %d partners\n", *confirm,
-		seeded.Countries, seeded.Settings, seeded.Aliases, seeded.Schools, seeded.Memberships, seeded.RolesSources, seeded.Partners)
+	fmt.Printf("seeded %s: %d countries, %d settings, %d names, %d schools, %d memberships, %d role sources, %d partners, %d unit levels, %d units\n", *confirm,
+		seeded.Countries, seeded.Settings, seeded.Aliases, seeded.Schools, seeded.Memberships, seeded.RolesSources, seeded.Partners,
+		geography.Types, geography.Units)
+	return nil
+}
+
+// reconcileGeography prints how every existing geography table stands
+// against the registry, one line a table, and fails when any is not mapped
+// one to one. It only reads.
+func reconcileGeography(ctx context.Context, conn *pgx.Conn, database string) error {
+	levels, err := country.Reconcile(ctx, conn)
+	if err != nil {
+		return err
+	}
+	apart := 0
+	for _, l := range levels {
+		mark := "ok"
+		if !l.Reconciled() {
+			mark, apart = "APART", apart+1
+		}
+		fmt.Printf("%-10s %-5s existing %6d  mapped %6d  renamed %d  moved %d  unmapped %v\n",
+			l.Table, mark, l.Existing, l.Mapped, l.Renamed, l.Moved, l.Unmapped)
+	}
+	if apart > 0 {
+		return fmt.Errorf("%s: %d geography tables are not mapped one to one", database, apart)
+	}
+	fmt.Printf("%s: geography reconciled one to one\n", database)
 	return nil
 }
