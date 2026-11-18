@@ -24,9 +24,10 @@ function one(value: string | string[] | undefined, max: number): string {
 }
 
 /*
- * Country memberships (Edify Global, docs/migration/80 §11): find an
+ * Country memberships (Edify Global, docs/migration/80 §11 and §12): find an
  * account, see every country membership it ever had, grant a country and
- * revoke one with its reason. Accounts come from AccountAdminService, the
+ * revoke one with its reason, and, in a country whose roles come from the
+ * registry, assign and revoke the roles the account holds there. Accounts come from AccountAdminService, the
  * memberships from CountryService (both Go); only the gateway writes.
  */
 export default async function MembershipsPage({ searchParams }: { searchParams: Search }) {
@@ -52,12 +53,20 @@ export default async function MembershipsPage({ searchParams }: { searchParams: 
           throw error;
         },
       );
-      if (!account) return { account: undefined, memberships: [], countries: [] };
+      if (!account) return { account: undefined, memberships: [], assignableRoles: [], regions: [], countries: [] };
       const [memberships, registry] = await Promise.all([countries.listMemberships({ userId }), countries.listCountries({})]);
-      return { account, memberships: memberships.memberships, countries: grantableCountries(registry.countries) };
+      return {
+        account,
+        memberships: memberships.memberships,
+        assignableRoles: memberships.assignableRoles,
+        regions: memberships.regions,
+        countries: grantableCountries(registry.countries),
+      };
     });
   }
-  const names = selected?.account ? await accountNames(selected.memberships.flatMap((m) => [m.grantedBy, m.revokedBy])) : new Map<string, string>();
+  const names = selected?.account
+    ? await accountNames(selected.memberships.flatMap((m) => [m.grantedBy, m.revokedBy, ...m.roles.flatMap((r) => [r.grantedBy, r.revokedBy])]))
+    : new Map<string, string>();
 
   return (
     <CountryFrame
@@ -103,6 +112,8 @@ export default async function MembershipsPage({ searchParams }: { searchParams: 
               activeRole: selected.account.activeRole,
             }}
             memberships={selected.memberships}
+            assignableRoles={selected.assignableRoles}
+            regions={selected.regions}
             countries={selected.countries.map((c) => ({ code: c.code, name: c.name, state: c.state }))}
             names={Object.fromEntries(names)}
             reader={{ userId: reader.userId, name: reader.name }}

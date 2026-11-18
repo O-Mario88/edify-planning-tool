@@ -6,6 +6,10 @@ export const LABEL = 'flex flex-col text-[length:var(--edify-text-label-size)] f
 export const FIELD =
   'mt-1 h-10 w-full rounded-[var(--radius-control)] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-3 text-[14px] font-medium text-[var(--edify-text)] focus:border-[var(--brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary-soft)] [&:is(textarea)]:h-auto [&:is(textarea)]:py-2';
 export const HINT = 'mt-1 text-[12.5px] font-medium text-[var(--edify-text-muted)]';
+/** A cell of the country Admin pages' own tables. */
+export const CELL = 'whitespace-nowrap px-3 py-2 align-top first:pl-4 last:pr-4';
+export const DESTRUCTIVE =
+  'inline-flex h-10 items-center rounded-[var(--radius-control)] bg-[#be123c] px-4 text-[length:var(--edify-text-label-size)] font-semibold text-white disabled:opacity-60';
 
 export function NoticeLine({ problem, notice }: { problem: string; notice: string }) {
   if (problem) {

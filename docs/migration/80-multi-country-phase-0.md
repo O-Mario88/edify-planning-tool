@@ -6,7 +6,7 @@ country-specific configuration, securely isolated country data.* Phase 0 of
 that instruction asks for an audit and the architecture decisions before any
 schema change. This document is that Phase 0. The owner approved Phase 1
 on §7's recommended defaults on 2026-11-17 ("Yes, start Phase 1"); what has
-been built since, on the development copies only, is §8 to §11.
+been built since, on the development copies only, is §8 to §12.
 
 Everything below was measured on 2026-11-17 against the development copy
 `edify_gorn_test` and the code on `feature/edify-go-rn-migration`. No
@@ -392,4 +392,129 @@ afterwards and the officer's membership put back as it was.
 
 Not built: the pages in the React Native app; a sidebar link (it waits for
 the navigation to move to Go); choosing which membership is an account's
-default; role and scope per country (Phase 3).
+default. Role and scope per country followed in §12.
+
+## 12. Phase 3, first step: role and scope per country (2026-11-18)
+
+Owner instruction: *"Start Phase 3 with role and scope per country."* Until
+now a membership said only which countries an account works in; the role it
+works in, and that role's reach, were the existing profile's everywhere.
+This step makes them per country, without changing Uganda.
+
+**Where a country's roles come from.** `country.roles_source` (migration
+0005) is `existing_profile` or `registry`:
+
+| Source | Countries | What decides the account's roles and scope there |
+|---|---|---|
+| `existing_profile` | Uganda | The existing application, exactly as today: `user.roles` and `active_role`, the profile's country, its region and school assignments, acting appointments. Nothing is recorded in the registry and nothing can be assigned there |
+| `registry` | Kenya, Rwanda, Ethiopia, and any country added later | Only the roles an Admin assigned under the account's membership of that country (`country_role_assignment`), each with its own scope |
+
+The migration adds the column with `existing_profile` for every country
+already registered, so no behaviour moves when it runs, then makes
+`registry` the default; the legacy seed then moves the countries that are
+not Active (KE, RW, ET; nobody works in them) to `registry`. It never moves
+an Active country.
+
+**The role table.** `country_role_assignment`: a membership, its country
+and account (a composite foreign key to the membership, so a role cannot be
+filed against another country's or another account's membership), the role
+(one the existing application defines; never Admin, which is the
+platform's own role), its kind of scope (`country`, `regions` or
+`portfolio`, from the role as the School Directory reads it), the existing
+region ids a regional role covers, and who assigned it, when and why;
+revoked ones keep who, when and why. One live assignment of a role per
+membership. Row-level security as on the other registry tables: written
+only for a country the transaction declares.
+
+**How a request is made in a country.** On every request the gateway reads
+the country it is made in: the account's default membership in force of an
+Active country, then its others by code; for an account with no membership
+at all, the Active country its profile names (`country.Working`). Then
+(`auth.Authenticate`):
+
+- that country's roles are the profile's, the account is an Admin, or it
+  works in no Active country: nothing changes;
+- that country's roles are the registry's: the account holds exactly the
+  roles assigned there; the role it asks for counts only when it is one of
+  them, the first assigned otherwise; an acting appointment (made in
+  Uganda) does not travel; with no role there the request is refused
+  ("Your account has no role in Kenya yet. An Admin assigns the roles you
+  hold there."), never given the profile's.
+
+The role's scope there (`schooldirectory.resolveScope`, read by every
+module that uses the directory's scope, and the HR register's reach): a
+country role reaches that country (its name as the existing tables hold
+it), a regional role the regions assigned to it there (widened to their
+country's regions as `_regional_reach` does today), any other role its
+portfolio in the existing tables kept to that country's schools
+(`country.SchoolIn`), so an officer moved to Kenya does not keep Uganda's
+schools.
+
+**The API**, on `CountryService`:
+
+| Call | Who | What |
+|---|---|---|
+| `AssignCountryRole` | Admin only, never on their own account | A role under a membership that is not revoked or ended, of a country whose roles come from the registry; a regional role names at least one region of that country, any other names none; a reason. Refused: Uganda (its roles are the profile's), Admin, an unknown role, a role already held there, a region of another country |
+| `RevokeCountryRole` | Same | Marks it revoked with who, when and why; the row is kept |
+| `ListMemberships` | As before | Each membership now carries its country's roles source and its roles, revoked ones included; an Admin is also given the roles that may be assigned (with their scope and the name people read) and the regions of the account's registry countries |
+
+**The Admin page.** The Memberships page (§11) gains a Roles column
+("From the existing profile" for Uganda; the roles held, or "None yet"), an
+**Assign role** item in each membership's Actions menu (disabled with the
+reason for Uganda, a revoked or an ended membership) that opens the form in
+place under the row, and a **Country Roles** table: country, role, scope
+in words (Whole country, Regions: their names, Own portfolio), status
+(Held; Held, membership not in force; Revoked), who assigned it and why,
+who revoked it and why, and **Revoke role** from the row's Actions, which
+asks the reason in place. A change redraws the tables in place.
+
+Applied to `edify_gorn_test`, `edify_gorn_dev` and `edify_gorn_route` only
+(`schemactl migrate --schema=country_registry`, then `countryctl
+seed-legacy`: 3 role sources set). No existing table is altered and no
+existing row is written.
+
+Proof:
+
+- Unit: `internal/countryconfig/roles_test.go` (good assignments for an
+  officer, a Country Director and a regional lead; 10 malformed ones refused;
+  Admin never offered; scope kinds and the names people read);
+  `internal/auth/auth_test.go` (Uganda keeps the profile's roles; a role
+  assigned in Kenya; a profile role not assigned there falls to the one
+  assigned; no role in Kenya is refused; an Admin is the platform's; acting
+  appointments do not travel; the regional role's regions);
+  `src/lib/countryRoles.test.ts` (5 cases); the web app's whole unit suite
+  (31 files, 231 tests), `tsc` and `eslint` clean; the schema lint passes.
+- Integration (`internal/integration/country_roles_test.go`), with an
+  officer whose memberships are taken away and put back exactly after: an
+  Admin is offered every role but Admin and Kenya's one region; a Country
+  Director cannot assign; an Admin cannot assign on their own account;
+  Uganda, Admin, a regional role with no region, a Ugandan region for Kenya
+  and an unknown membership are refused; CCEO and a regional lead land in
+  Kenya with their scope and who assigned them; the same role twice is
+  refused; while the officer works in Uganda nothing assigned in Kenya
+  applies; with Kenya Active and Uganda revoked the officer's session holds
+  exactly CCEO and the regional lead, the portfolio holds none of Uganda's
+  schools and the regional lead reaches Kenya's region; a revocation needs a
+  reason, keeps its record and cannot be repeated; with no role left the
+  officer is refused; the table refuses a role whose country is not its
+  membership's, and row-level security refuses a Kenyan role written in a
+  transaction declared for Uganda.
+- Uganda unchanged: the whole integration suite and every golden, 0
+  differing; school parity with the existing API, 24 accounts served and 13
+  refused, 700 rows, `PARITY OK`.
+- In the browser, on `edify_gorn_route` through the gateway on 8090, as
+  Admin: Kenya granted to an officer; the Roles column; Assign role from the
+  Kenya row (a regional role says Kenya has no regions yet and is stopped
+  before sending); CCEO assigned and shown at once in both tables as held
+  while the membership is not in force (Kenya is Draft); a revocation
+  refused without a reason, then kept with its reason; Uganda's Assign role
+  disabled with why; the 375 px layout with tables that scroll whole. The
+  test rows were removed afterwards and the officer's membership put back as
+  it was.
+
+Not built yet: assigning roles in the React Native app; per-country
+supervision and team structure (a Programme Lead's team still comes from the
+existing supervisor table); moving Uganda to the registry (it waits for the
+existing application to stop owning roles); the rest of Phase 3, carrying
+the country through planning, SSA, clusters, partners, budgets, advances,
+loans and notifications.

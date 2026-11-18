@@ -14,16 +14,23 @@ const LegacySince = "2000-10-01"
 // registered are the countries Phase 1 registers (owner, 2026-11-17: codes
 // UG, KE, RW, ET). Only Uganda is Active; the others are Draft until their
 // settings are approved and they are validated (docs/migration/80, §7).
-var registered = []struct{ code, name, state string }{
-	{"UG", "Uganda", StateActive},
-	{"KE", "Kenya", StateDraft},
-	{"RW", "Rwanda", StateDraft},
-	{"ET", "Ethiopia", StateDraft},
+//
+// Uganda's roles come from the account's profile in the existing
+// application, as today; every other country's from the registry
+// (docs/migration/80, §12).
+var registered = []struct{ code, name, state, roles string }{
+	{"UG", "Uganda", StateActive, RolesFromProfile},
+	{"KE", "Kenya", StateDraft, RolesFromRegistry},
+	{"RW", "Rwanda", StateDraft, RolesFromRegistry},
+	{"ET", "Ethiopia", StateDraft, RolesFromRegistry},
 }
 
 // Seeded is what one SeedLegacy run added.
 type Seeded struct {
 	Countries, Settings, Aliases, Schools, Memberships int64
+	// RolesSources is how many registered countries had where their roles
+	// come from set by this run.
+	RolesSources int64
 }
 
 // SeedLegacy registers the countries and maps the existing application's
@@ -50,9 +57,18 @@ func SeedLegacy(ctx context.Context, tx pgx.Tx, by string) (Seeded, error) {
 	}
 	for _, c := range registered {
 		if err := exec("the countries", &out.Countries, `INSERT INTO country_registry.country
-  (id, code, name, state, activated_on, created_by, updated_by)
-VALUES (gen_random_uuid(), $1, $2, $3, CASE WHEN $3 = 'active' THEN current_date END, $4, $4)
-ON CONFLICT (code) DO NOTHING`, c.code, c.name, c.state, by); err != nil {
+  (id, code, name, state, activated_on, roles_source, created_by, updated_by)
+VALUES (gen_random_uuid(), $1, $2, $3, CASE WHEN $3 = 'active' THEN current_date END, $5, $4, $4)
+ON CONFLICT (code) DO NOTHING`, c.code, c.name, c.state, by, c.roles); err != nil {
+			return out, err
+		}
+		// A country registered before roles had a source was given the
+		// existing behaviour by migration 0005; one that is not Active, and
+		// so has nobody working in it, moves to its own source here. An
+		// Active country is never moved.
+		if err := exec("where roles come from", &out.RolesSources, `UPDATE country_registry.country
+SET roles_source = $2, updated_by = $3, updated_at = now()
+WHERE code = $1 AND roles_source <> $2 AND state <> 'active'`, c.code, c.roles, by); err != nil {
 			return out, err
 		}
 		for _, alias := range []string{c.code, c.name} {

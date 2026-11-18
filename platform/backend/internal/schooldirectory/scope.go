@@ -112,8 +112,15 @@ SELECT EXISTS (
 		}
 	}
 
+	// Edify Global (docs/migration/80, §12): in a country whose roles come
+	// from the registry, the role's scope is the one assigned there, not the
+	// existing profile's.
+	held, inRegistry := p.HeldInCountry()
+
 	var err error
 	switch {
+	case (s.SummaryOnly || s.RegionScope) && inRegistry:
+		s.RegionIDs = uniq(held.RegionIDs)
 	case (s.SummaryOnly || s.RegionScope) && s.StaffID != "":
 		if s.RegionIDs, err = assignedRegions(ctx, q, s.StaffID); err != nil {
 			return s, err
@@ -137,12 +144,21 @@ WHERE psa.project_id IN (
 		}
 	}
 
+	if inRegistry {
+		// The portfolio the existing tables give holds only the country's
+		// own schools there.
+		if err = s.withinCountry(ctx, q, p.Country.ID); err != nil {
+			return s, err
+		}
+	}
 	if s.RegionScope {
 		if s.RegionIDs, err = regionalReach(ctx, q, s.RegionIDs); err != nil {
 			return s, err
 		}
 	}
-	if s.CountryScope && s.Role != roleAdmin && s.StaffID != "" {
+	if s.CountryScope && s.Role != roleAdmin && inRegistry {
+		s.Country = p.Country.Name
+	} else if s.CountryScope && s.Role != roleAdmin && s.StaffID != "" {
 		var country *string
 		err := q.QueryRow(ctx, `SELECT country FROM staff_profile WHERE id = $1`, s.StaffID).Scan(&country)
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
@@ -167,6 +183,32 @@ WHERE psa.project_id IN (
 		}
 	}
 	return s, nil
+}
+
+// withinCountry keeps, of the portfolio, the schools of the country whose
+// registry id is countryID (country.SchoolIn), and reads its own clusters
+// and districts again from what is left.
+func (s *Scope) withinCountry(ctx context.Context, q Querier, countryID string) error {
+	if len(s.SchoolIDs) == 0 && len(s.OwnSchoolIDs) == 0 {
+		return nil
+	}
+	inside, err := strings1(ctx, q, `SELECT s.id FROM school s WHERE s.id = ANY($1) AND `+registry.SchoolIn("s", "$2"),
+		uniq(append(append([]string{}, s.SchoolIDs...), s.OwnSchoolIDs...)), []string{countryID})
+	if err != nil {
+		return fmt.Errorf("schooldirectory: keeping the country's schools: %w", err)
+	}
+	keep := func(ids []string) []string {
+		out := []string{}
+		for _, id := range ids {
+			if in(inside, id) {
+				out = append(out, id)
+			}
+		}
+		return out
+	}
+	s.OwnSchoolIDs, s.SchoolIDs = keep(s.OwnSchoolIDs), keep(s.SchoolIDs)
+	s.OwnClusterIDs, s.OwnDistrictIDs, err = ownGeography(ctx, q, s.OwnSchoolIDs)
+	return err
 }
 
 // portfolio is the CCEO, Program Lead and IA-assistant branch: own schools,

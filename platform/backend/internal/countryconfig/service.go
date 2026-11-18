@@ -246,8 +246,9 @@ VALUES (gen_random_uuid(), $1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::d
 // country is one country with the settings in force today.
 func (s *Service) country(ctx context.Context, q country.Querier, id string) (*countriesv1.Country, error) {
 	out := &countriesv1.Country{}
-	if err := q.QueryRow(ctx, `SELECT id::text, code, name, state, COALESCE(activated_on::text, '')
-FROM country_registry.country WHERE id = $1::uuid`, id).Scan(&out.Id, &out.Code, &out.Name, &out.State, &out.ActivatedOn); err != nil {
+	if err := q.QueryRow(ctx, `SELECT id::text, code, name, state, COALESCE(activated_on::text, ''), roles_source
+FROM country_registry.country WHERE id = $1::uuid`, id).Scan(&out.Id, &out.Code, &out.Name, &out.State, &out.ActivatedOn,
+		&out.RolesSource); err != nil {
 		return nil, fmt.Errorf("countryconfig: reading the country: %w", err)
 	}
 	inForce, err := s.configs(ctx, q, `v.country_id = $1::uuid AND v.effective_from <= current_date

@@ -12,6 +12,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -19,12 +20,15 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 )
 
 const (
 	bearerPrefix      = "Bearer "
 	signingAlgorithm  = "HS256"
 	accountStatusLive = "active"
+	// roleAdmin is the platform's own role: it is never held per country.
+	roleAdmin = "Admin"
 )
 
 // ErrAccountNotFound is returned by an AccountLoader when no usable account
@@ -67,6 +71,11 @@ type Account struct {
 	// MustChangePassword: an administrator chose the password, and it must
 	// be replaced before anything else (the existing PasswordChangeMiddleware).
 	MustChangePassword bool
+	// Country is the Edify Global country the request is made in, nil when
+	// the account works in no Active country (docs/migration/80, §12). Where
+	// its roles come from the registry, Authenticate narrows Roles and
+	// ActiveRole to the roles the account holds there.
+	Country *country.Work
 }
 
 // ActingAppointment is the acting appointment a person holds today
@@ -185,9 +194,58 @@ func (a *Authenticator) Authenticate(ctx context.Context, header string) (Princi
 		return Principal{}, apierr.New(ctx, connect.CodePermissionDenied, apierr.ReasonAccountInactive,
 			"This account is not active.")
 	}
+	account, inCountry := rolesInCountry(account)
+	if !inCountry {
+		return Principal{}, apierr.New(ctx, connect.CodePermissionDenied, apierr.ReasonPermissionDenied,
+			fmt.Sprintf("Your account has no role in %s yet. An Admin assigns the roles you hold there.", account.Country.Name))
+	}
 	account.ActiveRole = resolveActiveRole(claims.ActiveRole, account)
 	account.InActingAppointment = account.Acting.WorkingIn(account.ActiveRole)
 	return Principal{Account: account}, nil
+}
+
+// rolesInCountry is the account as it works in the country the request is
+// made in. Where that country's roles are the existing profile's (Uganda's),
+// or the account is an Admin (a platform role, held in no one country), or it
+// works in no Active country, nothing changes. Where they come from the
+// registry, the account holds exactly the roles assigned to it there: its
+// stored role counts only when it is one of them, the first assigned
+// otherwise, and an acting appointment (the existing application's, made
+// in Uganda) does not travel. false when it holds no role there at all.
+func rolesInCountry(account Account) (Account, bool) {
+	if !account.Country.FromRegistry() || slices.Contains(account.Roles, roleAdmin) {
+		return account, true
+	}
+	roles := []string{}
+	for _, held := range account.Country.Roles {
+		if held.Role != roleAdmin && !slices.Contains(roles, held.Role) {
+			roles = append(roles, held.Role)
+		}
+	}
+	if len(roles) == 0 {
+		return account, false
+	}
+	account.Roles = roles
+	if !slices.Contains(roles, account.ActiveRole) {
+		account.ActiveRole = roles[0]
+	}
+	account.Acting = nil
+	return account, true
+}
+
+// HeldInCountry is the assignment of the request's role in the country the
+// request is made in, when that country's roles come from the registry; the
+// role's scope there is the assignment's, not the existing profile's.
+func (a Account) HeldInCountry() (country.Assigned, bool) {
+	if !a.Country.FromRegistry() {
+		return country.Assigned{}, false
+	}
+	for _, held := range a.Country.Roles {
+		if held.Role == a.ActiveRole {
+			return held, true
+		}
+	}
+	return country.Assigned{}, false
 }
 
 // resolveActiveRole mirrors the existing rule: the token's role counts only

@@ -121,7 +121,14 @@ func (s *Service) ListMemberships(ctx context.Context, req *connect.Request[coun
 	if err != nil {
 		return nil, apierr.Internal(ctx, s.logger, err)
 	}
-	return connect.NewResponse(&countriesv1.ListMembershipsResponse{Memberships: out}), nil
+	answer := &countriesv1.ListMembershipsResponse{Memberships: out}
+	if p.ActiveRole == roleAdmin {
+		answer.AssignableRoles = assignableRoles()
+		if answer.Regions, err = regionsFor(ctx, s.db, whose); err != nil {
+			return nil, apierr.Internal(ctx, s.logger, err)
+		}
+	}
+	return connect.NewResponse(answer), nil
 }
 
 // GrantMembership records that an account works in a country from a date.
@@ -326,24 +333,30 @@ func memberships(ctx context.Context, q country.Querier, where string, args ...a
   COALESCE(m.effective_until::text, ''), m.granted_by, m.grant_reason, m.granted_at, COALESCE(m.revoked_by, ''),
   m.revoked_at, COALESCE(m.revoke_reason, ''),
   m.revoked_at IS NULL AND m.effective_from <= current_date AND (m.effective_until IS NULL OR m.effective_until > current_date)
-    AND c.state = 'active'
+    AND c.state = 'active',
+  c.roles_source
 FROM country_registry.country_membership m JOIN country_registry.country c ON c.id = m.country_id
 WHERE `+where+` ORDER BY m.granted_at DESC, m.id`, args...)
 	if err != nil {
 		return nil, fmt.Errorf("countryconfig: reading the memberships: %w", err)
 	}
-	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (*countriesv1.Membership, error) {
+	out, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (*countriesv1.Membership, error) {
 		m := &countriesv1.Membership{}
 		var (
 			granted time.Time
 			revoked *time.Time
 		)
 		err := row.Scan(&m.Id, &m.UserId, &m.CountryCode, &m.CountryName, &m.CountryState, &m.IsDefault, &m.EffectiveFrom,
-			&m.EffectiveUntil, &m.GrantedBy, &m.GrantReason, &granted, &m.RevokedBy, &revoked, &m.RevokeReason, &m.InForce)
+			&m.EffectiveUntil, &m.GrantedBy, &m.GrantReason, &granted, &m.RevokedBy, &revoked, &m.RevokeReason, &m.InForce,
+			&m.RolesSource)
 		m.GrantedAt = granted.UTC().Format(time.RFC3339)
 		if revoked != nil {
 			m.RevokedAt = revoked.UTC().Format(time.RFC3339)
 		}
 		return m, err
 	})
+	if err != nil {
+		return nil, err
+	}
+	return withRoles(ctx, q, out)
 }

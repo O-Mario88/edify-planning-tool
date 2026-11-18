@@ -275,7 +275,7 @@ export function membershipStatus(
   return { label: `Not in force: ${stateOf(m.countryState).label} country`, tone: 'warning' };
 }
 
-function reasonProblem(reason: string): string {
+export function reasonProblem(reason: string): string {
   const text = reason.trim();
   if (!text) return 'Say why: a reason is required.';
   if ([...text].length > MAX_REASON) return `Keep the reason to ${MAX_REASON} characters.`;

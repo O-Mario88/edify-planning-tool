@@ -5,6 +5,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 import {
+  AssignCountryRoleRequestSchema,
+  AssignCountryRoleResponseSchema,
   CountryService,
   GrantMembershipRequestSchema,
   GrantMembershipResponseSchema,
@@ -12,6 +14,8 @@ import {
   ListMembershipsResponseSchema,
   RecordCountryConfigRequestSchema,
   RecordCountryConfigResponseSchema,
+  RevokeCountryRoleRequestSchema,
+  RevokeCountryRoleResponseSchema,
   RevokeMembershipRequestSchema,
   RevokeMembershipResponseSchema,
 } from '@/gen/edify/countries/v1/countries_pb';
@@ -20,8 +24,9 @@ import { isSameOrigin } from '@/lib/routes';
 import { ACCESS_COOKIE } from '@/lib/session';
 
 /**
- * Country administration from the browser (docs/migration/80, §11): a new
- * settings version, a grant, a revocation and an account's memberships,
+ * Country administration from the browser (docs/migration/80, §11 and §12):
+ * a new settings version, a grant, a revocation, an account's memberships,
+ * and the roles an account holds in a country,
  * asked of the gateway's CountryService as the reader. The gateway decides
  * who may (an Admin, never on their own account) and writes only Go's
  * country_registry tables. Posts from another site are refused.
@@ -56,6 +61,14 @@ export async function POST(request: NextRequest) {
       case 'revoke': {
         const answer = await client.revokeMembership(fromJson(RevokeMembershipRequestSchema, asked));
         return NextResponse.json(toJson(RevokeMembershipResponseSchema, answer), { headers });
+      }
+      case 'assignRole': {
+        const answer = await client.assignCountryRole(fromJson(AssignCountryRoleRequestSchema, asked));
+        return NextResponse.json(toJson(AssignCountryRoleResponseSchema, answer), { headers });
+      }
+      case 'revokeRole': {
+        const answer = await client.revokeCountryRole(fromJson(RevokeCountryRoleRequestSchema, asked));
+        return NextResponse.json(toJson(RevokeCountryRoleResponseSchema, answer), { headers });
       }
       default:
         return NextResponse.json({ error: 'not_found' }, { status: 404 });

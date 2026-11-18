@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 )
 
 const testSecret = "unit-test-signing-secret-0123456789abcdef"
@@ -89,6 +91,22 @@ func TestAuthenticate(t *testing.T) {
 	single := Account{UserID: "user-1", Roles: []string{"Program Lead"}, ActiveRole: "Program Lead", Status: "active"}
 	suspended := live
 	suspended.Status = "suspended"
+	// Edify Global (docs/migration/80, §12): Uganda's roles stay the
+	// profile's; Kenya's are the registry's.
+	inUganda := live
+	inUganda.Country = &country.Work{Country: country.Country{Code: "UG", Name: "Uganda"}, RolesSource: country.RolesFromProfile}
+	kenya := func(roles ...string) *country.Work {
+		w := &country.Work{Country: country.Country{Code: "KE", Name: "Kenya"}, RolesSource: country.RolesFromRegistry, MembershipID: "m1"}
+		for _, role := range roles {
+			w.Roles = append(w.Roles, country.Assigned{Role: role, ScopeType: country.ScopePortfolio})
+		}
+		return w
+	}
+	officerInKenya, assessorInKenya, nobodyInKenya, adminInKenya := live, live, live, live
+	officerInKenya.Country = kenya("CCEO")
+	assessorInKenya.Country = kenya("ImpactAssessment")
+	nobodyInKenya.Country = kenya()
+	adminInKenya.Roles, adminInKenya.ActiveRole, adminInKenya.Country = []string{"Admin"}, "Admin", kenya()
 
 	tests := []struct {
 		name       string
@@ -100,6 +118,11 @@ func TestAuthenticate(t *testing.T) {
 	}{
 		{name: "token role held by the account wins", header: valid, accounts: fakeAccounts{account: live}, wantRole: "CCEO"},
 		{name: "token role no longer held falls back", header: valid, accounts: fakeAccounts{account: single}, wantRole: "Program Lead"},
+		{name: "Uganda keeps the profile's roles", header: valid, accounts: fakeAccounts{account: inUganda}, wantRole: "CCEO"},
+		{name: "a role assigned in Kenya", header: valid, accounts: fakeAccounts{account: officerInKenya}, wantRole: "CCEO"},
+		{name: "a profile role not assigned in Kenya", header: valid, accounts: fakeAccounts{account: assessorInKenya}, wantRole: "ImpactAssessment"},
+		{name: "no role in Kenya", header: valid, accounts: fakeAccounts{account: nobodyInKenya}, wantCode: connect.CodePermissionDenied, wantReason: apierr.ReasonPermissionDenied},
+		{name: "an Admin is the platform's", header: valid, accounts: fakeAccounts{account: adminInKenya}, wantRole: "Admin"},
 		{name: "no header", header: "", wantCode: connect.CodeUnauthenticated, wantReason: apierr.ReasonAuthMissing},
 		{name: "not a bearer token", header: "Basic abc", wantCode: connect.CodeUnauthenticated, wantReason: apierr.ReasonAuthMissing},
 		{name: "empty bearer token", header: "Bearer  ", wantCode: connect.CodeUnauthenticated, wantReason: apierr.ReasonAuthMissing},
@@ -134,5 +157,35 @@ func TestAuthenticateReportsStoreFailuresAsPlainErrors(t *testing.T) {
 	var connectErr *connect.Error
 	if err == nil || errors.As(err, &connectErr) {
 		t.Fatalf("a store failure must stay an internal error for the interceptor to hide, got %v", err)
+	}
+}
+
+func TestRolesInCountry(t *testing.T) {
+	acting := &ActingAppointment{AppointmentID: "a1", AppointeeRole: "CCEO", InCapacity: true}
+	account := Account{UserID: "u1", Roles: []string{"CCEO", "Program Lead"}, ActiveRole: "Program Lead", Acting: acting,
+		Country: &country.Work{Country: country.Country{Code: "KE", Name: "Kenya"}, RolesSource: country.RolesFromRegistry,
+			Roles: []country.Assigned{{Role: "CCEO"}, {Role: "CCEO"}, {Role: "RegionalProgramLead", RegionIDs: []string{"r1"}}}}}
+	got, ok := rolesInCountry(account)
+	if !ok || strings.Join(got.Roles, ",") != "CCEO,RegionalProgramLead" || got.ActiveRole != "CCEO" || got.Acting != nil {
+		t.Errorf("in Kenya: %+v (%v); want the roles assigned there, the first active, no acting appointment", got, ok)
+	}
+	if held, ok := got.HeldInCountry(); !ok || held.Role != "CCEO" {
+		t.Errorf("the role held in Kenya: %+v (%v)", held, ok)
+	}
+	got.ActiveRole = "RegionalProgramLead"
+	if held, _ := got.HeldInCountry(); strings.Join(held.RegionIDs, ",") != "r1" {
+		t.Errorf("the regional role's regions: %+v", held)
+	}
+
+	account.Country.RolesSource = country.RolesFromProfile
+	if got, ok := rolesInCountry(account); !ok || len(got.Roles) != 2 || got.Acting == nil {
+		t.Errorf("in Uganda: %+v (%v); want the profile's roles untouched", got, ok)
+	}
+	if _, ok := account.HeldInCountry(); ok {
+		t.Error("a role is held through the registry in Uganda")
+	}
+	account.Country = nil
+	if got, ok := rolesInCountry(account); !ok || len(got.Roles) != 2 {
+		t.Errorf("in no country: %+v (%v); want unchanged", got, ok)
 	}
 }

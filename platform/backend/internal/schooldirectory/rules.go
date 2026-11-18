@@ -16,6 +16,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
+
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 )
 
 //go:embed rules.json
@@ -68,6 +70,19 @@ func mustLoad(raw []byte) Rules {
 }
 
 func in(list []string, value string) bool { return slices.Contains(list, value) }
+
+// ScopeTypeOf is the kind of scope a role has (country.Scope*), as
+// resolveScope reads it: a country role the whole country, a regional or
+// summary role the regions it is assigned, anyone else their own portfolio.
+func ScopeTypeOf(role string) string {
+	switch {
+	case in(rules.CountryRoles, role):
+		return registry.ScopeCountry
+	case in(rules.RegionRoles, role) || in(rules.SummaryOnlyRoles, role):
+		return registry.ScopeRegions
+	}
+	return registry.ScopePortfolio
+}
 
 // schoolTypeLabel is School.get_school_type_display: the choice's label, or
 // the stored value itself when it names no choice.

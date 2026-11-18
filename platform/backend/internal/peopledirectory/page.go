@@ -284,6 +284,10 @@ JOIN staff_profile sv ON sv.id = a.supervisor_id JOIN "user" u ON u.id = sv.user
 	return rows.Err()
 }
 
+// RoleLabel is a role in the singular, as the existing application names
+// it to people (CountryDirector → Country Director).
+func RoleLabel(role string) string { return roleLabel(role) }
+
 // roleLabel is the role in the singular.
 func roleLabel(role string) string {
 	if l, ok := rules.SingularRoleLabels[role]; ok {

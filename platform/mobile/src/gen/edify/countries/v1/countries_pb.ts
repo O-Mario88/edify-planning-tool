@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file edify/countries/v1/countries.proto.
  */
 export const file_edify_countries_v1_countries: GenFile = /*@__PURE__*/
-  fileDesc("CiJlZGlmeS9jb3VudHJpZXMvdjEvY291bnRyaWVzLnByb3RvEhJlZGlmeS5jb3VudHJpZXMudjEiiQEKB0NvdW50cnkSCgoCaWQYASABKAkSDAoEY29kZRgCIAEoCRIMCgRuYW1lGAMgASgJEg0KBXN0YXRlGAQgASgJEhQKDGFjdGl2YXRlZF9vbhgFIAEoCRIxCgZjb25maWcYBiABKAsyIS5lZGlmeS5jb3VudHJpZXMudjEuQ291bnRyeUNvbmZpZyLaAgoNQ291bnRyeUNvbmZpZxIPCgd2ZXJzaW9uGAEgASgFEhgKEGRlZmF1bHRfbGFuZ3VhZ2UYAiABKAkSEQoJbGFuZ3VhZ2VzGAMgAygJEhUKDWN1cnJlbmN5X2NvZGUYBCABKAkSHAoUY3VycmVuY3lfbWlub3JfdW5pdHMYBSABKAUSEQoJdGltZV96b25lGAYgASgJEhMKC2RhdGVfZm9ybWF0GAcgASgJEhEKCWNhbGVuZGFycxgIIAMoCRIWCg5meV9zdGFydF9tb250aBgJIAEoBRIWCg5lZmZlY3RpdmVfZnJvbRgKIAEoCRIXCg9lZmZlY3RpdmVfdW50aWwYCyABKAkSEgoKY2hhbmdlZF9ieRgMIAEoCRIVCg1jaGFuZ2VfcmVhc29uGA0gASgJEhMKC2FwcHJvdmVkX2J5GA4gASgJEhIKCmNyZWF0ZWRfYXQYDyABKAkiFgoUTGlzdENvdW50cmllc1JlcXVlc3QiRwoVTGlzdENvdW50cmllc1Jlc3BvbnNlEi4KCWNvdW50cmllcxgBIAMoCzIbLmVkaWZ5LmNvdW50cmllcy52MS5Db3VudHJ5Ii8KF0dldENvdW50cnlDb25maWdSZXF1ZXN0EhQKDGNvdW50cnlfY29kZRgBIAEoCSJ9ChhHZXRDb3VudHJ5Q29uZmlnUmVzcG9uc2USLAoHY291bnRyeRgBIAEoCzIbLmVkaWZ5LmNvdW50cmllcy52MS5Db3VudHJ5EjMKCHZlcnNpb25zGAIgAygLMiEuZWRpZnkuY291bnRyaWVzLnYxLkNvdW50cnlDb25maWcilgIKGlJlY29yZENvdW50cnlDb25maWdSZXF1ZXN0EhQKDGNvdW50cnlfY29kZRgBIAEoCRIYChBkZWZhdWx0X2xhbmd1YWdlGAIgASgJEhEKCWxhbmd1YWdlcxgDIAMoCRIVCg1jdXJyZW5jeV9jb2RlGAQgASgJEhwKFGN1cnJlbmN5X21pbm9yX3VuaXRzGAUgASgFEhEKCXRpbWVfem9uZRgGIAEoCRITCgtkYXRlX2Zvcm1hdBgHIAEoCRIRCgljYWxlbmRhcnMYCCADKAkSFgoOZnlfc3RhcnRfbW9udGgYCSABKAUSFgoOZWZmZWN0aXZlX2Zyb20YCiABKAkSFQoNY2hhbmdlX3JlYXNvbhgLIAEoCSKAAQobUmVjb3JkQ291bnRyeUNvbmZpZ1Jlc3BvbnNlEiwKB2NvdW50cnkYASABKAsyGy5lZGlmeS5jb3VudHJpZXMudjEuQ291bnRyeRIzCghyZWNvcmRlZBgCIAEoCzIhLmVkaWZ5LmNvdW50cmllcy52MS5Db3VudHJ5Q29uZmlnIsACCgpNZW1iZXJzaGlwEgoKAmlkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkSFAoMY291bnRyeV9jb2RlGAMgASgJEhQKDGNvdW50cnlfbmFtZRgEIAEoCRIVCg1jb3VudHJ5X3N0YXRlGAUgASgJEhIKCmlzX2RlZmF1bHQYBiABKAgSFgoOZWZmZWN0aXZlX2Zyb20YByABKAkSFwoPZWZmZWN0aXZlX3VudGlsGAggASgJEhIKCmdyYW50ZWRfYnkYCSABKAkSFAoMZ3JhbnRfcmVhc29uGAogASgJEhIKCmdyYW50ZWRfYXQYCyABKAkSEgoKcmV2b2tlZF9ieRgMIAEoCRISCgpyZXZva2VkX2F0GA0gASgJEhUKDXJldm9rZV9yZWFzb24YDiABKAkSEAoIaW5fZm9yY2UYDyABKAgiKQoWTGlzdE1lbWJlcnNoaXBzUmVxdWVzdBIPCgd1c2VyX2lkGAEgASgJIk4KF0xpc3RNZW1iZXJzaGlwc1Jlc3BvbnNlEjMKC21lbWJlcnNoaXBzGAEgAygLMh4uZWRpZnkuY291bnRyaWVzLnYxLk1lbWJlcnNoaXAigAEKFkdyYW50TWVtYmVyc2hpcFJlcXVlc3QSDwoHdXNlcl9pZBgBIAEoCRIUCgxjb3VudHJ5X2NvZGUYAiABKAkSFgoOZWZmZWN0aXZlX2Zyb20YAyABKAkSFwoPZWZmZWN0aXZlX3VudGlsGAQgASgJEg4KBnJlYXNvbhgFIAEoCSJKChdHcmFudE1lbWJlcnNoaXBSZXNwb25zZRIvCgdncmFudGVkGAEgASgLMh4uZWRpZnkuY291bnRyaWVzLnYxLk1lbWJlcnNoaXAiQAoXUmV2b2tlTWVtYmVyc2hpcFJlcXVlc3QSFQoNbWVtYmVyc2hpcF9pZBgBIAEoCRIOCgZyZWFzb24YAiABKAkiSwoYUmV2b2tlTWVtYmVyc2hpcFJlc3BvbnNlEi8KB3Jldm9rZWQYASABKAsyHi5lZGlmeS5jb3VudHJpZXMudjEuTWVtYmVyc2hpcDKkBQoOQ291bnRyeVNlcnZpY2USZAoNTGlzdENvdW50cmllcxIoLmVkaWZ5LmNvdW50cmllcy52MS5MaXN0Q291bnRyaWVzUmVxdWVzdBopLmVkaWZ5LmNvdW50cmllcy52MS5MaXN0Q291bnRyaWVzUmVzcG9uc2USbQoQR2V0Q291bnRyeUNvbmZpZxIrLmVkaWZ5LmNvdW50cmllcy52MS5HZXRDb3VudHJ5Q29uZmlnUmVxdWVzdBosLmVkaWZ5LmNvdW50cmllcy52MS5HZXRDb3VudHJ5Q29uZmlnUmVzcG9uc2USdgoTUmVjb3JkQ291bnRyeUNvbmZpZxIuLmVkaWZ5LmNvdW50cmllcy52MS5SZWNvcmRDb3VudHJ5Q29uZmlnUmVxdWVzdBovLmVkaWZ5LmNvdW50cmllcy52MS5SZWNvcmRDb3VudHJ5Q29uZmlnUmVzcG9uc2USagoPTGlzdE1lbWJlcnNoaXBzEiouZWRpZnkuY291bnRyaWVzLnYxLkxpc3RNZW1iZXJzaGlwc1JlcXVlc3QaKy5lZGlmeS5jb3VudHJpZXMudjEuTGlzdE1lbWJlcnNoaXBzUmVzcG9uc2USagoPR3JhbnRNZW1iZXJzaGlwEiouZWRpZnkuY291bnRyaWVzLnYxLkdyYW50TWVtYmVyc2hpcFJlcXVlc3QaKy5lZGlmeS5jb3VudHJpZXMudjEuR3JhbnRNZW1iZXJzaGlwUmVzcG9uc2USbQoQUmV2b2tlTWVtYmVyc2hpcBIrLmVkaWZ5LmNvdW50cmllcy52MS5SZXZva2VNZW1iZXJzaGlwUmVxdWVzdBosLmVkaWZ5LmNvdW50cmllcy52MS5SZXZva2VNZW1iZXJzaGlwUmVzcG9uc2VC8AEKFmNvbS5lZGlmeS5jb3VudHJpZXMudjFCDkNvdW50cmllc1Byb3RvUAFaXGdpdGh1Yi5jb20vTy1NYXJpbzg4L2VkaWZ5LXBsYW5uaW5nLXRvb2wvcGxhdGZvcm0vYmFja2VuZC9nZW4vZWRpZnkvY291bnRyaWVzL3YxO2NvdW50cmllc3YxogIDRUNYqgISRWRpZnkuQ291bnRyaWVzLlYxygISRWRpZnlcQ291bnRyaWVzXFYx4gIeRWRpZnlcQ291bnRyaWVzXFYxXEdQQk1ldGFkYXRh6gIURWRpZnk6OkNvdW50cmllczo6VjFiBnByb3RvMw");
+  fileDesc("CiJlZGlmeS9jb3VudHJpZXMvdjEvY291bnRyaWVzLnByb3RvEhJlZGlmeS5jb3VudHJpZXMudjEinwEKB0NvdW50cnkSCgoCaWQYASABKAkSDAoEY29kZRgCIAEoCRIMCgRuYW1lGAMgASgJEg0KBXN0YXRlGAQgASgJEhQKDGFjdGl2YXRlZF9vbhgFIAEoCRIxCgZjb25maWcYBiABKAsyIS5lZGlmeS5jb3VudHJpZXMudjEuQ291bnRyeUNvbmZpZxIUCgxyb2xlc19zb3VyY2UYByABKAki2gIKDUNvdW50cnlDb25maWcSDwoHdmVyc2lvbhgBIAEoBRIYChBkZWZhdWx0X2xhbmd1YWdlGAIgASgJEhEKCWxhbmd1YWdlcxgDIAMoCRIVCg1jdXJyZW5jeV9jb2RlGAQgASgJEhwKFGN1cnJlbmN5X21pbm9yX3VuaXRzGAUgASgFEhEKCXRpbWVfem9uZRgGIAEoCRITCgtkYXRlX2Zvcm1hdBgHIAEoCRIRCgljYWxlbmRhcnMYCCADKAkSFgoOZnlfc3RhcnRfbW9udGgYCSABKAUSFgoOZWZmZWN0aXZlX2Zyb20YCiABKAkSFwoPZWZmZWN0aXZlX3VudGlsGAsgASgJEhIKCmNoYW5nZWRfYnkYDCABKAkSFQoNY2hhbmdlX3JlYXNvbhgNIAEoCRITCgthcHByb3ZlZF9ieRgOIAEoCRISCgpjcmVhdGVkX2F0GA8gASgJIhYKFExpc3RDb3VudHJpZXNSZXF1ZXN0IkcKFUxpc3RDb3VudHJpZXNSZXNwb25zZRIuCgljb3VudHJpZXMYASADKAsyGy5lZGlmeS5jb3VudHJpZXMudjEuQ291bnRyeSIvChdHZXRDb3VudHJ5Q29uZmlnUmVxdWVzdBIUCgxjb3VudHJ5X2NvZGUYASABKAkifQoYR2V0Q291bnRyeUNvbmZpZ1Jlc3BvbnNlEiwKB2NvdW50cnkYASABKAsyGy5lZGlmeS5jb3VudHJpZXMudjEuQ291bnRyeRIzCgh2ZXJzaW9ucxgCIAMoCzIhLmVkaWZ5LmNvdW50cmllcy52MS5Db3VudHJ5Q29uZmlnIpYCChpSZWNvcmRDb3VudHJ5Q29uZmlnUmVxdWVzdBIUCgxjb3VudHJ5X2NvZGUYASABKAkSGAoQZGVmYXVsdF9sYW5ndWFnZRgCIAEoCRIRCglsYW5ndWFnZXMYAyADKAkSFQoNY3VycmVuY3lfY29kZRgEIAEoCRIcChRjdXJyZW5jeV9taW5vcl91bml0cxgFIAEoBRIRCgl0aW1lX3pvbmUYBiABKAkSEwoLZGF0ZV9mb3JtYXQYByABKAkSEQoJY2FsZW5kYXJzGAggAygJEhYKDmZ5X3N0YXJ0X21vbnRoGAkgASgFEhYKDmVmZmVjdGl2ZV9mcm9tGAogASgJEhUKDWNoYW5nZV9yZWFzb24YCyABKAkigAEKG1JlY29yZENvdW50cnlDb25maWdSZXNwb25zZRIsCgdjb3VudHJ5GAEgASgLMhsuZWRpZnkuY291bnRyaWVzLnYxLkNvdW50cnkSMwoIcmVjb3JkZWQYAiABKAsyIS5lZGlmeS5jb3VudHJpZXMudjEuQ291bnRyeUNvbmZpZyKGAwoKTWVtYmVyc2hpcBIKCgJpZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJEhQKDGNvdW50cnlfY29kZRgDIAEoCRIUCgxjb3VudHJ5X25hbWUYBCABKAkSFQoNY291bnRyeV9zdGF0ZRgFIAEoCRISCgppc19kZWZhdWx0GAYgASgIEhYKDmVmZmVjdGl2ZV9mcm9tGAcgASgJEhcKD2VmZmVjdGl2ZV91bnRpbBgIIAEoCRISCgpncmFudGVkX2J5GAkgASgJEhQKDGdyYW50X3JlYXNvbhgKIAEoCRISCgpncmFudGVkX2F0GAsgASgJEhIKCnJldm9rZWRfYnkYDCABKAkSEgoKcmV2b2tlZF9hdBgNIAEoCRIVCg1yZXZva2VfcmVhc29uGA4gASgJEhAKCGluX2ZvcmNlGA8gASgIEhQKDHJvbGVzX3NvdXJjZRgQIAEoCRIuCgVyb2xlcxgRIAMoCzIfLmVkaWZ5LmNvdW50cmllcy52MS5Db3VudHJ5Um9sZSKNAgoLQ291bnRyeVJvbGUSCgoCaWQYASABKAkSFQoNbWVtYmVyc2hpcF9pZBgCIAEoCRIMCgRyb2xlGAMgASgJEhIKCnNjb3BlX3R5cGUYBCABKAkSEgoKcmVnaW9uX2lkcxgFIAMoCRIUCgxyZWdpb25fbmFtZXMYBiADKAkSEgoKZ3JhbnRlZF9ieRgHIAEoCRIUCgxncmFudF9yZWFzb24YCCABKAkSEgoKZ3JhbnRlZF9hdBgJIAEoCRISCgpyZXZva2VkX2J5GAogASgJEhIKCnJldm9rZWRfYXQYCyABKAkSFQoNcmV2b2tlX3JlYXNvbhgMIAEoCRISCgpyb2xlX2xhYmVsGA0gASgJIkEKDkFzc2lnbmFibGVSb2xlEgwKBHJvbGUYASABKAkSEgoKc2NvcGVfdHlwZRgCIAEoCRINCgVsYWJlbBgDIAEoCSI4CgZSZWdpb24SCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIUCgxjb3VudHJ5X2NvZGUYAyABKAkiKQoWTGlzdE1lbWJlcnNoaXBzUmVxdWVzdBIPCgd1c2VyX2lkGAEgASgJIrkBChdMaXN0TWVtYmVyc2hpcHNSZXNwb25zZRIzCgttZW1iZXJzaGlwcxgBIAMoCzIeLmVkaWZ5LmNvdW50cmllcy52MS5NZW1iZXJzaGlwEjwKEGFzc2lnbmFibGVfcm9sZXMYAiADKAsyIi5lZGlmeS5jb3VudHJpZXMudjEuQXNzaWduYWJsZVJvbGUSKwoHcmVnaW9ucxgDIAMoCzIaLmVkaWZ5LmNvdW50cmllcy52MS5SZWdpb24igAEKFkdyYW50TWVtYmVyc2hpcFJlcXVlc3QSDwoHdXNlcl9pZBgBIAEoCRIUCgxjb3VudHJ5X2NvZGUYAiABKAkSFgoOZWZmZWN0aXZlX2Zyb20YAyABKAkSFwoPZWZmZWN0aXZlX3VudGlsGAQgASgJEg4KBnJlYXNvbhgFIAEoCSJKChdHcmFudE1lbWJlcnNoaXBSZXNwb25zZRIvCgdncmFudGVkGAEgASgLMh4uZWRpZnkuY291bnRyaWVzLnYxLk1lbWJlcnNoaXAiQAoXUmV2b2tlTWVtYmVyc2hpcFJlcXVlc3QSFQoNbWVtYmVyc2hpcF9pZBgBIAEoCRIOCgZyZWFzb24YAiABKAkiSwoYUmV2b2tlTWVtYmVyc2hpcFJlc3BvbnNlEi8KB3Jldm9rZWQYASABKAsyHi5lZGlmeS5jb3VudHJpZXMudjEuTWVtYmVyc2hpcCJjChhBc3NpZ25Db3VudHJ5Um9sZVJlcXVlc3QSFQoNbWVtYmVyc2hpcF9pZBgBIAEoCRIMCgRyb2xlGAIgASgJEhIKCnJlZ2lvbl9pZHMYAyADKAkSDgoGcmVhc29uGAQgASgJIk8KGUFzc2lnbkNvdW50cnlSb2xlUmVzcG9uc2USMgoKbWVtYmVyc2hpcBgBIAEoCzIeLmVkaWZ5LmNvdW50cmllcy52MS5NZW1iZXJzaGlwIjsKGFJldm9rZUNvdW50cnlSb2xlUmVxdWVzdBIPCgdyb2xlX2lkGAEgASgJEg4KBnJlYXNvbhgCIAEoCSJPChlSZXZva2VDb3VudHJ5Um9sZVJlc3BvbnNlEjIKCm1lbWJlcnNoaXAYASABKAsyHi5lZGlmeS5jb3VudHJpZXMudjEuTWVtYmVyc2hpcDKIBwoOQ291bnRyeVNlcnZpY2USZAoNTGlzdENvdW50cmllcxIoLmVkaWZ5LmNvdW50cmllcy52MS5MaXN0Q291bnRyaWVzUmVxdWVzdBopLmVkaWZ5LmNvdW50cmllcy52MS5MaXN0Q291bnRyaWVzUmVzcG9uc2USbQoQR2V0Q291bnRyeUNvbmZpZxIrLmVkaWZ5LmNvdW50cmllcy52MS5HZXRDb3VudHJ5Q29uZmlnUmVxdWVzdBosLmVkaWZ5LmNvdW50cmllcy52MS5HZXRDb3VudHJ5Q29uZmlnUmVzcG9uc2USdgoTUmVjb3JkQ291bnRyeUNvbmZpZxIuLmVkaWZ5LmNvdW50cmllcy52MS5SZWNvcmRDb3VudHJ5Q29uZmlnUmVxdWVzdBovLmVkaWZ5LmNvdW50cmllcy52MS5SZWNvcmRDb3VudHJ5Q29uZmlnUmVzcG9uc2USagoPTGlzdE1lbWJlcnNoaXBzEiouZWRpZnkuY291bnRyaWVzLnYxLkxpc3RNZW1iZXJzaGlwc1JlcXVlc3QaKy5lZGlmeS5jb3VudHJpZXMudjEuTGlzdE1lbWJlcnNoaXBzUmVzcG9uc2USagoPR3JhbnRNZW1iZXJzaGlwEiouZWRpZnkuY291bnRyaWVzLnYxLkdyYW50TWVtYmVyc2hpcFJlcXVlc3QaKy5lZGlmeS5jb3VudHJpZXMudjEuR3JhbnRNZW1iZXJzaGlwUmVzcG9uc2USbQoQUmV2b2tlTWVtYmVyc2hpcBIrLmVkaWZ5LmNvdW50cmllcy52MS5SZXZva2VNZW1iZXJzaGlwUmVxdWVzdBosLmVkaWZ5LmNvdW50cmllcy52MS5SZXZva2VNZW1iZXJzaGlwUmVzcG9uc2UScAoRQXNzaWduQ291bnRyeVJvbGUSLC5lZGlmeS5jb3VudHJpZXMudjEuQXNzaWduQ291bnRyeVJvbGVSZXF1ZXN0Gi0uZWRpZnkuY291bnRyaWVzLnYxLkFzc2lnbkNvdW50cnlSb2xlUmVzcG9uc2UScAoRUmV2b2tlQ291bnRyeVJvbGUSLC5lZGlmeS5jb3VudHJpZXMudjEuUmV2b2tlQ291bnRyeVJvbGVSZXF1ZXN0Gi0uZWRpZnkuY291bnRyaWVzLnYxLlJldm9rZUNvdW50cnlSb2xlUmVzcG9uc2VC8AEKFmNvbS5lZGlmeS5jb3VudHJpZXMudjFCDkNvdW50cmllc1Byb3RvUAFaXGdpdGh1Yi5jb20vTy1NYXJpbzg4L2VkaWZ5LXBsYW5uaW5nLXRvb2wvcGxhdGZvcm0vYmFja2VuZC9nZW4vZWRpZnkvY291bnRyaWVzL3YxO2NvdW50cmllc3YxogIDRUNYqgISRWRpZnkuQ291bnRyaWVzLlYxygISRWRpZnlcQ291bnRyaWVzXFYx4gIeRWRpZnlcQ291bnRyaWVzXFYxXEdQQk1ldGFkYXRh6gIURWRpZnk6OkNvdW50cmllczo6VjFiBnByb3RvMw");
 
 /**
  * Country is one registered country.
@@ -57,6 +57,15 @@ export type Country = Message<"edify.countries.v1.Country"> & {
    * @generated from field: edify.countries.v1.CountryConfig config = 6;
    */
   config?: CountryConfig | undefined;
+
+  /**
+   * Where the roles of the people who work in it come from:
+   * existing_profile (Uganda's: each account's profile in the existing
+   * application, as today) or registry (only the roles assigned there).
+   *
+   * @generated from field: string roles_source = 7;
+   */
+  rolesSource: string;
 };
 
 /**
@@ -439,6 +448,22 @@ export type Membership = Message<"edify.countries.v1.Membership"> & {
    * @generated from field: bool in_force = 15;
    */
   inForce: boolean;
+
+  /**
+   * The country's roles_source (see Country).
+   *
+   * @generated from field: string roles_source = 16;
+   */
+  rolesSource: string;
+
+  /**
+   * The roles assigned under this membership, newest first, revoked ones
+   * included. Always empty where the country's roles come from the existing
+   * profile.
+   *
+   * @generated from field: repeated edify.countries.v1.CountryRole roles = 17;
+   */
+  roles: CountryRole[];
 };
 
 /**
@@ -447,6 +472,159 @@ export type Membership = Message<"edify.countries.v1.Membership"> & {
  */
 export const MembershipSchema: GenMessage<Membership> = /*@__PURE__*/
   messageDesc(file_edify_countries_v1_countries, 8);
+
+/**
+ * CountryRole is one role an account holds in a country. It applies while
+ * its membership is in force; nothing is ever rewritten.
+ *
+ * @generated from message edify.countries.v1.CountryRole
+ */
+export type CountryRole = Message<"edify.countries.v1.CountryRole"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string membership_id = 2;
+   */
+  membershipId: string;
+
+  /**
+   * A role the existing application defines, e.g. CCEO.
+   *
+   * @generated from field: string role = 3;
+   */
+  role: string;
+
+  /**
+   * country, regions or portfolio: the kind of scope the role has.
+   *
+   * @generated from field: string scope_type = 4;
+   */
+  scopeType: string;
+
+  /**
+   * The existing regions a regional role covers, with their names.
+   *
+   * @generated from field: repeated string region_ids = 5;
+   */
+  regionIds: string[];
+
+  /**
+   * @generated from field: repeated string region_names = 6;
+   */
+  regionNames: string[];
+
+  /**
+   * @generated from field: string granted_by = 7;
+   */
+  grantedBy: string;
+
+  /**
+   * @generated from field: string grant_reason = 8;
+   */
+  grantReason: string;
+
+  /**
+   * RFC 3339.
+   *
+   * @generated from field: string granted_at = 9;
+   */
+  grantedAt: string;
+
+  /**
+   * Empty while not revoked.
+   *
+   * @generated from field: string revoked_by = 10;
+   */
+  revokedBy: string;
+
+  /**
+   * @generated from field: string revoked_at = 11;
+   */
+  revokedAt: string;
+
+  /**
+   * @generated from field: string revoke_reason = 12;
+   */
+  revokeReason: string;
+
+  /**
+   * The role as people read it, e.g. Country Director.
+   *
+   * @generated from field: string role_label = 13;
+   */
+  roleLabel: string;
+};
+
+/**
+ * Describes the message edify.countries.v1.CountryRole.
+ * Use `create(CountryRoleSchema)` to create a new message.
+ */
+export const CountryRoleSchema: GenMessage<CountryRole> = /*@__PURE__*/
+  messageDesc(file_edify_countries_v1_countries, 9);
+
+/**
+ * AssignableRole is a role an Admin may assign in a country, with the kind
+ * of scope it has there.
+ *
+ * @generated from message edify.countries.v1.AssignableRole
+ */
+export type AssignableRole = Message<"edify.countries.v1.AssignableRole"> & {
+  /**
+   * @generated from field: string role = 1;
+   */
+  role: string;
+
+  /**
+   * @generated from field: string scope_type = 2;
+   */
+  scopeType: string;
+
+  /**
+   * The role as people read it.
+   *
+   * @generated from field: string label = 3;
+   */
+  label: string;
+};
+
+/**
+ * Describes the message edify.countries.v1.AssignableRole.
+ * Use `create(AssignableRoleSchema)` to create a new message.
+ */
+export const AssignableRoleSchema: GenMessage<AssignableRole> = /*@__PURE__*/
+  messageDesc(file_edify_countries_v1_countries, 10);
+
+/**
+ * Region is an existing region, named by the country it is in.
+ *
+ * @generated from message edify.countries.v1.Region
+ */
+export type Region = Message<"edify.countries.v1.Region"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string country_code = 3;
+   */
+  countryCode: string;
+};
+
+/**
+ * Describes the message edify.countries.v1.Region.
+ * Use `create(RegionSchema)` to create a new message.
+ */
+export const RegionSchema: GenMessage<Region> = /*@__PURE__*/
+  messageDesc(file_edify_countries_v1_countries, 11);
 
 /**
  * @generated from message edify.countries.v1.ListMembershipsRequest
@@ -465,7 +643,7 @@ export type ListMembershipsRequest = Message<"edify.countries.v1.ListMemberships
  * Use `create(ListMembershipsRequestSchema)` to create a new message.
  */
 export const ListMembershipsRequestSchema: GenMessage<ListMembershipsRequest> = /*@__PURE__*/
-  messageDesc(file_edify_countries_v1_countries, 9);
+  messageDesc(file_edify_countries_v1_countries, 12);
 
 /**
  * @generated from message edify.countries.v1.ListMembershipsResponse
@@ -475,6 +653,19 @@ export type ListMembershipsResponse = Message<"edify.countries.v1.ListMembership
    * @generated from field: repeated edify.countries.v1.Membership memberships = 1;
    */
   memberships: Membership[];
+
+  /**
+   * For an Admin: the roles that may be assigned in a country, and the
+   * regions of the account's countries whose roles come from the registry.
+   *
+   * @generated from field: repeated edify.countries.v1.AssignableRole assignable_roles = 2;
+   */
+  assignableRoles: AssignableRole[];
+
+  /**
+   * @generated from field: repeated edify.countries.v1.Region regions = 3;
+   */
+  regions: Region[];
 };
 
 /**
@@ -482,7 +673,7 @@ export type ListMembershipsResponse = Message<"edify.countries.v1.ListMembership
  * Use `create(ListMembershipsResponseSchema)` to create a new message.
  */
 export const ListMembershipsResponseSchema: GenMessage<ListMembershipsResponse> = /*@__PURE__*/
-  messageDesc(file_edify_countries_v1_countries, 10);
+  messageDesc(file_edify_countries_v1_countries, 13);
 
 /**
  * @generated from message edify.countries.v1.GrantMembershipRequest
@@ -527,7 +718,7 @@ export type GrantMembershipRequest = Message<"edify.countries.v1.GrantMembership
  * Use `create(GrantMembershipRequestSchema)` to create a new message.
  */
 export const GrantMembershipRequestSchema: GenMessage<GrantMembershipRequest> = /*@__PURE__*/
-  messageDesc(file_edify_countries_v1_countries, 11);
+  messageDesc(file_edify_countries_v1_countries, 14);
 
 /**
  * @generated from message edify.countries.v1.GrantMembershipResponse
@@ -544,7 +735,7 @@ export type GrantMembershipResponse = Message<"edify.countries.v1.GrantMembershi
  * Use `create(GrantMembershipResponseSchema)` to create a new message.
  */
 export const GrantMembershipResponseSchema: GenMessage<GrantMembershipResponse> = /*@__PURE__*/
-  messageDesc(file_edify_countries_v1_countries, 12);
+  messageDesc(file_edify_countries_v1_countries, 15);
 
 /**
  * @generated from message edify.countries.v1.RevokeMembershipRequest
@@ -568,7 +759,7 @@ export type RevokeMembershipRequest = Message<"edify.countries.v1.RevokeMembersh
  * Use `create(RevokeMembershipRequestSchema)` to create a new message.
  */
 export const RevokeMembershipRequestSchema: GenMessage<RevokeMembershipRequest> = /*@__PURE__*/
-  messageDesc(file_edify_countries_v1_countries, 13);
+  messageDesc(file_edify_countries_v1_countries, 16);
 
 /**
  * @generated from message edify.countries.v1.RevokeMembershipResponse
@@ -585,7 +776,106 @@ export type RevokeMembershipResponse = Message<"edify.countries.v1.RevokeMembers
  * Use `create(RevokeMembershipResponseSchema)` to create a new message.
  */
 export const RevokeMembershipResponseSchema: GenMessage<RevokeMembershipResponse> = /*@__PURE__*/
-  messageDesc(file_edify_countries_v1_countries, 14);
+  messageDesc(file_edify_countries_v1_countries, 17);
+
+/**
+ * @generated from message edify.countries.v1.AssignCountryRoleRequest
+ */
+export type AssignCountryRoleRequest = Message<"edify.countries.v1.AssignCountryRoleRequest"> & {
+  /**
+   * The membership the role is held under: not revoked and not ended.
+   *
+   * @generated from field: string membership_id = 1;
+   */
+  membershipId: string;
+
+  /**
+   * @generated from field: string role = 2;
+   */
+  role: string;
+
+  /**
+   * Required for a regional role (at least one, each a region of the
+   * membership's country); empty for any other.
+   *
+   * @generated from field: repeated string region_ids = 3;
+   */
+  regionIds: string[];
+
+  /**
+   * Why the account holds this role there (required, at most 500 characters).
+   *
+   * @generated from field: string reason = 4;
+   */
+  reason: string;
+};
+
+/**
+ * Describes the message edify.countries.v1.AssignCountryRoleRequest.
+ * Use `create(AssignCountryRoleRequestSchema)` to create a new message.
+ */
+export const AssignCountryRoleRequestSchema: GenMessage<AssignCountryRoleRequest> = /*@__PURE__*/
+  messageDesc(file_edify_countries_v1_countries, 18);
+
+/**
+ * @generated from message edify.countries.v1.AssignCountryRoleResponse
+ */
+export type AssignCountryRoleResponse = Message<"edify.countries.v1.AssignCountryRoleResponse"> & {
+  /**
+   * The membership, with its roles.
+   *
+   * @generated from field: edify.countries.v1.Membership membership = 1;
+   */
+  membership?: Membership | undefined;
+};
+
+/**
+ * Describes the message edify.countries.v1.AssignCountryRoleResponse.
+ * Use `create(AssignCountryRoleResponseSchema)` to create a new message.
+ */
+export const AssignCountryRoleResponseSchema: GenMessage<AssignCountryRoleResponse> = /*@__PURE__*/
+  messageDesc(file_edify_countries_v1_countries, 19);
+
+/**
+ * @generated from message edify.countries.v1.RevokeCountryRoleRequest
+ */
+export type RevokeCountryRoleRequest = Message<"edify.countries.v1.RevokeCountryRoleRequest"> & {
+  /**
+   * @generated from field: string role_id = 1;
+   */
+  roleId: string;
+
+  /**
+   * Why it is revoked (required, at most 500 characters).
+   *
+   * @generated from field: string reason = 2;
+   */
+  reason: string;
+};
+
+/**
+ * Describes the message edify.countries.v1.RevokeCountryRoleRequest.
+ * Use `create(RevokeCountryRoleRequestSchema)` to create a new message.
+ */
+export const RevokeCountryRoleRequestSchema: GenMessage<RevokeCountryRoleRequest> = /*@__PURE__*/
+  messageDesc(file_edify_countries_v1_countries, 20);
+
+/**
+ * @generated from message edify.countries.v1.RevokeCountryRoleResponse
+ */
+export type RevokeCountryRoleResponse = Message<"edify.countries.v1.RevokeCountryRoleResponse"> & {
+  /**
+   * @generated from field: edify.countries.v1.Membership membership = 1;
+   */
+  membership?: Membership | undefined;
+};
+
+/**
+ * Describes the message edify.countries.v1.RevokeCountryRoleResponse.
+ * Use `create(RevokeCountryRoleResponseSchema)` to create a new message.
+ */
+export const RevokeCountryRoleResponseSchema: GenMessage<RevokeCountryRoleResponse> = /*@__PURE__*/
+  messageDesc(file_edify_countries_v1_countries, 21);
 
 /**
  * Edify Global (docs/migration/80-multi-country-phase-0.md): the countries
@@ -661,6 +951,30 @@ export const CountryService: GenService<{
     methodKind: "unary";
     input: typeof RevokeMembershipRequestSchema;
     output: typeof RevokeMembershipResponseSchema;
+  },
+  /**
+   * Assign a role an account holds in a country, under one of its
+   * memberships (Admin only, never their own). Only for a country whose
+   * roles come from the registry: Uganda's come from each account's profile
+   * in the existing application.
+   *
+   * @generated from rpc edify.countries.v1.CountryService.AssignCountryRole
+   */
+  assignCountryRole: {
+    methodKind: "unary";
+    input: typeof AssignCountryRoleRequestSchema;
+    output: typeof AssignCountryRoleResponseSchema;
+  },
+  /**
+   * Revoke a role held in a country, keeping its record (Admin only, never
+   * their own).
+   *
+   * @generated from rpc edify.countries.v1.CountryService.RevokeCountryRole
+   */
+  revokeCountryRole: {
+    methodKind: "unary";
+    input: typeof RevokeCountryRoleRequestSchema;
+    output: typeof RevokeCountryRoleResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_edify_countries_v1_countries, 0);

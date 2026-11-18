@@ -25,6 +25,8 @@ const (
 	CountryService_ListMemberships_FullMethodName     = "/edify.countries.v1.CountryService/ListMemberships"
 	CountryService_GrantMembership_FullMethodName     = "/edify.countries.v1.CountryService/GrantMembership"
 	CountryService_RevokeMembership_FullMethodName    = "/edify.countries.v1.CountryService/RevokeMembership"
+	CountryService_AssignCountryRole_FullMethodName   = "/edify.countries.v1.CountryService/AssignCountryRole"
+	CountryService_RevokeCountryRole_FullMethodName   = "/edify.countries.v1.CountryService/RevokeCountryRole"
 )
 
 // CountryServiceClient is the client API for CountryService service.
@@ -54,6 +56,14 @@ type CountryServiceClient interface {
 	GrantMembership(ctx context.Context, in *GrantMembershipRequest, opts ...grpc.CallOption) (*GrantMembershipResponse, error)
 	// Revoke a membership, keeping its record (Admin only, never their own).
 	RevokeMembership(ctx context.Context, in *RevokeMembershipRequest, opts ...grpc.CallOption) (*RevokeMembershipResponse, error)
+	// Assign a role an account holds in a country, under one of its
+	// memberships (Admin only, never their own). Only for a country whose
+	// roles come from the registry: Uganda's come from each account's profile
+	// in the existing application.
+	AssignCountryRole(ctx context.Context, in *AssignCountryRoleRequest, opts ...grpc.CallOption) (*AssignCountryRoleResponse, error)
+	// Revoke a role held in a country, keeping its record (Admin only, never
+	// their own).
+	RevokeCountryRole(ctx context.Context, in *RevokeCountryRoleRequest, opts ...grpc.CallOption) (*RevokeCountryRoleResponse, error)
 }
 
 type countryServiceClient struct {
@@ -124,6 +134,26 @@ func (c *countryServiceClient) RevokeMembership(ctx context.Context, in *RevokeM
 	return out, nil
 }
 
+func (c *countryServiceClient) AssignCountryRole(ctx context.Context, in *AssignCountryRoleRequest, opts ...grpc.CallOption) (*AssignCountryRoleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AssignCountryRoleResponse)
+	err := c.cc.Invoke(ctx, CountryService_AssignCountryRole_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *countryServiceClient) RevokeCountryRole(ctx context.Context, in *RevokeCountryRoleRequest, opts ...grpc.CallOption) (*RevokeCountryRoleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RevokeCountryRoleResponse)
+	err := c.cc.Invoke(ctx, CountryService_RevokeCountryRole_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CountryServiceServer is the server API for CountryService service.
 // All implementations must embed UnimplementedCountryServiceServer
 // for forward compatibility.
@@ -151,6 +181,14 @@ type CountryServiceServer interface {
 	GrantMembership(context.Context, *GrantMembershipRequest) (*GrantMembershipResponse, error)
 	// Revoke a membership, keeping its record (Admin only, never their own).
 	RevokeMembership(context.Context, *RevokeMembershipRequest) (*RevokeMembershipResponse, error)
+	// Assign a role an account holds in a country, under one of its
+	// memberships (Admin only, never their own). Only for a country whose
+	// roles come from the registry: Uganda's come from each account's profile
+	// in the existing application.
+	AssignCountryRole(context.Context, *AssignCountryRoleRequest) (*AssignCountryRoleResponse, error)
+	// Revoke a role held in a country, keeping its record (Admin only, never
+	// their own).
+	RevokeCountryRole(context.Context, *RevokeCountryRoleRequest) (*RevokeCountryRoleResponse, error)
 	mustEmbedUnimplementedCountryServiceServer()
 }
 
@@ -178,6 +216,12 @@ func (UnimplementedCountryServiceServer) GrantMembership(context.Context, *Grant
 }
 func (UnimplementedCountryServiceServer) RevokeMembership(context.Context, *RevokeMembershipRequest) (*RevokeMembershipResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RevokeMembership not implemented")
+}
+func (UnimplementedCountryServiceServer) AssignCountryRole(context.Context, *AssignCountryRoleRequest) (*AssignCountryRoleResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AssignCountryRole not implemented")
+}
+func (UnimplementedCountryServiceServer) RevokeCountryRole(context.Context, *RevokeCountryRoleRequest) (*RevokeCountryRoleResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RevokeCountryRole not implemented")
 }
 func (UnimplementedCountryServiceServer) mustEmbedUnimplementedCountryServiceServer() {}
 func (UnimplementedCountryServiceServer) testEmbeddedByValue()                        {}
@@ -308,6 +352,42 @@ func _CountryService_RevokeMembership_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CountryService_AssignCountryRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AssignCountryRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CountryServiceServer).AssignCountryRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CountryService_AssignCountryRole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CountryServiceServer).AssignCountryRole(ctx, req.(*AssignCountryRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CountryService_RevokeCountryRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevokeCountryRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CountryServiceServer).RevokeCountryRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CountryService_RevokeCountryRole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CountryServiceServer).RevokeCountryRole(ctx, req.(*RevokeCountryRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CountryService_ServiceDesc is the grpc.ServiceDesc for CountryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -338,6 +418,14 @@ var CountryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RevokeMembership",
 			Handler:    _CountryService_RevokeMembership_Handler,
+		},
+		{
+			MethodName: "AssignCountryRole",
+			Handler:    _CountryService_AssignCountryRole_Handler,
+		},
+		{
+			MethodName: "RevokeCountryRole",
+			Handler:    _CountryService_RevokeCountryRole_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -34,7 +34,11 @@ type Country struct {
 	// YYYY-MM-DD, set once the country is Active.
 	ActivatedOn string `protobuf:"bytes,5,opt,name=activated_on,json=activatedOn,proto3" json:"activated_on,omitempty"`
 	// The settings in force today; unset while none is.
-	Config        *CountryConfig `protobuf:"bytes,6,opt,name=config,proto3" json:"config,omitempty"`
+	Config *CountryConfig `protobuf:"bytes,6,opt,name=config,proto3" json:"config,omitempty"`
+	// Where the roles of the people who work in it come from:
+	// existing_profile (Uganda's: each account's profile in the existing
+	// application, as today) or registry (only the roles assigned there).
+	RolesSource   string `protobuf:"bytes,7,opt,name=roles_source,json=rolesSource,proto3" json:"roles_source,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -109,6 +113,13 @@ func (x *Country) GetConfig() *CountryConfig {
 		return x.Config
 	}
 	return nil
+}
+
+func (x *Country) GetRolesSource() string {
+	if x != nil {
+		return x.RolesSource
+	}
+	return ""
 }
 
 // CountryConfig is one version of a country's settings.
@@ -663,7 +674,13 @@ type Membership struct {
 	RevokeReason string `protobuf:"bytes,14,opt,name=revoke_reason,json=revokeReason,proto3" json:"revoke_reason,omitempty"`
 	// Whether it gives the account its country today: not revoked, in its
 	// dates, and the country Active.
-	InForce       bool `protobuf:"varint,15,opt,name=in_force,json=inForce,proto3" json:"in_force,omitempty"`
+	InForce bool `protobuf:"varint,15,opt,name=in_force,json=inForce,proto3" json:"in_force,omitempty"`
+	// The country's roles_source (see Country).
+	RolesSource string `protobuf:"bytes,16,opt,name=roles_source,json=rolesSource,proto3" json:"roles_source,omitempty"`
+	// The roles assigned under this membership, newest first, revoked ones
+	// included. Always empty where the country's roles come from the existing
+	// profile.
+	Roles         []*CountryRole `protobuf:"bytes,17,rep,name=roles,proto3" json:"roles,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -803,6 +820,292 @@ func (x *Membership) GetInForce() bool {
 	return false
 }
 
+func (x *Membership) GetRolesSource() string {
+	if x != nil {
+		return x.RolesSource
+	}
+	return ""
+}
+
+func (x *Membership) GetRoles() []*CountryRole {
+	if x != nil {
+		return x.Roles
+	}
+	return nil
+}
+
+// CountryRole is one role an account holds in a country. It applies while
+// its membership is in force; nothing is ever rewritten.
+type CountryRole struct {
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	Id           string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	MembershipId string                 `protobuf:"bytes,2,opt,name=membership_id,json=membershipId,proto3" json:"membership_id,omitempty"`
+	// A role the existing application defines, e.g. CCEO.
+	Role string `protobuf:"bytes,3,opt,name=role,proto3" json:"role,omitempty"`
+	// country, regions or portfolio: the kind of scope the role has.
+	ScopeType string `protobuf:"bytes,4,opt,name=scope_type,json=scopeType,proto3" json:"scope_type,omitempty"`
+	// The existing regions a regional role covers, with their names.
+	RegionIds   []string `protobuf:"bytes,5,rep,name=region_ids,json=regionIds,proto3" json:"region_ids,omitempty"`
+	RegionNames []string `protobuf:"bytes,6,rep,name=region_names,json=regionNames,proto3" json:"region_names,omitempty"`
+	GrantedBy   string   `protobuf:"bytes,7,opt,name=granted_by,json=grantedBy,proto3" json:"granted_by,omitempty"`
+	GrantReason string   `protobuf:"bytes,8,opt,name=grant_reason,json=grantReason,proto3" json:"grant_reason,omitempty"`
+	// RFC 3339.
+	GrantedAt string `protobuf:"bytes,9,opt,name=granted_at,json=grantedAt,proto3" json:"granted_at,omitempty"`
+	// Empty while not revoked.
+	RevokedBy    string `protobuf:"bytes,10,opt,name=revoked_by,json=revokedBy,proto3" json:"revoked_by,omitempty"`
+	RevokedAt    string `protobuf:"bytes,11,opt,name=revoked_at,json=revokedAt,proto3" json:"revoked_at,omitempty"`
+	RevokeReason string `protobuf:"bytes,12,opt,name=revoke_reason,json=revokeReason,proto3" json:"revoke_reason,omitempty"`
+	// The role as people read it, e.g. Country Director.
+	RoleLabel     string `protobuf:"bytes,13,opt,name=role_label,json=roleLabel,proto3" json:"role_label,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CountryRole) Reset() {
+	*x = CountryRole{}
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CountryRole) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CountryRole) ProtoMessage() {}
+
+func (x *CountryRole) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CountryRole.ProtoReflect.Descriptor instead.
+func (*CountryRole) Descriptor() ([]byte, []int) {
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *CountryRole) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *CountryRole) GetMembershipId() string {
+	if x != nil {
+		return x.MembershipId
+	}
+	return ""
+}
+
+func (x *CountryRole) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
+func (x *CountryRole) GetScopeType() string {
+	if x != nil {
+		return x.ScopeType
+	}
+	return ""
+}
+
+func (x *CountryRole) GetRegionIds() []string {
+	if x != nil {
+		return x.RegionIds
+	}
+	return nil
+}
+
+func (x *CountryRole) GetRegionNames() []string {
+	if x != nil {
+		return x.RegionNames
+	}
+	return nil
+}
+
+func (x *CountryRole) GetGrantedBy() string {
+	if x != nil {
+		return x.GrantedBy
+	}
+	return ""
+}
+
+func (x *CountryRole) GetGrantReason() string {
+	if x != nil {
+		return x.GrantReason
+	}
+	return ""
+}
+
+func (x *CountryRole) GetGrantedAt() string {
+	if x != nil {
+		return x.GrantedAt
+	}
+	return ""
+}
+
+func (x *CountryRole) GetRevokedBy() string {
+	if x != nil {
+		return x.RevokedBy
+	}
+	return ""
+}
+
+func (x *CountryRole) GetRevokedAt() string {
+	if x != nil {
+		return x.RevokedAt
+	}
+	return ""
+}
+
+func (x *CountryRole) GetRevokeReason() string {
+	if x != nil {
+		return x.RevokeReason
+	}
+	return ""
+}
+
+func (x *CountryRole) GetRoleLabel() string {
+	if x != nil {
+		return x.RoleLabel
+	}
+	return ""
+}
+
+// AssignableRole is a role an Admin may assign in a country, with the kind
+// of scope it has there.
+type AssignableRole struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	Role      string                 `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
+	ScopeType string                 `protobuf:"bytes,2,opt,name=scope_type,json=scopeType,proto3" json:"scope_type,omitempty"`
+	// The role as people read it.
+	Label         string `protobuf:"bytes,3,opt,name=label,proto3" json:"label,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AssignableRole) Reset() {
+	*x = AssignableRole{}
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AssignableRole) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AssignableRole) ProtoMessage() {}
+
+func (x *AssignableRole) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AssignableRole.ProtoReflect.Descriptor instead.
+func (*AssignableRole) Descriptor() ([]byte, []int) {
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *AssignableRole) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
+func (x *AssignableRole) GetScopeType() string {
+	if x != nil {
+		return x.ScopeType
+	}
+	return ""
+}
+
+func (x *AssignableRole) GetLabel() string {
+	if x != nil {
+		return x.Label
+	}
+	return ""
+}
+
+// Region is an existing region, named by the country it is in.
+type Region struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	CountryCode   string                 `protobuf:"bytes,3,opt,name=country_code,json=countryCode,proto3" json:"country_code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Region) Reset() {
+	*x = Region{}
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Region) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Region) ProtoMessage() {}
+
+func (x *Region) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Region.ProtoReflect.Descriptor instead.
+func (*Region) Descriptor() ([]byte, []int) {
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *Region) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Region) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Region) GetCountryCode() string {
+	if x != nil {
+		return x.CountryCode
+	}
+	return ""
+}
+
 type ListMembershipsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The account; empty for the reader's own.
@@ -813,7 +1116,7 @@ type ListMembershipsRequest struct {
 
 func (x *ListMembershipsRequest) Reset() {
 	*x = ListMembershipsRequest{}
-	mi := &file_edify_countries_v1_countries_proto_msgTypes[9]
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -825,7 +1128,7 @@ func (x *ListMembershipsRequest) String() string {
 func (*ListMembershipsRequest) ProtoMessage() {}
 
 func (x *ListMembershipsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_countries_v1_countries_proto_msgTypes[9]
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -838,7 +1141,7 @@ func (x *ListMembershipsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMembershipsRequest.ProtoReflect.Descriptor instead.
 func (*ListMembershipsRequest) Descriptor() ([]byte, []int) {
-	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{9}
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ListMembershipsRequest) GetUserId() string {
@@ -849,15 +1152,19 @@ func (x *ListMembershipsRequest) GetUserId() string {
 }
 
 type ListMembershipsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Memberships   []*Membership          `protobuf:"bytes,1,rep,name=memberships,proto3" json:"memberships,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	Memberships []*Membership          `protobuf:"bytes,1,rep,name=memberships,proto3" json:"memberships,omitempty"`
+	// For an Admin: the roles that may be assigned in a country, and the
+	// regions of the account's countries whose roles come from the registry.
+	AssignableRoles []*AssignableRole `protobuf:"bytes,2,rep,name=assignable_roles,json=assignableRoles,proto3" json:"assignable_roles,omitempty"`
+	Regions         []*Region         `protobuf:"bytes,3,rep,name=regions,proto3" json:"regions,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *ListMembershipsResponse) Reset() {
 	*x = ListMembershipsResponse{}
-	mi := &file_edify_countries_v1_countries_proto_msgTypes[10]
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -869,7 +1176,7 @@ func (x *ListMembershipsResponse) String() string {
 func (*ListMembershipsResponse) ProtoMessage() {}
 
 func (x *ListMembershipsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_countries_v1_countries_proto_msgTypes[10]
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -882,12 +1189,26 @@ func (x *ListMembershipsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMembershipsResponse.ProtoReflect.Descriptor instead.
 func (*ListMembershipsResponse) Descriptor() ([]byte, []int) {
-	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{10}
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ListMembershipsResponse) GetMemberships() []*Membership {
 	if x != nil {
 		return x.Memberships
+	}
+	return nil
+}
+
+func (x *ListMembershipsResponse) GetAssignableRoles() []*AssignableRole {
+	if x != nil {
+		return x.AssignableRoles
+	}
+	return nil
+}
+
+func (x *ListMembershipsResponse) GetRegions() []*Region {
+	if x != nil {
+		return x.Regions
 	}
 	return nil
 }
@@ -909,7 +1230,7 @@ type GrantMembershipRequest struct {
 
 func (x *GrantMembershipRequest) Reset() {
 	*x = GrantMembershipRequest{}
-	mi := &file_edify_countries_v1_countries_proto_msgTypes[11]
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -921,7 +1242,7 @@ func (x *GrantMembershipRequest) String() string {
 func (*GrantMembershipRequest) ProtoMessage() {}
 
 func (x *GrantMembershipRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_countries_v1_countries_proto_msgTypes[11]
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -934,7 +1255,7 @@ func (x *GrantMembershipRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GrantMembershipRequest.ProtoReflect.Descriptor instead.
 func (*GrantMembershipRequest) Descriptor() ([]byte, []int) {
-	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{11}
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GrantMembershipRequest) GetUserId() string {
@@ -981,7 +1302,7 @@ type GrantMembershipResponse struct {
 
 func (x *GrantMembershipResponse) Reset() {
 	*x = GrantMembershipResponse{}
-	mi := &file_edify_countries_v1_countries_proto_msgTypes[12]
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -993,7 +1314,7 @@ func (x *GrantMembershipResponse) String() string {
 func (*GrantMembershipResponse) ProtoMessage() {}
 
 func (x *GrantMembershipResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_countries_v1_countries_proto_msgTypes[12]
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1006,7 +1327,7 @@ func (x *GrantMembershipResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GrantMembershipResponse.ProtoReflect.Descriptor instead.
 func (*GrantMembershipResponse) Descriptor() ([]byte, []int) {
-	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{12}
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GrantMembershipResponse) GetGranted() *Membership {
@@ -1027,7 +1348,7 @@ type RevokeMembershipRequest struct {
 
 func (x *RevokeMembershipRequest) Reset() {
 	*x = RevokeMembershipRequest{}
-	mi := &file_edify_countries_v1_countries_proto_msgTypes[13]
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1039,7 +1360,7 @@ func (x *RevokeMembershipRequest) String() string {
 func (*RevokeMembershipRequest) ProtoMessage() {}
 
 func (x *RevokeMembershipRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_countries_v1_countries_proto_msgTypes[13]
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1052,7 +1373,7 @@ func (x *RevokeMembershipRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevokeMembershipRequest.ProtoReflect.Descriptor instead.
 func (*RevokeMembershipRequest) Descriptor() ([]byte, []int) {
-	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{13}
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *RevokeMembershipRequest) GetMembershipId() string {
@@ -1078,7 +1399,7 @@ type RevokeMembershipResponse struct {
 
 func (x *RevokeMembershipResponse) Reset() {
 	*x = RevokeMembershipResponse{}
-	mi := &file_edify_countries_v1_countries_proto_msgTypes[14]
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1090,7 +1411,7 @@ func (x *RevokeMembershipResponse) String() string {
 func (*RevokeMembershipResponse) ProtoMessage() {}
 
 func (x *RevokeMembershipResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_edify_countries_v1_countries_proto_msgTypes[14]
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1103,7 +1424,7 @@ func (x *RevokeMembershipResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevokeMembershipResponse.ProtoReflect.Descriptor instead.
 func (*RevokeMembershipResponse) Descriptor() ([]byte, []int) {
-	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{14}
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *RevokeMembershipResponse) GetRevoked() *Membership {
@@ -1113,18 +1434,233 @@ func (x *RevokeMembershipResponse) GetRevoked() *Membership {
 	return nil
 }
 
+type AssignCountryRoleRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The membership the role is held under: not revoked and not ended.
+	MembershipId string `protobuf:"bytes,1,opt,name=membership_id,json=membershipId,proto3" json:"membership_id,omitempty"`
+	Role         string `protobuf:"bytes,2,opt,name=role,proto3" json:"role,omitempty"`
+	// Required for a regional role (at least one, each a region of the
+	// membership's country); empty for any other.
+	RegionIds []string `protobuf:"bytes,3,rep,name=region_ids,json=regionIds,proto3" json:"region_ids,omitempty"`
+	// Why the account holds this role there (required, at most 500 characters).
+	Reason        string `protobuf:"bytes,4,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AssignCountryRoleRequest) Reset() {
+	*x = AssignCountryRoleRequest{}
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AssignCountryRoleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AssignCountryRoleRequest) ProtoMessage() {}
+
+func (x *AssignCountryRoleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AssignCountryRoleRequest.ProtoReflect.Descriptor instead.
+func (*AssignCountryRoleRequest) Descriptor() ([]byte, []int) {
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *AssignCountryRoleRequest) GetMembershipId() string {
+	if x != nil {
+		return x.MembershipId
+	}
+	return ""
+}
+
+func (x *AssignCountryRoleRequest) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
+func (x *AssignCountryRoleRequest) GetRegionIds() []string {
+	if x != nil {
+		return x.RegionIds
+	}
+	return nil
+}
+
+func (x *AssignCountryRoleRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+type AssignCountryRoleResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The membership, with its roles.
+	Membership    *Membership `protobuf:"bytes,1,opt,name=membership,proto3" json:"membership,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AssignCountryRoleResponse) Reset() {
+	*x = AssignCountryRoleResponse{}
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AssignCountryRoleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AssignCountryRoleResponse) ProtoMessage() {}
+
+func (x *AssignCountryRoleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AssignCountryRoleResponse.ProtoReflect.Descriptor instead.
+func (*AssignCountryRoleResponse) Descriptor() ([]byte, []int) {
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *AssignCountryRoleResponse) GetMembership() *Membership {
+	if x != nil {
+		return x.Membership
+	}
+	return nil
+}
+
+type RevokeCountryRoleRequest struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	RoleId string                 `protobuf:"bytes,1,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
+	// Why it is revoked (required, at most 500 characters).
+	Reason        string `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeCountryRoleRequest) Reset() {
+	*x = RevokeCountryRoleRequest{}
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeCountryRoleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeCountryRoleRequest) ProtoMessage() {}
+
+func (x *RevokeCountryRoleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeCountryRoleRequest.ProtoReflect.Descriptor instead.
+func (*RevokeCountryRoleRequest) Descriptor() ([]byte, []int) {
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *RevokeCountryRoleRequest) GetRoleId() string {
+	if x != nil {
+		return x.RoleId
+	}
+	return ""
+}
+
+func (x *RevokeCountryRoleRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+type RevokeCountryRoleResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Membership    *Membership            `protobuf:"bytes,1,opt,name=membership,proto3" json:"membership,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeCountryRoleResponse) Reset() {
+	*x = RevokeCountryRoleResponse{}
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeCountryRoleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeCountryRoleResponse) ProtoMessage() {}
+
+func (x *RevokeCountryRoleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeCountryRoleResponse.ProtoReflect.Descriptor instead.
+func (*RevokeCountryRoleResponse) Descriptor() ([]byte, []int) {
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *RevokeCountryRoleResponse) GetMembership() *Membership {
+	if x != nil {
+		return x.Membership
+	}
+	return nil
+}
+
 var File_edify_countries_v1_countries_proto protoreflect.FileDescriptor
 
 const file_edify_countries_v1_countries_proto_rawDesc = "" +
 	"\n" +
-	"\"edify/countries/v1/countries.proto\x12\x12edify.countries.v1\"\xb5\x01\n" +
+	"\"edify/countries/v1/countries.proto\x12\x12edify.countries.v1\"\xd8\x01\n" +
 	"\aCountry\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\tR\x04code\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x14\n" +
 	"\x05state\x18\x04 \x01(\tR\x05state\x12!\n" +
 	"\factivated_on\x18\x05 \x01(\tR\vactivatedOn\x129\n" +
-	"\x06config\x18\x06 \x01(\v2!.edify.countries.v1.CountryConfigR\x06config\"\x9f\x04\n" +
+	"\x06config\x18\x06 \x01(\v2!.edify.countries.v1.CountryConfigR\x06config\x12!\n" +
+	"\froles_source\x18\a \x01(\tR\vrolesSource\"\x9f\x04\n" +
 	"\rCountryConfig\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\x05R\aversion\x12)\n" +
 	"\x10default_language\x18\x02 \x01(\tR\x0fdefaultLanguage\x12\x1c\n" +
@@ -1170,7 +1706,7 @@ const file_edify_countries_v1_countries_proto_rawDesc = "" +
 	"\rchange_reason\x18\v \x01(\tR\fchangeReason\"\x93\x01\n" +
 	"\x1bRecordCountryConfigResponse\x125\n" +
 	"\acountry\x18\x01 \x01(\v2\x1b.edify.countries.v1.CountryR\acountry\x12=\n" +
-	"\brecorded\x18\x02 \x01(\v2!.edify.countries.v1.CountryConfigR\brecorded\"\xee\x03\n" +
+	"\brecorded\x18\x02 \x01(\v2!.edify.countries.v1.CountryConfigR\brecorded\"\xc8\x04\n" +
 	"\n" +
 	"Membership\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
@@ -1193,11 +1729,46 @@ const file_edify_countries_v1_countries_proto_rawDesc = "" +
 	"\n" +
 	"revoked_at\x18\r \x01(\tR\trevokedAt\x12#\n" +
 	"\rrevoke_reason\x18\x0e \x01(\tR\frevokeReason\x12\x19\n" +
-	"\bin_force\x18\x0f \x01(\bR\ainForce\"1\n" +
+	"\bin_force\x18\x0f \x01(\bR\ainForce\x12!\n" +
+	"\froles_source\x18\x10 \x01(\tR\vrolesSource\x125\n" +
+	"\x05roles\x18\x11 \x03(\v2\x1f.edify.countries.v1.CountryRoleR\x05roles\"\x9a\x03\n" +
+	"\vCountryRole\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12#\n" +
+	"\rmembership_id\x18\x02 \x01(\tR\fmembershipId\x12\x12\n" +
+	"\x04role\x18\x03 \x01(\tR\x04role\x12\x1d\n" +
+	"\n" +
+	"scope_type\x18\x04 \x01(\tR\tscopeType\x12\x1d\n" +
+	"\n" +
+	"region_ids\x18\x05 \x03(\tR\tregionIds\x12!\n" +
+	"\fregion_names\x18\x06 \x03(\tR\vregionNames\x12\x1d\n" +
+	"\n" +
+	"granted_by\x18\a \x01(\tR\tgrantedBy\x12!\n" +
+	"\fgrant_reason\x18\b \x01(\tR\vgrantReason\x12\x1d\n" +
+	"\n" +
+	"granted_at\x18\t \x01(\tR\tgrantedAt\x12\x1d\n" +
+	"\n" +
+	"revoked_by\x18\n" +
+	" \x01(\tR\trevokedBy\x12\x1d\n" +
+	"\n" +
+	"revoked_at\x18\v \x01(\tR\trevokedAt\x12#\n" +
+	"\rrevoke_reason\x18\f \x01(\tR\frevokeReason\x12\x1d\n" +
+	"\n" +
+	"role_label\x18\r \x01(\tR\troleLabel\"Y\n" +
+	"\x0eAssignableRole\x12\x12\n" +
+	"\x04role\x18\x01 \x01(\tR\x04role\x12\x1d\n" +
+	"\n" +
+	"scope_type\x18\x02 \x01(\tR\tscopeType\x12\x14\n" +
+	"\x05label\x18\x03 \x01(\tR\x05label\"O\n" +
+	"\x06Region\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12!\n" +
+	"\fcountry_code\x18\x03 \x01(\tR\vcountryCode\"1\n" +
 	"\x16ListMembershipsRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"[\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"\xe0\x01\n" +
 	"\x17ListMembershipsResponse\x12@\n" +
-	"\vmemberships\x18\x01 \x03(\v2\x1e.edify.countries.v1.MembershipR\vmemberships\"\xbc\x01\n" +
+	"\vmemberships\x18\x01 \x03(\v2\x1e.edify.countries.v1.MembershipR\vmemberships\x12M\n" +
+	"\x10assignable_roles\x18\x02 \x03(\v2\".edify.countries.v1.AssignableRoleR\x0fassignableRoles\x124\n" +
+	"\aregions\x18\x03 \x03(\v2\x1a.edify.countries.v1.RegionR\aregions\"\xbc\x01\n" +
 	"\x16GrantMembershipRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12!\n" +
 	"\fcountry_code\x18\x02 \x01(\tR\vcountryCode\x12%\n" +
@@ -1210,14 +1781,33 @@ const file_edify_countries_v1_countries_proto_rawDesc = "" +
 	"\rmembership_id\x18\x01 \x01(\tR\fmembershipId\x12\x16\n" +
 	"\x06reason\x18\x02 \x01(\tR\x06reason\"T\n" +
 	"\x18RevokeMembershipResponse\x128\n" +
-	"\arevoked\x18\x01 \x01(\v2\x1e.edify.countries.v1.MembershipR\arevoked2\xa4\x05\n" +
+	"\arevoked\x18\x01 \x01(\v2\x1e.edify.countries.v1.MembershipR\arevoked\"\x8a\x01\n" +
+	"\x18AssignCountryRoleRequest\x12#\n" +
+	"\rmembership_id\x18\x01 \x01(\tR\fmembershipId\x12\x12\n" +
+	"\x04role\x18\x02 \x01(\tR\x04role\x12\x1d\n" +
+	"\n" +
+	"region_ids\x18\x03 \x03(\tR\tregionIds\x12\x16\n" +
+	"\x06reason\x18\x04 \x01(\tR\x06reason\"[\n" +
+	"\x19AssignCountryRoleResponse\x12>\n" +
+	"\n" +
+	"membership\x18\x01 \x01(\v2\x1e.edify.countries.v1.MembershipR\n" +
+	"membership\"K\n" +
+	"\x18RevokeCountryRoleRequest\x12\x17\n" +
+	"\arole_id\x18\x01 \x01(\tR\x06roleId\x12\x16\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason\"[\n" +
+	"\x19RevokeCountryRoleResponse\x12>\n" +
+	"\n" +
+	"membership\x18\x01 \x01(\v2\x1e.edify.countries.v1.MembershipR\n" +
+	"membership2\x88\a\n" +
 	"\x0eCountryService\x12d\n" +
 	"\rListCountries\x12(.edify.countries.v1.ListCountriesRequest\x1a).edify.countries.v1.ListCountriesResponse\x12m\n" +
 	"\x10GetCountryConfig\x12+.edify.countries.v1.GetCountryConfigRequest\x1a,.edify.countries.v1.GetCountryConfigResponse\x12v\n" +
 	"\x13RecordCountryConfig\x12..edify.countries.v1.RecordCountryConfigRequest\x1a/.edify.countries.v1.RecordCountryConfigResponse\x12j\n" +
 	"\x0fListMemberships\x12*.edify.countries.v1.ListMembershipsRequest\x1a+.edify.countries.v1.ListMembershipsResponse\x12j\n" +
 	"\x0fGrantMembership\x12*.edify.countries.v1.GrantMembershipRequest\x1a+.edify.countries.v1.GrantMembershipResponse\x12m\n" +
-	"\x10RevokeMembership\x12+.edify.countries.v1.RevokeMembershipRequest\x1a,.edify.countries.v1.RevokeMembershipResponseB\xf0\x01\n" +
+	"\x10RevokeMembership\x12+.edify.countries.v1.RevokeMembershipRequest\x1a,.edify.countries.v1.RevokeMembershipResponse\x12p\n" +
+	"\x11AssignCountryRole\x12,.edify.countries.v1.AssignCountryRoleRequest\x1a-.edify.countries.v1.AssignCountryRoleResponse\x12p\n" +
+	"\x11RevokeCountryRole\x12,.edify.countries.v1.RevokeCountryRoleRequest\x1a-.edify.countries.v1.RevokeCountryRoleResponseB\xf0\x01\n" +
 	"\x16com.edify.countries.v1B\x0eCountriesProtoP\x01Z\\github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/countries/v1;countriesv1\xa2\x02\x03ECX\xaa\x02\x12Edify.Countries.V1\xca\x02\x12Edify\\Countries\\V1\xe2\x02\x1eEdify\\Countries\\V1\\GPBMetadata\xea\x02\x14Edify::Countries::V1b\x06proto3"
 
 var (
@@ -1232,7 +1822,7 @@ func file_edify_countries_v1_countries_proto_rawDescGZIP() []byte {
 	return file_edify_countries_v1_countries_proto_rawDescData
 }
 
-var file_edify_countries_v1_countries_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_edify_countries_v1_countries_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_edify_countries_v1_countries_proto_goTypes = []any{
 	(*Country)(nil),                     // 0: edify.countries.v1.Country
 	(*CountryConfig)(nil),               // 1: edify.countries.v1.CountryConfig
@@ -1243,12 +1833,19 @@ var file_edify_countries_v1_countries_proto_goTypes = []any{
 	(*RecordCountryConfigRequest)(nil),  // 6: edify.countries.v1.RecordCountryConfigRequest
 	(*RecordCountryConfigResponse)(nil), // 7: edify.countries.v1.RecordCountryConfigResponse
 	(*Membership)(nil),                  // 8: edify.countries.v1.Membership
-	(*ListMembershipsRequest)(nil),      // 9: edify.countries.v1.ListMembershipsRequest
-	(*ListMembershipsResponse)(nil),     // 10: edify.countries.v1.ListMembershipsResponse
-	(*GrantMembershipRequest)(nil),      // 11: edify.countries.v1.GrantMembershipRequest
-	(*GrantMembershipResponse)(nil),     // 12: edify.countries.v1.GrantMembershipResponse
-	(*RevokeMembershipRequest)(nil),     // 13: edify.countries.v1.RevokeMembershipRequest
-	(*RevokeMembershipResponse)(nil),    // 14: edify.countries.v1.RevokeMembershipResponse
+	(*CountryRole)(nil),                 // 9: edify.countries.v1.CountryRole
+	(*AssignableRole)(nil),              // 10: edify.countries.v1.AssignableRole
+	(*Region)(nil),                      // 11: edify.countries.v1.Region
+	(*ListMembershipsRequest)(nil),      // 12: edify.countries.v1.ListMembershipsRequest
+	(*ListMembershipsResponse)(nil),     // 13: edify.countries.v1.ListMembershipsResponse
+	(*GrantMembershipRequest)(nil),      // 14: edify.countries.v1.GrantMembershipRequest
+	(*GrantMembershipResponse)(nil),     // 15: edify.countries.v1.GrantMembershipResponse
+	(*RevokeMembershipRequest)(nil),     // 16: edify.countries.v1.RevokeMembershipRequest
+	(*RevokeMembershipResponse)(nil),    // 17: edify.countries.v1.RevokeMembershipResponse
+	(*AssignCountryRoleRequest)(nil),    // 18: edify.countries.v1.AssignCountryRoleRequest
+	(*AssignCountryRoleResponse)(nil),   // 19: edify.countries.v1.AssignCountryRoleResponse
+	(*RevokeCountryRoleRequest)(nil),    // 20: edify.countries.v1.RevokeCountryRoleRequest
+	(*RevokeCountryRoleResponse)(nil),   // 21: edify.countries.v1.RevokeCountryRoleResponse
 }
 var file_edify_countries_v1_countries_proto_depIdxs = []int32{
 	1,  // 0: edify.countries.v1.Country.config:type_name -> edify.countries.v1.CountryConfig
@@ -1257,26 +1854,35 @@ var file_edify_countries_v1_countries_proto_depIdxs = []int32{
 	1,  // 3: edify.countries.v1.GetCountryConfigResponse.versions:type_name -> edify.countries.v1.CountryConfig
 	0,  // 4: edify.countries.v1.RecordCountryConfigResponse.country:type_name -> edify.countries.v1.Country
 	1,  // 5: edify.countries.v1.RecordCountryConfigResponse.recorded:type_name -> edify.countries.v1.CountryConfig
-	8,  // 6: edify.countries.v1.ListMembershipsResponse.memberships:type_name -> edify.countries.v1.Membership
-	8,  // 7: edify.countries.v1.GrantMembershipResponse.granted:type_name -> edify.countries.v1.Membership
-	8,  // 8: edify.countries.v1.RevokeMembershipResponse.revoked:type_name -> edify.countries.v1.Membership
-	2,  // 9: edify.countries.v1.CountryService.ListCountries:input_type -> edify.countries.v1.ListCountriesRequest
-	4,  // 10: edify.countries.v1.CountryService.GetCountryConfig:input_type -> edify.countries.v1.GetCountryConfigRequest
-	6,  // 11: edify.countries.v1.CountryService.RecordCountryConfig:input_type -> edify.countries.v1.RecordCountryConfigRequest
-	9,  // 12: edify.countries.v1.CountryService.ListMemberships:input_type -> edify.countries.v1.ListMembershipsRequest
-	11, // 13: edify.countries.v1.CountryService.GrantMembership:input_type -> edify.countries.v1.GrantMembershipRequest
-	13, // 14: edify.countries.v1.CountryService.RevokeMembership:input_type -> edify.countries.v1.RevokeMembershipRequest
-	3,  // 15: edify.countries.v1.CountryService.ListCountries:output_type -> edify.countries.v1.ListCountriesResponse
-	5,  // 16: edify.countries.v1.CountryService.GetCountryConfig:output_type -> edify.countries.v1.GetCountryConfigResponse
-	7,  // 17: edify.countries.v1.CountryService.RecordCountryConfig:output_type -> edify.countries.v1.RecordCountryConfigResponse
-	10, // 18: edify.countries.v1.CountryService.ListMemberships:output_type -> edify.countries.v1.ListMembershipsResponse
-	12, // 19: edify.countries.v1.CountryService.GrantMembership:output_type -> edify.countries.v1.GrantMembershipResponse
-	14, // 20: edify.countries.v1.CountryService.RevokeMembership:output_type -> edify.countries.v1.RevokeMembershipResponse
-	15, // [15:21] is the sub-list for method output_type
-	9,  // [9:15] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	9,  // 6: edify.countries.v1.Membership.roles:type_name -> edify.countries.v1.CountryRole
+	8,  // 7: edify.countries.v1.ListMembershipsResponse.memberships:type_name -> edify.countries.v1.Membership
+	10, // 8: edify.countries.v1.ListMembershipsResponse.assignable_roles:type_name -> edify.countries.v1.AssignableRole
+	11, // 9: edify.countries.v1.ListMembershipsResponse.regions:type_name -> edify.countries.v1.Region
+	8,  // 10: edify.countries.v1.GrantMembershipResponse.granted:type_name -> edify.countries.v1.Membership
+	8,  // 11: edify.countries.v1.RevokeMembershipResponse.revoked:type_name -> edify.countries.v1.Membership
+	8,  // 12: edify.countries.v1.AssignCountryRoleResponse.membership:type_name -> edify.countries.v1.Membership
+	8,  // 13: edify.countries.v1.RevokeCountryRoleResponse.membership:type_name -> edify.countries.v1.Membership
+	2,  // 14: edify.countries.v1.CountryService.ListCountries:input_type -> edify.countries.v1.ListCountriesRequest
+	4,  // 15: edify.countries.v1.CountryService.GetCountryConfig:input_type -> edify.countries.v1.GetCountryConfigRequest
+	6,  // 16: edify.countries.v1.CountryService.RecordCountryConfig:input_type -> edify.countries.v1.RecordCountryConfigRequest
+	12, // 17: edify.countries.v1.CountryService.ListMemberships:input_type -> edify.countries.v1.ListMembershipsRequest
+	14, // 18: edify.countries.v1.CountryService.GrantMembership:input_type -> edify.countries.v1.GrantMembershipRequest
+	16, // 19: edify.countries.v1.CountryService.RevokeMembership:input_type -> edify.countries.v1.RevokeMembershipRequest
+	18, // 20: edify.countries.v1.CountryService.AssignCountryRole:input_type -> edify.countries.v1.AssignCountryRoleRequest
+	20, // 21: edify.countries.v1.CountryService.RevokeCountryRole:input_type -> edify.countries.v1.RevokeCountryRoleRequest
+	3,  // 22: edify.countries.v1.CountryService.ListCountries:output_type -> edify.countries.v1.ListCountriesResponse
+	5,  // 23: edify.countries.v1.CountryService.GetCountryConfig:output_type -> edify.countries.v1.GetCountryConfigResponse
+	7,  // 24: edify.countries.v1.CountryService.RecordCountryConfig:output_type -> edify.countries.v1.RecordCountryConfigResponse
+	13, // 25: edify.countries.v1.CountryService.ListMemberships:output_type -> edify.countries.v1.ListMembershipsResponse
+	15, // 26: edify.countries.v1.CountryService.GrantMembership:output_type -> edify.countries.v1.GrantMembershipResponse
+	17, // 27: edify.countries.v1.CountryService.RevokeMembership:output_type -> edify.countries.v1.RevokeMembershipResponse
+	19, // 28: edify.countries.v1.CountryService.AssignCountryRole:output_type -> edify.countries.v1.AssignCountryRoleResponse
+	21, // 29: edify.countries.v1.CountryService.RevokeCountryRole:output_type -> edify.countries.v1.RevokeCountryRoleResponse
+	22, // [22:30] is the sub-list for method output_type
+	14, // [14:22] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_edify_countries_v1_countries_proto_init() }
@@ -1290,7 +1896,7 @@ func file_edify_countries_v1_countries_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_edify_countries_v1_countries_proto_rawDesc), len(file_edify_countries_v1_countries_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   15,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

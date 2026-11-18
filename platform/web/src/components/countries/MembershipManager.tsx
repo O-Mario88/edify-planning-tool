@@ -6,20 +6,24 @@
  * place. The gateway decides: only an Admin, never on their own account,
  * and never a first grant that would take away the country the account
  * works in through its profile. A change reads the list again in place.
+ * Where a country's roles come from the registry, its memberships carry the
+ * roles the account holds there (CountryRoles.tsx).
  */
 import { fromJson } from '@bufbuild/protobuf';
 import { useState } from 'react';
 
 import { GrantMembershipResponseSchema, ListMembershipsResponseSchema } from '@/gen/edify/countries/v1/countries_pb';
-import type { Membership } from '@/gen/edify/countries/v1/countries_pb';
+import type { AssignableRole, Membership, Region } from '@/gen/edify/countries/v1/countries_pb';
 import { postCountryAdmin } from '@/lib/countryAdminClient';
 import { MAX_REASON, dayText, grantRequest, membershipStatus, revokeRequest, stampText } from '@/lib/countryAdmin';
+import { ROLES_FROM_REGISTRY, assignRefusal, rolesCellText } from '@/lib/countryRoles';
 
 import { Badge } from '../blocks/Badge';
 import { BUTTON_OUTLINE, BUTTON_PRIMARY } from '../blocks/buttons';
 import { Card } from '../blocks/Card';
 import { RowActions } from '../blocks/RowActions';
-import { FIELD, HINT, LABEL, NoticeLine } from './fields';
+import { AssignRoleForm, CountryRolesCard } from './CountryRoles';
+import { CELL, DESTRUCTIVE, FIELD, HINT, LABEL, NoticeLine } from './fields';
 
 export interface ManagedPerson {
   readonly userId: string;
@@ -37,26 +41,35 @@ export interface GrantChoice {
 interface ManagerProps {
   readonly account: ManagedPerson;
   readonly memberships: readonly Membership[];
+  readonly assignableRoles: readonly AssignableRole[];
+  readonly regions: readonly Region[];
   readonly countries: readonly GrantChoice[];
   readonly names: Readonly<Record<string, string>>;
   readonly reader: { readonly userId: string; readonly name: string };
   readonly today: string;
 }
 
-const CELL = 'whitespace-nowrap px-3 py-2 align-top first:pl-4 last:pr-4';
-const DESTRUCTIVE = 'inline-flex h-10 items-center rounded-[var(--radius-control)] bg-[#be123c] px-4 text-[length:var(--edify-text-label-size)] font-semibold text-white disabled:opacity-60';
 
-export function MembershipManager({ account, memberships, countries, names, reader, today }: ManagerProps) {
+type Opened = { readonly id: string; readonly kind: 'revoke' | 'assign' };
+const CLOSED: Opened = { id: '', kind: 'revoke' };
+
+export function MembershipManager({ account, memberships, assignableRoles, regions, countries, names, reader, today }: ManagerProps) {
   const [list, setList] = useState(memberships);
+  const [choices, setChoices] = useState(assignableRoles);
+  const [regionList, setRegionList] = useState(regions);
   const [notice, setNotice] = useState('');
-  const [revoking, setRevoking] = useState('');
+  const [opened, setOpened] = useState<Opened>(CLOSED);
   const isSelf = account.userId === reader.userId;
   const who = (id: string) => (id === reader.userId ? reader.name : (names[id] ?? id));
 
   const reload = async () => {
     const answer = await postCountryAdmin('memberships', { userId: account.userId });
-    setList(fromJson(ListMembershipsResponseSchema, answer).memberships);
+    const read = fromJson(ListMembershipsResponseSchema, answer);
+    setList(read.memberships);
+    setChoices(read.assignableRoles);
+    setRegionList(read.regions);
   };
+  const hasRegistryCountry = list.some((m) => m.rolesSource === ROLES_FROM_REGISTRY);
 
   return (
     <>
@@ -77,7 +90,7 @@ export function MembershipManager({ account, memberships, countries, names, read
             <table className="w-full min-w-[60rem] border-collapse text-left text-[13.7px]">
               <thead>
                 <tr className="border-b border-[var(--edify-border)] text-[length:var(--edify-text-label-size)]">
-                  {['Country', 'Status', 'From', 'Until', 'Default', 'Granted', 'Revoked'].map((label) => (
+                  {['Country', 'Status', 'From', 'Until', 'Default', 'Roles', 'Granted', 'Revoked'].map((label) => (
                     <th key={label} scope="col" className={`${CELL} font-bold`}>
                       {label}
                     </th>
@@ -97,14 +110,27 @@ export function MembershipManager({ account, memberships, countries, names, read
                     today={today}
                     who={who}
                     actionable={!isSelf}
-                    open={revoking === m.id}
-                    onOpen={() => setRevoking(m.id)}
-                    onClose={() => setRevoking('')}
+                    opened={opened.id === m.id ? opened.kind : ''}
+                    onOpen={(kind) => setOpened({ id: m.id, kind })}
+                    onClose={() => setOpened(CLOSED)}
                     onRevoked={async () => {
-                      setRevoking('');
+                      setOpened(CLOSED);
                       setNotice(`${m.countryName} membership revoked. Its record and reason are kept.`);
                       await reload();
                     }}
+                    assignForm={
+                      <AssignRoleForm
+                        membership={m}
+                        choices={choices}
+                        regions={regionList}
+                        onClose={() => setOpened(CLOSED)}
+                        onAssigned={async (label) => {
+                          setOpened(CLOSED);
+                          setNotice(`${label} assigned in ${m.countryName}.`);
+                          await reload();
+                        }}
+                      />
+                    }
                   />
                 ))}
               </tbody>
@@ -117,6 +143,17 @@ export function MembershipManager({ account, memberships, countries, names, read
           </p>
         )}
       </Card>
+      {hasRegistryCountry ? (
+        <CountryRolesCard
+          memberships={list}
+          who={who}
+          actionable={!isSelf}
+          onRevoked={async (role, countryName) => {
+            setNotice(`${role.roleLabel || role.role} in ${countryName} revoked. Its record and reason are kept.`);
+            await reload();
+          }}
+        />
+      ) : null}
       {isSelf ? (
         <Card>
           <p className="text-[length:var(--edify-text-label-size)] text-[var(--edify-text-muted)]">
@@ -143,15 +180,18 @@ interface RowProps {
   readonly today: string;
   readonly who: (id: string) => string;
   readonly actionable: boolean;
-  readonly open: boolean;
-  readonly onOpen: () => void;
+  /** Which form is open below the row, if any. */
+  readonly opened: '' | 'revoke' | 'assign';
+  readonly onOpen: (kind: 'revoke' | 'assign') => void;
   readonly onClose: () => void;
   readonly onRevoked: () => Promise<void>;
+  readonly assignForm: React.ReactNode;
 }
 
-function MembershipRow({ membership: m, today, who, actionable, open, onOpen, onClose, onRevoked }: RowProps) {
+function MembershipRow({ membership: m, today, who, actionable, opened, onOpen, onClose, onRevoked, assignForm }: RowProps) {
   const status = membershipStatus(m, today);
-  const span = actionable ? 8 : 7;
+  const span = actionable ? 9 : 8;
+  const cannotAssign = assignRefusal(m, today);
   return (
     <>
       <tr className="border-b border-[var(--edify-table-divider)]" data-membership={m.countryCode}>
@@ -164,6 +204,7 @@ function MembershipRow({ membership: m, today, who, actionable, open, onOpen, on
         <td className={CELL}>{dayText(m.effectiveFrom)}</td>
         <td className={CELL}>{dayText(m.effectiveUntil, 'No end')}</td>
         <td className={CELL}>{m.isDefault ? 'Yes' : 'No'}</td>
+        <td className={`${CELL} whitespace-normal`}>{rolesCellText(m)}</td>
         <td className={`${CELL} whitespace-normal`}>
           <span className="font-semibold">{who(m.grantedBy)}</span> · {stampText(m.grantedAt)}
           <span className="block max-w-[22rem] text-[var(--edify-text-muted)]">{m.grantReason}</span>
@@ -184,22 +225,30 @@ function MembershipRow({ membership: m, today, who, actionable, open, onOpen, on
               subject={`${m.countryName} membership`}
               actions={[
                 {
+                  key: 'assign-role',
+                  label: 'Assign role',
+                  enabled: !cannotAssign,
+                  reason: cannotAssign,
+                  href: '',
+                  onSelect: () => onOpen('assign'),
+                },
+                {
                   key: 'revoke',
                   label: 'Revoke membership',
                   enabled: !m.revokedAt,
                   reason: m.revokedAt ? 'Already revoked' : '',
                   href: '',
-                  onSelect: onOpen,
+                  onSelect: () => onOpen('revoke'),
                 },
               ]}
             />
           </td>
         ) : null}
       </tr>
-      {open ? (
+      {opened ? (
         <tr className="border-b border-[var(--edify-table-divider)] bg-[var(--edify-surface-muted)]">
           <td colSpan={span} className="px-4 py-3">
-            <RevokeForm membership={m} onClose={onClose} onRevoked={onRevoked} />
+            {opened === 'assign' ? assignForm : <RevokeForm membership={m} onClose={onClose} onRevoked={onRevoked} />}
           </td>
         </tr>
       ) : null}
@@ -292,8 +341,9 @@ function GrantForm({ account, countries, today, onGranted }: GrantProps) {
     <Card label="Grant a country">
       <h2 className="text-[length:var(--edify-text-title-size)] font-bold">Grant a Country</h2>
       <p className={HINT}>
-        A membership lets {account.name} work in a country; their role, scope and portfolio still decide which records they see. A country that
-        is not Active gives no access until it is activated.
+        A membership lets {account.name} work in a country; their role, scope and portfolio still decide which records they see. In Uganda the
+        role is the existing profile&apos;s; in any other country, assign the roles they hold there from the membership&apos;s Actions. A country
+        that is not Active gives no access until it is activated.
       </p>
       <form onSubmit={send} className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" noValidate>
         <label className={LABEL}>

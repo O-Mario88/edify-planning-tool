@@ -6,7 +6,7 @@
  */
 import type { JsonValue } from '@bufbuild/protobuf';
 
-export type CountryAdminOp = 'record' | 'memberships' | 'grant' | 'revoke';
+export type CountryAdminOp = 'record' | 'memberships' | 'grant' | 'revoke' | 'assignRole' | 'revokeRole';
 
 const FALLBACK = 'The change could not be saved. Please try again.';
 

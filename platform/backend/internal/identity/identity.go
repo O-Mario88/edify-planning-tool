@@ -15,10 +15,12 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/acting"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 )
 
 // Querier is the read the store needs; *pgxpool.Pool satisfies it.
 type Querier interface {
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
 	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
 }
 
@@ -58,7 +60,8 @@ SELECT u.id,
        COALESCE(a.seat_id, ''),
        COALESCE(a.seat_name, ''),
        COALESCE(a.country, ''),
-       COALESCE(a.in_capacity, false)
+       COALESCE(a.in_capacity, false),
+       COALESCE(btrim(sp.country), '')
 FROM "user" u
 LEFT JOIN staff_profile sp ON sp.user_id = u.id AND sp.deleted_at IS NULL
 LEFT JOIN LATERAL (
@@ -88,6 +91,7 @@ func (s *Store) LoadAccount(ctx context.Context, userID string) (auth.Account, e
 		account auth.Account
 		row     struct {
 			id, key, seatID, seatName, country string
+			profileCountry                     string
 			start                              time.Time
 			inCapacity                         bool
 		}
@@ -103,6 +107,7 @@ func (s *Store) LoadAccount(ctx context.Context, userID string) (auth.Account, e
 		&account.MustChangePassword,
 		&account.StaffProfileID,
 		&row.id, &row.key, &row.start, &row.seatID, &row.seatName, &row.country, &row.inCapacity,
+		&row.profileCountry,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return auth.Account{}, auth.ErrAccountNotFound
@@ -117,6 +122,12 @@ func (s *Store) LoadAccount(ctx context.Context, userID string) (auth.Account, e
 			SeatStaffID: row.seatID, SeatName: row.seatName, ScopeType: entry.ScopeType, Country: row.country,
 			InCapacity: row.inCapacity,
 		}
+	}
+	// Edify Global (docs/migration/80, §12): the country the request is made
+	// in, and the roles the account holds there where they come from the
+	// registry. auth.Authenticate applies them.
+	if account.Country, err = country.Working(ctx, s.db, account.UserID, row.profileCountry); err != nil {
+		return auth.Account{}, fmt.Errorf("identity: %w", err)
 	}
 	return account, nil
 }

@@ -51,6 +51,12 @@ const (
 	// CountryServiceRevokeMembershipProcedure is the fully-qualified name of the CountryService's
 	// RevokeMembership RPC.
 	CountryServiceRevokeMembershipProcedure = "/edify.countries.v1.CountryService/RevokeMembership"
+	// CountryServiceAssignCountryRoleProcedure is the fully-qualified name of the CountryService's
+	// AssignCountryRole RPC.
+	CountryServiceAssignCountryRoleProcedure = "/edify.countries.v1.CountryService/AssignCountryRole"
+	// CountryServiceRevokeCountryRoleProcedure is the fully-qualified name of the CountryService's
+	// RevokeCountryRole RPC.
+	CountryServiceRevokeCountryRoleProcedure = "/edify.countries.v1.CountryService/RevokeCountryRole"
 )
 
 // CountryServiceClient is a client for the edify.countries.v1.CountryService service.
@@ -68,6 +74,14 @@ type CountryServiceClient interface {
 	GrantMembership(context.Context, *connect.Request[v1.GrantMembershipRequest]) (*connect.Response[v1.GrantMembershipResponse], error)
 	// Revoke a membership, keeping its record (Admin only, never their own).
 	RevokeMembership(context.Context, *connect.Request[v1.RevokeMembershipRequest]) (*connect.Response[v1.RevokeMembershipResponse], error)
+	// Assign a role an account holds in a country, under one of its
+	// memberships (Admin only, never their own). Only for a country whose
+	// roles come from the registry: Uganda's come from each account's profile
+	// in the existing application.
+	AssignCountryRole(context.Context, *connect.Request[v1.AssignCountryRoleRequest]) (*connect.Response[v1.AssignCountryRoleResponse], error)
+	// Revoke a role held in a country, keeping its record (Admin only, never
+	// their own).
+	RevokeCountryRole(context.Context, *connect.Request[v1.RevokeCountryRoleRequest]) (*connect.Response[v1.RevokeCountryRoleResponse], error)
 }
 
 // NewCountryServiceClient constructs a client for the edify.countries.v1.CountryService service. By
@@ -117,6 +131,18 @@ func NewCountryServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(countryServiceMethods.ByName("RevokeMembership")),
 			connect.WithClientOptions(opts...),
 		),
+		assignCountryRole: connect.NewClient[v1.AssignCountryRoleRequest, v1.AssignCountryRoleResponse](
+			httpClient,
+			baseURL+CountryServiceAssignCountryRoleProcedure,
+			connect.WithSchema(countryServiceMethods.ByName("AssignCountryRole")),
+			connect.WithClientOptions(opts...),
+		),
+		revokeCountryRole: connect.NewClient[v1.RevokeCountryRoleRequest, v1.RevokeCountryRoleResponse](
+			httpClient,
+			baseURL+CountryServiceRevokeCountryRoleProcedure,
+			connect.WithSchema(countryServiceMethods.ByName("RevokeCountryRole")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -128,6 +154,8 @@ type countryServiceClient struct {
 	listMemberships     *connect.Client[v1.ListMembershipsRequest, v1.ListMembershipsResponse]
 	grantMembership     *connect.Client[v1.GrantMembershipRequest, v1.GrantMembershipResponse]
 	revokeMembership    *connect.Client[v1.RevokeMembershipRequest, v1.RevokeMembershipResponse]
+	assignCountryRole   *connect.Client[v1.AssignCountryRoleRequest, v1.AssignCountryRoleResponse]
+	revokeCountryRole   *connect.Client[v1.RevokeCountryRoleRequest, v1.RevokeCountryRoleResponse]
 }
 
 // ListCountries calls edify.countries.v1.CountryService.ListCountries.
@@ -160,6 +188,16 @@ func (c *countryServiceClient) RevokeMembership(ctx context.Context, req *connec
 	return c.revokeMembership.CallUnary(ctx, req)
 }
 
+// AssignCountryRole calls edify.countries.v1.CountryService.AssignCountryRole.
+func (c *countryServiceClient) AssignCountryRole(ctx context.Context, req *connect.Request[v1.AssignCountryRoleRequest]) (*connect.Response[v1.AssignCountryRoleResponse], error) {
+	return c.assignCountryRole.CallUnary(ctx, req)
+}
+
+// RevokeCountryRole calls edify.countries.v1.CountryService.RevokeCountryRole.
+func (c *countryServiceClient) RevokeCountryRole(ctx context.Context, req *connect.Request[v1.RevokeCountryRoleRequest]) (*connect.Response[v1.RevokeCountryRoleResponse], error) {
+	return c.revokeCountryRole.CallUnary(ctx, req)
+}
+
 // CountryServiceHandler is an implementation of the edify.countries.v1.CountryService service.
 type CountryServiceHandler interface {
 	// The countries the reader may see, each with the settings in force today.
@@ -175,6 +213,14 @@ type CountryServiceHandler interface {
 	GrantMembership(context.Context, *connect.Request[v1.GrantMembershipRequest]) (*connect.Response[v1.GrantMembershipResponse], error)
 	// Revoke a membership, keeping its record (Admin only, never their own).
 	RevokeMembership(context.Context, *connect.Request[v1.RevokeMembershipRequest]) (*connect.Response[v1.RevokeMembershipResponse], error)
+	// Assign a role an account holds in a country, under one of its
+	// memberships (Admin only, never their own). Only for a country whose
+	// roles come from the registry: Uganda's come from each account's profile
+	// in the existing application.
+	AssignCountryRole(context.Context, *connect.Request[v1.AssignCountryRoleRequest]) (*connect.Response[v1.AssignCountryRoleResponse], error)
+	// Revoke a role held in a country, keeping its record (Admin only, never
+	// their own).
+	RevokeCountryRole(context.Context, *connect.Request[v1.RevokeCountryRoleRequest]) (*connect.Response[v1.RevokeCountryRoleResponse], error)
 }
 
 // NewCountryServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -220,6 +266,18 @@ func NewCountryServiceHandler(svc CountryServiceHandler, opts ...connect.Handler
 		connect.WithSchema(countryServiceMethods.ByName("RevokeMembership")),
 		connect.WithHandlerOptions(opts...),
 	)
+	countryServiceAssignCountryRoleHandler := connect.NewUnaryHandler(
+		CountryServiceAssignCountryRoleProcedure,
+		svc.AssignCountryRole,
+		connect.WithSchema(countryServiceMethods.ByName("AssignCountryRole")),
+		connect.WithHandlerOptions(opts...),
+	)
+	countryServiceRevokeCountryRoleHandler := connect.NewUnaryHandler(
+		CountryServiceRevokeCountryRoleProcedure,
+		svc.RevokeCountryRole,
+		connect.WithSchema(countryServiceMethods.ByName("RevokeCountryRole")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/edify.countries.v1.CountryService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case CountryServiceListCountriesProcedure:
@@ -234,6 +292,10 @@ func NewCountryServiceHandler(svc CountryServiceHandler, opts ...connect.Handler
 			countryServiceGrantMembershipHandler.ServeHTTP(w, r)
 		case CountryServiceRevokeMembershipProcedure:
 			countryServiceRevokeMembershipHandler.ServeHTTP(w, r)
+		case CountryServiceAssignCountryRoleProcedure:
+			countryServiceAssignCountryRoleHandler.ServeHTTP(w, r)
+		case CountryServiceRevokeCountryRoleProcedure:
+			countryServiceRevokeCountryRoleHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -265,4 +327,12 @@ func (UnimplementedCountryServiceHandler) GrantMembership(context.Context, *conn
 
 func (UnimplementedCountryServiceHandler) RevokeMembership(context.Context, *connect.Request[v1.RevokeMembershipRequest]) (*connect.Response[v1.RevokeMembershipResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.countries.v1.CountryService.RevokeMembership is not implemented"))
+}
+
+func (UnimplementedCountryServiceHandler) AssignCountryRole(context.Context, *connect.Request[v1.AssignCountryRoleRequest]) (*connect.Response[v1.AssignCountryRoleResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.countries.v1.CountryService.AssignCountryRole is not implemented"))
+}
+
+func (UnimplementedCountryServiceHandler) RevokeCountryRole(context.Context, *connect.Request[v1.RevokeCountryRoleRequest]) (*connect.Response[v1.RevokeCountryRoleResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.countries.v1.CountryService.RevokeCountryRole is not implemented"))
 }

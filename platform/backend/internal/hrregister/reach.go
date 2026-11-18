@@ -56,6 +56,16 @@ WHERE u.id = $1`, p.UserID).Scan(&superuser, &viewer, &country)
 	if p.ActiveRole == "Admin" || superuser {
 		return reach{kind: reachAll}, nil
 	}
+	// Edify Global (docs/migration/80, §12): in a country whose roles come
+	// from the registry, a role held there reaches that country's People
+	// records (a Programme Lead still their own team), not the countries
+	// the existing profile or geography names.
+	if _, inRegistry := p.HeldInCountry(); inRegistry {
+		if slices.Contains(programmeLeads, p.ActiveRole) && viewer != nil {
+			return reach{kind: reachTeam, viewer: *viewer}, nil
+		}
+		return reach{kind: reachCountries, countries: []string{p.Country.Name}}, nil
+	}
 	own := ""
 	if country != nil {
 		own = strings.TrimSpace(*country)

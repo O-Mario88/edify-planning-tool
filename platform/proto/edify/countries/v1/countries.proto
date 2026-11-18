@@ -26,6 +26,15 @@ service CountryService {
   rpc GrantMembership(GrantMembershipRequest) returns (GrantMembershipResponse);
   // Revoke a membership, keeping its record (Admin only, never their own).
   rpc RevokeMembership(RevokeMembershipRequest) returns (RevokeMembershipResponse);
+
+  // Assign a role an account holds in a country, under one of its
+  // memberships (Admin only, never their own). Only for a country whose
+  // roles come from the registry: Uganda's come from each account's profile
+  // in the existing application.
+  rpc AssignCountryRole(AssignCountryRoleRequest) returns (AssignCountryRoleResponse);
+  // Revoke a role held in a country, keeping its record (Admin only, never
+  // their own).
+  rpc RevokeCountryRole(RevokeCountryRoleRequest) returns (RevokeCountryRoleResponse);
 }
 
 // Country is one registered country.
@@ -41,6 +50,10 @@ message Country {
   string activated_on = 5;
   // The settings in force today; unset while none is.
   CountryConfig config = 6;
+  // Where the roles of the people who work in it come from:
+  // existing_profile (Uganda's: each account's profile in the existing
+  // application, as today) or registry (only the roles assigned there).
+  string roles_source = 7;
 }
 
 // CountryConfig is one version of a country's settings.
@@ -139,6 +152,52 @@ message Membership {
   // Whether it gives the account its country today: not revoked, in its
   // dates, and the country Active.
   bool in_force = 15;
+  // The country's roles_source (see Country).
+  string roles_source = 16;
+  // The roles assigned under this membership, newest first, revoked ones
+  // included. Always empty where the country's roles come from the existing
+  // profile.
+  repeated CountryRole roles = 17;
+}
+
+// CountryRole is one role an account holds in a country. It applies while
+// its membership is in force; nothing is ever rewritten.
+message CountryRole {
+  string id = 1;
+  string membership_id = 2;
+  // A role the existing application defines, e.g. CCEO.
+  string role = 3;
+  // country, regions or portfolio: the kind of scope the role has.
+  string scope_type = 4;
+  // The existing regions a regional role covers, with their names.
+  repeated string region_ids = 5;
+  repeated string region_names = 6;
+  string granted_by = 7;
+  string grant_reason = 8;
+  // RFC 3339.
+  string granted_at = 9;
+  // Empty while not revoked.
+  string revoked_by = 10;
+  string revoked_at = 11;
+  string revoke_reason = 12;
+  // The role as people read it, e.g. Country Director.
+  string role_label = 13;
+}
+
+// AssignableRole is a role an Admin may assign in a country, with the kind
+// of scope it has there.
+message AssignableRole {
+  string role = 1;
+  string scope_type = 2;
+  // The role as people read it.
+  string label = 3;
+}
+
+// Region is an existing region, named by the country it is in.
+message Region {
+  string id = 1;
+  string name = 2;
+  string country_code = 3;
 }
 
 message ListMembershipsRequest {
@@ -148,6 +207,10 @@ message ListMembershipsRequest {
 
 message ListMembershipsResponse {
   repeated Membership memberships = 1;
+  // For an Admin: the roles that may be assigned in a country, and the
+  // regions of the account's countries whose roles come from the registry.
+  repeated AssignableRole assignable_roles = 2;
+  repeated Region regions = 3;
 }
 
 message GrantMembershipRequest {
@@ -174,4 +237,30 @@ message RevokeMembershipRequest {
 
 message RevokeMembershipResponse {
   Membership revoked = 1;
+}
+
+message AssignCountryRoleRequest {
+  // The membership the role is held under: not revoked and not ended.
+  string membership_id = 1;
+  string role = 2;
+  // Required for a regional role (at least one, each a region of the
+  // membership's country); empty for any other.
+  repeated string region_ids = 3;
+  // Why the account holds this role there (required, at most 500 characters).
+  string reason = 4;
+}
+
+message AssignCountryRoleResponse {
+  // The membership, with its roles.
+  Membership membership = 1;
+}
+
+message RevokeCountryRoleRequest {
+  string role_id = 1;
+  // Why it is revoked (required, at most 500 characters).
+  string reason = 2;
+}
+
+message RevokeCountryRoleResponse {
+  Membership membership = 1;
 }
