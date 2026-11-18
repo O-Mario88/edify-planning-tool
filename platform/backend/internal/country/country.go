@@ -146,11 +146,11 @@ WHERE a.alias = $1 AND c.state = $3 AND (EXISTS (
 // would have shown it to both (docs/migration/80-multi-country-phase-0.md,
 // §1.2).
 func SchoolIn(school, ids string) string {
-	return fmt.Sprintf(`(EXISTS (SELECT 1 FROM country_registry.school_country sc
-  WHERE sc.school_id = %[1]s.id AND sc.country_id::text = ANY(%[2]s) AND `+current("sc")+`)
- OR (NOT EXISTS (SELECT 1 FROM country_registry.school_country sc WHERE sc.school_id = %[1]s.id AND `+current("sc")+`)
-  AND (EXISTS (SELECT 1 FROM region r JOIN country_registry.country_alias a ON a.alias = r.country
-        WHERE r.id = %[1]s.region_id AND a.country_id::text = ANY(%[2]s))
-    OR (%[1]s.region_id IS NULL AND EXISTS (SELECT 1 FROM staff_profile sp JOIN country_registry.country_alias a ON a.alias = sp.country
-        WHERE sp.id = %[1]s.account_owner_id AND sp.deleted_at IS NULL AND a.country_id::text = ANY(%[2]s))))))`, school, ids)
+	return fmt.Sprintf(`(EXISTS (SELECT 1 FROM country_registry.school_country sin_sc
+  WHERE sin_sc.school_id = %[1]s.id AND sin_sc.country_id::text = ANY(%[2]s) AND `+current("sin_sc")+`)
+ OR (NOT EXISTS (SELECT 1 FROM country_registry.school_country sin_sc WHERE sin_sc.school_id = %[1]s.id AND `+current("sin_sc")+`)
+  AND (EXISTS (SELECT 1 FROM region sin_r JOIN country_registry.country_alias sin_a ON sin_a.alias = sin_r.country
+        WHERE sin_r.id = %[1]s.region_id AND sin_a.country_id::text = ANY(%[2]s))
+    OR (%[1]s.region_id IS NULL AND EXISTS (SELECT 1 FROM staff_profile sin_sp JOIN country_registry.country_alias sin_a ON sin_a.alias = sin_sp.country
+        WHERE sin_sp.id = %[1]s.account_owner_id AND sin_sp.deleted_at IS NULL AND sin_a.country_id::text = ANY(%[2]s))))))`, school, ids)
 }
