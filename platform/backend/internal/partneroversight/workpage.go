@@ -453,7 +453,7 @@ func (v *workView) actions(i *item) *screensv1.PageCell {
 		}
 		return &screensv1.PageCell{Actions: append(menu, reviewItems(i)...)}
 	}
-	if i.awaitsStaffDecision() && v.w.role.ResolvesReturns {
+	if i.awaitsStaffDecision() && v.w.role.ResolvesReturns && !i.projectLocked {
 		return &screensv1.PageCell{Text: "Resolve Exception"}
 	}
 	if i.withdrawalLabel == "" {
@@ -482,7 +482,22 @@ func standing(i *item) []*screensv1.PageFact {
 	if i.isReturned() && i.resolution != "" {
 		out = append(out, fact("Decision", resolutionLabel(i.resolution)))
 	}
+	if f := projectFact(i); f != nil {
+		out = append(out, f)
+	}
 	return out
+}
+
+// projectFact is the details' Special Project line.
+func projectFact(i *item) *screensv1.PageFact {
+	if i.projectName == "" {
+		return nil
+	}
+	value := i.projectName
+	if i.projectLocked {
+		value += " — withdrawals and reassignments are its Project Coordinator's"
+	}
+	return fact("Special Project", value)
 }
 
 // resolutionLabel is get_resolution_display: the decision in words, the
@@ -659,13 +674,13 @@ func (v *workView) coreRow(i *item) *screensv1.PageRow {
 		actions = append(actions, &screensv1.PageAction{Key: "menu", Label: "Return", Enabled: true,
 			Href: "/partner-oversight/return?activity_id=" + i.activityID, Drawer: true})
 	}
-	withdraw := v.w.role.WithdrawsPartnerWork && i.withdrawalLabel != "" &&
+	withdraw := v.w.role.WithdrawsPartnerWork && i.withdrawalLabel != "" && !i.projectLocked &&
 		(i.stage == stageAwaiting || (i.withdrawalKind() == "recall_scheduled" && !i.partnerHasDated))
 	if withdraw {
 		actions = append(actions, &screensv1.PageAction{Key: "menu", Label: "Withdraw school", Enabled: true,
 			Href: "/partner-oversight/withdraw?assignment_id=" + i.assignmentID, Drawer: true})
 	}
-	if i.awaitsStaffDecision() && v.w.role.ResolvesReturns {
+	if i.awaitsStaffDecision() && v.w.role.ResolvesReturns && !i.projectLocked {
 		actions = append(actions, &screensv1.PageAction{Key: "menu", Label: "Resolve Exception", Enabled: true,
 			Href: "/partner-oversight/resolve?assignment_id=" + i.assignmentID, Drawer: true})
 	}
@@ -695,6 +710,9 @@ func (v *workView) coreRow(i *item) *screensv1.PageRow {
 	}
 	if i.isReturned() && i.resolution != "" {
 		details = append(details, fact("Decision", resolutionLabel(i.resolution)))
+	}
+	if f := projectFact(i); f != nil {
+		details = append(details, f)
 	}
 	return &screensv1.PageRow{Cells: cells, Details: details, DetailBlocks: []*screensv1.PageBlock{}}
 }

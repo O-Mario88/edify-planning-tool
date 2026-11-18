@@ -65,6 +65,9 @@ type item struct {
 	// work waiting for IA verification; reviewIsSSA that it is SSA Support,
 	// confirmed in its own drawer.
 	canReview, reviewIsSSA bool
+	// projectLocked is Special Project work the reader may not withdraw or
+	// decide (its Project Coordinator's).
+	projectLocked bool
 
 	coreSlotLabel            string
 	partnerRate              *int64

@@ -17,6 +17,8 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pricing"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolplanning"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/visitgate"
 )
 
 // work draws the page for a team-lens reader whose workspace holds partner
@@ -188,10 +190,8 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 			}
 		}
 	}
-	for _, i := range partnerItems {
-		if i.projectID != "" {
-			return nil, false, nil
-		}
+	if err := s.lockProjectWork(ctx, p, partnerItems); err != nil {
+		return nil, true, err
 	}
 
 	// The team members: the roster first, then whoever holds the Partner's
@@ -512,6 +512,44 @@ WHERE sp.deleted_at IS NULL AND 'ImpactAssessment' = ANY(COALESCE(u.roles, '{}')
 			i.canReview = true
 		}
 		i.reviewIsSSA = a.schoolID != "" && (a.ssaExpected || a.purposeType == "ssa_support" || in(rules.Work.SSASupportTypes, a.activityType))
+	}
+	return nil
+}
+
+// lockProjectWork is _lock_project_work: Special Project work is its
+// Project Coordinator's to withdraw or reassign (projects.authority), and a
+// Coordinator does not read this page, so only the Admin and Impact
+// Assessment (the Admin's operational reach) direct it here. For anyone
+// else it is locked: no withdrawal or hand-back decision is drawn on it.
+// Work of a project no SSA intervention measures reads General where it
+// names no intervention (intervention_or_general).
+func (s *Service) lockProjectWork(ctx context.Context, p auth.Principal, items []*item) error {
+	any := false
+	for _, i := range items {
+		if i.projectID != "" {
+			any = true
+			break
+		}
+	}
+	if !any {
+		return nil
+	}
+	outside, err := visitgate.ProjectsOutsideSSA(ctx, s.db, schoolprofile.GateRules())
+	if err != nil {
+		return err
+	}
+	directs := p.ActiveRole == "Admin" || p.ActiveRole == "ImpactAssessment"
+	for _, i := range items {
+		if i.projectID == "" {
+			continue
+		}
+		if i.targetIntervention == "" && contains(outside, i.projectID) {
+			i.targetIntervention = "general"
+		}
+		if !directs {
+			i.projectLocked = true
+			i.withdrawalLabel = ""
+		}
 	}
 	return nil
 }

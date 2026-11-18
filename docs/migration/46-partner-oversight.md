@@ -431,3 +431,27 @@ will deliver the support", `get_resolution_display`, `resolution_labels` in
 
 Proof: the golden adds a decided hand-back and asks two activity filters of
 every reader: **624 answers of 10 accounts, 0 differing**.
+
+## 46.15 Special Project work (2026-11-18)
+
+Special Project work is no longer handed on. It is its Project
+Coordinator's to withdraw or reassign (`projects.authority`), and a
+Coordinator does not read this page. So, as in `_lock_project_work`, only
+the Admin and Impact Assessment (the Admin's operational reach) direct it
+here.
+
+For every other reader the work is locked:
+
+- no withdrawal is drawn, and no Withdraw school or Resolve Exception;
+- its details read "Special Project: <name> — withdrawals and reassignments
+  are its Project Coordinator's".
+
+For the Admin and Impact Assessment the details name the project alone.
+
+Work of a project no SSA intervention measures, and naming no intervention,
+reads "general" as its target intervention (`intervention_or_general`,
+through `visitgate.ProjectsOutsideSSA`).
+
+Proof: a project hand-over waiting on the Partner and dated project work.
+It is locked for every reader but admin and ia: **624 answers of 10
+accounts, 0 differing**.

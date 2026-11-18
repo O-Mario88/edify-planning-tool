@@ -98,12 +98,18 @@ def file_rows():
             "AND s.school_id IS NOT NULL AND btrim(s.school_id) <> '' "
             "AND NOT EXISTS (SELECT 1 FROM partner_assignment pa WHERE pa.school_id = s.id) "
             "AND NOT EXISTS (SELECT 1 FROM activity a WHERE a.school_id = s.id AND a.delivery_type = 'partner') "
-            "ORDER BY s.id LIMIT 12"
+            "ORDER BY s.id LIMIT 14"
         )
         clients = [row[0] for row in cursor.fetchall()]
         # Each fixture's school, by its number: 0-8 and 17-18 are clients.
         schools = {n: clients[n] for n in range(9)}
         schools[17], schools[18], schools[19] = clients[9], clients[10], clients[11]
+        schools[20], schools[21] = clients[12], clients[13]
+        # A Special Project, whose work is its Project Coordinator's.
+        cursor.execute(
+            "SELECT id FROM project WHERE deleted_at IS NULL ORDER BY id LIMIT 1"
+        )
+        (project,) = cursor.fetchone()
         # A Core school with no partner work of its own, for the Core tab.
         cursor.execute(
             "SELECT s.id FROM school s WHERE s.deleted_at IS NULL AND s.school_type = 'core' "
@@ -147,6 +153,7 @@ def file_rows():
             ia="pending",
             payment="none",
             cluster=None,
+            project=None,
         ):
             day = TODAY + timedelta(days=days)
             clone(
@@ -179,7 +186,7 @@ def file_rows():
                     "pl_reviewed_at": None,
                     "planned_date_before_completion": None,
                     "reschedule_count": 0,
-                    "project_id": None,
+                    "project_id": project,
                     "deleted_at": None,
                     "paired_school_visit_id": None,
                     "created_at": NOW,
@@ -208,6 +215,7 @@ def file_rows():
             category=None,
             reason=None,
             cluster=None,
+            project=None,
         ):
             created = NOW - timedelta(days=created_days)
             clone(
@@ -228,7 +236,7 @@ def file_rows():
                     "support_type": None,
                     "visit_number": None,
                     "training_number": None,
-                    "project_id": None,
+                    "project_id": project,
                     "outside_ssa": False,
                     "training_course_id": None,
                     "catalogue_item_id": None,
@@ -337,6 +345,16 @@ def file_rows():
         )
         cursor.execute(
             "UPDATE partner_assignment SET resolution = 'staff_delivery' WHERE id = 'gpoH19'"
+        )
+
+        # Special Project work: a hand-over waiting on the Partner's date
+        # and work the Partner dated, both its Project Coordinator's.
+        handover(20, status="assigned", project=project, created_days=2)
+        handover(
+            21,
+            status="scheduled",
+            project=project,
+            activity_id=work(21, status="partner_scheduled", days=9, project=project),
         )
 
         # Group trainings the Partner facilitates: the officer's own work,
