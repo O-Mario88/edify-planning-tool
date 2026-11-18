@@ -912,6 +912,16 @@
         "no_visit": "No visit in the plan",
         "unplanned": "Nothing planned this year"
       },
+      "show_order": [
+        "all",
+        "no_ssa",
+        "unplanned",
+        "improved",
+        "declined",
+        "awaiting_partner",
+        "no_training",
+        "no_visit"
+      ],
       "team_label": "Team"
     },
     "ssa_target": 10.0,

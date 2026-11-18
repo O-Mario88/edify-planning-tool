@@ -424,6 +424,7 @@ def scope_rules() -> dict:
         "level_labels": dict(engine._LEVEL_LABELS),
         "period_options": [list(pair) for pair in engine.period_options()],
         "show_labels": dict(engine.SHOW_LABELS),
+        "show_order": list(engine.SHOW_LABELS),
         "ranked": engine.RANKED,
         "ranking_method": engine.RANKING_METHOD,
         "movers_method": engine.MOVERS_METHOD,

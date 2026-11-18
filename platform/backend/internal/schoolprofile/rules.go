@@ -187,6 +187,7 @@ type scopeRules struct {
 	LevelLabels       map[string]string   `json:"level_labels"`
 	PeriodOptions     [][2]string         `json:"period_options"`
 	ShowLabels        map[string]string   `json:"show_labels"`
+	ShowOrder         []string            `json:"show_order"`
 	Ranked            int                 `json:"ranked"`
 	RankingMethod     string              `json:"ranking_method"`
 	MoversMethod      string              `json:"movers_method"`

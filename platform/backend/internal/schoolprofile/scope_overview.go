@@ -41,6 +41,7 @@ type scopeProfile struct {
 	staff, leads   []person
 	book           ruleBook
 	focus          map[string][2]int
+	planned        map[string]bool
 }
 
 func (s *Service) readScopeProfile(ctx context.Context, r btReader, sc scopeOf, l lens, now time.Time) (*scopeProfile, error) {
@@ -98,12 +99,11 @@ func (s *Service) readScopeProfile(ctx context.Context, r btReader, sc scopeOf, 
 	if pr.schoolWork, pr.clusterWork, err = s.workByPlace(ctx, ids, clusterIDs, l.fy, l.window); err != nil {
 		return nil, err
 	}
-	planned, err := s.plannedSchools(ctx, ids, l.fy, l.window)
-	if err != nil {
+	if pr.planned, err = s.plannedSchools(ctx, ids, l.fy, l.window); err != nil {
 		return nil, err
 	}
 	for _, x := range pr.schools {
-		if !planned[x.id] {
+		if !pr.planned[x.id] {
 			pr.unplanned++
 		}
 	}

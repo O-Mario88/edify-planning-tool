@@ -16,7 +16,10 @@ import (
 // scopeSchool is one of the scope's schools (engine._schools).
 type scopeSchool struct {
 	id, code, name, kind, cluster, owner, district, subRegion, subCounty string
+	districtName                                                         string
 	enrolment                                                            int
+	// hasEnrolment is whether the school's record has a figure at all.
+	hasEnrolment bool
 }
 
 // scopeOf is a profile's scope: whose profile it is and the schools it
@@ -34,7 +37,8 @@ func (s *Service) readScopeSchools(ctx context.Context, sc scopeOf) ([]scopeScho
 	rows, err := s.db.Query(ctx, `
 SELECT s.id, COALESCE(s.school_id, ''), s.name, COALESCE(s.school_type, ''), COALESCE(s.cluster_id, ''),
   COALESCE(s.account_owner_id, ''), COALESCE(s.district_id, ''),
-  COALESCE(d.sub_region_id, s.sub_region_id, ''), COALESCE(s.sub_county_id, ''), COALESCE(s.enrollment, 0)
+  COALESCE(d.sub_region_id, s.sub_region_id, ''), COALESCE(s.sub_county_id, ''), COALESCE(s.enrollment, 0),
+  s.enrollment IS NOT NULL, COALESCE(d.name, '')
 FROM school s LEFT JOIN district d ON d.id = s.district_id
 WHERE s.deleted_at IS NULL AND s.operational_status = ANY($1) AND `+sc.where+`
 ORDER BY s.name, s.id`, args...)
@@ -43,7 +47,8 @@ ORDER BY s.name, s.id`, args...)
 	}
 	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (scopeSchool, error) {
 		var x scopeSchool
-		err := row.Scan(&x.id, &x.code, &x.name, &x.kind, &x.cluster, &x.owner, &x.district, &x.subRegion, &x.subCounty, &x.enrolment)
+		err := row.Scan(&x.id, &x.code, &x.name, &x.kind, &x.cluster, &x.owner, &x.district, &x.subRegion, &x.subCounty, &x.enrolment,
+			&x.hasEnrolment, &x.districtName)
 		return x, err
 	})
 }

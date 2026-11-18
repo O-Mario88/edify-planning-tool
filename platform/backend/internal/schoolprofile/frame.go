@@ -3,6 +3,7 @@ package schoolprofile
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"slices"
 	"strings"
 
@@ -18,6 +19,9 @@ type lens struct {
 	window                   window
 	// base is the profile's own address, /schools/<record id>.
 	base string
+	// query is the page's query, which a table's pager reads its page
+	// from and carries on.
+	query url.Values
 }
 
 // href is profile_context's "href": every link of the profile starts here.

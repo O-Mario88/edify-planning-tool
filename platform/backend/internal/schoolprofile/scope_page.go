@@ -76,7 +76,14 @@ WHERE d.id = $1`, id).Scan(&name, &regionName, &subRegionID, &subRegionName)
 
 // scopeQueryKeys are the keys a profile's own links carry; anything else
 // is still the existing application's.
-var scopeQueryKeys = map[string]bool{"tab": true, "fy": true, "period": true, "show": true, "what": true}
+// scopeTabsInGo are the sections Go draws; the rest are still the existing
+// application's.
+var scopeTabsInGo = map[string]bool{"overview": true, "ssa": true, "sub_counties": true, "staff": true, "districts": true, "sub_regions": true, "schools": true, "projects": true}
+
+// tablePageSize is the shared table pager's page (TABLE_PAGE_SIZE).
+const tablePageSize = 50
+
+var scopeQueryKeys = map[string]bool{"tab": true, "fy": true, "period": true, "show": true, "what": true, "parts_page": true, "schools_page": true, "sub_county": true, "projects_page": true}
 
 // scopePage is one kind of profile page: its scope, its address, its back
 // link, the line before its scope line and its own header facts.
@@ -109,10 +116,10 @@ func (s *Service) scopePage(ctx context.Context, p auth.Principal, page scopePag
 	if !contains(sections, tab) {
 		tab = sections[0]
 	}
-	if tab != "overview" || query.Get("what") != "" {
+	if !scopeTabsInGo[tab] || query.Get("what") != "" {
 		return nil, false, nil
 	}
-	l := lens{tab: tab, fy: fy, period: period, running: running, window: periodWindow(fy, period), base: page.base}
+	l := lens{tab: tab, fy: fy, period: period, running: running, window: periodWindow(fy, period), base: page.base, query: query}
 	reader, err := schooldirectory.ResolveScope(ctx, s.db, p, now)
 	if err != nil {
 		return nil, true, err
@@ -132,16 +139,66 @@ func (s *Service) scopePage(ctx context.Context, p auth.Principal, page scopePag
 	header := &screensv1.PageHeader{BackLabel: page.back[0], BackHref: page.back[1], Title: page.scope.name,
 		Description: pr.scopeLine(page.lead, l)}
 	facts := append(page.facts(pr), &screensv1.PageFact{Label: "Fiscal Year", Value: fyLabel(fy)})
+	filters := scopeFilters(l)
+	if tab == "schools" {
+		// The Schools tab's Show list, and the sub-county a part's row opened.
+		show := query.Get("show")
+		if _, ok := rules.Engine.Scope.ShowLabels[show]; !ok {
+			show = "all"
+		}
+		options := []*screensv1.PageFilterOption{}
+		for _, key := range rules.Engine.Scope.ShowOrder {
+			options = append(options, &screensv1.PageFilterOption{Value: key, Label: rules.Engine.Scope.ShowLabels[key]})
+		}
+		f := filters.GetFilters()
+		f.Filters = append(f.Filters, &screensv1.PageFilter{Name: "show", Label: "Show", Value: show, Options: options})
+		if sub := query.Get("sub_county"); sub != "" {
+			f.Hidden["sub_county"] = sub
+		}
+	}
 	blocks := []*screensv1.PageBlock{
 		{Kind: &screensv1.PageBlock_Facts{Facts: &screensv1.PageFacts{Facts: facts}}},
-		scopeFilters(l),
+		filters,
 	}
-	blocks = append(blocks, pr.overview(l)...)
-	tables := pr.tables(l, pr.book, pr.focus, rules.Doors[p.ActiveRole].Profile)
-	if tables == nil {
-		return nil, false, nil
+	switch tab {
+	case "overview":
+		blocks = append(blocks, pr.overview(l)...)
+		tables := pr.tables(l, pr.book, pr.focus, rules.Doors[p.ActiveRole].Profile)
+		if tables == nil {
+			return nil, false, nil
+		}
+		blocks = append(blocks, tables...)
+	case "ssa":
+		atTarget := 0
+		for _, x := range pr.schools {
+			if c := pr.scores[x.id].current; c != nil && *c >= rules.Engine.SSATarget {
+				atTarget++
+			}
+		}
+		progress, err := s.progressByYear(ctx, idsOf(pr.schools))
+		if err != nil {
+			return nil, true, err
+		}
+		blocks = append(blocks, ssaSection(pr.cmp, pr.overall, atTarget, l, progress)...)
+	case "schools":
+		show := query.Get("show")
+		if _, ok := rules.Engine.Scope.ShowLabels[show]; !ok {
+			show = "all"
+		}
+		blocks = append(blocks, pr.schoolsBlocks(l, show, query.Get("sub_county"), rules.Doors[p.ActiveRole])...)
+	case "projects":
+		projects, err := s.scopeProjects(ctx, pr, l)
+		if err != nil {
+			return nil, true, err
+		}
+		blocks = append(blocks, projectsBlocks(l, projects, rules.Doors[p.ActiveRole].OpenProjects)...)
+	case "sub_counties", "staff", "districts", "sub_regions":
+		rows, unplaced, err := s.groups(ctx, pr, tab, pr.planned)
+		if err != nil {
+			return nil, true, err
+		}
+		blocks = append(blocks, pr.partsBlocks(l, tab, rows, unplaced, tab != "staff" || rules.Doors[p.ActiveRole].OpenStaff)...)
 	}
-	blocks = append(blocks, tables...)
 	return &screensv1.GetPageResponse{Header: header, Tabs: tabs, Blocks: blocks, WebPath: page.base}, true, nil
 }
 

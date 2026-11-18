@@ -33,6 +33,26 @@ func (s *Service) ssaTab(ctx context.Context, sc school, l lens) ([]*screensv1.P
 	if err != nil {
 		return nil, err
 	}
+	atTarget := 0
+	if mine := scores[sc.ID]; mine.current != nil && *mine.current >= rules.Engine.SSATarget {
+		atTarget = 1
+	}
+	progress, err := s.progressByYear(ctx, []string{sc.ID})
+	if err != nil {
+		return nil, err
+	}
+	blocks := ssaSection(cmp, overall, atTarget, l, progress)
+
+	own, err := s.schoolProgress(ctx, sc, book)
+	if err != nil {
+		return nil, err
+	}
+	return append(blocks, own...), nil
+}
+
+// ssaSection is the SSA tab's Intervention Matrix and its two charts
+// (partials/profiles/_sections.html, section "ssa"), for one school or many.
+func ssaSection(cmp comparison, overall change, atTarget int, l lens, progress progressRows) []*screensv1.PageBlock {
 	yearLabel, previousLabel := fyLabel(l.fy), fyLabel(previousFY(l.fy))
 	records := l.records()
 	target := rules.Engine.SSATarget
@@ -75,10 +95,6 @@ func (s *Service) ssaTab(ctx context.Context, sc school, l lens) ([]*screensv1.P
 		{Text: score(cmp.previous)}, {Text: score(cmp.current), Strong: true}, changeCell(overall),
 		{Text: overall.label()}, {Text: targetText}, toTarget(cmp.current),
 	}})
-	atTarget := 0
-	if mine := scores[sc.ID]; mine.current != nil && *mine.current >= target {
-		atTarget = 1
-	}
 	isAre := "are"
 	if atTarget == 1 {
 		isAre = "is"
@@ -113,20 +129,12 @@ func (s *Service) ssaTab(ctx context.Context, sc school, l lens) ([]*screensv1.P
 	}
 
 	// ── Annual SSA Progress (ssa.services.get_ssa_progress_by_fy) ──────────
-	progress, err := s.progressByYear(ctx, sc.ID)
-	if err != nil {
-		return nil, err
-	}
 	if len(progress.years) > 0 {
 		blocks = append(blocks, ssaChart("Annual SSA Progress", "Average confirmed SSA score of these schools, by financial year.",
 			progress.years, []*screensv1.PageSeries{{Name: "Average SSA score", Values: progress.averages}}))
 	}
 
-	own, err := s.schoolProgress(ctx, sc, book)
-	if err != nil {
-		return nil, err
-	}
-	return append(blocks, own...), nil
+	return blocks
 }
 
 func ssaChart(title, subtitle string, categories []string, series []*screensv1.PageSeries) *screensv1.PageBlock {
@@ -143,12 +151,12 @@ type progressRows struct {
 
 // progressByYear is every confirmed record's average, year by year, and the
 // schools assessed in it.
-func (s *Service) progressByYear(ctx context.Context, schoolID string) (progressRows, error) {
+func (s *Service) progressByYear(ctx context.Context, schoolIDs []string) (progressRows, error) {
 	var out progressRows
 	rows, err := s.db.Query(ctx, `
 SELECT fy, AVG(average_score), COUNT(DISTINCT school_id) FROM ssa_record
-WHERE school_id = $1 AND verification_status = 'confirmed' AND deleted_at IS NULL
-GROUP BY fy ORDER BY fy`, schoolID)
+WHERE school_id = ANY($1) AND verification_status = 'confirmed' AND deleted_at IS NULL
+GROUP BY fy ORDER BY fy`, schoolIDs)
 	if err != nil {
 		return out, fmt.Errorf("schoolprofile: reading SSA progress: %w", err)
 	}

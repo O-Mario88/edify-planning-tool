@@ -88,3 +88,30 @@ Mukono District (700 schools, with SSA, the FY 2026 work, hand-overs and
 partners) and the empty Kamuli District. Each was asked by seven readers,
 for the running year, FY 2026 and FY 2025, two periods, and an unknown year
 and period: **112 answers, 0 differing**.
+
+## 176.4 The District profile's SSA, Sub-counties, Staff and Schools tabs (2026-11-18)
+
+- **SSA:** the Intervention Matrix, the score by intervention, and the
+  Annual SSA Progress, from the same code as a school's SSA tab
+  (`ssaSection`, `progressByYear` over a list of schools).
+- **Sub-counties and Staff** (`profile_intelligence.groups`): the parts'
+  table, fifty a page (`parts_page`), with the schools no part holds said
+  under it. With more than one part, their four rankings follow.
+  - A holder written as a staff id or a user id is one person.
+  - A sub-county has no page, so its name opens the Schools tab for it, and
+    in the rankings it links to its id alone, as the existing page writes
+    it.
+- **Schools** (`school_rows`): the Show filter's lists (no SSA, nothing
+  planned, improved, declined, waiting for a Partner, no training or visit
+  in the plan) and a sub-county's schools, fifty a page (`schools_page`).
+  A District column appears when the scope spans districts.
+
+- **Projects** (`_projects`): each project with schools in the scope.
+  - Columns: its status, these schools, the project's whole size against
+    the capacity its coordinator set, its work here (planned and done), and
+    the schools' SSA.
+  - The note under the table is drawn only when a project is listed.
+
+Proof: the district golden adds each tab, the pages and every Show list:
+SSA **40/0**, the parts tabs **60/0**, Schools **112/0**, Projects
+**30/0**.
