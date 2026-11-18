@@ -1,0 +1,67 @@
+{
+  "channels": {
+    "app": "app",
+    "email": "email",
+    "sms": "sms"
+  },
+  "roles": {
+    "Accountant": {
+      "page": true
+    },
+    "Admin": {
+      "page": true
+    },
+    "BusinessTransformationOfficer": {
+      "page": true
+    },
+    "CCEO": {
+      "page": true
+    },
+    "ClusterLeader": {
+      "page": false
+    },
+    "CountryDirector": {
+      "page": true
+    },
+    "HumanResources": {
+      "page": true
+    },
+    "ImpactAssessment": {
+      "page": true
+    },
+    "MfiLoanOfficer": {
+      "page": true
+    },
+    "MfiPartnerAdmin": {
+      "page": true
+    },
+    "PartnerAdmin": {
+      "page": true
+    },
+    "PartnerFieldOfficer": {
+      "page": true
+    },
+    "Program Lead": {
+      "page": true
+    },
+    "ProjectCoordinator": {
+      "page": true
+    },
+    "RegionalProgramLead": {
+      "page": true
+    },
+    "RegionalVicePresident": {
+      "page": true
+    }
+  },
+  "session_idle_default_seconds": 1800,
+  "session_idle_env": "SESSION_IDLE_TIMEOUT_SECONDS",
+  "sms_needs_phone": "Add a phone number to your profile to receive codes by text.",
+  "sms_not_configured": "Text messaging is not configured on this deployment. Your administrator can enable it.",
+  "sms_provider": "africastalking",
+  "sms_provider_env": "SMS_PROVIDER",
+  "sms_required_envs": [
+    "SMS_API_KEY",
+    "SMS_USERNAME"
+  ]
+}

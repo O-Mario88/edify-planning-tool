@@ -736,3 +736,69 @@ and the CD, three queries each, against the existing pages: the Country Map
 and Project Monitoring 9 answers each, 0 differing; Country Oversight's
 lenses and the Country Profile's Overview stay the existing application's
 for every reader, as before.
+
+## 176.28 Messages and Settings in the new web app (2026-11-18)
+
+The last two sidebar pages every role has, /messages and /settings, were
+answered "not moved yet" by the new web app. Both are now drawn there.
+
+**Messages** (`platform/web/src/app/(app)/messages/page.tsx`) is drawn from
+`MessagingService.ListThreads`, which Go already read and doc 42 proved
+against the existing page (78 threads, 0 differing): the header, the inbox
+tabs with their counts, the sort, the conversation list, the pager and the
+Message Rules. Opening a conversation marks it read, a save Go does not make
+yet (doc 42, piece 2), so the open conversation's card links to it in the
+existing web app, as does New Message.
+
+**Settings** is read by a new Go service, `SettingsScreenService.GetSettings`
+(`internal/settingspage`, `proto/edify/screens/v1/settings.proto`): the
+reader's email, whether they owe a new password, their two-step
+verification (`mfa_service.enrolment_state`: in force, required by policy,
+the channel degraded to one that works, the app and text messages
+available, why not, and the masked email and phone) and the idle session
+length (`SESSION_COOKIE_AGE // 60`). Who may open it, the session and SMS
+settings it reads, and the page's words for an unavailable channel are
+exported by `manage.py export_settings_page_rules`
+(`apps/accounts/test_settings_page_rules_export.py` holds the copy current
+and checks the words against `enrolment_state`). The two-step policy is the
+one Go's sign-in already reads (`EDIFY_MFA_REQUIRED_*`). The account columns
+come through the sign-in grant (`identity_roles.sql`); no new grant.
+
+- An account owing a new password never reads the page: the gateway's
+  interceptor refuses every call but the password's own, as the existing
+  middleware redirects to /change-password.
+- An acting appointment is handed on (Unavailable), as on every Go page.
+- The Cluster Leader is refused, as the existing page refuses them.
+- Changing two-step verification stays in the existing web app; the card
+  shows the choice and links there.
+- Appearance offers System, Light and Night black, under the same
+  per-browser key (`edify_theme`). Edify Blue is not drawn by the new web
+  app yet, so it is not offered.
+- The existing template marks Email as well as the app for an app user, and
+  the browser keeps the later one; the new page marks only the channel in use.
+
+Proof: `internal/settingspage/testdata/golden.py` files eight accounts (no
+phone, a phone, a short number, enrolled on each channel, the app with and
+without a secret, an unknown channel, required roles held and active, a
+refused role, a password owed, letters beyond ASCII) in a rolled-back
+transaction, runs the real `settings_view` for each under SMS on and off,
+three policies and two session settings, and
+`TestTheSettingsPageMatchesTheExistingPage` reads each through the
+gateway's own role: 84 answers compared, 0 differing (12 more are the
+password-owed account, which the interceptor stops first).
+
+## 176.29 A hand-over is dated the local day (2026-11-19)
+
+The full suite run just after midnight found Partner Oversight differing on
+138 of 705 answers: a hand-over made at 00:20 EAT on 18 November read
+"Assigned 17 Nov 2026" on the existing page and "18 Nov 2026" in Go. The
+existing service dated a hand-over `assignment.created_at.date()`, the UTC
+day, a day behind from 00:00 to 03:00 EAT. Every "today" is the Kampala day
+(apps.core.clock; the owner's local-day rule), and Go already read it so.
+The existing service now takes `timezone.localtime(created_at).date()`
+(`apps/planning/partner_oversight_service.py`), held by
+`TheAssignmentDayIsTheLocalDayTest` (a hand-over made 21:30 UTC on 8
+October is dated the 9th). The same day feeds the page's month, quarter and
+week filters and the schedule deadline (`partner_risk_service`), so those
+now count a night hand-over in the day it was made. Partner Oversight
+compared at 00:30 EAT: 705 answers, 0 differing.

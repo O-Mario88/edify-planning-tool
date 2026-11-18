@@ -116,6 +116,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/screens"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/settingspage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/signin"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/ssaverify"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/staffactivity"
@@ -316,6 +317,10 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	mux.Handle(screensv1connect.NewPageDrawerServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewExportServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewNotificationCenterServiceHandler(notificationcenter.NewHandler(notificationcenter.NewService(pool, notificationcenter.EmailConfigured(nil)), logger), options...))
+	// Settings (/settings): the reader's own account, read through the
+	// sign-in grant, with the same two-step policy sign-in applies.
+	mux.Handle(screensv1connect.NewSettingsScreenServiceHandler(settingspage.NewHandler(settingspage.NewService(pool,
+		settingspage.Policy{RequiredForAll: cfg.SignIn.MFARequiredForAll, RequiredRoles: cfg.SignIn.MFARequiredRoles}, nil), logger), options...))
 	// Edify Global's countries and their versioned settings
 	// (docs/migration/80 §8), from the Go-owned country_registry.
 	mux.Handle(countriesv1connect.NewCountryServiceHandler(countryconfig.NewService(pool,

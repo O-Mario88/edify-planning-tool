@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package edify.screens.v1;
+
+// The Settings page (/settings) for the signed-in person, as the existing
+// page draws it (apps.frontend.views.extended_views.settings_view,
+// pages/settings/index.html and apps.accounts.mfa_service.enrolment_state):
+// their email, whether they must change their password, their two-step
+// verification and how long an idle session lasts. Only ever the caller's
+// own account: nothing in the request names whose it is. Changing two-step
+// verification is a save the existing web app still makes.
+service SettingsScreenService {
+  rpc GetSettings(GetSettingsRequest) returns (GetSettingsResponse);
+}
+
+message GetSettingsRequest {}
+
+// The two-step verification card.
+message TwoStepVerification {
+  // Whether a code is asked at sign-in: enrolled, or required by policy.
+  bool in_force = 1;
+  // Required by the organisation, so it cannot be turned off.
+  bool required_by_policy = 2;
+  // email, sms or app: the channel codes go to, degraded to one that works.
+  string channel = 3;
+  // The authenticator app is set up.
+  bool app_available = 4;
+  // A text message can reach them.
+  bool sms_available = 5;
+  // Why a text message cannot, in the page's words; empty when it can.
+  string sms_blocked_reason = 6;
+  // Their email and phone as the page shows them ("a•••@edify.org", "•••• 0001").
+  string email_hint = 7;
+  string phone_hint = 8;
+}
+
+message GetSettingsResponse {
+  string email = 1;
+  // The page offers Change password only then.
+  bool must_change_password = 2;
+  TwoStepVerification two_step = 3;
+  // After this many minutes without activity the person is signed out.
+  int32 session_idle_minutes = 4;
+}

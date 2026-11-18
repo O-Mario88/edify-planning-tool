@@ -26,7 +26,7 @@ export function HistoryControls() {
   );
 }
 
-function applyTheme(dark: boolean) {
+export function applyTheme(dark: boolean) {
   const root = document.documentElement;
   root.classList.remove('light', 'theme-dark', 'dark');
   root.classList.add(dark ? 'theme-dark' : 'light');
@@ -35,7 +35,7 @@ function applyTheme(dark: boolean) {
 }
 
 /** The root's theme class, which the page's head script set before paint. */
-function subscribeTheme(onChange: () => void) {
+export function subscribeTheme(onChange: () => void) {
   const observer = new MutationObserver(onChange);
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
   return () => observer.disconnect();

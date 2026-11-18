@@ -7,7 +7,7 @@ import Link from 'next/link';
 
 import type { PageLinkTabs } from '@/gen/edify/screens/v1/page_pb';
 
-function PhoneMore({ rail, counts }: { rail: PageLinkTabs; counts?: readonly number[] }) {
+function PhoneMore({ rail, counts }: { rail: PageLinkTabs; counts?: readonly (number | undefined)[] }) {
   const others = rail.tabs.map((tab, index) => ({ tab, count: counts?.[index] })).filter(({ tab }) => !tab.active);
   if (!others.length) return null;
   return (
@@ -27,7 +27,7 @@ function PhoneMore({ rail, counts }: { rail: PageLinkTabs; counts?: readonly num
   );
 }
 
-export function TabRail({ rail, counts }: { rail: PageLinkTabs; counts?: readonly number[] }) {
+export function TabRail({ rail, counts }: { rail: PageLinkTabs; counts?: readonly (number | undefined)[] }) {
   return (
     <div className="flex sm:overflow-x-auto" data-block="tabs">
       <div role="tablist" aria-label={rail.label || undefined} className="inline-flex min-h-8 flex-nowrap items-stretch rounded-[8px] bg-[var(--edify-surface-muted)]">
