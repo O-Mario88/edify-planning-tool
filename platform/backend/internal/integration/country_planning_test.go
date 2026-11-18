@@ -29,58 +29,8 @@ import (
 // removed, and Kenya is Draft again.
 func TestTheCountryThroughPlanning(t *testing.T) {
 	ctx := context.Background()
-	exec := func(sql string, args ...any) {
-		t.Helper()
-		if _, err := admin.Exec(ctx, sql, args...); err != nil {
-			t.Fatalf("%s: %v", sql, err)
-		}
-	}
-	type account struct{ user, staff string }
-	pick := func(skip string) account {
-		t.Helper()
-		var a account
-		if err := admin.QueryRow(ctx, `SELECT u.id, sp.id FROM "user" u JOIN staff_profile sp ON sp.user_id = u.id AND sp.deleted_at IS NULL
-WHERE u.active_role = 'CCEO' AND u.is_active AND u.deleted_at IS NULL AND btrim(sp.country) = 'Uganda' AND u.id <> $1
-  AND NOT EXISTS (SELECT 1 FROM staff_supervisor_assignment l JOIN staff_profile x ON x.id = l.supervisor_id
-    JOIN "user" xu ON xu.id = x.user_id WHERE l.supervisee_id = sp.id AND 'ImpactAssessment' = ANY(xu.roles))
-ORDER BY u.id LIMIT 1`, skip).Scan(&a.user, &a.staff); err != nil {
-			t.Fatal(err)
-		}
-		return a
-	}
-	assessor := pick("")
-	officer := pick(assessor.user)
-	withoutMemberships(t, assessor.user)
-	withoutMemberships(t, officer.user)
-	clear := func() {
-		for _, sql := range []string{
-			`DELETE FROM country_registry.country_role_assignment WHERE user_id = ANY($1)`,
-			`DELETE FROM country_registry.country_membership WHERE user_id = ANY($1)`,
-			`DELETE FROM activity WHERE id LIKE 'gcpl%' AND $1::text[] IS NOT NULL`,
-			`DELETE FROM country_registry.school_country WHERE school_id LIKE 'gcpl%' AND $1::text[] IS NOT NULL`,
-			`DELETE FROM school WHERE id LIKE 'gcpl%' AND $1::text[] IS NOT NULL`,
-			`UPDATE country_registry.country SET state = 'draft', activated_on = NULL WHERE code = 'KE' AND $1::text[] IS NOT NULL`,
-		} {
-			if _, err := admin.Exec(ctx, sql, []string{assessor.user, officer.user}); err != nil {
-				t.Errorf("%s: %v", sql, err)
-			}
-		}
-	}
-	clear()
-	// Registered after withoutMemberships, so it runs first.
-	t.Cleanup(clear)
-
-	// Kenya Active; both accounts belong to Kenya alone, the assessor as
-	// Impact Assessment and the officer as CCEO.
-	exec(`UPDATE country_registry.country SET state = 'active', activated_on = current_date WHERE code = 'KE'`)
+	assessor, officer, exec := twoKenyans(t, "gcpl")
 	kenya := countryID(t, "KE")
-	for _, a := range []struct{ user, role string }{{assessor.user, "ImpactAssessment"}, {officer.user, "CCEO"}} {
-		exec(`WITH m AS (INSERT INTO country_registry.country_membership (id, user_id, country_id, is_default, effective_from, granted_by, grant_reason)
-  VALUES (gen_random_uuid(), $1, $2::uuid, true, current_date, 'gcpl', 'Planning test') RETURNING id)
-INSERT INTO country_registry.country_role_assignment (id, membership_id, country_id, user_id, role_name, scope_type, granted_by, grant_reason)
-SELECT gen_random_uuid(), m.id, $2::uuid, $1, $3, $4, 'gcpl', 'Planning test' FROM m`,
-			a.user, kenya, a.role, schooldirectory.ScopeTypeOf(a.role))
-	}
 
 	// A Kenyan school, and a Ugandan one with no region and no holder; work
 	// at each, in this year, held by the officer.

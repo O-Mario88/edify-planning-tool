@@ -8,6 +8,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -294,7 +295,7 @@ ORDER BY r.school_id ASC, r.date_of_ssa DESC, r.created_at DESC, r.id DESC`, fun
 
 	// The schools' countries, for the rule in force.
 	if err := each(ctx, q, "the schools' countries", `
-SELECT s.id, COALESCE(r.country, '') FROM school s LEFT OUTER JOIN region r ON s.region_id = r.id
+SELECT s.id, `+registry.SchoolCountryName("s")+` FROM school s
 WHERE s.deleted_at IS NULL AND s.id = ANY($1)`, func(rows pgx.Rows) error {
 		var id, country string
 		if err := rows.Scan(&id, &country); err != nil {

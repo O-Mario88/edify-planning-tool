@@ -6,7 +6,7 @@ country-specific configuration, securely isolated country data.* Phase 0 of
 that instruction asks for an audit and the architecture decisions before any
 schema change. This document is that Phase 0. The owner approved Phase 1
 on §7's recommended defaults on 2026-11-17 ("Yes, start Phase 1"); what has
-been built since, on the development copies only, is §8 to §13.
+been built since, on the development copies only, is §8 to §14.
 
 Everything below was measured on 2026-11-17 against the development copy
 `edify_gorn_test` and the code on `feature/edify-go-rn-migration`. No
@@ -604,3 +604,47 @@ Not in this step:
 - Writes: scheduling already stays inside the country, because it requires
   the school in the scheduler's own portfolio, which §12 keeps to the
   country's schools.
+
+## 14. Phase 3, third step: the country through SSA (2026-11-18)
+
+Owner instruction: *"Continue Phase 3 with the country through SSA."*
+SSA records belong to schools, so an SSA record's country is its school's
+in the registry (`country.SchoolIn`). Go only reads SSA; recording,
+importing and confirming scores stay in the existing application. No table
+is added or changed and no row is written.
+
+Most SSA readers already reach records through the School Directory's
+scope (a portfolio, or a country read through the registry since §8): My
+Plan, the Planning page, Core Schools, the Programme Rollout, the
+dashboards, My Targets and the IA outcome pages. The ones that compared a
+country's name as text now read the registry:
+
+| Reader | Before | Now |
+|---|---|---|
+| The SSA verification queue (`/ssa/verification/`) for a country reader | The school's region's country name, or a school with no region and no country-bound holder in every country | The school's registry country (`SchoolIn`) |
+| Which records a Country Director confirms (those Impact Assessment collected) | Collected by anyone holding Impact Assessment anywhere | In a country whose roles come from the registry, by the people assigned Impact Assessment there (a revoked assignment still marks what they collected); Uganda's rule unchanged |
+| The SSA change rules that apply to a school (Core Oversight, Cluster Oversight) | The school's region's country name | The school's registry country's name (`country.SchoolCountryName`) |
+| The IA dashboard's SSA operations: unmatched SSA rows, failed uploads, districts below the SSA target | The uploader's profile country; the suggested school's region; the regions named by the country | The country's people (`country.UsersIn`: in Uganda, today's rule kept to its members; elsewhere, its members), the suggested school's registry country, the country's regions (`country.RegionsIn`) |
+| The IA geography (district groups and region links) | Regions named by the country | `country.RegionsIn` |
+
+Proof: `internal/integration/country_ssa_test.go`, with Kenya Active, an
+Impact Assessment officer and a CCEO who work in Kenya alone, a Kenyan
+region, a Kenyan school and a Ugandan school with no region and no holder,
+and a pending SSA at each: Kenya's IA sees only Kenya's record in the
+verification queue and Uganda's IA only Uganda's (the existing rule would
+have shown Kenya the Ugandan record too); the schools' rule countries are
+Kenya and Uganda; Kenya's regions and people are its own and Uganda's no
+longer include the officer who left. The shared test setup
+(`country_kenyans_test.go`) now fails the test outright when its cleanup
+cannot run, so a role left behind can never keep memberships from being
+put back. The whole integration suite and every golden unchanged (0
+differing); school parity `PARITY OK` (24 accounts served, 13 refused, 700
+rows).
+
+Not in this step: SSA writes (in the existing application); a
+country-specific SSA framework (the interventions and score bands are the
+existing rules; per-country change rules already exist as
+`activity_intervention_mapping.country` and now apply by the registry
+country); the IA pages outside SSA (stories, reports, verification reach),
+which keep their text rule until they are carried.
+

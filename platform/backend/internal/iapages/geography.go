@@ -9,6 +9,7 @@ import (
 	"time"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/oversightportfolio"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
@@ -179,7 +180,7 @@ func (s *Service) schoolReach(ctx context.Context, scope schooldirectory.Scope, 
 func districtScope(scope schooldirectory.Scope) (string, []any) {
 	switch {
 	case countryBound(scope):
-		return "d.region_id IN (SELECT id FROM region WHERE country = $1)", []any{scope.Country}
+		return "d.region_id IN " + registry.RegionsIn("$1"), []any{scope.CountryIDs()}
 	case !scope.CountryScope:
 		schools, args := activeSchoolsAll(scope)
 		return "d.id IN (SELECT s.district_id FROM school s WHERE " + schools + ")", args
@@ -235,7 +236,7 @@ func (s *Service) regionLinks(ctx context.Context, scope schooldirectory.Scope, 
 	where, args := "TRUE", []any{}
 	switch {
 	case countryBound(scope):
-		where, args = "r.country = $1", []any{scope.Country}
+		where, args = "r.id IN "+registry.RegionsIn("$1"), []any{scope.CountryIDs()}
 	case !scope.CountryScope:
 		schools, sargs := activeSchoolsAll(scope)
 		where, args = "r.id IN (SELECT s.region_id FROM school s WHERE "+schools+")", sargs

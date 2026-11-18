@@ -11,6 +11,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -207,10 +208,11 @@ func countryBound(scope schooldirectory.Scope) bool {
 	return scope.CountryScope && scope.Country != ""
 }
 
-// countryUsers is country_user_ids as a sub-select, its country the
-// argument numbered n.
+// countryUsers is country_user_ids as a sub-select, read through the
+// registry (country.UsersIn, docs/migration/80 §14): the argument numbered n
+// is the country's registry id (Scope.CountryID).
 func countryUsers(n int) string {
-	return fmt.Sprintf("(SELECT user_id FROM staff_profile WHERE country = $%d)", n)
+	return registry.UsersIn(fmt.Sprintf("$%d::text", n))
 }
 
 // unmatchedSSA is unmatched_ssa_for_scope over `u`: rows still pending or on
@@ -220,9 +222,9 @@ func unmatchedSSA(scope schooldirectory.Scope) (string, []any) {
 	args := []any{rules.Dashboard.UnmatchedOpenStatuses}
 	where := "u.status = ANY($1)"
 	if countryBound(scope) {
-		args = append(args, scope.Country)
+		args = append(args, scope.CountryID)
 		where += fmt.Sprintf(` AND (u.batch_id IN (SELECT id FROM ssa_import_batch WHERE uploaded_by IN %s)
-  OR u.suggested_school_id IN (SELECT ss.id FROM school ss JOIN region r ON r.id = ss.region_id WHERE r.country = $2))`, countryUsers(2))
+  OR u.suggested_school_id IN (SELECT ss.id FROM school ss WHERE %s))`, countryUsers(2), registry.SchoolIn("ss", "ARRAY[$2::text]"))
 	}
 	return where, args
 }
@@ -287,8 +289,8 @@ func (s *Service) districtsBelowTarget(ctx context.Context, scope schooldirector
 	args = slices.Clone(args)
 	districts := "TRUE"
 	if countryBound(scope) {
-		args = append(args, scope.Country)
-		districts = fmt.Sprintf("d.region_id IN (SELECT id FROM region WHERE country = $%d)", len(args))
+		args = append(args, scope.CountryIDs())
+		districts = "d.region_id IN " + registry.RegionsIn(fmt.Sprintf("$%d", len(args)))
 	}
 	// A reader without the country sees the districts of their schools, which
 	// are the districts the schools below sit in already.
@@ -318,7 +320,7 @@ func (s *Service) failedUploads(ctx context.Context, scope schooldirectory.Scope
 	args := []any{rules.Dashboard.FailedUploadStatuses}
 	where := "status = ANY($1)"
 	if countryBound(scope) {
-		args = append(args, scope.Country)
+		args = append(args, scope.CountryID)
 		where += " AND uploaded_by IN " + countryUsers(2)
 	}
 	var n int

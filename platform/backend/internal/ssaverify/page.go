@@ -27,6 +27,7 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/decisionlog"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
@@ -101,18 +102,16 @@ func (a *args) add(v any) string {
 
 // readable is readable_records over ssa_record r with its school s: a
 // country reader's country, a portfolio reader's schools, nobody else's.
+// The country is the school's in the registry (country.SchoolIn,
+// docs/migration/80 §14): the existing rule also placed a school with no
+// region and no country-bound holder in every country.
 func readable(scope schooldirectory.Scope, a *args) string {
 	switch {
 	case scope.CountryScope:
 		if scope.Country == "" {
 			return "r.deleted_at IS NULL"
 		}
-		c := a.add(scope.Country)
-		return fmt.Sprintf(`r.deleted_at IS NULL AND (EXISTS (SELECT 1 FROM region g WHERE g.id = s.region_id AND g.country = %[1]s)
- OR (s.region_id IS NULL AND (
-   s.account_owner_id IN (SELECT id FROM staff_profile WHERE country = %[1]s AND deleted_at IS NULL)
-   OR s.account_owner_id IS NULL OR s.account_owner_id = ''
-   OR s.account_owner_id IN (SELECT id FROM staff_profile WHERE (country IS NULL OR country = '') AND deleted_at IS NULL))))`, c)
+		return "r.deleted_at IS NULL AND " + registry.SchoolIn("s", a.add(scope.CountryIDs()))
 	case len(scope.SchoolIDs) > 0:
 		return "r.deleted_at IS NULL AND r.school_id = ANY(" + a.add(scope.SchoolIDs) + ")"
 	}
@@ -133,6 +132,13 @@ func decides(p auth.Principal, scope schooldirectory.Scope, own []string, a *arg
 	switch {
 	case rules.Roles[p.ActiveRole].IAVerify:
 		cond = "TRUE"
+	case p.ActiveRole == rules.CountryDirectorRole && scope.CountryFromRegistry:
+		// In a country whose roles come from the registry, Impact
+		// Assessment is the people assigned it there (docs/migration/80, §14),
+		// a revoked assignment still marking what they collected.
+		ia := fmt.Sprintf(`(SELECT hr.user_id FROM country_registry.country_role_assignment hr
+  WHERE hr.country_id::text = %s AND hr.role_name = %s)`, a.add(scope.CountryID), a.add(rules.IARole))
+		cond = fmt.Sprintf("(r.collector_type = 'ia' OR r.collected_by_user_id IN %[1]s OR r.uploaded_by IN %[1]s)", ia)
 	case p.ActiveRole == rules.CountryDirectorRole:
 		ia := fmt.Sprintf(`(SELECT id FROM "user" WHERE roles @> ARRAY[%s]::varchar[])`, a.add(rules.IARole))
 		cond = fmt.Sprintf("(r.collector_type = 'ia' OR r.collected_by_user_id IN %[1]s OR r.uploaded_by IN %[1]s)", ia)

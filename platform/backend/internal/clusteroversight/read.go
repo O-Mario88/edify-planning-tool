@@ -9,6 +9,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -203,8 +204,8 @@ WHERE sp.deleted_at IS NULL AND (sp.id = ANY($1) OR sp.user_id = ANY($1))`, func
 	// profile_insights.member_schools: the operating schools, by name.
 	schools := []string{}
 	if err := each(ctx, q, "the member schools", `
-SELECT s.id, s.cluster_id, COALESCE(rg.country, '')
-FROM school s LEFT OUTER JOIN region rg ON s.region_id = rg.id
+SELECT s.id, s.cluster_id, `+registry.SchoolCountryName("s")+`
+FROM school s
 WHERE s.deleted_at IS NULL AND s.operational_status = ANY($1) AND s.cluster_id = ANY($2)
 ORDER BY s.name ASC`, func(rows pgx.Rows) error {
 		var m memberRow

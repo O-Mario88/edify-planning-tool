@@ -1,0 +1,40 @@
+package country
+
+import "fmt"
+
+// Phase 3, SSA (docs/migration/80-multi-country-phase-0.md §14): the
+// registry's answers to "which regions", "which people" and "which country"
+// as SQL fragments, for the readers that compared a country's name as text.
+
+// RegionsIn is the SQL sub-select of the existing regions of the countries
+// whose registry ids the placeholder ids holds (a text[] argument): those
+// whose country name is one of the country's names in the registry.
+func RegionsIn(ids string) string {
+	return fmt.Sprintf(`(SELECT rr.id FROM region rr JOIN country_registry.country_alias ral ON ral.alias = btrim(rr.country)
+  WHERE ral.country_id::text = ANY(%s))`, ids)
+}
+
+// UsersIn is the SQL sub-select of the account ids that work in the country
+// whose registry id the placeholder id holds (text), as the existing
+// country_user_ids reads a country's people. In a country whose roles are
+// the existing profile's (Uganda) it is today's rule, the profile naming the
+// country, kept to accounts that belong to it (BelongsTo); in a country whose
+// roles come from the registry, the accounts with a membership of it in
+// force.
+func UsersIn(id string) string {
+	return fmt.Sprintf(`(SELECT usp.user_id FROM staff_profile usp JOIN country_registry.country uc ON uc.id::text = %[1]s
+  WHERE usp.user_id IS NOT NULL AND (
+    (uc.roles_source = '%[2]s' AND usp.country = uc.name AND %[3]s)
+    OR (uc.roles_source = '%[4]s' AND EXISTS (SELECT 1 FROM country_registry.country_membership um
+      WHERE um.user_id = usp.user_id AND um.country_id = uc.id AND um.revoked_at IS NULL AND `+current("um")+`))))`,
+		id, RolesFromProfile, BelongsTo("usp.user_id", id), RolesFromRegistry)
+}
+
+// SchoolCountryName is the SQL expression for the name of the country a
+// school (aliased by school) belongs to in the registry (SchoolIn), or ""
+// when it belongs to none: the country whose rules apply to it, where the
+// existing code read its region's country name.
+func SchoolCountryName(school string) string {
+	return fmt.Sprintf(`COALESCE((SELECT sc_c.name FROM country_registry.country sc_c WHERE %s ORDER BY sc_c.code LIMIT 1), '')`,
+		SchoolIn(school, "ARRAY[sc_c.id::text]"))
+}
