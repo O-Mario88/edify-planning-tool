@@ -108,7 +108,11 @@ func pyTitle(s string) string {
 }
 
 // ugx is the template's ugx filter over a whole number of shillings.
-func ugx(n int64) string {
+func ugx(n int64) string { return inCurrency("UGX", n) }
+
+// inCurrency is the ugx filter for any currency: its ISO code, then the
+// whole amount with thousands separators (docs/migration/80, §18).
+func inCurrency(code string, n int64) string {
 	s := fmt.Sprint(n)
 	sign := ""
 	if strings.HasPrefix(s, "-") {
@@ -117,7 +121,7 @@ func ugx(n int64) string {
 	for i := len(s) - 3; i > 0; i -= 3 {
 		s = s[:i] + "," + s[i:]
 	}
-	return "UGX " + sign + s
+	return code + " " + sign + s
 }
 
 // activities is "activity" or "activities", as pluralize:'y,ies' writes it.
@@ -130,7 +134,10 @@ func activities(n int) string {
 
 // ugxCompact is apps.core.metrics.format_ugx_compact: UGX 1.2M, UGX 850K,
 // UGX 640, to Python's float formatting.
-func ugxCompact(n int64) string {
+func ugxCompact(n int64) string { return compactIn("UGX", n) }
+
+// compactIn is format_ugx_compact for any currency.
+func compactIn(code string, n int64) string {
 	sign := ""
 	if n < 0 {
 		sign, n = "-", -n
@@ -138,13 +145,13 @@ func ugxCompact(n int64) string {
 	var text string
 	switch {
 	case n >= 1_000_000_000:
-		text = "UGX " + strconv.FormatFloat(float64(n)/1e9, 'f', 1, 64) + "B"
+		text = code + " " + strconv.FormatFloat(float64(n)/1e9, 'f', 1, 64) + "B"
 	case n >= 1_000_000:
-		text = "UGX " + strconv.FormatFloat(float64(n)/1e6, 'f', 1, 64) + "M"
+		text = code + " " + strconv.FormatFloat(float64(n)/1e6, 'f', 1, 64) + "M"
 	case n >= 1_000:
-		text = "UGX " + strconv.FormatFloat(float64(n)/1e3, 'f', 0, 64) + "K"
+		text = code + " " + strconv.FormatFloat(float64(n)/1e3, 'f', 0, 64) + "K"
 	default:
-		text = ugx(n)
+		text = inCurrency(code, n)
 	}
 	return sign + text
 }

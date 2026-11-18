@@ -18,6 +18,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
@@ -60,6 +61,9 @@ type ask struct {
 	periods             map[string]period
 	weekYears           []string
 	selected            period
+	// countryIDs keep the country's Budget to the request's country
+	// (registry ids, docs/migration/80 §18); nil reads every line.
+	countryIDs []string
 }
 
 func readAsk(p auth.Principal, query url.Values, now time.Time) (ask, error) {
@@ -158,8 +162,14 @@ func (s *Service) build(ctx context.Context, p auth.Principal, r role, query url
 	var owners []string
 	switch {
 	case r.Country && (scope.CountryScope || in(rules.CountryLedgerRoles, p.ActiveRole)):
-		// The country's Budget: every planned line, no owner.
+		// The country's Budget: every planned line of the country the
+		// request is made in, no owner (docs/migration/80, §18). Money is
+		// never summed across countries: the Admin and the regional roles,
+		// who reach every country, read the one they work in.
 		a.budgetScope = "country"
+		if p.Country != nil {
+			a.countryIDs = []string{p.Country.ID}
+		}
 	case r.Country || scope.CountryScope:
 		return nil, errPassOn
 	default:
@@ -188,19 +198,26 @@ func (s *Service) build(ctx context.Context, p auth.Principal, r role, query url
 		team = teamSummary(lines, names)
 	}
 	v := view{a: a, role: p.ActiveRole, export: r.Export, groups: gs, team: team, now: now}
+	if v.currency, err = registry.CurrencyOf(ctx, s.db, p.Country); err != nil {
+		return nil, err
+	}
 	if a.budgetScope == "country" {
-		several, err := s.multiCountry(ctx)
-		if err != nil {
+		if p.Country == nil {
+			// With no country to keep it to, the existing page's rule: a
+			// platform whose People name several countries is handed on.
+			several, err := s.multiCountry(ctx)
+			if err != nil {
+				return nil, err
+			}
+			if several {
+				return nil, errPassOn
+			}
+		}
+		v.country, v.countryIDs = true, a.countryIDs
+		if v.wf, err = s.workflow(ctx, registry.SettingsName(p.Country, rules.Country.HomeCountryID), a.countryIDs, a.fy, int(a.anchor.Month())); err != nil {
 			return nil, err
 		}
-		if several {
-			return nil, errPassOn
-		}
-		v.country = true
-		if v.wf, err = s.workflow(ctx, a.fy, int(a.anchor.Month())); err != nil {
-			return nil, err
-		}
-		if v.fin, err = s.financeHealth(ctx, a.fy); err != nil {
+		if v.fin, err = s.financeHealth(ctx, a.fy, a.countryIDs); err != nil {
 			return nil, err
 		}
 		if v.districts, err = s.districts(ctx); err != nil {
@@ -266,7 +283,10 @@ func (s *Service) lines(ctx context.Context, a ask, owners []string) ([]line, er
 		       COALESCE(a.expected_participants, 0), COALESCE(a.daily_visit_batch_id, '')
 		FROM activity_schedule_cost_line l
 		JOIN activity a ON a.id = l.activity_id
+		LEFT JOIN school s ON s.id = a.school_id
+		LEFT JOIN cluster cl ON cl.id = a.cluster_id
 		WHERE l.fiscal_year = ANY($1)
+		  AND ($7::text[] IS NULL OR `+registry.ActivityIn("a", "s", "cl", "$7")+`)
 		  AND a.deleted_at IS NULL
 		  AND (a.scheduled_date IS NOT NULL OR a.planned_date IS NOT NULL)
 		  AND (a.status IS NULL OR NOT (a.status = ANY($2)))
@@ -277,7 +297,8 @@ func (s *Service) lines(ctx context.Context, a ask, owners []string) ([]line, er
 		           AND (a.responsible_staff_id = ANY($3)
 		                OR (a.delivery_type = 'partner' AND a.monitored_by_staff_id = ANY($3)))))
 		  AND (l.planned_date BETWEEN $4 AND $5 OR (l.planned_date IS NULL AND l.month = ANY($6)))`,
-		a.weekYears, rules.NonFundableStatuses, owners, a.selected.start, a.selected.end, wholeMonths(a.selected.start, a.selected.end))
+		a.weekYears, rules.NonFundableStatuses, owners, a.selected.start, a.selected.end, wholeMonths(a.selected.start, a.selected.end),
+		a.countryIDs)
 	if err != nil {
 		return nil, fmt.Errorf("budgetpage: reading the cost lines: %w", err)
 	}

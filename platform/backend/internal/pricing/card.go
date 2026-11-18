@@ -8,6 +8,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/costing"
 )
 
@@ -46,7 +47,9 @@ func ReadCard(ctx context.Context, db Querier, kind string, onDate *time.Time) (
 	q := `
 		SELECT id, version, material_difference_threshold_bps FROM cost_catalogue
 		WHERE country = $1 AND kind = $2 AND status = $3 AND is_active`
-	args := []any{rules.Country, kind, rules.PublishedStatus}
+	// The request's country's card (docs/migration/80, §18): Uganda's
+	// wherever the caller works there or there is no caller.
+	args := []any{auth.SettingsName(ctx, rules.Country), kind, rules.PublishedStatus}
 	if onDate != nil {
 		q += ` AND (effective_from IS NULL OR effective_from <= $4) AND (effective_to IS NULL OR effective_to >= $4)`
 		args = append(args, *onDate)

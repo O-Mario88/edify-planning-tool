@@ -25,6 +25,23 @@ type view struct {
 	wf        workflow
 	fin       financeHealth
 	districts []district
+	// currency is the ISO code of the money shown: the request's country's
+	// (docs/migration/80, §18), UGX wherever none is recorded.
+	currency string
+	// countryIDs bound the country's Budget to the request's country; nil
+	// is unbounded, as the existing page reads.
+	countryIDs []string
+}
+
+func (v view) amount(n int64) string { return inCurrency(v.code(), n) }
+
+func (v view) amountCompact(n int64) string { return compactIn(v.code(), n) }
+
+func (v view) code() string {
+	if v.currency == "" {
+		return "UGX"
+	}
+	return v.currency
 }
 
 func (v view) header() *screensv1.PageHeader {
@@ -112,7 +129,7 @@ func (v view) blocks() []*screensv1.PageBlock {
 		}
 		items := []*screensv1.PagePanelItem{text(strconv.Itoa(len(v.team)) + " " + people)}
 		for _, m := range v.team {
-			items = append(items, text(m.name), figure(activities(m.activities), ugx(m.total)))
+			items = append(items, text(m.name), figure(activities(m.activities), v.amount(m.total)))
 		}
 		out = append(out, panel("Team cost summary",
 			"Each person’s planned activity cost for this "+strings.ToLower(a.selected.label)+".", items...))
@@ -135,11 +152,11 @@ func (v view) blocks() []*screensv1.PageBlock {
 		total += g.total
 		staff += g.staffTotal
 	}
-	out = append(out, panel("", "", figure("Grand total", ugx(total))), v.ledger(staff, total))
+	out = append(out, panel("", "", figure("Grand total", v.amount(total))), v.ledger(staff, total))
 	source := map[string]string{
 		"my": "My planned activities", "team": "Team planned activities", "country": "Scheduled planned activities",
 	}[a.budgetScope]
-	out = append(out, panel("", "", text("Source: "+source+" · Total: "+ugx(total))))
+	out = append(out, panel("", "", text("Source: "+source+" · Total: "+v.amount(total))))
 	return append(out, v.countryBlocks()...)
 }
 
@@ -168,7 +185,7 @@ func (v view) countryBlocks() []*screensv1.PageBlock {
 	if f.requested != 0 {
 		pct = pyPercentage(f.disbursed, f.requested)
 	}
-	money := ugx
+	money := v.amount
 	fy := strconv.Itoa(v.a.fy)
 	out := []*screensv1.PageBlock{
 		{Kind: &screensv1.PageBlock_Section{Section: "Finance Health, FY " + fy}},
@@ -181,12 +198,12 @@ func (v view) countryBlocks() []*screensv1.PageBlock {
 			{Label: "Returned", Value: money(f.returned)},
 		}),
 		{Kind: &screensv1.PageBlock_Chart{Chart: &screensv1.PageChart{
-			Title: "Advances Requested by Quarter", Subtitle: "UGX requested against each quarter's activities",
+			Title: "Advances Requested by Quarter", Subtitle: v.code() + " requested against each quarter's activities",
 			Categories: []string{"Q1", "Q2", "Q3", "Q4"},
-			Series: []*screensv1.PageSeries{{Name: "Requested (UGX)", Values: []float64{
+			Series: []*screensv1.PageSeries{{Name: "Requested (" + v.code() + ")", Values: []float64{
 				float64(f.quarters[0]), float64(f.quarters[1]), float64(f.quarters[2]), float64(f.quarters[3]),
 			}}},
-			AxisTitle: "UGX requested",
+			AxisTitle: v.code() + " requested",
 		}}},
 	}
 	if v.a.period != "month" {
@@ -212,15 +229,15 @@ func (v view) countryBlocks() []*screensv1.PageBlock {
 	return append(out,
 		panel("Monthly Budget Approval", "Status: "+w.approvalStatus()+" · "+rules.Country.Months[w.month]+" FY "+fy,
 			&screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Links{Links: links}}),
-		panel("", "", text("Country operational request: "+ugx(w.total)+". New submissions contain only costs from planned activities. Previously submitted amounts remain in Submitted budgets.")),
+		panel("", "", text("Country operational request: "+v.amount(w.total)+". New submissions contain only costs from planned activities. Previously submitted amounts remain in Submitted budgets.")),
 		panel("Disbursement and Accountability", "", text("Actual spending")),
 		schoolprofile.Strip("Performance overview", []schoolprofile.StripFigure{
-			{Label: "Approved Operating Limits", Value: ugxCompact(approved)},
-			{Label: "Committed", Value: ugxCompact(r.committed)},
-			{Label: "Amount Disbursed", Value: ugxCompact(r.disbursed)},
-			{Label: "Actual Accounted Spend", Value: ugxCompact(r.accounted)},
-			{Label: "Returned Balance", Value: ugxCompact(r.returned)},
-			{Label: "Reimbursements", Value: ugxCompact(r.reimbursed)},
+			{Label: "Approved Operating Limits", Value: v.amountCompact(approved)},
+			{Label: "Committed", Value: v.amountCompact(r.committed)},
+			{Label: "Amount Disbursed", Value: v.amountCompact(r.disbursed)},
+			{Label: "Actual Accounted Spend", Value: v.amountCompact(r.accounted)},
+			{Label: "Returned Balance", Value: v.amountCompact(r.returned)},
+			{Label: "Reimbursements", Value: v.amountCompact(r.reimbursed)},
 		}),
 	)
 }
@@ -229,12 +246,12 @@ func (v view) countryBlocks() []*screensv1.PageBlock {
 // it: every group's band, its column names, its rows and its subtotal, then
 // the grand total.
 func (v view) ledger(staff, total int64) *screensv1.PageBlock {
-	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{Rows: ledgerRows(v.groups, staff, total)}}}
+	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{Rows: ledgerRows(v.code(), v.groups, staff, total)}}}
 }
 
 // ledgerRows is the ledger's rows: each group's band, column names, rows
 // and subtotal, then the grand total.
-func ledgerRows(gs []*group, staff, total int64) []*screensv1.PageRow {
+func ledgerRows(code string, gs []*group, staff, total int64) []*screensv1.PageRow {
 	t := &screensv1.PageTable{}
 	for _, g := range gs {
 		count, people := "No. of Days", "No. of Persons"
@@ -261,15 +278,15 @@ func ledgerRows(gs []*group, staff, total int64) []*screensv1.PageRow {
 			if heads != 0 {
 				headText = strconv.FormatInt(heads, 10)
 			}
-			staffText := ugx(r.staffTotal)
+			staffText := inCurrency(code, r.staffTotal)
 			if r.vendorTotal != 0 && r.staffTotal == 0 {
 				staffText = "—"
 			}
-			t.Rows = append(t.Rows, cells(r.item, strconv.Itoa(n), headText, ugx(r.rate), staffText, ugx(r.total)))
+			t.Rows = append(t.Rows, cells(r.item, strconv.Itoa(n), headText, inCurrency(code, r.rate), staffText, inCurrency(code, r.total)))
 		}
-		t.Rows = append(t.Rows, cells(g.label+" subtotal", ugx(g.staffTotal), ugx(g.total)))
+		t.Rows = append(t.Rows, cells(g.label+" subtotal", inCurrency(code, g.staffTotal), inCurrency(code, g.total)))
 	}
-	t.Rows = append(t.Rows, cells("Grand total", ugx(staff), ugx(total)))
+	t.Rows = append(t.Rows, cells("Grand total", inCurrency(code, staff), inCurrency(code, total)))
 	return t.Rows
 }
 

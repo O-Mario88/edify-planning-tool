@@ -133,7 +133,7 @@ func (s *Service) catalogue(ctx context.Context) (*catalogue, error) {
 		FROM cost_catalogue
 		WHERE country = $1 AND kind = $2 AND status = $3 AND is_active
 		ORDER BY fy DESC, version DESC
-		LIMIT 1`, rules.Country, rules.OperationalKind, rules.PublishedStatus,
+		LIMIT 1`, auth.SettingsName(ctx, rules.Country), rules.OperationalKind, rules.PublishedStatus,
 	).Scan(&c.id, &c.kind, &c.country, &c.fy, &c.version, &c.provisional)
 	if err == pgx.ErrNoRows {
 		return nil, nil

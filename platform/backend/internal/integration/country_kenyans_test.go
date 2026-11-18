@@ -49,6 +49,7 @@ ORDER BY u.id LIMIT 1`, skip).Scan(&a.user, &a.staff); err != nil {
 			`DELETE FROM country_registry.country_membership WHERE user_id = ANY($1) AND $2 <> ''`,
 			`DELETE FROM ssa_score WHERE ssa_record_id LIKE $2 AND $1::text[] IS NOT NULL`,
 			`DELETE FROM ssa_record WHERE id LIKE $2 AND $1::text[] IS NOT NULL`,
+			`DELETE FROM activity_schedule_cost_line WHERE id LIKE $2 AND $1::text[] IS NOT NULL`,
 			`DELETE FROM activity WHERE id LIKE $2 AND $1::text[] IS NOT NULL`,
 			`DELETE FROM country_registry.school_country WHERE school_id LIKE $2 AND $1::text[] IS NOT NULL`,
 			`DELETE FROM cluster WHERE id LIKE $2 AND $1::text[] IS NOT NULL`,
@@ -57,6 +58,7 @@ ORDER BY u.id LIMIT 1`, skip).Scan(&a.user, &a.staff); err != nil {
 			`DELETE FROM school WHERE id LIKE $2 AND $1::text[] IS NOT NULL`,
 			`DELETE FROM district WHERE id LIKE $2 AND $1::text[] IS NOT NULL`,
 			`DELETE FROM region WHERE id LIKE $2 AND $1::text[] IS NOT NULL`,
+			`DELETE FROM country_registry.country_config_version WHERE change_reason LIKE $2 AND $1::text[] IS NOT NULL`,
 			`UPDATE country_registry.country SET state = 'draft', activated_on = NULL WHERE code = 'KE' AND $1::text[] IS NOT NULL AND $2 <> ''`,
 		} {
 			if _, err := admin.Exec(ctx, sql, []string{assessor.user, officer.user}, like); err != nil {

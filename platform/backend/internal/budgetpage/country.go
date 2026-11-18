@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 )
 
 // countryRules are the country Budget's rules (rules.json "country").
@@ -88,13 +90,15 @@ func (s *Service) multiCountry(ctx context.Context) (bool, error) {
 }
 
 // workflow reads the month's country budget and what the page shows of it.
-func (s *Service) workflow(ctx context.Context, fy, month int) (workflow, error) {
+// home is the country the budget is kept under (country_id, as
+// country.SettingsName keys it).
+func (s *Service) workflow(ctx context.Context, home string, countryIDs []string, fy, month int) (workflow, error) {
 	w := workflow{month: month, status: "draft_generated"}
 	key := monthKey(fy, month)
 	err := s.db.QueryRow(ctx, `
 		SELECT id, status, COALESCE(total_amount, 0), COALESCE(operational_activity_requirement, 0)
 		FROM monthly_work_plan_budget WHERE country_id = $1 AND month_key = $2`,
-		rules.Country.HomeCountryID, key,
+		home, key,
 	).Scan(&w.id, &w.status, &w.total, &w.operationalRequirement)
 	switch {
 	case err == pgx.ErrNoRows:
@@ -105,7 +109,7 @@ func (s *Service) workflow(ctx context.Context, fy, month int) (workflow, error)
 	}
 	if !w.locked() {
 		// _recompute_if_live: the request is the month's planned cost.
-		live, err := s.monthProgramTotal(ctx, fy, month)
+		live, err := s.monthProgramTotal(ctx, countryIDs, fy, month)
 		if err != nil {
 			return w, err
 		}
@@ -114,8 +118,8 @@ func (s *Service) workflow(ctx context.Context, fy, month int) (workflow, error)
 	var prior *string
 	err = s.db.QueryRow(ctx, `
 		SELECT month_key FROM monthly_work_plan_budget
-		WHERE fy = $1 AND status = 'submitted_to_rvp' AND month_key < $2
-		ORDER BY month_key DESC LIMIT 1`, fmt.Sprint(fy), key).Scan(&prior)
+		WHERE fy = $1 AND status = 'submitted_to_rvp' AND month_key < $2 AND country_id = $3
+		ORDER BY month_key DESC LIMIT 1`, fmt.Sprint(fy), key, home).Scan(&prior)
 	if err != nil && err != pgx.ErrNoRows {
 		return w, fmt.Errorf("budgetpage: reading the pending months: %w", err)
 	}
@@ -126,7 +130,7 @@ func (s *Service) workflow(ctx context.Context, fy, month int) (workflow, error)
 			w.priorPending = rules.Country.Months[m]
 		}
 	}
-	if w.rec, err = s.reconcile(ctx, key); err != nil {
+	if w.rec, err = s.reconcile(ctx, countryIDs, key); err != nil {
 		return w, err
 	}
 	return w, nil
@@ -134,7 +138,7 @@ func (s *Service) workflow(ctx context.Context, fy, month int) (workflow, error)
 
 // monthProgramTotal is _program_source's program total: the month's valid
 // lines of the year's ledger.
-func (s *Service) monthProgramTotal(ctx context.Context, fy, month int) (int64, error) {
+func (s *Service) monthProgramTotal(ctx context.Context, countryIDs []string, fy, month int) (int64, error) {
 	year := fy
 	if month >= 10 {
 		year = fy - 1
@@ -145,11 +149,13 @@ func (s *Service) monthProgramTotal(ctx context.Context, fy, month int) (int64, 
 	err := s.db.QueryRow(ctx, `
 		SELECT COALESCE(sum(l.amount), 0)
 		FROM activity_schedule_cost_line l JOIN activity a ON a.id = l.activity_id
+		LEFT JOIN school s ON s.id = a.school_id LEFT JOIN cluster cl ON cl.id = a.cluster_id
 		WHERE a.deleted_at IS NULL AND l.fiscal_year = $1
+		  AND ($6::text[] IS NULL OR `+registry.ActivityIn("a", "s", "cl", "$6")+`)
 		  AND (a.scheduled_date IS NOT NULL OR a.planned_date IS NOT NULL)
 		  AND (a.status IS NULL OR NOT (a.status = ANY($2)))
 		  AND (l.planned_date BETWEEN $3 AND $4 OR (l.planned_date IS NULL AND l.month = ANY($5)))`,
-		fmt.Sprint(fy), rules.NonFundableStatuses, start, end, wholeMonths(start, end)).Scan(&total)
+		fmt.Sprint(fy), rules.NonFundableStatuses, start, end, wholeMonths(start, end), countryIDs).Scan(&total)
 	if err != nil {
 		return 0, fmt.Errorf("budgetpage: totalling the month's plan: %w", err)
 	}
@@ -159,7 +165,7 @@ func (s *Service) monthProgramTotal(ctx context.Context, fy, month int) (int64, 
 // reconcile is reconcile_month's figures the page shows: the advances whose
 // activity falls in the month (by planned date, else by when they were
 // raised), all committed, and the money of those whose money has moved.
-func (s *Service) reconcile(ctx context.Context, key string) (reconciliation, error) {
+func (s *Service) reconcile(ctx context.Context, countryIDs []string, key string) (reconciliation, error) {
 	var y, m int
 	if _, err := fmt.Sscanf(key, "%d-%d", &y, &m); err != nil {
 		return reconciliation{}, fmt.Errorf("budgetpage: the month key %q: %w", key, err)
@@ -173,10 +179,12 @@ func (s *Service) reconcile(ctx context.Context, key string) (reconciliation, er
 		       COALESCE(sum(accounted_amount) FILTER (WHERE status = ANY($3)), 0),
 		       COALESCE(sum(returned_amount) FILTER (WHERE status = ANY($3)), 0),
 		       COALESCE(sum(reimbursed_amount) FILTER (WHERE status = ANY($3)), 0)
-		FROM advance_request
-		WHERE (planned_date >= $1 AND planned_date < $2)
-		   OR (planned_date IS NULL AND created_at >= $1 AND created_at < $2)`,
-		start, end, rules.Country.MoneyMovedStatuses,
+		FROM advance_request ar
+		WHERE ((ar.planned_date >= $1 AND ar.planned_date < $2)
+		   OR (ar.planned_date IS NULL AND ar.created_at >= $1 AND ar.created_at < $2))
+		  AND ($4::text[] IS NULL OR EXISTS (SELECT 1 FROM activity a LEFT JOIN school s ON s.id = a.school_id
+		    LEFT JOIN cluster cl ON cl.id = a.cluster_id WHERE a.id = ar.activity_id AND `+registry.ActivityIn("a", "s", "cl", "$4")+`))`,
+		start, end, rules.Country.MoneyMovedStatuses, countryIDs,
 	).Scan(&r.committed, &r.disbursed, &r.accounted, &r.returned, &r.reimbursed)
 	if err != nil {
 		return r, fmt.Errorf("budgetpage: reconciling the month: %w", err)
@@ -184,7 +192,8 @@ func (s *Service) reconcile(ctx context.Context, key string) (reconciliation, er
 	return r, nil
 }
 
-func (s *Service) financeHealth(ctx context.Context, fy int) (financeHealth, error) {
+// countryIDs keep it to the request's country; nil reads every advance.
+func (s *Service) financeHealth(ctx context.Context, fy int, countryIDs []string) (financeHealth, error) {
 	var f financeHealth
 	c := rules.Country.Finance
 	err := s.db.QueryRow(ctx, `
@@ -199,8 +208,9 @@ func (s *Service) financeHealth(ctx context.Context, fy int) (financeHealth, err
 		       COALESCE(sum(r.amount) FILTER (WHERE a.quarter = 'Q3'), 0),
 		       COALESCE(sum(r.amount) FILTER (WHERE a.quarter = 'Q4'), 0)
 		FROM advance_request r JOIN activity a ON a.id = r.activity_id
-		WHERE a.fy = $1 AND a.deleted_at IS NULL`,
-		fmt.Sprint(fy), c.Pending, c.Confirmed, c.Disbursed, c.Accounted,
+		LEFT JOIN school s ON s.id = a.school_id LEFT JOIN cluster cl ON cl.id = a.cluster_id
+		WHERE a.fy = $1 AND a.deleted_at IS NULL AND ($6::text[] IS NULL OR `+registry.ActivityIn("a", "s", "cl", "$6")+`)`,
+		fmt.Sprint(fy), c.Pending, c.Confirmed, c.Disbursed, c.Accounted, countryIDs,
 	).Scan(&f.requested, &f.pending, &f.confirmed, &f.disbursed, &f.accounted, &f.returned,
 		&f.quarters[0], &f.quarters[1], &f.quarters[2], &f.quarters[3])
 	if err != nil {

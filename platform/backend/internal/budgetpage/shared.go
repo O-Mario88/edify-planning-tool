@@ -83,7 +83,7 @@ func ledgerFrom(ctx context.Context, db schooldirectory.Querier, sql string, arg
 		staff += g.staffTotal
 		total += g.total
 	}
-	return ledgerRows(gs, staff, total), true, nil
+	return ledgerRows("UGX", gs, staff, total), true, nil
 }
 
 // UGX is the ugx template filter: UGX 24,000.

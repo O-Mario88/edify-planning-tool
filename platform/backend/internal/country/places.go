@@ -1,6 +1,12 @@
 package country
 
-import "fmt"
+import (
+	"context"
+	"errors"
+	"fmt"
+
+	"github.com/jackc/pgx/v5"
+)
 
 // Phase 3, SSA (docs/migration/80-multi-country-phase-0.md §14): the
 // registry's answers to "which regions", "which people" and "which country"
@@ -67,4 +73,23 @@ func PartnerIn(partner, ids string) string {
   OR (NOT EXISTS (SELECT 1 FROM country_registry.partner_country pc WHERE pc.partner_id = %[1]s.id)
     AND EXISTS (SELECT 1 FROM country_registry.country pcc WHERE pcc.id::text = ANY(%[2]s) AND pcc.roles_source = '%[3]s')))`,
 		partner, ids, RolesFromProfile)
+}
+
+// CurrencyOf is the ISO currency the country w keeps its money in, from its
+// settings in force (country_config_version); "" when w is nil or the
+// country has no settings in force yet.
+func CurrencyOf(ctx context.Context, q Querier, w *Work) (string, error) {
+	if w == nil {
+		return "", nil
+	}
+	var code string
+	err := q.QueryRow(ctx, `SELECT v.currency_code FROM country_registry.country_config_version v
+WHERE v.country_id = $1::uuid AND `+current("v")+` ORDER BY v.effective_from DESC LIMIT 1`, w.ID).Scan(&code)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("country: reading %s's currency: %w", w.Code, err)
+	}
+	return code, nil
 }

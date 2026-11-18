@@ -6,7 +6,7 @@ country-specific configuration, securely isolated country data.* Phase 0 of
 that instruction asks for an audit and the architecture decisions before any
 schema change. This document is that Phase 0. The owner approved Phase 1
 on §7's recommended defaults on 2026-11-17 ("Yes, start Phase 1"); what has
-been built since, on the development copies only, is §8 to §17.
+been built since, on the development copies only, is §8 to §18.
 
 Everything below was measured on 2026-11-17 against the development copy
 `edify_gorn_test` and the code on `feature/edify-go-rn-migration`. No
@@ -785,4 +785,58 @@ Not in this step: recording a partner in a country from a page (it is
 `import` or `assignment` data, set where partners are onboarded, which is
 the existing application's); handing school work to a partner (the
 existing application's), whose country check comes with it.
+
+## 18. Phase 3, sixth step: the country through budgets (2026-11-18)
+
+Owner instruction: *"Continue Phase 3 with the country through budgets."*
+No table is added or changed and no row of the existing application is
+written; it is Go code only.
+
+**The country's Budget** (`/budget`, the country view the Country Director,
+Accountant, Impact Assessment, Regional Vice President and Admin read). It
+read every planned cost line and every advance in the platform. It now
+reads only the country the request is made in:
+
+| Figure | Kept to the country by |
+|---|---|
+| The planned cost lines (the ledger, the groups, the grand total) | `country.ActivityIn` on each line's activity |
+| Finance Health (the year's advance pipeline) | The same, on each advance's activity |
+| The month's live request (`_recompute_if_live`) and its reconciliation | The same, on the month's lines and advances |
+| The month's budget row and the earlier month still pending | The country's own row (`monthly_work_plan_budget.country_id`, keyed as `country.SettingsName` names it: "Uganda" for Uganda) |
+
+Money is never summed across countries. The Admin and the regional roles,
+who reach every country (§15), read the Budget of the country they work in;
+a view of every country side by side, each in its own currency, waits for
+the country switcher (Phase 4). With no country to keep it to (a caller
+working in no Active country), the existing page's rule is kept: a platform
+whose People name several countries is handed on.
+
+**Currency.** The page wrote every amount as UGX. It now writes the request's
+country's currency, from its settings in force (`country.CurrencyOf`), in
+the same form (`KES 12,345`, `KES 1.2M`), and the chart's labels follow;
+UGX wherever no currency is recorded, so Uganda's page is unchanged.
+Amounts stay whole units: ETB's precision is still owner decision 4.
+
+**Prices.** The published rate card that costs work when it is scheduled
+(`pricing.ReadCard`) and the Cost Settings page read the request's country's
+card (`auth.SettingsName`: Uganda's card wherever the caller works in a
+country whose roles are the existing profile's, or there is no caller). A
+country with no published card has none, so its work is not costed on
+Uganda's rates in Uganda's currency.
+
+Proof: `internal/budgetpage/currency_test.go` (UGX unchanged; KES, RWF and
+ETB in both forms); `internal/integration/country_budgets_test.go`, with
+Kenya Active and keeping its money in KES, a Kenyan school with one planned
+cost line of 12,345 and an Impact Assessment officer who works in Kenya
+alone: Kenya's Budget totals exactly that line, as `KES 12,345`, and shows
+no UGX; Kenya's currency is KES and it has no rate card while Uganda's are
+read as today. Uganda unchanged: the Budget page's own golden (28 answers
+over 9 accounts, the country's Budget among them), the Cost Settings golden
+(15 answers), and the four pricing oracles (264 activities priced, 239
+saves checked, 7 shared days, 276 stored activities), all 0 differing; the
+whole integration suite and every golden; school parity `PARITY OK`.
+
+Not in this step: the other pages that write UGX (fund approvals,
+disbursements, partner payments, the cost settings tables) move with
+advances and payments; ETB minor units (decision 4); a cross-country view.
 

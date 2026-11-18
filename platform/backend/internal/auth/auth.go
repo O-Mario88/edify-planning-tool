@@ -275,6 +275,17 @@ func WithPrincipal(ctx context.Context, principal Principal) context.Context {
 	return context.WithValue(ctx, principalKey{}, principal)
 }
 
+// SettingsName is the name the existing tables key the request's country's
+// settings by (country.SettingsName): existing, Uganda's, unless the request
+// is made by a caller working in a country whose roles come from the
+// registry. Code reached without a caller (a job, a command) reads Uganda's.
+func SettingsName(ctx context.Context, existing string) string {
+	if p, ok := PrincipalFrom(ctx); ok {
+		return country.SettingsName(p.Country, existing)
+	}
+	return existing
+}
+
 // PrincipalFrom returns the authenticated caller, if the request has one.
 func PrincipalFrom(ctx context.Context) (Principal, bool) {
 	principal, ok := ctx.Value(principalKey{}).(Principal)
