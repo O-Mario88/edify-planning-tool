@@ -31,6 +31,9 @@ type Seeded struct {
 	// RolesSources is how many registered countries had where their roles
 	// come from set by this run.
 	RolesSources int64
+	// Partners is how many existing partner organisations were recorded in
+	// Uganda.
+	Partners int64
 }
 
 // SeedLegacy registers the countries and maps the existing application's
@@ -99,6 +102,13 @@ ON CONFLICT (country_id, version) DO NOTHING`, by, LegacySince); err != nil {
 SELECT s.id, c.id, $2::date, 'legacy_uganda', $1
 FROM school s CROSS JOIN country_registry.country c
 WHERE c.code = 'UG' AND NOT EXISTS (SELECT 1 FROM country_registry.school_country x WHERE x.school_id = s.id)`, by, LegacySince); err != nil {
+		return out, err
+	}
+	if err := exec("the partners", &out.Partners, `INSERT INTO country_registry.partner_country
+  (partner_id, country_id, effective_from, source, recorded_by)
+SELECT p.id, c.id, $2::date, 'legacy_uganda', $1
+FROM partner p CROSS JOIN country_registry.country c
+WHERE c.code = 'UG' AND NOT EXISTS (SELECT 1 FROM country_registry.partner_country x WHERE x.partner_id = p.id)`, by, LegacySince); err != nil {
 		return out, err
 	}
 	if err := exec("the accounts", &out.Memberships, `INSERT INTO country_registry.country_membership

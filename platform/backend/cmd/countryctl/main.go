@@ -95,7 +95,7 @@ func run(args []string) error {
 	if err := tx.Commit(ctx); err != nil {
 		return err
 	}
-	fmt.Printf("seeded %s: %d countries, %d settings, %d names, %d schools, %d memberships, %d role sources\n", *confirm,
-		seeded.Countries, seeded.Settings, seeded.Aliases, seeded.Schools, seeded.Memberships, seeded.RolesSources)
+	fmt.Printf("seeded %s: %d countries, %d settings, %d names, %d schools, %d memberships, %d role sources, %d partners\n", *confirm,
+		seeded.Countries, seeded.Settings, seeded.Aliases, seeded.Schools, seeded.Memberships, seeded.RolesSources, seeded.Partners)
 	return nil
 }

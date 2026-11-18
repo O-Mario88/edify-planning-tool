@@ -52,3 +52,19 @@ func ClusterIn(cluster, ids string) string {
     JOIN country_registry.country_alias cal ON cal.alias = btrim(cr.country)
     WHERE cd.id = %[1]s.district_id AND cal.country_id::text = ANY(%[2]s)))`, cluster, ids)
 }
+
+// PartnerIn is the SQL that a partner organisation (aliased by partner, the
+// existing partner table) works in one of the countries whose registry ids
+// the placeholder ids holds (a text[] argument): its recorded country in
+// force (country_registry.partner_country, docs/migration/80 §17). A
+// partner with no recorded country at all — one the existing application
+// made after the registry was seeded — works in the country whose roles are
+// the existing profile's (Uganda), as everything that application holds
+// does; a partner whose recorded countries have all ended works in none.
+func PartnerIn(partner, ids string) string {
+	return fmt.Sprintf(`(EXISTS (SELECT 1 FROM country_registry.partner_country pc
+    WHERE pc.partner_id = %[1]s.id AND pc.country_id::text = ANY(%[2]s) AND `+current("pc")+`)
+  OR (NOT EXISTS (SELECT 1 FROM country_registry.partner_country pc WHERE pc.partner_id = %[1]s.id)
+    AND EXISTS (SELECT 1 FROM country_registry.country pcc WHERE pcc.id::text = ANY(%[2]s) AND pcc.roles_source = '%[3]s')))`,
+		partner, ids, RolesFromProfile)
+}

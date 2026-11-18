@@ -6,7 +6,7 @@ country-specific configuration, securely isolated country data.* Phase 0 of
 that instruction asks for an audit and the architecture decisions before any
 schema change. This document is that Phase 0. The owner approved Phase 1
 on §7's recommended defaults on 2026-11-17 ("Yes, start Phase 1"); what has
-been built since, on the development copies only, is §8 to §16.
+been built since, on the development copies only, is §8 to §17.
 
 Everything below was measured on 2026-11-17 against the development copy
 `edify_gorn_test` and the code on `feature/edify-go-rn-migration`. No
@@ -730,4 +730,59 @@ Not in this step: the training summary (cluster trainings, coverage and the
 per-country training ceilings) keeps its own country from the reader's
 profile; it moves with trainings. Creating or editing clusters is the
 existing application's.
+
+## 17. Phase 3, fifth step: the country through partners (2026-11-18)
+
+Owner instruction: *"Continue Phase 3 with the country through partners."*
+The existing `partner` table has no country. A partner's country is now a
+row in the registry, never a new column on the existing table, as a
+school's is.
+
+**Migration 0006** (`country_registry.partner_country`): partner id,
+country, effective dates, source (`legacy_uganda`, `import`,
+`assignment`), who recorded it and when. A partner may work in more than
+one country, each with its own dates. Row-level security as on the other
+registry tables: read by the registry's roles, written only for a country
+the transaction declares. Applied to `edify_gorn_test`, `edify_gorn_dev`
+and `edify_gorn_route` only; the legacy seed (`countryctl seed-legacy`)
+recorded every existing partner in Uganda (6, 8 and 6 partners).
+
+**Which country a partner works in** (`country.PartnerIn`): its recorded
+countries in force. A partner with no recorded country at all, one the
+existing application creates after the seed, is read as Uganda's (the
+country whose roles are the existing profile's), since that application
+serves Uganda alone; a partner whose recorded countries have all ended
+works in none.
+
+**Where it is enforced.** Most partner reads in Go already follow the work
+(Partner Oversight reads the reader's own team and schools; the partner
+workspace, assigned work and payments are the partner's own records), so
+they were country-bound through the school scope. The country-wide one was
+partner team management (`teams.PartnerService`): the Country Director,
+Impact Assessment and the Accountant could read and change *any* partner's
+team, add members and create their logins. Now:
+
+| Reader | Partner teams they read and change |
+|---|---|
+| Admin, and the regional roles (§15) | Every partner |
+| Country Director, Impact Assessment, Accountant | The partners of the country they work in; none while they work in no Active country |
+| A partner's own Partner Admin or login | Their own organisation, as before |
+
+So Kenya's staff cannot add members to, or create logins for, a Ugandan
+partner, nor Uganda's for a Kenyan one.
+
+Proof: `internal/integration/country_partners_test.go`, with Kenya Active,
+a Kenyan partner, an unrecorded partner and an Impact Assessment officer
+who works in Kenya alone: the rule places the Kenyan partner in Kenya only
+and the unrecorded one in Uganda; through the gateway, Kenya's IA reads
+Kenya's partner team and is refused a Ugandan or unrecorded partner's,
+Uganda's IA reads Uganda's and the unrecorded partner's and is refused
+Kenya's, the Admin reads both; Kenya's IA adding a member to a Ugandan
+partner is refused and nothing is written. The schema lint passes; the
+whole integration suite and every golden, and school parity.
+
+Not in this step: recording a partner in a country from a page (it is
+`import` or `assignment` data, set where partners are onboarded, which is
+the existing application's); handing school work to a partner (the
+existing application's), whose country check comes with it.
 

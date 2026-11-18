@@ -52,6 +52,8 @@ ORDER BY u.id LIMIT 1`, skip).Scan(&a.user, &a.staff); err != nil {
 			`DELETE FROM activity WHERE id LIKE $2 AND $1::text[] IS NOT NULL`,
 			`DELETE FROM country_registry.school_country WHERE school_id LIKE $2 AND $1::text[] IS NOT NULL`,
 			`DELETE FROM cluster WHERE id LIKE $2 AND $1::text[] IS NOT NULL`,
+			`DELETE FROM country_registry.partner_country WHERE partner_id LIKE $2 AND $1::text[] IS NOT NULL`,
+			`DELETE FROM partner WHERE id LIKE $2 AND $1::text[] IS NOT NULL`,
 			`DELETE FROM school WHERE id LIKE $2 AND $1::text[] IS NOT NULL`,
 			`DELETE FROM district WHERE id LIKE $2 AND $1::text[] IS NOT NULL`,
 			`DELETE FROM region WHERE id LIKE $2 AND $1::text[] IS NOT NULL`,

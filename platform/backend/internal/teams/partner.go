@@ -13,6 +13,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/accounts"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/cuid"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/rbac"
 )
@@ -118,10 +119,25 @@ func (s *PartnerService) leadsTeam(ctx context.Context, principal auth.Principal
 }
 
 // managesRoster is manages_roster: country staff who run the directory, and
-// whoever leads the team.
+// whoever leads the team. Country staff manage the partners of the country
+// they work in (docs/migration/80, §17): the Admin and the regional roles
+// every partner, anyone else none while they work in no Active country.
 func (s *PartnerService) managesRoster(ctx context.Context, principal auth.Principal, p partnerRow) (bool, error) {
 	if slices.Contains(countryRoles, principal.ActiveRole) {
-		return true, nil
+		if principal.ActiveRole == rbac.Admin || registry.IsRegional(principal.ActiveRole) {
+			return true, nil
+		}
+		if principal.Country == nil {
+			return false, nil
+		}
+		var inCountry bool
+		if err := s.store.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM partner p WHERE p.id = $1 AND `+registry.PartnerIn("p", "$2")+`)`,
+			p.ID, []string{principal.Country.ID}).Scan(&inCountry); err != nil {
+			return false, fmt.Errorf("teams: reading the partner's country: %w", err)
+		}
+		if inCountry {
+			return true, nil
+		}
 	}
 	return s.leadsTeam(ctx, principal, p)
 }
