@@ -1056,3 +1056,5 @@ GRANT SELECT (assigned_partner_id) ON core_activity_slot TO edify_gateway_ro;
 -- Partner Monitoring's partnership register: each engagement's row, its
 -- follow-up and whether the partner has it.
 GRANT SELECT (id, kind, fy, country, subject, agreed_improvements, follow_up_due, follow_up_done_at, shared_with_partner_at, partner_id, created_at) ON partner_engagement TO edify_gateway_ro;
+-- The Sub-region profile: the region a sub-region sits in.
+GRANT SELECT (region_id) ON sub_region TO edify_gateway_ro;

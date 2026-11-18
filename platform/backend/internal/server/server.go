@@ -259,7 +259,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			planningmonitor.NewPage(pool, time.Now),
 			programmerollout.NewService(pool, time.Now),
 			partneroversight.NewService(pool, time.Now).WithTarget(planningmonitor.PartnerTargetReader(pool)),
-			schoolprofile.NewScopePages(pool, time.Now),
+			schoolprofile.NewScopePages(pool, time.Now).WithClusterCards(clusterCards{clusteroversight.CardReader{DB: pool}}),
 			hrregister.NewService(pool, time.Now).WithAccessLog(pool, logger),
 			leavepolicies.NewService(pool, time.Now),
 			iapages.NewService(pool, time.Now),
@@ -503,4 +503,20 @@ func reach(ctx context.Context, rawURL string) error {
 		return err
 	}
 	return response.Body.Close()
+}
+
+// clusterCards lends the profiles of many schools Cluster Oversight's
+// cluster cards (schoolprofile cannot import clusteroversight).
+type clusterCards struct{ clusteroversight.CardReader }
+
+func (c clusterCards) Cards(ctx context.Context, ids []string, fy, today string) (map[string]schoolprofile.ClusterCard, error) {
+	cards, err := c.CardReader.Cards(ctx, ids, fy, today)
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[string]schoolprofile.ClusterCard, len(cards))
+	for id, card := range cards {
+		out[id] = schoolprofile.ClusterCard(card)
+	}
+	return out, nil
 }

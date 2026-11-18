@@ -218,7 +218,7 @@ func rankingTable(rows []ranked, title, empty, label, previousLabel string, open
 }
 
 // tables are the Overview's tables after its strips, then its rail.
-func (pr *scopeProfile) tables(l lens, book ruleBook, focus map[string][2]int, openSchools bool) []*screensv1.PageBlock {
+func (pr *scopeProfile) tables(l lens, book ruleBook, focus map[string][2]int, openSchools bool, parts map[string][]part) []*screensv1.PageBlock {
 	records := l.records()
 	label, previousLabel := fyLabel(l.fy), fyLabel(previousFY(l.fy))
 	tabURL := func(section, show string) string {
@@ -271,8 +271,14 @@ func (pr *scopeProfile) tables(l lens, book ruleBook, focus map[string][2]int, o
 			case "clusters":
 				rows = clusters
 			default:
-				// A level read by its parts (engine.groups) is not drawn yet.
-				return nil
+				// A level read by its parts (engine.groups).
+				list, ok := parts[level]
+				if !ok {
+					return nil
+				}
+				for _, p := range list {
+					rows = append(rows, p.ranked)
+				}
 			}
 			measured, improved, declined := 0, 0, 0
 			var visits, visitsDone, trainings, trainingsDone int
@@ -398,6 +404,12 @@ func (pr *scopeProfile) rail(l lens, schools, clusters []ranked, noSSA int) *scr
 		line{noTraining, "school due a training has none in the plan", "schools due a training have none in the plan", "in " + label, "schools", "no_training", ""},
 		line{noVisit, "school due a visit has none in the plan", "schools due a visit have none in the plan", "in " + label, "schools", "no_visit", ""},
 		line{awaiting, "school is waiting for a partner's date", "schools are waiting for a partner's date", "", "schools", "awaiting_partner", ""},
+	)
+	if pr.scope.kind == "country" {
+		lines = append(lines, line{pr.lowLeadership, "district's Leadership score is below 5.0", "districts' Leadership score is below 5.0",
+			"in " + label, "districts", "", ""})
+	}
+	lines = append(lines,
 		line{pr.meetings.overdue, "cluster meeting is past its date and not held", "cluster meetings are past their date and not held", "", "activities", "", "meetings_overdue"},
 		line{pr.visits.overdue, "visit is past its date and not done", "visits are past their date and not done", "", "activities", "", "visits_overdue"},
 		line{pr.trainings.overdue, "training is past its date and not delivered", "trainings are past their date and not delivered", "", "activities", "", "trainings_overdue"},

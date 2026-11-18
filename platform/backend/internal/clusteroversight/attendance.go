@@ -26,6 +26,9 @@ type attendance struct {
 	drifting, represented int
 	invitedTotal          int
 	attendedTotal         int
+	// teachers and leaders are those recorded for the schools at the
+	// year's sessions they attended.
+	teachers, leaders int
 	// rate is the year's attendance out of 100, nil with no invitation.
 	rate *int
 }
@@ -81,6 +84,10 @@ func attendanceOf(members []string, sessions []sessionRow, register map[string]m
 			rows[i].invited++
 			if came[school] {
 				rows[i].attended++
+				if row, ok := register[activity.ID][school]; ok {
+					out.teachers += row.Teachers
+					out.leaders += row.Leaders
+				}
 			}
 		}
 	}

@@ -50,8 +50,8 @@ func previousFY(fy string) string {
 // learning is outcomes.LearningSummary for one cluster, as far as the page
 // reads it.
 type learning struct {
-	compared, improved int
-	before, after      *float64
+	compared, improved, declined int
+	before, after                *float64
 }
 
 // change is LearningSummary.change, in percentage points.
@@ -106,8 +106,11 @@ func learningOf(members []string, scores map[string]map[string]float64, fy strin
 		}
 		out.compared++
 		befores, afters = append(befores, before), append(afters, after)
-		if pyRound(after-before, 1) > 0 {
+		switch moved := pyRound(after-before, 1); {
+		case moved > 0:
 			out.improved++
+		case moved < 0:
+			out.declined++
 		}
 	}
 	out.before, out.after = meanOrNil(befores), meanOrNil(afters)

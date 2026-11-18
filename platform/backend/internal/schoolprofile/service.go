@@ -33,6 +33,10 @@ var (
 type Service struct {
 	db  Querier
 	now func() time.Time
+	// clusterCards reads Cluster Management's facts for the profiles of
+	// many schools; nil leaves their Clusters tab to the existing
+	// application.
+	clusterCards ClusterCards
 }
 
 // NewService reads db; now is the clock (time.Now).

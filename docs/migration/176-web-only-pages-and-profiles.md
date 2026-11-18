@@ -115,3 +115,72 @@ and period: **112 answers, 0 differing**.
 Proof: the district golden adds each tab, the pages and every Show list:
 SSA **40/0**, the parts tabs **60/0**, Schools **112/0**, Projects
 **30/0**.
+
+## 176.5 The Sub-region profile (2026-11-18)
+
+`/sub-regions/<id>` (`profile_views.sub_region_profile_view`) is drawn in
+Go on the same tabs as a District. Its schools are those whose district
+lies in the sub-region, plus, where the district names no sub-region,
+those whose own record names it.
+
+- **The page:** back to the Country profile, the region first on the scope
+  line, and facts for its region, country, districts, Programme Leads and
+  CCEOs.
+- **The Overview:** Portfolio counts its districts. What This Profile
+  Covers reads districts as parts, by `groups`, beside clusters and schools.
+- **The Districts tab:** its parts.
+
+The gateway now reads `sub_region.region_id` (`roles.sql`).
+
+Proof: `TestTheProfilesOfManySchoolsMatchTheExistingPages`, renamed from
+the District test and keyed by `EDIFY_SCOPE_PROFILES_GOLDEN`. It asks the
+Central sub-region (Mukono's) and an empty one, as seven readers, across
+nine queries and tabs: **126 answers, 0 differing**.
+
+## 176.6 The Country profile's tabs (2026-11-18)
+
+`/country-profile` (`profile_views.country_profile_view`) is drawn in Go on
+every tab but its Overview.
+
+- **Whose country:** the reader's profile's, else the platform's
+  (`training_ceilings.country_of`, `fy_policy.default_country`). Its schools
+  are those whose region is the country's, plus those no region places.
+- **The page:** titled "<country> Profile" under "Edify Operations", with
+  no back link. Facts give the sub-regions, the districts, the Programme
+  Leads and the staff holding schools.
+
+**The Overview** carries the decision review (`profile_decisions`, the
+leadership and budget boards) for a reader who holds it, and every role the
+page opens to holds it (the Admin, the Country Director, Impact Assessment,
+the RVP). It is still the existing application's. Its Needs Attention line
+for districts whose Leadership score averages below 5.0
+(`_low_leadership_districts`) is written, but has no proof until the
+Overview is drawn.
+
+Proof: the Country profile's SSA, Sub-regions, Districts, Staff, Schools
+and Projects tabs, for the four readers and two it refuses: **42 answers, 0
+differing**. The test now takes several golden files.
+
+## 176.7 The Clusters tab (2026-11-18)
+
+A profile's Clusters tab (`cluster_management`) is drawn in Go for
+Districts, Sub-regions and the Country:
+
+- **Cluster Sessions:** the clusters and the schools in one, the sessions
+  held, attendance, the schools absent three sessions or more in a row, and
+  the teachers and leaders reached.
+- **Cluster Impact:** enrolment growth, learning results, approved stories.
+- **The table:** each cluster's schools here with their SSA and work, then
+  the whole cluster's card (sessions, attendance, absences, Health,
+  Impact, maturity), fifty a page (`clusters_page`). Its rankings follow.
+
+The cards are Cluster Oversight's own (`clusteroversight.Cards`, over
+`readClusters`, which `read` now calls with the reader's clusters). The
+existing attendance read gains the teachers and leaders recorded at the
+sessions a school attended, and the learning results gain the declined
+count. schoolprofile cannot import clusteroversight (a cluster page reads
+the school profile), so `server.go` lends the cards to `ScopePages`
+(`WithClusterCards`).
+
+Proof: Mukono, Kamuli and the Central sub-region's Clusters tab, for five
+readers and four years and periods: **60 answers, 0 differing**.

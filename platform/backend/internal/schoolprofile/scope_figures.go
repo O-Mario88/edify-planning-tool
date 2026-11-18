@@ -423,3 +423,47 @@ SELECT s.id FROM school s WHERE s.id = ANY($1) AND (
 	}
 	return out, nil
 }
+
+// lowLeadershipDistricts is profile_intelligence._low_leadership_districts:
+// the districts whose schools' Leadership score, on each one's latest
+// confirmed SSA of the year, averages below LOW_LEADERSHIP.
+func (s *Service) lowLeadershipDistricts(ctx context.Context, schools []scopeSchool, fy string) (int, error) {
+	ids := idsOf(schools)
+	rows, err := s.db.Query(ctx, `
+SELECT x.school_id, sc.score::float8
+FROM (SELECT DISTINCT ON (r.school_id) r.id, r.school_id FROM ssa_record r
+  WHERE r.school_id = ANY($1) AND r.fy = $2 AND r.deleted_at IS NULL AND r.verification_status = ANY($3)
+  ORDER BY r.school_id, r.date_of_ssa DESC, r.created_at DESC, r.id DESC) x
+JOIN ssa_score sc ON sc.ssa_record_id = x.id AND sc.intervention = $4 AND sc.score IS NOT NULL`,
+		ids, fy, rules.SSACurrentStatuses, rules.Engine.Scope.LeadershipKey)
+	if err != nil {
+		return 0, fmt.Errorf("schoolprofile: reading Leadership scores: %w", err)
+	}
+	score := map[string]float64{}
+	for rows.Next() {
+		var school string
+		var v float64
+		if err := rows.Scan(&school, &v); err != nil {
+			rows.Close()
+			return 0, err
+		}
+		score[school] = pyRound(v, 2)
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return 0, err
+	}
+	byDistrict := map[string][]float64{}
+	for _, x := range schools {
+		if v, ok := score[x.id]; ok && x.district != "" {
+			byDistrict[x.district] = append(byDistrict[x.district], v)
+		}
+	}
+	low := 0
+	for _, values := range byDistrict {
+		if pyRound(pySum(values)/float64(len(values)), 6) < rules.Engine.Scope.LowLeadership {
+			low++
+		}
+	}
+	return low, nil
+}

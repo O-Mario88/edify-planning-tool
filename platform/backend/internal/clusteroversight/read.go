@@ -125,16 +125,21 @@ func float(text *string) (*float64, error) {
 // year fy. Each is the statement the existing page issues, in its shape and
 // its order, since a mean of floats depends on the order its rows are read.
 func read(ctx context.Context, q schooldirectory.Querier, s schooldirectory.Scope, r reach, fy string) (*records, error) {
-	out := &records{Owners: map[string]string{}, LastDelivered: map[string]string{}}
-	previous := previousFY(fy)
-
 	// Cluster.objects (not deleted), the reader's, with their districts, by
 	// name.
+	return readClusters(ctx, q, func(b *sqlb) string { return b.inScope(s, r) }, "INNER", fy)
+}
+
+// readClusters reads the records of the clusters where picks, joined to
+// their districts by join ("INNER" leaves out a cluster with none).
+func readClusters(ctx context.Context, q schooldirectory.Querier, where func(*sqlb) string, join, fy string) (*records, error) {
+	out := &records{Owners: map[string]string{}, LastDelivered: map[string]string{}}
+	previous := previousFY(fy)
 	b := &sqlb{}
 	if err := each(ctx, q, "the clusters", `
-SELECT c.id, c.name, d.name, c.responsible_staff_id, c.cluster_leader_name, c.cluster_leader_phone
-FROM cluster c INNER JOIN district d ON c.district_id = d.id
-WHERE c.deleted_at IS NULL AND `+b.inScope(s, r)+` ORDER BY c.name ASC`, func(rows pgx.Rows) error {
+SELECT c.id, c.name, COALESCE(d.name, ''), c.responsible_staff_id, c.cluster_leader_name, c.cluster_leader_phone
+FROM cluster c `+join+` JOIN district d ON c.district_id = d.id
+WHERE c.deleted_at IS NULL AND `+where(b)+` ORDER BY c.name ASC`, func(rows pgx.Rows) error {
 		var c clusterRow
 		if err := rows.Scan(&c.ID, &c.Name, &c.District, &c.OwnerID, &c.LeaderName, &c.LeaderPhone); err != nil {
 			return err
@@ -239,10 +244,11 @@ ORDER BY a.created_at DESC`, func(rows pgx.Rows) error {
 	}
 	if len(sessions) > 0 {
 		if err := each(ctx, q, "the session register", `
-SELECT activity_id, school_id, invited, attended FROM cluster_activity_attendance WHERE activity_id = ANY($1)`,
+SELECT activity_id, school_id, invited, attended, COALESCE(teachers, 0), COALESCE(leaders, 0)
+FROM cluster_activity_attendance WHERE activity_id = ANY($1)`,
 			func(rows pgx.Rows) error {
 				var row registerRow
-				if err := rows.Scan(&row.ActivityID, &row.SchoolID, &row.Invited, &row.Attended); err != nil {
+				if err := rows.Scan(&row.ActivityID, &row.SchoolID, &row.Invited, &row.Attended, &row.Teachers, &row.Leaders); err != nil {
 					return err
 				}
 				out.Register = append(out.Register, row)

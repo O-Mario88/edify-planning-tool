@@ -29,10 +29,137 @@ func NewScopePages(db Querier, now func() time.Time) *ScopePages {
 	return &ScopePages{s: NewService(db, now)}
 }
 
-const districtPrefix = "/districts/"
+const (
+	districtPrefix     = "/districts/"
+	subRegionPrefix    = "/sub-regions/"
+	countryProfilePath = "/country-profile"
+)
 
-// Build draws /districts/<id> (extended_views.district_detail_view).
+// country draws /country-profile (profile_views.country_profile_view):
+// every school of the reader's country, read by sub-region, district,
+// staff and cluster. The decision review its Overview carries for a reader
+// who holds it is still the existing application's.
+func (sp *ScopePages) country(ctx context.Context, p auth.Principal, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	d := rules.Doors[p.ActiveRole]
+	if !d.CountryProfile {
+		return nil, true, pagegate.ErrNotAvailable
+	}
+	for key := range query {
+		if !scopeQueryKeys[key] {
+			return nil, false, nil
+		}
+	}
+	tab := query.Get("tab")
+	if !contains(rules.Engine.Scope.SectionsOf["country"], tab) {
+		tab = "overview"
+	}
+	if tab == "overview" && d.Decisions {
+		return nil, false, nil
+	}
+	s := sp.s
+	// training_ceilings.country_of: the reader's profile's country, else
+	// the platform's.
+	var country string
+	err := s.db.QueryRow(ctx, `SELECT COALESCE(btrim(country), '') FROM staff_profile WHERE user_id = $1 ORDER BY id LIMIT 1`,
+		p.UserID).Scan(&country)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return nil, true, fmt.Errorf("schoolprofile: reading the reader's country: %w", err)
+	}
+	if country == "" {
+		country = rules.Engine.Scope.DefaultCountry
+	}
+	// A school the upload could not place has no region: it is still the
+	// country's.
+	scope := scopeOf{kind: "country", key: country, name: country, covers: "Every school in the country",
+		where: "(s.region_id IS NULL OR EXISTS (SELECT 1 FROM region r WHERE r.id = s.region_id AND r.country = $2))", args: []any{country}}
+	page := scopePage{scope: scope, base: countryProfilePath, lead: "Edify Operations", title: country + " Profile"}
+	page.facts = func(pr *scopeProfile) []*screensv1.PageFact {
+		subRegions, districts := map[string]bool{}, map[string]bool{}
+		for _, x := range pr.schools {
+			if x.subRegion != "" {
+				subRegions[x.subRegion] = true
+			}
+			if x.district != "" {
+				districts[x.district] = true
+			}
+		}
+		return []*screensv1.PageFact{
+			{Label: "Type", Value: "Country"},
+			{Label: "Sub-regions", Value: intcomma(len(subRegions))},
+			{Label: "Districts", Value: intcomma(len(districts))},
+			peopleFact("Programme Lead", pr.leads, d.OpenStaff, "/staff/"),
+			{Label: "Staff Holding Schools", Value: intcomma(len(pr.staff))},
+		}
+	}
+	return s.scopePage(ctx, p, page, query)
+}
+
+// subRegion draws /sub-regions/<id>: its districts, staff, clusters and
+// schools.
+func (sp *ScopePages) subRegion(ctx context.Context, p auth.Principal, id string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if id == "" || strings.Contains(id, "/") {
+		return nil, false, nil
+	}
+	if !rules.Doors[p.ActiveRole].OpenSubRegion {
+		return nil, true, pagegate.ErrNotAvailable
+	}
+	for key := range query {
+		if !scopeQueryKeys[key] {
+			return nil, false, nil
+		}
+	}
+	s := sp.s
+	var name, regionName, country string
+	var hasRegion bool
+	err := s.db.QueryRow(ctx, `
+SELECT sr.name, COALESCE(r.name, ''), COALESCE(r.country, ''), sr.region_id IS NOT NULL
+FROM sub_region sr LEFT JOIN region r ON r.id = sr.region_id WHERE sr.id = $1`, id).Scan(&name, &regionName, &country, &hasRegion)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, true, ErrNotFound
+	}
+	if err != nil {
+		return nil, true, fmt.Errorf("schoolprofile: reading the sub-region: %w", err)
+	}
+	// A school's sub-region is its district's; the school's own column
+	// counts only where its district names none.
+	scope := scopeOf{kind: "sub_region", key: id, name: name + " Sub-region", covers: "All schools in the sub-region",
+		where: "(d.sub_region_id = $2 OR (d.sub_region_id IS NULL AND s.sub_region_id = $2))", args: []any{id}}
+	page := scopePage{scope: scope, base: subRegionPrefix + id, back: [2]string{"Back to Country profile", "/country-profile?tab=sub_regions"}}
+	if hasRegion {
+		page.lead = regionName
+	}
+	page.facts = func(pr *scopeProfile) []*screensv1.PageFact {
+		facts := []*screensv1.PageFact{{Label: "Type", Value: "Sub-region"}}
+		if hasRegion {
+			if regionName != "" {
+				facts = append(facts, &screensv1.PageFact{Label: "Region", Value: regionName})
+			}
+			if country != "" {
+				facts = append(facts, &screensv1.PageFact{Label: "Country", Value: country})
+			}
+		}
+		districts := map[string]bool{}
+		for _, x := range pr.schools {
+			if x.district != "" {
+				districts[x.district] = true
+			}
+		}
+		open := rules.Doors[p.ActiveRole].OpenStaff
+		return append(facts, &screensv1.PageFact{Label: "Districts", Value: intcomma(len(districts))},
+			peopleFact("Programme Lead", pr.leads, open, "/staff/"), peopleFact("CCEO", pr.staff, open, "/staff/"))
+	}
+	return s.scopePage(ctx, p, page, query)
+}
+
+// Build draws /districts/<id> (extended_views.district_detail_view) and
+// /sub-regions/<id> (profile_views.sub_region_profile_view).
 func (sp *ScopePages) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if strings.HasPrefix(path, subRegionPrefix) {
+		return sp.subRegion(ctx, p, strings.TrimPrefix(path, subRegionPrefix), query)
+	}
+	if path == countryProfilePath {
+		return sp.country(ctx, p, query)
+	}
 	if !strings.HasPrefix(path, districtPrefix) {
 		return nil, false, nil
 	}
@@ -78,12 +205,12 @@ WHERE d.id = $1`, id).Scan(&name, &regionName, &subRegionID, &subRegionName)
 // is still the existing application's.
 // scopeTabsInGo are the sections Go draws; the rest are still the existing
 // application's.
-var scopeTabsInGo = map[string]bool{"overview": true, "ssa": true, "sub_counties": true, "staff": true, "districts": true, "sub_regions": true, "schools": true, "projects": true}
+var scopeTabsInGo = map[string]bool{"overview": true, "ssa": true, "sub_counties": true, "staff": true, "districts": true, "sub_regions": true, "schools": true, "projects": true, "clusters": true}
 
 // tablePageSize is the shared table pager's page (TABLE_PAGE_SIZE).
 const tablePageSize = 50
 
-var scopeQueryKeys = map[string]bool{"tab": true, "fy": true, "period": true, "show": true, "what": true, "parts_page": true, "schools_page": true, "sub_county": true, "projects_page": true}
+var scopeQueryKeys = map[string]bool{"tab": true, "fy": true, "period": true, "show": true, "what": true, "parts_page": true, "schools_page": true, "sub_county": true, "projects_page": true, "clusters_page": true}
 
 // scopePage is one kind of profile page: its scope, its address, its back
 // link, the line before its scope line and its own header facts.
@@ -92,6 +219,8 @@ type scopePage struct {
 	base  string
 	back  [2]string
 	lead  string
+	// title is the page's title where it is not the scope's name.
+	title string
 	facts func(*scopeProfile) []*screensv1.PageFact
 }
 
@@ -136,7 +265,11 @@ func (s *Service) scopePage(ctx context.Context, p auth.Principal, page scopePag
 	for _, key := range sections {
 		tabs = append(tabs, &screensv1.PageTab{Key: key, Label: labels[key], Active: key == tab})
 	}
-	header := &screensv1.PageHeader{BackLabel: page.back[0], BackHref: page.back[1], Title: page.scope.name,
+	title := page.scope.name
+	if page.title != "" {
+		title = page.title
+	}
+	header := &screensv1.PageHeader{BackLabel: page.back[0], BackHref: page.back[1], Title: title,
 		Description: pr.scopeLine(page.lead, l)}
 	facts := append(page.facts(pr), &screensv1.PageFact{Label: "Fiscal Year", Value: fyLabel(fy)})
 	filters := scopeFilters(l)
@@ -163,7 +296,18 @@ func (s *Service) scopePage(ctx context.Context, p auth.Principal, page scopePag
 	switch tab {
 	case "overview":
 		blocks = append(blocks, pr.overview(l)...)
-		tables := pr.tables(l, pr.book, pr.focus, rules.Doors[p.ActiveRole].Profile)
+		parts := map[string][]part{}
+		for _, level := range rules.Engine.Scope.LevelsOf[page.scope.kind] {
+			if level == "schools" || level == "clusters" {
+				continue
+			}
+			rows, _, err := s.groups(ctx, pr, level, pr.planned)
+			if err != nil {
+				return nil, true, err
+			}
+			parts[level] = rows
+		}
+		tables := pr.tables(l, pr.book, pr.focus, rules.Doors[p.ActiveRole].Profile, parts)
 		if tables == nil {
 			return nil, false, nil
 		}
@@ -186,6 +330,15 @@ func (s *Service) scopePage(ctx context.Context, p auth.Principal, page scopePag
 			show = "all"
 		}
 		blocks = append(blocks, pr.schoolsBlocks(l, show, query.Get("sub_county"), rules.Doors[p.ActiveRole])...)
+	case "clusters":
+		if s.clusterCards == nil {
+			return nil, false, nil
+		}
+		lines, err := s.clusterLines(ctx, pr, fy, kampalaDay(now).Format("2006-01-02"))
+		if err != nil {
+			return nil, true, err
+		}
+		blocks = append(blocks, pr.clustersBlocks(l, lines, rules.Doors[p.ActiveRole], s.clusterCards.AlertAfter())...)
 	case "projects":
 		projects, err := s.scopeProjects(ctx, pr, l)
 		if err != nil {

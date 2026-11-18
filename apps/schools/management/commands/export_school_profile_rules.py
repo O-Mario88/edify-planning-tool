@@ -62,6 +62,17 @@ def doors() -> dict:
             # (school_links._may_open).
             "open_cluster": bool(can_open_url(user, "/clusters/0")),
             "open_district": bool(can_open_url(user, "/districts/0")),
+            "open_sub_region": bool(can_open_url(user, "/sub-regions/0")),
+            # The Country profile, and the decision review its Overview
+            # carries for a reader who holds it (profile_decisions).
+            "country_profile": bool(can_open_url(user, "/country-profile")),
+            "decisions": RolePermissionService.can_view_page(
+                user, "decision_intelligence"
+            ),
+            # The Clusters tab's link to Cluster Oversight.
+            "cluster_oversight": RolePermissionService.can_view_page(
+                user, "cluster_oversight"
+            ),
             # Whether a person's name opens their profile, and a project's
             # its monitoring page (profile_views.profile_context).
             "open_staff": RolePermissionService.can_view_page(user, "staff"),
@@ -413,6 +424,8 @@ def scope_rules() -> dict:
     from apps.analytics import profile_records
     from apps.core.enums import SchoolType
     from apps.frontend.views import profile_views
+    from apps.core.enums import SsaIntervention
+    from apps.planning.fy_policy import default_country
     from apps.schools.lifecycle_models import OPERATING_STATUSES
 
     return {
@@ -431,6 +444,12 @@ def scope_rules() -> dict:
         "school_type_order": [value for value, _label in SchoolType.choices],
         "online_mode": profile_records.ONLINE,
         "fy_choices": 3,
+        # training_ceilings.country_of with no country on the reader's profile.
+        "default_country": default_country(),
+        # The Country profile's Needs Attention line for districts whose
+        # Leadership score is below LOW_LEADERSHIP.
+        "low_leadership": engine.LOW_LEADERSHIP,
+        "leadership_key": SsaIntervention.LEADERSHIP.value,
     }
 
 

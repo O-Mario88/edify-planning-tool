@@ -79,6 +79,8 @@ type registerRow struct {
 	SchoolID   string `json:"school_id"`
 	Invited    bool   `json:"invited"`
 	Attended   bool   `json:"attended"`
+	Teachers   int    `json:"teachers"`
+	Leaders    int    `json:"leaders"`
 }
 
 type latestRow struct {

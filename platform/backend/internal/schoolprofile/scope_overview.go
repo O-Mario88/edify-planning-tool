@@ -42,6 +42,9 @@ type scopeProfile struct {
 	book           ruleBook
 	focus          map[string][2]int
 	planned        map[string]bool
+	// lowLeadership is, on the Country profile, the districts whose
+	// schools' Leadership score averages below LOW_LEADERSHIP.
+	lowLeadership int
 }
 
 func (s *Service) readScopeProfile(ctx context.Context, r btReader, sc scopeOf, l lens, now time.Time) (*scopeProfile, error) {
@@ -144,6 +147,11 @@ func (s *Service) readScopeProfile(ctx context.Context, r btReader, sc scopeOf, 
 	}
 	if pr.staff, pr.leads, err = s.holdersOf(ctx, owners); err != nil {
 		return nil, err
+	}
+	if sc.kind == "country" {
+		if pr.lowLeadership, err = s.lowLeadershipDistricts(ctx, pr.schools, l.fy); err != nil {
+			return nil, err
+		}
 	}
 	return pr, nil
 }
@@ -265,6 +273,21 @@ func (pr *scopeProfile) overview(l lens) []*screensv1.PageBlock {
 		}
 	}
 	portfolio := []kpi{{label: "Schools", value: intcomma(len(pr.schools)), link: tabURL("schools"), helper: strings.Join(types, " · ")}}
+	subRegions, districts := map[string]bool{}, map[string]bool{}
+	for _, x := range pr.schools {
+		if x.subRegion != "" {
+			subRegions[x.subRegion] = true
+		}
+		if x.district != "" {
+			districts[x.district] = true
+		}
+	}
+	if contains(sections, "sub_regions") {
+		portfolio = append(portfolio, kpi{label: "Sub-regions", value: intcomma(len(subRegions)), link: tabURL("sub_regions")})
+	}
+	if contains(sections, "districts") {
+		portfolio = append(portfolio, kpi{label: "Districts", value: intcomma(len(districts)), link: tabURL("districts")})
+	}
 	if contains(sections, "sub_counties") {
 		portfolio = append(portfolio, kpi{label: "Sub-counties", value: intcomma(pr.subCounties), link: tabURL("sub_counties")})
 	}

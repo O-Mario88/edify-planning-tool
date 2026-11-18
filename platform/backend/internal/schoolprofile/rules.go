@@ -24,23 +24,27 @@ var rulesJSON []byte
 // doors are what one role may do from a school's profile, as the existing
 // gates answer (manage.py export_school_profile_rules).
 type doors struct {
-	Profile       bool `json:"profile"`
-	Schedule      bool `json:"schedule"`
-	AssignPartner bool `json:"assign_partner"`
-	TransferOwner bool `json:"transfer_owner"`
-	AssignProject bool `json:"assign_project"`
-	EnterSSA      bool `json:"enter_ssa"`
-	DeleteSchool  bool `json:"delete_school"`
-	Take          bool `json:"take"`
-	OpenCluster   bool `json:"open_cluster"`
-	OpenDistrict  bool `json:"open_district"`
-	OpenStaff     bool `json:"open_staff"`
-	OpenProjects  bool `json:"open_projects"`
-	Loans         bool `json:"loans"`
-	MyPlan        bool `json:"my_plan"`
-	CoreSchools   bool `json:"core_schools"`
-	BTSensitive   bool `json:"bt_sensitive"`
-	BTManage      bool `json:"bt_manage"`
+	Profile          bool `json:"profile"`
+	Schedule         bool `json:"schedule"`
+	AssignPartner    bool `json:"assign_partner"`
+	TransferOwner    bool `json:"transfer_owner"`
+	AssignProject    bool `json:"assign_project"`
+	EnterSSA         bool `json:"enter_ssa"`
+	DeleteSchool     bool `json:"delete_school"`
+	Take             bool `json:"take"`
+	OpenCluster      bool `json:"open_cluster"`
+	OpenDistrict     bool `json:"open_district"`
+	OpenSubRegion    bool `json:"open_sub_region"`
+	CountryProfile   bool `json:"country_profile"`
+	Decisions        bool `json:"decisions"`
+	ClusterOversight bool `json:"cluster_oversight"`
+	OpenStaff        bool `json:"open_staff"`
+	OpenProjects     bool `json:"open_projects"`
+	Loans            bool `json:"loans"`
+	MyPlan           bool `json:"my_plan"`
+	CoreSchools      bool `json:"core_schools"`
+	BTSensitive      bool `json:"bt_sensitive"`
+	BTManage         bool `json:"bt_manage"`
 }
 
 type profileRules struct {
@@ -194,6 +198,9 @@ type scopeRules struct {
 	SchoolTypeOrder   []string            `json:"school_type_order"`
 	OnlineMode        string              `json:"online_mode"`
 	FYChoices         int                 `json:"fy_choices"`
+	DefaultCountry    string              `json:"default_country"`
+	LowLeadership     float64             `json:"low_leadership"`
+	LeadershipKey     string              `json:"leadership_key"`
 }
 
 var rules = mustLoad()
