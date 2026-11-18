@@ -57,6 +57,7 @@ type role struct {
 	TeamAvailability bool               `json:"team_availability"`
 	Holidays         holidaysRole       `json:"holidays"`
 	Coverage         coverageRole       `json:"coverage"`
+	Calendar         bool               `json:"calendar"`
 }
 
 var rules = func() (r struct {
@@ -98,6 +99,9 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	}
 	if path == CoveragePath {
 		return s.coveragePage(ctx, p, query)
+	}
+	if path == CalendarPath {
+		return s.calendarPage(ctx, p, query)
 	}
 	if path != Path {
 		return nil, false, nil

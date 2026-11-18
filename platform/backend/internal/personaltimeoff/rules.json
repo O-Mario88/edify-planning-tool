@@ -19,6 +19,7 @@
   ],
   "roles": {
     "Accountant": {
+      "calendar": true,
       "coverage": {
         "page": true,
         "strip": {
@@ -95,6 +96,7 @@
       "team_availability": false
     },
     "Admin": {
+      "calendar": true,
       "coverage": {
         "page": true,
         "strip": {
@@ -216,6 +218,7 @@
       "team_availability": true
     },
     "BusinessTransformationOfficer": {
+      "calendar": true,
       "coverage": {
         "page": false,
         "strip": null
@@ -262,6 +265,7 @@
       "team_availability": false
     },
     "CCEO": {
+      "calendar": true,
       "coverage": {
         "page": true,
         "strip": {
@@ -338,6 +342,7 @@
       "team_availability": false
     },
     "ClusterLeader": {
+      "calendar": false,
       "coverage": {
         "page": false,
         "strip": null
@@ -354,6 +359,7 @@
       "team_availability": false
     },
     "CountryDirector": {
+      "calendar": true,
       "coverage": {
         "page": true,
         "strip": {
@@ -475,6 +481,7 @@
       "team_availability": true
     },
     "HumanResources": {
+      "calendar": true,
       "coverage": {
         "page": true,
         "strip": {
@@ -596,6 +603,7 @@
       "team_availability": true
     },
     "ImpactAssessment": {
+      "calendar": true,
       "coverage": {
         "page": true,
         "strip": {
@@ -672,6 +680,7 @@
       "team_availability": true
     },
     "MfiLoanOfficer": {
+      "calendar": true,
       "coverage": {
         "page": false,
         "strip": null
@@ -718,6 +727,7 @@
       "team_availability": false
     },
     "MfiPartnerAdmin": {
+      "calendar": true,
       "coverage": {
         "page": false,
         "strip": null
@@ -764,6 +774,7 @@
       "team_availability": false
     },
     "PartnerAdmin": {
+      "calendar": true,
       "coverage": {
         "page": false,
         "strip": null
@@ -780,6 +791,7 @@
       "team_availability": false
     },
     "PartnerFieldOfficer": {
+      "calendar": true,
       "coverage": {
         "page": false,
         "strip": null
@@ -796,6 +808,7 @@
       "team_availability": false
     },
     "Program Lead": {
+      "calendar": true,
       "coverage": {
         "page": true,
         "strip": {
@@ -917,6 +930,7 @@
       "team_availability": true
     },
     "ProjectCoordinator": {
+      "calendar": true,
       "coverage": {
         "page": false,
         "strip": null
@@ -963,6 +977,7 @@
       "team_availability": false
     },
     "RegionalProgramLead": {
+      "calendar": true,
       "coverage": {
         "page": false,
         "strip": null
@@ -1009,6 +1024,7 @@
       "team_availability": false
     },
     "RegionalVicePresident": {
+      "calendar": true,
       "coverage": {
         "page": true,
         "strip": {

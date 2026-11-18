@@ -31,6 +31,8 @@ EXPORT_PATH = Path("platform/backend/internal/personaltimeoff/rules.json")
 PAGE_PERMISSION = "personal_time_off"
 PATH = "/personal-time-off/"
 TEAM_AVAILABILITY = "/leave/team-availability"
+CALENDAR_PERMISSION = "leave_calendar"
+CALENDAR_PATH = "/leave/calendar"
 COVERAGE_PERMISSION = "leave_coverage"
 COVERAGE_PATH = "/leave/coverage"
 HOLIDAYS_PERMISSION = "public_holidays"
@@ -71,6 +73,8 @@ def roles() -> dict:
             "team_availability": bool(can_open_url(user, TEAM_AVAILABILITY)),
             "holidays": holidays(user),
             "coverage": coverage(user),
+            "calendar": RolePermissionService.can_view_page(user, CALENDAR_PERMISSION)
+            and bool(can_open_url(user, CALENDAR_PATH)),
         }
     return out
 

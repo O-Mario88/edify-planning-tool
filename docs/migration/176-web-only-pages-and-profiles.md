@@ -391,3 +391,30 @@ created_at)`. Proof: over four seeded assignments (live, revoked, ended,
 not yet begun; edify_gorn_test only, removed after), six queries for
 eleven readers, two of them refused: **66 answers, 0 differing**; and
 with none, in the suite.
+
+## 176.15 The Team Availability Calendar (2026-11-18)
+
+`/leave/calendar` (`leave_views.leave_calendar_view`,
+`pages/leave/leave_calendar.html`) is drawn in Go by `personaltimeoff`
+(`calendar.go`). The grid is drawn in the browser from its events; what
+the feed reads is the month's activity panel
+(`partials/leave/calendar_activity_panel.html`), and that is what Go draws.
+
+- The month is `?month=&year=` as `int()` reads them (`+3`, ` 1_2 `), else
+  today's in Kampala; a month or a year out of range, or either unreadable,
+  is today's month.
+- The work is the month's by its scheduled day in the platform's zone, or
+  its planned day when it has none, neither cancelled, rejected nor
+  completed (`off_calendar_done`), in the query's order. The Admin's is
+  everyone's; anyone else's is the work they hold (user or staff id) and
+  the partner work they monitor (`_calendar_staff_audience`).
+- The feed reads each day's list item as one link: its first activity's
+  type label to `/my-plan/<id>`. With nothing, "Nothing scheduled in
+  <Month>." The count is every activity.
+- `calendarpage` lends the type labels, the completed statuses and the zone.
+
+Proof: nine activities seeded from one real visit (edify_gorn_test only,
+removed after): planned-only, in progress, completed, cancelled, partner
+and staff work the officer monitors, a December visit, and two either side
+of midnight on 30 November. Eight queries for nine readers: **72 answers,
+0 differing**; and over the seed's own work, in the suite.
