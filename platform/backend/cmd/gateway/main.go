@@ -23,6 +23,7 @@ import (
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/analytics"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/config"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/countryctx"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dbguard"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schools"
@@ -144,6 +145,9 @@ func openDatabase(ctx context.Context, cfg config.Config, logger *slog.Logger) (
 	// a developer connects with a broader local role.
 	poolConfig.ConnConfig.RuntimeParams["default_transaction_read_only"] = "on"
 	poolConfig.ConnConfig.RuntimeParams["application_name"] = "edify-gateway"
+	// Each connection carries the country its request is made in, for the
+	// guarded tables' row-level security (docs/migration/80, §23).
+	countryctx.Configure(poolConfig)
 
 	ctx, cancel := context.WithTimeout(ctx, startupTimeout)
 	defer cancel()

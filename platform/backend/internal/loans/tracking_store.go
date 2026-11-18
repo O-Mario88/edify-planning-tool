@@ -521,7 +521,7 @@ func (s *Store) ResolveMatch(ctx context.Context, applicationID string, school *
 		tag, err := tx.Exec(ctx, `
 UPDATE school_loans.application
 SET school_match_status = $2, school_id = $3, match_method = CASE WHEN $3::text IS NULL THEN '' ELSE 'bto' END,
-  matched_by = $4, matched_at = $5, updated_at = $5
+  matched_by = $4, matched_at = $5, updated_at = $5, country_code = `+schoolCountryCode("$3::text")+`
 WHERE id = $1`, applicationID, status, schoolID, staffID, now)
 		if err != nil {
 			return err

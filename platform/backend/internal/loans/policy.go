@@ -97,3 +97,13 @@ func denied(ctx context.Context, message string) error {
 
 // IsLenderRole says whether a role is a lender's own staff.
 func IsLenderRole(role string) bool { return role == roleMFIAdmin || role == roleMFIOfficer }
+
+// schoolCountryCode is the SQL for the country code an application at the
+// school whose id the expression school names belongs to: the school's
+// registry country, else — a school no country holds, or no school yet —
+// Uganda's, as everything the existing application holds is
+// (country.SchoolHeldIn; docs/migration/80, §23).
+func schoolCountryCode(school string) string {
+	return `COALESCE((SELECT acc.code FROM country_registry.country acc JOIN school acs ON acs.id = ` + school +
+		` WHERE ` + registry.SchoolIn("acs", "ARRAY[acc.id::text]") + ` ORDER BY acc.code LIMIT 1), 'UG')`
+}

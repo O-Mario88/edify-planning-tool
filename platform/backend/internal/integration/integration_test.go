@@ -44,6 +44,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/config"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	countryschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country/schema"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/countryctx"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dbguard"
 	loanschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/server"
@@ -129,6 +130,8 @@ func run(m *testing.M) int {
 	gatewayConfig.ConnConfig.User = gatewayRole
 	gatewayConfig.ConnConfig.Password = password
 	gatewayConfig.ConnConfig.RuntimeParams["default_transaction_read_only"] = "on"
+	// As cmd/gateway: each connection carries its request's country.
+	countryctx.Configure(gatewayConfig)
 	gateway, err = pgxpool.NewWithConfig(ctx, gatewayConfig)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "integration: connecting as the gateway role:", err)

@@ -146,7 +146,7 @@ INSERT INTO school_loans.application (
   purpose_code, purpose_label, purpose_other, purpose_details, requested_amount_ugx, preferred_term_months,
   partner_id, lender_id, lender_name, consent_version, consent_recorded_at,
   school_match_status, school_id, match_method, matched_by, matched_at,
-  status, delivery_status, next_follow_up_on, submitted_at, updated_at, share_link_id
+  status, delivery_status, next_follow_up_on, submitted_at, updated_at, share_link_id, country_code
 ) VALUES (
   $1, $2, $3, $4, $5, $6, $7,
   $8, $9, $10, $11, $12,
@@ -155,7 +155,8 @@ INSERT INTO school_loans.application (
   $23, $24, $25, $26, $27, $28,
   $29, $30, $31, $32, $33,
   $34, $35, $36, $37, $38,
-  'submitted', 'queued', $39, $33, $33, $40
+  'submitted', 'queued', $39, $33, $33, $40,
+  `+schoolCountryCode("$35::text")+`
 )`,
 		id, reference, input.IdempotencyKey, HashToken(receipt), app.Now.Add(receiptLifetime), source, invitationID,
 		input.SchoolName, input.DirectorName, input.DirectorPhone, input.DirectorEmail, input.Religion,

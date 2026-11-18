@@ -6,7 +6,7 @@ country-specific configuration, securely isolated country data.* Phase 0 of
 that instruction asks for an audit and the architecture decisions before any
 schema change. This document is that Phase 0. The owner approved Phase 1
 on §7's recommended defaults on 2026-11-17 ("Yes, start Phase 1"); what has
-been built since, on the development copies only, is §8 to §22.
+been built since, on the development copies only, is §8 to §23.
 
 Everything below was measured on 2026-11-17 against the development copy
 `edify_gorn_test` and the code on `feature/edify-go-rn-migration`. No
@@ -993,4 +993,60 @@ With this step, Phase 3's areas named in §6 have been carried through
 (planning, SSA, clusters, partners, budgets, advances, loans,
 notifications, trainings), except the financial year per country, which
 waits on owner decision 5.
+
+## 23. Country isolation in the database (2026-11-18)
+
+Owner, 2026-11-18: *"enforce country isolation in both Go and the database.
+PostgreSQL supports Row-Level Security, which can provide an additional
+layer of protection beyond ordinary application permissions. This should be
+implemented and tested carefully, including how database connection pooling
+handles country context."*
+
+**The country on every connection** (`internal/countryctx`). The gateway's
+pool is shared by every request, so each connection carries the session
+setting `edify.read_countries`, written when the connection is taken out of
+the pool (pgx `PrepareConn`) whenever the request wants a value other than
+the one the connection last carried:
+
+| Request | `edify.read_countries` |
+|---|---|
+| A signed-in caller working in a country | That country's code (`UG`, `KE`) |
+| The Admin, a regional role (§15) | `*`: every country |
+| A signed-in caller working in no Active country | Empty: no guarded row is theirs |
+| No signed-in caller: the platform's own work (the public loan form, school and lender token pages, workers, start-up checks) | `*` |
+
+A connection therefore never keeps a previous request's country: the value
+is checked on every checkout and rewritten when it differs (a cached value
+per connection saves the round trip when consecutive requests share a
+country). If writing it fails, the pool discards the connection. Both
+`cmd/gateway` and the integration harness configure their pools this way.
+Transactions that declare the countries they write (`country.WriteFor`,
+§9) are unaffected: those settings are transaction-local.
+
+**The first guarded table** (school loans migration 0008).
+`school_loans.application` gains `country_code` (every application already
+recorded is Uganda's, owner decision 2), written when an application is
+submitted and again when it is matched to a school (the school's registry
+country, else Uganda's: `country.SchoolHeldIn`). Row-level security is on
+and forced: a row is read, inserted or updated only when
+`edify.read_countries` is `*` or names its country; another country's row
+is invisible, cannot be changed and cannot be filed. Only the gateway
+reads the `school_loans` schema, so no other service is affected. The
+Go checks of §20 stay in front of it.
+
+Proof: `internal/countryctx/countryctx_test.go` (the value for each kind of
+request); `internal/integration/country_rls_test.go`, through a pool of one
+connection as the gateway's own role, so every request reuses the same
+session: a Ugandan application is seen by a reader working in Uganda, the
+Admin and the platform's own work, and by no reader working in Kenya or in
+no country, with the requests alternating twice over on the connection; a
+reader working in Kenya changes no Ugandan application and is refused
+filing one as Uganda's. The loan suites (the public form writes as the
+platform's own work), the whole integration suite and every golden
+unchanged; school parity `PARITY OK`.
+
+Next: the same guard on the other Go-owned tables that belong to a
+country (cluster leadership, field routes), each with a recorded country.
+The existing application's tables cannot be altered, so their isolation
+stays the Go checks until they are Go's.
 
