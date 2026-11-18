@@ -28,11 +28,17 @@ describe('firstAnswer', () => {
     expect(asked).toEqual(['/planning']);
   });
 
-  it('is not found only when no spelling answers and one refused', async () => {
+  it('is not found only when every spelling is refused', async () => {
     const { ask } = asker({ '/x': { kind: 'notFound' }, '/x/': { kind: 'notFound' } });
     expect(await firstAnswer(['/x', '/x/'], ask)).toEqual({ kind: 'notFound' });
-    const { ask: mixed } = asker({ '/y': { kind: 'unavailable' }, '/y/': { kind: 'notFound' } });
-    expect(await firstAnswer(['/y', '/y/'], mixed)).toEqual({ kind: 'notFound' });
+  });
+
+  it('is not moved yet when one spelling is a page the gateway has not drawn and the other is no page', async () => {
+    // "/settings" is the reader's page, not drawn here yet; "/settings/" is
+    // not a page at all. The reader is sent to the existing web, not told
+    // the page does not exist.
+    const { ask } = asker({ '/settings': { kind: 'unavailable' }, '/settings/': { kind: 'notFound' } });
+    expect(await firstAnswer(['/settings', '/settings/'], ask)).toEqual({ kind: 'unavailable' });
   });
 
   it('is unavailable when every spelling is one the gateway has not moved yet', async () => {

@@ -6,9 +6,10 @@
  * path as given: "/planning-monitor" is not a page there, "/planning-monitor/"
  * is. The sidebar writes some pages without their slash, so one spelling the
  * gateway does not know must not end the reader's request: the next spelling
- * is asked. Only when no spelling answers and one of them refused the reader
- * is the page not found; when every spelling is one the gateway has not
- * moved yet, the page is not moved yet.
+ * is asked. A spelling the gateway has not moved yet means the page exists
+ * and is the reader's, so it outweighs a spelling that is no page at all
+ * ("/settings" is a page, "/settings/" is not): the page is not found only
+ * when every spelling is refused.
  */
 
 export type SpellingAnswer<T> = { kind: 'page'; page: T } | { kind: 'notFound' } | { kind: 'unavailable' };
@@ -17,11 +18,11 @@ export async function firstAnswer<T>(
   spellings: readonly string[],
   ask: (path: string) => Promise<SpellingAnswer<T>>,
 ): Promise<SpellingAnswer<T>> {
-  let refused = false;
+  let notMoved = spellings.length === 0;
   for (const path of spellings) {
     const answer = await ask(path);
     if (answer.kind === 'page') return answer;
-    if (answer.kind === 'notFound') refused = true;
+    if (answer.kind === 'unavailable') notMoved = true;
   }
-  return refused ? { kind: 'notFound' } : { kind: 'unavailable' };
+  return notMoved ? { kind: 'unavailable' } : { kind: 'notFound' };
 }

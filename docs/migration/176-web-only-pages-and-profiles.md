@@ -671,8 +671,10 @@ three causes.
   for "/x" is moved there (APPEND_SLASH), but the gateway reads a path as
   given, and the sidebar writes these links without their slash. FeedPage
   asked "/x", took the gateway's NotFound as final and never asked "/x/".
-  It now asks each spelling in turn (`lib/pageSpellings.ts`): the page is not
-  found only when no spelling answers.
+  It now asks each spelling in turn (`lib/pageSpellings.ts`): a page wins,
+  then "not moved yet" (the page exists and is the reader's; "/settings" is a
+  page, "/settings/" no page at all), and it is not found only when every
+  spelling is refused.
 - **A page Go has not drawn yet, through the fallback.** The feed answered
   404 alike for a page the reader may not open and for a page of the web it
   does not draw. It now answers 501 for the second (`read_page`,
