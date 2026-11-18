@@ -15,6 +15,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolplanning"
@@ -66,11 +67,12 @@ func readable(ctx context.Context, q schooldirectory.Querier, s schooldirectory.
 		if s.Country == "" {
 			return true, nil
 		}
+		// The cluster's country, read through the registry
+		// (docs/migration/80, §16).
 		var ok bool
 		err := q.QueryRow(ctx, `
-SELECT EXISTS (SELECT 1 FROM region r WHERE r.id = $2 AND r.country = $1)
-  OR EXISTS (SELECT 1 FROM district d JOIN region r ON r.id = d.region_id WHERE d.id = $3 AND r.country = $1)`,
-			s.Country, c.regionID, c.districtID).Scan(&ok)
+SELECT EXISTS (SELECT 1 FROM (SELECT $2::varchar AS region_id, $3::varchar AS district_id) c WHERE `+registry.ClusterIn("c", "$1")+`)`,
+			s.CountryIDs(), c.regionID, c.districtID).Scan(&ok)
 		if err != nil {
 			return false, fmt.Errorf("clusterpage: reading the cluster's country: %w", err)
 		}

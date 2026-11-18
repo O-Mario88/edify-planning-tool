@@ -50,9 +50,10 @@ func (s *Service) ListManagedClusters(
 	if err := s.checkReady(ctx); err != nil {
 		return nil, err
 	}
-	var ownerIDs []string
+	var ownerIDs, countryIDs []string
 	switch {
 	case anyClusterAdministrators[principal.ActiveRole]:
+		countryIDs = countryBound(principal)
 	case principal.ActiveRole == roleCCEO && principal.StaffProfileID != "":
 		ownerIDs = ownIDs(principal)
 	default:
@@ -66,7 +67,7 @@ func (s *Service) ListManagedClusters(
 	if err != nil {
 		return nil, err
 	}
-	clusters, total, err := s.data.ManagedClusters(ctx, ownerIDs, search, s.today(), int(size), int((page-1)*size))
+	clusters, total, err := s.data.ManagedClusters(ctx, ownerIDs, countryIDs, search, s.today(), int(size), int((page-1)*size))
 	if err != nil {
 		return nil, s.internal(ctx, err)
 	}

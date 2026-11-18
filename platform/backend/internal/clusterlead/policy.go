@@ -64,14 +64,33 @@ func leader(ctx context.Context) (auth.Principal, error) {
 	return principal, nil
 }
 
-// mayAdminister says whether principal may manage cluster's leaders.
+// mayAdminister says whether principal may manage cluster's leaders. An
+// Admin manages every cluster; a Programme Lead those of the country they
+// work in (docs/migration/80, §16), and none while they work in no Active
+// country.
 func mayAdminister(principal auth.Principal, cluster Cluster) bool {
-	if anyClusterAdministrators[principal.ActiveRole] {
+	if principal.ActiveRole == roleAdmin {
 		return true
+	}
+	if anyClusterAdministrators[principal.ActiveRole] {
+		return principal.Country != nil && slices.Contains(cluster.CountryIDs, principal.Country.ID)
 	}
 	return principal.ActiveRole == roleCCEO &&
 		principal.StaffProfileID != "" &&
 		slices.Contains(ownIDs(principal), cluster.ResponsibleStaffID)
+}
+
+// countryBound is the countries a cluster administrator's lists are kept
+// to: nil (every country) for an Admin; the one a Programme Lead works in, or
+// one id that matches no country while they work in none.
+func countryBound(principal auth.Principal) []string {
+	switch {
+	case principal.ActiveRole == roleAdmin:
+		return nil
+	case principal.Country != nil:
+		return []string{principal.Country.ID}
+	}
+	return []string{""}
 }
 
 // ownIDs is every id a cluster this person is responsible for may be filed

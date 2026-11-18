@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 )
 
 // The Cluster Action Register's records (migration 0004). Every write runs in
@@ -220,8 +222,11 @@ type QueueFilter struct {
 	Responsible []string
 	// Staff-profile ids the requests are routed to as supervisor.
 	Supervisor []string
-	// Unassigned requests too (no responsible CCEO and no supervisor).
-	Unassigned bool
+	// Unassigned requests too (no responsible CCEO and no supervisor),
+	// kept to the schools of these registry countries when not nil
+	// (docs/migration/80, §16).
+	Unassigned          bool
+	UnassignedCountries []string
 }
 
 // SupportQueue is the sent actions with a school routed to the filter, with
@@ -232,9 +237,10 @@ JOIN cluster_leadership.cluster_action ca ON ca.id = s.action_id
 WHERE ca.status IN ('submitted', 'closed')
   AND (s.responsible_staff_id = ANY($1)
        OR (s.routed_to <> 'owner' AND s.supervisor_staff_id = ANY($2))
-       OR ($3 AND s.routed_to = 'unassigned'))
+       OR ($3 AND s.routed_to = 'unassigned' AND ($5::text[] IS NULL OR EXISTS (
+         SELECT 1 FROM school us WHERE us.id = s.school_id AND `+registry.SchoolIn("us", "$5")+`))))
 ORDER BY ca.target_on, s.updated_at DESC
-LIMIT $4`, f.Responsible, f.Supervisor, f.Unassigned, limit)
+LIMIT $4`, f.Responsible, f.Supervisor, f.Unassigned, limit, f.UnassignedCountries)
 	if err != nil {
 		return nil, fmt.Errorf("clusterlead: reading the support queue: %w", err)
 	}

@@ -38,8 +38,9 @@ type Data interface {
 	MemberSchools(ctx context.Context, clusterID, search string, limit, offset int) ([]School, int64, error)
 	UpcomingActivities(ctx context.Context, clusterID string, day time.Time, limit int) ([]Activity, error)
 	PastActivities(ctx context.Context, clusterID string, day time.Time, limit int) ([]Activity, error)
-	// ownerIDs nil means every cluster.
-	ManagedClusters(ctx context.Context, ownerIDs []string, search string, day time.Time, limit, offset int) ([]ManagedCluster, int64, error)
+	// ownerIDs nil means every owner's clusters; countryIDs nil every
+	// country's.
+	ManagedClusters(ctx context.Context, ownerIDs, countryIDs []string, search string, day time.Time, limit, offset int) ([]ManagedCluster, int64, error)
 	ClusterAssignments(ctx context.Context, clusterID string) ([]Assignment, error)
 	// InvitedLeader is an account holding the Cluster Leader role alone,
 	// active or still invited; ErrNotFound otherwise.

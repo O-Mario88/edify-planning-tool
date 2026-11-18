@@ -51,7 +51,9 @@ ORDER BY u.id LIMIT 1`, skip).Scan(&a.user, &a.staff); err != nil {
 			`DELETE FROM ssa_record WHERE id LIKE $2 AND $1::text[] IS NOT NULL`,
 			`DELETE FROM activity WHERE id LIKE $2 AND $1::text[] IS NOT NULL`,
 			`DELETE FROM country_registry.school_country WHERE school_id LIKE $2 AND $1::text[] IS NOT NULL`,
+			`DELETE FROM cluster WHERE id LIKE $2 AND $1::text[] IS NOT NULL`,
 			`DELETE FROM school WHERE id LIKE $2 AND $1::text[] IS NOT NULL`,
+			`DELETE FROM district WHERE id LIKE $2 AND $1::text[] IS NOT NULL`,
 			`DELETE FROM region WHERE id LIKE $2 AND $1::text[] IS NOT NULL`,
 			`UPDATE country_registry.country SET state = 'draft', activated_on = NULL WHERE code = 'KE' AND $1::text[] IS NOT NULL AND $2 <> ''`,
 		} {

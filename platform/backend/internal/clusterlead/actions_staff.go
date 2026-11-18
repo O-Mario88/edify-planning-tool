@@ -44,8 +44,11 @@ func (s *ActionService) staffQueue(ctx context.Context, scope string) (QueueFilt
 			return QueueFilter{}, false, apierr.New(ctx, connect.CodePermissionDenied, apierr.ReasonPermissionDenied,
 				"You have no team.")
 		}
-		return QueueFilter{Responsible: supervisees, Supervisor: own,
-			Unassigned: anyClusterAdministrators[principal.ActiveRole]}, true, nil
+		filter := QueueFilter{Responsible: supervisees, Supervisor: own, Unassigned: anyClusterAdministrators[principal.ActiveRole]}
+		if filter.Unassigned {
+			filter.UnassignedCountries = countryBound(principal)
+		}
+		return filter, true, nil
 	}
 	return QueueFilter{}, false, invalid(ctx, "The scope is mine or team.")
 }

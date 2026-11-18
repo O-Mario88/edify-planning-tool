@@ -6,7 +6,7 @@ country-specific configuration, securely isolated country data.* Phase 0 of
 that instruction asks for an audit and the architecture decisions before any
 schema change. This document is that Phase 0. The owner approved Phase 1
 on §7's recommended defaults on 2026-11-17 ("Yes, start Phase 1"); what has
-been built since, on the development copies only, is §8 to §15.
+been built since, on the development copies only, is §8 to §16.
 
 Everything below was measured on 2026-11-17 against the development copy
 `edify_gorn_test` and the code on `feature/edify-go-rn-migration`. No
@@ -695,4 +695,39 @@ Consequences to note: per-country region scope (`scope_type = regions`)
 now has no role that uses it, since both roles that cover regions are
 regional; it stays in the schema for a country-level regional role should
 one be defined.
+
+## 16. Phase 3, fourth step: the country through clusters (2026-11-18)
+
+Owner instruction: *"Continue Phase 3 with the country through clusters."*
+A cluster has no country column; it is placed by its region, or its
+district's region (`country.ClusterIn`), whose country name is read
+through the registry's names. No table is added or changed and no row of
+the existing application is written.
+
+| Where | Before | Now |
+|---|---|---|
+| Cluster Oversight and the cluster pages (`cluster_queryset` for a country reader) | The cluster's region or district region named the country's text | `country.ClusterIn` with the scope's registry id |
+| Whether a country reader may open a cluster's schools | The same, as a text comparison | The same registry rule |
+| The Cluster Leader portal: which clusters a Programme Lead manages leaders for, and whose leaders they may assign, end or replace | Every cluster in the platform | The clusters of the country the Programme Lead works in; none while they work in no Active country. An Admin still manages every cluster; a CCEO their own, as before |
+| The cluster support requests left unassigned (a Programme Lead's team queue) | Every unassigned request | Those at schools of the Programme Lead's country (`country.SchoolIn`) |
+
+So a Programme Lead working in Kenya can no longer assign, end or replace
+the leaders of a Ugandan cluster, and Uganda's cannot touch Kenya's. For
+Uganda's data nothing moves: every cluster has a Ugandan region.
+
+Proof: `internal/clusterlead/service_test.go` (a Programme Lead manages
+their own country's clusters, not another country's, and none while
+working in no Active country; the Admin manages every country's);
+`internal/integration/country_clusters_test.go`, with Kenya Active, a
+Kenyan region, district and cluster, and an officer who is Programme Lead
+in Kenya alone: the cluster rule places the Kenyan cluster in Kenya only;
+through the gateway, Kenya's Programme Lead manages Kenya's cluster alone
+and is refused a Ugandan cluster's leaders, Uganda's Programme Lead keeps
+the Ugandan clusters and is refused Kenya's, and the Admin manages both;
+the whole integration suite and every golden, and school parity.
+
+Not in this step: the training summary (cluster trainings, coverage and the
+per-country training ceilings) keeps its own country from the reader's
+profile; it moves with trainings. Creating or editing clusters is the
+existing application's.
 

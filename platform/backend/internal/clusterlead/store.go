@@ -18,6 +18,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 )
 
 var (
@@ -46,6 +48,9 @@ type Cluster struct {
 	SubCounty          string
 	ResponsibleStaffID string
 	ResponsibleStaff   string
+	// CountryIDs are the registry countries the cluster is in (by its region
+	// or its district's; docs/migration/80 §16), empty when none.
+	CountryIDs []string
 }
 
 // Assignment is one leadership assignment and its history.
@@ -149,14 +154,15 @@ func (s *Store) Cluster(ctx context.Context, clusterID string) (Cluster, error) 
 	var c Cluster
 	err := s.db.QueryRow(ctx, `
 SELECT c.id, c.name, c.status, c.cluster_type, COALESCE(d.name, ''),
-       COALESCE(sc.name, c.sub_county_name, ''), COALESCE(c.responsible_staff_id, ''), COALESCE(u.name, '')
+       COALESCE(sc.name, c.sub_county_name, ''), COALESCE(c.responsible_staff_id, ''), COALESCE(u.name, ''),
+       ARRAY(SELECT rc.id::text FROM country_registry.country rc WHERE `+registry.ClusterIn("c", "ARRAY[rc.id::text]")+` ORDER BY rc.code)
 FROM cluster c
 LEFT JOIN district d ON d.id = c.district_id
 LEFT JOIN sub_county sc ON sc.id = c.sub_county_id
 LEFT JOIN staff_profile sp ON sp.id = c.responsible_staff_id AND sp.deleted_at IS NULL
 LEFT JOIN "user" u ON u.id = COALESCE(sp.user_id, c.responsible_staff_id)
 WHERE c.id = $1 AND c.deleted_at IS NULL`, clusterID).Scan(
-		&c.ID, &c.Name, &c.Status, &c.Type, &c.District, &c.SubCounty, &c.ResponsibleStaffID, &c.ResponsibleStaff)
+		&c.ID, &c.Name, &c.Status, &c.Type, &c.District, &c.SubCounty, &c.ResponsibleStaffID, &c.ResponsibleStaff, &c.CountryIDs)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Cluster{}, ErrNotFound
 	}
@@ -336,18 +342,20 @@ type ManagedCluster struct {
 // under one of ownerIDs, unless ownerIDs is nil), with each one's
 // operating member schools and live leaders on day.
 func (s *Store) ManagedClusters(
-	ctx context.Context, ownerIDs []string, search string, day time.Time, limit, offset int,
+	ctx context.Context, ownerIDs, countryIDs []string, search string, day time.Time, limit, offset int,
 ) ([]ManagedCluster, int64, error) {
 	pattern := likePattern(search)
 	all := ownerIDs == nil
-	// owners is the placeholder of ownerIDs in each query.
-	where := func(owners string) string {
+	// owners and countries are the placeholders of ownerIDs and countryIDs
+	// in each query; countryIDs nil is every country.
+	where := func(owners, countries string) string {
 		return `
 WHERE c.deleted_at IS NULL AND ($1 OR c.responsible_staff_id = ANY(` + owners + `))
-  AND ($2 = '' OR c.name ILIKE $2 ESCAPE '\')`
+  AND ($2 = '' OR c.name ILIKE $2 ESCAPE '\')
+  AND (` + countries + `::text[] IS NULL OR ` + registry.ClusterIn("c", countries) + `)`
 	}
 	var total int64
-	if err := s.db.QueryRow(ctx, `SELECT count(*) FROM cluster c`+where("$3"), all, pattern, ownerIDs).Scan(&total); err != nil {
+	if err := s.db.QueryRow(ctx, `SELECT count(*) FROM cluster c`+where("$3", "$4"), all, pattern, ownerIDs, countryIDs).Scan(&total); err != nil {
 		return nil, 0, fmt.Errorf("clusterlead: counting clusters: %w", err)
 	}
 	rows, err := s.db.Query(ctx, `
@@ -364,9 +372,9 @@ FROM cluster c
 LEFT JOIN district d ON d.id = c.district_id
 LEFT JOIN sub_county sc ON sc.id = c.sub_county_id
 LEFT JOIN staff_profile sp ON sp.id = c.responsible_staff_id AND sp.deleted_at IS NULL
-LEFT JOIN "user" u ON u.id = COALESCE(sp.user_id, c.responsible_staff_id)`+where("$6")+`
+LEFT JOIN "user" u ON u.id = COALESCE(sp.user_id, c.responsible_staff_id)`+where("$6", "$7")+`
 ORDER BY c.name, c.id
-LIMIT $4 OFFSET $5`, all, pattern, day, limit, offset, ownerIDs)
+LIMIT $4 OFFSET $5`, all, pattern, day, limit, offset, ownerIDs, countryIDs)
 	if err != nil {
 		return nil, 0, fmt.Errorf("clusterlead: listing clusters: %w", err)
 	}

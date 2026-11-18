@@ -38,3 +38,17 @@ func SchoolCountryName(school string) string {
 	return fmt.Sprintf(`COALESCE((SELECT sc_c.name FROM country_registry.country sc_c WHERE %s ORDER BY sc_c.code LIMIT 1), '')`,
 		SchoolIn(school, "ARRAY[sc_c.id::text]"))
 }
+
+// ClusterIn is the SQL that a cluster (aliased by cluster, the existing
+// cluster table) belongs to one of the countries whose registry ids the
+// placeholder ids holds (a text[] argument): by its region, or by its
+// district's region, whose country name is one of the country's names in
+// the registry (docs/migration/80 §16). A cluster with neither belongs to
+// no country, as in the existing cluster_queryset.
+func ClusterIn(cluster, ids string) string {
+	return fmt.Sprintf(`(EXISTS (SELECT 1 FROM region cr JOIN country_registry.country_alias cal ON cal.alias = btrim(cr.country)
+    WHERE cr.id = %[1]s.region_id AND cal.country_id::text = ANY(%[2]s))
+  OR EXISTS (SELECT 1 FROM district cd JOIN region cr ON cr.id = cd.region_id
+    JOIN country_registry.country_alias cal ON cal.alias = btrim(cr.country)
+    WHERE cd.id = %[1]s.district_id AND cal.country_id::text = ANY(%[2]s)))`, cluster, ids)
+}

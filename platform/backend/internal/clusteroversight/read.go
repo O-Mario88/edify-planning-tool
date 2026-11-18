@@ -101,9 +101,8 @@ func (b *sqlb) inScope(s schooldirectory.Scope, r reach) string {
 		if s.Country == "" {
 			return "TRUE"
 		}
-		c := b.arg(s.Country)
-		return fmt.Sprintf(`(EXISTS (SELECT 1 FROM region r WHERE r.id = c.region_id AND r.country = %[1]s)
-  OR EXISTS (SELECT 1 FROM district d2 JOIN region r2 ON r2.id = d2.region_id WHERE d2.id = c.district_id AND r2.country = %[1]s))`, c)
+		// Read through the registry (docs/migration/80, §16).
+		return registry.ClusterIn("c", b.arg(s.CountryIDs()))
 	case s.SummaryOnly:
 		return "TRUE"
 	}

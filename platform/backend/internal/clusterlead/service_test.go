@@ -13,6 +13,7 @@ import (
 
 	clustersv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/clusters/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 )
 
 // fakeData is an in-memory Data: clusters, accounts and assignments.
@@ -27,8 +28,9 @@ type fakeData struct {
 func newFake() *fakeData {
 	return &fakeData{
 		clusters: map[string]Cluster{
-			"c-mine":  {ID: "c-mine", Name: "Cluster A", ResponsibleStaffID: "sp-cceo"},
-			"c-other": {ID: "c-other", Name: "Cluster B", ResponsibleStaffID: "sp-someone-else"},
+			"c-mine":  {ID: "c-mine", Name: "Cluster A", ResponsibleStaffID: "sp-cceo", CountryIDs: []string{"ug"}},
+			"c-other": {ID: "c-other", Name: "Cluster B", ResponsibleStaffID: "sp-someone-else", CountryIDs: []string{"ug"}},
+			"c-kenya": {ID: "c-kenya", Name: "Cluster K", ResponsibleStaffID: "sp-someone-else", CountryIDs: []string{"ke"}},
 		},
 		accounts: map[string]Account{
 			"u-leader":  {UserID: "u-leader", Name: "Grace", IsLeader: true},
@@ -81,11 +83,12 @@ func (f *fakeData) PastActivities(context.Context, string, time.Time, int) ([]Ac
 	return nil, nil
 }
 
-func (f *fakeData) ManagedClusters(_ context.Context, ownerIDs []string, _ string, _ time.Time, _, _ int) ([]ManagedCluster, int64, error) {
+func (f *fakeData) ManagedClusters(_ context.Context, ownerIDs, countryIDs []string, _ string, _ time.Time, _, _ int) ([]ManagedCluster, int64, error) {
 	var out []ManagedCluster
-	for _, id := range []string{"c-mine", "c-other"} {
+	for _, id := range []string{"c-kenya", "c-mine", "c-other"} {
 		c := f.clusters[id]
-		if ownerIDs == nil || slices.Contains(ownerIDs, c.ResponsibleStaffID) {
+		inCountry := countryIDs == nil || slices.ContainsFunc(c.CountryIDs, func(id string) bool { return slices.Contains(countryIDs, id) })
+		if (ownerIDs == nil || slices.Contains(ownerIDs, c.ResponsibleStaffID)) && inCountry {
 			out = append(out, ManagedCluster{Cluster: c, Members: int64(len(f.members[id]))})
 		}
 	}
@@ -201,6 +204,13 @@ func as(role, userID, staffProfile string) context.Context {
 	}})
 }
 
+// inUganda is ctx's caller working in Uganda (docs/migration/80, §16).
+func inUganda(ctx context.Context) context.Context {
+	p, _ := auth.PrincipalFrom(ctx)
+	p.Country = &country.Work{Country: country.Country{ID: "ug", Code: "UG", Name: "Uganda"}, RolesSource: country.RolesFromProfile}
+	return auth.WithPrincipal(context.Background(), p)
+}
+
 func codeOf(err error) connect.Code {
 	var connectErr *connect.Error
 	if errors.As(err, &connectErr) {
@@ -300,7 +310,10 @@ func TestTheAssignmentPolicy(t *testing.T) {
 		allowed bool
 	}{
 		{"Admin, any cluster", as(roleAdmin, "u-admin", ""), "c-other", true},
-		{"Program Lead, any cluster", as(roleProgramLead, "u-pl", "sp-pl"), "c-other", true},
+		{"Program Lead, any cluster of their country", inUganda(as(roleProgramLead, "u-pl", "sp-pl")), "c-other", true},
+		{"Program Lead, a cluster of another country", inUganda(as(roleProgramLead, "u-pl", "sp-pl")), "c-kenya", false},
+		{"Program Lead working in no Active country", as(roleProgramLead, "u-pl", "sp-pl"), "c-other", false},
+		{"Admin, a cluster of any country", as(roleAdmin, "u-admin", ""), "c-kenya", true},
 		{"CCEO, a cluster they are responsible for", as(roleCCEO, "u-cceo", "sp-cceo"), "c-mine", true},
 		{"CCEO, someone else's cluster", as(roleCCEO, "u-cceo", "sp-cceo"), "c-other", false},
 		{"Cluster Leader", as(RoleClusterLeader, "u-leader", ""), "c-mine", false},
@@ -412,8 +425,11 @@ func TestManagedClustersFollowTheAssignmentPolicy(t *testing.T) {
 		}
 		return len(got.Msg.GetClusters()), nil
 	}
-	if n, err := count(as(roleAdmin, "u-admin", "")); err != nil || n != 2 {
+	if n, err := count(as(roleAdmin, "u-admin", "")); err != nil || n != 3 {
 		t.Fatalf("Admin manages every cluster: %d %v", n, err)
+	}
+	if n, err := count(inUganda(as(roleProgramLead, "u-pl", "sp-pl"))); err != nil || n != 2 {
+		t.Fatalf("a Programme Lead manages their country's clusters: %d %v", n, err)
 	}
 	if n, err := count(as(roleCCEO, "u-cceo", "sp-cceo")); err != nil || n != 1 {
 		t.Fatalf("a CCEO manages only their own clusters: %d %v", n, err)
