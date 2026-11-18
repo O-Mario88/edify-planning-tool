@@ -68,6 +68,9 @@ type workspace struct {
 	// country is the reader's scope's country ("" the whole deployment),
 	// which the Partners' follow-ups are read in.
 	country string
+	// regions bound a region's lens (the Regional Programme Lead): nil for
+	// a team or the whole country.
+	regions []string
 }
 
 // Build answers path for p with the page's query. served is false for a
@@ -111,8 +114,12 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if err != nil {
 		return nil, true, err
 	}
-	if role.Lens == "country" {
-		return s.country(ctx, p, role, per, query, scope.Country, now)
+	if role.Lens == "country" || role.Lens == "region" {
+		var regions []string
+		if role.Lens == "region" {
+			regions = nonNil(scope.RegionIDs)
+		}
+		return s.country(ctx, p, role, per, query, scope.Country, regions, now)
 	}
 	busy, err := anyPartnerWork(ctx, s.db, team, nonNil(scope.SchoolIDs), per.fy, per.fy == schooldirectory.OperationalFY(now))
 	if err != nil {
@@ -152,9 +159,9 @@ func drawn(p auth.Principal, role Role) bool {
 	if p.Acting != nil || p.InActingAppointment {
 		return false
 	}
-	if role.Lens == "country" {
-		// The country lens of a country whose roles come from the registry
-		// is not drawn yet (docs/migration/80).
+	if role.Lens == "country" || role.Lens == "region" {
+		// The country or region lens of a country whose roles come from the
+		// registry is not drawn yet (docs/migration/80).
 		return p.Country == nil || !p.Country.FromRegistry()
 	}
 	if role.Lens != "team" {

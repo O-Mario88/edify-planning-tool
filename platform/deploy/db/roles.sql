@@ -1044,3 +1044,6 @@ GRANT SELECT (fy) ON team_action TO edify_gateway_ro;
 -- its source gave it where it has no display name.
 GRANT SELECT (resolution, return_reason_category) ON partner_assignment TO edify_gateway_ro;
 GRANT SELECT (source_name) ON activity_catalogue_item TO edify_gateway_ro;
+-- Partner Monitoring through a region's lens: the school or hand-over a
+-- withdrawal request names, to place it in the reader's regions.
+GRANT SELECT (school_id, assignment_id) ON partner_assignment_withdrawal TO edify_gateway_ro;

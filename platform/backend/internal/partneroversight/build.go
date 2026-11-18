@@ -45,7 +45,8 @@ LEFT JOIN activity sa ON sa.id = pa.source_activity_id
 LEFT JOIN activity_catalogue_item sc ON sc.id = sa.training_course_id
 WHERE NOT (pa.status = ANY($2) OR (pa.status = $3 AND pa.resolved_at IS NOT NULL))
   AND ($1::text[] IS NULL OR pa.monitoring_staff_id = ANY($1) OR pa.assigning_staff_id = ANY($1)
-    OR s.account_owner_id = ANY($1) OR c.responsible_staff_id = ANY($1))`
+    OR s.account_owner_id = ANY($1) OR c.responsible_staff_id = ANY($1))
+  AND ($4::text[] IS NULL OR s.region_id = ANY($4) OR c.region_id = ANY($4))`
 
 // activity is the fields of an activity the page reads.
 type activity struct {
@@ -307,8 +308,8 @@ func describe(w work) (training, purpose, intervention string) {
 
 // readItems is build_items for a team lens (team nil: the country's) over
 // the years read, before the period narrows them.
-func readItems(ctx context.Context, db schooldirectory.Querier, team []string, years []string, today time.Time) ([]*item, error) {
-	rows, err := db.Query(ctx, assignmentSQL, team, rules.LeftPartnerStatuses, rules.ReturnedToStaff)
+func readItems(ctx context.Context, db schooldirectory.Querier, team, regions []string, years []string, today time.Time) ([]*item, error) {
+	rows, err := db.Query(ctx, assignmentSQL, team, rules.LeftPartnerStatuses, rules.ReturnedToStaff, regions)
 	if err != nil {
 		return nil, fmt.Errorf("partneroversight: reading the hand-overs: %w", err)
 	}
@@ -393,7 +394,8 @@ func readItems(ctx context.Context, db schooldirectory.Querier, team []string, y
   AND COALESCE(a.assigned_partner_id, '') <> '' AND a.status <> ALL($2) AND a.fy = ANY($3) AND NOT (a.id = ANY($4))
   AND ($5::text[] IS NULL OR a.monitored_by_staff_id = ANY($5) OR a.responsible_staff_id = ANY($5)
     OR s.account_owner_id = ANY($5) OR c.responsible_staff_id = ANY($5))
-ORDER BY a.id`, rules.PartnerDelivery, []string{"cancelled", "rejected", "deferred"}, years, keptActivities, team)
+  AND ($6::text[] IS NULL OR s.region_id = ANY($6) OR c.region_id = ANY($6))
+ORDER BY a.id`, rules.PartnerDelivery, []string{"cancelled", "rejected", "deferred"}, years, keptActivities, team, regions)
 	if err != nil {
 		return nil, err
 	}

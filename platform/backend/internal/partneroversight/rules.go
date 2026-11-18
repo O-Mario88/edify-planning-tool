@@ -7,13 +7,12 @@
 // the app's feed reads it (apps.mobile_feed).
 //
 // It answers a field officer or a Programme Lead in their own seat (the
-// team lens), and the country's readers one Programme Lead's team at a time
-// (leads.go): with no partner work, the page as it opens (page.go); with
+// team lens), and the country's and a region's readers one Programme Lead's
+// team at a time (leads.go): with no partner work, the page as it opens (page.go); with
 // partner work (work.go, build.go, workpage.go), the Partner tabs with their
 // follow-up recommendations, the team-member tabs, the headline tiles with
 // the Planning Monitor's Partner target, and the open tab's table of the
-// chosen Partner's work. A reader the page reads through a region, and
-// what work.go names (work waiting for IA verification, Core
+// chosen Partner's work. What work.go names (work waiting for IA verification, Core
 // schools, Special Project work, a decided hand-back, facilitated
 // trainings, withdrawal requests, the Clusters tab, an activity filter, a
 // table past one page, engagements recorded), is passed to the existing

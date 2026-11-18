@@ -88,13 +88,13 @@ WHERE u.email = 'cceo1@edify.org' AND s.school_type = 'core'`).Scan(&core); err 
 	if _, err := pageOf(officer, partnerOversightPath, map[string]string{"period_type": "fy"}); connect.CodeOf(err) != connect.CodeUnavailable {
 		t.Errorf("custom period: got %v, want the page passed on", err)
 	}
-	// The country's lens is Go's; a region's is not drawn yet.
+	// The country's lens and a region's are Go's.
 	if _, err := pageOf(sessionOf(t, "cd@edify.org", seededPassword).GetAccessToken(), partnerOversightPath, nil); err != nil {
 		t.Errorf("the Country Director: %v", err)
 	}
 	borrowAccount(t, "regional-lead@edify.org")
-	if _, err := pageOf(sessionOf(t, "regional-lead@edify.org", seededPassword).GetAccessToken(), partnerOversightPath, nil); connect.CodeOf(err) != connect.CodeUnavailable {
-		t.Errorf("the Regional Programme Lead: got %v, want the page passed on", err)
+	if _, err := pageOf(sessionOf(t, "regional-lead@edify.org", seededPassword).GetAccessToken(), partnerOversightPath, nil); err != nil {
+		t.Errorf("the Regional Programme Lead: %v", err)
 	}
 	if _, err := pageOf(sessionOf(t, "business-transformation@edify.org", seededPassword).GetAccessToken(), partnerOversightPath, nil); connect.CodeOf(err) != connect.CodeNotFound {
 		t.Errorf("Business Transformation: got %v, want not found", err)

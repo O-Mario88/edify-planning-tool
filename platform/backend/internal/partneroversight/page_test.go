@@ -107,7 +107,7 @@ func TestDrawnReaders(t *testing.T) {
 		{auth.Principal{Account: auth.Account{ActiveRole: "Program Lead"}}, true},
 		{auth.Principal{Account: auth.Account{ActiveRole: "CountryDirector"}}, true},
 		{auth.Principal{Account: auth.Account{ActiveRole: "CountryDirector", InActingAppointment: true}}, false},
-		{auth.Principal{Account: auth.Account{ActiveRole: "RegionalProgramLead"}}, false},
+		{auth.Principal{Account: auth.Account{ActiveRole: "RegionalProgramLead"}}, true},
 		{auth.Principal{Account: auth.Account{ActiveRole: "CCEO", InActingAppointment: true}}, false},
 		{auth.Principal{Account: auth.Account{ActiveRole: "CCEO", Acting: &auth.ActingAppointment{}}}, false},
 	} {

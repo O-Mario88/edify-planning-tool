@@ -51,6 +51,8 @@ READERS = [
     "ia@edify.org",
     "accountant@edify.org",
     "rvp@edify.org",
+    # A region's lens: the Partner work of the reader's regions.
+    "regional-lead@edify.org",
 ]
 FY = {"period": "fy", "fy": "2026"}
 PARTNER = "gpoP1"

@@ -43,7 +43,7 @@ func (s *Service) work(ctx context.Context, p auth.Principal, w workspace, own [
 // one Programme Lead's team at a time. country is the reader's scope's
 // country, "" for the whole deployment.
 func (s *Service) country(ctx context.Context, p auth.Principal, role Role, per period, query url.Values,
-	country string, now time.Time) (*screensv1.GetPageResponse, bool, error) {
+	country string, regions []string, now time.Time) (*screensv1.GetPageResponse, bool, error) {
 	if strings.TrimSpace(query.Get("activity_type")) != "" || country == schooldirectory.NoCountry {
 		return nil, false, nil
 	}
@@ -54,7 +54,7 @@ func (s *Service) country(ctx context.Context, p auth.Principal, role Role, per 
 		}
 	}
 	w := workspace{role: role, period: per, status: query.Get("status"), fyOptions: schooldirectory.FYOptions(now),
-		country: country, withTarget: true}
+		country: country, regions: regions, withTarget: true}
 	w.programLead = strings.TrimSpace(query.Get("program_lead"))
 	w.work = strings.TrimSpace(query.Get("work"))
 	w.partnerAsked = strings.TrimSpace(query.Get("partner"))
@@ -71,11 +71,11 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 	if err != nil {
 		return nil, true, err
 	}
-	if held, err := handedOn(ctx, s.db, staff, years); err != nil || held {
+	if held, err := handedOn(ctx, s.db, staff, w.regions, years); err != nil || held {
 		return nil, !held, err
 	}
 	today := dateOf(now.In(zone))
-	items, err := readItems(ctx, s.db, staff, years, today)
+	items, err := readItems(ctx, s.db, staff, w.regions, years, today)
 	if err != nil {
 		return nil, true, err
 	}
@@ -95,6 +95,20 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 		leads, err := systemProgramLeads(ctx, s.db)
 		if err != nil {
 			return nil, true, err
+		}
+		if w.regions != nil {
+			// A region's tabs are the leads whose teams hold its work.
+			visible := map[string]bool{}
+			for _, i := range items {
+				visible[i.plID] = true
+			}
+			kept := []programLead{}
+			for _, l := range leads {
+				if visible[l.id] {
+					kept = append(kept, l)
+				}
+			}
+			leads = kept
 		}
 		var rows []*item
 		v.leads, w.programLead, rows = leadTabs(leads, items, w.programLead)
@@ -256,16 +270,20 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 // before any row is read: a withdrawal request their team must decide, or a
 // group training or meeting a Partner facilitates for the team in the
 // years read.
-func handedOn(ctx context.Context, db schooldirectory.Querier, staff, years []string) (bool, error) {
+func handedOn(ctx context.Context, db schooldirectory.Querier, staff, regions, years []string) (bool, error) {
 	var held bool
 	err := db.QueryRow(ctx, `
-SELECT EXISTS (SELECT 1 FROM partner_assignment_withdrawal w WHERE w.state = $1
-      AND ($2::text[] IS NULL OR w.supervising_pl_id = ANY($2)))
-    OR EXISTS (SELECT 1 FROM activity a LEFT JOIN cluster c ON c.id = a.cluster_id
+SELECT EXISTS (SELECT 1 FROM partner_assignment_withdrawal w
+      LEFT JOIN school ws ON ws.id = w.school_id
+      LEFT JOIN partner_assignment wa ON wa.id = w.assignment_id LEFT JOIN cluster wc ON wc.id = wa.cluster_id
+      WHERE w.state = $1 AND ($2::text[] IS NULL OR w.supervising_pl_id = ANY($2))
+        AND ($5::text[] IS NULL OR ws.region_id = ANY($5) OR wc.region_id = ANY($5)))
+    OR EXISTS (SELECT 1 FROM activity a LEFT JOIN cluster c ON c.id = a.cluster_id LEFT JOIN school s ON s.id = a.school_id
       WHERE a.deleted_at IS NULL AND COALESCE(a.facilitating_partner_id, '') <> ''
         AND a.status <> ALL($3) AND a.fy = ANY($4)
-        AND ($2::text[] IS NULL OR a.responsible_staff_id = ANY($2) OR c.responsible_staff_id = ANY($2)))`,
-		rules.WithdrawalRequested, staff, []string{"cancelled", "rejected", "deferred"}, years).Scan(&held)
+        AND ($2::text[] IS NULL OR a.responsible_staff_id = ANY($2) OR c.responsible_staff_id = ANY($2))
+        AND ($5::text[] IS NULL OR c.region_id = ANY($5) OR s.region_id = ANY($5)))`,
+		rules.WithdrawalRequested, staff, []string{"cancelled", "rejected", "deferred"}, years, regions).Scan(&held)
 	if err != nil {
 		return false, fmt.Errorf("partneroversight: reading what the page hands on: %w", err)
 	}

@@ -264,3 +264,24 @@ differing**.
 
 Still handed on: the region's lens (the Regional Programme Lead), and the
 list in §46.7.
+
+## 46.9 A region's lens (2026-11-18)
+
+The Regional Programme Lead is now drawn as well. They read the Partner
+work of their regions (`_resolve_scope` "region"):
+
+- **The rows:** a hand-over, Partner activity, withdrawal request or
+  facilitated training whose school or cluster lies in the reader's
+  regions.
+- **The tabs:** a tab only for a Programme Lead whose team holds that work,
+  then Unassigned.
+- **The target:** the region's Planning Monitor (`ReadRegion`).
+
+Go's regions for a regional role are every country's (docs/migration/80
+§15), which on Uganda's data are the regions the existing scope gives.
+
+The gateway may now read `partner_assignment_withdrawal.school_id` and
+`assignment_id` (`roles.sql`), to place a request in a region.
+
+Proof: the golden now also asks regional-lead: **544 answers of 10
+accounts, 0 differing**.
