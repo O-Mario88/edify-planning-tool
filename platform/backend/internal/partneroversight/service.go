@@ -68,6 +68,9 @@ type workspace struct {
 	// country is the reader's scope's country ("" the whole deployment),
 	// which the Partners' follow-ups are read in.
 	country string
+	// activityType is the activity filter a link carries
+	// (filter_workspace's activity_type), "" for none.
+	activityType string
 	// regions bound a region's lens (the Regional Programme Lead): nil for
 	// a team or the whole country.
 	regions []string
@@ -150,7 +153,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	w.work = strings.TrimSpace(query.Get("work"))
 	w.partnerAsked = strings.TrimSpace(query.Get("partner"))
 	w.memberAsked = strings.TrimSpace(query.Get("member"))
-	return s.work(ctx, p, w, own, scope.SupervisedStaffIDs, strings.TrimSpace(query.Get("activity_type")), now)
+	return s.work(ctx, p, w, own, scope.SupervisedStaffIDs, query.Get("activity_type"), now)
 }
 
 // drawn is whether this piece draws the reader at all: a field officer or a

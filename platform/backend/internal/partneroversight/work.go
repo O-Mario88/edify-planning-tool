@@ -28,9 +28,7 @@ import (
 // a table longer than one page.
 func (s *Service) work(ctx context.Context, p auth.Principal, w workspace, own []string, supervised []string,
 	activityType string, now time.Time) (*screensv1.GetPageResponse, bool, error) {
-	if activityType != "" {
-		return nil, false, nil
-	}
+	w.activityType = activityType
 	staff := own
 	if !w.role.OwnWorkOnly {
 		var err error
@@ -47,7 +45,7 @@ func (s *Service) work(ctx context.Context, p auth.Principal, w workspace, own [
 // country, "" for the whole deployment.
 func (s *Service) country(ctx context.Context, p auth.Principal, role Role, per period, query url.Values,
 	country string, regions []string, now time.Time) (*screensv1.GetPageResponse, bool, error) {
-	if strings.TrimSpace(query.Get("activity_type")) != "" || country == schooldirectory.NoCountry {
+	if country == schooldirectory.NoCountry {
 		return nil, false, nil
 	}
 	if role.EngagementRegister {
@@ -62,6 +60,7 @@ func (s *Service) country(ctx context.Context, p auth.Principal, role Role, per 
 	w.work = strings.TrimSpace(query.Get("work"))
 	w.partnerAsked = strings.TrimSpace(query.Get("partner"))
 	w.memberAsked = strings.TrimSpace(query.Get("member"))
+	w.activityType = query.Get("activity_type")
 	return s.draw(ctx, p, w, nil, now)
 }
 
@@ -190,7 +189,7 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 		}
 	}
 	for _, i := range partnerItems {
-		if i.projectID != "" || i.resolution != "" {
+		if i.projectID != "" {
 			return nil, false, nil
 		}
 	}
@@ -245,7 +244,7 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 		v.members = append(v.members, memberTab{key: k, label: labels[k], count: n})
 	}
 	for _, i := range partnerItems {
-		if member == "all" || memberKey(i) == member {
+		if (member == "all" || memberKey(i) == member) && (w.activityType == "" || i.activityType == w.activityType) {
 			v.typed = append(v.typed, i)
 		}
 	}
@@ -255,7 +254,8 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 		}
 	}
 	for _, t := range partnerTrainings {
-		if (member == "all" || trainingKey(t) == member) && (w.status == "" || t.deliveryPhase() == w.status) {
+		if (member == "all" || trainingKey(t) == member) && (w.activityType == "" || t.activityType == w.activityType) &&
+			(w.status == "" || t.deliveryPhase() == w.status) {
 			if t.awaitsReview() {
 				// Its Programme Lead's Confirm and Return depend on who reads.
 				return nil, false, nil

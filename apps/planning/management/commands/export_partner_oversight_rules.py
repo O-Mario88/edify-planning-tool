@@ -192,6 +192,8 @@ def work() -> dict:
 
     return {
         "unscheduled_statuses": list(PartnerAssignment.UNSCHEDULED_STATUSES),
+        # A hand-back's decision, in words (get_resolution_display).
+        "resolution_labels": dict(PartnerAssignment.RESOLUTION_CHOICES),
         "in_progress": list(service._IN_PROGRESS_STATUSES),
         "evidence_review": list(service._EVIDENCE_REVIEW_STATUSES),
         "awaiting_ia": list(service._AWAITING_IA_STATUSES),

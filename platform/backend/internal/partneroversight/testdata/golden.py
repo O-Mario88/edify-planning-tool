@@ -98,12 +98,12 @@ def file_rows():
             "AND s.school_id IS NOT NULL AND btrim(s.school_id) <> '' "
             "AND NOT EXISTS (SELECT 1 FROM partner_assignment pa WHERE pa.school_id = s.id) "
             "AND NOT EXISTS (SELECT 1 FROM activity a WHERE a.school_id = s.id AND a.delivery_type = 'partner') "
-            "ORDER BY s.id LIMIT 11"
+            "ORDER BY s.id LIMIT 12"
         )
         clients = [row[0] for row in cursor.fetchall()]
         # Each fixture's school, by its number: 0-8 and 17-18 are clients.
         schools = {n: clients[n] for n in range(9)}
-        schools[17], schools[18] = clients[9], clients[10]
+        schools[17], schools[18], schools[19] = clients[9], clients[10], clients[11]
         # A Core school with no partner work of its own, for the Core tab.
         cursor.execute(
             "SELECT s.id FROM school s WHERE s.deleted_at IS NULL AND s.school_type = 'core' "
@@ -327,6 +327,18 @@ def file_rows():
             ),
         )
 
+        # A hand-back staff have decided on: it reads Returned, with the
+        # decision under it.
+        handover(
+            19,
+            status="returned_to_staff",
+            category="school_unavailable",
+            reason="School moved to a new site",
+        )
+        cursor.execute(
+            "UPDATE partner_assignment SET resolution = 'staff_delivery' WHERE id = 'gpoH19'"
+        )
+
         # Group trainings the Partner facilitates: the officer's own work,
         # each with its facilitation fee.
         def facilitated(n, *, status, days, sf=""):
@@ -467,6 +479,8 @@ try:
                 {"work": "visits"},
                 {"work": "core"},
                 {"work": "clusters"},
+                {"activity_type": "school_visit"},
+                {"activity_type": "cluster_training", "work": "clusters"},
                 {"work": "trainings"},
                 {"status": "completed"},
                 {"status": "scheduled"},

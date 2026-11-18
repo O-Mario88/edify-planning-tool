@@ -481,6 +481,11 @@
       "story_gathering": "Content/Story Collection",
       "training_follow_up": "Training Follow Up"
     },
+    "resolution_labels": {
+      "reassigned": "Reassigned to another Partner",
+      "staff_delivery": "Staff will deliver the support",
+      "support_closed": "Support no longer required"
+    },
     "returned_to_partner": [
       "returned",
       "returned_by_pl",

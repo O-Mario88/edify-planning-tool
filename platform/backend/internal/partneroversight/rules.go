@@ -12,11 +12,12 @@
 // partner work (work.go, build.go, workpage.go), the Partner tabs with their
 // follow-up recommendations, the team-member tabs, the headline tiles with
 // the Planning Monitor's Partner target, and the open tab's table of the
-// chosen Partner's work. What work.go names (work waiting for IA verification, Core
-// schools, Special Project work, a decided hand-back, facilitated
-// trainings, withdrawal requests, the Clusters tab, an activity filter, a
-// table past one page, engagements recorded), is passed to the existing
-// application (served=false).
+// chosen Partner's work. What work.go names (a facilitated training waiting
+// for its Programme Lead, Special Project work, withdrawal requests, a
+// table past one page, recorded engagements, a Partner's contact line on
+// the Clusters tab, Core schools the Partner has not dated or whose form is
+// in, custom periods) is passed to the existing application
+// (served=false).
 //
 // The vocabularies it is built from are the existing ones, exported to
 // rules.json by `manage.py export_partner_oversight_rules`;
@@ -101,6 +102,7 @@ type Rules struct {
 // partner_risk_service).
 type Work struct {
 	UnscheduledStatuses []string          `json:"unscheduled_statuses"`
+	ResolutionLabels    map[string]string `json:"resolution_labels"`
 	InProgress          []string          `json:"in_progress"`
 	EvidenceReview      []string          `json:"evidence_review"`
 	AwaitingIA          []string          `json:"awaiting_ia"`

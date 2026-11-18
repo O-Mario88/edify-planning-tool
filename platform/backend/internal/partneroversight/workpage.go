@@ -479,7 +479,19 @@ func standing(i *item) []*screensv1.PageFact {
 	if i.returnReason != "" {
 		out = append(out, fact("Returned", pyTitle(strings.ReplaceAll(i.returnReasonCategory, "_", " "))+" — "+i.returnReason))
 	}
+	if i.isReturned() && i.resolution != "" {
+		out = append(out, fact("Decision", resolutionLabel(i.resolution)))
+	}
 	return out
+}
+
+// resolutionLabel is get_resolution_display: the decision in words, the
+// stored value where it names no choice.
+func resolutionLabel(value string) string {
+	if l, ok := rules.Work.ResolutionLabels[value]; ok {
+		return l
+	}
+	return value
 }
 
 func (v *workView) schoolRow(i *item) *screensv1.PageRow {
@@ -680,6 +692,9 @@ func (v *workView) coreRow(i *item) *screensv1.PageRow {
 	}
 	if i.returnReason != "" {
 		details = append(details, fact("Returned", pyTitle(strings.ReplaceAll(i.returnReasonCategory, "_", " "))+" — "+i.returnReason))
+	}
+	if i.isReturned() && i.resolution != "" {
+		details = append(details, fact("Decision", resolutionLabel(i.resolution)))
 	}
 	return &screensv1.PageRow{Cells: cells, Details: details, DetailBlocks: []*screensv1.PageBlock{}}
 }

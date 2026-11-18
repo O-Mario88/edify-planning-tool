@@ -415,3 +415,19 @@ activity's. A Core school's row offers Return.
 Proof: two fixture visits waiting for IA verification, one SSA Support,
 monitored by cceo1. cceo1 is offered the review as their monitor and ia as
 verifier: **584 answers of 10 accounts, 0 differing**.
+
+## 46.14 The activity filter and decided hand-backs (2026-11-18)
+
+**The activity filter.** An `activity_type` a link carries is no longer
+handed on. It narrows the Partner's work and the trainings it facilitates
+as `filter_workspace` and `filter_trainings` do. The Status filter's counts
+are taken from what remains, and, as in the existing page, the filter bar
+carries no hidden field for it.
+
+**A decided hand-back.** A hand-back whose decision is recorded but not yet
+made final reads Returned, with the decision under it ("Decision: Staff
+will deliver the support", `get_resolution_display`, `resolution_labels` in
+`rules.json`). Its row offers View.
+
+Proof: the golden adds a decided hand-back and asks two activity filters of
+every reader: **624 answers of 10 accounts, 0 differing**.

@@ -69,7 +69,7 @@ func TestPartnerOversightPassesOnWhatGoDoesNotDrawAndRefusesOthers(t *testing.T)
 	borrowAccount(t, "business-transformation@edify.org")
 	officer := sessionOf(t, "cceo1@edify.org", seededPassword).GetAccessToken()
 	// cceo1's completed FY 2026 Partner work is Go's (the golden compares
-	// it); an activity filter over it is the existing application's.
+	// it), and so is an activity filter over it.
 	if _, err := pageOf(officer, partnerOversightPath, map[string]string{"fy": "2026"}); err != nil {
 		t.Errorf("cceo1 in FY 2026: %v", err)
 	}
@@ -79,8 +79,8 @@ JOIN "user" u ON u.id = pa.monitoring_staff_id WHERE u.email = 'cceo1@edify.org'
 		t.Fatal(err)
 	}
 	if held > 0 {
-		if _, err := pageOf(officer, partnerOversightPath, map[string]string{"fy": "2026", "activity_type": "school_visit"}); connect.CodeOf(err) != connect.CodeUnavailable {
-			t.Errorf("an activity filter: got %v, want the page passed on", err)
+		if _, err := pageOf(officer, partnerOversightPath, map[string]string{"fy": "2026", "activity_type": "school_visit"}); err != nil {
+			t.Errorf("an activity filter: %v", err)
 		}
 	}
 	// A custom period from the export drawer is too.
