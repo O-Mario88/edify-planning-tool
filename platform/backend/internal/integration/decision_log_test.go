@@ -76,6 +76,15 @@ func compareGolden(t *testing.T, path string, answers []goldenAnswer) {
 			}
 			continue
 		}
+		if answer.Status == 302 {
+			// The existing page writes on this read and redirects: Go hands
+			// it on.
+			if connect.CodeOf(err) != connect.CodeUnavailable {
+				differing++
+				t.Errorf("%s %v: %v, want handed on", answer.Email, answer.Query, err)
+			}
+			continue
+		}
 		if answer.Status == 403 {
 			// A page the role may open that refuses this reader.
 			if connect.CodeOf(err) != connect.CodePermissionDenied {

@@ -438,11 +438,20 @@ func scoreValues(earliestAvg, latestAvg float64, latest []float64, slots, comple
 	}
 }
 
-// scan is ChampionEligibilityService.scan over the records: each School ID
-// the rule can judge (a Core profile, a live plan and a confirmed SSA) and
-// its metrics.
-func scan(r *records, operational string) map[string]metrics {
-	out := map[string]metrics{}
+// judged is one school the rule can judge: its inputs and its metrics.
+type judged struct {
+	code                   string
+	earliestAvg, latestAvg float64
+	latestScores           []scanScoreRow
+	total, completed       int
+	metrics                metrics
+}
+
+// judge is ChampionEligibilityService.scan over the records: each School ID
+// the rule can judge (a Core profile, a live plan and a confirmed SSA), in
+// the profiles' order, with its metrics.
+func judge(r *records, operational string) []judged {
+	out := []judged{}
 	if len(r.ScanProfiles) == 0 {
 		return out
 	}
@@ -457,23 +466,13 @@ func scan(r *records, operational string) map[string]metrics {
 	for _, row := range r.ScanSSAs {
 		ssas[row.Code] = append(ssas[row.Code], row)
 	}
-	scores := map[string][]float64{}
+	scores := map[string][]scanScoreRow{}
 	for _, row := range r.ScanScores {
-		v := 0.0
-		if row.Score != nil {
-			v = *row.Score
-		}
-		scores[row.RecordID] = append(scores[row.RecordID], v)
+		scores[row.RecordID] = append(scores[row.RecordID], row)
 	}
 	schools := map[string]scanSchoolRow{}
 	for _, row := range r.ScanSchools {
 		schools[row.Code] = row
-	}
-	orZero := func(v *float64) float64 {
-		if v == nil {
-			return 0
-		}
-		return *v
 	}
 	for _, code := range r.ScanProfiles {
 		sc, okSchool := schools[code]
@@ -483,8 +482,31 @@ func scan(r *records, operational string) map[string]metrics {
 			continue
 		}
 		latest := confirmed[len(confirmed)-1]
-		out[code] = scoreValues(orZero(confirmed[0].Average), orZero(latest.Average), scores[latest.ID],
-			plan.Total, plan.Completed, sc.Closed, sc.Clean, len(confirmed))
+		j := judged{code: code, earliestAvg: orZero(confirmed[0].Average), latestAvg: orZero(latest.Average),
+			latestScores: scores[latest.ID], total: plan.Total, completed: plan.Completed}
+		values := make([]float64, len(j.latestScores))
+		for i, row := range j.latestScores {
+			values[i] = orZero(row.Score)
+		}
+		j.metrics = scoreValues(j.earliestAvg, j.latestAvg, values, plan.Total, plan.Completed, sc.Closed, sc.Clean, len(confirmed))
+		out = append(out, j)
+	}
+	return out
+}
+
+// orZero is a value or nought (`x or 0.0`).
+func orZero(v *float64) float64 {
+	if v == nil {
+		return 0
+	}
+	return *v
+}
+
+// scan is judge by School ID.
+func scan(r *records, operational string) map[string]metrics {
+	out := map[string]metrics{}
+	for _, j := range judge(r, operational) {
+		out[j.code] = j.metrics
 	}
 	return out
 }

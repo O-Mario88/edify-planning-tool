@@ -19,6 +19,31 @@
   ],
   "roles": {
     "Accountant": {
+      "holidays": {
+        "editor": false,
+        "page": true,
+        "strip": {
+          "label": "Leave",
+          "scrolls": true,
+          "tabs": [
+            {
+              "active": false,
+              "href": "/personal-time-off/",
+              "label": "My Leave"
+            },
+            {
+              "active": false,
+              "href": "/leave/coverage",
+              "label": "Coverage"
+            },
+            {
+              "active": true,
+              "href": "/public-holidays",
+              "label": "Holidays & Blackouts"
+            }
+          ]
+        }
+      },
       "leave_policies": false,
       "page": true,
       "slug": "ACCOUNTANT",
@@ -46,6 +71,46 @@
       "team_availability": false
     },
     "Admin": {
+      "holidays": {
+        "editor": true,
+        "page": true,
+        "strip": {
+          "label": "Leave",
+          "scrolls": true,
+          "tabs": [
+            {
+              "active": false,
+              "href": "/personal-time-off/",
+              "label": "My Leave"
+            },
+            {
+              "active": false,
+              "href": "/leave/coverage",
+              "label": "Coverage"
+            },
+            {
+              "active": true,
+              "href": "/public-holidays",
+              "label": "Holidays & Blackouts"
+            },
+            {
+              "active": false,
+              "href": "/leave/approvals",
+              "label": "Approvals"
+            },
+            {
+              "active": false,
+              "href": "/leave/tracker",
+              "label": "Leave Tracker"
+            },
+            {
+              "active": false,
+              "href": "/leave/team-availability",
+              "label": "Team Availability"
+            }
+          ]
+        }
+      },
       "leave_policies": true,
       "page": true,
       "slug": "ADMIN",
@@ -88,6 +153,26 @@
       "team_availability": true
     },
     "BusinessTransformationOfficer": {
+      "holidays": {
+        "editor": false,
+        "page": true,
+        "strip": {
+          "label": "Leave",
+          "scrolls": true,
+          "tabs": [
+            {
+              "active": false,
+              "href": "/personal-time-off/",
+              "label": "My Leave"
+            },
+            {
+              "active": true,
+              "href": "/public-holidays",
+              "label": "Holidays & Blackouts"
+            }
+          ]
+        }
+      },
       "leave_policies": false,
       "page": true,
       "slug": "BUSINESS_TRANSFORMATION",
@@ -110,6 +195,31 @@
       "team_availability": false
     },
     "CCEO": {
+      "holidays": {
+        "editor": false,
+        "page": true,
+        "strip": {
+          "label": "Leave",
+          "scrolls": true,
+          "tabs": [
+            {
+              "active": false,
+              "href": "/personal-time-off/",
+              "label": "My Leave"
+            },
+            {
+              "active": false,
+              "href": "/leave/coverage",
+              "label": "Coverage"
+            },
+            {
+              "active": true,
+              "href": "/public-holidays",
+              "label": "Holidays & Blackouts"
+            }
+          ]
+        }
+      },
       "leave_policies": false,
       "page": true,
       "slug": "CCEO",
@@ -137,6 +247,11 @@
       "team_availability": false
     },
     "ClusterLeader": {
+      "holidays": {
+        "editor": false,
+        "page": false,
+        "strip": null
+      },
       "leave_policies": false,
       "page": false,
       "slug": "CLUSTERLEADER",
@@ -144,6 +259,46 @@
       "team_availability": false
     },
     "CountryDirector": {
+      "holidays": {
+        "editor": true,
+        "page": true,
+        "strip": {
+          "label": "Leave",
+          "scrolls": true,
+          "tabs": [
+            {
+              "active": false,
+              "href": "/personal-time-off/",
+              "label": "My Leave"
+            },
+            {
+              "active": false,
+              "href": "/leave/coverage",
+              "label": "Coverage"
+            },
+            {
+              "active": true,
+              "href": "/public-holidays",
+              "label": "Holidays & Blackouts"
+            },
+            {
+              "active": false,
+              "href": "/leave/approvals",
+              "label": "Approvals"
+            },
+            {
+              "active": false,
+              "href": "/leave/tracker",
+              "label": "Leave Tracker"
+            },
+            {
+              "active": false,
+              "href": "/leave/team-availability",
+              "label": "Team Availability"
+            }
+          ]
+        }
+      },
       "leave_policies": false,
       "page": true,
       "slug": "CD",
@@ -186,6 +341,46 @@
       "team_availability": true
     },
     "HumanResources": {
+      "holidays": {
+        "editor": true,
+        "page": true,
+        "strip": {
+          "label": "Leave",
+          "scrolls": true,
+          "tabs": [
+            {
+              "active": false,
+              "href": "/personal-time-off/",
+              "label": "My Leave"
+            },
+            {
+              "active": false,
+              "href": "/leave/coverage",
+              "label": "Coverage"
+            },
+            {
+              "active": true,
+              "href": "/public-holidays",
+              "label": "Holidays & Blackouts"
+            },
+            {
+              "active": false,
+              "href": "/leave/approvals",
+              "label": "Approvals"
+            },
+            {
+              "active": false,
+              "href": "/leave/tracker",
+              "label": "Leave Tracker"
+            },
+            {
+              "active": false,
+              "href": "/leave/team-availability",
+              "label": "Team Availability"
+            }
+          ]
+        }
+      },
       "leave_policies": true,
       "page": true,
       "slug": "HR",
@@ -228,6 +423,31 @@
       "team_availability": true
     },
     "ImpactAssessment": {
+      "holidays": {
+        "editor": false,
+        "page": true,
+        "strip": {
+          "label": "Leave",
+          "scrolls": true,
+          "tabs": [
+            {
+              "active": false,
+              "href": "/personal-time-off/",
+              "label": "My Leave"
+            },
+            {
+              "active": false,
+              "href": "/leave/coverage",
+              "label": "Coverage"
+            },
+            {
+              "active": true,
+              "href": "/public-holidays",
+              "label": "Holidays & Blackouts"
+            }
+          ]
+        }
+      },
       "leave_policies": true,
       "page": true,
       "slug": "IA",
@@ -255,6 +475,26 @@
       "team_availability": true
     },
     "MfiLoanOfficer": {
+      "holidays": {
+        "editor": false,
+        "page": true,
+        "strip": {
+          "label": "Leave",
+          "scrolls": true,
+          "tabs": [
+            {
+              "active": false,
+              "href": "/personal-time-off/",
+              "label": "My Leave"
+            },
+            {
+              "active": true,
+              "href": "/public-holidays",
+              "label": "Holidays & Blackouts"
+            }
+          ]
+        }
+      },
       "leave_policies": false,
       "page": true,
       "slug": "MFI_OFFICER",
@@ -277,6 +517,26 @@
       "team_availability": false
     },
     "MfiPartnerAdmin": {
+      "holidays": {
+        "editor": false,
+        "page": true,
+        "strip": {
+          "label": "Leave",
+          "scrolls": true,
+          "tabs": [
+            {
+              "active": false,
+              "href": "/personal-time-off/",
+              "label": "My Leave"
+            },
+            {
+              "active": true,
+              "href": "/public-holidays",
+              "label": "Holidays & Blackouts"
+            }
+          ]
+        }
+      },
       "leave_policies": false,
       "page": true,
       "slug": "MFI_ADMIN",
@@ -299,6 +559,11 @@
       "team_availability": false
     },
     "PartnerAdmin": {
+      "holidays": {
+        "editor": false,
+        "page": true,
+        "strip": null
+      },
       "leave_policies": false,
       "page": false,
       "slug": "PARTNER",
@@ -306,6 +571,11 @@
       "team_availability": false
     },
     "PartnerFieldOfficer": {
+      "holidays": {
+        "editor": false,
+        "page": true,
+        "strip": null
+      },
       "leave_policies": false,
       "page": false,
       "slug": "PARTNER",
@@ -313,6 +583,46 @@
       "team_availability": false
     },
     "Program Lead": {
+      "holidays": {
+        "editor": false,
+        "page": true,
+        "strip": {
+          "label": "Leave",
+          "scrolls": true,
+          "tabs": [
+            {
+              "active": false,
+              "href": "/personal-time-off/",
+              "label": "My Leave"
+            },
+            {
+              "active": false,
+              "href": "/leave/coverage",
+              "label": "Coverage"
+            },
+            {
+              "active": true,
+              "href": "/public-holidays",
+              "label": "Holidays & Blackouts"
+            },
+            {
+              "active": false,
+              "href": "/leave/approvals",
+              "label": "Approvals"
+            },
+            {
+              "active": false,
+              "href": "/leave/tracker",
+              "label": "Leave Tracker"
+            },
+            {
+              "active": false,
+              "href": "/leave/team-availability",
+              "label": "Team Availability"
+            }
+          ]
+        }
+      },
       "leave_policies": false,
       "page": true,
       "slug": "PL",
@@ -355,6 +665,26 @@
       "team_availability": true
     },
     "ProjectCoordinator": {
+      "holidays": {
+        "editor": false,
+        "page": true,
+        "strip": {
+          "label": "Leave",
+          "scrolls": true,
+          "tabs": [
+            {
+              "active": false,
+              "href": "/personal-time-off/",
+              "label": "My Leave"
+            },
+            {
+              "active": true,
+              "href": "/public-holidays",
+              "label": "Holidays & Blackouts"
+            }
+          ]
+        }
+      },
       "leave_policies": false,
       "page": true,
       "slug": "PROJECT_COORDINATOR",
@@ -377,6 +707,26 @@
       "team_availability": false
     },
     "RegionalProgramLead": {
+      "holidays": {
+        "editor": false,
+        "page": true,
+        "strip": {
+          "label": "Leave",
+          "scrolls": true,
+          "tabs": [
+            {
+              "active": false,
+              "href": "/personal-time-off/",
+              "label": "My Leave"
+            },
+            {
+              "active": true,
+              "href": "/public-holidays",
+              "label": "Holidays & Blackouts"
+            }
+          ]
+        }
+      },
       "leave_policies": false,
       "page": true,
       "slug": "RPL",
@@ -399,6 +749,46 @@
       "team_availability": false
     },
     "RegionalVicePresident": {
+      "holidays": {
+        "editor": false,
+        "page": true,
+        "strip": {
+          "label": "Leave",
+          "scrolls": true,
+          "tabs": [
+            {
+              "active": false,
+              "href": "/personal-time-off/",
+              "label": "My Leave"
+            },
+            {
+              "active": false,
+              "href": "/leave/coverage",
+              "label": "Coverage"
+            },
+            {
+              "active": true,
+              "href": "/public-holidays",
+              "label": "Holidays & Blackouts"
+            },
+            {
+              "active": false,
+              "href": "/leave/approvals",
+              "label": "Approvals"
+            },
+            {
+              "active": false,
+              "href": "/leave/tracker",
+              "label": "Leave Tracker"
+            },
+            {
+              "active": false,
+              "href": "/leave/team-availability",
+              "label": "Team Availability"
+            }
+          ]
+        }
+      },
       "leave_policies": false,
       "page": true,
       "slug": "RVP",

@@ -17,3 +17,7 @@ func SchoolTypeLabel(value string) string {
 	}
 	return value
 }
+
+// MayOpenSchools is whether a role's school names link to their profiles
+// (school_links._may_open: can_open_url("/schools/0")).
+func MayOpenSchools(role string) bool { return rules.Doors[role].Profile }

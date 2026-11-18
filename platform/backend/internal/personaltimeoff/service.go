@@ -55,6 +55,7 @@ type role struct {
 	Slug             string             `json:"slug"`
 	LeavePolicies    bool               `json:"leave_policies"`
 	TeamAvailability bool               `json:"team_availability"`
+	Holidays         holidaysRole       `json:"holidays"`
 }
 
 var rules = func() (r struct {
@@ -91,6 +92,9 @@ var errPassOn = errors.New("personaltimeoff: handed on")
 
 // Build answers /personal-time-off/; every other path is not its own.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if path == HolidaysPath {
+		return s.holidays(ctx, p, query)
+	}
 	if path != Path {
 		return nil, false, nil
 	}

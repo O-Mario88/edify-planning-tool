@@ -256,3 +256,113 @@ and a Programme Lead: **126 + 126 answers, 0 differing**. The trained, case
 and loan records, over Mukono and the sub-region for four readers: **48
 answers, 0 differing**. The seed has no rows for these, so only their empty
 tables are proven; the closing sums' shape is the cluster register's.
+
+## 176.10 The Districts directory (2026-11-18)
+
+`/districts` (`extended_views.districts_list_view`,
+`pages/districts/index.html`) is drawn in Go by
+`schoolprofile.ScopePages` (`district_list.go`), next to the district
+profiles it opens.
+
+- One query, as the view's: every district by name with its region (`—`
+  without one), its live schools, and the mean SSA of their live records in
+  the operational year, `round(avg, 2)` written as Python writes a float
+  (`5.91/10`, `6.0/10`). A mean of nought shows `—`, as `if d.avg_ssa`
+  does.
+- `q` is trimmed and matched as Django's `icontains`: `UPPER(name) LIKE
+  UPPER(%q%)` with `\`, `%` and `_` escaped.
+- Fifty a page under `districts_page`; the pager stands apart from the
+  table, so it is the pager panel (`tablepager.Panel`). No match is the
+  "No districts found" card.
+- The door is the district profile's (`open_district`, the `planning`
+  page); the Country Profile button follows `country_profile`.
+
+Proof: 11 queries (search, wildcards, pages, a bad and a negative page)
+for twelve readers, five of them refused: **132 answers, 0 differing**.
+
+## 176.11 Graduated Champion Schools (2026-11-18)
+
+`/core-schools/champions` (`core_schools_views.champions_list_view`,
+`pages/core_schools/champions.html`) is drawn in Go by `coreschools`
+(`champions.go`), behind the Core Schools door.
+
+- The operating champions (`active_schools()`, `school_type =
+  'champion'`) by name, with region and district (`Unknown` without one).
+- The Core start year is the Core profile's, found by the School ID as
+  the view looks it up, else `Unknown`. The latest SSA average is the live
+  record with the latest `date_of_ssa` (`DESC`, so a record without a date
+  comes first, as Django's `-date_of_ssa` does), else `0.0`.
+- A name links to the school's profile for a reader who may open one
+  (`schoolprofile.MayOpenSchools`, `school_links._may_open`): the
+  Accountant reads plain names.
+- The count is its own panel above the table; the pager is the pager
+  panel; with no champion the table carries the page's empty sentence.
+
+The gateway reads `core_school_profile (school_id, core_start_fy)`.
+
+Proof: three queries for eleven readers, five of them refused: **33
+answers, 0 differing**; and over the seed of §176.12, where one champion
+has a Core profile (its start year, 2025, shows), for twelve readers:
+**36 answers, 0 differing**.
+
+## 176.12 The Champion Candidate Queue (2026-11-18)
+
+`/core-schools/champion-candidates` (`core_schools_views.
+champion_candidates_view`, `pages/core_schools/champion_candidates.html`)
+is drawn in Go by `coreschools` (`candidates.go`) over
+`coreoversight.ChampionCandidates`, the scan Core Oversight already ran
+(`ChampionEligibilityService.scan`), now kept as `judge` with the inputs
+the queue shows: the latest average, the delta (`round(latest − earliest,
+1)`), the first lowest score of the latest record with its intervention,
+and the package slots.
+
+- Every Core profile in the table's own order (the model has no ordering;
+  the read takes a second column so it is not served off the School ID
+  index), judged, the eligible kept, then the reader's portfolio unless
+  their scope is the country's.
+- **A write on the read is handed on.** `evaluate_all` moves an eligible
+  profile to Potential Champion; when any eligible profile's stored status
+  is not Champion, Approved Champion or Potential Champion, the page is the
+  existing application's.
+- The feed reads the header's link to the champions outside the header,
+  the Review button (an `hx-get` drawer) as its label, every pill as a
+  primary badge, and the `{% empty %}` row as a one-cell row; the
+  Graduated Champions page's empty row is drawn the same way.
+
+The seed (in `edify_gorn_test` only, filed and removed by scratch SQL):
+Core plans, the eight package slots and a later confirmed SSA for four
+schools. One is eligible and stored Potential Champion, one eligible and
+stored Champion, one a slot short, one on an archived plan, and an older
+live plan stands beside this year's. Over it, for twelve readers, five of
+them refused: **36 answers, 0 differing**. With the first candidate's
+status set back to Not Eligible, Go hands the page on for every reader
+while the Graduated Champions list still matches.
+
+## 176.13 Public Holidays & Blackout Dates (2026-11-18)
+
+`/public-holidays` (`leave_views.public_holidays_view`,
+`pages/leave/public_holidays.html`) is drawn in Go by `personaltimeoff`
+(`holidays.go`).
+
+- The exported rules give each role the page, its Leave strip (Holidays &
+  Blackouts active) and whether it edits (`is_editor`: CD, HR, Admin),
+  which offers Seed Default Blocks and Add Block. The add drawer is on the
+  page for every reader.
+- Public Holidays: the active PUBLIC_HOLIDAY blocks ending today or later,
+  by start (`N j, Y`, `start to end` when they differ), then the national
+  calendar's next forty days that no recorded day names
+  (`calendarpage.Upcoming`, `l j F Y`, "National calendar"). An announced
+  Eid takes the expected one's place.
+- Blackout dates and conference weeks with their description; regional
+  events with "Applies to: Region …" (`All` without one). The view's
+  custom blocks are not drawn by the template, so not by Go. The Remove
+  forms are not read by the feed.
+- **An editor's `?action=seed` is handed on**: it files the default
+  blocks and redirects. Anyone else's is the ordinary page. The page
+  comparison now reads a 302 as "Go hands this on".
+
+The gateway reads `calendar_block.region_id`. Proof: over the seed's ten
+blocks (two upcoming holidays, a past one, blackouts with and without a
+description, a conference, regional events with and without a region, a
+custom block and an inactive one), for ten readers and both queries:
+**20 answers, 0 differing**; and with no blocks, in the suite.

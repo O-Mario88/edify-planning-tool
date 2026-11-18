@@ -150,6 +150,9 @@ func (sp *ScopePages) Build(ctx context.Context, p auth.Principal, path string, 
 	if path == countryProfilePath {
 		return sp.country(ctx, p, query)
 	}
+	if path == districtsPath {
+		return sp.directory(ctx, p, query)
+	}
 	if !strings.HasPrefix(path, districtPrefix) {
 		return nil, false, nil
 	}

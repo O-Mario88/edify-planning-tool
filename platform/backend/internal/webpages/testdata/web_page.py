@@ -18,7 +18,7 @@ import os
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.urls import resolve
+from django.urls import Resolver404, resolve
 from django.utils import timezone
 
 from apps.mobile_feed.views import _run_page, page_body
@@ -32,7 +32,11 @@ for path, email, query in (
     for email in os.environ["WEB_READERS"].split(",")
     for query in queries
 ):
-    name = frozenset({resolve(path).url_name})
+    try:
+        name = frozenset({resolve(path).url_name})
+    except Resolver404:
+        answers.append({"email": email, "path": path, "query": query, "status": 404})
+        continue
     user = get_user_model().objects.filter(email=email.strip()).first()
     if user is None:
         continue

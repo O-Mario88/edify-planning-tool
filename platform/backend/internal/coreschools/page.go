@@ -55,12 +55,23 @@ type page struct {
 
 // Build answers /core-schools; every other path is not its own.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
-	if path != Path {
+	if path != Path && path != ChampionsPath && path != CandidatesPath {
 		return nil, false, nil
 	}
 	d, ok := rules.Roles[p.ActiveRole]
 	if !ok {
 		return nil, true, pagegate.ErrNotAvailable
+	}
+	if path == ChampionsPath {
+		resp, err := s.champions(ctx, p, query)
+		return resp, true, err
+	}
+	if path == CandidatesPath {
+		resp, err := s.candidates(ctx, p, query)
+		if errors.Is(err, errPassOn) {
+			return nil, false, nil
+		}
+		return resp, true, err
 	}
 	resp, err := s.build(ctx, p, d, query)
 	if errors.Is(err, errPassOn) {

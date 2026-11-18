@@ -1060,3 +1060,9 @@ GRANT SELECT (id, kind, fy, country, subject, agreed_improvements, follow_up_due
 GRANT SELECT (region_id) ON sub_region TO edify_gateway_ro;
 -- The profiles' records of teachers and leaders: the register's own order.
 GRANT SELECT (id) ON cluster_activity_attendance TO edify_gateway_ro;
+
+-- The Graduated Champion Schools directory: each champion's Core start year
+-- (core_schools_views.champions_list_view).
+GRANT SELECT (school_id, core_start_fy) ON core_school_profile TO edify_gateway_ro;
+-- Public Holidays & Blackout Dates: the region a regional event applies to.
+GRANT SELECT (region_id) ON calendar_block TO edify_gateway_ro;

@@ -547,9 +547,9 @@ ORDER BY s.school_id ASC, r.date_of_ssa ASC, r.created_at ASC`, func(rows pgx.Ro
 	}
 	if len(latestIDs) > 0 {
 		if err := each(ctx, q, "the latest SSAs' scores", `
-SELECT ssa_record_id, score FROM ssa_score WHERE ssa_record_id = ANY($1)`, func(rows pgx.Rows) error {
+SELECT ssa_record_id, score, intervention FROM ssa_score WHERE ssa_record_id = ANY($1)`, func(rows pgx.Rows) error {
 			var row scanScoreRow
-			if err := rows.Scan(&row.RecordID, &row.Score); err != nil {
+			if err := rows.Scan(&row.RecordID, &row.Score, &row.Intervention); err != nil {
 				return err
 			}
 			out.ScanScores = append(out.ScanScores, row)

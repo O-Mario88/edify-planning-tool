@@ -170,8 +170,9 @@ type scanSSARow struct {
 }
 
 type scanScoreRow struct {
-	RecordID string   `json:"record_id"`
-	Score    *float64 `json:"score"`
+	RecordID     string   `json:"record_id"`
+	Score        *float64 `json:"score"`
+	Intervention string   `json:"intervention,omitempty"`
 }
 
 type scanSchoolRow struct {

@@ -31,6 +31,10 @@ EXPORT_PATH = Path("platform/backend/internal/personaltimeoff/rules.json")
 PAGE_PERMISSION = "personal_time_off"
 PATH = "/personal-time-off/"
 TEAM_AVAILABILITY = "/leave/team-availability"
+HOLIDAYS_PERMISSION = "public_holidays"
+HOLIDAYS_PATH = "/public-holidays"
+#: public_holidays_view's is_editor.
+HOLIDAY_EDITORS = ["CD", "HR", "ADMIN"]
 
 #: personal_time_off_view's balance_priority.
 BALANCE_PRIORITY = {
@@ -63,8 +67,28 @@ def roles() -> dict:
                 user, "leave_policies"
             ),
             "team_availability": bool(can_open_url(user, TEAM_AVAILABILITY)),
+            "holidays": holidays(user),
         }
     return out
+
+
+def holidays(user) -> dict:
+    """What a role is given on /public-holidays (leave_views.
+    public_holidays_view): the page, its workspace strip, and whether it
+    edits the calendar blocks (is_editor)."""
+    from apps.core.navigation import get_user_role_slug
+    from apps.core.permissions import RolePermissionService, can_open_url
+
+    page = RolePermissionService.can_view_page(user, HOLIDAYS_PERMISSION) and bool(
+        can_open_url(user, HOLIDAYS_PATH)
+    )
+    return {
+        "page": page,
+        "strip": strip(user, HOLIDAYS_PATH, "partials/_section_nav.html")
+        if page
+        else None,
+        "editor": get_user_role_slug(user) in HOLIDAY_EDITORS,
+    }
 
 
 def rules() -> dict:
