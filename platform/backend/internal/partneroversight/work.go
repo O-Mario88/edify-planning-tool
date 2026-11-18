@@ -74,7 +74,7 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 	if err != nil {
 		return nil, true, err
 	}
-	if held, err := handedOn(ctx, s.db, staff, w.regions, years); err != nil || held {
+	if held, err := handedOn(ctx, s.db, staff, w.regions); err != nil || held {
 		return nil, !held, err
 	}
 	today := dateOf(now.In(zone))
@@ -83,6 +83,11 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 		return nil, true, err
 	}
 	items = narrow(items, w.period)
+	// The trainings a Partner facilitates are read over the years alone.
+	trainings, err := readTrainings(ctx, s.db, staff, w.regions, years)
+	if err != nil {
+		return nil, true, err
+	}
 	if err := annotate(ctx, s.db, items, today); err != nil {
 		return nil, true, err
 	}
@@ -105,6 +110,9 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 			for _, i := range items {
 				visible[i.plID] = true
 			}
+			for _, t := range trainings {
+				visible[t.plID] = true
+			}
 			kept := []programLead{}
 			for _, l := range leads {
 				if visible[l.id] {
@@ -114,8 +122,9 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 			leads = kept
 		}
 		var rows []*item
-		v.leads, w.programLead, rows = leadTabs(leads, items, w.programLead)
-		items = rows
+		var held []*training
+		v.leads, w.programLead, rows, held = leadTabs(leads, items, trainings, w.programLead)
+		items, trainings = rows, held
 		v.w.programLead = w.programLead
 		if w.members, err = roster(ctx, s.db, w.programLead); err != nil {
 			return nil, true, err
@@ -128,6 +137,12 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 		if i.partnerID != "" {
 			counts[i.partnerID]++
 			names[i.partnerID] = i.partnerName
+		}
+	}
+	for _, t := range trainings {
+		if t.partnerID != "" {
+			counts[t.partnerID]++
+			names[t.partnerID] = t.partnerName
 		}
 	}
 	for id, n := range counts {
@@ -160,11 +175,17 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 		v.partnerTab = &v.partners[0]
 	}
 	partnerItems := []*item{}
+	partnerTrainings := []*training{}
 	if v.partnerTab != nil {
 		v.partner = v.partnerTab.key
 		for _, i := range items {
 			if i.partnerID == v.partner {
 				partnerItems = append(partnerItems, i)
+			}
+		}
+		for _, t := range trainings {
+			if t.partnerID == v.partner {
+				partnerTrainings = append(partnerTrainings, t)
 			}
 		}
 	}
@@ -192,6 +213,14 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 		}
 		labels[k] = orDefault(i.cceoName, "Unassigned")
 	}
+	trainingKey := func(t *training) string { return orDefault(t.cceoID, "unassigned") }
+	for _, t := range partnerTrainings {
+		k := trainingKey(t)
+		if _, ok := labels[k]; !ok {
+			order = append(order, k)
+		}
+		labels[k] = orDefault(t.cceoName, "Unassigned")
+	}
 	member := w.memberAsked
 	if member == "" {
 		member = "all"
@@ -200,11 +229,16 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 		member = "all"
 	}
 	v.w.member = member
-	v.members = []memberTab{{key: "all", label: allMembers, count: len(partnerItems)}}
+	v.members = []memberTab{{key: "all", label: allMembers, count: len(partnerItems) + len(partnerTrainings)}}
 	for _, k := range order {
 		n := 0
 		for _, i := range partnerItems {
 			if memberKey(i) == k {
+				n++
+			}
+		}
+		for _, t := range partnerTrainings {
+			if trainingKey(t) == k {
 				n++
 			}
 		}
@@ -220,6 +254,18 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 			v.shown = append(v.shown, i)
 		}
 	}
+	for _, t := range partnerTrainings {
+		if (member == "all" || trainingKey(t) == member) && (w.status == "" || t.deliveryPhase() == w.status) {
+			if t.awaitsReview() {
+				// Its Programme Lead's Confirm and Return depend on who reads.
+				return nil, false, nil
+			}
+			v.trainings = append(v.trainings, t)
+		}
+	}
+	if len(v.trainings) > tablePageSize {
+		return nil, false, nil
+	}
 	orderForMonitoring(v.shown)
 	v.tableItems = v.shown
 	core := 0
@@ -228,7 +274,7 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 			core++
 		}
 	}
-	v.tab = workTabOpen(tablesFor(v.shown), w.work, core)
+	v.tab = workTabOpen(tablesFor(v.shown), w.work, core, len(v.trainings))
 	v.w.work = v.tab
 	if v.tab == "clusters" {
 		// The card is read part by part there: its head names the Partner's
@@ -287,20 +333,15 @@ FROM partner WHERE id = $1`, v.partner).Scan(&contact); err != nil && !errors.Is
 // before any row is read: a withdrawal request their team must decide, or a
 // group training or meeting a Partner facilitates for the team in the
 // years read.
-func handedOn(ctx context.Context, db schooldirectory.Querier, staff, regions, years []string) (bool, error) {
+func handedOn(ctx context.Context, db schooldirectory.Querier, staff, regions []string) (bool, error) {
 	var held bool
 	err := db.QueryRow(ctx, `
 SELECT EXISTS (SELECT 1 FROM partner_assignment_withdrawal w
       LEFT JOIN school ws ON ws.id = w.school_id
       LEFT JOIN partner_assignment wa ON wa.id = w.assignment_id LEFT JOIN cluster wc ON wc.id = wa.cluster_id
       WHERE w.state = $1 AND ($2::text[] IS NULL OR w.supervising_pl_id = ANY($2))
-        AND ($5::text[] IS NULL OR ws.region_id = ANY($5) OR wc.region_id = ANY($5)))
-    OR EXISTS (SELECT 1 FROM activity a LEFT JOIN cluster c ON c.id = a.cluster_id LEFT JOIN school s ON s.id = a.school_id
-      WHERE a.deleted_at IS NULL AND COALESCE(a.facilitating_partner_id, '') <> ''
-        AND a.status <> ALL($3) AND a.fy = ANY($4)
-        AND ($2::text[] IS NULL OR a.responsible_staff_id = ANY($2) OR c.responsible_staff_id = ANY($2))
-        AND ($5::text[] IS NULL OR c.region_id = ANY($5) OR s.region_id = ANY($5)))`,
-		rules.WithdrawalRequested, staff, []string{"cancelled", "rejected", "deferred"}, years, regions).Scan(&held)
+        AND ($3::text[] IS NULL OR ws.region_id = ANY($3) OR wc.region_id = ANY($3)))`,
+		rules.WithdrawalRequested, staff, regions).Scan(&held)
 	if err != nil {
 		return false, fmt.Errorf("partneroversight: reading what the page hands on: %w", err)
 	}

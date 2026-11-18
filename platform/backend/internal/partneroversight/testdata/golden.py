@@ -303,6 +303,64 @@ def file_rows():
             kind="cluster_meeting",
             cluster=cluster,
         )
+
+        # Group trainings the Partner facilitates: the officer's own work,
+        # each with its facilitation fee.
+        def facilitated(n, *, status, days, sf=""):
+            day = TODAY + timedelta(days=days)
+            clone(
+                cursor,
+                "activity",
+                activity,
+                {
+                    "id": f"gpoA{n}",
+                    "school_id": None,
+                    "cluster_id": cluster,
+                    "assigned_partner_id": None,
+                    "facilitating_partner_id": PARTNER,
+                    "delivery_type": "staff",
+                    "activity_type": "cluster_training",
+                    "status": status,
+                    "planned_date": day,
+                    "scheduled_date": None,
+                    "fy": "2027",
+                    "quarter": "Q1",
+                    "planned_month": day.month,
+                    "evidence_status": "none",
+                    "salesforce_activity_id": sf or None,
+                    "ia_verification_status": "pending",
+                    "payment_status": "none",
+                    "monitored_by_staff_id": cceo,
+                    "responsible_staff_id": cceo,
+                    "actual_delivery_date": None,
+                    "execution_started_at": None,
+                    "submitted_to_ia_at": None,
+                    "pl_reviewed_at": None,
+                    "planned_date_before_completion": None,
+                    "reschedule_count": 0,
+                    "project_id": None,
+                    "deleted_at": None,
+                    "paired_school_visit_id": None,
+                    "created_at": NOW - timedelta(minutes=n),
+                    "updated_at": NOW,
+                },
+            )
+            clone(
+                cursor,
+                "activity_schedule_cost_line",
+                cost_line,
+                {
+                    "id": f"gpoC{n}",
+                    "activity_id": f"gpoA{n}",
+                    "amount": 150000,
+                    "line_item_type": "facilitation",
+                },
+            )
+
+        facilitated(13, status="planned", days=14)
+        facilitated(14, status="planned", days=-4)
+        facilitated(15, status="awaiting_ia_verification", days=-8, sf="TS-GPO-15")
+        facilitated(16, status="ia_verified", days=-12, sf="TS-GPO-16")
         # A Core school whose visit a staff member dated: still the
         # Partner's to schedule, so it may be withdrawn.
         handover(

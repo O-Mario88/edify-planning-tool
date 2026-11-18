@@ -20,6 +20,7 @@ type programLead struct {
 type leadTab struct {
 	key, label string
 	items      []*item
+	trainings  []*training
 }
 
 // systemProgramLeads is system_program_leads: every staff member who holds
@@ -50,11 +51,12 @@ ORDER BY u.name, sp.id`, rules.RosterLeadRole)
 	return out, rows.Err()
 }
 
-// leadTabs is _program_lead_tabs with the system's leads: a tab for each
-// lead with the work their teams hold, then Unassigned for work no lead
-// supervises; the tab asked for opens, else the first. It answers the tabs,
-// the open tab's key and its work.
-func leadTabs(leads []programLead, items []*item, asked string) ([]leadTab, string, []*item) {
+// leadTabs is _program_lead_tabs with the system's leads over the work
+// and the facilitated trainings: a tab for each lead with what their teams
+// hold, then Unassigned for what no lead supervises; the tab asked for
+// opens, else the first. It answers the tabs, the open tab's key, its work
+// and its trainings.
+func leadTabs(leads []programLead, items []*item, trainings []*training, asked string) ([]leadTab, string, []*item, []*training) {
 	tabs := []leadTab{}
 	of := map[string]int{}
 	for _, l := range leads {
@@ -63,19 +65,26 @@ func leadTabs(leads []programLead, items []*item, asked string) ([]leadTab, stri
 			of[id] = len(tabs) - 1
 		}
 	}
-	unassigned := []*item{}
+	unassigned := leadTab{key: "unassigned", label: "Unassigned"}
 	for _, i := range items {
 		if at, ok := of[i.plID]; ok && i.plID != "" {
 			tabs[at].items = append(tabs[at].items, i)
 		} else {
-			unassigned = append(unassigned, i)
+			unassigned.items = append(unassigned.items, i)
 		}
 	}
-	if len(unassigned) > 0 {
-		tabs = append(tabs, leadTab{key: "unassigned", label: "Unassigned", items: unassigned})
+	for _, t := range trainings {
+		if at, ok := of[t.plID]; ok && t.plID != "" {
+			tabs[at].trainings = append(tabs[at].trainings, t)
+		} else {
+			unassigned.trainings = append(unassigned.trainings, t)
+		}
+	}
+	if len(unassigned.items)+len(unassigned.trainings) > 0 {
+		tabs = append(tabs, unassigned)
 	}
 	if len(tabs) == 0 {
-		return nil, "", nil
+		return nil, "", nil, nil
 	}
 	open := 0
 	for at, t := range tabs {
@@ -84,7 +93,7 @@ func leadTabs(leads []programLead, items []*item, asked string) ([]leadTab, stri
 			break
 		}
 	}
-	return tabs, tabs[open].key, tabs[open].items
+	return tabs, tabs[open].key, tabs[open].items, tabs[open].trainings
 }
 
 // leadPanel is the Programme Lead strip as the feed reads it.
@@ -93,7 +102,7 @@ func (v *workView) leadPanel() *screensv1.PageBlock {
 	for _, t := range v.leads {
 		links = append(links, &screensv1.PageLink{Text: t.label,
 			Href:    "?program_lead=" + t.key + "&partner=all" + v.query(),
-			Caption: strconv.Itoa(len(t.items))})
+			Caption: strconv.Itoa(len(t.items) + len(t.trainings))})
 	}
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{
 		Badges: []*screensv1.PageBadge{},

@@ -344,3 +344,52 @@ Proof: the golden now asks the Clusters tab of every reader, over a fixture
 cluster hand-over and a cluster meeting the Partner dated with no
 hand-over. That gives 28 cluster sections: **584 answers of 10 accounts, 0
 differing**.
+
+## 46.12 Trainings a Partner facilitates (2026-11-18)
+
+Group trainings and cluster meetings that a Partner facilitates are the
+officer's own work, and the page reads them under that Partner
+(`facilitated_trainings`, `FacilitatedTraining`). Go now reads them for the
+same team, region or country as the rest of the page, over the years read.
+The period does not narrow them, as in the existing page.
+
+**Where they count:**
+
+- the Programme Lead tabs, through their supervising lead, and a region's
+  visible leads;
+- the Partner tabs;
+- the team-member tabs, through the officer;
+- the Clusters to facilitate tab.
+
+The team-member and Status filters narrow them as they narrow the Partner's
+own work.
+
+**On the Clusters tab** they follow the note on the years read, as
+"Trainings and meetings facilitated (N)" and its table:
+
+| Column | What it shows |
+|---|---|
+| Cluster Name | The training's cluster, or the school for an in-school training |
+| District | That place's district |
+| Training Name | The course, else its name, else its type |
+| SSA Intervention | The intervention it targets |
+| Training Date | Its date |
+| Salesforce ID | The officer's Salesforce ID |
+| Status | Upcoming, Overdue, Completed, Verified, Returned, or what a done status lacks |
+| Cost | The facilitation fee from its cost lines |
+| Action | "With Impact Assessment" while IA verifies it, else View activity as a plain link |
+
+Overdue rows carry the overdue tone.
+
+**Still handed on:** a training waiting for its Programme Lead's review,
+whose Confirm and Return depend on who reads.
+
+The work rows' lone View activity link is now read the same way as the
+trainings', as the cell's text and link. The feed reads the record-action
+mark on its wrapper, not on the cell.
+
+The hand-overs are read in their model's order (newest first), as are the
+Partner activities. Rows sorted alike then tie the same way.
+
+Proof: four fixture trainings (upcoming, overdue, with IA, verified), each
+with its facilitation fee: **584 answers of 10 accounts, 0 differing**.

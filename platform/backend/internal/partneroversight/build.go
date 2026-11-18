@@ -47,7 +47,8 @@ LEFT JOIN activity_catalogue_item sc ON sc.id = sa.training_course_id
 WHERE NOT (pa.status = ANY($2) OR (pa.status = $3 AND pa.resolved_at IS NOT NULL))
   AND ($1::text[] IS NULL OR pa.monitoring_staff_id = ANY($1) OR pa.assigning_staff_id = ANY($1)
     OR s.account_owner_id = ANY($1) OR c.responsible_staff_id = ANY($1))
-  AND ($4::text[] IS NULL OR s.region_id = ANY($4) OR c.region_id = ANY($4))`
+  AND ($4::text[] IS NULL OR s.region_id = ANY($4) OR c.region_id = ANY($4))
+ORDER BY pa.created_at DESC, pa.id`
 
 // activity is the fields of an activity the page reads.
 type activity struct {
@@ -396,7 +397,7 @@ func readItems(ctx context.Context, db schooldirectory.Querier, team, regions []
   AND ($5::text[] IS NULL OR a.monitored_by_staff_id = ANY($5) OR a.responsible_staff_id = ANY($5)
     OR s.account_owner_id = ANY($5) OR c.responsible_staff_id = ANY($5))
   AND ($6::text[] IS NULL OR s.region_id = ANY($6) OR c.region_id = ANY($6))
-ORDER BY a.id`, rules.PartnerDelivery, []string{"cancelled", "rejected", "deferred"}, years, keptActivities, team, regions)
+ORDER BY a.created_at DESC, a.id`, rules.PartnerDelivery, []string{"cancelled", "rejected", "deferred"}, years, keptActivities, team, regions)
 	if err != nil {
 		return nil, err
 	}

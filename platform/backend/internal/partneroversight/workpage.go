@@ -47,6 +47,9 @@ type workView struct {
 	tableItems []*item
 	years      []string
 	target     *target
+	// trainings are the group trainings the Partner facilitates that the
+	// team member and status shown hold.
+	trainings []*training
 	// selectable is a Schools table with a row that can be withdrawn: its
 	// tick boxes and the Withdraw selected bar.
 	selectable bool
@@ -101,8 +104,8 @@ var tableTab = map[string]string{"Core Schools assigned": "core", "Schools assig
 // workTabOpen is work_tabs' open tab: the one asked for if it is a tab, else
 // the first holding anything. Core schools is a tab only for a Partner who
 // holds a Core school.
-func workTabOpen(tables []workTable, requested string, core int) string {
-	counts := map[string]int{"core": core}
+func workTabOpen(tables []workTable, requested string, core, trainings int) string {
+	counts := map[string]int{"core": core, "clusters": trainings}
 	for _, t := range tables {
 		counts[tableTab[t.title]] += len(t.items)
 	}
@@ -532,9 +535,9 @@ func (v *workView) workRow(i *item, kind string) *screensv1.PageRow {
 			{Key: "menu", Label: i.withdrawalLabel, Enabled: true, Href: "/partner-oversight/withdraw?activity_id=" + i.activityID, Drawer: true},
 		}})
 	default:
-		cells = append(cells, &screensv1.PageCell{Actions: []*screensv1.PageAction{
-			{Key: "button", Label: "View activity", Primary: true, Enabled: true, Href: "/activities/" + i.activityID},
-		}})
+		// The record-action mark sits on the link's wrapper, not the cell:
+		// the feed reads the lone link as the cell's text.
+		cells = append(cells, &screensv1.PageCell{Text: "View activity", Href: "/activities/" + i.activityID})
 	}
 	details := []*screensv1.PageFact{}
 	if i.schoolCode != "" {
@@ -696,6 +699,7 @@ func (v *workView) cardParts() []*screensv1.PageBlock {
 		counts[tableTab[t.title]] += len(t.items)
 		core = core || t.columns == "core"
 	}
+	counts["clusters"] += len(v.trainings)
 	w, p := v.w, v.w.period
 	tabs := []*screensv1.PageLinkTab{}
 	for _, t := range [][2]string{{"schools", "Schools assigned"}, {"core", "Core schools"}, {"visits", "Visits"},
@@ -744,6 +748,10 @@ func (v *workView) cardParts() []*screensv1.PageBlock {
 			Items: []*screensv1.PagePanelItem{{Kind: &screensv1.PagePanelItem_Text{
 				Text: "Read for " + horizonLabel(v.years) + ": work a Partner dates into the next financial year stays here, on its date."}}},
 		}}})
+	}
+	// The group trainings the Partner facilitates follow the work tables.
+	if len(v.trainings) > 0 {
+		out = append(out, v.trainingsBlocks(v.trainings)...)
 	}
 	return out
 }
