@@ -6,7 +6,7 @@ country-specific configuration, securely isolated country data.* Phase 0 of
 that instruction asks for an audit and the architecture decisions before any
 schema change. This document is that Phase 0. The owner approved Phase 1
 on §7's recommended defaults on 2026-11-17 ("Yes, start Phase 1"); what has
-been built since, on the development copies only, is §8 to §20.
+been built since, on the development copies only, is §8 to §21.
 
 Everything below was measured on 2026-11-17 against the development copy
 `edify_gorn_test` and the code on `feature/edify-go-rn-migration`. No
@@ -937,4 +937,34 @@ Uganda's Country Director lists and opens the application and manages only
 the Ugandan lender. The loan suites (portal, follow-ups, sharing,
 statements, existing terms), the whole integration suite and every golden
 unchanged; school parity `PARITY OK`.
+
+## 21. Phase 3, ninth step: the country through notifications and messages (2026-11-18)
+
+Chosen next by me under the owner's standing instruction. No table is added
+or changed; Go code only.
+
+The Notification Centre (`internal/notificationcenter`) reads each
+account's own notifications, so it is already per person and needs no
+country rule. Messages carry a record (a school, a cluster, an activity,
+a fund request…); the inbox shows a conversation only to readers who may
+open its record (`messaging.gate`). Two of its rules ignored the country:
+
+| Rule | Before | Now |
+|---|---|---|
+| A country reader opening a conversation's school | Any school at all | A school of their country (`country.SchoolHeldIn`); an unbounded reader (Admin, a regional role) any school |
+| A country reader opening a conversation's activity | Any activity at all | An activity of their country (`country.ActivityHeldIn`) |
+| Field staff opening a school nobody holds "in their country" | The country their profile names | The country they work in, where its roles come from the registry |
+
+Records the registry places in no country are Uganda's, as the existing
+application, which served Uganda alone, let every country reader open them.
+Clusters already followed the cluster rule of §16.
+
+Proof: `internal/integration/country_messaging_test.go`, with Kenya Active,
+a Kenyan school and an Impact Assessment officer who works in Kenya alone:
+Kenya's officer is shown the conversation about the Kenyan school and not
+one about a Ugandan school, and Uganda's officer the reverse. The messaging
+integration tests, the whole integration suite and every golden unchanged;
+school parity `PARITY OK`. (The inbox's own proof against the existing
+page writes, since the existing page marks conversations read, so it is run
+only on a shadow copy and was not run for this step.)
 

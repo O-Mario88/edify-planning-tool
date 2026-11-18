@@ -10,6 +10,7 @@ import (
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterpage"
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -208,17 +209,39 @@ func (g *gate) canViewRecord(ctx context.Context, rec record) (bool, error) {
 	}
 	switch rec.kind {
 	case kindSchool:
-		if scope.CountryScope || in(scope.SchoolIDs, rec.id) {
+		if in(scope.SchoolIDs, rec.id) {
 			return true, nil
+		}
+		if scope.CountryScope {
+			// A country reader's own country's schools (docs/migration/80,
+			// §21); an unbounded one (the Admin, a regional role) every school.
+			return g.inCountry(ctx, scope, `SELECT EXISTS (SELECT 1 FROM school s WHERE s.id = $1 AND `+registry.SchoolHeldIn("s", "$2")+`)`, rec.id)
 		}
 		return g.openTo(ctx, rec.id)
 	case kindCluster:
 		return clusterpage.ClusterReadable(ctx, g.db, scope, rec.id, rec.clusterLead, rec.districtID, rec.regionID)
 	}
 	if scope.CountryScope {
-		return true, nil
+		return g.inCountry(ctx, scope, `SELECT EXISTS (SELECT 1 FROM activity a LEFT JOIN school s ON s.id = a.school_id
+  LEFT JOIN cluster cl ON cl.id = a.cluster_id WHERE a.id = $1 AND `+registry.ActivityHeldIn("a", "s", "cl", "$2")+`)`, rec.id)
 	}
 	return false, ErrHandOn
+}
+
+// inCountry runs check (its $1 the record's id, $2 the scope's country) for
+// a country reader bounded to a country; one unbounded reads every record.
+// Records the registry places in no country are Uganda's, as the existing
+// application, which served Uganda alone, let every country reader open
+// them.
+func (g *gate) inCountry(ctx context.Context, scope schooldirectory.Scope, check, id string) (bool, error) {
+	if scope.Country == "" {
+		return true, nil
+	}
+	var ok bool
+	if err := g.db.QueryRow(ctx, check, id, scope.CountryIDs()).Scan(&ok); err != nil {
+		return false, fmt.Errorf("messaging: reading the record's country: %w", err)
+	}
+	return ok, nil
 }
 
 // openTo is data_gaps.open_to: field staff may open a school nobody holds in
@@ -230,6 +253,11 @@ func (g *gate) openTo(ctx context.Context, schoolID string) (bool, error) {
 	country, err := schooldirectory.OfficerCountry(ctx, g.db, g.p.UserID)
 	if err != nil {
 		return false, err
+	}
+	if g.p.Country.FromRegistry() {
+		// The country they work in, not their profile's (docs/migration/80,
+		// §21).
+		country = g.p.Country.Name
 	}
 	return schooldirectory.UnheldInCountry(ctx, g.db, country, schoolID)
 }
