@@ -80,6 +80,14 @@ PAGES = {
             "Coaching Follow-Ups Due",
         ],
     },
+    "/cce-leadership/coaching": {
+        "permission": "cce_training_feedback",
+        "drawers": [],
+        "metrics": [
+            "Regional Lead Coaching Awaiting Acknowledgement",
+            "Regional Lead Coaching Acknowledged",
+        ],
+    },
     "/cce-leadership/feedback": {
         "permission": "cce_training_feedback",
         "drawers": [],

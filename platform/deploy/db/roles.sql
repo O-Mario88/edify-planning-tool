@@ -1079,3 +1079,5 @@ GRANT SELECT (id, activity_id, status, published_at, error_message, created_at) 
 -- and its NetSuite expense id.
 GRANT SELECT (activity_id, ia_verified) ON closure_checklist TO edify_gateway_ro;
 GRANT SELECT (activity_id, netsuite_expense_id) ON completed_activity_snapshot TO edify_gateway_ro;
+-- Regional Lead Coaching: each conversation's agreed actions and follow-up.
+GRANT SELECT (agreed_actions, follow_up_due) ON cce_regional_engagement TO edify_gateway_ro;

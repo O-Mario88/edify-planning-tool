@@ -630,3 +630,30 @@ definitions, `resolve(path).kwargs`), and its doors and strip per role.
 
 Proof: three queries (none, `?tab=spiritual`, `?fy=2026`) for eight readers
 on each path, one refused each: **72 answers, 0 differing**.
+
+## 176.24 Regional Lead Coaching (2026-11-18)
+
+`/cce-leadership/coaching` (`cce_leadership_views.regional_coaching_view`) is
+drawn in Go by `ccelead` (`regionalcoaching.go`) through the register the
+other CCE leadership pages share. The export adds the page to its `PAGES`
+(`cce_training_feedback`, no drawers, its two figures).
+
+- The reach is `regional_coaching_visible_to`: Admin every Programme Lead
+  coaching conversation, the Regional Lead their own, a Programme Lead those
+  shared with them (by staff record), nobody else. The Country Director opens
+  the page to a notice that the coaching stays between the Regional Lead and
+  each Programme Lead.
+- Each conversation, latest held first (then latest made), five hundred at
+  most: the subject, the day held, the Regional Lead for a Programme Lead
+  (else the Programme Leads named, "Programme Lead" for one unknown), the
+  actions agreed, the follow-up day ("· passed" once due and still not
+  acknowledged), and the state. A Programme Lead's button reads Acknowledge
+  until they do, else Open.
+- The figures: shared and awaiting acknowledgement, and acknowledged.
+
+The gateway reads `cce_regional_engagement (agreed_actions,
+follow_up_due)`. Proof: five engagements seeded (edify_gorn_test only, removed
+after): acknowledged, awaiting past its follow-up, never shared, shared with
+one lead, and a training observation the page leaves out. Two queries for
+eight readers, two refused: **16 answers, 0 differing**; and with none, in
+the suite.

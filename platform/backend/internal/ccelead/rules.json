@@ -222,6 +222,8 @@
     "Feedback Acknowledged": "Feedback Acknowledged",
     "Feedback Awaiting Acknowledgement": "Feedback Awaiting Acknowledgement",
     "One-to-Ones Held This Month": "One-to-Ones Held This Month",
+    "Regional Lead Coaching Acknowledged": "Regional Lead Coaching Acknowledged",
+    "Regional Lead Coaching Awaiting Acknowledgement": "Regional Lead Coaching Awaiting Acknowledgement",
     "Report Drafts": "Report Drafts",
     "Reports Acknowledged": "Reports Acknowledged",
     "Reports Awaiting Review": "Reports Awaiting Review",
@@ -232,6 +234,105 @@
   "one_to_one_kind": "one_to_one",
   "page_size": 50,
   "pages": {
+    "/cce-leadership/coaching": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "page": true,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "page": true,
+          "strip": {
+            "label": "Regional Lead",
+            "scrolls": true,
+            "tabs": [
+              {
+                "active": false,
+                "href": "/cce-leadership/feedback",
+                "label": "Training Feedback"
+              },
+              {
+                "active": true,
+                "href": "/cce-leadership/coaching",
+                "label": "Regional Lead Coaching"
+              }
+            ]
+          }
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [],
+          "page": true,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "page": false,
+          "strip": null
+        }
+      }
+    },
     "/cce-leadership/engagements": {
       "roles": {
         "Accountant": {
