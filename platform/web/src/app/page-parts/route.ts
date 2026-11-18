@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   const token = (await cookies()).get(ACCESS_COOKIE)?.value;
   if (!token) return NextResponse.json({ error: 'signed_out' }, { status: 401 });
   try {
-    const answer = await gatewayClient(PageScreenService, token).getPage({ path, query: {} });
+    const answer = await gatewayClient(PageScreenService, token).getPage({ path, query: {}, desktop: true });
     return NextResponse.json(toJson(GetPageResponseSchema, answer), { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     if (isUnauthenticated(error)) return NextResponse.json({ error: 'signed_out' }, { status: 401 });

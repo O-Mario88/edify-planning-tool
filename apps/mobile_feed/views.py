@@ -1370,12 +1370,12 @@ def _run_page(
     return response
 
 
-def page_body(html: str, path: str, later=None) -> dict:
+def page_body(html: str, path: str, later=None, desktop: bool = False) -> dict:
     """A page as the app reads it: its blocks, its dialogs, and whether the
-    feed saves each form it shows."""
+    feed saves each form it shows; with ``desktop``, as the web app does."""
     from apps.mobile_feed import page_blocks
 
-    body = page_blocks.read(html, later, path)
+    body = page_blocks.read(html, later, path, desktop=desktop)
     _mark_forms(body, path)
     return {**body, "webPath": path}
 
@@ -1413,8 +1413,10 @@ def _not_moved_yet(user, path: str) -> bool:
     return name not in NATIVE_PAGES | LATER_PARTS and bool(can_open_url(user, path))
 
 
-def read_page(user, path: str, query) -> tuple[int, dict]:
-    """The page at ``path`` as blocks for ``user``: (status, body)."""
+def read_page(user, path: str, query, desktop: bool = False) -> tuple[int, dict]:
+    """The page at ``path`` as blocks for ``user``: (status, body), read as a
+    phone draws it, or with ``desktop`` as a desktop browser does (the web
+    app)."""
     from urllib.parse import parse_qsl, urlparse
 
     from django.http import Http404
@@ -1454,7 +1456,12 @@ def read_page(user, path: str, query) -> tuple[int, dict]:
             else None
         )
 
-    return 200, page_body(page.content.decode(), path, later)
+    return 200, page_body(page.content.decode(), path, later, desktop=desktop)
+
+
+#: The feed's own parameter, never the page's: read the page as a desktop
+#: browser draws it ("1"), for the web app.
+DESKTOP_PARAM = "_desktop"
 
 
 class PageFeedView(APIView):
@@ -1465,9 +1472,12 @@ class PageFeedView(APIView):
         user = reader(request)
         path = request.query_params.get("path", "")
         query = {
-            key: value for key, value in request.query_params.items() if key != "path"
+            key: value
+            for key, value in request.query_params.items()
+            if key not in ("path", DESKTOP_PARAM)
         }
-        status, body = read_page(user, path, query)
+        desktop = request.query_params.get(DESKTOP_PARAM) == "1"
+        status, body = read_page(user, path, query, desktop=desktop)
         return Response(body, status=status)
 
 

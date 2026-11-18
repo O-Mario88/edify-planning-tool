@@ -41,6 +41,7 @@ func (s *Service) GetPage(
 	if query.Has("path") {
 		return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This page cannot be opened.")
 	}
+	ctx = pagegate.WithDesktop(ctx, message.GetDesktop())
 	if principal, ok := auth.PrincipalFrom(ctx); ok && !principal.InActingAppointment {
 		// A page whose reading is itself audited records who read it from
 		// where (Employee Relations).
@@ -64,6 +65,11 @@ func (s *Service) GetPage(
 	full := url.Values{"path": {message.GetPath()}}
 	for key, values := range query {
 		full[key] = values
+	}
+	// The feed's own parameter (apps.mobile_feed.views.DESKTOP_PARAM); no
+	// page query key can be it, as they start with a letter (queryKey).
+	if message.GetDesktop() {
+		full.Set("_desktop", "1")
 	}
 	return fetch[screensv1.GetPageResponse](ctx, s, pathPage+"?"+full.Encode())
 }

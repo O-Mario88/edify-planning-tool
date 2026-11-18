@@ -26,7 +26,10 @@ type GetPageRequest struct {
 	// The page's web path ("/todos", "/clusters").
 	Path string `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
 	// The page's own query, as its tabs, filters and pagers write it.
-	Query         map[string]string `protobuf:"bytes,2,rep,name=query,proto3" json:"query,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Query map[string]string `protobuf:"bytes,2,rep,name=query,proto3" json:"query,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// Read the page as a desktop browser draws it (the web app): its desktop
+	// header and parts, not the phone's. False is the phone app's reading.
+	Desktop       bool `protobuf:"varint,3,opt,name=desktop,proto3" json:"desktop,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -73,6 +76,13 @@ func (x *GetPageRequest) GetQuery() map[string]string {
 		return x.Query
 	}
 	return nil
+}
+
+func (x *GetPageRequest) GetDesktop() bool {
+	if x != nil {
+		return x.Desktop
+	}
+	return false
 }
 
 type GetPageResponse struct {
@@ -184,10 +194,11 @@ var File_edify_screens_v1_page_screen_proto protoreflect.FileDescriptor
 
 const file_edify_screens_v1_page_screen_proto_rawDesc = "" +
 	"\n" +
-	"\"edify/screens/v1/page_screen.proto\x12\x10edify.screens.v1\x1a\x1bedify/screens/v1/page.proto\"\xa1\x01\n" +
+	"\"edify/screens/v1/page_screen.proto\x12\x10edify.screens.v1\x1a\x1bedify/screens/v1/page.proto\"\xbb\x01\n" +
 	"\x0eGetPageRequest\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12A\n" +
-	"\x05query\x18\x02 \x03(\v2+.edify.screens.v1.GetPageRequest.QueryEntryR\x05query\x1a8\n" +
+	"\x05query\x18\x02 \x03(\v2+.edify.screens.v1.GetPageRequest.QueryEntryR\x05query\x12\x18\n" +
+	"\adesktop\x18\x03 \x01(\bR\adesktop\x1a8\n" +
 	"\n" +
 	"QueryEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +

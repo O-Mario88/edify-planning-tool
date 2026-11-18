@@ -1823,3 +1823,62 @@ class GroupedTableTest(SimpleTestCase):
             [row["cells"][0]["text"] for row in table["rows"]],
             ["School Visit 2 activities", "Lunch", "Grand total"],
         )
+
+
+SPLIT_PAGE = """
+<main>
+<header class="mobile-role-home edify-page-header" data-mobile-role-home>
+  <div class="mobile-role-home__copy"><p>My work</p><h1 class="edify-page-title">Action queue</h1><span>Start with the highest-priority task.</span></div>
+</header>
+<section class="mobile-home-only mobile-home-section"><div class="card"><p>Do next on a phone</p></div></section>
+<div class="edify-page-header mobile-home-hide">
+  <div class="edify-page-header__lead">
+    <p class="edify-page-eyebrow">My Work</p>
+    <h1 class="edify-page-title edify-page-header__title">To-Do</h1>
+    <p class="edify-page-header__description">Your action queue.</p>
+  </div>
+</div>
+<div class="card mobile-home-hide"><p>Only on a desktop</p></div>
+<div class="card hidden lg:block"><p>Shown from lg</p></div>
+<div class="card lg:hidden"><p>Hidden from lg</p></div>
+<div class="card hidden md:flex"><p>Shown from md</p></div>
+</main>
+"""
+
+
+def _texts(page: dict) -> str:
+    import json
+
+    return json.dumps(page["blocks"])
+
+
+class DesktopReadingTest(SimpleTestCase):
+    """The web app reads a page as a desktop browser draws it (64rem and
+    wider): its desktop header and parts, not the phone's."""
+
+    def test_the_desktop_reading_takes_the_desktop_header(self):
+        page = page_blocks.read(SPLIT_PAGE, path="/todos", desktop=True)
+
+        self.assertEqual(
+            (page["header"]["eyebrow"], page["header"]["title"]),
+            ("My Work", "To-Do"),
+        )
+        self.assertEqual(page["header"]["description"], "Your action queue.")
+
+    def test_the_desktop_reading_keeps_desktop_parts_and_drops_phone_ones(self):
+        texts = _texts(page_blocks.read(SPLIT_PAGE, path="/todos", desktop=True))
+
+        for shown in ("Only on a desktop", "Shown from lg", "Shown from md"):
+            self.assertIn(shown, texts)
+        for left_out in ("Do next on a phone", "Hidden from lg"):
+            self.assertNotIn(left_out, texts)
+
+    def test_the_phone_reading_is_unchanged(self):
+        page = page_blocks.read(SPLIT_PAGE, path="/todos")
+        texts = _texts(page)
+
+        self.assertEqual(page["header"]["title"], "Action queue")
+        self.assertIn("Do next on a phone", texts)
+        self.assertIn("Hidden from lg", texts)
+        for left_out in ("Only on a desktop", "Shown from lg", "Shown from md"):
+            self.assertNotIn(left_out, texts)

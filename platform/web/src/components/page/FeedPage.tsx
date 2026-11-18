@@ -26,7 +26,7 @@ import { SelectionBar } from './SelectionBar';
 async function askSpelling(path: string, query: Record<string, string>): Promise<SpellingAnswer<GetPageResponse>> {
   return asReader(async (token) => {
     try {
-      return { kind: 'page', page: await gatewayClient(PageScreenService, token).getPage({ path, query }) };
+      return { kind: 'page', page: await gatewayClient(PageScreenService, token).getPage({ path, query, desktop: true }) };
     } catch (error) {
       if (isNotFound(error)) return { kind: 'notFound' };
       if (isUnavailable(error)) return { kind: 'unavailable' };

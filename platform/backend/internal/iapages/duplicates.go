@@ -69,6 +69,12 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	case SamplesPath:
 		return s.samples(ctx, p, role, query)
 	case AnalyticsPath:
+		// Its desktop page differs from the phone's (mobile_role_home and
+		// mobile-home-hide parts), which Go does not build yet: a desktop
+		// reading is the existing page's (pagegate.Desktop).
+		if pagegate.Desktop(ctx) {
+			return nil, false, nil
+		}
 		return s.analytics(ctx, p, query)
 	case StoriesPath:
 		return s.stories(ctx, p, role, query)

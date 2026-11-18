@@ -93,6 +93,12 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, _ ur
 	if path != Path {
 		return nil, false, nil
 	}
+	// The desktop page differs from the phone's (its own header and the
+	// parts marked mobile-home-hide), which Go does not build yet: a desktop
+	// reading is the existing page's (pagegate.Desktop).
+	if pagegate.Desktop(ctx) {
+		return nil, false, nil
+	}
 	role, ok := rules.Roles[p.ActiveRole]
 	if !ok {
 		return nil, false, nil

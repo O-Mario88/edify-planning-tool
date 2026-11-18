@@ -14,6 +14,7 @@ Python's own HTML parser is used, so the production app gains no dependency.
 
 from __future__ import annotations
 
+import contextvars
 import json
 import re
 from html.parser import HTMLParser
@@ -2071,6 +2072,55 @@ PHONE_SHOWN = re.compile(
 PHONE_HIDDEN = re.compile(r"^max-(?:sm|md|lg):hidden$")
 
 
+#: Whether the page is read as a desktop browser draws it (64rem and wider:
+#: the web app) rather than as a phone does (the native app). Set by read()
+#: for the whole reading, the parts it loads later and its dialogs included.
+_DESKTOP: contextvars.ContextVar[bool] = contextvars.ContextVar(
+    "page_blocks_desktop", default=False
+)
+
+#: The display utilities that show a node again from a breakpoint up.
+DISPLAYS = (
+    "block",
+    "flex",
+    "grid",
+    "inline",
+    "inline-flex",
+    "inline-block",
+    "table",
+    "contents",
+)
+#: The breakpoints a desktop (64rem, Tailwind's lg) is at or past, narrowest first.
+DESKTOP_BREAKPOINTS = ("sm:", "md:", "lg:")
+#: The phone's own parts, which the existing stylesheets hide from 64rem
+#: (mobile-patterns.css: .mobile-role-home, .mobile-home-only).
+PHONE_ONLY_CLASSES = ("mobile-role-home", "mobile-home-only")
+
+
+def desktop_hidden(node: Node) -> bool:
+    """Whether a desktop (64rem and wider) draws ``node`` at all: the phone's
+    own parts are not, and Tailwind's display classes are read at that width
+    (a later breakpoint overrides an earlier one)."""
+    classes = node.classes
+    if "data-mobile-role-home" in node.attrs or any(
+        c in classes for c in PHONE_ONLY_CLASSES
+    ):
+        return True
+    hidden = "hidden" in classes
+    for prefix in DESKTOP_BREAKPOINTS:
+        if prefix + "hidden" in classes:
+            hidden = True
+        elif any(prefix + display in classes for display in DISPLAYS):
+            hidden = False
+    return hidden
+
+
+def not_drawn(node: Node) -> bool:
+    """Whether the screen the page is read for draws ``node``: a desktop's
+    rules when the reading is for the web app, a phone's otherwise."""
+    return desktop_hidden(node) if _DESKTOP.get() else phone_hidden(node)
+
+
 def phone_hidden(node: Node) -> bool:
     """Whether a phone (below the 64rem breakpoint) draws ``node`` at all:
     the page's own classes decide, as the browser does at that width."""
@@ -2094,7 +2144,7 @@ def _for_phone(node: Node) -> Node:
         child
         for child in node.children
         if isinstance(child, str)
-        or not (phone_hidden(child) or _hidden_on_opening(child) or _is_tick_bar(child))
+        or not (not_drawn(child) or _hidden_on_opening(child) or _is_tick_bar(child))
     ]
     for child in node.children:
         if isinstance(child, Node):
@@ -2102,10 +2152,19 @@ def _for_phone(node: Node) -> Node:
     return node
 
 
-def read(html: str, later=None, path: str = "") -> dict:
-    """The page's header, tabs and blocks, in the order a phone draws them.
+def read(html: str, later=None, path: str = "", desktop: bool = False) -> dict:
+    """The page's header, tabs and blocks, in the order a phone draws them,
+    or, with ``desktop``, as a desktop browser draws them (the web app).
     ``later(path, headers)`` answers a part the page loads after it opens
     (with the headers its section sends), or None to leave it out."""
+    token = _DESKTOP.set(desktop)
+    try:
+        return _read(html, later, path)
+    finally:
+        _DESKTOP.reset(token)
+
+
+def _read(html: str, later, path: str) -> dict:
     from apps.mobile_feed import dialogs
 
     from apps.mobile_feed import selection

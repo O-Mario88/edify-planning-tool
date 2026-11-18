@@ -29,6 +29,7 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myplan"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -145,6 +146,12 @@ func served(query url.Values) bool {
 
 // Build answers /dashboard for a field officer or a Programme Lead.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	// The desktop page differs from the phone's (its own header and the
+	// parts marked mobile-home-hide), which Go does not build yet: a desktop
+	// reading is the existing page's (pagegate.Desktop).
+	if pagegate.Desktop(ctx) {
+		return nil, false, nil
+	}
 	if path == Path && p.ActiveRole == rules.Lead.Role {
 		return s.buildLead(ctx, p, query)
 	}

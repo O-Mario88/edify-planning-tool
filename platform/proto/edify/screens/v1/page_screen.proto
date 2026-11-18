@@ -18,6 +18,9 @@ message GetPageRequest {
   string path = 1;
   // The page's own query, as its tabs, filters and pagers write it.
   map<string, string> query = 2;
+  // Read the page as a desktop browser draws it (the web app): its desktop
+  // header and parts, not the phone's. False is the phone app's reading.
+  bool desktop = 3;
 }
 
 message GetPageResponse {
