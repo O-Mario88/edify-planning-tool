@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file edify/countries/v1/countries.proto.
  */
 export const file_edify_countries_v1_countries: GenFile = /*@__PURE__*/
-  fileDesc("CiJlZGlmeS9jb3VudHJpZXMvdjEvY291bnRyaWVzLnByb3RvEhJlZGlmeS5jb3VudHJpZXMudjEinwEKB0NvdW50cnkSCgoCaWQYASABKAkSDAoEY29kZRgCIAEoCRIMCgRuYW1lGAMgASgJEg0KBXN0YXRlGAQgASgJEhQKDGFjdGl2YXRlZF9vbhgFIAEoCRIxCgZjb25maWcYBiABKAsyIS5lZGlmeS5jb3VudHJpZXMudjEuQ291bnRyeUNvbmZpZxIUCgxyb2xlc19zb3VyY2UYByABKAki2gIKDUNvdW50cnlDb25maWcSDwoHdmVyc2lvbhgBIAEoBRIYChBkZWZhdWx0X2xhbmd1YWdlGAIgASgJEhEKCWxhbmd1YWdlcxgDIAMoCRIVCg1jdXJyZW5jeV9jb2RlGAQgASgJEhwKFGN1cnJlbmN5X21pbm9yX3VuaXRzGAUgASgFEhEKCXRpbWVfem9uZRgGIAEoCRITCgtkYXRlX2Zvcm1hdBgHIAEoCRIRCgljYWxlbmRhcnMYCCADKAkSFgoOZnlfc3RhcnRfbW9udGgYCSABKAUSFgoOZWZmZWN0aXZlX2Zyb20YCiABKAkSFwoPZWZmZWN0aXZlX3VudGlsGAsgASgJEhIKCmNoYW5nZWRfYnkYDCABKAkSFQoNY2hhbmdlX3JlYXNvbhgNIAEoCRITCgthcHByb3ZlZF9ieRgOIAEoCRISCgpjcmVhdGVkX2F0GA8gASgJIhYKFExpc3RDb3VudHJpZXNSZXF1ZXN0IkcKFUxpc3RDb3VudHJpZXNSZXNwb25zZRIuCgljb3VudHJpZXMYASADKAsyGy5lZGlmeS5jb3VudHJpZXMudjEuQ291bnRyeSIvChdHZXRDb3VudHJ5Q29uZmlnUmVxdWVzdBIUCgxjb3VudHJ5X2NvZGUYASABKAkifQoYR2V0Q291bnRyeUNvbmZpZ1Jlc3BvbnNlEiwKB2NvdW50cnkYASABKAsyGy5lZGlmeS5jb3VudHJpZXMudjEuQ291bnRyeRIzCgh2ZXJzaW9ucxgCIAMoCzIhLmVkaWZ5LmNvdW50cmllcy52MS5Db3VudHJ5Q29uZmlnIpYCChpSZWNvcmRDb3VudHJ5Q29uZmlnUmVxdWVzdBIUCgxjb3VudHJ5X2NvZGUYASABKAkSGAoQZGVmYXVsdF9sYW5ndWFnZRgCIAEoCRIRCglsYW5ndWFnZXMYAyADKAkSFQoNY3VycmVuY3lfY29kZRgEIAEoCRIcChRjdXJyZW5jeV9taW5vcl91bml0cxgFIAEoBRIRCgl0aW1lX3pvbmUYBiABKAkSEwoLZGF0ZV9mb3JtYXQYByABKAkSEQoJY2FsZW5kYXJzGAggAygJEhYKDmZ5X3N0YXJ0X21vbnRoGAkgASgFEhYKDmVmZmVjdGl2ZV9mcm9tGAogASgJEhUKDWNoYW5nZV9yZWFzb24YCyABKAkigAEKG1JlY29yZENvdW50cnlDb25maWdSZXNwb25zZRIsCgdjb3VudHJ5GAEgASgLMhsuZWRpZnkuY291bnRyaWVzLnYxLkNvdW50cnkSMwoIcmVjb3JkZWQYAiABKAsyIS5lZGlmeS5jb3VudHJpZXMudjEuQ291bnRyeUNvbmZpZyKGAwoKTWVtYmVyc2hpcBIKCgJpZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJEhQKDGNvdW50cnlfY29kZRgDIAEoCRIUCgxjb3VudHJ5X25hbWUYBCABKAkSFQoNY291bnRyeV9zdGF0ZRgFIAEoCRISCgppc19kZWZhdWx0GAYgASgIEhYKDmVmZmVjdGl2ZV9mcm9tGAcgASgJEhcKD2VmZmVjdGl2ZV91bnRpbBgIIAEoCRISCgpncmFudGVkX2J5GAkgASgJEhQKDGdyYW50X3JlYXNvbhgKIAEoCRISCgpncmFudGVkX2F0GAsgASgJEhIKCnJldm9rZWRfYnkYDCABKAkSEgoKcmV2b2tlZF9hdBgNIAEoCRIVCg1yZXZva2VfcmVhc29uGA4gASgJEhAKCGluX2ZvcmNlGA8gASgIEhQKDHJvbGVzX3NvdXJjZRgQIAEoCRIuCgVyb2xlcxgRIAMoCzIfLmVkaWZ5LmNvdW50cmllcy52MS5Db3VudHJ5Um9sZSKNAgoLQ291bnRyeVJvbGUSCgoCaWQYASABKAkSFQoNbWVtYmVyc2hpcF9pZBgCIAEoCRIMCgRyb2xlGAMgASgJEhIKCnNjb3BlX3R5cGUYBCABKAkSEgoKcmVnaW9uX2lkcxgFIAMoCRIUCgxyZWdpb25fbmFtZXMYBiADKAkSEgoKZ3JhbnRlZF9ieRgHIAEoCRIUCgxncmFudF9yZWFzb24YCCABKAkSEgoKZ3JhbnRlZF9hdBgJIAEoCRISCgpyZXZva2VkX2J5GAogASgJEhIKCnJldm9rZWRfYXQYCyABKAkSFQoNcmV2b2tlX3JlYXNvbhgMIAEoCRISCgpyb2xlX2xhYmVsGA0gASgJIkEKDkFzc2lnbmFibGVSb2xlEgwKBHJvbGUYASABKAkSEgoKc2NvcGVfdHlwZRgCIAEoCRINCgVsYWJlbBgDIAEoCSI4CgZSZWdpb24SCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIUCgxjb3VudHJ5X2NvZGUYAyABKAkiKQoWTGlzdE1lbWJlcnNoaXBzUmVxdWVzdBIPCgd1c2VyX2lkGAEgASgJIrkBChdMaXN0TWVtYmVyc2hpcHNSZXNwb25zZRIzCgttZW1iZXJzaGlwcxgBIAMoCzIeLmVkaWZ5LmNvdW50cmllcy52MS5NZW1iZXJzaGlwEjwKEGFzc2lnbmFibGVfcm9sZXMYAiADKAsyIi5lZGlmeS5jb3VudHJpZXMudjEuQXNzaWduYWJsZVJvbGUSKwoHcmVnaW9ucxgDIAMoCzIaLmVkaWZ5LmNvdW50cmllcy52MS5SZWdpb24igAEKFkdyYW50TWVtYmVyc2hpcFJlcXVlc3QSDwoHdXNlcl9pZBgBIAEoCRIUCgxjb3VudHJ5X2NvZGUYAiABKAkSFgoOZWZmZWN0aXZlX2Zyb20YAyABKAkSFwoPZWZmZWN0aXZlX3VudGlsGAQgASgJEg4KBnJlYXNvbhgFIAEoCSJKChdHcmFudE1lbWJlcnNoaXBSZXNwb25zZRIvCgdncmFudGVkGAEgASgLMh4uZWRpZnkuY291bnRyaWVzLnYxLk1lbWJlcnNoaXAiQAoXUmV2b2tlTWVtYmVyc2hpcFJlcXVlc3QSFQoNbWVtYmVyc2hpcF9pZBgBIAEoCRIOCgZyZWFzb24YAiABKAkiSwoYUmV2b2tlTWVtYmVyc2hpcFJlc3BvbnNlEi8KB3Jldm9rZWQYASABKAsyHi5lZGlmeS5jb3VudHJpZXMudjEuTWVtYmVyc2hpcCJjChhBc3NpZ25Db3VudHJ5Um9sZVJlcXVlc3QSFQoNbWVtYmVyc2hpcF9pZBgBIAEoCRIMCgRyb2xlGAIgASgJEhIKCnJlZ2lvbl9pZHMYAyADKAkSDgoGcmVhc29uGAQgASgJIk8KGUFzc2lnbkNvdW50cnlSb2xlUmVzcG9uc2USMgoKbWVtYmVyc2hpcBgBIAEoCzIeLmVkaWZ5LmNvdW50cmllcy52MS5NZW1iZXJzaGlwIjsKGFJldm9rZUNvdW50cnlSb2xlUmVxdWVzdBIPCgdyb2xlX2lkGAEgASgJEg4KBnJlYXNvbhgCIAEoCSJPChlSZXZva2VDb3VudHJ5Um9sZVJlc3BvbnNlEjIKCm1lbWJlcnNoaXAYASABKAsyHi5lZGlmeS5jb3VudHJpZXMudjEuTWVtYmVyc2hpcDKIBwoOQ291bnRyeVNlcnZpY2USZAoNTGlzdENvdW50cmllcxIoLmVkaWZ5LmNvdW50cmllcy52MS5MaXN0Q291bnRyaWVzUmVxdWVzdBopLmVkaWZ5LmNvdW50cmllcy52MS5MaXN0Q291bnRyaWVzUmVzcG9uc2USbQoQR2V0Q291bnRyeUNvbmZpZxIrLmVkaWZ5LmNvdW50cmllcy52MS5HZXRDb3VudHJ5Q29uZmlnUmVxdWVzdBosLmVkaWZ5LmNvdW50cmllcy52MS5HZXRDb3VudHJ5Q29uZmlnUmVzcG9uc2USdgoTUmVjb3JkQ291bnRyeUNvbmZpZxIuLmVkaWZ5LmNvdW50cmllcy52MS5SZWNvcmRDb3VudHJ5Q29uZmlnUmVxdWVzdBovLmVkaWZ5LmNvdW50cmllcy52MS5SZWNvcmRDb3VudHJ5Q29uZmlnUmVzcG9uc2USagoPTGlzdE1lbWJlcnNoaXBzEiouZWRpZnkuY291bnRyaWVzLnYxLkxpc3RNZW1iZXJzaGlwc1JlcXVlc3QaKy5lZGlmeS5jb3VudHJpZXMudjEuTGlzdE1lbWJlcnNoaXBzUmVzcG9uc2USagoPR3JhbnRNZW1iZXJzaGlwEiouZWRpZnkuY291bnRyaWVzLnYxLkdyYW50TWVtYmVyc2hpcFJlcXVlc3QaKy5lZGlmeS5jb3VudHJpZXMudjEuR3JhbnRNZW1iZXJzaGlwUmVzcG9uc2USbQoQUmV2b2tlTWVtYmVyc2hpcBIrLmVkaWZ5LmNvdW50cmllcy52MS5SZXZva2VNZW1iZXJzaGlwUmVxdWVzdBosLmVkaWZ5LmNvdW50cmllcy52MS5SZXZva2VNZW1iZXJzaGlwUmVzcG9uc2UScAoRQXNzaWduQ291bnRyeVJvbGUSLC5lZGlmeS5jb3VudHJpZXMudjEuQXNzaWduQ291bnRyeVJvbGVSZXF1ZXN0Gi0uZWRpZnkuY291bnRyaWVzLnYxLkFzc2lnbkNvdW50cnlSb2xlUmVzcG9uc2UScAoRUmV2b2tlQ291bnRyeVJvbGUSLC5lZGlmeS5jb3VudHJpZXMudjEuUmV2b2tlQ291bnRyeVJvbGVSZXF1ZXN0Gi0uZWRpZnkuY291bnRyaWVzLnYxLlJldm9rZUNvdW50cnlSb2xlUmVzcG9uc2VC8AEKFmNvbS5lZGlmeS5jb3VudHJpZXMudjFCDkNvdW50cmllc1Byb3RvUAFaXGdpdGh1Yi5jb20vTy1NYXJpbzg4L2VkaWZ5LXBsYW5uaW5nLXRvb2wvcGxhdGZvcm0vYmFja2VuZC9nZW4vZWRpZnkvY291bnRyaWVzL3YxO2NvdW50cmllc3YxogIDRUNYqgISRWRpZnkuQ291bnRyaWVzLlYxygISRWRpZnlcQ291bnRyaWVzXFYx4gIeRWRpZnlcQ291bnRyaWVzXFYxXEdQQk1ldGFkYXRh6gIURWRpZnk6OkNvdW50cmllczo6VjFiBnByb3RvMw");
+  fileDesc("CiJlZGlmeS9jb3VudHJpZXMvdjEvY291bnRyaWVzLnByb3RvEhJlZGlmeS5jb3VudHJpZXMudjEinwEKB0NvdW50cnkSCgoCaWQYASABKAkSDAoEY29kZRgCIAEoCRIMCgRuYW1lGAMgASgJEg0KBXN0YXRlGAQgASgJEhQKDGFjdGl2YXRlZF9vbhgFIAEoCRIxCgZjb25maWcYBiABKAsyIS5lZGlmeS5jb3VudHJpZXMudjEuQ291bnRyeUNvbmZpZxIUCgxyb2xlc19zb3VyY2UYByABKAki2gIKDUNvdW50cnlDb25maWcSDwoHdmVyc2lvbhgBIAEoBRIYChBkZWZhdWx0X2xhbmd1YWdlGAIgASgJEhEKCWxhbmd1YWdlcxgDIAMoCRIVCg1jdXJyZW5jeV9jb2RlGAQgASgJEhwKFGN1cnJlbmN5X21pbm9yX3VuaXRzGAUgASgFEhEKCXRpbWVfem9uZRgGIAEoCRITCgtkYXRlX2Zvcm1hdBgHIAEoCRIRCgljYWxlbmRhcnMYCCADKAkSFgoOZnlfc3RhcnRfbW9udGgYCSABKAUSFgoOZWZmZWN0aXZlX2Zyb20YCiABKAkSFwoPZWZmZWN0aXZlX3VudGlsGAsgASgJEhIKCmNoYW5nZWRfYnkYDCABKAkSFQoNY2hhbmdlX3JlYXNvbhgNIAEoCRITCgthcHByb3ZlZF9ieRgOIAEoCRISCgpjcmVhdGVkX2F0GA8gASgJIhYKFExpc3RDb3VudHJpZXNSZXF1ZXN0IkcKFUxpc3RDb3VudHJpZXNSZXNwb25zZRIuCgljb3VudHJpZXMYASADKAsyGy5lZGlmeS5jb3VudHJpZXMudjEuQ291bnRyeSIvChdHZXRDb3VudHJ5Q29uZmlnUmVxdWVzdBIUCgxjb3VudHJ5X2NvZGUYASABKAkifQoYR2V0Q291bnRyeUNvbmZpZ1Jlc3BvbnNlEiwKB2NvdW50cnkYASABKAsyGy5lZGlmeS5jb3VudHJpZXMudjEuQ291bnRyeRIzCgh2ZXJzaW9ucxgCIAMoCzIhLmVkaWZ5LmNvdW50cmllcy52MS5Db3VudHJ5Q29uZmlnIpYCChpSZWNvcmRDb3VudHJ5Q29uZmlnUmVxdWVzdBIUCgxjb3VudHJ5X2NvZGUYASABKAkSGAoQZGVmYXVsdF9sYW5ndWFnZRgCIAEoCRIRCglsYW5ndWFnZXMYAyADKAkSFQoNY3VycmVuY3lfY29kZRgEIAEoCRIcChRjdXJyZW5jeV9taW5vcl91bml0cxgFIAEoBRIRCgl0aW1lX3pvbmUYBiABKAkSEwoLZGF0ZV9mb3JtYXQYByABKAkSEQoJY2FsZW5kYXJzGAggAygJEhYKDmZ5X3N0YXJ0X21vbnRoGAkgASgFEhYKDmVmZmVjdGl2ZV9mcm9tGAogASgJEhUKDWNoYW5nZV9yZWFzb24YCyABKAkigAEKG1JlY29yZENvdW50cnlDb25maWdSZXNwb25zZRIsCgdjb3VudHJ5GAEgASgLMhsuZWRpZnkuY291bnRyaWVzLnYxLkNvdW50cnkSMwoIcmVjb3JkZWQYAiABKAsyIS5lZGlmeS5jb3VudHJpZXMudjEuQ291bnRyeUNvbmZpZyKGAwoKTWVtYmVyc2hpcBIKCgJpZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJEhQKDGNvdW50cnlfY29kZRgDIAEoCRIUCgxjb3VudHJ5X25hbWUYBCABKAkSFQoNY291bnRyeV9zdGF0ZRgFIAEoCRISCgppc19kZWZhdWx0GAYgASgIEhYKDmVmZmVjdGl2ZV9mcm9tGAcgASgJEhcKD2VmZmVjdGl2ZV91bnRpbBgIIAEoCRISCgpncmFudGVkX2J5GAkgASgJEhQKDGdyYW50X3JlYXNvbhgKIAEoCRISCgpncmFudGVkX2F0GAsgASgJEhIKCnJldm9rZWRfYnkYDCABKAkSEgoKcmV2b2tlZF9hdBgNIAEoCRIVCg1yZXZva2VfcmVhc29uGA4gASgJEhAKCGluX2ZvcmNlGA8gASgIEhQKDHJvbGVzX3NvdXJjZRgQIAEoCRIuCgVyb2xlcxgRIAMoCzIfLmVkaWZ5LmNvdW50cmllcy52MS5Db3VudHJ5Um9sZSKNAgoLQ291bnRyeVJvbGUSCgoCaWQYASABKAkSFQoNbWVtYmVyc2hpcF9pZBgCIAEoCRIMCgRyb2xlGAMgASgJEhIKCnNjb3BlX3R5cGUYBCABKAkSEgoKcmVnaW9uX2lkcxgFIAMoCRIUCgxyZWdpb25fbmFtZXMYBiADKAkSEgoKZ3JhbnRlZF9ieRgHIAEoCRIUCgxncmFudF9yZWFzb24YCCABKAkSEgoKZ3JhbnRlZF9hdBgJIAEoCRISCgpyZXZva2VkX2J5GAogASgJEhIKCnJldm9rZWRfYXQYCyABKAkSFQoNcmV2b2tlX3JlYXNvbhgMIAEoCRISCgpyb2xlX2xhYmVsGA0gASgJIkEKDkFzc2lnbmFibGVSb2xlEgwKBHJvbGUYASABKAkSEgoKc2NvcGVfdHlwZRgCIAEoCRINCgVsYWJlbBgDIAEoCSI4CgZSZWdpb24SCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIUCgxjb3VudHJ5X2NvZGUYAyABKAkiKQoWTGlzdE1lbWJlcnNoaXBzUmVxdWVzdBIPCgd1c2VyX2lkGAEgASgJIrkBChdMaXN0TWVtYmVyc2hpcHNSZXNwb25zZRIzCgttZW1iZXJzaGlwcxgBIAMoCzIeLmVkaWZ5LmNvdW50cmllcy52MS5NZW1iZXJzaGlwEjwKEGFzc2lnbmFibGVfcm9sZXMYAiADKAsyIi5lZGlmeS5jb3VudHJpZXMudjEuQXNzaWduYWJsZVJvbGUSKwoHcmVnaW9ucxgDIAMoCzIaLmVkaWZ5LmNvdW50cmllcy52MS5SZWdpb24igAEKFkdyYW50TWVtYmVyc2hpcFJlcXVlc3QSDwoHdXNlcl9pZBgBIAEoCRIUCgxjb3VudHJ5X2NvZGUYAiABKAkSFgoOZWZmZWN0aXZlX2Zyb20YAyABKAkSFwoPZWZmZWN0aXZlX3VudGlsGAQgASgJEg4KBnJlYXNvbhgFIAEoCSJKChdHcmFudE1lbWJlcnNoaXBSZXNwb25zZRIvCgdncmFudGVkGAEgASgLMh4uZWRpZnkuY291bnRyaWVzLnYxLk1lbWJlcnNoaXAiQAoXUmV2b2tlTWVtYmVyc2hpcFJlcXVlc3QSFQoNbWVtYmVyc2hpcF9pZBgBIAEoCRIOCgZyZWFzb24YAiABKAkiSwoYUmV2b2tlTWVtYmVyc2hpcFJlc3BvbnNlEi8KB3Jldm9rZWQYASABKAsyHi5lZGlmeS5jb3VudHJpZXMudjEuTWVtYmVyc2hpcCJjChhBc3NpZ25Db3VudHJ5Um9sZVJlcXVlc3QSFQoNbWVtYmVyc2hpcF9pZBgBIAEoCRIMCgRyb2xlGAIgASgJEhIKCnJlZ2lvbl9pZHMYAyADKAkSDgoGcmVhc29uGAQgASgJIk8KGUFzc2lnbkNvdW50cnlSb2xlUmVzcG9uc2USMgoKbWVtYmVyc2hpcBgBIAEoCzIeLmVkaWZ5LmNvdW50cmllcy52MS5NZW1iZXJzaGlwIjsKGFJldm9rZUNvdW50cnlSb2xlUmVxdWVzdBIPCgdyb2xlX2lkGAEgASgJEg4KBnJlYXNvbhgCIAEoCSJPChlSZXZva2VDb3VudHJ5Um9sZVJlc3BvbnNlEjIKCm1lbWJlcnNoaXAYASABKAsyHi5lZGlmeS5jb3VudHJpZXMudjEuTWVtYmVyc2hpcCKZAQoOQWRtaW5Vbml0TGV2ZWwSCgoCaWQYASABKAkSFgoOY2Fub25pY2FsX3R5cGUYAiABKAkSEwoLbG9jYWxfbGFiZWwYAyABKAkSDQoFbGV2ZWwYBCABKAUSEwoLaXNfcmVxdWlyZWQYBSABKAgSEgoKdW5pdF9jb3VudBgGIAEoAxIWCg52ZXJpZmllZF9jb3VudBgHIAEoAyLBAQoJQWRtaW5Vbml0EgoKAmlkGAEgASgJEhUKDW9mZmljaWFsX25hbWUYAiABKAkSFQoNb2ZmaWNpYWxfY29kZRgDIAEoCRIQCghsZXZlbF9pZBgEIAEoCRITCgtsZXZlbF9sYWJlbBgFIAEoCRIRCglwYXJlbnRfaWQYBiABKAkSGwoTdmVyaWZpY2F0aW9uX3N0YXR1cxgHIAEoCRIOCgZzb3VyY2UYCCABKAkSEwoLY2hpbGRfY291bnQYCSABKAMiMgoaTGlzdEFkbWluVW5pdExldmVsc1JlcXVlc3QSFAoMY291bnRyeV9jb2RlGAEgASgJIlEKG0xpc3RBZG1pblVuaXRMZXZlbHNSZXNwb25zZRIyCgZsZXZlbHMYASADKAsyIi5lZGlmeS5jb3VudHJpZXMudjEuQWRtaW5Vbml0TGV2ZWwiXQoVTGlzdEFkbWluVW5pdHNSZXF1ZXN0EhQKDGNvdW50cnlfY29kZRgBIAEoCRIRCglwYXJlbnRfaWQYAiABKAkSDQoFcXVlcnkYAyABKAkSDAoEcGFnZRgEIAEoBSKRAQoWTGlzdEFkbWluVW5pdHNSZXNwb25zZRIsCgV1bml0cxgBIAMoCzIdLmVkaWZ5LmNvdW50cmllcy52MS5BZG1pblVuaXQSLAoFdHJhaWwYAiADKAsyHS5lZGlmeS5jb3VudHJpZXMudjEuQWRtaW5Vbml0EgwKBHBhZ2UYAyABKAUSDQoFdG90YWwYBCABKAMihAEKG0RlZmluZUFkbWluVW5pdExldmVsUmVxdWVzdBIUCgxjb3VudHJ5X2NvZGUYASABKAkSFgoOY2Fub25pY2FsX3R5cGUYAiABKAkSEwoLbG9jYWxfbGFiZWwYAyABKAkSDQoFbGV2ZWwYBCABKAUSEwoLaXNfcmVxdWlyZWQYBSABKAgiUQocRGVmaW5lQWRtaW5Vbml0TGV2ZWxSZXNwb25zZRIxCgVsZXZlbBgBIAEoCzIiLmVkaWZ5LmNvdW50cmllcy52MS5BZG1pblVuaXRMZXZlbCJ+ChNBZGRBZG1pblVuaXRSZXF1ZXN0EhQKDGNvdW50cnlfY29kZRgBIAEoCRIQCghsZXZlbF9pZBgCIAEoCRIRCglwYXJlbnRfaWQYAyABKAkSFQoNb2ZmaWNpYWxfbmFtZRgEIAEoCRIVCg1vZmZpY2lhbF9jb2RlGAUgASgJIkMKFEFkZEFkbWluVW5pdFJlc3BvbnNlEisKBHVuaXQYASABKAsyHS5lZGlmeS5jb3VudHJpZXMudjEuQWRtaW5Vbml0MscKCg5Db3VudHJ5U2VydmljZRJkCg1MaXN0Q291bnRyaWVzEiguZWRpZnkuY291bnRyaWVzLnYxLkxpc3RDb3VudHJpZXNSZXF1ZXN0GikuZWRpZnkuY291bnRyaWVzLnYxLkxpc3RDb3VudHJpZXNSZXNwb25zZRJtChBHZXRDb3VudHJ5Q29uZmlnEisuZWRpZnkuY291bnRyaWVzLnYxLkdldENvdW50cnlDb25maWdSZXF1ZXN0GiwuZWRpZnkuY291bnRyaWVzLnYxLkdldENvdW50cnlDb25maWdSZXNwb25zZRJ2ChNSZWNvcmRDb3VudHJ5Q29uZmlnEi4uZWRpZnkuY291bnRyaWVzLnYxLlJlY29yZENvdW50cnlDb25maWdSZXF1ZXN0Gi8uZWRpZnkuY291bnRyaWVzLnYxLlJlY29yZENvdW50cnlDb25maWdSZXNwb25zZRJqCg9MaXN0TWVtYmVyc2hpcHMSKi5lZGlmeS5jb3VudHJpZXMudjEuTGlzdE1lbWJlcnNoaXBzUmVxdWVzdBorLmVkaWZ5LmNvdW50cmllcy52MS5MaXN0TWVtYmVyc2hpcHNSZXNwb25zZRJqCg9HcmFudE1lbWJlcnNoaXASKi5lZGlmeS5jb3VudHJpZXMudjEuR3JhbnRNZW1iZXJzaGlwUmVxdWVzdBorLmVkaWZ5LmNvdW50cmllcy52MS5HcmFudE1lbWJlcnNoaXBSZXNwb25zZRJtChBSZXZva2VNZW1iZXJzaGlwEisuZWRpZnkuY291bnRyaWVzLnYxLlJldm9rZU1lbWJlcnNoaXBSZXF1ZXN0GiwuZWRpZnkuY291bnRyaWVzLnYxLlJldm9rZU1lbWJlcnNoaXBSZXNwb25zZRJwChFBc3NpZ25Db3VudHJ5Um9sZRIsLmVkaWZ5LmNvdW50cmllcy52MS5Bc3NpZ25Db3VudHJ5Um9sZVJlcXVlc3QaLS5lZGlmeS5jb3VudHJpZXMudjEuQXNzaWduQ291bnRyeVJvbGVSZXNwb25zZRJwChFSZXZva2VDb3VudHJ5Um9sZRIsLmVkaWZ5LmNvdW50cmllcy52MS5SZXZva2VDb3VudHJ5Um9sZVJlcXVlc3QaLS5lZGlmeS5jb3VudHJpZXMudjEuUmV2b2tlQ291bnRyeVJvbGVSZXNwb25zZRJ2ChNMaXN0QWRtaW5Vbml0TGV2ZWxzEi4uZWRpZnkuY291bnRyaWVzLnYxLkxpc3RBZG1pblVuaXRMZXZlbHNSZXF1ZXN0Gi8uZWRpZnkuY291bnRyaWVzLnYxLkxpc3RBZG1pblVuaXRMZXZlbHNSZXNwb25zZRJnCg5MaXN0QWRtaW5Vbml0cxIpLmVkaWZ5LmNvdW50cmllcy52MS5MaXN0QWRtaW5Vbml0c1JlcXVlc3QaKi5lZGlmeS5jb3VudHJpZXMudjEuTGlzdEFkbWluVW5pdHNSZXNwb25zZRJ5ChREZWZpbmVBZG1pblVuaXRMZXZlbBIvLmVkaWZ5LmNvdW50cmllcy52MS5EZWZpbmVBZG1pblVuaXRMZXZlbFJlcXVlc3QaMC5lZGlmeS5jb3VudHJpZXMudjEuRGVmaW5lQWRtaW5Vbml0TGV2ZWxSZXNwb25zZRJhCgxBZGRBZG1pblVuaXQSJy5lZGlmeS5jb3VudHJpZXMudjEuQWRkQWRtaW5Vbml0UmVxdWVzdBooLmVkaWZ5LmNvdW50cmllcy52MS5BZGRBZG1pblVuaXRSZXNwb25zZULwAQoWY29tLmVkaWZ5LmNvdW50cmllcy52MUIOQ291bnRyaWVzUHJvdG9QAVpcZ2l0aHViLmNvbS9PLU1hcmlvODgvZWRpZnktcGxhbm5pbmctdG9vbC9wbGF0Zm9ybS9iYWNrZW5kL2dlbi9lZGlmeS9jb3VudHJpZXMvdjE7Y291bnRyaWVzdjGiAgNFQ1iqAhJFZGlmeS5Db3VudHJpZXMuVjHKAhJFZGlmeVxDb3VudHJpZXNcVjHiAh5FZGlmeVxDb3VudHJpZXNcVjFcR1BCTWV0YWRhdGHqAhRFZGlmeTo6Q291bnRyaWVzOjpWMWIGcHJvdG8z");
 
 /**
  * Country is one registered country.
@@ -878,6 +878,361 @@ export const RevokeCountryRoleResponseSchema: GenMessage<RevokeCountryRoleRespon
   messageDesc(file_edify_countries_v1_countries, 21);
 
 /**
+ * AdminUnitLevel is one level of a country's administrative units.
+ *
+ * @generated from message edify.countries.v1.AdminUnitLevel
+ */
+export type AdminUnitLevel = Message<"edify.countries.v1.AdminUnitLevel"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * The same word in every country: region, district, sub_county, province.
+   *
+   * @generated from field: string canonical_type = 2;
+   */
+  canonicalType: string;
+
+  /**
+   * What the country calls it.
+   *
+   * @generated from field: string local_label = 3;
+   */
+  localLabel: string;
+
+  /**
+   * 1 is the top level.
+   *
+   * @generated from field: int32 level = 4;
+   */
+  level: number;
+
+  /**
+   * @generated from field: bool is_required = 5;
+   */
+  isRequired: boolean;
+
+  /**
+   * Units at this level, and how many of them are verified.
+   *
+   * @generated from field: int64 unit_count = 6;
+   */
+  unitCount: bigint;
+
+  /**
+   * @generated from field: int64 verified_count = 7;
+   */
+  verifiedCount: bigint;
+};
+
+/**
+ * Describes the message edify.countries.v1.AdminUnitLevel.
+ * Use `create(AdminUnitLevelSchema)` to create a new message.
+ */
+export const AdminUnitLevelSchema: GenMessage<AdminUnitLevel> = /*@__PURE__*/
+  messageDesc(file_edify_countries_v1_countries, 22);
+
+/**
+ * AdminUnit is one administrative unit.
+ *
+ * @generated from message edify.countries.v1.AdminUnit
+ */
+export type AdminUnit = Message<"edify.countries.v1.AdminUnit"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string official_name = 2;
+   */
+  officialName: string;
+
+  /**
+   * Empty when the unit has none.
+   *
+   * @generated from field: string official_code = 3;
+   */
+  officialCode: string;
+
+  /**
+   * @generated from field: string level_id = 4;
+   */
+  levelId: string;
+
+  /**
+   * @generated from field: string level_label = 5;
+   */
+  levelLabel: string;
+
+  /**
+   * Empty for a unit at the top level.
+   *
+   * @generated from field: string parent_id = 6;
+   */
+  parentId: string;
+
+  /**
+   * verified, unverified or rejected.
+   *
+   * @generated from field: string verification_status = 7;
+   */
+  verificationStatus: string;
+
+  /**
+   * existing_table, import or manual.
+   *
+   * @generated from field: string source = 8;
+   */
+  source: string;
+
+  /**
+   * Units directly under this one.
+   *
+   * @generated from field: int64 child_count = 9;
+   */
+  childCount: bigint;
+};
+
+/**
+ * Describes the message edify.countries.v1.AdminUnit.
+ * Use `create(AdminUnitSchema)` to create a new message.
+ */
+export const AdminUnitSchema: GenMessage<AdminUnit> = /*@__PURE__*/
+  messageDesc(file_edify_countries_v1_countries, 23);
+
+/**
+ * @generated from message edify.countries.v1.ListAdminUnitLevelsRequest
+ */
+export type ListAdminUnitLevelsRequest = Message<"edify.countries.v1.ListAdminUnitLevelsRequest"> & {
+  /**
+   * @generated from field: string country_code = 1;
+   */
+  countryCode: string;
+};
+
+/**
+ * Describes the message edify.countries.v1.ListAdminUnitLevelsRequest.
+ * Use `create(ListAdminUnitLevelsRequestSchema)` to create a new message.
+ */
+export const ListAdminUnitLevelsRequestSchema: GenMessage<ListAdminUnitLevelsRequest> = /*@__PURE__*/
+  messageDesc(file_edify_countries_v1_countries, 24);
+
+/**
+ * @generated from message edify.countries.v1.ListAdminUnitLevelsResponse
+ */
+export type ListAdminUnitLevelsResponse = Message<"edify.countries.v1.ListAdminUnitLevelsResponse"> & {
+  /**
+   * @generated from field: repeated edify.countries.v1.AdminUnitLevel levels = 1;
+   */
+  levels: AdminUnitLevel[];
+};
+
+/**
+ * Describes the message edify.countries.v1.ListAdminUnitLevelsResponse.
+ * Use `create(ListAdminUnitLevelsResponseSchema)` to create a new message.
+ */
+export const ListAdminUnitLevelsResponseSchema: GenMessage<ListAdminUnitLevelsResponse> = /*@__PURE__*/
+  messageDesc(file_edify_countries_v1_countries, 25);
+
+/**
+ * @generated from message edify.countries.v1.ListAdminUnitsRequest
+ */
+export type ListAdminUnitsRequest = Message<"edify.countries.v1.ListAdminUnitsRequest"> & {
+  /**
+   * @generated from field: string country_code = 1;
+   */
+  countryCode: string;
+
+  /**
+   * The parent whose units are listed; empty for the top level.
+   *
+   * @generated from field: string parent_id = 2;
+   */
+  parentId: string;
+
+  /**
+   * Narrows to names containing this text (at most 100 characters).
+   *
+   * @generated from field: string query = 3;
+   */
+  query: string;
+
+  /**
+   * The page to read, from 1; at most 50 units a page.
+   *
+   * @generated from field: int32 page = 4;
+   */
+  page: number;
+};
+
+/**
+ * Describes the message edify.countries.v1.ListAdminUnitsRequest.
+ * Use `create(ListAdminUnitsRequestSchema)` to create a new message.
+ */
+export const ListAdminUnitsRequestSchema: GenMessage<ListAdminUnitsRequest> = /*@__PURE__*/
+  messageDesc(file_edify_countries_v1_countries, 26);
+
+/**
+ * @generated from message edify.countries.v1.ListAdminUnitsResponse
+ */
+export type ListAdminUnitsResponse = Message<"edify.countries.v1.ListAdminUnitsResponse"> & {
+  /**
+   * @generated from field: repeated edify.countries.v1.AdminUnit units = 1;
+   */
+  units: AdminUnit[];
+
+  /**
+   * The parent and its parents, top first; empty for the top level.
+   *
+   * @generated from field: repeated edify.countries.v1.AdminUnit trail = 2;
+   */
+  trail: AdminUnit[];
+
+  /**
+   * @generated from field: int32 page = 3;
+   */
+  page: number;
+
+  /**
+   * Units matching, across every page.
+   *
+   * @generated from field: int64 total = 4;
+   */
+  total: bigint;
+};
+
+/**
+ * Describes the message edify.countries.v1.ListAdminUnitsResponse.
+ * Use `create(ListAdminUnitsResponseSchema)` to create a new message.
+ */
+export const ListAdminUnitsResponseSchema: GenMessage<ListAdminUnitsResponse> = /*@__PURE__*/
+  messageDesc(file_edify_countries_v1_countries, 27);
+
+/**
+ * @generated from message edify.countries.v1.DefineAdminUnitLevelRequest
+ */
+export type DefineAdminUnitLevelRequest = Message<"edify.countries.v1.DefineAdminUnitLevelRequest"> & {
+  /**
+   * @generated from field: string country_code = 1;
+   */
+  countryCode: string;
+
+  /**
+   * Lower-case letters and underscores, at most 40 characters.
+   *
+   * @generated from field: string canonical_type = 2;
+   */
+  canonicalType: string;
+
+  /**
+   * At most 80 characters.
+   *
+   * @generated from field: string local_label = 3;
+   */
+  localLabel: string;
+
+  /**
+   * 1 to 12, not already held by a live level.
+   *
+   * @generated from field: int32 level = 4;
+   */
+  level: number;
+
+  /**
+   * @generated from field: bool is_required = 5;
+   */
+  isRequired: boolean;
+};
+
+/**
+ * Describes the message edify.countries.v1.DefineAdminUnitLevelRequest.
+ * Use `create(DefineAdminUnitLevelRequestSchema)` to create a new message.
+ */
+export const DefineAdminUnitLevelRequestSchema: GenMessage<DefineAdminUnitLevelRequest> = /*@__PURE__*/
+  messageDesc(file_edify_countries_v1_countries, 28);
+
+/**
+ * @generated from message edify.countries.v1.DefineAdminUnitLevelResponse
+ */
+export type DefineAdminUnitLevelResponse = Message<"edify.countries.v1.DefineAdminUnitLevelResponse"> & {
+  /**
+   * @generated from field: edify.countries.v1.AdminUnitLevel level = 1;
+   */
+  level?: AdminUnitLevel | undefined;
+};
+
+/**
+ * Describes the message edify.countries.v1.DefineAdminUnitLevelResponse.
+ * Use `create(DefineAdminUnitLevelResponseSchema)` to create a new message.
+ */
+export const DefineAdminUnitLevelResponseSchema: GenMessage<DefineAdminUnitLevelResponse> = /*@__PURE__*/
+  messageDesc(file_edify_countries_v1_countries, 29);
+
+/**
+ * @generated from message edify.countries.v1.AddAdminUnitRequest
+ */
+export type AddAdminUnitRequest = Message<"edify.countries.v1.AddAdminUnitRequest"> & {
+  /**
+   * @generated from field: string country_code = 1;
+   */
+  countryCode: string;
+
+  /**
+   * @generated from field: string level_id = 2;
+   */
+  levelId: string;
+
+  /**
+   * Required below the top level: a unit of the same country at a higher
+   * level. Empty for a unit at the top level.
+   *
+   * @generated from field: string parent_id = 3;
+   */
+  parentId: string;
+
+  /**
+   * At most 200 characters.
+   *
+   * @generated from field: string official_name = 4;
+   */
+  officialName: string;
+
+  /**
+   * Optional, at most 40 characters, unique at its level.
+   *
+   * @generated from field: string official_code = 5;
+   */
+  officialCode: string;
+};
+
+/**
+ * Describes the message edify.countries.v1.AddAdminUnitRequest.
+ * Use `create(AddAdminUnitRequestSchema)` to create a new message.
+ */
+export const AddAdminUnitRequestSchema: GenMessage<AddAdminUnitRequest> = /*@__PURE__*/
+  messageDesc(file_edify_countries_v1_countries, 30);
+
+/**
+ * @generated from message edify.countries.v1.AddAdminUnitResponse
+ */
+export type AddAdminUnitResponse = Message<"edify.countries.v1.AddAdminUnitResponse"> & {
+  /**
+   * @generated from field: edify.countries.v1.AdminUnit unit = 1;
+   */
+  unit?: AdminUnit | undefined;
+};
+
+/**
+ * Describes the message edify.countries.v1.AddAdminUnitResponse.
+ * Use `create(AddAdminUnitResponseSchema)` to create a new message.
+ */
+export const AddAdminUnitResponseSchema: GenMessage<AddAdminUnitResponse> = /*@__PURE__*/
+  messageDesc(file_edify_countries_v1_countries, 31);
+
+/**
  * Edify Global (docs/migration/80-multi-country-phase-0.md): the countries
  * the platform serves and each one's settings. A country's settings are
  * versioned: a change records a new version from a date, the one before it
@@ -975,6 +1330,50 @@ export const CountryService: GenService<{
     methodKind: "unary";
     input: typeof RevokeCountryRoleRequestSchema;
     output: typeof RevokeCountryRoleResponseSchema;
+  },
+  /**
+   * The geographic registry (docs/migration/80 §25, §26). A country's levels
+   * of administrative units, top first, each with how many units it holds.
+   *
+   * @generated from rpc edify.countries.v1.CountryService.ListAdminUnitLevels
+   */
+  listAdminUnitLevels: {
+    methodKind: "unary";
+    input: typeof ListAdminUnitLevelsRequestSchema;
+    output: typeof ListAdminUnitLevelsResponseSchema;
+  },
+  /**
+   * A country's units under one parent (or its top level), by name, with
+   * the parent's own chain up to the top.
+   *
+   * @generated from rpc edify.countries.v1.CountryService.ListAdminUnits
+   */
+  listAdminUnits: {
+    methodKind: "unary";
+    input: typeof ListAdminUnitsRequestSchema;
+    output: typeof ListAdminUnitsResponseSchema;
+  },
+  /**
+   * Define a level for a country that is not yet Active (Admin only).
+   * Uganda's levels are its existing application's and are not changed here.
+   *
+   * @generated from rpc edify.countries.v1.CountryService.DefineAdminUnitLevel
+   */
+  defineAdminUnitLevel: {
+    methodKind: "unary";
+    input: typeof DefineAdminUnitLevelRequestSchema;
+    output: typeof DefineAdminUnitLevelResponseSchema;
+  },
+  /**
+   * Add a unit to a country that is not yet Active (Admin only), under a
+   * parent of a higher level in the same country.
+   *
+   * @generated from rpc edify.countries.v1.CountryService.AddAdminUnit
+   */
+  addAdminUnit: {
+    methodKind: "unary";
+    input: typeof AddAdminUnitRequestSchema;
+    output: typeof AddAdminUnitResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_edify_countries_v1_countries, 0);

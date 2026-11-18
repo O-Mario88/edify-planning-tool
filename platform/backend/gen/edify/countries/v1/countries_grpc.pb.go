@@ -19,14 +19,18 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CountryService_ListCountries_FullMethodName       = "/edify.countries.v1.CountryService/ListCountries"
-	CountryService_GetCountryConfig_FullMethodName    = "/edify.countries.v1.CountryService/GetCountryConfig"
-	CountryService_RecordCountryConfig_FullMethodName = "/edify.countries.v1.CountryService/RecordCountryConfig"
-	CountryService_ListMemberships_FullMethodName     = "/edify.countries.v1.CountryService/ListMemberships"
-	CountryService_GrantMembership_FullMethodName     = "/edify.countries.v1.CountryService/GrantMembership"
-	CountryService_RevokeMembership_FullMethodName    = "/edify.countries.v1.CountryService/RevokeMembership"
-	CountryService_AssignCountryRole_FullMethodName   = "/edify.countries.v1.CountryService/AssignCountryRole"
-	CountryService_RevokeCountryRole_FullMethodName   = "/edify.countries.v1.CountryService/RevokeCountryRole"
+	CountryService_ListCountries_FullMethodName        = "/edify.countries.v1.CountryService/ListCountries"
+	CountryService_GetCountryConfig_FullMethodName     = "/edify.countries.v1.CountryService/GetCountryConfig"
+	CountryService_RecordCountryConfig_FullMethodName  = "/edify.countries.v1.CountryService/RecordCountryConfig"
+	CountryService_ListMemberships_FullMethodName      = "/edify.countries.v1.CountryService/ListMemberships"
+	CountryService_GrantMembership_FullMethodName      = "/edify.countries.v1.CountryService/GrantMembership"
+	CountryService_RevokeMembership_FullMethodName     = "/edify.countries.v1.CountryService/RevokeMembership"
+	CountryService_AssignCountryRole_FullMethodName    = "/edify.countries.v1.CountryService/AssignCountryRole"
+	CountryService_RevokeCountryRole_FullMethodName    = "/edify.countries.v1.CountryService/RevokeCountryRole"
+	CountryService_ListAdminUnitLevels_FullMethodName  = "/edify.countries.v1.CountryService/ListAdminUnitLevels"
+	CountryService_ListAdminUnits_FullMethodName       = "/edify.countries.v1.CountryService/ListAdminUnits"
+	CountryService_DefineAdminUnitLevel_FullMethodName = "/edify.countries.v1.CountryService/DefineAdminUnitLevel"
+	CountryService_AddAdminUnit_FullMethodName         = "/edify.countries.v1.CountryService/AddAdminUnit"
 )
 
 // CountryServiceClient is the client API for CountryService service.
@@ -64,6 +68,18 @@ type CountryServiceClient interface {
 	// Revoke a role held in a country, keeping its record (Admin only, never
 	// their own).
 	RevokeCountryRole(ctx context.Context, in *RevokeCountryRoleRequest, opts ...grpc.CallOption) (*RevokeCountryRoleResponse, error)
+	// The geographic registry (docs/migration/80 §25, §26). A country's levels
+	// of administrative units, top first, each with how many units it holds.
+	ListAdminUnitLevels(ctx context.Context, in *ListAdminUnitLevelsRequest, opts ...grpc.CallOption) (*ListAdminUnitLevelsResponse, error)
+	// A country's units under one parent (or its top level), by name, with
+	// the parent's own chain up to the top.
+	ListAdminUnits(ctx context.Context, in *ListAdminUnitsRequest, opts ...grpc.CallOption) (*ListAdminUnitsResponse, error)
+	// Define a level for a country that is not yet Active (Admin only).
+	// Uganda's levels are its existing application's and are not changed here.
+	DefineAdminUnitLevel(ctx context.Context, in *DefineAdminUnitLevelRequest, opts ...grpc.CallOption) (*DefineAdminUnitLevelResponse, error)
+	// Add a unit to a country that is not yet Active (Admin only), under a
+	// parent of a higher level in the same country.
+	AddAdminUnit(ctx context.Context, in *AddAdminUnitRequest, opts ...grpc.CallOption) (*AddAdminUnitResponse, error)
 }
 
 type countryServiceClient struct {
@@ -154,6 +170,46 @@ func (c *countryServiceClient) RevokeCountryRole(ctx context.Context, in *Revoke
 	return out, nil
 }
 
+func (c *countryServiceClient) ListAdminUnitLevels(ctx context.Context, in *ListAdminUnitLevelsRequest, opts ...grpc.CallOption) (*ListAdminUnitLevelsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListAdminUnitLevelsResponse)
+	err := c.cc.Invoke(ctx, CountryService_ListAdminUnitLevels_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *countryServiceClient) ListAdminUnits(ctx context.Context, in *ListAdminUnitsRequest, opts ...grpc.CallOption) (*ListAdminUnitsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListAdminUnitsResponse)
+	err := c.cc.Invoke(ctx, CountryService_ListAdminUnits_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *countryServiceClient) DefineAdminUnitLevel(ctx context.Context, in *DefineAdminUnitLevelRequest, opts ...grpc.CallOption) (*DefineAdminUnitLevelResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DefineAdminUnitLevelResponse)
+	err := c.cc.Invoke(ctx, CountryService_DefineAdminUnitLevel_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *countryServiceClient) AddAdminUnit(ctx context.Context, in *AddAdminUnitRequest, opts ...grpc.CallOption) (*AddAdminUnitResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddAdminUnitResponse)
+	err := c.cc.Invoke(ctx, CountryService_AddAdminUnit_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CountryServiceServer is the server API for CountryService service.
 // All implementations must embed UnimplementedCountryServiceServer
 // for forward compatibility.
@@ -189,6 +245,18 @@ type CountryServiceServer interface {
 	// Revoke a role held in a country, keeping its record (Admin only, never
 	// their own).
 	RevokeCountryRole(context.Context, *RevokeCountryRoleRequest) (*RevokeCountryRoleResponse, error)
+	// The geographic registry (docs/migration/80 §25, §26). A country's levels
+	// of administrative units, top first, each with how many units it holds.
+	ListAdminUnitLevels(context.Context, *ListAdminUnitLevelsRequest) (*ListAdminUnitLevelsResponse, error)
+	// A country's units under one parent (or its top level), by name, with
+	// the parent's own chain up to the top.
+	ListAdminUnits(context.Context, *ListAdminUnitsRequest) (*ListAdminUnitsResponse, error)
+	// Define a level for a country that is not yet Active (Admin only).
+	// Uganda's levels are its existing application's and are not changed here.
+	DefineAdminUnitLevel(context.Context, *DefineAdminUnitLevelRequest) (*DefineAdminUnitLevelResponse, error)
+	// Add a unit to a country that is not yet Active (Admin only), under a
+	// parent of a higher level in the same country.
+	AddAdminUnit(context.Context, *AddAdminUnitRequest) (*AddAdminUnitResponse, error)
 	mustEmbedUnimplementedCountryServiceServer()
 }
 
@@ -222,6 +290,18 @@ func (UnimplementedCountryServiceServer) AssignCountryRole(context.Context, *Ass
 }
 func (UnimplementedCountryServiceServer) RevokeCountryRole(context.Context, *RevokeCountryRoleRequest) (*RevokeCountryRoleResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RevokeCountryRole not implemented")
+}
+func (UnimplementedCountryServiceServer) ListAdminUnitLevels(context.Context, *ListAdminUnitLevelsRequest) (*ListAdminUnitLevelsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListAdminUnitLevels not implemented")
+}
+func (UnimplementedCountryServiceServer) ListAdminUnits(context.Context, *ListAdminUnitsRequest) (*ListAdminUnitsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListAdminUnits not implemented")
+}
+func (UnimplementedCountryServiceServer) DefineAdminUnitLevel(context.Context, *DefineAdminUnitLevelRequest) (*DefineAdminUnitLevelResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DefineAdminUnitLevel not implemented")
+}
+func (UnimplementedCountryServiceServer) AddAdminUnit(context.Context, *AddAdminUnitRequest) (*AddAdminUnitResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AddAdminUnit not implemented")
 }
 func (UnimplementedCountryServiceServer) mustEmbedUnimplementedCountryServiceServer() {}
 func (UnimplementedCountryServiceServer) testEmbeddedByValue()                        {}
@@ -388,6 +468,78 @@ func _CountryService_RevokeCountryRole_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CountryService_ListAdminUnitLevels_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAdminUnitLevelsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CountryServiceServer).ListAdminUnitLevels(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CountryService_ListAdminUnitLevels_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CountryServiceServer).ListAdminUnitLevels(ctx, req.(*ListAdminUnitLevelsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CountryService_ListAdminUnits_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAdminUnitsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CountryServiceServer).ListAdminUnits(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CountryService_ListAdminUnits_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CountryServiceServer).ListAdminUnits(ctx, req.(*ListAdminUnitsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CountryService_DefineAdminUnitLevel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DefineAdminUnitLevelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CountryServiceServer).DefineAdminUnitLevel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CountryService_DefineAdminUnitLevel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CountryServiceServer).DefineAdminUnitLevel(ctx, req.(*DefineAdminUnitLevelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CountryService_AddAdminUnit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddAdminUnitRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CountryServiceServer).AddAdminUnit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CountryService_AddAdminUnit_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CountryServiceServer).AddAdminUnit(ctx, req.(*AddAdminUnitRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CountryService_ServiceDesc is the grpc.ServiceDesc for CountryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -426,6 +578,22 @@ var CountryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RevokeCountryRole",
 			Handler:    _CountryService_RevokeCountryRole_Handler,
+		},
+		{
+			MethodName: "ListAdminUnitLevels",
+			Handler:    _CountryService_ListAdminUnitLevels_Handler,
+		},
+		{
+			MethodName: "ListAdminUnits",
+			Handler:    _CountryService_ListAdminUnits_Handler,
+		},
+		{
+			MethodName: "DefineAdminUnitLevel",
+			Handler:    _CountryService_DefineAdminUnitLevel_Handler,
+		},
+		{
+			MethodName: "AddAdminUnit",
+			Handler:    _CountryService_AddAdminUnit_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -57,6 +57,18 @@ const (
 	// CountryServiceRevokeCountryRoleProcedure is the fully-qualified name of the CountryService's
 	// RevokeCountryRole RPC.
 	CountryServiceRevokeCountryRoleProcedure = "/edify.countries.v1.CountryService/RevokeCountryRole"
+	// CountryServiceListAdminUnitLevelsProcedure is the fully-qualified name of the CountryService's
+	// ListAdminUnitLevels RPC.
+	CountryServiceListAdminUnitLevelsProcedure = "/edify.countries.v1.CountryService/ListAdminUnitLevels"
+	// CountryServiceListAdminUnitsProcedure is the fully-qualified name of the CountryService's
+	// ListAdminUnits RPC.
+	CountryServiceListAdminUnitsProcedure = "/edify.countries.v1.CountryService/ListAdminUnits"
+	// CountryServiceDefineAdminUnitLevelProcedure is the fully-qualified name of the CountryService's
+	// DefineAdminUnitLevel RPC.
+	CountryServiceDefineAdminUnitLevelProcedure = "/edify.countries.v1.CountryService/DefineAdminUnitLevel"
+	// CountryServiceAddAdminUnitProcedure is the fully-qualified name of the CountryService's
+	// AddAdminUnit RPC.
+	CountryServiceAddAdminUnitProcedure = "/edify.countries.v1.CountryService/AddAdminUnit"
 )
 
 // CountryServiceClient is a client for the edify.countries.v1.CountryService service.
@@ -82,6 +94,18 @@ type CountryServiceClient interface {
 	// Revoke a role held in a country, keeping its record (Admin only, never
 	// their own).
 	RevokeCountryRole(context.Context, *connect.Request[v1.RevokeCountryRoleRequest]) (*connect.Response[v1.RevokeCountryRoleResponse], error)
+	// The geographic registry (docs/migration/80 §25, §26). A country's levels
+	// of administrative units, top first, each with how many units it holds.
+	ListAdminUnitLevels(context.Context, *connect.Request[v1.ListAdminUnitLevelsRequest]) (*connect.Response[v1.ListAdminUnitLevelsResponse], error)
+	// A country's units under one parent (or its top level), by name, with
+	// the parent's own chain up to the top.
+	ListAdminUnits(context.Context, *connect.Request[v1.ListAdminUnitsRequest]) (*connect.Response[v1.ListAdminUnitsResponse], error)
+	// Define a level for a country that is not yet Active (Admin only).
+	// Uganda's levels are its existing application's and are not changed here.
+	DefineAdminUnitLevel(context.Context, *connect.Request[v1.DefineAdminUnitLevelRequest]) (*connect.Response[v1.DefineAdminUnitLevelResponse], error)
+	// Add a unit to a country that is not yet Active (Admin only), under a
+	// parent of a higher level in the same country.
+	AddAdminUnit(context.Context, *connect.Request[v1.AddAdminUnitRequest]) (*connect.Response[v1.AddAdminUnitResponse], error)
 }
 
 // NewCountryServiceClient constructs a client for the edify.countries.v1.CountryService service. By
@@ -143,19 +167,47 @@ func NewCountryServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(countryServiceMethods.ByName("RevokeCountryRole")),
 			connect.WithClientOptions(opts...),
 		),
+		listAdminUnitLevels: connect.NewClient[v1.ListAdminUnitLevelsRequest, v1.ListAdminUnitLevelsResponse](
+			httpClient,
+			baseURL+CountryServiceListAdminUnitLevelsProcedure,
+			connect.WithSchema(countryServiceMethods.ByName("ListAdminUnitLevels")),
+			connect.WithClientOptions(opts...),
+		),
+		listAdminUnits: connect.NewClient[v1.ListAdminUnitsRequest, v1.ListAdminUnitsResponse](
+			httpClient,
+			baseURL+CountryServiceListAdminUnitsProcedure,
+			connect.WithSchema(countryServiceMethods.ByName("ListAdminUnits")),
+			connect.WithClientOptions(opts...),
+		),
+		defineAdminUnitLevel: connect.NewClient[v1.DefineAdminUnitLevelRequest, v1.DefineAdminUnitLevelResponse](
+			httpClient,
+			baseURL+CountryServiceDefineAdminUnitLevelProcedure,
+			connect.WithSchema(countryServiceMethods.ByName("DefineAdminUnitLevel")),
+			connect.WithClientOptions(opts...),
+		),
+		addAdminUnit: connect.NewClient[v1.AddAdminUnitRequest, v1.AddAdminUnitResponse](
+			httpClient,
+			baseURL+CountryServiceAddAdminUnitProcedure,
+			connect.WithSchema(countryServiceMethods.ByName("AddAdminUnit")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // countryServiceClient implements CountryServiceClient.
 type countryServiceClient struct {
-	listCountries       *connect.Client[v1.ListCountriesRequest, v1.ListCountriesResponse]
-	getCountryConfig    *connect.Client[v1.GetCountryConfigRequest, v1.GetCountryConfigResponse]
-	recordCountryConfig *connect.Client[v1.RecordCountryConfigRequest, v1.RecordCountryConfigResponse]
-	listMemberships     *connect.Client[v1.ListMembershipsRequest, v1.ListMembershipsResponse]
-	grantMembership     *connect.Client[v1.GrantMembershipRequest, v1.GrantMembershipResponse]
-	revokeMembership    *connect.Client[v1.RevokeMembershipRequest, v1.RevokeMembershipResponse]
-	assignCountryRole   *connect.Client[v1.AssignCountryRoleRequest, v1.AssignCountryRoleResponse]
-	revokeCountryRole   *connect.Client[v1.RevokeCountryRoleRequest, v1.RevokeCountryRoleResponse]
+	listCountries        *connect.Client[v1.ListCountriesRequest, v1.ListCountriesResponse]
+	getCountryConfig     *connect.Client[v1.GetCountryConfigRequest, v1.GetCountryConfigResponse]
+	recordCountryConfig  *connect.Client[v1.RecordCountryConfigRequest, v1.RecordCountryConfigResponse]
+	listMemberships      *connect.Client[v1.ListMembershipsRequest, v1.ListMembershipsResponse]
+	grantMembership      *connect.Client[v1.GrantMembershipRequest, v1.GrantMembershipResponse]
+	revokeMembership     *connect.Client[v1.RevokeMembershipRequest, v1.RevokeMembershipResponse]
+	assignCountryRole    *connect.Client[v1.AssignCountryRoleRequest, v1.AssignCountryRoleResponse]
+	revokeCountryRole    *connect.Client[v1.RevokeCountryRoleRequest, v1.RevokeCountryRoleResponse]
+	listAdminUnitLevels  *connect.Client[v1.ListAdminUnitLevelsRequest, v1.ListAdminUnitLevelsResponse]
+	listAdminUnits       *connect.Client[v1.ListAdminUnitsRequest, v1.ListAdminUnitsResponse]
+	defineAdminUnitLevel *connect.Client[v1.DefineAdminUnitLevelRequest, v1.DefineAdminUnitLevelResponse]
+	addAdminUnit         *connect.Client[v1.AddAdminUnitRequest, v1.AddAdminUnitResponse]
 }
 
 // ListCountries calls edify.countries.v1.CountryService.ListCountries.
@@ -198,6 +250,26 @@ func (c *countryServiceClient) RevokeCountryRole(ctx context.Context, req *conne
 	return c.revokeCountryRole.CallUnary(ctx, req)
 }
 
+// ListAdminUnitLevels calls edify.countries.v1.CountryService.ListAdminUnitLevels.
+func (c *countryServiceClient) ListAdminUnitLevels(ctx context.Context, req *connect.Request[v1.ListAdminUnitLevelsRequest]) (*connect.Response[v1.ListAdminUnitLevelsResponse], error) {
+	return c.listAdminUnitLevels.CallUnary(ctx, req)
+}
+
+// ListAdminUnits calls edify.countries.v1.CountryService.ListAdminUnits.
+func (c *countryServiceClient) ListAdminUnits(ctx context.Context, req *connect.Request[v1.ListAdminUnitsRequest]) (*connect.Response[v1.ListAdminUnitsResponse], error) {
+	return c.listAdminUnits.CallUnary(ctx, req)
+}
+
+// DefineAdminUnitLevel calls edify.countries.v1.CountryService.DefineAdminUnitLevel.
+func (c *countryServiceClient) DefineAdminUnitLevel(ctx context.Context, req *connect.Request[v1.DefineAdminUnitLevelRequest]) (*connect.Response[v1.DefineAdminUnitLevelResponse], error) {
+	return c.defineAdminUnitLevel.CallUnary(ctx, req)
+}
+
+// AddAdminUnit calls edify.countries.v1.CountryService.AddAdminUnit.
+func (c *countryServiceClient) AddAdminUnit(ctx context.Context, req *connect.Request[v1.AddAdminUnitRequest]) (*connect.Response[v1.AddAdminUnitResponse], error) {
+	return c.addAdminUnit.CallUnary(ctx, req)
+}
+
 // CountryServiceHandler is an implementation of the edify.countries.v1.CountryService service.
 type CountryServiceHandler interface {
 	// The countries the reader may see, each with the settings in force today.
@@ -221,6 +293,18 @@ type CountryServiceHandler interface {
 	// Revoke a role held in a country, keeping its record (Admin only, never
 	// their own).
 	RevokeCountryRole(context.Context, *connect.Request[v1.RevokeCountryRoleRequest]) (*connect.Response[v1.RevokeCountryRoleResponse], error)
+	// The geographic registry (docs/migration/80 §25, §26). A country's levels
+	// of administrative units, top first, each with how many units it holds.
+	ListAdminUnitLevels(context.Context, *connect.Request[v1.ListAdminUnitLevelsRequest]) (*connect.Response[v1.ListAdminUnitLevelsResponse], error)
+	// A country's units under one parent (or its top level), by name, with
+	// the parent's own chain up to the top.
+	ListAdminUnits(context.Context, *connect.Request[v1.ListAdminUnitsRequest]) (*connect.Response[v1.ListAdminUnitsResponse], error)
+	// Define a level for a country that is not yet Active (Admin only).
+	// Uganda's levels are its existing application's and are not changed here.
+	DefineAdminUnitLevel(context.Context, *connect.Request[v1.DefineAdminUnitLevelRequest]) (*connect.Response[v1.DefineAdminUnitLevelResponse], error)
+	// Add a unit to a country that is not yet Active (Admin only), under a
+	// parent of a higher level in the same country.
+	AddAdminUnit(context.Context, *connect.Request[v1.AddAdminUnitRequest]) (*connect.Response[v1.AddAdminUnitResponse], error)
 }
 
 // NewCountryServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -278,6 +362,30 @@ func NewCountryServiceHandler(svc CountryServiceHandler, opts ...connect.Handler
 		connect.WithSchema(countryServiceMethods.ByName("RevokeCountryRole")),
 		connect.WithHandlerOptions(opts...),
 	)
+	countryServiceListAdminUnitLevelsHandler := connect.NewUnaryHandler(
+		CountryServiceListAdminUnitLevelsProcedure,
+		svc.ListAdminUnitLevels,
+		connect.WithSchema(countryServiceMethods.ByName("ListAdminUnitLevels")),
+		connect.WithHandlerOptions(opts...),
+	)
+	countryServiceListAdminUnitsHandler := connect.NewUnaryHandler(
+		CountryServiceListAdminUnitsProcedure,
+		svc.ListAdminUnits,
+		connect.WithSchema(countryServiceMethods.ByName("ListAdminUnits")),
+		connect.WithHandlerOptions(opts...),
+	)
+	countryServiceDefineAdminUnitLevelHandler := connect.NewUnaryHandler(
+		CountryServiceDefineAdminUnitLevelProcedure,
+		svc.DefineAdminUnitLevel,
+		connect.WithSchema(countryServiceMethods.ByName("DefineAdminUnitLevel")),
+		connect.WithHandlerOptions(opts...),
+	)
+	countryServiceAddAdminUnitHandler := connect.NewUnaryHandler(
+		CountryServiceAddAdminUnitProcedure,
+		svc.AddAdminUnit,
+		connect.WithSchema(countryServiceMethods.ByName("AddAdminUnit")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/edify.countries.v1.CountryService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case CountryServiceListCountriesProcedure:
@@ -296,6 +404,14 @@ func NewCountryServiceHandler(svc CountryServiceHandler, opts ...connect.Handler
 			countryServiceAssignCountryRoleHandler.ServeHTTP(w, r)
 		case CountryServiceRevokeCountryRoleProcedure:
 			countryServiceRevokeCountryRoleHandler.ServeHTTP(w, r)
+		case CountryServiceListAdminUnitLevelsProcedure:
+			countryServiceListAdminUnitLevelsHandler.ServeHTTP(w, r)
+		case CountryServiceListAdminUnitsProcedure:
+			countryServiceListAdminUnitsHandler.ServeHTTP(w, r)
+		case CountryServiceDefineAdminUnitLevelProcedure:
+			countryServiceDefineAdminUnitLevelHandler.ServeHTTP(w, r)
+		case CountryServiceAddAdminUnitProcedure:
+			countryServiceAddAdminUnitHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -335,4 +451,20 @@ func (UnimplementedCountryServiceHandler) AssignCountryRole(context.Context, *co
 
 func (UnimplementedCountryServiceHandler) RevokeCountryRole(context.Context, *connect.Request[v1.RevokeCountryRoleRequest]) (*connect.Response[v1.RevokeCountryRoleResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.countries.v1.CountryService.RevokeCountryRole is not implemented"))
+}
+
+func (UnimplementedCountryServiceHandler) ListAdminUnitLevels(context.Context, *connect.Request[v1.ListAdminUnitLevelsRequest]) (*connect.Response[v1.ListAdminUnitLevelsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.countries.v1.CountryService.ListAdminUnitLevels is not implemented"))
+}
+
+func (UnimplementedCountryServiceHandler) ListAdminUnits(context.Context, *connect.Request[v1.ListAdminUnitsRequest]) (*connect.Response[v1.ListAdminUnitsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.countries.v1.CountryService.ListAdminUnits is not implemented"))
+}
+
+func (UnimplementedCountryServiceHandler) DefineAdminUnitLevel(context.Context, *connect.Request[v1.DefineAdminUnitLevelRequest]) (*connect.Response[v1.DefineAdminUnitLevelResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.countries.v1.CountryService.DefineAdminUnitLevel is not implemented"))
+}
+
+func (UnimplementedCountryServiceHandler) AddAdminUnit(context.Context, *connect.Request[v1.AddAdminUnitRequest]) (*connect.Response[v1.AddAdminUnitResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.countries.v1.CountryService.AddAdminUnit is not implemented"))
 }

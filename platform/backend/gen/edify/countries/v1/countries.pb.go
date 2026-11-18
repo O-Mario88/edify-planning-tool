@@ -1648,6 +1648,693 @@ func (x *RevokeCountryRoleResponse) GetMembership() *Membership {
 	return nil
 }
 
+// AdminUnitLevel is one level of a country's administrative units.
+type AdminUnitLevel struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// The same word in every country: region, district, sub_county, province.
+	CanonicalType string `protobuf:"bytes,2,opt,name=canonical_type,json=canonicalType,proto3" json:"canonical_type,omitempty"`
+	// What the country calls it.
+	LocalLabel string `protobuf:"bytes,3,opt,name=local_label,json=localLabel,proto3" json:"local_label,omitempty"`
+	// 1 is the top level.
+	Level      int32 `protobuf:"varint,4,opt,name=level,proto3" json:"level,omitempty"`
+	IsRequired bool  `protobuf:"varint,5,opt,name=is_required,json=isRequired,proto3" json:"is_required,omitempty"`
+	// Units at this level, and how many of them are verified.
+	UnitCount     int64 `protobuf:"varint,6,opt,name=unit_count,json=unitCount,proto3" json:"unit_count,omitempty"`
+	VerifiedCount int64 `protobuf:"varint,7,opt,name=verified_count,json=verifiedCount,proto3" json:"verified_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AdminUnitLevel) Reset() {
+	*x = AdminUnitLevel{}
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AdminUnitLevel) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdminUnitLevel) ProtoMessage() {}
+
+func (x *AdminUnitLevel) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdminUnitLevel.ProtoReflect.Descriptor instead.
+func (*AdminUnitLevel) Descriptor() ([]byte, []int) {
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *AdminUnitLevel) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *AdminUnitLevel) GetCanonicalType() string {
+	if x != nil {
+		return x.CanonicalType
+	}
+	return ""
+}
+
+func (x *AdminUnitLevel) GetLocalLabel() string {
+	if x != nil {
+		return x.LocalLabel
+	}
+	return ""
+}
+
+func (x *AdminUnitLevel) GetLevel() int32 {
+	if x != nil {
+		return x.Level
+	}
+	return 0
+}
+
+func (x *AdminUnitLevel) GetIsRequired() bool {
+	if x != nil {
+		return x.IsRequired
+	}
+	return false
+}
+
+func (x *AdminUnitLevel) GetUnitCount() int64 {
+	if x != nil {
+		return x.UnitCount
+	}
+	return 0
+}
+
+func (x *AdminUnitLevel) GetVerifiedCount() int64 {
+	if x != nil {
+		return x.VerifiedCount
+	}
+	return 0
+}
+
+// AdminUnit is one administrative unit.
+type AdminUnit struct {
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	Id           string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	OfficialName string                 `protobuf:"bytes,2,opt,name=official_name,json=officialName,proto3" json:"official_name,omitempty"`
+	// Empty when the unit has none.
+	OfficialCode string `protobuf:"bytes,3,opt,name=official_code,json=officialCode,proto3" json:"official_code,omitempty"`
+	LevelId      string `protobuf:"bytes,4,opt,name=level_id,json=levelId,proto3" json:"level_id,omitempty"`
+	LevelLabel   string `protobuf:"bytes,5,opt,name=level_label,json=levelLabel,proto3" json:"level_label,omitempty"`
+	// Empty for a unit at the top level.
+	ParentId string `protobuf:"bytes,6,opt,name=parent_id,json=parentId,proto3" json:"parent_id,omitempty"`
+	// verified, unverified or rejected.
+	VerificationStatus string `protobuf:"bytes,7,opt,name=verification_status,json=verificationStatus,proto3" json:"verification_status,omitempty"`
+	// existing_table, import or manual.
+	Source string `protobuf:"bytes,8,opt,name=source,proto3" json:"source,omitempty"`
+	// Units directly under this one.
+	ChildCount    int64 `protobuf:"varint,9,opt,name=child_count,json=childCount,proto3" json:"child_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AdminUnit) Reset() {
+	*x = AdminUnit{}
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AdminUnit) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdminUnit) ProtoMessage() {}
+
+func (x *AdminUnit) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdminUnit.ProtoReflect.Descriptor instead.
+func (*AdminUnit) Descriptor() ([]byte, []int) {
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *AdminUnit) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *AdminUnit) GetOfficialName() string {
+	if x != nil {
+		return x.OfficialName
+	}
+	return ""
+}
+
+func (x *AdminUnit) GetOfficialCode() string {
+	if x != nil {
+		return x.OfficialCode
+	}
+	return ""
+}
+
+func (x *AdminUnit) GetLevelId() string {
+	if x != nil {
+		return x.LevelId
+	}
+	return ""
+}
+
+func (x *AdminUnit) GetLevelLabel() string {
+	if x != nil {
+		return x.LevelLabel
+	}
+	return ""
+}
+
+func (x *AdminUnit) GetParentId() string {
+	if x != nil {
+		return x.ParentId
+	}
+	return ""
+}
+
+func (x *AdminUnit) GetVerificationStatus() string {
+	if x != nil {
+		return x.VerificationStatus
+	}
+	return ""
+}
+
+func (x *AdminUnit) GetSource() string {
+	if x != nil {
+		return x.Source
+	}
+	return ""
+}
+
+func (x *AdminUnit) GetChildCount() int64 {
+	if x != nil {
+		return x.ChildCount
+	}
+	return 0
+}
+
+type ListAdminUnitLevelsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CountryCode   string                 `protobuf:"bytes,1,opt,name=country_code,json=countryCode,proto3" json:"country_code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAdminUnitLevelsRequest) Reset() {
+	*x = ListAdminUnitLevelsRequest{}
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAdminUnitLevelsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAdminUnitLevelsRequest) ProtoMessage() {}
+
+func (x *ListAdminUnitLevelsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAdminUnitLevelsRequest.ProtoReflect.Descriptor instead.
+func (*ListAdminUnitLevelsRequest) Descriptor() ([]byte, []int) {
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *ListAdminUnitLevelsRequest) GetCountryCode() string {
+	if x != nil {
+		return x.CountryCode
+	}
+	return ""
+}
+
+type ListAdminUnitLevelsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Levels        []*AdminUnitLevel      `protobuf:"bytes,1,rep,name=levels,proto3" json:"levels,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAdminUnitLevelsResponse) Reset() {
+	*x = ListAdminUnitLevelsResponse{}
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAdminUnitLevelsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAdminUnitLevelsResponse) ProtoMessage() {}
+
+func (x *ListAdminUnitLevelsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAdminUnitLevelsResponse.ProtoReflect.Descriptor instead.
+func (*ListAdminUnitLevelsResponse) Descriptor() ([]byte, []int) {
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *ListAdminUnitLevelsResponse) GetLevels() []*AdminUnitLevel {
+	if x != nil {
+		return x.Levels
+	}
+	return nil
+}
+
+type ListAdminUnitsRequest struct {
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	CountryCode string                 `protobuf:"bytes,1,opt,name=country_code,json=countryCode,proto3" json:"country_code,omitempty"`
+	// The parent whose units are listed; empty for the top level.
+	ParentId string `protobuf:"bytes,2,opt,name=parent_id,json=parentId,proto3" json:"parent_id,omitempty"`
+	// Narrows to names containing this text (at most 100 characters).
+	Query string `protobuf:"bytes,3,opt,name=query,proto3" json:"query,omitempty"`
+	// The page to read, from 1; at most 50 units a page.
+	Page          int32 `protobuf:"varint,4,opt,name=page,proto3" json:"page,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAdminUnitsRequest) Reset() {
+	*x = ListAdminUnitsRequest{}
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAdminUnitsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAdminUnitsRequest) ProtoMessage() {}
+
+func (x *ListAdminUnitsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAdminUnitsRequest.ProtoReflect.Descriptor instead.
+func (*ListAdminUnitsRequest) Descriptor() ([]byte, []int) {
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *ListAdminUnitsRequest) GetCountryCode() string {
+	if x != nil {
+		return x.CountryCode
+	}
+	return ""
+}
+
+func (x *ListAdminUnitsRequest) GetParentId() string {
+	if x != nil {
+		return x.ParentId
+	}
+	return ""
+}
+
+func (x *ListAdminUnitsRequest) GetQuery() string {
+	if x != nil {
+		return x.Query
+	}
+	return ""
+}
+
+func (x *ListAdminUnitsRequest) GetPage() int32 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+type ListAdminUnitsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Units []*AdminUnit           `protobuf:"bytes,1,rep,name=units,proto3" json:"units,omitempty"`
+	// The parent and its parents, top first; empty for the top level.
+	Trail []*AdminUnit `protobuf:"bytes,2,rep,name=trail,proto3" json:"trail,omitempty"`
+	Page  int32        `protobuf:"varint,3,opt,name=page,proto3" json:"page,omitempty"`
+	// Units matching, across every page.
+	Total         int64 `protobuf:"varint,4,opt,name=total,proto3" json:"total,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAdminUnitsResponse) Reset() {
+	*x = ListAdminUnitsResponse{}
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAdminUnitsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAdminUnitsResponse) ProtoMessage() {}
+
+func (x *ListAdminUnitsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAdminUnitsResponse.ProtoReflect.Descriptor instead.
+func (*ListAdminUnitsResponse) Descriptor() ([]byte, []int) {
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *ListAdminUnitsResponse) GetUnits() []*AdminUnit {
+	if x != nil {
+		return x.Units
+	}
+	return nil
+}
+
+func (x *ListAdminUnitsResponse) GetTrail() []*AdminUnit {
+	if x != nil {
+		return x.Trail
+	}
+	return nil
+}
+
+func (x *ListAdminUnitsResponse) GetPage() int32 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+func (x *ListAdminUnitsResponse) GetTotal() int64 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+type DefineAdminUnitLevelRequest struct {
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	CountryCode string                 `protobuf:"bytes,1,opt,name=country_code,json=countryCode,proto3" json:"country_code,omitempty"`
+	// Lower-case letters and underscores, at most 40 characters.
+	CanonicalType string `protobuf:"bytes,2,opt,name=canonical_type,json=canonicalType,proto3" json:"canonical_type,omitempty"`
+	// At most 80 characters.
+	LocalLabel string `protobuf:"bytes,3,opt,name=local_label,json=localLabel,proto3" json:"local_label,omitempty"`
+	// 1 to 12, not already held by a live level.
+	Level         int32 `protobuf:"varint,4,opt,name=level,proto3" json:"level,omitempty"`
+	IsRequired    bool  `protobuf:"varint,5,opt,name=is_required,json=isRequired,proto3" json:"is_required,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DefineAdminUnitLevelRequest) Reset() {
+	*x = DefineAdminUnitLevelRequest{}
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DefineAdminUnitLevelRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DefineAdminUnitLevelRequest) ProtoMessage() {}
+
+func (x *DefineAdminUnitLevelRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DefineAdminUnitLevelRequest.ProtoReflect.Descriptor instead.
+func (*DefineAdminUnitLevelRequest) Descriptor() ([]byte, []int) {
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *DefineAdminUnitLevelRequest) GetCountryCode() string {
+	if x != nil {
+		return x.CountryCode
+	}
+	return ""
+}
+
+func (x *DefineAdminUnitLevelRequest) GetCanonicalType() string {
+	if x != nil {
+		return x.CanonicalType
+	}
+	return ""
+}
+
+func (x *DefineAdminUnitLevelRequest) GetLocalLabel() string {
+	if x != nil {
+		return x.LocalLabel
+	}
+	return ""
+}
+
+func (x *DefineAdminUnitLevelRequest) GetLevel() int32 {
+	if x != nil {
+		return x.Level
+	}
+	return 0
+}
+
+func (x *DefineAdminUnitLevelRequest) GetIsRequired() bool {
+	if x != nil {
+		return x.IsRequired
+	}
+	return false
+}
+
+type DefineAdminUnitLevelResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Level         *AdminUnitLevel        `protobuf:"bytes,1,opt,name=level,proto3" json:"level,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DefineAdminUnitLevelResponse) Reset() {
+	*x = DefineAdminUnitLevelResponse{}
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DefineAdminUnitLevelResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DefineAdminUnitLevelResponse) ProtoMessage() {}
+
+func (x *DefineAdminUnitLevelResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DefineAdminUnitLevelResponse.ProtoReflect.Descriptor instead.
+func (*DefineAdminUnitLevelResponse) Descriptor() ([]byte, []int) {
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *DefineAdminUnitLevelResponse) GetLevel() *AdminUnitLevel {
+	if x != nil {
+		return x.Level
+	}
+	return nil
+}
+
+type AddAdminUnitRequest struct {
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	CountryCode string                 `protobuf:"bytes,1,opt,name=country_code,json=countryCode,proto3" json:"country_code,omitempty"`
+	LevelId     string                 `protobuf:"bytes,2,opt,name=level_id,json=levelId,proto3" json:"level_id,omitempty"`
+	// Required below the top level: a unit of the same country at a higher
+	// level. Empty for a unit at the top level.
+	ParentId string `protobuf:"bytes,3,opt,name=parent_id,json=parentId,proto3" json:"parent_id,omitempty"`
+	// At most 200 characters.
+	OfficialName string `protobuf:"bytes,4,opt,name=official_name,json=officialName,proto3" json:"official_name,omitempty"`
+	// Optional, at most 40 characters, unique at its level.
+	OfficialCode  string `protobuf:"bytes,5,opt,name=official_code,json=officialCode,proto3" json:"official_code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AddAdminUnitRequest) Reset() {
+	*x = AddAdminUnitRequest{}
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddAdminUnitRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddAdminUnitRequest) ProtoMessage() {}
+
+func (x *AddAdminUnitRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddAdminUnitRequest.ProtoReflect.Descriptor instead.
+func (*AddAdminUnitRequest) Descriptor() ([]byte, []int) {
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *AddAdminUnitRequest) GetCountryCode() string {
+	if x != nil {
+		return x.CountryCode
+	}
+	return ""
+}
+
+func (x *AddAdminUnitRequest) GetLevelId() string {
+	if x != nil {
+		return x.LevelId
+	}
+	return ""
+}
+
+func (x *AddAdminUnitRequest) GetParentId() string {
+	if x != nil {
+		return x.ParentId
+	}
+	return ""
+}
+
+func (x *AddAdminUnitRequest) GetOfficialName() string {
+	if x != nil {
+		return x.OfficialName
+	}
+	return ""
+}
+
+func (x *AddAdminUnitRequest) GetOfficialCode() string {
+	if x != nil {
+		return x.OfficialCode
+	}
+	return ""
+}
+
+type AddAdminUnitResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Unit          *AdminUnit             `protobuf:"bytes,1,opt,name=unit,proto3" json:"unit,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AddAdminUnitResponse) Reset() {
+	*x = AddAdminUnitResponse{}
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddAdminUnitResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddAdminUnitResponse) ProtoMessage() {}
+
+func (x *AddAdminUnitResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_countries_v1_countries_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddAdminUnitResponse.ProtoReflect.Descriptor instead.
+func (*AddAdminUnitResponse) Descriptor() ([]byte, []int) {
+	return file_edify_countries_v1_countries_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *AddAdminUnitResponse) GetUnit() *AdminUnit {
+	if x != nil {
+		return x.Unit
+	}
+	return nil
+}
+
 var File_edify_countries_v1_countries_proto protoreflect.FileDescriptor
 
 const file_edify_countries_v1_countries_proto_rawDesc = "" +
@@ -1798,7 +2485,63 @@ const file_edify_countries_v1_countries_proto_rawDesc = "" +
 	"\x19RevokeCountryRoleResponse\x12>\n" +
 	"\n" +
 	"membership\x18\x01 \x01(\v2\x1e.edify.countries.v1.MembershipR\n" +
-	"membership2\x88\a\n" +
+	"membership\"\xe5\x01\n" +
+	"\x0eAdminUnitLevel\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12%\n" +
+	"\x0ecanonical_type\x18\x02 \x01(\tR\rcanonicalType\x12\x1f\n" +
+	"\vlocal_label\x18\x03 \x01(\tR\n" +
+	"localLabel\x12\x14\n" +
+	"\x05level\x18\x04 \x01(\x05R\x05level\x12\x1f\n" +
+	"\vis_required\x18\x05 \x01(\bR\n" +
+	"isRequired\x12\x1d\n" +
+	"\n" +
+	"unit_count\x18\x06 \x01(\x03R\tunitCount\x12%\n" +
+	"\x0everified_count\x18\a \x01(\x03R\rverifiedCount\"\xa8\x02\n" +
+	"\tAdminUnit\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12#\n" +
+	"\rofficial_name\x18\x02 \x01(\tR\fofficialName\x12#\n" +
+	"\rofficial_code\x18\x03 \x01(\tR\fofficialCode\x12\x19\n" +
+	"\blevel_id\x18\x04 \x01(\tR\alevelId\x12\x1f\n" +
+	"\vlevel_label\x18\x05 \x01(\tR\n" +
+	"levelLabel\x12\x1b\n" +
+	"\tparent_id\x18\x06 \x01(\tR\bparentId\x12/\n" +
+	"\x13verification_status\x18\a \x01(\tR\x12verificationStatus\x12\x16\n" +
+	"\x06source\x18\b \x01(\tR\x06source\x12\x1f\n" +
+	"\vchild_count\x18\t \x01(\x03R\n" +
+	"childCount\"?\n" +
+	"\x1aListAdminUnitLevelsRequest\x12!\n" +
+	"\fcountry_code\x18\x01 \x01(\tR\vcountryCode\"Y\n" +
+	"\x1bListAdminUnitLevelsResponse\x12:\n" +
+	"\x06levels\x18\x01 \x03(\v2\".edify.countries.v1.AdminUnitLevelR\x06levels\"\x81\x01\n" +
+	"\x15ListAdminUnitsRequest\x12!\n" +
+	"\fcountry_code\x18\x01 \x01(\tR\vcountryCode\x12\x1b\n" +
+	"\tparent_id\x18\x02 \x01(\tR\bparentId\x12\x14\n" +
+	"\x05query\x18\x03 \x01(\tR\x05query\x12\x12\n" +
+	"\x04page\x18\x04 \x01(\x05R\x04page\"\xac\x01\n" +
+	"\x16ListAdminUnitsResponse\x123\n" +
+	"\x05units\x18\x01 \x03(\v2\x1d.edify.countries.v1.AdminUnitR\x05units\x123\n" +
+	"\x05trail\x18\x02 \x03(\v2\x1d.edify.countries.v1.AdminUnitR\x05trail\x12\x12\n" +
+	"\x04page\x18\x03 \x01(\x05R\x04page\x12\x14\n" +
+	"\x05total\x18\x04 \x01(\x03R\x05total\"\xbf\x01\n" +
+	"\x1bDefineAdminUnitLevelRequest\x12!\n" +
+	"\fcountry_code\x18\x01 \x01(\tR\vcountryCode\x12%\n" +
+	"\x0ecanonical_type\x18\x02 \x01(\tR\rcanonicalType\x12\x1f\n" +
+	"\vlocal_label\x18\x03 \x01(\tR\n" +
+	"localLabel\x12\x14\n" +
+	"\x05level\x18\x04 \x01(\x05R\x05level\x12\x1f\n" +
+	"\vis_required\x18\x05 \x01(\bR\n" +
+	"isRequired\"X\n" +
+	"\x1cDefineAdminUnitLevelResponse\x128\n" +
+	"\x05level\x18\x01 \x01(\v2\".edify.countries.v1.AdminUnitLevelR\x05level\"\xba\x01\n" +
+	"\x13AddAdminUnitRequest\x12!\n" +
+	"\fcountry_code\x18\x01 \x01(\tR\vcountryCode\x12\x19\n" +
+	"\blevel_id\x18\x02 \x01(\tR\alevelId\x12\x1b\n" +
+	"\tparent_id\x18\x03 \x01(\tR\bparentId\x12#\n" +
+	"\rofficial_name\x18\x04 \x01(\tR\fofficialName\x12#\n" +
+	"\rofficial_code\x18\x05 \x01(\tR\fofficialCode\"I\n" +
+	"\x14AddAdminUnitResponse\x121\n" +
+	"\x04unit\x18\x01 \x01(\v2\x1d.edify.countries.v1.AdminUnitR\x04unit2\xc7\n" +
+	"\n" +
 	"\x0eCountryService\x12d\n" +
 	"\rListCountries\x12(.edify.countries.v1.ListCountriesRequest\x1a).edify.countries.v1.ListCountriesResponse\x12m\n" +
 	"\x10GetCountryConfig\x12+.edify.countries.v1.GetCountryConfigRequest\x1a,.edify.countries.v1.GetCountryConfigResponse\x12v\n" +
@@ -1807,7 +2550,11 @@ const file_edify_countries_v1_countries_proto_rawDesc = "" +
 	"\x0fGrantMembership\x12*.edify.countries.v1.GrantMembershipRequest\x1a+.edify.countries.v1.GrantMembershipResponse\x12m\n" +
 	"\x10RevokeMembership\x12+.edify.countries.v1.RevokeMembershipRequest\x1a,.edify.countries.v1.RevokeMembershipResponse\x12p\n" +
 	"\x11AssignCountryRole\x12,.edify.countries.v1.AssignCountryRoleRequest\x1a-.edify.countries.v1.AssignCountryRoleResponse\x12p\n" +
-	"\x11RevokeCountryRole\x12,.edify.countries.v1.RevokeCountryRoleRequest\x1a-.edify.countries.v1.RevokeCountryRoleResponseB\xf0\x01\n" +
+	"\x11RevokeCountryRole\x12,.edify.countries.v1.RevokeCountryRoleRequest\x1a-.edify.countries.v1.RevokeCountryRoleResponse\x12v\n" +
+	"\x13ListAdminUnitLevels\x12..edify.countries.v1.ListAdminUnitLevelsRequest\x1a/.edify.countries.v1.ListAdminUnitLevelsResponse\x12g\n" +
+	"\x0eListAdminUnits\x12).edify.countries.v1.ListAdminUnitsRequest\x1a*.edify.countries.v1.ListAdminUnitsResponse\x12y\n" +
+	"\x14DefineAdminUnitLevel\x12/.edify.countries.v1.DefineAdminUnitLevelRequest\x1a0.edify.countries.v1.DefineAdminUnitLevelResponse\x12a\n" +
+	"\fAddAdminUnit\x12'.edify.countries.v1.AddAdminUnitRequest\x1a(.edify.countries.v1.AddAdminUnitResponseB\xf0\x01\n" +
 	"\x16com.edify.countries.v1B\x0eCountriesProtoP\x01Z\\github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/countries/v1;countriesv1\xa2\x02\x03ECX\xaa\x02\x12Edify.Countries.V1\xca\x02\x12Edify\\Countries\\V1\xe2\x02\x1eEdify\\Countries\\V1\\GPBMetadata\xea\x02\x14Edify::Countries::V1b\x06proto3"
 
 var (
@@ -1822,30 +2569,40 @@ func file_edify_countries_v1_countries_proto_rawDescGZIP() []byte {
 	return file_edify_countries_v1_countries_proto_rawDescData
 }
 
-var file_edify_countries_v1_countries_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_edify_countries_v1_countries_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
 var file_edify_countries_v1_countries_proto_goTypes = []any{
-	(*Country)(nil),                     // 0: edify.countries.v1.Country
-	(*CountryConfig)(nil),               // 1: edify.countries.v1.CountryConfig
-	(*ListCountriesRequest)(nil),        // 2: edify.countries.v1.ListCountriesRequest
-	(*ListCountriesResponse)(nil),       // 3: edify.countries.v1.ListCountriesResponse
-	(*GetCountryConfigRequest)(nil),     // 4: edify.countries.v1.GetCountryConfigRequest
-	(*GetCountryConfigResponse)(nil),    // 5: edify.countries.v1.GetCountryConfigResponse
-	(*RecordCountryConfigRequest)(nil),  // 6: edify.countries.v1.RecordCountryConfigRequest
-	(*RecordCountryConfigResponse)(nil), // 7: edify.countries.v1.RecordCountryConfigResponse
-	(*Membership)(nil),                  // 8: edify.countries.v1.Membership
-	(*CountryRole)(nil),                 // 9: edify.countries.v1.CountryRole
-	(*AssignableRole)(nil),              // 10: edify.countries.v1.AssignableRole
-	(*Region)(nil),                      // 11: edify.countries.v1.Region
-	(*ListMembershipsRequest)(nil),      // 12: edify.countries.v1.ListMembershipsRequest
-	(*ListMembershipsResponse)(nil),     // 13: edify.countries.v1.ListMembershipsResponse
-	(*GrantMembershipRequest)(nil),      // 14: edify.countries.v1.GrantMembershipRequest
-	(*GrantMembershipResponse)(nil),     // 15: edify.countries.v1.GrantMembershipResponse
-	(*RevokeMembershipRequest)(nil),     // 16: edify.countries.v1.RevokeMembershipRequest
-	(*RevokeMembershipResponse)(nil),    // 17: edify.countries.v1.RevokeMembershipResponse
-	(*AssignCountryRoleRequest)(nil),    // 18: edify.countries.v1.AssignCountryRoleRequest
-	(*AssignCountryRoleResponse)(nil),   // 19: edify.countries.v1.AssignCountryRoleResponse
-	(*RevokeCountryRoleRequest)(nil),    // 20: edify.countries.v1.RevokeCountryRoleRequest
-	(*RevokeCountryRoleResponse)(nil),   // 21: edify.countries.v1.RevokeCountryRoleResponse
+	(*Country)(nil),                      // 0: edify.countries.v1.Country
+	(*CountryConfig)(nil),                // 1: edify.countries.v1.CountryConfig
+	(*ListCountriesRequest)(nil),         // 2: edify.countries.v1.ListCountriesRequest
+	(*ListCountriesResponse)(nil),        // 3: edify.countries.v1.ListCountriesResponse
+	(*GetCountryConfigRequest)(nil),      // 4: edify.countries.v1.GetCountryConfigRequest
+	(*GetCountryConfigResponse)(nil),     // 5: edify.countries.v1.GetCountryConfigResponse
+	(*RecordCountryConfigRequest)(nil),   // 6: edify.countries.v1.RecordCountryConfigRequest
+	(*RecordCountryConfigResponse)(nil),  // 7: edify.countries.v1.RecordCountryConfigResponse
+	(*Membership)(nil),                   // 8: edify.countries.v1.Membership
+	(*CountryRole)(nil),                  // 9: edify.countries.v1.CountryRole
+	(*AssignableRole)(nil),               // 10: edify.countries.v1.AssignableRole
+	(*Region)(nil),                       // 11: edify.countries.v1.Region
+	(*ListMembershipsRequest)(nil),       // 12: edify.countries.v1.ListMembershipsRequest
+	(*ListMembershipsResponse)(nil),      // 13: edify.countries.v1.ListMembershipsResponse
+	(*GrantMembershipRequest)(nil),       // 14: edify.countries.v1.GrantMembershipRequest
+	(*GrantMembershipResponse)(nil),      // 15: edify.countries.v1.GrantMembershipResponse
+	(*RevokeMembershipRequest)(nil),      // 16: edify.countries.v1.RevokeMembershipRequest
+	(*RevokeMembershipResponse)(nil),     // 17: edify.countries.v1.RevokeMembershipResponse
+	(*AssignCountryRoleRequest)(nil),     // 18: edify.countries.v1.AssignCountryRoleRequest
+	(*AssignCountryRoleResponse)(nil),    // 19: edify.countries.v1.AssignCountryRoleResponse
+	(*RevokeCountryRoleRequest)(nil),     // 20: edify.countries.v1.RevokeCountryRoleRequest
+	(*RevokeCountryRoleResponse)(nil),    // 21: edify.countries.v1.RevokeCountryRoleResponse
+	(*AdminUnitLevel)(nil),               // 22: edify.countries.v1.AdminUnitLevel
+	(*AdminUnit)(nil),                    // 23: edify.countries.v1.AdminUnit
+	(*ListAdminUnitLevelsRequest)(nil),   // 24: edify.countries.v1.ListAdminUnitLevelsRequest
+	(*ListAdminUnitLevelsResponse)(nil),  // 25: edify.countries.v1.ListAdminUnitLevelsResponse
+	(*ListAdminUnitsRequest)(nil),        // 26: edify.countries.v1.ListAdminUnitsRequest
+	(*ListAdminUnitsResponse)(nil),       // 27: edify.countries.v1.ListAdminUnitsResponse
+	(*DefineAdminUnitLevelRequest)(nil),  // 28: edify.countries.v1.DefineAdminUnitLevelRequest
+	(*DefineAdminUnitLevelResponse)(nil), // 29: edify.countries.v1.DefineAdminUnitLevelResponse
+	(*AddAdminUnitRequest)(nil),          // 30: edify.countries.v1.AddAdminUnitRequest
+	(*AddAdminUnitResponse)(nil),         // 31: edify.countries.v1.AddAdminUnitResponse
 }
 var file_edify_countries_v1_countries_proto_depIdxs = []int32{
 	1,  // 0: edify.countries.v1.Country.config:type_name -> edify.countries.v1.CountryConfig
@@ -1862,27 +2619,40 @@ var file_edify_countries_v1_countries_proto_depIdxs = []int32{
 	8,  // 11: edify.countries.v1.RevokeMembershipResponse.revoked:type_name -> edify.countries.v1.Membership
 	8,  // 12: edify.countries.v1.AssignCountryRoleResponse.membership:type_name -> edify.countries.v1.Membership
 	8,  // 13: edify.countries.v1.RevokeCountryRoleResponse.membership:type_name -> edify.countries.v1.Membership
-	2,  // 14: edify.countries.v1.CountryService.ListCountries:input_type -> edify.countries.v1.ListCountriesRequest
-	4,  // 15: edify.countries.v1.CountryService.GetCountryConfig:input_type -> edify.countries.v1.GetCountryConfigRequest
-	6,  // 16: edify.countries.v1.CountryService.RecordCountryConfig:input_type -> edify.countries.v1.RecordCountryConfigRequest
-	12, // 17: edify.countries.v1.CountryService.ListMemberships:input_type -> edify.countries.v1.ListMembershipsRequest
-	14, // 18: edify.countries.v1.CountryService.GrantMembership:input_type -> edify.countries.v1.GrantMembershipRequest
-	16, // 19: edify.countries.v1.CountryService.RevokeMembership:input_type -> edify.countries.v1.RevokeMembershipRequest
-	18, // 20: edify.countries.v1.CountryService.AssignCountryRole:input_type -> edify.countries.v1.AssignCountryRoleRequest
-	20, // 21: edify.countries.v1.CountryService.RevokeCountryRole:input_type -> edify.countries.v1.RevokeCountryRoleRequest
-	3,  // 22: edify.countries.v1.CountryService.ListCountries:output_type -> edify.countries.v1.ListCountriesResponse
-	5,  // 23: edify.countries.v1.CountryService.GetCountryConfig:output_type -> edify.countries.v1.GetCountryConfigResponse
-	7,  // 24: edify.countries.v1.CountryService.RecordCountryConfig:output_type -> edify.countries.v1.RecordCountryConfigResponse
-	13, // 25: edify.countries.v1.CountryService.ListMemberships:output_type -> edify.countries.v1.ListMembershipsResponse
-	15, // 26: edify.countries.v1.CountryService.GrantMembership:output_type -> edify.countries.v1.GrantMembershipResponse
-	17, // 27: edify.countries.v1.CountryService.RevokeMembership:output_type -> edify.countries.v1.RevokeMembershipResponse
-	19, // 28: edify.countries.v1.CountryService.AssignCountryRole:output_type -> edify.countries.v1.AssignCountryRoleResponse
-	21, // 29: edify.countries.v1.CountryService.RevokeCountryRole:output_type -> edify.countries.v1.RevokeCountryRoleResponse
-	22, // [22:30] is the sub-list for method output_type
-	14, // [14:22] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	22, // 14: edify.countries.v1.ListAdminUnitLevelsResponse.levels:type_name -> edify.countries.v1.AdminUnitLevel
+	23, // 15: edify.countries.v1.ListAdminUnitsResponse.units:type_name -> edify.countries.v1.AdminUnit
+	23, // 16: edify.countries.v1.ListAdminUnitsResponse.trail:type_name -> edify.countries.v1.AdminUnit
+	22, // 17: edify.countries.v1.DefineAdminUnitLevelResponse.level:type_name -> edify.countries.v1.AdminUnitLevel
+	23, // 18: edify.countries.v1.AddAdminUnitResponse.unit:type_name -> edify.countries.v1.AdminUnit
+	2,  // 19: edify.countries.v1.CountryService.ListCountries:input_type -> edify.countries.v1.ListCountriesRequest
+	4,  // 20: edify.countries.v1.CountryService.GetCountryConfig:input_type -> edify.countries.v1.GetCountryConfigRequest
+	6,  // 21: edify.countries.v1.CountryService.RecordCountryConfig:input_type -> edify.countries.v1.RecordCountryConfigRequest
+	12, // 22: edify.countries.v1.CountryService.ListMemberships:input_type -> edify.countries.v1.ListMembershipsRequest
+	14, // 23: edify.countries.v1.CountryService.GrantMembership:input_type -> edify.countries.v1.GrantMembershipRequest
+	16, // 24: edify.countries.v1.CountryService.RevokeMembership:input_type -> edify.countries.v1.RevokeMembershipRequest
+	18, // 25: edify.countries.v1.CountryService.AssignCountryRole:input_type -> edify.countries.v1.AssignCountryRoleRequest
+	20, // 26: edify.countries.v1.CountryService.RevokeCountryRole:input_type -> edify.countries.v1.RevokeCountryRoleRequest
+	24, // 27: edify.countries.v1.CountryService.ListAdminUnitLevels:input_type -> edify.countries.v1.ListAdminUnitLevelsRequest
+	26, // 28: edify.countries.v1.CountryService.ListAdminUnits:input_type -> edify.countries.v1.ListAdminUnitsRequest
+	28, // 29: edify.countries.v1.CountryService.DefineAdminUnitLevel:input_type -> edify.countries.v1.DefineAdminUnitLevelRequest
+	30, // 30: edify.countries.v1.CountryService.AddAdminUnit:input_type -> edify.countries.v1.AddAdminUnitRequest
+	3,  // 31: edify.countries.v1.CountryService.ListCountries:output_type -> edify.countries.v1.ListCountriesResponse
+	5,  // 32: edify.countries.v1.CountryService.GetCountryConfig:output_type -> edify.countries.v1.GetCountryConfigResponse
+	7,  // 33: edify.countries.v1.CountryService.RecordCountryConfig:output_type -> edify.countries.v1.RecordCountryConfigResponse
+	13, // 34: edify.countries.v1.CountryService.ListMemberships:output_type -> edify.countries.v1.ListMembershipsResponse
+	15, // 35: edify.countries.v1.CountryService.GrantMembership:output_type -> edify.countries.v1.GrantMembershipResponse
+	17, // 36: edify.countries.v1.CountryService.RevokeMembership:output_type -> edify.countries.v1.RevokeMembershipResponse
+	19, // 37: edify.countries.v1.CountryService.AssignCountryRole:output_type -> edify.countries.v1.AssignCountryRoleResponse
+	21, // 38: edify.countries.v1.CountryService.RevokeCountryRole:output_type -> edify.countries.v1.RevokeCountryRoleResponse
+	25, // 39: edify.countries.v1.CountryService.ListAdminUnitLevels:output_type -> edify.countries.v1.ListAdminUnitLevelsResponse
+	27, // 40: edify.countries.v1.CountryService.ListAdminUnits:output_type -> edify.countries.v1.ListAdminUnitsResponse
+	29, // 41: edify.countries.v1.CountryService.DefineAdminUnitLevel:output_type -> edify.countries.v1.DefineAdminUnitLevelResponse
+	31, // 42: edify.countries.v1.CountryService.AddAdminUnit:output_type -> edify.countries.v1.AddAdminUnitResponse
+	31, // [31:43] is the sub-list for method output_type
+	19, // [19:31] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_edify_countries_v1_countries_proto_init() }
@@ -1896,7 +2666,7 @@ func file_edify_countries_v1_countries_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_edify_countries_v1_countries_proto_rawDesc), len(file_edify_countries_v1_countries_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   22,
+			NumMessages:   32,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

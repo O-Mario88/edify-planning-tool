@@ -5,10 +5,14 @@ package integration
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
+	"time"
 
+	"connectrpc.com/connect"
 	"github.com/jackc/pgx/v5/pgconn"
 
+	countriesv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/countries/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 )
 
@@ -115,4 +119,160 @@ FROM kt`, ke, ug); !foreignKeyRefused(err) {
 func foreignKeyRefused(err error) bool {
 	var pgErr *pgconn.PgError
 	return errors.As(err, &pgErr) && pgErr.Code == "23503"
+}
+
+// The registry through the gateway (docs/migration/80 §26): a Country
+// Director working in Uganda reads Uganda's levels and drills down its
+// units with each one's chain, and cannot see Kenya's or define a level; an
+// Admin defines Kenya's levels and adds its units under parents of a higher
+// level in Kenya, and changes none of Uganda's. Kenya's levels and units
+// are removed after.
+func TestTheGeographyRegistryThroughTheGateway(t *testing.T) {
+	ctx := context.Background()
+	var adminID, cdID, keID string
+	if err := admin.QueryRow(ctx, `SELECT (SELECT id FROM "user" WHERE email = 'admin@edify.org'),
+  (SELECT id FROM "user" WHERE email = 'cd@edify.org'), (SELECT id::text FROM country_registry.country WHERE code = 'KE')`).
+		Scan(&adminID, &cdID, &keID); err != nil {
+		t.Fatal(err)
+	}
+	clear := func() {
+		for _, sql := range []string{
+			`DELETE FROM country_registry.admin_unit WHERE country_id = $1::uuid AND created_by = $2`,
+			`DELETE FROM country_registry.admin_unit_type WHERE country_id = $1::uuid AND created_by = $2`,
+		} {
+			if _, err := admin.Exec(ctx, sql, keID, adminID); err != nil {
+				t.Fatalf("%s: %v", sql, err)
+			}
+		}
+	}
+	clear()
+	t.Cleanup(clear)
+	asAdmin, asCD := token(t, adminID, "Admin", time.Hour), token(t, cdID, "CountryDirector", time.Hour)
+	client := countriesClient()
+	codeOf := func(err error) connect.Code { return connect.CodeOf(err) }
+
+	// Uganda, read by its Country Director.
+	levels, err := client.ListAdminUnitLevels(ctx, authed(&countriesv1.ListAdminUnitLevelsRequest{CountryCode: "UG"}, asCD))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var districts int64
+	if err := admin.QueryRow(ctx, `SELECT count(*) FROM district`).Scan(&districts); err != nil {
+		t.Fatal(err)
+	}
+	words := []string{}
+	for _, l := range levels.Msg.GetLevels() {
+		words = append(words, l.GetCanonicalType())
+		if l.GetCanonicalType() == "district" && l.GetUnitCount() != districts {
+			t.Errorf("Uganda's districts: %d, want the %d existing", l.GetUnitCount(), districts)
+		}
+	}
+	if got := strings.Join(words, ","); got != "region,sub_region,district,county,sub_county,parish,village" {
+		t.Errorf("Uganda's levels: %s", got)
+	}
+	top, err := client.ListAdminUnits(ctx, authed(&countriesv1.ListAdminUnitsRequest{CountryCode: "UG"}, asCD))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var regions int64
+	if err := admin.QueryRow(ctx, `SELECT count(*) FROM region`).Scan(&regions); err != nil {
+		t.Fatal(err)
+	}
+	if top.Msg.GetTotal() < regions || len(top.Msg.GetTrail()) != 0 {
+		t.Fatalf("Uganda's top: %d units and a trail of %d, want at least the %d regions and none", top.Msg.GetTotal(),
+			len(top.Msg.GetTrail()), regions)
+	}
+	var region *countriesv1.AdminUnit
+	for _, u := range top.Msg.GetUnits() {
+		if u.GetLevelLabel() == "Region" && u.GetChildCount() > 0 {
+			region = u
+			break
+		}
+	}
+	if region == nil {
+		t.Fatal("no Ugandan region with units under it")
+	}
+	under, err := client.ListAdminUnits(ctx, authed(&countriesv1.ListAdminUnitsRequest{CountryCode: "UG", ParentId: region.GetId()}, asCD))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if under.Msg.GetTotal() != region.GetChildCount() || len(under.Msg.GetTrail()) != 1 || under.Msg.GetTrail()[0].GetId() != region.GetId() {
+		t.Errorf("under %s: %d units (want %d), trail %v", region.GetOfficialName(), under.Msg.GetTotal(), region.GetChildCount(), under.Msg.GetTrail())
+	}
+	for _, u := range under.Msg.GetUnits() {
+		if u.GetParentId() != region.GetId() || u.GetSource() != "existing_table" {
+			t.Errorf("a unit under %s: %+v", region.GetOfficialName(), u)
+		}
+	}
+	if _, err := client.ListAdminUnitLevels(ctx, authed(&countriesv1.ListAdminUnitLevelsRequest{CountryCode: "KE"}, asCD)); codeOf(err) != connect.CodeNotFound {
+		t.Errorf("a Ugandan Country Director reading Kenya's levels: %v", err)
+	}
+	if _, err := client.DefineAdminUnitLevel(ctx, authed(&countriesv1.DefineAdminUnitLevelRequest{CountryCode: "KE",
+		CanonicalType: "county", LocalLabel: "County", Level: 1}, asCD)); codeOf(err) != connect.CodePermissionDenied {
+		t.Errorf("a Country Director defining a level: %v", err)
+	}
+	if _, err := client.DefineAdminUnitLevel(ctx, authed(&countriesv1.DefineAdminUnitLevelRequest{CountryCode: "UG",
+		CanonicalType: "zone", LocalLabel: "Zone", Level: 8}, asAdmin)); codeOf(err) != connect.CodeFailedPrecondition {
+		t.Errorf("an Admin defining a level for Active Uganda: %v", err)
+	}
+
+	// Kenya, set up by an Admin.
+	define := func(word, label string, level int32) (*countriesv1.AdminUnitLevel, error) {
+		got, err := client.DefineAdminUnitLevel(ctx, authed(&countriesv1.DefineAdminUnitLevelRequest{CountryCode: "KE",
+			CanonicalType: word, LocalLabel: label, Level: level, IsRequired: level == 1}, asAdmin))
+		if err != nil {
+			return nil, err
+		}
+		return got.Msg.GetLevel(), nil
+	}
+	county, err := define("county", "County", 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	subCounty, err := define("sub_county", "Sub-county", 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := define("ward", "Ward", 2); codeOf(err) != connect.CodeFailedPrecondition {
+		t.Errorf("a second live level 2: %v", err)
+	}
+	add := func(level, parent, name, code string) (*countriesv1.AdminUnit, error) {
+		got, err := client.AddAdminUnit(ctx, authed(&countriesv1.AddAdminUnitRequest{CountryCode: "KE", LevelId: level,
+			ParentId: parent, OfficialName: name, OfficialCode: code}, asAdmin))
+		if err != nil {
+			return nil, err
+		}
+		return got.Msg.GetUnit(), nil
+	}
+	nairobi, err := add(county.GetId(), "", "Nairobi", "047")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := add(county.GetId(), "", "Another Nairobi", "047"); codeOf(err) != connect.CodeFailedPrecondition {
+		t.Errorf("a second county with code 047: %v", err)
+	}
+	if _, err := add(subCounty.GetId(), "", "Westlands", ""); codeOf(err) != connect.CodeFailedPrecondition {
+		t.Errorf("a sub-county with no parent: %v", err)
+	}
+	westlands, err := add(subCounty.GetId(), nairobi.GetId(), "Westlands", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := add(county.GetId(), westlands.GetId(), "Below", ""); codeOf(err) != connect.CodeFailedPrecondition {
+		t.Errorf("a county under a sub-county: %v", err)
+	}
+	if _, err := add(subCounty.GetId(), region.GetId(), "Over the border", ""); codeOf(err) != connect.CodeFailedPrecondition {
+		t.Errorf("a Kenyan sub-county under a Ugandan region: %v", err)
+	}
+	inNairobi, err := client.ListAdminUnits(ctx, authed(&countriesv1.ListAdminUnitsRequest{CountryCode: "KE", ParentId: nairobi.GetId()}, asAdmin))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if inNairobi.Msg.GetTotal() != 1 || inNairobi.Msg.GetUnits()[0].GetId() != westlands.GetId() ||
+		len(inNairobi.Msg.GetTrail()) != 1 || inNairobi.Msg.GetTrail()[0].GetChildCount() != 1 {
+		t.Errorf("in Nairobi: %+v", inNairobi.Msg)
+	}
+	if _, err := client.ListAdminUnits(ctx, authed(&countriesv1.ListAdminUnitsRequest{CountryCode: "UG", ParentId: nairobi.GetId()}, asAdmin)); codeOf(err) != connect.CodeNotFound {
+		t.Errorf("Nairobi read as Uganda's: %v", err)
+	}
 }

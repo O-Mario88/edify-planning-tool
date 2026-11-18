@@ -1186,3 +1186,45 @@ Next: Go reads the registry for geography: country-aware unit lists and
 pickers, Admin pages for a country's levels and units, and the cycle
 check. A country-aware school import follows (dry run, duplicates,
 rejects), keeping the School ID apart from any national ID (§8, Phase 2).
+
+## 26. Phase 2, second step: the geographic registry through the gateway (2026-11-18)
+
+`CountryService` gains four calls for the registry (`internal/countryconfig/geography.go`):
+
+| Call | Who may use it | What it does |
+|---|---|---|
+| `ListAdminUnitLevels` | Anyone, for a country they may see | The country's live levels, top first, each with its units and verified units counted |
+| `ListAdminUnits` | Anyone, for a country they may see | One parent's live units, or the top level's, by name, 50 a page, with an optional name search. Each unit has its level, source, verification status and number of children. The parent's chain up to the top comes with them |
+| `DefineAdminUnitLevel` | An Admin, for a country not yet Active | Defines a level: a canonical word, the country's label, a number from 1 to 12, and whether it is required. A second live level with the same word or number is refused |
+| `AddAdminUnit` | An Admin, for a country not yet Active | Adds a unit at a live level of the country. Below the top level it needs a parent, a live unit of the same country at a higher level. An official code is unique at its level |
+
+Which countries a reader may see follows `ListCountries`. A country the
+reader may not see answers "not found", as if it did not exist.
+
+Uganda is Active, so its geography is refused here. It changes in the
+existing application, and the seed maps the change in by id (§25).
+
+A unit's parent is always at a higher level in its own country. No chain of
+parents can therefore loop, and the database's composite keys back this
+check.
+
+Proof: `internal/countryconfig/geography_test.go` covers every request check
+(the shape of the word, the label and name lengths, the level range, ids
+only as uuids, the query length).
+`internal/integration/country_geography_test.go` goes through the gateway:
+
+- A Country Director working in Uganda reads Uganda's seven levels, with
+  the district count equal to the existing table's. They read the top
+  level, and drill into a region whose units are its existing children with
+  a one-unit chain.
+- The same Director is told Kenya does not exist and may not define a
+  level.
+- An Admin is refused a level for Uganda, defines Kenya's county and
+  sub-county levels, and is refused a second level 2.
+- The Admin adds Nairobi (code 047) and Westlands under it. The Admin is
+  refused a second 047, a sub-county with no parent, a county under a
+  sub-county, and a Kenyan sub-county under a Ugandan region.
+- Nairobi read as Uganda's is not found.
+
+The pages, the Admin's country geography tab and the location pickers, come
+with the Next.js and Expo migration, which reads these calls.

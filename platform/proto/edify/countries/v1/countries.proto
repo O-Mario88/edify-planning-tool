@@ -35,6 +35,19 @@ service CountryService {
   // Revoke a role held in a country, keeping its record (Admin only, never
   // their own).
   rpc RevokeCountryRole(RevokeCountryRoleRequest) returns (RevokeCountryRoleResponse);
+
+  // The geographic registry (docs/migration/80 §25, §26). A country's levels
+  // of administrative units, top first, each with how many units it holds.
+  rpc ListAdminUnitLevels(ListAdminUnitLevelsRequest) returns (ListAdminUnitLevelsResponse);
+  // A country's units under one parent (or its top level), by name, with
+  // the parent's own chain up to the top.
+  rpc ListAdminUnits(ListAdminUnitsRequest) returns (ListAdminUnitsResponse);
+  // Define a level for a country that is not yet Active (Admin only).
+  // Uganda's levels are its existing application's and are not changed here.
+  rpc DefineAdminUnitLevel(DefineAdminUnitLevelRequest) returns (DefineAdminUnitLevelResponse);
+  // Add a unit to a country that is not yet Active (Admin only), under a
+  // parent of a higher level in the same country.
+  rpc AddAdminUnit(AddAdminUnitRequest) returns (AddAdminUnitResponse);
 }
 
 // Country is one registered country.
@@ -263,4 +276,95 @@ message RevokeCountryRoleRequest {
 
 message RevokeCountryRoleResponse {
   Membership membership = 1;
+}
+
+// AdminUnitLevel is one level of a country's administrative units.
+message AdminUnitLevel {
+  string id = 1;
+  // The same word in every country: region, district, sub_county, province.
+  string canonical_type = 2;
+  // What the country calls it.
+  string local_label = 3;
+  // 1 is the top level.
+  int32 level = 4;
+  bool is_required = 5;
+  // Units at this level, and how many of them are verified.
+  int64 unit_count = 6;
+  int64 verified_count = 7;
+}
+
+// AdminUnit is one administrative unit.
+message AdminUnit {
+  string id = 1;
+  string official_name = 2;
+  // Empty when the unit has none.
+  string official_code = 3;
+  string level_id = 4;
+  string level_label = 5;
+  // Empty for a unit at the top level.
+  string parent_id = 6;
+  // verified, unverified or rejected.
+  string verification_status = 7;
+  // existing_table, import or manual.
+  string source = 8;
+  // Units directly under this one.
+  int64 child_count = 9;
+}
+
+message ListAdminUnitLevelsRequest {
+  string country_code = 1;
+}
+
+message ListAdminUnitLevelsResponse {
+  repeated AdminUnitLevel levels = 1;
+}
+
+message ListAdminUnitsRequest {
+  string country_code = 1;
+  // The parent whose units are listed; empty for the top level.
+  string parent_id = 2;
+  // Narrows to names containing this text (at most 100 characters).
+  string query = 3;
+  // The page to read, from 1; at most 50 units a page.
+  int32 page = 4;
+}
+
+message ListAdminUnitsResponse {
+  repeated AdminUnit units = 1;
+  // The parent and its parents, top first; empty for the top level.
+  repeated AdminUnit trail = 2;
+  int32 page = 3;
+  // Units matching, across every page.
+  int64 total = 4;
+}
+
+message DefineAdminUnitLevelRequest {
+  string country_code = 1;
+  // Lower-case letters and underscores, at most 40 characters.
+  string canonical_type = 2;
+  // At most 80 characters.
+  string local_label = 3;
+  // 1 to 12, not already held by a live level.
+  int32 level = 4;
+  bool is_required = 5;
+}
+
+message DefineAdminUnitLevelResponse {
+  AdminUnitLevel level = 1;
+}
+
+message AddAdminUnitRequest {
+  string country_code = 1;
+  string level_id = 2;
+  // Required below the top level: a unit of the same country at a higher
+  // level. Empty for a unit at the top level.
+  string parent_id = 3;
+  // At most 200 characters.
+  string official_name = 4;
+  // Optional, at most 40 characters, unique at its level.
+  string official_code = 5;
+}
+
+message AddAdminUnitResponse {
+  AdminUnit unit = 1;
 }
