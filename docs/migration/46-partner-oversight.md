@@ -510,3 +510,51 @@ The gateway reads only the columns the queue needs (`roles.sql`).
 
 Proof: one requested withdrawal of a dated hand-over, addressed to pl2:
 461 of the **624 answers of 10 accounts** show it, **0 differing**.
+
+## 46.18 A table past one page (2026-11-18)
+
+A Partner's work table longer than fifty rows is no longer handed on on the
+Core schools, Schools, Visits and Trainings tabs. It is paged as
+`{% paginate table.items table.page_param %}` pages it, with each table's
+own parameter (`partner_core_page`, `partner_schools_page`,
+`partner_visits_page`, `partner_trainings_work_page`):
+
+- a page that is not a number is the first, and one out of range is the
+  last;
+- the tick column is drawn only when a row on the page shown can be
+  withdrawn;
+- the pager (`components/table_pager.html`) shows the first and last pages
+  and one either side of the current one;
+- the feed reads the pager's "Showing 1–50 of 51" as the table's footnote,
+  since it is the first line under the table.
+
+The pager is the new shared `internal/tablepager` package.
+
+**One intended difference.** The existing pager's links carry the
+request's other keys in the request's own order. Go reads the page's query
+as a map, so it writes them in key order. The golden asks every query in
+key order, which both sides then agree on.
+
+**Still handed on:** the Clusters tab past one page, whose card the feed
+reads table by table, and more than fifty facilitated trainings.
+
+Proof: a second fixture Partner with 51 hand-overs waiting on its date. The
+golden asks its second page, a page past the end, one that is not a number,
+and a page with other keys to carry: **695 answers of 10 accounts, 53 with
+a pager, 0 differing**.
+
+## 46.19 The Partner's contact line (2026-11-18)
+
+A Partner with a contact person or a phone is no longer handed on on the
+Clusters tab. That is the only tab where the feed reads the card's head as
+a panel, and the head's first line becomes the panel's subtitle:
+
+- the follow-up line, when the Partner has a follow-up, which leaves the
+  contact line unread;
+- else the contact line (`_attach_partner_identity`): the contact person,
+  then " · " and the phone, then " · " and the regions. The regions are the
+  tick-list, else the single region column.
+
+Proof: the first fixture Partner has a person, a phone, two regions and a
+follow-up. The second has a phone alone and only the old region column,
+and its Clusters tab is asked: **705 answers of 10 accounts, 0 differing**.

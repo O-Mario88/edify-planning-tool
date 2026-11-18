@@ -57,7 +57,7 @@ func (s *Service) country(ctx context.Context, p auth.Principal, role Role, per 
 			return nil, !engaged, err
 		}
 	}
-	w := workspace{role: role, period: per, status: query.Get("status"), fyOptions: schooldirectory.FYOptions(now),
+	w := workspace{role: role, period: per, status: query.Get("status"), fyOptions: schooldirectory.FYOptions(now), query: query,
 		country: country, regions: regions, supervised: supervised, withTarget: true}
 	w.programLead = strings.TrimSpace(query.Get("program_lead"))
 	w.work = strings.TrimSpace(query.Get("work"))
@@ -285,14 +285,9 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 	v.w.work = v.tab
 	if v.tab == "clusters" {
 		// The card is read part by part there: its head names the Partner's
-		// contact, which is not drawn yet.
-		var contact bool
-		if err := s.db.QueryRow(ctx, `SELECT COALESCE(btrim(contact_person), '') <> '' OR COALESCE(btrim(phone), '') <> ''
-FROM partner WHERE id = $1`, v.partner).Scan(&contact); err != nil && !errors.Is(err, pgx.ErrNoRows) {
-			return nil, true, fmt.Errorf("partneroversight: reading the Partner's contact: %w", err)
-		}
-		if contact {
-			return nil, false, nil
+		// contact.
+		if v.contact, err = readContact(ctx, s.db, v.partner); err != nil {
+			return nil, true, err
 		}
 	}
 	if v.tab == "core" {
@@ -300,9 +295,13 @@ FROM partner WHERE id = $1`, v.partner).Scan(&contact); err != nil && !errors.Is
 			return nil, !drawn, err
 		}
 	}
-	for _, t := range tablesFor(v.shown) {
-		if tableTab[t.title] == v.tab && len(t.items) > tablePageSize {
-			return nil, false, nil
+	if v.tab == "clusters" {
+		// The Clusters tab's card is read part by part, each table with its
+		// own pager: not drawn past one page yet.
+		for _, t := range tablesFor(v.shown) {
+			if tableTab[t.title] == v.tab && len(t.items) > tablePageSize {
+				return nil, false, nil
+			}
 		}
 	}
 	if w.withTarget {
@@ -533,4 +532,35 @@ func (s *Service) lockProjectWork(ctx context.Context, p auth.Principal, items [
 		}
 	}
 	return nil
+}
+
+// readContact is the card head's contact line
+// (_attach_partner_identity): the contact person, the phone and the
+// regions, drawn only when the Partner has a contact person or a phone.
+func readContact(ctx context.Context, db schooldirectory.Querier, partner string) (string, error) {
+	var person, phone, region string
+	var regions []string
+	err := db.QueryRow(ctx, `SELECT COALESCE(contact_person, ''), COALESCE(phone, ''), COALESCE(region_name, ''), region_names
+FROM partner WHERE id = $1`, partner).Scan(&person, &phone, &region, &regions)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("partneroversight: reading the Partner's contact: %w", err)
+	}
+	if person == "" && phone == "" {
+		return "", nil
+	}
+	// Partner.regions: the tick-list, else the single column.
+	if len(regions) == 0 && region != "" {
+		regions = []string{region}
+	}
+	line := person
+	if phone != "" {
+		line += " · " + phone
+	}
+	if label := strings.Join(regions, ", "); label != "" {
+		line += " · " + label
+	}
+	return strings.Join(strings.Fields(line), " "), nil
 }

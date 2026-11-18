@@ -7,6 +7,7 @@ import (
 	"time"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/tablepager"
 )
 
 // The page with partner work in it (partner_oversight_view over
@@ -34,10 +35,12 @@ type target struct{ target, core, beyond, held int }
 
 // workView is what the page draws for a reader with partner work.
 type workView struct {
-	w          workspace
-	today      time.Time
-	leads      []leadTab
-	requests   []request
+	w        workspace
+	today    time.Time
+	leads    []leadTab
+	requests []request
+	// contact is the card head's contact line (the Clusters tab's).
+	contact    string
 	partners   []partnerTab
 	partner    string
 	partnerTab *partnerTab
@@ -98,6 +101,12 @@ func tablesFor(items []*item) []workTable {
 		{"Cluster sessions", "activity", "", pick(activities, func(i *item) bool { return i.workTab() == "clusters" })},
 	}...)
 }
+
+// tablePageParams are each work table's page parameter
+// (workspace_tables' page_param).
+var tablePageParams = map[string]string{"Core Schools assigned": "partner_core_page", "Schools assigned": "partner_schools_page",
+	"Visits": "partner_visits_page", "Trainings": "partner_trainings_work_page",
+	"Cluster work assigned": "partner_clusters_page", "Cluster sessions": "partner_activities_page"}
 
 var tableTab = map[string]string{"Core Schools assigned": "core", "Schools assigned": "schools", "Visits": "visits", "Trainings": "trainings",
 	"Cluster work assigned": "clusters", "Cluster sessions": "clusters"}
@@ -353,14 +362,23 @@ func (v *workView) card() *screensv1.PageTable {
 			out.Columns = append(out.Columns, &screensv1.PageColumn{Label: l})
 		}
 	}
+	// Fifty rows a page ({% paginate table.items table.page_param %}); the
+	// tick column only when a row on this page can be withdrawn.
+	page := tablepager.Paginate(len(table.items), tablePageSize, v.w.query, tablePageParams[table.title])
+	shown := table.items[page.Start:page.End]
+	if page.Pager != nil {
+		// The feed's footnote is the first line under the table: the
+		// pager's summary comes before the years' note.
+		out.Pager, out.Footnote = page.Pager, page.Pager.Summary
+	}
 	selectable := false
-	for _, i := range table.items {
+	for _, i := range shown {
 		if i.withdrawalLabel != "" {
 			selectable = true
 		}
 	}
 	v.selectable = (table.columns == "school" || table.columns == "core") && selectable
-	for _, i := range table.items {
+	for _, i := range shown {
 		var row *screensv1.PageRow
 		switch table.columns {
 		case "school", "core":
@@ -734,8 +752,12 @@ var followUpWords = map[string]string{
 func (v *workView) cardParts() []*screensv1.PageBlock {
 	s := summarize(v.shown)
 	subtitle := ""
+	// The head's first line is its subtitle: the follow-up, else the
+	// contact line.
 	if f := v.partnerTab.followUp; f != "" {
 		subtitle = "Needs follow-up: " + f + followUpWords[f]
+	} else {
+		subtitle = v.contact
 	}
 	chips := []*screensv1.PageLink{}
 	for _, c := range []string{

@@ -77,6 +77,9 @@ type workspace struct {
 	// regions bound a region's lens (the Regional Programme Lead): nil for
 	// a team or the whole country.
 	regions []string
+	// query is the page's query, which a table's pager reads its page from
+	// and carries on.
+	query url.Values
 }
 
 // Build answers path for p with the page's query. served is false for a
@@ -138,7 +141,8 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 			return nil, !engaged, err
 		}
 	}
-	w := workspace{role: role, period: per, status: query.Get("status"), fyOptions: schooldirectory.FYOptions(now)}
+	w := workspace{role: role, period: per, status: query.Get("status"), fyOptions: schooldirectory.FYOptions(now),
+		query: query}
 	w.programLead = strings.TrimSpace(query.Get("program_lead"))
 	if w.members, err = roster(ctx, s.db, p.UserID); err != nil {
 		return nil, true, err

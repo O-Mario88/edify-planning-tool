@@ -11,7 +11,8 @@ in this financial year, in each state the page reads apart: two hand-overs
 waiting on the Partner's date (one past its grace), work the Partner dated
 ahead, work a staff member dated that has passed, work in progress,
 evidence uploaded, a hand-back nobody has decided, verified work awaiting
-payment, and a Partner training no hand-over points at. Each carries a cost
+payment, and a Partner training no hand-over points at. A second Partner
+holds more hand-overs than one page of its table, asked page by page. Each carries a cost
 where it is scheduled, and the forms the Partner uploaded. It asks the page
 of the field officers, Programme Leads and the country's readers, over that work and over the
 development seed's completed FY 2026 work, with each Partner, team member,
@@ -56,6 +57,9 @@ READERS = [
 ]
 FY = {"period": "fy", "fy": "2026"}
 PARTNER = "gpoP1"
+# A second Partner with more hand-overs than one page of a table holds.
+BULK = "gpoP2"
+BULK_HANDOVERS = 51
 # A row before the rows that point at it; reversed, the order they leave.
 TABLES = (
     "partner",
@@ -99,7 +103,8 @@ def file_rows():
             "AND s.school_id IS NOT NULL AND btrim(s.school_id) <> '' "
             "AND NOT EXISTS (SELECT 1 FROM partner_assignment pa WHERE pa.school_id = s.id) "
             "AND NOT EXISTS (SELECT 1 FROM activity a WHERE a.school_id = s.id AND a.delivery_type = 'partner') "
-            "ORDER BY s.id LIMIT 14"
+            "ORDER BY s.id LIMIT %s",
+            [14 + BULK_HANDOVERS],
         )
         clients = [row[0] for row in cursor.fetchall()]
         # Each fixture's school, by its number: 0-8 and 17-18 are clients.
@@ -134,6 +139,10 @@ def file_rows():
             {
                 "id": PARTNER,
                 "name": "Gpo Partner",
+                "contact_person": "Grace Gpo",
+                "phone": "0700 000 001",
+                "region_name": None,
+                "region_names": ["Central", "Eastern"],
                 "user_id": None,
                 "loan_lender_id": None,
                 "deleted_at": None,
@@ -245,6 +254,63 @@ def file_rows():
                     "focus_intervention": "leadership",
                     "return_reason_category": category,
                     "return_reason": reason,
+                    "resolution": "",
+                    "resolved_at": None,
+                    "scheduled_date": None,
+                    "created_at": created,
+                    "updated_at": created,
+                },
+            )
+
+        # The bulk Partner: hand-overs waiting on its date, a minute apart
+        # so both sides read them in one order.
+        clone(
+            cursor,
+            "partner",
+            partner,
+            {
+                "id": BULK,
+                "name": "Gpo Bulk Partner",
+                # A phone alone, and the region in the single column only.
+                "contact_person": "",
+                "phone": "0700 000 002",
+                "region_name": "Northern",
+                "region_names": [],
+                "user_id": None,
+                "loan_lender_id": None,
+                "deleted_at": None,
+                "created_at": NOW,
+                "updated_at": NOW,
+            },
+        )
+        for k in range(BULK_HANDOVERS):
+            created = NOW - timedelta(days=1, minutes=k)
+            clone(
+                cursor,
+                "partner_assignment",
+                assignment,
+                {
+                    "id": f"gpoB{k:02d}",
+                    "partner_id": BULK,
+                    "school_id": clients[14 + k],
+                    "cluster_id": None,
+                    "status": "assigned",
+                    "scheduled_activity_id": None,
+                    "monitoring_staff_id": cceo,
+                    "assigning_staff_id": cceo,
+                    "purpose_of_visit": "in_school_coaching",
+                    "expected_activity_type": "school_visit",
+                    "support_type": None,
+                    "visit_number": None,
+                    "training_number": None,
+                    "project_id": None,
+                    "outside_ssa": False,
+                    "training_course_id": None,
+                    "catalogue_item_id": None,
+                    "source_activity_id": None,
+                    "focus_intervention": "leadership",
+                    "return_reason_category": None,
+                    "return_reason": None,
                     "resolution": "",
                     "resolved_at": None,
                     "scheduled_date": None,
@@ -455,6 +521,9 @@ def dump_rows():
 
 
 def ask(user, query):
+    # In key order: a pager carries the request's keys in the request's
+    # order, and Go, reading the query as a map, writes them in key order.
+    query = dict(sorted(query.items()))
     with transaction.atomic():
         status, body = read_page(user, PATH, query)
         transaction.set_rollback(True)
@@ -534,6 +603,17 @@ try:
                 {"period": "week", "week": TODAY.strftime("%G-W%V")},
             ):
                 answers.append(ask(user, {**base, **extra}))
+        # The bulk Partner's Schools assigned table, page by page: the
+        # second, one past the end, one that is not a number, and a page
+        # with other keys to carry.
+        for extra in (
+            {"partner_schools_page": "2"},
+            {"partner_schools_page": "9"},
+            {"partner_schools_page": "x"},
+            {"partner_schools_page": "2", "work": "schools", "member": "all"},
+            {"work": "clusters"},
+        ):
+            answers.append(ask(user, {"partner": BULK, **extra}))
 finally:
     clear()
 
