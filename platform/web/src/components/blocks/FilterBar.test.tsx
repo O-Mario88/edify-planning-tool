@@ -21,20 +21,20 @@ const field = (name: string): Filter => ({
 });
 
 describe('the filter row', () => {
-  it('leaves two fields at their own width, with no × where the page has no Clear', () => {
+  it('leaves two fields unarranged, with no × where the page has no Clear', () => {
     const html = renderToStaticMarkup(<FilterBar action="/schools/1000" oneRow hidden={{}} filters={[field('fy'), field('period')]} />);
-    expect(html).toContain('data-own-width="true"');
-    expect(html).toContain('flex flex-wrap');
-    expect(html).not.toContain('grid-template-columns');
-    expect(html.match(/w-auto max-w-full \[field-sizing:content\] pl-\[10px\] pr-\[30px\]/g)).toHaveLength(2);
-    expect(html).not.toContain('Clear Filters');
+    expect(html).toContain('class="edify-filter-bar flex flex-wrap items-end gap-2.5 "');
+    expect(html).not.toContain('data-edify-filter-row');
+    expect(html.match(/class="platform-filter-compact flex flex-col edify-filter-field "/g)).toHaveLength(2);
+    expect(html).not.toContain('data-edify-filter-clear');
   });
 
-  it('shares the row among three fields and ends it in the ×', () => {
+  it('arranges three fields as the existing filter row and ends it in the ×', () => {
     const html = renderToStaticMarkup(<FilterBar action="/planning" clearHref="/planning" oneRow hidden={{}} filters={[field('fy'), field('quarter'), field('district')]} />);
-    expect(html).not.toContain('data-own-width');
-    expect(html).toContain('grid-template-columns:repeat(3, minmax(0, 1fr)) auto');
-    expect(html.match(/w-full px-\[22px\]/g)).toHaveLength(3);
-    expect(html).toContain('aria-label="Clear Filters"');
+    expect(html).toContain('edify-filter-row" data-edify-filter-row=""');
+    expect(html).toContain('--edify-filter-cols:3');
+    expect(html.match(/edify-filter-field edify-filter-row__field/g)).toHaveLength(3);
+    expect(html).toContain('<span class="edify-filter-label">fy</span>');
+    expect(html).toContain('data-edify-filter-clear="" aria-label="Clear filters"');
   });
 });

@@ -13,7 +13,6 @@ import { useEffect, useRef, useState } from 'react';
 import { isEmptyFilter } from '@/lib/emptyFilter';
 import { arrangesRow, filterSlots, foldFilters, UNMEASURED_SLOTS } from '@/lib/filterSlots';
 
-import { Icon } from '../shell/icons';
 
 export interface FilterOption {
   readonly value: string;
@@ -40,14 +39,11 @@ function applied(filter: Filter): boolean {
   return !filter.disabled && !all(filter.value.trim()) && filter.options.some((option) => all(option.value));
 }
 
-const SELECT_WIDE = 'w-full px-[22px]';
-/** A select as wide as its words, the chevron in its own lane (the existing profile's 10px / 30px). */
-const SELECT_OWN_WIDTH = 'w-auto max-w-full [field-sizing:content] pl-[10px] pr-[30px]';
-
-function Field({ filter, onChange, ownWidth = false }: { filter: Filter; onChange: () => void; ownWidth?: boolean }) {
+/** A field as the existing filter row draws it (micro-ux.js arrangeFilterRows). */
+function Field({ filter, onChange, inRow = true }: { filter: Filter; onChange: () => void; inRow?: boolean }) {
   return (
-    <label className="block min-w-0">
-      <span className="mb-1 block truncate text-[length:var(--edify-text-micro-size)] font-medium text-[var(--edify-text-muted)]" aria-hidden={filter.caption ? true : undefined}>
+    <div className={`platform-filter-compact flex flex-col edify-filter-field ${inRow ? 'edify-filter-row__field' : ''}`}>
+      <span className="edify-filter-label" aria-hidden={filter.caption ? true : undefined}>
         {filter.caption || filter.label}
       </span>
       <select
@@ -56,7 +52,7 @@ function Field({ filter, onChange, ownWidth = false }: { filter: Filter; onChang
         defaultValue={filter.value}
         disabled={filter.disabled}
         onChange={onChange}
-        className={`edify-select h-8 ${ownWidth ? SELECT_OWN_WIDTH : SELECT_WIDE} truncate rounded-[var(--radius-control)] border border-[var(--edify-border)] bg-[var(--edify-surface)] text-center text-[14px] font-medium text-[var(--edify-text)] focus:border-[var(--brand-primary)] focus:outline-none disabled:bg-[var(--edify-surface-muted)] disabled:text-[var(--edify-text-subtle)]`}
+        className="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all disabled:text-slate-400"
       >
         {filter.options.map((option) => (
           <option key={option.value} value={option.value}>
@@ -64,7 +60,7 @@ function Field({ filter, onChange, ownWidth = false }: { filter: Filter; onChang
           </option>
         ))}
       </select>
-    </label>
+    </div>
   );
 }
 
@@ -127,6 +123,8 @@ export function FilterBar({
   // Too few fields to share the row: each keeps its own width, as the existing page leaves them.
   const ownWidth = !arrangesRow(shown.length, layout.phone);
   const shared = (oneRow || layout.phone) && !ownWidth;
+  // The existing filter row's DOM (micro-ux.js arrangeFilterRows), drawn by its stylesheets.
+  const arranged = !ownWidth;
   return (
     <form
       ref={form}
@@ -134,13 +132,11 @@ export function FilterBar({
       action={action}
       aria-label={label}
       data-block="filters"
-      data-own-width={ownWidth || undefined}
-      style={shared ? { gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr)) auto` } : undefined}
-      className={
-        ownWidth
-          ? 'flex flex-wrap items-end gap-2 sm:gap-3'
-          : `grid items-end gap-2 sm:gap-3 ${oneRow ? '' : 'grid-cols-[repeat(4,minmax(0,1fr))_auto] sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))]'}`
-      }
+      data-component="filter-toolbar"
+      className={`edify-filter-bar flex flex-wrap items-end gap-2.5 ${arranged ? 'edify-filter-row' : ''}`}
+      data-edify-filter-row={arranged ? '' : undefined}
+      data-edify-filter-slots={arranged && layout.slots ? layout.slots : undefined}
+      style={arranged ? ({ '--edify-filter-cols': String(shared ? columns - (folded.length ? 1 : 0) : inRow.length) } as React.CSSProperties) : undefined}
     >
       {Object.entries(hidden).map(([name, value]) => (
         <input key={name} type="hidden" name={name} value={value} />
@@ -149,46 +145,39 @@ export function FilterBar({
         <input key={filter.name} type="hidden" name={filter.name} value={filter.value} />
       ))}
       {inRow.map((filter) => (
-        <Field key={filter.name} filter={filter} onChange={submit} ownWidth={ownWidth} />
+        <Field key={filter.name} filter={filter} onChange={submit} inRow={arranged} />
       ))}
       {folded.length ? (
-        <div className="relative min-w-0" data-filter-more>
-          <button
-            type="button"
-            aria-expanded={open}
-            onClick={() => setOpen(!open)}
-            className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-[var(--radius-control)] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-3 text-[14px] font-semibold text-[var(--edify-text)]"
-          >
+        <div className={`edify-filter-more edify-filter-row__field ${open ? 'is-open' : ''}`} data-edify-filter-more="" data-filter-more>
+          <button type="button" className="edify-filter-more__toggle" aria-expanded={open} aria-controls="edify-filter-more-panel" onClick={() => setOpen(!open)}>
             <span>
-              More<span className="max-sm:hidden"> filters</span>
+              More<span className="edify-filter-more__long"> filters</span>
             </span>
-            {foldedApplied ? <span className="rounded-full bg-[var(--brand-primary)] px-1.5 text-[11px] font-bold text-white">{foldedApplied}</span> : null}
-            <Icon name="chevronDown" className={`h-4 w-4 ${open ? 'rotate-180' : ''}`} />
+            <span className="edify-filter-more__count" hidden={!foldedApplied}>
+              {foldedApplied || ''}
+            </span>
+            <svg className="edify-filter-more__chevron" aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M19 9l-7 7-7-7" />
+            </svg>
           </button>
-          <div
-            role="group"
-            aria-label="More filters"
-            hidden={!open}
-            className="absolute right-0 top-full z-30 mt-1 w-64 max-w-[calc(100vw-2rem)] space-y-3 rounded-[10px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] p-3 shadow-[var(--edify-shadow-md)]"
-          >
+          <div className="edify-filter-more__panel" id="edify-filter-more-panel" role="group" aria-label="More filters" data-edify-filter-more-panel="" hidden={!open}>
             {folded.map((filter) => (
-              <Field key={filter.name} filter={filter} onChange={submit} />
+              <Field key={filter.name} filter={filter} onChange={submit} inRow={false} />
             ))}
           </div>
         </div>
       ) : null}
       {clearHref ? (
-        <a
-          href={clearHref}
-          aria-label="Clear Filters"
-          title="Clear Filters"
-          className="grid h-8 w-8 place-items-center rounded-[var(--radius-control)] border border-[var(--edify-border)] bg-[var(--edify-surface)] text-[var(--edify-text)] hover:bg-[var(--brand-primary-soft)]"
-        >
-          <Icon name="close" className="h-4 w-4" />
+        <a href={clearHref} data-edify-filter-clear="" aria-label="Clear filters" title="Clear filters">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.25} strokeLinecap="round">
+            <path d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </a>
       ) : null}
       <noscript>
-        <button type="submit">Apply</button>
+        <button type="submit" className="btn btn-primary h-9">
+          Apply
+        </button>
       </noscript>
     </form>
   );

@@ -7,8 +7,6 @@
  */
 import { useEffect, useRef, useState } from 'react';
 
-import { Icon } from '../shell/icons';
-
 export interface RowAction {
   readonly key: string;
   readonly label: string;
@@ -34,44 +32,40 @@ export function RowActions({ subject, actions }: { subject: string; actions: rea
     };
   }, [open]);
   if (!actions.length) return null;
+  // The existing row menu (templates/components/row_actions.html).
   return (
-    <div className="relative" ref={ref}>
-      <button
-        type="button"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-label={`Actions for ${subject}`}
-        onClick={() => setOpen(!open)}
-        className="inline-flex h-6 items-center gap-1 rounded-[var(--radius-control)] border border-[var(--brand-primary-border)] bg-[var(--edify-surface)] px-3 text-[length:var(--edify-text-label-size)] font-semibold text-[var(--brand-primary-text)] dark:text-[var(--edify-accent-text)]"
-      >
+    <div className="row-menu" data-row-actions="" ref={ref}>
+      <button type="button" className="row-menu__trigger" aria-haspopup="menu" aria-expanded={open} aria-label={`Actions for ${subject}`} onClick={() => setOpen(!open)}>
         Actions
-        <Icon name="chevronDown" className="h-3.5 w-3.5" />
+        <svg className={`row-menu__caret ${open ? 'is-open' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
       </button>
       {open ? (
-        <div role="menu" className="absolute right-0 top-full z-40 mt-1 min-w-52 rounded-[var(--radius-surface)] border border-[var(--edify-border)] bg-[var(--edify-surface)] py-1 shadow-lg">
+        <div className="row-menu__list" role="menu">
           {actions.map((action) =>
             action.enabled && action.onSelect ? (
               <button
                 key={action.key}
                 type="button"
                 role="menuitem"
+                className="row-menu__item"
                 onClick={() => {
                   setOpen(false);
                   action.onSelect?.();
                 }}
-                className="block w-full px-4 py-2 text-left text-[13px] font-semibold text-[var(--edify-text)] hover:bg-[var(--edify-surface-muted)]"
               >
                 {action.label}
               </button>
             ) : action.enabled ? (
-              <a key={action.key} role="menuitem" href={action.href} className="block px-4 py-2 text-[13px] font-semibold text-[var(--edify-text)] hover:bg-[var(--edify-surface-muted)]">
+              <a key={action.key} role="menuitem" href={action.href} className="row-menu__item">
                 {action.label}
               </a>
             ) : (
-              <span key={action.key} role="menuitem" aria-disabled="true" className="block cursor-not-allowed px-4 py-2 text-[13px] font-semibold text-[var(--edify-text-subtle)]">
+              <button key={action.key} type="button" role="menuitem" aria-disabled="true" className="row-menu__item">
                 {action.label}
-                {action.reason ? <span className="block text-[12px] font-medium">{action.reason}</span> : null}
-              </span>
+                {action.reason ? <span className="row-menu__reason">{action.reason}</span> : null}
+              </button>
             ),
           )}
         </div>

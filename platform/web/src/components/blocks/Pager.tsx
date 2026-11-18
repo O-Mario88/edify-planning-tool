@@ -10,7 +10,10 @@ import type { PagePager } from '@/gen/edify/screens/v1/page_pb';
 
 import { PageSize } from './PageSize';
 
-const CONTROL = 'grid h-8 min-w-8 place-items-center rounded-[var(--radius-control)] px-2 text-[12px] font-bold';
+const CONTROL =
+  'edify-pagination__control min-h-11 min-w-11 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 hover:bg-slate-50 inline-flex items-center justify-center';
+const CURRENT =
+  'edify-pagination__control edify-pagination__control--current min-h-11 min-w-11 px-2.5 rounded-control edify-primary-solid text-white edify-text-caption font-bold tabular-nums inline-flex items-center justify-center';
 
 /** The page feed writes Prev and Next as pages of their own (PagePagerPage). */
 const PREV = 'Prev';
@@ -22,33 +25,40 @@ export function Pager({ pager }: { pager: PagePager }) {
   const currentIndex = numbers.findIndex((page) => page.current);
   const previous = labelled ? pager.pages.find((page) => page.label === PREV) : currentIndex > 0 ? numbers[currentIndex - 1] : undefined;
   const next = labelled ? pager.pages.find((page) => page.label === NEXT) : currentIndex >= 0 ? numbers[currentIndex + 1] : undefined;
+  // The existing pager (templates/components/table_pager.html).
   return (
-    <nav aria-label="Pages" data-block="pager" className="flex flex-col gap-3 border-t border-[var(--edify-border)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-      <p className="whitespace-nowrap text-[12px] font-semibold text-[var(--edify-text-muted)]">{pager.summary}</p>
-      <div className="flex flex-wrap items-center gap-1.5">
+    <nav aria-label="Table pages" data-block="pager" className="edify-pagination flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-slate-100">
+      <p className="edify-pagination__summary edify-text-caption font-semibold text-slate-400 tabular-nums">{pager.summary}</p>
+      <div className="edify-pagination__controls flex items-center gap-1">
         {previous?.href ? (
-          <Link href={previous.href} aria-label="Previous page" className={`${CONTROL} border border-[var(--edify-border)] px-3 text-[var(--edify-text)] hover:bg-[var(--brand-primary-soft)]`}>
-            Prev
+          <Link href={previous.href} rel="prev" aria-label="Previous page" className={`${CONTROL} edify-pagination__control--direction`}>
+            <span className="edify-pagination__direction-label">Prev</span>
+            <span className="edify-pagination__direction-symbol" aria-hidden="true">
+              ‹
+            </span>
           </Link>
         ) : null}
         {numbers.map((page, index) =>
           page.current ? (
-            <span key={index} aria-current="page" aria-label={`Page ${page.label}, current page`} className={`${CONTROL} bg-[var(--brand-primary)] text-white shadow-sm`}>
+            <span key={index} aria-current="page" aria-label={`Page ${page.label}, current page`} className={CURRENT}>
               {page.label}
             </span>
           ) : page.href ? (
-            <Link key={index} href={page.href} className={`${CONTROL} text-[var(--edify-text)] hover:bg-[var(--edify-surface-muted)]`}>
+            <Link key={index} href={page.href} aria-label={`Page ${page.label}`} className={`${CONTROL} tabular-nums`}>
               {page.label}
             </Link>
           ) : (
-            <span key={index} aria-hidden="true" className="w-8 text-center font-bold text-[var(--edify-text-subtle)]">
+            <span key={index} className="edify-pagination__ellipsis edify-text-caption font-bold text-slate-300 px-1" aria-hidden="true">
               {page.label}
             </span>
           ),
         )}
         {next?.href ? (
-          <Link href={next.href} aria-label="Next page" className={`${CONTROL} border border-[var(--edify-border)] px-3 text-[var(--edify-text)] hover:bg-[var(--brand-primary-soft)]`}>
-            Next
+          <Link href={next.href} rel="next" aria-label="Next page" className={`${CONTROL} edify-pagination__control--direction`}>
+            <span className="edify-pagination__direction-label">Next</span>
+            <span className="edify-pagination__direction-symbol" aria-hidden="true">
+              ›
+            </span>
           </Link>
         ) : null}
         {pager.size ? (

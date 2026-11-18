@@ -81,7 +81,7 @@ describe('Planning blocks', () => {
 
   it('draws the pager with its own Next', () => {
     expect(html).toContain('Showing 1–15 of 75 schools');
-    expect(html).toMatch(/aria-label="Next page"[^>]*>Next<|href="\/planning\?page=2&amp;tab=client"[^>]*aria-label="Next page"/);
+    expect(html).toMatch(/rel="next" aria-label="Next page"[^>]*href="\/planning\?page=2&amp;tab=client"><span class="edify-pagination__direction-label">Next<\/span>/);
   });
 
   it('hides a filter with nothing to choose but still sends its value', () => {
