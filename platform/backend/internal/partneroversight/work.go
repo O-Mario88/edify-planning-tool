@@ -11,6 +11,8 @@ import (
 	"time"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/jackc/pgx/v5"
+
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pricing"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
@@ -229,7 +231,16 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 	v.tab = workTabOpen(tablesFor(v.shown), w.work, core)
 	v.w.work = v.tab
 	if v.tab == "clusters" {
-		return nil, false, nil
+		// The card is read part by part there: its head names the Partner's
+		// contact, which is not drawn yet.
+		var contact bool
+		if err := s.db.QueryRow(ctx, `SELECT COALESCE(btrim(contact_person), '') <> '' OR COALESCE(btrim(phone), '') <> ''
+FROM partner WHERE id = $1`, v.partner).Scan(&contact); err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			return nil, true, fmt.Errorf("partneroversight: reading the Partner's contact: %w", err)
+		}
+		if contact {
+			return nil, false, nil
+		}
 	}
 	if v.tab == "core" {
 		if drawn, err := s.coreSupport(ctx, v.shown); err != nil || !drawn {

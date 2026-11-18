@@ -133,9 +133,12 @@ func (v *workView) blocks() []*screensv1.PageBlock {
 		blocks = append(blocks, v.partnerPanel())
 	}
 	blocks = append(blocks, v.memberTabs(), v.tiles())
-	if v.partnerTab == nil {
+	switch {
+	case v.partnerTab == nil:
 		blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Empty{Empty: emptyWork}})
-	} else {
+	case v.tab == "clusters":
+		blocks = append(blocks, v.cardParts()...)
+	default:
 		blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: v.card()}})
 	}
 	if w.role.EngagementRegister {
@@ -655,4 +658,92 @@ func (v *workView) coreRow(i *item) *screensv1.PageRow {
 		details = append(details, fact("Returned", pyTitle(strings.ReplaceAll(i.returnReasonCategory, "_", " "))+" — "+i.returnReason))
 	}
 	return &screensv1.PageRow{Cells: cells, Details: details, DetailBlocks: []*screensv1.PageBlock{}}
+}
+
+// followUpWords are the card's follow-up line after the recommendation.
+var followUpWords = map[string]string{
+	"Quality Review":  " · on target, but its schools' SSA rose less than half a point",
+	"Capacity Review": " · its schools' SSA rose, but its work is below target",
+}
+
+// cardParts is the Partner's card where it holds more than one table (the
+// Clusters tab), read part by part: its head (the Partner's name, the
+// follow-up line and the status chips), the work tabs, each table under its
+// heading, and the note on the years read.
+func (v *workView) cardParts() []*screensv1.PageBlock {
+	s := summarize(v.shown)
+	subtitle := ""
+	if f := v.partnerTab.followUp; f != "" {
+		subtitle = "Needs follow-up: " + f + followUpWords[f]
+	}
+	chips := []*screensv1.PageLink{}
+	for _, c := range []string{
+		strconv.Itoa(s.awaiting) + " awaiting scheduling", strconv.Itoa(s.visits) + " visits scheduled",
+		strconv.Itoa(s.trainings) + " trainings scheduled", strconv.Itoa(s.meetings) + " meetings scheduled",
+		strconv.Itoa(s.overdue) + " overdue", strconv.Itoa(s.completed) + " completed",
+	} {
+		chips = append(chips, &screensv1.PageLink{Text: c})
+	}
+	out := []*screensv1.PageBlock{{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{
+		Title: v.partnerTab.label, Subtitle: subtitle, Badges: []*screensv1.PageBadge{},
+		Items: []*screensv1.PagePanelItem{{Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{Links: chips}}}},
+	}}}}
+
+	tables := tablesFor(v.tableItems)
+	counts := map[string]int{}
+	core := false
+	for _, t := range tables {
+		counts[tableTab[t.title]] += len(t.items)
+		core = core || t.columns == "core"
+	}
+	w, p := v.w, v.w.period
+	tabs := []*screensv1.PageLinkTab{}
+	for _, t := range [][2]string{{"schools", "Schools assigned"}, {"core", "Core schools"}, {"visits", "Visits"},
+		{"trainings", "Trainings"}, {"clusters", "Clusters to facilitate"}} {
+		if t[0] == "core" && !core {
+			continue
+		}
+		href := "?program_lead=" + w.programLead + "&partner=" + v.partner + "&member=" + w.member + "&work=" + t[0] +
+			"&status=" + w.status + "&period=" + p.kind + "&fy=" + p.fy + "&month=" + strconv.Itoa(p.month) +
+			"&quarter=" + p.quarter + "&week=" + p.week
+		tabs = append(tabs, &screensv1.PageLinkTab{Label: t[1] + " " + strconv.Itoa(counts[t[0]]), Href: href, Active: t[0] == v.tab})
+	}
+	out = append(out, &screensv1.PageBlock{Kind: &screensv1.PageBlock_LinkTabs{LinkTabs: &screensv1.PageLinkTabs{Tabs: tabs, Scrolls: true}}})
+
+	for _, t := range tables {
+		if tableTab[t.title] != v.tab {
+			continue
+		}
+		out = append(out, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Section{Section: t.title + " (" + strconv.Itoa(len(t.items)) + ")"}})
+		table := &screensv1.PageTable{}
+		first := "School"
+		if t.kind == "activity" {
+			first = "School / cluster"
+		} else if t.title == "Cluster work assigned" {
+			first = "Cluster"
+		}
+		dated := "Activity date"
+		if t.kind == "activity" {
+			dated = "Scheduled"
+		}
+		for _, l := range []string{first, "Staff member", "Activity / purpose", "Salesforce ID", "Evidence", "Status",
+			dated, "Completed date", "Actions"} {
+			table.Columns = append(table.Columns, &screensv1.PageColumn{Label: l})
+		}
+		for _, i := range t.items {
+			table.Rows = append(table.Rows, v.workRow(i, t.kind))
+		}
+		if len(t.items) == 0 {
+			table.Rows = []*screensv1.PageRow{{Cells: []*screensv1.PageCell{{Text: noWorkRow}}}}
+		}
+		out = append(out, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: table}})
+	}
+	if len(v.years) > 1 {
+		out = append(out, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{
+			Badges: []*screensv1.PageBadge{},
+			Items: []*screensv1.PagePanelItem{{Kind: &screensv1.PagePanelItem_Text{
+				Text: "Read for " + horizonLabel(v.years) + ": work a Partner dates into the next financial year stays here, on its date."}}},
+		}}})
+	}
+	return out
 }

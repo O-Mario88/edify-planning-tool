@@ -320,3 +320,27 @@ Proof: the golden now asks the Core tab of every reader, over the seed's
 nine completed Core hand-overs and a fixture Core school a staff member
 dated. That gives 13 Core tables with Withdraw school offered where the
 role may: **564 answers of 10 accounts, 0 differing**.
+
+## 46.11 The Clusters tab (2026-11-18)
+
+The Clusters to facilitate tab holds two tables, so the feed reads the
+Partner's card part by part, and Go now draws it that way:
+
+- **The card's head:** a panel with the Partner's name as its title. The
+  subtitle is the follow-up line ("Needs follow-up: Capacity Review · its
+  schools' SSA rose, but its work is below target"), and the status chips
+  are its links.
+- **The work tabs**, each with its count. Core schools appears only for a
+  Partner holding one.
+- **Cluster work assigned and Cluster sessions:** each is a section heading
+  with its count, then its table. A hand-over names its cluster with the
+  cluster's profile link.
+- **The note on the years read**, as a panel of its own.
+
+A Partner with a contact person or phone is still handed on there, since
+the head would name them, as are group trainings a Partner facilitates.
+
+Proof: the golden now asks the Clusters tab of every reader, over a fixture
+cluster hand-over and a cluster meeting the Partner dated with no
+hand-over. That gives 28 cluster sections: **584 answers of 10 accounts, 0
+differing**.

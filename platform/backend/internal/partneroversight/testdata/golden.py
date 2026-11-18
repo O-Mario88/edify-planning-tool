@@ -110,6 +110,13 @@ def file_rows():
             "ORDER BY s.id LIMIT 1"
         )
         schools.append(cursor.fetchone()[0])
+        # A cluster with no partner work of its own, for the Clusters tab.
+        cursor.execute(
+            "SELECT c.id FROM cluster c WHERE c.deleted_at IS NULL "
+            "AND NOT EXISTS (SELECT 1 FROM partner_assignment pa WHERE pa.cluster_id = c.id) "
+            "ORDER BY c.id LIMIT 1"
+        )
+        (cluster,) = cursor.fetchone()
         clone(
             cursor,
             "partner",
@@ -136,6 +143,7 @@ def file_rows():
             sf="",
             ia="pending",
             payment="none",
+            cluster=None,
         ):
             day = TODAY + timedelta(days=days)
             clone(
@@ -144,8 +152,8 @@ def file_rows():
                 activity,
                 {
                     "id": f"gpoA{n}",
-                    "school_id": schools[n],
-                    "cluster_id": None,
+                    "school_id": None if cluster else schools[n],
+                    "cluster_id": cluster,
                     "assigned_partner_id": PARTNER,
                     "delivery_type": "partner",
                     "activity_type": kind,
@@ -196,6 +204,7 @@ def file_rows():
             purpose="in_school_coaching",
             category=None,
             reason=None,
+            cluster=None,
         ):
             created = NOW - timedelta(days=created_days)
             clone(
@@ -205,8 +214,8 @@ def file_rows():
                 {
                     "id": f"gpoH{n}",
                     "partner_id": PARTNER,
-                    "school_id": schools[n],
-                    "cluster_id": None,
+                    "school_id": None if cluster else schools[n],
+                    "cluster_id": cluster,
                     "status": status,
                     "scheduled_activity_id": activity_id,
                     "monitoring_staff_id": cceo,
@@ -284,6 +293,16 @@ def file_rows():
         )
         form(7)
         work(8, status="partner_scheduled", days=3, kind="in_school_training")
+        # Cluster work: a hand-over waiting on the Partner's date, and a
+        # cluster meeting the Partner dated that no hand-over points at.
+        handover(11, status="assigned", cluster=cluster, purpose="", created_days=3)
+        work(
+            12,
+            status="partner_scheduled",
+            days=6,
+            kind="cluster_meeting",
+            cluster=cluster,
+        )
         # A Core school whose visit a staff member dated: still the
         # Partner's to schedule, so it may be withdrawn.
         handover(
@@ -366,6 +385,7 @@ try:
             for extra in (
                 {"work": "visits"},
                 {"work": "core"},
+                {"work": "clusters"},
                 {"work": "trainings"},
                 {"status": "completed"},
                 {"status": "scheduled"},
