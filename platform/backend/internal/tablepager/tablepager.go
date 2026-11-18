@@ -129,3 +129,33 @@ func pager(number, pages, total int, shown Page, base, param string) *screensv1.
 	}
 	return p
 }
+
+// Panel is the pager as the feed reads it when it stands apart from its
+// table (a pager inside a segment): the summary, then the controls in
+// order, neighbouring links grouped, the current page and a gap as text.
+// It is nil when every row fits on one page.
+func Panel(total, size int, query url.Values, param string) *screensv1.PageBlock {
+	page := Paginate(total, size, query, param)
+	if page.Pager == nil {
+		return nil
+	}
+	text := func(t string) *screensv1.PagePanelItem {
+		return &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Text{Text: t}}
+	}
+	items := []*screensv1.PagePanelItem{text(page.Pager.Summary)}
+	var links *screensv1.PageLinks
+	for _, p := range page.Pager.Pages {
+		switch {
+		case p.Href == "":
+			items, links = append(items, text(p.Label)), nil
+		default:
+			if links == nil {
+				links = &screensv1.PageLinks{}
+				items = append(items, &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Links{Links: links}})
+			}
+			caption := map[string]string{"Prev": "‹", "Next": "›"}[p.Label]
+			links.Links = append(links.Links, &screensv1.PageLink{Text: p.Label, Caption: caption, Href: p.Href})
+		}
+	}
+	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{Items: items}}}
+}

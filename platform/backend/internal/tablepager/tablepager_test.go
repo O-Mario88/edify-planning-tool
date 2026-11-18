@@ -3,6 +3,7 @@ package tablepager
 import (
 	"net/url"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -82,5 +83,28 @@ func TestTheWindowShowsTheEndsAndOnePageEitherSide(t *testing.T) {
 		if got := labels(t, p); !reflect.DeepEqual(got, tc.want) {
 			t.Errorf("page %s: %v, want %v", tc.page, got, tc.want)
 		}
+	}
+}
+
+func TestThePanelPagerGroupsTheLinksAroundTheCurrentPage(t *testing.T) {
+	if Panel(50, 50, url.Values{}, "p") != nil {
+		t.Fatal("one page drew a pager")
+	}
+	panel := Panel(260, 50, url.Values{"p": {"3"}}, "p").GetPanel()
+	got := []string{}
+	for _, item := range panel.Items {
+		if links := item.GetLinks(); links != nil {
+			texts := []string{}
+			for _, l := range links.Links {
+				texts = append(texts, l.Text+l.Caption)
+			}
+			got = append(got, "["+strings.Join(texts, " ")+"]")
+		} else {
+			got = append(got, item.GetText())
+		}
+	}
+	want := []string{"Showing 101–150 of 260", "[Prev‹ 1 2]", "3", "[4 5 6 Next›]"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got %v, want %v", got, want)
 	}
 }

@@ -184,3 +184,37 @@ the school profile), so `server.go` lends the cards to `ScopePages`
 
 Proof: Mukono, Kamuli and the Central sub-region's Clusters tab, for five
 readers and four years and periods: **60 answers, 0 differing**.
+
+## 176.8 The Activities tab (2026-11-18)
+
+A profile's Activities tab is drawn in Go:
+
+- **The year's work by kind:** visits, trainings and cluster meetings,
+  each with:
+  - what is expected (the visits and trainings each school's type is due);
+  - what is in the plan, completed, outstanding, upcoming and past its day;
+  - who delivers it (staff or partner);
+  - the schools reached, and coverage of the schools due.
+- **Training By Channel and Cluster Meetings:** the school profile's own
+  reads (`channels`, `meetings`), now over a list of schools. A profile
+  with a Clusters tab adds that tab's sentence to the meetings note.
+- **The District's list** (`profile_activities.for_district`): fifty a
+  page for each segment (`district_acts_planned_page`,
+  `district_acts_done_page`) and the segment asked for (`district_acts_tab`).
+  - The pager stands apart from its table, so the feed reads it as a panel
+    (`tablepager.Panel`). The bar for ticked activities shows where a
+    planned row can be ticked.
+  - A link that carries only the list's own keys opens this tab, as Django
+    does.
+  - `visible_to` keeps every activity for a country reader. A narrower
+    reader's list is still the existing application's, since their team's
+    staff, clusters and partners are not read yet.
+
+A profile page now ignores query keys it does not read, as Django does,
+instead of handing them on. Its pagers carry them along, the same as
+Django's.
+
+Proof: the districts' Activities tab for the Admin, the Country Director and
+Impact Assessment, with the second page, a page past the end and the
+Completed segment, plus the Central sub-region's for the field readers:
+**54 + 18 answers, 0 differing**.

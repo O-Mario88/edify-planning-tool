@@ -30,16 +30,16 @@ func (s *Service) participationTab(ctx context.Context, p auth.Principal, scope 
 		return nil, nil, err
 	}
 	blocks := []*screensv1.PageBlock{executionTable(ex, l)}
-	channels, err := s.channels(ctx, sc, liveClusters, l)
+	channels, err := s.channels(ctx, []string{sc.ID}, liveClusters, l)
 	if err != nil {
 		return nil, nil, err
 	}
 	blocks = append(blocks, channelsTable(channels, l))
-	meetings, err := s.meetings(ctx, sc, liveClusters, l, today)
+	meetings, err := s.meetings(ctx, []string{sc.ID}, liveClusters, l, today)
 	if err != nil {
 		return nil, nil, err
 	}
-	blocks = append(blocks, meetingsTable(ex.meetings, meetings))
+	blocks = append(blocks, meetingsTable(ex.meetings, meetings, false))
 
 	list, err := s.activityList(ctx, p, scope, d, sc, today)
 	if err != nil {
@@ -223,10 +223,10 @@ const (
 	notOnline = "a.programme_delivery_mode IS DISTINCT FROM 'online'"
 )
 
-func (s *Service) channels(ctx context.Context, sc school, clusters []string, l lens) (channelFigures, error) {
+func (s *Service) channels(ctx context.Context, ids, clusters []string, l lens) (channelFigures, error) {
 	var c channelFigures
 	args := []any{}
-	where := activityScope(sc, clusters, l, &args)
+	where := scopeWork(ids, clusters, l.fy, l.window, &args)
 	args = append(args, rules.Engine.TrainingTypes, rules.Engine.CompletedWorkStatuses, rules.Engine.NotStartedStatuses)
 	k := len(args)
 	training, done, waiting := fmt.Sprintf("a.activity_type = ANY($%d)", k-2), fmt.Sprintf("a.status = ANY($%d)", k-1), fmt.Sprintf("a.status = ANY($%d)", k)
@@ -250,7 +250,7 @@ func (s *Service) channels(ctx context.Context, sc school, clusters []string, l 
 	}
 
 	// The register of the year's completed sessions (engine._sessions).
-	args = []any{sc.ID, rules.Engine.CompletedWorkStatuses, l.fy, rules.Engine.TrainingTypes}
+	args = []any{ids, rules.Engine.CompletedWorkStatuses, l.fy, rules.Engine.TrainingTypes}
 	inWindow := l.window.sql(&args)
 	people := func(mode string) string {
 		return "COALESCE(SUM(c.teachers) FILTER (WHERE " + mode + " AND c.attended), 0) + COALESCE(SUM(c.leaders) FILTER (WHERE " + mode + " AND c.attended), 0)"
@@ -261,7 +261,7 @@ SELECT COUNT(c.activity_id) FILTER (WHERE `+notOnline+` AND c.invited),
   COUNT(c.activity_id) FILTER (WHERE `+online+` AND c.invited),
   COUNT(c.activity_id) FILTER (WHERE `+online+` AND c.attended), `+people(online)+`
 FROM cluster_activity_attendance c JOIN activity a ON a.id = c.activity_id
-WHERE c.school_id = $1 AND a.status = ANY($2) AND a.school_id IS NULL AND a.fy = $3 AND a.deleted_at IS NULL
+WHERE c.school_id = ANY($1) AND a.status = ANY($2) AND a.school_id IS NULL AND a.fy = $3 AND a.deleted_at IS NULL
   AND a.activity_type = ANY($4) AND `+inWindow, args...).Scan(
 		&c.groupInvited, &c.groupAttended, &c.groupPeople, &c.onlineInvited, &c.onlineAttended, &c.onlinePeople); err != nil {
 		return c, fmt.Errorf("schoolprofile: reading the training register: %w", err)
@@ -269,8 +269,8 @@ WHERE c.school_id = $1 AND a.status = ANY($2) AND a.school_id IS NULL AND a.fy =
 	// A hand-over for training the partner still holds (_handover_queryset).
 	if err := s.db.QueryRow(ctx, `
 SELECT COUNT(id) FROM partner_assignment
-WHERE school_id = $1 AND NOT (status = ANY($2)) AND expected_activity_type = ANY($3)`,
-		sc.ID, rules.Engine.HandoverReleasedStatuses, rules.Engine.TrainingTypes).Scan(&c.assigned); err != nil {
+WHERE school_id = ANY($1) AND NOT (status = ANY($2)) AND expected_activity_type = ANY($3)`,
+		ids, rules.Engine.HandoverReleasedStatuses, rules.Engine.TrainingTypes).Scan(&c.assigned); err != nil {
 		return c, fmt.Errorf("schoolprofile: counting training hand-overs: %w", err)
 	}
 	return c, nil
@@ -338,10 +338,10 @@ type meetingFigures struct {
 	next                       []string // "Cluster E, 5 Dec"
 }
 
-func (s *Service) meetings(ctx context.Context, sc school, clusters []string, l lens, today time.Time) (meetingFigures, error) {
+func (s *Service) meetings(ctx context.Context, ids, clusters []string, l lens, today time.Time) (meetingFigures, error) {
 	m := meetingFigures{}
 	args := []any{}
-	where := activityScope(sc, clusters, l, &args)
+	where := scopeWork(ids, clusters, l.fy, l.window, &args)
 	args = append(args, rules.Engine.MeetingTypes, rules.Engine.CompletedWorkStatuses)
 	k := len(args)
 	rows, err := s.db.Query(ctx, fmt.Sprintf(`
@@ -371,13 +371,13 @@ GROUP BY a.meeting_kind ORDER BY a.meeting_kind`, args...)
 		return m, err
 	}
 
-	args = []any{sc.ID, rules.Engine.CompletedWorkStatuses, l.fy, rules.Engine.MeetingTypes}
+	args = []any{ids, rules.Engine.CompletedWorkStatuses, l.fy, rules.Engine.MeetingTypes}
 	inWindow := l.window.sql(&args)
 	if err := s.db.QueryRow(ctx, `
 SELECT COUNT(c.activity_id) FILTER (WHERE c.invited), COUNT(c.activity_id) FILTER (WHERE c.attended),
   COUNT(DISTINCT c.school_id) FILTER (WHERE c.attended)
 FROM cluster_activity_attendance c JOIN activity a ON a.id = c.activity_id
-WHERE c.school_id = $1 AND a.status = ANY($2) AND a.school_id IS NULL AND a.fy = $3 AND a.deleted_at IS NULL
+WHERE c.school_id = ANY($1) AND a.status = ANY($2) AND a.school_id IS NULL AND a.fy = $3 AND a.deleted_at IS NULL
   AND a.activity_type = ANY($4) AND `+inWindow, args...).Scan(&m.invited, &m.attended, &m.schools); err != nil {
 		return m, fmt.Errorf("schoolprofile: reading the meeting register: %w", err)
 	}
@@ -385,7 +385,7 @@ WHERE c.school_id = $1 AND a.status = ANY($2) AND a.school_id IS NULL AND a.fy =
 	// The next meetings: not started and not past. Django's negation of the
 	// past keeps a meeting with no day at all.
 	args = []any{}
-	where = activityScope(sc, clusters, l, &args)
+	where = scopeWork(ids, clusters, l.fy, l.window, &args)
 	args = append(args, rules.Engine.MeetingTypes, rules.Engine.NotStartedStatuses, today)
 	k = len(args)
 	next, err := s.db.Query(ctx, fmt.Sprintf(`
@@ -426,11 +426,14 @@ ORDER BY a.planned_date, a.scheduled_date, a.id LIMIT 5`, args...)
 // jM is Django's |date:"j M" ("5 Dec").
 func jM(day time.Time) string { return fmt.Sprintf("%d %s", day.Day(), day.Format("Jan")) }
 
-func meetingsTable(f kindFigures, m meetingFigures) *screensv1.PageBlock {
+func meetingsTable(f kindFigures, m meetingFigures, clustersTab bool) *screensv1.PageBlock {
 	footnote := fmt.Sprintf("%s school%s represented · %s of %s invitations attended · %d%% attendance.",
 		intcomma(m.schools), plural(m.schools), intcomma(m.attended), intcomma(m.invited), attendanceRate(m.attended, m.invited))
 	if len(m.next) > 0 {
 		footnote += " Next: " + strings.Join(m.next, " · ") + "."
+	}
+	if clustersTab {
+		footnote += " Schools absent from sessions in a row are listed for each cluster on the Clusters tab."
 	}
 	rows := []*screensv1.PageRow{}
 	for _, k := range m.kinds {

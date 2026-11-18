@@ -44,11 +44,6 @@ func (sp *ScopePages) country(ctx context.Context, p auth.Principal, query url.V
 	if !d.CountryProfile {
 		return nil, true, pagegate.ErrNotAvailable
 	}
-	for key := range query {
-		if !scopeQueryKeys[key] {
-			return nil, false, nil
-		}
-	}
 	tab := query.Get("tab")
 	if !contains(rules.Engine.Scope.SectionsOf["country"], tab) {
 		tab = "overview"
@@ -102,11 +97,6 @@ func (sp *ScopePages) subRegion(ctx context.Context, p auth.Principal, id string
 	}
 	if !rules.Doors[p.ActiveRole].OpenSubRegion {
 		return nil, true, pagegate.ErrNotAvailable
-	}
-	for key := range query {
-		if !scopeQueryKeys[key] {
-			return nil, false, nil
-		}
 	}
 	s := sp.s
 	var name, regionName, country string
@@ -170,11 +160,6 @@ func (sp *ScopePages) Build(ctx context.Context, p auth.Principal, path string, 
 	if !rules.Doors[p.ActiveRole].OpenDistrict {
 		return nil, true, pagegate.ErrNotAvailable
 	}
-	for key := range query {
-		if !scopeQueryKeys[key] {
-			return nil, false, nil
-		}
-	}
 	s := sp.s
 	var name, regionName, subRegionID, subRegionName string
 	err := s.db.QueryRow(ctx, `
@@ -189,7 +174,17 @@ WHERE d.id = $1`, id).Scan(&name, &regionName, &subRegionID, &subRegionName)
 	}
 	scope := scopeOf{kind: "district", key: id, name: name + " District", covers: "All schools in the district",
 		where: "s.district_id = $2", args: []any{id}}
-	page := scopePage{scope: scope, base: districtPrefix + id, back: [2]string{"Back to Districts", "/districts"}, lead: regionName}
+	page := scopePage{scope: scope, base: districtPrefix + id, back: [2]string{"Back to Districts", "/districts"}, lead: regionName,
+		// profile_activities.for_district: work at its schools, its clusters'
+		// sessions, and programme events held in it.
+		activities: func(args *[]any) string {
+			*args = append(*args, id)
+			n := len(*args)
+			return fmt.Sprintf(`(s.district_id = $%[1]d OR cl.district_id = $%[1]d
+  OR (a.school_id IS NULL AND a.cluster_id IS NULL AND a.event_district_id = $%[1]d))`, n)
+		},
+		activitiesParam:   "district_acts",
+		activitiesCaption: "Visits, trainings and cluster sessions in this district that your role oversees."}
 	page.facts = func(pr *scopeProfile) []*screensv1.PageFact {
 		facts := []*screensv1.PageFact{{Label: "Type", Value: "District"}}
 		if subRegionID != "" && subRegionName != "" {
@@ -201,16 +196,13 @@ WHERE d.id = $1`, id).Scan(&name, &regionName, &subRegionID, &subRegionName)
 	return s.scopePage(ctx, p, page, query)
 }
 
-// scopeQueryKeys are the keys a profile's own links carry; anything else
-// is still the existing application's.
 // scopeTabsInGo are the sections Go draws; the rest are still the existing
 // application's.
-var scopeTabsInGo = map[string]bool{"overview": true, "ssa": true, "sub_counties": true, "staff": true, "districts": true, "sub_regions": true, "schools": true, "projects": true, "clusters": true}
+var scopeTabsInGo = map[string]bool{"overview": true, "ssa": true, "sub_counties": true, "staff": true, "districts": true,
+	"sub_regions": true, "schools": true, "projects": true, "clusters": true, "activities": true}
 
 // tablePageSize is the shared table pager's page (TABLE_PAGE_SIZE).
 const tablePageSize = 50
-
-var scopeQueryKeys = map[string]bool{"tab": true, "fy": true, "period": true, "show": true, "what": true, "parts_page": true, "schools_page": true, "sub_county": true, "projects_page": true, "clusters_page": true}
 
 // scopePage is one kind of profile page: its scope, its address, its back
 // link, the line before its scope line and its own header facts.
@@ -221,7 +213,13 @@ type scopePage struct {
 	lead  string
 	// title is the page's title where it is not the scope's name.
 	title string
-	facts func(*scopeProfile) []*screensv1.PageFact
+	// activities is the Activities tab's list (a District's: its own work,
+	// profile_activities.for_district), its query parameters' prefix and
+	// its caption; nil for a profile with no list.
+	activities        func(args *[]any) string
+	activitiesParam   string
+	activitiesCaption string
+	facts             func(*scopeProfile) []*screensv1.PageFact
 }
 
 // scopePage draws a profile page (profile_context and profile.html).
@@ -242,6 +240,16 @@ func (s *Service) scopePage(ctx context.Context, p auth.Principal, page scopePag
 	}
 	sections := rules.Engine.Scope.SectionsOf[page.scope.kind]
 	tab := query.Get("tab")
+	if !contains(sections, tab) && page.activities != nil {
+		// The list's own links (its Planned / Completed switch, its pager)
+		// carry the list's parameters and no tab: they are the
+		// Activities tab's.
+		for key := range query {
+			if strings.HasPrefix(key, page.activitiesParam) {
+				tab = "activities"
+			}
+		}
+	}
 	if !contains(sections, tab) {
 		tab = sections[0]
 	}
@@ -293,6 +301,7 @@ func (s *Service) scopePage(ctx context.Context, p auth.Principal, page scopePag
 		{Kind: &screensv1.PageBlock_Facts{Facts: &screensv1.PageFacts{Facts: facts}}},
 		filters,
 	}
+	var selection *screensv1.PageSelection
 	switch tab {
 	case "overview":
 		blocks = append(blocks, pr.overview(l)...)
@@ -339,6 +348,39 @@ func (s *Service) scopePage(ctx context.Context, p auth.Principal, page scopePag
 			return nil, true, err
 		}
 		blocks = append(blocks, pr.clustersBlocks(l, lines, rules.Doors[p.ActiveRole], s.clusterCards.AlertAfter())...)
+	case "activities":
+		today := kampalaDay(now)
+		ex, err := s.scopeExecutionFigures(ctx, pr, l, today)
+		if err != nil {
+			return nil, true, err
+		}
+		live := make([]string, 0, len(pr.clusters))
+		for id := range pr.clusters {
+			live = append(live, id)
+		}
+		ids := idsOf(pr.schools)
+		channels, err := s.channels(ctx, ids, live, l)
+		if err != nil {
+			return nil, true, err
+		}
+		meetings, err := s.meetings(ctx, ids, live, l, today)
+		if err != nil {
+			return nil, true, err
+		}
+		blocks = append(blocks, executionTable(ex, l), channelsTable(channels, l), meetingsTable(ex.meetings, meetings, contains(sections, "clusters")))
+		if page.activities != nil {
+			// visible_to keeps every activity for a country reader; a
+			// narrower reader's list is still the existing application's.
+			if !reader.CountryScope {
+				return nil, false, nil
+			}
+			list, err := s.scopeActivityList(ctx, p, reader, rules.Doors[p.ActiveRole], page.activities, page.activitiesParam, query, today)
+			if err != nil {
+				return nil, true, err
+			}
+			blocks = append(blocks, list.block(page.activitiesCaption))
+			selection = list.selection()
+		}
 	case "projects":
 		projects, err := s.scopeProjects(ctx, pr, l)
 		if err != nil {
@@ -352,7 +394,7 @@ func (s *Service) scopePage(ctx context.Context, p auth.Principal, page scopePag
 		}
 		blocks = append(blocks, pr.partsBlocks(l, tab, rows, unplaced, tab != "staff" || rules.Doors[p.ActiveRole].OpenStaff)...)
 	}
-	return &screensv1.GetPageResponse{Header: header, Tabs: tabs, Blocks: blocks, WebPath: page.base}, true, nil
+	return &screensv1.GetPageResponse{Header: header, Tabs: tabs, Blocks: blocks, WebPath: page.base, Selection: selection}, true, nil
 }
 
 // scopeFilters is partials/profiles/_filters.html: the year and the period.

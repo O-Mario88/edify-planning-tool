@@ -98,7 +98,20 @@ func (s *Service) activityList(ctx context.Context, p auth.Principal, scope scho
 }
 
 func (s *Service) listed(ctx context.Context, scope schooldirectory.Scope, sc school, statuses []string, order string) ([]listedActivity, error) {
-	args := []any{sc.ID, statuses}
+	return s.listedWhere(ctx, scope, statuses, order, func(args *[]any) string {
+		*args = append(*args, sc.ID)
+		n := len(*args)
+		return fmt.Sprintf(`(a.school_id = $%[1]d OR a.id IN (
+    SELECT c.activity_id FROM cluster_activity_attendance c WHERE c.school_id = $%[1]d AND (c.invited OR c.attended)))`, n)
+	})
+}
+
+// listedWhere reads the activities of one status group that source picks
+// (a profile's own question: profile_activities.for_school, for_district…),
+// in order.
+func (s *Service) listedWhere(ctx context.Context, scope schooldirectory.Scope, statuses []string, order string, source func(args *[]any) string) ([]listedActivity, error) {
+	args := []any{statuses}
+	picked := source(&args)
 	inCountry := "false"
 	if scope.CountryScope && scope.Country != "" {
 		args = append(args, scope.CountryIDs())
@@ -117,12 +130,10 @@ SELECT a.id, COALESCE(a.status, ''), COALESCE(a.activity_type, ''), COALESCE(a.a
 FROM activity a
 LEFT JOIN school s ON s.id = a.school_id
 LEFT JOIN cluster cl ON cl.id = a.cluster_id
-WHERE a.deleted_at IS NULL AND a.status = ANY($2)
-  AND (a.school_id = $1 OR a.id IN (
-    SELECT c.activity_id FROM cluster_activity_attendance c WHERE c.school_id = $1 AND (c.invited OR c.attended)))
+WHERE a.deleted_at IS NULL AND a.status = ANY($1) AND `+picked+`
 ORDER BY `+order, args...)
 	if err != nil {
-		return nil, fmt.Errorf("schoolprofile: reading the school's activities: %w", err)
+		return nil, fmt.Errorf("schoolprofile: reading the profile's activities: %w", err)
 	}
 	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (listedActivity, error) {
 		var a listedActivity
