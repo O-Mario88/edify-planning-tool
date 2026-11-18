@@ -104,6 +104,12 @@ func (c *Client) do(ctx context.Context, method, path string, payload []byte, ou
 		// application answers both alike, and so does the app.
 		return apierr.New(ctx, connect.CodeNotFound, apierr.ReasonNotFound,
 			"This was not found, or it is not yours to view.")
+	case response.StatusCode == http.StatusNotImplemented:
+		// A page of the web the reader may open that the feed does not draw:
+		// not a failure, and not the reader's refusal. The app opens it in
+		// the existing web.
+		return apierr.New(ctx, connect.CodeUnavailable, apierr.ReasonScreenUnavailable,
+			"This screen is not available here yet. Use the Edify web app.")
 	case response.StatusCode != http.StatusOK:
 		return c.unavailable(ctx, fmt.Errorf("%s answered %d", path, response.StatusCode))
 	}

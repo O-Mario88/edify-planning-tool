@@ -60,6 +60,7 @@ func TestGetMapsFailures(t *testing.T) {
 		{name: "session no longer valid", status: 401, wantCode: connect.CodeUnauthenticated, wantReason: apierr.ReasonAuthInvalid},
 		{name: "role may not view the page", status: 403, wantCode: connect.CodePermissionDenied, wantReason: apierr.ReasonPermissionDenied},
 		{name: "not there or not the reader's", status: 404, wantCode: connect.CodeNotFound, wantReason: apierr.ReasonNotFound},
+		{name: "a web page the feed does not draw yet", status: 501, wantCode: connect.CodeUnavailable, wantReason: apierr.ReasonScreenUnavailable},
 		{name: "existing application error", status: 500, body: "Traceback: secret detail", wantCode: connect.CodeUnavailable, wantReason: apierr.ReasonScreenUnavailable},
 		{name: "a field the contract does not know", status: 200, body: `{"greeting":"Hi","passwordHash":"x"}`, wantCode: connect.CodeUnavailable, wantReason: apierr.ReasonScreenUnavailable},
 		{name: "not JSON", status: 200, body: "<html>", wantCode: connect.CodeUnavailable, wantReason: apierr.ReasonScreenUnavailable},

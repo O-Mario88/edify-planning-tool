@@ -15,34 +15,42 @@ import { asReader } from '@/lib/auth';
 import { environment } from '@/lib/environment';
 import { actionHref, drawerPageHref } from '@/lib/feedPage';
 import { gatewayClient, isNotFound, isUnavailable } from '@/lib/gateway';
+import { firstAnswer, type SpellingAnswer } from '@/lib/pageSpellings';
 
 import { PageHeader } from '../blocks/PageHeader';
 import { FeedBlocks } from './FeedBlocks';
 import { NotMovedYet } from './NotMovedYet';
 import { SelectionBar } from './SelectionBar';
 
-export async function askPage(path: string, query: Record<string, string>): Promise<GetPageResponse | null> {
+/** The gateway's answer for one spelling of a page. */
+async function askSpelling(path: string, query: Record<string, string>): Promise<SpellingAnswer<GetPageResponse>> {
   return asReader(async (token) => {
     try {
-      return await gatewayClient(PageScreenService, token).getPage({ path, query });
+      return { kind: 'page', page: await gatewayClient(PageScreenService, token).getPage({ path, query }) };
     } catch (error) {
-      if (isNotFound(error)) notFound();
-      if (isUnavailable(error)) return null;
+      if (isNotFound(error)) return { kind: 'notFound' };
+      if (isUnavailable(error)) return { kind: 'unavailable' };
       throw error;
     }
   });
 }
 
+export async function askPage(path: string, query: Record<string, string>): Promise<GetPageResponse | null> {
+  const answer = await askSpelling(path, query);
+  if (answer.kind === 'notFound') notFound();
+  return answer.kind === 'page' ? answer.page : null;
+}
+
 /**
  * The first answer among the page's spellings: some pages are answered only
- * as "/x/" (the finance pages), others only as "/x".
+ * as "/x/" (the finance pages, every oversight page), others only as "/x".
+ * A spelling the gateway does not know moves on to the next
+ * (lib/pageSpellings); the page is not found only when none answers.
  */
 async function askFirst(paths: readonly string[], query: Record<string, string>): Promise<GetPageResponse | null> {
-  for (const path of paths) {
-    const answer = await askPage(path, query);
-    if (answer) return answer;
-  }
-  return null;
+  const answer = await firstAnswer(paths, (path) => askSpelling(path, query));
+  if (answer.kind === 'notFound') notFound();
+  return answer.kind === 'page' ? answer.page : null;
 }
 
 export async function FeedPage({ path, query, alsoAs = [] }: { path: string; query: Record<string, string>; alsoAs?: readonly string[] }) {

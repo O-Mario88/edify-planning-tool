@@ -1396,6 +1396,23 @@ def _mark_forms(node, page_path: str) -> None:
         _mark_forms(value, page_path)
 
 
+def _not_moved_yet(user, path: str) -> bool:
+    """A page of the web the reader may open that the feed does not draw:
+    not refused, only not here yet. The gateway answers it "unavailable" and
+    the new web app opens it in the existing web, where a 404 told the reader
+    the page did not exist."""
+    from django.urls import Resolver404, resolve
+
+    from apps.core.permissions import can_open_url
+
+    try:
+        match = resolve(path)
+    except Resolver404:
+        return False
+    name = match.url_name or match.func.__name__
+    return name not in NATIVE_PAGES | LATER_PARTS and bool(can_open_url(user, path))
+
+
 def read_page(user, path: str, query) -> tuple[int, dict]:
     """The page at ``path`` as blocks for ``user``: (status, body)."""
     from urllib.parse import parse_qsl, urlparse
@@ -1409,6 +1426,8 @@ def read_page(user, path: str, query) -> tuple[int, dict]:
     except Http404:
         return 404, {"error": "This page is not available."}
     if page is None:
+        if _not_moved_yet(user, path):
+            return 501, {"error": "This page has not moved here yet."}
         return 404, {"error": "This page is not available."}
     if page.status_code in (301, 302, 303):
         return 200, {"redirect": page.get("Location", "")}

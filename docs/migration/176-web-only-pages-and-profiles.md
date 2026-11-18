@@ -657,3 +657,35 @@ after): acknowledged, awaiting past its follow-up, never shared, shared with
 one lead, and a training observation the page leaves out. Two queries for
 eight readers, two refused: **16 answers, 0 differing**; and with none, in
 the suite.
+
+## 176.25 The web app's "This page could not be found" (2026-11-18)
+
+The owner reported the Next.js web app answering 404 for Planning Monitor,
+Planning Oversight, Country Oversight, the Country Map, Cluster, Core and
+Partner Oversight, the Verification Queue, SSA Verification, Partner
+Evidence, Team Performance, Returned Activities and more. A sweep of every
+role's sidebar through the gateway, under both spellings of each link, found
+three causes.
+
+- **A page's spelling.** The existing pages are "/x/" and a browser asking
+  for "/x" is moved there (APPEND_SLASH), but the gateway reads a path as
+  given, and the sidebar writes these links without their slash. FeedPage
+  asked "/x", took the gateway's NotFound as final and never asked "/x/".
+  It now asks each spelling in turn (`lib/pageSpellings.ts`): the page is not
+  found only when no spelling answers.
+- **A page Go has not drawn yet, through the fallback.** The feed answered
+  404 alike for a page the reader may not open and for a page of the web it
+  does not draw. It now answers 501 for the second (`read_page`,
+  `_not_moved_yet`), the gateway's feed client reads that as "unavailable",
+  and the web app opens the page in the existing web instead of a 404.
+- **A route that caught another page.** `/schools/[id]` read "closed" as a
+  school's id; `/schools/closed` has a route of its own now.
+
+A gateway started before a page was drawn in Go also falls back for it;
+restarting it serves the new pages. Proof: every sidebar link of thirteen
+roles, both spellings, through the gateway: all served but `/home` and
+`/messages` (not yet in Go) and `/schools` (the web app's own screen); and
+every one of the Admin's 118 links fetched in the signed-in web app, after
+the fix, 200 but `/home`, `/messages` and `/settings`. The Regional Lead's
+sidebar offers Country Oversight and the Country Map, which the existing
+application refuses them too: a question for the owner.
