@@ -200,7 +200,6 @@ func periodInUse(t *testing.T, body json.RawMessage, query map[string]string) js
 	return out
 }
 
-
 // The existing feed's Partner Monitoring over work in each state the page
 // reads apart (internal/partneroversight/testdata/golden.py files it) and
 // over the seed's completed FY 2026 work, for the officers and Programme
