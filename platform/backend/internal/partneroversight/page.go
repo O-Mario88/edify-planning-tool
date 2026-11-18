@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
-	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 )
 
 // Words the templates hold.
@@ -43,7 +42,7 @@ func page(w workspace) *screensv1.GetPageResponse {
 	blocks := []*screensv1.PageBlock{filters(w), memberTabs(w), tiles(w),
 		{Kind: &screensv1.PageBlock_Empty{Empty: emptyWork}}}
 	if w.role.EngagementRegister {
-		blocks = append(blocks, register(w)...)
+		blocks = append(blocks, register(w, w.engagements)...)
 	}
 	return &screensv1.GetPageResponse{Header: header, Blocks: blocks, WebPath: Path}
 }
@@ -132,36 +131,6 @@ func tiles(w workspace) *screensv1.PageBlock {
 		metrics[i] = &screensv1.PageMetric{Label: t.Label, Value: t.Value, Helper: t.Helper, Note: t.Note, Tone: t.Tone}
 	}
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Strip{Strip: &screensv1.PageStrip{Title: tilesTitle, Metrics: metrics}}}
-}
-
-// register is partials/partners/engagement_register.html with no
-// engagements: its title, its tiles (each a sentence, so the line under the
-// figure is the note) and the empty table.
-func register(w workspace) []*screensv1.PageBlock {
-	keys := []string{"recorded", "partners_engaged", "follow_ups_due"}
-	if w.role.ObservationsTile {
-		keys = append(keys, "observations")
-	}
-	figures := []schoolprofile.StripFigure{}
-	for _, key := range keys {
-		words := rules.EngagementMetricWords[key]
-		figures = append(figures, schoolprofile.StripFigure{
-			Label: words[0], Value: "0", Helper: strings.ReplaceAll(words[1], "{fy}", w.period.fy),
-		})
-	}
-	message, hint := readerEmpty, readerHint
-	if w.role.RecordsEngagements {
-		message, hint = recordedEmpty, recordedHint
-	}
-	table := &screensv1.PageTable{
-		Rows:         []*screensv1.PageRow{{Cells: []*screensv1.PageCell{{Text: message + " " + hint}}}},
-		EmptyMessage: message,
-	}
-	return []*screensv1.PageBlock{
-		{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{Title: registerTitle}}},
-		schoolprofile.Strip(registerTilesTitle, figures),
-		{Kind: &screensv1.PageBlock_Table{Table: table}},
-	}
 }
 
 // title_ is |replace_underscore|title: words split at underscores, each

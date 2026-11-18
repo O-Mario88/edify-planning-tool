@@ -80,6 +80,8 @@ type workspace struct {
 	// query is the page's query, which a table's pager reads its page from
 	// and carries on.
 	query url.Values
+	// engagements is the partnership register, for the readers who see it.
+	engagements *engagementRegister
 }
 
 // Build answers path for p with the page's query. served is false for a
@@ -135,10 +137,10 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if err != nil {
 		return nil, true, err
 	}
-	if role.EngagementRegister {
-		engaged, err := anyEngagement(ctx, s.db, p.UserID)
-		if err != nil || engaged {
-			return nil, !engaged, err
+	if role.ObservationsTile {
+		observed, err := anyPartnerObservation(ctx, s.db)
+		if err != nil || observed {
+			return nil, !observed, err
 		}
 	}
 	w := workspace{role: role, period: per, status: query.Get("status"), fyOptions: schooldirectory.FYOptions(now),
@@ -156,6 +158,13 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	}
 	w.work = workTab(strings.TrimSpace(query.Get("work")))
 	if !busy {
+		if role.EngagementRegister {
+			reg, drawn, err := s.readRegister(ctx, p, per.fy, "", dateOf(now.In(zone)))
+			if err != nil || !drawn {
+				return nil, drawn, err
+			}
+			w.engagements = reg
+		}
 		return page(w), true, nil
 	}
 	w.work = strings.TrimSpace(query.Get("work"))

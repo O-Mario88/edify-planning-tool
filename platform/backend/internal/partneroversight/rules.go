@@ -93,6 +93,9 @@ type Rules struct {
 	EngagementMetricWords        map[string][2]string `json:"engagement_metric_words"`
 	EngagementAutoloadParams     []string             `json:"engagement_autoload_params"`
 	EngagementPageParam          string               `json:"engagement_page_param"`
+	EngagementKindLabels         map[string]string    `json:"engagement_kind_labels"`
+	EngagementBaseURL            string               `json:"engagement_base_url"`
+	EngagementRowLimit           int                  `json:"engagement_row_limit"`
 	ZeroTiles                    []Tile               `json:"zero_tiles"`
 	ZeroTilesWithTarget          []Tile               `json:"zero_tiles_with_target"`
 	QueryKeysNotPassed           []string             `json:"query_keys_not_passed"`

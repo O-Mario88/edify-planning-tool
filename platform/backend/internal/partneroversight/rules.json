@@ -6,6 +6,14 @@
     "record",
     "source"
   ],
+  "engagement_base_url": "/partner-engagements",
+  "engagement_kind_labels": {
+    "capacity_building": "Capacity-building session",
+    "framework_orientation": "Orientation on Edify's CCE framework",
+    "joint_planning": "Joint planning",
+    "quality_follow_up": "Training quality follow-up",
+    "review_meeting": "Partner review meeting"
+  },
   "engagement_metric_words": {
     "follow_ups_due": [
       "Partner Follow-Ups Due",
@@ -25,6 +33,7 @@
     ]
   },
   "engagement_page_param": "engagement_page",
+  "engagement_row_limit": 500,
   "left_partner_statuses": [
     "returned",
     "cancelled"

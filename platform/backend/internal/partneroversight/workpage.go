@@ -158,7 +158,7 @@ func (v *workView) blocks() []*screensv1.PageBlock {
 		blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: v.card()}})
 	}
 	if w.role.EngagementRegister {
-		blocks = append(blocks, register(w)...)
+		blocks = append(blocks, register(w, w.engagements)...)
 	}
 	return blocks
 }

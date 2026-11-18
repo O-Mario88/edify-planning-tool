@@ -159,6 +159,11 @@ def rules() -> dict:
         },
         "engagement_autoload_params": list(engagement_views.AUTOLOAD_PARAMS),
         "engagement_page_param": engagement_views.PAGE_PARAM,
+        # The register's rows (engagement_register): each kind's label, the
+        # drawers' root and the most rows read.
+        "engagement_kind_labels": dict(engagement_services.KIND_LABELS),
+        "engagement_base_url": engagement_views.BASE_URL,
+        "engagement_row_limit": 500,
         # The tiles with no monitor behind the reader, and with one whose
         # every total is zero.
         "zero_tiles": zero_tiles(None),

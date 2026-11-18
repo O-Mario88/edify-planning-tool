@@ -1053,3 +1053,6 @@ GRANT SELECT (id, requested_at, kind, reason_category, partner_facing_reason, in
 -- Partner Monitoring's Core tab: the package slot a hand-over waiting on
 -- its Partner holds (slot_held_by_assignment).
 GRANT SELECT (assigned_partner_id) ON core_activity_slot TO edify_gateway_ro;
+-- Partner Monitoring's partnership register: each engagement's row, its
+-- follow-up and whether the partner has it.
+GRANT SELECT (id, kind, fy, country, subject, agreed_improvements, follow_up_due, follow_up_done_at, shared_with_partner_at, partner_id, created_at) ON partner_engagement TO edify_gateway_ro;

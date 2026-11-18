@@ -51,12 +51,6 @@ func (s *Service) country(ctx context.Context, p auth.Principal, role Role, per 
 	if country == schooldirectory.NoCountry {
 		return nil, false, nil
 	}
-	if role.EngagementRegister {
-		engaged, err := anyEngagementAtAll(ctx, s.db)
-		if err != nil || engaged {
-			return nil, !engaged, err
-		}
-	}
 	w := workspace{role: role, period: per, status: query.Get("status"), fyOptions: schooldirectory.FYOptions(now), query: query,
 		country: country, regions: regions, supervised: supervised, withTarget: true}
 	w.programLead = strings.TrimSpace(query.Get("program_lead"))
@@ -325,6 +319,14 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 			Key: "add_partner_organisation", Label: "Add Partner Organisation", Primary: true,
 			Enabled: true, Href: "/partners/create", Drawer: true,
 		}}
+	}
+	if w.role.EngagementRegister {
+		// The register follows the Partner tab in view.
+		reg, drawn, err := s.readRegister(ctx, p, w.period.fy, v.partner, today)
+		if err != nil || !drawn {
+			return nil, drawn, err
+		}
+		v.w.engagements = reg
 	}
 	out := &screensv1.GetPageResponse{Header: header, Blocks: v.blocks(), WebPath: Path}
 	if v.selectable {

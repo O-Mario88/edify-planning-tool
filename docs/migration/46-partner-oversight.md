@@ -587,3 +587,48 @@ Proof: a fixture Core package with two visit slots handed to the Partner.
 One hand-over names visit 1 and reads V1; the other names none and reads
 V2. There is also Core work waiting for IA verification with its form in:
 **705 answers of 10 accounts, 0 differing**.
+
+## 46.21 The partnership register with engagements (2026-11-18)
+
+Recorded engagements no longer hand the page on. Go draws the register
+(`partner_engagement_views.engagement_register`) for the page's FY and the
+Partner tab in view, or every Partner on an empty workspace:
+
+- **Who reads what** (`engagements_visible_to`): the Admin reads every
+  engagement, a Programme Lead their own, and the Country Director their
+  country's (every one when no country is on file). Impact Assessment reads
+  none.
+- **The tiles:** engagements held in the FY, the Partners engaged in it,
+  and open follow-ups whose day has come, from any year.
+- **The rows:** newest held first, at most 500. Each row shows:
+  - the subject, the Partner and the kind;
+  - the day it was held;
+  - the first 120 characters of the agreed improvements;
+  - the follow-up in words (No follow-up, Followed up, Overdue since…, Due
+    today, Due…);
+  - whether it is shared with the Partner. The day is the stored moment's
+    UTC day, as Django formats it;
+  - who recorded it, for everyone but a Programme Lead.
+- **The buttons:** every row offers Open. Its author also gets Follow up
+  once the follow-up's day has come, and Share until they share it.
+
+**Still handed on:**
+
+- a register past one page;
+- a Programme Lead's page while any Regional Lead observation asks to
+  strengthen or replace a partner (`open_observation_follow_ups`, its tile
+  and its list).
+
+`roles.sql` grants the gateway the register's columns. `rules.json` now
+carries the kinds' labels, the drawers' root and the row limit.
+
+Proof: six fixture engagements:
+
+- a Programme Lead's overdue, unshared one, with improvements over 120
+  characters;
+- a Country Director's followed-up, shared one, and their one due ahead;
+- last year's one, due today;
+- one for the bulk Partner;
+- one in another country, which only the Admin reads.
+
+**705 answers of 10 accounts, 0 differing.**

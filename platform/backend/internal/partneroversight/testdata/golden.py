@@ -71,6 +71,7 @@ TABLES = (
     "partner_assignment_withdrawal",
     "core_plan",
     "core_activity_slot",
+    "partner_engagement",
 )
 
 
@@ -550,6 +551,144 @@ def file_rows():
             ),
         )
         form(26)
+
+        # The partnership register: engagements Programme Leads and the
+        # Country Director recorded, in this year and the last, one in
+        # another country.
+        fy = str(get_operational_fy())
+        users = {
+            email: User.objects.get(email=email).id
+            for email in (
+                "pl1@edify.org",
+                "pl2@edify.org",
+                "cd@edify.org",
+                "admin@edify.org",
+            )
+        }
+        for (
+            n,
+            author,
+            role,
+            partner_id,
+            kind,
+            held_days,
+            year,
+            country,
+            due_days,
+            done,
+            shared,
+        ) in (
+            (
+                1,
+                "pl2@edify.org",
+                "Program Lead",
+                PARTNER,
+                "review_meeting",
+                10,
+                fy,
+                "Uganda",
+                -2,
+                False,
+                False,
+            ),
+            (
+                2,
+                "cd@edify.org",
+                "CountryDirector",
+                PARTNER,
+                "framework_orientation",
+                5,
+                fy,
+                "Uganda",
+                -1,
+                True,
+                True,
+            ),
+            (
+                3,
+                "pl2@edify.org",
+                "Program Lead",
+                PARTNER,
+                "quality_follow_up",
+                400,
+                str(int(fy) - 1),
+                "Uganda",
+                0,
+                False,
+                False,
+            ),
+            (
+                4,
+                "pl1@edify.org",
+                "Program Lead",
+                BULK,
+                "joint_planning",
+                1,
+                fy,
+                "Uganda",
+                None,
+                False,
+                False,
+            ),
+            (
+                5,
+                "cd@edify.org",
+                "CountryDirector",
+                PARTNER,
+                "capacity_building",
+                3,
+                fy,
+                "Uganda",
+                7,
+                False,
+                False,
+            ),
+            (
+                6,
+                "admin@edify.org",
+                "Admin",
+                PARTNER,
+                "review_meeting",
+                2,
+                fy,
+                "Kenya",
+                None,
+                False,
+                True,
+            ),
+        ):
+            cursor.execute(
+                "INSERT INTO partner_engagement (id, author_id, author_role, kind,"
+                " held_on, fy, country, subject, notes, agreed_improvements,"
+                " follow_up_due, follow_up_done_at, follow_up_note,"
+                " shared_with_partner_at, partner_id, source_engagement_id,"
+                " created_at, updated_at)"
+                " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, '', %s, %s, %s, '', %s,"
+                " %s, %s, %s, %s)",
+                [
+                    f"gpoN{n}",
+                    users[author],
+                    role,
+                    kind,
+                    TODAY - timedelta(days=held_days),
+                    year,
+                    country,
+                    f"Gpo engagement {n}",
+                    (
+                        "Agree the term's visit calendar and the evidence each visit "
+                        "uploads, then review the first month's forms together. " * 2
+                    )
+                    if n == 1
+                    else f"Improvement {n}",
+                    None if due_days is None else TODAY + timedelta(days=due_days),
+                    NOW if done else None,
+                    NOW - timedelta(days=1) if shared else None,
+                    partner_id,
+                    None,
+                    NOW - timedelta(minutes=n),
+                    NOW - timedelta(minutes=n),
+                ],
+            )
 
         # A Core school whose visit a staff member dated: still the
         # Partner's to schedule, so it may be withdrawn.

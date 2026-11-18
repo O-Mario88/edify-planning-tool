@@ -96,22 +96,6 @@ SELECT EXISTS (
 	return found, nil
 }
 
-// anyEngagement is whether the partnership register would hold a row or a
-// count for a Programme Lead (engagements_visible_to: their own) or a
-// Regional Lead observation asking for work with a partner
-// (open_observation_follow_ups), read wider than the register does.
-func anyEngagement(ctx context.Context, db schooldirectory.Querier, userID string) (bool, error) {
-	var found bool
-	err := db.QueryRow(ctx, `
-SELECT EXISTS (SELECT 1 FROM partner_engagement e WHERE e.author_id = $1)
-    OR EXISTS (SELECT 1 FROM cce_regional_engagement r WHERE r.recommendation = ANY($2))`,
-		userID, rules.PartnerActionRecommendations).Scan(&found)
-	if err != nil {
-		return false, fmt.Errorf("partneroversight: reading the partnership register: %w", err)
-	}
-	return found, nil
-}
-
 // isRosterLead is whether the reader leads a team in the planning roster
 // (country_oversight.rules.roster): a live profile on a live, active account
 // whose planning role is Programme Lead. monitor_roster files the reader's
@@ -182,17 +166,16 @@ func contains(list []string, v string) bool {
 	return false
 }
 
-// anyEngagementAtAll is whether the partnership register a country reader
-// sees could hold a row: any engagement recorded, or any Regional Lead
-// observation asking for one. The register with rows is not drawn yet.
-func anyEngagementAtAll(ctx context.Context, db schooldirectory.Querier) (bool, error) {
+// anyPartnerObservation is whether a Regional Lead observation asks for work
+// with a partner (strengthen or replace): a Programme Lead's register then
+// may list it and count it in its tile (open_observation_follow_ups), which
+// is not drawn yet. Read wider than the observations shared with the lead.
+func anyPartnerObservation(ctx context.Context, db schooldirectory.Querier) (bool, error) {
 	var found bool
-	err := db.QueryRow(ctx, `
-SELECT EXISTS (SELECT 1 FROM partner_engagement)
-    OR EXISTS (SELECT 1 FROM cce_regional_engagement r WHERE r.recommendation = ANY($1))`,
+	err := db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM cce_regional_engagement r WHERE r.recommendation = ANY($1))`,
 		rules.PartnerActionRecommendations).Scan(&found)
 	if err != nil {
-		return false, fmt.Errorf("partneroversight: reading the partnership register: %w", err)
+		return false, fmt.Errorf("partneroversight: reading the Regional Lead observations: %w", err)
 	}
 	return found, nil
 }
