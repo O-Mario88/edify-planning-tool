@@ -96,6 +96,7 @@ type Rules struct {
 	EngagementKindLabels         map[string]string    `json:"engagement_kind_labels"`
 	EngagementBaseURL            string               `json:"engagement_base_url"`
 	EngagementRowLimit           int                  `json:"engagement_row_limit"`
+	ObservationRecommendations   map[string]string    `json:"observation_recommendation_labels"`
 	ZeroTiles                    []Tile               `json:"zero_tiles"`
 	ZeroTilesWithTarget          []Tile               `json:"zero_tiles_with_target"`
 	QueryKeysNotPassed           []string             `json:"query_keys_not_passed"`

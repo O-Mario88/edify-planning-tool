@@ -31,6 +31,7 @@ from django.contrib.auth import get_user_model
 from django.db import connection, transaction
 from django.utils import timezone as dj_timezone
 
+from apps.accounts.models import StaffProfile
 from apps.core.fy import get_operational_fy
 from apps.mobile_feed.views import read_page
 
@@ -71,6 +72,7 @@ TABLES = (
     "partner_assignment_withdrawal",
     "core_plan",
     "core_activity_slot",
+    "cce_regional_engagement",
     "partner_engagement",
 )
 
@@ -552,6 +554,41 @@ def file_rows():
         )
         form(26)
 
+        # Regional Lead observations of the Partner's work shared with pl2:
+        # one still waiting on work with the Partner; one an engagement
+        # answers; one older than the Partner's latest engagement; one not
+        # shared; one asking only to economize.
+        lead2 = StaffProfile.objects.get(user__email="pl2@edify.org").id
+        observer = User.objects.get(email="regional-lead@edify.org").id
+        for n, recommendation, held_days, activity, shared in (
+            (1, "strengthen", 1, "gpoA2", True),
+            (2, "replace", 0, "gpoA3", True),
+            (3, "strengthen", 20, "gpoA4", True),
+            (4, "strengthen", 1, "gpoA5", False),
+            (5, "economize", 1, "gpoA7", True),
+        ):
+            cursor.execute(
+                "INSERT INTO cce_regional_engagement (id, author_id, kind, held_on,"
+                " fy, country, program_lead_ids, subject, notes, agreed_actions,"
+                " recommendation, feedback, feedback_shared_at, lead_response,"
+                " activity_id, created_at, updated_at)"
+                " VALUES (%s, %s, 'training_observation', %s, %s, 'Uganda', %s,"
+                " %s, '', '', %s, '', %s, '', %s, %s, %s)",
+                [
+                    f"gpoR{n}",
+                    observer,
+                    TODAY - timedelta(days=held_days),
+                    str(get_operational_fy()),
+                    [lead2],
+                    f"Gpo observation {n}",
+                    recommendation,
+                    NOW if shared else None,
+                    activity,
+                    NOW - timedelta(minutes=n),
+                    NOW - timedelta(minutes=n),
+                ],
+            )
+
         # The partnership register: engagements Programme Leads and the
         # Country Director recorded, in this year and the last, one in
         # another country.
@@ -656,6 +693,20 @@ def file_rows():
                 False,
                 True,
             ),
+            # Answers the second observation.
+            (
+                7,
+                "pl1@edify.org",
+                "Program Lead",
+                PARTNER,
+                "quality_follow_up",
+                30,
+                fy,
+                "Uganda",
+                None,
+                False,
+                False,
+            ),
         ):
             cursor.execute(
                 "INSERT INTO partner_engagement (id, author_id, author_role, kind,"
@@ -684,7 +735,7 @@ def file_rows():
                     NOW if done else None,
                     NOW - timedelta(days=1) if shared else None,
                     partner_id,
-                    None,
+                    "gpoR2" if n == 7 else None,
                     NOW - timedelta(minutes=n),
                     NOW - timedelta(minutes=n),
                 ],
@@ -742,7 +793,8 @@ def links(body):
         if "linkTabs" in block
         for tab in block["linkTabs"]["tabs"]
     ]
-    return partners + tabs
+    # Only this page's own links: a Partner's profile link is another page.
+    return [href for href in partners + tabs if href.startswith("?")]
 
 
 def as_query(href):

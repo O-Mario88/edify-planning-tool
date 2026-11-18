@@ -126,6 +126,7 @@ def rules() -> dict:
     from apps.core.enums import DeliveryType
     from apps.core.rbac import EdifyRole
     from apps.frontend.views import partner_engagement_views as engagement_views
+    from apps.cce_leadership.models import ObservationRecommendation
     from apps.frontend.views.oversight_views import PARTNER_STATUS_FILTER_KEYS
     from apps.mobile_feed.views import NOT_PASSED
     from apps.partners import engagement_services
@@ -164,6 +165,8 @@ def rules() -> dict:
         "engagement_kind_labels": dict(engagement_services.KIND_LABELS),
         "engagement_base_url": engagement_views.BASE_URL,
         "engagement_row_limit": 500,
+        # A Regional Lead observation's recommendation, as its line reads it.
+        "observation_recommendation_labels": dict(ObservationRecommendation.choices),
         # The tiles with no monitor behind the reader, and with one whose
         # every total is zero.
         "zero_tiles": zero_tiles(None),

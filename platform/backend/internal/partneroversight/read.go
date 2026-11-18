@@ -165,17 +165,3 @@ func contains(list []string, v string) bool {
 	}
 	return false
 }
-
-// anyPartnerObservation is whether a Regional Lead observation asks for work
-// with a partner (strengthen or replace): a Programme Lead's register then
-// may list it and count it in its tile (open_observation_follow_ups), which
-// is not drawn yet. Read wider than the observations shared with the lead.
-func anyPartnerObservation(ctx context.Context, db schooldirectory.Querier) (bool, error) {
-	var found bool
-	err := db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM cce_regional_engagement r WHERE r.recommendation = ANY($1))`,
-		rules.PartnerActionRecommendations).Scan(&found)
-	if err != nil {
-		return false, fmt.Errorf("partneroversight: reading the Regional Lead observations: %w", err)
-	}
-	return found, nil
-}

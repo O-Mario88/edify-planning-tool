@@ -109,7 +109,7 @@ const partnerOversightGoldenEnv = "EDIFY_PARTNER_OVERSIGHT_GOLDEN"
 // row before the rows that point at it) and, reversed, the order they
 // leave.
 var partnerOversightTables = []string{"partner", "activity", "partner_assignment", "activity_schedule_cost_line", "evidence_record", "partner_assignment_withdrawal",
-	"core_plan", "core_activity_slot", "partner_engagement"}
+	"core_plan", "core_activity_slot", "cce_regional_engagement", "partner_engagement"}
 
 // filePartnerOversightGolden reads the golden, files its rows and returns
 // its answers; the rows leave when the test ends.

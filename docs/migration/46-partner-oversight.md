@@ -632,3 +632,36 @@ Proof: six fixture engagements:
 - one in another country, which only the Admin reads.
 
 **705 answers of 10 accounts, 0 differing.**
+
+## 46.22 Regional Lead observations in a Programme Lead's register (2026-11-18)
+
+A Programme Lead's page is no longer handed on when a Regional Lead
+observation asks for work with a Partner. Go reads
+`open_observation_follow_ups`:
+
+- **Which observations:** training observations shared with the lead of a
+  Partner-delivered training that ask to strengthen or replace it, oldest
+  first, for the Partner in view.
+- **Which are left out:**
+  - any an engagement names. Only the observed Partners' engagements count,
+    as in Django;
+  - any held before the latest engagement anyone recorded with that
+    Partner.
+
+The register's fourth tile counts them. A note under the tiles reads as an
+untitled panel with three parts:
+
+- its title line;
+- its sentence: "a partner", "1 training", or the plural forms;
+- a line for each of the first five. Each line reads the Partner, then the
+  training (its planned day, its name and its place), then the
+  recommendation and the day observed, then the Follow up button's words.
+
+`rules.json` carries the recommendations' labels. golden.py now follows
+only this page's own query links, since a note's Partner link is another
+page.
+
+Proof: five fixture observations shared with pl2. One is still waiting,
+one is answered by an engagement, one is older than the Partner's latest
+engagement, one is not shared, and one asks only to economize. Only the
+first is listed: **705 answers of 10 accounts, 0 differing**.

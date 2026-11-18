@@ -322,7 +322,7 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 	}
 	if w.role.EngagementRegister {
 		// The register follows the Partner tab in view.
-		reg, drawn, err := s.readRegister(ctx, p, w.period.fy, v.partner, today)
+		reg, drawn, err := s.readRegister(ctx, p, w.role, w.period.fy, v.partner, today)
 		if err != nil || !drawn {
 			return nil, drawn, err
 		}

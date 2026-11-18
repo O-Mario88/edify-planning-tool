@@ -38,6 +38,12 @@
     "returned",
     "cancelled"
   ],
+  "observation_recommendation_labels": {
+    "continue": "Continue as delivered",
+    "economize": "Economize the delivery",
+    "replace": "Replace the training",
+    "strengthen": "Strengthen with the training partner"
+  },
   "partner_action_recommendations": [
     "strengthen",
     "replace"
