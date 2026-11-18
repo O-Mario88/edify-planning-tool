@@ -609,3 +609,24 @@ four closed (cceo1's with and without a school, one with no holder, another
 officer's), one deleted and one merely completed, with a checklist each way
 and a NetSuite snapshot. Two queries for ten readers, two refused: **20
 answers, 0 differing**; and with none, in the suite.
+
+## 176.23 The My Performance sub-pages (2026-11-18)
+
+`/my-performance/development`, `/my-performance/values` and
+`/my-performance/documents` (the sidebar's deep links into
+`hr_views.my_performance_view`, each with its tab as a URL argument) are
+drawn in Go by `myperformance`, the page it already drew at
+`/my-performance`. The export adds each path's tab (read from the URL
+definitions, `resolve(path).kwargs`), and its doors and strip per role.
+
+- The path's tab wins over `?tab=`, as `tab or request.GET.get("tab")`
+  does. The documents link names "conversations", which the page does not
+  draw, so it opens on Distributed Priorities whatever `?tab=` says.
+- **The oracle now follows a page's later parts.** `web_page.py` read the
+  HTML without the feed's `later`, so a part a page loads after it opens
+  (the CCEO's guidance inbox here) was missing from the oracle though the
+  feed, and Go, draw it. It now passes read_page's own `later`, inside the
+  rolled-back transaction, and every web-only golden is read that way.
+
+Proof: three queries (none, `?tab=spiritual`, `?fy=2026`) for eight readers
+on each path, one refused each: **72 answers, 0 differing**.

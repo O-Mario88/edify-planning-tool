@@ -55,16 +55,23 @@ const PrioritiesPath = "/priorities"
 //go:embed rules.json
 var rulesJSON []byte
 
+// door is one role's way in at one path, and the strip shown there.
+type door struct {
+	Page  bool            `json:"page"`
+	Strip json.RawMessage `json:"strip"`
+}
+
 var rules = func() (r struct {
-	Roles map[string]struct {
-		Page  bool            `json:"page"`
-		Strip json.RawMessage `json:"strip"`
-	} `json:"roles"`
+	Roles map[string]door `json:"roles"`
 	// PrioritiesRoles are the same page's doors at /priorities.
-	PrioritiesRoles map[string]struct {
-		Page  bool            `json:"page"`
-		Strip json.RawMessage `json:"strip"`
-	} `json:"priorities_roles"`
+	PrioritiesRoles map[string]door `json:"priorities_roles"`
+	// SubPages are the sidebar's deep links into the page's own tabs
+	// (/my-performance/development, /values, /documents): each path's tab,
+	// which wins over ?tab=, and its doors.
+	SubPages map[string]struct {
+		Tab   string          `json:"tab"`
+		Roles map[string]door `json:"roles"`
+	} `json:"sub_pages"`
 	ManagerRoles        []string          `json:"manager_roles"`
 	DistributeRoles     []string          `json:"distribute_roles"`
 	DistributeTeamRoles []string          `json:"distribute_team_roles"`
@@ -109,13 +116,29 @@ type commitment struct{ name, kind, behaviour, reflection, evidence string }
 
 var errPassOn = errors.New("myperformance: the existing page answers this reader")
 
-// Build answers /my-performance; every other path is not its own.
+// withTab is query with its tab replaced, the request's own left alone.
+func withTab(query url.Values, tab string) url.Values {
+	out := url.Values{}
+	for k, v := range query {
+		out[k] = append([]string(nil), v...)
+	}
+	out.Set("tab", tab)
+	return out
+}
+
+// Build answers /my-performance, its sub-pages and /priorities; every other
+// path is not its own.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
 	doors := rules.Roles
-	switch path {
-	case Path:
-	case PrioritiesPath:
+	switch sub, isSub := rules.SubPages[path]; {
+	case path == Path:
+	case path == PrioritiesPath:
 		doors = rules.PrioritiesRoles
+	case isSub:
+		// The path's tab wins over ?tab= (tab or request.GET.get("tab")),
+		// even one the page does not draw, which leaves its first tab.
+		doors = sub.Roles
+		query = withTab(query, sub.Tab)
 	default:
 		return nil, false, nil
 	}

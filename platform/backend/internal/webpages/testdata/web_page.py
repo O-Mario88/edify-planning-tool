@@ -9,7 +9,8 @@ pages, for a page the feed does not open (a web-only page).
 It runs the page's own view, unmodified, for each reader, exactly as the
 feed runs one of its pages (apps.mobile_feed.views._run_page, which also
 asks can_open_url), and reads the HTML with the feed's own reader
-(page_body). Nothing is written: each answer runs in a transaction rolled
+(page_body), following the parts the page loads after it opens as the feed
+does (read_page's `later`). Nothing is written: each answer runs in a transaction rolled
 back.
 """
 
@@ -21,7 +22,40 @@ from django.db import transaction
 from django.urls import Resolver404, resolve
 from django.utils import timezone
 
-from apps.mobile_feed.views import _run_page, page_body
+from apps.mobile_feed.views import (
+    LATER_PARTS,
+    NATIVE_PAGES,
+    _page_params,
+    _run_page,
+    page_body,
+)
+
+
+def later_for(user):
+    """read_page's `later`: a part the page loads after it opens, run through
+    the page's own view."""
+    from urllib.parse import parse_qsl, urlparse
+
+    from django.http import Http404
+
+    def later(part_path, headers):
+        url = urlparse(part_path)
+        try:
+            part = _run_page(
+                user,
+                url.path,
+                _page_params(dict(parse_qsl(url.query))),
+                LATER_PARTS | NATIVE_PAGES,
+                headers,
+            )
+        except Http404:
+            return None
+        if part is None or part.status_code != 200:
+            return None
+        return part.content.decode()
+
+    return later
+
 
 paths = os.environ["WEB_PATH"].split(",")
 queries = json.loads(os.environ.get("WEB_QUERIES") or "[{}]")
@@ -42,6 +76,12 @@ for path, email, query in (
         continue
     with transaction.atomic():
         response = _run_page(user, path, query, name)
+        body = None
+        if response is not None and response.status_code == 200:
+            # The parts the page loads after it opens are read as the feed
+            # reads them (read_page's own `later`), in the same rolled-back
+            # transaction.
+            body = page_body(response.content.decode(), path, later_for(user))
         transaction.set_rollback(True)
     if response is None:
         answers.append({"email": email, "path": path, "query": query, "status": 404})
@@ -56,7 +96,6 @@ for path, email, query in (
             }
         )
         continue
-    body = page_body(response.content.decode(), path)
     answers.append(
         {"email": email, "path": path, "query": query, "status": 200, "body": body}
     )

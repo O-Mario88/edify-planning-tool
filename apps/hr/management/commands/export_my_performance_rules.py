@@ -30,6 +30,13 @@ PATH = "/my-performance"
 #: The Priorities door (target_distribution_views.priorities_workspace_page):
 #: the same page behind its own gate as well, with its own strip.
 PRIORITIES_PATH = "/priorities"
+#: The sidebar's deep links into the page's own tabs: the same view, each
+#: path carrying its tab as a URL argument that wins over ?tab=.
+SUB_PATHS = [
+    "/my-performance/development",
+    "/my-performance/values",
+    "/my-performance/documents",
+]
 
 #: my_performance_view's own lists, as it writes them.
 MANAGER_ROLES = [
@@ -77,6 +84,8 @@ TABS = [
 
 
 def rules() -> dict:
+    from django.urls import resolve
+
     from apps.core.permissions import RolePermissionService, can_open_url
     from apps.core.rbac import EdifyRole
     from apps.hr.models import ValueCommitment
@@ -98,9 +107,21 @@ def rules() -> dict:
             and bool(can_open_url(user, PRIORITIES_PATH)),
             "strip": strip(user, PRIORITIES_PATH, "partials/_section_nav.html"),
         }
+    sub_pages = {}
+    for sub in SUB_PATHS:
+        sub_roles = {}
+        for role in EdifyRole:
+            user = _role_user(role.value)
+            sub_roles[role.value] = {
+                "page": RolePermissionService.can_view_page(user, "my_performance")
+                and bool(can_open_url(user, sub)),
+                "strip": strip(user, sub, "partials/_section_nav.html"),
+            }
+        sub_pages[sub] = {"tab": resolve(sub).kwargs.get("tab", ""), "roles": sub_roles}
     return {
         "roles": roles,
         "priorities_roles": priorities,
+        "sub_pages": sub_pages,
         "manager_roles": MANAGER_ROLES,
         "distribute_roles": DISTRIBUTE_ROLES,
         "distribute_team_roles": DISTRIBUTE_TEAM_ROLES,

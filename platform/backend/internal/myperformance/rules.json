@@ -189,6 +189,215 @@
     "returned": "Returned",
     "signed_off": "Signed off"
   },
+  "sub_pages": {
+    "/my-performance/development": {
+      "roles": {
+        "Accountant": {
+          "page": true,
+          "strip": null
+        },
+        "Admin": {
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "page": true,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "page": true,
+          "strip": null
+        },
+        "HumanResources": {
+          "page": true,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "page": true,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "page": true,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "page": true,
+          "strip": null
+        }
+      },
+      "tab": "development"
+    },
+    "/my-performance/documents": {
+      "roles": {
+        "Accountant": {
+          "page": true,
+          "strip": null
+        },
+        "Admin": {
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "page": true,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "page": true,
+          "strip": null
+        },
+        "HumanResources": {
+          "page": true,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "page": true,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "page": true,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "page": true,
+          "strip": null
+        }
+      },
+      "tab": "conversations"
+    },
+    "/my-performance/values": {
+      "roles": {
+        "Accountant": {
+          "page": true,
+          "strip": null
+        },
+        "Admin": {
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "page": true,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "page": true,
+          "strip": null
+        },
+        "HumanResources": {
+          "page": true,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "page": true,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "page": true,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "page": true,
+          "strip": null
+        }
+      },
+      "tab": "values"
+    }
+  },
   "tabs": [
     [
       "distributed",
