@@ -190,7 +190,7 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 		}
 	}
 	for _, i := range partnerItems {
-		if i.activityStatus == "awaiting_ia_verification" || i.projectID != "" || i.resolution != "" {
+		if i.projectID != "" || i.resolution != "" {
 			return nil, false, nil
 		}
 	}
@@ -265,6 +265,13 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 	}
 	if len(v.trainings) > tablePageSize {
 		return nil, false, nil
+	}
+	own, err := bothIDSpaces(ctx, s.db, []string{p.UserID, p.StaffProfileID})
+	if err != nil {
+		return nil, true, err
+	}
+	if err := s.markReviewable(ctx, p, w.role, own, v.shown); err != nil {
+		return nil, true, err
 	}
 	orderForMonitoring(v.shown)
 	v.tableItems = v.shown
@@ -456,4 +463,55 @@ WHERE activity_id = ANY($1) ORDER BY activity_id`, activities)
 		i.coreSlotLabel = slots[i.activityID]
 	}
 	return true, nil
+}
+
+// markReviewable sets can_review on the work shown that waits for IA
+// verification (RolePermissionService.can_confirm_partner_activity): Impact
+// Assessment, unless it is their own work; the Country Director for work an
+// Impact Assessment officer ran; and the activity's monitor among the field
+// roles.
+func (s *Service) markReviewable(ctx context.Context, p auth.Principal, role Role, own []string, shown []*item) error {
+	waiting := []*item{}
+	for _, i := range shown {
+		if i.activityStatus == "awaiting_ia_verification" && i.act != nil && i.act.delivery == rules.PartnerDelivery {
+			waiting = append(waiting, i)
+		}
+	}
+	if len(waiting) == 0 {
+		return nil
+	}
+	officers := map[string]bool{}
+	if p.ActiveRole == "CountryDirector" {
+		rows, err := s.db.Query(ctx, `SELECT sp.id FROM staff_profile sp JOIN "user" u ON u.id = sp.user_id
+WHERE sp.deleted_at IS NULL AND 'ImpactAssessment' = ANY(COALESCE(u.roles, '{}'))`)
+		if err != nil {
+			return fmt.Errorf("partneroversight: reading the Impact Assessment officers: %w", err)
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var id string
+			if err := rows.Scan(&id); err != nil {
+				return fmt.Errorf("partneroversight: reading the Impact Assessment officers: %w", err)
+			}
+			officers[id] = true
+		}
+		if err := rows.Err(); err != nil {
+			return err
+		}
+	}
+	field := p.ActiveRole == "CCEO" || p.ActiveRole == "Program Lead" || p.ActiveRole == "ProjectCoordinator"
+	for _, i := range waiting {
+		a := i.act
+		ownWork := a.responsible != "" && contains(own, a.responsible)
+		switch {
+		case !ownWork && role.VerifiesIA:
+			i.canReview = true
+		case !ownWork && p.ActiveRole == "CountryDirector" && a.responsible != "" && officers[a.responsible]:
+			i.canReview = true
+		case field && a.monitor != "" && contains(own, a.monitor):
+			i.canReview = true
+		}
+		i.reviewIsSSA = a.schoolID != "" && (a.ssaExpected || a.purposeType == "ssa_support" || in(rules.Work.SSASupportTypes, a.activityType))
+	}
+	return nil
 }

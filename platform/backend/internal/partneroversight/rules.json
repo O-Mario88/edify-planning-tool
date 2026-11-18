@@ -58,6 +58,7 @@
       "records_engagements": false,
       "resolves_returns": false,
       "school_profiles": false,
+      "verifies_ia": false,
       "withdraws_partner_work": false
     },
     "Admin": {
@@ -72,6 +73,7 @@
       "records_engagements": false,
       "resolves_returns": true,
       "school_profiles": true,
+      "verifies_ia": false,
       "withdraws_partner_work": true
     },
     "BusinessTransformationOfficer": {
@@ -86,6 +88,7 @@
       "records_engagements": false,
       "resolves_returns": false,
       "school_profiles": true,
+      "verifies_ia": false,
       "withdraws_partner_work": false
     },
     "CCEO": {
@@ -100,6 +103,7 @@
       "records_engagements": false,
       "resolves_returns": true,
       "school_profiles": true,
+      "verifies_ia": false,
       "withdraws_partner_work": true
     },
     "ClusterLeader": {
@@ -114,6 +118,7 @@
       "records_engagements": false,
       "resolves_returns": false,
       "school_profiles": false,
+      "verifies_ia": false,
       "withdraws_partner_work": false
     },
     "CountryDirector": {
@@ -128,6 +133,7 @@
       "records_engagements": true,
       "resolves_returns": false,
       "school_profiles": true,
+      "verifies_ia": false,
       "withdraws_partner_work": true
     },
     "HumanResources": {
@@ -142,6 +148,7 @@
       "records_engagements": false,
       "resolves_returns": false,
       "school_profiles": false,
+      "verifies_ia": false,
       "withdraws_partner_work": false
     },
     "ImpactAssessment": {
@@ -156,6 +163,7 @@
       "records_engagements": false,
       "resolves_returns": true,
       "school_profiles": true,
+      "verifies_ia": true,
       "withdraws_partner_work": true
     },
     "MfiLoanOfficer": {
@@ -170,6 +178,7 @@
       "records_engagements": false,
       "resolves_returns": false,
       "school_profiles": false,
+      "verifies_ia": false,
       "withdraws_partner_work": false
     },
     "MfiPartnerAdmin": {
@@ -184,6 +193,7 @@
       "records_engagements": false,
       "resolves_returns": false,
       "school_profiles": false,
+      "verifies_ia": false,
       "withdraws_partner_work": false
     },
     "PartnerAdmin": {
@@ -198,6 +208,7 @@
       "records_engagements": false,
       "resolves_returns": false,
       "school_profiles": false,
+      "verifies_ia": false,
       "withdraws_partner_work": false
     },
     "PartnerFieldOfficer": {
@@ -212,6 +223,7 @@
       "records_engagements": false,
       "resolves_returns": false,
       "school_profiles": false,
+      "verifies_ia": false,
       "withdraws_partner_work": false
     },
     "Program Lead": {
@@ -226,6 +238,7 @@
       "records_engagements": true,
       "resolves_returns": true,
       "school_profiles": true,
+      "verifies_ia": false,
       "withdraws_partner_work": true
     },
     "ProjectCoordinator": {
@@ -240,6 +253,7 @@
       "records_engagements": false,
       "resolves_returns": true,
       "school_profiles": true,
+      "verifies_ia": false,
       "withdraws_partner_work": true
     },
     "RegionalProgramLead": {
@@ -254,6 +268,7 @@
       "records_engagements": false,
       "resolves_returns": false,
       "school_profiles": false,
+      "verifies_ia": false,
       "withdraws_partner_work": false
     },
     "RegionalVicePresident": {
@@ -268,6 +283,7 @@
       "records_engagements": false,
       "resolves_returns": false,
       "school_profiles": false,
+      "verifies_ia": false,
       "withdraws_partner_work": false
     }
   },
@@ -478,6 +494,12 @@
       "review_grace_days": 5,
       "schedule_grace_days": 7
     },
+    "ssa_support_types": [
+      "baseline_ssa_visit",
+      "partner_ssa_collection",
+      "school_visit_ssa_collection",
+      "ssa_activity"
+    ],
     "training_types": [
       "cluster_training",
       "cluster_training_ssa_collection",

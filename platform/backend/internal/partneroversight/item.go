@@ -61,6 +61,11 @@ type item struct {
 	// work holds ("V2", "T1"), what the Partner is paid for it before they
 	// date it, and the hand-over's support type and purpose that decide the
 	// rate.
+	// canReview is whether the reader may Verify & Confirm or Return the
+	// work waiting for IA verification; reviewIsSSA that it is SSA Support,
+	// confirmed in its own drawer.
+	canReview, reviewIsSSA bool
+
 	coreSlotLabel            string
 	partnerRate              *int64
 	supportType, purposeCode string

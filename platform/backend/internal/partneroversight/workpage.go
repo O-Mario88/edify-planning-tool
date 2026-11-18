@@ -443,6 +443,16 @@ func completionCells(i *item) []*screensv1.PageCell {
 // Exception on a hand-back the reader decides, else View and the withdrawal
 // the record permits as one menu, else View alone.
 func (v *workView) actions(i *item) *screensv1.PageCell {
+	if i.canReview {
+		menu := []*screensv1.PageAction{
+			{Key: "menu", Label: "View", Enabled: true, Href: "/partner-oversight/detail?assignment_id=" + i.assignmentID, Drawer: true},
+		}
+		if i.withdrawalLabel != "" {
+			menu = append(menu, &screensv1.PageAction{Key: "menu", Label: i.withdrawalLabel, Enabled: true,
+				Href: "/partner-oversight/withdraw?assignment_id=" + i.assignmentID, Drawer: true})
+		}
+		return &screensv1.PageCell{Actions: append(menu, reviewItems(i)...)}
+	}
 	if i.awaitsStaffDecision() && v.w.role.ResolvesReturns {
 		return &screensv1.PageCell{Text: "Resolve Exception"}
 	}
@@ -529,6 +539,13 @@ func (v *workView) workRow(i *item, kind string) *screensv1.PageRow {
 	switch {
 	case i.assignmentID != "":
 		cells = append(cells, v.actions(i))
+	case i.canReview:
+		menu := []*screensv1.PageAction{{Key: "menu", Label: "View activity", Enabled: true, Href: "/activities/" + i.activityID}}
+		if i.withdrawalLabel != "" {
+			menu = append(menu, &screensv1.PageAction{Key: "menu", Label: i.withdrawalLabel, Enabled: true,
+				Href: "/partner-oversight/withdraw?activity_id=" + i.activityID, Drawer: true})
+		}
+		cells = append(cells, &screensv1.PageCell{Actions: append(menu, reviewItems(i)...)})
 	case i.withdrawalLabel != "":
 		cells = append(cells, &screensv1.PageCell{Actions: []*screensv1.PageAction{
 			{Key: "menu", Label: "View activity", Enabled: true, Href: "/activities/" + i.activityID},
@@ -625,6 +642,10 @@ func (v *workView) coreRow(i *item) *screensv1.PageRow {
 	cells = append(cells, completionCells(i)...)
 	actions := []*screensv1.PageAction{
 		{Key: "menu", Label: "View", Enabled: true, Href: "/partner-oversight/detail?assignment_id=" + i.assignmentID, Drawer: true},
+	}
+	if i.canReview {
+		actions = append(actions, &screensv1.PageAction{Key: "menu", Label: "Return", Enabled: true,
+			Href: "/partner-oversight/return?activity_id=" + i.activityID, Drawer: true})
 	}
 	withdraw := v.w.role.WithdrawsPartnerWork && i.withdrawalLabel != "" &&
 		(i.stage == stageAwaiting || (i.withdrawalKind() == "recall_scheduled" && !i.partnerHasDated))
@@ -754,4 +775,17 @@ func (v *workView) cardParts() []*screensv1.PageBlock {
 		out = append(out, v.trainingsBlocks(v.trainings)...)
 	}
 	return out
+}
+
+// reviewItems are _partner_review_items.html: Verify & Confirm (SSA
+// Support's own drawer, which also records the scores) and Return.
+func reviewItems(i *item) []*screensv1.PageAction {
+	verify := "/partner-oversight/verify?activity_id=" + i.activityID
+	if i.reviewIsSSA {
+		verify = "/activities/" + i.activityID + "/partner-ssa-complete"
+	}
+	return []*screensv1.PageAction{
+		{Key: "menu", Label: "Verify & Confirm", Enabled: true, Href: verify, Drawer: true},
+		{Key: "menu", Label: "Return", Enabled: true, Href: "/partner-oversight/return?activity_id=" + i.activityID, Drawer: true},
+	}
 }

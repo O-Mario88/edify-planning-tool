@@ -98,9 +98,12 @@ def file_rows():
             "AND s.school_id IS NOT NULL AND btrim(s.school_id) <> '' "
             "AND NOT EXISTS (SELECT 1 FROM partner_assignment pa WHERE pa.school_id = s.id) "
             "AND NOT EXISTS (SELECT 1 FROM activity a WHERE a.school_id = s.id AND a.delivery_type = 'partner') "
-            "ORDER BY s.id LIMIT 9"
+            "ORDER BY s.id LIMIT 11"
         )
-        schools = [row[0] for row in cursor.fetchall()]
+        clients = [row[0] for row in cursor.fetchall()]
+        # Each fixture's school, by its number: 0-8 and 17-18 are clients.
+        schools = {n: clients[n] for n in range(9)}
+        schools[17], schools[18] = clients[9], clients[10]
         # A Core school with no partner work of its own, for the Core tab.
         cursor.execute(
             "SELECT s.id FROM school s WHERE s.deleted_at IS NULL AND s.school_type = 'core' "
@@ -109,7 +112,7 @@ def file_rows():
             "AND NOT EXISTS (SELECT 1 FROM activity a WHERE a.school_id = s.id AND a.delivery_type = 'partner') "
             "ORDER BY s.id LIMIT 1"
         )
-        schools.append(cursor.fetchone()[0])
+        schools[9] = cursor.fetchone()[0]
         # A cluster with no partner work of its own, for the Clusters tab.
         cursor.execute(
             "SELECT c.id FROM cluster c WHERE c.deleted_at IS NULL "
@@ -302,6 +305,26 @@ def file_rows():
             days=6,
             kind="cluster_meeting",
             cluster=cluster,
+        )
+
+        # Work waiting for IA verification: a visit whose form is in and
+        # whose Salesforce ID the reviewer enters, and SSA Support confirmed
+        # in its own drawer. cceo1 monitors both; Impact Assessment verifies.
+        handover(
+            17,
+            status="scheduled",
+            activity_id=work(
+                17, status="awaiting_ia_verification", days=-7, evidence="uploaded"
+            ),
+        )
+        form(17)
+        handover(
+            18,
+            status="scheduled",
+            purpose="ssa_support",
+            activity_id=work(
+                18, status="awaiting_ia_verification", days=-10, evidence="uploaded"
+            ),
         )
 
         # Group trainings the Partner facilitates: the officer's own work,

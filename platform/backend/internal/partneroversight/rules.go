@@ -60,6 +60,8 @@ type Role struct {
 	ResolvesReturns bool `json:"resolves_returns"`
 	// WithdrawsPartnerWork is offered a Core school's Withdraw school.
 	WithdrawsPartnerWork bool `json:"withdraws_partner_work"`
+	// VerifiesIA holds Impact Assessment's verification authority.
+	VerifiesIA bool `json:"verifies_ia"`
 }
 
 // Tile is one headline tile as the feed reads it.
@@ -111,6 +113,7 @@ type Work struct {
 	DataGatheringLabel  string            `json:"data_gathering_label"`
 	Withdrawal          WithdrawalRules   `json:"withdrawal"`
 	DatedByStaff        string            `json:"dated_by_staff"`
+	SSASupportTypes     []string          `json:"ssa_support_types"`
 	VisitTypes          []string          `json:"visit_types"`
 	TrainingTypes       []string          `json:"training_types"`
 	ClusterMeetingTypes []string          `json:"cluster_meeting_types"`

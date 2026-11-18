@@ -393,3 +393,25 @@ Partner activities. Rows sorted alike then tie the same way.
 
 Proof: four fixture trainings (upcoming, overdue, with IA, verified), each
 with its facilitation fee: **584 answers of 10 accounts, 0 differing**.
+
+## 46.13 Verify & Confirm and Return (2026-11-18)
+
+Work waiting for IA verification is no longer handed on. Its reviewer's
+Actions menu offers Verify & Confirm and Return
+(`_partner_review_items.html`), for the readers
+`RolePermissionService.can_confirm_partner_activity` names:
+
+- Impact Assessment (`verifies_ia` in `rules.json`, the matrix's
+  `ia.verify`), unless it is their own work;
+- the Country Director, for work an Impact Assessment officer ran;
+- the activity's monitor, in a field role (CCEO, Programme Lead, Project
+  Coordinator).
+
+SSA Support (`is_partner_ssa_support_activity`) is verified in its own
+drawer, `/activities/<id>/partner-ssa-complete`. The items follow View and
+any withdrawal on a hand-over's row, and View activity on a Partner
+activity's. A Core school's row offers Return.
+
+Proof: two fixture visits waiting for IA verification, one SSA Support,
+monitored by cceo1. cceo1 is offered the review as their monitor and ia as
+verifier: **584 answers of 10 accounts, 0 differing**.

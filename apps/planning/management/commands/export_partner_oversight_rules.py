@@ -85,6 +85,9 @@ def roles() -> dict:
             "resolves_returns": has_permission(
                 user, Permission.PARTNER_RETURN_RESOLVE.value
             ),
+            # Verify & Confirm on work waiting for IA verification
+            # (RolePermissionService.can_verify_ia's matrix half).
+            "verifies_ia": has_permission(user, Permission.IA_VERIFY.value),
             # The Core Schools table's Withdraw school (_prepare_core_actions).
             "withdraws_partner_work": has_permission(
                 user, Permission.PARTNER_ASSIGNMENT_WITHDRAW.value
@@ -169,6 +172,7 @@ def work() -> dict:
     (apps.activities.completion_columns) and the risk rules' grace days
     (partner_risk_service)."""
     from apps.activities import completion_columns as completion
+    from apps.activities.services import PARTNER_SSA_SUPPORT_ACTIVITY_TYPES
     from apps.core import activity_types
     from apps.core.enums import ActivityType, EvidenceKind, SsaIntervention
     from apps.partners import purposes
@@ -209,6 +213,9 @@ def work() -> dict:
             "withdraw_from_partner": withdrawal.WITHDRAW_FROM_PARTNER,
         },
         "dated_by_staff": DATED_BY_STAFF,
+        # SSA Support is confirmed in its own drawer
+        # (activities.services.is_partner_ssa_support_activity).
+        "ssa_support_types": sorted(PARTNER_SSA_SUPPORT_ACTIVITY_TYPES),
         "visit_types": sorted(activity_types.VISIT_TYPES),
         "training_types": sorted(activity_types.TRAINING_TYPES),
         "cluster_meeting_types": sorted(activity_types.CLUSTER_MEETING_TYPES),

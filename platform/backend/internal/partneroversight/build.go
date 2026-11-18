@@ -66,6 +66,7 @@ type activity struct {
 	schoolCode, schoolName, schoolType, district           string
 	owner, ownerRaw, clusterName, clusterOwner             string
 	partnerName, projectName                               string
+	ssaExpected                                            bool
 }
 
 const activityColumns = `a.id, COALESCE(a.activity_type, ''), COALESCE(a.status, ''), COALESCE(a.evidence_status, ''),
@@ -80,7 +81,8 @@ const activityColumns = `a.id, COALESCE(a.activity_type, ''), COALESCE(a.status,
   COALESCE(a.responsible_staff_id, ''),
   COALESCE(s.school_id, ''), COALESCE(s.name, ''), COALESCE(s.school_type, ''), COALESCE(sd.name, ''),
   COALESCE(s.account_owner_id, ''), COALESCE(s.account_owner_name_raw, ''), COALESCE(c.name, ''),
-  COALESCE(c.responsible_staff_id, ''), COALESCE(pt.name, ''), COALESCE(pr.name, '')`
+  COALESCE(c.responsible_staff_id, ''), COALESCE(pt.name, ''), COALESCE(pr.name, ''),
+  COALESCE(a.ssa_collection_expected, false)`
 
 func scanActivity(row pgx.Row, a *activity) error {
 	return row.Scan(&a.id, &a.activityType, &a.status, &a.evidence, &a.salesforce, &a.ia, &a.payment,
@@ -90,7 +92,7 @@ func scanActivity(row pgx.Row, a *activity) error {
 		&a.focus, &a.purposeIntervention, &a.purposeType, &a.dateSetBy, &a.reschedules, &a.plannedMonth, &a.delivery,
 		&a.partnerID, &a.schoolID, &a.clusterID, &a.projectID, &a.responsible,
 		&a.schoolCode, &a.schoolName, &a.schoolType, &a.district, &a.owner, &a.ownerRaw, &a.clusterName,
-		&a.clusterOwner, &a.partnerName, &a.projectName)
+		&a.clusterOwner, &a.partnerName, &a.projectName, &a.ssaExpected)
 }
 
 // day is activity_day: the planned day, else the scheduled moment's day in
