@@ -489,3 +489,123 @@ after): every status the page reads, no school, no date, a training, a
 deleted visit, fifty more for a second page, and two for a Partner who may
 not open schools. Nine queries for seven readers, two refused: **63
 answers, 0 differing**; and over the seed's own visits, in the suite.
+
+## 176.19 The trainings log (2026-11-18)
+
+`/trainings` (`staff_views.trainings_log_view`, `pages/trainings/index.html`)
+is drawn in Go by `stafflogs` (`trainings.go`), beside the visits log. The
+export adds each role's door to it, the training types, and the roles the
+view sends elsewhere.
+
+- **The Programme Lead and the CCEO are handed on.** The view redirects
+  them (to Programme Rollout and to My Plan). The redirected roles are
+  written in the export by hand: the view names them in its code, not in a
+  constant the export could read.
+- Everyone else: their own trainings under either id (`owner_ids`), latest
+  planned first, the first hundred, filtered by `status` (Scheduled or
+  Completed offered) and by school or cluster name.
+- Each row: the session's name (else "Training") over where it is: the
+  school (linked for a reader who may open it), else "<cluster> Cluster"
+  (linked), else "Programme activity". Then the catalogue's category (else
+  "Legacy training") as a badge, its SSA indicator (else `—`), the planned
+  day, the status, "N teachers" (else `—`), and View.
+- The header counts sessions and completed ones; the empty card carries
+  the page's Schedule link, as the visits log's does.
+
+Proof: 57 trainings seeded from one real visit (edify_gorn_test only,
+removed after): the Admin's by user id and the coordinator's by staff id;
+with and without a school, a cluster, a catalogue item, a name and an
+attendance; a visit, a deleted training, and fifty more for a second page.
+Six queries for eight readers (two handed on, one refused): **48 answers,
+0 differing**; and over the seed's own work, in the suite.
+
+## 176.20 The Blocked Closures directory (2026-11-18)
+
+`/activities/closure/blocked` (`closure_views.blocked_closure_view`,
+`pages/closure/blocked_closure.html`) is drawn in Go by the new
+`closurepages` package, behind the `planning` door
+(`schoolprofile.MayPlan`).
+
+- **Ordered longest blocked first (owner, 2026-11-18).** The model has no
+  ordering, so the existing page listed blockers as the query plan
+  happened to return them (a hash join over `school` left them in the
+  school table's physical order). The owner chose longest blocked first;
+  the view now orders by `created_at`, then activity, then blocker, and Go
+  the same. `apps/frontend/test_blocked_closure_order.py` holds it.
+- The reach is `_in_scope`: a country reader every live activity's
+  blockers; anyone else those on work they hold under either id or at their
+  schools. Deleted activities are out, as Activity's manager leaves them.
+  Partner ids never reach this page: no partner role holds `planning`.
+- Each row: `#` and the activity id's first eight characters over its type,
+  the reason (a badge), the responsible role, the holder's id (else
+  "Unassigned"), the age as `timesince` writes it
+  (`debriefs.Timesince`), the next step the reason names (Evidence, IA,
+  NetSuite, else reconcile), and Resolve Blocker. With none, the one-cell
+  "Perfect compliance!" row, which the feed also reads as the table's
+  empty message (the empty state component sits in the row).
+
+The gateway reads `closure_blocker (id, activity_id, blocking_reason,
+responsible_role, created_at)`. Proof: four blockers seeded on existing
+activities (edify_gorn_test only, removed after): two on cceo1's work, one
+on another officer's, ages from forty minutes to over a year. For nine
+readers, two refused, and two queries: **18 answers, 0 differing**, the
+oracle written and compared within the minute because the ages move. With
+none, in the suite.
+
+## 176.21 Analytics Publishing Status (2026-11-18)
+
+`/analytics/publishing` (`closure_views.analytics_publishing_status_view`
+in the analytics workspace, `partials/analytics/panels/publishing_status.html`)
+is drawn in Go by `closurepages` (`publishing.go`). Its rules come from
+`export_closure_pages_rules` (each role's door, `analytics_publishing`;
+whether school names open; the workspace's tab rail for the role, IA's
+alone; the status ranks), kept current by
+`apps/activities/test_closure_pages_rules_export.py`.
+
+- **Failures first (owner, 2026-11-18).** The model has no ordering. The
+  view now ranks failed and recalculation-required records first, then
+  pending, then published, anything else last (`PUBLISH_STATUS_RANK`), the
+  oldest first within each. Go reads the same ranks;
+  `apps/frontend/test_analytics_publishing_order.py` holds the order.
+- The workspace's frame (its decision frame, evidence and freshness), then
+  for IA the analytics tab rail, then the table: the activity's first eight
+  characters, the School ID (read empty) or `—`, the school (linked for a
+  reader who may open it) or "Cluster-wide", the type and the status as
+  badges, the publication time in Kampala (`M d, Y H:i`, else "Pending"),
+  and the error, else the success sentence. With none, the empty row and
+  the table's empty message. The provisional note closes the page.
+
+The gateway reads `analytics_publish_record (id, activity_id, status,
+published_at, error_message, created_at)`. Proof: six records seeded on
+existing activities (edify_gorn_test only, removed after): every ranked
+status and an excluded one, created so table order and the page's order
+disagree, one without a school. Two queries for six readers, three refused:
+**12 answers, 0 differing**; and with none, in the suite.
+
+## 176.22 The Completed Activities ledger (2026-11-18)
+
+`/completed-activities` (`closure_views.completed_activities_view` in the
+analytics workspace, `partials/analytics/panels/completed_work.html`) is drawn
+in Go by `closurepages` (`completed.go`), on the workspace frame it shares
+with the Publishing page (`workspace.go`). The export adds each role's door
+(`completed_activities`) and its tab rail on the page (none of the seven roles
+that open it is shown one).
+
+- The live closed activities in the reader's reach (`reachOf`, the Blocked
+  Closures reach), the latest changed first. The id now settles activities
+  changed in the same instant, in the view and in Go alike, so the order
+  never falls to the query plan.
+- Each row: the id's first eight characters, the School ID (read empty) or
+  `—`, the school (linked for a reader who may open it) or "Cluster-wide",
+  the holder's id (Python's `None` without one), the type as a badge, the
+  planned day (`M d, Y`, blank without one), Verified or Not Verified by the
+  closure checklist's IA flag, the snapshot's NetSuite id (else `—`), and
+  View Record. With none, the empty row and the table's empty message.
+
+The gateway reads `closure_checklist (activity_id, ia_verified)` and
+`completed_activity_snapshot (activity_id, netsuite_expense_id)`. Proof: six
+activities copied from one real visit (edify_gorn_test only, removed after):
+four closed (cceo1's with and without a school, one with no holder, another
+officer's), one deleted and one merely completed, with a checklist each way
+and a NetSuite snapshot. Two queries for ten readers, two refused: **20
+answers, 0 differing**; and with none, in the suite.

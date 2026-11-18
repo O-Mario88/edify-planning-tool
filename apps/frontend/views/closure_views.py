@@ -1,4 +1,4 @@
-from django.db.models import Exists, OuterRef, Q
+from django.db.models import Case, Exists, IntegerField, OuterRef, Q, Value, When
 from django.http import Http404
 from django.shortcuts import render
 from django.contrib import messages
@@ -22,6 +22,18 @@ from apps.activities.closure_services import (
 # for the long tail.
 CLOSURE_QUEUE_LIMIT = 300
 CLOSURE_TAB_LIMIT = 100
+
+
+#: The Analytics Publishing Status page's order (owner, 2026-11-18): the
+#: failures together at the top, then pending, then published.
+PUBLISH_STATUS_RANK = {
+    "failed": 0,
+    "recalculation_required": 0,
+    "pending": 1,
+    "published": 2,
+}
+#: Where any other status (excluded, say) sits: after them all.
+PUBLISH_STATUS_OTHER_RANK = 3
 
 
 def _in_scope(request, queryset):
@@ -213,7 +225,9 @@ def completed_activities_view(request):
             request, Activity.objects.filter(deleted_at__isnull=True, status="closed")
         )
         .select_related("school", "cluster", "closure_checklist")
-        .order_by("-updated_at")
+        # The id settles activities changed in the same instant (a bulk
+        # close), so the order never falls to the query plan.
+        .order_by("-updated_at", "id")
     )
 
     from apps.frontend.views.analytics_render import render_analytics_section
@@ -258,8 +272,12 @@ def blocked_closure_view(request):
     # reason, so listing them all leaks the same information the activity
     # queue would.
     visible = _in_scope(request, Activity.objects.all()).values("id")
-    blockers = ClosureBlocker.objects.filter(activity_id__in=visible).select_related(
-        "activity", "activity__school"
+    # Longest blocked first (owner, 2026-11-18): the model has no ordering,
+    # so the rows came in whatever order the query plan produced.
+    blockers = (
+        ClosureBlocker.objects.filter(activity_id__in=visible)
+        .select_related("activity", "activity__school")
+        .order_by("created_at", "activity_id", "id")
     )
 
     context = {"blockers": blockers}
@@ -300,8 +318,24 @@ def activity_timeline_view(request, activity_id):
 @require_page_permission("analytics_publishing")
 def analytics_publishing_status_view(request):
     """Analytics Publishing Status Page."""
-    records = AnalyticsPublishRecord.objects.all().select_related(
-        "activity", "activity__school"
+    # Failures first (owner, 2026-11-18): failed and recalculation-required
+    # records, then pending, then published, anything else last; oldest
+    # first within each. The model has no ordering, so the rows came in
+    # whatever order the query plan produced.
+    records = (
+        AnalyticsPublishRecord.objects.all()
+        .select_related("activity", "activity__school")
+        .annotate(
+            publish_rank=Case(
+                *(
+                    When(status=status, then=Value(rank))
+                    for status, rank in PUBLISH_STATUS_RANK.items()
+                ),
+                default=Value(PUBLISH_STATUS_OTHER_RANK),
+                output_field=IntegerField(),
+            )
+        )
+        .order_by("publish_rank", "created_at", "activity_id", "id")
     )
 
     from apps.frontend.views.analytics_render import render_analytics_section

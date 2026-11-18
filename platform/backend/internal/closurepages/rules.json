@@ -1,0 +1,258 @@
+{
+  "publish_status_other_rank": 3,
+  "publish_status_rank": {
+    "failed": 0,
+    "pending": 1,
+    "published": 2,
+    "recalculation_required": 0
+  },
+  "roles": {
+    "Accountant": {
+      "completed": true,
+      "completed_strip": null,
+      "open_school": false,
+      "publishing": false,
+      "publishing_strip": null
+    },
+    "Admin": {
+      "completed": true,
+      "completed_strip": null,
+      "open_school": true,
+      "publishing": true,
+      "publishing_strip": null
+    },
+    "BusinessTransformationOfficer": {
+      "completed": false,
+      "completed_strip": null,
+      "open_school": true,
+      "publishing": false,
+      "publishing_strip": null
+    },
+    "CCEO": {
+      "completed": true,
+      "completed_strip": null,
+      "open_school": true,
+      "publishing": false,
+      "publishing_strip": null
+    },
+    "ClusterLeader": {
+      "completed": false,
+      "completed_strip": null,
+      "open_school": false,
+      "publishing": false,
+      "publishing_strip": null
+    },
+    "CountryDirector": {
+      "completed": true,
+      "completed_strip": null,
+      "open_school": true,
+      "publishing": true,
+      "publishing_strip": null
+    },
+    "HumanResources": {
+      "completed": false,
+      "completed_strip": null,
+      "open_school": false,
+      "publishing": false,
+      "publishing_strip": null
+    },
+    "ImpactAssessment": {
+      "completed": true,
+      "completed_strip": null,
+      "open_school": true,
+      "publishing": true,
+      "publishing_strip": {
+        "label": "",
+        "scrolls": true,
+        "tabs": [
+          {
+            "active": false,
+            "href": "/ia/dashboard/",
+            "label": "Dashboard"
+          },
+          {
+            "active": false,
+            "href": "/ia/framework/",
+            "label": "Measurement Framework"
+          },
+          {
+            "active": false,
+            "href": "/ia/school-evidence/",
+            "label": "School Evidence"
+          },
+          {
+            "active": false,
+            "href": "/ssa/upload/",
+            "label": "SSA Upload Center"
+          },
+          {
+            "active": false,
+            "href": "/ssa/unmatched",
+            "label": "Unmatched SSA"
+          },
+          {
+            "active": false,
+            "href": "/ia/stories/",
+            "label": "Most Significant Change"
+          },
+          {
+            "active": false,
+            "href": "/ia/learning/",
+            "label": "Programme Learning"
+          },
+          {
+            "active": false,
+            "href": "/ia/lending-evidence/",
+            "label": "Lending Evidence"
+          },
+          {
+            "active": false,
+            "href": "/ia/impact-reports/",
+            "label": "Impact Reports"
+          },
+          {
+            "active": false,
+            "href": "/reports",
+            "label": "Programme Output Reports"
+          },
+          {
+            "active": true,
+            "href": "/analytics/publishing",
+            "label": "Publishing"
+          },
+          {
+            "active": false,
+            "href": "/decision-log",
+            "label": "Decision Log"
+          },
+          {
+            "active": false,
+            "href": "/country-planning-oversight/",
+            "label": "Country Oversight"
+          },
+          {
+            "active": false,
+            "href": "/cluster-oversight/",
+            "label": "Cluster Oversight"
+          },
+          {
+            "active": false,
+            "href": "/core-schools-oversight/",
+            "label": "Core Schools Oversight"
+          },
+          {
+            "active": false,
+            "href": "/ia/verification/",
+            "label": "Verification Queue"
+          },
+          {
+            "active": false,
+            "href": "/ia/partner-evidence/",
+            "label": "Partner Evidence"
+          },
+          {
+            "active": false,
+            "href": "/ssa/verification/",
+            "label": "SSA Verification"
+          },
+          {
+            "active": false,
+            "href": "/ia/returned/",
+            "label": "Returned Activities"
+          },
+          {
+            "active": false,
+            "href": "/evidence/",
+            "label": "Evidence Review"
+          },
+          {
+            "active": false,
+            "href": "/ia/duplicates/",
+            "label": "Duplicate Review"
+          },
+          {
+            "active": false,
+            "href": "/ia/compare/",
+            "label": "Evidence Compare"
+          },
+          {
+            "active": false,
+            "href": "/ia/history/",
+            "label": "Verification History"
+          },
+          {
+            "active": false,
+            "href": "/ia/analytics/",
+            "label": "Verification Analytics"
+          },
+          {
+            "active": false,
+            "href": "/ia/samples/",
+            "label": "Sample Checks"
+          },
+          {
+            "active": false,
+            "href": "/admin-panel/data-quality-center",
+            "label": "Data Quality"
+          }
+        ]
+      }
+    },
+    "MfiLoanOfficer": {
+      "completed": false,
+      "completed_strip": null,
+      "open_school": false,
+      "publishing": false,
+      "publishing_strip": null
+    },
+    "MfiPartnerAdmin": {
+      "completed": false,
+      "completed_strip": null,
+      "open_school": false,
+      "publishing": false,
+      "publishing_strip": null
+    },
+    "PartnerAdmin": {
+      "completed": false,
+      "completed_strip": null,
+      "open_school": false,
+      "publishing": false,
+      "publishing_strip": null
+    },
+    "PartnerFieldOfficer": {
+      "completed": false,
+      "completed_strip": null,
+      "open_school": false,
+      "publishing": false,
+      "publishing_strip": null
+    },
+    "Program Lead": {
+      "completed": true,
+      "completed_strip": null,
+      "open_school": true,
+      "publishing": false,
+      "publishing_strip": null
+    },
+    "ProjectCoordinator": {
+      "completed": true,
+      "completed_strip": null,
+      "open_school": true,
+      "publishing": false,
+      "publishing_strip": null
+    },
+    "RegionalProgramLead": {
+      "completed": false,
+      "completed_strip": null,
+      "open_school": false,
+      "publishing": false,
+      "publishing_strip": null
+    },
+    "RegionalVicePresident": {
+      "completed": false,
+      "completed_strip": null,
+      "open_school": false,
+      "publishing": false,
+      "publishing_strip": null
+    }
+  }
+}

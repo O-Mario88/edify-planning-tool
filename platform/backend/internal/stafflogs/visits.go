@@ -94,6 +94,9 @@ LIMIT $3`, args...)
 
 // Build answers the logs; every other path is not its own.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if path == TrainingsPath {
+		return s.trainings(ctx, p, query)
+	}
 	if path != VisitsPath {
 		return nil, false, nil
 	}
@@ -121,15 +124,15 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	header := &screensv1.PageHeader{Eyebrow: "Planning", Title: "School Visits",
 		Description: fmt.Sprintf("%d visits · %d completed · %d pending", len(visits), completed, pending),
 		Badges:      []*screensv1.PageBadge{}, Actions: []*screensv1.PageAction{}}
-	blocks := append([]*screensv1.PageBlock{statusFilter(status)}, visitBlocks(visits, d, query)...)
+	blocks := append([]*screensv1.PageBlock{statusFilter(statusOptions, status)}, visitBlocks(visits, d, query)...)
 	return &screensv1.GetPageResponse{Header: header, Blocks: blocks, WebPath: VisitsPath}, true, nil
 }
 
 // statusFilter is the status select, with the option chosen (none, when the
 // status asked is not one of them).
-func statusFilter(status string) *screensv1.PageBlock {
+func statusFilter(options [][2]string, status string) *screensv1.PageBlock {
 	f := &screensv1.PageFilter{Name: "status", Label: "Status"}
-	for _, o := range statusOptions {
+	for _, o := range options {
 		f.Options = append(f.Options, &screensv1.PageFilterOption{Value: o[0], Label: o[1]})
 		if o[0] == status {
 			f.Value = status
@@ -149,13 +152,7 @@ func djangoDate(t time.Time) string {
 // empty card, which the feed reads with the page's Schedule link.
 func visitBlocks(visits []visit, d role, query url.Values) []*screensv1.PageBlock {
 	if len(visits) == 0 {
-		text := func(t string) *screensv1.PagePanelItem {
-			return &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Text{Text: t}}
-		}
-		return []*screensv1.PageBlock{{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{Badges: []*screensv1.PageBadge{},
-			Items: []*screensv1.PagePanelItem{text("No visits found"), text("Schedule your first school visit to get started"),
-				{Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{Links: []*screensv1.PageLink{
-					{Text: "Schedule", Href: scheduleHref}}}}}}}}}}
+		return []*screensv1.PageBlock{emptyCard("No visits found", "Schedule your first school visit to get started", scheduleHref)}
 	}
 	t := &screensv1.PageTable{Columns: []*screensv1.PageColumn{{Label: "School ID"}, {Label: "School"}, {Label: "Type"},
 		{Label: "Date"}, {Label: "Status"}, {Label: ""}}}
@@ -193,4 +190,16 @@ func visitBlocks(visits []visit, d role, query url.Values) []*screensv1.PageBloc
 		blocks = append(blocks, pager)
 	}
 	return blocks
+}
+
+// emptyCard is a log's empty card as the feed reads it: the two sentences,
+// then the page's Schedule link from its header.
+func emptyCard(title, message, schedule string) *screensv1.PageBlock {
+	text := func(t string) *screensv1.PagePanelItem {
+		return &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Text{Text: t}}
+	}
+	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{Badges: []*screensv1.PageBadge{},
+		Items: []*screensv1.PagePanelItem{text(title), text(message),
+			{Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{Links: []*screensv1.PageLink{
+				{Text: "Schedule", Href: schedule}}}}}}}}}
 }

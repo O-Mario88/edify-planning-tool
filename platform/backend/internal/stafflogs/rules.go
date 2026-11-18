@@ -1,6 +1,7 @@
 // Package stafflogs is the staff members' own logs in Go: the visits log
-// (/visits: staff_views.visits_log_view, pages/visits/index.html), as the
-// existing feed reads it.
+// (/visits: staff_views.visits_log_view, pages/visits/index.html) and the
+// trainings log (/trainings: trainings_log_view, pages/trainings/index.html),
+// as the existing feed reads them.
 package stafflogs
 
 import (
@@ -17,12 +18,15 @@ var rulesJSON []byte
 // role is what one role is given.
 type role struct {
 	Visits     bool `json:"visits"`
+	Trainings  bool `json:"trainings"`
 	OpenSchool bool `json:"open_school"`
 }
 
 var rules = func() (r struct {
 	Roles               map[string]role   `json:"roles"`
 	VisitTypes          []string          `json:"visit_types"`
+	TrainingTypes       []string          `json:"training_types"`
+	TrainingsRedirected []string          `json:"trainings_redirected"`
 	CompletedStatuses   []string          `json:"completed_statuses"`
 	NotFinishedStatuses []string          `json:"not_finished_statuses"`
 	RowLimit            int               `json:"row_limit"`
@@ -31,8 +35,8 @@ var rules = func() (r struct {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {
 		panic(fmt.Sprintf("stafflogs: reading rules.json: %v", err))
 	}
-	if len(r.Roles) == 0 || len(r.VisitTypes) == 0 || r.RowLimit == 0 {
-		panic("stafflogs: rules.json lacks the doors, the visit types or the row limit")
+	if len(r.Roles) == 0 || len(r.VisitTypes) == 0 || len(r.TrainingTypes) == 0 || r.RowLimit == 0 {
+		panic("stafflogs: rules.json lacks the doors, the visit or training types, or the row limit")
 	}
 	return r
 }()
@@ -60,3 +64,7 @@ func statusLabel(value string) string {
 	}
 	return strings.Join(words, " ")
 }
+
+// StatusLabel is frontend_filters.status_label, for other pages that print
+// a bare status token.
+func StatusLabel(value string) string { return statusLabel(value) }

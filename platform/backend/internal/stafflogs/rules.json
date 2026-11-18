@@ -14,66 +14,82 @@
   "roles": {
     "Accountant": {
       "open_school": false,
+      "trainings": true,
       "visits": true
     },
     "Admin": {
       "open_school": true,
+      "trainings": true,
       "visits": true
     },
     "BusinessTransformationOfficer": {
       "open_school": true,
+      "trainings": false,
       "visits": false
     },
     "CCEO": {
       "open_school": true,
+      "trainings": true,
       "visits": true
     },
     "ClusterLeader": {
       "open_school": false,
+      "trainings": false,
       "visits": false
     },
     "CountryDirector": {
       "open_school": true,
+      "trainings": true,
       "visits": true
     },
     "HumanResources": {
       "open_school": false,
+      "trainings": false,
       "visits": false
     },
     "ImpactAssessment": {
       "open_school": true,
+      "trainings": true,
       "visits": true
     },
     "MfiLoanOfficer": {
       "open_school": false,
+      "trainings": false,
       "visits": false
     },
     "MfiPartnerAdmin": {
       "open_school": false,
+      "trainings": false,
       "visits": false
     },
     "PartnerAdmin": {
       "open_school": false,
+      "trainings": true,
       "visits": true
     },
     "PartnerFieldOfficer": {
       "open_school": false,
+      "trainings": true,
       "visits": true
     },
     "Program Lead": {
       "open_school": true,
+      "trainings": true,
       "visits": true
     },
     "ProjectCoordinator": {
       "open_school": true,
+      "trainings": true,
       "visits": true
     },
     "RegionalProgramLead": {
       "open_school": false,
+      "trainings": false,
       "visits": false
     },
     "RegionalVicePresident": {
       "open_school": false,
+      "trainings": false,
       "visits": false
     }
   },
@@ -93,6 +109,18 @@
     "Ssa": "SSA",
     "Ura": "URA"
   },
+  "training_types": [
+    "training",
+    "in_school_training",
+    "school_improvement_training",
+    "cluster_training",
+    "core_training",
+    "cluster_training_ssa_collection"
+  ],
+  "trainings_redirected": [
+    "Program Lead",
+    "CCEO"
+  ],
   "visit_types": [
     "school_visit",
     "follow_up_visit",

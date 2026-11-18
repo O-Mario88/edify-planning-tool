@@ -21,3 +21,7 @@ func SchoolTypeLabel(value string) string {
 // MayOpenSchools is whether a role's school names link to their profiles
 // (school_links._may_open: can_open_url("/schools/0")).
 func MayOpenSchools(role string) bool { return rules.Doors[role].Profile }
+
+// MayPlan is whether a role holds the planning page (the district
+// profile's door, can_open_url("/districts/0"), is that page's).
+func MayPlan(role string) bool { return rules.Doors[role].OpenDistrict }

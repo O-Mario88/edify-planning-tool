@@ -37,6 +37,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/calendarpage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/ccelead"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closurepages"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closurequality"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead/schema"
@@ -266,6 +267,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			leavepolicies.NewService(pool, time.Now),
 			visitrequests.NewService(pool, time.Now),
 			stafflogs.NewService(pool, time.Now),
+			closurepages.NewService(pool, time.Now),
 			iapages.NewService(pool, time.Now),
 			ccelead.NewService(pool, time.Now),
 			extrawork.NewService(pool, time.Now),

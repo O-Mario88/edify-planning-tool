@@ -1071,3 +1071,11 @@ GRANT SELECT (region_id) ON calendar_block TO edify_gateway_ro;
 GRANT SELECT (scope, revoked_at, created_at) ON temporary_coverage_assignment TO edify_gateway_ro;
 -- Visit Requests: the owner's note on a decided request.
 GRANT SELECT (owner_decision_note) ON activity TO edify_gateway_ro;
+-- The Blocked Closures directory: each blocker, its reason, role and age, longest blocked first.
+GRANT SELECT (id, activity_id, blocking_reason, responsible_role, created_at) ON closure_blocker TO edify_gateway_ro;
+-- Analytics Publishing Status: each publish record, failures first.
+GRANT SELECT (id, activity_id, status, published_at, error_message, created_at) ON analytics_publish_record TO edify_gateway_ro;
+-- The Completed Activities ledger: each closed activity's IA verification
+-- and its NetSuite expense id.
+GRANT SELECT (activity_id, ia_verified) ON closure_checklist TO edify_gateway_ro;
+GRANT SELECT (activity_id, netsuite_expense_id) ON completed_activity_snapshot TO edify_gateway_ro;
