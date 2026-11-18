@@ -58,6 +58,8 @@ type Role struct {
 	ClusterProfiles bool `json:"cluster_profiles"`
 	// ResolvesReturns is offered Resolve Exception on a hand-back.
 	ResolvesReturns bool `json:"resolves_returns"`
+	// WithdrawsPartnerWork is offered a Core school's Withdraw school.
+	WithdrawsPartnerWork bool `json:"withdraws_partner_work"`
 }
 
 // Tile is one headline tile as the feed reads it.

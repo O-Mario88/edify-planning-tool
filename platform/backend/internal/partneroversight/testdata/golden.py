@@ -101,6 +101,15 @@ def file_rows():
             "ORDER BY s.id LIMIT 9"
         )
         schools = [row[0] for row in cursor.fetchall()]
+        # A Core school with no partner work of its own, for the Core tab.
+        cursor.execute(
+            "SELECT s.id FROM school s WHERE s.deleted_at IS NULL AND s.school_type = 'core' "
+            "AND s.school_id IS NOT NULL AND btrim(s.school_id) <> '' "
+            "AND NOT EXISTS (SELECT 1 FROM partner_assignment pa WHERE pa.school_id = s.id) "
+            "AND NOT EXISTS (SELECT 1 FROM activity a WHERE a.school_id = s.id AND a.delivery_type = 'partner') "
+            "ORDER BY s.id LIMIT 1"
+        )
+        schools.append(cursor.fetchone()[0])
         clone(
             cursor,
             "partner",
@@ -275,6 +284,13 @@ def file_rows():
         )
         form(7)
         work(8, status="partner_scheduled", days=3, kind="in_school_training")
+        # A Core school whose visit a staff member dated: still the
+        # Partner's to schedule, so it may be withdrawn.
+        handover(
+            9,
+            status="scheduled",
+            activity_id=work(9, status="scheduled", days=12, dated_by="staff"),
+        )
 
 
 def dump_rows():
@@ -349,6 +365,7 @@ try:
         for base in (FY, {"partner": PARTNER}):
             for extra in (
                 {"work": "visits"},
+                {"work": "core"},
                 {"work": "trainings"},
                 {"status": "completed"},
                 {"status": "scheduled"},

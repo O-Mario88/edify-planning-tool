@@ -56,6 +56,37 @@ type item struct {
 	withdrawalLabel string
 	// act is the activity behind the work, for the completion columns.
 	act *activity
+
+	// The Core Schools table (annotate_core_support): the package slot the
+	// work holds ("V2", "T1"), what the Partner is paid for it before they
+	// date it, and the hand-over's support type and purpose that decide the
+	// rate.
+	coreSlotLabel            string
+	partnerRate              *int64
+	supportType, purposeCode string
+}
+
+// showsComplete is complete work whose status is a completed one.
+func (i *item) showsComplete() bool {
+	return i.isComplete && in(rules.Work.Completion.CompletedWork, i.activityStatus)
+}
+
+// displayCost is the Core Schools table's Cost: the scheduled work's price,
+// nothing for work taken back, else the Partner's rate.
+func (i *item) displayCost() *int64 {
+	if i.isScheduled() && i.plannedCost != nil && *i.plannedCost != 0 {
+		return i.plannedCost
+	}
+	if i.isReturned() {
+		return nil
+	}
+	return i.partnerRate
+}
+
+// coreTraining is annotate_core_support's test: an in-school training is
+// priced as a Partner school visit whatever the school.
+func (i *item) coreTraining() bool {
+	return in(rules.Work.TrainingTypes, i.activityType) || i.supportType == "Training" || i.purposeCode == "in_school_training"
 }
 
 func in(list []string, v string) bool { return slices.Contains(list, v) }

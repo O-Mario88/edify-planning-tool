@@ -285,3 +285,38 @@ The gateway may now read `partner_assignment_withdrawal.school_id` and
 
 Proof: the golden now also asks regional-lead: **544 answers of 10
 accounts, 0 differing**.
+
+## 46.10 The Core schools tab (2026-11-18)
+
+A Partner holding a Core school gets the Core schools tab, and Go now draws
+its table (`partner_core_row.html`). The columns are School ID, School
+Name, Staff Name, Core support, Purpose of Assignment, Planned date,
+Completed date, Cost, Salesforce ID, Evidence, Status and Actions.
+
+- **Core support** is the package slot its activity fills (`V2`, `T1`,
+  from `core_activity_slot`).
+- **Cost** is the scheduled work's price. Before the work is priced it is
+  the Partner's rate from the operational card, `core_partner_visit` or a
+  training's `client_partner_visit` (`pricing.OperationalRate`). It reads
+  "Rate not set" when the card sets none, and "—" for work taken back.
+- **The Actions menu** is View, plus:
+  - Withdraw school, for a role that may withdraw partner work
+    (`withdraws_partner_work` in `rules.json`), while the Partner has not
+    dated the work;
+  - Resolve Exception, on a hand-back the reader decides.
+- **The details** are Assigned, Training, SSA Intervention, Partner officer,
+  District, Execution, IA, Payment and Returned.
+- **Selection:** the tick boxes and the Withdraw selected bar appear as on
+  Schools assigned.
+
+**Still handed on:**
+
+- a Core school the Partner has not dated, whose slot is the one its
+  hand-over holds (`slot_held_by_assignment`);
+- work whose form is in but is not complete, whose Confirm completed work
+  depends on who may confirm it.
+
+Proof: the golden now asks the Core tab of every reader, over the seed's
+nine completed Core hand-overs and a fixture Core school a staff member
+dated. That gives 13 Core tables with Withdraw school offered where the
+role may: **564 answers of 10 accounts, 0 differing**.

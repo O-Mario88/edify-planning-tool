@@ -85,6 +85,10 @@ def roles() -> dict:
             "resolves_returns": has_permission(
                 user, Permission.PARTNER_RETURN_RESOLVE.value
             ),
+            # The Core Schools table's Withdraw school (_prepare_core_actions).
+            "withdraws_partner_work": has_permission(
+                user, Permission.PARTNER_ASSIGNMENT_WITHDRAW.value
+            ),
         }
     return out
 

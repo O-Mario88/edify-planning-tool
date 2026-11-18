@@ -16,6 +16,7 @@ const (
 	noWork        = "No partner work in this period"
 	noSchoolsRow  = "No schools assigned to this Partner for the selected team and filters."
 	noWorkRow     = "No work for the selected team and filters."
+	noCoreRow     = "No Core Schools assigned to this Partner for the selected team and filters."
 	tablePageSize = 50
 )
 
@@ -79,7 +80,11 @@ func tablesFor(items []*item) []workTable {
 		}
 		return out
 	}
-	return []workTable{
+	tables := []workTable{}
+	if core := pick(items, (*item).isCoreSchoolWork); len(core) > 0 {
+		tables = append(tables, workTable{"Core Schools assigned", "core", "core", core})
+	}
+	return append(tables, []workTable{
 		{"Schools assigned", "assignment", "school", pick(items, func(i *item) bool {
 			return i.assignmentID != "" && i.schoolID != "" && !i.isCoreSchoolWork()
 		})},
@@ -87,10 +92,10 @@ func tablesFor(items []*item) []workTable {
 		{"Trainings", "activity", "", pick(activities, func(i *item) bool { return i.workTab() == "trainings" })},
 		{"Cluster work assigned", "assignment", "", pick(items, func(i *item) bool { return i.assignmentID != "" && i.clusterID != "" })},
 		{"Cluster sessions", "activity", "", pick(activities, func(i *item) bool { return i.workTab() == "clusters" })},
-	}
+	}...)
 }
 
-var tableTab = map[string]string{"Schools assigned": "schools", "Visits": "visits", "Trainings": "trainings",
+var tableTab = map[string]string{"Core Schools assigned": "core", "Schools assigned": "schools", "Visits": "visits", "Trainings": "trainings",
 	"Cluster work assigned": "clusters", "Cluster sessions": "clusters"}
 
 // workTabOpen is work_tabs' open tab: the one asked for if it is a tab, else
@@ -315,12 +320,18 @@ func (v *workView) card() *screensv1.PageTable {
 	if len(v.years) > 1 {
 		out.Footnote = "Read for " + horizonLabel(v.years) + ": work a Partner dates into the next financial year stays here, on its date."
 	}
-	if table.columns == "school" {
+	switch table.columns {
+	case "core":
+		for _, l := range []string{"School ID", "School Name", "Staff Name", "Core support", "Purpose of Assignment",
+			"Planned date", "Completed date", "Cost", "Salesforce ID", "Evidence", "Status", "Actions"} {
+			out.Columns = append(out.Columns, &screensv1.PageColumn{Label: l, Numeric: l == "Cost"})
+		}
+	case "school":
 		for _, l := range []string{"School ID", "School Name", "Staff Name", "Training", "Purpose of Assignment",
 			"SSA Intervention", "Salesforce ID", "Evidence", "Status", "Activity date", "Completed date", "Actions"} {
 			out.Columns = append(out.Columns, &screensv1.PageColumn{Label: l})
 		}
-	} else {
+	default:
 		first, dated := "School", "Activity date"
 		if table.kind == "activity" {
 			first, dated = "School / cluster", "Scheduled"
@@ -338,23 +349,31 @@ func (v *workView) card() *screensv1.PageTable {
 			selectable = true
 		}
 	}
-	v.selectable = table.columns == "school" && selectable
+	v.selectable = (table.columns == "school" || table.columns == "core") && selectable
 	for _, i := range table.items {
 		var row *screensv1.PageRow
-		if table.columns == "school" {
-			row = v.schoolRow(i)
+		switch table.columns {
+		case "school", "core":
+			if table.columns == "core" {
+				row = v.coreRow(i)
+			} else {
+				row = v.schoolRow(i)
+			}
 			if selectable && i.withdrawalLabel != "" {
 				row.PickId = i.assignmentID
 			}
-		} else {
+		default:
 			row = v.workRow(i, table.kind)
 		}
 		out.Rows = append(out.Rows, row)
 	}
 	if len(table.items) == 0 {
 		empty := noWorkRow
-		if table.columns == "school" {
+		switch table.columns {
+		case "school":
 			empty = noSchoolsRow
+		case "core":
+			empty = noCoreRow
 		}
 		out.Rows = []*screensv1.PageRow{{Cells: []*screensv1.PageCell{{Text: empty}}}}
 	}
@@ -569,4 +588,71 @@ func horizonLabel(years []string) string {
 		return "FY " + years[0]
 	}
 	return "FY " + years[0] + "–" + years[len(years)-1]
+}
+
+// coreRow is partner_core_row.html: the package slot, the planned date, the
+// cost, and one Actions menu (View, Withdraw school while the Partner has
+// not dated it, Resolve Exception on a hand-back the reader decides).
+func (v *workView) coreRow(i *item) *screensv1.PageRow {
+	planned := "—"
+	if d := i.activityDate(); d != nil {
+		planned = jMY(d)
+	} else if i.stage == stageAwaiting {
+		planned = "Waiting for scheduling from partner"
+	}
+	cost := "Rate not set"
+	if c := i.displayCost(); c != nil {
+		cost = "UGX " + intcomma(*c)
+	} else if i.isReturned() {
+		cost = "—"
+	}
+	cells := []*screensv1.PageCell{
+		{Text: orDash(i.schoolCode)},
+		{Text: i.schoolName, Href: v.schoolHref(i)},
+		{Text: orDefault(i.cceoName, "Unassigned")},
+		{Text: orDash(i.coreSlotLabel)},
+		{Text: orDash(i.purposeLabel)},
+		{Text: planned},
+		{Text: orDash(jMY(i.completedOn))},
+		{Text: cost},
+	}
+	cells = append(cells, completionCells(i)...)
+	actions := []*screensv1.PageAction{
+		{Key: "menu", Label: "View", Enabled: true, Href: "/partner-oversight/detail?assignment_id=" + i.assignmentID, Drawer: true},
+	}
+	withdraw := v.w.role.WithdrawsPartnerWork && i.withdrawalLabel != "" &&
+		(i.stage == stageAwaiting || (i.withdrawalKind() == "recall_scheduled" && !i.partnerHasDated))
+	if withdraw {
+		actions = append(actions, &screensv1.PageAction{Key: "menu", Label: "Withdraw school", Enabled: true,
+			Href: "/partner-oversight/withdraw?assignment_id=" + i.assignmentID, Drawer: true})
+	}
+	if i.awaitsStaffDecision() && v.w.role.ResolvesReturns {
+		actions = append(actions, &screensv1.PageAction{Key: "menu", Label: "Resolve Exception", Enabled: true,
+			Href: "/partner-oversight/resolve?assignment_id=" + i.assignmentID, Drawer: true})
+	}
+	cells = append(cells, v.statusCell(i), &screensv1.PageCell{Actions: actions})
+	details := []*screensv1.PageFact{}
+	if i.assignmentDate != nil {
+		details = append(details, fact("Assigned", jMY(i.assignmentDate)))
+	}
+	if i.trainingName != "" {
+		details = append(details, fact("Training", i.trainingName))
+	}
+	if i.interventionLabel != "" {
+		details = append(details, fact("SSA Intervention", i.interventionLabel))
+	}
+	if i.fieldOfficer != "" {
+		details = append(details, fact("Partner officer", i.fieldOfficer))
+	}
+	if i.district != "" {
+		details = append(details, fact("District", i.district))
+	}
+	if i.activityID != "" {
+		details = append(details, fact("Execution", i.executionStatus()), fact("IA", i.iaStatusLabel()),
+			fact("Payment", i.paymentLabel()))
+	}
+	if i.returnReason != "" {
+		details = append(details, fact("Returned", pyTitle(strings.ReplaceAll(i.returnReasonCategory, "_", " "))+" — "+i.returnReason))
+	}
+	return &screensv1.PageRow{Cells: cells, Details: details, DetailBlocks: []*screensv1.PageBlock{}}
 }

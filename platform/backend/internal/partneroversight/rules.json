@@ -57,7 +57,8 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": false,
-      "school_profiles": false
+      "school_profiles": false,
+      "withdraws_partner_work": false
     },
     "Admin": {
       "cluster_profiles": true,
@@ -70,7 +71,8 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": true,
-      "school_profiles": true
+      "school_profiles": true,
+      "withdraws_partner_work": true
     },
     "BusinessTransformationOfficer": {
       "cluster_profiles": false,
@@ -83,7 +85,8 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": false,
-      "school_profiles": true
+      "school_profiles": true,
+      "withdraws_partner_work": false
     },
     "CCEO": {
       "cluster_profiles": true,
@@ -96,7 +99,8 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": true,
-      "school_profiles": true
+      "school_profiles": true,
+      "withdraws_partner_work": true
     },
     "ClusterLeader": {
       "cluster_profiles": false,
@@ -109,7 +113,8 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": false,
-      "school_profiles": false
+      "school_profiles": false,
+      "withdraws_partner_work": false
     },
     "CountryDirector": {
       "cluster_profiles": true,
@@ -122,7 +127,8 @@
       "reads_own_engagements": false,
       "records_engagements": true,
       "resolves_returns": false,
-      "school_profiles": true
+      "school_profiles": true,
+      "withdraws_partner_work": true
     },
     "HumanResources": {
       "cluster_profiles": false,
@@ -135,7 +141,8 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": false,
-      "school_profiles": false
+      "school_profiles": false,
+      "withdraws_partner_work": false
     },
     "ImpactAssessment": {
       "cluster_profiles": true,
@@ -148,7 +155,8 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": true,
-      "school_profiles": true
+      "school_profiles": true,
+      "withdraws_partner_work": true
     },
     "MfiLoanOfficer": {
       "cluster_profiles": false,
@@ -161,7 +169,8 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": false,
-      "school_profiles": false
+      "school_profiles": false,
+      "withdraws_partner_work": false
     },
     "MfiPartnerAdmin": {
       "cluster_profiles": false,
@@ -174,7 +183,8 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": false,
-      "school_profiles": false
+      "school_profiles": false,
+      "withdraws_partner_work": false
     },
     "PartnerAdmin": {
       "cluster_profiles": false,
@@ -187,7 +197,8 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": false,
-      "school_profiles": false
+      "school_profiles": false,
+      "withdraws_partner_work": false
     },
     "PartnerFieldOfficer": {
       "cluster_profiles": false,
@@ -200,7 +211,8 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": false,
-      "school_profiles": false
+      "school_profiles": false,
+      "withdraws_partner_work": false
     },
     "Program Lead": {
       "cluster_profiles": true,
@@ -213,7 +225,8 @@
       "reads_own_engagements": true,
       "records_engagements": true,
       "resolves_returns": true,
-      "school_profiles": true
+      "school_profiles": true,
+      "withdraws_partner_work": true
     },
     "ProjectCoordinator": {
       "cluster_profiles": false,
@@ -226,7 +239,8 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": true,
-      "school_profiles": true
+      "school_profiles": true,
+      "withdraws_partner_work": true
     },
     "RegionalProgramLead": {
       "cluster_profiles": false,
@@ -239,7 +253,8 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": false,
-      "school_profiles": false
+      "school_profiles": false,
+      "withdraws_partner_work": false
     },
     "RegionalVicePresident": {
       "cluster_profiles": false,
@@ -252,7 +267,8 @@
       "reads_own_engagements": false,
       "records_engagements": false,
       "resolves_returns": false,
-      "school_profiles": false
+      "school_profiles": false,
+      "withdraws_partner_work": false
     }
   },
   "roster_lead_role": "Program Lead",

@@ -69,19 +69,18 @@ func TestPartnerOversightPassesOnWhatGoDoesNotDrawAndRefusesOthers(t *testing.T)
 	borrowAccount(t, "business-transformation@edify.org")
 	officer := sessionOf(t, "cceo1@edify.org", seededPassword).GetAccessToken()
 	// cceo1's completed FY 2026 Partner work is Go's (the golden compares
-	// it); the Core schools tab under it is the existing application's.
+	// it); the Clusters tab under it is the existing application's.
 	if _, err := pageOf(officer, partnerOversightPath, map[string]string{"fy": "2026"}); err != nil {
 		t.Errorf("cceo1 in FY 2026: %v", err)
 	}
-	var core int
+	var held int
 	if err := admin.QueryRow(context.Background(), `SELECT count(*) FROM partner_assignment pa
-JOIN school s ON s.id = pa.school_id JOIN "user" u ON u.id = pa.monitoring_staff_id
-WHERE u.email = 'cceo1@edify.org' AND s.school_type = 'core'`).Scan(&core); err != nil {
+JOIN "user" u ON u.id = pa.monitoring_staff_id WHERE u.email = 'cceo1@edify.org'`).Scan(&held); err != nil {
 		t.Fatal(err)
 	}
-	if core > 0 {
-		if _, err := pageOf(officer, partnerOversightPath, map[string]string{"fy": "2026", "work": "core"}); connect.CodeOf(err) != connect.CodeUnavailable {
-			t.Errorf("the Core schools tab: got %v, want the page passed on", err)
+	if held > 0 {
+		if _, err := pageOf(officer, partnerOversightPath, map[string]string{"fy": "2026", "work": "clusters"}); connect.CodeOf(err) != connect.CodeUnavailable {
+			t.Errorf("the Clusters tab: got %v, want the page passed on", err)
 		}
 	}
 	// A custom period from the export drawer is too.

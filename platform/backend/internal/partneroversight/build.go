@@ -32,7 +32,8 @@ SELECT pa.id, pa.status, COALESCE(pa.partner_id, ''), COALESCE(p.name, ''),
   sa.id IS NOT NULL, COALESCE(NULLIF(sc.display_name, ''), sc.source_name, ''),
   COALESCE(sa.activity_name_snapshot, ''), COALESCE(sa.activity_type, ''),
   COALESCE(pa.return_reason_category, ''), COALESCE(pa.return_reason, ''), COALESCE(pa.resolution, ''),
-  pa.created_at, pa.scheduled_date, COALESCE(pa.scheduled_activity_id, ''), pa.resolved_at IS NOT NULL
+  pa.created_at, pa.scheduled_date, COALESCE(pa.scheduled_activity_id, ''), pa.resolved_at IS NOT NULL,
+  COALESCE(pa.support_type, '')
 FROM partner_assignment pa
 LEFT JOIN partner p ON p.id = pa.partner_id
 LEFT JOIN school s ON s.id = pa.school_id
@@ -332,7 +333,7 @@ func readItems(ctx context.Context, db schooldirectory.Querier, team, regions []
 			&h.mon, &h.assigner, &h.w.purpose, &h.w.activityType, &h.w.focus, &h.w.course, &h.w.catalogue,
 			&h.w.hasSource, &h.w.sourceCourse, &h.w.sourceSnapshot, &h.w.sourceType,
 			&it.returnReasonCategory, &it.returnReason, &it.resolution,
-			&h.created, &h.scheduledOn, &h.activityID, &h.resolved); err != nil {
+			&h.created, &h.scheduledOn, &h.activityID, &h.resolved, &it.supportType); err != nil {
 			rows.Close()
 			return nil, fmt.Errorf("partneroversight: reading the hand-overs: %w", err)
 		}
@@ -452,6 +453,7 @@ ORDER BY a.id`, rules.PartnerDelivery, []string{"cancelled", "rejected", "deferr
 			h.w.activityType = a.activityType
 		}
 		it.activityType = h.w.activityType
+		it.purposeCode = h.w.purpose
 		it.targetIntervention = h.w.focus
 		it.trainingName, it.purposeLabel, it.interventionLabel = describe(h.w)
 		created := dateOf(h.created.In(zone))

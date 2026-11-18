@@ -140,3 +140,18 @@ func (c *Card) LinkedRates(itemID string) [][2]string {
 	}
 	return out
 }
+
+// OperationalRate is the rate the country's newest published operational
+// card sets for key (partner_oversight_service._partner_rate), or nil when
+// there is no card or it sets none.
+func OperationalRate(ctx context.Context, db Querier, key string) (*int64, error) {
+	card, err := ReadCard(ctx, db, rules.OperationalKind, nil)
+	if err != nil || card == nil {
+		return nil, err
+	}
+	rate, ok := card.Rates[key]
+	if !ok {
+		return nil, nil
+	}
+	return &rate, nil
+}

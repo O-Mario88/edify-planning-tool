@@ -12,6 +12,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pricing"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolplanning"
 )
@@ -227,8 +228,13 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 	}
 	v.tab = workTabOpen(tablesFor(v.shown), w.work, core)
 	v.w.work = v.tab
-	if v.tab == "clusters" || v.tab == "core" {
+	if v.tab == "clusters" {
 		return nil, false, nil
+	}
+	if v.tab == "core" {
+		if drawn, err := s.coreSupport(ctx, v.shown); err != nil || !drawn {
+			return nil, !drawn, err
+		}
 	}
 	for _, t := range tablesFor(v.shown) {
 		if tableTab[t.title] == v.tab && len(t.items) > tablePageSize {
@@ -334,4 +340,68 @@ func isoWeekStart(week string) time.Time {
 	jan4 := time.Date(year, time.January, 4, 0, 0, 0, 0, time.UTC)
 	monday := jan4.AddDate(0, 0, -((int(jan4.Weekday()) + 6) % 7))
 	return monday.AddDate(0, 0, (n-1)*7)
+}
+
+// coreSupport is annotate_core_support over the Core schools the table
+// shows: each one's package slot (the slot its activity fills) and the
+// Partner's rate (the Core Partner Visit rate, a training's the Partner
+// school visit rate). It is false where the table holds what this piece
+// does not draw yet: a Core school the Partner has not dated (the slot its
+// hand-over holds), or work whose form is in but is not complete (Confirm
+// completed work, offered by who may confirm it).
+func (s *Service) coreSupport(ctx context.Context, shown []*item) (bool, error) {
+	core := []*item{}
+	activities := []string{}
+	for _, i := range shown {
+		if !i.isCoreSchoolWork() {
+			continue
+		}
+		if i.stage == stageAwaiting || (i.evidenceOK && !i.showsComplete()) {
+			return false, nil
+		}
+		core = append(core, i)
+		if i.activityID != "" {
+			activities = append(activities, i.activityID)
+		}
+	}
+	visit, err := pricing.OperationalRate(ctx, s.db, "core_partner_visit")
+	if err != nil {
+		return false, err
+	}
+	training, err := pricing.OperationalRate(ctx, s.db, "client_partner_visit")
+	if err != nil {
+		return false, err
+	}
+	slots := map[string]string{}
+	if len(activities) > 0 {
+		rows, err := s.db.Query(ctx, `SELECT activity_id, activity_type, sequence_number FROM core_activity_slot
+WHERE activity_id = ANY($1) ORDER BY activity_id`, activities)
+		if err != nil {
+			return false, fmt.Errorf("partneroversight: reading the Core slots: %w", err)
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var id, kind string
+			var sequence int
+			if err := rows.Scan(&id, &kind, &sequence); err != nil {
+				return false, fmt.Errorf("partneroversight: reading the Core slots: %w", err)
+			}
+			letter := "T"
+			if kind == "visit" {
+				letter = "V"
+			}
+			slots[id] = letter + strconv.Itoa(sequence)
+		}
+		if err := rows.Err(); err != nil {
+			return false, err
+		}
+	}
+	for _, i := range core {
+		i.partnerRate = visit
+		if i.coreTraining() {
+			i.partnerRate = training
+		}
+		i.coreSlotLabel = slots[i.activityID]
+	}
+	return true, nil
 }
