@@ -15,6 +15,7 @@ import (
 	routesv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/routes/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 )
 
 // Offline school GPS capture (owner brief, 2026-11-14): a capture taken on
@@ -240,8 +241,9 @@ func (s *Service) file(ctx context.Context, p auth.Principal, id string, sc scho
 	_, err = tx.Exec(ctx, `
 INSERT INTO field_routes.location_capture (id, school_id, school_code, target, kind, point_source, lat, lng, accuracy_m,
   captured_at, sample_count, spread_m, received_at, base_version, previous_lat, previous_lng, previous_status,
-  displacement_m, reason, access_note, flags, status, captured_by, captured_role)
-VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)`,
+  displacement_m, reason, access_note, flags, status, captured_by, captured_role, country_code)
+VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24,
+  `+registry.SchoolCountryCode("$2")+`)`,
 		id, schoolID, sc.pin.GetCode(), in.Target, in.Kind, in.Source, lat, lng, acc, capturedAt, in.SampleCount, spread,
 		now, in.BaseVersion, prevLat, prevLng, sc.pin.GetLocationStatus(), d.DisplacementM, in.Reason, in.AccessNote,
 		flags, d.Status, p.UserID, p.ActiveRole)
@@ -296,8 +298,9 @@ func (s *Service) apply(ctx context.Context, tx pgx.Tx, c change) (int32, error)
 	}
 	version := st.Version + 1
 	if _, err := tx.Exec(ctx, `
-INSERT INTO field_routes.school_location (school_id, target, lat, lng, accuracy_m, access_note, version, capture_id, verified_by, verified_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8::uuid, $9, $10)
+INSERT INTO field_routes.school_location (school_id, target, lat, lng, accuracy_m, access_note, version, capture_id, verified_by, verified_at,
+  country_code)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8::uuid, $9, $10, `+registry.SchoolCountryCode("$1")+`)
 ON CONFLICT (school_id, target) DO UPDATE SET lat = EXCLUDED.lat, lng = EXCLUDED.lng, accuracy_m = EXCLUDED.accuracy_m,
   access_note = EXCLUDED.access_note, version = EXCLUDED.version, capture_id = EXCLUDED.capture_id,
   verified_by = EXCLUDED.verified_by, verified_at = EXCLUDED.verified_at`,
@@ -314,8 +317,9 @@ ON CONFLICT (school_id, target) DO UPDATE SET lat = EXCLUDED.lat, lng = EXCLUDED
 	}
 	if _, err := tx.Exec(ctx, `
 INSERT INTO field_routes.location_change (id, school_id, target, version, lat, lng, previous_lat, previous_lng,
-  previous_version, capture_id, changed_by, changed_at)
-VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10::uuid, $11, $12)`,
+  previous_version, capture_id, changed_by, changed_at, country_code)
+VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10::uuid, $11, $12,
+  (SELECT lc.country_code FROM field_routes.location_capture lc WHERE lc.id = $10::uuid))`,
 		changeID, c.schoolID, c.target, version, c.at.Lat, c.at.Lng, prevLat, prevLng, st.Version, c.captureID, c.by, c.when); err != nil {
 		return 0, fmt.Errorf("routeplan: recording the change: %w", err)
 	}

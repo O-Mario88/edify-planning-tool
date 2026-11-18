@@ -469,8 +469,8 @@ func (s *Store) SaveActionDraft(ctx context.Context, a ActionRecord, idempotency
 			_, err := tx.Exec(ctx, `
 INSERT INTO cluster_leadership.cluster_action
   (id, ref, cluster_id, source, source_activity_id, source_plan_id, support_kind, training_course_id, title,
-   description, expected_outcome, priority, target_on, school_ids, fiscal_year, status, idempotency_key, created_by)
-VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'draft',$16,$17)`,
+   description, expected_outcome, priority, target_on, school_ids, fiscal_year, status, idempotency_key, created_by, country_code)
+VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'draft',$16,$17, `+registry.ClusterCountryCode("$3")+`)`,
 				a.ID, a.Ref, a.ClusterID, a.Source, nullable(a.SourceActivityID), nullable(a.SourcePlanID), a.SupportKind,
 				nullable(a.TrainingCourseID), a.Title, a.Description, a.ExpectedOutcome, a.Priority, a.TargetOn, a.SchoolIDs,
 				a.FiscalYear, nullable(idempotencyKey), w.ActorID)
@@ -517,8 +517,8 @@ WHERE id::text = $1 AND status = 'draft' AND version = $2`, actionID, version)
 			r := routes[school]
 			if _, err := tx.Exec(ctx, `
 INSERT INTO cluster_leadership.cluster_action_school
-  (id, action_id, school_id, responsible_staff_id, supervisor_staff_id, routed_to, status)
-VALUES ($1, $2::uuid, $3, $4, $5, $6, 'awaiting_review')`,
+  (id, action_id, school_id, responsible_staff_id, supervisor_staff_id, routed_to, status, country_code)
+VALUES ($1, $2::uuid, $3, $4, $5, $6, 'awaiting_review', (SELECT a.country_code FROM cluster_leadership.cluster_action a WHERE a.id = $2::uuid))`,
 				ids[i], actionID, school, nullable(r.ResponsibleStaffID), nullable(r.SupervisorStaffID), r.RoutedTo); err != nil {
 				return fmt.Errorf("clusterlead: routing a school: %w", err)
 			}
@@ -593,8 +593,8 @@ func (s *Store) AddReview(ctx context.Context, r ReviewRecord, actionID, activit
 	return s.inWrite(ctx, func(tx pgx.Tx) error {
 		if _, err := tx.Exec(ctx, `
 INSERT INTO cluster_leadership.cluster_action_review
-  (id, action_id, activity_id, plan_id, progress, challenges, next_step, outcome, created_by)
-VALUES ($1, $2::uuid, $3, $4::uuid, $5, $6, $7, $8, $9)`, r.ID, actionID, nullable(activityID), nullable(planID),
+  (id, action_id, activity_id, plan_id, progress, challenges, next_step, outcome, created_by, country_code)
+VALUES ($1, $2::uuid, $3, $4::uuid, $5, $6, $7, $8, $9, (SELECT a.country_code FROM cluster_leadership.cluster_action a WHERE a.id = $2::uuid))`, r.ID, actionID, nullable(activityID), nullable(planID),
 			r.Progress, r.Challenges, r.NextStep, r.Outcome, w.ActorID); err != nil {
 			return fmt.Errorf("clusterlead: recording a review: %w", err)
 		}
@@ -607,8 +607,8 @@ func (s *Store) AddEscalation(ctx context.Context, x EscalationRecord, actionID,
 	return s.inWrite(ctx, func(tx pgx.Tx) error {
 		if _, err := tx.Exec(ctx, `
 INSERT INTO cluster_leadership.cluster_action_escalation
-  (id, action_id, school_id, reason, raised_by_kind, raised_by, from_staff_id, to_staff_id)
-VALUES ($1, $2::uuid, $3, $4, $5, $6, $7, $8)`, x.ID, actionID, nullable(x.SchoolID), x.Reason, kind, w.ActorID,
+  (id, action_id, school_id, reason, raised_by_kind, raised_by, from_staff_id, to_staff_id, country_code)
+VALUES ($1, $2::uuid, $3, $4, $5, $6, $7, $8, (SELECT a.country_code FROM cluster_leadership.cluster_action a WHERE a.id = $2::uuid))`, x.ID, actionID, nullable(x.SchoolID), x.Reason, kind, w.ActorID,
 			nullable(fromStaffID), nullable(x.ToStaffID)); err != nil {
 			return fmt.Errorf("clusterlead: recording an escalation: %w", err)
 		}
@@ -664,8 +664,8 @@ UPDATE cluster_leadership.cluster_action_school SET reminded_at = now() WHERE ac
 func (s *Store) record(ctx context.Context, tx pgx.Tx, actionID string, w ActionWrite) error {
 	for _, e := range w.Events {
 		if _, err := tx.Exec(ctx, `
-INSERT INTO cluster_leadership.cluster_action_event (action_id, school_id, event, actor_id, actor_role, from_status, to_status, note)
-VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8)`, actionID, nullable(e.School), e.Event, w.ActorID, w.ActorRole,
+INSERT INTO cluster_leadership.cluster_action_event (action_id, school_id, event, actor_id, actor_role, from_status, to_status, note, country_code)
+VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, (SELECT a.country_code FROM cluster_leadership.cluster_action a WHERE a.id = $1::uuid))`, actionID, nullable(e.School), e.Event, w.ActorID, w.ActorRole,
 			e.FromStatus, e.ToStatus, e.Note); err != nil {
 			return fmt.Errorf("clusterlead: recording an action event: %w", err)
 		}
@@ -677,8 +677,8 @@ VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8)`, actionID, nullable(e.School), e.
 		}
 		if _, err := tx.Exec(ctx, `
 INSERT INTO cluster_leadership.cluster_action_notice
-  (id, action_id, recipient_user_id, event, title, body, target_route, sender_user_id, dedup_key)
-VALUES ($1, $2::uuid, $3, $4, $5, $6, $7, $8, $9)
+  (id, action_id, recipient_user_id, event, title, body, target_route, sender_user_id, dedup_key, country_code)
+VALUES ($1, $2::uuid, $3, $4, $5, $6, $7, $8, $9, (SELECT a.country_code FROM cluster_leadership.cluster_action a WHERE a.id = $2::uuid))
 ON CONFLICT (dedup_key) DO NOTHING`, id, actionID, n.RecipientUserID, n.Event, n.Title, n.Body, n.TargetRoute,
 			nullable(n.SenderUserID), n.DedupKey); err != nil {
 			return fmt.Errorf("clusterlead: queueing a notice: %w", err)

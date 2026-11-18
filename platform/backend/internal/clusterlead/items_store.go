@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 )
 
 // Action items, requests to staff, and the counts the Home and the report
@@ -62,8 +64,8 @@ func (s *Store) SaveItem(ctx context.Context, i Item, ownerName string, isNew bo
 			event = "created"
 			_, err = tx.Exec(ctx, `
 INSERT INTO cluster_leadership.action_item
-  (id, cluster_id, activity_id, title, owner_school_id, owner_name, due_on, status, created_by)
-VALUES ($1, $2, $3, $4, $5, $6, $7, 'open', $8)`,
+  (id, cluster_id, activity_id, title, owner_school_id, owner_name, due_on, status, created_by, country_code)
+VALUES ($1, $2, $3, $4, $5, $6, $7, 'open', $8, `+registry.ClusterCountryCode("$2")+`)`,
 				i.ID, i.ClusterID, nullable(i.ActivityID), i.Title, nullable(i.OwnerSchoolID), ownerName, i.DueOn, actorID)
 		} else {
 			tag, updateErr := tx.Exec(ctx, `
@@ -138,8 +140,8 @@ func (s *Store) RequestByID(ctx context.Context, id string) (Request, error) {
 func (s *Store) CreateRequest(ctx context.Context, id, clusterID, subject, body, actorID string) error {
 	return s.inWrite(ctx, func(tx pgx.Tx) error {
 		_, err := tx.Exec(ctx, `
-INSERT INTO cluster_leadership.leader_request (id, cluster_id, subject, body, status, created_by)
-VALUES ($1, $2, $3, $4, 'open', $5)`, id, clusterID, subject, body, actorID)
+INSERT INTO cluster_leadership.leader_request (id, cluster_id, subject, body, status, created_by, country_code)
+VALUES ($1, $2, $3, $4, 'open', $5, `+registry.ClusterCountryCode("$2")+`)`, id, clusterID, subject, body, actorID)
 		if err != nil {
 			return fmt.Errorf("clusterlead: recording a request: %w", err)
 		}

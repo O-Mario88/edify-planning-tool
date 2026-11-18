@@ -14,6 +14,7 @@ import (
 	routesv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/routes/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -185,22 +186,34 @@ func loadDay(ctx context.Context, db rowQuerier, user string, day time.Time, loc
 	return d, rows.Err()
 }
 
+// workingCode is the code of the country p works in, "" for none.
+func workingCode(p auth.Principal) string {
+	if p.Country == nil {
+		return ""
+	}
+	return p.Country.Code
+}
+
 // storeDay writes the whole day back inside tx.
-func storeDay(ctx context.Context, tx pgx.Tx, user string, day time.Time, d fieldDay) error {
+// The day is recorded under the country its person works in (country, from
+// workingCode), or the holding country's when it is "" (migration 0005); a
+// person who works in no country can record none, as the database refuses
+// their writes.
+func storeDay(ctx context.Context, tx pgx.Tx, user, country string, day time.Time, d fieldDay) error {
 	date := day.Format(time.DateOnly)
 	order := d.order
 	if order == nil {
 		order = []string{}
 	}
-	if _, err := tx.Exec(ctx, `INSERT INTO field_routes.field_day (user_id, day, school_ids, saved_at, started_at, ended_at)
-VALUES ($1, $2, $3, $4, $5, $6)
+	if _, err := tx.Exec(ctx, `INSERT INTO field_routes.field_day (user_id, day, school_ids, saved_at, started_at, ended_at, country_code)
+VALUES ($1, $2, $3, $4, $5, $6, COALESCE(NULLIF($7, ''), `+registry.HeldCode+`))
 ON CONFLICT (user_id, day) DO UPDATE SET school_ids = EXCLUDED.school_ids, saved_at = EXCLUDED.saved_at,
-  started_at = EXCLUDED.started_at, ended_at = EXCLUDED.ended_at`, user, date, order, d.saved, d.started, d.ended); err != nil {
+  started_at = EXCLUDED.started_at, ended_at = EXCLUDED.ended_at`, user, date, order, d.saved, d.started, d.ended, country); err != nil {
 		return fmt.Errorf("routeplan: saving the field day: %w", err)
 	}
 	for id, st := range d.stops {
-		if _, err := tx.Exec(ctx, `INSERT INTO field_routes.field_day_stop (user_id, day, school_id, arrived_at, left_at)
-VALUES ($1, $2, $3, $4, $5)
+		if _, err := tx.Exec(ctx, `INSERT INTO field_routes.field_day_stop (user_id, day, school_id, arrived_at, left_at, country_code)
+VALUES ($1, $2, $3, $4, $5, (SELECT fd.country_code FROM field_routes.field_day fd WHERE fd.user_id = $1 AND fd.day = $2::date))
 ON CONFLICT (user_id, day, school_id) DO UPDATE SET left_at = EXCLUDED.left_at`, user, date, id, st.arrived, st.left); err != nil {
 			return fmt.Errorf("routeplan: saving a stop: %w", err)
 		}
@@ -278,7 +291,7 @@ func (s *Service) change(ctx context.Context, raw string, ev dayEvent) (*routesv
 	if refused != "" {
 		return nil, apierr.New(ctx, connect.CodeFailedPrecondition, apierr.ReasonInvalidArgument, refused)
 	}
-	if err := storeDay(ctx, tx, p.UserID, day, next); err != nil {
+	if err := storeDay(ctx, tx, p.UserID, workingCode(p), day, next); err != nil {
 		return nil, s.fail(ctx, err)
 	}
 	if err := tx.Commit(ctx); err != nil {

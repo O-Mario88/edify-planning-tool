@@ -8,6 +8,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 )
 
 // histories names each append-only history and the column that keys it; a
@@ -16,6 +18,14 @@ var histories = map[string]string{
 	"plan_event":        "plan_id",
 	"invitation_event":  "invitation_id",
 	"action_item_event": "action_item_id",
+}
+
+// historyOf is the record each history hangs on, whose country the
+// history is recorded under (migration 0005).
+var historyOf = map[string]string{
+	"plan_event":        "meeting_plan",
+	"invitation_event":  "invitation",
+	"action_item_event": "action_item",
 }
 
 func historyKey(table, key string) error {
@@ -227,9 +237,9 @@ func (s *Store) SavePlan(ctx context.Context, p Plan, isNew bool, actorID, event
 			_, err = tx.Exec(ctx, `
 INSERT INTO cluster_leadership.meeting_plan
   (id, cluster_id, category, title, training_course_id, planned_on, starts_at, venue, is_online,
-   objectives, agenda, expected_participants, facilitator, resources, notes, status, created_by, submitted_at)
+   objectives, agenda, expected_participants, facilitator, resources, notes, status, created_by, submitted_at, country_code)
 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,
-        CASE WHEN $16 = 'submitted' THEN now() END)`,
+        CASE WHEN $16 = 'submitted' THEN now() END, `+registry.ClusterCountryCode("$2")+`)`,
 				p.ID, p.ClusterID, p.Category, p.Title, course, p.PlannedOn, p.StartsAt, p.Venue, p.IsOnline,
 				p.Objectives, p.Agenda, p.ExpectedParticipants, p.Facilitator, p.Resources, p.Notes, p.Status, actorID)
 		} else {
@@ -311,8 +321,8 @@ FROM cluster_leadership.plan_invitation WHERE plan_id::text = $1 AND carried_to 
 			return err
 		}
 		tag, err := tx.Exec(ctx, `
-INSERT INTO cluster_leadership.invitation (id, cluster_id, activity_id, school_id, status, channel, invited_by, invited_at)
-VALUES ($1, $2, $3, $4, 'invited', $5, $6, $7)
+INSERT INTO cluster_leadership.invitation (id, cluster_id, activity_id, school_id, status, channel, invited_by, invited_at, country_code)
+VALUES ($1, $2, $3, $4, 'invited', $5, $6, $7, `+registry.ClusterCountryCode("$2")+`)
 ON CONFLICT (activity_id, school_id) DO NOTHING`, invitationID, p.clusterID, activityID, p.schoolID, p.channel, p.invitedBy, p.invitedAt)
 		if err != nil {
 			return fmt.Errorf("clusterlead: carrying an invitation: %w", err)
@@ -339,8 +349,8 @@ func (s *Store) InvitePlan(ctx context.Context, clusterID, planID string, school
 	err := s.inWrite(ctx, func(tx pgx.Tx) error {
 		for index, schoolID := range schoolIDs {
 			tag, err := tx.Exec(ctx, `
-INSERT INTO cluster_leadership.plan_invitation (id, plan_id, cluster_id, school_id, channel, invited_by)
-SELECT $1, p.id, $3, $4, $5, $6 FROM cluster_leadership.meeting_plan p
+INSERT INTO cluster_leadership.plan_invitation (id, plan_id, cluster_id, school_id, channel, invited_by, country_code)
+SELECT $1, p.id, $3, $4, $5, $6, p.country_code FROM cluster_leadership.meeting_plan p
 WHERE p.id::text = $2 AND p.status IN ('draft', 'submitted', 'returned', 'approved')
 ON CONFLICT (plan_id, school_id) DO NOTHING`, ids[index], planID, clusterID, schoolID, channel, actorID)
 			if err != nil {
@@ -409,8 +419,8 @@ func (s *Store) Invite(ctx context.Context, clusterID, activityID string, school
 	err := s.inWrite(ctx, func(tx pgx.Tx) error {
 		for index, schoolID := range schoolIDs {
 			tag, err := tx.Exec(ctx, `
-INSERT INTO cluster_leadership.invitation (id, cluster_id, activity_id, school_id, status, channel, invited_by)
-VALUES ($1, $2, $3, $4, 'invited', $5, $6)
+INSERT INTO cluster_leadership.invitation (id, cluster_id, activity_id, school_id, status, channel, invited_by, country_code)
+VALUES ($1, $2, $3, $4, 'invited', $5, $6, `+registry.ClusterCountryCode("$2")+`)
 ON CONFLICT (activity_id, school_id) DO NOTHING`, ids[index], clusterID, activityID, schoolID, channel, actorID)
 			if err != nil {
 				return fmt.Errorf("clusterlead: inviting a school: %w", err)
@@ -472,8 +482,8 @@ func (s *Store) RecordAttendance(ctx context.Context, clusterID, activityID stri
 		for index, entry := range entries {
 			if _, err := tx.Exec(ctx, `
 INSERT INTO cluster_leadership.attendance_record
-  (id, cluster_id, activity_id, school_id, attended, participants, recorded_by)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+  (id, cluster_id, activity_id, school_id, attended, participants, recorded_by, country_code)
+VALUES ($1, $2, $3, $4, $5, $6, $7, `+registry.ClusterCountryCode("$2")+`)
 ON CONFLICT (activity_id, school_id) DO UPDATE
 SET attended = EXCLUDED.attended, participants = EXCLUDED.participants,
     recorded_by = EXCLUDED.recorded_by, recorded_at = now()`,
@@ -509,8 +519,8 @@ func (s *Store) SaveMinutes(ctx context.Context, id, clusterID, activityID, disc
 	return s.inWrite(ctx, func(tx pgx.Tx) error {
 		tag, err := tx.Exec(ctx, `
 INSERT INTO cluster_leadership.meeting_minutes
-  (id, cluster_id, activity_id, discussion, decisions, status, written_by, submitted_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, CASE WHEN $6 = 'submitted' THEN now() END)
+  (id, cluster_id, activity_id, discussion, decisions, status, written_by, submitted_at, country_code)
+VALUES ($1, $2, $3, $4, $5, $6, $7, CASE WHEN $6 = 'submitted' THEN now() END, `+registry.ClusterCountryCode("$2")+`)
 ON CONFLICT (activity_id) DO UPDATE
 SET discussion = EXCLUDED.discussion, decisions = EXCLUDED.decisions, status = EXCLUDED.status,
     written_by = EXCLUDED.written_by, updated_at = now(), submitted_at = EXCLUDED.submitted_at
@@ -539,8 +549,8 @@ func appendTo(ctx context.Context, tx pgx.Tx, table, key, id, event, actorID, no
 	if err := historyKey(table, key); err != nil {
 		return err
 	}
-	_, err := tx.Exec(ctx, `INSERT INTO cluster_leadership.`+table+` (`+key+`, event, actor_id, note)
-VALUES ($1, $2, $3, $4)`, id, event, actorID, note)
+	_, err := tx.Exec(ctx, `INSERT INTO cluster_leadership.`+table+` (`+key+`, event, actor_id, note, country_code)
+VALUES ($1, $2, $3, $4, (SELECT r.country_code FROM cluster_leadership.`+historyOf[table]+` r WHERE r.id = $1))`, id, event, actorID, note)
 	if err != nil {
 		return fmt.Errorf("clusterlead: recording what changed: %w", err)
 	}

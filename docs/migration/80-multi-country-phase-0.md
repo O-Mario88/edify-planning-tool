@@ -1050,3 +1050,58 @@ country (cluster leadership, field routes), each with a recorded country.
 The existing application's tables cannot be altered, so their isolation
 stays the Go checks until they are Go's.
 
+
+## 24. Country isolation in the database: cluster leadership and field routes (2026-11-18)
+
+§23's guard now covers every Go-owned table that belongs to a country. The
+eighteen `cluster_leadership` tables (migration 0005) and the seven
+`field_routes` tables (migration 0005) each record a `country_code`. Rows
+already kept are Uganda's, per owner decision 2. Row-level security is
+enabled and forced on each, with the same read, add and change policies as
+the loan applications. A row is visible and writable only when the
+connection's `edify.read_countries` is `*` or names its country.
+
+How Go records the country:
+
+- **Records of a cluster** (leader assignments, meeting plans, invitations,
+  attendance, minutes, action items, leader requests, plan invitations,
+  cluster actions) take the cluster's country: `country.ClusterCountryCode`,
+  read from its region or its district's region as in §16.
+- **Records of a school** (location reports, captures, school locations)
+  take the school's country: `country.SchoolCountryCode`.
+- **What hangs on a record** (assignment and plan events, invitation and
+  action-item events, a cluster action's routed schools, events, reviews,
+  escalations and notices, a location change) takes that record's country.
+  It is read in the same statement, so a parent hidden from the request
+  leaves no country and the insert fails.
+- **A field day** takes the country its person works in, and its stops take
+  the day's.
+- **Anything no country places** goes to the holding country, the
+  existing profile's, which is Uganda: `country.HeldCode`.
+
+`SchoolCountryCode` and `ClusterCountryCode` are now shared in the country
+package, and the loans use them. They compare the id as `varchar`, so a
+placeholder keeps the type its column gives it. Comparing as `text` made
+PostgreSQL deduce two types for one parameter (42P08).
+
+A person whose request works in no Active country is refused these writes,
+as Go already refuses their reads (`countryBound` keeps them to no country).
+Admin, regional roles and the platform's own work, such as the notice
+worker, read and write every country.
+
+Proof: `internal/integration/country_rls_test.go`. Through a one-connection
+pool, two rounds of alternating readers check a Ugandan leader request and
+a Ugandan field day:
+
+- Readers who see them: a CCEO working in Uganda, the Admin, a Regional
+  Program Lead and the platform's own work.
+- Readers who do not: a CCEO working in Kenya, and a CCEO working in no
+  country.
+- A Kenyan CCEO changes neither record and is refused recording one as
+  Uganda's.
+
+The cluster leadership and field route journeys, the whole integration
+suite, every golden and school parity are unchanged.
+
+The existing application's own tables cannot be altered, so their isolation
+stays with the Go checks until Go owns them.

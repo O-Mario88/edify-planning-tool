@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 )
 
 // The portal's writes. Each opens a read-write transaction on purpose (the
@@ -73,8 +75,8 @@ func insertAssignment(ctx context.Context, tx pgx.Tx, a NewAssignment) error {
 	}
 	_, err := tx.Exec(ctx, `
 INSERT INTO cluster_leadership.leader_assignment
-  (id, cluster_id, user_id, starts_on, ends_on, status, assigned_by, assigned_reason, replaces_assignment_id)
-VALUES ($1, $2, $3, $4, $5, 'active', $6, $7, $8)`,
+  (id, cluster_id, user_id, starts_on, ends_on, status, assigned_by, assigned_reason, replaces_assignment_id, country_code)
+VALUES ($1, $2, $3, $4, $5, 'active', $6, $7, $8, `+registry.ClusterCountryCode("$2")+`)`,
 		a.ID, a.ClusterID, a.UserID, a.StartsOn, a.EndsOn, a.ActorID, a.Reason, replaces)
 	if isUniqueViolation(err) {
 		return ErrAlreadyAssigned
@@ -103,8 +105,8 @@ WHERE id::text = $1 AND status <> 'ended'`, id, actorID, reason, day)
 
 func appendEvent(ctx context.Context, tx pgx.Tx, assignmentID, event, actorID, reason string) error {
 	_, err := tx.Exec(ctx, `
-INSERT INTO cluster_leadership.assignment_event (assignment_id, event, actor_id, reason)
-VALUES ($1, $2, $3, $4)`, assignmentID, event, actorID, reason)
+INSERT INTO cluster_leadership.assignment_event (assignment_id, event, actor_id, reason, country_code)
+VALUES ($1, $2, $3, $4, (SELECT a.country_code FROM cluster_leadership.leader_assignment a WHERE a.id = $1))`, assignmentID, event, actorID, reason)
 	if err != nil {
 		return fmt.Errorf("clusterlead: recording what changed: %w", err)
 	}

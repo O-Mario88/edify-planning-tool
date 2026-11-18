@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 )
 
 // ConsentVersion names the declaration and privacy notice the applicant
@@ -156,7 +158,7 @@ INSERT INTO school_loans.application (
   $29, $30, $31, $32, $33,
   $34, $35, $36, $37, $38,
   'submitted', 'queued', $39, $33, $33, $40,
-  `+schoolCountryCode("$35::text")+`
+  `+registry.SchoolCountryCode("$35::text")+`
 )`,
 		id, reference, input.IdempotencyKey, HashToken(receipt), app.Now.Add(receiptLifetime), source, invitationID,
 		input.SchoolName, input.DirectorName, input.DirectorPhone, input.DirectorEmail, input.Religion,

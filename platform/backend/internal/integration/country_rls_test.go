@@ -114,3 +114,97 @@ SELECT gen_random_uuid(), 'GCRLS-2', repeat('f', 32), repeat('a', 64), now() + i
 		t.Errorf("a Kenyan reader filing a Ugandan application: %v", err)
 	}
 }
+
+// The same guard on the cluster leadership and field route records
+// (docs/migration/80 §24): a Ugandan leader's request and a Ugandan field
+// day are read by a reader working in Uganda, the Admin and the platform's
+// own work, by nobody working in Kenya or in no country, and a Kenyan
+// reader can neither change them nor record one as Uganda's. The rows are
+// removed after.
+func TestTheDatabaseKeepsClusterAndRouteRecordsToTheirCountry(t *testing.T) {
+	ctx := context.Background()
+	exec := func(sql string, args ...any) {
+		t.Helper()
+		if _, err := admin.Exec(ctx, sql, args...); err != nil {
+			t.Fatalf("%s: %v", sql, err)
+		}
+	}
+	const user = "gcrls-user"
+	t.Cleanup(func() {
+		_, _ = admin.Exec(ctx, `DELETE FROM cluster_leadership.leader_request WHERE created_by = $1`, user)
+		_, _ = admin.Exec(ctx, `DELETE FROM field_routes.field_day WHERE user_id = $1`, user)
+	})
+	exec(`INSERT INTO cluster_leadership.leader_request (id, cluster_id, subject, body, status, created_by, country_code)
+VALUES (gen_random_uuid(), 'gcrls-cluster', 'Ugandan request', 'body', 'open', $1, 'UG')`, user)
+	exec(`INSERT INTO field_routes.field_day (user_id, day, country_code) VALUES ($1, '2026-11-02', 'UG')`, user)
+
+	cfg := gateway.Config().Copy()
+	cfg.MaxConns, cfg.MinConns = 1, 1
+	countryctx.Configure(cfg)
+	one, err := pgxpool.NewWithConfig(ctx, cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer one.Close()
+
+	in := func(code string) *country.Work {
+		return &country.Work{Country: country.Country{ID: countryID(t, code), Code: code}, RolesSource: country.RolesFromProfile}
+	}
+	as := func(role string, w *country.Work) context.Context {
+		return auth.WithPrincipal(ctx, auth.Principal{Account: auth.Account{UserID: user, ActiveRole: role, Country: w}})
+	}
+	tables := []struct{ name, count, change, add string }{
+		{"leader requests",
+			`SELECT count(*) FROM cluster_leadership.leader_request WHERE created_by = $1`,
+			`UPDATE cluster_leadership.leader_request SET subject = 'Changed' WHERE created_by = $1`,
+			`INSERT INTO cluster_leadership.leader_request (id, cluster_id, subject, body, status, created_by, country_code)
+VALUES (gen_random_uuid(), 'gcrls-cluster', 'Another', 'body', 'open', $1, 'UG')`},
+		{"field days",
+			`SELECT count(*) FROM field_routes.field_day WHERE user_id = $1`,
+			`UPDATE field_routes.field_day SET school_ids = '{x}' WHERE user_id = $1`,
+			`INSERT INTO field_routes.field_day (user_id, day, country_code) VALUES ($1, '2026-11-03', 'UG')`},
+	}
+	readers := []struct {
+		who  string
+		ctx  context.Context
+		sees bool
+	}{
+		{"a CCEO working in Uganda", as("CCEO", in("UG")), true},
+		{"a CCEO working in Kenya", as("CCEO", in("KE")), false},
+		{"the Admin", as("Admin", in("KE")), true},
+		{"a Regional Program Lead", as("RegionalProgramLead", in("KE")), true},
+		{"a CCEO working in no Active country", as("CCEO", nil), false},
+		{"the platform's own work", ctx, true},
+	}
+	kenyan := as("CCEO", in("KE"))
+	for _, table := range tables {
+		for round := 0; round < 2; round++ {
+			for _, r := range readers {
+				var n int
+				if err := one.QueryRow(r.ctx, table.count, user).Scan(&n); err != nil {
+					t.Fatal(err)
+				}
+				if got := n == 1; got != r.sees {
+					t.Errorf("%s, round %d, %s: sees the Ugandan record %v, want %v", table.name, round, r.who, got, r.sees)
+				}
+			}
+		}
+		err := pgx.BeginTxFunc(kenyan, one, pgx.TxOptions{AccessMode: pgx.ReadWrite}, func(tx pgx.Tx) error {
+			tag, err := tx.Exec(kenyan, table.change, user)
+			if err == nil && tag.RowsAffected() != 0 {
+				t.Errorf("%s: a Kenyan reader changed %d Ugandan records", table.name, tag.RowsAffected())
+			}
+			return err
+		})
+		if err != nil {
+			t.Fatalf("%s: the Kenyan update: %v", table.name, err)
+		}
+		err = pgx.BeginTxFunc(kenyan, one, pgx.TxOptions{AccessMode: pgx.ReadWrite}, func(tx pgx.Tx) error {
+			_, err := tx.Exec(kenyan, table.add, user)
+			return err
+		})
+		if !refusedByRowSecurity(err) {
+			t.Errorf("%s: a Kenyan reader recording a Ugandan one: %v", table.name, err)
+		}
+	}
+}

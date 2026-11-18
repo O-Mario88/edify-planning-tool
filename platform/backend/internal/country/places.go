@@ -141,3 +141,30 @@ func SchoolHeldIn(school, ids string) string {
     WHERE shc.id::text = ANY(%s) AND shc.roles_source = '%s')))`,
 		SchoolIn(school, ids), SchoolIn(school, "ARRAY(SELECT anys.id::text FROM country_registry.country anys)"), ids, RolesFromProfile)
 }
+
+// heldCode is the code of the country that holds what no country's registry
+// places: the country whose roles are the existing profile's (Uganda), as
+// everything the existing application holds is (owner decision 2), and
+// Uganda's code itself before the registry is seeded.
+var heldCode = `(SELECT hcc.code FROM country_registry.country hcc WHERE hcc.roles_source = '` + RolesFromProfile + `' ORDER BY hcc.code LIMIT 1), 'UG'`
+
+// HeldCode is the SQL for the holding country's code.
+var HeldCode = `COALESCE(` + heldCode + `)`
+
+// SchoolCountryCode is the SQL for the code of the country a record at the
+// school whose id the expression school names is recorded under, for the
+// database's country guard (docs/migration/80 §23): the school's registry
+// country, else — a school no country holds, or no school yet — the
+// holding country's (SchoolHeldIn).
+func SchoolCountryCode(school string) string {
+	return `COALESCE((SELECT scc.code FROM country_registry.country scc JOIN school scs ON scs.id = CAST(` + school +
+		` AS varchar) WHERE ` + SchoolIn("scs", "ARRAY[scc.id::text]") + ` ORDER BY scc.code LIMIT 1), ` + heldCode + `)`
+}
+
+// ClusterCountryCode is SchoolCountryCode for a record of the cluster whose
+// id the expression cluster names: the cluster's country (ClusterIn), else
+// the holding country's.
+func ClusterCountryCode(cluster string) string {
+	return `COALESCE((SELECT ccc.code FROM country_registry.country ccc JOIN cluster ccs ON ccs.id = CAST(` + cluster +
+		` AS varchar) WHERE ` + ClusterIn("ccs", "ARRAY[ccc.id::text]") + ` ORDER BY ccc.code LIMIT 1), ` + heldCode + `)`
+}
