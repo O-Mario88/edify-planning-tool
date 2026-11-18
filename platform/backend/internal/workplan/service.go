@@ -126,7 +126,7 @@ func (s *Service) read(ctx context.Context, p auth.Principal, door Door, query u
 	now := s.now()
 	local := now.In(s.zone)
 	today := time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC)
-	next, err := nextOpenFY(ctx, s.db, today, s.zone)
+	next, err := nextOpenFY(ctx, s.db, p.Country, today, s.zone)
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +208,7 @@ func (s *Service) read(ctx context.Context, p auth.Principal, door Door, query u
 	if err != nil {
 		return nil, err
 	}
-	if v.approval, err = readApproval(ctx, s.db, p.ActiveRole, st.fy); err != nil {
+	if v.approval, err = readApproval(ctx, s.db, p.Country, p.ActiveRole, st.fy); err != nil {
 		return nil, err
 	}
 	if v.projects, err = scopedProjects(ctx, s.db, p, scope); err != nil {

@@ -104,7 +104,7 @@ func (s *Service) build(ctx context.Context, p auth.Principal, doors Doors, quer
 		}
 	}
 	op, _ := strconv.Atoi(operational)
-	years, err := schoolplanning.Horizon(ctx, s.db, v.fy, op, options, now)
+	years, err := schoolplanning.Horizon(ctx, s.db, p.Country, v.fy, op, options, now)
 	if err != nil {
 		return nil, err
 	}

@@ -28,6 +28,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
@@ -111,7 +112,7 @@ FROM fiscal_year_planning_policy ORDER BY fy DESC`)
 		// default country) has an opening moment that has passed.
 		var openAt *time.Time
 		err := s.db.QueryRow(ctx, `SELECT planning_open_at FROM fiscal_year_planning_policy WHERE country = $1 AND fy = $2 LIMIT 1`,
-			rules.DefaultCountry, next).Scan(&openAt)
+			registry.SettingsName(p.Country, rules.DefaultCountry), next).Scan(&openAt)
 		if err != nil && err != pgx.ErrNoRows {
 			return nil, true, fmt.Errorf("fyplanning: reading the next year's policy: %w", err)
 		}

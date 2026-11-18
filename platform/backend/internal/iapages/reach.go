@@ -24,7 +24,7 @@ func reach(ctx context.Context, db schooldirectory.Querier, p auth.Principal, no
 	}
 	where := "TRUE"
 	if scope.CountryScope && scope.Country != "" {
-		args = append(args, scope.Country)
+		args = append(args, scope.CountryIDs())
 		where = schoolprofile.ActivityInCountry(len(args))
 	}
 	if !slices.Contains(rules.IAVerifyRoles, p.ActiveRole) {

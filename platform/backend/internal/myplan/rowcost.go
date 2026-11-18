@@ -9,6 +9,7 @@ import (
 	"math/big"
 	"slices"
 
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -439,11 +440,11 @@ func mealRates(ctx context.Context, db schooldirectory.Querier, ids []string) (m
 // catalogueRate is costing_service.catalogue_rate: the live published card's
 // rate for key as staff planning reads one (the approved minimum, else the
 // operational rate), nil when the card does not carry it.
-func catalogueRate(ctx context.Context, db schooldirectory.Querier, key string) (*int64, error) {
+func catalogueRate(ctx context.Context, db schooldirectory.Querier, place *registry.Work, key string) (*int64, error) {
 	r := rules.Rows
 	var card string
 	err := db.QueryRow(ctx, `SELECT id FROM cost_catalogue WHERE country = $1 AND kind = $2 AND status = $3 AND is_active
-ORDER BY fy DESC, version DESC LIMIT 1`, r.CatalogueCountry, r.CatalogueKind, r.CatalogueStatus).Scan(&card)
+ORDER BY fy DESC, version DESC LIMIT 1`, registry.SettingsName(place, r.CatalogueCountry), r.CatalogueKind, r.CatalogueStatus).Scan(&card)
 	if isNoRows(err) {
 		return nil, nil
 	}

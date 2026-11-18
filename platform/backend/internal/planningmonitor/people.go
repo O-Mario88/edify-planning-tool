@@ -6,6 +6,9 @@ import (
 	"slices"
 	"sort"
 	"strings"
+
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
 // Officer is one person's year (OfficerMonitor). Every figure is folded from
@@ -52,7 +55,7 @@ type rosterTeam struct {
 // CCEOs they supervise by name (rules.roster's team whose Lead is one of
 // wanted), the people the planning rulebook follows by the role they hold.
 func (m *monitor) leadTeam(ctx context.Context, wanted []string) (*Lead, []rosterPerson, error) {
-	teams, err := m.roster(ctx, "")
+	teams, err := m.roster(ctx, countryLens{})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -67,19 +70,16 @@ func (m *monitor) leadTeam(ctx context.Context, wanted []string) (*Lead, []roste
 
 // roster is rules.roster: every Programme Lead with their CCEOs (a CCEO on
 // several Leads' lines under the first by name), then the CCEOs with no
-// Lead; country keeps the people to their country (or none recorded).
-func (m *monitor) roster(ctx context.Context, country string) ([]rosterTeam, error) {
-	args := []any{[]string{rules.ProgramLeadRole, rules.CCEORole}}
-	where := ""
-	if country != "" {
-		args = append(args, country)
-		where = " AND (sp.country = $2 OR sp.country = '')"
-	}
+// Lead; a country keeps the people to it (country.RosterIn: in Uganda the
+// profile's country or none recorded; in a country whose roles come from the
+// registry, the roles held there). The zero lens is unbounded.
+func (m *monitor) roster(ctx context.Context, in countryLens) ([]rosterTeam, error) {
+	r := registry.RosterIn(in.name, in.id, in.fromRegistry, []string{rules.ProgramLeadRole, rules.CCEORole})
 	rows, err := m.db.Query(ctx, `SELECT sp.id, COALESCE(sp.user_id, ''), COALESCE(NULLIF(u.name, ''), NULLIF(u.email, ''), sp.id),
-  COALESCE(u.active_role, ''), COALESCE(u.roles, '{}')
+  `+r.Active+`, `+r.Roles+`
 FROM staff_profile sp JOIN "user" u ON u.id = sp.user_id
 WHERE sp.deleted_at IS NULL AND u.is_active AND u.deleted_at IS NULL
-AND (u.roles && $1::varchar[] OR u.active_role = ANY($1))`+where, args...)
+AND `+r.Where, r.Args...)
 	if err != nil {
 		return nil, fmt.Errorf("planningmonitor: the roster: %w", err)
 	}
@@ -184,6 +184,17 @@ func intersects(a, b []string) bool {
 }
 
 // planningRole is rules.planning_role: Programme Lead before CCEO, or "".
+// countryLens is the country a roster is kept to: its name, registry id and
+// whether its roles come from the registry; the zero lens is unbounded.
+type countryLens struct {
+	name, id     string
+	fromRegistry bool
+}
+
+func lensOf(scope schooldirectory.Scope) countryLens {
+	return countryLens{name: scope.Country, id: scope.CountryID, fromRegistry: scope.CountryFromRegistry}
+}
+
 func planningRole(roles []string, active string) string {
 	held := append(slices.Clone(roles), active)
 	switch {

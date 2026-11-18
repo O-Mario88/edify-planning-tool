@@ -12,6 +12,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -100,7 +101,7 @@ func (s *Service) listed(ctx context.Context, scope schooldirectory.Scope, sc sc
 	args := []any{sc.ID, statuses}
 	inCountry := "false"
 	if scope.CountryScope && scope.Country != "" {
-		args = append(args, scope.Country)
+		args = append(args, scope.CountryIDs())
 		inCountry = activityInCountry(len(args))
 	}
 	rows, err := s.db.Query(ctx, `
@@ -142,16 +143,7 @@ ORDER BY `+order, args...)
 // cluster (its region, or its district's), or, with neither, the person
 // responsible for it.
 func activityInCountry(n int) string {
-	c := fmt.Sprintf("$%d", n)
-	return `(EXISTS (SELECT 1 FROM region r WHERE r.id = s.region_id AND r.country = ` + c + `)
- OR (s.id IS NOT NULL AND s.region_id IS NULL AND (
-   s.account_owner_id IN (SELECT id FROM staff_profile WHERE country = ` + c + ` AND deleted_at IS NULL)
-   OR s.account_owner_id IS NULL OR s.account_owner_id = ''
-   OR s.account_owner_id IN (SELECT id FROM staff_profile WHERE (country IS NULL OR country = '') AND deleted_at IS NULL)))
- OR EXISTS (SELECT 1 FROM region r WHERE r.id = cl.region_id AND r.country = ` + c + `)
- OR EXISTS (SELECT 1 FROM district d JOIN region r ON r.id = d.region_id WHERE d.id = cl.district_id AND r.country = ` + c + `)
- OR (a.school_id IS NULL AND a.cluster_id IS NULL
-   AND a.responsible_staff_id IN (SELECT id FROM staff_profile WHERE country = ` + c + ` AND deleted_at IS NULL)))`
+	return registry.ActivityIn("a", "s", "cl", fmt.Sprintf("$%d", n))
 }
 
 // executorNames are _staff_names and _partner_names for the listed work.

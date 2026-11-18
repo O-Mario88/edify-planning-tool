@@ -37,10 +37,16 @@ type Scope struct {
 	// Country bounds a country-scoped role; empty means unbounded (Admin, or
 	// a country role with no country on its profile), NoCountry that the
 	// account does not belong to its profile's country.
-	Country     string
-	RegionScope bool
-	RegionIDs   []string
-	SummaryOnly bool
+	Country string
+	// CountryID is that country's registry id, empty when Country is empty
+	// or NoCountry; CountryFromRegistry that the country's roles (and so its
+	// rosters) come from the registry rather than the existing profile
+	// (docs/migration/80, §12 and §13).
+	CountryID           string
+	CountryFromRegistry bool
+	RegionScope         bool
+	RegionIDs           []string
+	SummaryOnly         bool
 	// OwnSchoolIDs is the direct portfolio: own schools and those of anyone
 	// whose temporary coverage this person holds (or a coordinator's project
 	// schools).
@@ -54,6 +60,11 @@ type Scope struct {
 	OwnDistrictIDs     []string
 	SupervisedStaffIDs []string
 }
+
+// CountryIDs is the scope's country as the registry clauses take it (a
+// text[] argument): its registry id, or one empty id, which matches no
+// country, when the reader is bounded to NoCountry.
+func (s Scope) CountryIDs() []string { return []string{s.CountryID} }
 
 // NoCountry is the country of a reader whose profile names a country the
 // account does not belong to (internal/country): no record carries it. It
@@ -157,7 +168,7 @@ WHERE psa.project_id IN (
 		}
 	}
 	if s.CountryScope && s.Role != roleAdmin && inRegistry {
-		s.Country = p.Country.Name
+		s.Country, s.CountryID, s.CountryFromRegistry = p.Country.Name, p.Country.ID, true
 	} else if s.CountryScope && s.Role != roleAdmin && s.StaffID != "" {
 		var country *string
 		err := q.QueryRow(ctx, `SELECT country FROM staff_profile WHERE id = $1`, s.StaffID).Scan(&country)
@@ -179,6 +190,8 @@ WHERE psa.project_id IN (
 			}
 			if len(ids) == 0 {
 				s.Country = NoCountry
+			} else {
+				s.CountryID = ids[0]
 			}
 		}
 	}

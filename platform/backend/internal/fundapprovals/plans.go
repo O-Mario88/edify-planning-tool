@@ -9,6 +9,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -30,10 +31,17 @@ func team(ctx context.Context, db schooldirectory.Querier, scope schooldirectory
 	case scope.Role == "Admin" && scope.CountryScope:
 		ids, err = collect(ctx, db, `SELECT sp.id FROM staff_profile sp JOIN "user" u ON u.id = sp.user_id
 			WHERE u.active_role = 'CCEO' AND sp.deleted_at IS NULL`)
+	case scope.Role == "CountryDirector" && scope.CountryFromRegistry:
+		// A country whose roles come from the registry (docs/migration/80,
+		// §13): the people holding those roles there.
+		ids, err = collect(ctx, db, `SELECT sp.id FROM staff_profile sp JOIN "user" u ON u.id = sp.user_id
+			WHERE u.is_active AND sp.deleted_at IS NULL AND `+registry.HoldsRoleIn("u.id", "$2", "$1::varchar[]"),
+			rules.CDApprovalRoles, scope.CountryID)
 	case scope.Role == "CountryDirector":
+		// Uganda's rule, kept to the accounts that belong to the country.
 		ids, err = collect(ctx, db, `SELECT sp.id FROM staff_profile sp JOIN "user" u ON u.id = sp.user_id
 			WHERE u.active_role = ANY($1) AND u.is_active AND sp.deleted_at IS NULL
-			  AND ($2 = '' OR sp.country = $2)`, rules.CDApprovalRoles, scope.Country)
+			  AND ($2 = '' OR (sp.country = $2 AND `+registry.BelongsTo("u.id", "$3")+`))`, rules.CDApprovalRoles, scope.Country, scope.CountryID)
 	}
 	if err != nil {
 		return nil, err

@@ -27,5 +27,7 @@ func MayRun(ctx context.Context, db Querier, p auth.Principal, scope schooldirec
 }
 
 // ActivityInCountry is scoping.activity_country_q over an activity a with
-// its school s and cluster cl, the country being argument n.
+// its school s and cluster cl, read through the registry
+// (country.ActivityIn): argument n holds the countries' registry ids
+// (Scope.CountryIDs).
 func ActivityInCountry(n int) string { return activityInCountry(n) }

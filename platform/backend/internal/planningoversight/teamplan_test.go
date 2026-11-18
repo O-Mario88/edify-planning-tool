@@ -94,7 +94,7 @@ func TestPeriodWordsAreThePagesOwn(t *testing.T) {
 	}
 	// A week across 1 October reads both years (_plan_period).
 	s := &Service{}
-	years, label, read, err := s.planPeriod(nil, partneroversight.Period{FY: "2027", Kind: "week", Week: "2026-W40"}, nil, time.Now())
+	years, label, read, err := s.planPeriod(nil, nil, partneroversight.Period{FY: "2027", Kind: "week", Week: "2026-W40"}, nil, time.Now())
 	if err != nil || len(years) != 2 || years[0] != "2026" || years[1] != "2027" || label != "Week of 28 Sep 2026" || read.start.IsZero() {
 		t.Errorf("week across the year: %v %q %+v %v", years, label, read, err)
 	}

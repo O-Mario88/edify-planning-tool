@@ -49,7 +49,7 @@ func (s *Service) samples(ctx context.Context, p auth.Principal, role Role, quer
 	args := []any{}
 	activityReach := "TRUE"
 	if scope.CountryScope && scope.Country != "" {
-		args = append(args, scope.Country)
+		args = append(args, scope.CountryIDs())
 		activityReach = schoolprofile.ActivityInCountry(len(args))
 	}
 	schoolReach := schooldirectory.AnalyticsReach(scope, &args)

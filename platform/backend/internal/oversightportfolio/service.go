@@ -148,7 +148,7 @@ func (s *Service) read(ctx context.Context, p auth.Principal, doors Doors, fy st
 	}
 	options := schooldirectory.FYOptions(now)
 	operational, _ := strconv.Atoi(schooldirectory.OperationalFY(now))
-	horizon, err := schoolplanning.Horizon(ctx, s.db, fy, operational, options, now)
+	horizon, err := schoolplanning.Horizon(ctx, s.db, p.Country, fy, operational, options, now)
 	if err != nil {
 		return v, nil, err
 	}

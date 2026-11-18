@@ -15,6 +15,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partneroversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolplanning"
@@ -87,7 +88,7 @@ func (s *Service) buildTeamPlan(ctx context.Context, p auth.Principal, query url
 		return nil, false, nil
 	}
 	fyOptions := schooldirectory.FYOptions(now)
-	years, label, read, err := s.planPeriod(ctx, per, fyOptions, now)
+	years, label, read, err := s.planPeriod(ctx, p.Country, per, fyOptions, now)
 	if err != nil {
 		return nil, true, err
 	}
@@ -195,7 +196,7 @@ type periodRead struct {
 
 // planPeriod is _plan_period with _plan_period_label: the years a plan read
 // covers, how the page names the period, and what narrows it.
-func (s *Service) planPeriod(ctx context.Context, per partneroversight.Period, fyOptions []string, now time.Time) ([]string, string, periodRead, error) {
+func (s *Service) planPeriod(ctx context.Context, place *registry.Work, per partneroversight.Period, fyOptions []string, now time.Time) ([]string, string, periodRead, error) {
 	switch per.Kind {
 	case "month":
 		return []string{per.FY}, monthNames[per.Month-1] + " · FY " + per.FY, periodRead{month: per.Month}, nil
@@ -212,7 +213,7 @@ func (s *Service) planPeriod(ctx context.Context, per partneroversight.Period, f
 		return years, "Week of " + start.Format("02 Jan 2006"), periodRead{start: start, end: end}, nil
 	}
 	operational, _ := strconv.Atoi(schooldirectory.OperationalFY(now))
-	years, err := schoolplanning.Horizon(ctx, s.db, per.FY, operational, fyOptions, now)
+	years, err := schoolplanning.Horizon(ctx, s.db, place, per.FY, operational, fyOptions, now)
 	if err != nil {
 		return nil, "", periodRead{}, err
 	}

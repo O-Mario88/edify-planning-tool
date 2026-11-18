@@ -95,7 +95,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 			for _, r := range shown {
 				schools = append(schools, myplan.CoreSchool{PK: r.id, Code: r.code})
 			}
-			visits, trainings, err := myplan.CoreSchoolPlans(ctx, s.db, schools, fy, now)
+			visits, trainings, err := myplan.CoreSchoolPlans(ctx, s.db, p.Country, schools, fy, now)
 			sheet := trainings
 			if tab == "core_visits" {
 				sheet = visits

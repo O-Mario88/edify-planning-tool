@@ -9,6 +9,7 @@ import (
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -57,7 +58,7 @@ func teamsFor(ctx context.Context, db schooldirectory.Querier, p auth.Principal,
 		if !rules.AllowCDOperational {
 			return nil, nil
 		}
-		return countryTeams(ctx, db, p, scope.Country)
+		return countryTeams(ctx, db, p, scope)
 	}
 	return nil, nil
 }
@@ -127,19 +128,18 @@ type rosterPerson struct {
 // (country_oversight.rules.roster): each Programme Lead by name with the
 // CCEOs they supervise, then the CCEOs who report to no Lead, the reader
 // themself left out.
-func countryTeams(ctx context.Context, db schooldirectory.Querier, p auth.Principal, country string) ([]team, error) {
+//
+// The country keeps the people to it (country.RosterIn): in Uganda the
+// profile's country or none recorded; in a country whose roles come from the
+// registry, the Leads and CCEOs who hold those roles there.
+func countryTeams(ctx context.Context, db schooldirectory.Querier, p auth.Principal, scope schooldirectory.Scope) ([]team, error) {
 	lead, cceo := rules.PlanningLeadRole, rules.PlanningCCEORole
-	args := []any{[]string{lead, cceo}}
-	where := ""
-	if country != "" {
-		args = append(args, country)
-		where = " AND (sp.country = $2 OR sp.country = '')"
-	}
+	r := registry.RosterIn(scope.Country, scope.CountryID, scope.CountryFromRegistry, []string{lead, cceo})
 	rows, err := db.Query(ctx, `
-SELECT sp.id, sp.user_id, u.name, u.email, COALESCE(u.roles, '{}'), COALESCE(u.active_role, '')
+SELECT sp.id, sp.user_id, u.name, u.email, `+r.Roles+`, `+r.Active+`
 FROM staff_profile sp JOIN "user" u ON u.id = sp.user_id
 WHERE sp.deleted_at IS NULL AND u.is_active AND u.deleted_at IS NULL
-  AND (u.roles && $1::varchar[] OR u.active_role = ANY($1))`+where, args...)
+  AND `+r.Where, r.Args...)
 	if err != nil {
 		return nil, fmt.Errorf("calendarpage: reading the roster: %w", err)
 	}

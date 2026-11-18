@@ -146,7 +146,7 @@ func (s *Service) verificationAnalytics(ctx context.Context, p auth.Principal, w
 	args := []any{since}
 	inCountry := "TRUE"
 	if scope.CountryScope && scope.Country != "" {
-		args = append(args, scope.Country)
+		args = append(args, scope.CountryIDs())
 		inCountry = schoolprofile.ActivityInCountry(len(args))
 	}
 	reach := `SELECT a.id FROM activity a LEFT JOIN school s ON s.id = a.school_id LEFT JOIN cluster cl ON cl.id = a.cluster_id WHERE a.deleted_at IS NULL AND ` + inCountry

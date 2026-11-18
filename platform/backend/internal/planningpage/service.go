@@ -13,6 +13,7 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterpage"
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolplanning"
@@ -95,7 +96,7 @@ WHERE d.id IN (SELECT s.district_id FROM school s WHERE `+base+`) ORDER BY d.nam
 		return nil, err
 	}
 	filters := formFilters(f, schooldirectory.FYOptions(now), districts, staff, support)
-	strip, err := stripBlock(ctx, s.db, base, baseB.args, f.dataFY)
+	strip, err := stripBlock(ctx, s.db, p.Country, base, baseB.args, f.dataFY)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +117,7 @@ WHERE d.id IN (SELECT s.district_id FROM school s WHERE `+base+`) ORDER BY d.nam
 	if f.tab == "clusters" {
 		rest, err2 = s.clustersTab(ctx, p, scope, f)
 	} else {
-		rest, err2 = s.schoolsTab(ctx, scope, doors, f, owners, support, base, baseB.args, operational, now)
+		rest, err2 = s.schoolsTab(ctx, p.Country, scope, doors, f, owners, support, base, baseB.args, operational, now)
 	}
 	if err2 != nil {
 		return nil, err2
@@ -131,7 +132,7 @@ WHERE d.id IN (SELECT s.district_id FROM school s WHERE `+base+`) ORDER BY d.nam
 
 // schoolsTab is a tab of schools (Client, Core, Assigned to Partner,
 // Scheduled): its rows by name or by holder, its pager or empty card.
-func (s *Service) schoolsTab(ctx context.Context, scope schooldirectory.Scope, doors Doors, f filterState, owners []string,
+func (s *Service) schoolsTab(ctx context.Context, place *registry.Work, scope schooldirectory.Scope, doors Doors, f filterState, owners []string,
 	support bool, base string, baseArgs []any, operational string, now time.Time) ([]*screensv1.PageBlock, error) {
 	blocks := []*screensv1.PageBlock{}
 	b := &sqlb{}
@@ -203,7 +204,7 @@ func (s *Service) schoolsTab(ctx context.Context, scope schooldirectory.Scope, d
 	if err != nil {
 		return nil, err
 	}
-	horizon, err := schoolplanning.Horizon(ctx, s.db, f.dataFY, atoi(operational), schooldirectory.FYOptions(now), now)
+	horizon, err := schoolplanning.Horizon(ctx, s.db, place, f.dataFY, atoi(operational), schooldirectory.FYOptions(now), now)
 	if err != nil {
 		return nil, err
 	}

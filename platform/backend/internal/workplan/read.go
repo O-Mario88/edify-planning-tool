@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -126,7 +127,10 @@ WHERE a.supervisor_id = $1 AND sp.deleted_at IS NULL`, p.StaffProfileID)
 }
 
 // scopedProjects is apps.projects.scoping.scoped_projects: (id, name) by
-// name.
+// name. A country reader's projects are read through the registry
+// (docs/migration/80, §13): a project with a school of the country
+// (country.SchoolIn), managed by someone whose profile names it, or with
+// neither schools nor a manager.
 func scopedProjects(ctx context.Context, db schooldirectory.Querier, p auth.Principal, scope schooldirectory.Scope) ([][2]string, error) {
 	sql := `SELECT DISTINCT pr.id, pr.name FROM project pr WHERE pr.deleted_at IS NULL`
 	args := []any{}
@@ -134,11 +138,12 @@ func scopedProjects(ctx context.Context, db schooldirectory.Querier, p auth.Prin
 	case scope.CountryScope:
 		if scope.Country != "" {
 			sql += ` AND (EXISTS (SELECT 1 FROM project_school_assignment pa JOIN school sc ON sc.id = pa.school_id
-    JOIN region r ON r.id = sc.region_id WHERE pa.project_id = pr.id AND r.country = $1)
- OR pr.manager_staff_id IN (SELECT id FROM staff_profile WHERE country = $1 AND deleted_at IS NULL)
+    WHERE pa.project_id = pr.id AND ` + registry.SchoolIn("sc", "$1") + `)
+ OR pr.manager_staff_id IN (SELECT msp.id FROM staff_profile msp JOIN country_registry.country_alias al ON al.alias = btrim(msp.country)
+    WHERE al.country_id::text = ANY($1) AND msp.deleted_at IS NULL)
  OR (NOT EXISTS (SELECT 1 FROM project_school_assignment pa WHERE pa.project_id = pr.id)
      AND (pr.manager_staff_id IS NULL OR pr.manager_staff_id = '')))`
-			args = append(args, scope.Country)
+			args = append(args, scope.CountryIDs())
 		}
 	case p.ActiveRole == roleCoordinator:
 		if p.StaffProfileID == "" {
@@ -561,10 +566,10 @@ func namesOf(ctx context.Context, db schooldirectory.Querier, table string, ids 
 
 // nextOpenFY is fy_policy.next_open_fy at noon of today: the nearest
 // future year whose planning has opened.
-func nextOpenFY(ctx context.Context, db schooldirectory.Querier, today time.Time, zone *time.Location) (string, error) {
+func nextOpenFY(ctx context.Context, db schooldirectory.Querier, place *registry.Work, today time.Time, zone *time.Location) (string, error) {
 	at := time.Date(today.Year(), today.Month(), today.Day(), 12, 0, 0, 0, zone)
 	rows, err := db.Query(ctx, `SELECT fy FROM fiscal_year_planning_policy WHERE country = $1 AND planning_open_at <= $2 ORDER BY fy`,
-		rules.PlanningCountry, at)
+		registry.SettingsName(place, rules.PlanningCountry), at)
 	if err != nil {
 		return "", fmt.Errorf("workplan: planning policy: %w", err)
 	}
@@ -591,11 +596,11 @@ type approval struct {
 	canSubmit, canDecide bool
 }
 
-func readApproval(ctx context.Context, db schooldirectory.Querier, role, fy string) (approval, error) {
+func readApproval(ctx context.Context, db schooldirectory.Querier, place *registry.Work, role, fy string) (approval, error) {
 	out := approval{status: "draft"}
 	var status, note *string
 	err := db.QueryRow(ctx, `SELECT status, rvp_review_note FROM country_annual_budget WHERE fy = $1 AND country_id = $2
-ORDER BY id LIMIT 1`, fy, rules.Approval.Country).Scan(&status, &note)
+ORDER BY id LIMIT 1`, fy, registry.SettingsName(place, rules.Approval.Country)).Scan(&status, &note)
 	switch {
 	case err == pgx.ErrNoRows:
 	case err != nil:

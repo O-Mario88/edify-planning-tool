@@ -99,9 +99,9 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if err != nil {
 		return nil, true, fmt.Errorf("batchpayments: resolving the reader's scope: %w", err)
 	}
-	country := ""
-	if scope.CountryScope {
-		country = scope.Country
+	var country []string
+	if scope.CountryScope && scope.Country != "" {
+		country = scope.CountryIDs()
 	}
 	advances, err := s.read(ctx, country, `a.delivery_type = 'staff' AND NOT (a.payment_status = ANY($2))
   AND EXISTS (SELECT 1 FROM advance_request r WHERE r.activity_id = a.id AND r.status = $3)`,
@@ -121,9 +121,9 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 
 // read is the live work matching where, in the reader's country when the
 // reader is held to one, latest first (the activity's own ordering).
-func (s *Service) read(ctx context.Context, country, where string, args ...any) ([]payment, error) {
+func (s *Service) read(ctx context.Context, country []string, where string, args ...any) ([]payment, error) {
 	countryArg := any(nil)
-	if country != "" {
+	if country != nil {
 		countryArg = country
 	}
 	rows, err := s.db.Query(ctx, `
@@ -132,7 +132,7 @@ FROM activity a
 LEFT JOIN school s ON s.id = a.school_id
 LEFT JOIN cluster cl ON cl.id = a.cluster_id
 WHERE a.deleted_at IS NULL AND `+where+`
-  AND ($1::text IS NULL OR `+schoolprofile.ActivityInCountry(1)+`)
+  AND ($1::text[] IS NULL OR `+schoolprofile.ActivityInCountry(1)+`)
 ORDER BY a.created_at DESC`, append([]any{countryArg}, args...)...)
 	if err != nil {
 		return nil, fmt.Errorf("batchpayments: reading the payable work: %w", err)

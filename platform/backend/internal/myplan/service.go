@@ -115,7 +115,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 			}
 		}
 		var ported bool
-		if tables, ported, err = ReadPlanTables(ctx, s.db, owners, period, f, now); err != nil || !ported {
+		if tables, ported, err = ReadPlanTables(ctx, s.db, p.Country, owners, period, f, now); err != nil || !ported {
 			return nil, false, err
 		}
 	}

@@ -73,7 +73,7 @@ func (s *Service) teamPlans(ctx context.Context, p auth.Principal, query url.Val
 			return nil, true, fmt.Errorf("adminops: resolving the reader's scope: %w", err)
 		}
 		if scope.CountryScope && scope.Country != "" {
-			args = append(args, scope.Country)
+			args = append(args, scope.CountryIDs())
 			where += " AND " + schoolprofile.ActivityInCountry(len(args))
 		}
 	}

@@ -198,7 +198,7 @@ func (s *Service) achieved(ctx context.Context, scope schooldirectory.Scope, fy 
 	args := []any{fy, rules.AchievedStatuses}
 	where := "a.deleted_at IS NULL AND a.fy = $1"
 	if scope.CountryScope && scope.Country != "" {
-		args = append(args, scope.Country)
+		args = append(args, scope.CountryIDs())
 		where += " AND " + schoolprofile.ActivityInCountry(len(args))
 	}
 	cols := []string{}

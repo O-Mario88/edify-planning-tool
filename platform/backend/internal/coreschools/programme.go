@@ -129,7 +129,7 @@ func (pg *page) mayPlan(sc school) bool {
 // programme is the Core Trained, Core Graduate and Champion tables.
 func (pg *page) programme(ctx context.Context) ([]*screensv1.PageBlock, error) {
 	gates := schoolprofile.GateRules()
-	horizon, err := schoolplanning.Horizon(ctx, pg.db, pg.fy, mustAtoi(pg.operational), schooldirectory.FYOptions(pg.now), pg.now)
+	horizon, err := schoolplanning.Horizon(ctx, pg.db, pg.p.Country, pg.fy, mustAtoi(pg.operational), schooldirectory.FYOptions(pg.now), pg.now)
 	if err != nil {
 		return nil, err
 	}

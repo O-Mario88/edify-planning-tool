@@ -7,6 +7,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/calendarpage"
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -194,7 +195,7 @@ func tableOf(a *activity, slots coreSlots) int {
 // ReadPlanTables reads the rows of My Plan's own tables for the plan of
 // owners. ok is false when a listed activity needs a part Go does not draw
 // yet: the page is the existing application's.
-func ReadPlanTables(ctx context.Context, db schooldirectory.Querier, owners []string, p Period, f Filters, now time.Time) (PlanTablesResult, bool, error) {
+func ReadPlanTables(ctx context.Context, db schooldirectory.Querier, place *registry.Work, owners []string, p Period, f Filters, now time.Time) (PlanTablesResult, bool, error) {
 	var res PlanTablesResult
 	ids, err := listedIDs(ctx, db, owners, p, f, now)
 	if err != nil || len(ids) == 0 {
@@ -204,7 +205,7 @@ func ReadPlanTables(ctx context.Context, db schooldirectory.Querier, owners []st
 	if err != nil {
 		return res, false, err
 	}
-	pg, err := readPage(ctx, db, acts, now)
+	pg, err := readPage(ctx, db, place, acts, now)
 	if err != nil {
 		return res, false, err
 	}

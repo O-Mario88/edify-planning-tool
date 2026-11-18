@@ -78,7 +78,7 @@ func TestCoreSchoolPlansAreTheExistingCodesSheets(t *testing.T) {
 		for _, s := range c.Schools {
 			schools = append(schools, CoreSchool{PK: s[0], Code: s[1]})
 		}
-		visits, trainings, err := CoreSchoolPlans(context.Background(), db, schools, c.FY, golden.Now)
+		visits, trainings, err := CoreSchoolPlans(context.Background(), db, nil, schools, c.FY, golden.Now)
 		if err != nil {
 			t.Errorf("%s: %v", c.Label, err)
 			differing += 2

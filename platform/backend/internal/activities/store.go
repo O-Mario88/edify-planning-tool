@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 )
 
 // Querier is the read the save takes, inside its transaction or before it.
@@ -177,10 +179,10 @@ WHERE a.school_id = $1 ORDER BY a.created_at LIMIT 1`, schoolID).Scan(&staffID, 
 
 // followUpNeedsTraining is fy_policy.follow_up_requires_prior_training: true
 // when the year has no policy.
-func followUpNeedsTraining(ctx context.Context, q Querier, fy string) (bool, error) {
+func followUpNeedsTraining(ctx context.Context, q Querier, place *registry.Work, fy string) (bool, error) {
 	var needs bool
 	err := q.QueryRow(ctx, `SELECT follow_up_visit_requires_prior_training FROM fiscal_year_planning_policy
-WHERE country = $1 AND fy = $2 ORDER BY created_at LIMIT 1`, rules.DefaultCountry, fy).Scan(&needs)
+WHERE country = $1 AND fy = $2 ORDER BY created_at LIMIT 1`, registry.SettingsName(place, rules.DefaultCountry), fy).Scan(&needs)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return true, nil
 	}

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 )
 
 // PartnerSupported is, for each school, whether a partner holds its support
@@ -100,8 +102,10 @@ func NextActivities(ctx context.Context, q Querier, counted []Counted, now time.
 
 // Horizon is fy_policy.planning_horizon(fy): the page year alone, except
 // the operational year, which reads forward through every later year the FY
-// selector offers and any year opened for planning beyond it.
-func Horizon(ctx context.Context, q Querier, fy string, operational int, fyOptions []string, now time.Time) ([]string, error) {
+// selector offers and any year opened for planning beyond it. The years
+// opened are the request's country's (place, docs/migration/80 §13): Uganda's
+// policy rows wherever its roles are the existing profile's.
+func Horizon(ctx context.Context, q Querier, place *registry.Work, fy string, operational int, fyOptions []string, now time.Time) ([]string, error) {
 	if fy != strconv.Itoa(operational) {
 		return []string{fy}, nil
 	}
@@ -113,7 +117,7 @@ func Horizon(ctx context.Context, q Querier, fy string, operational int, fyOptio
 	}
 	rows, err := q.Query(ctx, `
 SELECT fy FROM fiscal_year_planning_policy WHERE country = $1 AND planning_open_at <= $2 ORDER BY fy`,
-		rules.DefaultCountry, now)
+		registry.SettingsName(place, rules.DefaultCountry), now)
 	if err != nil {
 		return nil, fmt.Errorf("schoolplanning: reading the planning calendar: %w", err)
 	}

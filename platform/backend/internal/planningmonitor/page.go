@@ -104,7 +104,7 @@ func (pg *Page) Build(ctx context.Context, p auth.Principal, path string, query 
 		fy = schooldirectory.OperationalFY(now)
 	}
 	if fy == "" {
-		next, err := workplan.NextOpenFY(ctx, pg.db, now.In(nairobi), nairobi)
+		next, err := workplan.NextOpenFY(ctx, pg.db, p.Country, now.In(nairobi), nairobi)
 		if err != nil {
 			return nil, true, err
 		}

@@ -184,7 +184,7 @@ FROM cluster WHERE id = $1 AND deleted_at IS NULL`, clusterID).Scan(&c.id, &c.na
 	if fy == "" {
 		fy = operational
 	}
-	horizon, err := schoolplanning.Horizon(ctx, s.db, fy, opYear, schooldirectory.FYOptions(now), now)
+	horizon, err := schoolplanning.Horizon(ctx, s.db, p.Country, fy, opYear, schooldirectory.FYOptions(now), now)
 	if err != nil {
 		return nil, err
 	}

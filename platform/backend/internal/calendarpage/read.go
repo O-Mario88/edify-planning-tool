@@ -101,7 +101,7 @@ func readActivities(ctx context.Context, db schooldirectory.Querier, scope schoo
 	}
 	inCountry := "false"
 	if scope.CountryScope && scope.Country != "" {
-		args = append(args, scope.Country)
+		args = append(args, scope.CountryIDs())
 		inCountry = schoolprofile.ActivityInCountry(len(args))
 	}
 	rows, err := db.Query(ctx, `

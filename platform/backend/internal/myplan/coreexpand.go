@@ -219,7 +219,7 @@ WHERE a.activity_id = ANY($1) AND (a.invited OR a.attended) ORDER BY s.name ASC`
 				rate, ok := meals[act]
 				if !ok {
 					if !fallbackRead {
-						fallback, err = catalogueRate(ctx, db, rules.Rows.GroupTrainingMealsRateKey)
+						fallback, err = catalogueRate(ctx, db, p.country, rules.Rows.GroupTrainingMealsRateKey)
 						if err != nil {
 							return nil, err
 						}

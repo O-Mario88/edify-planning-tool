@@ -16,6 +16,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -113,7 +114,7 @@ func iaVerificationTodos(ctx context.Context, s *Service, r *reader) ([]todo, er
 	where := `a.deleted_at IS NULL AND a.status = $1
   AND (a.delivery_type = 'partner' OR NOT (a.salesforce_activity_id IS NULL OR a.salesforce_activity_id = ''))`
 	if r.scope.CountryScope && r.scope.Country != "" {
-		args = append(args, r.scope.Country)
+		args = append(args, r.scope.CountryIDs())
 		where += " AND " + activityInCountry(len(args))
 	}
 	if len(r.owners) > 0 {
@@ -146,16 +147,7 @@ ORDER BY a.submitted_to_ia_at ASC NULLS LAST, a.updated_at ASC LIMIT 20`, args..
 // activityInCountry is scoping.activity_country_q over an activity a with
 // its school s and cluster cl, the country being argument n.
 func activityInCountry(n int) string {
-	c := "$" + strconv.Itoa(n)
-	return `(EXISTS (SELECT 1 FROM region r WHERE r.id = s.region_id AND r.country = ` + c + `)
- OR (s.id IS NOT NULL AND s.region_id IS NULL AND (
-   s.account_owner_id IN (SELECT id FROM staff_profile WHERE country = ` + c + ` AND deleted_at IS NULL)
-   OR s.account_owner_id IS NULL OR s.account_owner_id = ''
-   OR s.account_owner_id IN (SELECT id FROM staff_profile WHERE (country IS NULL OR country = '') AND deleted_at IS NULL)))
- OR EXISTS (SELECT 1 FROM region r WHERE r.id = cl.region_id AND r.country = ` + c + `)
- OR EXISTS (SELECT 1 FROM district d JOIN region r ON r.id = d.region_id WHERE d.id = cl.district_id AND r.country = ` + c + `)
- OR (a.school_id IS NULL AND a.cluster_id IS NULL
-   AND a.responsible_staff_id IN (SELECT id FROM staff_profile WHERE country = ` + c + ` AND deleted_at IS NULL)))`
+	return registry.ActivityIn("a", "s", "cl", "$"+strconv.Itoa(n))
 }
 
 // place is the row's where: the school, else the cluster, else "—".

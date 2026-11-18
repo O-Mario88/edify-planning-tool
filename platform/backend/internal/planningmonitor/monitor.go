@@ -150,7 +150,7 @@ func ReadCountry(ctx context.Context, db schooldirectory.Querier, p auth.Princip
 	if err := m.readSchools(ctx, base, args); err != nil {
 		return nil, err
 	}
-	teams, err := m.roster(ctx, scope.Country)
+	teams, err := m.roster(ctx, lensOf(scope))
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +197,7 @@ func ReadRegion(ctx context.Context, db schooldirectory.Querier, p auth.Principa
 	for _, s := range append(append([]*School{}, m.schoolOrder...), m.outreachOrder...) {
 		hint = append(hint, s.LeadID)
 	}
-	all, err := m.roster(ctx, "")
+	all, err := m.roster(ctx, countryLens{})
 	if err != nil {
 		return nil, err
 	}

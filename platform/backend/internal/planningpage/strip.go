@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 )
@@ -23,7 +24,7 @@ func count(ctx context.Context, q schooldirectory.Querier, what, sql string, arg
 
 // stripBlock is get_dashboard_data's ten figures over the whole direct
 // portfolio (base, a condition over the schools aliased s), for the year fy.
-func stripBlock(ctx context.Context, q schooldirectory.Querier, base string, baseArgs []any, fy string) (*screensv1.PageBlock, error) {
+func stripBlock(ctx context.Context, q schooldirectory.Querier, place *registry.Work, base string, baseArgs []any, fy string) (*screensv1.PageBlock, error) {
 	// Each statement numbers its own parameters after the portfolio's.
 	with := func(more ...any) []any { return append(append([]any{}, baseArgs...), more...) }
 	n := len(baseArgs)
@@ -33,7 +34,7 @@ func stripBlock(ctx context.Context, q schooldirectory.Querier, base string, bas
 
 	var hasCatalogue bool
 	if err := q.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM cost_catalogue WHERE country = $1 AND kind = $2 AND status = $3 AND is_active)`,
-		rules.Catalogue.Country, rules.Catalogue.Kind, rules.Catalogue.Status).Scan(&hasCatalogue); err != nil {
+		registry.SettingsName(place, rules.Catalogue.Country), rules.Catalogue.Kind, rules.Catalogue.Status).Scan(&hasCatalogue); err != nil {
 		return nil, fmt.Errorf("planningpage: reading the cost catalogue: %w", err)
 	}
 	costBlocked := 0

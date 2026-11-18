@@ -6,7 +6,7 @@ country-specific configuration, securely isolated country data.* Phase 0 of
 that instruction asks for an audit and the architecture decisions before any
 schema change. This document is that Phase 0. The owner approved Phase 1
 on §7's recommended defaults on 2026-11-17 ("Yes, start Phase 1"); what has
-been built since, on the development copies only, is §8 to §12.
+been built since, on the development copies only, is §8 to §13.
 
 Everything below was measured on 2026-11-17 against the development copy
 `edify_gorn_test` and the code on `feature/edify-go-rn-migration`. No
@@ -517,4 +517,90 @@ supervision and team structure (a Programme Lead's team still comes from the
 existing supervisor table); moving Uganda to the registry (it waits for the
 existing application to stop owning roles); the rest of Phase 3, carrying
 the country through planning, SSA, clusters, partners, budgets, advances,
-loans and notifications.
+loans and notifications. Planning followed in §13.
+
+## 13. Phase 3, second step: the country through planning (2026-11-18)
+
+Owner instruction: *"Continue Phase 3 with the country through planning."*
+Planning's records, people and settings now follow the country a request is
+made in (§12), read through the registry instead of comparing a country's
+name as text. No table is added or changed in this step and no row is
+written; it is Go code only.
+
+**Which work belongs to a country** (`country.ActivityIn`). The existing
+rule (`activity_country_q`) placed an activity by its school's region, its
+cluster's region or district, or its responsible person's profile, and put
+work at a school with no region and no country-bound holder in *every*
+country. The registry rule places the school by `country.SchoolIn` (its
+recorded country, else its region's, else its holder's), keeps the cluster
+and responsible-person routes, and puts a school of no country in none
+(owner decision 3, §8). Every page that used the shared clause now reads it
+with the scope's country id (`Scope.CountryID`, filled beside
+`Scope.Country`): My Plan's school activity list, the Calendar, Team Plans,
+the IA pages (reach, samples, analytics), the IA to-dos, Reports and Batch
+Payments. A reader bounded to no country (`NoCountry`) still finds nothing.
+
+**People in a country** (`country.RosterIn`, `HoldsRoleIn`, `BelongsTo`).
+The Planning Monitor's roster, the Calendar's country teams and the
+Country Director's approval team:
+
+| Country's roles | Who is on the roster |
+|---|---|
+| The existing profile's (Uganda) | Today's rule unchanged (the role on the account, the profile naming the country or none), kept to accounts that belong to the country, so someone who now belongs only to Kenya leaves Uganda's roster |
+| The registry's (Kenya, Rwanda, Ethiopia) | The people holding the role there under a membership in force, with the roles they hold there |
+
+**Projects** (Work Plan's project list): a project is a country's when one
+of its schools is (`SchoolIn`) or its manager's profile names the country.
+
+**Planning settings by country** (`country.SettingsName`). The existing
+tables key planning settings by the country's name ("Uganda"). Uganda,
+and any request made in no Active country, reads exactly the rows it reads
+today; a country whose roles come from the registry reads its own rows by
+its own name, and finds none until they are recorded:
+
+| Setting | Where it is read |
+|---|---|
+| The cost catalogue (`cost_catalogue.country`) | The Planning page's costing strip; My Plan's group-training meal rate |
+| The planning calendar (`fiscal_year_planning_policy.country`): which later years are open, and whether a follow-up visit needs a prior training | Work Plan, the Planning Monitor, FY Planning, the planning horizon shared by the Planning page, Cluster schools, Core Schools, Oversight Portfolio, Project Monitoring and Planning Oversight, and scheduling a follow-up visit |
+| The annual budget approval (`country_annual_budget.country_id`) | Work Plan |
+
+So a Kenyan planner sees no catalogue (costing is blocked, as for a country
+with none) and no later year open, rather than Uganda's.
+
+Proof:
+
+- Unit: `internal/country/planning_test.go` (settings keys for no country,
+  Uganda and Kenya; the three rosters; the activity clause reads the
+  registry and no longer places work everywhere); every backend unit test
+  and `go vet ./...` pass.
+- Integration (`internal/integration/country_planning_test.go`), with Kenya
+  Active, an Impact Assessment officer and a CCEO who belong to Kenya alone
+  (their memberships taken away and put back exactly after), a Kenyan
+  school and a Ugandan school with no region and no holder, and work at
+  each: Team Plans through the gateway shows Kenya's IA only Kenya's work and
+  Uganda's IA only Uganda's (the existing rule would have shown Kenya the
+  Ugandan school's work too); the activity clause agrees; Kenya's roster is
+  the Kenyan CCEO alone, and Uganda's no longer holds them though their
+  profile still says Uganda; Kenya's settings are keyed "Kenya" and it has
+  no catalogue and no open planning year.
+- Uganda unchanged: the whole integration suite and every golden, 0
+  differing; school parity with the existing API, 24 accounts served and 13
+  refused, 700 rows, `PARITY OK`.
+
+Not in this step:
+
+- **The financial year per country.** Every planning page still rolls the
+  year over on 1 October, Uganda's. The registry holds each country's
+  financial-year month (§9), but Kenya's, Rwanda's and Ethiopia's are owner
+  decision 5, still open, and about 80 Go files compute the year; it needs
+  one shared, country-aware year before any page changes.
+- **Holidays and organisation events**: `public_holiday` has no country, and
+  the calendar blocks are read by the profile's country; a country calendar
+  (§3, `country_calendar`) comes first.
+- **A project with no schools and no manager** still shows in every country,
+  as today: projects have no country of their own yet.
+- **The targets engine** (`internal/allocations`) keeps its own copy of the
+  existing activity rule; it moves with targets.
+- Writes: scheduling already stays inside the country, because it requires
+  the school in the scheduler's own portfolio, which §12 keeps to the
+  country's schools.

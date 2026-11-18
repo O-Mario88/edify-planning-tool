@@ -6,6 +6,7 @@ import (
 	"slices"
 	"time"
 
+	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -49,7 +50,7 @@ UNION SELECT id FROM live WHERE school_id IS NULL AND activity_type = ANY($4)
 // and Core School Trainings sheets of these schools' year, My Plan's own
 // rows of them. ErrUnported names a plan whose rows need a part Go does not
 // draw yet.
-func CoreSchoolPlans(ctx context.Context, db schooldirectory.Querier, schools []CoreSchool, fy string, now time.Time) (visits, trainings Sheet, err error) {
+func CoreSchoolPlans(ctx context.Context, db schooldirectory.Querier, place *registry.Work, schools []CoreSchool, fy string, now time.Time) (visits, trainings Sheet, err error) {
 	pks := make([]string, 0, len(schools))
 	codes := map[string]bool{}
 	for _, s := range schools {
@@ -62,7 +63,7 @@ func CoreSchoolPlans(ctx context.Context, db schooldirectory.Querier, schools []
 	if err != nil {
 		return visits, trainings, err
 	}
-	visitRows, trainingRows, err := coreRows(ctx, db, ids, now)
+	visitRows, trainingRows, err := coreRows(ctx, db, place, ids, now)
 	if err != nil {
 		return visits, trainings, err
 	}
@@ -91,10 +92,13 @@ type page struct {
 	notes    map[string]string
 	slots    coreSlots
 	today    time.Time
+	// country is the request's country, whose cost catalogue the page reads
+	// (docs/migration/80, §13).
+	country *registry.Work
 }
 
-func readPage(ctx context.Context, db schooldirectory.Querier, acts []*activity, now time.Time) (*page, error) {
-	p := &page{}
+func readPage(ctx context.Context, db schooldirectory.Querier, place *registry.Work, acts []*activity, now time.Time) (*page, error) {
+	p := &page{country: place}
 	y, m, d := now.In(kampala).Date()
 	p.today = time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
 	ids := make([]string, 0, len(acts))
@@ -212,7 +216,7 @@ func (p *page) newRow(a *activity, isCore bool) *row {
 
 // coreRows is get_frontend_context's Core School Visits and Core School
 // Trainings lists for exactly these activities (an export's period "fy").
-func coreRows(ctx context.Context, db schooldirectory.Querier, ids []string, now time.Time) (visits, trainings []*row, err error) {
+func coreRows(ctx context.Context, db schooldirectory.Querier, place *registry.Work, ids []string, now time.Time) (visits, trainings []*row, err error) {
 	if len(ids) == 0 {
 		return nil, nil, nil
 	}
@@ -220,7 +224,7 @@ func coreRows(ctx context.Context, db schooldirectory.Querier, ids []string, now
 	if err != nil || len(acts) == 0 {
 		return nil, nil, err
 	}
-	p, err := readPage(ctx, db, acts, now)
+	p, err := readPage(ctx, db, place, acts, now)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -286,7 +286,7 @@ func (s *Service) create(ctx context.Context, p auth.Principal, req Request, ori
 	}
 	// A Training Follow Up names the training it follows (2822–2832).
 	if purpose == "training_follow_up" || activityType == "training_follow_up_visit" {
-		needs, err := followUpNeedsTraining(ctx, s.db, fy)
+		needs, err := followUpNeedsTraining(ctx, s.db, p.Country, fy)
 		if err != nil {
 			return nil, err
 		}
