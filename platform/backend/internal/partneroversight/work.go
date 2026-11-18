@@ -291,8 +291,8 @@ func (s *Service) draw(ctx context.Context, p auth.Principal, w workspace, staff
 		}
 	}
 	if v.tab == "core" {
-		if drawn, err := s.coreSupport(ctx, v.shown); err != nil || !drawn {
-			return nil, !drawn, err
+		if err := s.coreSupport(ctx, v.shown); err != nil {
+			return nil, true, err
 		}
 	}
 	if v.tab == "clusters" {
@@ -382,21 +382,16 @@ func isoWeekStart(week string) time.Time {
 }
 
 // coreSupport is annotate_core_support over the Core schools the table
-// shows: each one's package slot (the slot its activity fills) and the
+// shows: each one's package slot (the slot its activity fills; before the
+// Partner dates it, the slot its hand-over names or holds) and the
 // Partner's rate (the Core Partner Visit rate, a training's the Partner
-// school visit rate). It is false where the table holds what this piece
-// does not draw yet: a Core school the Partner has not dated (the slot its
-// hand-over holds), or work whose form is in but is not complete (Confirm
-// completed work, offered by who may confirm it).
-func (s *Service) coreSupport(ctx context.Context, shown []*item) (bool, error) {
+// school visit rate).
+func (s *Service) coreSupport(ctx context.Context, shown []*item) error {
 	core := []*item{}
 	activities := []string{}
 	for _, i := range shown {
 		if !i.isCoreSchoolWork() {
 			continue
-		}
-		if i.stage == stageAwaiting || (i.evidenceOK && !i.showsComplete()) {
-			return false, nil
 		}
 		core = append(core, i)
 		if i.activityID != "" {
@@ -405,35 +400,42 @@ func (s *Service) coreSupport(ctx context.Context, shown []*item) (bool, error) 
 	}
 	visit, err := pricing.OperationalRate(ctx, s.db, "core_partner_visit")
 	if err != nil {
-		return false, err
+		return err
 	}
 	training, err := pricing.OperationalRate(ctx, s.db, "client_partner_visit")
 	if err != nil {
-		return false, err
+		return err
 	}
 	slots := map[string]string{}
 	if len(activities) > 0 {
 		rows, err := s.db.Query(ctx, `SELECT activity_id, activity_type, sequence_number FROM core_activity_slot
 WHERE activity_id = ANY($1) ORDER BY activity_id`, activities)
 		if err != nil {
-			return false, fmt.Errorf("partneroversight: reading the Core slots: %w", err)
+			return fmt.Errorf("partneroversight: reading the Core slots: %w", err)
 		}
 		defer rows.Close()
 		for rows.Next() {
 			var id, kind string
 			var sequence int
 			if err := rows.Scan(&id, &kind, &sequence); err != nil {
-				return false, fmt.Errorf("partneroversight: reading the Core slots: %w", err)
+				return fmt.Errorf("partneroversight: reading the Core slots: %w", err)
 			}
-			letter := "T"
-			if kind == "visit" {
-				letter = "V"
-			}
-			slots[id] = letter + strconv.Itoa(sequence)
+			slots[id] = slotLetter(kind) + strconv.Itoa(sequence)
 		}
 		if err := rows.Err(); err != nil {
-			return false, err
+			return err
 		}
+	}
+	// Before the Partner dates it: the slot the hand-over names or holds.
+	waiting := []string{}
+	for _, i := range core {
+		if slots[i.activityID] == "" && i.stage == stageAwaiting && i.assignmentID != "" {
+			waiting = append(waiting, i.assignmentID)
+		}
+	}
+	held, err := visitgate.HeldSlots(ctx, s.db, schoolprofile.GateRules(), waiting)
+	if err != nil {
+		return err
 	}
 	for _, i := range core {
 		i.partnerRate = visit
@@ -441,8 +443,11 @@ WHERE activity_id = ANY($1) ORDER BY activity_id`, activities)
 			i.partnerRate = training
 		}
 		i.coreSlotLabel = slots[i.activityID]
+		if h, ok := held[i.assignmentID]; ok && i.coreSlotLabel == "" && i.stage == stageAwaiting {
+			i.coreSlotLabel = slotLetter(h.Kind) + strconv.Itoa(h.Sequence)
+		}
 	}
-	return true, nil
+	return nil
 }
 
 // markReviewable sets can_review on the work shown that waits for IA
@@ -563,4 +568,12 @@ FROM partner WHERE id = $1`, partner).Scan(&person, &phone, &region, &regions)
 		line += " · " + label
 	}
 	return strings.Join(strings.Fields(line), " "), nil
+}
+
+// slotLetter is a package slot's letter: V for a visit, T for a training.
+func slotLetter(kind string) string {
+	if kind == "visit" {
+		return "V"
+	}
+	return "T"
 }

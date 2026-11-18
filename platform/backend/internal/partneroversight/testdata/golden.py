@@ -31,6 +31,7 @@ from django.contrib.auth import get_user_model
 from django.db import connection, transaction
 from django.utils import timezone as dj_timezone
 
+from apps.core.fy import get_operational_fy
 from apps.mobile_feed.views import read_page
 
 if not settings.DATABASES["default"]["NAME"].endswith("_test"):
@@ -68,6 +69,8 @@ TABLES = (
     "activity_schedule_cost_line",
     "evidence_record",
     "partner_assignment_withdrawal",
+    "core_plan",
+    "core_activity_slot",
 )
 
 
@@ -122,9 +125,11 @@ def file_rows():
             "AND s.school_id IS NOT NULL AND btrim(s.school_id) <> '' "
             "AND NOT EXISTS (SELECT 1 FROM partner_assignment pa WHERE pa.school_id = s.id) "
             "AND NOT EXISTS (SELECT 1 FROM activity a WHERE a.school_id = s.id AND a.delivery_type = 'partner') "
-            "ORDER BY s.id LIMIT 1"
+            "ORDER BY s.id LIMIT 4"
         )
-        schools[9] = cursor.fetchone()[0]
+        cores = [row[0] for row in cursor.fetchall()]
+        schools[9] = cores[0]
+        schools[24], schools[26] = cores[1], cores[2]
         # A cluster with no partner work of its own, for the Clusters tab.
         cursor.execute(
             "SELECT c.id FROM cluster c WHERE c.deleted_at IS NULL "
@@ -226,6 +231,8 @@ def file_rows():
             reason=None,
             cluster=None,
             project=None,
+            core_school=None,
+            visit_number=None,
         ):
             created = NOW - timedelta(days=created_days)
             clone(
@@ -235,7 +242,9 @@ def file_rows():
                 {
                     "id": f"gpoH{n}",
                     "partner_id": PARTNER,
-                    "school_id": None if cluster else schools[n],
+                    "school_id": None
+                    if cluster
+                    else schools[core_school if core_school else n],
                     "cluster_id": cluster,
                     "status": status,
                     "scheduled_activity_id": activity_id,
@@ -243,8 +252,8 @@ def file_rows():
                     "assigning_staff_id": cceo,
                     "purpose_of_visit": purpose,
                     "expected_activity_type": "school_visit",
-                    "support_type": None,
-                    "visit_number": None,
+                    "support_type": "Visit" if visit_number else None,
+                    "visit_number": visit_number,
                     "training_number": None,
                     "project_id": project,
                     "outside_ssa": False,
@@ -500,6 +509,48 @@ def file_rows():
         # whose Salesforce ID is not in.
         facilitated(22, status="submitted_to_pl", days=-2, sf="TS-GPO-22")
         facilitated(23, status="submitted_to_pl", days=-3)
+        # A Core school's package this year, with two visit slots handed to
+        # the Partner and not yet filled. Of its two hand-overs waiting on
+        # the Partner's date, one names visit 1; the other names none and
+        # holds the next slot, visit 2.
+        cursor.execute("SELECT school_id FROM school WHERE id = %s", [schools[24]])
+        (code,) = cursor.fetchone()
+        cursor.execute(
+            "INSERT INTO core_plan (id, school_id, fy, status, visits_target,"
+            " trainings_target, visits_completed, trainings_completed,"
+            " assessment_completed, created_at, updated_at)"
+            " VALUES ('gpoCP24', %s, %s, 'Active', 4, 4, 0, 0, 0, %s, %s)",
+            [code, str(get_operational_fy()), NOW, NOW],
+        )
+        for sequence in (1, 2):
+            cursor.execute(
+                "INSERT INTO core_activity_slot (id, school_id, intervention,"
+                " activity_type, sequence_number, status, owner,"
+                " assigned_partner_id, core_plan_id, created_at, updated_at)"
+                " VALUES (%s, %s, 'leadership', 'visit', %s, 'Assigned',"
+                " 'partner', %s, 'gpoCP24', %s, %s)",
+                [f"gpoS24{sequence}", code, sequence, PARTNER, NOW, NOW],
+            )
+        handover(24, status="assigned", created_days=4)
+        handover(
+            25,
+            status="assigned",
+            created_days=5,
+            purpose="",
+            core_school=24,
+            visit_number="1",
+        )
+        # Core work whose form is in, waiting for IA verification: whoever
+        # may confirm it is offered Confirm completed work.
+        handover(
+            26,
+            status="scheduled",
+            activity_id=work(
+                26, status="awaiting_ia_verification", days=-4, evidence="uploaded"
+            ),
+        )
+        form(26)
+
         # A Core school whose visit a staff member dated: still the
         # Partner's to schedule, so it may be withdrawn.
         handover(

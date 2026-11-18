@@ -692,6 +692,16 @@ func (v *workView) coreRow(i *item) *screensv1.PageRow {
 	actions := []*screensv1.PageAction{
 		{Key: "menu", Label: "View", Enabled: true, Href: "/partner-oversight/detail?assignment_id=" + i.assignmentID, Drawer: true},
 	}
+	// Confirm completed work once the form is in, for the reader who may
+	// review it. Its disabled form ("Waiting for the partner to submit it")
+	// opens nothing, so the feed leaves it out.
+	if i.evidenceOK && i.canReview {
+		href := "/partner-oversight/verify?activity_id=" + i.activityID
+		if i.reviewIsSSA {
+			href = "/activities/" + i.activityID + "/partner-ssa-complete"
+		}
+		actions = append(actions, &screensv1.PageAction{Key: "menu", Label: "Confirm completed work", Enabled: true, Href: href, Drawer: true})
+	}
 	if i.canReview {
 		actions = append(actions, &screensv1.PageAction{Key: "menu", Label: "Return", Enabled: true,
 			Href: "/partner-oversight/return?activity_id=" + i.activityID, Drawer: true})

@@ -1050,3 +1050,6 @@ GRANT SELECT (school_id, assignment_id) ON partner_assignment_withdrawal TO edif
 -- Partner Monitoring's withdrawal queue: each request a CCEO raised, why,
 -- whose it is, what happens next and the money it carries.
 GRANT SELECT (id, requested_at, kind, reason_category, partner_facing_reason, internal_note, attribution, disposition, original_planned_cost, financial_state_at_withdrawal, partner_id) ON partner_assignment_withdrawal TO edify_gateway_ro;
+-- Partner Monitoring's Core tab: the package slot a hand-over waiting on
+-- its Partner holds (slot_held_by_assignment).
+GRANT SELECT (assigned_partner_id) ON core_activity_slot TO edify_gateway_ro;

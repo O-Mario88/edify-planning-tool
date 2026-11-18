@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pynum"
 )
 
 // windowSize is the pages either side of the current one the pager shows
@@ -32,7 +33,7 @@ func Paginate(total, size int, query url.Values, param string) Page {
 	size = max(1, size)
 	pages := max(1, (total+size-1)/size)
 	number := 1
-	if n, ok := PyInt(query.Get(param)); ok {
+	if n, ok := pynum.Int(query.Get(param)); ok {
 		number = n
 	}
 	number = min(max(1, number), pages)
@@ -127,29 +128,4 @@ func pager(number, pages, total int, shown Page, base, param string) *screensv1.
 		p.Pages = append(p.Pages, &screensv1.PagePagerPage{Label: "Next", Href: href(number + 1)})
 	}
 	return p
-}
-
-// PyInt is Python's int() of a text: surrounding space, one sign and single
-// underscores between digits allowed.
-func PyInt(text string) (int, bool) {
-	s := strings.TrimSpace(text)
-	sign := 1
-	if strings.HasPrefix(s, "+") || strings.HasPrefix(s, "-") {
-		if s[0] == '-' {
-			sign = -1
-		}
-		s = s[1:]
-	}
-	if s == "" || s[0] == '_' || s[len(s)-1] == '_' || strings.Contains(s, "__") {
-		return 0, false
-	}
-	digits := strings.ReplaceAll(s, "_", "")
-	if strings.ContainsAny(digits, "+-") {
-		return 0, false
-	}
-	n, err := strconv.Atoi(digits)
-	if err != nil {
-		return 0, false
-	}
-	return sign * n, true
 }

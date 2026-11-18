@@ -558,3 +558,32 @@ a panel, and the head's first line becomes the panel's subtitle:
 Proof: the first fixture Partner has a person, a phone, two regions and a
 follow-up. The second has a phone alone and only the old region column,
 and its Clusters tab is asked: **705 answers of 10 accounts, 0 differing**.
+
+## 46.20 The Core tab's waiting and form-in work (2026-11-18)
+
+The Core schools tab is no longer handed on for two kinds of row.
+
+**A hand-over waiting on the Partner's date** reads the package slot it
+holds as its Core support (`annotate_core_support` through
+`slot_held_by_assignment`, now `visitgate.HeldSlots`):
+
+- a hand-over that names its slot (a support type, a visit or a training
+  number) holds that numbered slot, when it is this Partner's;
+- one that names none holds the first slot this Partner was handed that no
+  activity fills yet. Slots another of the Partner's waiting hand-overs at
+  the school names are skipped. The newest plan comes first, then by
+  number.
+
+**Core work whose form is in** offers Confirm completed work to the reader
+who may review it, opening the Verify drawer, or SSA Support's own
+completion drawer. When the reader may confirm but the work is not yet
+theirs to review, the existing page draws the item disabled. It opens
+nothing, so the feed leaves it out, and so does Go.
+
+The gateway now reads `core_activity_slot.assigned_partner_id`
+(`roles.sql`). Python's `int()` is shared from the new `internal/pynum`.
+
+Proof: a fixture Core package with two visit slots handed to the Partner.
+One hand-over names visit 1 and reads V1; the other names none and reads
+V2. There is also Core work waiting for IA verification with its form in:
+**705 answers of 10 accounts, 0 differing**.
