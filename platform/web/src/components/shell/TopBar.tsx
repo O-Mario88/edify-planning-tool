@@ -1,14 +1,15 @@
 /*
- * The top bar (templates/layouts/shell.html): page search, the date chip,
- * messages, notifications, report a problem, the theme switch and the
- * account menu.
+ * The top bar, in the existing web's markup and class names
+ * (templates/layouts/shell.html), drawn by its own stylesheets: page
+ * history, the page's search, today's date and week, messages,
+ * notifications, report a problem, the theme switch and the account menu.
  */
+import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import { badgeCount } from '@/lib/badgeCount';
 import { dateChip } from '@/lib/today';
 
-import { Icon } from './icons';
 import { AccountMenu, HistoryControls, PhoneMenu, ThemeToggle } from './TopBarControls';
 import type { AccountMenuProps } from './TopBarControls';
 
@@ -28,84 +29,111 @@ export interface TopBarCounts {
   readonly notifications: number;
 }
 
-/** A count over its icon (components.css .notification-badge, placed by .edify-topbar__icon-control). */
+/** A count over its icon (components.css .notification-badge). */
 function CountBadge({ count }: { count: number }) {
   const text = badgeCount(count);
   if (!text) return null;
   return (
-    <span
-      data-count-badge
-      className="absolute left-[52%] top-0 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-[var(--edify-surface)] bg-[var(--edify-notification)] px-1 text-[length:var(--edify-text-micro-size)] font-bold leading-none tabular-nums text-[var(--edify-notification-text)] shadow-[0_3px_10px_var(--edify-notification-glow)]"
-    >
+    <span data-count-badge className="notification-badge absolute top-1 right-1">
       {text}
     </span>
   );
 }
 
-const ICON_LINK =
-  'relative grid h-9 w-9 place-items-center rounded-full text-[var(--edify-text-muted)] hover:bg-[var(--edify-surface-muted)] hover:text-[var(--edify-text)]';
+const UTILITY = 'edify-topbar__icon-control edify-topbar__utility flex items-center justify-center relative focus:outline-none';
 
 export function TopBar({
   search,
   account,
   menu,
-  existingWebUrl,
   counts = { messages: 0, notifications: 0 },
 }: {
   search: PageSearch;
   account: AccountMenuProps;
   menu: ReactNode;
-  existingWebUrl: string;
+  existingWebUrl?: string;
   counts?: TopBarCounts;
 }) {
   const today = dateChip(new Date());
-  const route = encodeURIComponent(account.path.split('?')[0] ?? '/');
+  const weekday = today.weekday.charAt(0) + today.weekday.slice(1).toLowerCase();
+  const short = today.date.split(',')[0] ?? today.date;
+  const route = encodeURIComponent(account.path.split('?')[0] || '/');
   return (
-    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-[var(--edify-topbar-border)] bg-[var(--edify-topbar-bg)] px-4 shadow-[var(--edify-topbar-shadow)] backdrop-blur sm:px-[27px]">
-      <PhoneMenu>{menu}</PhoneMenu>
-      <HistoryControls />
-      <form method="get" action={search.action} role="search" className="relative w-full max-w-[448px] flex-1">
-        {Object.entries(search.keep).map(([name, value]) => (
-          <input key={name} type="hidden" name={name} value={value} />
-        ))}
-        <label className="sr-only" htmlFor="topbar-search-input">
-          {search.label ?? search.placeholder}
-        </label>
-        <input
-          id="topbar-search-input"
-          type="search"
-          name="q"
-          defaultValue={search.value}
-          placeholder={search.placeholder}
-          className="h-[38px] w-full rounded-[var(--radius-control)] border border-[var(--edify-field-border,#858e98)] bg-[var(--edify-surface)] py-[7px] pl-3 pr-[42px] text-[14px] font-semibold text-[var(--edify-text)] placeholder:font-medium placeholder:text-[var(--edify-text-subtle)] focus:border-[var(--brand-primary)] focus:outline-none"
-        />
-        <button
-          type="submit"
-          aria-label="Search"
-          className="absolute right-[5px] top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full bg-[var(--brand-primary)] text-white"
-        >
-          <Icon name="search" className="h-4 w-4" strokeWidth={2.2} />
-        </button>
-      </form>
-      <div className="ml-auto flex items-center gap-1.5">
-        <span className="hidden items-center gap-1.5 whitespace-nowrap pr-2 text-[length:var(--edify-text-label-size)] font-semibold text-[var(--edify-text)] md:flex">
-          <Icon name="calendar" className="h-[18px] w-[18px] text-[var(--brand-primary)]" />
-          <span className="text-[length:var(--edify-text-micro-size)]">{today.weekday}</span>
-          <span>{today.date}</span>
-          <span className="rounded-full bg-[var(--brand-primary-soft)] px-2 py-0.5 text-[length:var(--edify-text-micro-size)] text-[var(--brand-primary-text)]">
-            Week {today.week}
-          </span>
+    <header className="edify-topbar shrink-0 relative z-10">
+      <div className="edify-topbar__lead flex items-center gap-4 flex-1 min-w-0">
+        <HistoryControls />
+        <PhoneMenu>{menu}</PhoneMenu>
+        <search className="edify-topbar__search max-w-md w-full min-w-0 relative block" data-edify-has-submit="">
+          <form method="get" action={search.action}>
+            {Object.entries(search.keep).map(([name, value]) => (
+              <input key={name} type="hidden" name={name} value={value} />
+            ))}
+            <label className="sr-only" htmlFor="global-search-input">
+              {search.label ?? search.placeholder}
+            </label>
+            <input
+              type="search"
+              id="global-search-input"
+              name="q"
+              defaultValue={search.value}
+              placeholder={search.placeholder}
+              className="h-9 w-full rounded-control pl-4 text-[13px] font-normal focus:outline-none transition-all edify-surface-muted border edify-border edify-text"
+            />
+            <button type="submit" aria-label="Search" className="edify-search-submit">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+          </form>
+        </search>
+      </div>
+      <div className="edify-topbar__date edify-topbar__when" title="Today's date">
+        <span className="sr-only">
+          Today is {today.date}, week {today.week}
         </span>
-        <a href={`${existingWebUrl}/messages`} className={`${ICON_LINK} hidden sm:grid`} aria-label="Messages">
-          <Icon name="messages" className="h-5 w-5" />
+        <svg className="edify-topbar__when-mark" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+          <rect x="3" y="5" width="18" height="16" rx="3" />
+          <path strokeLinecap="round" d="M16 3v4M8 3v4M3 10h18" />
+        </svg>
+        <span className="edify-topbar__when-day" aria-hidden="true">
+          <span className="edify-topbar__when-weekday">{weekday}</span> <span className="edify-topbar__date-short xl:hidden">{short}</span>
+          <span className="edify-topbar__date-long hidden xl:inline">{today.date}</span>
+        </span>
+        <span className="edify-topbar__when-week" aria-hidden="true">
+          <span className="xl:hidden">Wk</span>
+          <span className="hidden xl:inline">Week</span> {today.week}
+        </span>
+      </div>
+      <div className="edify-topbar__utilities flex items-center gap-2 shrink-0">
+        <Link href="/messages" className={`${UTILITY} edify-topbar__utility--messages`} title="Messages" aria-label="Messages">
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.3-3.9A7.97 7.97 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+            />
+          </svg>
           <CountBadge count={counts.messages} />
-        </a>
-        <a href={`${existingWebUrl}/notifications`} className={ICON_LINK} aria-label="Notifications">
-          <Icon name="bell" className="h-5 w-5" />
+        </Link>
+        <Link href="/notifications" className={`${UTILITY} edify-topbar__utility--notifications`} title="Notifications" aria-label="Notifications">
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+            />
+          </svg>
           <CountBadge count={counts.notifications} />
-        </a>
-        <a href={`${existingWebUrl}/support?route=${route}`} className={`${ICON_LINK} hidden sm:grid`} aria-label="Report a problem with this page">
-          <Icon name="alert" className="h-5 w-5" />
+        </Link>
+        <a
+          href={`/support?route=${route}`}
+          className="edify-topbar__icon-control edify-topbar__secondary-link flex items-center justify-center"
+          title="Report a problem with this page"
+          aria-label="Report a problem with this page"
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z" />
+          </svg>
         </a>
         <ThemeToggle />
         <AccountMenu {...account} />

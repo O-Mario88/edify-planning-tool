@@ -7,7 +7,7 @@ const ALLOWED_TAGS = new Set(['svg', 'path', 'circle', 'rect', 'line', 'polyline
 const ALLOWED_ATTRIBUTES = new Set([
   'class', 'fill', 'viewbox', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'd', 'cx', 'cy',
   'r', 'rx', 'ry', 'x', 'y', 'x1', 'x2', 'y1', 'y2', 'width', 'height', 'points', 'xmlns', 'aria-hidden',
-  'fill-rule', 'clip-rule', 'transform', 'opacity', 'stroke-miterlimit',
+  'fill-rule', 'clip-rule', 'transform', 'opacity', 'stroke-miterlimit', 'focusable',
 ]);
 const TAG = /<\/?\s*([a-zA-Z][\w:-]*)([^>]*)>/g;
 const ATTRIBUTE = /([a-zA-Z_:][\w:.-]*)\s*=\s*("[^"]*"|'[^']*')/g;

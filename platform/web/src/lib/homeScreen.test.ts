@@ -3,26 +3,26 @@ import { describe, expect, it } from 'vitest';
 
 import { GetHomeResponseSchema, HomeFigureSchema } from '@/gen/edify/screens/v1/home_pb';
 
-import { homeFigures, homeHeader, homeTone } from './homeScreen';
+import { homeDate, homeFigures, homeHeader, homeTone } from './homeScreen';
 
 const figure = (key: string, over: Partial<{ value: string; tone: string; loading: boolean }> = {}) =>
   create(HomeFigureSchema, { key, label: key.toUpperCase(), url: '/todos', description: `${key} described`, ...over });
 
 describe('homeFigures', () => {
-  it('fills a figure still to come with the queue’s value of the same key', () => {
-    const strip = homeFigures(
+  it('fills a figure still to come with the queue’s value and tone, by key', () => {
+    const cards = homeFigures(
       [figure('waiting_me', { loading: true, tone: 'plain' }), figure('critical', { loading: true, tone: 'plain' })],
       [figure('waiting_me', { value: '4', tone: 'caution' })],
     );
-    expect(strip.metrics.map((m) => [m.label, m.value, m.tone, m.href])).toEqual([
-      ['WAITING_ME', '4', 'warning', '/todos'],
-      ['CRITICAL', '—', '', '/todos'],
+    expect(cards.map((c) => [c.key, c.value, c.tone, c.loading, c.url])).toEqual([
+      ['waiting_me', '4', 'caution', false, '/todos'],
+      ['critical', '', 'plain', true, '/todos'],
     ]);
-    expect(strip.metrics[0]?.note).toBe('waiting_me described');
+    expect(cards[0]?.description).toBe('waiting_me described');
   });
 
   it('keeps a figure that came with its own value', () => {
-    expect(homeFigures([figure('schools', { value: '12', tone: 'good' })], []).metrics[0]?.value).toBe('12');
+    expect(homeFigures([figure('schools', { value: '12', tone: 'good' })], [])[0]).toMatchObject({ value: '12', tone: 'good', loading: false });
   });
 });
 
@@ -35,11 +35,14 @@ describe('homeTone', () => {
 });
 
 describe('homeHeader', () => {
-  it('greets the reader by name over the day, the year and the role', () => {
-    const header = homeHeader(
-      create(GetHomeResponseSchema, { greeting: 'Good evening', firstName: 'Edify', roleTitle: 'Admin', todayLabel: 'Wed, Nov 18', fy: '2027' }),
-    );
-    expect([header.eyebrow, header.title, header.description]).toEqual(['Wed, Nov 18 · FY 2027', 'Good evening, Edify', 'Admin']);
+  it('heads Home with the role and greets the reader by name', () => {
+    const home = create(GetHomeResponseSchema, { greeting: 'Good evening', firstName: 'Edify', roleTitle: 'Admin', todayLabel: 'Wed, Nov 18', fy: '2027' });
+    expect(homeHeader(home)).toEqual({
+      eyebrow: 'Home · Admin',
+      title: 'Good evening, Edify',
+      description: 'What needs you now, what is coming up, and where to go next.',
+    });
+    expect(homeDate(home)).toBe('Wed, Nov 18 · FY2027');
   });
 
   it('leaves the name out when the reader has none', () => {

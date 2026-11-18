@@ -1,0 +1,191 @@
+/* Honest platform state for connectivity and expired sessions.
+ * These surfaces sit outside the page workspace so they remain available
+ * while drawers or partial updates are in flight. */
+
+.edify-connectivity-status {
+  position: fixed;
+  z-index: 120;
+  inset-block-start: max(0.75rem, env(safe-area-inset-top));
+  inset-inline: 50% auto;
+  display: flex;
+  inline-size: min(34rem, calc(100vw - 2rem));
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--edify-warning) 58%, transparent);
+  border-radius: var(--edify-radius-md);
+  background: color-mix(in srgb, var(--edify-surface) 94%, var(--edify-warning));
+  box-shadow: var(--edify-shadow-lg);
+  color: var(--edify-text);
+  transform: translateX(-50%);
+}
+
+.edify-connectivity-status[hidden] {
+  display: none;
+}
+
+.edify-connectivity-status[data-state="restored"] {
+  border-color: color-mix(in srgb, var(--edify-success) 58%, transparent);
+  background: color-mix(in srgb, var(--edify-surface) 94%, var(--edify-success));
+}
+
+.edify-connectivity-status__icon {
+  display: grid;
+  flex: 0 0 2.25rem;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  place-items: center;
+  border-radius: var(--edify-radius-sm);
+  background: color-mix(in srgb, var(--edify-warning) 18%, transparent);
+  color: var(--edify-warning-text);
+}
+
+[data-state="restored"] .edify-connectivity-status__icon {
+  background: color-mix(in srgb, var(--edify-success) 18%, transparent);
+  color: var(--edify-success-text);
+}
+
+.edify-connectivity-status__icon svg {
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+}
+
+.edify-connectivity-status__copy {
+  display: grid;
+  min-inline-size: 0;
+  gap: 0.1rem;
+  font-size: var(--edify-text-micro-size);
+  line-height: 1.35;
+}
+
+.edify-connectivity-status__copy strong {
+  font-size: var(--edify-text-label-size);
+  font-weight: 700;
+}
+
+.edify-connectivity-status__copy span {
+  color: var(--edify-text-muted);
+}
+
+.edify-session-dialog {
+  inline-size: min(21rem, calc(100vw - 2rem));
+  margin: auto; /* centres it: the reset zeroes margins */
+  padding: 2rem 1.5rem 1.25rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-lg);
+  background: var(--edify-surface);
+  box-shadow: var(--edify-shadow-lg);
+  color: var(--edify-text);
+  text-align: center;
+}
+
+.edify-session-dialog::backdrop {
+  background: rgb(15 23 42 / 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.edify-session-dialog[open] {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+}
+
+.edify-session-dialog__icon {
+  display: grid;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  margin-block-end: 0.5rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--edify-surface-muted);
+  color: var(--edify-accent);
+}
+
+.edify-session-dialog__icon svg {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+}
+
+.edify-session-dialog h2 {
+  margin: 0;
+  font-size: var(--edify-text-heading-size);
+  font-weight: 700;
+}
+
+.edify-session-dialog p {
+  margin: 0;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  line-height: 1.5;
+}
+
+.edify-session-dialog__actions {
+  display: grid;
+  gap: 0.25rem;
+  inline-size: 100%;
+  padding-block-start: 1rem;
+}
+
+.edify-session-dialog__actions :is(a, button) {
+  display: inline-flex;
+  min-block-size: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--edify-radius-sm);
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+}
+
+.edify-session-dialog__primary {
+  background: var(--edify-accent);
+  color: var(--edify-on-accent);
+}
+
+.edify-session-dialog__secondary {
+  border: 0;
+  background: transparent;
+  color: var(--edify-text-muted);
+}
+
+@media (max-width: 30rem) {
+  .edify-connectivity-status {
+    inset-block-start: max(0.5rem, env(safe-area-inset-top));
+    inline-size: calc(100vw - 1rem);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .edify-connectivity-status:not([hidden]) {
+    animation: edify-status-enter 180ms ease-out;
+  }
+
+  @keyframes edify-status-enter {
+    from { opacity: 0; transform: translate(-50%, -0.5rem); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+  }
+}
+
+@media (forced-colors: active) {
+  .edify-connectivity-status,
+  .edify-session-dialog {
+    border: 2px solid CanvasText;
+  }
+}
+
+.edify-request-error {
+  position: fixed; z-index: 130; inset-inline-end: max(1rem, env(safe-area-inset-right));
+  inset-block-end: max(5rem, calc(env(safe-area-inset-bottom) + 1rem));
+  width: min(32rem, calc(100vw - 2rem)); display: flex; align-items: center;
+  gap: 1rem; padding: 1rem; border-radius: var(--edify-radius-md);
+  border: 1px solid var(--edify-control-border); background: var(--edify-surface);
+  color: var(--edify-text); box-shadow: var(--edify-shadow-lg);
+}
+.edify-request-error p { margin: 0; font-size: var(--edify-text-label-size); line-height: 1.5; }
+.edify-request-error button { flex-shrink: 0; min-height: 44px; }
+@media (max-width: 30rem) {
+  .edify-request-error { align-items: flex-start; flex-direction: column; gap: .5rem; }
+}
+
+/* Opacity alone leaves idle "Updating…" text in the accessibility tree. */
+.htmx-indicator { visibility: hidden; }
+.htmx-request .htmx-indicator, .htmx-indicator.htmx-request { visibility: visible; }

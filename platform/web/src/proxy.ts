@@ -9,7 +9,7 @@ import type { NextRequest } from 'next/server';
 
 import { ACCESS_COOKIE } from './lib/session';
 
-const PUBLIC = [/^\/login$/, /^\/auth\//, /^\/_next\//, /^\/favicon/];
+const PUBLIC = [/^\/login$/, /^\/auth\//, /^\/_next\//, /^\/favicon/, /^\/static\//];
 
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;

@@ -136,9 +136,8 @@ describe('My Plan blocks', () => {
     expect(html).toMatch(/data-count="true">0</);
   });
 
-  it('shows a strip’s title only when it has a line under it', () => {
-    expect(html).toContain('<h2 class="text-[length:var(--edify-text-title-size)] font-bold">Plan Breakdown by Period</h2>');
-    expect(draw(PLANNING)).not.toContain('>Planning context</h2>');
+  it('heads a strip with its title, as the existing context-metrics row does', () => {
+    expect(html).toContain('<h2 class="context-metrics__title">Plan Breakdown by Period</h2>');
   });
 });
 

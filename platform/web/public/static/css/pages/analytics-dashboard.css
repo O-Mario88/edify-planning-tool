@@ -1,0 +1,1714 @@
+/*
+ * Analytics card bands
+ *
+ * Cards are grouped by comparable content scale instead of being packed into
+ * one mixed-height grid. The container queries respond to the workspace width
+ * after the sidebar takes its share, which keeps the grouping stable whether
+ * navigation is expanded or collapsed.
+ */
+
+.analytics-dashboard-stack {
+  container: analytics-dashboard / inline-size;
+  display: grid;
+  gap: 1rem;
+}
+
+.analytics-filter-command {
+  position: relative;
+  z-index: 12;
+}
+
+.analytics-action-label--mobile {
+  display: none;
+}
+
+.analytics-filter-command__primary {
+  display: flex;
+  align-items: end;
+  gap: .65rem;
+  min-inline-size: 0;
+}
+
+.analytics-filter-field {
+  display: grid;
+  gap: 4px;
+  min-inline-size: 0;
+  inline-size: clamp(8.5rem, 12vw, 10.5rem);
+}
+
+.analytics-filter-field--geography {
+  inline-size: clamp(10rem, 16vw, 13rem);
+}
+
+.analytics-filter-field select {
+  inline-size: 100%;
+  block-size: 38px;
+  padding-inline: .7rem 1.9rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-control);
+  background-color: var(--edify-surface);
+  color: var(--edify-text);
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+
+.analytics-more-filters {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.analytics-more-filters > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  min-block-size: 32px;
+  padding-inline: .8rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-control);
+  background: var(--edify-surface);
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+
+.analytics-more-filters > summary::-webkit-details-marker {
+  display: none;
+}
+
+.analytics-more-filters > summary svg,
+.analytics-filter-command__clear svg {
+  inline-size: 15px;
+  block-size: 15px;
+}
+
+.analytics-more-filters > summary > span {
+  display: grid;
+  place-items: center;
+  min-inline-size: 19px;
+  block-size: 19px;
+  border-radius: var(--edify-radius-pill);
+  background: var(--edify-surface-muted);
+  font-size: var(--edify-text-micro-size);
+}
+
+.analytics-more-filters[open] > summary {
+  border-color: var(--edify-accent-border);
+  color: var(--edify-accent-text);
+}
+
+.analytics-more-filters__panel {
+  position: absolute;
+  inset-block-start: calc(100% + .5rem);
+  inset-inline-end: 0;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(9rem, 1fr));
+  gap: .75rem;
+  inline-size: min(46rem, calc(100vw - 3rem));
+  padding: .9rem;
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface-raised);
+  box-shadow: var(--edify-shadow-lg);
+}
+
+.analytics-more-filters__panel .analytics-filter-field {
+  inline-size: auto;
+}
+
+.analytics-filter-command__clear {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  min-block-size: 38px;
+  margin-inline-start: auto;
+  padding-inline: .55rem;
+  color: var(--edify-accent-text);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+}
+
+.analytics-layout-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.analytics-card-slot {
+  min-inline-size: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+.analytics-card-slot > * {
+  min-inline-size: 0;
+  flex: 1 1 auto;
+}
+
+.analytics-card-slot > .edify-surface {
+  align-self: start;
+  block-size: auto;
+}
+
+/* Geography owns a complete dashboard row. The original map visual remains
+   unchanged; only the space assigned to it and its companion table changes. */
+.analytics-row--geography,
+.analytics-row--wide {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.analytics-geo-card .sr-map-layout,
+.analytics-geo-card .sr-map-canvas,
+.analytics-geo-card .sr-distribution-panel {
+  min-inline-size: 0;
+}
+
+/* A SQUARE map, as large as the window leaves room for (owner, 2026-09-17:
+   "The map should be square much as it will fill the desktop page. i dont
+   mind the dead space on the sides").
+
+   Two things the owner has asked for, on consecutive days, and they decide
+   the two axes between them. Square, because the SVG is a square viewBox
+   (0 0 620 620) holding a country whose own bounds are 570 x 600: the 30:42
+   portrait sheet it used to sit in was a print convention, and fitting a
+   square drawing into it wasted a band the full width of the card top and
+   bottom -- roughly 380px of nothing on a 1440 x 950 screen, which is why
+   the map kept reading as small however it was sized.
+
+   And bounded by the height actually left below the page and card headers,
+   because that is the request from 2026-09-16 -- "make it fit exactly so
+   that the users don't have to scroll" -- and because it is what "dead space
+   on the sides" means: a square whose height is spent leaves its spare room
+   at the sides, which is exactly the room the owner has said they don't mind.
+   A square bounded by the card's WIDTH instead has no spare room at the
+   sides at all; it runs off the bottom of the window, and on a 1366 x 768
+   laptop it stood 1154px tall.
+
+   Since 2026-09-20 the sheet is the full width of the card at a fixed
+   600px height (no longer square). The height is still bounded by the room
+   under the chrome, so the whole map stays on screen on a laptop: 600px
+   where there is room, the room itself where there is less (owner,
+   2026-09-16: "make it fit exactly so that the users don't have to
+   scroll"). --sr-map-chrome covers the ~276px the map's top sits into the
+   scroll container, plus a margin. svh, not vh, so a phone's retracting
+   toolbar does not crop it. */
+.analytics-geo-card {
+  --sr-map-chrome: 19rem;
+}
+.analytics-geo-card .sr-map-viewport {
+  margin-inline: auto;
+  inline-size: 100% !important;
+  max-inline-size: 100% !important;
+  width: 100% !important;
+  min-height: min(540px, calc(100svh - var(--sr-map-chrome))) !important;
+  height: min(600px, calc(100svh - var(--sr-map-chrome))) !important;
+  aspect-ratio: auto !important;
+  block-size: auto;
+}
+.analytics-geo-card .sr-map-viewport > svg {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+}
+
+/* Phones and tablets: the sheet is only as tall as the drawing (owner,
+   2026-09-27: "There is a huge space above and below the map in mobile
+   mode... fix it also in tablet mode"). The drawing is a square viewBox, so
+   on a card narrower than the height above it filled the width and left the
+   rest as two bands of nothing, ~116px each on a 390px phone. Here the sheet
+   is square, capped by the same room-under-the-chrome bound, and never less
+   than 17.5rem so a landscape phone still shows a readable map. Desktop keeps
+   the full-width, 600px sheet above. */
+@media (max-width: 63.999rem) {
+  .analytics-geo-card .sr-map-viewport {
+    aspect-ratio: 1 / 1 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: max(17.5rem, min(600px, calc(100svh - var(--sr-map-chrome)))) !important;
+  }
+}
+
+/* The school key under the map. The heading sits on the first row of items
+   and the items keep one rhythm: a 12px dot, the label, the count, left-
+   aligned in 28px rows. Phones lay the items out in two even columns under
+   the heading, so the dots line up; wider cards run them along one line
+   beside the heading and wrap under the first item, not under the heading.
+   The platform's shared button rules (centred content, a 40px phone block
+   size) do not apply to a key entry; its touch target is micro-ux.js's
+   invisible 44px square. */
+.analytics-geo-card .sr-key {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: .375rem;
+}
+.analytics-geo-card .sr-key .sr-key-name {
+  margin: 0;
+  text-align: start;
+  line-height: 1.75rem !important;
+}
+.analytics-geo-card .sr-key .sr-key-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .125rem 1rem;
+  align-items: center;
+  min-inline-size: 0;
+}
+.analytics-geo-card .sr-key .sr-key-item {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: flex-start !important;
+  gap: .375rem;
+  inline-size: auto;
+  min-inline-size: 0;
+  height: 1.75rem !important;
+  min-height: 1.75rem !important;
+  /* The hover wash reaches past the dot and the count; the negative margins
+     keep the entry's footprint to its content, so the dots sit on the
+     card's content edge and the gaps below are the visible gaps. */
+  margin-inline: -.375rem;
+  padding: 0 .375rem !important;
+  text-align: start !important;
+  white-space: nowrap;
+}
+.analytics-geo-card .sr-key .sr-key-item > .sr-legend-marker {
+  margin-inline-end: .125rem;
+}
+.analytics-geo-card .sr-key .sr-key-text {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.analytics-geo-card .sr-key .sr-key-count {
+  flex: 0 0 auto;
+}
+@media (min-width: 48rem) {
+  /* One 1rem gap between the heading and the first dot and between entries;
+     the heading's gap adds back the first entry's negative margin. */
+  .analytics-geo-card .sr-key {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: calc(1rem + .375rem);
+  }
+  .analytics-geo-card .sr-key .sr-key-name {
+    flex: 0 0 auto;
+  }
+  .analytics-geo-card .sr-key .sr-key-list {
+    display: flex;
+    flex: 1 1 0;
+    flex-wrap: wrap;
+    gap: .125rem 1rem;
+  }
+}
+
+.analytics-geo-card .sr-distribution-scroll {
+  max-inline-size: 100%;
+  overflow-x: clip;
+  overflow-y: auto;
+  overscroll-behavior-block: contain;
+  scrollbar-gutter: auto;
+}
+
+.analytics-geo-card .sr-distribution-table {
+  inline-size: 100%;
+  min-inline-size: 0 !important;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-size: var(--edify-text-micro-size);
+  line-height: 1.25;
+  table-layout: fixed;
+}
+
+.analytics-geo-card .sr-distribution-col--schools {
+  inline-size: 3.25rem;
+}
+
+.analytics-geo-card .sr-distribution-col--clusters {
+  inline-size: 2.75rem;
+}
+
+/* achieved/planned reads "12/40"; the partner column is one count. The
+   "# planned" columns are hidden below tablet width (x-show on the <col>). */
+.analytics-geo-card .sr-distribution-col--achieved {
+  inline-size: 3.25rem;
+}
+
+.analytics-geo-card .sr-distribution-col--partner {
+  inline-size: 2.6rem;
+}
+
+.analytics-geo-card .sr-distribution-table :is(th, td) {
+  box-sizing: border-box;
+  min-inline-size: 0;
+  overflow: hidden;
+  padding-inline: .5rem !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.analytics-geo-card .sr-distribution-table :is(th, td):first-child {
+  overflow: hidden;
+  padding-inline-start: .25rem !important;
+  text-overflow: ellipsis;
+}
+
+.analytics-geo-card .sr-distribution-table :is(th, td):last-child {
+  padding-inline-end: .25rem !important;
+}
+
+.analytics-geo-card .sr-distribution-table td:first-child > span {
+  max-inline-size: 100%;
+}
+
+.analytics-band-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-block-end: .75rem;
+}
+
+.analytics-band-eyebrow {
+  margin: 0 0 3px;
+  color: var(--brand-primary-text);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.analytics-band-heading h2,
+.analytics-priority-card__header h3 {
+  margin: 0;
+  color: var(--edify-text);
+  font-size: var(--edify-text-heading-size);
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+
+.analytics-band-heading > p,
+.analytics-priority-card__header p {
+  margin: 0;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+}
+
+.analytics-executive-pulse {
+  min-inline-size: 0;
+}
+
+.analytics-metrics-disclosure,
+.analytics-evidence-disclosure {
+  border-radius: var(--edify-radius-md);
+  background: color-mix(in srgb, var(--edify-surface) 72%, transparent);
+}
+
+.analytics-metrics-disclosure {
+  margin-block-start: .5rem;
+}
+
+.analytics-metrics-disclosure > summary,
+.analytics-evidence-disclosure > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  min-block-size: 42px;
+  padding: .65rem .85rem;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+
+.analytics-metrics-disclosure > summary::-webkit-details-marker,
+.analytics-evidence-disclosure > summary::-webkit-details-marker,
+.analytics-priority-group > summary::-webkit-details-marker {
+  display: none;
+}
+
+.analytics-metrics-disclosure[open] > summary > :last-child,
+.analytics-evidence-disclosure[open] > summary > :last-child {
+  transform: rotate(180deg);
+}
+
+.analytics-metrics-disclosure .kpi-strip {
+  padding: 0 .75rem .75rem;
+}
+
+.analytics-evidence-disclosure {
+  box-shadow: var(--edify-shadow-sm);
+}
+
+.analytics-evidence-disclosure > summary {
+  min-block-size: 58px;
+  padding: .8rem 1rem;
+  color: var(--edify-text);
+}
+
+.analytics-evidence-disclosure > summary > span:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.analytics-evidence-disclosure > summary small {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+}
+
+.analytics-evidence-disclosure__body {
+  display: grid;
+  gap: 1rem;
+  padding: 0 1rem 1rem;
+}
+
+.analytics-text-link {
+  flex: 0 0 auto;
+  color: var(--edify-accent-text);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+}
+
+.analytics-text-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.analytics-priority-card {
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-block-size: 690px;
+  overflow: clip;
+}
+
+.analytics-priority-card__header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: .75rem;
+  padding-block-end: .75rem;
+}
+
+.analytics-priority-card__header > div > p:last-child {
+  margin-block-start: 3px;
+}
+
+/* The priority filters are the platform's tab rail (data-edify-tablist,
+   interactions.css) since 2026-09-27; the selected tab and each tab's count
+   come from there. Every tab still carries its count, so a reader can tell
+   "no critical district in this scope" from "the filter did nothing"
+   (owner, 2026-09-05). */
+.analytics-priority-filters {
+  max-inline-size: 100%;
+}
+
+/* What a filter says when nothing matches, instead of an empty card. */
+.analytics-priority-empty {
+  margin-block-start: .65rem;
+  padding: 1rem;
+  border: 1px dashed var(--edify-border);
+  border-radius: var(--edify-radius-control);
+  text-align: center;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+}
+
+.analytics-priority-empty strong {
+  display: block;
+  margin-block-end: .2rem;
+  color: var(--edify-text);
+  font-size: var(--edify-text-label-size, .875rem);
+}
+
+.analytics-priority-groups {
+  max-block-size: 556px;
+  margin-block-start: .65rem;
+  padding-inline-end: 3px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.analytics-priority-group {
+  border-block-start: 1px solid var(--edify-border);
+}
+
+.analytics-priority-group:first-child {
+  border-block-start: 0;
+}
+
+.analytics-priority-group > summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 18px;
+  align-items: center;
+  gap: .5rem;
+  min-block-size: 58px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.analytics-priority-group > summary > svg {
+  inline-size: 16px;
+  block-size: 16px;
+  color: var(--edify-text-subtle);
+  transition: transform .15s ease;
+}
+
+.analytics-priority-group[open] > summary > svg {
+  transform: rotate(180deg);
+}
+
+.analytics-priority-group__identity,
+.analytics-priority-group__signal {
+  display: grid;
+  min-inline-size: 0;
+}
+
+.analytics-priority-group__identity strong {
+  overflow: clip;
+  color: var(--edify-text);
+  font-size: var(--edify-text-label-size);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.analytics-priority-group__identity small,
+.analytics-priority-group__signal small,
+.analytics-district-row small,
+.analytics-priority-group__meta {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+}
+
+.analytics-priority-group__signal {
+  justify-items: end;
+}
+
+.analytics-priority-group__signal b {
+  font-size: var(--edify-text-micro-size);
+}
+
+.analytics-priority-group__signal .is-critical {
+  color: var(--edify-danger-text);
+}
+
+.analytics-priority-group__signal .is-watch {
+  color: var(--edify-warning-text);
+}
+
+.analytics-priority-group__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem .75rem;
+  padding: .55rem .65rem;
+  border-radius: var(--edify-radius-control);
+  background: var(--edify-surface-muted);
+}
+
+.analytics-priority-group__rows {
+  padding-block: .25rem .65rem;
+}
+
+.analytics-district-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: .45rem .65rem;
+  padding: .65rem .25rem .7rem;
+}
+
+.analytics-district-row__main {
+  display: flex;
+  align-items: center;
+  min-inline-size: 0;
+  gap: .5rem;
+}
+
+.analytics-district-row__main > span:last-child {
+  display: grid;
+  min-inline-size: 0;
+}
+
+.analytics-district-row__main strong {
+  overflow: clip;
+  color: var(--edify-text);
+  font-size: var(--edify-text-label-size);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.analytics-district-row__rank {
+  display: grid;
+  place-items: center;
+  flex: 0 0 24px;
+  block-size: 24px;
+  border-radius: var(--edify-radius-pill);
+  background: var(--edify-surface-muted);
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size); /* 12px floor (tablet pass, 2026-09-05) */
+  font-weight: 700;
+}
+
+.analytics-district-row__status {
+  display: grid;
+  justify-items: end;
+  align-content: center;
+  gap: 2px;
+}
+
+.analytics-district-row__status > strong {
+  color: var(--edify-text);
+  font-size: var(--edify-text-micro-size);
+}
+
+.analytics-status-chip {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 20px;
+  padding-inline: 7px;
+  border-radius: var(--edify-radius-pill);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+}
+
+.analytics-status-chip.is-critical {
+  color: var(--edify-danger-text);
+  background: var(--edify-danger-light);
+}
+
+.analytics-status-chip.is-watch {
+  color: var(--edify-warning-text);
+  background: var(--edify-warning-light);
+}
+
+.analytics-status-chip.is-on_track {
+  color: var(--edify-success-text);
+  background: var(--edify-success-light);
+}
+
+.analytics-status-chip.is-untracked {
+  color: var(--edify-text-muted);
+  background: var(--edify-surface-muted);
+}
+
+.analytics-district-row__track {
+  grid-column: 1 / -1;
+  block-size: 3px;
+  overflow: clip;
+  border-radius: var(--edify-radius-pill);
+  background: var(--edify-chart-bar-track);
+}
+
+.analytics-district-row__track > span {
+  display: block;
+  block-size: 100%;
+  border-radius: inherit;
+  background: var(--edify-chart-series-primary);
+}
+
+.analytics-district-row.is-critical .analytics-district-row__track > span {
+  background: var(--edify-danger);
+}
+
+.analytics-district-row.is-watch .analytics-district-row__track > span {
+  background: var(--edify-warning);
+}
+
+.analytics-district-row.is-on_track .analytics-district-row__track > span {
+  background: var(--edify-success);
+}
+
+.analytics-priority-group__more {
+  inline-size: 100%;
+  min-block-size: 34px;
+  color: var(--edify-accent-text);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+}
+
+.analytics-empty-state {
+  display: grid;
+  place-items: center;
+  min-block-size: 180px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.analytics-empty-state p {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+}
+
+.analytics-impact-card {
+  container: analytics-impact / inline-size;
+}
+
+.analytics-impact-metrics {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@container analytics-impact (min-width: 44rem) {
+  .analytics-impact-metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@container analytics-dashboard (min-width: 42rem) {
+  .analytics-row--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container analytics-dashboard (min-width: 52rem) {
+  .analytics-row--geography {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .analytics-row--overview {
+    grid-template-columns: minmax(0, 2fr) minmax(17rem, 1fr);
+  }
+
+  .analytics-row--decision {
+    grid-template-columns: minmax(0, 7fr) minmax(20rem, 5fr);
+  }
+
+}
+
+@container analytics-dashboard (max-width: 51.99rem) {
+  .kpi-strip--executive .kpi-strip__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .analytics-priority-card {
+    max-block-size: none;
+  }
+
+  .analytics-priority-groups {
+    max-block-size: 34rem;
+  }
+}
+
+@container analytics-dashboard (max-width: 36rem) {
+  .analytics-dashboard-stack {
+    gap: .8rem;
+  }
+
+  .analytics-band-heading {
+    align-items: start;
+  }
+
+  .analytics-band-heading > p {
+    display: none;
+  }
+
+  .analytics-priority-card,
+  .analytics-geo-card {
+    padding: .85rem;
+  }
+
+  .analytics-priority-group > summary {
+    grid-template-columns: minmax(0, 1fr) 16px;
+  }
+
+  .analytics-priority-group__signal {
+    display: none;
+  }
+
+  .analytics-evidence-disclosure > summary {
+    min-block-size: 52px;
+  }
+
+  .analytics-evidence-disclosure__body {
+    padding-inline: .75rem;
+  }
+
+}
+
+@media (max-width: 48rem) {
+  .analytics-header-actions {
+    inline-size: 100%;
+    gap: .4rem;
+  }
+
+  .analytics-header-actions > :is(a, button) {
+    padding-inline: .65rem;
+  }
+
+  .analytics-action-label--desktop {
+    display: none;
+  }
+
+  .analytics-action-label--mobile {
+    display: inline;
+  }
+
+  .analytics-filter-command__primary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+  }
+
+  .analytics-filter-field,
+  .analytics-filter-field--geography {
+    inline-size: 100%;
+  }
+
+  .analytics-filter-field--geography {
+    grid-column: 1 / -1;
+  }
+
+  .analytics-more-filters {
+    position: static;
+    grid-column: 1 / -1;
+  }
+
+  .analytics-more-filters > summary {
+    inline-size: 100%;
+    justify-content: center;
+  }
+
+  .analytics-more-filters__panel {
+    position: static;
+    grid-column: 1 / -1;
+    grid-template-columns: 1fr;
+    inline-size: 100%;
+    margin-block-start: .5rem;
+    box-shadow: var(--edify-shadow-sm);
+  }
+
+  .analytics-filter-command__clear {
+    grid-column: 1 / -1;
+    justify-content: center;
+    margin-inline-start: 0;
+  }
+}
+
+/* The distribution table sits below the map at every width (owner,
+   2026-09-14: on desktop the table moved under the map to give the map the
+   room). The panel is a full-width band under the map, and the table fills
+   it: a nested scroll region was giving it a second, narrower viewport
+   inside the panel — the table measured 256px inside a 337px card and
+   scrolled sideways with the whole width sitting unused beside it (owner,
+   2026-09-05). There is room here; nothing needs to scroll horizontally.
+
+   It starts on the same edge as the school key and the card's title band
+   (owner, 2026-09-27). Its class ends in "-panel", so the platform's nested-
+   card rule (consistency.css) had given it a surface's 16px padding, setting
+   its heading and table 17px in from everything above; the template marks
+   it data-edify-padding="flush", that rule's own opt-out for table shells. */
+.analytics-geo-card .sr-distribution-panel {
+  margin-block-start: .25rem;
+  padding: 1rem 0 0;
+  border-block-start: 1px solid var(--edify-border);
+}
+
+.analytics-geo-card .sr-distribution-scroll {
+  overflow-x: clip;
+  overflow-y: auto;
+  overscroll-behavior-block: contain;
+  scrollbar-gutter: auto;
+}
+
+.analytics-geo-card .sr-distribution-scroll table,
+.analytics-geo-card .sr-distribution-scroll .edify-table-scroll-region > table {
+  inline-size: 100% !important;
+  min-inline-size: 0 !important;
+  table-layout: auto;
+}
+
+/* The table scrolls inside its own region, like every platform table
+   (mobile-micro-ux.css sizes a "fit" table to its content, no wrapping): a
+   visible region inside the clipping panel cut the last columns off wherever
+   the card was narrower than the table — every phone and tablet, and a
+   laptop's side-by-side card. The region carries the 620px cap, so the
+   sticky header stays with the rows it heads while they scroll. */
+.analytics-geo-card .sr-distribution-scroll .edify-table-scroll-region {
+  overflow: auto !important;
+  max-block-size: 620px;
+  overscroll-behavior: contain;
+}
+
+/* The name column takes whatever the figure columns leave. */
+.analytics-geo-card .sr-distribution-col--name {
+  inline-size: auto;
+}
+
+.analytics-geo-card .sr-distribution-scroll :is(th, td) {
+  min-block-size: 38px;
+  padding-block: .5rem;
+}
+
+@media (max-width: 36rem) {
+  .analytics-geo-card .sr-distribution-col--schools {
+    inline-size: 2.8rem;
+  }
+
+  .analytics-geo-card .sr-distribution-col--clusters {
+    inline-size: 2.45rem;
+  }
+
+  .analytics-geo-card .sr-distribution-col--achieved {
+    inline-size: 2.9rem;
+  }
+
+  .analytics-geo-card .sr-distribution-col--partner {
+    inline-size: 2.3rem;
+  }
+
+  .analytics-geo-card .sr-distribution-table {
+    font-size: var(--edify-text-micro-size);
+  }
+
+  .analytics-geo-card .sr-distribution-table :is(th, td) {
+    padding-inline: .15rem !important;
+  }
+
+  .analytics-geo-card .sr-distribution-table td:first-child > span {
+    gap: .35rem;
+  }
+}
+
+/* -------------------------------------------------------------------------
+ * Enterprise analytics workspace
+ *
+ * A deliberately scoped bridge across the legacy analytics page families.
+ * The attribute is applied only to routed intelligence surfaces, so these
+ * rules cannot alter finance, planning, directory or HR workflow pages.
+ * ---------------------------------------------------------------------- */
+[data-analytics-enterprise] {
+  --analytics-gap: clamp(.875rem, 1.15vw, 1.25rem);
+  --analytics-card-padding: clamp(.9rem, 1.35vw, 1.25rem);
+  --analytics-card-shadow: 0 10px 30px -22px rgb(15 39 51 / .36), 0 2px 8px rgb(15 39 51 / .045);
+  --analytics-card-shadow-hover: 0 18px 40px -25px rgb(15 39 51 / .4), 0 4px 12px rgb(15 39 51 / .06);
+  width: min(100%, 93.75rem);
+  margin-inline: auto;
+  color: var(--edify-text);
+}
+
+[data-analytics-enterprise] :where(.edify-page-header, .edify-page-hero) {
+  min-block-size: auto;
+}
+
+[data-analytics-enterprise] .edify-page-header__lead {
+  max-inline-size: 50rem;
+}
+
+[data-analytics-enterprise] .edify-page-header__description {
+  max-inline-size: 68ch;
+}
+
+[data-analytics-enterprise] :where(.edify-page-header__controls, .hcos-hero__actions) {
+  align-self: center;
+}
+
+[data-analytics-enterprise] :where(.edify-filter-bar, .analytics-filter-bar) {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: end;
+  gap: .55rem;
+  width: 100%;
+  padding: .25rem 0 .4rem;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+[data-analytics-enterprise] :where(.edify-filter-bar, .analytics-filter-bar) > * {
+  flex: 0 0 auto;
+}
+
+[data-analytics-enterprise] :where(.edify-filter-bar, .analytics-filter-bar) :where(select, input[type="date"], input[type="search"]) {
+  min-block-size: 2.25rem;
+  border-color: var(--edify-border);
+  border-radius: var(--edify-radius-control);
+  background: var(--edify-surface);
+  color: var(--edify-text);
+  font-size: var(--edify-text-micro-size);
+  box-shadow: 0 1px 2px rgb(15 39 51 / .025);
+}
+
+[data-analytics-enterprise] .edify-section-nav {
+  margin-block: .1rem .2rem;
+}
+
+.analytics-decision-frame {
+  display: grid;
+  grid-template-columns: minmax(14rem, 1.25fr) minmax(25rem, 1.8fr) auto;
+  align-items: center;
+  gap: 1rem;
+  min-inline-size: 0;
+  padding: .85rem 1rem;
+  border-radius: var(--edify-radius-md);
+  background:
+    linear-gradient(115deg, color-mix(in srgb, var(--edify-accent) 8%, var(--edify-surface-raised)) 0%, var(--edify-surface-raised) 58%);
+  box-shadow: var(--analytics-card-shadow, var(--edify-shadow-sm));
+}
+
+.analytics-decision-frame__lead {
+  min-inline-size: 0;
+}
+
+.analytics-decision-frame__eyebrow,
+.analytics-section-heading__eyebrow {
+  display: block;
+  margin-block-end: .2rem;
+  color: var(--brand-primary-text);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  letter-spacing: .1em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.analytics-decision-frame__question {
+  margin: 0;
+  max-inline-size: 46ch;
+  color: var(--edify-text);
+  font-size: clamp(.8125rem, 1vw, .9375rem);
+  font-weight: 700;
+  letter-spacing: -.01em;
+  line-height: 1.35;
+}
+
+.analytics-decision-frame__meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .75rem;
+  min-inline-size: 0;
+  margin: 0;
+}
+
+.analytics-decision-frame__meta > div {
+  box-sizing: border-box;
+  min-inline-size: 0;
+  padding-inline-start: .75rem;
+  border-inline-start: 1px solid var(--edify-border);
+}
+
+.analytics-decision-frame__meta dt {
+  color: var(--edify-text-subtle);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.analytics-decision-frame__meta dd {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  min-inline-size: 0;
+  margin: .18rem 0 0;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.analytics-confidence-dot {
+  flex: 0 0 auto;
+  inline-size: .4rem;
+  block-size: .4rem;
+  border-radius: var(--edify-radius-pill);
+  background: var(--edify-success, #059669);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--edify-success, #059669) 12%, transparent);
+}
+
+.analytics-decision-frame__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  min-block-size: 2.25rem;
+  padding-inline: .75rem;
+  border-radius: var(--edify-radius-control);
+  background: var(--edify-primary, var(--edify-accent));
+  color: #fff;
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+[data-analytics-enterprise] :where(.edify-surface, .card, .sp-card, .ia-panel, .hcos-register, .edify-report-matrix) {
+  border-color: transparent !important;
+  background-color: var(--edify-surface-raised, var(--edify-surface));
+  box-shadow: var(--analytics-card-shadow);
+  transition: box-shadow 150ms ease, transform 150ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-analytics-enterprise] :where(.edify-surface, .card, .sp-card, .ia-panel, .hcos-register):hover {
+    box-shadow: var(--analytics-card-shadow-hover);
+  }
+}
+
+[data-analytics-enterprise] :where(.space-y-5, .space-y-4) {
+  --tw-space-y-reverse: 0;
+}
+
+.analytics-command-layer,
+.analytics-decision-section,
+.analytics-evidence-stack {
+  display: grid;
+  gap: var(--analytics-gap);
+}
+
+.analytics-section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-block-end: -.15rem;
+}
+
+.analytics-section-heading h2 {
+  margin: 0;
+  color: var(--edify-text);
+  font-size: clamp(.9375rem, 1.25vw, 1.125rem);
+  font-weight: 700;
+  letter-spacing: -.025em;
+}
+
+.analytics-section-heading p {
+  max-inline-size: 60ch;
+  margin: 0;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  line-height: 1.45;
+}
+
+.analytics-evidence-disclosure[data-analytics-disclosure] {
+  overflow: clip;
+  border: 0;
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface-raised, var(--edify-surface));
+  box-shadow: var(--analytics-card-shadow);
+}
+
+.analytics-evidence-disclosure[data-analytics-disclosure] > summary {
+  min-block-size: 3.65rem;
+  padding: .75rem 1rem;
+  border: 0;
+}
+
+.analytics-evidence-disclosure[data-analytics-disclosure] > summary > span:first-child {
+  display: grid;
+  gap: .12rem;
+}
+
+.analytics-evidence-disclosure[data-analytics-disclosure] > summary strong {
+  color: var(--edify-text);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+}
+
+.analytics-evidence-disclosure[data-analytics-disclosure] > summary small {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+}
+
+.analytics-evidence-disclosure__body {
+  display: grid;
+  gap: var(--analytics-gap);
+  padding: 0 1rem 1rem;
+}
+
+.analytics-evidence-disclosure[data-analytics-disclosure]:not([open]) > .analytics-evidence-disclosure__body {
+  display: none;
+}
+
+.analytics-evidence-disclosure__chevron {
+  inline-size: 1rem;
+  block-size: 1rem;
+  transition: transform 150ms ease;
+}
+
+.analytics-evidence-disclosure[open] .analytics-evidence-disclosure__chevron {
+  transform: rotate(180deg);
+}
+
+[data-analytics-enterprise] :where(table) {
+  font-size: var(--edify-text-micro-size);
+}
+
+[data-analytics-enterprise] :where(th) {
+  color: var(--edify-text-subtle);
+  font-size: var(--edify-text-micro-size);
+  letter-spacing: .055em;
+}
+
+[data-analytics-enterprise] :where(th, td) {
+  padding-block: .65rem;
+}
+
+[data-analytics-enterprise] :where(.edify-empty-state, .hcos-empty) {
+  min-block-size: 11rem;
+  padding: 2rem 1.25rem;
+  border: 0;
+  border-radius: var(--edify-radius-md);
+  background: color-mix(in srgb, var(--edify-surface) 86%, var(--edify-bg));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--edify-border) 55%, transparent);
+}
+
+[data-analytics-enterprise] [data-analytics-deferred] {
+  content-visibility: auto;
+  contain-intrinsic-size: auto none auto 34rem;
+}
+
+[data-analytics-enterprise] :where(a, button, summary, select, input):focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--edify-accent) 48%, transparent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 64rem) {
+  [data-analytics-enterprise] {
+    --analytics-gap: .875rem;
+  }
+
+  .analytics-decision-frame {
+    grid-template-columns: minmax(14rem, .9fr) minmax(25rem, 1.4fr);
+    overflow-x: auto;
+  }
+
+  .analytics-decision-frame__action {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  [data-analytics-enterprise] .edify-card-row {
+    gap: .875rem;
+  }
+}
+
+@media (max-width: 48rem) {
+  [data-analytics-enterprise] {
+    --analytics-card-padding: .875rem;
+    width: 100%;
+  }
+
+  [data-analytics-enterprise] :where(.edify-page-header__controls, .hcos-hero__actions) {
+    width: 100%;
+  }
+
+  [data-analytics-enterprise] :where(.edify-page-header__controls, .hcos-hero__actions) > :where(a, button) {
+    min-block-size: 2.125rem;
+    padding-inline: .65rem;
+    font-size: var(--edify-text-micro-size);
+  }
+
+  .analytics-decision-frame {
+    display: block;
+    padding: .8rem .875rem;
+    overflow: hidden;
+  }
+
+  .analytics-decision-frame__meta {
+    grid-template-columns: minmax(0, .85fr) minmax(0, 1.02fr) minmax(0, 1.11fr);
+    gap: .45rem;
+    margin-block-start: .75rem;
+  }
+
+  .analytics-decision-frame__meta > div {
+    padding-inline-start: .55rem;
+  }
+
+  .analytics-decision-frame__meta dt {
+    font-size: var(--edify-text-micro-size);
+    letter-spacing: 0;
+  }
+
+  .analytics-decision-frame__meta dd {
+    display: block;
+  }
+
+  .analytics-decision-frame__meta .analytics-confidence-dot {
+    display: inline-block;
+    margin-inline-end: .25rem;
+  }
+
+  .analytics-decision-frame__action {
+    margin-block-start: .75rem;
+  }
+
+  [data-analytics-enterprise] :where(.edify-filter-bar, .analytics-filter-bar) {
+    margin-inline: 0;
+    padding-block: .15rem .45rem;
+  }
+
+  [data-analytics-enterprise] :where(.edify-filter-bar, .analytics-filter-bar) :where(select, input[type="date"], input[type="search"]) {
+    min-block-size: 2.125rem;
+    font-size: var(--edify-text-micro-size);
+  }
+
+  .analytics-section-heading {
+    display: grid;
+    gap: .3rem;
+  }
+
+  .analytics-evidence-disclosure[data-analytics-disclosure] > summary {
+    min-block-size: 3.25rem;
+    padding: .65rem .8rem;
+  }
+
+  .analytics-evidence-disclosure__body {
+    padding: 0 .75rem .75rem;
+  }
+
+  [data-analytics-enterprise] :where(.edify-surface, .card, .sp-card, .ia-panel) {
+    border-radius: var(--edify-radius-md);
+  }
+
+  [data-analytics-enterprise] :where(table) {
+    font-size: var(--edify-text-micro-size);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-analytics-enterprise] *,
+  [data-analytics-enterprise] *::before,
+  [data-analytics-enterprise] *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}
+/* The grouped association matrix sits below the initial viewport and can grow
+   with country portfolios. Let the browser defer its layout/paint work while
+   preserving a stable scroll footprint; unsupported browsers simply ignore
+   these progressive-enhancement properties. */
+.impact-deferred-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 34rem;
+}
+
+/* Contribution evidence stays tabular at every viewport size. The focusable
+   wrapper owns overflow so wide rows scroll locally without widening the page. */
+.impact-scroll-hint {
+  margin: 0;
+  color: var(--edify-text-subtle, #64748b);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+}
+
+.impact-table-scroll {
+  position: relative;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  border: 1px solid var(--edify-border, #e2e8f0);
+  border-radius: var(--edify-radius-md, .75rem);
+  background: var(--edify-surface, #fff);
+}
+
+.impact-table-scroll:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--edify-accent, #2563eb) 48%, transparent);
+  outline-offset: 2px;
+}
+
+.impact-analysis-table {
+  inline-size: 100%;
+  min-inline-size: 92rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--edify-text-muted, #475569);
+  font-size: var(--edify-text-micro-size);
+  line-height: 1.35;
+}
+
+.impact-analysis-table--groups {
+  min-inline-size: 126rem;
+}
+
+.impact-analysis-table--lagging {
+  min-inline-size: 42rem;
+}
+
+.impact-analysis-table :where(th, td) {
+  box-sizing: border-box;
+  padding: .65rem .75rem;
+  border-block-end: 1px solid var(--edify-border, #e2e8f0);
+  text-align: start;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.impact-analysis-table thead th {
+  background: var(--edify-surface-soft, #f8fafc);
+  color: var(--edify-text-subtle, #64748b);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.impact-analysis-table tbody tr:last-child :where(th, td) {
+  border-block-end: 0;
+}
+
+.impact-analysis-table tbody tr:nth-child(even) :where(th, td) {
+  background: color-mix(in srgb, var(--edify-surface-soft, #f8fafc) 55%, var(--edify-surface, #fff));
+}
+
+.impact-analysis-table tbody th[scope="row"] {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 1;
+  max-inline-size: 17rem;
+  background: var(--edify-frozen-surface);
+  color: var(--edify-text, #1e293b);
+  box-shadow: 1px 0 0 var(--edify-border, #e2e8f0);
+  white-space: normal;
+}
+
+.impact-analysis-table tbody tr:nth-child(even) th[scope="row"] {
+  background: color-mix(in srgb, var(--edify-surface-soft, #f8fafc) 55%, var(--edify-surface, #fff));
+}
+
+.impact-analysis-table tbody th strong,
+.impact-analysis-table tbody th small {
+  display: block;
+}
+
+.impact-analysis-table tbody th small {
+  margin-block-start: .2rem;
+  color: var(--edify-text-subtle, #64748b);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.impact-table-number {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.impact-signal {
+  font-weight: 700;
+}
+
+.impact-signal--positive {
+  color: var(--edify-success, #047857);
+}
+
+.impact-signal--negative {
+  color: var(--edify-danger, #be123c);
+}
+
+.impact-signal--insufficient {
+  color: var(--edify-warning, #a16207);
+}
+
+.impact-table-empty {
+  padding-block: 2rem !important;
+  color: var(--edify-text-subtle, #64748b);
+  text-align: center !important;
+}
+
+/* Impact filters have a scope sentence below their controls, so they are not
+   the single-row scrolling toolbar used by directory filters. Keep the nested
+   control grid full-width; otherwise the shared :has(select) rule treats the
+   entire grid as one 7.5rem field and truncates both values on phones. */
+main #impact-filters-form.impact-filter-panel {
+  display: block !important;
+  overflow: visible !important;
+}
+
+main #impact-filters-form.impact-filter-panel > .sp-filter-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(12rem, 18rem)) auto !important;
+  inline-size: 100%;
+  max-inline-size: 100%;
+}
+
+html body main #impact-filters-form.sp-filter-panel.impact-filter-panel select {
+  min-block-size: 3rem !important;
+}
+
+main #impact-workspace .impact-group-pagination a {
+  min-block-size: 2.75rem !important;
+}
+
+@media (max-width: 720px) {
+  main #impact-filters-form.impact-filter-panel > .sp-filter-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  main #impact-filters-form.impact-filter-panel .sp-filter-actions {
+    grid-column: auto;
+    justify-content: stretch;
+  }
+}
+
+/* The sub-region colour key: the row's tie to the choropleth. It was an 8px
+   dot, and a dot in front of a name reads as list punctuation rather than a
+   legend (owner, 2026-09-05: "the dot before the sub-region name looks
+   weird"). A short rounded rule at the row's cap height carries the same
+   colour and reads as a key beside the name instead of a mark inside it. */
+.sr-distribution-key {
+  inline-size: .1875rem;
+  block-size: .8125rem;
+  border-radius: var(--edify-radius-pill);
+  background-color: var(--sr-key, var(--edify-border));
+  align-self: center;
+}
+
+/* A chart that cannot draw says so where a reader can see it. The status
+   was screen-reader-only, so when the library was missing on the Impact
+   page a sighted reader got a blank 260px box (owner, 2026-09-05). Empty
+   while the chart is fine, so it costs nothing on the normal path. */
+.analytics-chart-status {
+  display: grid;
+  place-items: center;
+  min-block-size: 8rem;
+  padding: 1rem;
+  border: 1px dashed var(--edify-border);
+  border-radius: var(--edify-radius-control);
+  text-align: center;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+}
+
+.analytics-chart-status:empty {
+  display: none;
+}
+
+/* The toolbar a tab carries when it has actions of its own (SSA's Add SSA
+   Score and Upload Center) or an engine state. */
+.analytics-panel-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+}
+
+/* The IA dashboard body hides its desktop sections on phones because the IA
+   PAGE puts a role home in their place. Inside the Analytics workspace there
+   is no role home, so the same body shows everything. */
+@media (max-width: 63.999rem) {
+  .analytics-ia-panel .mobile-home-hide {
+    display: block !important;
+  }
+}
+
+
+/* Map geometry stays intact inside a landscape workspace. Height follows
+   the available viewport instead of growing with the monitor's width. */
+@media (min-width: 64rem) {
+  /* The canvas is exactly as wide as the map is tall, and the pair — square
+     map, then the distribution table — sits centred in the card. The canvas
+     used to take every pixel the fixed table left, so the drawing floated in
+     the middle of a much wider box and the table was pushed to the far edge
+     of the card with empty space between (owner, 2026-09-11). */
+  .analytics-geo-card .sr-map-layout { flex-direction: column; align-items: stretch; }
+  .analytics-geo-card .sr-map-canvas {
+    flex: 0 0 auto;
+    min-width: 0;
+    width: 100%;
+  }
+  /* Desktop has more room above the map than a phone does, but the rule is
+     the same one: square, and whole on screen rather than past the fold.
+     This override only widens the cap the sheet may grow to — restating
+     inline-size here would drop the height bound the base rule carries. */
+  .analytics-geo-card .sr-map-viewport {
+    max-inline-size: 30cm;
+  }
+  .analytics-geo-card .sr-map-viewport > svg { width: 100%; height: 100%; }
+  /* The distribution table: a full-width band under the map, every column
+     showing, denser than the stacked phone table, and a bounded height so a
+     district focus with many rows scrolls inside the card rather than
+     stretching it. */
+  .analytics-geo-card .sr-distribution-panel { flex: 0 0 auto; width: 100%; }
+  .analytics-geo-card .sr-distribution-scroll { max-height: 26rem; }
+  .analytics-geo-card .sr-distribution-table {
+    font-size: var(--edify-text-micro-size);
+  }
+  .analytics-geo-card .sr-distribution-scroll :is(th, td) {
+    min-block-size: 32px;
+    padding-block: .375rem;
+    padding-inline: .75rem !important;
+  }
+  .analytics-geo-card .sr-distribution-table :is(th, td):first-child {
+    padding-inline-start: .5rem !important;
+  }
+  .analytics-geo-card .sr-distribution-table :is(th, td):last-child {
+    padding-inline-end: .75rem !important;
+  }
+  .analytics-geo-card .sr-distribution-col--schools,
+  .analytics-geo-card .sr-distribution-col--clusters { inline-size: 5rem; }
+  .analytics-geo-card .sr-distribution-col--achieved { inline-size: 6rem; }
+  .analytics-geo-card .sr-distribution-col--partner { inline-size: 4.5rem; }
+  .analytics-geo-card .sr-distribution-col--planned,
+  .analytics-geo-card .sr-distribution-table th.sr-wide,
+  .analytics-geo-card .sr-distribution-table td.sr-wide { inline-size: 5.5rem; }
+}
+
+/* Give the selected map the workspace height; summary metrics remain on
+   the operations/week tab. :has responds to tab swaps without a reload. */
+@media (min-width: 64rem) {
+  main:has([data-dashboard-views]):has(.sr-map-viewport) [data-context-metrics] {
+    display: none;
+  }
+}
+
+/* SVG boundaries use a geographic stroke for keyboard focus, never the
+   rectangular HTML-button focus treatment. */
+.analytics-geo-card #sr-cam path[role="button"] {
+  outline: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+.analytics-geo-card .sr-distribution-table td:first-child > span {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+.analytics-geo-card .sr-distribution-table td:first-child > span > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 64rem) {
+  .analytics-geo-card .sr-distribution-table td:first-child > span > span:last-child {
+    white-space: normal;
+    overflow-wrap: normal;
+    line-height: 1.25;
+  }
+}
+
+/* The sub-region table's three wide columns — schools visited, schools
+   trained, students impacted (owner, 2026-09-12). Shown from tablet width
+   up, now that the table sits below the map and takes the whole row at
+   every size (owner, 2026-09-14). Their visibility is the component's
+   (x-show="wideColumns" on the cells, from one matchMedia over the same
+   band): mobile-micro-ux.css forces every table cell visible with a
+   ten-part !important rule that yields only to an inline display:none. */
+
+
+/* The workspace's "Updating…" sits under the header, out of its actions, and
+   holds no line until a request runs (owner, 2026-09-27: a title's one or two
+   actions share its line on a phone). */
+#analytics-panel-updating:not(.htmx-request) {
+  display: none;
+}

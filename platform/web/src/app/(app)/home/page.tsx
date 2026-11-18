@@ -1,24 +1,20 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
 import { HomeScreenService } from '@/gen/edify/screens/v1/home_pb';
 import type { GetHomeQueueResponse, GetHomeResponse, HomeFigure, HomePriorityRow, HomeUpcoming } from '@/gen/edify/screens/v1/home_pb';
-import { Badge } from '@/components/blocks/Badge';
-import { Card } from '@/components/blocks/Card';
-import { KpiStrip } from '@/components/blocks/KpiStrip';
-import { PageHeader } from '@/components/blocks/PageHeader';
 import { NotMovedYet } from '@/components/page/NotMovedYet';
 import { asReader } from '@/lib/auth';
 import { environment } from '@/lib/environment';
 import { gatewayClient, isNotFound, isUnavailable } from '@/lib/gateway';
-import { homeFigures, homeHeader, homeTone } from '@/lib/homeScreen';
+import { homeDate, homeFigures, homeHeader } from '@/lib/homeScreen';
+import type { HomeFigureCard } from '@/lib/homeScreen';
 import { safeIcon } from '@/lib/icon';
 
 export const metadata: Metadata = { title: 'Home — Edify' };
 
-const noAction = (): string => '';
-
-type HomeParts = { home: GetHomeResponse; queue: GetHomeQueueResponse; figures: HomeFigure[] };
+type HomeParts = { home: GetHomeResponse; queue: GetHomeQueueResponse; figures: HomeFigure[]; total: number | undefined };
 type HomeAnswer = { kind: 'home'; parts: HomeParts } | { kind: 'elsewhere'; url: string } | { kind: 'notMoved' };
 
 /** Each part of Home; where the reader starts instead; or not moved yet. */
@@ -29,8 +25,11 @@ async function askHome(): Promise<HomeAnswer> {
       const home = await client.getHome({});
       if (home.redirectUrl) return { kind: 'elsewhere', url: home.redirectUrl };
       const queue = await client.getHomeQueue({});
-      const figures = queue.todoFiguresLater ? (await client.getHomeTodoFigures({})).queueFigures : queue.queueFigures;
-      return { kind: 'home', parts: { home, queue, figures } };
+      if (queue.todoFiguresLater) {
+        const later = await client.getHomeTodoFigures({});
+        return { kind: 'home', parts: { home, queue, figures: later.queueFigures, total: later.priorityTotal } };
+      }
+      return { kind: 'home', parts: { home, queue, figures: queue.queueFigures, total: queue.priorityTotal } };
     } catch (error) {
       if (isNotFound(error)) notFound();
       if (isUnavailable(error)) return { kind: 'notMoved' };
@@ -39,145 +38,284 @@ async function askHome(): Promise<HomeAnswer> {
   });
 }
 
-function Icon({ svg }: { svg: string }) {
-  const markup = safeIcon(svg);
-  if (!markup) return null;
-  return (
-    <span
-      aria-hidden
-      className="inline-flex h-5 w-5 shrink-0 text-[var(--brand-primary-text)] [&_svg]:h-5 [&_svg]:w-5"
-      dangerouslySetInnerHTML={{ __html: markup }}
-    />
-  );
-}
-
-function PriorityRow({ row }: { row: HomePriorityRow }) {
-  return (
-    <li className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between" data-home-priority>
-      <div className="flex min-w-0 items-start gap-3">
-        <Icon svg={row.iconSvg} />
-        <div className="min-w-0">
-          <p className="font-semibold text-[var(--edify-text)]">{row.title}</p>
-          {row.context ? <p className="text-[length:var(--edify-text-label-size)] text-[var(--edify-text-muted)]">{row.context}</p> : null}
-        </div>
-      </div>
-      <div className="flex shrink-0 flex-wrap items-center gap-2">
-        {row.dueLabel ? <Badge tone={homeTone(row.dueTone) || 'neutral'}>{row.dueLabel}</Badge> : null}
-        {row.statusLabel ? <Badge tone={homeTone(row.statusTone) || 'neutral'}>{row.statusLabel}</Badge> : null}
-        {row.actionLabel && row.url ? (
-          <a
-            href={row.url}
-            className="inline-flex h-8 items-center rounded-[var(--radius-control)] border border-[var(--edify-border)] px-3 text-[length:var(--edify-text-label-size)] font-semibold text-[var(--brand-primary-text)] hover:bg-[var(--edify-surface-muted)]"
-          >
-            {row.actionLabel}
-          </a>
-        ) : null}
-      </div>
-    </li>
-  );
-}
-
-function UpcomingRow({ item }: { item: HomeUpcoming }) {
-  const body = (
+/* Home's small icon set (templates/partials/home/icon.html). */
+const GLYPHS = {
+  bolt: <path d="M13 2 4 14h7l-1 8 9-12h-7z" />,
+  grid: (
     <>
-      <div
-        className={`flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-[8px] border ${item.isToday ? 'border-[var(--brand-primary-border)] bg-[var(--brand-primary-soft)]' : 'border-[var(--edify-border)]'}`}
-      >
-        <span className="text-[10px] font-semibold uppercase text-[var(--edify-text-muted)]">{item.month}</span>
-        <span className="text-[15px] font-bold leading-none text-[var(--edify-text)]">{item.day}</span>
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="font-semibold text-[var(--edify-text)]">{item.title}</p>
-        <p className="text-[length:var(--edify-text-label-size)] text-[var(--edify-text-muted)]">{[item.where, item.time].filter(Boolean).join(' · ')}</p>
-      </div>
-      <div className="flex shrink-0 flex-wrap gap-2">
-        {item.typeLabel ? <Badge tone="neutral">{item.typeLabel}</Badge> : null}
-        {item.statusLabel ? <Badge tone="info">{item.statusLabel}</Badge> : null}
-      </div>
+      <rect x="3" y="3" width="7" height="7" rx="1.5" />
+      <rect x="14" y="3" width="7" height="7" rx="1.5" />
+      <rect x="3" y="14" width="7" height="7" rx="1.5" />
+      <rect x="14" y="14" width="7" height="7" rx="1.5" />
     </>
+  ),
+  calendar: (
+    <>
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M16 3v4M8 3v4M3 11h18" />
+    </>
+  ),
+  clock: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </>
+  ),
+  chevron: <path d="m9 6 6 6-6 6" />,
+  arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
+} as const;
+
+function Glyph({ name }: { name: keyof typeof GLYPHS }) {
+  return (
+    <svg
+      className="edify-home-glyph"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      {GLYPHS[name]}
+    </svg>
   );
+}
+
+/** An icon the gateway sends as the existing web's SVG markup. */
+function SentIcon({ svg, className }: { svg: string; className: string }) {
+  return <span className={className} aria-hidden="true" dangerouslySetInnerHTML={{ __html: safeIcon(svg) }} />;
+}
+
+function Figure({ card }: { card: HomeFigureCard }) {
+  return (
+    <Link
+      href={card.url}
+      className={`edify-home__figure edify-home__figure--${card.tone}${card.loading ? ' edify-home__figure--loading' : ''}`}
+      data-home-figure={card.key}
+      aria-busy={card.loading || undefined}
+    >
+      <SentIcon svg={card.iconSvg} className="edify-home__figure-glyph" />
+      <span className="edify-home__figure-value">
+        {card.loading ? (
+          <>
+            <span className="edify-home__skeleton" aria-hidden="true" />
+            <span className="sr-only">Loading</span>
+          </>
+        ) : (
+          card.value
+        )}
+      </span>
+      <span className="edify-home__figure-label">{card.label}</span>
+      {card.description ? <span className="sr-only">: {card.description}</span> : null}
+    </Link>
+  );
+}
+
+function PriorityItem({ row }: { row: HomePriorityRow }) {
   return (
     <li>
-      {item.url ? (
-        <a href={item.url} className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--edify-surface-muted)]">
-          {body}
-        </a>
-      ) : (
-        <div className="flex items-center gap-3 px-4 py-3">{body}</div>
-      )}
+      <Link href={row.url} className="edify-home__item" data-home-priority={row.key || undefined}>
+        <SentIcon svg={row.iconSvg} className={`edify-home__item-mark edify-home__item-mark--${row.markTone || row.statusTone}`} />
+        <span className="edify-home__item-body">
+          <span className="edify-home__item-name">{row.title}</span>
+          {row.context ? <span className="edify-home__item-sub">{row.context}</span> : null}
+          <span className="edify-home__item-tags">
+            {row.statusLabel ? <span className={`edify-home__tag edify-home__tag--${row.statusTone}`}>{row.statusLabel}</span> : null}
+            {row.dueLabel ? (
+              <span className={`edify-home__due edify-home__due--${row.dueTone}`}>
+                <Glyph name="clock" />
+                {row.dueLabel}
+              </span>
+            ) : null}
+          </span>
+        </span>
+        <span className="edify-home__item-go">
+          {row.actionLabel}
+          <Glyph name="chevron" />
+        </span>
+      </Link>
     </li>
   );
 }
 
-function Section({ title, count, children }: { title: string; count?: number; children: React.ReactNode }) {
+function UpcomingItem({ item }: { item: HomeUpcoming }) {
   return (
-    <Card flush label={title}>
-      <h2 className="flex items-center gap-2 border-b border-[var(--edify-border)] px-4 py-3 text-[length:var(--edify-text-heading-size)] font-semibold">
-        {title}
-        {count !== undefined ? <span className="text-[var(--edify-text-muted)]">({count})</span> : null}
-      </h2>
-      {children}
-    </Card>
+    <li>
+      <Link href={item.url} className="edify-home__item edify-home__item--upcoming" data-home-upcoming="">
+        <span className={`edify-home__datebox${item.isToday ? ' edify-home__datebox--today' : ''}`}>
+          <span>{item.isToday ? 'TODAY' : item.month}</span>
+          <strong>{item.day}</strong>
+        </span>
+        <span className="edify-home__item-body">
+          <span className="edify-home__item-name">
+            {item.title}
+            {item.where ? ` — ${item.where}` : ''}
+          </span>
+          <span className="edify-home__item-sub">
+            {item.time ? `${item.time} · ` : ''}
+            {item.typeLabel} · {item.statusLabel}
+          </span>
+        </span>
+        <span className="edify-home__item-go edify-home__item-go--quiet">
+          <Glyph name="chevron" />
+          <span className="sr-only">Open</span>
+        </span>
+      </Link>
+    </li>
+  );
+}
+
+function Empty({ title, copy, cta }: { title: string; copy: string; cta?: boolean }) {
+  return (
+    <div className="edify-home__empty">
+      <p className="edify-home__empty-title">{title}</p>
+      <p className="edify-home__empty-copy">{copy}</p>
+      {cta ? (
+        <Link href="/my-plan" className="edify-home__empty-cta">
+          Open My Plan
+        </Link>
+      ) : null}
+    </div>
   );
 }
 
 /*
- * Home, drawn from the gateway's HomeScreenService answers (the phone app's
- * Home reads the same): the greeting, the overview figures, the priority
- * actions, the reader's upcoming work and their shortcuts. A reader who does
- * not use Home is sent where they start.
+ * Home, as the existing Home draws it (templates/pages/home/index.html and
+ * partials/home/*), from the gateway's HomeScreenService answers: the
+ * greeting, Today's overview, the priority actions, Quick access and the
+ * reader's upcoming activities. A reader who does not use Home is sent where
+ * they start.
  */
 export default async function HomePage() {
   const answer = await askHome();
   if (answer.kind === 'elsewhere') redirect(answer.url);
   if (answer.kind === 'notMoved') return <NotMovedYet href={`${environment().existingWebUrl}/home`} />;
-  const { home, queue, figures } = answer.parts;
+  const { home, queue, figures, total } = answer.parts;
+  const header = homeHeader(home);
+  const cards = homeFigures(home.figures, figures);
   const rows = queue.priorityRows;
-  const total = queue.priorityTotal ?? rows.length;
   return (
-    <div className="mx-auto max-w-[1500px] space-y-4 px-4 pb-24 pt-5 sm:px-6 lg:pb-8" data-page="/home">
-      <PageHeader header={homeHeader(home)} hrefOf={noAction} />
-      {home.figures.length ? <KpiStrip strip={homeFigures(home.figures, figures)} /> : null}
-      <Section title="Priority actions" count={total}>
+    <div className="edify-home" data-mobile-family="home" data-page="/home">
+      <header className="edify-home__hero edify-inverse-surface">
+        <div className="edify-home__wordmark">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="edify-home__wordmark-logo" src="/static/images/logo.png" alt="Edify" width={72} height={30} />
+          <span className="edify-home__wordmark-rule" aria-hidden="true" />
+          <span className="edify-home__wordmark-product">
+            Planning &amp;
+            <br />
+            Monitoring
+          </span>
+        </div>
+        <h1 className="edify-page-title edify-home__greeting">
+          <span className="edify-home__greeting-words">{header.title}</span>
+        </h1>
+        <p className="edify-home__subtitle">Here’s what needs you today</p>
+        {home.roleTitle ? <p className="edify-home__role">{home.roleTitle}</p> : null}
+      </header>
+      <header className="edify-page-header edify-home__desk-head mobile-home-hide">
+        <div className="edify-page-header__lead">
+          <p className="edify-page-eyebrow">{header.eyebrow}</p>
+          <h1 className="edify-page-title edify-page-header__title">{header.title}</h1>
+          <p className="edify-page-header__description">{header.description}</p>
+        </div>
+      </header>
+      <section className="edify-home__card edify-home__overview" aria-labelledby="home-summary-title">
+        <div className="edify-home__card-head">
+          <h2 id="home-summary-title" className="edify-home__card-title">
+            Today’s overview
+          </h2>
+          <time className="edify-home__date" dateTime={home.today}>
+            {homeDate(home)}
+          </time>
+        </div>
+        <ul className="edify-home__figures" role="list" data-count={cards.length}>
+          {cards.map((card) => (
+            <li key={card.key}>
+              <Figure card={card} />
+            </li>
+          ))}
+        </ul>
+      </section>
+      <section className="edify-home__card edify-home__card--queue" aria-labelledby="home-priority-title">
+        <div className="edify-home__card-head">
+          <h2 id="home-priority-title" className="edify-home__card-title">
+            <span className="edify-home__head-glyph">
+              <Glyph name="bolt" />
+            </span>
+            Priority actions
+          </h2>
+          {total ? (
+            <Link href="/todos" className="edify-home__see-all">
+              View all {total}
+              <Glyph name="arrow" />
+            </Link>
+          ) : null}
+        </div>
         {rows.length ? (
-          <ul className="divide-y divide-[var(--edify-border)]">
+          <ul className="edify-home__list" role="list">
             {rows.map((row, i) => (
-              <PriorityRow key={row.key || `${row.title}-${i}`} row={row} />
+              <PriorityItem key={row.key || `${row.title}-${i}`} row={row} />
             ))}
           </ul>
         ) : (
-          <p className="px-4 py-6 text-[var(--edify-text-muted)]">Nothing is waiting on you.</p>
+          <Empty title="Nothing needs you right now" copy="New work appears here as soon as it is yours to do." cta={queue.hasPlan} />
         )}
-      </Section>
-      {home.hasPlan ? (
-        <Section title="Upcoming activities">
-          {home.upcoming.length ? (
-            <ul className="divide-y divide-[var(--edify-border)]">
-              {home.upcoming.map((item) => (
-                <UpcomingRow key={item.id} item={item} />
-              ))}
-            </ul>
-          ) : (
-            <p className="px-4 py-6 text-[var(--edify-text-muted)]">No activities coming up.</p>
-          )}
-        </Section>
-      ) : null}
-      {home.shortcuts.length ? (
-        <Section title="Shortcuts">
-          <ul className="grid grid-cols-2 gap-2 p-4 sm:grid-cols-3 lg:grid-cols-6">
-            {home.shortcuts.map((s) => (
-              <li key={s.url}>
-                <a
-                  href={s.url}
-                  className="flex h-full items-center gap-2 rounded-[8px] border border-[var(--edify-border)] px-3 py-2 font-semibold text-[var(--edify-text)] hover:bg-[var(--edify-surface-muted)]"
-                >
-                  <Icon svg={s.iconSvg} />
-                  <span className="min-w-0 truncate">{s.label}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </Section>
+      </section>
+      {home.shortcuts.length || home.hasPlan ? (
+        <div className="edify-home__side">
+          {home.shortcuts.length ? (
+            <section className="edify-home__card edify-home__card--side" aria-labelledby="home-shortcuts-title">
+              <div className="edify-home__card-head">
+                <h2 id="home-shortcuts-title" className="edify-home__card-title">
+                  <span className="edify-home__head-glyph">
+                    <Glyph name="grid" />
+                  </span>
+                  Quick access
+                </h2>
+              </div>
+              <ul className="edify-home__shortcuts" role="list">
+                {home.shortcuts.map((s) => (
+                  <li key={s.url}>
+                    <Link href={s.url} className="edify-home__shortcut">
+                      <SentIcon svg={s.iconSvg} className="edify-home__shortcut-glyph" />
+                      <span className="edify-home__shortcut-label">{s.label}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+          {home.hasPlan ? (
+            <section className="edify-home__card edify-home__card--side" aria-labelledby="home-upcoming-title">
+              <div className="edify-home__card-head">
+                <h2 id="home-upcoming-title" className="edify-home__card-title">
+                  <span className="edify-home__head-glyph">
+                    <Glyph name="calendar" />
+                  </span>
+                  Upcoming activities
+                </h2>
+                {home.upcoming.length ? (
+                  <Link href="/my-plan?status=upcoming" className="edify-home__see-all">
+                    View all
+                    <Glyph name="arrow" />
+                  </Link>
+                ) : null}
+              </div>
+              {home.upcoming.length ? (
+                <ul className="edify-home__list" role="list">
+                  {home.upcoming.map((item) => (
+                    <UpcomingItem key={item.id} item={item} />
+                  ))}
+                </ul>
+              ) : (
+                <Empty title="No activities coming up" copy="Plan your next visit or training and it will show here." cta />
+              )}
+            </section>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

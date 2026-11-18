@@ -25,7 +25,7 @@ export function HeaderAction({ action, href }: { action: PageAction; href: strin
   const className = action.primary ? BUTTON_PRIMARY : BUTTON_OUTLINE;
   const content = (
     <>
-      {icon ? <Icon name={icon} className="h-[18px] w-[18px]" /> : null}
+      {icon ? <Icon name={icon} className="h-4 w-4" /> : null}
       <span>{action.label}</span>
     </>
   );
@@ -80,26 +80,21 @@ function RecordHeader({ header, hrefOf }: { header: PageHeaderMessage; hrefOf: (
 
 export function PageHeader({ header, hrefOf }: { header: PageHeaderMessage; hrefOf: (action: PageAction) => string }) {
   if (header.badges.length || header.backLabel) return <RecordHeader header={header} hrefOf={hrefOf} />;
+  // The canonical page header (templates/components/page_header.html).
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" data-block="header">
-      <div className="min-w-0">
-        {header.eyebrow ? (
-          <p className="text-[length:var(--edify-text-label-size)] font-semibold uppercase text-[var(--brand-primary-text)] dark:text-[var(--edify-accent-text)]">
-            {header.eyebrow}
-          </p>
-        ) : null}
-        <h1 className="text-[length:var(--edify-text-display-size)] font-bold leading-[1.15] text-[var(--edify-text)]">{header.title}</h1>
-        {header.description ? (
-          <p className="text-[length:var(--edify-text-label-size)] font-medium text-[var(--edify-text-muted)]">{header.description}</p>
-        ) : null}
+    <header className="edify-page-header" data-block="header">
+      <div className="edify-page-header__lead">
+        {header.eyebrow ? <p className="edify-page-eyebrow">{header.eyebrow}</p> : null}
+        <h1 className="edify-page-title edify-page-header__title">{header.title}</h1>
+        {header.description ? <p className="edify-page-header__description">{header.description}</p> : null}
       </div>
       {header.actions.length ? (
-        <div className="flex flex-wrap items-center gap-2 sm:justify-end lg:shrink-0 lg:flex-nowrap">
+        <div className="edify-page-header__controls">
           {header.actions.map((action) => (
             <HeaderAction key={action.key} action={action} href={hrefOf(action)} />
           ))}
         </div>
       ) : null}
-    </div>
+    </header>
   );
 }

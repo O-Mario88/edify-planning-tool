@@ -8,11 +8,16 @@
  *      :root.theme-dark, with the @media blocks that wrap them)
  *   static/fonts/Geist-Variable.woff2 -> src/fonts/Geist-Variable.woff2
  *   static/images/logo.png, login-classroom-portrait.jpg -> public/images/
+ *   every stylesheet templates/base.html links, in its order, and the fonts
+ *   and images they name -> public/static/ (verbatim, at the same paths, so
+ *   their url()s resolve as on the existing web). The web app links them in
+ *   the same order (LEGACY_STYLESHEETS), so its pages are drawn by the
+ *   existing web's own CSS.
  *
  * `node scripts/sync-tokens.mjs` writes them; `--check` exits 1 when the
  * committed copies differ (the unit tests run the same check).
  */
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import postcss from 'postcss';
@@ -60,6 +65,57 @@ export function extractTokens(css) {
   return out.toString();
 }
 
+const STATIC_CSS = /\{% static '([^']+\.css)' %\}/g;
+
+/** Every page's own stylesheets (each template's {% block feature_css %}), sorted. */
+function featureStylesheets() {
+  const found = new Set();
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) walk(path);
+      else if (entry.name.endsWith('.html')) {
+        const text = readFileSync(path, 'utf8');
+        for (const block of text.matchAll(/\{% block feature_css %\}([\s\S]*?)\{% endblock/g)) {
+          for (const m of block[1].matchAll(STATIC_CSS)) found.add(m[1]);
+        }
+      }
+    }
+  };
+  walk(join(REPO, 'templates'));
+  return [...found].sort();
+}
+
+/**
+ * The stylesheets templates/base.html links, in its order (static paths),
+ * with every page's own stylesheets where base.html opens its feature_css
+ * block. Those are each scoped under their page's prefix (.edify-home,
+ * .admin-*, …), so linking them all draws every page as its own does.
+ */
+export function legacyStylesheets() {
+  const base = readFileSync(join(REPO, 'templates/base.html'), 'utf8');
+  const cut = base.indexOf('{% block feature_css %}');
+  const before = [...base.slice(0, cut).matchAll(/<link rel="stylesheet" href="\{% static '([^']+\.css)' %\}/g)].map((m) => m[1]);
+  const after = [...base.slice(cut).matchAll(/<link rel="stylesheet" href="\{% static '([^']+\.css)' %\}/g)].map((m) => m[1]);
+  const shared = new Set([...before, ...after]);
+  return [...before, ...featureStylesheets().filter((path) => !shared.has(path)), ...after];
+}
+
+/** The fonts and images the stylesheets name, as static paths. */
+const LEGACY_ASSETS = [
+  'fonts/Geist-Variable.woff2',
+  'fonts/Geist-Italic-Variable.woff2',
+  'images/logo.png',
+  'images/login-classroom-portrait.jpg',
+];
+
+function legacyFiles() {
+  return [...legacyStylesheets(), ...LEGACY_ASSETS].map((path) => [
+    `public/static/${path}`,
+    readFileSync(join(REPO, 'static', path)),
+  ]);
+}
+
 export function expectedFiles() {
   const theme = readFileSync(join(REPO, 'assets/css/_theme.css'), 'utf8');
   const system = readFileSync(join(REPO, 'static/css/design-system.css'), 'utf8');
@@ -69,6 +125,8 @@ export function expectedFiles() {
     ['src/fonts/Geist-Variable.woff2', readFileSync(join(REPO, 'static/fonts/Geist-Variable.woff2'))],
     ['public/images/logo.png', readFileSync(join(REPO, 'static/images/logo.png'))],
     ['public/images/login-classroom-portrait.jpg', readFileSync(join(REPO, 'static/images/login-classroom-portrait.jpg'))],
+    ...legacyFiles(),
+    ['src/styles/generated/legacy-stylesheets.json', JSON.stringify(legacyStylesheets().map((path) => `/static/${path}`), null, 2) + '\n'],
   ];
 }
 

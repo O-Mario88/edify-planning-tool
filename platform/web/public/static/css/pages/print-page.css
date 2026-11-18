@@ -1,0 +1,40 @@
+/* A page that is printed as a document (a partner's invoice, 2026-10-08).
+   The paper carries the document, not the application around it: the sidebar,
+   the top bar and the page's own buttons stay on the screen, and the shell's
+   fixed-height scrolling box is let go so every line reaches the paper.
+
+   Each selector is one step heavier than the layout utilities it answers
+   (`html` before the class), so none of this needs `!important`. */
+@media print {
+  /* The shell's main column only: its first child is the phone menu, a fixed
+     full-window dialog that is hidden until opened. */
+  html:root,
+  html body,
+  html .edify-shell,
+  html .edify-shell > :not(.app-sidebar):not(aside):not(nav):not([role="dialog"]),
+  html #main-content {
+    display: block;
+    block-size: auto;
+    max-block-size: none;
+    overflow: visible;
+    background: #fff;
+  }
+
+  html .app-sidebar,
+  html .edify-topbar,
+  html .edify-bottom-nav,
+  html #toast-container,
+  html [data-print-hide],
+  html .edify-shell > :is(aside, nav, [role="dialog"]) {
+    display: none;
+  }
+
+  html #main-content :is(.card, .edify-surface) {
+    box-shadow: none;
+    break-inside: avoid;
+  }
+
+  html #main-content .overflow-x-auto {
+    overflow: visible;
+  }
+}

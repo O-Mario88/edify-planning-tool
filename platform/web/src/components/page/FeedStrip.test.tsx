@@ -1,7 +1,8 @@
 /**
- * A strip's figures are separate tiles (owner, 2026-11-16): each the figure,
- * its label and the line under it, with an info dot for a note, in even rows
- * of at most five on a wide screen.
+ * A strip's figures are drawn as the existing web's context-metrics row
+ * (templates/components/context_metrics.html): each fact its label, figure
+ * and the line under it, linked where it opens a page, its note kept for a
+ * screen reader.
  */
 import { create } from '@bufbuild/protobuf';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -10,32 +11,30 @@ import { describe, expect, it } from 'vitest';
 import { PageStripSchema } from '@/gen/edify/screens/v1/page_pb';
 
 import { KpiStrip } from '../blocks/KpiStrip';
-import { FeedStrip, tileColumns } from './FeedStrip';
+import { FeedStrip } from './FeedStrip';
 
 const strip = create(PageStripSchema, {
-  title: 'Figures',
+  title: 'School list context',
   metrics: [
-    { label: 'School Leaders Trained', value: '2', helper: '2 in school' },
+    { label: 'Total Schools', value: '699' },
+    { label: 'Client Schools', value: '558', helper: '80% of total', href: '/schools?school_type=client' },
     { label: 'Overdue Plans', value: '105', note: 'Past their date, not completed', tone: 'danger' },
   ],
 });
 
 describe('a strip', () => {
-  it('draws each figure as its own tile: figure, label, the line under it', () => {
+  it('draws one context-metrics row of facts: label, figure, the line under it', () => {
     const html = renderToStaticMarkup(<FeedStrip strip={strip} resolve={(href) => href} />);
-    expect(html.match(/data-tile=/g)).toHaveLength(2);
-    expect(html).toMatch(/>2<\/dd><dt[^>]*>School Leaders Trained<\/dt><dd[^>]*>2 in school<\/dd>/);
+    expect(html).toContain('class="context-metrics"');
+    expect(html).toContain('data-kpi-count="3"');
+    expect(html.match(/class="context-metrics__fact"/g)).toHaveLength(3);
+    expect(html).toMatch(/context-metrics__label[^>]*>Client Schools<\/span><strong class="context-metrics__value"[^>]*>558<\/strong><span class="context-metrics__helper"[^>]*>80% of total<\/span>/);
   });
 
-  it('says a note in an info dot and tints a problem red', () => {
+  it('links a figure that opens a page, and keeps a note for a screen reader', () => {
     const html = renderToStaticMarkup(<FeedStrip strip={strip} resolve={(href) => href} />);
-    expect(html).toContain('aria-label="Past their date, not completed"');
-    expect(html).toContain('data-tile="alert"');
-    expect(html).toContain('color:#dc2626');
-  });
-
-  it('spreads tiles into even rows of at most five', () => {
-    expect([1, 4, 5, 6, 8, 9, 10, 12].map(tileColumns)).toEqual([1, 4, 5, 3, 4, 5, 5, 4]);
+    expect(html).toContain('<a class="context-metrics__link" href="/schools?school_type=client">');
+    expect(html).toMatch(/data-kpi-note[^>]*>Past their date, not completed</);
   });
 
   it('is drawn the same way outside the page feed', () => {

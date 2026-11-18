@@ -45,6 +45,7 @@ export default async function ShellLayout({ children }: { children: ReactNode })
   const person = session.session;
   const account = {
     name: person?.name || person?.email || '',
+    email: person?.email ?? '',
     initials: initialsOf(person?.name ?? '', person?.email ?? ''),
     activeRole: person?.activeRole ?? '',
     roles: (person?.roles ?? []).map((role) => ({ value: role, label: role })),
@@ -53,17 +54,19 @@ export default async function ShellLayout({ children }: { children: ReactNode })
   const menu = (
     <>
       <SidebarBrand />
-      <div className="mt-5">
+      <div className="app-sidebar__nav-container">
         <SidebarNav sections={navigation.sections} path={path} />
       </div>
     </>
   );
+  // The existing shell's frame (templates/layouts/shell.html): the sidebar
+  // beside one column of the top bar over the scrolling workspace.
   return (
-    <div className="flex min-h-dvh">
+    <div className="edify-shell h-full flex overflow-hidden">
       <Sidebar sections={navigation.sections} path={path} />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar search={pageSearch(path)} account={account} menu={menu} existingWebUrl={environment().existingWebUrl} counts={{ messages, notifications }} />
-        <main id="main" className="min-w-0 flex-1 pb-24 lg:pb-0">
+        <main id="main-content" tabIndex={-1} className="edify-workspace flex-1 overflow-y-auto focus:outline-none relative bg-[var(--edify-bg)]" data-density="compact">
           {children}
         </main>
         <BottomNav items={navigation.bottom} path={path} more={<PhoneMenu asTab>{menu}</PhoneMenu>} />

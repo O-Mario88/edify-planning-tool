@@ -1,0 +1,389 @@
+/* Shared outlined forms: quiet surfaces, clear boundaries and visible states. */
+:root { --form-outline: #858e98; --form-placeholder: #707b87; }
+html.theme-dark, html.theme-blue, .dark, [data-theme="dark"] { --form-outline: #798796; --form-placeholder: #a4afbd; }
+/* Content inside a plain table (micro-ux.js marks it .edify-table-plain-content)
+   reads as table text, as consistency.css's field rules already allow: this
+   selector's #drawer-container gives it ID weight, which would otherwise put
+   the outline back on an inline cell field. The exclusion sits in :where() so
+   it adds no weight: a heavier rule here would outrank the 16px phone field
+   size that keeps iOS from zooming. The padding, textarea and desktop height
+   rules below skip it the same way, so a cell field keeps the row's 24px
+   control line; the 16px phone size still applies to it. */
+:is(body, #drawer-container) :is(input:not([type]), input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="url"], input[type="search"], input[type="date"], input[type="datetime-local"], input[type="time"], input[type="month"], input[type="week"], select, textarea):not(:where(.edify-table-plain-content)) {
+  min-height: 44px !important;
+  max-width: 100%;
+  border: 1px solid var(--form-outline) !important;
+  border-radius: var(--edify-radius-sm) !important;
+  background-color: var(--edify-surface) !important;
+  color: var(--edify-text) !important;
+  box-shadow: none !important;
+  /* A fixed size, not the fluid label step: a field's text and its 38px box
+     hold at every desktop width and density (e2e/display-density.spec.js). */
+  font-size: 14px !important;
+  line-height: 1.5;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+:is(body, #drawer-container) :is(input, textarea)::placeholder { color: var(--form-placeholder) !important; opacity: 1; }
+:is(body, #drawer-container) :is(input, select, textarea):focus-visible {
+  outline: 2px solid var(--edify-accent) !important;
+  outline-offset: 2px;
+  border-color: var(--edify-accent) !important;
+}
+:is(body, #drawer-container) :is(input, select, textarea)[aria-invalid="true"] { border-color: #dc2626 !important; }
+:is(body, #drawer-container) :is(input, select, textarea):disabled { opacity: .6; cursor: not-allowed; }
+:is(body, #drawer-container) textarea:not(:where(.edify-table-plain-content)) { padding: .75rem; min-height: 96px !important; }
+:is(body, #drawer-container) :is(input:not([type]), input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="url"], input[type="date"], input[type="time"], input[type="datetime-local"]):not(:where(.edify-table-plain-content)) { padding-block: .65rem; }
+:is(body, #drawer-container) :is(.drawer-body, .edify-popup-dialog__surface) label {
+  color: var(--edify-text);
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+}
+body .drawer-header {
+  min-height: 4.75rem;
+  padding: 1.25rem 3.5rem 1.25rem 1.5rem;
+}
+:is(body, #drawer-container) :is(.drawer-header__identity, .drawer-header__title-row) { justify-content: flex-start; }
+body .drawer-header__copy { text-align: left; }
+body .drawer-header__subtitle { margin-left: 0 !important; }
+body .drawer-body { background: var(--edify-surface); }
+body .drawer-footer { background: var(--edify-surface) !important; border-top: 1px solid var(--edify-border); box-shadow: none; }
+@media (max-width: 640px) {
+  :is(body, #drawer-container) :is(input:not([type]), input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="url"], input[type="search"], input[type="date"], input[type="datetime-local"], input[type="time"], select, textarea) { font-size: 16px !important; }
+  body .drawer-header { padding-left: 1rem; }
+}
+/* !important: components.css gives every text field `transition: all` with
+   !important, which a plain `none` could not override, so reduced motion still
+   animated the fields' size and colour. */
+@media (prefers-reduced-motion: reduce) { :is(body, #drawer-container) :is(input, select, textarea) { transition: none !important; } }
+/* CSS pixels, not physical screen pixels, determine density. Preserve browser
+   zoom and OS accessibility scaling; wide monitors must not inflate controls. */
+body { font-size-adjust: none; }
+@media (min-width: 1024px) {
+  :is(body, #drawer-container) :is(input:not([type]), input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="url"], input[type="search"], input[type="date"], input[type="datetime-local"], input[type="time"], select):not(:where(.edify-table-plain-content)) {
+    min-height: 38px !important;
+    padding-block: .45rem;
+  }
+  body .drawer-header__title-row h3 { font-size: var(--edify-text-heading-size) !important; }
+  body .drawer-body { padding: 1.5rem; }
+}
+
+/* ── One Edify calendar for every date field ───────────────────────────────
+   static/js/date-picker.js sets a read-only text field and this calendar
+   beside every <input type="date"> (owner, 2026-09-26: the same system
+   calendar everywhere, the Edify popover rather than the browser's own). It
+   lives in this sheet because it is form styling, and because a sheet of
+   its own was one more render-blocking request on every page
+   (apps/system_health/test_frontend_budgets.py).
+
+   The visible field is left to the field rules above and across the
+   platform — it is an input[type="text"], and every rule that draws a date
+   field draws a text field the same way — so it matches the fields around
+   it on every page. This part only makes room for the calendar mark and
+   draws the calendar.
+
+   LAYERS. The wrapper's resting display sits in Tailwind's `components`
+   layer, under the utilities, so a field's own `block`, `hidden` or `w-full`
+   still places it. Everything else is in its own layer with `!important`:
+   important declarations in a layer outrank unlayered important ones, which
+   is what keeps the platform's page-wide button and field contracts
+   (radius, font size, touch height) off the calendar's day buttons. Layers,
+   not load order, settle these rules, so this sheet's place before
+   interactions.css (which must stay the last stylesheet) does not matter. */
+
+@layer components {
+  .edify-datepick {
+    display: inline-block;
+    max-inline-size: 100%;
+    vertical-align: top;
+  }
+}
+
+@layer edify-datepick {
+  .edify-datepick {
+    position: relative !important;
+  }
+
+  /* The real date field: in the page for the form, its validation, its
+     listeners and browser tests; off screen for the reader. */
+  .edify-datepick__native {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: 1px !important;
+    max-height: 1px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    opacity: 0 !important;
+    overflow: hidden !important;
+    clip-path: inset(50%) !important;
+    pointer-events: none !important;
+  }
+
+  .edify-datepick__field {
+    display: block !important;
+    padding-inline-start: 2.25rem !important;
+    padding-inline-end: 2rem !important;
+    cursor: pointer !important;
+    caret-color: transparent !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .edify-datepick__field:disabled {
+    cursor: not-allowed !important;
+  }
+
+  .edify-datepick__glyph,
+  .edify-datepick__caret {
+    position: absolute !important;
+    top: 50% !important;
+    display: flex !important;
+    color: var(--edify-text-muted) !important;
+    pointer-events: none !important;
+    transform: translateY(-50%) !important;
+  }
+
+  .edify-datepick__glyph {
+    inset-inline-start: 0.75rem !important;
+    width: 1rem !important;
+    height: 1rem !important;
+  }
+
+  .edify-datepick__caret {
+    inset-inline-end: 0.75rem !important;
+    width: 0.875rem !important;
+    height: 0.875rem !important;
+    transition: transform 0.15s ease !important;
+  }
+
+  .edify-datepick[data-open] .edify-datepick__caret {
+    transform: translateY(-50%) rotate(180deg) !important;
+  }
+
+  .edify-datepick svg {
+    width: 100% !important;
+    height: 100% !important;
+    flex: none !important;
+  }
+
+  /* ── The calendar ─────────────────────────────────────────────────────── */
+
+  .edify-datepick__pop {
+    position: fixed !important;
+    z-index: 55 !important;
+    box-sizing: border-box !important;
+    width: 17.5rem !important;
+    max-width: calc(100vw - 1rem) !important;
+    margin: 0 !important;
+    padding: 0.75rem !important;
+    border: 1px solid var(--edify-border) !important;
+    border-radius: var(--radius-surface, 12px) !important;
+    background: var(--edify-surface-raised, var(--edify-surface)) !important;
+    color: var(--edify-text) !important;
+    box-shadow: var(--edify-shadow-lg) !important;
+    font-family: var(--edify-font-sans, inherit) !important;
+    font-size: var(--edify-text-label-size) !important;
+    font-weight: 500 !important;
+    line-height: 1.2 !important;
+    letter-spacing: normal !important;
+    text-align: start !important;
+    text-transform: none !important;
+    user-select: none !important;
+  }
+
+  .edify-datepick__pop[hidden] {
+    display: none !important;
+  }
+
+  :where(.edify-datepick__pop) button {
+    appearance: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: var(--radius-control, 10px) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: inherit !important;
+    font: inherit !important;
+    letter-spacing: normal !important;
+    text-transform: none !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+    cursor: pointer !important;
+    transform: none !important;
+    translate: none !important;
+    scale: none !important;
+    transition: background-color 0.12s ease, color 0.12s ease !important;
+  }
+
+  :where(.edify-datepick__pop) button:hover:not([aria-disabled="true"]) {
+    background: var(--edify-surface-hover) !important;
+    color: var(--edify-text) !important;
+  }
+
+  :where(.edify-datepick__pop) button:focus-visible {
+    outline: 2px solid var(--edify-accent) !important;
+    outline-offset: 1px !important;
+  }
+
+  .edify-datepick__head {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.25rem !important;
+    margin: 0 0 0.5rem !important;
+  }
+
+  .edify-datepick__step {
+    width: 2rem !important;
+    height: 2rem !important;
+    color: var(--edify-text-muted) !important;
+  }
+
+  .edify-datepick__step svg {
+    width: 1rem !important;
+    height: 1rem !important;
+  }
+
+  .edify-datepick__caption {
+    height: 2rem !important;
+    padding: 0 0.625rem !important;
+    font-size: var(--edify-text-title-size) !important;
+    font-weight: 600 !important;
+  }
+
+  .edify-datepick__week {
+    display: grid !important;
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    gap: 0.125rem !important;
+    margin: 0 0 0.125rem !important;
+  }
+
+  .edify-datepick__dow {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 1.75rem !important;
+    color: var(--edify-text-muted) !important;
+    font-size: var(--edify-text-micro-size) !important;
+    font-weight: 600 !important;
+  }
+
+  .edify-datepick__day,
+  .edify-datepick__month {
+    width: 100% !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  .edify-datepick__day {
+    height: 2.25rem !important;
+  }
+
+  .edify-datepick__day[data-blank] {
+    pointer-events: none !important;
+  }
+
+  .edify-datepick__day[aria-current="date"] {
+    color: var(--edify-accent-text, var(--edify-accent)) !important;
+    font-weight: 700 !important;
+    box-shadow: inset 0 0 0 1px var(--edify-accent) !important;
+  }
+
+  .edify-datepick__day[aria-selected="true"],
+  .edify-datepick__month[aria-pressed="true"] {
+    background: var(--edify-primary-action-fill, var(--edify-accent)) !important;
+    color: var(--edify-primary-action-ink, #fff) !important;
+    font-weight: 700 !important;
+    box-shadow: none !important;
+  }
+
+  .edify-datepick__day[aria-selected="true"]:hover,
+  .edify-datepick__month[aria-pressed="true"]:hover {
+    background: var(--edify-primary-action-fill-hover, var(--edify-accent)) !important;
+    color: var(--edify-primary-action-ink, #fff) !important;
+  }
+
+  :where(.edify-datepick__pop) button[aria-disabled="true"] {
+    color: var(--edify-text-subtle, var(--edify-text-muted)) !important;
+    opacity: 0.45 !important;
+    cursor: not-allowed !important;
+  }
+
+  .edify-datepick__months {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.375rem !important;
+  }
+
+  .edify-datepick__month {
+    height: 2.5rem !important;
+  }
+
+  .edify-datepick__foot {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin: 0.5rem 0 0 !important;
+    padding: 0.5rem 0 0 !important;
+    border-top: 1px solid var(--edify-border) !important;
+  }
+
+  .edify-datepick__link {
+    height: 2rem !important;
+    padding: 0 0.625rem !important;
+    color: var(--edify-accent-text, var(--edify-accent)) !important;
+    font-weight: 600 !important;
+  }
+
+  /* A finger needs a bigger day than a pointer does; seven of them still fit
+     a 320px phone. */
+  @media (pointer: coarse) {
+    .edify-datepick__pop {
+      width: 19.5rem !important;
+    }
+
+    .edify-datepick__day {
+      height: 2.5rem !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .edify-datepick__caret,
+    :where(.edify-datepick__pop) button {
+      transition: none !important;
+    }
+  }
+}
+
+/* Drawer fields on phones and tablets (owner, 2026-09-27: the input drawer
+   adjusts to the screen): 40px fields, and on a phone a 16px value, which
+   stops iOS zooming the page when a field takes focus. Anchored on the drawer
+   host, so it outranks the 44px field floor above. Desktops are unchanged. */
+@media (max-width: 79.99rem) {
+  #drawer-container .drawer-body :is(
+    select,
+    input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="range"])
+  ) {
+    block-size: 2.5rem !important;
+    min-block-size: 2.5rem !important;
+    min-height: 2.5rem !important;
+    padding-block: 0 !important;
+    line-height: normal !important;
+  }
+}
+
+@media (max-width: 47.99rem) {
+  #drawer-container .drawer-body :is(select, input, textarea) {
+    font-size: 1rem !important;
+  }
+}

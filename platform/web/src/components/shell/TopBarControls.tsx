@@ -1,44 +1,66 @@
 'use client';
 
-/* The top bar's interactive parts: page history, the theme switch, the
-   account menu (role switch, sign out) and the phone menu. */
+/* The top bar's interactive parts, in the existing web's markup and class
+   names (templates/layouts/shell.html), so its stylesheets draw them as
+   there: page history, the theme switch, the account menu (role switch,
+   help, report, profile, sign out) and the phone menu. */
+import Link from 'next/link';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { ReactNode } from 'react';
 
+import { applyThemeClass, chooseTheme, subscribeThemePreference } from '@/lib/themePreference';
+
 import { Icon } from './icons';
 
-const ICON_BUTTON =
-  'grid h-9 w-9 place-items-center rounded-full text-[var(--edify-text-muted)] hover:bg-[var(--edify-surface-muted)] hover:text-[var(--edify-text)] focus-visible:outline-2 focus-visible:outline-[var(--brand-primary)]';
+const CONTROL = 'edify-topbar__icon-control flex items-center justify-center focus:outline-none';
 
 export function HistoryControls() {
   return (
-    <nav aria-label="Page history" className="hidden shrink-0 items-center gap-1 [@media(display-mode:standalone)]:flex">
-      <button type="button" className={ICON_BUTTON} title="Back" aria-label="Go back" onClick={() => history.back()}>
-        <Icon name="back" className="h-5 w-5" />
+    <nav className="edify-topbar__history flex items-center shrink-0" aria-label="Page history">
+      <button type="button" className={`${CONTROL} edify-topbar__history-control`} title="Back" aria-label="Go back" onClick={() => history.back()}>
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 5l-7 7 7 7" />
+        </svg>
       </button>
-      <button type="button" className={ICON_BUTTON} title="Forward" aria-label="Go forward" onClick={() => history.forward()}>
-        <Icon name="forward" className="h-5 w-5" />
+      <button
+        type="button"
+        className={`${CONTROL} edify-topbar__history-control edify-topbar__history-control--forward`}
+        title="Forward"
+        aria-label="Go forward"
+        onClick={() => history.forward()}
+      >
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
       </button>
-      <button type="button" className={ICON_BUTTON} title="Refresh" aria-label="Refresh this page" onClick={() => location.reload()}>
-        <Icon name="refresh" className="h-5 w-5" />
+      <button
+        type="button"
+        className={`${CONTROL} edify-topbar__history-control edify-topbar__history-control--refresh`}
+        title="Refresh"
+        aria-label="Refresh this page"
+        onClick={() => location.reload()}
+      >
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5.6 15A7 7 0 0 0 18 16.5M18.4 9A7 7 0 0 0 6 7.5" />
+        </svg>
       </button>
     </nav>
   );
 }
 
-export function applyTheme(dark: boolean) {
-  const root = document.documentElement;
-  root.classList.remove('light', 'theme-dark', 'dark');
-  root.classList.add(dark ? 'theme-dark' : 'light');
-  if (dark) root.classList.add('dark');
-  root.dataset.theme = dark ? 'dark' : 'light';
-}
+/** Kept for callers that set the theme class directly. */
+export const applyTheme = applyThemeClass;
 
 /** The root's theme class, which the page's head script set before paint. */
 export function subscribeTheme(onChange: () => void) {
   const observer = new MutationObserver(onChange);
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-  return () => observer.disconnect();
+  const unsubscribe = subscribeThemePreference(onChange);
+  return () => {
+    observer.disconnect();
+    unsubscribe();
+  };
 }
 
 export function ThemeToggle() {
@@ -47,24 +69,27 @@ export function ThemeToggle() {
     () => document.documentElement.classList.contains('theme-dark'),
     () => false,
   );
-  const toggle = () => {
-    const next = !dark;
-    applyTheme(next);
-    try {
-      localStorage.setItem('edify_theme', next ? 'dark' : 'light');
-    } catch {
-      // Private windows: the choice lasts for this page only.
-    }
-  };
   return (
     <button
       type="button"
-      className={ICON_BUTTON}
-      onClick={toggle}
+      className={`${CONTROL} edify-topbar__utility edify-topbar__utility--theme`}
+      onClick={() => chooseTheme(dark ? 'light' : 'dark')}
       aria-label={dark ? 'Turn off night black mode' : 'Turn on night black mode'}
       aria-pressed={dark}
     >
-      <Icon name={dark ? 'sun' : 'moon'} className="h-5 w-5" />
+      {dark ? (
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 3V1m0 22v-2m9-9h2M1 12h2m15.364-6.364 1.414-1.414M4.222 19.778l1.414-1.414m12.728 0 1.414 1.414M4.222 4.222l1.414 1.414M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+          />
+        </svg>
+      ) : (
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+        </svg>
+      )}
     </button>
   );
 }
@@ -92,51 +117,70 @@ function useDisclosure() {
 export interface AccountMenuProps {
   readonly name: string;
   readonly initials: string;
+  readonly email?: string;
   readonly activeRole: string;
   readonly roles: readonly { value: string; label: string }[];
   readonly path: string;
 }
 
-export function AccountMenu({ name, initials, activeRole, roles, path }: AccountMenuProps) {
+const MENU_ITEM = 'w-full text-left px-4 py-1.5 hover:bg-[var(--edify-surface-muted)] font-semibold';
+
+export function AccountMenu({ name, initials, email = '', activeRole, roles, path }: AccountMenuProps) {
   const { open, setOpen, ref } = useDisclosure();
-  const others = roles.filter((role) => role.value !== activeRole);
-  const activeLabel = roles.find((role) => role.value === activeRole)?.label ?? activeRole;
+  const route = encodeURIComponent(path.split('?')[0] || '/');
   return (
-    <div className="relative" ref={ref}>
+    <div className="edify-topbar__account relative" ref={ref}>
       <button
         type="button"
         aria-label="Account menu"
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen(!open)}
-        className="grid h-9 w-9 place-items-center rounded-full bg-[var(--brand-primary)] text-[12px] font-semibold text-white"
+        className={`${CONTROL} edify-topbar__icon-control--avatar text-white text-[12px] font-semibold`}
       >
-        {initials}
+        <span>{initials}</span>
       </button>
       {open ? (
-        <div role="menu" className="absolute right-0 top-full z-50 mt-2 w-64 rounded-[var(--radius-surface)] border border-[var(--edify-border)] bg-[var(--edify-surface)] py-1 text-[13px] shadow-lg">
-          <div className="border-b border-[var(--edify-border)] px-4 py-2.5">
-            <p className="font-semibold text-[var(--edify-text)]">{name}</p>
-            <p className="text-[length:var(--edify-text-micro-size)] font-semibold text-[var(--edify-text-muted)]">{activeLabel}</p>
+        <div
+          role="menu"
+          className="absolute right-0 top-full mt-2 w-56 rounded-surface shadow-lg py-1.5 text-[12px] z-50 overflow-hidden edify-surface border edify-border"
+        >
+          <div className="px-4 py-2 border-b edify-border-bottom">
+            <p className="font-semibold edify-text">{name}</p>
+            <p className="edify-text-caption font-semibold edify-text-muted">{activeRole}</p>
+            {email ? <p className="edify-text-caption truncate edify-text-subtle mt-0.5">{email}</p> : null}
           </div>
-          {others.length ? (
-            <div className="border-b border-[var(--edify-border)] py-1">
-              <p className="bg-[var(--edify-surface-muted)] px-3 py-1 text-[length:var(--edify-text-micro-size)] font-bold uppercase tracking-wider text-[var(--edify-text-subtle)]">
-                Switch Active Role
-              </p>
-              {others.map((role) => (
-                <form key={role.value} method="post" action="/auth/switch-role">
+          {roles.length > 1 ? (
+            <>
+              <div className="px-3 py-1 edify-text-caption font-bold uppercase tracking-wider edify-surface-muted edify-text-subtle">Switch Active Role</div>
+              {roles.map((role) => (
+                <form key={role.value} method="post" action="/auth/switch-role" className="m-0">
                   <input type="hidden" name="role" value={role.value} />
                   <input type="hidden" name="next" value={path} />
-                  <button type="submit" role="menuitem" className="w-full px-4 py-1.5 text-left font-semibold hover:bg-[var(--edify-surface-muted)]">
+                  <button
+                    type="submit"
+                    role="menuitem"
+                    className={MENU_ITEM}
+                    style={{ color: role.value === activeRole ? 'var(--edify-accent)' : 'var(--edify-text-muted)' }}
+                  >
                     {role.label}
                   </button>
                 </form>
               ))}
-            </div>
+              <div className="my-1.5 border-t edify-border-top" />
+            </>
           ) : null}
-          <form method="post" action="/auth/sign-out" className="mt-1">
-            <button type="submit" role="menuitem" className="w-full px-4 py-2 text-left font-semibold text-[#be123c] hover:bg-[var(--edify-surface-muted)]">
+          <a href={`/help/context?for=${route}`} className="edify-mobile-account-link block px-4 py-2 edify-text">
+            Help for this page
+          </a>
+          <a href={`/support?route=${route}`} className="edify-mobile-account-link block px-4 py-2 edify-text">
+            Report a problem
+          </a>
+          <Link href="/profile" className="block px-4 py-1.5 hover:bg-[var(--edify-surface-muted)] font-semibold edify-text">
+            My Profile
+          </Link>
+          <form method="post" action="/auth/sign-out" className="m-0 mt-1 border-t edify-border-top">
+            <button type="submit" role="menuitem" className="account-menu__signout w-full text-left px-4 py-2 font-semibold">
               Log out
             </button>
           </form>
@@ -146,27 +190,38 @@ export function AccountMenu({ name, initials, activeRole, roles, path }: Account
   );
 }
 
-/** Below 1024px the sidebar opens from the top bar's menu button. */
+/** Below 1024px the sidebar opens from the top bar's menu button, as the existing drawer. */
 export function PhoneMenu({ children, asTab = false }: { children: ReactNode; asTab?: boolean }) {
   const [open, setOpen] = useState(false);
   return (
     <>
       {asTab ? (
-        <button type="button" aria-label="More" aria-expanded={open} onClick={() => setOpen(true)} className="flex h-16 flex-col items-center justify-center gap-1 text-[12px] font-semibold text-[var(--edify-text)]">
+        <button
+          type="button"
+          aria-label="More"
+          aria-expanded={open}
+          onClick={() => setOpen(true)}
+          className="flex h-16 flex-col items-center justify-center gap-1 text-[12px] font-semibold text-[var(--edify-text)]"
+        >
           <Icon name="menu" className="h-6 w-6" />
           <span>More</span>
         </button>
       ) : (
-        <button type="button" className={`${ICON_BUTTON} hidden md:grid lg:hidden`} aria-label="Open menu" aria-expanded={open} onClick={() => setOpen(true)}>
-          <Icon name="menu" className="h-5 w-5" />
+        <button type="button" className={`${CONTROL} hidden md:flex lg:hidden`} aria-label="Open sidebar" aria-expanded={open} onClick={() => setOpen(true)}>
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
         </button>
       )}
       {open ? (
-        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
-          <button type="button" aria-label="Close menu" className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
-          <div className="absolute inset-y-0 left-0 flex w-[280px] flex-col overflow-y-auto bg-[image:var(--edify-sidebar-bg)] px-3.5 py-[18px]" onClick={(event) => {
-            if ((event.target as HTMLElement).closest('a')) setOpen(false);
-          }}>
+        <div className="lg:hidden fixed inset-0 flex z-40" role="dialog" aria-modal="true" aria-label="Primary navigation">
+          <button type="button" aria-label="Close sidebar" className="fixed inset-0 bg-slate-600/75 backdrop-blur-sm" onClick={() => setOpen(false)} />
+          <div
+            className="app-sidebar relative flex h-full max-w-xs w-full flex-1 flex-col text-slate-100"
+            onClick={(event) => {
+              if ((event.target as HTMLElement).closest('a')) setOpen(false);
+            }}
+          >
             {children}
           </div>
         </div>
