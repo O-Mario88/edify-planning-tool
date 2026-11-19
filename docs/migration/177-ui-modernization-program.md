@@ -125,3 +125,7 @@ Nothing is claimed verified without evidence.
   the Expo app in the iOS simulator), with seeded accounts for every role.
 - Sequencing (owner, 2026-11-19): the redesign starts, mobile first, once
   the remaining Go migration in `178-remaining-go-migration.md` is done.
+- Stage A's audit is `179-stage-a-audit.md` (2026-11-19): 576 local captures
+  of all 16 roles at phone, tablet and desktop, the route-by-role
+  permissions matrix with Acting PL and Acting CD, a local timing baseline,
+  two defects, and three decisions for the owner.
