@@ -5,7 +5,8 @@
 // Upload History (/admin-panel/school-upload-history, upload_history.go);
 // the Admin Dashboard (/admin-panel, hub.go); and the Audit Log
 // (/admin-panel/audit-log, audit.go); and Geographical Location Setup
-// (/admin-panel/region-district-setup, geography.go).
+// (/admin-panel/region-district-setup, geography.go); and Notification &
+// Alert Logs (/admin-panel/notifications-mgmt, notifications.go).
 //
 // The doors and the listed rules are exported to rules.json by `manage.py
 // export_admin_panel_rules`; apps/frontend/test_admin_panel_rules_export.py
@@ -86,6 +87,8 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		return s.auditLog(ctx, query)
 	case GeographyPath:
 		return s.geography(ctx, p)
+	case NotificationsPath:
+		return s.notifications(ctx, query)
 	}
 	return workflowRules(), true, nil
 }

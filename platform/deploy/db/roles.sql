@@ -1154,3 +1154,8 @@ GRANT SELECT (id, file_name, original_file_name, upload_type, source, error_summ
 GRANT SELECT (id, name, status) ON secondary_district_group TO edify_gateway_ro;
 GRANT SELECT (id, group_id, district_id, created_at) ON secondary_district_group_member TO edify_gateway_ro;
 
+-- Notification & Alert Logs (internal/adminpanel/notifications.go): the
+-- Admin's log reads every recipient's newest notices with the role each was
+-- sent to (the columns above, and this one).
+GRANT SELECT (recipient_role) ON notification TO edify_gateway_ro;
+

@@ -33,6 +33,7 @@ PAGES = {
     "/admin-panel": "admin_dashboard",
     "/admin-panel/audit-log": "audit_log",
     "/admin-panel/region-district-setup": "region_district_setup",
+    "/admin-panel/notifications-mgmt": "notifications_mgmt",
 }
 
 

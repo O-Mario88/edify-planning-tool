@@ -48,6 +48,9 @@
       "Admin",
       "ImpactAssessment"
     ],
+    "/admin-panel/notifications-mgmt": [
+      "Admin"
+    ],
     "/admin-panel/region-district-setup": [
       "Admin"
     ],
