@@ -1980,6 +1980,8 @@ def _hidden_on_opening(node: Node) -> bool:
 
 
 def _blocks(node: Node, out: list[dict], later=None) -> list[dict]:
+    from apps.mobile_feed import family_cards
+
     taken: set[int] = set()
     for child in node.children:
         if not isinstance(child, Node) or child.tag in SILENT or _is_header(child):
@@ -2008,6 +2010,14 @@ def _blocks(node: Node, out: list[dict], later=None) -> list[dict]:
             if part is not None:
                 _blocks(_for_phone(parse(part)), out, later)
                 continue
+        if (group := family_cards.group_of(child)) and not child.has("hidden"):
+            # Cards the existing layout sets side by side: each names it.
+            inside = _blocks(child, [], later)
+            out.extend({**block, "group": group} for block in inside)
+            continue
+        if family_cards.is_admin_panel(child):
+            out.append(family_cards.read_admin_panel(child))
+            continue
         if (several := _several_blocks(child)) is not None:
             out.extend(several)
             continue

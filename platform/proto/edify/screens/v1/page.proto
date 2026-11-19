@@ -345,6 +345,8 @@ message PageListItem {
   string count = 8;
   // What the row is filtered on by the page's chips (cat → "Finance").
   map<string, string> keys = 9;
+  // A bar beside the row (the Admin dashboard's sign-ins a day).
+  PageMeter meter = 10;
 }
 
 message PageChip {
@@ -369,6 +371,11 @@ message PageList {
   string count = 2;
   string subtitle = 3;
   repeated PageListItem items = 4;
+  // The existing component the list is drawn as ("admin-panel": a card of
+  // rows, the Admin dashboard's); empty for the plain list.
+  string family = 5;
+  // What the card says when it has no rows.
+  string empty = 6;
 }
 
 message PageBlock {
@@ -399,6 +406,10 @@ message PageBlock {
     // draw it as text.
     PageCalendar calendar = 18;
   }
+  // The existing layout the block sits in with the blocks beside it that
+  // name the same group ("admin-ops-grid": the Admin dashboard's cards side
+  // by side); empty for a block on its own.
+  string group = 19;
 }
 
 // One entry of a calendar day: a piece of work, a leave day, a holiday or an

@@ -102,6 +102,52 @@ function Row({ item, resolve, hrefOf }: { item: PageListItem; resolve: (href: st
   );
 }
 
+/** A badge tone as the Admin dashboard's .admin-status colour. */
+const ADMIN_STATUS: Readonly<Record<string, string>> = { danger: 's-red', warning: 's-orange', info: 's-blue', success: 's-green' };
+
+/**
+ * A card of the Admin dashboard's own family (.admin-panel of
+ * .admin-target-row rows, partials/dashboards/admin/_platform_operations.html):
+ * each row its title (a link or a day), its figure, then its status, next
+ * step or bar, drawn by the existing admin-dashboard stylesheet.
+ */
+function AdminPanel({ list, resolve }: { list: PageList; resolve: (href: string) => string }) {
+  return (
+    <section className="admin-panel" aria-label={list.title || undefined} data-block="list" data-family="admin-panel">
+      <header className="admin-panel__header">
+        <h2>{list.title}</h2>
+        {list.subtitle ? <span className="edify-text-caption">{list.subtitle}</span> : null}
+      </header>
+      {list.items.map((item, index) => {
+        const href = resolve(item.href);
+        return (
+          <div key={index} className={`admin-target-row${item.tone === 'head' ? ' admin-target-row--head' : ''}`}>
+            {href ? <Link href={href}>{item.title}</Link> : <span>{item.title}</span>}
+            {item.count ? <strong>{item.count}</strong> : null}
+            {item.badges.map((badge) => (
+              <span key={badge.text} className={`admin-status ${ADMIN_STATUS[badge.tone] ?? ''}`}>
+                {badge.text}
+              </span>
+            ))}
+            {item.actions.map((action) => (
+              <Link key={action.label} href={resolve(action.href)} className="admin-next-step">
+                {action.label}
+                <span aria-hidden="true"> →</span>
+              </Link>
+            ))}
+            {item.meter ? (
+              <span className="admin-presence-bar" aria-hidden="true">
+                <i style={{ '--w': `${Math.round(item.meter.fraction * 100)}%` } as React.CSSProperties} />
+              </span>
+            ) : null}
+          </div>
+        );
+      })}
+      {!list.items.length && list.empty ? <p className="admin-panel__empty">{list.empty}</p> : null}
+    </section>
+  );
+}
+
 export function FeedList({
   list,
   resolve,
@@ -111,6 +157,7 @@ export function FeedList({
   resolve: (href: string) => string;
   hrefOf: (action: PageAction) => string;
 }) {
+  if (list.family === 'admin-panel') return <AdminPanel list={list} resolve={resolve} />;
   return (
     <section aria-label={list.title || 'List'} data-block="list" className="space-y-2">
       {list.title ? (

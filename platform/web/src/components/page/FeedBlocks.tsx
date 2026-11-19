@@ -4,6 +4,7 @@
  * any other kind the gateway may add later is named as not drawn yet rather
  * than silently dropped.
  */
+import type { ReactNode } from 'react';
 import type { PageAction, PageBlock, PageLinkTabs } from '@/gen/edify/screens/v1/page_pb';
 import { actionHref, resolveHref } from '@/lib/feedPage';
 
@@ -54,14 +55,42 @@ function joinsPrevious(blocks: readonly PageBlock[], index: number): boolean {
   return blocks[index]?.kind.case === 'pager' && (before === 'table' || before === 'panel');
 }
 
+/**
+ * The blocks in order, each run of blocks naming the same group (the Admin
+ * dashboard's cards in admin-ops-grid) wrapped in that existing layout, so
+ * its stylesheet sets them side by side as on the existing page.
+ */
+export function inGroups(blocks: readonly PageBlock[], draw: (block: PageBlock, index: number) => ReactNode): ReactNode[] {
+  const out: ReactNode[] = [];
+  for (let index = 0; index < blocks.length; ) {
+    const group = blocks[index]?.group ?? '';
+    if (!group) {
+      out.push(draw(blocks[index] as PageBlock, index));
+      index += 1;
+      continue;
+    }
+    const run: ReactNode[] = [];
+    let end = index;
+    while (end < blocks.length && blocks[end]?.group === group) {
+      run.push(draw(blocks[end] as PageBlock, end));
+      end += 1;
+    }
+    out.push(
+      <div key={`group-${index}`} className={group} data-group={group}>
+        {run}
+      </div>,
+    );
+    index = end;
+  }
+  return out;
+}
+
 export function FeedBlocks({ blocks, pagePath, drawerHref, selectable, clearFilters = true }: FeedBlocksProps) {
   const resolve = (href: string) => resolveHref(pagePath, href);
   const hrefOf = (action: PageAction) => actionHref(action, pagePath, drawerHref);
   const pagerOf = (block: PageBlock | undefined) =>
     block?.kind.case === 'pager' ? <Pager pager={{ ...block.kind.value, pages: block.kind.value.pages.map((page) => ({ ...page, href: resolve(page.href) })) }} /> : undefined;
-  return (
-    <>
-      {blocks.map((block, index) => {
+  const draw = (block: PageBlock, index: number) => {
         const kind = block.kind;
         if (joinsPrevious(blocks, index)) return null;
         const footer = joinsPrevious(blocks, index + 1) ? pagerOf(blocks[index + 1]) : undefined;
@@ -141,7 +170,6 @@ export function FeedBlocks({ blocks, pagePath, drawerHref, selectable, clearFilt
               </p>
             );
         }
-      })}
-    </>
-  );
+  };
+  return <>{inGroups(blocks, draw)}</>;
 }

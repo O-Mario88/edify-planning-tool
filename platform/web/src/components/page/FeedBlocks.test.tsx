@@ -348,3 +348,43 @@ describe('a record card’s facts in the existing card’s colours (web-fixes-2)
     expect(html).toMatch(/<dd class="[^"]*text-\[var\(--edify-accent-text\)\][^"]*">Schedule training</);
   });
 });
+
+describe('the Admin dashboard’s cards', () => {
+  const html = draw(
+    {
+      blocks: [
+        {
+          group: 'admin-ops-grid',
+          list: {
+            title: 'Recent Incidents',
+            family: 'admin-panel',
+            items: [{ title: 'INC-000267 · exceeds the SLO', href: '/admin-ops/incidents/i2', count: '35×', badges: [{ text: 'Open', tone: 'warning' }] }],
+          },
+        },
+        {
+          group: 'admin-ops-grid',
+          list: {
+            title: 'Sign-ins',
+            subtitle: '1 today · 85 this week',
+            family: 'admin-panel',
+            items: [{ title: 'Wed 18 Nov', count: '19', meter: { fraction: 0.4 } }, { title: 'Week of', count: 'Sign-ins', tone: 'head' }],
+          },
+        },
+        { list: { title: 'Critical Now', family: 'admin-panel', empty: 'Nothing critical is open.' } },
+      ],
+    },
+    '/dashboard',
+  );
+
+  it('sets the grouped cards side by side in their existing layout', () => {
+    expect(html.match(/<div class="admin-ops-grid" data-group="admin-ops-grid">/g)).toHaveLength(1);
+    expect(html).toMatch(/data-group="admin-ops-grid"><section class="admin-panel"[^]*Recent Incidents[^]*Sign-ins[^]*<\/section><\/div><section class="admin-panel"/);
+  });
+
+  it('draws each row as the existing target row', () => {
+    expect(html).toContain('<div class="admin-target-row"><a href="/admin-ops/incidents/i2">INC-000267 · exceeds the SLO</a><strong>35×</strong><span class="admin-status s-orange">Open</span></div>');
+    expect(html).toContain('<span class="admin-presence-bar" aria-hidden="true"><i style="--w:40%"></i></span>');
+    expect(html).toContain('<div class="admin-target-row admin-target-row--head"><span>Week of</span><strong>Sign-ins</strong></div>');
+    expect(html).toContain('<p class="admin-panel__empty">Nothing critical is open.</p>');
+  });
+});
