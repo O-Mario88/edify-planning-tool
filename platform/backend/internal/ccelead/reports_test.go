@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -52,5 +53,18 @@ func TestRolesWithoutTheRegisterAreRefused(t *testing.T) {
 		if !served || !errors.Is(err, pagegate.ErrNotAvailable) {
 			t.Errorf("%s: served %v, %v", role, served, err)
 		}
+	}
+}
+
+func TestARegionalLeadRowIsWordedAsTheQueueWordsIt(t *testing.T) {
+	due := time.Date(2026, 11, 10, 0, 0, 0, 0, time.UTC)
+	late := leadTodo("Submit the October CCE report", "late", "critical", ReportsPath, "Open reports", "Monthly report", &due, true)
+	if late.StatusLabel != "Overdue" || late.StatusTone != "danger" || late.DueLabel != "10 Nov" || late.DueTone != "danger" {
+		t.Errorf("an overdue report: %+v", late)
+	}
+	draft := leadTodo("Share training feedback", strings.Repeat("x", 200), "medium", EngagementsPath, "Open log", "Uganda", nil, false)
+	if draft.StatusLabel != "Waiting on Me" || draft.StatusTone != "warning" || draft.DueLabel != "—" ||
+		draft.DueTone != "neutral" || len(draft.Description) != todoDescriptionLength {
+		t.Errorf("unshared feedback: %+v", draft)
 	}
 }

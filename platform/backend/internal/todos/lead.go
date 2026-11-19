@@ -2,6 +2,7 @@ package todos
 
 import (
 	"context"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/ccelead"
 	"net/url"
 	"time"
 
@@ -150,12 +151,10 @@ func escalationGuard(ctx context.Context, s *Service, _ *reader) ([]todo, error)
 // training feedback (_cce_leadership_todos for a lead, the Regional Lead
 // row of coaching_todos, the observations of partner_engagement_todos):
 // any Regional Lead engagement, and for the RVP any submitted monthly
-// report. The Regional Lead's own rows of
-// _cce_leadership_todos (the monthly report, the engagement rhythm, feedback
-// to share) are not built in Go: that reader is passed on.
+// report. The Regional Lead's own rows are built (regionalLeadTodos).
 func regionalEngagementGuard(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 	if r.role == regionalLeadRole {
-		return nil, errPassOn
+		return regionalLeadTodos(ctx, s, r)
 	}
 	if r.role == rvpRole {
 		// The RVP's rows of the builder are the Regional Leads' submitted
@@ -165,6 +164,27 @@ func regionalEngagementGuard(ctx context.Context, s *Service, r *reader) ([]todo
 		}
 	}
 	return passOnIf(s.exists(ctx, `SELECT 1 FROM cce_regional_engagement`))
+}
+
+// regionalLeadTodos is _cce_leadership_todos for the Regional Lead
+// (ccelead.RegionalLeadTodos).
+func regionalLeadTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
+	rows, err := ccelead.RegionalLeadTodos(ctx, s.db, r.p, r.now)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]todo, len(rows))
+	for i, c := range rows {
+		due := c.Due
+		if due == nil {
+			due = &r.today
+		}
+		out[i] = todo{Title: c.Title, Description: c.Description, Category: "CCE leadership", Priority: c.Priority,
+			StatusKey: c.StatusKey, StatusLabel: c.StatusLabel, StatusTone: c.StatusTone, DueLabel: c.DueLabel,
+			DueTone: c.DueTone, Actionable: true, Linked: c.Linked, ActionLabel: c.ActionLabel, ActionURL: c.URL,
+			Shape: c.URL, Due: due}
+	}
+	return out, nil
 }
 
 // regionalLeadRole is the CCE Regional Programme Lead.

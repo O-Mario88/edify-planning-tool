@@ -131,6 +131,8 @@ LINK_SHAPES = {
     "/cost-settings": "/cost-settings",
     "/cost-settings?fy={fy}": "/cost-settings?fy=2028",
     "/staff/{id}": "/staff/cmw0000000000000000000001",
+    "/cce-leadership/reports": "/cce-leadership/reports",
+    "/cce-leadership/engagements": "/cce-leadership/engagements",
     "/analytics/country-director/drilldown?drill=risk&issue=no_ssa&fy={fy}": (
         "/analytics/country-director/drilldown?drill=risk&issue=no_ssa&fy=2028"
     ),

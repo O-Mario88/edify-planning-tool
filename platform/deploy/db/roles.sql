@@ -1089,3 +1089,6 @@ GRANT SELECT (total_amount, created_at) ON country_annual_budget TO edify_gatewa
 -- (todo_service._strategy_note_todos).
 GRANT SELECT (id, priority_label, scope, instruction, responsible_cd_id, deadline, status, created_at)
   ON rvp_strategy_note TO edify_gateway_ro;
+-- The Regional Lead's To-Dos: the RVP's note on a returned monthly report
+-- (todo_service._cce_leadership_todos).
+GRANT SELECT (review_note) ON cce_regional_report TO edify_gateway_ro;

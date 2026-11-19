@@ -73,14 +73,14 @@ var Handled = map[string]func(ctx context.Context, s *Service, r *reader) ([]tod
 // two lending roles' and the two partner roles' were compared with the
 // existing queue over the demo seed (internal/home/testdata/golden.py); the
 // lending and partner roles' builders pass every such reader on (their
-// loan and partner work is not built in Go). The Regional Lead's CCE rows
-// are not built (regionalEngagementGuard), and the Cluster Leader has no
-// account in the seed to compare: both stay the existing application's.
-// The RVP's were compared over a General Budget and an Annual Budget filed
-// for them, the Country Director's over the demo seed and a strategy note.
+// loan and partner work is not built in Go). The RVP's were compared over a
+// General Budget and an Annual Budget filed for them, the Country
+// Director's over the demo seed and a strategy note, the Regional Lead's
+// over the seed (an overdue monthly report). The Cluster Leader has no
+// account in the seed to compare and stays the existing application's.
 var PortedRoles = []string{"CCEO", leadRole, roleIA, adminRole, coordinatorRole, btRole,
 	"Accountant", "HumanResources", "MfiLoanOfficer", "MfiPartnerAdmin", "PartnerAdmin", "PartnerFieldOfficer",
-	rvpRole, cdRole}
+	rvpRole, cdRole, regionalLeadRole}
 
 // Served is whether Go answers a role at all: Go has built the role's queue
 // and has every builder the role reaches.
