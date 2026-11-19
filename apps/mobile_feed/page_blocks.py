@@ -1986,7 +1986,7 @@ def _hidden_on_opening(node: Node) -> bool:
 
 
 def _blocks(node: Node, out: list[dict], later=None) -> list[dict]:
-    from apps.mobile_feed import family_cards
+    from apps.mobile_feed import family_cards, markup_tree
 
     taken: set[int] = set()
     for child in node.children:
@@ -2016,6 +2016,11 @@ def _blocks(node: Node, out: list[dict], later=None) -> list[dict]:
             if part is not None:
                 _blocks(_for_phone(parse(part)), out, later)
                 continue
+        if _DESKTOP.get() and markup_tree.is_root(child):
+            # A part of bespoke cards, carried as its elements for the web
+            # app (markup_tree); the phone reads it as blocks.
+            out.append({"markup": {"root": markup_tree.read(child)}})
+            continue
         if (group := family_cards.group_of(child)) and not child.has("hidden"):
             # Cards the existing layout sets side by side: each names it.
             inside = _blocks(child, [], later)

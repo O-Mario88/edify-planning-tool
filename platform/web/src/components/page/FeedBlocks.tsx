@@ -17,6 +17,7 @@ import { FeedChart } from './FeedChart';
 import { FeedChips } from './FeedChips';
 import { FeedFacts } from './FeedFacts';
 import { FeedForm, FeedList } from './FeedList';
+import { FeedMarkup } from './FeedMarkup';
 import { FeedPanel } from './FeedPanel';
 import { FeedRail } from './FeedRail';
 import { FeedRecord } from './FeedRecord';
@@ -152,6 +153,8 @@ export function FeedBlocks({ blocks, pagePath, drawerHref, selectable, clearFilt
                 }))}
               />
             );
+          case 'markup':
+            return <FeedMarkup key={index} markup={kind.value} />;
           case 'list':
             return <FeedList key={index} list={kind.value} resolve={resolve} hrefOf={hrefOf} />;
           case 'chips':
