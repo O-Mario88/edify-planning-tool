@@ -880,3 +880,10 @@ build. `internal/home/testdata/golden.py` and
 `internal/integration/home_test.go` compare every seeded role's three
 answers at the instant the feed was asked: 29 compared, 25 handed on, 0
 differing.
+
+## 176.32 Superseded direction (2026-11-19)
+
+The owner's modernization brief (177-ui-modernization-program.md) replaces
+the "exactly like the live system" direction of 176.27–176.30 for the web:
+the live system is now the documented baseline, and the new design system
+is reviewed through previews before pages are rebuilt.
