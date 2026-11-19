@@ -802,3 +802,49 @@ October is dated the 9th). The same day feeds the page's month, quarter and
 week filters and the schedule deadline (`partner_risk_service`), so those
 now count a night hand-over in the day it was made. Partner Oversight
 compared at 00:30 EAT: 705 answers, 0 differing.
+
+## 176.30 One design system; a phone draws the native app's design (2026-11-19)
+
+The owner asked for "a standard system design (cards, graphs, tiles, layout,
+typography)" and then to "use the mobile design in react native and apply it
+to the … mobile screen design for the web".
+
+**The standard parts.** `platform/web/src/components/ds` exports every part a
+page is built from: the page header and its buttons, the type scale
+(`Eyebrow`, `PageTitle`, `SectionHeading`, `CardTitle`, `Caption`), the
+registered card (`StandardCard`), `Card`, the figure row, `MiniTile`,
+`Meter`, `Badge`, tables, the pager, the tab rail, the filter row and charts.
+Each draws the existing web's own markup, so the stylesheets the root layout
+links set it as on the live pages. `/design-system` shows them all with
+sample figures, beside a sample page as a phone reads it.
+
+**Two readings.** Below the existing web's phone line (64rem, where its own
+`desktop_hidden` switches), a page asks the gateway for the phone reading —
+the one the app gets — and draws it with web versions of the app's parts
+(`components/phone`, after `platform/mobile/src/ui/page`). From 64rem up it
+asks for the desktop reading and draws the live system's markup.
+
+- The browser measures itself and keeps the answer in the `edify_view`
+  cookie (`ViewportSync`, `lib/viewport.ts`), redrawing when it crosses the
+  line. Until it has measured, the device's hints guess (`Sec-CH-UA-Mobile`,
+  the user agent).
+- `FeedPage` and the school profile follow the reading. The Calendar keeps
+  the desktop reading, which its own components draw.
+- The phone parts are the app's: the field-coloured page, the header with
+  Export beside the title, figure tiles, the segment rail (first and open tab,
+  the rest under More) with the square calendar button, three filters and
+  More, record tables with the swipe hint, lists, panels, record cards,
+  segments and the cut-out bar chart. The palette is the app's `theme.ts`,
+  light and dark. Icons are `lucide-react` at the app's lucide version.
+
+**Why a cascade layer.** The existing stylesheets set `!important` rules on
+everything under `main` — weights, tab roles, selects, headings, 44px link
+targets — and match class substrings. The phone parts therefore style on
+`data-ph` attributes only, carry no `role="tab"`, and keep their rules in
+`@layer edify-phone` with every declaration important: a layered important
+declaration outranks every unlayered one. Their breakpoints are container
+queries on the blocks column, so the catalogue's phone frame and a split
+screen lay them out as a phone does.
+
+**Not changed:** the app itself already draws every screen from `theme.ts`;
+the Smart Route Planner keeps its owner-drawn teal (next-smart-field-routing).
