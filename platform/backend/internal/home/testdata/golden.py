@@ -9,7 +9,8 @@ Only against a database whose name ends in "_test". It files, every id
 starting "ghome", an officer's work in each state Home reads: planned for
 today, a cluster's work with no purpose of its own, an undated piece with a
 time of day, a dated piece saved at local midnight, under way, overdue, and
-done (in no figure); asks Home of a reader in every role the seed holds;
+done (in no figure); asks Home, its Priority actions and its To-Do figures of a reader in
+every role the seed holds;
 writes the instant it asked, the rows and the answers to GOLDEN_OUT, and
 deletes the rows. internal/integration/home_test.go files them again and
 asks Go at the same instant.
@@ -27,7 +28,11 @@ from rest_framework.test import APIRequestFactory, force_authenticate
 
 from apps.accounts.models import StaffProfile
 from apps.activities.models import Activity
-from apps.mobile_feed.views import HomeFeedView
+from apps.mobile_feed.views import (
+    HomeFeedView,
+    HomeQueueFeedView,
+    HomeTodoFiguresFeedView,
+)
 
 if not settings.DATABASES["default"]["NAME"].endswith("_test"):
     raise SystemExit("golden.py runs only against a _test database")
@@ -122,15 +127,24 @@ def file_rows(today):
     activity("done", "school_visit", "completed", -2)
 
 
+VIEWS = {
+    "body": HomeFeedView,
+    "queue": HomeQueueFeedView,
+    "todo_figures": HomeTodoFiguresFeedView,
+}
+
+
 def ask(email):
+    """Home's three answers for the reader, as the app asks them."""
     user = User.objects.get(email=email)
-    request = APIRequestFactory().get("/api/mobile/v1/home")
-    force_authenticate(request, user=user)
-    response = HomeFeedView.as_view()(request)
-    return {
-        "status": response.status_code,
-        "body": json.loads(json.dumps(response.data, default=str)),
-    }
+    out = {}
+    for name, view in VIEWS.items():
+        request = APIRequestFactory().get("/api/mobile/v1/home")
+        force_authenticate(request, user=user)
+        response = view.as_view()(request)
+        out["status"] = max(out.get("status", 0), response.status_code)
+        out[name] = json.loads(json.dumps(response.data, default=str))
+    return out
 
 
 clear()

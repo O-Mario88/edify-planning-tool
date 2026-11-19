@@ -47,6 +47,29 @@ type Figure struct {
 	Description string `json:"description"`
 }
 
+// PriorityRow is one of the Priority actions the owner set for a role
+// (home_priorities.SPECS): its words, icon, action, what it counts ("" for
+// a page with nothing to count), the line under it then, and its link with
+// FYMark where the year goes.
+type PriorityRow struct {
+	Key    string `json:"key"`
+	Title  string `json:"title"`
+	One    string `json:"one"`
+	Icon   string `json:"icon"`
+	Action string `json:"action"`
+	Counts string `json:"counts"`
+	Line   string `json:"line"`
+	URL    string `json:"url"`
+}
+
+// Priorities are home_priorities': each role's rows in the owner's order.
+type Priorities struct {
+	Roles       map[string][]PriorityRow `json:"roles"`
+	SchoolLists map[string]string        `json:"school_lists"`
+	UnreadLine  string                   `json:"unread_line"`
+	FYMark      string                   `json:"fy_mark"`
+}
+
 // Rules is rules.json.
 type Rules struct {
 	Roles         map[string]Role   `json:"roles"`
@@ -56,6 +79,7 @@ type Rules struct {
 	PriorityLimit int               `json:"priority_limit"`
 	StatusLabels  map[string]string `json:"status_labels"`
 	TypeLabels    map[string]string `json:"type_labels"`
+	Priorities    Priorities        `json:"priorities"`
 }
 
 var rules = mustLoad(rulesJSON)

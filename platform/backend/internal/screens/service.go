@@ -53,6 +53,8 @@ type Profile interface {
 // existing application still answers.
 type Home interface {
 	Build(ctx context.Context, p auth.Principal) (*screensv1.GetHomeResponse, bool, error)
+	BuildQueue(ctx context.Context, p auth.Principal) (*screensv1.GetHomeQueueResponse, bool, error)
+	BuildTodoFigures(ctx context.Context, p auth.Principal) (*screensv1.GetHomeTodoFiguresResponse, bool, error)
 }
 
 // Pages builds pages in Go (internal/clusterpage and the ones beside it).
@@ -165,17 +167,37 @@ func (s *Service) GetHome(
 	return fetch[screensv1.GetHomeResponse](ctx, s, pathHome)
 }
 
-// GetHomeQueue returns Home's Priority actions.
+// GetHomeQueue returns Home's Priority actions: from Go for a reader it
+// serves (internal/home), else from the existing application.
 func (s *Service) GetHomeQueue(
 	ctx context.Context, _ *connect.Request[screensv1.GetHomeQueueRequest],
 ) (*connect.Response[screensv1.GetHomeQueueResponse], error) {
+	if principal, ok := auth.PrincipalFrom(ctx); ok && s.home != nil {
+		response, served, err := s.home.BuildQueue(ctx, principal)
+		if err != nil {
+			return nil, apierr.Internal(ctx, s.logger, err)
+		}
+		if served {
+			return connect.NewResponse(response), nil
+		}
+	}
 	return fetch[screensv1.GetHomeQueueResponse](ctx, s, pathHomeQueue)
 }
 
-// GetHomeTodoFigures returns Home's To-Do figures.
+// GetHomeTodoFigures returns Home's To-Do figures: from Go for a reader it
+// serves (internal/home), else from the existing application.
 func (s *Service) GetHomeTodoFigures(
 	ctx context.Context, _ *connect.Request[screensv1.GetHomeTodoFiguresRequest],
 ) (*connect.Response[screensv1.GetHomeTodoFiguresResponse], error) {
+	if principal, ok := auth.PrincipalFrom(ctx); ok && s.home != nil {
+		response, served, err := s.home.BuildTodoFigures(ctx, principal)
+		if err != nil {
+			return nil, apierr.Internal(ctx, s.logger, err)
+		}
+		if served {
+			return connect.NewResponse(response), nil
+		}
+	}
 	return fetch[screensv1.GetHomeTodoFiguresResponse](ctx, s, pathHomeTodoFigures)
 }
 

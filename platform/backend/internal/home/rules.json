@@ -40,6 +40,162 @@
     "upload": "<svg class=\"edify-home-glyph\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M12 16V4M7 9l5-5 5 5\"/><path d=\"M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3\"/></svg>",
     "warning": "<svg class=\"edify-home-glyph\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M12 9v4M12 17h.01\"/><path d=\"M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z\"/></svg>"
   },
+  "priorities": {
+    "fy_mark": "9999",
+    "roles": {
+      "CCEO": [
+        {
+          "action": "Open",
+          "counts": "past their date, not completed",
+          "icon": "warning",
+          "key": "my_overdue",
+          "line": "",
+          "one": "",
+          "title": "My Overdue Plans",
+          "url": "/dashboard?view=week#what-needs-you-now"
+        },
+        {
+          "action": "Cluster",
+          "counts": "In no active cluster",
+          "icon": "grid",
+          "key": "not_clustered",
+          "line": "",
+          "one": "School Not Clustered",
+          "title": "Schools Not Clustered",
+          "url": "/my-plan?list=not_clustered#plan-list"
+        },
+        {
+          "action": "Plan",
+          "counts": "No visit completed this year",
+          "icon": "calendar",
+          "key": "no_visit",
+          "line": "",
+          "one": "School With No Visits",
+          "title": "Schools With No Visits",
+          "url": "/my-plan?list=not_visited#plan-list"
+        },
+        {
+          "action": "Plan",
+          "counts": "No training completed this year",
+          "icon": "calendar",
+          "key": "no_training",
+          "line": "",
+          "one": "School With No Trainings",
+          "title": "Schools With No Trainings",
+          "url": "/my-plan?list=not_trained#plan-list"
+        },
+        {
+          "action": "Open",
+          "counts": "No confirmed SSA this year",
+          "icon": "chart",
+          "key": "no_ssa",
+          "line": "",
+          "one": "School With No SSA",
+          "title": "Schools With No SSA",
+          "url": "/schools?gap=no_ssa"
+        },
+        {
+          "action": "Open",
+          "counts": null,
+          "icon": "chart",
+          "key": "my_performance",
+          "line": "Your targets and achievements this year",
+          "one": "",
+          "title": "My Performance",
+          "url": "/team-performance/"
+        }
+      ],
+      "Program Lead": [
+        {
+          "action": "Open",
+          "counts": "past their date, not completed",
+          "icon": "warning",
+          "key": "my_overdue",
+          "line": "",
+          "one": "",
+          "title": "My Overdue Plans",
+          "url": "/dashboard?view=week&plans=own#what-needs-you-now"
+        },
+        {
+          "action": "Follow up",
+          "counts": "past their date, not completed",
+          "icon": "bell",
+          "key": "team_overdue",
+          "line": "",
+          "one": "",
+          "title": "Follow up with CCEOs Overdue Plans",
+          "url": "/dashboard?view=week&plans=team#what-needs-you-now"
+        },
+        {
+          "action": "Cluster",
+          "counts": "In no active cluster",
+          "icon": "grid",
+          "key": "not_clustered",
+          "line": "",
+          "one": "School Not Clustered",
+          "title": "Schools Not Clustered",
+          "url": "/dashboard?fy=9999&pm=view%3Dplanning%26fy%3D9999%26gap%3Dnot_clustered#monitor-list"
+        },
+        {
+          "action": "Verify",
+          "counts": "waiting on your review",
+          "icon": "check",
+          "key": "verify",
+          "line": "",
+          "one": "",
+          "title": "Verify CCEO Completed Activities",
+          "url": "/dashboard?fy=9999&pm=view%3Dexecution%26fy%3D9999#completion-reviews"
+        },
+        {
+          "action": "Plan",
+          "counts": "No visit completed this year",
+          "icon": "calendar",
+          "key": "no_visit",
+          "line": "",
+          "one": "School With No Visits",
+          "title": "Schools With No Visits",
+          "url": "/dashboard?fy=9999&pm=view%3Dplanning%26fy%3D9999%26gap%3Dnot_visited#monitor-list"
+        },
+        {
+          "action": "Plan",
+          "counts": "No training completed this year",
+          "icon": "calendar",
+          "key": "no_training",
+          "line": "",
+          "one": "School With No Trainings",
+          "title": "Schools With No Trainings",
+          "url": "/dashboard?fy=9999&pm=view%3Dplanning%26fy%3D9999%26gap%3Dnot_trained#monitor-list"
+        },
+        {
+          "action": "Open",
+          "counts": "No confirmed SSA this year",
+          "icon": "chart",
+          "key": "no_ssa",
+          "line": "",
+          "one": "School With No SSA",
+          "title": "Schools With No SSA",
+          "url": "/dashboard?fy=9999&pm=view%3Dplanning%26fy%3D9999%26gap%3Dno_ssa#monitor-list"
+        },
+        {
+          "action": "Open",
+          "counts": null,
+          "icon": "chart",
+          "key": "team_performance",
+          "line": "Your CCEOs' targets and achievements",
+          "one": "",
+          "title": "My Team Performance",
+          "url": "/team-performance/"
+        }
+      ]
+    },
+    "school_lists": {
+      "no_ssa": "no_ssa",
+      "no_training": "not_trained",
+      "no_visit": "not_visited",
+      "not_clustered": "not_clustered"
+    },
+    "unread_line": "Could not be counted just now. Open the list to see it."
+  },
   "priority_limit": 5,
   "roles": {
     "Accountant": {

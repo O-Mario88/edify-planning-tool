@@ -109,6 +109,16 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, _ ur
 	if !Served(p.ActiveRole) {
 		return nil, false, nil
 	}
+	q, served, err := s.readQueue(ctx, p)
+	if !served || err != nil {
+		return nil, served, err
+	}
+	return page(q), true, nil
+}
+
+// readQueue is get_todos for p: the reader's rows, sorted and counted.
+// served is false for a reader whose queue needs what Go does not build.
+func (s *Service) readQueue(ctx context.Context, p auth.Principal) (queue, bool, error) {
 	now := s.now()
 	local := now.In(zone)
 	r := &reader{p: p, role: p.ActiveRole, now: now, fy: readerYear(now),
@@ -120,18 +130,35 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, _ ur
 	}
 	scope, err := schooldirectory.ResolveScope(ctx, s.db, p, now)
 	if err != nil {
-		return nil, true, err
+		return queue{}, true, err
 	}
 	r.scope = scope
-	rows, served, err := collect(ctx, s, r, role.Builders)
+	rows, served, err := collect(ctx, s, r, rules.Roles[p.ActiveRole].Builders)
 	if !served || err != nil {
-		return nil, served, err
+		return queue{}, served, err
 	}
 	q, err := buildQueue(r.role, rows)
 	if err != nil {
-		return nil, true, err
+		return queue{}, true, err
 	}
-	return page(q), true, nil
+	return q, true, nil
+}
+
+// QueueCounts are Home's To-Do figures (home_service.build_home_todo_figures
+// over get_cached_todos): the rows waiting on the reader, due today and
+// critical, and how many rows the queue holds. served is false where the
+// existing application answers the queue: a role Go has not ported, a
+// builder it does not have, an acting appointment.
+func (s *Service) QueueCounts(ctx context.Context, p auth.Principal) (counts map[string]int, total int, served bool, err error) {
+	role, ok := rules.Roles[p.ActiveRole]
+	if !ok || !role.Page || !Served(p.ActiveRole) || p.InActingAppointment {
+		return nil, 0, false, nil
+	}
+	q, served, err := s.readQueue(ctx, p)
+	if !served || err != nil {
+		return nil, 0, served, err
+	}
+	return map[string]int{"waiting_me": q.WaitingMe, "due_today": q.DueToday, "critical": q.Critical}, q.Total, true, nil
 }
 
 // collect runs the reader's builders in order. A builder that needs what Go

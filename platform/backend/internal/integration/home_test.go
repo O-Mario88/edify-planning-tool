@@ -35,9 +35,11 @@ func TestHomeMatchesTheExistingFeed(t *testing.T) {
 		Now     time.Time         `json:"now"`
 		Rows    []json.RawMessage `json:"rows"`
 		Answers []struct {
-			Email  string          `json:"email"`
-			Status int             `json:"status"`
-			Body   json.RawMessage `json:"body"`
+			Email       string          `json:"email"`
+			Status      int             `json:"status"`
+			Body        json.RawMessage `json:"body"`
+			Queue       json.RawMessage `json:"queue"`
+			TodoFigures json.RawMessage `json:"todo_figures"`
 		} `json:"answers"`
 	}
 	if err := json.Unmarshal(raw, &golden); err != nil {
@@ -66,28 +68,39 @@ FROM "user" u LEFT JOIN staff_profile sp ON sp.user_id = u.id WHERE u.email = $1
 			t.Fatalf("the test database needs %s (demo seed): %v", a.Email, err)
 		}
 		p.Roles = []string{p.ActiveRole}
-		got, served, err := service.Build(ctx, p)
-		if err != nil {
-			t.Fatalf("%s: %v", a.Email, err)
-		}
-		if !served {
-			handedOn++
-			continue
-		}
-		compared++
-		want := &screensv1.GetHomeResponse{}
-		if err := protojson.Unmarshal(a.Body, want); err != nil {
-			t.Fatalf("%s: reading the existing answer: %v", a.Email, err)
-		}
-		if !proto.Equal(got, want) {
-			differing++
-			g, w := protojson.Format(got), protojson.Format(want)
-			at := 0
-			for at < len(g) && at < len(w) && g[at] == w[at] {
-				at++
+		// Each of Home's three answers, where Go answers it.
+		for _, part := range []struct {
+			name     string
+			build    func() (proto.Message, bool, error)
+			existing json.RawMessage
+			want     proto.Message
+		}{
+			{"home", func() (proto.Message, bool, error) { return service.Build(ctx, p) }, a.Body, &screensv1.GetHomeResponse{}},
+			{"queue", func() (proto.Message, bool, error) { return service.BuildQueue(ctx, p) }, a.Queue, &screensv1.GetHomeQueueResponse{}},
+			{"to-do figures", func() (proto.Message, bool, error) { return service.BuildTodoFigures(ctx, p) }, a.TodoFigures, &screensv1.GetHomeTodoFiguresResponse{}},
+		} {
+			got, served, err := part.build()
+			if err != nil {
+				t.Fatalf("%s %s: %v", a.Email, part.name, err)
 			}
-			t.Errorf("%s differs at byte %d:\n go:       …%s\n existing: …%s", a.Email, at,
-				g[max(at-200, 0):min(at+200, len(g))], w[max(at-200, 0):min(at+200, len(w))])
+			if !served {
+				handedOn++
+				continue
+			}
+			compared++
+			if err := protojson.Unmarshal(part.existing, part.want); err != nil {
+				t.Fatalf("%s %s: reading the existing answer: %v", a.Email, part.name, err)
+			}
+			if !proto.Equal(got, part.want) {
+				differing++
+				g, w := protojson.Format(got), protojson.Format(part.want)
+				at := 0
+				for at < len(g) && at < len(w) && g[at] == w[at] {
+					at++
+				}
+				t.Errorf("%s %s differs at byte %d:\n go:       …%s\n existing: …%s", a.Email, part.name, at,
+					g[max(at-200, 0):min(at+200, len(g))], w[max(at-200, 0):min(at+200, len(w))])
+			}
 		}
 	}
 	t.Logf("%d answers compared, %d handed on, %d differing", compared, handedOn, differing)

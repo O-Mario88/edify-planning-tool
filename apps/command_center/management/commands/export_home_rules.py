@@ -12,7 +12,11 @@ platform/backend/internal/home/rules.json:
     (render_precomputed_metric_item), which do not depend on the value;
   • how many upcoming activities and priority rows Home lists;
   • an activity's status and type as Home words them (the model's choices,
-    get_status_display and get_activity_type_display).
+    get_status_display and get_activity_type_display);
+  • the Priority actions the owner set for a CCEO and a Programme Lead
+    (apps.command_center.home_priorities): each role's rows in order, each
+    row's words, icon, action and link — the link with FY_MARK where the
+    year goes, which Go fills in.
 
 Nothing is restated: each answer is computed here by the same functions the
 feed calls. apps/command_center/test_home_rules_export.py fails until a
@@ -103,6 +107,51 @@ def _choices(field: str) -> dict:
     }
 
 
+#: Where a priority row's link carries the year (urlencoded unchanged).
+FY_MARK = "9999"
+
+
+def _priorities() -> dict:
+    from apps.command_center.home_priorities import (
+        PAGE_LINES,
+        ROLE_ROWS,
+        SCHOOL_LISTS,
+        SPECS,
+        UNREAD_LINE,
+        _url,
+    )
+    from apps.core.navigation import get_user_role_slug
+    from apps.core.rbac import EdifyRole
+
+    roles = {}
+    for role in EdifyRole:
+        slug = get_user_role_slug(_role_user(role.value)) or ""
+        if slug not in ROLE_ROWS:
+            continue
+        rows = []
+        for key in ROLE_ROWS[slug]:
+            title, one, icon, action, counts = SPECS[key]
+            rows.append(
+                {
+                    "key": key,
+                    "title": title,
+                    "one": one,
+                    "icon": icon,
+                    "action": action,
+                    "counts": counts,
+                    "line": PAGE_LINES.get(key, ""),
+                    "url": _url(key, slug, FY_MARK),
+                }
+            )
+        roles[role.value] = rows
+    return {
+        "roles": roles,
+        "school_lists": dict(SCHOOL_LISTS),
+        "unread_line": UNREAD_LINE,
+        "fy_mark": FY_MARK,
+    }
+
+
 def rules() -> dict:
     from apps.command_center.home_service import PRIORITY_LIMIT, UPCOMING_LIMIT
     from apps.core.rbac import EdifyRole
@@ -116,6 +165,7 @@ def rules() -> dict:
         "priority_limit": PRIORITY_LIMIT,
         "status_labels": _choices("status"),
         "type_labels": _choices("activity_type"),
+        "priorities": _priorities(),
     }
 
 

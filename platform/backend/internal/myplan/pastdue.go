@@ -33,6 +33,12 @@ type PastDue struct {
 // Total is past_due_total_count: every past-due plan, whoever's.
 func (p PastDue) Total() int { return p.count }
 
+// Owned is pl_own_past_due_count: a Lead's own past-due plans.
+func (p PastDue) Owned() int { return p.owned }
+
+// Team is pl_team_past_due_count: a Lead's team's past-due plans.
+func (p PastDue) Team() int { return p.teamWork }
+
 type pastDueRow struct {
 	a                                    *activity
 	typeLabel, owner, planned            string

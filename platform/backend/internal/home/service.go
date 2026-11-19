@@ -10,6 +10,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myplan"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/todos"
 )
 
 // kampala is the project's timezone (settings.TIME_ZONE): Home's day, its
@@ -42,8 +43,9 @@ var queueFigures = []queueFigure{
 
 // Service builds Home.
 type Service struct {
-	db  schooldirectory.Querier
-	now func() time.Time
+	db    schooldirectory.Querier
+	now   func() time.Time
+	todos *todos.Service
 }
 
 // NewService returns a Service reading db at the time now gives.
@@ -51,7 +53,7 @@ func NewService(db schooldirectory.Querier, now func() time.Time) *Service {
 	if now == nil {
 		now = time.Now
 	}
-	return &Service{db: db, now: now}
+	return &Service{db: db, now: now, todos: todos.NewService(db, now)}
 }
 
 // roleOf is the reader's Home rules, and whether Go answers their Home: a
