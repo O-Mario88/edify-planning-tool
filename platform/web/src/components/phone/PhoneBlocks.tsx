@@ -16,7 +16,7 @@ import { PhoneList } from './PhoneList';
 import { PhonePanel } from './PhonePanel';
 import { PhoneRecord } from './PhoneRecord';
 import { PhoneSegments } from './PhoneSegments';
-import { PhoneEmpty, PhonePager } from './PhoneParts';
+import { PhoneEmpty, PhonePager, pagerEmpty } from './PhoneParts';
 import { PhoneTable } from './PhoneTable';
 import { PhoneTiles } from './PhoneTiles';
 
@@ -80,7 +80,12 @@ export function PhoneBlocks({ blocks, pagePath, drawerHref, selectable }: PhoneB
         return <PhoneTable key={index} table={kind.value} pagePath={pagePath} drawerHref={drawerHref} selectable={selectable} bare={bare} footer={footer} />;
       }
       case 'pager':
-        return (
+        // Nothing to page: no card at all. Inside a switch card it is that
+        // card's foot, not a card of its own.
+        if (pagerEmpty(kind.value)) return null;
+        return bare ? (
+          <PhonePager key={index} pager={kind.value} resolve={resolve} alone />
+        ) : (
           <section key={index} data-ph="card">
             <PhonePager pager={kind.value} resolve={resolve} alone />
           </section>
@@ -111,9 +116,7 @@ export function PhoneBlocks({ blocks, pagePath, drawerHref, selectable }: PhoneB
           />
         );
       case 'chips':
-        // Inside a switch card the chips are that card's own second switch;
-        // on the page they keep the existing rail (FeedChips).
-        return bare ? <PhoneChips key={index} chips={kind.value} /> : <FeedBlocks key={index} blocks={[block]} pagePath={pagePath} drawerHref={drawerHref} selectable={selectable} />;
+        return <PhoneChips key={index} chips={kind.value} />;
       case undefined:
         return null;
       default:

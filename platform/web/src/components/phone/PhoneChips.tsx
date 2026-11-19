@@ -1,11 +1,11 @@
 'use client';
 
 /*
- * A chip filter inside a card that switches between parts (the Dashboard's
- * This Week: All Categories, School Visits, Trainings, Cluster Meetings), as
- * the app draws chips (PageChipsView.tsx): a rail that never scrolls, with
- * the first chip and the chosen one on it and the rest under "More n". It
- * filters as FeedChips does.
+ * A chip filter on a phone (To-Do's categories and priorities; inside the
+ * Dashboard's This Week card its kinds of plan), as the app draws chips
+ * (PageChipsView.tsx): a rail that never scrolls, with the first chip and
+ * the chosen one on it and the rest under "More n". It filters as FeedChips
+ * does.
  */
 import type { PageChip, PageChips } from '@/gen/edify/screens/v1/page_pb';
 import { useChipFilter } from '@/components/page/FeedChips';

@@ -7,7 +7,13 @@ import { Inbox } from 'lucide-react';
 import type { PageAction, PagePager } from '@/gen/edify/screens/v1/page_pb';
 
 /** The shared table pager: "Showing 1–50 of 51" and the page buttons. */
+/** A pager with nothing to say: no summary and no pages. */
+export function pagerEmpty(pager: PagePager): boolean {
+  return pager.summary === '' && pager.pages.length === 0;
+}
+
 export function PhonePager({ pager, resolve, alone = false }: { pager: PagePager; resolve: (href: string) => string; alone?: boolean }) {
+  if (pagerEmpty(pager)) return null;
   return (
     <nav data-ph="pager" data-alone={alone || undefined} aria-label="Pages">
       <span data-ph="pager-summary">{pager.summary}</span>

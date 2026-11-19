@@ -20,6 +20,7 @@ import { PhonePage } from './PhonePage';
 import { scaleOf } from './PhoneChart';
 import { railChips } from './PhoneChips';
 import { railTabs } from './PhoneLinkTabs';
+import { foldSegments } from './PhoneSegments';
 import { phoneTone, tileColumns } from './tone';
 
 // The menu leaves a desktop through the app router (LeaveOnDesktop).
@@ -169,6 +170,22 @@ describe('a page on a phone', () => {
     expect(body).toContain('aria-label="More Which kind of plan, 2"');
   });
 
+  it('draws no card for a pager with nothing to page, on the page or inside a switch card', () => {
+    const empty = { pager: { summary: '', pages: [] } };
+    expect(draw({ blocks: [empty] })).toBe('<div data-ph="blocks"></div>');
+    const html = draw({ blocks: [{ segments: { segments: [{ label: 'Matrix', active: true, blocks: [empty, { pager: { summary: '1–20 of 42', pages: [{ label: '1', current: true }] } }] }] } }] });
+    const body = html.slice(html.indexOf('data-ph="seg-body"'));
+    expect(body).not.toContain('data-ph="card"');
+    expect(body).toContain('<span data-ph="pager-summary">1–20 of 42</span>');
+  });
+
+  it('draws chips on the page as the app’s rail, not the existing tab rail', () => {
+    const html = draw({ blocks: [{ chips: { name: 'cat', label: 'Category', value: 'all', chips: [{ label: 'All', value: 'all' }, { label: 'Planning', value: 'planning' }, { label: 'Partner', value: 'partner' }] } }] });
+    expect(html).toContain('<div data-ph="rail" role="group" aria-label="Category">');
+    expect(html).not.toContain('data-edify-tablist');
+    expect(html).toContain('aria-label="More Category, 1"');
+  });
+
   it('draws a record card with its tick, pills, facts and a way to open it', () => {
     const html = draw(
       {
@@ -245,6 +262,11 @@ describe('the phone rules', () => {
     const { shown, rest } = railChips(chips as never, 'meetings');
     expect(shown.map((chip) => chip.value)).toEqual(['all', 'meetings']);
     expect(rest.map((chip) => chip.value)).toEqual(['visits', 'trainings']);
+  });
+
+  it('keeps the first part and the open one on a folded switch', () => {
+    expect(foldSegments(4, 0)).toEqual({ shown: [0, 1], rest: [2, 3] });
+    expect(foldSegments(6, 4)).toEqual({ shown: [0, 4], rest: [1, 2, 3, 5] });
   });
 
   it('sets tiles two a row on a phone and in even rows of at most five wider', () => {
