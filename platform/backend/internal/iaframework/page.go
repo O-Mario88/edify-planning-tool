@@ -311,3 +311,25 @@ func choice(name, caption, blank, value string, options [][2]string) *screensv1.
 	}
 	return f
 }
+
+// Reviewer is apps.impact.review.reviewer_basis for one reader, for the
+// other pages whose records a second person confirms (School Evidence):
+// whether the reader may confirm what author recorded in country.
+type Reviewer struct{ res *resolver }
+
+// NewReviewer is the reviewer rules for p, the country on their People
+// record as the framework reads it.
+func NewReviewer(ctx context.Context, db schooldirectory.Querier, p auth.Principal) (*Reviewer, error) {
+	r := reader{id: p.UserID, role: p.ActiveRole}
+	err := db.QueryRow(ctx, `SELECT COALESCE(country, '') FROM staff_profile WHERE user_id = $1 LIMIT 1`, p.UserID).Scan(&r.country)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return nil, fmt.Errorf("iaframework: reading the reader's country: %w", err)
+	}
+	r.country = strings.TrimSpace(r.country)
+	return &Reviewer{res: &resolver{db: db, r: r, officers: map[string][]string{}}}, nil
+}
+
+// May is whether the reader may confirm a record author made in country.
+func (v *Reviewer) May(ctx context.Context, author, country string) (bool, error) {
+	return v.res.may(ctx, author, country)
+}

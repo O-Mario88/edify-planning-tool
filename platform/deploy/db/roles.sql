@@ -1201,3 +1201,11 @@ GRANT SELECT (evidence_profile, salesforce_record_type, salesforce_expected_pref
 GRANT SELECT (id, catalogue_item_id, version, change_reason, created_at) ON activity_catalogue_version TO edify_gateway_ro;
 GRANT SELECT (id, review_kind, source_model, source_record_id, source_value, candidate_codes, status, created_at)
   ON activity_catalogue_review_queue TO edify_gateway_ro;
+
+-- School Evidence (internal/schoolevidence): a learning result's
+-- proficiency, its state's reason and country, and when it was recorded;
+-- every kind's school, year and deletion for the page's figures. Not its
+-- notes or evidence reference.
+GRANT SELECT (learners_proficient, return_reason, country, created_at) ON impact_learning_result TO edify_gateway_ro;
+GRANT SELECT (school_id, deleted_at) ON impact_edtech_deployment TO edify_gateway_ro;
+GRANT SELECT (school_id, deleted_at) ON impact_edtech_check TO edify_gateway_ro;

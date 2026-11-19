@@ -119,6 +119,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/routeplan"
 	routeschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/routeplan/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolevidence"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/screens"
@@ -209,6 +210,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			perfcycle.NewService(pool, time.Now),
 			perfconversation.NewService(pool, time.Now),
 			catalogue.NewService(pool, time.Now),
+			schoolevidence.NewService(pool, time.Now),
 			closurequality.NewService(pool, time.Now),
 			iaframework.NewService(pool),
 			ownership.NewService(pool),

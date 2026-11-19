@@ -1,0 +1,260 @@
+{
+  "assessment_types": [
+    [
+      "onetest",
+      "OneTest"
+    ],
+    [
+      "national_exam",
+      "National examination"
+    ],
+    [
+      "internal",
+      "School internal assessment"
+    ]
+  ],
+  "learning_rule_label": "Any change (no approved threshold)",
+  "metric_labels": {
+    "School Evidence Awaiting Verification": "School Evidence Awaiting Verification",
+    "School Evidence Returned for Correction": "School Evidence Returned for Correction",
+    "Schools With Confirmed Discipleship Records": "Schools With Confirmed Discipleship Records",
+    "Schools With Confirmed EdTech Deployments": "Schools With Confirmed EdTech Deployments",
+    "Schools With Confirmed Learning Results": "Schools With Confirmed Learning Results"
+  },
+  "min_learners": 10,
+  "roles": {
+    "Accountant": {
+      "page": false,
+      "record": false,
+      "strip": null
+    },
+    "Admin": {
+      "page": true,
+      "record": false,
+      "strip": {
+        "label": "Impact Assessment",
+        "scrolls": true,
+        "tabs": [
+          {
+            "active": false,
+            "href": "/ia/dashboard/",
+            "label": "Overview"
+          },
+          {
+            "active": false,
+            "href": "/ia/framework/",
+            "label": "Framework & Strategy"
+          },
+          {
+            "active": true,
+            "href": "/ia/school-evidence/",
+            "label": "Baseline & Field Data"
+          },
+          {
+            "active": false,
+            "href": "/ia/stories/",
+            "label": "School Progress"
+          },
+          {
+            "active": false,
+            "href": "/ia/learning/",
+            "label": "Analysis & Learning"
+          },
+          {
+            "active": false,
+            "href": "/ia/impact-reports/",
+            "label": "Reporting & Accountability"
+          },
+          {
+            "active": false,
+            "href": "/country-planning-oversight/",
+            "label": "Data Quality & Verification"
+          }
+        ]
+      }
+    },
+    "BusinessTransformationOfficer": {
+      "page": false,
+      "record": false,
+      "strip": null
+    },
+    "CCEO": {
+      "page": false,
+      "record": false,
+      "strip": null
+    },
+    "ClusterLeader": {
+      "page": false,
+      "record": false,
+      "strip": null
+    },
+    "CountryDirector": {
+      "page": true,
+      "record": false,
+      "strip": {
+        "label": "Impact Assessment",
+        "scrolls": true,
+        "tabs": [
+          {
+            "active": false,
+            "href": "/ia/dashboard/",
+            "label": "Overview"
+          },
+          {
+            "active": false,
+            "href": "/ia/framework/",
+            "label": "Framework & Strategy"
+          },
+          {
+            "active": true,
+            "href": "/ia/school-evidence/",
+            "label": "Baseline & Field Data"
+          },
+          {
+            "active": false,
+            "href": "/ia/stories/",
+            "label": "School Progress"
+          },
+          {
+            "active": false,
+            "href": "/ia/learning/",
+            "label": "Analysis & Learning"
+          },
+          {
+            "active": false,
+            "href": "/ia/impact-reports/",
+            "label": "Reporting & Accountability"
+          },
+          {
+            "active": false,
+            "href": "/country-planning-oversight/",
+            "label": "Data Quality & Verification"
+          }
+        ]
+      }
+    },
+    "HumanResources": {
+      "page": false,
+      "record": false,
+      "strip": null
+    },
+    "ImpactAssessment": {
+      "page": true,
+      "record": true,
+      "strip": {
+        "label": "Impact Assessment",
+        "scrolls": true,
+        "tabs": [
+          {
+            "active": false,
+            "href": "/ia/dashboard/",
+            "label": "Overview"
+          },
+          {
+            "active": false,
+            "href": "/ia/framework/",
+            "label": "Framework & Strategy"
+          },
+          {
+            "active": true,
+            "href": "/ia/school-evidence/",
+            "label": "Baseline & Field Data"
+          },
+          {
+            "active": false,
+            "href": "/ia/stories/",
+            "label": "School Progress"
+          },
+          {
+            "active": false,
+            "href": "/ia/learning/",
+            "label": "Analysis & Learning"
+          },
+          {
+            "active": false,
+            "href": "/ia/impact-reports/",
+            "label": "Reporting & Accountability"
+          },
+          {
+            "active": false,
+            "href": "/country-planning-oversight/",
+            "label": "Data Quality & Verification"
+          }
+        ]
+      }
+    },
+    "MfiLoanOfficer": {
+      "page": false,
+      "record": false,
+      "strip": null
+    },
+    "MfiPartnerAdmin": {
+      "page": false,
+      "record": false,
+      "strip": null
+    },
+    "PartnerAdmin": {
+      "page": false,
+      "record": false,
+      "strip": null
+    },
+    "PartnerFieldOfficer": {
+      "page": false,
+      "record": false,
+      "strip": null
+    },
+    "Program Lead": {
+      "page": false,
+      "record": false,
+      "strip": null
+    },
+    "ProjectCoordinator": {
+      "page": false,
+      "record": false,
+      "strip": null
+    },
+    "RegionalProgramLead": {
+      "page": false,
+      "record": false,
+      "strip": null
+    },
+    "RegionalVicePresident": {
+      "page": false,
+      "record": false,
+      "strip": null
+    }
+  },
+  "status_tones": {
+    "confirmed": "success",
+    "pending": "warning",
+    "returned": "danger"
+  },
+  "statuses": [
+    [
+      "pending",
+      "Pending verification"
+    ],
+    [
+      "confirmed",
+      "Confirmed"
+    ],
+    [
+      "returned",
+      "Returned"
+    ]
+  ],
+  "tabs": [
+    [
+      "learning",
+      "Learning results"
+    ],
+    [
+      "discipleship",
+      "Discipleship"
+    ],
+    [
+      "edtech",
+      "EdTech"
+    ]
+  ]
+}

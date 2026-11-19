@@ -393,7 +393,22 @@ answers of 8 readers over four pages, 0 differing; and a framework compare
 (rules tab, its filters and paging, the default and indicators tabs) to
 prove the shared rows: 18 answers, 0 differing.
 
-Left in C5: `/ia/school-evidence/`.
+`/ia/school-evidence/` is Go's for its Learning results tab (internal/
+schoolevidence): the reader's section strip, the figures over every kind of
+evidence in their scope (nothing for a summary-only reader), the tab rail,
+the year, state and subject filters, Impact Assessment's CSV upload form and
+Record button, the year-on-year comparison of confirmed class results
+(learning_comparisons: pooled by school, assessment, class and subject,
+weighted by learners, a side under ten learners withheld, the change in
+points of score or of proficiency, Python's rounding and number writing)
+and the register of results, newest first, fifty a page, each Open or, where
+the reviewer rules allow (iaframework.Reviewer, now exported), Verify. A
+status's tone sits on a span the feed does not read. Handed on: the
+Discipleship and EdTech tabs and ?open= (a record's drawer). Golden
+(schoolevidence/testdata/learning_golden.py, `gsev` results): 28 answers of
+4 readers over seven filters, 0 differing.
+
+Left in C5: the Discipleship and EdTech tabs of `/ia/school-evidence/`.
 
 ### C7 (part) · Four HR programme registers, and the registers' header buttons (2026-11-19)
 
