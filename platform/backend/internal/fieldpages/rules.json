@@ -1,67 +1,117 @@
 {
+  "interventions": [
+    [
+      "christlike_behaviour",
+      "Christlike Behaviour"
+    ],
+    [
+      "exposure_to_word_of_god",
+      "Exposure to the Word of God"
+    ],
+    [
+      "financial_health",
+      "Financial Health"
+    ],
+    [
+      "leadership",
+      "Leadership"
+    ],
+    [
+      "government_requirement",
+      "Government Requirements"
+    ],
+    [
+      "learning_environment",
+      "Learning Environment"
+    ],
+    [
+      "teaching_environment",
+      "Teacher's Environment"
+    ],
+    [
+      "enrolment",
+      "Enrolment"
+    ]
+  ],
   "roles": {
     "Accountant": {
       "map": false,
+      "schedule": true,
       "search": true
     },
     "Admin": {
       "map": true,
+      "schedule": true,
       "search": true
     },
     "BusinessTransformationOfficer": {
       "map": false,
+      "schedule": false,
       "search": true
     },
     "CCEO": {
       "map": true,
+      "schedule": true,
       "search": true
     },
     "ClusterLeader": {
       "map": false,
+      "schedule": false,
       "search": false
     },
     "CountryDirector": {
       "map": true,
+      "schedule": true,
       "search": true
     },
     "HumanResources": {
       "map": false,
+      "schedule": false,
       "search": true
     },
     "ImpactAssessment": {
       "map": true,
+      "schedule": true,
       "search": true
     },
     "MfiLoanOfficer": {
       "map": false,
+      "schedule": false,
       "search": true
     },
     "MfiPartnerAdmin": {
       "map": false,
+      "schedule": false,
       "search": true
     },
     "PartnerAdmin": {
       "map": false,
+      "schedule": false,
       "search": true
     },
     "PartnerFieldOfficer": {
       "map": false,
+      "schedule": false,
       "search": true
     },
     "Program Lead": {
       "map": true,
+      "schedule": true,
       "search": true
     },
     "ProjectCoordinator": {
       "map": true,
+      "schedule": true,
       "search": true
     },
     "RegionalProgramLead": {
       "map": true,
+      "schedule": false,
       "search": true
     },
     "RegionalVicePresident": {
       "map": false,
+      "schedule": false,
       "search": true
     }
   }

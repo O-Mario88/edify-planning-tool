@@ -1,10 +1,13 @@
 """Write the field pages' rules for the Go gateway.
 
 Go builds the School Map (/map: apps.frontend.views.extended_views.map_view,
-pages/map/index.html) and the empty Search page (/search: search_view with no
-query) as the existing feed reads them, from what this command writes to
+pages/map/index.html), the empty Search page (/search: search_view with no
+query) and the Schedule School Visit form with nothing chosen yet
+(/planning/schedule: planning_views.schedule_activity_form_view) as the
+existing feed reads them, from what this command writes to
 platform/backend/internal/fieldpages/rules.json: for each role, whether it
-may open each page. A change must be exported again;
+may open each page, and the interventions the form offers. A change must be
+exported again;
 apps/frontend/test_field_pages_rules_export.py fails until it is.
 
     python manage.py export_field_pages_rules
@@ -27,6 +30,7 @@ EXPORT_PATH = Path("platform/backend/internal/fieldpages/rules.json")
 PAGES = {
     "map": ("schools", "/map"),
     "search": ("search", "/search"),
+    "schedule": ("planning", "/planning/schedule"),
 }
 
 
@@ -44,7 +48,13 @@ def rules() -> dict:
             )
             for name, (permission, path) in PAGES.items()
         }
-    return {"roles": roles}
+    from apps.core.enums import SsaIntervention
+
+    return {
+        "roles": roles,
+        # The form's Primary Focus Intervention choices, in their order.
+        "interventions": [[str(v), str(label)] for v, label in SsaIntervention.choices],
+    }
 
 
 def rendered() -> str:

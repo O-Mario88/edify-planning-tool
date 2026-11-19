@@ -25,9 +25,11 @@ var rulesJSON []byte
 
 var rules = func() (r struct {
 	Roles map[string]struct {
-		Map    bool `json:"map"`
-		Search bool `json:"search"`
+		Map      bool `json:"map"`
+		Search   bool `json:"search"`
+		Schedule bool `json:"schedule"`
 	} `json:"roles"`
+	Interventions [][2]string `json:"interventions"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {
 		panic(fmt.Sprintf("fieldpages: reading rules.json: %v", err))
@@ -63,12 +65,21 @@ func NewService(db schooldirectory.Querier, now func() time.Time) *Service {
 // without rules, and a search with a query (the existing page's).
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
 	path = strings.TrimSuffix(path, "/")
-	if path != mapPath && path != searchPath {
+	if path != mapPath && path != searchPath && path != schedulePath {
 		return nil, false, nil
 	}
 	doors, ok := rules.Roles[p.ActiveRole]
 	if !ok {
 		return nil, false, nil
+	}
+	if path == schedulePath {
+		if !doors.Schedule {
+			return nil, true, pagegate.ErrNotAvailable
+		}
+		if scheduleChosen(query) {
+			return nil, false, nil
+		}
+		return scheduleForm(), true, nil
 	}
 	if path == searchPath {
 		if !doors.Search {

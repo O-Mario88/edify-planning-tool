@@ -162,6 +162,10 @@ and activity lists are not built yet). Rules: `manage.py
 export_field_pages_rules`. Golden: `web_page.py` for `/map` and `/search`
 over eight readers, 16 answers, 0 differing.
 
+`/planning/schedule` with nothing chosen (the visit form: a school is typed,
+no cluster is listed) is Go's too; a chosen action, school or cluster is
+handed on. With it the golden is 24 answers over three pages, 0 differing.
+
 Left in C3: `/today` (desk roles; the field roles are redirected and handed
-on), `/activities/closure`, `/planning/schedule`, `/debriefs/submit`,
-`/debriefs/weekly-report`, and `/search` with a query.
+on), `/activities/closure`, `/debriefs/submit`, `/debriefs/weekly-report`,
+`/search` with a query and `/planning/schedule` with a choice.
