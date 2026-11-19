@@ -80,6 +80,16 @@ type Rules struct {
 	StatusLabels  map[string]string `json:"status_labels"`
 	TypeLabels    map[string]string `json:"type_labels"`
 	Priorities    Priorities        `json:"priorities"`
+	QueueRows     QueueRows         `json:"queue_rows"`
+}
+
+// QueueRows are how a role without the owner's Priority actions words its
+// To-Do rows on Home (home_service._todo_row, _group_row).
+type QueueRows struct {
+	CategoryIcons  map[string]string `json:"category_icons"`
+	PriorityTones  map[string]string `json:"priority_tones"`
+	PriorityLabels map[string]string `json:"priority_labels"`
+	Tones          map[string]string `json:"tones"`
 }
 
 var rules = mustLoad(rulesJSON)

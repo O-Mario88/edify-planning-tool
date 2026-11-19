@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/todos"
 )
 
 func TestHomeWordsTheDayAsTheExistingPage(t *testing.T) {
@@ -64,5 +65,28 @@ func TestQueueFiguresWaitValuelessThenTakeTheirTone(t *testing.T) {
 	got := QueueFigures(map[string]int{"waiting_me": 2, "critical": 0}, false)
 	if len(got) != 3 || got[0].GetValue() != "2" || got[0].GetTone() != "caution" || got[2].GetTone() != "plain" || got[1].GetValue() != "0" {
 		t.Fatalf("a queue's tiles: %v", got)
+	}
+}
+
+func TestAQueueRowReadsAsTheExistingHomeRow(t *testing.T) {
+	row := todoRow(todos.Row{Title: "Visit Nakifuma School", Category: "Execution", Priority: "high",
+		StatusLabel: "Overdue", StatusTone: "danger", DueLabel: "Overdue", DueTone: "danger",
+		Linked: "Nakifuma School · School Visit", Description: "not read beside a link"})
+	if row.Context != "School Visit" || row.DueLabel != "" || row.DueTone != "alert" || row.StatusTone != "alert" ||
+		row.ActionLabel != "Open" || row.Url != "/todos" || row.IconSvg != rules.Icons["calendar"] {
+		t.Errorf("a linked overdue row: %+v", row)
+	}
+	row = todoRow(todos.Row{Title: "Set rates", Category: "Somewhere new", DueLabel: "—", DueTone: "neutral",
+		Description: "Three activities cannot be costed", ActionLabel: "Set Rates", ActionURL: "/cost-settings"})
+	if row.Context != "Three activities cannot be costed" || row.DueLabel != "" || row.DueTone != "plain" ||
+		row.ActionLabel != "Set Rates" || row.Url != "/cost-settings" || row.IconSvg != rules.Icons["flag"] {
+		t.Errorf("an unlinked row: %+v", row)
+	}
+	same := todos.Row{Title: "Plan Activities for Newly Added Project School", Category: "Projects", Priority: "medium",
+		DueLabel: "—", DueTone: "neutral"}
+	group := groupRow([]todos.Row{same, same, same})
+	if group.Context != "3 like this" || group.StatusLabel != "Medium" || group.StatusTone != "info" ||
+		group.DueLabel != "—" || group.ActionLabel != "Review" || group.Url != "/todos" || group.Count != 3 {
+		t.Errorf("a group: %+v", group)
 	}
 }

@@ -16,7 +16,10 @@ platform/backend/internal/home/rules.json:
   • the Priority actions the owner set for a CCEO and a Programme Lead
     (apps.command_center.home_priorities): each role's rows in order, each
     row's words, icon, action and link — the link with FY_MARK where the
-    year goes, which Go fills in.
+    year goes, which Go fills in;
+  • how every other role's Priority actions word their To-Do rows
+    (home_service._todo_row and _group_row): each category's icon, each
+    priority's tone and label, and the queue's tones as Home names them.
 
 Nothing is restated: each answer is computed here by the same functions the
 feed calls. apps/command_center/test_home_rules_export.py fails until a
@@ -152,6 +155,22 @@ def _priorities() -> dict:
     }
 
 
+def _queue_rows() -> dict:
+    from apps.command_center.home_service import (
+        CATEGORY_ICONS,
+        PRIORITY_TONES,
+        TONES,
+    )
+    from apps.command_center.todo_service import PRIORITY_LABEL
+
+    return {
+        "category_icons": dict(CATEGORY_ICONS),
+        "priority_tones": dict(PRIORITY_TONES),
+        "priority_labels": dict(PRIORITY_LABEL),
+        "tones": dict(TONES),
+    }
+
+
 def rules() -> dict:
     from apps.command_center.home_service import PRIORITY_LIMIT, UPCOMING_LIMIT
     from apps.core.rbac import EdifyRole
@@ -166,6 +185,7 @@ def rules() -> dict:
         "status_labels": _choices("status"),
         "type_labels": _choices("activity_type"),
         "priorities": _priorities(),
+        "queue_rows": _queue_rows(),
     }
 
 

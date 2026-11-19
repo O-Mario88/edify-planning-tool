@@ -70,7 +70,7 @@ func TestNextActionIsTheExistingOne(t *testing.T) {
 			}
 		}
 		na := computeNextAction(a, today)
-		got := []string{na.Text, na.Action, na.URL, na.Description, actPriority(a, na.Action, today), actStatus(a, na.Action, today)}
+		got := []string{na.Text, na.Action, na.URL, na.Description, actPriority(a, na.Action, today), statusKey(a, na.Action, today)}
 		if strings.Join(got, "|") != answer {
 			t.Errorf("%s\n got %v\nwant %v", given, got, want)
 		}
@@ -202,5 +202,37 @@ func TestAReaderIsPassedOnByAGuardOrAnApprovalTheyGive(t *testing.T) {
 	}
 	if _, err := fundRequestTodos(context.Background(), nil, &reader{role: "CountryDirector"}); err != errPassOn {
 		t.Errorf("a fund approver: %v", err)
+	}
+}
+
+func statusKey(a activity, action string, today time.Time) string {
+	key, _, _ := actStatus(a, action, today)
+	return key
+}
+
+func TestARowsDueWordsAreTheExistingOnes(t *testing.T) {
+	today := time.Date(2026, 11, 19, 0, 0, 0, 0, time.UTC)
+	day := func(d int) *time.Time { v := today.AddDate(0, 0, d); return &v }
+	for _, c := range []struct {
+		day         *time.Time
+		label, tone string
+	}{{nil, "—", "neutral"}, {day(-1), "Overdue", "danger"}, {day(0), "Today", "warning"}, {day(3), "Nov 22", "info"}} {
+		if label, tone := dueWords(c.day, today); label != c.label || tone != c.tone {
+			t.Errorf("%v: %q %q, want %q %q", c.day, label, tone, c.label, c.tone)
+		}
+	}
+	for _, c := range []struct {
+		due                       *time.Time
+		key, status, tone, dueTag string
+	}{
+		{nil, "waiting_me", "Waiting on Me", "warning", "—"},
+		{day(-2), "overdue", "Overdue", "danger", "17 Nov"},
+		{day(0), "due_today", "Due Today", "warning", "19 Nov"},
+		{day(9), "waiting_me", "Waiting on Me", "warning", "28 Nov"},
+	} {
+		got := derivedWords(todo{}, c.due, today)
+		if got.StatusKey != c.key || got.StatusLabel != c.status || got.StatusTone != c.tone || got.DueLabel != c.dueTag {
+			t.Errorf("%v: %+v", c.due, got)
+		}
 	}
 }

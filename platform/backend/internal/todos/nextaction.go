@@ -1,6 +1,9 @@
 package todos
 
-import "time"
+import (
+	"strconv"
+	"time"
+)
 
 // activity is what compute_next_action reads of an activity.
 type activity struct {
@@ -148,16 +151,58 @@ func actPriority(a activity, action string, today time.Time) string {
 
 // actStatus is todo_service._act_status's key (its label and tone are not
 // drawn).
-func actStatus(a activity, action string, today time.Time) string {
+func actStatus(a activity, action string, today time.Time) (key, label, tone string) {
 	switch {
 	case contains([]string{"returned", "returned_by_pl", "returned_by_ia"}, a.Status):
-		return "returned"
+		return "returned", "Returned", "danger"
 	case contains(rules.Waiting, action):
-		return "blocked"
+		return "blocked", "Waiting on Review", "danger"
 	case a.PlannedDate != nil && a.PlannedDate.Before(today):
-		return "overdue"
+		return "overdue", "Overdue", "danger"
 	case a.PlannedDate != nil && a.PlannedDate.Equal(today):
-		return "due_today"
+		return "due_today", "Due Today", "warning"
 	}
-	return "waiting_me"
+	return "waiting_me", "Waiting on Me", "info"
+}
+
+// dueWords is _due's label and tone for a day: none, past, today or ahead.
+func dueWords(day *time.Time, today time.Time) (label, tone string) {
+	switch {
+	case day == nil:
+		return "—", "neutral"
+	case day.Before(today):
+		return "Overdue", "danger"
+	case day.Equal(today):
+		return "Today", "warning"
+	}
+	return day.Format("Jan ") + strconv.Itoa(day.Day()), "info"
+}
+
+// withDue is t with _due's words for its own Due day.
+func withDue(t todo, today time.Time) todo {
+	t.DueLabel, t.DueTone = dueWords(t.Due, today)
+	return t
+}
+
+// dayMonth is strftime("%-d %b").
+func dayMonth(d time.Time) string {
+	return strconv.Itoa(d.Day()) + " " + d.Format("Jan")
+}
+
+// derivedWords is derived_rows.todo_row's status and due words for a row
+// due on due (none: waiting on the reader, no date).
+func derivedWords(t todo, due *time.Time, today time.Time) todo {
+	t.StatusKey, t.StatusLabel, t.StatusTone = "waiting_me", "Waiting on Me", "warning"
+	t.DueLabel, t.DueTone = "—", "neutral"
+	if due == nil {
+		return t
+	}
+	t.DueLabel, t.DueTone = dayMonth(*due), "warning"
+	switch {
+	case due.Before(today):
+		t.StatusKey, t.StatusLabel, t.StatusTone, t.DueTone = "overdue", "Overdue", "danger", "danger"
+	case due.Equal(today):
+		t.StatusKey, t.StatusLabel = "due_today", "Due Today"
+	}
+	return t
 }

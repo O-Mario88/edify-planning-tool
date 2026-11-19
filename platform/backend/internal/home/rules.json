@@ -197,6 +197,32 @@
     "unread_line": "Could not be counted just now. Open the list to see it."
   },
   "priority_limit": 5,
+  "queue_rows": {
+    "category_icons": {
+      "Evidence": "upload",
+      "Execution": "calendar",
+      "Finance": "money",
+      "SSA": "chart"
+    },
+    "priority_labels": {
+      "critical": "Critical",
+      "high": "High",
+      "low": "Low",
+      "medium": "Medium"
+    },
+    "priority_tones": {
+      "critical": "alert",
+      "high": "caution",
+      "medium": "info"
+    },
+    "tones": {
+      "danger": "alert",
+      "info": "info",
+      "primary": "brand",
+      "success": "good",
+      "warning": "caution"
+    }
+  },
   "roles": {
     "Accountant": {
       "has_plan": false,

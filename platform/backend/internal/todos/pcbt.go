@@ -122,7 +122,8 @@ WHERE project_id = ANY($1) AND school_id = ANY($2) AND deleted_at IS NULL
 			continue
 		}
 		out = append(out, todo{Title: "Plan Activities for Newly Added Project School", Category: "Projects",
-			Priority: "medium", StatusKey: "waiting_me", Actionable: true, Linked: e.name, ActionLabel: "Plan project work",
+			Priority: "medium", StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "warning",
+			DueLabel: "—", DueTone: "neutral", Actionable: true, Linked: e.name, ActionLabel: "Plan project work",
 			ActionURL: "/projects/planning?project=" + e.project, Shape: "/projects/planning?project={id}", Due: &r.today})
 	}
 	return out, nil
@@ -208,7 +209,8 @@ ORDER BY g.name ASC, d.name ASC LIMIT $3`, pc.BTEligibleSchoolStatuses, pc.BTDis
 		schools += d.schools
 	}
 	return []todo{{Title: "Review Geographic Financing Gap", Category: btCategory, Priority: "medium",
-		StatusKey: "waiting_me", Actionable: true, Linked: thousands(schools) + " eligible schools",
+		StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info", DueLabel: "This month", DueTone: "neutral",
+		Actionable: true, Linked: thousands(schools) + " eligible schools",
 		ActionLabel: "Review coverage", ActionURL: "/business-transformation", Shape: "/business-transformation",
 		Due: &r.today}}, nil
 }
@@ -263,12 +265,13 @@ func salesforceRow(id, mfi, purpose string, submitted, today time.Time) todo {
 	case !today.Before(due.AddDate(0, 0, -btSalesforceWarnDays)):
 		priority = "high"
 	}
-	status := "waiting_me"
+	status, label, tone := "waiting_me", "Waiting on Me", "info"
+	dueLabel := due.Format("Jan ") + strconv.Itoa(due.Day())
 	if today.After(due) {
-		status = "overdue"
+		status, label, tone, dueLabel = "overdue", "Overdue", "danger", "Overdue"
 	}
 	return todo{Title: "Confirm loan in Salesforce", Category: btCategory, Priority: priority, StatusKey: status,
-		Actionable: true, Linked: mfi + " · " + purpose + " · " + strconv.Itoa(age) + " days old", ActionLabel: "Complete",
+		StatusLabel: label, StatusTone: tone, DueLabel: dueLabel, DueTone: tone, Actionable: true, Linked: mfi + " · " + purpose + " · " + strconv.Itoa(age) + " days old", ActionLabel: "Complete",
 		ActionURL: "/loans?open=" + id + "#loan-register-title", Shape: "/loans?open={id}#loan-register-title", Due: &due}
 }
 
@@ -291,10 +294,12 @@ ORDER BY q.due_date ASC LIMIT $3`, schools, rules.LoanFieldVerificationStates, b
 		err := row.Scan(&due, &name, &code, &mfi)
 		d := dateOf(due)
 		t := todo{Title: "Schedule Loan-Use Verification", Category: btCategory, Priority: "high", StatusKey: "waiting_me",
+			StatusLabel: "Waiting on Me", StatusTone: "info", DueLabel: due.Format("Jan ") + strconv.Itoa(due.Day()), DueTone: "info",
 			Actionable: true, Linked: pyStr(name) + " · " + mfi, ActionLabel: "Plan Visit",
 			ActionURL: "/schools/" + pyStr(code) + "#school-bt-title", Shape: "/schools/{code}#school-bt-title", Due: d}
 		if d.Before(r.today) {
-			t.Priority, t.StatusKey = "critical", "overdue"
+			t.Priority, t.StatusKey, t.StatusLabel, t.StatusTone = "critical", "overdue", "Overdue", "danger"
+			t.DueLabel, t.DueTone = "Overdue", "danger"
 		}
 		return t, err
 	})
@@ -376,9 +381,10 @@ func learningRow(title, action string, days []time.Time, today time.Time) todo {
 	}
 	t := todo{Title: title, Category: btCategory, Priority: "high", StatusKey: "waiting_me", Actionable: true,
 		Linked: strconv.Itoa(len(days)) + " waiting", ActionLabel: action,
-		ActionURL: "/business-transformation/impact-reports", Shape: "/business-transformation/impact-reports", Due: &oldest}
+		ActionURL: "/business-transformation/impact-reports", Shape: "/business-transformation/impact-reports", Due: &oldest,
+		StatusLabel: "Waiting on Me", StatusTone: "warning", DueLabel: "Oldest " + dayMonth(oldest), DueTone: "neutral"}
 	if int(today.Sub(oldest)/(24*time.Hour)) > learningLateDays {
-		t.Priority, t.StatusKey = "critical", "overdue"
+		t.Priority, t.StatusKey, t.StatusLabel, t.StatusTone, t.DueTone = "critical", "overdue", "Overdue", "danger", "danger"
 	}
 	return t
 }

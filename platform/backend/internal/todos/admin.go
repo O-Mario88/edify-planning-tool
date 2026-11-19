@@ -3,6 +3,7 @@ package todos
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -116,7 +117,7 @@ ORDER BY month_key DESC LIMIT 5`, budgetCountry(r), desk.status)
 		}
 		for _, key := range keys {
 			out = append(out, todo{Title: desk.title, Category: desk.category, Priority: "high", StatusKey: "waiting_me",
-				Actionable: true, Linked: "General Budget · " + key, ActionLabel: desk.actionLabel,
+				StatusLabel: "Waiting on Me", StatusTone: "info", DueLabel: "—", DueTone: "neutral", Actionable: true, Linked: "General Budget · " + key, ActionLabel: desk.actionLabel,
 				ActionURL: desk.actionURL, Shape: desk.actionURL})
 		}
 	}
@@ -137,7 +138,8 @@ WHERE country_id = $1 AND month_key = $2 AND status = ANY($3) ORDER BY id ASC LI
 	}
 	for _, key := range current {
 		out = append(out, todo{Title: "Review " + key + " General Budget", Category: "Budget Approval", Priority: "medium",
-			StatusKey: "waiting_me", Actionable: true, Linked: "General Budget · " + key, ActionLabel: "Review",
+			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info", DueLabel: "—", DueTone: "neutral",
+			Actionable: true, Linked: "General Budget · " + key, ActionLabel: "Review",
 			ActionURL: "/country-budget", Shape: "/country-budget"})
 	}
 	returned, err := s.strings(ctx, `SELECT month_key FROM monthly_work_plan_budget WHERE country_id = $1 AND status = $2
@@ -147,7 +149,8 @@ ORDER BY month_key DESC LIMIT 5`, budgetCountry(r), cb.ReturnedStatus)
 	}
 	for _, key := range returned {
 		out = append(out, todo{Title: "Fix Returned General Budget", Category: "Budget Approval", Priority: "critical",
-			StatusKey: "returned", Actionable: true, Linked: "General Budget · " + key, ActionLabel: "Fix",
+			StatusKey: "returned", StatusLabel: "Returned", StatusTone: "danger", DueLabel: "Today", DueTone: "warning",
+			Actionable: true, Linked: "General Budget · " + key, ActionLabel: "Fix",
 			ActionURL: "/country-budget", Shape: "/country-budget", Due: &r.today})
 	}
 	fys, err := s.strings(ctx, `SELECT fy FROM country_annual_budget WHERE country_id = $1 AND status = $2
@@ -157,7 +160,8 @@ ORDER BY fy DESC LIMIT 3`, budgetCountry(r), cb.ReturnedStatus)
 	}
 	for _, fy := range fys {
 		out = append(out, todo{Title: "Fix Returned FY" + fy + " Work Plan", Category: "Budget Approval", Priority: "critical",
-			StatusKey: "returned", Actionable: true, Linked: "FY Work Plan · " + fy, ActionLabel: "Fix",
+			StatusKey: "returned", StatusLabel: "Returned", StatusTone: "danger", DueLabel: "Today", DueTone: "warning",
+			Actionable: true, Linked: "FY Work Plan · " + fy, ActionLabel: "Fix",
 			ActionURL: "/work-plan?view=fy", Shape: "/work-plan?view=fy", Due: &r.today})
 	}
 	rows, err := s.db.Query(ctx, `SELECT period_key FROM fund_request WHERE status = $1 ORDER BY created_at DESC LIMIT 10`,
@@ -170,8 +174,13 @@ ORDER BY fy DESC LIMIT 3`, budgetCountry(r), cb.ReturnedStatus)
 		return nil, err
 	}
 	for _, period := range periods {
+		due := ""
+		if period != nil {
+			due = *period
+		}
 		out = append(out, todo{Title: "Approve Team Monthly Request", Category: "Budget Approval", Priority: "high",
-			StatusKey: "waiting_me", Actionable: true, Linked: "Team request · " + pyStr(period), ActionLabel: "Review",
+			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info", DueLabel: due, DueTone: "neutral",
+			Actionable: true, Linked: "Team request · " + pyStr(period), ActionLabel: "Review",
 			ActionURL: "/budget", Shape: "/budget", Due: &r.today})
 	}
 	return out, nil
@@ -190,7 +199,7 @@ func costCatalogueTodos(ctx context.Context, s *Service, r *reader) ([]todo, err
 		return nil, nil
 	}
 	return []todo{{Title: "Set Missing Cost Catalogue Rates", Category: "Finance", Priority: "high", StatusKey: "blocked",
-		Actionable: true, Linked: "Cost Catalogue", ActionLabel: "Set Rates", ActionURL: "/cost-settings",
+		StatusLabel: "Blocking Funding", StatusTone: "danger", DueLabel: "Today", DueTone: "warning", Actionable: true, Linked: "Cost Catalogue", ActionLabel: "Set Rates", ActionURL: "/cost-settings",
 		Shape: "/cost-settings", Due: &r.today}}, nil
 }
 
@@ -217,7 +226,7 @@ ORDER BY created_at ASC LIMIT 4`, pending)
 		}
 	}
 	return []todo{{Title: "Configure Partner Users", Category: "Partners", Priority: "high", StatusKey: "waiting_me",
-		Actionable: true, Linked: plural(total, "organisation"), ActionLabel: "Set up logins",
+		StatusLabel: "Waiting on Me", StatusTone: "warning", DueLabel: "—", DueTone: "neutral", Actionable: true, Linked: plural(total, "organisation"), ActionLabel: "Set up logins",
 		ActionURL: "/admin-panel/users#partner-directory-title", Shape: "/admin-panel/users#partner-directory-title",
 		Due: &r.today}}, nil
 }
@@ -248,10 +257,13 @@ ORDER BY r.due_date ASC LIMIT 30`, rules.LoanFieldVerificationStates)
 		var name, code, mfi *string
 		err := row.Scan(&due, &name, &code, &mfi)
 		t := todo{Title: "Schedule Loan-Use Verification", Category: "Business Transformation", Priority: "high",
-			StatusKey: "waiting_me", Actionable: true, Linked: pyStr(name) + " · " + pyStr(mfi), ActionLabel: "Plan Visit",
+			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info",
+			DueLabel: due.Format("Jan ") + strconv.Itoa(due.Day()), DueTone: "info",
+			Actionable: true, Linked: pyStr(name) + " · " + pyStr(mfi), ActionLabel: "Plan Visit",
 			ActionURL: "/schools/" + pyStr(code) + "#school-bt-title", Shape: "/schools/{code}#school-bt-title", Due: dateOf(due)}
 		if dateOf(due).Before(r.today) {
-			t.Priority, t.StatusKey = "critical", "overdue"
+			t.Priority, t.StatusKey, t.StatusLabel, t.StatusTone = "critical", "overdue", "Overdue", "danger"
+			t.DueLabel, t.DueTone = "Overdue", "danger"
 		}
 		return t, err
 	})

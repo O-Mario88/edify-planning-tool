@@ -887,3 +887,34 @@ The owner's modernization brief (177-ui-modernization-program.md) replaces
 the "exactly like the live system" direction of 176.27–176.30 for the web:
 the live system is now the documented baseline, and the new design system
 is reviewed through previews before pages are rebuilt.
+
+## 176.33 Every role's Home queue in Go (2026-11-19)
+
+Owner: "port the other roles' Home queue to Go too". A role without the
+owner's Priority actions (everyone but the CCEO and the Programme Lead) sees
+its To-Do queue's first entries on Home (`home_service.priority_actions`).
+Go's queue rows now carry the words each existing builder writes: the due
+label and tone (`_due`, `todo_row`, the collection, evidence, learning and
+review helpers), the status label and tone, and the description Home shows
+on a row with no link. `home.buildTodoQueue` draws them as `_todo_row` and
+`_group_row` do (identical To-Dos one row, five entries), with each
+category's icon, each priority's tone and the queue's tones exported to
+`rules.json` (`queue_rows`).
+
+The queue is answered by Go for six more roles: Accountant, Human Resources,
+the two lending roles and the two partner roles (`todos.PortedRoles`). The
+lending and partner roles' loan and partner builders pass every such reader
+on, so in practice their Home queue stays the existing application's. Still
+handed on: the Regional Lead (its monthly CCE report, engagement rhythm and
+feedback rows are not built), the Cluster Leader (no seeded account to
+compare), the Country Director and the RVP (builders not yet in Go).
+
+`golden.py` now also records each reader's raw To-Do rows from
+`todo_service.get_todos`; `home_test.go` compares them field by field (a
+description only where the row has no link). Over the demo seed: 47 answers
+compared, 25 handed on, 0 differing — rows word for word for three CCEOs,
+two Programme Leads, the Admin, IA, the Project Coordinator and BT. The
+seed's Accountant and HR queues are empty in both, so their builders are
+compared only as empty; states the seed lacks (returned work, overdue
+loans) are covered by the unit tests and the code read against each
+builder.

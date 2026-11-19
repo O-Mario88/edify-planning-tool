@@ -69,8 +69,15 @@ var errPassOn = errors.New("todos: passed to the existing application")
 var Handled = map[string]func(ctx context.Context, s *Service, r *reader) ([]todo, error){}
 
 // PortedRoles are the roles whose queue Go builds; every other role is
-// passed on, whatever the builders it reaches.
-var PortedRoles = []string{"CCEO", leadRole, roleIA, adminRole, coordinatorRole, btRole}
+// passed on, whatever the builders it reaches. The Accountant's, HR's, the
+// two lending roles' and the two partner roles' were compared with the
+// existing queue over the demo seed (internal/home/testdata/golden.py); the
+// lending and partner roles' builders pass every such reader on (their
+// loan and partner work is not built in Go). The Regional Lead's CCE rows
+// are not built (regionalEngagementGuard), and the Cluster Leader has no
+// account in the seed to compare: both stay the existing application's.
+var PortedRoles = []string{"CCEO", leadRole, roleIA, adminRole, coordinatorRole, btRole,
+	"Accountant", "HumanResources", "MfiLoanOfficer", "MfiPartnerAdmin", "PartnerAdmin", "PartnerFieldOfficer"}
 
 // Served is whether Go answers a role at all: Go has built the role's queue
 // and has every builder the role reaches.
@@ -144,21 +151,74 @@ func (s *Service) readQueue(ctx context.Context, p auth.Principal) (queue, bool,
 	return q, true, nil
 }
 
-// QueueCounts are Home's To-Do figures (home_service.build_home_todo_figures
-// over get_cached_todos): the rows waiting on the reader, due today and
-// critical, and how many rows the queue holds. served is false where the
+// Row is one To-Do as Home's Priority actions read it (home_service._todo_row).
+type Row struct {
+	Title, Description, Category, Priority string
+	StatusKey, StatusLabel, StatusTone     string
+	DueLabel, DueTone                      string
+	Linked, ActionLabel, ActionURL         string
+}
+
+// Queue is the reader's queue as Home reads it (get_cached_todos): the rows
+// in the queue's order, and the same rows as group_identical's entries; the
+// rows waiting on the reader, due today and critical; and how many rows it
+// holds.
+type Queue struct {
+	Rows    []Row
+	Entries []Entry
+	Counts  map[string]int
+	Total   int
+}
+
+// Entry is one of group_identical's entries: a row on its own, or the
+// identical rows standing where the first of them stood.
+type Entry struct {
+	Rows  []Row
+	Group bool
+}
+
+// ContextLine is todo_groups.context_line: a row's second line without the
+// place when its title already names it.
+func ContextLine(title, linked string) string { return contextLine(title, linked) }
+
+// HomeQueue is the reader's queue for Home. served is false where the
 // existing application answers the queue: a role Go has not ported, a
 // builder it does not have, an acting appointment.
-func (s *Service) QueueCounts(ctx context.Context, p auth.Principal) (counts map[string]int, total int, served bool, err error) {
+func (s *Service) HomeQueue(ctx context.Context, p auth.Principal) (Queue, bool, error) {
 	role, ok := rules.Roles[p.ActiveRole]
 	if !ok || !role.Page || !Served(p.ActiveRole) || p.InActingAppointment {
-		return nil, 0, false, nil
+		return Queue{}, false, nil
 	}
 	q, served, err := s.readQueue(ctx, p)
 	if !served || err != nil {
-		return nil, 0, served, err
+		return Queue{}, served, err
 	}
-	return map[string]int{"waiting_me": q.WaitingMe, "due_today": q.DueToday, "critical": q.Critical}, q.Total, true, nil
+	out := Queue{Rows: make([]Row, len(q.Rows)), Total: q.Total,
+		Counts: map[string]int{"waiting_me": q.WaitingMe, "due_today": q.DueToday, "critical": q.Critical}}
+	for i, t := range q.Rows {
+		out.Rows[i] = rowOf(t)
+	}
+	for _, e := range groupIdentical(q.Rows) {
+		rows := make([]Row, len(e.rows))
+		for i, t := range e.rows {
+			rows[i] = rowOf(t)
+		}
+		out.Entries = append(out.Entries, Entry{Rows: rows, Group: e.group})
+	}
+	return out, true, nil
+}
+
+func rowOf(t todo) Row {
+	return Row{Title: t.Title, Description: t.Description, Category: t.Category, Priority: t.Priority,
+		StatusKey: t.StatusKey, StatusLabel: t.StatusLabel, StatusTone: t.StatusTone,
+		DueLabel: t.DueLabel, DueTone: t.DueTone, Linked: t.Linked, ActionLabel: t.ActionLabel, ActionURL: t.ActionURL}
+}
+
+// QueueCounts are Home's To-Do figures (home_service.build_home_todo_figures
+// over get_cached_todos), from HomeQueue.
+func (s *Service) QueueCounts(ctx context.Context, p auth.Principal) (counts map[string]int, total int, served bool, err error) {
+	q, served, err := s.HomeQueue(ctx, p)
+	return q.Counts, q.Total, served, err
 }
 
 // collect runs the reader's builders in order. A builder that needs what Go

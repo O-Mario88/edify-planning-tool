@@ -149,10 +149,18 @@ func escalationGuard(ctx context.Context, s *Service, _ *reader) ([]todo, error)
 // regionalEngagementGuard stands for the Regional Lead's coaching and
 // training feedback (_cce_leadership_todos for a lead, the Regional Lead
 // row of coaching_todos, the observations of partner_engagement_todos):
-// any Regional Lead engagement.
-func regionalEngagementGuard(ctx context.Context, s *Service, _ *reader) ([]todo, error) {
+// any Regional Lead engagement. The Regional Lead's own rows of
+// _cce_leadership_todos (the monthly report, the engagement rhythm, feedback
+// to share) are not built in Go: that reader is passed on.
+func regionalEngagementGuard(ctx context.Context, s *Service, r *reader) ([]todo, error) {
+	if r.role == regionalLeadRole {
+		return nil, errPassOn
+	}
 	return passOnIf(s.exists(ctx, `SELECT 1 FROM cce_regional_engagement`))
 }
+
+// regionalLeadRole is the CCE Regional Programme Lead.
+const regionalLeadRole = "RegionalProgramLead"
 
 // distributionGuard stands for distribution_todos: a milestone allocated
 // to the reader's team (its spread rows hang under such an allocation).
@@ -324,10 +332,13 @@ WHERE kind = $1 AND cceo_staff_id = ANY($2) AND held_on >= $3 AND held_on < $4`,
 		}
 		q := url.Values{"open": {"new"}, "cceo": {m.StaffID}, "kind": {"one_to_one"}}
 		due := monthEnd
-		out = append(out, todo{Title: "Hold " + start.Format("January") + " one-to-one with " + name,
-			Category: rules.Lead.CoachingCategory, Priority: priority, StatusKey: status, Actionable: true, Linked: name,
+		t := todo{Title: "Hold " + start.Format("January") + " one-to-one with " + name,
+			Category: rules.Lead.CoachingCategory, Priority: priority, Actionable: true, Linked: name,
 			ActionLabel: "Log one-to-one", ActionURL: "/team/coaching?" + pyURLEncode(q, "open", "cceo", "kind"),
-			Shape: "/team/coaching?open=new&cceo={id}&kind=one_to_one", Due: &due})
+			Shape: "/team/coaching?open=new&cceo={id}&kind=one_to_one", Due: &due}
+		t = derivedWords(t, &due, r.today)
+		t.StatusKey = status
+		out = append(out, t)
 	}
 	return out, nil
 }

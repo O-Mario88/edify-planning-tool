@@ -126,8 +126,12 @@ func reviewRow(r *reader, title, staffID, name string, due *time.Time, overdue b
 	t := todo{Title: title, Category: rules.Lead.ReviewCategory, Priority: "medium", StatusKey: "waiting_me",
 		Actionable: true, Linked: name, ActionLabel: "Open conversation",
 		ActionURL: "/performance-conversation?staff=" + staffID, Shape: "/performance-conversation?staff={id}", Due: due}
+	t.StatusLabel, t.StatusTone, t.DueLabel, t.DueTone = "Waiting on Me", "warning", "—", "neutral"
+	if due != nil {
+		t.DueLabel, t.DueTone = dayMonth(*due), "warning"
+	}
 	if overdue {
-		t.Priority, t.StatusKey = "high", "overdue"
+		t.Priority, t.StatusKey, t.StatusLabel, t.StatusTone, t.DueTone = "high", "overdue", "Overdue", "danger", "danger"
 	}
 	if t.Due == nil {
 		today := r.today

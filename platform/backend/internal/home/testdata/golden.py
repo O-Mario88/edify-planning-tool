@@ -10,7 +10,8 @@ starting "ghome", an officer's work in each state Home reads: planned for
 today, a cluster's work with no purpose of its own, an undated piece with a
 time of day, a dated piece saved at local midnight, under way, overdue, and
 done (in no figure); asks Home, its Priority actions and its To-Do figures of a reader in
-every role the seed holds;
+every role the seed holds, and the reader's To-Do rows as the queue words them
+(todo_service.get_todos), which Home's Priority actions are drawn from;
 writes the instant it asked, the rows and the answers to GOLDEN_OUT, and
 deletes the rows. internal/integration/home_test.go files them again and
 asks Go at the same instant.
@@ -134,10 +135,38 @@ VIEWS = {
 }
 
 
+#: The words of a To-Do row Home reads (home_service._todo_row, _group_row).
+ROW_KEYS = (
+    "title",
+    "description",
+    "category",
+    "priority",
+    "status_key",
+    "status_label",
+    "status_tone",
+    "due_label",
+    "due_tone",
+    "linked",
+    "action_label",
+    "action_url",
+)
+
+
+def todo_rows(user):
+    """The reader's queue, row by row, or None where it cannot be built."""
+    from apps.command_center.todo_service import get_todos
+
+    try:
+        todos = get_todos(user)["todos"]
+    except Exception as exc:  # noqa: BLE001 - recorded, not compared
+        return {"error": repr(exc)}
+    return [{key: str(t.get(key) or "") for key in ROW_KEYS} for t in todos]
+
+
 def ask(email):
     """Home's three answers for the reader, as the app asks them."""
     user = User.objects.get(email=email)
-    out = {}
+    out = {"todo_rows": todo_rows(user)}
     for name, view in VIEWS.items():
         request = APIRequestFactory().get("/api/mobile/v1/home")
         force_authenticate(request, user=user)

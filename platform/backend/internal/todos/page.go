@@ -25,6 +25,12 @@ type todo struct {
 	Shape string
 	// Due is the row's _due_sort; nil is date.max.
 	Due *time.Time
+	// The row's words, as the existing builder writes them: Home's Priority
+	// actions show them (home_service._todo_row). Description is read only
+	// where Linked is empty.
+	Description             string
+	DueLabel, DueTone       string
+	StatusLabel, StatusTone string
 }
 
 // queue is get_todos' answer: the rows a reader may follow, sorted, and

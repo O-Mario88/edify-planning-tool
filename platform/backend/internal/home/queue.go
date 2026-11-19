@@ -13,6 +13,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningmonitor"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/plreview"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/todos"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/trainingsummary"
 )
 
@@ -23,14 +24,18 @@ const leadRole = "Program Lead"
 // BuildQueue answers GetHomeQueue for p: the Priority actions the owner set
 // for a CCEO and a Programme Lead (apps.command_center.home_priorities),
 // each count read from the service behind the table it opens; the To-Do
-// figures follow (GetHomeTodoFigures). served is false for every other
-// role, whose Priority actions are their To-Do queue's first rows, and for
-// an acting appointment: the existing application answers them.
+// figures follow (GetHomeTodoFigures). Every other role's Priority actions
+// are their To-Do queue's first entries (buildTodoQueue). served is false
+// for an acting appointment and where Go does not build the queue: the
+// existing application answers them.
 func (s *Service) BuildQueue(ctx context.Context, p auth.Principal) (*screensv1.GetHomeQueueResponse, bool, error) {
 	role, ok := roleOf(p)
-	specs, set := rules.Priorities.Roles[p.ActiveRole]
-	if !ok || !set {
+	if !ok {
 		return nil, false, nil
+	}
+	specs, set := rules.Priorities.Roles[p.ActiveRole]
+	if !set {
+		return s.buildTodoQueue(ctx, p, role)
 	}
 	now := s.now()
 	fy := operationalFY(now)
@@ -42,6 +47,83 @@ func (s *Service) BuildQueue(ctx context.Context, p auth.Principal) (*screensv1.
 		out.PriorityRows = append(out.PriorityRows, priorityRow(spec, count, read, fy))
 	}
 	return out, true, nil
+}
+
+// buildTodoQueue is build_home_queue for a role without the owner's rows:
+// its Priority actions are its To-Do queue's first entries, identical To-Dos
+// one row, the To-Do figures alongside. served is false where the existing
+// application answers the queue (todos.Service.HomeQueue).
+func (s *Service) buildTodoQueue(ctx context.Context, p auth.Principal, role Role) (*screensv1.GetHomeQueueResponse, bool, error) {
+	q, served, err := s.todos.HomeQueue(ctx, p)
+	if !served || err != nil {
+		return nil, served, err
+	}
+	total := int32(q.Total)
+	out := &screensv1.GetHomeQueueResponse{HasPlan: role.HasPlan, PriorityTotal: &total,
+		QueueFigures: QueueFigures(q.Counts, role.HasPlan), PriorityRows: []*screensv1.HomePriorityRow{}}
+	for _, e := range q.Entries[:min(rules.PriorityLimit, len(q.Entries))] {
+		if e.Group {
+			out.PriorityRows = append(out.PriorityRows, groupRow(e.Rows))
+		} else {
+			out.PriorityRows = append(out.PriorityRows, todoRow(e.Rows[0]))
+		}
+	}
+	return out, true, nil
+}
+
+// queueTone is home_service.tone: the queue's tone as Home names it.
+func queueTone(value string) string {
+	if t, ok := rules.QueueRows.Tones[value]; ok {
+		return t
+	}
+	return "plain"
+}
+
+func categoryIcon(category string) string {
+	name, ok := rules.QueueRows.CategoryIcons[category]
+	if !ok {
+		name = "flag"
+	}
+	return rules.Icons[name]
+}
+
+// todoRow is home_service._todo_row through the feed's priority_row.
+func todoRow(t todos.Row) *screensv1.HomePriorityRow {
+	line := t.Description
+	if t.Linked != "" {
+		line = todos.ContextLine(t.Title, t.Linked)
+	}
+	due := t.DueLabel
+	if due == "—" || due == t.StatusLabel {
+		due = ""
+	}
+	action := t.ActionLabel
+	if action == "" {
+		action = "Open"
+	}
+	link := t.ActionURL
+	if link == "" {
+		link = "/todos"
+	}
+	return &screensv1.HomePriorityRow{Title: t.Title, Context: line, DueLabel: due, DueTone: queueTone(t.DueTone),
+		StatusLabel: t.StatusLabel, StatusTone: queueTone(t.StatusTone), ActionLabel: action, Url: link,
+		IconSvg: categoryIcon(t.Category)}
+}
+
+// groupRow is home_service._group_row: identical To-Dos as one row.
+func groupRow(rows []todos.Row) *screensv1.HomePriorityRow {
+	first := rows[0]
+	label, ok := rules.QueueRows.PriorityLabels[first.Priority]
+	if !ok {
+		label = "—"
+	}
+	tone, ok := rules.QueueRows.PriorityTones[first.Priority]
+	if !ok {
+		tone = "plain"
+	}
+	return &screensv1.HomePriorityRow{Title: first.Title, Context: strconv.Itoa(len(rows)) + " like this",
+		DueLabel: first.DueLabel, DueTone: queueTone(first.DueTone), StatusLabel: label, StatusTone: tone,
+		ActionLabel: "Review", Url: "/todos", IconSvg: categoryIcon(first.Category), Count: int32(len(rows))}
 }
 
 // priorityCounts is home_priorities._counts: each row's figure, a figure

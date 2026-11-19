@@ -171,13 +171,14 @@ func iaVerificationRow(r *reader, id, kind, delivery string, submitted *time.Tim
 		t.Title, t.ActionLabel = "Review Partner Evidence and Confirm Salesforce", "Review"
 		t.ActionURL, t.Shape = "/ia/partner-evidence/"+id+"/", "/ia/partner-evidence/{id}/"
 	}
+	t.StatusLabel, t.StatusTone = "Waiting on Me", "info"
 	if submitted != nil {
 		t.Due = dateOf(submitted.Add(24 * time.Hour).In(zone))
 		if r.now.Sub(*submitted) > 24*time.Hour {
-			t.Priority, t.StatusKey = "critical", "overdue"
+			t.Priority, t.StatusKey, t.StatusLabel, t.StatusTone = "critical", "overdue", "Past 24h", "danger"
 		}
 	}
-	return t
+	return withDue(t, r.today)
 }
 
 // iaQueueGuard is ia_queue_todos: any SSA record awaiting verification,
@@ -249,6 +250,7 @@ WHERE ci.status = 'active' AND (ci.requires_school OR ci.cluster_delivery_allowe
 	}
 	return []todo{{Title: "Set measurement rules for " + strconv.Itoa(unmapped) + " " + word,
 		Category: rules.IA.FrameworkCategory, Priority: "medium", StatusKey: "waiting_me", Actionable: true,
+		StatusLabel: "Waiting on Me", StatusTone: "warning", DueLabel: "—", DueTone: "neutral",
 		Linked: strconv.Itoa(unmapped) + " waiting", ActionLabel: "Open Measurement Rules",
 		ActionURL: "/ia/framework/?tab=rules&status=required", Shape: "/ia/framework/?tab=rules&status=required",
 		Due: &r.today}}, nil
@@ -298,7 +300,7 @@ WHERE `+reach+` AND s.operational_status = ANY(`+ops+`) AND s.school_type = ANY(
 		return nil, nil
 	}
 	return []todo{{Title: "Review Schools with No Cluster Training or Meeting Planned", Category: "School Progress",
-		Priority: "high", StatusKey: "waiting_me", Actionable: true, Linked: plural(missing, "school"),
+		Priority: "high", StatusKey: "waiting_me", Actionable: true, StatusLabel: "Waiting on Me", StatusTone: "warning", DueLabel: "—", DueTone: "neutral", Linked: plural(missing, "school"),
 		ActionLabel: "Open Schools & Coverage", ActionURL: rules.IA.CoverageURL, Shape: rules.IA.CoverageURL,
 		Due: &r.today}}, nil
 }
@@ -439,7 +441,7 @@ func schoolWord(n int) string {
 // collectionRow is collection_todos._row with no due day.
 func collectionRow(r *reader, title, link, shape, linked, priority string) todo {
 	return todo{Title: title, Category: rules.IA.CollectionCategory, Priority: priority, StatusKey: "waiting_me",
-		Actionable: true, Linked: linked, ActionLabel: "Open Collection", ActionURL: link, Shape: shape, Due: &r.today}
+		StatusLabel: "Waiting on Me", StatusTone: "warning", DueLabel: "—", DueTone: "neutral", Actionable: true, Linked: linked, ActionLabel: "Open Collection", ActionURL: link, Shape: shape, Due: &r.today}
 }
 
 // collectionGroups is ia_collection.annotate_states(collection_schools())
@@ -551,11 +553,12 @@ WHERE r.status = $1 AND b.uploaded_by = $2 AND b.created_at >= $3`,
 	t := todo{Title: "Re-file " + plural(n, "blocked SSA row") + " from your uploads", Category: rules.IA.CollectionCategory,
 		Priority: "medium", StatusKey: "waiting_me", Actionable: true, Linked: strconv.Itoa(batches) + " " + word,
 		ActionLabel: "Open Upload History", ActionURL: "/ssa/upload/history/?has_blocked=1",
-		Shape: "/ssa/upload/history/?has_blocked=1", Due: &r.today}
+		Shape: "/ssa/upload/history/?has_blocked=1", Due: &r.today, StatusLabel: "Waiting on Me", StatusTone: "warning", DueLabel: "—", DueTone: "neutral"}
 	if oldest != nil {
 		t.Due = dateOf(oldest.In(zone))
+		t.DueLabel = "Since " + dayMonth(*t.Due)
 		if t.Due.Before(r.today) {
-			t.Priority, t.StatusKey = "high", "overdue"
+			t.Priority, t.StatusKey, t.StatusLabel, t.StatusTone, t.DueTone = "high", "overdue", "Overdue", "danger", "danger"
 		}
 	}
 	return []todo{t}, nil

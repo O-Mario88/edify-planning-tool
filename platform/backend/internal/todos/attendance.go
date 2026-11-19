@@ -60,9 +60,9 @@ WHERE deleted_at IS NULL AND responsible_staff_id = ANY($1)`, r.owners)
 	var out []todo
 	for _, f := range list[:min(rules.AttendanceMaxRows, len(list))] {
 		url := "/clusters/" + f.c.id + "/profile?tab=attendance&show=missing"
-		out = append(out, todo{Title: "Follow Up Schools Missing Cluster Sessions", Category: attendanceCategory(r.role), Priority: "high",
-			StatusKey: "waiting_me", Actionable: true, Linked: f.c.name, ActionLabel: "Open Schools", ActionURL: url,
-			Shape: idShape(url, f.c.id), Due: &r.today})
+		out = append(out, derivedWords(todo{Title: "Follow Up Schools Missing Cluster Sessions", Category: attendanceCategory(r.role), Priority: "high",
+			Actionable: true, Linked: f.c.name, ActionLabel: "Open Schools", ActionURL: url,
+			Shape: idShape(url, f.c.id), Due: &r.today}, nil, r.today))
 	}
 	return out, nil
 }

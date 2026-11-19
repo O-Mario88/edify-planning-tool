@@ -155,10 +155,11 @@ ORDER BY a.created_at DESC LIMIT 120`, r.fy, r.owners, rules.ActivitySettledStat
 		case f.hasCluster:
 			where = pyStr(f.cluster)
 		}
-		out = append(out, todo{Title: na.Text, Category: meta[0], Priority: actPriority(a, na.Action, r.today),
-			StatusKey: actStatus(a, na.Action, r.today), Actionable: actionable,
+		key, label, tone := actStatus(a, na.Action, r.today)
+		out = append(out, withDue(todo{Title: na.Text, Category: meta[0], Priority: actPriority(a, na.Action, r.today),
+			StatusKey: key, StatusLabel: label, StatusTone: tone, Actionable: actionable,
 			Linked: where + " · " + typeLabel(a.ActivityType), ActionLabel: meta[1], ActionURL: na.URL,
-			Shape: idShape(na.URL, a.ID), Due: a.PlannedDate})
+			Shape: idShape(na.URL, a.ID), Due: a.PlannedDate, Description: na.Description + " — " + where}, r.today))
 	}
 	return out, nil
 }
@@ -250,6 +251,7 @@ ORDER BY a.created_at DESC LIMIT 10`, r.owners, r.today, rules.PartnerDelaySettl
 			where = pyStr(name)
 		}
 		return todo{Title: "Chase Partner Delivery", Category: "Partner", Priority: "high", StatusKey: "overdue",
+			StatusLabel: "Overdue", StatusTone: "danger", DueLabel: "Overdue", DueTone: "danger",
 			Actionable: true, Linked: where + " · partner", ActionLabel: "Open", ActionURL: "/my-plan/" + id,
 			Shape: "/my-plan/{id}", Due: dateOf(planned)}, err
 	})
@@ -272,12 +274,12 @@ func projectSSATodos(ctx context.Context, s *Service, r *reader) ([]todo, error)
 	}
 	var out []todo
 	for _, q := range []struct {
-		where, title string
-		args         []any
+		where, title, status, tone string
+		args                       []any
 	}{
-		{`psa.assigned_by = $1 AND psa.baseline_score IS NULL`, "Collect Current FY SSA", []any{r.p.UserID}},
+		{`psa.assigned_by = $1 AND psa.baseline_score IS NULL`, "Collect Current FY SSA", "Current FY SSA missing", "danger", []any{r.p.UserID}},
 		{`psa.assigned_by = $1 AND psa.impact_classification = $2 AND psa.follow_up_due_on <= $3 AND psa.follow_up_ssa_id IS NULL`,
-			"Complete Follow-Up SSA", []any{r.p.UserID, rules.ProjectNotYetMeasurable, r.today}},
+			"Complete Follow-Up SSA", "Follow-up due", "warning", []any{r.p.UserID, rules.ProjectNotYetMeasurable, r.today}},
 	} {
 		rows, err := s.db.Query(ctx, `
 SELECT psa.school_id, s.name, p.name
@@ -290,9 +292,10 @@ WHERE `+q.where+` LIMIT 20`, q.args...)
 			var schoolID string
 			var school, project *string
 			err := row.Scan(&schoolID, &school, &project)
-			return todo{Title: q.title, Category: "Special Project", Priority: "high", StatusKey: "open", Actionable: true,
+			return withDue(todo{Title: q.title, Category: "Special Project", Priority: "high", StatusKey: "open", Actionable: true,
+				StatusLabel: q.status, StatusTone: q.tone,
 				Linked: pyStr(school) + " · " + pyStr(project), ActionLabel: "Open school", ActionURL: "/schools/" + schoolID,
-				Shape: "/schools/{id}", Due: &r.today}, err
+				Shape: "/schools/{id}", Due: &r.today}, r.today), err
 		})
 		if err != nil {
 			return nil, err
@@ -308,9 +311,10 @@ func extraWorkTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) 
 	if r.p.UserID == "" {
 		return nil, nil
 	}
-	row := func(due time.Time, status, title, label, priority, linked string) todo {
-		return todo{Title: title, Category: "Extra Work", Priority: priority, StatusKey: status, Actionable: true,
-			Linked: linked, ActionLabel: label, ActionURL: "/extra-work", Shape: "/extra-work", Due: dateOf(due)}
+	row := func(due time.Time, status, title, label, priority, linked, word, tone string) todo {
+		return withDue(todo{Title: title, Category: "Extra Work", Priority: priority, StatusKey: status, Actionable: true,
+			StatusLabel: word, StatusTone: tone,
+			Linked: linked, ActionLabel: label, ActionURL: "/extra-work", Shape: "/extra-work", Due: dateOf(due)}, r.today)
 	}
 	var out []todo
 	read := func(sql string, args []any, each func(due time.Time, status, title, urgency string)) error {
@@ -333,15 +337,15 @@ func extraWorkTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) 
 		func(due time.Time, status, title, urgency string) {
 			switch {
 			case status == "returned":
-				out = append(out, row(due, status, "Correct Returned Extra Work", "Correct", "high", title))
+				out = append(out, row(due, status, "Correct Returned Extra Work", "Correct", "high", title, "Returned", "danger"))
 			case due.Before(r.today):
-				out = append(out, row(due, status, "Resolve Overdue Extra Work", "Complete", "high", title))
+				out = append(out, row(due, status, "Resolve Overdue Extra Work", "Complete", "high", title, "Overdue", "danger"))
 			default:
 				priority := "high"
 				if urgency == "normal" {
 					priority = "medium"
 				}
-				out = append(out, row(due, status, "Complete Extra Assignment", "Open", priority, title))
+				out = append(out, row(due, status, "Complete Extra Assignment", "Open", priority, title, extraStatusLabel(status), "neutral"))
 			}
 		})
 	if err != nil {
@@ -349,7 +353,7 @@ func extraWorkTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) 
 	}
 	err = read(`reviewer_id = $1 AND status = 'submitted' ORDER BY submitted_at ASC LIMIT 20`, []any{r.p.UserID},
 		func(due time.Time, status, title, _ string) {
-			out = append(out, row(due, status, "Review Extra Work", "Review", "high", title))
+			out = append(out, row(due, status, "Review Extra Work", "Review", "high", title, "Submitted", "info"))
 		})
 	if err != nil {
 		return nil, err
@@ -357,7 +361,7 @@ func extraWorkTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) 
 	err = read(`assigner_id = $1 AND status = ANY($2) AND due_date < $3 ORDER BY due_date ASC LIMIT 10`,
 		[]any{r.p.UserID, rules.ExtraOpenStatuses, r.today},
 		func(due time.Time, status, title, _ string) {
-			out = append(out, row(due, status, "Chase Overdue Extra Work", "Follow up", "medium", title))
+			out = append(out, row(due, status, "Chase Overdue Extra Work", "Follow up", "medium", title, "Overdue", "warning"))
 		})
 	return out, err
 }
@@ -391,12 +395,22 @@ ORDER BY pa.returned_at DESC LIMIT 10`, rules.ReturnedToStaffStatus, r.owners)
 			where = pyStr(cluster)
 		}
 		t := todo{Title: "Resolve Returned Partner Assignment", Category: "Partner", Priority: "high", StatusKey: "returned",
+			StatusLabel: "Returned to you", StatusTone: "warning",
 			Actionable: true, Linked: where + " · " + pyStr(partner), ActionLabel: "Review",
 			ActionURL: "/partner-oversight/?partner=" + partnerID + "&status=returned",
 			Shape:     "/partner-oversight/?partner={id}&status=returned"}
+		days := 0
 		if returned != nil {
 			day := localDate(*returned)
 			t.Due = &day
+			days = int(r.today.Sub(day).Hours() / 24)
+		}
+		t.DueLabel, t.DueTone = "Returned today", "warning"
+		if days != 0 {
+			t.DueLabel = "Waiting " + plural(days, "day")
+		}
+		if days >= 3 {
+			t.DueTone = "danger"
 		}
 		return t, err
 	})
@@ -428,10 +442,11 @@ WHERE responsible_user = $1 AND status = ANY($2) ORDER BY week_start_date DESC L
 		var week time.Time
 		err := row.Scan(&id, &status, &week)
 		t := todo{Title: "Confirm Fund Request", Category: "Finance", Priority: "high", StatusKey: "waiting_me",
-			Actionable: true, Linked: "Weekly Fund Request · " + week.Format("Jan") + " " + strconv.Itoa(week.Day()),
+			StatusLabel: "Waiting on Me", StatusTone: "info", DueLabel: "Today", DueTone: "warning", Actionable: true, Linked: "Weekly Fund Request · " + week.Format("Jan") + " " + strconv.Itoa(week.Day()),
 			ActionLabel: "Open", ActionURL: "/fund-requests/weekly/" + id, Shape: "/fund-requests/weekly/{id}", Due: &r.today}
 		if contains(rules.WeeklyReturnedStatuses, status) {
 			t.Title, t.Priority, t.StatusKey = "Fix Fund Request", "critical", "returned"
+			t.StatusLabel, t.StatusTone = "Returned", "danger"
 		}
 		return t, err
 	})
@@ -440,6 +455,10 @@ WHERE responsible_user = $1 AND status = ANY($2) ORDER BY week_start_date DESC L
 	}
 	out = append(out, got...)
 	monthly := func(sql, title, priority, status, label string, args ...any) error {
+		word, tone := "Waiting on Me", "info"
+		if status == "returned" {
+			word, tone = "Returned", "danger"
+		}
 		rows, err := s.db.Query(ctx, `SELECT COALESCE(period_key, 'None') FROM fund_request WHERE `+sql, args...)
 		if err != nil {
 			return err
@@ -448,6 +467,7 @@ WHERE responsible_user = $1 AND status = ANY($2) ORDER BY week_start_date DESC L
 			var key string
 			err := row.Scan(&key)
 			return todo{Title: title, Category: "Finance", Priority: priority, StatusKey: status, Actionable: true,
+				StatusLabel: word, StatusTone: tone, DueLabel: "Today", DueTone: "warning",
 				Linked: "Monthly Fund Plan · " + key, ActionLabel: label, ActionURL: "/fund-requests/weekly",
 				Shape: "/fund-requests/weekly", Due: &r.today}, err
 		})
@@ -468,6 +488,7 @@ WHERE responsible_user = $1 AND status = 'disbursed' AND receipt_confirmed_at IS
 		var week time.Time
 		err := row.Scan(&id, &week)
 		return todo{Title: "Confirm Receipt of Funds", Category: "Finance", Priority: "high", StatusKey: "waiting_me",
+			StatusLabel: "Waiting on Me", StatusTone: "info", DueLabel: "Today", DueTone: "warning",
 			Actionable: true, Linked: "Weekly Fund Request · " + week.Format("02 Jan"), ActionLabel: "Confirm",
 			ActionURL: "/fund-requests/weekly/" + id, Shape: "/fund-requests/weekly/{id}", Due: &r.today}, err
 	})
@@ -509,6 +530,7 @@ ORDER BY s.created_at DESC LIMIT 8`, ids, rules.OperatingStatuses)
 			var name *string
 			err := row.Scan(&name)
 			return todo{Title: q.title, Category: q.category, Priority: q.priority, StatusKey: "waiting_me", Actionable: true,
+				StatusLabel: "Waiting on Me", StatusTone: "info", DueLabel: "—", DueTone: "neutral",
 				Linked: pyStr(name), ActionLabel: q.label, ActionURL: q.url, Shape: q.url}, err
 		})
 		if err != nil {
@@ -546,7 +568,8 @@ FROM daily_visit_route_batch WHERE responsible_user = $1 AND visit_date >= $2 OR
 	for _, b := range batches {
 		if b.confidence == "low" || b.confidence == "needs_cleanup" {
 			out = append(out, todo{Title: "Fix school location / coordinates", Category: "Data Quality", Priority: "medium",
-				StatusKey: "waiting_me", Actionable: true, Linked: "Route Intelligence", ActionLabel: "Review Schools",
+				StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info", DueLabel: "—", DueTone: "neutral",
+				Actionable: true, Linked: "Route Intelligence", ActionLabel: "Review Schools",
 				ActionURL: "/my-plan", Shape: "/my-plan", Due: &r.today})
 			break
 		}
@@ -554,7 +577,8 @@ FROM daily_visit_route_batch WHERE responsible_user = $1 AND visit_date >= $2 OR
 	for _, b := range batches {
 		if !b.feasible || b.status == "not_feasible" || b.status == "blocked" {
 			out = append(out, todo{Title: "Rework route plan — day overloaded", Category: "Planning", Priority: "high",
-				StatusKey: "waiting_me", Actionable: true, Linked: "Route Intelligence", ActionLabel: "Open My Plan",
+				StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "warning",
+				DueLabel: b.day.Format("02 Jan"), DueTone: "warning", Actionable: true, Linked: "Route Intelligence", ActionLabel: "Open My Plan",
 				ActionURL: "/my-plan", Shape: "/my-plan", Due: dateOf(b.day)})
 			break
 		}
@@ -691,7 +715,8 @@ WHERE core_plan_id = ANY($1)`, planIDs)
 		returned, missing := corePlanGaps(slots[p.id])
 		for _, sl := range returned[:min(2, len(returned))] {
 			out = append(out, todo{Title: "Fix returned core " + sl.Kind + " — " + name, Category: "Core Schools",
-				Priority: "high", StatusKey: "returned", Actionable: true, Linked: name, ActionLabel: "Open Core Schools",
+				Priority: "high", StatusKey: "returned", StatusLabel: "Returned", StatusTone: "danger", DueLabel: "—", DueTone: "neutral",
+				Actionable: true, Linked: name, ActionLabel: "Open Core Schools",
 				ActionURL: "/core-schools", Shape: "/core-schools", Due: &r.today})
 		}
 		for _, m := range missing {
@@ -700,7 +725,8 @@ WHERE core_plan_id = ANY($1)`, planIDs)
 				tag = m.label[:1] + strconv.Itoa(m.slot.Sequence) + " Core " + m.label
 			}
 			out = append(out, todo{Title: "Schedule " + tag + " — " + name, Category: "Core Schools", Priority: "medium",
-				StatusKey: "waiting_me", Actionable: true, Linked: name, ActionLabel: "Plan Now", ActionURL: "/core-schools",
+				StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info", DueLabel: "—", DueTone: "neutral",
+				Actionable: true, Linked: name, ActionLabel: "Plan Now", ActionURL: "/core-schools",
 				Shape: "/core-schools", Due: &r.today})
 		}
 	}
@@ -782,10 +808,12 @@ ORDER BY r.due_date ASC LIMIT 30`, r.scope.SchoolIDs, rules.LoanFieldVerificatio
 		var name, code *string
 		err := row.Scan(&due, &name, &code)
 		t := todo{Title: "Complete Loan-Use Verification", Category: "Business Transformation", Priority: "high",
-			StatusKey: "waiting_me", Actionable: true, Linked: pyStr(name), ActionLabel: "Plan Visit",
+			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info",
+			DueLabel: due.Format("Jan ") + strconv.Itoa(due.Day()), DueTone: "warning", Actionable: true, Linked: pyStr(name), ActionLabel: "Plan Visit",
 			ActionURL: "/schools/" + pyStr(code) + "#school-bt-title", Shape: "/schools/{code}#school-bt-title", Due: dateOf(due)}
 		if dateOf(due).Before(r.today) {
-			t.Priority, t.StatusKey = "critical", "overdue"
+			t.Priority, t.StatusKey, t.StatusLabel, t.StatusTone = "critical", "overdue", "Overdue", "danger"
+			t.DueLabel, t.DueTone = "Overdue", "danger"
 		}
 		return t, err
 	})
@@ -828,12 +856,14 @@ WHERE deleted_at IS NULL AND verification_status = 'returned' AND collected_by_u
 	t := todo{Title: "Correct " + plural(n, "SSA record") + " returned to you", Category: "Baseline & Field Data",
 		Priority: "high", StatusKey: "waiting_me", Actionable: true, Linked: plural(n, "record"),
 		ActionLabel: "Open Returned SSA", ActionURL: "/ssa/verification/?status=returned&mine=1",
-		Shape: "/ssa/verification/?status=returned&mine=1", Due: &r.today}
+		Shape: "/ssa/verification/?status=returned&mine=1", Due: &r.today,
+		StatusLabel: "Waiting on Me", StatusTone: "warning", DueLabel: "—", DueTone: "neutral"}
 	if oldest != nil {
 		due := dateOf(oldest.In(zone)).AddDate(0, 0, 7)
 		t.Due = &due
+		t.DueLabel = "Since " + dayMonth(due)
 		if due.Before(r.today) {
-			t.StatusKey = "overdue"
+			t.StatusKey, t.StatusLabel, t.StatusTone, t.DueTone = "overdue", "Overdue", "danger", "danger"
 		}
 	}
 	return []todo{t}, nil
@@ -877,12 +907,14 @@ ORDER BY a.actual_delivery_date ASC, a.planned_date ASC, a.id ASC LIMIT 10`, r.o
 		}
 		t := todo{Title: "Record OneTest results for " + pyStr(name), Category: "My Work", Priority: "normal",
 			StatusKey: "waiting_me", Actionable: true, Linked: "1 waiting", ActionLabel: "Record Results",
-			ActionURL: "/my-plan/" + id + "?learning_results=1", Shape: "/my-plan/{id}?learning_results=1", Due: &r.today}
+			ActionURL: "/my-plan/" + id + "?learning_results=1", Shape: "/my-plan/{id}?learning_results=1", Due: &r.today,
+			StatusLabel: "Waiting on Me", StatusTone: "warning", DueLabel: "—", DueTone: "neutral"}
 		if delivered != nil {
 			d := dateOf(*delivered)
 			t.Due = d
+			t.DueLabel = "Oldest " + dayMonth(*d)
 			if r.today.Sub(*d) > 7*24*time.Hour {
-				t.Priority, t.StatusKey = "critical", "overdue"
+				t.Priority, t.StatusKey, t.StatusLabel, t.StatusTone, t.DueTone = "critical", "overdue", "Overdue", "danger", "danger"
 			}
 		}
 		return t, err
@@ -931,17 +963,25 @@ WHERE country = $1 AND planning_open_at <= $2 ORDER BY fy ASC`, rules.PlanningCo
 		t := todo{Title: "Plan FY" + p.fy + " Activities", Category: "Planning", Priority: "medium", StatusKey: "waiting_me",
 			Actionable: true, Linked: "FY" + p.fy, ActionLabel: "Open Planning", ActionURL: "/planning", Shape: "/planning",
 			Due: &r.today}
+		var starts *time.Time
 		if p.starts != nil {
-			d := dateOf(*p.starts)
-			t.Due = d
-			switch {
-			case d.Before(r.today):
-				t.StatusKey = "overdue"
-			case d.Equal(r.today):
-				t.StatusKey = "due_today"
-			}
+			starts = dateOf(*p.starts)
+			t.Due = starts
 		}
-		return []todo{t}, nil
+		return []todo{derivedWords(t, starts, r.today)}, nil
 	}
 	return nil, nil
+}
+
+// extraStatusLabels are ExtraAssignment.STATUSES' words.
+var extraStatusLabels = map[string]string{"draft": "Draft", "assigned": "Assigned", "acknowledged": "Acknowledged",
+	"in_progress": "In Progress", "submitted": "Submitted", "returned": "Returned for Correction",
+	"verified": "Completed & Verified", "cancelled": "Cancelled"}
+
+// extraStatusLabel is get_status_display(): the word, or the stored value.
+func extraStatusLabel(status string) string {
+	if word, ok := extraStatusLabels[status]; ok {
+		return word
+	}
+	return status
 }

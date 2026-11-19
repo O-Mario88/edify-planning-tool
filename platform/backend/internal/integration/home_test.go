@@ -5,6 +5,7 @@ package integration
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -15,6 +16,7 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/home"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/todos"
 )
 
 // TestHomeMatchesTheExistingFeed files the work internal/home/testdata/
@@ -40,6 +42,7 @@ func TestHomeMatchesTheExistingFeed(t *testing.T) {
 			Body        json.RawMessage `json:"body"`
 			Queue       json.RawMessage `json:"queue"`
 			TodoFigures json.RawMessage `json:"todo_figures"`
+			TodoRows    json.RawMessage `json:"todo_rows"`
 		} `json:"answers"`
 	}
 	if err := json.Unmarshal(raw, &golden); err != nil {
@@ -58,7 +61,9 @@ func TestHomeMatchesTheExistingFeed(t *testing.T) {
 			t.Fatalf("filing the work: %v", err)
 		}
 	}
-	service := home.NewService(gateway, func() time.Time { return golden.Now })
+	at := func() time.Time { return golden.Now }
+	service := home.NewService(gateway, at)
+	queues := todos.NewService(gateway, at)
 	compared, handedOn, differing := 0, 0, 0
 	for _, a := range golden.Answers {
 		var p auth.Principal
@@ -68,6 +73,19 @@ FROM "user" u LEFT JOIN staff_profile sp ON sp.user_id = u.id WHERE u.email = $1
 			t.Fatalf("the test database needs %s (demo seed): %v", a.Email, err)
 		}
 		p.Roles = []string{p.ActiveRole}
+		// The To-Do rows Home's Priority actions are drawn from, word for word.
+		switch d, asked, err := todoRowsDiffer(ctx, queues, p, a.TodoRows); {
+		case err != nil:
+			t.Fatalf("%s to-do rows: %v", a.Email, err)
+		case !asked:
+			handedOn++
+		case d != "":
+			compared++
+			differing++
+			t.Errorf("%s to-do rows differ: %s", a.Email, d)
+		default:
+			compared++
+		}
 		// Each of Home's three answers, where Go answers it.
 		for _, part := range []struct {
 			name     string
@@ -107,4 +125,38 @@ FROM "user" u LEFT JOIN staff_profile sp ON sp.user_id = u.id WHERE u.email = $1
 	if compared == 0 {
 		t.Fatal("the golden asks Go nothing")
 	}
+}
+
+// todoRowsDiffer compares Go's queue for p with the rows the existing queue
+// gave (golden.py's todo_rows): "" when they agree. compared is false when
+// Go hands the queue on. A description is compared only on a row with no
+// link, the only place Home reads it.
+func todoRowsDiffer(ctx context.Context, queues *todos.Service, p auth.Principal, existing json.RawMessage) (string, bool, error) {
+	q, served, err := queues.HomeQueue(ctx, p)
+	if err != nil || !served {
+		return "", false, err
+	}
+	var want []map[string]string
+	if err := json.Unmarshal(existing, &want); err != nil {
+		return "", true, fmt.Errorf("the existing queue gave no rows (%s): %w", existing, err)
+	}
+	if len(q.Rows) != len(want) {
+		return fmt.Sprintf("go has %d rows, the existing queue %d", len(q.Rows), len(want)), true, nil
+	}
+	for i, r := range q.Rows {
+		got := map[string]string{"title": r.Title, "category": r.Category, "priority": r.Priority,
+			"status_key": r.StatusKey, "status_label": r.StatusLabel, "status_tone": r.StatusTone,
+			"due_label": r.DueLabel, "due_tone": r.DueTone, "linked": r.Linked,
+			"action_label": r.ActionLabel, "action_url": r.ActionURL, "description": r.Description}
+		w := want[i]
+		if w["linked"] != "" {
+			got["description"] = w["description"]
+		}
+		for k, v := range w {
+			if got[k] != v {
+				return fmt.Sprintf("row %d (%s) %s: go %q, existing %q", i, w["title"], k, got[k], v), true, nil
+			}
+		}
+	}
+	return "", true, nil
 }
