@@ -18,6 +18,8 @@ import type {
 import { fonts, radius, toneColors, useTheme } from '../theme';
 import { routeShortcuts } from './route/routeData';
 import { SvgIcon } from '../ui/SvgIcon';
+import { TodayScreen } from './TodayScreen';
+import { redesignedToday } from '../ds/todayView';
 
 const MORNING_ENDS = 12;
 const AFTERNOON_ENDS = 17;
@@ -110,6 +112,21 @@ export function HomeScreen({ onOpen }: HomeScreenProps) {
 
   const glyph = (name: string) => home?.glyphs[name] ?? '';
   const cardStyle = [styles.card, { backgroundColor: colors.raised, borderColor: colors.raisedBorder }];
+
+  // The roles already moved to the redesigned Today (177 stage D) see it in
+  // Home's place, from the same answer; the rest keep Home as it is.
+  if (home && !error && redesignedToday(role)) {
+    return (
+      <TodayScreen
+        home={home}
+        figures={figures}
+        queue={queue}
+        queueError={queueError}
+        onRetryQueue={() => void loadQueue()}
+        onOpen={onOpen}
+      />
+    );
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.page}>
