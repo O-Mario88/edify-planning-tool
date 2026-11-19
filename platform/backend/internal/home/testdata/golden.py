@@ -1,0 +1,161 @@
+"""Write Home's golden: what the existing feed answers each reader for Home
+(apps.mobile_feed.views.HomeFeedView over home_service.build_home).
+
+    DATABASE_URL=postgresql://localhost:5432/edify_gorn_test \\
+    GOLDEN_OUT=/path/to/home_golden.json \\
+    python manage.py shell < platform/backend/internal/home/testdata/golden.py
+
+Only against a database whose name ends in "_test". It files, every id
+starting "ghome", an officer's work in each state Home reads: planned for
+today, a cluster's work with no purpose of its own, an undated piece with a
+time of day, a dated piece saved at local midnight, under way, overdue, and
+done (in no figure); asks Home of a reader in every role the seed holds;
+writes the instant it asked, the rows and the answers to GOLDEN_OUT, and
+deletes the rows. internal/integration/home_test.go files them again and
+asks Go at the same instant.
+"""
+
+import json
+import os
+from datetime import datetime, time, timedelta
+
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.db import connection
+from django.utils import timezone as dj_timezone
+from rest_framework.test import APIRequestFactory, force_authenticate
+
+from apps.accounts.models import StaffProfile
+from apps.activities.models import Activity
+from apps.mobile_feed.views import HomeFeedView
+
+if not settings.DATABASES["default"]["NAME"].endswith("_test"):
+    raise SystemExit("golden.py runs only against a _test database")
+
+User = get_user_model()
+P = "ghome"
+OFFICER = "cceo1@edify.org"
+READERS = (
+    "cceo1@edify.org",
+    "cceo@edify.org",
+    "cceo2@edify.org",
+    "pl1@edify.org",
+    "pl2@edify.org",
+    "cd@edify.org",
+    "admin@edify.org",
+    "ia@edify.org",
+    "accountant@edify.org",
+    "hr@edify.org",
+    "rvp@edify.org",
+    "regional-lead@edify.org",
+    "coordinator@edify.org",
+    "business-transformation@edify.org",
+    "mfi-admin@edify.org",
+    "mfi-officer@edify.org",
+    "partner@edify.org",
+    "partner-admin@edify.org",
+)
+
+
+def clear():
+    with connection.cursor() as cursor:
+        cursor.execute('DELETE FROM "activity" WHERE id LIKE %s', [P + "%"])
+
+
+def at(day, hour, minute=0):
+    return dj_timezone.make_aware(datetime.combine(day, time(hour, minute)))
+
+
+def file_rows(today):
+    officer = User.objects.get(email=OFFICER)
+    sp = StaffProfile.objects.get(user=officer)
+    mine = Activity.objects.filter(
+        deleted_at__isnull=True, responsible_staff_id__in=[officer.id, sp.id]
+    )
+    school = mine.exclude(school=None).first().school
+    cluster = mine.exclude(cluster=None).first().cluster
+    fy = str(today.year + 1 if today.month >= 10 else today.year)
+
+    def activity(key, kind, status, planned, **extra):
+        place = (
+            {"cluster": cluster}
+            if extra.pop("on_cluster", False)
+            else {"school": school}
+        )
+        Activity.objects.create(
+            id=P + key,
+            activity_type=kind,
+            status=status,
+            delivery_type="staff",
+            responsible_staff_id=sp.id,
+            planned_date=today + timedelta(days=planned)
+            if planned is not None
+            else None,
+            fy=fy,
+            **{**place, **extra},
+        )
+
+    activity(
+        "today",
+        "school_visit",
+        "scheduled",
+        0,
+        activity_purpose_text="Coaching the head teacher",
+    )
+    activity("cluster", "cluster_meeting", "planned", 1, on_cluster=True)
+    activity(
+        "timed",
+        "follow_up_visit",
+        "scheduled",
+        None,
+        scheduled_date=at(today + timedelta(days=2), 14, 30),
+    )
+    activity(
+        "midnight",
+        "school_visit",
+        "rescheduled",
+        3,
+        scheduled_date=at(today + timedelta(days=3), 0, 0),
+    )
+    activity("underway", "school_visit", "in_progress", 1)
+    activity("overdue", "school_visit", "planned", -4)
+    activity("done", "school_visit", "completed", -2)
+
+
+def ask(email):
+    user = User.objects.get(email=email)
+    request = APIRequestFactory().get("/api/mobile/v1/home")
+    force_authenticate(request, user=user)
+    response = HomeFeedView.as_view()(request)
+    return {
+        "status": response.status_code,
+        "body": json.loads(json.dumps(response.data, default=str)),
+    }
+
+
+clear()
+try:
+    now = dj_timezone.now()
+    file_rows(dj_timezone.localdate())
+    rows = [
+        dict(zip([c.name for c in cur.description], r))
+        for cur in [connection.cursor()]
+        for _ in [
+            cur.execute(
+                'SELECT row_to_json(a)::text FROM "activity" a WHERE id LIKE %s ORDER BY id',
+                [P + "%"],
+            )
+        ]
+        for r in cur.fetchall()
+    ]
+    answers = [{"email": email, **ask(email)} for email in READERS]
+    out = {
+        "now": now.isoformat(),
+        "rows": [json.loads(r["row_to_json"]) for r in rows],
+        "answers": answers,
+    }
+    with open(os.environ["GOLDEN_OUT"], "w", encoding="utf-8") as fh:
+        json.dump(out, fh, indent=1, sort_keys=True)
+    print(f"wrote {len(answers)} answers, {len(rows)} rows")
+finally:
+    clear()

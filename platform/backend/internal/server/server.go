@@ -62,6 +62,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/fundapprovals"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/fyplanning"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/health"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/home"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/hrregister"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/hrtoday"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/httpmw"
@@ -181,6 +182,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	screenService := screens.NewService(existingApp).TrustProxyHeaders(cfg.Loans.TrustProxyHeaders).
 		WithDirectory(schooldirectory.NewService(pool, time.Now), logger).
 		WithProfile(schoolprofile.NewService(pool, time.Now), logger).
+		WithHome(home.NewService(pool, time.Now), logger).
 		WithNavigation(navigation.NewService(pool)).
 		WithPages(logger,
 			clusterpage.NewService(pool, time.Now),

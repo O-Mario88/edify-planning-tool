@@ -49,6 +49,12 @@ type Profile interface {
 	Build(ctx context.Context, p auth.Principal, req *screensv1.GetSchoolProfileRequest) (*screensv1.GetSchoolProfileResponse, bool, error)
 }
 
+// Home builds Home in Go (internal/home). served is false for a reader the
+// existing application still answers.
+type Home interface {
+	Build(ctx context.Context, p auth.Principal) (*screensv1.GetHomeResponse, bool, error)
+}
+
 // Pages builds pages in Go (internal/clusterpage and the ones beside it).
 // served is false for a path the builder does not answer; a page refused to
 // the reader is pagegate.ErrNotAvailable.
@@ -62,6 +68,7 @@ type Service struct {
 	existingApp Fetcher // nil when no existing application is configured
 	directory   Directory
 	profile     Profile
+	home        Home // nil unless Home is built in Go (internal/home)
 	pages       []Pages
 	navigation  Navigation // nil unless the navigation is built in Go (internal/navigation)
 	visits      VisitSaver // nil unless EDIFY_GO_SAVES names schedule_visit or schedule_training_pair
@@ -111,6 +118,13 @@ func (s *Service) WithProfile(profile Profile, logger *slog.Logger) *Service {
 	return s
 }
 
+// WithHome answers Home in Go for the readers internal/home serves; anyone
+// else's Home is passed to the existing application.
+func (s *Service) WithHome(home Home, logger *slog.Logger) *Service {
+	s.home, s.logger = home, logger
+	return s
+}
+
 // WithPages answers the pages Go has taken over, for anyone working in
 // their own role: each builder is asked in turn, and a path none of them
 // answers is passed to the existing application.
@@ -134,10 +148,20 @@ func fetch[T any, M interface {
 	return connect.NewResponse(message), nil
 }
 
-// GetHome returns Home without its queue.
+// GetHome returns Home without its queue: from Go for a reader it serves
+// (internal/home), else from the existing application.
 func (s *Service) GetHome(
 	ctx context.Context, _ *connect.Request[screensv1.GetHomeRequest],
 ) (*connect.Response[screensv1.GetHomeResponse], error) {
+	if principal, ok := auth.PrincipalFrom(ctx); ok && s.home != nil {
+		response, served, err := s.home.Build(ctx, principal)
+		if err != nil {
+			return nil, apierr.Internal(ctx, s.logger, err)
+		}
+		if served {
+			return connect.NewResponse(response), nil
+		}
+	}
 	return fetch[screensv1.GetHomeResponse](ctx, s, pathHome)
 }
 
