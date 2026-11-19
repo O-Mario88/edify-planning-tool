@@ -1185,3 +1185,9 @@ GRANT SELECT (description, cost_category, unit_cost, total_cost, quantity, statu
 -- Report a Problem (internal/adminops/report.go): whose ticket it is (the
 -- reader's own twenty) and the resolution its reporter is told.
 GRANT SELECT (reporter_id, resolution) ON admin_support_ticket TO edify_gateway_ro;
+
+-- The policy response page (internal/uploadcenter/restricted.go): the
+-- reason a person gave for disagreeing, and the policy's description, its
+-- statement and whether it gates the application.
+GRANT SELECT (comment) ON document_acknowledgement TO edify_gateway_ro;
+GRANT SELECT (description, agreement_statement, blocks_application_access) ON document_asset TO edify_gateway_ro;

@@ -471,6 +471,16 @@ each path's own door (the exporter now lists the workspace's). A golden over
 both paths, eight readers and three filters (the seed's portfolio): 48
 answers, 0 differing, now in the suite, which had no BT compare before.
 
+`/policy-agreement/restricted` is Go's too (uploadcenter/restricted.go): the
+page a reader who disagreed with a required policy lands on, in base.html's
+own chrome (not the shell), with each policy in force that gates the
+application and that they disagreed with, newest first (the model's
+ordering), each card read by the feed's form rule (a short card is its
+"Change my answer to Agree" form, with the policy's statement as a line;
+a long one a panel). The save stays with the existing application. Golden
+(uploadcenter/testdata/restricted_golden.py, `gprd` policies): 3 answers,
+0 differing.
+
 ### Found on the way (2026-11-19): stale generated artefacts on this branch
 
 Only Platform CI runs on `feature/edify-go-rn-migration`; Django's suite runs

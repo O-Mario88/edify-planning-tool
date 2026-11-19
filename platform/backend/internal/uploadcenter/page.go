@@ -53,8 +53,12 @@ func NewService(db schooldirectory.Querier, now func() time.Time) *Service {
 	return &Service{db: db, now: now}
 }
 
-// Build answers /uploads and New Policy or Manual.
+// Build answers /uploads, New Policy or Manual and the policy response page.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if path == RestrictedPath {
+		// Every signed-in reader (restricted_view asks only that).
+		return s.restricted(ctx, p)
+	}
 	if path == NewDocumentPath {
 		doors := rules.Roles[p.ActiveRole]
 		if !doors.NewPage {
