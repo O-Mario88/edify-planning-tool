@@ -1905,9 +1905,13 @@ def _block(node: Node) -> dict | None:
 
 def _holds_blocks(node: Node) -> bool:
     """Whether ``node`` holds blocks of its own (then it is read inside)."""
+    from apps.mobile_feed import family_cards
+
     return (
         node.find(
             lambda n: n.has("context-metrics")
+            or bool(family_cards.group_of(n))
+            or family_cards.is_admin_panel(n)
             or n.has("edify-data-chart")
             or n.has("edify-table-titlebar")
             or n.tag == "table"

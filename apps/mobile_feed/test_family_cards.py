@@ -117,3 +117,19 @@ class AdminPanelCardsTest(SimpleTestCase):
             (self.blocks[3]["list"]["items"], self.blocks[3]["list"]["empty"]),
             ([], "Nothing critical is open."),
         )
+
+
+class CardsInsideAPartTest(SimpleTestCase):
+    def test_cards_inside_a_wrapper_are_still_cards(self):
+        # The dashboard's Operations part wraps the grid in sections of its
+        # own; the wrapper is read inside, not as one panel of lines.
+        wrapped = OPS.replace(
+            '<div class="admin-ops-grid">',
+            '<section class="admin-operations"><div class="admin-ops-grid">',
+        ).replace("</main>", "</section></main>")
+        blocks = page_blocks.read(wrapped, path="/dashboard", desktop=True)["blocks"]
+
+        self.assertEqual(
+            [b["list"]["title"] for b in blocks],
+            ["Critical Now", "Recent Incidents", "Sign-ins", "Critical Now"],
+        )
