@@ -2,6 +2,7 @@ package home
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"strings"
 	"time"
@@ -67,6 +68,25 @@ func roleOf(p auth.Principal) (Role, bool) {
 	return role, true
 }
 
+// ErrForbidden is require_page's refusal: the reader's role may not open
+// Home (the Cluster Leader, whose Home is the Cluster Leader Portal).
+var ErrForbidden = errors.New("home: the role may not open Home")
+
+// refused is whether Go answers p with the existing feed's refusal: a role
+// it has rules for that may not open Home, in its own capacity.
+func refused(p auth.Principal) bool {
+	role, ok := rules.Roles[p.ActiveRole]
+	return ok && !role.Home && !p.InActingAppointment
+}
+
+// refusal is ErrForbidden for a refused reader, else nil (handed on).
+func refusal(p auth.Principal) error {
+	if refused(p) {
+		return ErrForbidden
+	}
+	return nil
+}
+
 // Served is whether Go answers this reader's Home.
 func Served(p auth.Principal) bool {
 	_, ok := roleOf(p)
@@ -78,7 +98,7 @@ func Served(p auth.Principal) bool {
 func (s *Service) Build(ctx context.Context, p auth.Principal) (*screensv1.GetHomeResponse, bool, error) {
 	role, ok := roleOf(p)
 	if !ok {
-		return nil, false, nil
+		return nil, refused(p), refusal(p)
 	}
 	now := s.now()
 	local := now.In(kampala)

@@ -89,6 +89,14 @@ DEMO_ACCOUNTS = [
         "Demo MFI Loan Officer",
         EdifyRole.MFI_LOAN_OFFICER.value,
     ),
+    # A school leader, not staff: the Cluster Leader role alone, no staff
+    # profile (apps.clusters.leader_onboarding). The cluster they lead is
+    # given in the Go-owned cluster_leadership schema, not here.
+    (
+        "cluster-leader@edify.org",
+        "Demo Cluster Leader",
+        EdifyRole.CLUSTER_LEADER.value,
+    ),
 ]
 
 # Demo CCEO accounts in the order they are created. The first, cceo@edify.org
@@ -333,6 +341,7 @@ class Command(BaseCommand):
                 EdifyRole.PARTNER_FIELD_OFFICER.value,
                 EdifyRole.MFI_PARTNER_ADMIN.value,
                 EdifyRole.MFI_LOAN_OFFICER.value,
+                EdifyRole.CLUSTER_LEADER.value,
             }:
                 profile, _ = StaffProfile.objects.update_or_create(
                     user=u, defaults={"onboarding_state": "active"}

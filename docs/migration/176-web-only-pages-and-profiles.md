@@ -960,3 +960,29 @@ differing, the Country Director's rows (the strategy note, the recommended
 actions, the financing gap, an underused budget), queue and To-Do figures
 among them. No seeded lead's team reaches High Risk, so the recovery-plan
 row is proved only by the unit tests of `_pl_risk`.
+
+**The Regional Programme Lead (same day).** `ccelead.RegionalLeadTodos`
+builds the Regional Lead's rows of `_cce_leadership_todos` from the package's
+own report state, reach and rhythm (`leadReach`, `leadRhythm`, `evaluate`):
+last month's report once overdue, reports the RVP returned (not last month's
+when its overdue row stands for it), the rhythm's overdue and missed meetings
+(five), and training feedback written but not shared (five).
+
+**The Cluster Leader (same day).** Owner: "add a Cluster Leader seed account
+and port it too". The demo seed now holds `cluster-leader@edify.org` (the
+Cluster Leader role alone, no staff profile, as
+`apps.clusters.leader_onboarding` makes one; the cluster they lead is given in
+the Go-owned `cluster_leadership` schema, not by the seed). The role opens
+neither Home nor the To-Do page in the existing application: the feed answers
+403 (`require_page`), the To-Do page is not there. Go now gives the same
+answers instead of passing the request on: `home.ErrForbidden` (mapped to
+permission denied with the feed's words) for GetHome, GetHomeQueue and
+GetHomeTodoFigures, and `todos.ErrNotAvailable` for the To-Do page. The
+leader's own Home is the Cluster Leader Portal, already Go's. `golden.py`
+records each answer's status; `home_test.go` compares a refusal as one and
+lists who it hands on. Over the seed: 59 answers compared, 17 handed on, 0
+differing. Handed on: pl1's queue (a record of theirs a guard stands for),
+the two lending roles' and the two partner roles' queues (their loan and
+partner work), the partners' Home, and the Cluster Leader's raw To-Do rows
+(the role has no To-Do page). The Regional Lead's rows needed
+`cce_regional_report.review_note` granted to the gateway (roles.sql).

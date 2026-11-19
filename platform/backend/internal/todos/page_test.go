@@ -3,6 +3,7 @@ package todos
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"strconv"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 )
 
 func day(s string) *time.Time {
@@ -278,5 +280,12 @@ func TestACountryDirectorRowsLinkShapeNamesTheYearAndTheLead(t *testing.T) {
 		if got := ssaScore(in); got != want {
 			t.Errorf("ssaScore(%v) = %v, want %v", in, got, want)
 		}
+	}
+}
+
+func TestTheToDoPageIsNotThereForAClusterLeader(t *testing.T) {
+	_, served, err := NewService(nil, time.Now).Build(context.Background(), auth.Principal{ActiveRole: "ClusterLeader"}, Path, nil)
+	if !served || !errors.Is(err, ErrNotAvailable) {
+		t.Errorf("served %v, %v", served, err)
 	}
 }

@@ -9,6 +9,7 @@ package screens
 import (
 	"context"
 	"errors"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/home"
 	"log/slog"
 	"net/url"
 	"strconv"
@@ -157,6 +158,11 @@ func (s *Service) GetHome(
 ) (*connect.Response[screensv1.GetHomeResponse], error) {
 	if principal, ok := auth.PrincipalFrom(ctx); ok && s.home != nil {
 		response, served, err := s.home.Build(ctx, principal)
+		if errors.Is(err, home.ErrForbidden) {
+			// require_page's refusal, as the existing feed gives it.
+			return nil, apierr.New(ctx, connect.CodePermissionDenied, apierr.ReasonPermissionDenied,
+				"Your role does not have permission to view this.")
+		}
 		if err != nil {
 			return nil, apierr.Internal(ctx, s.logger, err)
 		}
@@ -174,6 +180,11 @@ func (s *Service) GetHomeQueue(
 ) (*connect.Response[screensv1.GetHomeQueueResponse], error) {
 	if principal, ok := auth.PrincipalFrom(ctx); ok && s.home != nil {
 		response, served, err := s.home.BuildQueue(ctx, principal)
+		if errors.Is(err, home.ErrForbidden) {
+			// require_page's refusal, as the existing feed gives it.
+			return nil, apierr.New(ctx, connect.CodePermissionDenied, apierr.ReasonPermissionDenied,
+				"Your role does not have permission to view this.")
+		}
 		if err != nil {
 			return nil, apierr.Internal(ctx, s.logger, err)
 		}
@@ -191,6 +202,11 @@ func (s *Service) GetHomeTodoFigures(
 ) (*connect.Response[screensv1.GetHomeTodoFiguresResponse], error) {
 	if principal, ok := auth.PrincipalFrom(ctx); ok && s.home != nil {
 		response, served, err := s.home.BuildTodoFigures(ctx, principal)
+		if errors.Is(err, home.ErrForbidden) {
+			// require_page's refusal, as the existing feed gives it.
+			return nil, apierr.New(ctx, connect.CodePermissionDenied, apierr.ReasonPermissionDenied,
+				"Your role does not have permission to view this.")
+		}
 		if err != nil {
 			return nil, apierr.Internal(ctx, s.logger, err)
 		}

@@ -1,6 +1,8 @@
 package home
 
 import (
+	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -88,5 +90,27 @@ func TestAQueueRowReadsAsTheExistingHomeRow(t *testing.T) {
 	if group.Context != "3 like this" || group.StatusLabel != "Medium" || group.StatusTone != "info" ||
 		group.DueLabel != "—" || group.ActionLabel != "Review" || group.Url != "/todos" || group.Count != 3 {
 		t.Errorf("a group: %+v", group)
+	}
+}
+
+func TestAClusterLeaderIsRefusedHomeAsTheExistingFeedRefusesIt(t *testing.T) {
+	leader := auth.Principal{UserID: "u", ActiveRole: "ClusterLeader"}
+	s := NewService(nil, time.Now)
+	for name, build := range map[string]func() (bool, error){
+		"home":  func() (bool, error) { _, served, err := s.Build(context.Background(), leader); return served, err },
+		"queue": func() (bool, error) { _, served, err := s.BuildQueue(context.Background(), leader); return served, err },
+		"to-do figures": func() (bool, error) {
+			_, served, err := s.BuildTodoFigures(context.Background(), leader)
+			return served, err
+		},
+	} {
+		if served, err := build(); !served || !errors.Is(err, ErrForbidden) {
+			t.Errorf("%s: served %v, %v", name, served, err)
+		}
+	}
+	acting := leader
+	acting.InActingAppointment = true
+	if _, served, err := s.Build(context.Background(), acting); served || err != nil {
+		t.Errorf("an acting appointment is handed on: %v %v", served, err)
 	}
 }

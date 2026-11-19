@@ -31,7 +31,7 @@ const leadRole = "Program Lead"
 func (s *Service) BuildQueue(ctx context.Context, p auth.Principal) (*screensv1.GetHomeQueueResponse, bool, error) {
 	role, ok := roleOf(p)
 	if !ok {
-		return nil, false, nil
+		return nil, refused(p), refusal(p)
 	}
 	specs, set := rules.Priorities.Roles[p.ActiveRole]
 	if !set {
@@ -279,7 +279,7 @@ func thousands(n int) string {
 func (s *Service) BuildTodoFigures(ctx context.Context, p auth.Principal) (*screensv1.GetHomeTodoFiguresResponse, bool, error) {
 	role, ok := roleOf(p)
 	if !ok {
-		return nil, false, nil
+		return nil, refused(p), refusal(p)
 	}
 	counts, total, served, err := s.todos.QueueCounts(ctx, p)
 	if !served || err != nil {

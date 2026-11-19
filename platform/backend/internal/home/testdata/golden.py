@@ -60,6 +60,7 @@ READERS = (
     "mfi-officer@edify.org",
     "partner@edify.org",
     "partner-admin@edify.org",
+    "cluster-leader@edify.org",
 )
 
 
@@ -226,6 +227,7 @@ def ask(email):
         force_authenticate(request, user=user)
         response = view.as_view()(request)
         out["status"] = max(out.get("status", 0), response.status_code)
+        out[f"{name}_status"] = response.status_code
         out[name] = json.loads(json.dumps(response.data, default=str))
     return out
 

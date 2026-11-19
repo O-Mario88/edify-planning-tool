@@ -5,8 +5,11 @@ package integration
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -49,6 +52,10 @@ func TestHomeMatchesTheExistingFeed(t *testing.T) {
 			Queue       json.RawMessage `json:"queue"`
 			TodoFigures json.RawMessage `json:"todo_figures"`
 			TodoRows    json.RawMessage `json:"todo_rows"`
+			// Each answer's HTTP status (403: the role may not open Home).
+			BodyStatus        int `json:"body_status"`
+			QueueStatus       int `json:"queue_status"`
+			TodoFiguresStatus int `json:"todo_figures_status"`
 		} `json:"answers"`
 	}
 	if err := json.Unmarshal(raw, &golden); err != nil {
@@ -82,6 +89,7 @@ func TestHomeMatchesTheExistingFeed(t *testing.T) {
 	service := home.NewService(gateway, at)
 	queues := todos.NewService(gateway, at)
 	compared, handedOn, differing := 0, 0, 0
+	var passed []string
 	for _, a := range golden.Answers {
 		var p auth.Principal
 		if err := admin.QueryRow(ctx, `SELECT u.id, u.email, COALESCE(u.name, ''), u.active_role, COALESCE(sp.id, '')
@@ -96,6 +104,7 @@ FROM "user" u LEFT JOIN staff_profile sp ON sp.user_id = u.id WHERE u.email = $1
 			t.Fatalf("%s to-do rows: %v", a.Email, err)
 		case !asked:
 			handedOn++
+			passed = append(passed, a.Email+" to-do rows")
 		case d != "":
 			compared++
 			differing++
@@ -108,18 +117,30 @@ FROM "user" u LEFT JOIN staff_profile sp ON sp.user_id = u.id WHERE u.email = $1
 			name     string
 			build    func() (proto.Message, bool, error)
 			existing json.RawMessage
+			status   int
 			want     proto.Message
 		}{
-			{"home", func() (proto.Message, bool, error) { return service.Build(ctx, p) }, a.Body, &screensv1.GetHomeResponse{}},
-			{"queue", func() (proto.Message, bool, error) { return service.BuildQueue(ctx, p) }, a.Queue, &screensv1.GetHomeQueueResponse{}},
-			{"to-do figures", func() (proto.Message, bool, error) { return service.BuildTodoFigures(ctx, p) }, a.TodoFigures, &screensv1.GetHomeTodoFiguresResponse{}},
+			{"home", func() (proto.Message, bool, error) { return service.Build(ctx, p) }, a.Body, a.BodyStatus, &screensv1.GetHomeResponse{}},
+			{"queue", func() (proto.Message, bool, error) { return service.BuildQueue(ctx, p) }, a.Queue, a.QueueStatus, &screensv1.GetHomeQueueResponse{}},
+			{"to-do figures", func() (proto.Message, bool, error) { return service.BuildTodoFigures(ctx, p) }, a.TodoFigures, a.TodoFiguresStatus, &screensv1.GetHomeTodoFiguresResponse{}},
 		} {
 			got, served, err := part.build()
+			// A refusal is compared as one: Go refuses exactly where the
+			// existing feed answered 403.
+			if refusedByGo, refusedByFeed := errors.Is(err, home.ErrForbidden), part.status == http.StatusForbidden; refusedByGo || refusedByFeed {
+				compared++
+				if refusedByGo != refusedByFeed {
+					differing++
+					t.Errorf("%s %s: go refused %v, the existing feed answered %d", a.Email, part.name, refusedByGo, part.status)
+				}
+				continue
+			}
 			if err != nil {
 				t.Fatalf("%s %s: %v", a.Email, part.name, err)
 			}
 			if !served {
 				handedOn++
+				passed = append(passed, a.Email+" "+part.name)
 				continue
 			}
 			compared++
@@ -139,6 +160,7 @@ FROM "user" u LEFT JOIN staff_profile sp ON sp.user_id = u.id WHERE u.email = $1
 		}
 	}
 	t.Logf("%d answers compared, %d handed on, %d differing", compared, handedOn, differing)
+	t.Logf("handed on: %s", strings.Join(passed, "; "))
 	if compared == 0 {
 		t.Fatal("the golden asks Go nothing")
 	}
