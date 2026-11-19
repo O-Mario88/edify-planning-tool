@@ -10,11 +10,11 @@ import (
 	"time"
 )
 
-// compareSchoolEvidence files the rows a School Evidence golden filed (every
-// id starting prefix, in each table, in order), asks /ia/school-evidence/ as
-// each reader the golden asked, and compares the whole page. Skipped unless
-// env names that golden, written within the hour.
-func compareSchoolEvidence(t *testing.T, env, prefix string, tables ...string) {
+// compareFiledPage files the rows a web golden filed (every id starting
+// prefix, in each table, in order), asks page as each reader the golden
+// asked, and compares the whole page. Skipped unless env names that golden,
+// written within the hour.
+func compareFiledPage(t *testing.T, env, prefix, page string, tables ...string) {
 	path := os.Getenv(env)
 	if path == "" {
 		t.Skip(env + " is not set")
@@ -52,7 +52,11 @@ func compareSchoolEvidence(t *testing.T, env, prefix string, tables ...string) {
 	if len(golden.Answers) == 0 {
 		t.Fatal("the golden asks nothing")
 	}
-	compareGolden(t, "/ia/school-evidence/", golden.Answers)
+	compareGolden(t, page, golden.Answers)
+}
+
+func compareSchoolEvidence(t *testing.T, env, prefix string, tables ...string) {
+	compareFiledPage(t, env, prefix, "/ia/school-evidence/", tables...)
 }
 
 // TestSchoolEvidenceLearningResultsMatchTheExistingPage compares the

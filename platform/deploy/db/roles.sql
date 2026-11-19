@@ -1229,3 +1229,6 @@ GRANT SELECT (is_staff) ON "user" TO edify_gateway_ro;
 GRANT SELECT (id, title, description, slug, status, acknowledgement_reason, agreement_statement, required_reading_minutes, download_allowed, comment_required, acknowledgement_required, current_version_id) ON document_asset TO edify_gateway_ro;
 GRANT SELECT (id, version_number, effective_date) ON document_version TO edify_gateway_ro;
 GRANT SELECT (id, state, user_id, document_id, version_id, due_date, active_reading_seconds, session_count, responded_at, offline_attestation, created_at) ON document_acknowledgement TO edify_gateway_ro;
+-- The Today page (internal/todaypage).
+GRANT SELECT (user_id, todo_id, until) ON command_center_todo_snooze TO edify_gateway_ro;
+GRANT SELECT (user_id, created_at) ON command_center_today_action TO edify_gateway_ro;

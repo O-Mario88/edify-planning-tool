@@ -31,7 +31,10 @@ type todo struct {
 	// The row's words, as the existing builder writes them: Home's Priority
 	// actions show them (home_service._todo_row). Description is read only
 	// where Linked is empty.
-	Description             string
+	Description string
+	// Described is whether Description holds the row's whole description
+	// as the existing builder writes it (Today shows it beside Linked).
+	Described               bool
 	DueLabel, DueTone       string
 	StatusLabel, StatusTone string
 }

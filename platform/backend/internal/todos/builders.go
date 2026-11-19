@@ -526,7 +526,7 @@ ORDER BY s.created_at DESC LIMIT 8`, ids, rules.OperatingStatuses)
 			var id string
 			var name *string
 			err := row.Scan(&id, &name)
-			return todo{ID: "sch-" + id + "-" + q.key, Title: q.title, Category: q.category, Priority: q.priority, StatusKey: "waiting_me", Actionable: true,
+			return todo{ID: "sch-" + id + "-" + q.key, Description: pyStr(name), Described: true, Title: q.title, Category: q.category, Priority: q.priority, StatusKey: "waiting_me", Actionable: true,
 				StatusLabel: "Waiting on Me", StatusTone: "info", DueLabel: "—", DueTone: "neutral",
 				Linked: pyStr(name), ActionLabel: q.label, ActionURL: q.url, Shape: q.url}, err
 		})

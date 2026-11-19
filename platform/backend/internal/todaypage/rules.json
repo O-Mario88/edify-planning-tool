@@ -1,0 +1,353 @@
+{
+  "activity_drawer": "^/activities/[^/?#]+/(start|complete|partner-ssa-complete|evidence|salesforce-id|submit|attendance|ssa-upload)$",
+  "adapters": [
+    {
+      "kind": "completion_review",
+      "operations": [
+        {
+          "drawer": "",
+          "keeps_query": false,
+          "key": "confirm",
+          "label": "Verified",
+          "needs_form": false,
+          "tone": "primary"
+        },
+        {
+          "drawer": "",
+          "keeps_query": false,
+          "key": "return",
+          "label": "Return",
+          "needs_form": true,
+          "tone": "secondary"
+        },
+        {
+          "drawer": "/pl/review-queue/{id}/drawer",
+          "keeps_query": false,
+          "key": "review",
+          "label": "Review evidence",
+          "needs_form": false,
+          "tone": "ghost"
+        }
+      ],
+      "pattern": "^plrev-(?P<id>.+)$",
+      "url_contains": ""
+    },
+    {
+      "kind": "weekly_fund_approval",
+      "operations": [
+        {
+          "drawer": "",
+          "keeps_query": false,
+          "key": "approve",
+          "label": "Approve",
+          "needs_form": false,
+          "tone": "primary"
+        },
+        {
+          "drawer": "",
+          "keeps_query": false,
+          "key": "return",
+          "label": "Return",
+          "needs_form": true,
+          "tone": "secondary"
+        }
+      ],
+      "pattern": "^wfr-appr-(?P<id>.+)$",
+      "url_contains": ""
+    },
+    {
+      "kind": "weekly_receipt",
+      "operations": [
+        {
+          "drawer": "",
+          "keeps_query": false,
+          "key": "confirm",
+          "label": "Confirm receipt",
+          "needs_form": true,
+          "tone": "primary"
+        }
+      ],
+      "pattern": "^wfrreceipt-(?P<id>.+)$",
+      "url_contains": ""
+    },
+    {
+      "kind": "monthly_receipt",
+      "operations": [
+        {
+          "drawer": "",
+          "keeps_query": false,
+          "key": "confirm",
+          "label": "Confirm receipt",
+          "needs_form": true,
+          "tone": "primary"
+        }
+      ],
+      "pattern": "^frreceipt-(?P<id>.+)$",
+      "url_contains": ""
+    },
+    {
+      "kind": "weekly_fund_request",
+      "operations": [
+        {
+          "drawer": "",
+          "keeps_query": false,
+          "key": "send",
+          "label": "Send for approval",
+          "needs_form": false,
+          "tone": "primary"
+        }
+      ],
+      "pattern": "^wfr-(?P<id>[^-]+)$",
+      "url_contains": ""
+    },
+    {
+      "kind": "leave_approval",
+      "operations": [
+        {
+          "drawer": "",
+          "keeps_query": false,
+          "key": "approve",
+          "label": "Approve",
+          "needs_form": false,
+          "tone": "primary"
+        },
+        {
+          "drawer": "",
+          "keeps_query": false,
+          "key": "reject",
+          "label": "Decline",
+          "needs_form": true,
+          "tone": "secondary"
+        }
+      ],
+      "pattern": "^leave-(?P<id>.+)$",
+      "url_contains": ""
+    },
+    {
+      "kind": "visit_request",
+      "operations": [
+        {
+          "drawer": "",
+          "keeps_query": false,
+          "key": "approve",
+          "label": "Approve",
+          "needs_form": true,
+          "tone": "primary"
+        },
+        {
+          "drawer": "",
+          "keeps_query": false,
+          "key": "decline",
+          "label": "Decline",
+          "needs_form": true,
+          "tone": "secondary"
+        }
+      ],
+      "pattern": "^visitreq-(?P<id>.+)$",
+      "url_contains": ""
+    },
+    {
+      "kind": "ssa_verification",
+      "operations": [
+        {
+          "drawer": "",
+          "keeps_query": false,
+          "key": "confirm",
+          "label": "Confirm",
+          "needs_form": false,
+          "tone": "primary"
+        },
+        {
+          "drawer": "",
+          "keeps_query": false,
+          "key": "return",
+          "label": "Return",
+          "needs_form": true,
+          "tone": "secondary"
+        }
+      ],
+      "pattern": "^ssa-next-(?P<id>.+)$",
+      "url_contains": ""
+    },
+    {
+      "kind": "partner_evidence",
+      "operations": [
+        {
+          "drawer": "",
+          "keeps_query": false,
+          "key": "confirm",
+          "label": "Verified",
+          "needs_form": true,
+          "tone": "primary"
+        },
+        {
+          "drawer": "/ia/partner-evidence/{id}/return-drawer",
+          "keeps_query": false,
+          "key": "return",
+          "label": "Return",
+          "needs_form": false,
+          "tone": "secondary"
+        }
+      ],
+      "pattern": "^ia-(?P<id>[a-z0-9]{20,})$",
+      "url_contains": "/ia/partner-evidence/"
+    },
+    {
+      "kind": "school_contact",
+      "operations": [
+        {
+          "drawer": "/schools/{id}/edit-drawer",
+          "keeps_query": false,
+          "key": "fix",
+          "label": "Fix contact",
+          "needs_form": false,
+          "tone": "primary"
+        }
+      ],
+      "pattern": "^sch-(?P<id>.+)-contact$",
+      "url_contains": ""
+    },
+    {
+      "kind": "ssa_visit",
+      "operations": [
+        {
+          "drawer": "/planning/schedule-modal?school_id={id}",
+          "keeps_query": false,
+          "key": "schedule",
+          "label": "Schedule SSA visit",
+          "needs_form": false,
+          "tone": "primary"
+        }
+      ],
+      "pattern": "^sch-(?P<id>.+)-ssa$",
+      "url_contains": ""
+    },
+    {
+      "kind": "coaching",
+      "operations": [
+        {
+          "drawer": "/team/coaching/new?",
+          "keeps_query": true,
+          "key": "log",
+          "label": "Log it",
+          "needs_form": false,
+          "tone": "primary"
+        }
+      ],
+      "pattern": "^coaching-(?P<id>.+)$",
+      "url_contains": ""
+    }
+  ],
+  "exception_limit": 6,
+  "group_min": 3,
+  "group_preview": 3,
+  "roles": {
+    "Accountant": {
+      "desk": true,
+      "home": "/today",
+      "page": false,
+      "verifies_ssa": false
+    },
+    "Admin": {
+      "desk": true,
+      "home": "/today",
+      "page": true,
+      "verifies_ssa": false
+    },
+    "BusinessTransformationOfficer": {
+      "desk": true,
+      "home": "/today",
+      "page": false,
+      "verifies_ssa": false
+    },
+    "CCEO": {
+      "desk": false,
+      "home": "/dashboard?view=today",
+      "page": true,
+      "verifies_ssa": false
+    },
+    "ClusterLeader": {
+      "desk": true,
+      "home": "/today",
+      "page": false,
+      "verifies_ssa": false
+    },
+    "CountryDirector": {
+      "desk": true,
+      "home": "/today",
+      "page": false,
+      "verifies_ssa": false
+    },
+    "HumanResources": {
+      "desk": true,
+      "home": "/today",
+      "page": false,
+      "verifies_ssa": false
+    },
+    "ImpactAssessment": {
+      "desk": true,
+      "home": "/ia/dashboard/?view=today",
+      "page": true,
+      "verifies_ssa": true
+    },
+    "MfiLoanOfficer": {
+      "desk": true,
+      "home": "/today",
+      "page": false,
+      "verifies_ssa": false
+    },
+    "MfiPartnerAdmin": {
+      "desk": true,
+      "home": "/today",
+      "page": false,
+      "verifies_ssa": false
+    },
+    "PartnerAdmin": {
+      "desk": true,
+      "home": "/today",
+      "page": false,
+      "verifies_ssa": false
+    },
+    "PartnerFieldOfficer": {
+      "desk": true,
+      "home": "/today",
+      "page": false,
+      "verifies_ssa": false
+    },
+    "Program Lead": {
+      "desk": false,
+      "home": "/dashboard?view=today",
+      "page": true,
+      "verifies_ssa": false
+    },
+    "ProjectCoordinator": {
+      "desk": false,
+      "home": "/dashboard?view=today",
+      "page": true,
+      "verifies_ssa": false
+    },
+    "RegionalProgramLead": {
+      "desk": true,
+      "home": "/today",
+      "page": false,
+      "verifies_ssa": false
+    },
+    "RegionalVicePresident": {
+      "desk": true,
+      "home": "/today",
+      "page": false,
+      "verifies_ssa": false
+    }
+  },
+  "snooze_choices": [
+    [
+      "tomorrow",
+      "Until tomorrow"
+    ],
+    [
+      "next_week",
+      "Until next week"
+    ]
+  ],
+  "waiting_limit": 8
+}

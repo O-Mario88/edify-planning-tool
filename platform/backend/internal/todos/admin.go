@@ -237,7 +237,16 @@ ORDER BY created_at ASC LIMIT 4`, pending)
 			return nil, err
 		}
 	}
-	return []todo{{ID: "partner-user-setup", Title: "Configure Partner Users", Category: "Partners", Priority: "high", StatusKey: "waiting_me",
+	shown := strings.Join(names[:min(3, len(names))], ", ")
+	if total > 3 {
+		shown += " and more"
+	}
+	word := "organisations"
+	if total == 1 {
+		word = "organisation"
+	}
+	description := strconv.Itoa(total) + " partner " + word + " without a login set up: " + shown + "."
+	return []todo{{ID: "partner-user-setup", Description: description, Described: true, Title: "Configure Partner Users", Category: "Partners", Priority: "high", StatusKey: "waiting_me",
 		StatusLabel: "Waiting on Me", StatusTone: "warning", DueLabel: "—", DueTone: "neutral", Actionable: true, Linked: plural(total, "organisation"), ActionLabel: "Set up logins",
 		ActionURL: "/admin-panel/users#partner-directory-title", Shape: "/admin-panel/users#partner-directory-title",
 		Due: &r.today}}, nil
@@ -269,7 +278,8 @@ ORDER BY r.due_date ASC LIMIT 30`, rules.LoanFieldVerificationStates)
 		var due time.Time
 		var name, code, mfi *string
 		err := row.Scan(&id, &due, &name, &code, &mfi)
-		t := todo{ID: "bt-verification-" + id, Title: "Schedule Loan-Use Verification", Category: "Business Transformation", Priority: "high",
+		t := todo{ID: "bt-verification-" + id, Description: pyStr(name) + " needs a governed post-disbursement verification visit.",
+			Described: true, Title: "Schedule Loan-Use Verification", Category: "Business Transformation", Priority: "high",
 			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info",
 			DueLabel: due.Format("Jan ") + strconv.Itoa(due.Day()), DueTone: "info",
 			Actionable: true, Linked: pyStr(name) + " · " + pyStr(mfi), ActionLabel: "Plan Visit",

@@ -161,6 +161,9 @@ func (s *Service) readQueue(ctx context.Context, p auth.Principal) (queue, bool,
 
 // Row is one To-Do as Home's Priority actions read it (home_service._todo_row).
 type Row struct {
+	// ID is the row's id as the existing builder writes it.
+	ID                                     string
+	Actionable, Described                  bool
 	Title, Description, Category, Priority string
 	StatusKey, StatusLabel, StatusTone     string
 	DueLabel, DueTone                      string
@@ -217,7 +220,7 @@ func (s *Service) HomeQueue(ctx context.Context, p auth.Principal) (Queue, bool,
 }
 
 func rowOf(t todo) Row {
-	return Row{Title: t.Title, Description: t.Description, Category: t.Category, Priority: t.Priority,
+	return Row{ID: t.ID, Actionable: t.Actionable, Described: t.Described, Title: t.Title, Description: t.Description, Category: t.Category, Priority: t.Priority,
 		StatusKey: t.StatusKey, StatusLabel: t.StatusLabel, StatusTone: t.StatusTone,
 		DueLabel: t.DueLabel, DueTone: t.DueTone, Linked: t.Linked, ActionLabel: t.ActionLabel, ActionURL: t.ActionURL}
 }

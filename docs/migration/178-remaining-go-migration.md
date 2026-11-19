@@ -551,7 +551,30 @@ document; every save stays with the existing application. Golden
 (uploadcenter/testdata/agreement_golden.py, `gpag` policies and answers): 4
 readers, 0 differing (two drawn, two handed on).
 
-Left in C: `/today` (it waits for the To-Do rows to carry ids, part of E).
+### C3 · Today (2026-11-19)
+
+Every To-Do row Go builds now carries the id the existing builder gives it
+(`act-<id>`, `sch-<school>-contact`, `ssa-collect-owner-<owner>`, …),
+which the queue never showed but Today matches snoozes and decisions on.
+`/today` is Go's (internal/todaypage) for the reader whose desk it is (the
+Admin): the tally of decisions cleared from Today today and of the rows
+snoozed, then "Waiting on you", the actionable rows less the snoozed, eight
+at most, each with the Actions menu today_actions.decorate gives it as the
+feed reads it (a decision's drawer, an activity's next form, the row's own
+link, the Snooze note). Handed on: the field roles and Impact Assessment
+(sent to their dashboards), a reader who verifies SSA (the next SSA leads
+the list), exceptions (critical or blocked rows, their own list), identical
+To-Dos the page groups, money rows (their amount) and every save. The
+exporter writes who opens it, the limits, the snooze choices and each
+decision adapter. Goldens (todaypage/testdata/golden.py): the page as the
+database stands, and under `gtdy` snoozes and cleared decisions: 6
+readers each, 0 differing. A row's description is shown beside its linked
+line here (Home reads it only without one), so a row now says whether Go
+writes its whole description (`Described`: the partner logins, the loan
+verifications to schedule and the data-quality rows); a shown row that does
+not is handed on.
+
+Section C is done.
 
 ### C8 · The Business Transformation workspace (2026-11-19)
 
