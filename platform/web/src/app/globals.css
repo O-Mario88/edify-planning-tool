@@ -6,6 +6,9 @@
 @import "tailwindcss";
 @import "../styles/generated/theme.css";
 @import "../styles/generated/edify-tokens.css";
+/* The Enterprise Design System's tokens (platform/design/tokens.json), for
+   the redesigned screens (components/eds). */
+@import "../styles/ds/tokens.css";
 
 /* `dark:` follows the chosen theme (the root's .theme-dark), as on the
    existing web, never the device alone. */
