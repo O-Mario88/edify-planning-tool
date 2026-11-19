@@ -129,3 +129,7 @@ Nothing is claimed verified without evidence.
   of all 16 roles at phone, tablet and desktop, the route-by-role
   permissions matrix with Acting PL and Acting CD, a local timing baseline,
   two defects, and three decisions for the owner.
+- Stage B's first cut is `180-stage-b-design-system.md`: one token source
+  for both apps (every colour pair at WCAG AA, checked when built), the first
+  components (`components/eds`) and `/design-preview` with before/after
+  pairs for three phone screens.
