@@ -1,11 +1,16 @@
+'use client';
+
 /*
  * The sidebar, in the existing web's own markup and class names
  * (templates/components/sidebar.html), so the existing stylesheet
  * (static/css/components/sidebar.css, linked by the root layout) draws it
  * exactly as there: the gateway's sections in their order, every link drawn,
- * the current page marked, and the settings panel at the foot.
+ * the current page marked, and the settings panel at the foot. The current
+ * page is read in the browser: the shell's layout is not redrawn when a link
+ * moves within it, so the path it was drawn for goes stale.
  */
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 import type { NavSection } from '@/gen/edify/screens/v1/navigation_pb';
 import { safeIcon } from '@/lib/icon';
@@ -37,6 +42,7 @@ function Brand() {
 }
 
 export function SidebarNav({ sections, path }: { sections: NavSection[]; path: string }) {
+  const here = usePathname() ?? path;
   return (
     <nav className="app-sidebar__nav" aria-label="Main Navigation">
       {sections.map((section) =>
@@ -49,7 +55,7 @@ export function SidebarNav({ sections, path }: { sections: NavSection[]; path: s
             ) : null}
             <div className="app-sidebar__section-items">
               {section.items.map((item) => {
-                const active = isCurrent(item.url, path);
+                const active = isCurrent(item.url, here);
                 return (
                   <Link
                     key={item.url}

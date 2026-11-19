@@ -13,6 +13,8 @@ import Link from 'next/link';
 import type { NavSection } from '@/gen/edify/screens/v1/navigation_pb';
 import { safeIcon } from '@/lib/icon';
 
+import { LeaveOnDesktop } from './LeaveOnDesktop';
+
 export interface PhoneMoreProps {
   readonly name: string;
   readonly email: string;
@@ -24,6 +26,7 @@ export interface PhoneMoreProps {
 export function PhoneMore({ name, email, activeRole, roles, sections }: PhoneMoreProps) {
   return (
     <div data-ph="page" data-page="/more">
+      <LeaveOnDesktop />
       <section data-ph="more-account" aria-label="Your account">
         <p data-ph="more-name">{name}</p>
         <p data-ph="more-meta">{[activeRole, email].filter(Boolean).join(' · ')}</p>
