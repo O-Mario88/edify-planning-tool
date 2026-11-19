@@ -5,12 +5,16 @@ import { redirect } from 'next/navigation';
 import type { HomePriorityRow, HomeUpcoming } from '@/gen/edify/screens/v1/home_pb';
 import { NotMovedYet } from '@/components/page/NotMovedYet';
 import { environment } from '@/lib/environment';
+import { TodayScreen } from '@/components/today/TodayScreen';
 import { askHome } from '@/lib/homeData';
 import { homeDate, homeFigures, homeHeader } from '@/lib/homeScreen';
 import type { HomeFigureCard } from '@/lib/homeScreen';
 import { safeIcon } from '@/lib/icon';
 
 export const metadata: Metadata = { title: 'Home — Edify' };
+
+/** Roles whose Home is the redesigned Today. */
+const REDESIGNED = new Set(['CCEO']);
 
 /* Home's small icon set (templates/partials/home/icon.html). */
 const GLYPHS = {
@@ -166,6 +170,10 @@ export default async function HomePage() {
   const answer = await askHome();
   if (answer.kind === 'elsewhere') redirect(answer.url);
   if (answer.kind === 'notMoved') return <NotMovedYet href={`${environment().existingWebUrl}/home`} />;
+  // The CCEO's Home is the redesigned Today (docs/migration/177 stage D),
+  // checked against this page's own figures and rows for a CCEO before it
+  // replaced it; every other role keeps this page until its Home is rebuilt.
+  if (REDESIGNED.has(answer.parts.role)) return <TodayScreen parts={answer.parts} />;
   const { home, queue, figures, total } = answer.parts;
   const header = homeHeader(home);
   const cards = homeFigures(home.figures, figures);

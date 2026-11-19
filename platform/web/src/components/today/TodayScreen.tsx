@@ -49,7 +49,7 @@ export function TodayScreen({ parts, note }: { parts: HomeParts; note?: string }
       <div className="mx-auto mt-5 grid max-w-5xl gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-3">
           {home.hasPlan ? <NextUp next={nextUp(home.upcoming)} /> : null}
-          <SectionHeader title="Waiting on you" count={total ?? waiting.length} href="/todos" />
+          <SectionHeader title="Waiting on you" href="/todos" linkLabel={total ? `All ${total} To-Dos` : 'All To-Dos'} />
           {waiting.length ? (
             <TaskList>
               {waiting.map((row, i) => (

@@ -13,7 +13,14 @@ import { asReader } from '@/lib/auth';
 import { gatewayClient, isNotFound, isUnavailable } from '@/lib/gateway';
 import { withRouteShortcut } from '@/lib/routePlanner';
 
-export type HomeParts = { home: GetHomeResponse; queue: GetHomeQueueResponse; figures: HomeFigure[]; total: number | undefined };
+export type HomeParts = {
+  home: GetHomeResponse;
+  queue: GetHomeQueueResponse;
+  figures: HomeFigure[];
+  total: number | undefined;
+  /** The reader's active role, as the session holds it. */
+  role: string;
+};
 export type HomeAnswer = { kind: 'home'; parts: HomeParts } | { kind: 'elsewhere'; url: string } | { kind: 'notMoved' };
 
 /** Each part of Home; where the reader starts instead; or not moved yet. */
@@ -23,14 +30,15 @@ export async function askHome(): Promise<HomeAnswer> {
     try {
       const [answer, session] = await Promise.all([client.getHome({}), gatewayClient(IdentityService, token).getSession({})]);
       // Quick access opens Smart Route in My Plan's place for a role that plans routes.
-      const home = { ...answer, shortcuts: withRouteShortcut(answer.shortcuts, session.session?.activeRole ?? '') };
+      const role = session.session?.activeRole ?? '';
+      const home = { ...answer, shortcuts: withRouteShortcut(answer.shortcuts, role) };
       if (home.redirectUrl) return { kind: 'elsewhere', url: home.redirectUrl };
       const queue = await client.getHomeQueue({});
       if (queue.todoFiguresLater) {
         const later = await client.getHomeTodoFigures({});
-        return { kind: 'home', parts: { home, queue, figures: later.queueFigures, total: later.priorityTotal } };
+        return { kind: 'home', parts: { home, queue, figures: later.queueFigures, total: later.priorityTotal, role } };
       }
-      return { kind: 'home', parts: { home, queue, figures: queue.queueFigures, total: queue.priorityTotal } };
+      return { kind: 'home', parts: { home, queue, figures: queue.queueFigures, total: queue.priorityTotal, role } };
     } catch (error) {
       if (isNotFound(error)) notFound();
       if (isUnavailable(error)) return { kind: 'notMoved' };
