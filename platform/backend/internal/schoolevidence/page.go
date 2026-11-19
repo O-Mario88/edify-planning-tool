@@ -40,7 +40,8 @@ import (
 const Path = "/ia/school-evidence/"
 
 const (
-	learning = "learning"
+	learning     = "learning"
+	discipleship = "discipleship"
 	// pageSize is the register's database page and the summary's list page
 	// (ia_collection.PAGE_SIZE, TABLE_PAGE_SIZE).
 	pageSize = 50
@@ -117,10 +118,10 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if !known {
 		tab = learning
 	}
-	if tab != learning || query.Get("open") != "" {
+	if (tab != learning && tab != discipleship) || query.Get("open") != "" {
 		return nil, false, nil
 	}
-	resp, err := s.page(ctx, p, query)
+	resp, err := s.page(ctx, p, tab, query)
 	if err != nil {
 		return nil, true, err
 	}
@@ -136,15 +137,26 @@ type reader struct {
 	status   string
 	subject  string
 	reviewer *iaframework.Reviewer
+	scope    schooldirectory.Scope
 }
 
-func (s *Service) page(ctx context.Context, p auth.Principal, query url.Values) (*screensv1.GetPageResponse, error) {
+// tabContent is what a register tab hands the page: its words, its record
+// button, its own filters, whether it offers the CSV upload, and its tables.
+type tabContent struct {
+	description         string
+	recordLabel, record string
+	filters             []*screensv1.PageFilter
+	upload              bool
+	tables              []*screensv1.PageBlock
+}
+
+func (s *Service) page(ctx context.Context, p auth.Principal, tab string, query url.Values) (*screensv1.GetPageResponse, error) {
 	now := s.now()
 	scope, err := schooldirectory.ResolveScope(ctx, s.db, p, now)
 	if err != nil {
 		return nil, fmt.Errorf("schoolevidence: resolving the reader's scope: %w", err)
 	}
-	r := &reader{p: p}
+	r := &reader{p: p, scope: scope}
 	if scope.SummaryOnly {
 		r.schools = "false" // evidence_schools: nothing for a summary-only reader
 	} else {
@@ -174,20 +186,21 @@ func (s *Service) page(ctx context.Context, p auth.Principal, query url.Values) 
 	if err != nil {
 		return nil, err
 	}
-	subjects, err := s.subjects(ctx, r)
+	var c tabContent
+	if tab == learning {
+		c, err = s.learningTab(ctx, r, query)
+	} else {
+		c, err = s.discipleshipTab(ctx, r, query)
+	}
 	if err != nil {
 		return nil, err
-	}
-	r.subject = strings.TrimSpace(query.Get("subject"))
-	if !contains(subjects, r.subject) {
-		r.subject = ""
 	}
 	role := rules.Roles[p.ActiveRole]
 	header := &screensv1.PageHeader{Eyebrow: "Baseline & field data", Title: "School Evidence",
 		Description: "Class learning results, discipleship practice and EdTech use in partner schools — recorded by one person, confirmed by another, and only then counted."}
 	if role.Record {
-		header.Actions = []*screensv1.PageAction{{Key: "record_learning_result", Label: "Record learning result", Enabled: true,
-			Href: Path + learning + "/new", Drawer: true}}
+		header.Actions = []*screensv1.PageAction{{Key: slug(c.recordLabel), Label: c.recordLabel, Enabled: true,
+			Href: Path + c.record + "/new", Drawer: true}}
 	}
 	blocks := []*screensv1.PageBlock{}
 	if st := role.Strip; st != nil {
@@ -200,12 +213,9 @@ func (s *Service) page(ctx context.Context, p auth.Principal, query url.Values) 
 	blocks = append(blocks, figures)
 	rail := &screensv1.PageLinkTabs{Scrolls: true}
 	for _, t := range rules.Tabs {
-		rail.Tabs = append(rail.Tabs, &screensv1.PageLinkTab{Label: t[1], Href: Path + "?tab=" + t[0], Active: t[0] == learning})
+		rail.Tabs = append(rail.Tabs, &screensv1.PageLinkTab{Label: t[1], Href: Path + "?tab=" + t[0], Active: t[0] == tab})
 	}
-	blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_LinkTabs{LinkTabs: rail}},
-		panel("", text("Class-level results — OneTest, national examinations and the school's own assessments — with no pupil names. "+
-			"The same class and subject are compared year on year; a side with fewer than "+strconv.Itoa(rules.MinLearners)+
-			" learners is withheld. "+rules.LearningRuleLabel+".")))
+	blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_LinkTabs{LinkTabs: rail}}, panel("", text(c.description)))
 	filters := []*screensv1.PageFilter{
 		{Name: "fy", Caption: "Financial year", Value: r.fy},
 		{Name: "status", Caption: "Status", Value: r.status, Options: []*screensv1.PageFilterOption{{Label: "Every status"}}},
@@ -216,16 +226,9 @@ func (s *Service) page(ctx context.Context, p auth.Principal, query url.Values) 
 	for _, st := range rules.Statuses {
 		filters[1].Options = append(filters[1].Options, &screensv1.PageFilterOption{Value: st[0], Label: st[1]})
 	}
-	if len(subjects) > 0 {
-		f := &screensv1.PageFilter{Name: "subject", Caption: "Subject", Value: r.subject, Options: []*screensv1.PageFilterOption{{Label: "Every subject"}}}
-		for _, sub := range subjects {
-			f.Options = append(f.Options, &screensv1.PageFilterOption{Value: sub, Label: sub})
-		}
-		filters = append(filters, f)
-	}
 	blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Filters{Filters: &screensv1.PageFilters{
-		Filters: filters, Hidden: map[string]string{"tab": learning}}}})
-	if role.Record {
+		Filters: append(filters, c.filters...), Hidden: map[string]string{"tab": tab}}}})
+	if c.upload && role.Record {
 		blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Form{Form: &screensv1.PageForm{
 			Title: "Upload class results (CSV)",
 			Text:  "One row per class and subject. Every row is checked against schools in your country; a file with any invalid row records nothing and lists the rows to fix. Download the template.",
@@ -233,17 +236,61 @@ func (s *Service) page(ctx context.Context, p auth.Principal, query url.Values) 
 				Name: "results_file", Label: "Results file", Kind: "file", Required: true}}}},
 			SubmitLabel: "Upload results", Key: Path + "learning/upload"}}})
 	}
+	blocks = append(blocks, c.tables...)
+	return &screensv1.GetPageResponse{Header: header, Blocks: blocks, WebPath: Path}, nil
+}
+
+// learningTab is _learning_tab: its subjects to filter by, the comparison
+// and the register.
+func (s *Service) learningTab(ctx context.Context, r *reader, query url.Values) (tabContent, error) {
+	subjects, err := s.subjects(ctx, r)
+	if err != nil {
+		return tabContent{}, err
+	}
+	r.subject = strings.TrimSpace(query.Get("subject"))
+	if !contains(subjects, r.subject) {
+		r.subject = ""
+	}
+	c := tabContent{recordLabel: "Record learning result", record: learning, upload: true,
+		description: "Class-level results — OneTest, national examinations and the school's own assessments — with no pupil names. " +
+			"The same class and subject are compared year on year; a side with fewer than " + strconv.Itoa(rules.MinLearners) +
+			" learners is withheld. " + rules.LearningRuleLabel + "."}
+	if len(subjects) > 0 {
+		f := &screensv1.PageFilter{Name: "subject", Caption: "Subject", Value: r.subject, Options: []*screensv1.PageFilterOption{{Label: "Every subject"}}}
+		for _, sub := range subjects {
+			f.Options = append(f.Options, &screensv1.PageFilterOption{Value: sub, Label: sub})
+		}
+		c.filters = append(c.filters, f)
+	}
 	summary, err := s.summary(ctx, r, query)
 	if err != nil {
-		return nil, err
+		return tabContent{}, err
 	}
 	register, err := s.register(ctx, r, query)
 	if err != nil {
-		return nil, err
+		return tabContent{}, err
 	}
-	blocks = append(blocks, summary...)
-	blocks = append(blocks, register...)
-	return &screensv1.GetPageResponse{Header: header, Blocks: blocks, WebPath: Path}, nil
+	c.tables = append(summary, register...)
+	return c, nil
+}
+
+// slug is the feed's key for a header button: its label in lower case,
+// each run of anything but a–z and 0–9 one underscore.
+func slug(label string) string {
+	var b strings.Builder
+	gap := false
+	for _, r := range strings.ToLower(label) {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			if gap && b.Len() > 0 {
+				b.WriteByte('_')
+			}
+			gap = false
+			b.WriteRune(r)
+			continue
+		}
+		gap = true
+	}
+	return b.String()
 }
 
 func contains(list []string, s string) bool {

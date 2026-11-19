@@ -323,3 +323,36 @@ func workspaceStrip(role Role) []*screensv1.PageBlock {
 	}
 	return []*screensv1.PageBlock{{Kind: &screensv1.PageBlock_LinkTabs{LinkTabs: tabs}}}
 }
+
+// SpiritualStoriesBySchool is discipleship_summary's story counts: the
+// approved change stories the reader may see that evidence spiritual
+// formation (a spiritual SSA domain, or an outcome area read through one),
+// told in FY fy about a school, by school.
+func SpiritualStoriesBySchool(ctx context.Context, db schooldirectory.Querier, scope schooldirectory.Scope, fy string) (map[string]int, error) {
+	args := []any{}
+	where := storyReach(scope, &args)
+	start, end := fyBounds(fy)
+	args = append(args, start, end, rules.SpiritualDomains)
+	n := len(args)
+	rows, err := db.Query(ctx, fmt.Sprintf(`SELECT m.school_id, count(*) FROM mscs_story m LEFT JOIN school s ON s.id = m.school_id
+WHERE %s AND m.status = 'approved' AND m.school_id IS NOT NULL
+  AND m.story_date >= $%d::date AND m.story_date < $%d::date
+  AND (m.intervention = ANY($%d) OR m.outcome_area IN (
+    SELECT a.code FROM impact_outcome_area_domain d JOIN impact_outcome_area a ON a.id = d.area_id WHERE d.intervention = ANY($%d)))
+GROUP BY m.school_id`, where, n-2, n-1, n, n), args...)
+	if err != nil {
+		return nil, fmt.Errorf("iapages: counting the schools' change stories: %w", err)
+	}
+	out := map[string]int{}
+	for rows.Next() {
+		var school string
+		var count int
+		if err := rows.Scan(&school, &count); err != nil {
+			rows.Close()
+			return nil, fmt.Errorf("iapages: counting the schools' change stories: %w", err)
+		}
+		out[school] = count
+	}
+	rows.Close()
+	return out, rows.Err()
+}
