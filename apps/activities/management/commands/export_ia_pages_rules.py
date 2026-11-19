@@ -43,6 +43,7 @@ PAGES = {
     "/ia/notifications/": "ia_notifications",
     "/ssa/unmatched": "data_quality_center",
     "/ssa/upload/history/": "ia_upload_center",
+    "/ssa/manual/": "ssa",
 }
 
 #: The pages that draw the IA workspace strip (partials/_section_nav.html).
@@ -285,6 +286,9 @@ def rules() -> dict:
         "notification_categories": list(IA_NOTIFICATION_CATEGORIES),
         "lending": _lending(),
         "dashboard": _dashboard(),
+        # Add SSA Score: the eight interventions its score fields key, in
+        # order (ssa.forms._add_score_fields).
+        "ssa_interventions": [[str(v), str(lb)] for v, lb in SsaIntervention.choices],
         # SSA Upload History: who may upload official SSA (_may_upload_ssa);
         # a reader the page opens to without it is refused by the view.
         "ssa_upload_roles": sorted(

@@ -287,3 +287,10 @@ the existing page: handed on. Golden
 (iapages/testdata/upload_history_golden.py): 36 answers over six readers and
 six queries, 0 differing.
 
+`/ssa/manual/` (Add SSA Score) is Go's in `internal/iapages` (manual.go):
+the school typed (the one asked for written in), today's date and the eight
+intervention scores, for the roles that may upload official SSA; a role the
+page opens to without that permission is sent away by the existing page and
+handed on. 24 answers over eight readers, 0 differing. Saving stays the
+existing page's.
+

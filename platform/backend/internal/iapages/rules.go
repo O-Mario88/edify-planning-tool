@@ -35,6 +35,8 @@ var rules = func() (r struct {
 	IAVerifyRoles []string `json:"ia_verify_roles"`
 	// SSAUploadRoles may upload official SSA (SSA Upload History).
 	SSAUploadRoles []string `json:"ssa_upload_roles"`
+	// SSAInterventions are Add SSA Score's score fields, in order.
+	SSAInterventions [][2]string `json:"ssa_interventions"`
 	// NotificationCategories are the categories Verification Notifications
 	// lists.
 	NotificationCategories []string `json:"notification_categories"`
