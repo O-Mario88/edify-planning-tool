@@ -38,6 +38,7 @@
     "typescript": "~6.0.3"
   },
   "scripts": {
+    "tokens:ds": "node ../design/build-tokens.mjs",
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
