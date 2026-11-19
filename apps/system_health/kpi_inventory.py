@@ -608,6 +608,12 @@ def _classify(keys: set[str]) -> str:
 #: render_metric where migrated); counting them would count each tile twice.
 _READERS_OF_RENDERED_TILES = ("apps/mobile_feed/",)
 
+#: The Go gateway's rule exporters (management/commands/export_*_rules.py)
+#: copy the tiles a page already builds into the rules.json Go embeds
+#: (Partner and Planning Oversight's zero figures); they draw nothing, so
+#: their label/value dicts are not tiles. Their payload groups still count.
+_GO_RULE_EXPORTER = re.compile(r"/management/commands/export_\w+_rules\.py$")
+
 
 def _is_scanned(path: Path) -> bool:
     parts = path.as_posix()
@@ -744,6 +750,8 @@ def build_inventory() -> KpiInventory:
             group.audit_id = f"KPI-PAYLOAD-{len(inventory.payload_groups) + 1:03d}"
             inventory.payload_groups.append(group)
 
+        if _GO_RULE_EXPORTER.search(module):
+            continue
         for node in ast.walk(tree):
             if not isinstance(node, ast.Dict):
                 continue

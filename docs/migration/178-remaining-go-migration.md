@@ -326,3 +326,17 @@ Left in C6: `/admin-panel/audit-log`,
 `/admin-panel/region-district-setup`, `/settings/activity-catalogue/`.
 Left in C5: `/ia/school-evidence/` and `/priorities/ssa-mapping`.
 
+### Found on the way (2026-11-19): stale generated artefacts on this branch
+
+Only Platform CI runs on `feature/edify-go-rn-migration`; Django's suite runs
+on pull requests. Running `apps.system_health` here showed generated
+artefacts that drifted on the branch before today, failing on its own base:
+the KPI inventory (two Go rule exporters' zero-figure dicts read as tiles —
+the scan now skips the exporters' tile dicts, keeping their payload groups,
+and the manifest is rebuilt), the page inventory and the permission matrix
+(not rebuilt here), and the payload-group ratchet (178 audited items, floor
+180: something on the branch removed payload groups, to be judged before a
+merge, not lowered blindly). Before any pull request to `main`, rebuild them
+in the order the repository memory gives (page inventory first, traceability
+last) and settle the ratchet.
+
