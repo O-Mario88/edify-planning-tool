@@ -68,7 +68,7 @@ function CellText({ cell, resolve }: { cell: PageCell; resolve: (href: string) =
   );
 }
 
-function CellActions({ actions, subject, hrefOf }: { actions: readonly PageAction[]; subject: string; hrefOf: (action: PageAction) => string }) {
+export function CellActions({ actions, subject, hrefOf }: { actions: readonly PageAction[]; subject: string; hrefOf: (action: PageAction) => string }) {
   const { buttons, menu } = splitActions(actions);
   return (
     <div className="flex items-center justify-end gap-2">

@@ -8,10 +8,12 @@ import { SidebarBrand, SidebarNav, Sidebar } from '@/components/shell/Sidebar';
 import { BottomNav } from '@/components/shell/BottomNav';
 import { TopBar } from '@/components/shell/TopBar';
 import { PhoneMenu } from '@/components/shell/TopBarControls';
+import { ViewportSync } from '@/components/shell/ViewportSync';
 import { asReader, currentPath } from '@/lib/auth';
 import { environment } from '@/lib/environment';
 import { gatewayClient, isUnavailable } from '@/lib/gateway';
 import { pageSearch } from '@/lib/pageSearch';
+import { requestView } from '@/lib/requestView';
 import { initialsOf } from '@/lib/today';
 
 /*
@@ -21,6 +23,7 @@ import { initialsOf } from '@/lib/today';
  */
 export default async function ShellLayout({ children }: { children: ReactNode }) {
   const path = await currentPath();
+  const view = await requestView();
   const [session, navigation, messages, notifications] = await asReader((token) =>
     Promise.all([
       gatewayClient(IdentityService, token).getSession({}),
@@ -70,6 +73,7 @@ export default async function ShellLayout({ children }: { children: ReactNode })
           {children}
         </main>
         <BottomNav items={navigation.bottom} path={path} more={<PhoneMenu asTab>{menu}</PhoneMenu>} />
+        <ViewportSync served={view} />
       </div>
     </div>
   );

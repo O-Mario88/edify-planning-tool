@@ -16,17 +16,23 @@ import { environment } from '@/lib/environment';
 import { actionHref, drawerPageHref } from '@/lib/feedPage';
 import { gatewayClient, isNotFound, isUnavailable } from '@/lib/gateway';
 import { firstAnswer, type SpellingAnswer } from '@/lib/pageSpellings';
+import { requestView } from '@/lib/requestView';
 
 import { PageHeader } from '../blocks/PageHeader';
+import { PhonePage } from '../phone/PhonePage';
 import { FeedBlocks } from './FeedBlocks';
 import { NotMovedYet } from './NotMovedYet';
 import { SelectionBar } from './SelectionBar';
 
-/** The gateway's answer for one spelling of a page. */
+/**
+ * The gateway's answer for one spelling of a page: the phone's reading on a
+ * phone (the native app's), the desktop's otherwise (lib/viewport).
+ */
 async function askSpelling(path: string, query: Record<string, string>): Promise<SpellingAnswer<GetPageResponse>> {
+  const desktop = (await requestView()) === 'desktop';
   return asReader(async (token) => {
     try {
-      return { kind: 'page', page: await gatewayClient(PageScreenService, token).getPage({ path, query, desktop: true }) };
+      return { kind: 'page', page: await gatewayClient(PageScreenService, token).getPage({ path, query, desktop }) };
     } catch (error) {
       if (isNotFound(error)) return { kind: 'notFound' };
       if (isUnavailable(error)) return { kind: 'unavailable' };
@@ -60,6 +66,7 @@ export async function FeedPage({ path, query, alsoAs = [] }: { path: string; que
   if (!answer) return <NotMovedYet href={existingHref} />;
   const pagePath = answer.webPath || path;
   const drawerHref = drawerPageHref(existingWebUrl, pagePath, query);
+  if ((await requestView()) === 'phone') return <PhonePage answer={answer} pagePath={pagePath} drawerHref={drawerHref} />;
   const hrefOf = (action: PageAction) => actionHref(action, pagePath, drawerHref);
   return (
     // The existing page's own frame (its padding and width; a dashboard's
