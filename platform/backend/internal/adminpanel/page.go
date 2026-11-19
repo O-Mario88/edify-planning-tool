@@ -4,7 +4,8 @@
 // the reference list of the rules the system enforces in code; and School
 // Upload History (/admin-panel/school-upload-history, upload_history.go);
 // the Admin Dashboard (/admin-panel, hub.go); and the Audit Log
-// (/admin-panel/audit-log, audit.go).
+// (/admin-panel/audit-log, audit.go); and Geographical Location Setup
+// (/admin-panel/region-district-setup, geography.go).
 //
 // The doors and the listed rules are exported to rules.json by `manage.py
 // export_admin_panel_rules`; apps/frontend/test_admin_panel_rules_export.py
@@ -41,6 +42,8 @@ var rules = func() (r struct {
 		OnlineTrainingTypes     []string `json:"online_training_types"`
 		OnlineMode              string   `json:"online_mode"`
 	} `json:"missing_lines"`
+	// DistrictProfileRoles may open a district's profile.
+	DistrictProfileRoles []string `json:"district_profile_roles"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {
 		panic(fmt.Sprintf("adminpanel: reading rules.json: %v", err))
@@ -81,6 +84,8 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		return s.hub(ctx)
 	case AuditLogPath:
 		return s.auditLog(ctx, query)
+	case GeographyPath:
+		return s.geography(ctx, p)
 	}
 	return workflowRules(), true, nil
 }

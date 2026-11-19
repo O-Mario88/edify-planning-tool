@@ -1,4 +1,13 @@
 {
+  "district_profile_roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+  ],
   "missing_lines": {
     "companion_gone_statuses": [
       "cancelled",
@@ -38,6 +47,9 @@
     "/admin-panel/audit-log": [
       "Admin",
       "ImpactAssessment"
+    ],
+    "/admin-panel/region-district-setup": [
+      "Admin"
     ],
     "/admin-panel/school-upload-history": [
       "Admin",

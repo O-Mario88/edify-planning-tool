@@ -327,9 +327,16 @@ hundred audit rows, each its action and time in Django's default wording
 (adminpanel/testdata/audit_golden.py) dates its rows tomorrow, so rows the
 suite writes meanwhile stay older: 12 answers, 0 differing.
 
+`/admin-panel/region-district-setup` is Go's too (adminpanel/geography.go):
+the districts not yet classified, every region's districts, the Secondary
+District Groups (read as their create form when there are none, as a panel
+of each group's state and districts when there are) and the new-district
+form. Golden (adminpanel/testdata/geography_golden.py) 3 readers with groups
+and the clean state 2, 0 differing.
+
 Left in C6:
 `/admin-panel/notifications-mgmt`, `/admin-panel/page-access-matrix`,
-`/admin-panel/region-district-setup`, `/settings/activity-catalogue/`.
+`/settings/activity-catalogue/`.
 Left in C5: `/ia/school-evidence/` and `/priorities/ssa-mapping`.
 
 ### Found on the way (2026-11-19): stale generated artefacts on this branch

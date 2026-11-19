@@ -32,6 +32,7 @@ PAGES = {
     "/admin-panel/school-upload-history": "upload_history",
     "/admin-panel": "admin_dashboard",
     "/admin-panel/audit-log": "audit_log",
+    "/admin-panel/region-district-setup": "region_district_setup",
 }
 
 
@@ -54,6 +55,12 @@ def rules() -> dict:
         },
         "workflow_rules": [[r["key"], r["label"]] for r in WORKFLOW_RULES],
         "missing_lines": missing_lines(),
+        # Who may open a district's profile (school_links.district_link).
+        "district_profile_roles": sorted(
+            role.value
+            for role in EdifyRole
+            if can_open_url(_role_user(role.value), "/districts/0")
+        ),
     }
 
 

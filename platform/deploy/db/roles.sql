@@ -1149,3 +1149,8 @@ GRANT SELECT (id, file_name, original_file_name, upload_type, source, error_summ
   updated_rows, failed_rows, created_at)
   ON upload_batch TO edify_gateway_ro;
 
+-- Geographical Location Setup (internal/adminpanel/geography.go): the
+-- Secondary District Groups and the districts each holds.
+GRANT SELECT (id, name, status) ON secondary_district_group TO edify_gateway_ro;
+GRANT SELECT (id, group_id, district_id, created_at) ON secondary_district_group_member TO edify_gateway_ro;
+
