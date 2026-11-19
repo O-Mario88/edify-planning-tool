@@ -73,10 +73,24 @@ decided too ("Own role home"): both apps land every reader on Home. All
 three of 179's decisions are made; the preview shows the proposed
 answers so they can be judged side by side with today's screens.
 
+## The CCEO's Today, built and kept as a preview
+
+The CCEO's Today was built in both apps on the design system: web
+`components/today/TodayScreen` (rules in `lib/todayView`), Expo
+`screens/TodayScreen` on `ds/components` (rules in `ds/todayView`, the same
+choice). It reads Go's Home answer and leaves out only the rows that report
+"all clear". Checked against the existing Home for the same CCEO: the same
+waiting rows, figures and To-Do total, in the browser at 375px and in the iOS
+Simulator.
+
+After seeing it, the owner kept the existing Home (2026-11-19: "i think i
+like the previous home screen better"). The switch is off in both apps (web
+`REDESIGNED` in `app/(app)/home/page.tsx`, Expo `TODAY_ROLES` in
+`ds/todayView.ts`, both empty). The Today stays as the web preview
+`/today-next`, and its components stay for later screens.
+
 ## Next
 
-The redesigned screens themselves (177 stage D), each reading Go: the CCEO's
-Today first (the Home queue, the day package and the next visit Go already
-answers), web and Expo together, each proved against the existing figures
-before it replaces a screen; the drawers and depth each needs are ported
-then (178).
+No role's Home is replaced unless the owner asks. Before another core
+screen is redesigned, the owner says what to carry over from the existing
+one.
