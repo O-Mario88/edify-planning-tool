@@ -123,3 +123,5 @@ Nothing is claimed verified without evidence.
 - Stage A starts next, from `06-ui-inventory.md` and the local development
   environment (existing app on 8010, Go gateway on 8090, Next.js on 3000,
   the Expo app in the iOS simulator), with seeded accounts for every role.
+- Sequencing (owner, 2026-11-19): the redesign starts, mobile first, once
+  the remaining Go migration in `178-remaining-go-migration.md` is done.
