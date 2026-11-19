@@ -7,7 +7,7 @@
 import { fromJson } from '@bufbuild/protobuf';
 import type { JsonValue } from '@bufbuild/protobuf';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { GetPageResponseSchema } from '@/gen/edify/screens/v1/page_screen_pb';
 
@@ -20,6 +20,12 @@ import { PhonePage } from './PhonePage';
 import { scaleOf } from './PhoneChart';
 import { railTabs } from './PhoneLinkTabs';
 import { phoneTone, tileColumns } from './tone';
+
+// The menu leaves a desktop through the app router (LeaveOnDesktop).
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/more',
+  useRouter: () => ({ back: () => undefined, replace: () => undefined, refresh: () => undefined }),
+}));
 
 const DRAWER = 'http://localhost:8010/my-plan';
 
