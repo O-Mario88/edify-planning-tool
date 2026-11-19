@@ -49,8 +49,9 @@ export function todosLinkLabel(total: number | null | undefined): string {
   return total ? `All ${total} To-Dos` : 'All To-Dos';
 }
 
-/** The roles whose Home is the redesigned Today, as on the web (app/(app)/home). */
-const TODAY_ROLES: ReadonlySet<string> = new Set(['CCEO']);
+/** The roles whose Home is the redesigned Today, as on the web (app/(app)/home).
+ *  None for now: the owner keeps the existing Home (2026-11-19). */
+const TODAY_ROLES: ReadonlySet<string> = new Set<string>();
 
 export function redesignedToday(role: string): boolean {
   return TODAY_ROLES.has(role);

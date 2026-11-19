@@ -58,9 +58,8 @@ describe('the redesigned Today chooses what the web Today chooses', () => {
     expect(todosLinkLabel(0)).toBe('All To-Dos');
   });
 
-  test('only the CCEO has the redesigned Today so far, as on the web', () => {
-    expect(redesignedToday('CCEO')).toBe(true);
-    for (const role of ['ProgramLead', 'CountryDirector', 'ImpactAssessment', 'Admin', '']) {
+  test('every role keeps the existing Home for now (owner, 2026-11-19), as on the web', () => {
+    for (const role of ['CCEO', 'ProgramLead', 'CountryDirector', 'ImpactAssessment', 'Admin', '']) {
       expect(redesignedToday(role)).toBe(false);
     }
   });

@@ -13,8 +13,9 @@ import { safeIcon } from '@/lib/icon';
 
 export const metadata: Metadata = { title: 'Home — Edify' };
 
-/** Roles whose Home is the redesigned Today. */
-const REDESIGNED = new Set(['CCEO']);
+/** Roles whose Home is the redesigned Today. None for now: the owner keeps
+ *  the existing Home (2026-11-19); the redesign stays at /today-next. */
+const REDESIGNED: ReadonlySet<string> = new Set<string>();
 
 /* Home's small icon set (templates/partials/home/icon.html). */
 const GLYPHS = {
