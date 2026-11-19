@@ -6,6 +6,8 @@
  * with `window.edifyRender(json)`; the page answers taps with postMessage.
  */
 
+import { SYSTEM_BLUE } from './routeData';
+
 export const MAPLIBRE_VERSION = '6.16.0';
 const CDN = `https://cdn.jsdelivr.net/npm/maplibre-gl@${MAPLIBRE_VERSION}/dist`;
 const INTEGRITY = {
@@ -108,8 +110,8 @@ function layers() {
   if (!map.getSource('route')) {
     map.addSource('route', { type: 'geojson', data: line() });
     map.addLayer({ id: 'casing', type: 'line', source: 'route', paint: { 'line-color': '#fff', 'line-width': 8 }, layout: { 'line-join': 'round', 'line-cap': 'round' } });
-    map.addLayer({ id: 'road', type: 'line', source: 'route', filter: ['==', ['get', 'road'], true], paint: { 'line-color': '#1d6fe0', 'line-width': 4.5 }, layout: { 'line-join': 'round', 'line-cap': 'round' } });
-    map.addLayer({ id: 'straight', type: 'line', source: 'route', filter: ['==', ['get', 'road'], false], paint: { 'line-color': '#1d6fe0', 'line-width': 3.5, 'line-dasharray': [1.5, 1.5] } });
+    map.addLayer({ id: 'road', type: 'line', source: 'route', filter: ['==', ['get', 'road'], true], paint: { 'line-color': '${SYSTEM_BLUE}', 'line-width': 4.5 }, layout: { 'line-join': 'round', 'line-cap': 'round' } });
+    map.addLayer({ id: 'straight', type: 'line', source: 'route', filter: ['==', ['get', 'road'], false], paint: { 'line-color': '${SYSTEM_BLUE}', 'line-width': 3.5, 'line-dasharray': [1.5, 1.5] } });
   } else map.getSource('route').setData(line());
 }
 function draw(Marker, LngLatBounds) {

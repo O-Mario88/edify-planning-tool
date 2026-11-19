@@ -32,7 +32,7 @@ import type { GetFieldDayResponse, Itinerary, ItineraryStop, SavedFieldDay, Stop
 import { fonts, radius, spacing, useTheme } from '../../theme';
 import { DateField } from '../../ui/DateField';
 import { Select } from '../../ui/Select';
-import { PIN_TONES, ROUTE_TEAL, dayClock, hrMin, km, legFigures, totalFigures } from './routeData';
+import { PIN_TONES, dayClock, hrMin, km, legFigures, totalFigures } from './routeData';
 import type { FieldDayState } from './routeData';
 import type { MapScene } from './routeMapHtml';
 import { RouteMapView } from './RouteMapView';
@@ -78,7 +78,7 @@ function Segment<T extends string>({ value, options, onChange }: { value: T; opt
             onPress={() => onChange(o.key)}
             accessibilityRole="tab"
             accessibilityState={{ selected: active }}
-            style={[styles.segmentItem, active && { backgroundColor: ROUTE_TEAL }]}
+            style={[styles.segmentItem, active && { backgroundColor: colors.primary }]}
           >
             {o.icon}
             <Text style={[styles.segmentText, { color: active ? '#fff' : colors.text }]}>{o.label}</Text>
@@ -148,7 +148,7 @@ export function RoutePlannerScreen({
   return (
     <ScrollView contentContainerStyle={styles.page} style={{ backgroundColor: colors.bg }}>
       <View style={styles.titleRow}>
-        <MapPin size={34} color="#1d6fe0" fill="#1d6fe0" stroke="#ffffff" strokeWidth={1.5} />
+        <MapPin size={34} color={colors.primary} fill={colors.primary} stroke="#ffffff" strokeWidth={1.5} />
         <View style={styles.flex}>
           <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
             Smart Route Planner
@@ -190,8 +190,8 @@ export function RoutePlannerScreen({
               ? 'The eligible schools around it, nearest first, on the map and below.'
               : 'This school has no usable location, so nearby schools cannot be found. It still appears in every list and plan.'}
           </Text>
-          <Pressable onPress={onClearNear} style={styles.nearButton} accessibilityRole="button">
-            <Text style={styles.outlineText}>Show my day</Text>
+          <Pressable onPress={onClearNear} style={[styles.nearButton, { borderColor: colors.primary }]} accessibilityRole="button">
+            <Text style={[styles.outlineText, { color: colors.primary }]}>Show my day</Text>
           </Pressable>
         </View>
       ) : null}
@@ -201,9 +201,9 @@ export function RoutePlannerScreen({
           <RouteMapView scene={scene} onSelect={onSelectSchool} />
           {stops.length && !day.focus ? (
             <Pressable onPress={onOpenDetails} style={styles.routeCard} accessibilityRole="button" accessibilityLabel="Open the recommended route">
-              <CheckCircle2 size={26} color="#ffffff" fill="#1d6fe0" />
+              <CheckCircle2 size={26} color="#ffffff" fill={colors.primary} />
               <View>
-                <Text style={styles.routeCardTitle}>Recommended Route</Text>
+                <Text style={[styles.routeCardTitle, { color: colors.primary }]}>Recommended Route</Text>
                 <Text style={styles.routeCardSub}>
                   {km(total.meters)} • {hrMin(total.seconds)}
                 </Text>
@@ -247,7 +247,7 @@ export function RoutePlannerScreen({
       <Pressable
         onPress={onOptimise}
         disabled={isBusy || stops.length === 0}
-        style={[styles.primary, { opacity: isBusy || stops.length === 0 ? 0.6 : 1 }]}
+        style={[styles.primary, { backgroundColor: colors.primary, opacity: isBusy || stops.length === 0 ? 0.6 : 1 }]}
         accessibilityRole="button"
       >
         <Sparkles size={22} color="#fff" />
@@ -263,7 +263,7 @@ function SuggestionRow({ s, onAdd, onSelect, isAround = false }: { s: Suggestion
   return (
     <View style={[styles.suggestion, { borderColor: colors.border }]}>
       <Pressable onPress={onSelect} style={styles.photo} accessibilityLabel={`Open ${s.school?.name}`}>
-        <School size={34} color="#1d6fe0" />
+        <School size={34} color={colors.primary} />
       </Pressable>
       <View style={styles.flex}>
         <View style={styles.pillRow}>
@@ -284,8 +284,8 @@ function SuggestionRow({ s, onAdd, onSelect, isAround = false }: { s: Suggestion
           <Text style={[styles.rowSub, styles.inlineText, { color: colors.text }]}>{high ? 'Needs SSA support' : 'Support visit open'}</Text>
         </View>
       </View>
-      <Pressable onPress={onAdd} style={styles.outline} accessibilityRole="button">
-        <Text style={styles.outlineText}>Add to Plan</Text>
+      <Pressable onPress={onAdd} style={[styles.outline, { borderColor: colors.primary }]} accessibilityRole="button">
+        <Text style={[styles.outlineText, { color: colors.primary }]}>Add to Plan</Text>
       </Pressable>
     </View>
   );
@@ -467,31 +467,31 @@ export function RouteDetailsScreen({
               const isLocked = locked.has(id);
               return (
                 <Pressable key={id} onPress={() => onToggleLock(id)} style={[styles.listRow, { borderColor: colors.border }]} accessibilityRole="switch" accessibilityState={{ checked: isLocked }}>
-                  <Lock size={18} color={isLocked ? ROUTE_TEAL : colors.textMuted} />
+                  <Lock size={18} color={isLocked ? colors.primary : colors.textMuted} />
                   <Text style={[styles.rowTitle, styles.flex, { color: colors.text }]}>
                     {s.order}. {s.school?.name}
                   </Text>
-                  <Text style={[styles.rowSub, { color: isLocked ? ROUTE_TEAL : colors.textMuted }]}>{isLocked ? 'Kept' : 'Free'}</Text>
+                  <Text style={[styles.rowSub, { color: isLocked ? colors.primary : colors.textMuted }]}>{isLocked ? 'Kept' : 'Free'}</Text>
                 </Pressable>
               );
             })}
             <View style={styles.buttons}>
               <Pressable onPress={onKeepOrder} disabled={isBusy} style={[styles.outlineWide, styles.flex]} accessibilityRole="button">
-                <Text style={styles.outlineText}>Time my order</Text>
+                <Text style={[styles.outlineText, { color: colors.primary }]}>Time my order</Text>
               </Pressable>
-              <Pressable onPress={onRecalculate} disabled={isBusy} style={[styles.primarySmall, styles.flex]} accessibilityRole="button">
+              <Pressable onPress={onRecalculate} disabled={isBusy} style={[styles.primarySmall, styles.flex, { backgroundColor: colors.primary }]} accessibilityRole="button">
                 <Text style={styles.primaryText}>{isBusy ? 'Working…' : 'Recalculate'}</Text>
               </Pressable>
             </View>
             {fieldDay.canSave ? (
               <Pressable onPress={onSave} disabled={isBusy || !stops.length} style={styles.outlineWide} accessibilityRole="button">
                 <Save size={20} color="#0f172a" />
-                <Text style={styles.outlineText}>{fieldDay.phase === 'saved' ? `Save Plan (saved ${dayClock(saved?.savedAt ?? '')})` : 'Save Plan'}</Text>
+                <Text style={[styles.outlineText, { color: colors.primary }]}>{fieldDay.phase === 'saved' ? `Save Plan (saved ${dayClock(saved?.savedAt ?? '')})` : 'Save Plan'}</Text>
               </Pressable>
             ) : null}
             {isFieldDay ? (
               <Pressable onPress={onRefresh} style={styles.outlineWide} accessibilityRole="button">
-                <Text style={styles.outlineText}>Refresh completed visits</Text>
+                <Text style={[styles.outlineText, { color: colors.primary }]}>Refresh completed visits</Text>
               </Pressable>
             ) : null}
           </View>
@@ -559,7 +559,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 4,
   },
-  routeCardTitle: { fontFamily: fonts.semibold, fontSize: 15, color: '#1d6fe0' },
+  routeCardTitle: { fontFamily: fonts.semibold, fontSize: 15 },
   routeCardSub: { fontFamily: fonts.semibold, fontSize: 15, color: '#0f172a' },
   card: { borderWidth: 1, borderRadius: radius.lg, padding: spacing.md, gap: spacing.sm },
   figures: { flexDirection: 'row', borderWidth: 1, borderRadius: radius.lg, paddingVertical: spacing.md },
@@ -567,8 +567,8 @@ const styles = StyleSheet.create({
   figureValue: { fontFamily: fonts.bold, fontSize: 17, textAlign: 'center' },
   figureLabel: { fontFamily: fonts.regular, fontSize: 13, textAlign: 'center' },
   measure: { fontFamily: fonts.regular, fontSize: 12, textAlign: 'center' },
-  primary: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: ROUTE_TEAL, minHeight: 56, borderRadius: radius.md },
-  primarySmall: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: ROUTE_TEAL, minHeight: 52, borderRadius: radius.md },
+  primary: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 56, borderRadius: radius.md },
+  primarySmall: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 52, borderRadius: radius.md },
   primaryText: { fontFamily: fonts.semibold, fontSize: 17, color: '#fff' },
   listRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   dot: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
@@ -598,15 +598,15 @@ const styles = StyleSheet.create({
   link: { fontFamily: fonts.semibold, fontSize: 15 },
   suggestion: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: spacing.sm },
   photo: { width: 72, height: 72, borderRadius: 10, backgroundColor: '#dbeafe', alignItems: 'center', justifyContent: 'center' },
-  outline: { borderWidth: 2, borderColor: ROUTE_TEAL, borderRadius: radius.md, paddingHorizontal: 14, minHeight: 44, justifyContent: 'center' },
+  outline: { borderWidth: 2, borderRadius: radius.md, paddingHorizontal: 14, minHeight: 44, justifyContent: 'center' },
   outlineWide: { flexDirection: 'row', gap: 8, borderWidth: 1.5, borderColor: '#cbd5e1', borderRadius: radius.md, minHeight: 52, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
-  outlineText: { fontFamily: fonts.semibold, fontSize: 15, color: ROUTE_TEAL },
+  outlineText: { fontFamily: fonts.semibold, fontSize: 15 },
   outlineDark: { fontFamily: fonts.semibold, fontSize: 17, color: '#0f172a' },
   buttons: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
   nearBanner: { backgroundColor: '#eff6ff', borderColor: '#bfdbfe', borderWidth: 1, borderRadius: radius.lg, padding: spacing.md, gap: 6 },
   nearTitle: { fontFamily: fonts.semibold, fontSize: 16, color: '#0f172a' },
   nearText: { fontFamily: fonts.regular, fontSize: 14, color: '#1e293b' },
-  nearButton: { alignSelf: 'flex-start', borderWidth: 1.5, borderColor: '#1d6fe0', borderRadius: radius.sm, paddingHorizontal: 14, minHeight: 40, justifyContent: 'center', marginTop: 4 },
+  nearButton: { alignSelf: 'flex-start', borderWidth: 1.5, borderRadius: radius.sm, paddingHorizontal: 14, minHeight: 40, justifyContent: 'center', marginTop: 4 },
   footer: { flexDirection: 'row', gap: spacing.sm, padding: spacing.md, borderTopWidth: 1 },
 });
 
@@ -633,6 +633,7 @@ function FieldDayButton({
   readonly onSave: () => void;
   readonly onRecord: (event: 'start' | 'end') => void;
 }) {
+  const { colors } = useTheme();
   if (fieldDay.phase === 'ended') {
     return (
       <View style={[styles.primarySmall, styles.flex, styles.ended]} accessibilityRole="text">
@@ -647,7 +648,7 @@ function FieldDayButton({
       ? (['Start Field Day', () => onRecord('start'), <Play key="start" size={20} color="#fff" fill="#fff" />] as const)
       : (['Save Plan', onSave, <Save key="save" size={20} color="#fff" />] as const);
   return (
-    <Pressable onPress={action} disabled={busy || !hasStops} style={[styles.primarySmall, styles.flex]} accessibilityRole="button">
+    <Pressable onPress={action} disabled={busy || !hasStops} style={[styles.primarySmall, styles.flex, { backgroundColor: colors.primary }]} accessibilityRole="button">
       {icon}
       <Text style={styles.primaryText}>{busy ? 'Working…' : label}</Text>
     </Pressable>

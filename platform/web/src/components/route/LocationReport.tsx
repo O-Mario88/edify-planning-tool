@@ -32,8 +32,8 @@ import type { ReportKind, TypedPoint } from '@/lib/locationReport';
 
 import { RouteIcon } from './RouteIcons';
 
-const primary = 'inline-flex h-10 items-center gap-2 rounded-[8px] bg-[#1d6fe0] px-4 font-semibold text-white disabled:opacity-60';
-const secondary = 'inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#1d6fe0] px-4 font-semibold text-[#1d6fe0] disabled:opacity-60';
+const primary = 'inline-flex h-10 items-center gap-2 rounded-[8px] bg-[var(--brand-primary)] px-4 font-semibold text-white disabled:opacity-60';
+const secondary = 'inline-flex h-10 items-center gap-2 rounded-[8px] border border-[var(--brand-primary)] px-4 font-semibold text-[var(--brand-primary)] disabled:opacity-60';
 const field = 'mt-1 w-full rounded-[8px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] px-3 py-2 text-[14px]';
 
 export async function askLocation(op: 'report' | 'list' | 'review' | 'history', request: JsonValue): Promise<JsonValue> {

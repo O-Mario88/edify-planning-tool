@@ -17,10 +17,12 @@ export const LOCATION_REPORTS_URL = 'route:location-reports';
 /** Offline schools and the capture sync queue. */
 export const OFFLINE_QUEUE_URL = 'offline:queue';
 
-/** The design's dark teal (the planner's chosen controls). */
-export const ROUTE_TEAL = '#0f4f52';
+/** The system blue (theme.ts primary, light; owner 2026-11-19: "use the system
+ * blue color" in place of the planner's teal), for what is drawn outside the
+ * theme: the map page, its route line and pins. Controls use the theme's own. */
+export const SYSTEM_BLUE = '#0e5da3';
 /** Blue family only on the map, as on the web (owner, 2026-11-14 and 2026-11-16). */
-export const PIN_TONES = { planned: '#1d6fe0', suggested: '#0284c7', completed: '#1e3a8a', start: '#0284c7', nearby: '#0284c7', other: '#94a3b8' } as const;
+export const PIN_TONES = { planned: SYSTEM_BLUE, suggested: '#0284c7', completed: '#1e3a8a', start: '#0284c7', nearby: '#0284c7', other: '#94a3b8' } as const;
 
 /**
  * Who plans field days: My Plan's readers (routeplan rules, planner_roles).

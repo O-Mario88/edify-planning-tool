@@ -253,7 +253,7 @@ export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster, 
 
       <header className="mt-5 flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-start gap-4">
-          <RouteIcon name="pin" className="mt-1 h-12 w-12 text-[#1d6fe0]" strokeWidth={0} fill="currentColor" />
+          <RouteIcon name="pin" className="mt-1 h-12 w-12 text-[var(--brand-primary)]" strokeWidth={0} fill="currentColor" />
           <div>
             <h1 className="text-[22px] font-bold leading-tight text-[var(--edify-text)] sm:text-[28px]">Smart Route Planner</h1>
             <p className="mt-1 text-[16px] text-[var(--edify-text-muted)]">Optimise your field visits with the most efficient route</p>
@@ -277,14 +277,14 @@ export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster, 
       </header>
 
       {focus ? (
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-[#1d6fe0]/40 bg-blue-50 px-4 py-3" role="status">
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-[var(--brand-primary)]/40 bg-blue-50 px-4 py-3" role="status">
           <p className="text-[15px] text-slate-800">
             <strong>Schools near {focus.name}</strong> (ID {focus.code}):{' '}
             {focus.point
               ? `the eligible schools around it, nearest first, on the map and below.`
               : 'this school has no usable location, so nearby schools cannot be found. It still appears in every list and plan.'}
           </p>
-          <button type="button" onClick={() => go({ near: '' })} className="h-10 rounded-[8px] border border-[#1d6fe0] px-4 text-[14px] font-semibold text-[#1d6fe0]">
+          <button type="button" onClick={() => go({ near: '' })} className="h-10 rounded-[8px] border border-[var(--brand-primary)] px-4 text-[14px] font-semibold text-[var(--brand-primary)]">
             Show my day
           </button>
         </div>
@@ -319,7 +319,7 @@ export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster, 
                   role="tab"
                   aria-selected={view === key}
                   onClick={() => setView(key)}
-                  className={`flex h-12 items-center justify-center gap-2 rounded-[10px] text-[14px] font-semibold ${view === key ? 'bg-[#1d6fe0] text-white' : 'border border-[var(--edify-border)] text-[var(--edify-text)]'}`}
+                  className={`flex h-12 items-center justify-center gap-2 rounded-[10px] text-[14px] font-semibold ${view === key ? 'bg-[var(--brand-primary)] text-white' : 'border border-[var(--edify-border)] text-[var(--edify-text)]'}`}
                 >
                   <RouteIcon name={icon} className="h-5 w-5" /> {label}
                 </button>
@@ -336,7 +336,7 @@ export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster, 
                   <RouteIcon name="filter" className="h-5 w-5" /> Filters
                   <RouteIcon name="chevronDown" className={`h-4 w-4 md:hidden ${filtersOpen ? 'rotate-180' : ''}`} />
                 </button>
-                <button type="button" onClick={() => { setShow({ planned: true, suggested: true, nearby: false }); go({ district: '', cluster: '' }); }} className="text-[14px] font-medium text-[#1d6fe0]">
+                <button type="button" onClick={() => { setShow({ planned: true, suggested: true, nearby: false }); go({ district: '', cluster: '' }); }} className="text-[14px] font-medium text-[var(--brand-primary)]">
                   Clear All
                 </button>
               </div>
@@ -359,7 +359,7 @@ export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster, 
                 <legend className="text-[14px] font-semibold">Status</legend>
                 {(
                   [
-                    ['planned', 'Planned', 'accent-[#1d6fe0]'],
+                    ['planned', 'Planned', 'accent-[var(--brand-primary)]'],
                     ['suggested', 'Suggested', 'accent-sky-600'],
                     ['nearby', 'Nearby', 'accent-slate-500'],
                   ] as const
@@ -426,7 +426,7 @@ export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster, 
                 type="button"
                 disabled={busy || !itinerary?.stops.length || !fieldDay.canSave}
                 onClick={() => plan(ids(itinerary), 'fastest')}
-                className="flex h-14 items-center justify-center gap-3 rounded-[12px] border-2 border-[#1d6fe0] text-[16px] font-semibold text-[#1d6fe0] hover:bg-blue-50 disabled:opacity-50"
+                className="flex h-14 items-center justify-center gap-3 rounded-[12px] border-2 border-[var(--brand-primary)] text-[16px] font-semibold text-[var(--brand-primary)] hover:bg-blue-50 disabled:opacity-50"
               >
                 <RouteIcon name="optimize" className="h-6 w-6" /> {busy ? 'Working…' : 'Optimize Route'}
               </button>
@@ -435,7 +435,7 @@ export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster, 
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-disabled={!directions}
-                className={`flex h-14 items-center justify-center gap-3 rounded-[12px] bg-[#1d6fe0] text-[16px] font-semibold text-white hover:bg-[#1760c4] ${directions ? '' : 'pointer-events-none opacity-50'}`}
+                className={`flex h-14 items-center justify-center gap-3 rounded-[12px] bg-[var(--brand-primary)] text-[16px] font-semibold text-white hover:bg-[var(--brand-primary-hover)] ${directions ? '' : 'pointer-events-none opacity-50'}`}
               >
                 <RouteIcon name="navigate" className="h-6 w-6" /> Get Directions
               </a>
@@ -507,17 +507,17 @@ function SchoolPanel({
           </a>
         ) : null}
         {!inRoute ? (
-          <button type="button" onClick={onSelectForRoute} className="h-11 rounded-[10px] border border-[#1d6fe0] text-[#1d6fe0]">
+          <button type="button" onClick={onSelectForRoute} className="h-11 rounded-[10px] border border-[var(--brand-primary)] text-[var(--brand-primary)]">
             Select for Route
           </button>
         ) : null}
         {pin.status !== 'planned' && pin.status !== 'completed' ? (
-          <a href={addHref} className="flex h-11 items-center justify-center rounded-[10px] border border-[#1d6fe0] text-[#1d6fe0]">
+          <a href={addHref} className="flex h-11 items-center justify-center rounded-[10px] border border-[var(--brand-primary)] text-[var(--brand-primary)]">
             Add to Plan
           </a>
         ) : null}
         {directions ? (
-          <a href={directions} target="_blank" rel="noopener noreferrer" className="flex h-11 items-center justify-center rounded-[10px] bg-[#1d6fe0] text-white">
+          <a href={directions} target="_blank" rel="noopener noreferrer" className="flex h-11 items-center justify-center rounded-[10px] bg-[var(--brand-primary)] text-white">
             Get Directions
           </a>
         ) : null}
@@ -596,8 +596,8 @@ function FieldDayButtons({
   onSave: () => void;
   onRecord: (event: 'start' | 'end') => void;
 }) {
-  const quiet = 'flex h-14 items-center gap-3 rounded-[12px] border-2 border-[#1d6fe0] px-5 text-[16px] font-semibold text-[#1d6fe0] hover:bg-blue-50 disabled:opacity-50';
-  const solid = 'flex h-14 items-center gap-3 rounded-[12px] bg-[#1d6fe0] px-6 text-[16px] font-semibold text-white hover:bg-[#1760c4] disabled:opacity-50';
+  const quiet = 'flex h-14 items-center gap-3 rounded-[12px] border-2 border-[var(--brand-primary)] px-5 text-[16px] font-semibold text-[var(--brand-primary)] hover:bg-blue-50 disabled:opacity-50';
+  const solid = 'flex h-14 items-center gap-3 rounded-[12px] bg-[var(--brand-primary)] px-6 text-[16px] font-semibold text-white hover:bg-[var(--brand-primary-hover)] disabled:opacity-50';
   if (fieldDay.phase === 'ended') {
     return (
       <span className="flex h-14 items-center gap-2 rounded-[12px] bg-green-50 px-5 text-[15px] font-semibold text-green-700" role="status">

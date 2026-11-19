@@ -47,7 +47,7 @@ export function LocationCard({ answer: json }: { answer: JsonValue }) {
   return (
     <section className="card p-4" aria-labelledby="location-title" data-block="school-location">
       <h2 id="location-title" className="flex items-center gap-2 text-[16px] font-semibold">
-        <RouteIcon name="pin" className="h-5 w-5 text-[#1d6fe0]" /> Location &amp; Directions
+        <RouteIcon name="pin" className="h-5 w-5 text-[var(--brand-primary)]" /> Location &amp; Directions
       </h2>
       {point ? (
         <div className="mt-3 grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]">
@@ -96,12 +96,12 @@ export function LocationCard({ answer: json }: { answer: JsonValue }) {
             </div>
             <div className="flex flex-wrap gap-2 pt-1">
               {directions ? (
-                <a href={directions} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-2 rounded-[8px] bg-[#1d6fe0] px-4 font-semibold text-white">
+                <a href={directions} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-2 rounded-[8px] bg-[var(--brand-primary)] px-4 font-semibold text-white">
                   <RouteIcon name="navigate" className="h-4 w-4" /> Get Directions
                 </a>
               ) : null}
               {answer.canPlan ? (
-                <Link href={`/my-plan/smart-route?near=${encodeURIComponent(school.schoolId)}`} className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#1d6fe0] px-4 font-semibold text-[#1d6fe0]">
+                <Link href={`/my-plan/smart-route?near=${encodeURIComponent(school.schoolId)}`} className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[var(--brand-primary)] px-4 font-semibold text-[var(--brand-primary)]">
                   <RouteIcon name="route" className="h-4 w-4" /> Find Nearby Schools
                 </Link>
               ) : null}
@@ -124,18 +124,18 @@ export function LocationCard({ answer: json }: { answer: JsonValue }) {
         </p>
       ) : null}
       {notice ? (
-        <p className="mt-3 rounded-[8px] bg-[#e8f1fd] px-3 py-2 text-[14px] text-[#0b4a9e]" role="status">
+        <p className="mt-3 rounded-[8px] bg-[#e8f1fd] px-3 py-2 text-[14px] text-[var(--brand-primary-hover)]" role="status">
           {notice}
         </p>
       ) : null}
       {pending ? (
-        <div className="mt-3 space-y-3 rounded-[10px] border border-[#1d6fe0]/40 bg-[#f4f8fe] p-3" data-block="location-report">
-          <p className="flex items-center gap-2 text-[14px] font-semibold text-[#0b4a9e]">
+        <div className="mt-3 space-y-3 rounded-[10px] border border-[var(--brand-primary)]/40 bg-[#f4f8fe] p-3" data-block="location-report">
+          <p className="flex items-center gap-2 text-[14px] font-semibold text-[var(--brand-primary-hover)]">
             <RouteIcon name="hourglass" className="h-4 w-4" /> Location report waiting for review
           </p>
           <ReportDetails report={pending} />
           {answer.canReview ? (
-            <Link href="/schools/location-reports" className="text-[14px] font-semibold text-[#1d6fe0] hover:underline">
+            <Link href="/schools/location-reports" className="text-[14px] font-semibold text-[var(--brand-primary)] hover:underline">
               All location reports
             </Link>
           ) : null}
@@ -152,7 +152,7 @@ export function LocationCard({ answer: json }: { answer: JsonValue }) {
         </div>
       ) : null}
       {!pending && answer.canReport && !isReporting ? (
-        <button type="button" className="mt-3 inline-flex h-10 items-center gap-2 rounded-[8px] px-1 font-semibold text-[#1d6fe0]" onClick={() => { setNotice(''); setIsReporting(true); }}>
+        <button type="button" className="mt-3 inline-flex h-10 items-center gap-2 rounded-[8px] px-1 font-semibold text-[var(--brand-primary)]" onClick={() => { setNotice(''); setIsReporting(true); }}>
           <RouteIcon name="alert" className="h-4 w-4" /> Report location
         </button>
       ) : null}
@@ -170,7 +170,7 @@ export function LocationCard({ answer: json }: { answer: JsonValue }) {
       <button
         type="button"
         aria-expanded={isHistoryOpen}
-        className="mt-1 ml-3 inline-flex h-10 items-center gap-2 rounded-[8px] px-1 font-semibold text-[#1d6fe0]"
+        className="mt-1 ml-3 inline-flex h-10 items-center gap-2 rounded-[8px] px-1 font-semibold text-[var(--brand-primary)]"
         onClick={() => setIsHistoryOpen((open) => !open)}
       >
         <RouteIcon name="clock" className="h-4 w-4" /> {isHistoryOpen ? 'Hide location history' : 'Location history'}

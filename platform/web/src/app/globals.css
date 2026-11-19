@@ -142,7 +142,8 @@ select.edify-select {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #1d6fe0;
+  /* The system blue (owner, 2026-11-19). */
+  background: var(--brand-primary);
   border: 3px solid #fff;
-  box-shadow: 0 0 0 8px rgb(29 111 224 / 0.2);
+  box-shadow: 0 0 0 8px color-mix(in srgb, var(--brand-primary) 20%, transparent);
 }

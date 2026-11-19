@@ -38,7 +38,7 @@ export function LocationReportQueue({ status, answer: json }: QueueProps) {
             href={`/schools/location-reports?status=${t.status}`}
             aria-current={t.status === status ? 'page' : undefined}
             className={`h-8 whitespace-nowrap px-4 text-[14px] font-semibold leading-8 ${i ? 'border-l border-[var(--edify-border)]' : ''} ${
-              t.status === status ? 'bg-[#1d6fe0] text-white' : 'text-[var(--edify-text)]'
+              t.status === status ? 'bg-[var(--brand-primary)] text-white' : 'text-[var(--edify-text)]'
             }`}
           >
             {t.label}
@@ -46,7 +46,7 @@ export function LocationReportQueue({ status, answer: json }: QueueProps) {
         ))}
       </nav>
       {notice ? (
-        <p className="mt-4 rounded-[8px] bg-[#e8f1fd] px-3 py-2 text-[14px] text-[#0b4a9e]" role="status">
+        <p className="mt-4 rounded-[8px] bg-[#e8f1fd] px-3 py-2 text-[14px] text-[var(--brand-primary-hover)]" role="status">
           {notice}
         </p>
       ) : null}
@@ -59,7 +59,7 @@ export function LocationReportQueue({ status, answer: json }: QueueProps) {
           {reports.map((r) => (
             <li key={r.id} className="card p-4" data-block="location-report">
               <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-                <Link href={`/schools/${encodeURIComponent(r.school?.schoolId ?? '')}`} className="text-[16px] font-semibold text-[#1d6fe0] hover:underline">
+                <Link href={`/schools/${encodeURIComponent(r.school?.schoolId ?? '')}`} className="text-[16px] font-semibold text-[var(--brand-primary)] hover:underline">
                   {r.school?.name}
                 </Link>
                 <span className="text-[13px] text-[var(--edify-text-muted)]">

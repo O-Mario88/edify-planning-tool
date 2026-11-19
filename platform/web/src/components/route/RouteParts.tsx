@@ -17,7 +17,7 @@ const card = 'rounded-[16px] border border-[var(--edify-border)] bg-[var(--edify
 function Kpi({ icon, tint, value, label, aside }: { icon: RouteIconName; tint: string; value: string; label: string; aside?: ReactNode }) {
   return (
     <div className={`${card} flex items-center gap-3 px-3 py-3 sm:gap-4 sm:px-5 sm:py-4`}>
-      <span className="hidden h-12 w-12 shrink-0 place-items-center rounded-[12px] sm:grid" style={{ background: `${tint}1a`, color: tint }}>
+      <span className="hidden h-12 w-12 shrink-0 place-items-center rounded-[12px] sm:grid" style={{ background: `color-mix(in srgb, ${tint} 10%, transparent)`, color: tint }}>
         <RouteIcon name={icon} className="h-7 w-7" />
       </span>
       <div className="min-w-0 flex-1">
@@ -47,15 +47,15 @@ export function KpiRow({ itinerary }: { itinerary: Itinerary | undefined }) {
     <section className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4" aria-label="Field day figures">
       <Kpi
         icon="school"
-        tint="#1d6fe0"
+        tint="var(--brand-primary)"
         value={`${schools} School${schools === 1 ? '' : 's'}`}
         label="Selected for today"
         aside={fits ? <RouteIcon name="check" className="h-7 w-7 rounded-full bg-green-600 p-1 text-white" /> : null}
       />
-      <Kpi icon="route" tint="#1d6fe0" value={km(total.meters)} label="Total Distance" aside={<InfoDot text={measure} />} />
+      <Kpi icon="route" tint="var(--brand-primary)" value={km(total.meters)} label="Total Distance" aside={<InfoDot text={measure} />} />
       <Kpi
         icon="clock"
-        tint="#1d6fe0"
+        tint="var(--brand-primary)"
         value={hoursMinutes(total.seconds)}
         label="Total Travel Time"
         aside={<InfoDot text={total.measure === 'road' ? 'Estimated road travel time' : 'Planning estimate over straight lines; road times are unavailable'} />}
@@ -104,7 +104,7 @@ function StopCheckInRow({
   const times = [checkIn?.arrivedAt ? `Arrived ${dayClock(checkIn.arrivedAt)}` : '', checkIn?.leftAt ? `Left ${dayClock(checkIn.leftAt)}` : '']
     .filter(Boolean)
     .join(' · ');
-  const button = 'rounded-[10px] border-2 border-[#1d6fe0] px-3 py-1 text-[13px] font-semibold text-[#1d6fe0] hover:bg-blue-50 disabled:opacity-50';
+  const button = 'rounded-[10px] border-2 border-[var(--brand-primary)] px-3 py-1 text-[13px] font-semibold text-[var(--brand-primary)] hover:bg-blue-50 disabled:opacity-50';
   return (
     <span className="mt-2 flex flex-wrap items-center gap-2">
       {times ? <span className="text-[13px] font-medium text-green-700">{times}</span> : null}
@@ -233,7 +233,7 @@ export function NearbyCard({
           {around ? `Schools Near ${around.name}` : 'Schools Near Your Route'}
         </h2>
         {suggestions.length > 1 ? (
-          <button type="button" onClick={onViewAll} className="flex items-center gap-2 text-[15px] font-semibold text-[#1d6fe0]">
+          <button type="button" onClick={onViewAll} className="flex items-center gap-2 text-[15px] font-semibold text-[var(--brand-primary)]">
             {showAll ? 'Show fewer' : 'View All'} <RouteIcon name="arrowRight" className="h-5 w-5" />
           </button>
         ) : null}
@@ -247,7 +247,7 @@ export function NearbyCard({
               <button
                 type="button"
                 onClick={() => s.school && onFocus(s.school)}
-                className="grid h-[84px] w-[132px] shrink-0 place-items-center rounded-[10px] bg-gradient-to-br from-blue-100 to-sky-100 text-[#1d6fe0]"
+                className="grid h-[84px] w-[132px] shrink-0 place-items-center rounded-[10px] bg-gradient-to-br from-blue-100 to-sky-100 text-[var(--brand-primary)]"
                 aria-label={`Show ${s.school?.name} on the map`}
               >
                 <RouteIcon name="school" className="h-10 w-10" />
@@ -275,7 +275,7 @@ export function NearbyCard({
               </div>
               <a
                 href={onAdd(s)}
-                className="inline-flex h-12 shrink-0 items-center rounded-[10px] border-2 border-[#1d6fe0] px-6 text-[15px] font-semibold text-[#1d6fe0] hover:bg-blue-50"
+                className="inline-flex h-12 shrink-0 items-center rounded-[10px] border-2 border-[var(--brand-primary)] px-6 text-[15px] font-semibold text-[var(--brand-primary)] hover:bg-blue-50"
               >
                 Add to Plan
               </a>

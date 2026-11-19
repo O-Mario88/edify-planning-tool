@@ -32,7 +32,9 @@ const WORKER_URL = '/maplibre-worker.mjs';
 const UGANDA_CENTRE: [number, number] = [32.58, 0.35];
 
 export const TONES = {
-  planned: '#1d6fe0',
+  // The system blue (owner, 2026-11-19: "use the system blue color"), as a
+  // literal: MapLibre paints with colours, not CSS variables.
+  planned: '#0e5da3',
   // Blue family only on the map (owner, 2026-11-14): suggested is a lighter,
   // cyan-leaning blue beside planned; done is navy.
   suggested: '#0284c7',
@@ -208,7 +210,7 @@ export function RouteMap({ stops, path, others, chip, onSelect, onView, classNam
             type: 'line',
             source: 'route-line',
             filter: ['==', ['get', 'road'], true],
-            paint: { 'line-color': '#1d6fe0', 'line-width': 5 },
+            paint: { 'line-color': TONES.planned, 'line-width': 5 },
             layout: { 'line-join': 'round', 'line-cap': 'round' },
           });
           created.addLayer({
@@ -216,7 +218,7 @@ export function RouteMap({ stops, path, others, chip, onSelect, onView, classNam
             type: 'line',
             source: 'route-line',
             filter: ['==', ['get', 'road'], false],
-            paint: { 'line-color': '#1d6fe0', 'line-width': 4, 'line-dasharray': [1.5, 1.5] },
+            paint: { 'line-color': TONES.planned, 'line-width': 4, 'line-dasharray': [1.5, 1.5] },
             layout: { 'line-join': 'round', 'line-cap': 'round' },
           });
           created.addSource('schools', {
