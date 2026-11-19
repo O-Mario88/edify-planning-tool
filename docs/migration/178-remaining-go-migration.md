@@ -22,6 +22,21 @@ builder, 66 detail routes (with an id) not claimed, 134 static routes not
 claimed. Every role's Home and To-Do queue is Go's (176.31–176.33). The 134
 static routes split as follows.
 
+### Recount (2026-11-19, evening)
+
+The probe's builder list caught up with the gateway's (it lacked the
+Admin Panel, the field pages, Performance Conversation, the Activity
+Catalogue, School Evidence, the Knowledge Center and Today; Partner Users
+and Platform Health need more than a pool to build and are still counted
+from A). Over the dev database: 347 routes, **206 answered by a Go page
+builder**, 61 detail routes not claimed, 80 static routes not claimed. Of
+those 80, every page is in A or B below, or is the Help manager
+(`/help/manage…`, writes), contextual help (`/help/context`, synced by a
+cache Go cannot read) or `/profile`; the other 61 are D's parts. Of the 61
+detail routes, about half are saves (approve, return, confirm, action),
+which cut over one at a time and are not pages; the rest are drawers and
+detail pages that load inside a page Go already answers.
+
 ## A. Answered by Go outside the page builders
 
 Not unported; the probe asks page builders only. Each is confirmed when its
@@ -99,6 +114,16 @@ their own.
 
 C1 → C9, then D with each page, then E. After that the mobile-first redesign
 (177, Stage A first).
+
+Decided 2026-11-19 (evening), with C done: D's parts are the existing web's
+HTMX fragments, and the redesign replaces that web with Next.js and Expo
+screens that read Go over RPCs. Porting each fragment's markup into feed
+blocks now would build what the redesign throws away. So D and E move into
+the redesign: when a page is rebuilt (177 stages D–F), the drawers,
+previews and option lists it loads, and the depth Go still hands on for it,
+are ported then, as PageDrawerService RPCs or parts of the page's answer,
+each proved against the existing view as before. The saves keep cutting
+over one at a time, shadow-proved first.
 
 ## Done
 
