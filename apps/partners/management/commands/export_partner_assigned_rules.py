@@ -10,7 +10,11 @@ the activity types that make an assignment cluster work; the label of each
 coded visit purpose (apps.partners.purposes.visit_purpose_label); whether
 the demo role-bridge pins a partner login to the first partner
 (PARTNER_ROLE_BRIDGE); the table's page size; and the query keys the feed
-never passes. A change to any of them must be exported again;
+never passes. And the portal's Assigned Schools (/partner/schools), Activity
+Log (/partner/activities) and Assigned Activities (/partner/assignments):
+the states of called-off work they leave out, the assignment states that
+await the partner's schedule, and how many rows each reads. A change to any
+of them must be exported again;
 apps/partners/test_partner_assigned_rules_export.py fails until it is.
 
     python manage.py export_partner_assigned_rules
@@ -35,6 +39,9 @@ PAGES = {
     "/partner/assigned-activities": "partner_assignments",
     "/partner/evidence": "partner_evidence",
     "/partner/completed": "partner_activities",
+    "/partner/schools": "partner_schools",
+    "/partner/activities": "partner_activities",
+    "/partner/assignments": "partner_assignments",
 }
 
 #: partner_completed_payments_view: the statuses it lists and how many.
@@ -68,7 +75,13 @@ def rules() -> dict:
     from apps.core.pagination import TABLE_PAGE_SIZE
     from apps.core.permissions import RolePermissionService, can_open_url
     from apps.core.rbac import EdifyRole
-    from apps.frontend.views.partner_views import _CLUSTER_SCOPE_TYPES
+    from apps.core.activity_types import NOT_IN_PLAN_ACTIVITY_STATUSES
+    from apps.frontend.views.partner_views import (
+        _CLUSTER_SCOPE_TYPES,
+        PARTNER_ASSIGNMENTS_LIMIT,
+        PARTNER_AWAITING_STATUSES,
+        PARTNER_LOG_LIMIT,
+    )
     from apps.mobile_feed.views import NOT_PASSED
     from apps.partners.purposes import _LABELS
 
@@ -105,8 +118,13 @@ def rules() -> dict:
                 for role in EdifyRole
                 if can_open_url(_role_user(role.value), f"/{kind}/row")
             )
-            for kind in ("schools", "clusters")
+            for kind in ("schools", "clusters", "districts")
         },
+        # The portal's three lists.
+        "called_off_statuses": list(NOT_IN_PLAN_ACTIVITY_STATUSES),
+        "awaiting_statuses": list(PARTNER_AWAITING_STATUSES),
+        "log_limit": PARTNER_LOG_LIMIT,
+        "assignments_limit": PARTNER_ASSIGNMENTS_LIMIT,
     }
 
 

@@ -1513,6 +1513,15 @@ def partner_today_view(request):
     return _redirect("/partner/assigned-schools")
 
 
+#: The partner's Activity Log lists this many activities and assignments
+#: awaiting a date; Assigned Activities reads this many assignments; both
+#: count these statuses as awaiting the partner's schedule. Go's
+#: internal/partnerassigned reads the same from rules.json.
+PARTNER_LOG_LIMIT = 60
+PARTNER_ASSIGNMENTS_LIMIT = 200
+PARTNER_AWAITING_STATUSES = ("assigned", "pending_scheduling")
+
+
 @require_page_permission("partner_schools")
 def partner_schools_view(request):
     """Partner's assigned schools."""
@@ -1550,7 +1559,9 @@ def partner_activities_view(request):
             deleted_at__isnull=True,
         )
         .select_related("school", "cluster")
-        .order_by("-planned_date")
+        # The id settles work planned for the same day, so the log's order
+        # never falls to the query plan.
+        .order_by("-planned_date", "-id")
     )
     if status_filter:
         activities = activities.filter(status=status_filter)
@@ -1559,11 +1570,11 @@ def partner_activities_view(request):
         # called off is read by asking for it (`?status=cancelled`), and is
         # not in the count (owner, 2026-10-08).
         activities = activities.exclude(status__in=NOT_IN_PLAN_ACTIVITY_STATUSES)
-    activities = list(activities[:60])
+    activities = list(activities[:PARTNER_LOG_LIMIT])
     assignments = list(
         PartnerAssignment.objects.filter(
             partner_id__in=partner_ids,
-            status__in=["assigned", "pending_scheduling"],
+            status__in=PARTNER_AWAITING_STATUSES,
         )
         .select_related(
             "school",
@@ -1573,7 +1584,7 @@ def partner_activities_view(request):
             "source_ssa",
         )
         .prefetch_related("allowed_catalogue_items")
-        .order_by("scheduled_date", "created_at")[:60]
+        .order_by("scheduled_date", "created_at")[:PARTNER_LOG_LIMIT]
     )
     context = {
         "activities": activities,
@@ -2030,9 +2041,9 @@ def partner_assignments_view(request):
     assignments = list(
         PartnerAssignment.objects.filter(partner_id__in=partner_ids)
         .select_related("school", "cluster", "catalogue_item", "training_course")
-        .order_by("-created_at")[:200]
+        .order_by("-created_at")[:PARTNER_ASSIGNMENTS_LIMIT]
     )
-    pending = [a for a in assignments if a.status in ("assigned", "pending_scheduling")]
+    pending = [a for a in assignments if a.status in PARTNER_AWAITING_STATUSES]
     scheduled = [a for a in assignments if a.status == "partner_scheduled"]
     return render(
         request,

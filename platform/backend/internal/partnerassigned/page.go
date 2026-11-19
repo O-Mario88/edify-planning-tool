@@ -1,4 +1,6 @@
-// Package partnerassigned is the partner's intake queues: Assigned Schools
+// Package partnerassigned is the partner's intake queues and portal lists
+// (portal.go: /partner/schools, /partner/activities, /partner/assignments):
+// Assigned Schools
 // (/partner/assigned-schools), the school-based work Edify handed to the
 // organisation, and Assigned Activities (/partner/assigned-activities), its
 // cluster and group work, each awaiting the partner's Schedule-or-Return
@@ -76,8 +78,13 @@ var rules = func() (r struct {
 	CompletedStatuses []string            `json:"completed_statuses"`
 	CompletedLimit    int                 `json:"completed_limit"`
 	ProfileLinkRoles  map[string][]string `json:"profile_link_roles"`
+	// The portal's lists (portal.go).
+	CalledOffStatuses []string `json:"called_off_statuses"`
+	AwaitingStatuses  []string `json:"awaiting_statuses"`
+	LogLimit          int      `json:"log_limit"`
+	AssignmentsLimit  int      `json:"assignments_limit"`
 }) {
-	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.PageRoles) != 4 || r.CompletedLimit == 0 || len(r.CompletedWorkStatuses) == 0 || len(r.QueueStatuses) == 0 || r.QueueLimit == 0 || r.PageSize == 0 {
+	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.PageRoles) != 7 || r.LogLimit == 0 || r.AssignmentsLimit == 0 || len(r.AwaitingStatuses) == 0 || r.CompletedLimit == 0 || len(r.CompletedWorkStatuses) == 0 || len(r.QueueStatuses) == 0 || r.QueueLimit == 0 || r.PageSize == 0 {
 		panic(fmt.Sprintf("partnerassigned: the embedded rules are unreadable: %v", err))
 	}
 	return r
@@ -128,6 +135,9 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	}
 	if path == EvidencePath {
 		return s.evidence(ctx, partners)
+	}
+	if path == PortalSchoolsPath || path == PortalActivitiesPath || path == PortalAssignmentsPath {
+		return s.portal(ctx, p, path, partners, query)
 	}
 	if path == CompletedPath {
 		return s.completed(ctx, p, partners, query)

@@ -29,6 +29,17 @@
     "training": "Training",
     "training_follow_up_visit": "Training Follow-up Visit"
   },
+  "assignments_limit": 200,
+  "awaiting_statuses": [
+    "assigned",
+    "pending_scheduling"
+  ],
+  "called_off_statuses": [
+    "cancelled",
+    "rejected",
+    "deferred",
+    "not_planned"
+  ],
   "cluster_scope_types": [
     "cluster_meeting",
     "cluster_meeting_ssa_review",
@@ -54,8 +65,15 @@
     "completed"
   ],
   "evidence_limit": 50,
+  "log_limit": 60,
   "missing_evidence_limit": 10,
   "page_roles": {
+    "/partner/activities": [
+      "Admin",
+      "ImpactAssessment",
+      "PartnerAdmin",
+      "PartnerFieldOfficer"
+    ],
     "/partner/assigned-activities": [
       "Admin",
       "ImpactAssessment",
@@ -63,6 +81,12 @@
       "PartnerFieldOfficer"
     ],
     "/partner/assigned-schools": [
+      "Admin",
+      "ImpactAssessment",
+      "PartnerAdmin",
+      "PartnerFieldOfficer"
+    ],
+    "/partner/assignments": [
       "Admin",
       "ImpactAssessment",
       "PartnerAdmin",
@@ -79,6 +103,12 @@
       "ImpactAssessment",
       "PartnerAdmin",
       "PartnerFieldOfficer"
+    ],
+    "/partner/schools": [
+      "Admin",
+      "ImpactAssessment",
+      "PartnerAdmin",
+      "PartnerFieldOfficer"
     ]
   },
   "page_size": 50,
@@ -90,6 +120,15 @@
       "CountryDirector",
       "ImpactAssessment",
       "Program Lead"
+    ],
+    "districts": [
+      "Accountant",
+      "Admin",
+      "CCEO",
+      "CountryDirector",
+      "ImpactAssessment",
+      "Program Lead",
+      "ProjectCoordinator"
     ],
     "schools": [
       "Admin",

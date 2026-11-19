@@ -225,3 +225,26 @@ partner's organisation and the schools it holds), ten each, newest first.
 Its golden is 70 answers over ten readers and seven queries (wildcards, a
 padded query, nothing found), 0 differing. `_searches_every_country`'s roles
 are now `extended_views.EVERY_COUNTRY_SEARCH_ROLES`, exported.
+
+### C4 · The partner portal's lists (2026-11-19)
+
+`/partner/schools` (Assigned Schools), `/partner/activities` (the Activity
+Log) and `/partner/assignments` (Assigned Activities) are Go's in
+`internal/partnerassigned` (portal.go), over the organisation the login acts
+as (resolve_partner_ids): the schools it has work at that was not called
+off, by name; the log's assignments awaiting its date (Return and Schedule
+read as drawer links) and its work, the status asked for or else what was
+not called off, latest planned first, sixty of it, fifty a page; the newest
+two hundred assignments split into awaiting and scheduled. With no work but
+assignments waiting, the feed reads the log's card as one panel (the
+heading, the first assignment's name, the empty note), and Go draws that.
+The view's limits and states are now named
+(`partner_views.PARTNER_LOG_LIMIT`, `PARTNER_ASSIGNMENTS_LIMIT`,
+`PARTNER_AWAITING_STATUSES`) and exported, and the log orders same-day
+work by id (it fell to the query plan). Golden
+(partnerassigned/testdata/portal_golden.py): 108 answers over six readers,
+six queries and the three pages, 0 differing.
+
+Left, in order: `/today` (Admin's desk queue, with E), C2
+`/finance/fund-allocation`, C5–C9, D, E.
+
