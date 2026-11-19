@@ -50,12 +50,19 @@ type Role struct {
 	TrainingCreate         bool     `json:"training_create"`
 	ManageAcknowledgements bool     `json:"manage_acknowledgements"`
 	Slug                   string   `json:"slug"`
+	// NewPage opens New Policy or Manual.
+	NewPage bool `json:"new_page"`
 }
 
 var rules = func() (r struct {
-	Roles                map[string]Role   `json:"roles"`
-	MetricLabels         []string          `json:"metric_labels"`
-	TypeLabels           map[string]string `json:"type_labels"`
+	Roles        map[string]Role   `json:"roles"`
+	MetricLabels []string          `json:"metric_labels"`
+	TypeLabels   map[string]string `json:"type_labels"`
+	// NewDocumentTypes are New Policy or Manual's document types in order,
+	// RoleChoices the roles it may be addressed to.
+	NewDocumentTypes     [][2]string       `json:"new_document_types"`
+	NewTrainingTypes     [][2]string       `json:"new_training_types"`
+	RoleChoices          []string          `json:"role_choices"`
 	DocumentStatuses     map[string]string `json:"document_statuses"`
 	PreviewStatuses      map[string]string `json:"preview_statuses"`
 	SchoolImportStatuses map[string]string `json:"school_import_statuses"`

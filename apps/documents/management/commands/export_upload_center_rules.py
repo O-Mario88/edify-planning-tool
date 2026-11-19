@@ -30,6 +30,7 @@ EXPORT_PATH = Path("platform/backend/internal/uploadcenter/rules.json")
 
 PAGE_PERMISSION = "uploads"
 PATH = "/uploads"
+NEW_PATH = "/uploads/new"
 
 #: The strip's figures, in order.
 METRIC_KEYS = (
@@ -66,6 +67,10 @@ def roles() -> dict:
                 user, "policies.manage_acknowledgements"
             ),
             "slug": get_user_role_slug(user),
+            # New Policy or Manual (new_document_view): the page's door and
+            # the feed's for /uploads/new.
+            "new_page": RolePermissionService.can_view_page(user, PAGE_PERMISSION)
+            and bool(can_open_url(user, NEW_PATH)),
         }
     return out
 
@@ -78,6 +83,7 @@ def rules() -> dict:
         PreviewStatus,
         TRAINING_TYPES,
     )
+    from apps.core.rbac import EdifyRole
     from apps.documents.upload_center import UploadCenterService
     from apps.frontend.templatetags.frontend_filters import status_label
     from apps.schools.models import SchoolImportBatch, SSAImportBatch
@@ -97,6 +103,19 @@ def rules() -> dict:
         "school_import_statuses": dict(SchoolImportBatch.STATUSES),
         "ssa_import_statuses": dict(SSAImportBatch.STATUSES),
         "training_types": sorted(str(t) for t in TRAINING_TYPES),
+        # New Policy or Manual and New Training Resource: the document types
+        # each offers in order, and the roles either may be addressed to.
+        "new_document_types": [
+            [value, str(label)]
+            for value, label in DocumentType.choices
+            if not value.startswith("training_")
+        ],
+        "new_training_types": [
+            [value, str(label)]
+            for value, label in DocumentType.choices
+            if value.startswith("training_")
+        ],
+        "role_choices": [r.value for r in EdifyRole],
         "page_size": UploadCenterService.PAGE_SIZE,
     }
 

@@ -16,6 +16,26 @@
     "Published",
     "Overdue"
   ],
+  "new_document_types": [
+    [
+      "policy",
+      "Organisational Policy"
+    ],
+    [
+      "manual",
+      "Organisational Manual"
+    ]
+  ],
+  "new_training_types": [
+    [
+      "training_manual",
+      "Training Manual"
+    ],
+    [
+      "training_presentation",
+      "Training Presentation"
+    ]
+  ],
   "page_size": 50,
   "preview_statuses": {
     "failed": "Failed",
@@ -25,12 +45,31 @@
     "processing": "Processing",
     "ready": "Ready"
   },
+  "role_choices": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin",
+    "ClusterLeader"
+  ],
   "roles": {
     "Accountant": {
       "actions": [],
       "admin_menu": false,
       "documents_create": false,
       "manage_acknowledgements": false,
+      "new_page": false,
       "page": false,
       "school_upload": false,
       "slug": "ACCOUNTANT",
@@ -101,6 +140,7 @@
       "admin_menu": true,
       "documents_create": true,
       "manage_acknowledgements": true,
+      "new_page": true,
       "page": true,
       "school_upload": true,
       "slug": "ADMIN",
@@ -112,6 +152,7 @@
       "admin_menu": false,
       "documents_create": false,
       "manage_acknowledgements": false,
+      "new_page": false,
       "page": false,
       "school_upload": false,
       "slug": "BUSINESS_TRANSFORMATION",
@@ -123,6 +164,7 @@
       "admin_menu": false,
       "documents_create": false,
       "manage_acknowledgements": false,
+      "new_page": false,
       "page": false,
       "school_upload": false,
       "slug": "CCEO",
@@ -134,6 +176,7 @@
       "admin_menu": false,
       "documents_create": false,
       "manage_acknowledgements": false,
+      "new_page": false,
       "page": false,
       "school_upload": false,
       "slug": "CLUSTERLEADER",
@@ -155,6 +198,7 @@
       "admin_menu": false,
       "documents_create": true,
       "manage_acknowledgements": false,
+      "new_page": true,
       "page": true,
       "school_upload": false,
       "slug": "CD",
@@ -176,6 +220,7 @@
       "admin_menu": false,
       "documents_create": true,
       "manage_acknowledgements": true,
+      "new_page": true,
       "page": true,
       "school_upload": false,
       "slug": "HR",
@@ -246,6 +291,7 @@
       "admin_menu": false,
       "documents_create": true,
       "manage_acknowledgements": true,
+      "new_page": true,
       "page": true,
       "school_upload": true,
       "slug": "IA",
@@ -257,6 +303,7 @@
       "admin_menu": false,
       "documents_create": false,
       "manage_acknowledgements": false,
+      "new_page": false,
       "page": false,
       "school_upload": false,
       "slug": "MFI_OFFICER",
@@ -268,6 +315,7 @@
       "admin_menu": false,
       "documents_create": false,
       "manage_acknowledgements": false,
+      "new_page": false,
       "page": false,
       "school_upload": false,
       "slug": "MFI_ADMIN",
@@ -279,6 +327,7 @@
       "admin_menu": false,
       "documents_create": false,
       "manage_acknowledgements": false,
+      "new_page": false,
       "page": false,
       "school_upload": false,
       "slug": "PARTNER",
@@ -290,6 +339,7 @@
       "admin_menu": false,
       "documents_create": false,
       "manage_acknowledgements": false,
+      "new_page": false,
       "page": false,
       "school_upload": false,
       "slug": "PARTNER",
@@ -301,6 +351,7 @@
       "admin_menu": false,
       "documents_create": false,
       "manage_acknowledgements": false,
+      "new_page": false,
       "page": false,
       "school_upload": false,
       "slug": "PL",
@@ -312,6 +363,7 @@
       "admin_menu": false,
       "documents_create": false,
       "manage_acknowledgements": false,
+      "new_page": false,
       "page": false,
       "school_upload": false,
       "slug": "PROJECT_COORDINATOR",
@@ -323,6 +375,7 @@
       "admin_menu": false,
       "documents_create": false,
       "manage_acknowledgements": false,
+      "new_page": false,
       "page": false,
       "school_upload": false,
       "slug": "RPL",
@@ -344,6 +397,7 @@
       "admin_menu": false,
       "documents_create": true,
       "manage_acknowledgements": false,
+      "new_page": true,
       "page": true,
       "school_upload": false,
       "slug": "RVP",

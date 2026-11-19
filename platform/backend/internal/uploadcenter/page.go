@@ -53,8 +53,19 @@ func NewService(db schooldirectory.Querier, now func() time.Time) *Service {
 	return &Service{db: db, now: now}
 }
 
-// Build answers /uploads.
+// Build answers /uploads and New Policy or Manual.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if path == NewDocumentPath {
+		doors := rules.Roles[p.ActiveRole]
+		if !doors.NewPage {
+			return nil, true, pagegate.ErrNotAvailable
+		}
+		training := query.Get("kind") == "training"
+		if (training && !doors.TrainingCreate) || (!training && !doors.DocumentsCreate) {
+			return nil, false, nil // the page redirects a reader without the kind's create permission
+		}
+		return newDocumentPage(training), true, nil
+	}
 	if path != PagePath {
 		return nil, false, nil
 	}

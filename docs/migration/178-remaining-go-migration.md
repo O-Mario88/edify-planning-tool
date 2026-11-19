@@ -454,6 +454,14 @@ existing application. The exporter writes who opens it and the categories
 in order. Golden (adminops/testdata/report_golden.py, `garp` tickets): 8
 answers of 4 readers, 0 differing.
 
+`/uploads/new` is Go's too (uploadcenter/newdocument.go): New Policy or
+Manual as the feed reads its one form (the document's details, the audience
+by role, the acknowledgement it asks of readers, how it is delivered), and
+with `?kind=training` New Training Resource (its two training types, no
+acknowledgement). A reader without the kind's create permission is
+redirected, which Go hands on; every save stays with the existing
+application. 10 answers of 5 readers, 0 differing.
+
 ### Found on the way (2026-11-19): stale generated artefacts on this branch
 
 Only Platform CI runs on `feature/edify-go-rn-migration`; Django's suite runs
