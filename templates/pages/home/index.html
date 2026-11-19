@@ -4,7 +4,7 @@
 {% block title %}Home — Edify{% endblock %}
 
 {% comment %}The greeting's component is loaded here, ahead of Alpine in the head, as the CCEO dashboard loads it: a deferred script in feature_head_js runs after Alpine has started and read every x-data.{% endcomment %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/home.css' %}?v=20261024brand6">
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/home.css' %}?v=20261119wrap">
 <script src="{% static 'js/dashboard-greeting.js' %}?v=20261024clock1" defer></script>{% endblock %}
 
 {% block shell_content %}

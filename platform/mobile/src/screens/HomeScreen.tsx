@@ -5,7 +5,7 @@
  * (static/css/pages/home.css).
  */
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ApiError } from '../api/connect';
 import { describe, useSession } from '../auth/SessionContext';
@@ -15,7 +15,7 @@ import type {
   HomePriorityRow,
   HomeUpcoming,
 } from '../gen/edify/screens/v1/home_pb';
-import { fonts, radius, toneColors, useTheme } from '../theme';
+import { figureWashed, fonts, radius, toneColors, useTheme } from '../theme';
 import { routeShortcuts } from './route/routeData';
 import { SvgIcon } from '../ui/SvgIcon';
 import { TodayScreen } from './TodayScreen';
@@ -110,6 +110,14 @@ export function HomeScreen({ onOpen }: HomeScreenProps) {
     void load();
   }, [load]);
 
+  // Pull down to read Home again, as reopening it would.
+  const [refreshing, setRefreshing] = useState(false);
+  const refresh = useCallback(async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  }, [load]);
+
   const glyph = (name: string) => home?.glyphs[name] ?? '';
   const cardStyle = [styles.card, { backgroundColor: colors.raised, borderColor: colors.raisedBorder }];
 
@@ -129,7 +137,10 @@ export function HomeScreen({ onOpen }: HomeScreenProps) {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.page}>
+    <ScrollView
+      contentContainerStyle={styles.page}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} tintColor={colors.primary} />}
+    >
       {/* The work first (owner, 2026-11-19: drop the greeting band on
           phones): the role and the greeting on two quiet lines. */}
       <View style={styles.head}>
@@ -174,11 +185,11 @@ export function HomeScreen({ onOpen }: HomeScreenProps) {
                 <Pressable
                   onPress={() => onOpen('/todos', 'To-Do')}
                   accessibilityRole="link"
-                  accessibilityLabel={`To-Dos ${queue.total}`}
+                  accessibilityLabel={`View all ${queue.total} To-Dos`}
                   style={styles.seeAll}
                   hitSlop={12}
                 >
-                  <Text style={[styles.seeAllText, { color: colors.link }]}>To-Dos {queue.total}</Text>
+                  <Text style={[styles.seeAllText, { color: colors.link }]}>View all {queue.total}</Text>
                   <SvgIcon xml={glyph('arrow')} size={16} color={colors.link} />
                 </Pressable>
               ) : null}
@@ -227,7 +238,7 @@ export function HomeScreen({ onOpen }: HomeScreenProps) {
                     style={[styles.shortcut, { borderColor: colors.raisedBorder }]}
                   >
                     <SvgIcon xml={shortcut.iconSvg} size={24} color={colors.primary} />
-                    <Text style={[styles.shortcutLabel, { color: colors.text }]} numberOfLines={1}>
+                    <Text style={[styles.shortcutLabel, { color: colors.text }]} numberOfLines={2}>
                       {shortcut.label}
                     </Text>
                   </Pressable>
@@ -282,7 +293,7 @@ type Open = (url: string, label: string) => void;
 function FigureTile({ figure, onOpen }: { readonly figure: HomeFigure; readonly onOpen: Open }) {
   const { colors } = useTheme();
   const tone = toneColors(colors, figure.tone);
-  const isTinted = figure.tone === 'brand' || figure.tone === 'info';
+  const isTinted = figureWashed(figure.tone);
   return (
     <Pressable
       onPress={() => onOpen(figure.url, figure.label)}
@@ -331,11 +342,11 @@ function PriorityRow({ row, chevron, clock, onOpen }: PriorityRowProps) {
         <SvgIcon xml={row.iconSvg} size={20} color={mark.fg} />
       </View>
       <View style={styles.itemBody}>
-        <Text style={[styles.itemName, { color: colors.text }]} numberOfLines={2}>
+        <Text style={[styles.itemName, { color: colors.text }]}>
           {row.title}
         </Text>
         {row.context ? (
-          <Text style={[styles.itemSub, { color: colors.textMuted }]} numberOfLines={1}>
+          <Text style={[styles.itemSub, { color: colors.textMuted }]}>
             {row.context}
           </Text>
         ) : null}
@@ -392,10 +403,10 @@ function UpcomingRow({ activity, chevron, onOpen }: UpcomingRowProps) {
         </Text>
       </View>
       <View style={styles.itemBody}>
-        <Text style={[styles.itemName, { color: colors.text }]} numberOfLines={2}>
+        <Text style={[styles.itemName, { color: colors.text }]}>
           {name}
         </Text>
-        <Text style={[styles.itemSub, { color: colors.textMuted }]} numberOfLines={1}>
+        <Text style={[styles.itemSub, { color: colors.textMuted }]}>
           {sub}
         </Text>
       </View>

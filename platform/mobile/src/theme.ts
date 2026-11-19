@@ -207,6 +207,12 @@ export function toneColors(colors: Palette, tone: string): ToneColors {
   }
 }
 
+/** Whether a figure tile takes its tone's wash: every tone but plain, as
+ *  Home's figure classes do (static/css/pages/home.css). */
+export function figureWashed(tone: string): boolean {
+  return tone !== '' && tone !== 'plain';
+}
+
 const ThemeContext = createContext<{ choice: ThemeChoice; toggle: () => void } | null>(null);
 
 export function ThemeProvider({ children }: { readonly children: ReactNode }) {
