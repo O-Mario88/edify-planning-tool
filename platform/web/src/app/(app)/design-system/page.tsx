@@ -28,7 +28,9 @@ import {
   StandardCard,
   TabRail,
 } from '@/components/ds';
+import { PhonePage } from '@/components/phone/PhonePage';
 import { PageChartSchema, PageHeaderSchema, PageLinkTabsSchema, PagePagerSchema, PageStripSchema, PageTableSchema } from '@/gen/edify/screens/v1/page_pb';
+import { GetPageResponseSchema } from '@/gen/edify/screens/v1/page_screen_pb';
 
 export const metadata: Metadata = { title: 'Design system — Edify' };
 
@@ -108,6 +110,38 @@ const BAR_CHART = create(PageChartSchema, {
   horizontal: true,
   categories: ['Wakiso', 'Mukono', 'Kampala', 'Jinja'],
   series: [{ name: 'Visits', values: [214, 168, 131, 77] }],
+});
+
+/** The same parts as a phone reads them, drawn in the native app's design. */
+const PHONE = create(GetPageResponseSchema, {
+  header: HEADER,
+  blocks: [
+    { kind: { case: 'linkTabs', value: { tabs: [...TABS.tabs, { label: 'Closed', href: `${HERE}?lens=closed` }], beside: { key: 'calendar', label: 'Open Calendar', enabled: true, href: `${HERE}#calendar` } } } },
+    {
+      kind: {
+        case: 'filters',
+        value: {
+          filters: ['Fiscal year', 'Quarter', 'Month', 'District'].map((label) => ({ name: label.toLowerCase().replace(' ', '_'), label, value: 'all', options: [{ value: 'all', label: `All ${label.toLowerCase()}` }] })),
+        },
+      },
+    },
+    { kind: { case: 'strip', value: STRIP } },
+    { kind: { case: 'table', value: TABLE } },
+    {
+      kind: {
+        case: 'list',
+        value: {
+          title: 'Do next',
+          count: '2 open',
+          items: [
+            { title: 'Chase Partner Delivery', lines: ['Kyampisi UMEA Primary School · partner'], tone: 'caution', actions: [{ label: 'Open', enabled: true, href: `${HERE}#open` }] },
+            { title: 'Verify completion', lines: ['Bright Hope Primary · support visit'], tone: 'info', actions: [{ label: 'Verify', enabled: true, href: `${HERE}#verify` }] },
+          ],
+        },
+      },
+    },
+    { kind: { case: 'panel', value: { title: 'Details', items: [{ kind: { case: 'fields', value: { facts: [{ label: 'District', value: 'Wakiso' }, { label: 'Cluster', value: 'Kira North' }] } } }, { kind: { case: 'rows', value: { rows: [{ label: 'Visits this year', value: '2', tone: 'good' }, { label: 'Overdue', value: '1', tone: 'alert' }] } } }] } } },
+  ],
 });
 
 const TONES = ['good', 'caution', 'alert', 'info', 'purple', 'plain'] as const;
@@ -196,6 +230,12 @@ export default function DesignSystemPage() {
 
       <Entry name="Pager" note="Under a table: the count on the left, the pages on the right.">
         <Pager pager={PAGER} />
+      </Entry>
+
+      <Entry name="On a phone" note="Below 64rem every page is the native app's design: tiles, segment rail with More, three filters and More, record tables, lists and panels.">
+        <div className="max-w-[390px] overflow-hidden rounded-[24px] border border-[var(--edify-border)]">
+          <PhonePage answer={PHONE} pagePath={HERE} drawerHref={HERE} />
+        </div>
       </Entry>
 
       <Entry name="Graphs" note="The chart standard: the series colours, one plot height, bars of a fixed thickness.">
