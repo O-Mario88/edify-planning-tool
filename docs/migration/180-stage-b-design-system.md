@@ -34,7 +34,15 @@ below AA.
 StatusBadge (a status in words, toned), SectionHeader (title, count, link),
 Surface, KpiStat (a figure, its target and share), TaskRow and TaskList (a
 task, where, its state and its one action), EmptyState, Skeleton and
-Segmented. They draw only with the design system's tokens and stand apart
+Segmented, and DataTable: one set of columns drawn as a table from 768 px
+and, below it (owner, 2026-11-19: "Rows on phones"), as a list of rows —
+the record's title as its link, its context columns (a school's School ID
+and district) as the second line, its status as a badge, and every other
+column under "More details". Checked in the browser at 375 and 1280: only
+one of the two is drawn, and the phone page has no sideways scroll. The
+existing web's stylesheets hold `.hidden` over Tailwind's responsive
+`md:block`, so the table is hidden below 768 with `max-md:hidden` instead.
+They draw only with the design system's tokens and stand apart
 from `components/ds`, which draws the live system's markup for the pages kept
 at parity until each is redesigned. The Expo app has the tokens; its
 components follow the web set.
@@ -56,8 +64,8 @@ the owner's rule that text wraps.
 
 ## Waiting on the owner
 
-The three decisions in 179 (tables on phones, the greeting band, where
-leadership lands) shape the next screens; the preview shows the proposed
+Tables on phones is decided (rows, above). The other two decisions in 179
+(the greeting band, where leadership lands) shape the next screens; the preview shows the proposed
 answers so they can be judged side by side with today's screens.
 
 ## Next
