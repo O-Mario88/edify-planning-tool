@@ -380,7 +380,33 @@ differing, its 8 audited readings sealed as the existing app seals them.
 The register golden reads the HR audit log, which Employee Relations' reads
 append to, so the suite writes it after the main run and compares it alone.
 
-Left in C7: `/performance-conversation`.
+### C7 · The Performance Conversation (2026-11-19)
+
+`/performance-conversation` is Go's (internal/perfconversation): whose
+conversation the reader opens (their own; with `?staff=` someone in their
+People reach or whose reviewer they cover, `is_reviewer_of` with its live
+states and active cover), the channels they write (employee, manager,
+functional manager, HR), the year's window, the agreement waiting on the
+reviewer, the distributed summary (now drawn by `allocations.SummaryBlocks`,
+which My Targets shares), a card a priority and the values. The cards are
+written as the template writes them and read by the feed's own rules,
+ported to `feeddom.CardForm`: a card holding one form with little around it
+is that form, anything else a panel whose forms are skipped, a lone label
+before a figure a data row. The rating columns declare no choices, so a
+stored rating shows as it is stored.
+
+Handed on, never approximated: a reader the page refuses (it redirects), a
+reader in an acting appointment, and in an open window a conversation its
+snapshot froze, a measured priority (its live figures and milestones,
+`live_progress`/`milestone_metrics`), an inherited priority carried under a
+role rule, and a contract longer than one page. Golden
+(perfconversation/testdata/golden.py, `gpcv` officers who sign in): 18
+answers in the open window (2 handed on) and 4 with it shut, 0 differing.
+The window labels and HR roles moved out of the view into constants the
+exporter reads (`CONVERSATION_WINDOW_LABELS`, `CONVERSATION_HR_ROLES`).
+
+Left in C7: the conversation's handed-on depth (snapshots, the live engine,
+role-rule inheritance).
 
 ### Found on the way (2026-11-19): stale generated artefacts on this branch
 

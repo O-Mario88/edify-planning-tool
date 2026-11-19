@@ -2921,7 +2921,7 @@ def _resolve_conversation(request):
     viewer_sp = getattr(request.user, "staff_profile", None)
     staff_param = (request.GET.get("staff") or request.POST.get("staff") or "").strip()
     role = getattr(request.user, "active_role", "")
-    is_hr = role in ("HumanResources", "Admin")
+    is_hr = role in CONVERSATION_HR_ROLES
 
     if staff_param and staff_param != getattr(viewer_sp, "id", None):
         # The lookup was unscoped: any HR account could name any staff id in
@@ -2969,6 +2969,19 @@ def _resolve_conversation(request):
     return review, target, caps
 
 
+#: The conversation page's title for each window a cycle opens (and the Go
+#: gateway's, internal/perfconversation/rules.json).
+CONVERSATION_WINDOW_LABELS = {
+    "priority_setting": "FY Priority Setting",
+    "q1": "Q1 Performance Conversation",
+    "mid_year": "Mid-Year Performance Conversation",
+    "q3": "Q3 Performance Conversation",
+    "year_end": "End-of-Year Performance Conversation",
+}
+#: The roles that hold the HR channel of every conversation they open.
+CONVERSATION_HR_ROLES = ("HumanResources", "Admin")
+
+
 @require_page_permission("performance_conversations")
 def performance_conversation_view(request):
     """The conversation form for one employee's active window."""
@@ -3014,13 +3027,6 @@ def performance_conversation_view(request):
                 }
             )
 
-    WINDOW_LABELS = {
-        "priority_setting": "FY Priority Setting",
-        "q1": "Q1 Performance Conversation",
-        "mid_year": "Mid-Year Performance Conversation",
-        "q3": "Q3 Performance Conversation",
-        "year_end": "End-of-Year Performance Conversation",
-    }
     from apps.hr.accountability import allocation_priorities
 
     contract = (
@@ -3058,7 +3064,7 @@ def performance_conversation_view(request):
         "target": target,
         "caps": caps,
         "window": window,
-        "window_label": WINDOW_LABELS.get(window, "No window open"),
+        "window_label": CONVERSATION_WINDOW_LABELS.get(window, "No window open"),
         "window_open": window_open,
         "rows": rows,
         "ratings": PerformanceRating.choices,

@@ -95,6 +95,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partnerusers"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partnerworkspace"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/peopledirectory"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/perfconversation"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/perfcycle"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/personaltimeoff"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningmonitor"
@@ -205,6 +206,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			rolesmatrix.NewService(pool),
 			plreview.NewService(pool, time.Now),
 			perfcycle.NewService(pool, time.Now),
+			perfconversation.NewService(pool, time.Now),
 			closurequality.NewService(pool, time.Now),
 			iaframework.NewService(pool),
 			ownership.NewService(pool),

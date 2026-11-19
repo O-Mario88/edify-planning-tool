@@ -75,33 +75,7 @@ func floatText(f *float64) string {
 // distributedSummary is partials/hr/distributed_summary.html over the
 // year's contract.
 func (c contract) distributedSummary() []*screensv1.PageBlock {
-	annual := c.annual()
-	score := "No configured score for this reporting scope"
-	if annual.Pct != nil {
-		score = floatText(annual.Pct) + "% verified achievement"
-	}
-	cols := []*screensv1.PageColumn{}
-	for _, l := range []string{"Priority", "Scope", "Target", "Verified", "Achievement"} {
-		cols = append(cols, &screensv1.PageColumn{Label: l})
-	}
-	rows := []*screensv1.PageRow{}
-	for _, r := range annual.Rows {
-		achievement := "Not configured"
-		if r.Pct != nil {
-			achievement = floatText(r.Pct) + "%"
-		}
-		rows = append(rows, &screensv1.PageRow{Cells: []*screensv1.PageCell{
-			{Text: r.Title}, {Text: annual.Scope}, {Text: allocations.FloatFormat(r.Target, -2) + " " + r.Unit},
-			{Text: allocations.FloatFormat(r.Actual, -2)}, {Text: achievement},
-		}})
-	}
-	if len(rows) == 0 {
-		rows = append(rows, &screensv1.PageRow{Cells: []*screensv1.PageCell{{Text: "No approved distributed priorities in this record."}}})
-	}
-	return []*screensv1.PageBlock{
-		textPanel("Distributed priority performance", score),
-		{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{Columns: cols, Rows: rows}}},
-	}
+	return allocations.SummaryBlocks(c.annual())
 }
 
 // milestoneRows are the approved milestones' rows of the agreed matrix.

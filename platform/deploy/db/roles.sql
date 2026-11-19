@@ -1166,3 +1166,12 @@ GRANT SELECT (recipient_role) ON notification TO edify_gateway_ro;
 -- and when it changed. Not the nomination notes.
 GRANT SELECT (staff_id, payroll_period, has_exceptions, is_payroll_ready, exception_notes) ON hr_payroll_readiness TO edify_gateway_ro;
 GRANT SELECT (staff_successor_id, position_name, readiness, updated_at) ON hr_succession_candidate TO edify_gateway_ro;
+
+-- Performance Conversation (internal/perfconversation): each priority's
+-- alignment, the three channels' words and ratings and whether it is
+-- inherited; each commitment's id (its save); a snapshot's window. Not a
+-- snapshot's frozen figures.
+GRANT SELECT (strategic_alignment, employee_reflection, employee_rating, manager_assessment, manager_rating, agreed_action,
+  functional_manager_rating, is_mandatory) ON hr_performance_priority TO edify_gateway_ro;
+GRANT SELECT (id) ON hr_value_commitment TO edify_gateway_ro;
+GRANT SELECT ("window") ON hr_performance_snapshot TO edify_gateway_ro;

@@ -1,0 +1,87 @@
+{
+  "hr_roles": [
+    "HumanResources",
+    "Admin"
+  ],
+  "live_states": [
+    "active",
+    "pending"
+  ],
+  "ratings": [
+    [
+      "far_exceeds",
+      "Far Exceeds Priority"
+    ],
+    [
+      "exceeds",
+      "Exceeds Priority"
+    ],
+    [
+      "met",
+      "Met Priority"
+    ],
+    [
+      "met_some",
+      "Met Some Priority"
+    ],
+    [
+      "did_not_meet",
+      "Did Not Meet Priority"
+    ]
+  ],
+  "reviewer_roles": {
+    "Accountant": [
+      "CountryDirector"
+    ],
+    "CCEO": [
+      "Program Lead"
+    ],
+    "CountryDirector": [
+      "RegionalVicePresident"
+    ],
+    "HumanResources": [
+      "CountryDirector"
+    ],
+    "ImpactAssessment": [
+      "CountryDirector"
+    ],
+    "Program Lead": [
+      "CountryDirector"
+    ],
+    "ProjectCoordinator": [
+      "CountryDirector"
+    ],
+    "RegionalVicePresident": [
+      "Admin"
+    ]
+  },
+  "roles": {
+    "Accountant": true,
+    "Admin": true,
+    "BusinessTransformationOfficer": false,
+    "CCEO": true,
+    "ClusterLeader": false,
+    "CountryDirector": true,
+    "HumanResources": true,
+    "ImpactAssessment": true,
+    "MfiLoanOfficer": false,
+    "MfiPartnerAdmin": false,
+    "PartnerAdmin": false,
+    "PartnerFieldOfficer": false,
+    "Program Lead": true,
+    "ProjectCoordinator": true,
+    "RegionalProgramLead": false,
+    "RegionalVicePresident": true
+  },
+  "value_kinds": {
+    "spiritual": "Spiritual Formation",
+    "value": "Edify Value"
+  },
+  "window_labels": {
+    "mid_year": "Mid-Year Performance Conversation",
+    "priority_setting": "FY Priority Setting",
+    "q1": "Q1 Performance Conversation",
+    "q3": "Q3 Performance Conversation",
+    "year_end": "End-of-Year Performance Conversation"
+  }
+}

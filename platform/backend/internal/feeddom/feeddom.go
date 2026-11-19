@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 )
@@ -172,6 +173,79 @@ func (n *Node) collect(b *strings.Builder) {
 		}
 	}
 }
+
+// Text is the element's text as the feed reads it (Node.text).
+func (n *Node) Text() string { return n.text() }
+
+// introLimit is page_forms.INTRO_LIMIT: the characters a card may show
+// around its one form and still be read as that form.
+const introLimit = 400
+
+// controls are drawer_blocks.CONTROLS, and notFields the inputs among them
+// that are not fields the person fills (NOT_FIELDS).
+var (
+	controls  = map[string]bool{"input": true, "select": true, "textarea": true}
+	notFields = map[string]bool{"hidden": true, "submit": true, "button": true, "reset": true, "image": true}
+)
+
+// isPostForm is page_forms.is_post_form: a form that posts and holds a
+// field the person fills.
+func isPostForm(n *Node) bool {
+	return n.tag == "form" && strings.EqualFold(n.Get("method"), "post") && n.find(func(x *Node) bool {
+		return controls[x.tag] && (x.tag != "input" || !notFields[strings.ToLower(x.Get("type"))])
+	}) != nil
+}
+
+// CardForm is page_forms._form_of for a card (an edify-surface or card
+// element): its one POST form when the card shows no more than the intro
+// limit around it and no table or list outside it, else nil (the card is
+// read as a panel, its forms skipped).
+func CardForm(card *Node) *Node {
+	if !card.has("edify-surface") && !card.has("card") {
+		return nil
+	}
+	forms := card.findAll(func(x *Node) bool { return x.tag == "form" })
+	if len(forms) != 1 || !isPostForm(forms[0]) {
+		return nil
+	}
+	form := forms[0]
+	if utf8.RuneCountInString(card.text())-utf8.RuneCountInString(form.text()) > introLimit {
+		return nil
+	}
+	if card.find(func(x *Node) bool {
+		return (x.tag == "table" || x.tag == "ul" || x.tag == "ol" || x.tag == "dl") && !inside(x, form)
+	}) != nil {
+		return nil
+	}
+	return form
+}
+
+// Outside is page_forms._outside: the card's first element outside its form
+// that passes test, or nil.
+func Outside(card, form *Node, test func(*Node) bool) *Node {
+	return card.find(func(x *Node) bool { return test(x) && !inside(x, form) })
+}
+
+// Tag is the element's tag.
+func (n *Node) Tag() string { return n.tag }
+
+// FindAll is every element under n, in document order, that passes test.
+func (n *Node) FindAll(test func(*Node) bool) []*Node { return n.findAll(test) }
+
+// Written is drawer_blocks._value's textarea value: the element's own
+// words as written, stripped at the ends, not collapsed.
+func (n *Node) Written() string {
+	var b strings.Builder
+	for _, c := range n.children {
+		if t, ok := c.(string); ok {
+			b.WriteString(t)
+		}
+	}
+	return strings.TrimSpace(b.String())
+}
+
+// Has is whether the element carries the class.
+func (n *Node) Has(class string) bool { return n.has(class) }
 
 func inside(x, ancestor *Node) bool {
 	for ; x != nil; x = x.parent {
