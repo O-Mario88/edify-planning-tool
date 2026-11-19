@@ -37,7 +37,7 @@ export function TodayScreen({ parts, note }: { parts: HomeParts; note?: string }
   const waiting = waitingRows(queue.priorityRows);
   const counted = countedFigures(homeFigures(home.figures, figures));
   return (
-    <div className="min-h-full bg-ds-bg px-4 py-5 text-ds-text lg:px-8" data-page="/home" data-design="today">
+    <div className="min-h-full bg-ds-bg px-4 py-5 text-ds-text lg:px-8" data-page="/home" data-design="today" data-eds>
       <header className="mx-auto max-w-5xl">
         <p className="text-ds-caption font-semibold text-ds-text-subtle">
           {home.todayLabel} · FY{home.fy}

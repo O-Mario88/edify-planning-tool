@@ -192,3 +192,15 @@
   --breakpoint-ds-desktop: 1440px;
   --breakpoint-ds-wide: 1920px;
 }
+@layer utilities {
+  [data-eds] .text-ds-caption { font-size: 12px !important; line-height: 16px !important; }
+  [data-eds] .text-ds-body { font-size: 13.7px !important; line-height: 20px !important; }
+  [data-eds] .text-ds-control { font-size: 15px !important; line-height: 20px !important; }
+  [data-eds] .text-ds-lead { font-size: 16px !important; line-height: 24px !important; }
+  [data-eds] .text-ds-title { font-size: 20px !important; line-height: 28px !important; }
+  [data-eds] .text-ds-display { font-size: 26px !important; line-height: 32px !important; }
+  [data-eds] .text-ds-figure { font-size: 28px !important; line-height: 32px !important; }
+  [data-eds] .font-medium { font-weight: 500 !important; }
+  [data-eds] .font-semibold { font-weight: 600 !important; }
+  [data-eds] .font-bold { font-weight: 700 !important; }
+}

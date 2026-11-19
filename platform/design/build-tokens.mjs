@@ -110,6 +110,20 @@ export function renderCSS(tokens) {
     '@theme inline {',
     ...theme,
     '}',
+    // The existing web's stylesheets, linked unlayered, set every p, li and
+    // dd inside <main> to body size with !important (consistency.css) and
+    // .font-bold to 600 (platform.css). An important rule in a layer outranks
+    // an unlayered one, so inside a redesigned screen ([data-eds]) the
+    // design system's sizes and weights hold; pages kept at parity keep
+    // theirs.
+    '@layer utilities {',
+    ...Object.entries(tokens.text).map(
+      ([name, t]) => `  [data-eds] .text-ds-${name} { font-size: ${t.size}px !important; line-height: ${t.line}px !important; }`,
+    ),
+    ...Object.entries(tokens.font.weight).map(
+      ([name, v]) => `  [data-eds] .font-${name} { font-weight: ${v} !important; }`,
+    ),
+    '}',
     '',
   ].join('\n');
 }

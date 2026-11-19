@@ -211,7 +211,7 @@ const SCHOOL_ROWS: DataRow[] = [
 
 export default function DesignPreviewPage() {
   return (
-    <div className="space-y-12 bg-ds-bg p-6 text-ds-text">
+    <div className="space-y-12 bg-ds-bg p-6 text-ds-text" data-eds>
       <header className="max-w-3xl">
         <p className="text-ds-caption font-bold uppercase tracking-wide text-ds-primary">Stage B · preview</p>
         <h1 className="mt-1 text-ds-display font-bold">Edify Enterprise Design System</h1>
