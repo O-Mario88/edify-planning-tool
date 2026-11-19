@@ -1,0 +1,68 @@
+{
+  "roles": {
+    "Accountant": {
+      "map": false,
+      "search": true
+    },
+    "Admin": {
+      "map": true,
+      "search": true
+    },
+    "BusinessTransformationOfficer": {
+      "map": false,
+      "search": true
+    },
+    "CCEO": {
+      "map": true,
+      "search": true
+    },
+    "ClusterLeader": {
+      "map": false,
+      "search": false
+    },
+    "CountryDirector": {
+      "map": true,
+      "search": true
+    },
+    "HumanResources": {
+      "map": false,
+      "search": true
+    },
+    "ImpactAssessment": {
+      "map": true,
+      "search": true
+    },
+    "MfiLoanOfficer": {
+      "map": false,
+      "search": true
+    },
+    "MfiPartnerAdmin": {
+      "map": false,
+      "search": true
+    },
+    "PartnerAdmin": {
+      "map": false,
+      "search": true
+    },
+    "PartnerFieldOfficer": {
+      "map": false,
+      "search": true
+    },
+    "Program Lead": {
+      "map": true,
+      "search": true
+    },
+    "ProjectCoordinator": {
+      "map": true,
+      "search": true
+    },
+    "RegionalProgramLead": {
+      "map": true,
+      "search": true
+    },
+    "RegionalVicePresident": {
+      "map": false,
+      "search": true
+    }
+  }
+}

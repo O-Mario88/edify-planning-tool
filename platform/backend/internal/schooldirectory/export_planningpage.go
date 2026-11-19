@@ -58,3 +58,12 @@ func NoSSA(fy string, arg func(any) string) string {
 	b.and(clause)
 	return renumber(b, arg)
 }
+
+// ReadScope is school_queryset(scope): the scope's operating schools, the
+// team's included, over the schools aliased s.
+func ReadScope(s Scope, arg func(any) string) string {
+	b := &sqlb{}
+	b.and(operating)
+	b.and(b.reach(s))
+	return renumber(b, arg)
+}

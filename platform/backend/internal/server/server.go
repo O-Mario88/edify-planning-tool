@@ -59,6 +59,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/escalations"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/extrawork"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/feed"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/fieldpages"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/financedesks"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/fundapprovals"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/fyplanning"
@@ -276,6 +277,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			ccelead.NewService(pool, time.Now),
 			extrawork.NewService(pool, time.Now),
 			financedesks.NewService(pool, time.Now),
+			fieldpages.NewService(pool, time.Now),
 		)
 	if cfg.GoSaves.ScheduleVisit || cfg.GoSaves.RescheduleVisit || cfg.GoSaves.CancelVisit || cfg.GoSaves.EditVisit ||
 		cfg.GoSaves.ScheduleTrainingPair || cfg.GoSaves.GroupReschedule || cfg.GoSaves.GroupCancel ||

@@ -147,3 +147,21 @@ a month: 154 answers of 7 accounts across eleven pages, 0 differing.
 Still to do in C2: `/finance/fund-allocation`, the country scope of
 `budget_workspace` (its activity cost plan and time views), which `budgetpage`
 does not port.
+
+### C3 (part) · The School Map and the empty Search page (2026-11-19)
+
+`internal/fieldpages` builds `/map` (map_view over school_queryset: the
+reader's operating schools, the team's included, now exported as
+`schooldirectory.ReadScope`; the count without coordinates, a verified geo
+point first, then the upload's) and `/search` with no query. Once any school
+in reach has coordinates the existing feed reads the map's inline script and
+yields three panels of its string literals ("Map could not be loaded",
+"' + message + '", "' + p.name + '"); Go gives the same, so the apps see what
+they see today. A search with a query is handed on (its scoped school, staff
+and activity lists are not built yet). Rules: `manage.py
+export_field_pages_rules`. Golden: `web_page.py` for `/map` and `/search`
+over eight readers, 16 answers, 0 differing.
+
+Left in C3: `/today` (desk roles; the field roles are redirected and handed
+on), `/activities/closure`, `/planning/schedule`, `/debriefs/submit`,
+`/debriefs/weekly-report`, and `/search` with a query.
