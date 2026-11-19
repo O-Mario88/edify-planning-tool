@@ -6,7 +6,6 @@ import type { HomePriorityRow, HomeUpcoming } from '@/gen/edify/screens/v1/home_
 import { NotMovedYet } from '@/components/page/NotMovedYet';
 import { environment } from '@/lib/environment';
 import { askHome } from '@/lib/homeData';
-import type { HomeParts } from '@/lib/homeData';
 import { homeDate, homeFigures, homeHeader } from '@/lib/homeScreen';
 import type { HomeFigureCard } from '@/lib/homeScreen';
 import { safeIcon } from '@/lib/icon';

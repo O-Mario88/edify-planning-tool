@@ -13,6 +13,7 @@ import { redirect } from 'next/navigation';
 import type { HomePriorityRow, HomeUpcoming } from '@/gen/edify/screens/v1/home_pb';
 import { Button, EmptyState, KpiStat, SectionHeader, StatusBadge, Surface, TaskList, TaskRow } from '@/components/eds';
 import { NotMovedYet } from '@/components/page/NotMovedYet';
+import { environment } from '@/lib/environment';
 import { askHome } from '@/lib/homeData';
 
 export const metadata: Metadata = { title: 'Today (redesign) — Edify' };
@@ -65,7 +66,7 @@ function NextUp({ next }: { next: HomeUpcoming | undefined }) {
 export default async function TodayNextPage() {
   const answer = await askHome();
   if (answer.kind === 'elsewhere') redirect(answer.url);
-  if (answer.kind === 'notMoved') return <NotMovedYet />;
+  if (answer.kind === 'notMoved') return <NotMovedYet href={`${environment().existingWebUrl}/home`} />;
   const { home, queue, figures, total } = answer.parts;
   const waiting = queue.priorityRows.filter((row) => !allClear(row));
   const counted = [...home.figures, ...figures].filter((f) => /^\d[\d,]*$/.test(f.value) && f.value !== '0');
