@@ -1211,3 +1211,6 @@ GRANT SELECT (school_id, deleted_at) ON impact_edtech_deployment TO edify_gatewa
 GRANT SELECT (school_id, deleted_at) ON impact_edtech_check TO edify_gateway_ro;
 -- School Evidence's Discipleship tab reads each record's figures.
 GRANT SELECT (id, devotions_per_week, learners_in_groups, learners_enrolled, staff_in_devotions_pct, spiritual_lead_in_post, bible_lessons_timetabled, return_reason, country, created_at) ON impact_discipleship_record TO edify_gateway_ro;
+-- School Evidence's EdTech tab reads each deployment and check of use.
+GRANT SELECT (id, fy, asset_type, quantity, deployed_on, funding, learners_with_access, return_reason, country, created_at) ON impact_edtech_deployment TO edify_gateway_ro;
+GRANT SELECT (id, fy, deployment_id, checked_on, units_functional, teachers_using, learners_using, return_reason, country, created_at) ON impact_edtech_check TO edify_gateway_ro;

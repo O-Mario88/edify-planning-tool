@@ -68,3 +68,10 @@ func TestSchoolEvidenceLearningResultsMatchTheExistingPage(t *testing.T) {
 func TestSchoolEvidenceDiscipleshipMatchesTheExistingPage(t *testing.T) {
 	compareSchoolEvidence(t, "EDIFY_SCHOOL_EVIDENCE_DISCIPLESHIP_GOLDEN", "gsed", "impact_discipleship_record", "mscs_story")
 }
+
+// TestSchoolEvidenceEdTechMatchesTheExistingPage compares the EdTech tab
+// under the deployments and checks
+// internal/schoolevidence/testdata/edtech_golden.py filed.
+func TestSchoolEvidenceEdTechMatchesTheExistingPage(t *testing.T) {
+	compareSchoolEvidence(t, "EDIFY_SCHOOL_EVIDENCE_EDTECH_GOLDEN", "gset", "impact_edtech_deployment", "impact_edtech_check")
+}

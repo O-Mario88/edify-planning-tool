@@ -2,7 +2,8 @@
 
 Go builds /ia/school-evidence/ (internal/schoolevidence) from these: which
 roles open it, who records evidence, each role's section strip, the tabs,
-the verification states with their tones, the assessment types, the fewest
+the verification states with their tones, the assessment types, the
+EdTech technologies and funding sources, the fewest
 learners a comparison side may have, the learning rule's words and the label
 each figure is drawn with. apps/activities/test_school_evidence_rules_export.py
 fails when the file and this application differ.
@@ -42,7 +43,11 @@ def rules() -> dict:
     from apps.core.rbac import EdifyRole
     from apps.frontend.views.ia_school_evidence_views import TABS
     from apps.impact import evidence_services as ev
-    from apps.impact.models import LearningAssessmentType
+    from apps.impact.models import (
+        EdTechAssetType,
+        EdTechFunding,
+        LearningAssessmentType,
+    )
 
     roles = {}
     for role in EdifyRole:
@@ -61,6 +66,8 @@ def rules() -> dict:
         "statuses": [[k, str(v)] for k, v in ev.STATUS_LABELS.items()],
         "status_tones": dict(ev.STATUS_TONES),
         "assessment_types": [[k, str(v)] for k, v in LearningAssessmentType.choices],
+        "asset_types": [[k, str(v)] for k, v in EdTechAssetType.choices],
+        "funding": [[k, str(v)] for k, v in EdTechFunding.choices],
         "min_learners": ev.MIN_LEARNERS,
         "learning_rule_label": ev.LEARNING_RULE_LABEL,
         "metric_labels": {

@@ -271,7 +271,8 @@ try:
             {**d, "register_page": "9"},
             {**d, "fy": str(int(fy) - 1)},
             {**d, "fy": str(int(fy) + 1)},
-        ]
+        ],
+        sort_keys=True,  # Go writes pager links with sorted keys
     )
     oracle = os.path.join(
         settings.BASE_DIR, "platform/backend/internal/webpages/testdata/web_page.py"

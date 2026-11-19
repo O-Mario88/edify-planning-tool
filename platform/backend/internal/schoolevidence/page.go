@@ -62,11 +62,13 @@ var rules = func() (r struct {
 	Statuses          [][2]string       `json:"statuses"`
 	StatusTones       map[string]string `json:"status_tones"`
 	AssessmentTypes   [][2]string       `json:"assessment_types"`
+	AssetTypes        [][2]string       `json:"asset_types"`
+	Funding           [][2]string       `json:"funding"`
 	MinLearners       int               `json:"min_learners"`
 	LearningRuleLabel string            `json:"learning_rule_label"`
 	MetricLabels      map[string]string `json:"metric_labels"`
 }) {
-	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.Roles) == 0 || len(r.Tabs) == 0 || len(r.Statuses) == 0 || r.MinLearners <= 0 {
+	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.Roles) == 0 || len(r.Tabs) == 0 || len(r.Statuses) == 0 || len(r.AssetTypes) == 0 || r.MinLearners <= 0 {
 		panic(fmt.Sprintf("schoolevidence: the embedded rules are unreadable: %v", err))
 	}
 	return r
@@ -118,7 +120,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if !known {
 		tab = learning
 	}
-	if (tab != learning && tab != discipleship) || query.Get("open") != "" {
+	if query.Get("open") != "" {
 		return nil, false, nil
 	}
 	resp, err := s.page(ctx, p, tab, query)
@@ -187,10 +189,13 @@ func (s *Service) page(ctx context.Context, p auth.Principal, tab string, query 
 		return nil, err
 	}
 	var c tabContent
-	if tab == learning {
+	switch tab {
+	case learning:
 		c, err = s.learningTab(ctx, r, query)
-	} else {
+	case discipleship:
 		c, err = s.discipleshipTab(ctx, r, query)
+	default:
+		c, err = s.edtechTab(ctx, r, query)
 	}
 	if err != nil {
 		return nil, err

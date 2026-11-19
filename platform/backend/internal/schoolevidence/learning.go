@@ -84,31 +84,15 @@ ORDER BY l.assessed_on DESC, l.created_at DESC LIMIT `+limit+` OFFSET `+offset, 
 		if x.proficient != nil {
 			parts = append(parts, strconv.Itoa(*x.proficient)+" proficient")
 		}
-		recorder := "Staff member"
-		if x.recorder != nil {
-			recorder = *x.recorder
+		v := verdict{recordedBy: x.recordedBy, status: x.status, reason: x.reason, country: x.country, recorder: x.recorder}
+		tail, err := v.cells(ctx, r, learning, x.id)
+		if err != nil {
+			return nil, err
 		}
-		status := label(rules.Statuses, x.status)
-		if x.status == "returned" && x.reason != "" {
-			status += ": " + x.reason
-		}
-		open := "Open"
-		if x.status == "pending" {
-			may, err := r.reviewer.May(ctx, x.recordedBy, x.country)
-			if err != nil {
-				return nil, err
-			}
-			if may {
-				open = "Verify"
-			}
-		}
-		cells = append(cells, []*screensv1.PageCell{
+		cells = append(cells, append([]*screensv1.PageCell{
 			cell(x.school, ""), cell(label(rules.AssessmentTypes, x.assessment), ""), cell(x.grade+" · "+x.subject, ""),
 			cell(x.assessed.Format("2 Jan 2006"), ""), cell(strconv.Itoa(x.learners), ""), cell(strings.Join(parts, " · "), ""),
-			cell(recorder, ""), cell(status, rules.StatusTones[x.status]),
-			{Actions: []*screensv1.PageAction{{Key: "button", Label: open, Primary: true, Enabled: true,
-				Href: Path + learning + "/" + x.id + "/", Drawer: true}}},
-		})
+		}, tail...))
 	}
 	return table("Learning results", []string{"School", "Assessment", "Class · subject", "Assessed", "Learners", "Result", "Recorded by", "Status"},
 		cells, len(cells) > 0, total, number, pages, "register_page", "No learning results recorded",

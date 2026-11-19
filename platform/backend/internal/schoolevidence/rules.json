@@ -13,6 +13,54 @@
       "School internal assessment"
     ]
   ],
+  "asset_types": [
+    [
+      "tablet",
+      "Tablets"
+    ],
+    [
+      "laptop",
+      "Laptops"
+    ],
+    [
+      "desktop",
+      "Desktop computers"
+    ],
+    [
+      "projector",
+      "Projectors"
+    ],
+    [
+      "digital_library",
+      "Digital library / server"
+    ],
+    [
+      "connectivity",
+      "Connectivity"
+    ],
+    [
+      "other",
+      "Other"
+    ]
+  ],
+  "funding": [
+    [
+      "project",
+      "Special project"
+    ],
+    [
+      "loan",
+      "School loan"
+    ],
+    [
+      "grant",
+      "Grant or donation"
+    ],
+    [
+      "school",
+      "School's own funds"
+    ]
+  ],
   "learning_rule_label": "Any change (no approved threshold)",
   "metric_labels": {
     "School Evidence Awaiting Verification": "School Evidence Awaiting Verification",

@@ -110,30 +110,15 @@ ORDER BY d.observed_on DESC, d.created_at DESC LIMIT `+limit+` OFFSET `+offset, 
 		if x.inGroups != nil && x.enrolled != nil && *x.enrolled != 0 {
 			inGroups = strconv.Itoa(*x.inGroups) + " of " + strconv.Itoa(*x.enrolled)
 		}
-		recorder := "Staff member"
-		if x.recorder != nil {
-			recorder = *x.recorder
+		v := verdict{recordedBy: x.recordedBy, status: x.status, reason: x.reason, country: x.country, recorder: x.recorder}
+		tail, err := v.cells(ctx, r, discipleship, x.id)
+		if err != nil {
+			return nil, err
 		}
-		status := label(rules.Statuses, x.status)
-		if x.status == "returned" && x.reason != "" {
-			status += ": " + x.reason
-		}
-		open := "Open"
-		if x.status == "pending" {
-			may, err := r.reviewer.May(ctx, x.recordedBy, x.country)
-			if err != nil {
-				return nil, err
-			}
-			if may {
-				open = "Verify"
-			}
-		}
-		cells = append(cells, []*screensv1.PageCell{
+		cells = append(cells, append([]*screensv1.PageCell{
 			cell(x.school, ""), cell(x.observed.Format("2 Jan 2006"), ""), cell(num(x.devotions, ""), ""), cell(num(x.groups, ""), ""),
-			cell(inGroups, ""), cell(yesNo(x.lead), ""), cell(recorder, ""), cell(status, ""),
-			{Actions: []*screensv1.PageAction{{Key: "button", Label: open, Primary: true, Enabled: true,
-				Href: Path + discipleship + "/" + x.id + "/", Drawer: true}}},
-		})
+			cell(inGroups, ""), cell(yesNo(x.lead), ""),
+		}, tail...))
 	}
 	return table("Discipleship records", []string{"School", "Observed", "Devotions a week", "Active groups", "Learners in groups",
 		"Spiritual lead", "Recorded by", "Status"}, cells, len(cells) > 0, total, number, pages, "register_page",

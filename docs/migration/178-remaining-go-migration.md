@@ -403,12 +403,25 @@ weighted by learners, a side under ten learners withheld, the change in
 points of score or of proficiency, Python's rounding and number writing)
 and the register of results, newest first, fifty a page, each Open or, where
 the reviewer rules allow (iaframework.Reviewer, now exported), Verify. A
-status's tone sits on a span the feed does not read. Handed on: the
-Discipleship and EdTech tabs and ?open= (a record's drawer). Golden
-(schoolevidence/testdata/learning_golden.py, `gsev` results): 28 answers of
-4 readers over seven filters, 0 differing.
+status's tone sits on a span the feed does not read. Handed on: ?open= (a
+record's drawer). Golden (schoolevidence/testdata/learning_golden.py, `gsev`
+results): 28 answers of 4 readers over seven filters, 0 differing.
 
-Left in C5: the Discipleship and EdTech tabs of `/ia/school-evidence/`.
+The Discipleship and EdTech tabs are Go's too (2026-11-19). Discipleship:
+each school's latest confirmed record this year beside its latest last year
+(the share of learners in groups, Python's half-to-even rounding, the
+change in points) with its approved spiritual change stories
+(iapages.SpiritualStoriesBySchool, shared with the stories page), then the
+register. EdTech: every confirmed deployment in scope, of any year and
+state, with its latest confirmed check (deleted checks never count) and its
+checks awaiting verification, Impact Assessment's Record check on each; the
+register of deployments filtered by technology; and the year's checks of
+use, newest first, up to fifty. The three registers share one Recorded by /
+Status / Open-or-Verify helper. The technology and funding labels are in
+the exported rules. Goldens: discipleship_golden.py (`gsed` records and
+stories) 28 answers, 0 differing; edtech_golden.py (`gset` deployments and
+checks) 32 answers, 0 differing. Both ask with sorted keys, because Django
+writes pager links in the request's order and Go sorts them.
 
 ### C7 (part) · Four HR programme registers, and the registers' header buttons (2026-11-19)
 
