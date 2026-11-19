@@ -57,6 +57,7 @@ PLANNING_LIMIT = 50
 #: Team Plans (apps.admin_ops.team_plans): read by Admin and Impact Assessment
 #: (team_plans_view's own guard), not the Admin alone.
 TEAM_PLANS_PATH = "/admin-ops/team-plans"
+REPORT_PATH = "/support"
 TEAM_PLANS_PERMISSION = "admin_team_plans"
 TEAM_PLANS_ROLES = ("Admin", "ImpactAssessment")
 
@@ -92,6 +93,19 @@ def rules() -> dict:
         "pages": pages,
         "ticket_statuses": dict(TicketStatus.choices),
         "ticket_categories": dict(TicketCategory.choices),
+        # Report a Problem (/support, report_problem_view): every role that
+        # opens it, and its categories in their order.
+        "report_roles": [
+            role.value
+            for role in EdifyRole
+            if RolePermissionService.can_view_page(
+                _role_user(role.value), "report_problem"
+            )
+            and can_open_url(_role_user(role.value), REPORT_PATH)
+        ],
+        "ticket_category_choices": [
+            [v, str(label)] for v, label in TicketCategory.choices
+        ],
         # support_queue_view's "Open tickets": every ticket but these.
         "closed_ticket_statuses": sorted(
             str(s)

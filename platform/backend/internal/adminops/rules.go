@@ -25,8 +25,12 @@ var rules = func() (r struct {
 			Page bool `json:"page"`
 		} `json:"roles"`
 	} `json:"pages"`
-	TicketStatuses           map[string]string `json:"ticket_statuses"`
-	TicketCategories         map[string]string `json:"ticket_categories"`
+	TicketStatuses   map[string]string `json:"ticket_statuses"`
+	TicketCategories map[string]string `json:"ticket_categories"`
+	// ReportRoles open Report a Problem; TicketCategoryChoices are its
+	// categories in their order.
+	ReportRoles              []string          `json:"report_roles"`
+	TicketCategoryChoices    [][2]string       `json:"ticket_category_choices"`
 	ClosedTicketStatuses     []string          `json:"closed_ticket_statuses"`
 	ResolvableTicketStatuses []string          `json:"resolvable_ticket_statuses"`
 	UntriagedTicketStatus    string            `json:"untriaged_ticket_status"`

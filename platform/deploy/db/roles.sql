@@ -1181,3 +1181,7 @@ GRANT SELECT ("window") ON hr_performance_snapshot TO edify_gateway_ro;
 -- and total cost, and the month's budget it belongs to. Not its justification.
 GRANT SELECT (description, cost_category, unit_cost, total_cost, quantity, status, monthly_budget_id)
   ON admin_budget_line TO edify_gateway_ro;
+
+-- Report a Problem (internal/adminops/report.go): whose ticket it is (the
+-- reader's own twenty) and the resolution its reporter is told.
+GRANT SELECT (reporter_id, resolution) ON admin_support_ticket TO edify_gateway_ro;

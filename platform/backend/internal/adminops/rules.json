@@ -377,6 +377,23 @@
       "title": "Scheduled activities carrying no cost line"
     }
   ],
+  "report_roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin"
+  ],
   "resolvable_ticket_statuses": [
     "fix_ready",
     "verification"
@@ -466,6 +483,68 @@
     "slow_page": "Slow Page",
     "upload_problem": "Upload Problem"
   },
+  "ticket_category_choices": [
+    [
+      "cannot_log_in",
+      "Cannot Log In"
+    ],
+    [
+      "forgot_password",
+      "Forgot Password"
+    ],
+    [
+      "account_locked",
+      "Account Locked"
+    ],
+    [
+      "cannot_access_page",
+      "Cannot Access Page"
+    ],
+    [
+      "incorrect_permission",
+      "Incorrect Permission"
+    ],
+    [
+      "missing_data",
+      "Missing School / Activity / Budget"
+    ],
+    [
+      "upload_problem",
+      "Upload Problem"
+    ],
+    [
+      "dead_button",
+      "Dead Button"
+    ],
+    [
+      "broken_link",
+      "Broken Link"
+    ],
+    [
+      "slow_page",
+      "Slow Page"
+    ],
+    [
+      "frozen_screen",
+      "Frozen Screen"
+    ],
+    [
+      "incorrect_data",
+      "Incorrect Data or Status"
+    ],
+    [
+      "notification_problem",
+      "Notification Problem"
+    ],
+    [
+      "message_problem",
+      "Message Problem"
+    ],
+    [
+      "other",
+      "Other"
+    ]
+  ],
   "ticket_statuses": {
     "cancelled": "Cancelled",
     "closed": "Closed",

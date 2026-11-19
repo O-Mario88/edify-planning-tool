@@ -444,6 +444,16 @@ exporter reads (`CONVERSATION_WINDOW_LABELS`, `CONVERSATION_HR_ROLES`).
 Left in C7: the conversation's handed-on depth (snapshots, the live engine,
 role-rule inheritance).
 
+### C9 (part) · Report a Problem (2026-11-19)
+
+`/support` is Go's (adminops/report.go) for every role that opens it: the
+ticket form (its categories in their order, Medium urgency chosen) and the
+reader's own twenty newest tickets, written as the template writes them and
+read by the feed's own panel rules (`feeddom`). The save stays with the
+existing application. The exporter writes who opens it and the categories
+in order. Golden (adminops/testdata/report_golden.py, `garp` tickets): 8
+answers of 4 readers, 0 differing.
+
 ### Found on the way (2026-11-19): stale generated artefacts on this branch
 
 Only Platform CI runs on `feature/edify-go-rn-migration`; Django's suite runs
