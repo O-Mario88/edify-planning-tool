@@ -47,7 +47,7 @@ var cdNotInPlan = []string{"cancelled", "rejected", "deferred", "not_planned"}
 var cdApprovedEnvelope = []string{"approved_by_rvp", "sent_to_accountant", "disbursed", "closed"}
 
 // cdRow is one of cd_todos' dicts.
-type cdRow struct{ title, description, category, priority, action, url string }
+type cdRow struct{ id, title, description, category, priority, action, url string }
 
 // cdAnalyticsTodos is _cd_analytics_todos for the Country Director. A year
 // with any approved milestone allocation is passed on: a lead's achievement
@@ -62,7 +62,7 @@ func cdAnalyticsTodos(ctx context.Context, s *Service, r *reader) ([]todo, error
 	}
 	out := make([]todo, 0, len(rows))
 	for _, c := range rows {
-		out = append(out, todo{Title: c.title, Description: c.description, Category: c.category, Priority: c.priority,
+		out = append(out, todo{ID: c.id, Title: c.title, Description: c.description, Category: c.category, Priority: c.priority,
 			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info", DueLabel: "—", DueTone: "neutral",
 			Actionable: true, Linked: cdProfileLabel, ActionLabel: c.action, ActionURL: c.url, Shape: cdShape(c.url, r.fy),
 			Due: &r.today})
@@ -146,7 +146,7 @@ func (s *Service) cdTodos(ctx context.Context, r *reader) ([]cdRow, error) {
 			continue
 		}
 		underperforming++
-		out = append(out, cdRow{title: "Request Recovery Plan from PL",
+		out = append(out, cdRow{id: "cd-recovery-" + o.lead.id, title: "Request Recovery Plan from PL",
 			description: o.lead.name + "'s team is " + o.risk + " — " + strconv.Itoa(o.atRisk) + " schools at risk.",
 			category:    "PL Oversight", priority: "high", action: "Review PL", url: "/staff/" + o.lead.id})
 	}
@@ -165,12 +165,12 @@ func (s *Service) cdTodos(ctx context.Context, r *reader) ([]cdRow, error) {
 		return nil, err
 	}
 	if awaiting > 0 {
-		out = append(out, cdRow{title: "Approve PL Weekly Fund Request",
+		out = append(out, cdRow{id: "cd-weekly-approve", title: "Approve PL Weekly Fund Request",
 			description: strconv.Itoa(awaiting) + " weekly fund request(s) awaiting your approval.",
 			category:    "Finance", priority: "high", action: "Open Approvals", url: "/fund-requests/weekly"})
 	}
 	if used < cdLowBudgetPct {
-		out = append(out, cdRow{title: "Review Budget Underutilization",
+		out = append(out, cdRow{id: "cd-budget-util", title: "Review Budget Underutilization",
 			description: "Country disbursement is below 50% of the requested pipeline.",
 			category:    "Finance", priority: "medium", action: "Review Budget", url: "/budget"})
 	}
@@ -557,7 +557,7 @@ func (s *Service) cdRecommended(ctx context.Context, cd cdScope, underperforming
 		if item.danger {
 			priority = "high"
 		}
-		out = append(out, cdRow{title: item.issue,
+		out = append(out, cdRow{id: "cd-rec-" + firstRunes(item.issue, 20), title: item.issue,
 			description: strconv.Itoa(item.count) + " flagged — responsible: " + item.owner + ".",
 			category:    "Recommended Action", priority: priority, action: "Review",
 			url: "/analytics/country-director/drilldown" + item.link + "&fy=" + cd.fy})

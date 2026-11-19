@@ -50,7 +50,7 @@ func TestALoanConclusionRowTurnsCriticalAfterAWeek(t *testing.T) {
 		{ymd(2026, 11, 6), "high", "waiting_me"},
 		{ymd(2026, 11, 5), "critical", "overdue"},
 	} {
-		got := learningRow("Prepare 2 loan impact conclusions", "Prepare Conclusions",
+		got := learningRow("bt-impact-conclusions-prepare", "Prepare 2 loan impact conclusions", "Prepare Conclusions",
 			[]time.Time{ymd(2026, 11, 10), tt.oldest}, today)
 		if got.Priority != tt.priority || got.StatusKey != tt.status || !got.Due.Equal(tt.oldest) || got.Linked != "2 waiting" {
 			t.Errorf("oldest %v: got %+v", tt.oldest, got)

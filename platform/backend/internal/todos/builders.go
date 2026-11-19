@@ -164,7 +164,7 @@ ORDER BY a.created_at DESC LIMIT 120`, r.fy, r.owners, rules.ActivitySettledStat
 			where = pyStr(f.cluster)
 		}
 		key, label, tone := actStatus(a, na.Action, r.today)
-		out = append(out, withDue(todo{Title: na.Text, Category: meta[0], Priority: actPriority(a, na.Action, r.today),
+		out = append(out, withDue(todo{ID: "act-" + a.ID, Title: na.Text, Category: meta[0], Priority: actPriority(a, na.Action, r.today),
 			StatusKey: key, StatusLabel: label, StatusTone: tone, Actionable: actionable,
 			Linked: where + " · " + typeLabel(a.ActivityType), ActionLabel: meta[1], ActionURL: na.URL,
 			Shape: idShape(na.URL, a.ID), Due: a.PlannedDate, Description: na.Description + " — " + where}, r.today))
@@ -258,7 +258,7 @@ ORDER BY a.created_at DESC LIMIT 10`, r.owners, r.today, rules.PartnerDelaySettl
 		if hasSchool {
 			where = pyStr(name)
 		}
-		return todo{Title: "Chase Partner Delivery", Category: "Partner", Priority: "high", StatusKey: "overdue",
+		return todo{ID: "pdelay-" + id, Title: "Chase Partner Delivery", Category: "Partner", Priority: "high", StatusKey: "overdue",
 			StatusLabel: "Overdue", StatusTone: "danger", DueLabel: "Overdue", DueTone: "danger",
 			Actionable: true, Linked: where + " · partner", ActionLabel: "Open", ActionURL: "/my-plan/" + id,
 			Shape: "/my-plan/{id}", Due: dateOf(planned)}, err
@@ -273,25 +273,25 @@ func projectSSATodos(ctx context.Context, s *Service, r *reader) ([]todo, error)
 	}
 	var out []todo
 	for _, q := range []struct {
-		where, title, status, tone string
-		args                       []any
+		key, where, title, status, tone string
+		args                            []any
 	}{
-		{`psa.assigned_by = $1 AND psa.baseline_score IS NULL`, "Collect Current FY SSA", "Current FY SSA missing", "danger", []any{r.p.UserID}},
-		{`psa.assigned_by = $1 AND psa.impact_classification = $2 AND psa.follow_up_due_on <= $3 AND psa.follow_up_ssa_id IS NULL`,
+		{"psa-baseline-", `psa.assigned_by = $1 AND psa.baseline_score IS NULL`, "Collect Current FY SSA", "Current FY SSA missing", "danger", []any{r.p.UserID}},
+		{"psa-followup-", `psa.assigned_by = $1 AND psa.impact_classification = $2 AND psa.follow_up_due_on <= $3 AND psa.follow_up_ssa_id IS NULL`,
 			"Complete Follow-Up SSA", "Follow-up due", "warning", []any{r.p.UserID, rules.ProjectNotYetMeasurable, r.today}},
 	} {
 		rows, err := s.db.Query(ctx, `
-SELECT psa.school_id, s.name, p.name
+SELECT psa.id, psa.school_id, s.name, p.name
 FROM project_school_assignment psa INNER JOIN project p ON p.id = psa.project_id INNER JOIN school s ON s.id = psa.school_id
 WHERE `+q.where+` LIMIT 20`, q.args...)
 		if err != nil {
 			return nil, err
 		}
 		got, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (todo, error) {
-			var schoolID string
+			var id, schoolID string
 			var school, project *string
-			err := row.Scan(&schoolID, &school, &project)
-			return withDue(todo{Title: q.title, Category: "Special Project", Priority: "high", StatusKey: "open", Actionable: true,
+			err := row.Scan(&id, &schoolID, &school, &project)
+			return withDue(todo{ID: q.key + id, Title: q.title, Category: "Special Project", Priority: "high", StatusKey: "open", Actionable: true,
 				StatusLabel: q.status, StatusTone: q.tone,
 				Linked: pyStr(school) + " · " + pyStr(project), ActionLabel: "Open school", ActionURL: "/schools/" + schoolID,
 				Shape: "/schools/{id}", Due: &r.today}, r.today), err
@@ -310,57 +310,57 @@ func extraWorkTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) 
 	if r.p.UserID == "" {
 		return nil, nil
 	}
-	row := func(due time.Time, status, title, label, priority, linked, word, tone string) todo {
-		return withDue(todo{Title: title, Category: "Extra Work", Priority: priority, StatusKey: status, Actionable: true,
+	row := func(id string, due time.Time, status, title, label, priority, linked, word, tone string) todo {
+		return withDue(todo{ID: "xw-" + id, Title: title, Category: "Extra Work", Priority: priority, StatusKey: status, Actionable: true,
 			StatusLabel: word, StatusTone: tone,
 			Linked: linked, ActionLabel: label, ActionURL: "/extra-work", Shape: "/extra-work", Due: dateOf(due)}, r.today)
 	}
 	var out []todo
-	read := func(sql string, args []any, each func(due time.Time, status, title, urgency string)) error {
-		rows, err := s.db.Query(ctx, `SELECT due_date, status, title, urgency FROM hr_extra_assignment WHERE `+sql, args...)
+	read := func(sql string, args []any, each func(id string, due time.Time, status, title, urgency string)) error {
+		rows, err := s.db.Query(ctx, `SELECT id, due_date, status, title, urgency FROM hr_extra_assignment WHERE `+sql, args...)
 		if err != nil {
 			return err
 		}
 		defer rows.Close()
 		for rows.Next() {
 			var due time.Time
-			var status, title, urgency string
-			if err := rows.Scan(&due, &status, &title, &urgency); err != nil {
+			var id, status, title, urgency string
+			if err := rows.Scan(&id, &due, &status, &title, &urgency); err != nil {
 				return err
 			}
-			each(due, status, title, urgency)
+			each(id, due, status, title, urgency)
 		}
 		return rows.Err()
 	}
 	err := read(`assignee_id = $1 AND status = ANY($2) ORDER BY due_date ASC LIMIT 20`, []any{r.p.UserID, rules.ExtraOpenStatuses},
-		func(due time.Time, status, title, urgency string) {
+		func(id string, due time.Time, status, title, urgency string) {
 			switch {
 			case status == "returned":
-				out = append(out, row(due, status, "Correct Returned Extra Work", "Correct", "high", title, "Returned", "danger"))
+				out = append(out, row(id, due, status, "Correct Returned Extra Work", "Correct", "high", title, "Returned", "danger"))
 			case due.Before(r.today):
-				out = append(out, row(due, status, "Resolve Overdue Extra Work", "Complete", "high", title, "Overdue", "danger"))
+				out = append(out, row(id, due, status, "Resolve Overdue Extra Work", "Complete", "high", title, "Overdue", "danger"))
 			default:
 				priority := "high"
 				if urgency == "normal" {
 					priority = "medium"
 				}
-				out = append(out, row(due, status, "Complete Extra Assignment", "Open", priority, title, extraStatusLabel(status), "neutral"))
+				out = append(out, row(id, due, status, "Complete Extra Assignment", "Open", priority, title, extraStatusLabel(status), "neutral"))
 			}
 		})
 	if err != nil {
 		return nil, err
 	}
 	err = read(`reviewer_id = $1 AND status = 'submitted' ORDER BY submitted_at ASC LIMIT 20`, []any{r.p.UserID},
-		func(due time.Time, status, title, _ string) {
-			out = append(out, row(due, status, "Review Extra Work", "Review", "high", title, "Submitted", "info"))
+		func(id string, due time.Time, status, title, _ string) {
+			out = append(out, row(id, due, status, "Review Extra Work", "Review", "high", title, "Submitted", "info"))
 		})
 	if err != nil {
 		return nil, err
 	}
 	err = read(`assigner_id = $1 AND status = ANY($2) AND due_date < $3 ORDER BY due_date ASC LIMIT 10`,
 		[]any{r.p.UserID, rules.ExtraOpenStatuses, r.today},
-		func(due time.Time, status, title, _ string) {
-			out = append(out, row(due, status, "Chase Overdue Extra Work", "Follow up", "medium", title, "Overdue", "warning"))
+		func(id string, due time.Time, status, title, _ string) {
+			out = append(out, row(id, due, status, "Chase Overdue Extra Work", "Follow up", "medium", title, "Overdue", "warning"))
 		})
 	return out, err
 }
@@ -372,7 +372,7 @@ func returnedAssignmentTodos(ctx context.Context, s *Service, r *reader) ([]todo
 		return nil, nil
 	}
 	rows, err := s.db.Query(ctx, `
-SELECT pa.school_id IS NOT NULL, s.name, pa.cluster_id IS NOT NULL, c.name, p.name, pa.partner_id, pa.returned_at
+SELECT pa.id, pa.school_id IS NOT NULL, s.name, pa.cluster_id IS NOT NULL, c.name, p.name, pa.partner_id, pa.returned_at
 FROM partner_assignment pa INNER JOIN partner p ON p.id = pa.partner_id
   LEFT OUTER JOIN school s ON s.id = pa.school_id LEFT OUTER JOIN cluster c ON c.id = pa.cluster_id
 WHERE pa.status = $1 AND pa.assigning_staff_id = ANY($2) AND pa.resolved_at IS NULL
@@ -383,9 +383,9 @@ ORDER BY pa.returned_at DESC LIMIT 10`, rules.ReturnedToStaffStatus, r.owners)
 	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (todo, error) {
 		var hasSchool, hasCluster bool
 		var school, cluster, partner *string
-		var partnerID string
+		var id, partnerID string
 		var returned *time.Time
-		err := row.Scan(&hasSchool, &school, &hasCluster, &cluster, &partner, &partnerID, &returned)
+		err := row.Scan(&id, &hasSchool, &school, &hasCluster, &cluster, &partner, &partnerID, &returned)
 		where := "an assignment"
 		switch {
 		case hasSchool:
@@ -393,7 +393,7 @@ ORDER BY pa.returned_at DESC LIMIT 10`, rules.ReturnedToStaffStatus, r.owners)
 		case hasCluster:
 			where = pyStr(cluster)
 		}
-		t := todo{Title: "Resolve Returned Partner Assignment", Category: "Partner", Priority: "high", StatusKey: "returned",
+		t := todo{ID: "pret-" + id, Title: "Resolve Returned Partner Assignment", Category: "Partner", Priority: "high", StatusKey: "returned",
 			StatusLabel: "Returned to you", StatusTone: "warning",
 			Actionable: true, Linked: where + " · " + pyStr(partner), ActionLabel: "Review",
 			ActionURL: "/partner-oversight/?partner=" + partnerID + "&status=returned",
@@ -437,7 +437,7 @@ WHERE responsible_user = $1 AND status = ANY($2) ORDER BY week_start_date DESC L
 		var id, status string
 		var week time.Time
 		err := row.Scan(&id, &status, &week)
-		t := todo{Title: "Confirm Fund Request", Category: "Finance", Priority: "high", StatusKey: "waiting_me",
+		t := todo{ID: "wfr-" + id, Title: "Confirm Fund Request", Category: "Finance", Priority: "high", StatusKey: "waiting_me",
 			StatusLabel: "Waiting on Me", StatusTone: "info", DueLabel: "Today", DueTone: "warning", Actionable: true, Linked: "Weekly Fund Request · " + week.Format("Jan") + " " + strconv.Itoa(week.Day()),
 			ActionLabel: "Open", ActionURL: "/fund-requests/weekly/" + id, Shape: "/fund-requests/weekly/{id}", Due: &r.today}
 		if contains(rules.WeeklyReturnedStatuses, status) {
@@ -450,27 +450,27 @@ WHERE responsible_user = $1 AND status = ANY($2) ORDER BY week_start_date DESC L
 		return nil, err
 	}
 	out = append(out, got...)
-	monthly := func(sql, title, priority, status, label string, args ...any) error {
+	monthly := func(key, sql, title, priority, status, label string, args ...any) error {
 		word, tone := "Waiting on Me", "info"
 		if status == "returned" {
 			word, tone = "Returned", "danger"
 		}
-		rows, err := s.db.Query(ctx, `SELECT COALESCE(period_key, 'None') FROM fund_request WHERE `+sql, args...)
+		rows, err := s.db.Query(ctx, `SELECT id, COALESCE(period_key, 'None') FROM fund_request WHERE `+sql, args...)
 		if err != nil {
 			return err
 		}
 		got, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (todo, error) {
-			var key string
-			err := row.Scan(&key)
-			return todo{Title: title, Category: "Finance", Priority: priority, StatusKey: status, Actionable: true,
+			var id, period string
+			err := row.Scan(&id, &period)
+			return todo{ID: key + id, Title: title, Category: "Finance", Priority: priority, StatusKey: status, Actionable: true,
 				StatusLabel: word, StatusTone: tone, DueLabel: "Today", DueTone: "warning",
-				Linked: "Monthly Fund Plan · " + key, ActionLabel: label, ActionURL: "/fund-requests/weekly",
+				Linked: "Monthly Fund Plan · " + period, ActionLabel: label, ActionURL: "/fund-requests/weekly",
 				Shape: "/fund-requests/weekly", Due: &r.today}, err
 		})
 		out = append(out, got...)
 		return err
 	}
-	if err := monthly(`submitted_by_user_id = $1 AND period = 'monthly' AND status = ANY($2) ORDER BY reviewed_at DESC LIMIT 8`,
+	if err := monthly("frmonth-", `submitted_by_user_id = $1 AND period = 'monthly' AND status = ANY($2) ORDER BY reviewed_at DESC LIMIT 8`,
 		"Fix Returned Fund Request", "critical", "returned", "Fix", uid, rules.MonthlyReturnedStatuses); err != nil {
 		return nil, err
 	}
@@ -483,7 +483,7 @@ WHERE responsible_user = $1 AND status = 'disbursed' AND receipt_confirmed_at IS
 		var id string
 		var week time.Time
 		err := row.Scan(&id, &week)
-		return todo{Title: "Confirm Receipt of Funds", Category: "Finance", Priority: "high", StatusKey: "waiting_me",
+		return todo{ID: "wfrreceipt-" + id, Title: "Confirm Receipt of Funds", Category: "Finance", Priority: "high", StatusKey: "waiting_me",
 			StatusLabel: "Waiting on Me", StatusTone: "info", DueLabel: "Today", DueTone: "warning",
 			Actionable: true, Linked: "Weekly Fund Request · " + week.Format("02 Jan"), ActionLabel: "Confirm",
 			ActionURL: "/fund-requests/weekly/" + id, Shape: "/fund-requests/weekly/{id}", Due: &r.today}, err
@@ -492,7 +492,7 @@ WHERE responsible_user = $1 AND status = 'disbursed' AND receipt_confirmed_at IS
 		return nil, err
 	}
 	out = append(out, got...)
-	if err := monthly(`submitted_by_user_id = $1 AND period = 'monthly' AND status = 'disbursed' AND receipt_confirmed_at IS NULL
+	if err := monthly("frreceipt-", `submitted_by_user_id = $1 AND period = 'monthly' AND status = 'disbursed' AND receipt_confirmed_at IS NULL
 ORDER BY disbursed_at DESC LIMIT 5`, "Confirm Receipt of Funds", "high", "waiting_me", "Confirm", uid); err != nil {
 		return nil, err
 	}
@@ -511,21 +511,22 @@ func schoolQualityTodos(ctx context.Context, s *Service, r *reader) ([]todo, err
 		return nil, nil
 	}
 	var out []todo
-	for _, q := range []struct{ where, title, category, priority, label, url string }{
-		{`(s.primary_contact_name IS NULL OR s.primary_contact_name = '')`, "Fix School Contact", "Data Quality", "low", "Fix", "/schools"},
-		{`s.cluster_status = 'unclustered'`, "Add School to Cluster", "Planning", "medium", "Cluster", "/clusters"},
-		{`s.cluster_status = 'clustered' AND s.current_fy_ssa_status = 'not_done'`, "Schedule SSA Visit", "SSA", "medium", "Schedule", "/planning"},
+	for _, q := range []struct{ key, where, title, category, priority, label, url string }{
+		{"contact", `(s.primary_contact_name IS NULL OR s.primary_contact_name = '')`, "Fix School Contact", "Data Quality", "low", "Fix", "/schools"},
+		{"cluster", `s.cluster_status = 'unclustered'`, "Add School to Cluster", "Planning", "medium", "Cluster", "/clusters"},
+		{"ssa", `s.cluster_status = 'clustered' AND s.current_fy_ssa_status = 'not_done'`, "Schedule SSA Visit", "SSA", "medium", "Schedule", "/planning"},
 	} {
-		rows, err := s.db.Query(ctx, `SELECT s.name FROM school s
+		rows, err := s.db.Query(ctx, `SELECT s.id, s.name FROM school s
 WHERE s.deleted_at IS NULL AND s.id = ANY($1) AND s.operational_status = ANY($2) AND `+q.where+`
 ORDER BY s.created_at DESC LIMIT 8`, ids, rules.OperatingStatuses)
 		if err != nil {
 			return nil, err
 		}
 		got, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (todo, error) {
+			var id string
 			var name *string
-			err := row.Scan(&name)
-			return todo{Title: q.title, Category: q.category, Priority: q.priority, StatusKey: "waiting_me", Actionable: true,
+			err := row.Scan(&id, &name)
+			return todo{ID: "sch-" + id + "-" + q.key, Title: q.title, Category: q.category, Priority: q.priority, StatusKey: "waiting_me", Actionable: true,
 				StatusLabel: "Waiting on Me", StatusTone: "info", DueLabel: "—", DueTone: "neutral",
 				Linked: pyStr(name), ActionLabel: q.label, ActionURL: q.url, Shape: q.url}, err
 		})
@@ -563,7 +564,7 @@ FROM daily_visit_route_batch WHERE responsible_user = $1 AND visit_date >= $2 OR
 	var out []todo
 	for _, b := range batches {
 		if b.confidence == "low" || b.confidence == "needs_cleanup" {
-			out = append(out, todo{Title: "Fix school location / coordinates", Category: "Data Quality", Priority: "medium",
+			out = append(out, todo{ID: "route-fix-location", Title: "Fix school location / coordinates", Category: "Data Quality", Priority: "medium",
 				StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info", DueLabel: "—", DueTone: "neutral",
 				Actionable: true, Linked: "Route Intelligence", ActionLabel: "Review Schools",
 				ActionURL: "/my-plan", Shape: "/my-plan", Due: &r.today})
@@ -572,7 +573,7 @@ FROM daily_visit_route_batch WHERE responsible_user = $1 AND visit_date >= $2 OR
 	}
 	for _, b := range batches {
 		if !b.feasible || b.status == "not_feasible" || b.status == "blocked" {
-			out = append(out, todo{Title: "Rework route plan — day overloaded", Category: "Planning", Priority: "high",
+			out = append(out, todo{ID: "route-infeasible-" + b.day.Format("2006-01-02"), Title: "Rework route plan — day overloaded", Category: "Planning", Priority: "high",
 				StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "warning",
 				DueLabel: b.day.Format("02 Jan"), DueTone: "warning", Actionable: true, Linked: "Route Intelligence", ActionLabel: "Open My Plan",
 				ActionURL: "/my-plan", Shape: "/my-plan", Due: dateOf(b.day)})
@@ -710,7 +711,7 @@ WHERE core_plan_id = ANY($1)`, planIDs)
 		}
 		returned, missing := corePlanGaps(slots[p.id])
 		for _, sl := range returned[:min(2, len(returned))] {
-			out = append(out, todo{Title: "Fix returned core " + sl.Kind + " — " + name, Category: "Core Schools",
+			out = append(out, todo{ID: "core-returned-" + sl.ID, Title: "Fix returned core " + sl.Kind + " — " + name, Category: "Core Schools",
 				Priority: "high", StatusKey: "returned", StatusLabel: "Returned", StatusTone: "danger", DueLabel: "—", DueTone: "neutral",
 				Actionable: true, Linked: name, ActionLabel: "Open Core Schools",
 				ActionURL: "/core-schools", Shape: "/core-schools", Due: &r.today})
@@ -720,7 +721,7 @@ WHERE core_plan_id = ANY($1)`, planIDs)
 			if m.kind != "assessment" {
 				tag = m.label[:1] + strconv.Itoa(m.slot.Sequence) + " Core " + m.label
 			}
-			out = append(out, todo{Title: "Schedule " + tag + " — " + name, Category: "Core Schools", Priority: "medium",
+			out = append(out, todo{ID: "core-slot-" + m.slot.ID, Title: "Schedule " + tag + " — " + name, Category: "Core Schools", Priority: "medium",
 				StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info", DueLabel: "—", DueTone: "neutral",
 				Actionable: true, Linked: name, ActionLabel: "Plan Now", ActionURL: "/core-schools",
 				Shape: "/core-schools", Due: &r.today})
@@ -797,7 +798,7 @@ func loanVerificationTodos(ctx context.Context, s *Service, r *reader) ([]todo, 
 		return nil, nil
 	}
 	rows, err := s.db.Query(ctx, `
-SELECT r.due_date, s.name, s.school_id
+SELECT r.id, r.due_date, s.name, s.school_id
 FROM bt_loan_verification_requirement r INNER JOIN bt_mfi_loan l ON l.id = r.loan_id INNER JOIN school s ON s.id = l.school_id
 WHERE r.loan_id IN (SELECT id FROM bt_mfi_loan WHERE deleted_at IS NULL AND school_id = ANY($1))
   AND r.activity_id IS NULL AND r.status = ANY($2)
@@ -806,10 +807,11 @@ ORDER BY r.due_date ASC LIMIT 30`, r.scope.SchoolIDs, rules.LoanFieldVerificatio
 		return nil, err
 	}
 	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (todo, error) {
+		var id string
 		var due time.Time
 		var name, code *string
-		err := row.Scan(&due, &name, &code)
-		t := todo{Title: "Complete Loan-Use Verification", Category: "Business Transformation", Priority: "high",
+		err := row.Scan(&id, &due, &name, &code)
+		t := todo{ID: "bt-field-verification-" + id, Title: "Complete Loan-Use Verification", Category: "Business Transformation", Priority: "high",
 			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info",
 			DueLabel: due.Format("Jan ") + strconv.Itoa(due.Day()), DueTone: "warning", Actionable: true, Linked: pyStr(name), ActionLabel: "Plan Visit",
 			ActionURL: "/schools/" + pyStr(code) + "#school-bt-title", Shape: "/schools/{code}#school-bt-title", Due: dateOf(due)}
@@ -855,7 +857,7 @@ WHERE deleted_at IS NULL AND verification_status = 'returned' AND collected_by_u
 	if n == 0 {
 		return nil, nil
 	}
-	t := todo{Title: "Correct " + plural(n, "SSA record") + " returned to you", Category: "Baseline & Field Data",
+	t := todo{ID: "ssa-returned-mine", Title: "Correct " + plural(n, "SSA record") + " returned to you", Category: "Baseline & Field Data",
 		Priority: "high", StatusKey: "waiting_me", Actionable: true, Linked: plural(n, "record"),
 		ActionLabel: "Open Returned SSA", ActionURL: "/ssa/verification/?status=returned&mine=1",
 		Shape: "/ssa/verification/?status=returned&mine=1", Due: &r.today,
@@ -907,7 +909,7 @@ ORDER BY a.actual_delivery_date ASC, a.planned_date ASC, a.id ASC LIMIT 10`, r.o
 		if delivered == nil {
 			delivered = planned
 		}
-		t := todo{Title: "Record OneTest results for " + pyStr(name), Category: "My Work", Priority: "normal",
+		t := todo{ID: "onetest-results-" + id, Title: "Record OneTest results for " + pyStr(name), Category: "My Work", Priority: "normal",
 			StatusKey: "waiting_me", Actionable: true, Linked: "1 waiting", ActionLabel: "Record Results",
 			ActionURL: "/my-plan/" + id + "?learning_results=1", Shape: "/my-plan/{id}?learning_results=1", Due: &r.today,
 			StatusLabel: "Waiting on Me", StatusTone: "warning", DueLabel: "—", DueTone: "neutral"}
@@ -971,7 +973,7 @@ WHERE country = $1 AND planning_open_at <= $2 ORDER BY fy ASC`, rules.PlanningCo
 		if err != nil || planned {
 			return nil, err
 		}
-		t := todo{Title: "Plan FY" + p.fy + " Activities", Category: "Planning", Priority: "medium",
+		t := todo{ID: "fy-plan-" + p.fy, Title: "Plan FY" + p.fy + " Activities", Category: "Planning", Priority: "medium",
 			Actionable: true, Linked: "FY" + p.fy, ActionLabel: "Open Planning", ActionURL: "/planning", Shape: "/planning",
 			Due: &r.today}
 		if starts != nil {
@@ -992,7 +994,7 @@ func rateCardTodos(ctx context.Context, s *Service, r *reader, fy string, starts
 		return nil, err
 	}
 	link := "/cost-settings?fy=" + fy
-	t := todo{Title: "Prepare the FY" + fy + " Rate Card", Category: "Finance", Priority: "high", Actionable: true,
+	t := todo{ID: "fy-rate-card-" + fy, Title: "Prepare the FY" + fy + " Rate Card", Category: "Finance", Priority: "high", Actionable: true,
 		Linked: "FY" + fy, ActionLabel: "Open Cost Settings", ActionURL: link, Shape: "/cost-settings?fy={fy}", Due: &r.today,
 		Description: "FY" + fy + " is open for planning, but no FY" + fy + " rate card is published, so FY" + fy +
 			" activities cannot be costed."}

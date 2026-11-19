@@ -179,7 +179,7 @@ func regionalLeadTodos(ctx context.Context, s *Service, r *reader) ([]todo, erro
 		if due == nil {
 			due = &r.today
 		}
-		out[i] = todo{Title: c.Title, Description: c.Description, Category: "CCE leadership", Priority: c.Priority,
+		out[i] = todo{ID: c.ID, Title: c.Title, Description: c.Description, Category: "CCE leadership", Priority: c.Priority,
 			StatusKey: c.StatusKey, StatusLabel: c.StatusLabel, StatusTone: c.StatusTone, DueLabel: c.DueLabel,
 			DueTone: c.DueTone, Actionable: true, Linked: c.Linked, ActionLabel: c.ActionLabel, ActionURL: c.URL,
 			Shape: c.URL, Due: due}
@@ -366,7 +366,7 @@ WHERE kind = $1 AND cceo_staff_id = ANY($2) AND held_on >= $3 AND held_on < $4`,
 		}
 		q := url.Values{"open": {"new"}, "cceo": {m.StaffID}, "kind": {"one_to_one"}}
 		due := monthEnd
-		t := todo{Title: "Hold " + start.Format("January") + " one-to-one with " + name,
+		t := todo{ID: "coaching-one-to-one-" + start.Format("2006-01") + "-" + m.StaffID, Title: "Hold " + start.Format("January") + " one-to-one with " + name,
 			Category: rules.Lead.CoachingCategory, Priority: priority, Actionable: true, Linked: name,
 			ActionLabel: "Log one-to-one", ActionURL: "/team/coaching?" + pyURLEncode(q, "open", "cceo", "kind"),
 			Shape: "/team/coaching?open=new&cceo={id}&kind=one_to_one", Due: &due}

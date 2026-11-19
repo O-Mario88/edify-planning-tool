@@ -15,6 +15,9 @@ import (
 // the priority pill are hidden on a phone, and the feed reads what a phone
 // shows).
 type todo struct {
+	// ID is the row's id as the existing builder writes it ("act-<id>"):
+	// Today's snoozes and decision buttons are matched on it.
+	ID                        string
 	Title, Category, Priority string
 	StatusKey                 string
 	Actionable                bool

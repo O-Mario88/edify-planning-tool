@@ -97,7 +97,7 @@ ORDER BY pa.created_at ASC LIMIT $3`, r.partners, rules.PartnerIntakeStatuses, i
 		if age > intakeLateDays {
 			priority = "high"
 		}
-		return todo{Title: title, Description: fmt.Sprintf("%s — assigned %d day(s) ago and awaiting your decision", where, age),
+		return todo{ID: "pa-" + id, Title: title, Description: fmt.Sprintf("%s — assigned %d day(s) ago and awaiting your decision", where, age),
 			Category: "Assignments", Priority: priority, StatusKey: "waiting_me", StatusLabel: "Waiting on Me",
 			StatusTone: "info", DueLabel: "—", DueTone: "neutral", Actionable: true, Linked: where,
 			ActionLabel: "Decide", ActionURL: "/partner/assignments/" + id, Shape: "/partner/assignments/{id}"}, nil
@@ -121,7 +121,7 @@ func mfiTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 	}
 	status := a.Add(rules.SalesforceReturnedStatus)
 	limit := a.Add(mfiReturnedLimit)
-	rows, err := s.db.Query(ctx, `SELECT s.name, COALESCE(l.external_loan_reference, '')
+	rows, err := s.db.Query(ctx, `SELECT l.id, s.name, COALESCE(l.external_loan_reference, '')
 FROM bt_mfi_loan l JOIN school s ON s.id = l.school_id
 WHERE `+where+` AND l.salesforce_status = `+status+`
 ORDER BY l.salesforce_returned_at ASC NULLS LAST LIMIT `+limit, []any(*a)...)
@@ -129,14 +129,14 @@ ORDER BY l.salesforce_returned_at ASC NULLS LAST LIMIT `+limit, []any(*a)...)
 		return nil, fmt.Errorf("todos: reading the returned loan records: %w", err)
 	}
 	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (todo, error) {
+		var id, reference string
 		var school *string
-		var reference string
-		if err := row.Scan(&school, &reference); err != nil {
+		if err := row.Scan(&id, &school, &reference); err != nil {
 			return todo{}, err
 		}
 		// Description (the school and the return reason) is read only where
 		// Linked is empty, which it never is here.
-		return todo{Title: "Correct returned loan record", Category: "Business Transformation", Priority: "high",
+		return todo{ID: "bt-returned-" + id, Title: "Correct returned loan record", Category: "Business Transformation", Priority: "high",
 			StatusKey: "returned", StatusLabel: "Returned", StatusTone: "danger", DueLabel: "Today", DueTone: "warning",
 			Actionable: true, Linked: pyStr(school) + " · " + reference, ActionLabel: "Correct",
 			ActionURL: "/loans#loan-record-title", Shape: "/loans#loan-record-title", Due: &r.today}, nil

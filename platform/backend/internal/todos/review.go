@@ -110,20 +110,20 @@ func reviewRows(r *reader, people []reviewee, reviews []review, window string) (
 			if annualOverdue {
 				due = v.due
 			}
-			out = append(out, reviewRow(r, "Review "+name+"'s priorities", p.staffID, name, due, annualOverdue))
+			out = append(out, reviewRow(r, "review-agree-"+v.id, "Review "+name+"'s priorities", p.staffID, name, due, annualOverdue))
 		}
 		for _, late := range overdue {
 			if hasAnnual && late.id == v.id && waiting {
 				continue
 			}
-			out = append(out, reviewRow(r, "Complete "+name+"'s overdue performance review", p.staffID, name, late.due, true))
+			out = append(out, reviewRow(r, "review-overdue-"+late.id, "Complete "+name+"'s overdue performance review", p.staffID, name, late.due, true))
 		}
 	}
 	return out, nil
 }
 
-func reviewRow(r *reader, title, staffID, name string, due *time.Time, overdue bool) todo {
-	t := todo{Title: title, Category: rules.Lead.ReviewCategory, Priority: "medium", StatusKey: "waiting_me",
+func reviewRow(r *reader, key, title, staffID, name string, due *time.Time, overdue bool) todo {
+	t := todo{ID: key, Title: title, Category: rules.Lead.ReviewCategory, Priority: "medium", StatusKey: "waiting_me",
 		Actionable: true, Linked: name, ActionLabel: "Open conversation",
 		ActionURL: "/performance-conversation?staff=" + staffID, Shape: "/performance-conversation?staff={id}", Due: due}
 	t.StatusLabel, t.StatusTone, t.DueLabel, t.DueTone = "Waiting on Me", "warning", "—", "neutral"

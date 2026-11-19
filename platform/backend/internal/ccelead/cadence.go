@@ -16,8 +16,8 @@ type held struct {
 
 // rhythmRow is one row cadence.evaluate writes.
 type rhythmRow struct {
-	label, expectation, subject, state, note string
-	lastHeld, dueBy                          *time.Time
+	kind, label, expectation, subject, state, note string
+	lastHeld, dueBy                                *time.Time
 }
 
 // leadInReach is a Programme Lead in the Regional Lead's reach.
@@ -73,7 +73,7 @@ func evaluate(engagements []held, today time.Time, leads []leadInReach, countrie
 	for _, r := range c.Rules {
 		entries := byKind[r.Kind]
 		row := func(subject, state string, last, due *time.Time, note string) rhythmRow {
-			return rhythmRow{label: r.Label, expectation: r.Expectation, subject: subject, state: state, lastHeld: last, dueBy: due, note: note}
+			return rhythmRow{kind: r.Kind, label: r.Label, expectation: r.Expectation, subject: subject, state: state, lastHeld: last, dueBy: due, note: note}
 		}
 		rolling := func(subject string, dates []time.Time) rhythmRow {
 			last := latest(dates)

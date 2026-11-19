@@ -164,7 +164,7 @@ func place(hasSchool bool, school string, hasCluster bool, cluster string) strin
 // iaVerificationRow is one _ia_todos row: late a day after submission.
 func iaVerificationRow(r *reader, id, kind, delivery string, submitted *time.Time, where string) todo {
 	partner := delivery == "partner"
-	t := todo{Title: "Verify Activity", Category: rules.IA.Category, Priority: "high", StatusKey: "waiting_me",
+	t := todo{ID: "ia-" + id, Title: "Verify Activity", Category: rules.IA.Category, Priority: "high", StatusKey: "waiting_me",
 		Actionable: true, Linked: where + " · " + typeLabel(kind), ActionLabel: "Verify",
 		ActionURL: "/ia/verification/" + id + "/", Shape: "/ia/verification/{id}/"}
 	if partner {
@@ -269,7 +269,7 @@ WHERE ci.status = 'active' AND (ci.requires_school OR ci.cluster_delivery_allowe
 	if unmapped == 1 {
 		word = "activity"
 	}
-	return []todo{{Title: "Set measurement rules for " + strconv.Itoa(unmapped) + " " + word,
+	return []todo{{ID: "ia-framework-unmapped", Title: "Set measurement rules for " + strconv.Itoa(unmapped) + " " + word,
 		Category: rules.IA.FrameworkCategory, Priority: "medium", StatusKey: "waiting_me", Actionable: true,
 		StatusLabel: "Waiting on Me", StatusTone: "warning", DueLabel: "—", DueTone: "neutral",
 		Linked: strconv.Itoa(unmapped) + " waiting", ActionLabel: "Open Measurement Rules",
@@ -320,7 +320,7 @@ WHERE `+reach+` AND s.operational_status = ANY(`+ops+`) AND s.school_type = ANY(
 	if missing == 0 {
 		return nil, nil
 	}
-	return []todo{{Title: "Review Schools with No Cluster Training or Meeting Planned", Category: "School Progress",
+	return []todo{{ID: "coverage-missing-training-" + fy, Title: "Review Schools with No Cluster Training or Meeting Planned", Category: "School Progress",
 		Priority: "high", StatusKey: "waiting_me", Actionable: true, StatusLabel: "Waiting on Me", StatusTone: "warning", DueLabel: "—", DueTone: "neutral", Linked: plural(missing, "school"),
 		ActionLabel: "Open Schools & Coverage", ActionURL: rules.IA.CoverageURL, Shape: rules.IA.CoverageURL,
 		Due: &r.today}}, nil
@@ -421,7 +421,7 @@ func collectionRows(r *reader, groups []collectionGroup, names map[string]string
 		}
 		// urlencode keeps the dict's order: view, then owner.
 		u := "/ia/dashboard/?view=collection&owner=" + url.QueryEscape(o.owner)
-		rows = append(rows, collectionRow(r, plural(o.n, "school")+" without this year's SSA · "+name,
+		rows = append(rows, collectionRow(r, "ssa-collect-owner-"+o.owner, plural(o.n, "school")+" without this year's SSA · "+name,
 			u, "/ia/dashboard/?view=collection&owner={id}", plural(o.n, "school"), "medium"))
 	}
 	rest := 0
@@ -431,7 +431,7 @@ func collectionRows(r *reader, groups []collectionGroup, names map[string]string
 		}
 	}
 	if rest > 0 {
-		rows = append(rows, collectionRow(r, strconv.Itoa(rest)+" more "+schoolWord(rest)+" without this year's SSA",
+		rows = append(rows, collectionRow(r, "ssa-collect-owner-rest", strconv.Itoa(rest)+" more "+schoolWord(rest)+" without this year's SSA",
 			"/ia/dashboard/?view=collection", "/ia/dashboard/?view=collection", plural(rest, "school"), "low"))
 	}
 	sort.SliceStable(unownedOrder, func(i, j int) bool { return unowned[unownedOrder[i]] > unowned[unownedOrder[j]] })
@@ -446,7 +446,11 @@ func collectionRows(r *reader, groups []collectionGroup, names map[string]string
 			u = "/ia/dashboard/?view=collection&district=" + url.QueryEscape(key.id)
 			shape = "/ia/dashboard/?view=collection&district={id}"
 		}
-		rows = append(rows, collectionRow(r, strconv.Itoa(n)+" unowned "+schoolWord(n)+" without this year's SSA · "+key.name,
+		district := key.id
+		if district == "" {
+			district = "none"
+		}
+		rows = append(rows, collectionRow(r, "ssa-collect-unowned-"+district, strconv.Itoa(n)+" unowned "+schoolWord(n)+" without this year's SSA · "+key.name,
 			u, shape, plural(n, "school"), "low"))
 	}
 	return rows
@@ -460,8 +464,8 @@ func schoolWord(n int) string {
 }
 
 // collectionRow is collection_todos._row with no due day.
-func collectionRow(r *reader, title, link, shape, linked, priority string) todo {
-	return todo{Title: title, Category: rules.IA.CollectionCategory, Priority: priority, StatusKey: "waiting_me",
+func collectionRow(r *reader, key, title, link, shape, linked, priority string) todo {
+	return todo{ID: key, Title: title, Category: rules.IA.CollectionCategory, Priority: priority, StatusKey: "waiting_me",
 		StatusLabel: "Waiting on Me", StatusTone: "warning", DueLabel: "—", DueTone: "neutral", Actionable: true, Linked: linked, ActionLabel: "Open Collection", ActionURL: link, Shape: shape, Due: &r.today}
 }
 
@@ -571,7 +575,7 @@ WHERE r.status = $1 AND b.uploaded_by = $2 AND b.created_at >= $3`,
 	if batches == 1 {
 		word = "batch"
 	}
-	t := todo{Title: "Re-file " + plural(n, "blocked SSA row") + " from your uploads", Category: rules.IA.CollectionCategory,
+	t := todo{ID: "ssa-import-blocked-mine", Title: "Re-file " + plural(n, "blocked SSA row") + " from your uploads", Category: rules.IA.CollectionCategory,
 		Priority: "medium", StatusKey: "waiting_me", Actionable: true, Linked: strconv.Itoa(batches) + " " + word,
 		ActionLabel: "Open Upload History", ActionURL: "/ssa/upload/history/?has_blocked=1",
 		Shape: "/ssa/upload/history/?has_blocked=1", Due: &r.today, StatusLabel: "Waiting on Me", StatusTone: "warning", DueLabel: "—", DueTone: "neutral"}

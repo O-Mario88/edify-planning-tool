@@ -71,7 +71,7 @@ func projectSchoolPlanningTodos(ctx context.Context, s *Service, r *reader) ([]t
 	}
 	pc := rules.PCBT
 	rows, err := s.db.Query(ctx, `
-SELECT psa.project_id, psa.school_id, s.name
+SELECT psa.id, psa.project_id, psa.school_id, s.name
 FROM project_school_assignment psa INNER JOIN school s ON s.id = psa.school_id
 WHERE s.deleted_at IS NULL AND s.operational_status = ANY($3)
   AND psa.project_id IN (SELECT p.id FROM project p WHERE p.deleted_at IS NULL AND p.status = ANY($2)
@@ -82,11 +82,11 @@ ORDER BY psa.created_at DESC LIMIT $4`, r.p.StaffProfileID, pc.OpenProjectStatus
 	if err != nil {
 		return nil, err
 	}
-	type enrolment struct{ project, school, name string }
+	type enrolment struct{ id, project, school, name string }
 	enrolled, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (enrolment, error) {
 		var e enrolment
 		var name *string
-		err := row.Scan(&e.project, &e.school, &name)
+		err := row.Scan(&e.id, &e.project, &e.school, &name)
 		e.name = pyStr(name)
 		return e, err
 	})
@@ -121,7 +121,7 @@ WHERE project_id = ANY($1) AND school_id = ANY($2) AND deleted_at IS NULL
 		if planned[[2]string{e.project, e.school}] {
 			continue
 		}
-		out = append(out, todo{Title: "Plan Activities for Newly Added Project School", Category: "Projects",
+		out = append(out, todo{ID: "project-school-plan-" + e.id, Title: "Plan Activities for Newly Added Project School", Category: "Projects",
 			Priority: "medium", StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "warning",
 			DueLabel: "—", DueTone: "neutral", Actionable: true, Linked: e.name, ActionLabel: "Plan project work",
 			ActionURL: "/projects/planning?project=" + e.project, Shape: "/projects/planning?project={id}", Due: &r.today})
@@ -235,7 +235,7 @@ ORDER BY g.name ASC, d.name ASC LIMIT $3`, pc.BTEligibleSchoolStatuses, pc.BTDis
 	for _, d := range gaps {
 		schools += d.schools
 	}
-	return []todo{{Title: "Review Geographic Financing Gap", Category: btCategory, Priority: "medium",
+	return []todo{{ID: "bt-geography-gap", Title: "Review Geographic Financing Gap", Category: btCategory, Priority: "medium",
 		StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info", DueLabel: "This month", DueTone: "neutral",
 		Actionable: true, Linked: thousands(schools) + " eligible schools",
 		ActionLabel: "Review coverage", ActionURL: "/business-transformation", Shape: "/business-transformation",
@@ -297,7 +297,7 @@ func salesforceRow(id, mfi, purpose string, submitted, today time.Time) todo {
 	if today.After(due) {
 		status, label, tone, dueLabel = "overdue", "Overdue", "danger", "Overdue"
 	}
-	return todo{Title: "Confirm loan in Salesforce", Category: btCategory, Priority: priority, StatusKey: status,
+	return todo{ID: "bt-salesforce-" + id, Title: "Confirm loan in Salesforce", Category: btCategory, Priority: priority, StatusKey: status,
 		StatusLabel: label, StatusTone: tone, DueLabel: dueLabel, DueTone: tone, Actionable: true, Linked: mfi + " · " + purpose + " · " + strconv.Itoa(age) + " days old", ActionLabel: "Complete",
 		ActionURL: "/loans?open=" + id + "#loan-register-title", Shape: "/loans?open={id}#loan-register-title", Due: &due}
 }
@@ -306,7 +306,7 @@ func salesforceRow(id, mfi, purpose string, submitted, today time.Time) todo {
 // rows: requirements with no visit that need scheduling or are overdue.
 func btVerificationTodos(ctx context.Context, s *Service, r *reader, schools []string) ([]todo, error) {
 	rows, err := s.db.Query(ctx, `
-SELECT q.due_date, s.name, s.school_id, m.name
+SELECT q.id, q.due_date, s.name, s.school_id, m.name
 FROM bt_loan_verification_requirement q INNER JOIN bt_mfi_loan l ON l.id = q.loan_id
   INNER JOIN school s ON s.id = l.school_id INNER JOIN bt_mfi_organization m ON m.id = l.mfi_id
 WHERE q.loan_id IN (`+btLoanScope+`) AND q.activity_id IS NULL AND q.status = ANY($2)
@@ -315,12 +315,13 @@ ORDER BY q.due_date ASC LIMIT $3`, schools, rules.LoanFieldVerificationStates, b
 		return nil, err
 	}
 	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (todo, error) {
+		var id string
 		var due time.Time
 		var name, code *string
 		var mfi string
-		err := row.Scan(&due, &name, &code, &mfi)
+		err := row.Scan(&id, &due, &name, &code, &mfi)
 		d := dateOf(due)
-		t := todo{Title: "Schedule Loan-Use Verification", Category: btCategory, Priority: "high", StatusKey: "waiting_me",
+		t := todo{ID: "bt-verification-" + id, Title: "Schedule Loan-Use Verification", Category: btCategory, Priority: "high", StatusKey: "waiting_me",
 			StatusLabel: "Waiting on Me", StatusTone: "info", DueLabel: due.Format("Jan ") + strconv.Itoa(due.Day()), DueTone: "info",
 			Actionable: true, Linked: pyStr(name) + " · " + mfi, ActionLabel: "Plan Visit",
 			ActionURL: "/schools/" + pyStr(code) + "#school-bt-title", Shape: "/schools/{code}#school-bt-title", Due: d}
@@ -388,25 +389,25 @@ ORDER BY due_date ASC LIMIT $3`, args...)
 	}
 	var out []todo
 	if len(prepare) > 0 {
-		out = append(out, learningRow("Prepare "+plural(len(prepare), "loan impact conclusion"),
+		out = append(out, learningRow("bt-impact-conclusions-prepare", "Prepare "+plural(len(prepare), "loan impact conclusion"),
 			"Prepare Conclusions", prepare, r.today))
 	}
 	if len(returned) > 0 {
-		out = append(out, learningRow("Correct "+plural(len(returned), "loan impact conclusion")+" returned to you",
+		out = append(out, learningRow("bt-impact-conclusions-returned", "Correct "+plural(len(returned), "loan impact conclusion")+" returned to you",
 			"Correct Conclusions", returned, r.today))
 	}
 	return out, nil
 }
 
 // learningRow is learning_todos._row for one of the officer's queues.
-func learningRow(title, action string, days []time.Time, today time.Time) todo {
+func learningRow(key, title, action string, days []time.Time, today time.Time) todo {
 	oldest := days[0]
 	for _, d := range days[1:] {
 		if d.Before(oldest) {
 			oldest = d
 		}
 	}
-	t := todo{Title: title, Category: btCategory, Priority: "high", StatusKey: "waiting_me", Actionable: true,
+	t := todo{ID: key, Title: title, Category: btCategory, Priority: "high", StatusKey: "waiting_me", Actionable: true,
 		Linked: strconv.Itoa(len(days)) + " waiting", ActionLabel: action,
 		ActionURL: "/business-transformation/impact-reports", Shape: "/business-transformation/impact-reports", Due: &oldest,
 		StatusLabel: "Waiting on Me", StatusTone: "warning", DueLabel: "Oldest " + dayMonth(oldest), DueTone: "neutral"}

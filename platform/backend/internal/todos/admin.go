@@ -100,23 +100,24 @@ func countryBudgetTodos(ctx context.Context, s *Service, r *reader) ([]todo, err
 		out = append(out, rows...)
 	}
 	for _, desk := range []struct {
-		roles                   []string
-		status, title, category string
-		actionLabel, actionURL  string
+		roles                        []string
+		key, status, title, category string
+		actionLabel, actionURL       string
 	}{
-		{cb.RVPRoles, cb.SubmittedStatus, "Review General Budget", "Budget Approval", "Review", "/country-budget"},
-		{cb.AccountantRoles, cb.ApprovedStatus, "Prepare Monthly Disbursement Queue", "Finance", "Prepare", "/disbursements"},
+		{cb.RVPRoles, "cmb-rvp-", cb.SubmittedStatus, "Review General Budget", "Budget Approval", "Review", "/country-budget"},
+		{cb.AccountantRoles, "cmb-acct-", cb.ApprovedStatus, "Prepare Monthly Disbursement Queue", "Finance", "Prepare", "/disbursements"},
 	} {
 		if !contains(desk.roles, r.role) {
 			continue
 		}
-		keys, err := s.strings(ctx, `SELECT month_key FROM monthly_work_plan_budget WHERE country_id = $1 AND status = $2
+		keys, err := s.keyedRows(ctx, `SELECT id, month_key FROM monthly_work_plan_budget WHERE country_id = $1 AND status = $2
 ORDER BY month_key DESC LIMIT 5`, budgetCountry(r), desk.status)
 		if err != nil {
 			return nil, err
 		}
-		for _, key := range keys {
-			out = append(out, todo{Title: desk.title, Category: desk.category, Priority: "high", StatusKey: "waiting_me",
+		for _, k := range keys {
+			key := k.value
+			out = append(out, todo{ID: desk.key + k.id, Title: desk.title, Category: desk.category, Priority: "high", StatusKey: "waiting_me",
 				StatusLabel: "Waiting on Me", StatusTone: "info", DueLabel: "—", DueTone: "neutral", Actionable: true, Linked: "General Budget · " + key, ActionLabel: desk.actionLabel,
 				ActionURL: desk.actionURL, Shape: desk.actionURL})
 		}
@@ -131,54 +132,65 @@ func (s *Service) cdBudgetRows(ctx context.Context, r *reader) ([]todo, error) {
 	// The month is date.today()'s; .first() of an unordered queryset is the
 	// lowest id.
 	month := fmt.Sprintf("%d-%02d", r.today.Year(), int(r.today.Month()))
-	current, err := s.strings(ctx, `SELECT month_key FROM monthly_work_plan_budget
+	current, err := s.keyedRows(ctx, `SELECT id, month_key FROM monthly_work_plan_budget
 WHERE country_id = $1 AND month_key = $2 AND status = ANY($3) ORDER BY id ASC LIMIT 1`, budgetCountry(r), month, cb.ReviewStatuses)
 	if err != nil {
 		return nil, err
 	}
-	for _, key := range current {
-		out = append(out, todo{Title: "Review " + key + " General Budget", Category: "Budget Approval", Priority: "medium",
+	for _, k := range current {
+		key := k.value
+		out = append(out, todo{ID: "cmb-cd-" + k.id, Title: "Review " + key + " General Budget", Category: "Budget Approval", Priority: "medium",
 			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info", DueLabel: "—", DueTone: "neutral",
 			Actionable: true, Linked: "General Budget · " + key, ActionLabel: "Review",
 			ActionURL: "/country-budget", Shape: "/country-budget"})
 	}
-	returned, err := s.strings(ctx, `SELECT month_key FROM monthly_work_plan_budget WHERE country_id = $1 AND status = $2
+	returned, err := s.keyedRows(ctx, `SELECT id, month_key FROM monthly_work_plan_budget WHERE country_id = $1 AND status = $2
 ORDER BY month_key DESC LIMIT 5`, budgetCountry(r), cb.ReturnedStatus)
 	if err != nil {
 		return nil, err
 	}
-	for _, key := range returned {
-		out = append(out, todo{Title: "Fix Returned General Budget", Category: "Budget Approval", Priority: "critical",
+	for _, k := range returned {
+		key := k.value
+		out = append(out, todo{ID: "cmb-cd-" + k.id, Title: "Fix Returned General Budget", Category: "Budget Approval", Priority: "critical",
 			StatusKey: "returned", StatusLabel: "Returned", StatusTone: "danger", DueLabel: "Today", DueTone: "warning",
 			Actionable: true, Linked: "General Budget · " + key, ActionLabel: "Fix",
 			ActionURL: "/country-budget", Shape: "/country-budget", Due: &r.today})
 	}
-	fys, err := s.strings(ctx, `SELECT fy FROM country_annual_budget WHERE country_id = $1 AND status = $2
+	fys, err := s.keyedRows(ctx, `SELECT id, fy FROM country_annual_budget WHERE country_id = $1 AND status = $2
 ORDER BY fy DESC LIMIT 3`, budgetCountry(r), cb.ReturnedStatus)
 	if err != nil {
 		return nil, err
 	}
-	for _, fy := range fys {
-		out = append(out, todo{Title: "Fix Returned FY" + fy + " Work Plan", Category: "Budget Approval", Priority: "critical",
+	for _, k := range fys {
+		fy := k.value
+		out = append(out, todo{ID: "cab-cd-" + k.id, Title: "Fix Returned FY" + fy + " Work Plan", Category: "Budget Approval", Priority: "critical",
 			StatusKey: "returned", StatusLabel: "Returned", StatusTone: "danger", DueLabel: "Today", DueTone: "warning",
 			Actionable: true, Linked: "FY Work Plan · " + fy, ActionLabel: "Fix",
 			ActionURL: "/work-plan?view=fy", Shape: "/work-plan?view=fy", Due: &r.today})
 	}
-	rows, err := s.db.Query(ctx, `SELECT period_key FROM fund_request WHERE status = $1 ORDER BY created_at DESC LIMIT 10`,
+	rows, err := s.db.Query(ctx, `SELECT id, period_key FROM fund_request WHERE status = $1 ORDER BY created_at DESC LIMIT 10`,
 		cb.TeamRequestStatus)
 	if err != nil {
 		return nil, err
 	}
-	periods, err := pgx.CollectRows(rows, pgx.RowTo[*string])
+	type request struct {
+		id     string
+		period *string
+	}
+	requests, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (request, error) {
+		var q request
+		return q, row.Scan(&q.id, &q.period)
+	})
 	if err != nil {
 		return nil, err
 	}
-	for _, period := range periods {
+	for _, q := range requests {
+		period := q.period
 		due := ""
 		if period != nil {
 			due = *period
 		}
-		out = append(out, todo{Title: "Approve Team Monthly Request", Category: "Budget Approval", Priority: "high",
+		out = append(out, todo{ID: "fr-cd-" + q.id, Title: "Approve Team Monthly Request", Category: "Budget Approval", Priority: "high",
 			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info", DueLabel: due, DueTone: "neutral",
 			Actionable: true, Linked: "Team request · " + pyStr(period), ActionLabel: "Review",
 			ActionURL: "/budget", Shape: "/budget", Due: &r.today})
@@ -198,7 +210,7 @@ func costCatalogueTodos(ctx context.Context, s *Service, r *reader) ([]todo, err
 	if n == 0 {
 		return nil, nil
 	}
-	return []todo{{Title: "Set Missing Cost Catalogue Rates", Category: "Finance", Priority: "high", StatusKey: "blocked",
+	return []todo{{ID: "cost-catalogue-missing-rates", Title: "Set Missing Cost Catalogue Rates", Category: "Finance", Priority: "high", StatusKey: "blocked",
 		StatusLabel: "Blocking Funding", StatusTone: "danger", DueLabel: "Today", DueTone: "warning", Actionable: true, Linked: "Cost Catalogue", ActionLabel: "Set Rates", ActionURL: "/cost-settings",
 		Shape: "/cost-settings", Due: &r.today}}, nil
 }
@@ -225,7 +237,7 @@ ORDER BY created_at ASC LIMIT 4`, pending)
 			return nil, err
 		}
 	}
-	return []todo{{Title: "Configure Partner Users", Category: "Partners", Priority: "high", StatusKey: "waiting_me",
+	return []todo{{ID: "partner-user-setup", Title: "Configure Partner Users", Category: "Partners", Priority: "high", StatusKey: "waiting_me",
 		StatusLabel: "Waiting on Me", StatusTone: "warning", DueLabel: "—", DueTone: "neutral", Actionable: true, Linked: plural(total, "organisation"), ActionLabel: "Set up logins",
 		ActionURL: "/admin-panel/users#partner-directory-title", Shape: "/admin-panel/users#partner-directory-title",
 		Due: &r.today}}, nil
@@ -242,7 +254,7 @@ func loanVerificationsToSchedule(ctx context.Context, s *Service, r *reader) ([]
 		return nil, errPassOn
 	}
 	rows, err := s.db.Query(ctx, `
-SELECT r.due_date, s.name, s.school_id, m.name
+SELECT r.id, r.due_date, s.name, s.school_id, m.name
 FROM bt_loan_verification_requirement r INNER JOIN bt_mfi_loan l ON l.id = r.loan_id
   INNER JOIN school s ON s.id = l.school_id INNER JOIN bt_mfi_organization m ON m.id = l.mfi_id
 WHERE r.loan_id IN (SELECT id FROM bt_mfi_loan WHERE deleted_at IS NULL
@@ -253,10 +265,11 @@ ORDER BY r.due_date ASC LIMIT 30`, rules.LoanFieldVerificationStates)
 		return nil, err
 	}
 	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (todo, error) {
+		var id string
 		var due time.Time
 		var name, code, mfi *string
-		err := row.Scan(&due, &name, &code, &mfi)
-		t := todo{Title: "Schedule Loan-Use Verification", Category: "Business Transformation", Priority: "high",
+		err := row.Scan(&id, &due, &name, &code, &mfi)
+		t := todo{ID: "bt-verification-" + id, Title: "Schedule Loan-Use Verification", Category: "Business Transformation", Priority: "high",
 			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info",
 			DueLabel: due.Format("Jan ") + strconv.Itoa(due.Day()), DueTone: "info",
 			Actionable: true, Linked: pyStr(name) + " · " + pyStr(mfi), ActionLabel: "Plan Visit",
@@ -266,6 +279,21 @@ ORDER BY r.due_date ASC LIMIT 30`, rules.LoanFieldVerificationStates)
 			t.DueLabel, t.DueTone = "Overdue", "danger"
 		}
 		return t, err
+	})
+}
+
+// keyed is a row's id beside one text column.
+type keyed struct{ id, value string }
+
+// keyedRows reads an id column and one text column.
+func (s *Service) keyedRows(ctx context.Context, sql string, args ...any) ([]keyed, error) {
+	rows, err := s.db.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, err
+	}
+	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (keyed, error) {
+		var k keyed
+		return k, row.Scan(&k.id, &k.value)
 	})
 }
 

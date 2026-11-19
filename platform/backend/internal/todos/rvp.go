@@ -34,47 +34,47 @@ func rvpTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 	if r.role != rvpRole {
 		return nil, nil
 	}
-	approval := func(title, description, linked, url string) todo {
-		return todo{Title: title, Description: description, Category: "Approvals", Priority: "high",
+	approval := func(id, title, description, linked, url string) todo {
+		return todo{ID: id, Title: title, Description: description, Category: "Approvals", Priority: "high",
 			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "warning", DueLabel: "—", DueTone: "neutral",
 			Actionable: true, Linked: linked, ActionLabel: "Review", ActionURL: url, Shape: url, Due: &r.today}
 	}
-	rows, err := s.db.Query(ctx, `SELECT month_key, total_amount, activity_count FROM monthly_work_plan_budget
+	rows, err := s.db.Query(ctx, `SELECT id, month_key, total_amount, activity_count FROM monthly_work_plan_budget
 WHERE fy = $1 AND status = $2 ORDER BY month_key ASC`, r.fy, rvpPending)
 	if err != nil {
 		return nil, err
 	}
 	type budget struct {
-		month      string
+		id, month  string
 		total      int64
 		activities int
 	}
 	budgets, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (budget, error) {
 		var b budget
-		return b, row.Scan(&b.month, &b.total, &b.activities)
+		return b, row.Scan(&b.id, &b.month, &b.total, &b.activities)
 	})
 	if err != nil {
 		return nil, err
 	}
 	var out []todo
 	for _, b := range budgets {
-		out = append(out, approval("Review General Budget "+b.month, "UGX "+thousands(int(b.total))+" across "+
+		out = append(out, approval("rvp-mwpb-"+b.id, "Review General Budget "+b.month, "UGX "+thousands(int(b.total))+" across "+
 			strconv.Itoa(b.activities)+" plan-backed activities awaits your approval.", "General Budget · "+b.month, "/country-budget/"))
 	}
 	// An unordered queryset in the existing builder: the order rows were
 	// filed in.
-	rows, err = s.db.Query(ctx, `SELECT fy, total_amount FROM country_annual_budget
+	rows, err = s.db.Query(ctx, `SELECT id, fy, total_amount FROM country_annual_budget
 WHERE fy = $1 AND status = $2 ORDER BY created_at ASC, id ASC`, r.fy, rvpPending)
 	if err != nil {
 		return nil, err
 	}
 	annual, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (todo, error) {
-		var fy string
+		var id, fy string
 		var total int64
-		if err := row.Scan(&fy, &total); err != nil {
+		if err := row.Scan(&id, &fy, &total); err != nil {
 			return todo{}, err
 		}
-		return approval("Review Country Annual Budget FY "+fy, "UGX "+thousands(int(total))+
+		return approval("rvp-annual-"+id, "Review Country Annual Budget FY "+fy, "UGX "+thousands(int(total))+
 			" annual baseline awaiting approval — approval locks the baseline.", "Annual Budget · FY "+fy, "/dashboard"), nil
 	})
 	if err != nil {
@@ -91,19 +91,19 @@ func strategyNoteTodos(ctx context.Context, s *Service, r *reader) ([]todo, erro
 	}
 	// An unordered queryset in the existing builder: the order notes were
 	// written in.
-	rows, err := s.db.Query(ctx, `SELECT priority_label, scope, instruction, deadline FROM rvp_strategy_note
+	rows, err := s.db.Query(ctx, `SELECT id, priority_label, scope, instruction, deadline FROM rvp_strategy_note
 WHERE status = $1 AND (responsible_cd_id = $2 OR responsible_cd_id IS NULL)
 ORDER BY created_at ASC, id ASC LIMIT $3`, strategyOpen, r.p.UserID, strategyNoteLimit)
 	if err != nil {
 		return nil, err
 	}
 	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (todo, error) {
-		var label, scope, instruction string
+		var id, label, scope, instruction string
 		var deadline *time.Time
-		if err := row.Scan(&label, &scope, &instruction, &deadline); err != nil {
+		if err := row.Scan(&id, &label, &scope, &instruction, &deadline); err != nil {
 			return todo{}, err
 		}
-		t := todo{Title: "Act on RVP guidance — " + label, Description: firstRunes(instruction, strategyInstructionLength),
+		t := todo{ID: "strategy-note-" + id, Title: "Act on RVP guidance — " + label, Description: firstRunes(instruction, strategyInstructionLength),
 			Category: "Strategy", Priority: "high", StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info",
 			DueLabel: "—", DueTone: "neutral", Actionable: true, Linked: scope, ActionLabel: "Open",
 			ActionURL: "/dashboard", Shape: "/dashboard", Due: &r.today}
