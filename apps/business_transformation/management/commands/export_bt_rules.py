@@ -32,6 +32,7 @@ EXPORT_PATH = Path("platform/backend/internal/btportfolio/rules.json")
 
 #: Each page Go answers, with the page permission its view requires.
 PAGES = {
+    "/business-transformation": "business_transformation",
     "/business-transformation/overview": "business_transformation",
     "/business-transformation/business-accounting-finance": (
         "business_transformation_finance"

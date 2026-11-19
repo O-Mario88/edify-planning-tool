@@ -462,6 +462,15 @@ acknowledgement). A reader without the kind's create permission is
 redirected, which Go hands on; every save stays with the existing
 application. 10 answers of 5 readers, 0 differing.
 
+### C8 · The Business Transformation workspace (2026-11-19)
+
+`/business-transformation` is Go's (btpages): the existing application
+routes it and `/business-transformation/overview` to one view
+(`workspace_page`), so Go answers both with the overview's builder under
+each path's own door (the exporter now lists the workspace's). A golden over
+both paths, eight readers and three filters (the seed's portfolio): 48
+answers, 0 differing, now in the suite, which had no BT compare before.
+
 ### Found on the way (2026-11-19): stale generated artefacts on this branch
 
 Only Platform CI runs on `feature/edify-go-rn-migration`; Django's suite runs

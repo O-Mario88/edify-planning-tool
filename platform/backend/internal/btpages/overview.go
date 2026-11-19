@@ -30,6 +30,11 @@ import (
 // OverviewPath is the BT workspace.
 const OverviewPath = "/business-transformation/overview"
 
+// WorkspacePath is the Business Transformation workspace
+// (frontend_views.workspace_page), the same page as the overview under its
+// own path.
+const WorkspacePath = "/business-transformation"
+
 // casesShown is workspace_context's cases[:50].
 const casesShown = 50
 
@@ -47,8 +52,8 @@ func NewService(db schooldirectory.Querier, now func() time.Time) *Service {
 // Build answers the BT pages.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
 	switch path {
-	case OverviewPath:
-		return s.overview(ctx, p, query)
+	case OverviewPath, WorkspacePath:
+		return s.overview(ctx, p, path, query)
 	case FinancePath, GovernmentPath:
 		return s.portfolio(ctx, p, path, query)
 	case LoansPath:
@@ -137,8 +142,8 @@ func scorecard(m btportfolio.Metrics) *screensv1.PageBlock {
 	})
 }
 
-func (s *Service) overview(ctx context.Context, p auth.Principal, query url.Values) (*screensv1.GetPageResponse, bool, error) {
-	if !btportfolio.Opens(p.ActiveRole, OverviewPath) {
+func (s *Service) overview(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if !btportfolio.Opens(p.ActiveRole, path) {
 		return nil, true, pagegate.ErrNotAvailable
 	}
 	now := s.now()
@@ -167,7 +172,7 @@ func (s *Service) overview(ctx context.Context, p auth.Principal, query url.Valu
 		blocks = append(blocks, queue...)
 	}
 	blocks = append(blocks, panel("", "", text("Loading the scoped loan portfolio…")))
-	return &screensv1.GetPageResponse{Header: header, Blocks: blocks, WebPath: OverviewPath}, true, nil
+	return &screensv1.GetPageResponse{Header: header, Blocks: blocks, WebPath: path}, true, nil
 }
 
 // overviewFilters is the filter bar the feed reads: the region and lending

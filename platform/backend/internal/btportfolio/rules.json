@@ -423,6 +423,7 @@
   "roles": {
     "Accountant": {
       "pages": [
+        "/business-transformation",
         "/business-transformation/impact-reports",
         "/business-transformation/overview"
       ],
@@ -433,6 +434,7 @@
     },
     "Admin": {
       "pages": [
+        "/business-transformation",
         "/business-transformation/impact-reports",
         "/business-transformation/overview"
       ],
@@ -440,6 +442,7 @@
     },
     "BusinessTransformationOfficer": {
       "pages": [
+        "/business-transformation",
         "/business-transformation/business-accounting-finance",
         "/business-transformation/government-requirements",
         "/business-transformation/impact-reports",
@@ -460,6 +463,7 @@
     },
     "CCEO": {
       "pages": [
+        "/business-transformation",
         "/business-transformation/impact-reports",
         "/business-transformation/overview",
         "/loans"
@@ -474,6 +478,7 @@
     },
     "CountryDirector": {
       "pages": [
+        "/business-transformation",
         "/business-transformation/impact-reports",
         "/business-transformation/overview",
         "/loans"
@@ -497,6 +502,7 @@
     },
     "HumanResources": {
       "pages": [
+        "/business-transformation",
         "/business-transformation/impact-reports",
         "/business-transformation/overview"
       ],
@@ -504,6 +510,7 @@
     },
     "ImpactAssessment": {
       "pages": [
+        "/business-transformation",
         "/business-transformation/impact-reports",
         "/business-transformation/overview",
         "/loans"
@@ -554,6 +561,7 @@
     },
     "PartnerAdmin": {
       "pages": [
+        "/business-transformation",
         "/business-transformation/impact-reports",
         "/business-transformation/overview"
       ],
@@ -561,6 +569,7 @@
     },
     "PartnerFieldOfficer": {
       "pages": [
+        "/business-transformation",
         "/business-transformation/impact-reports",
         "/business-transformation/overview"
       ],
@@ -574,6 +583,7 @@
     },
     "ProjectCoordinator": {
       "pages": [
+        "/business-transformation",
         "/business-transformation/impact-reports",
         "/business-transformation/overview"
       ],
@@ -587,6 +597,7 @@
     },
     "RegionalVicePresident": {
       "pages": [
+        "/business-transformation",
         "/business-transformation/impact-reports",
         "/business-transformation/overview",
         "/loans"
