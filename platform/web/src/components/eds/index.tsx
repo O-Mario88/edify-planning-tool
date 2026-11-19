@@ -276,7 +276,7 @@ export function DataTable({
           </li>
         ))}
       </ul>
-      <div className="hidden overflow-x-auto rounded-ds-lg border border-ds-border bg-ds-surface shadow-ds-raised md:block">
+      <div className="overflow-x-auto rounded-ds-lg border border-ds-border bg-ds-surface shadow-ds-raised max-md:hidden">
         <table className="w-full border-collapse text-left">
           <caption className="sr-only">{caption}</caption>
           <thead className="bg-ds-surface-sunken">
