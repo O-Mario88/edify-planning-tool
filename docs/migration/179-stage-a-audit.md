@@ -140,7 +140,9 @@ before any page is rebuilt (177).
    design system's DataTable (180), rows below 768 px; the live web keeps its
    tables until each page is rebuilt.
 2. **The greeting band on Home.** Proposed: drop it on phones (the role and
-   date move to the top bar), so the first screen holds work.
+   date move to the top bar), so the first screen holds work. **Decided 2026-11-19
+   (owner: "Drop it on phones")**: phone Home (the Expo app and the web
+   app below 64rem) opens on a compact date and role line, then the work.
 3. **Where leadership lands.** Proposed: the Country Director, Impact
    Assessment, the RVP and the Regional Lead land on a role home of their
    own, with Country Planning Oversight one tap away, rather than on its

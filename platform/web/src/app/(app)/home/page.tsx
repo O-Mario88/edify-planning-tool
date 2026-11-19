@@ -157,8 +157,8 @@ function Empty({ title, copy, cta }: { title: string; copy: string; cta?: boolea
 
 /*
  * Home, as the existing Home draws it (templates/pages/home/index.html and
- * partials/home/*), from the gateway's HomeScreenService answers: the
- * greeting, Today's overview, the priority actions, Quick access and the
+ * partials/home/*) less the phone's greeting band, from the gateway's
+ * HomeScreenService answers: the greeting, Today's overview, the priority actions, Quick access and the
  * reader's upcoming activities. A reader who does not use Home is sent where
  * they start.
  */
@@ -172,22 +172,12 @@ export default async function HomePage() {
   const rows = queue.priorityRows;
   return (
     <div className="edify-home" data-mobile-family="home" data-page="/home">
-      <header className="edify-home__hero edify-inverse-surface">
-        <div className="edify-home__wordmark">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="edify-home__wordmark-logo" src="/static/images/logo.png" alt="Edify" width={72} height={30} />
-          <span className="edify-home__wordmark-rule" aria-hidden="true" />
-          <span className="edify-home__wordmark-product">
-            Planning &amp;
-            <br />
-            Monitoring
-          </span>
-        </div>
-        <h1 className="edify-page-title edify-home__greeting">
-          <span className="edify-home__greeting-words">{header.title}</span>
-        </h1>
-        <p className="edify-home__subtitle">Here’s what needs you today</p>
-        {home.roleTitle ? <p className="edify-home__role">{home.roleTitle}</p> : null}
+      {/* A phone's Home opens on the work (owner, 2026-11-19: drop the
+          greeting band on phones): the role and the greeting on two quiet
+          lines; from 64rem the page header below takes their place. */}
+      <header className="lg:hidden" style={{ padding: '0.75rem var(--home-gutter) 0.25rem' }}>
+        <p className="text-ds-caption font-semibold text-ds-text-subtle">{header.eyebrow}</p>
+        <h1 className="mt-0.5 text-ds-title font-bold text-ds-text">{header.title}</h1>
       </header>
       <header className="edify-page-header edify-home__desk-head mobile-home-hide">
         <div className="edify-page-header__lead">

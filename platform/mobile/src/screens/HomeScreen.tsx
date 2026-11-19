@@ -1,11 +1,11 @@
 /**
  * Home: the web app's phone Home (templates/pages/home/index.html), drawn
- * natively from the same view-model. Sizes and colours are that page's own
+ * natively from the same view-model, without the greeting band (owner,
+ * 2026-11-19). Sizes and colours are that page's own
  * (static/css/pages/home.css).
  */
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 
 import { ApiError } from '../api/connect';
 import { describe, useSession } from '../auth/SessionContext';
@@ -16,12 +16,9 @@ import type {
   HomeUpcoming,
 } from '../gen/edify/screens/v1/home_pb';
 import { fonts, radius, toneColors, useTheme } from '../theme';
-import { EdifyLogo } from '../ui/EdifyLogo';
 import { routeShortcuts } from './route/routeData';
 import { SvgIcon } from '../ui/SvgIcon';
 
-const HERO_OVERLAP = 24;
-const HERO_STOPS_LIGHT = [0, 0.56, 1] as const;
 const MORNING_ENDS = 12;
 const AFTERNOON_ENDS = 17;
 
@@ -48,7 +45,7 @@ interface QueueState {
 export function HomeScreen({ onOpen }: HomeScreenProps) {
   const { api, signOut, state } = useSession();
   const role = state.status === 'signedIn' ? state.session.activeRole : '';
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const [home, setHome] = useState<GetHomeResponse | null>(null);
   const [figures, setFigures] = useState<readonly HomeFigure[]>([]);
   const [queue, setQueue] = useState<QueueState | null>(null);
@@ -116,27 +113,17 @@ export function HomeScreen({ onOpen }: HomeScreenProps) {
 
   return (
     <ScrollView contentContainerStyle={styles.page}>
-      <LinearGradient
-        colors={colors.heroGradient}
-        locations={isDark ? undefined : HERO_STOPS_LIGHT}
-        style={styles.hero}
-      >
-        <View style={styles.wordmark}>
-          <EdifyLogo height={30} color="white" />
-          <View style={[styles.wordmarkRule, { backgroundColor: colors.heroRule }]} />
-          <Text style={styles.wordmarkProduct}>Planning &{'\n'}Monitoring</Text>
-        </View>
-        <Text style={styles.greeting} accessibilityRole="header">
+      {/* The work first (owner, 2026-11-19: drop the greeting band on
+          phones): the role and the greeting on two quiet lines. */}
+      <View style={styles.head}>
+        <Text style={[styles.headRole, { color: colors.textSubtle }]}>
+          {home?.roleTitle ? `Home · ${home.roleTitle}` : 'Home'}
+        </Text>
+        <Text style={[styles.headGreeting, { color: colors.text }]} accessibilityRole="header">
           {greetingNow()}
           {home?.firstName ? `, ${home.firstName}` : ''}
         </Text>
-        <Text style={styles.subtitle}>Here’s what needs you today</Text>
-        {home?.roleTitle ? (
-          <View style={styles.role}>
-            <Text style={styles.roleText}>{home.roleTitle}</Text>
-          </View>
-        ) : null}
-      </LinearGradient>
+      </View>
 
       {error ? (
         <View style={cardStyle}>
@@ -443,33 +430,9 @@ function Skeleton() {
 
 const styles = StyleSheet.create({
   page: { paddingBottom: 20, gap: 8 },
-  hero: {
-    alignItems: 'center',
-    paddingTop: 20,
-    paddingHorizontal: 16,
-    paddingBottom: 40,
-    marginBottom: -HERO_OVERLAP,
-  },
-  wordmark: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  wordmarkRule: { width: 1, height: 28 },
-  wordmarkProduct: {
-    fontFamily: fonts.bold,
-    fontSize: 12,
-    lineHeight: 15,
-    color: 'rgba(215, 230, 239, 0.88)',
-  },
-  greeting: { fontFamily: fonts.bold, fontSize: 20, lineHeight: 23, color: '#ffffff', marginTop: 18, textAlign: 'center' },
-  subtitle: { fontFamily: fonts.bold, fontSize: 13, lineHeight: 19.5, color: '#ffffff', marginTop: 8 },
-  role: {
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.18)',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: radius.pill,
-    paddingVertical: 3,
-    paddingHorizontal: 10,
-  },
-  roleText: { fontFamily: fonts.bold, fontSize: 13, lineHeight: 19.5, color: '#ffffff' },
+  head: { paddingTop: 14, paddingHorizontal: 16, paddingBottom: 2 },
+  headRole: { fontFamily: fonts.semibold, fontSize: 12, lineHeight: 16 },
+  headGreeting: { fontFamily: fonts.bold, fontSize: 20, lineHeight: 28, marginTop: 2 },
   card: { marginHorizontal: 12, padding: 14, borderWidth: 1, borderRadius: radius.lg },
   cardHead: {
     flexDirection: 'row',
