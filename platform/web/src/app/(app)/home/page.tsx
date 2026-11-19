@@ -1,46 +1,17 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound, redirect } from 'next/navigation';
+import { redirect } from 'next/navigation';
 
-import { IdentityService } from '@/gen/edify/identity/v1/identity_pb';
-import { HomeScreenService } from '@/gen/edify/screens/v1/home_pb';
-import type { GetHomeQueueResponse, GetHomeResponse, HomeFigure, HomePriorityRow, HomeUpcoming } from '@/gen/edify/screens/v1/home_pb';
+import type { HomePriorityRow, HomeUpcoming } from '@/gen/edify/screens/v1/home_pb';
 import { NotMovedYet } from '@/components/page/NotMovedYet';
-import { asReader } from '@/lib/auth';
 import { environment } from '@/lib/environment';
-import { gatewayClient, isNotFound, isUnavailable } from '@/lib/gateway';
+import { askHome } from '@/lib/homeData';
+import type { HomeParts } from '@/lib/homeData';
 import { homeDate, homeFigures, homeHeader } from '@/lib/homeScreen';
 import type { HomeFigureCard } from '@/lib/homeScreen';
 import { safeIcon } from '@/lib/icon';
-import { withRouteShortcut } from '@/lib/routePlanner';
 
 export const metadata: Metadata = { title: 'Home — Edify' };
-
-type HomeParts = { home: GetHomeResponse; queue: GetHomeQueueResponse; figures: HomeFigure[]; total: number | undefined };
-type HomeAnswer = { kind: 'home'; parts: HomeParts } | { kind: 'elsewhere'; url: string } | { kind: 'notMoved' };
-
-/** Each part of Home; where the reader starts instead; or not moved yet. */
-async function askHome(): Promise<HomeAnswer> {
-  return asReader(async (token): Promise<HomeAnswer> => {
-    const client = gatewayClient(HomeScreenService, token);
-    try {
-      const [answer, session] = await Promise.all([client.getHome({}), gatewayClient(IdentityService, token).getSession({})]);
-      // Quick access opens Smart Route in My Plan's place for a role that plans routes.
-      const home = { ...answer, shortcuts: withRouteShortcut(answer.shortcuts, session.session?.activeRole ?? '') };
-      if (home.redirectUrl) return { kind: 'elsewhere', url: home.redirectUrl };
-      const queue = await client.getHomeQueue({});
-      if (queue.todoFiguresLater) {
-        const later = await client.getHomeTodoFigures({});
-        return { kind: 'home', parts: { home, queue, figures: later.queueFigures, total: later.priorityTotal } };
-      }
-      return { kind: 'home', parts: { home, queue, figures: queue.queueFigures, total: queue.priorityTotal } };
-    } catch (error) {
-      if (isNotFound(error)) notFound();
-      if (isUnavailable(error)) return { kind: 'notMoved' };
-      throw error;
-    }
-  });
-}
 
 /* Home's small icon set (templates/partials/home/icon.html). */
 const GLYPHS = {
