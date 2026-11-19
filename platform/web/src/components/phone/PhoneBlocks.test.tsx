@@ -264,9 +264,11 @@ describe('the phone rules', () => {
     expect(rest.map((chip) => chip.value)).toEqual(['visits', 'trainings']);
   });
 
-  it('keeps the first part and the open one on a folded switch', () => {
+  it('keeps the first part and the open one on a folded switch, then the open one alone', () => {
     expect(foldSegments(4, 0)).toEqual({ shown: [0, 1], rest: [2, 3] });
     expect(foldSegments(6, 4)).toEqual({ shown: [0, 4], rest: [1, 2, 3, 5] });
+    expect(foldSegments(4, 0, 2)).toEqual({ shown: [0], rest: [1, 2, 3] });
+    expect(foldSegments(4, 2, 2)).toEqual({ shown: [2], rest: [0, 1, 3] });
   });
 
   it('sets tiles two a row on a phone and in even rows of at most five wider', () => {
