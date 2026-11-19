@@ -1,5 +1,40 @@
 {
+  "missing_lines": {
+    "companion_gone_statuses": [
+      "cancelled",
+      "rejected",
+      "deferred"
+    ],
+    "exempt_statuses": [
+      "not_planned",
+      "cancelled",
+      "deferred",
+      "rejected",
+      "awaiting_owner_approval"
+    ],
+    "online_mode": "online",
+    "online_training_types": [
+      "cluster_training",
+      "cluster_training_ssa_collection",
+      "core_training",
+      "in_school_training",
+      "school_improvement_training",
+      "training"
+    ],
+    "repriceable_pair_statuses": [
+      "planned",
+      "scheduled",
+      "rescheduled",
+      "assigned_to_partner",
+      "partner_scheduled",
+      "in_progress",
+      "completion_started"
+    ]
+  },
   "pages": {
+    "/admin-panel": [
+      "Admin"
+    ],
     "/admin-panel/school-upload-history": [
       "Admin",
       "ImpactAssessment"

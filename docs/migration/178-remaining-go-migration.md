@@ -313,7 +313,15 @@ type, row breakdown and state; a state with an error under it reads as one
 line. Golden (adminpanel/testdata/upload_history_golden.py): 8 answers, 0
 differing. Marking a batch failed stays the existing page's.
 
-Left in C6: `/admin-panel`, `/admin-panel/audit-log`,
+`/admin-panel` (the Admin Dashboard) is Go's too (adminpanel/hub.go): the
+user directory's figures, the links, the actions centre and the live alerts,
+the missing cost lines counted as system_health.missing_cost_lines_count
+counts them (its exempt states are now
+`system_health.services.MISSING_LINE_EXEMPT_STATUSES`, exported with the pair
+and online-training rules). Golden (adminpanel/testdata/hub_golden.py, both
+alerts raised) 3 readers and the clean state 4, 0 differing.
+
+Left in C6: `/admin-panel/audit-log`,
 `/admin-panel/notifications-mgmt`, `/admin-panel/page-access-matrix`,
 `/admin-panel/region-district-setup`, `/settings/activity-catalogue/`.
 Left in C5: `/ia/school-evidence/` and `/priorities/ssa-mapping`.

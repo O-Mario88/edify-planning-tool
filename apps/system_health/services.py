@@ -427,6 +427,18 @@ def _fy() -> str:
     return get_operational_fy()
 
 
+#: Work that carries no cost lines by design: not planned, called off, or a
+#: visit request awaiting its school owner (Go's internal/adminpanel reads
+#: the same list from rules.json).
+MISSING_LINE_EXEMPT_STATUSES = (
+    "not_planned",
+    "cancelled",
+    "deferred",
+    "rejected",
+    "awaiting_owner_approval",
+)
+
+
 def missing_cost_lines_count() -> int:
     """Cost-bearing scheduled activities carrying no budget/cost line.
 
@@ -450,15 +462,9 @@ def missing_cost_lines_count() -> int:
     active = Activity.objects.filter(deleted_at__isnull=True)
     # A visit request awaiting its school owner is priced when the owner
     # approves it (apps.planning.visit_requests._price), so it has no lines yet.
-    scheduled = active.exclude(
-        status__in=[
-            "not_planned",
-            "cancelled",
-            "deferred",
-            "rejected",
-            "awaiting_owner_approval",
-        ]
-    ).exclude(UNCOSTED_PAIR_TRAINING | DELIVERED_PAIR_TRAINING | ONLINE_TRAINING)
+    scheduled = active.exclude(status__in=MISSING_LINE_EXEMPT_STATUSES).exclude(
+        UNCOSTED_PAIR_TRAINING | DELIVERED_PAIR_TRAINING | ONLINE_TRAINING
+    )
     return (
         scheduled.annotate(cost_line_count=Count("schedule_cost_lines"))
         .filter(cost_line_count=0)

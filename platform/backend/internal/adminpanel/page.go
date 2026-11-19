@@ -2,7 +2,8 @@
 // reads them: Workflow & Automation Rules (/admin-panel/workflow-rules:
 // extended_views.admin_workflow_rules_view, pages/admin/workflow_rules.html),
 // the reference list of the rules the system enforces in code; and School
-// Upload History (/admin-panel/school-upload-history, upload_history.go).
+// Upload History (/admin-panel/school-upload-history, upload_history.go);
+// and the Admin Dashboard (/admin-panel, hub.go).
 //
 // The doors and the listed rules are exported to rules.json by `manage.py
 // export_admin_panel_rules`; apps/frontend/test_admin_panel_rules_export.py
@@ -30,6 +31,15 @@ var rulesJSON []byte
 var rules = func() (r struct {
 	Pages         map[string][]string `json:"pages"`
 	WorkflowRules [][2]string         `json:"workflow_rules"`
+	// MissingLines is what the dashboard's missing cost lines count leaves
+	// out (hub.go).
+	MissingLines struct {
+		ExemptStatuses          []string `json:"exempt_statuses"`
+		CompanionGoneStatuses   []string `json:"companion_gone_statuses"`
+		RepriceablePairStatuses []string `json:"repriceable_pair_statuses"`
+		OnlineTrainingTypes     []string `json:"online_training_types"`
+		OnlineMode              string   `json:"online_mode"`
+	} `json:"missing_lines"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {
 		panic(fmt.Sprintf("adminpanel: reading rules.json: %v", err))
@@ -63,8 +73,11 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if !slices.Contains(roles, p.ActiveRole) {
 		return nil, true, pagegate.ErrNotAvailable
 	}
-	if path == UploadHistoryPath {
+	switch path {
+	case UploadHistoryPath:
 		return s.uploadHistory(ctx, p)
+	case HubPath:
+		return s.hub(ctx)
 	}
 	return workflowRules(), true, nil
 }

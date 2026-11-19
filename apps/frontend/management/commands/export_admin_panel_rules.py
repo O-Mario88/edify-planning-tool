@@ -5,8 +5,9 @@ admin_workflow_rules_view, admin_school_upload_history_view and the others
 listed in PAGES) as the existing
 feed reads them, from what this command writes to
 platform/backend/internal/adminpanel/rules.json: for each page, which roles
-may open it (its page permission and the feed's door), and the workflow
-rules the reference page lists. A change to any of them must be exported
+may open it (its page permission and the feed's door); the workflow rules
+the reference page lists; and what the Admin Dashboard's missing cost lines
+count leaves out (system_health.services.missing_cost_lines_count). A change to any of them must be exported
 again; apps/frontend/test_admin_panel_rules_export.py fails until it is.
 
     python manage.py export_admin_panel_rules
@@ -29,6 +30,7 @@ EXPORT_PATH = Path("platform/backend/internal/adminpanel/rules.json")
 PAGES = {
     "/admin-panel/workflow-rules": "workflow_rules",
     "/admin-panel/school-upload-history": "upload_history",
+    "/admin-panel": "admin_dashboard",
 }
 
 
@@ -50,6 +52,27 @@ def rules() -> dict:
             for path, permission in PAGES.items()
         },
         "workflow_rules": [[r["key"], r["label"]] for r in WORKFLOW_RULES],
+        "missing_lines": missing_lines(),
+    }
+
+
+def missing_lines() -> dict:
+    from apps.activities.online_training import ONLINE, ONLINE_TRAINING_TYPES
+    from apps.activities.pair_costing import (
+        COMPANION_GONE_STATUSES,
+        REPRICEABLE_PAIR_STATUSES,
+    )
+    from apps.system_health.services import MISSING_LINE_EXEMPT_STATUSES
+
+    return {
+        "exempt_statuses": list(MISSING_LINE_EXEMPT_STATUSES),
+        # UNCOSTED_PAIR_TRAINING and DELIVERED_PAIR_TRAINING: an in-school
+        # training paired with a live visit, or a delivered pair.
+        "companion_gone_statuses": list(COMPANION_GONE_STATUSES),
+        "repriceable_pair_statuses": list(REPRICEABLE_PAIR_STATUSES),
+        # ONLINE_TRAINING.
+        "online_training_types": sorted(ONLINE_TRAINING_TYPES),
+        "online_mode": ONLINE,
     }
 
 
