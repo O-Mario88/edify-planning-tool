@@ -128,6 +128,13 @@
     "secondary_overnight_dinner_per_day",
     "secondary_transport_per_day"
   ],
+  "fund_allocation_roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Accountant",
+    "Admin"
+  ],
   "meeting_types": [
     "cluster_meeting",
     "cluster_meeting_ssa_review"

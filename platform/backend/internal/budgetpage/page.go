@@ -266,9 +266,12 @@ func ledgerRows(code string, gs []*group, staff, total int64) []*screensv1.PageR
 		t.Rows = append(t.Rows, cells(g.label+" "+activities(len(g.activityIDs))),
 			cells("Item", count, people, "Rate / Unit", "Staff cost", "Activity"))
 		for _, r := range g.rows {
-			n := len(r.dates)
-			if g.kind == "meeting" || g.kind == "training" {
-				n = len(r.activityIDs)
+			days := strconv.Itoa(len(r.dates))
+			switch {
+			case g.kind == "meeting" || g.kind == "training":
+				days = strconv.Itoa(len(r.activityIDs))
+			case r.quantity != nil && r.quantity.Sign() != 0:
+				days = r.quantity.String()
 			}
 			var heads int64
 			for _, c := range r.people {
@@ -282,7 +285,7 @@ func ledgerRows(code string, gs []*group, staff, total int64) []*screensv1.PageR
 			if r.vendorTotal != 0 && r.staffTotal == 0 {
 				staffText = "—"
 			}
-			t.Rows = append(t.Rows, cells(r.item, strconv.Itoa(n), headText, inCurrency(code, r.rate), staffText, inCurrency(code, r.total)))
+			t.Rows = append(t.Rows, cells(r.item, days, headText, inCurrency(code, r.rate), staffText, inCurrency(code, r.total)))
 		}
 		t.Rows = append(t.Rows, cells(g.label+" subtotal", inCurrency(code, g.staffTotal), inCurrency(code, g.total)))
 	}

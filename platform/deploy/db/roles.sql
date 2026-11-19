@@ -1175,3 +1175,9 @@ GRANT SELECT (strategic_alignment, employee_reflection, employee_rating, manager
   functional_manager_rating, is_mandatory) ON hr_performance_priority TO edify_gateway_ro;
 GRANT SELECT (id) ON hr_value_commitment TO edify_gateway_ro;
 GRANT SELECT ("window") ON hr_performance_snapshot TO edify_gateway_ro;
+
+-- Consolidated Fund Allocation (internal/budgetpage/fundallocation.go): each
+-- active line of the country admin plan, its item, category, quantity, unit
+-- and total cost, and the month's budget it belongs to. Not its justification.
+GRANT SELECT (description, cost_category, unit_cost, total_cost, quantity, status, monthly_budget_id)
+  ON admin_budget_line TO edify_gateway_ro;

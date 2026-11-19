@@ -53,6 +53,13 @@ func goldenSignInClients() func(n int) identityv1connect.SignInServiceClient {
 
 func compareGolden(t *testing.T, path string, answers []goldenAnswer) {
 	t.Helper()
+	compareGoldenMasked(t, path, answers, nil)
+}
+
+// compareGoldenMasked is compareGolden with mask applied to both answers
+// before they are compared: for a page that prints the moment it was drawn.
+func compareGoldenMasked(t *testing.T, path string, answers []goldenAnswer, mask func(*screensv1.GetPageResponse)) {
+	t.Helper()
 	clientFor := goldenSignInClients()
 	tokens := map[string]string{}
 	compared, differing := 0, 0
@@ -101,6 +108,10 @@ func compareGolden(t *testing.T, path string, answers []goldenAnswer) {
 		want := &screensv1.GetPageResponse{}
 		if err := protojson.Unmarshal(answer.Body, want); err != nil {
 			t.Fatalf("%s %v: reading the existing answer: %v", answer.Email, answer.Query, err)
+		}
+		if mask != nil {
+			mask(got)
+			mask(want)
 		}
 		if !proto.Equal(got, want) {
 			differing++

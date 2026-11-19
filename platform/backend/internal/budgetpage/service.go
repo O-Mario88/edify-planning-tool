@@ -64,6 +64,9 @@ type ask struct {
 	// countryIDs keep the country's Budget to the request's country
 	// (registry ids, docs/migration/80 §18); nil reads every line.
 	countryIDs []string
+	// district narrows every horizon to one district's lines (the Fund
+	// Allocation's filter); empty reads them all.
+	district string
 }
 
 func readAsk(p auth.Principal, query url.Values, now time.Time) (ask, error) {
@@ -111,7 +114,16 @@ func readAsk(p auth.Principal, query url.Values, now time.Time) (ask, error) {
 	if a.isProgramLead && requested == "team" {
 		a.budgetScope = "team"
 	}
-	a.periods = periods(fy, anchor)
+	a.settle()
+	return a, nil
+}
+
+// settle is _calendar_periods around the anchor and the years the week's
+// lines are read from: a week is its seven days, whichever fiscal years
+// they fall in, when the page is on one of them.
+func (a *ask) settle() {
+	fyText := strconv.Itoa(a.fy)
+	a.periods = periods(a.fy, a.anchor)
 	a.selected = a.periods[a.period]
 	week := a.periods["week"]
 	touches := []string{strconv.Itoa(operationalFY(week.start)), strconv.Itoa(operationalFY(week.end))}
@@ -124,11 +136,24 @@ func readAsk(p auth.Principal, query url.Values, now time.Time) (ask, error) {
 		}
 	}
 	sort.Strings(a.weekYears)
-	return a, nil
 }
 
-// Build answers /budget; every other path is not its own.
+// Build answers /budget and the Consolidated Fund Allocation; every other
+// path is not its own.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if path == FundAllocationPath || path == FundAllocationPath+"/" {
+		if !in(rules.FundAllocationRoles, p.ActiveRole) {
+			return nil, true, pagegate.ErrNotAvailable
+		}
+		resp, err := s.fundAllocation(ctx, p, query)
+		if errors.Is(err, errPassOn) {
+			return nil, false, nil
+		}
+		if err != nil {
+			return nil, true, err
+		}
+		return resp, true, nil
+	}
 	if path != Path && path != Path+"/" {
 		return nil, false, nil
 	}
@@ -274,6 +299,7 @@ func (s *Service) owners(ctx context.Context, p auth.Principal, scope schooldire
 // nil, the country's), planned in the period (or dated only by a month
 // wholly inside it).
 func (s *Service) lines(ctx context.Context, a ask, owners []string) ([]line, error) {
+	where, args := a.lineWhere(owners, a.selected.start, a.selected.end)
 	rows, err := s.db.Query(ctx, `
 		SELECT l.activity_id, COALESCE(l.responsible_user, ''), COALESCE(l.label, ''), COALESCE(l.cost_setting_key, ''),
 		       COALESCE(l.line_item_type, ''), COALESCE(l.amount, 0), COALESCE(l.unit_cost, 0), COALESCE(l.quantity, 0),
@@ -285,20 +311,7 @@ func (s *Service) lines(ctx context.Context, a ask, owners []string) ([]line, er
 		JOIN activity a ON a.id = l.activity_id
 		LEFT JOIN school s ON s.id = a.school_id
 		LEFT JOIN cluster cl ON cl.id = a.cluster_id
-		WHERE l.fiscal_year = ANY($1)
-		  AND ($7::text[] IS NULL OR `+registry.ActivityHeldIn("a", "s", "cl", "$7")+`)
-		  AND a.deleted_at IS NULL
-		  AND (a.scheduled_date IS NOT NULL OR a.planned_date IS NOT NULL)
-		  AND (a.status IS NULL OR NOT (a.status = ANY($2)))
-		  AND ($3::text[] IS NULL
-		       OR l.responsible_user = ANY($3)
-		       OR (a.delivery_type = 'partner' AND a.monitored_by_staff_id = ANY($3))
-		       OR ((l.responsible_user IS NULL OR l.responsible_user = '')
-		           AND (a.responsible_staff_id = ANY($3)
-		                OR (a.delivery_type = 'partner' AND a.monitored_by_staff_id = ANY($3)))))
-		  AND (l.planned_date BETWEEN $4 AND $5 OR (l.planned_date IS NULL AND l.month = ANY($6)))`,
-		a.weekYears, rules.NonFundableStatuses, owners, a.selected.start, a.selected.end, wholeMonths(a.selected.start, a.selected.end),
-		a.countryIDs)
+		WHERE `+where, args...)
 	if err != nil {
 		return nil, fmt.Errorf("budgetpage: reading the cost lines: %w", err)
 	}
@@ -313,6 +326,30 @@ func (s *Service) lines(ctx context.Context, a ask, owners []string) ([]line, er
 		return nil, fmt.Errorf("budgetpage: reading the cost lines: %w", err)
 	}
 	return out, nil
+}
+
+// lineWhere is scoped_budget_lines' filter planned_lines_for_period cuts
+// to a period, as a WHERE clause on activity_schedule_cost_line `l`, its
+// activity `a`, school `s` and cluster `cl`: the year's lines (and the
+// week's other year) of live, dated, fundable activities, the owners' when
+// owners is not nil, the request's country, the district's when one is
+// asked, planned in the period or dated only by a month wholly inside it.
+func (a ask) lineWhere(owners []string, start, end time.Time) (string, []any) {
+	return `l.fiscal_year = ANY($1)
+		  AND ($7::text[] IS NULL OR ` + registry.ActivityHeldIn("a", "s", "cl", "$7") + `)
+		  AND a.deleted_at IS NULL
+		  AND (a.scheduled_date IS NOT NULL OR a.planned_date IS NOT NULL)
+		  AND (a.status IS NULL OR NOT (a.status = ANY($2)))
+		  AND ($3::text[] IS NULL
+		       OR l.responsible_user = ANY($3)
+		       OR (a.delivery_type = 'partner' AND a.monitored_by_staff_id = ANY($3))
+		       OR ((l.responsible_user IS NULL OR l.responsible_user = '')
+		           AND (a.responsible_staff_id = ANY($3)
+		                OR (a.delivery_type = 'partner' AND a.monitored_by_staff_id = ANY($3)))))
+		  AND (l.planned_date BETWEEN $4 AND $5 OR (l.planned_date IS NULL AND l.month = ANY($6)))
+		  AND ($8 = '' OR l.school_id IN (SELECT id FROM school WHERE district_id = $8) OR s.district_id = $8
+		       OR cl.district_id = $8 OR a.event_district_id = $8)`,
+		[]any{a.weekYears, rules.NonFundableStatuses, owners, start, end, wholeMonths(start, end), a.countryIDs, a.district}
 }
 
 // dayRates is each shared day's rate snapshot, the rates it sets.

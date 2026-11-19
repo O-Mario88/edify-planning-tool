@@ -144,9 +144,25 @@ the Budget Overview's awaiting statuses are now a named constant in
 awaiting approval and a budget submitted to the RVP, and gives the cost lines
 a month: 154 answers of 7 accounts across eleven pages, 0 differing.
 
-Still to do in C2: `/finance/fund-allocation`, the country scope of
-`budget_workspace` (its activity cost plan and time views), which `budgetpage`
-does not port.
+### C2 · The Consolidated Fund Allocation (2026-11-19)
+
+`/finance/fund-allocation` is Go's (budgetpage/fundallocation.go): the
+country's roll-up for a week (its default), month, quarter or year around a
+date, each horizon's total on the period rail (the admin plan counted in the
+month, quarter and year, never split into a week), the activity cost plan's
+groups with the country admin plan as its own "Country Admin Plan" group (a
+row an item and unit cost, its quantity summed as Decimals print), the
+district filter (the activity's school, cluster or event district, or the
+line's school; it leaves the admin plan out), and the footer of program and
+admin costs. `budgetpage`'s line filter is now one builder the ledger and the
+period sums share, and its periods are set in one place. Handed on: exports,
+a search of the groups (it reads owners' names the ledger does not carry),
+a year or date that is not plain, a reader whose Budget is not the
+country's, several countries with no request country, more than one page of
+groups. Golden (budgetpage/testdata/fund_allocation_golden.py, `gfa` rows
+around today): 54 answers of 6 readers, 0 differing; the footer's "Updated"
+minute is masked in the compare (`compareGoldenMasked`), the only part
+drawn from the clock.
 
 ### C3 (part) · The School Map and the empty Search page (2026-11-19)
 

@@ -5,7 +5,8 @@ apps.budget.services.budget_workspace and pages/budgets/monthly.html) from
 what this command writes to platform/backend/internal/budgetpage/rules.json:
 who may open the page, who sees its Export button, who has a section strip
 above it, whose Budget is the country's, and the name each role is shown
-under; the activity statuses that draw no money; the names of the activity
+under, and who opens the Consolidated Fund Allocation; the activity
+statuses that draw no money; the names of the activity
 types and the programme categories; the ledger's training and meeting
 types and the lines whose quantity is a headcount; and the day's shared
 rates (whose rate is the day's own); and for the country's Budget, its
@@ -32,6 +33,7 @@ from apps.schools.management.commands.export_school_directory_rules import (
 
 EXPORT_PATH = Path("platform/backend/internal/budgetpage/rules.json")
 PATH = "/budget"
+FUND_ALLOCATION_PATH = "/finance/fund-allocation"
 
 
 def _choices(model, field: str) -> dict:
@@ -71,6 +73,15 @@ def rules() -> dict:
         "day_rate_keys": sorted(KEY_LABELS),
         "country": _country_rules(),
         "country_ledger_roles": list(services.COUNTRY_LEDGER_ROLES),
+        # Who opens the Consolidated Fund Allocation (fund_allocation_view).
+        "fund_allocation_roles": [
+            role.value
+            for role in EdifyRole
+            if RolePermissionService.can_view_page(
+                _role_user(role.value), "consolidated_fund_allocation"
+            )
+            and can_open_url(_role_user(role.value), FUND_ALLOCATION_PATH)
+        ],
     }
 
 

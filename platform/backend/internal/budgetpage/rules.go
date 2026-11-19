@@ -56,11 +56,13 @@ var rules = func() (r struct {
 	Country                countryRules      `json:"country"`
 	// CountryLedgerRoles read the country's ledger whatever their scope.
 	CountryLedgerRoles []string `json:"country_ledger_roles"`
+	// FundAllocationRoles open the Consolidated Fund Allocation.
+	FundAllocationRoles []string `json:"fund_allocation_roles"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {
 		panic(fmt.Sprintf("budgetpage: rules.json: %v", err))
 	}
-	if len(r.Roles) == 0 || len(r.NonFundableStatuses) == 0 {
+	if len(r.Roles) == 0 || len(r.NonFundableStatuses) == 0 || len(r.FundAllocationRoles) == 0 {
 		panic("budgetpage: rules.json lacks its roles or statuses")
 	}
 	return r

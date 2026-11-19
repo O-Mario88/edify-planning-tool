@@ -1,6 +1,7 @@
 package budgetpage
 
 import (
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pydecimal"
 	"sort"
 	"strconv"
 	"strings"
@@ -115,10 +116,15 @@ type row struct {
 	people                                  map[string]int64
 	activityIDs                             map[string]bool
 	staffTotal, vendorTotal, total, ordinal int64
+	// quantity is a country admin plan row's summed quantity (its "days"
+	// when not zero), nil for an activity's row.
+	quantity *pydecimal.Decimal
 }
 
 type group struct {
-	label, kind                    string
+	label, kind string
+	// isAdmin is the country admin plan's group.
+	isAdmin                        bool
 	rows                           []*row
 	byKey                          map[string]*row
 	activityIDs                    map[string]bool
