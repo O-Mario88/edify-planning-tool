@@ -25,11 +25,10 @@ import { NotMovedYet } from './NotMovedYet';
 import { SelectionBar } from './SelectionBar';
 
 /**
- * The gateway's answer for one spelling of a page: the phone's reading on a
- * phone (the native app's), the desktop's otherwise (lib/viewport).
+ * The gateway's answer for one spelling of a page, in the desktop's reading
+ * or the phone's (the native app's).
  */
-async function askSpelling(path: string, query: Record<string, string>): Promise<SpellingAnswer<GetPageResponse>> {
-  const desktop = (await requestView()) === 'desktop';
+async function askSpelling(path: string, query: Record<string, string>, desktop: boolean): Promise<SpellingAnswer<GetPageResponse>> {
   return asReader(async (token) => {
     try {
       return { kind: 'page', page: await gatewayClient(PageScreenService, token).getPage({ path, query, desktop }) };
@@ -41,8 +40,9 @@ async function askSpelling(path: string, query: Record<string, string>): Promise
   });
 }
 
+/** A page's desktop reading, for a page drawn by its own components (the Calendar). */
 export async function askPage(path: string, query: Record<string, string>): Promise<GetPageResponse | null> {
-  const answer = await askSpelling(path, query);
+  const answer = await askSpelling(path, query, true);
   if (answer.kind === 'notFound') notFound();
   return answer.kind === 'page' ? answer.page : null;
 }
@@ -53,20 +53,22 @@ export async function askPage(path: string, query: Record<string, string>): Prom
  * A spelling the gateway does not know moves on to the next
  * (lib/pageSpellings); the page is not found only when none answers.
  */
-async function askFirst(paths: readonly string[], query: Record<string, string>): Promise<GetPageResponse | null> {
-  const answer = await firstAnswer(paths, (path) => askSpelling(path, query));
+async function askFirst(paths: readonly string[], query: Record<string, string>, desktop: boolean): Promise<GetPageResponse | null> {
+  const answer = await firstAnswer(paths, (path) => askSpelling(path, query, desktop));
   if (answer.kind === 'notFound') notFound();
   return answer.kind === 'page' ? answer.page : null;
 }
 
 export async function FeedPage({ path, query, alsoAs = [] }: { path: string; query: Record<string, string>; alsoAs?: readonly string[] }) {
   const existingWebUrl = environment().existingWebUrl;
-  const answer = await askFirst([path, ...alsoAs], query);
+  // The phone's reading on a phone, drawn in the native app's design (lib/viewport).
+  const phone = (await requestView()) === 'phone';
+  const answer = await askFirst([path, ...alsoAs], query, !phone);
   const existingHref = drawerPageHref(existingWebUrl, path, query);
   if (!answer) return <NotMovedYet href={existingHref} />;
   const pagePath = answer.webPath || path;
   const drawerHref = drawerPageHref(existingWebUrl, pagePath, query);
-  if ((await requestView()) === 'phone') return <PhonePage answer={answer} pagePath={pagePath} drawerHref={drawerHref} />;
+  if (phone) return <PhonePage answer={answer} pagePath={pagePath} drawerHref={drawerHref} />;
   const hrefOf = (action: PageAction) => actionHref(action, pagePath, drawerHref);
   return (
     // The existing page's own frame (its padding and width; a dashboard's

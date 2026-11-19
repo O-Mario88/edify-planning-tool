@@ -21,10 +21,12 @@ import { environment } from '@/lib/environment';
 import { actionHref, drawerPageHref } from '@/lib/feedPage';
 import { gatewayClient, isNotFound, isUnavailable } from '@/lib/gateway';
 import { ACCESS_COOKIE } from '@/lib/session';
+import { requestView } from '@/lib/requestView';
 import { profileAsk, profileTabs, profileYear, splitRail, trailingPanels } from '@/lib/schoolProfile';
 
 import { PageHeader } from '../blocks/PageHeader';
 import { TabRail } from '../blocks/TabRail';
+import { PhonePage } from '../phone/PhonePage';
 import { FeedBlocks } from './FeedBlocks';
 import { NotMovedYet } from './NotMovedYet';
 import { SelectionBar } from './SelectionBar';
@@ -75,6 +77,14 @@ export async function ProfilePage({ schoolId, query }: { schoolId: string; query
   const hrefOf = (action: PageAction) => actionHref(action, pagePath, drawerHref);
   const selectable = Boolean(answer.selection?.actions.length);
   const activeTab = answer.tabs.find((tab) => tab.active)?.key ?? '';
+  if ((await requestView()) === 'phone') {
+    const year = profileYear(answer.blocks, asked.fy);
+    return (
+      <PhonePage answer={answer} pagePath={pagePath} drawerHref={drawerHref} tabLinks={profileTabs(answer.tabs, pagePath, year).tabs}>
+        {activeTab === 'overview' || activeTab === '' ? <SchoolLocation schoolId={schoolId} /> : null}
+      </PhonePage>
+    );
+  }
   const { frame, main, rail } = splitRail(answer.blocks);
   const props = { pagePath, drawerHref, selectable, clearFilters: false };
   return (
