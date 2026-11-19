@@ -425,3 +425,16 @@ describe('the Admin dashboard’s table cards', () => {
     expect(html).toContain('<tr class="admin-table__empty-row"><td colSpan="1"><div class="admin-empty admin-empty--table"><span>No clusters configured yet.</span></div></td></tr>');
   });
 });
+
+describe('loose text', () => {
+  it('is drawn as text on the page, a titled panel as a card', () => {
+    const html = draw({
+      blocks: [
+        { panel: { items: [{ text: 'Use the business workspaces in the sidebar.' }] } },
+        { panel: { title: 'Notes', items: [{ text: 'A titled panel.' }] } },
+      ],
+    });
+    expect(html).toMatch(/<div data-block="panel" data-loose-text=""[^>]*>[^]*Use the business workspaces in the sidebar\./);
+    expect(html).toMatch(/<section aria-label="Notes" data-block="panel" class="card px-4 py-3">/);
+  });
+});

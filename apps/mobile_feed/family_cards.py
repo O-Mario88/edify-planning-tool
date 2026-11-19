@@ -124,7 +124,10 @@ def status_tone(cell) -> str:
 def is_admin_table(node) -> bool:
     """An .admin-panel card around a table (Today's Priorities, Priority
     Schools, Cluster Performance)."""
-    return node.has("admin-panel") and node.find(lambda n: n.tag == "table") is not None
+    return (
+        node.has("admin-panel")
+        and node.find(lambda n: n.has("admin-table-wrap")) is not None
+    )
 
 
 def _link(node) -> dict | None:

@@ -145,11 +145,21 @@ export function FeedPanel({ panel, resolve, drawerHref = '', nested = false, foo
       </section>
     );
   }
+  // Loose text with no heading of its own (a section's intro line: the
+  // Admin dashboard's "Use the business workspaces …") is text on the page
+  // on the existing web, not a card.
+  if (!nested && !panel.title && !panel.badges.length && panel.items.length && panel.items.every((item) => item.kind.case === 'text')) {
+    return (
+      <div data-block="panel" data-loose-text="" className="space-y-1 edify-text-caption edify-text-muted">
+        {items}
+      </div>
+    );
+  }
   return (
     <section
       aria-label={panel.title || undefined}
       data-block="panel"
-      className={`rounded-[10px] border border-[var(--edify-border)] ${nested ? 'bg-[var(--edify-surface)] p-3' : 'bg-[var(--edify-card-surface)] px-4 py-3 shadow-[var(--edify-shadow-sm)]'}`}
+      className={nested ? 'rounded-[10px] border border-[var(--edify-border)] bg-[var(--edify-surface)] p-3' : 'card px-4 py-3'}
     >
       {panel.title || panel.badges.length ? (
         <header className="mb-2 flex flex-wrap items-center gap-2">
