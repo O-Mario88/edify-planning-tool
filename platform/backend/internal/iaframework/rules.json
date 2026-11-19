@@ -89,11 +89,15 @@
   "roles": {
     "Accountant": {
       "author": false,
+      "framework_reader": false,
+      "mapping": false,
       "page": false,
       "strip": null
     },
     "Admin": {
       "author": false,
+      "framework_reader": true,
+      "mapping": true,
       "page": true,
       "strip": {
         "label": "Impact Assessment",
@@ -139,21 +143,29 @@
     },
     "BusinessTransformationOfficer": {
       "author": false,
+      "framework_reader": false,
+      "mapping": false,
       "page": false,
       "strip": null
     },
     "CCEO": {
       "author": false,
+      "framework_reader": false,
+      "mapping": false,
       "page": false,
       "strip": null
     },
     "ClusterLeader": {
       "author": false,
+      "framework_reader": false,
+      "mapping": false,
       "page": false,
       "strip": null
     },
     "CountryDirector": {
       "author": false,
+      "framework_reader": true,
+      "mapping": true,
       "page": true,
       "strip": {
         "label": "Impact Assessment",
@@ -199,11 +211,15 @@
     },
     "HumanResources": {
       "author": false,
+      "framework_reader": false,
+      "mapping": false,
       "page": false,
       "strip": null
     },
     "ImpactAssessment": {
       "author": true,
+      "framework_reader": true,
+      "mapping": true,
       "page": true,
       "strip": {
         "label": "Impact Assessment",
@@ -249,41 +265,57 @@
     },
     "MfiLoanOfficer": {
       "author": false,
+      "framework_reader": false,
+      "mapping": false,
       "page": false,
       "strip": null
     },
     "MfiPartnerAdmin": {
       "author": false,
+      "framework_reader": false,
+      "mapping": false,
       "page": false,
       "strip": null
     },
     "PartnerAdmin": {
       "author": false,
+      "framework_reader": false,
+      "mapping": false,
       "page": false,
       "strip": null
     },
     "PartnerFieldOfficer": {
       "author": false,
+      "framework_reader": false,
+      "mapping": false,
       "page": false,
       "strip": null
     },
     "Program Lead": {
       "author": false,
+      "framework_reader": false,
+      "mapping": true,
       "page": false,
       "strip": null
     },
     "ProjectCoordinator": {
       "author": false,
+      "framework_reader": false,
+      "mapping": true,
       "page": false,
       "strip": null
     },
     "RegionalProgramLead": {
       "author": false,
+      "framework_reader": false,
+      "mapping": false,
       "page": false,
       "strip": null
     },
     "RegionalVicePresident": {
       "author": false,
+      "framework_reader": false,
+      "mapping": true,
       "page": false,
       "strip": null
     }

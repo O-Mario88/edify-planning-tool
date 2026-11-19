@@ -217,6 +217,15 @@ Assessment are redirected, which Go hands on): the desk queue with each
 row's decision buttons (today_actions adapters), snoozes and the cleared
 count.
 
+Looked at again (2026-11-19, after C2): the Admin's desk is the To-Do queue
+Go already builds (`todos.Service.HomeQueue`), split into exceptions
+(critical or blocked) and the actionable rest, less the rows the reader
+snoozed, each row decorated by `today_actions` (a decision adapter matched
+on the To-Do's id, else an activity drawer link) with the Snooze choices.
+Go's queue rows carry no To-Do id, so neither the snoozes (`TodoSnooze`,
+keyed by id) nor the adapters can be matched: `/today` waits for the
+builders to carry their ids, part of E.
+
 `/planning/schedule` with a choice is Go's (fieldpages/schedule.go): a
 training or meeting over the clusters the reader may plan in
 (cluster_queryset direct_only, by name; the chosen one selected when it is
@@ -363,7 +372,18 @@ each cell is a grant icon the feed reads alike whether granted or not. 12
 answers over three readers and four pages, 0 differing.
 
 Left in C6: `/settings/activity-catalogue/`.
-Left in C5: `/ia/school-evidence/` and `/priorities/ssa-mapping`.
+`/priorities/ssa-mapping` is Go's (iaframework/mapping.go) for the readers
+who keep the read-only register (the Programme Lead, the RVP, the Project
+Coordinator): rules_register's rows, fifty a page, each with its History
+drawer; a reader of the framework is redirected to its rules tab, which Go
+hands on, and an empty register is handed on. rules_register's rows are now
+built once (`ruleRows`) for the framework's rules tab and this page. The
+exporter writes who opens the register and who reads the framework. 32
+answers of 8 readers over four pages, 0 differing; and a framework compare
+(rules tab, its filters and paging, the default and indicators tabs) to
+prove the shared rows: 18 answers, 0 differing.
+
+Left in C5: `/ia/school-evidence/`.
 
 ### C7 (part) · Four HR programme registers, and the registers' header buttons (2026-11-19)
 

@@ -70,19 +70,31 @@ func ruleState(m *mapping) string {
 	return label(rules.MappingStatuses, m.status)
 }
 
-func (s *Service) rulesTab(ctx context.Context, r reader, res *resolver, programme, status string) (tab, error) {
+// ruleRow is one school-outcome activity of rules_register: its live rule
+// (or the version being drafted or reviewed) as the registers show it.
+type ruleRow struct {
+	itemID, programme, rawProgramme, name                      string
+	intervention, direction, window, threshold, scope, version string
+	state, reviewed, key                                       string
+	// waiting is the version being drafted or reviewed, nil with none.
+	waiting *mapping
+}
+
+// ruleRows is rules_register: one row per school-outcome catalogue item, by
+// programme and name, and the programmes they hold.
+func (s *Service) ruleRows(ctx context.Context) ([]ruleRow, []string, error) {
 	type item struct{ id, name, programme string }
 	rows, err := s.db.Query(ctx, `SELECT id, display_name, COALESCE(programme_category, '') FROM activity_catalogue_item
 WHERE status = 'active' AND (requires_school OR cluster_delivery_allowed OR is_training_course) ORDER BY programme_category, display_name`)
 	if err != nil {
-		return tab{}, fmt.Errorf("iaframework: reading the catalogue: %w", err)
+		return nil, nil, fmt.Errorf("iaframework: reading the catalogue: %w", err)
 	}
 	items, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (item, error) {
 		var x item
 		return x, row.Scan(&x.id, &x.name, &x.programme)
 	})
 	if err != nil {
-		return tab{}, fmt.Errorf("iaframework: reading the catalogue: %w", err)
+		return nil, nil, fmt.Errorf("iaframework: reading the catalogue: %w", err)
 	}
 	ids := make([]string, len(items))
 	for i, x := range items {
@@ -95,7 +107,7 @@ SELECT id, catalogue_item_id, status, COALESCE(intervention, ''), COALESCE(mappi
 FROM activity_intervention_mapping WHERE catalogue_item_id = ANY($1) AND (active OR status = ANY($2))
 ORDER BY is_primary DESC, priority, version DESC`, ids, rules.PendingMappingStatuses)
 	if err != nil {
-		return tab{}, fmt.Errorf("iaframework: reading the rules: %w", err)
+		return nil, nil, fmt.Errorf("iaframework: reading the rules: %w", err)
 	}
 	maps, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (mapping, error) {
 		var m mapping
@@ -103,7 +115,7 @@ ORDER BY is_primary DESC, priority, version DESC`, ids, rules.PendingMappingStat
 			&m.author, &m.reviewedBy, &m.submittedBy, &m.active, &m.primary, &m.version, &m.min, &m.expected, &m.max, &m.change)
 	})
 	if err != nil {
-		return tab{}, fmt.Errorf("iaframework: reading the rules: %w", err)
+		return nil, nil, fmt.Errorf("iaframework: reading the rules: %w", err)
 	}
 	live, pending := map[string][]*mapping{}, map[string][]*mapping{}
 	people := []string{}
@@ -119,7 +131,7 @@ ORDER BY is_primary DESC, priority, version DESC`, ids, rules.PendingMappingStat
 	}
 	names, err := s.names(ctx, people)
 	if err != nil {
-		return tab{}, err
+		return nil, nil, err
 	}
 	programmes := []string{}
 	for _, x := range items {
@@ -128,6 +140,73 @@ ORDER BY is_primary DESC, priority, version DESC`, ids, rules.PendingMappingStat
 		}
 	}
 	slices.Sort(programmes)
+	out := make([]ruleRow, 0, len(items))
+	for _, x := range items {
+		var primary, waiting *mapping
+		for _, m := range live[x.id] {
+			if m.primary {
+				primary = m
+				break
+			}
+		}
+		if len(pending[x.id]) > 0 {
+			waiting = pending[x.id][0]
+		}
+		shown := primary
+		r := ruleRow{itemID: x.id, programme: x.programme, rawProgramme: x.programme, name: x.name, state: ruleState(primary), key: "draft", waiting: waiting,
+			intervention: "—", direction: "—", window: "—", threshold: "—", scope: "—", version: "—", reviewed: "—"}
+		switch {
+		case primary == nil:
+			r.key = "required"
+		case referenceDefault(primary):
+			r.key = "reference"
+		case primary.status == "published":
+			r.key = "published"
+		}
+		if waiting != nil {
+			suffix := "v" + strconv.Itoa(waiting.version) + " " + strings.ToLower(ruleState(waiting))
+			if primary != nil {
+				r.state += " · " + suffix
+			} else {
+				r.state = suffix
+			}
+			r.key = "draft"
+			if waiting.status == "in_review" {
+				r.key = "in_review"
+			}
+			if shown == nil {
+				shown = waiting
+			}
+		}
+		if shown != nil {
+			r.intervention, r.window = interventionText(shown), window(shown)
+			r.direction = label(rules.Directions, shown.direction)
+			r.threshold = "Any change"
+			if shown.change != nil {
+				r.threshold = "±" + *shown.change
+			}
+			r.scope = shown.country
+			if r.scope == "" {
+				r.scope = "All countries"
+			}
+			r.version = "v" + strconv.Itoa(shown.version)
+		}
+		if primary != nil && primary.reviewedBy != "" {
+			r.reviewed = names[primary.reviewedBy]
+		}
+		if r.programme == "" {
+			r.programme = "Not categorised"
+		}
+		out = append(out, r)
+	}
+	return out, programmes, nil
+}
+
+func (s *Service) rulesTab(ctx context.Context, r reader, res *resolver, programme, status string) (tab, error) {
+	all, programmes, err := s.ruleRows(ctx)
+	if err != nil {
+		return tab{}, err
+	}
 	t := tab{title: "Measurement rules",
 		columns:    []string{"Programme", "Activity", "SSA domain", "Success looks like", "Follow-up window", "Meaningful change", "Scope", "Version", "Status", "Reviewed by"},
 		emptyTitle: "No school-outcome activities match", emptyBody: "Clear the filters to see every activity with a school outcome.",
@@ -143,92 +222,34 @@ ORDER BY is_primary DESC, priority, version DESC`, ids, rules.PendingMappingStat
 		t.filters = append(t.filters, choice("programme", "Programme", "Every programme", programme, options))
 	}
 	t.filters = append(t.filters, choice("status", "Status", "Every status", status, rules.RuleStatusFilters))
-	for _, x := range items {
-		if programme != "" && x.programme != programme {
+	for _, row := range all {
+		if programme != "" && row.rawProgramme != programme {
 			continue
 		}
-		var primary, waiting *mapping
-		for _, m := range live[x.id] {
-			if m.primary {
-				primary = m
-				break
-			}
-		}
-		if len(pending[x.id]) > 0 {
-			waiting = pending[x.id][0]
-		}
-		shown := primary
-		state := ruleState(primary)
-		key := "draft"
-		switch {
-		case primary == nil:
-			key = "required"
-		case referenceDefault(primary):
-			key = "reference"
-		case primary.status == "published":
-			key = "published"
-		}
-		if waiting != nil {
-			suffix := "v" + strconv.Itoa(waiting.version) + " " + strings.ToLower(ruleState(waiting))
-			if primary != nil {
-				state += " · " + suffix
-			} else {
-				state = suffix
-			}
-			key = "draft"
-			if waiting.status == "in_review" {
-				key = "in_review"
-			}
-			if shown == nil {
-				shown = waiting
-			}
-		}
-		if status != "" && key != status {
+		if status != "" && row.key != status {
 			continue
 		}
 		mayReview := false
-		if waiting != nil && waiting.status == "in_review" {
-			if mayReview, err = res.may(ctx, waiting.submittedBy, waiting.country); err != nil {
+		if row.waiting != nil && row.waiting.status == "in_review" {
+			if mayReview, err = res.may(ctx, row.waiting.submittedBy, row.waiting.country); err != nil {
 				return tab{}, err
 			}
-		}
-		intervention, direction, win, threshold, scope, version := "—", "—", "—", "—", "—", "—"
-		if shown != nil {
-			intervention, win = interventionText(shown), window(shown)
-			direction = label(rules.Directions, shown.direction)
-			threshold = "Any change"
-			if shown.change != nil {
-				threshold = "±" + *shown.change
-			}
-			scope = shown.country
-			if scope == "" {
-				scope = "All countries"
-			}
-			version = "v" + strconv.Itoa(shown.version)
-		}
-		reviewed := "—"
-		if primary != nil && primary.reviewedBy != "" {
-			reviewed = names[primary.reviewedBy]
 		}
 		pairs := [][2]string{}
 		if r.author {
 			edit := "Edit rule"
-			if state == "Mapping required" {
+			if row.state == "Mapping required" {
 				edit = "Link intervention"
 			}
-			pairs = append(pairs, [2]string{edit, "/priorities/ssa-mapping/" + x.id + "/drawer"})
+			pairs = append(pairs, [2]string{edit, "/priorities/ssa-mapping/" + row.itemID + "/drawer"})
 		}
 		if mayReview {
-			pairs = append(pairs, [2]string{"Review", "/priorities/ssa-mapping/rules/" + waiting.id + "/review"})
+			pairs = append(pairs, [2]string{"Review", "/priorities/ssa-mapping/rules/" + row.waiting.id + "/review"})
 		}
-		pairs = append(pairs, [2]string{"History", "/priorities/ssa-mapping/" + x.id + "/history"})
-		prog := x.programme
-		if prog == "" {
-			prog = "Not categorised"
-		}
+		pairs = append(pairs, [2]string{"History", "/priorities/ssa-mapping/" + row.itemID + "/history"})
 		t.rows = append(t.rows, []*screensv1.PageCell{
-			cell(prog), cell(x.name), cell(intervention), cell(direction), cell(win), cell(threshold),
-			cell(scope), cell(version), cell(state), cell(reviewed), actions(pairs...),
+			cell(row.programme), cell(row.name), cell(row.intervention), cell(row.direction), cell(row.window), cell(row.threshold),
+			cell(row.scope), cell(row.version), cell(row.state), cell(row.reviewed), actions(pairs...),
 		})
 	}
 	return t, nil

@@ -29,6 +29,7 @@ from apps.schools.management.commands.export_school_directory_rules import (
 
 EXPORT_PATH = Path("platform/backend/internal/iaframework/rules.json")
 
+MAPPING_PATH = "/priorities/ssa-mapping"
 PAGE_PATH = "/ia/framework/"
 PAGE_PERMISSION = "ia_framework"
 
@@ -64,6 +65,13 @@ def rules() -> dict:
             if page
             else None,
             "author": fw.may_author(user),
+            # The read-only register (ssa_mapping_page): who opens it, and
+            # who is sent on to the framework's rules instead.
+            "mapping": RolePermissionService.can_view_page(user, "ssa_mapping")
+            and bool(can_open_url(user, MAPPING_PATH)),
+            "framework_reader": RolePermissionService.can_view_page(
+                user, "ia_framework"
+            ),
         }
     return {
         "roles": roles,

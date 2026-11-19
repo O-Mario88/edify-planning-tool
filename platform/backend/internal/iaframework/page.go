@@ -44,6 +44,10 @@ var rules = func() (r struct {
 		Page   bool               `json:"page"`
 		Strip  *decisionlog.Strip `json:"strip"`
 		Author bool               `json:"author"`
+		// Mapping opens the read-only Measurement Rules register;
+		// FrameworkReader is sent on to the framework's rules instead.
+		Mapping         bool `json:"mapping"`
+		FrameworkReader bool `json:"framework_reader"`
 	} `json:"roles"`
 	Tabs                      [][2]string       `json:"tabs"`
 	DefinitionStatuses        [][2]string       `json:"definition_statuses"`
@@ -99,8 +103,18 @@ type tab struct {
 	emptyBody  string
 }
 
-// Build answers Path.
+// Build answers Path and the read-only Measurement Rules register.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if path == MappingPath {
+		role := rules.Roles[p.ActiveRole]
+		if !role.Mapping {
+			return nil, true, pagegate.ErrNotAvailable
+		}
+		if role.FrameworkReader {
+			return nil, false, nil // redirected to the framework's rules
+		}
+		return s.mappingPage(ctx, query)
+	}
 	if path != Path {
 		return nil, false, nil
 	}
