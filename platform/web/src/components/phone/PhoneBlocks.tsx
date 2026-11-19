@@ -12,6 +12,7 @@ import { PhoneFilters } from './PhoneFilters';
 import { PhoneLinkTabs } from './PhoneLinkTabs';
 import { PhoneList } from './PhoneList';
 import { PhonePanel } from './PhonePanel';
+import { PhoneRecord } from './PhoneRecord';
 import { PhoneSegments } from './PhoneSegments';
 import { PhoneEmpty, PhonePager } from './PhoneParts';
 import { PhoneTable } from './PhoneTable';
@@ -86,6 +87,8 @@ export function PhoneBlocks({ blocks, pagePath, drawerHref, selectable }: PhoneB
         return <PhonePanel key={index} panel={kind.value} resolve={resolve} />;
       case 'list':
         return <PhoneList key={index} list={kind.value} resolve={resolve} hrefOf={hrefOf} />;
+      case 'record':
+        return <PhoneRecord key={index} record={kind.value} pagePath={pagePath} drawerHref={drawerHref} selectable={selectable} />;
       case 'empty':
         return <PhoneEmpty key={index} message={kind.value} hrefOf={hrefOf} />;
       case 'segments':

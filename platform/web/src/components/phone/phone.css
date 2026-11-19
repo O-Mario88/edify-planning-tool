@@ -272,6 +272,20 @@ a[data-ph='tile']:active { background: var(--ph-primary-soft) !important; }
 [data-ph='list-action'] { display: inline-flex !important; align-items: center !important; height: 28px !important; padding: 0 12px !important; border: 1px solid var(--ph-outline) !important; border-radius: 10px !important; background: var(--ph-primary-soft) !important; color: var(--ph-link) !important; font-size: 12px !important; font-weight: 700 !important; text-decoration: none !important; }
 [data-ph='list-action'][aria-disabled='true'] { opacity: 0.55 !important; }
 
+/* ── Record cards ───────────────────────────────────────── */
+[data-ph='record'] { display: flex !important; flex-direction: column !important; gap: 10px !important; padding: 16px !important; border: 1px solid var(--ph-border) !important; border-radius: 10px !important; background: var(--ph-raised) !important; box-shadow: var(--ph-card-shadow) !important; }
+[data-ph='record']:has(input[data-pick]:checked) { border-color: var(--ph-primary) !important; }
+[data-ph='record-head'] { display: flex !important; align-items: flex-start !important; justify-content: space-between !important; gap: 12px !important; }
+[data-ph='record-title-row'] { display: flex !important; flex: 1 1 auto !important; flex-wrap: wrap !important; align-items: center !important; gap: 8px !important; min-width: 0 !important; }
+[data-ph='record-title'] { white-space: normal !important; overflow-wrap: anywhere !important; min-height: 0 !important; min-block-size: 0 !important; padding: 0 !important; border: 0 !important; background: none !important; color: var(--ph-text) !important; font: inherit !important; font-size: 15px !important; line-height: 20px !important; font-weight: 700 !important; text-align: left !important; text-transform: none !important; text-decoration: none !important; cursor: pointer !important; }
+[data-ph='record-badge'] { padding: 2px 8px !important; border-radius: 999px !important; background: var(--ph-tone-soft, var(--ph-surface-muted)) !important; color: var(--ph-tone, var(--ph-text-muted)) !important; font-size: 11px !important; font-weight: 600 !important; }
+[data-ph='record-subtitle'] { margin: 0 !important; color: var(--ph-text-muted) !important; font-size: 12px !important; font-weight: 500 !important; }
+[data-ph='details-fact'][data-plain] b { color: var(--ph-tone, var(--ph-text)) !important; }
+[data-ph='record-toggle'] { display: inline-flex !important; align-self: flex-start !important; align-items: center !important; gap: 4px !important; min-height: 0 !important; min-block-size: 0 !important; padding: 0 !important; border: 0 !important; background: none !important; color: var(--ph-link) !important; font: inherit !important; font-size: 12px !important; font-weight: 600 !important; text-transform: none !important; cursor: pointer !important; }
+[data-ph='record-open'] { display: flex !important; flex-direction: column !important; gap: 12px !important; padding-top: 12px !important; border-top: 1px solid var(--ph-raised-border) !important; }
+[data-ph='record-part'] { display: flex !important; flex-direction: column !important; gap: 12px !important; }
+[data-ph='record-status'] { margin: 0 !important; color: var(--ph-tone, var(--ph-text-muted)) !important; font-size: 12px !important; font-weight: 500 !important; }
+
 /* The profile rail's straight dividers, between two tabs that are not open (PageHeaderParts TabRail). */
 [data-ph='switch'] [data-ph='seg']:not([aria-current='page'], [aria-pressed='true']) + [data-ph='seg']:not([aria-current='page'], [aria-pressed='true'])::before { content: '' !important; position: absolute !important; left: 0 !important; top: 8px !important; bottom: 8px !important; width: 1px !important; background: var(--ph-border) !important; }
 

@@ -116,6 +116,31 @@ describe('a page on a phone', () => {
     expect(html).toContain('aria-label="Open: Chase delivery"');
   });
 
+  it('draws a record card with its tick, pills, facts and a way to open it', () => {
+    const html = draw(
+      {
+        blocks: [
+          {
+            record: {
+              title: 'Nakifuma Primary',
+              href: '/schools/9/',
+              badges: [{ text: 'Core', tone: 'info' }],
+              facts: [{ label: 'District', value: 'Mukono' }, { label: 'Visits', value: '0/4', tone: 'caution' }],
+              details: [{ panel: { title: 'Intervention scores', items: [{ text: 'No confirmed scores.' }] } }],
+              pickId: '9',
+            },
+          },
+        ],
+      },
+      true,
+    );
+    expect(html).toContain('<input type="checkbox" data-pick="9" aria-label="Select Nakifuma Primary"/>');
+    expect(html).toContain('aria-label="Show details for Nakifuma Primary">Nakifuma Primary</button>');
+    expect(html).toContain('<span data-ph="record-badge" data-ph-tone="info">Core</span>');
+    expect(html).toContain('<span data-ph="details-fact" data-ph-tone="caution" data-plain="true">Visits: <b>0/4</b></span>');
+    expect(html).toContain('Show details');
+  });
+
   it('puts Export beside the title in the header', () => {
     const page = fromJson(GetPageResponseSchema, MY_PLAN);
     const html = renderToStaticMarkup(<PhonePage answer={page} pagePath="/my-plan" drawerHref={DRAWER} />);
