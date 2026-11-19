@@ -94,10 +94,10 @@ func init() {
 		// The Admin reaches it too: plReviewGuard stands for it (admin.go).
 		"_ia_todos": byRole(onlyRole(adminRole, plReviewGuard), iaVerificationTodos),
 		"apps.activities.ia_todos:ia_queue_todos":     onlyIA(iaQueueGuard),
-		"apps.impact.framework_todos:framework_todos": onlyIA(frameworkTodos),
+		"apps.impact.framework_todos:framework_todos": byRole(onlyRole(cdRole, frameworkReviewGuard), frameworkTodos),
 		// A Business Transformation officer's conclusions are built (pcbt.go).
-		"apps.impact.learning_todos:learning_todos": byRole(learningTodos, learningGuard),
-		"apps.impact.report_todos:report_todos":     byRole(onlyRole(rvpRole, donorReleaseGuard), reportGuard),
+		"apps.impact.learning_todos:learning_todos": byRole(cdOr(learningGuard, learningTodos), learningGuard),
+		"apps.impact.report_todos:report_todos":     byRole(cdOr(reportGuard, onlyRole(rvpRole, donorReleaseGuard)), reportGuard),
 		// A Programme Lead's portfolio passes them on (lead.go).
 		"apps.planning.coverage_todos:missing_training_todos": byRole(portfolioGuard, missingTrainingTodos),
 	} {
@@ -229,18 +229,24 @@ func evidenceGuardIA(ctx context.Context, s *Service, r *reader) ([]todo, error)
 	return passOnIf(s.exists(ctx, sql, rules.IA.EvidencePending, rules.EvidenceReturned, rules.IA.StorySubmitted, r.p.UserID))
 }
 
-// frameworkTodos is framework_todos for IA: rules or definitions awaiting a
-// reviewer, or returned to their author, pass the reader on; otherwise the
-// one row is the school-outcome catalogue items with no live primary rule.
-func frameworkTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
-	found, err := s.exists(ctx, `
+// frameworkReviewGuard is framework_todos' review rows, which the Country
+// Director has too: any rule or definition awaiting a reviewer, or returned
+// to its author, passes the reader on.
+func frameworkReviewGuard(ctx context.Context, s *Service, _ *reader) ([]todo, error) {
+	return passOnIf(s.exists(ctx, `
 SELECT 1 FROM activity_intervention_mapping WHERE active = false
   AND (status = $1 OR (status = $2 AND reviewed_at IS NOT NULL))
 UNION ALL SELECT 1 FROM impact_outcome_area WHERE status = ANY($3)
 UNION ALL SELECT 1 FROM impact_indicator_definition WHERE status = ANY($3)`,
-		rules.IA.FrameworkInReview, rules.IA.FrameworkDraft, []string{rules.IA.DefinitionInReview, rules.IA.DefinitionReturned})
-	if err != nil || found {
-		return passOnIf(found, err)
+		rules.IA.FrameworkInReview, rules.IA.FrameworkDraft, []string{rules.IA.DefinitionInReview, rules.IA.DefinitionReturned}))
+}
+
+// frameworkTodos is framework_todos for IA: rules or definitions awaiting a
+// reviewer, or returned to their author, pass the reader on; otherwise the
+// one row is the school-outcome catalogue items with no live primary rule.
+func frameworkTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
+	if _, err := frameworkReviewGuard(ctx, s, r); err != nil {
+		return nil, err
 	}
 	var unmapped int
 	if err := s.db.QueryRow(ctx, `SELECT COUNT(*) FROM activity_catalogue_item ci

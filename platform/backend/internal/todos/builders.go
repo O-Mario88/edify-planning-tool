@@ -37,12 +37,13 @@ func init() {
 		"apps.staff_activity.todos:follow_up_todos":         followUpGuard,
 		"apps.cce_leadership.todos:coaching_todos":          coachingTodos,
 		"apps.cce_leadership.guidance_todos:guidance_todos": guidanceTodos,
-		"apps.ssa.collection_todos:collection_todos":        byRole(returnedSSATodos, collectionIA),
-		"apps.impact.evidence_todos:evidence_todos":         byRole(evidenceTodos, evidenceGuardIA),
+		"apps.ssa.collection_todos:collection_todos":        byRole(cdOr(directorSSAGuard, returnedSSATodos), collectionIA),
+		"apps.impact.evidence_todos:evidence_todos":         byRole(cdOr(evidenceGuardIA, evidenceTodos), evidenceGuardIA),
 		"apps.planning.fy_todos:fy_planning_todos":          fyPlanningTodos,
 		"apps.clusters.followups:attendance_todos":          attendanceTodos,
 		"_rvp_todos":                                        rvpTodos,
 		"_strategy_note_todos":                              strategyNoteTodos,
+		"_cd_analytics_todos":                               cdAnalyticsTodos,
 	} {
 		register(name, build)
 	}
@@ -418,15 +419,12 @@ ORDER BY pa.returned_at DESC LIMIT 10`, rules.ReturnedToStaffStatus, r.owners)
 	})
 }
 
-// fundRequestTodos is _fund_request_todos for a reader who approves no
-// fund requests: their own weekly requests to confirm or fix, returned
-// monthly plans, and disbursed funds to confirm. An approver's queue is
-// passed on.
+// fundRequestTodos is _fund_request_todos: the reader's own weekly requests
+// to confirm or fix, returned monthly plans, and disbursed funds to confirm.
+// An approver (a Programme Lead, the Country Director) with any request or
+// accountability at their step is passed on.
 func fundRequestTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 	if status, approves := rules.WeeklyApproverStatus[r.role]; approves {
-		if r.role != leadRole {
-			return nil, errPassOn
-		}
 		if _, err := passOnIf(leadApprovalsGuard(ctx, s, status)); err != nil {
 			return nil, err
 		}
@@ -779,6 +777,9 @@ func corePlanGaps(slots []coreSlot) ([]coreSlot, []coreGap) {
 // loanVerificationTodos is _business_transformation_todos for a field
 // officer: loan-use verification visits to plan at their schools.
 func loanVerificationTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
+	if r.role == cdRole {
+		return btDirectorTodos(ctx, s, r)
+	}
 	if r.role == leadRole {
 		return passOnIf(len(r.scope.OwnSchoolIDs) > 0, nil)
 	}
@@ -923,10 +924,12 @@ ORDER BY a.actual_delivery_date ASC, a.planned_date ASC, a.id ASC LIMIT 10`, r.o
 	})
 }
 
-// fyPlanningTodos is fy_planning_todos for a planner: the nearest future
-// year open for planning, while nothing of theirs is planned in it.
+// fyPlanningTodos is fy_planning_todos: for a planner, the nearest future
+// year open for planning while nothing of theirs is planned in it; for the
+// Country Director, that year while it has no published operational rate
+// card.
 func fyPlanningTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
-	if !contains(rules.PCBT.FYPlannerRoles, r.role) {
+	if !contains(rules.PCBT.FYPlannerRoles, r.role) && r.role != cdRole {
 		return nil, errPassOn
 	}
 	operational, _ := strconv.Atoi(r.fy)
@@ -954,6 +957,13 @@ WHERE country = $1 AND planning_open_at <= $2 ORDER BY fy ASC`, rules.PlanningCo
 		if fy <= operational {
 			continue
 		}
+		var starts *time.Time
+		if p.starts != nil {
+			starts = dateOf(*p.starts)
+		}
+		if r.role == cdRole {
+			return rateCardTodos(ctx, s, r, p.fy, starts)
+		}
 		if len(r.owners) == 0 {
 			return nil, nil
 		}
@@ -962,17 +972,35 @@ WHERE country = $1 AND planning_open_at <= $2 ORDER BY fy ASC`, rules.PlanningCo
 		if err != nil || planned {
 			return nil, err
 		}
-		t := todo{Title: "Plan FY" + p.fy + " Activities", Category: "Planning", Priority: "medium", StatusKey: "waiting_me",
+		t := todo{Title: "Plan FY" + p.fy + " Activities", Category: "Planning", Priority: "medium",
 			Actionable: true, Linked: "FY" + p.fy, ActionLabel: "Open Planning", ActionURL: "/planning", Shape: "/planning",
 			Due: &r.today}
-		var starts *time.Time
-		if p.starts != nil {
-			starts = dateOf(*p.starts)
+		if starts != nil {
 			t.Due = starts
 		}
 		return []todo{derivedWords(t, starts, r.today)}, nil
 	}
 	return nil, nil
+}
+
+// rateCardTodos is fy_planning_todos' Country Director row: "Prepare the
+// FY Rate Card" while the year open for planning has no published, active
+// operational rate card in the planning country.
+func rateCardTodos(ctx context.Context, s *Service, r *reader, fy string, starts *time.Time) ([]todo, error) {
+	published, err := s.exists(ctx, `SELECT 1 FROM cost_catalogue WHERE country = $1 AND fy = $2
+  AND kind = 'operational' AND status = 'published' AND is_active`, rules.PlanningCountry, fy)
+	if err != nil || published {
+		return nil, err
+	}
+	link := "/cost-settings?fy=" + fy
+	t := todo{Title: "Prepare the FY" + fy + " Rate Card", Category: "Finance", Priority: "high", Actionable: true,
+		Linked: "FY" + fy, ActionLabel: "Open Cost Settings", ActionURL: link, Shape: "/cost-settings?fy={fy}", Due: &r.today,
+		Description: "FY" + fy + " is open for planning, but no FY" + fy + " rate card is published, so FY" + fy +
+			" activities cannot be costed."}
+	if starts != nil {
+		t.Due = starts
+	}
+	return []todo{derivedWords(t, starts, r.today)}, nil
 }
 
 // extraStatusLabels are ExtraAssignment.STATUSES' words.

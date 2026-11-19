@@ -77,10 +77,10 @@ var Handled = map[string]func(ctx context.Context, s *Service, r *reader) ([]tod
 // are not built (regionalEngagementGuard), and the Cluster Leader has no
 // account in the seed to compare: both stay the existing application's.
 // The RVP's were compared over a General Budget and an Annual Budget filed
-// for them.
+// for them, the Country Director's over the demo seed and a strategy note.
 var PortedRoles = []string{"CCEO", leadRole, roleIA, adminRole, coordinatorRole, btRole,
 	"Accountant", "HumanResources", "MfiLoanOfficer", "MfiPartnerAdmin", "PartnerAdmin", "PartnerFieldOfficer",
-	rvpRole}
+	rvpRole, cdRole}
 
 // Served is whether Go answers a role at all: Go has built the role's queue
 // and has every builder the role reaches.

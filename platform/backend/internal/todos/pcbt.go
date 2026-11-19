@@ -168,13 +168,40 @@ func btOfficerTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) 
 
 // btOfficerGuard is whether the sections Go does not build have rows.
 func btOfficerGuard(ctx context.Context, s *Service, schools []string) (bool, error) {
+	if found, err := btRiskGuard(ctx, s, schools); err != nil || found {
+		return found, err
+	}
+	return s.exists(ctx, `SELECT 1 FROM bt_loan_purpose_proposal WHERE status = $1`, rules.PCBT.BTPurposeRequested)
+}
+
+// btRiskGuard is whether the repayment risks or loan-use concerns the
+// officer and the Country Director review (not built in Go) have rows.
+func btRiskGuard(ctx context.Context, s *Service, schools []string) (bool, error) {
 	pc := rules.PCBT
 	return s.exists(ctx, `
 SELECT 1 FROM bt_repayment_snapshot WHERE loan_id IN (`+btLoanScope+`) AND status = ANY($2)
 UNION ALL SELECT 1 FROM bt_loan_use_result u INNER JOIN bt_loan_verification_requirement q ON q.id = u.requirement_id
-  WHERE q.loan_id IN (`+btLoanScope+`) AND u.finding = ANY($3) AND u.concern_reviewed_at IS NULL
-UNION ALL SELECT 1 FROM bt_loan_purpose_proposal WHERE status = $4`,
-		schools, pc.BTRepaymentRiskStatuses, pc.BTConcernFindings, pc.BTPurposeRequested)
+  WHERE q.loan_id IN (`+btLoanScope+`) AND u.finding = ANY($3) AND u.concern_reviewed_at IS NULL`,
+		schools, pc.BTRepaymentRiskStatuses, pc.BTConcernFindings)
+}
+
+// btDirectorTodos is _business_transformation_todos for the Country
+// Director: loan-use verification visits to schedule and the geographic
+// financing gap. Repayment risks and loan-use concerns pass the reader on.
+func btDirectorTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
+	schools, err := s.btLoanSchools(ctx, r)
+	if err != nil {
+		return nil, err
+	}
+	if found, err := btRiskGuard(ctx, s, schools); err != nil || found {
+		return passOnIf(found, err)
+	}
+	out, err := btVerificationTodos(ctx, s, r, schools)
+	if err != nil {
+		return nil, err
+	}
+	gap, err := btGeographyGap(ctx, s, r)
+	return append(out, gap...), err
 }
 
 // btGeographyGap is the one "Review Geographic Financing Gap" row: the

@@ -933,3 +933,30 @@ Budget submitted to the RVP and a strategy note for the Country Director
 on, 0 differing, the RVP's three rows among them. The strategy note row is
 recorded but not yet compared: the Country Director stays handed on until
 `_cd_analytics_todos` (CDAnalyticsService.cd_todos) is in Go.
+
+**The Country Director (same day).** The widest queue: thirty builders.
+`todos/cdanalytics.go` ports `_cd_analytics_todos` (CDAnalyticsService
+.cd_todos over the reader's country, no dashboard filter): `pl_oversight`'s
+risk per Programme Lead (team achievement weighted over the CCEOs' agreed
+areas with `targets.Roster.SeriesOver` and `team_weighted_pct`, schools
+without this year's SSA, the backlog, `_pl_risk`) and its "Request Recovery
+Plan from PL" rows; `recommended_actions` (schools without SSA, districts
+whose latest confirmed Leadership mean is below 5.0 after `_ssa_score`,
+partners to follow up through `partneroversight.FollowUps`, underperforming
+teams, low utilisation); weekly requests escalated to the CD; and
+`budget_utilisation_detail`. It passes the reader on in a year with any
+approved milestone allocation (a lead's achievement is then their contract's)
+and, with no CCEO agreement, when anyone on a lead's team has agreed areas
+(the existing service fails on that case). The CD's turn of the shared
+builders: approvals at their step pass them on (`fundRequestTodos`, as for a
+lead); `btDirectorTodos` (verification visits and the financing gap; risks
+and concerns pass on); engagement follow-ups due on their own; the FY rate
+card row (`rateCardTodos`); the framework, SSA fallback, evidence, finding
+and impact-report rows pass them on whenever any such record exists
+(`cdOr`). New link shapes: `/staff/{id}`, the drilldowns with `&fy={fy}`,
+`/cost-settings?fy={fy}`.
+Over the demo seed the Home golden now compares 53 answers, 19 handed on, 0
+differing, the Country Director's rows (the strategy note, the recommended
+actions, the financing gap, an underused budget), queue and To-Do figures
+among them. No seeded lead's team reaches High Risk, so the recovery-plan
+row is proved only by the unit tests of `_pl_risk`.

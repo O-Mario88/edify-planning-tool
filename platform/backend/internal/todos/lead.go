@@ -176,10 +176,16 @@ func distributionGuard(ctx context.Context, s *Service, r *reader) ([]todo, erro
 	return passOnIf(s.exists(ctx, `SELECT 1 FROM hr_milestone_allocation WHERE team_id = $1`, r.p.StaffProfileID))
 }
 
-// partnerEngagementGuard stands for partner_engagement_todos: a partner
-// engagement the reader wrote, a Regional Lead observation, or a flag
-// assigned to the reader.
+// partnerEngagementGuard stands for partner_engagement_todos: for a lead, a
+// partner engagement they wrote, a Regional Lead observation, or a flag
+// assigned to them.
 func partnerEngagementGuard(ctx context.Context, s *Service, r *reader) ([]todo, error) {
+	if r.role != leadRole {
+		// Anyone else who records engagements (the Country Director) has
+		// only the follow-ups now due on their own.
+		return passOnIf(s.exists(ctx, `SELECT 1 FROM partner_engagement WHERE author_id = $1
+  AND follow_up_due <= $2 AND follow_up_done_at IS NULL`, r.p.UserID, r.today))
+	}
 	return passOnIf(s.exists(ctx, `SELECT 1 FROM partner_engagement WHERE author_id = $1
 UNION ALL SELECT 1 FROM cce_regional_engagement
 UNION ALL SELECT 1 FROM cd_flag WHERE assigned_to_user_id = $1`, r.p.UserID))

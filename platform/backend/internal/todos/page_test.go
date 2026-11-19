@@ -200,9 +200,6 @@ func TestAReaderIsPassedOnByAGuardOrAnApprovalTheyGive(t *testing.T) {
 	if got, err := partnerAssignmentGuard(context.Background(), nil, &reader{role: "CCEO"}); err != nil || got != nil {
 		t.Errorf("an officer: %v %v", got, err)
 	}
-	if _, err := fundRequestTodos(context.Background(), nil, &reader{role: "CountryDirector"}); err != errPassOn {
-		t.Errorf("a fund approver: %v", err)
-	}
 }
 
 func statusKey(a activity, action string, today time.Time) string {
@@ -244,5 +241,42 @@ func TestAStrategyNoteDescribesItsFirstCharacters(t *testing.T) {
 	}
 	if got := firstRunes("short", strategyInstructionLength); got != "short" {
 		t.Errorf("%q", got)
+	}
+}
+
+func TestALeadsRiskIsTheExistingScore(t *testing.T) {
+	for _, c := range []struct {
+		pct, target, atRisk, schools, backlog int
+		want                                  string
+	}{
+		{0, 0, 0, 0, 0, "Low Risk"},
+		{30, 10, 0, 10, 0, "High Risk"},      // achievement below 40 with a target
+		{50, 10, 4, 10, 0, "High Risk"},      // below 55, and a third of the schools
+		{30, 10, 7, 10, 10, "Critical Risk"}, // every signal
+		{80, 0, 0, 0, 12, "Medium Risk"},     // only the backlog
+		{20, 0, 3, 10, 0, "Low Risk"},        // no target: achievement is not read; 30% is not more than 0.3
+	} {
+		if got := plRisk(c.pct, c.target, c.atRisk, c.schools, c.backlog); got != c.want {
+			t.Errorf("%+v: %s", c, got)
+		}
+	}
+}
+
+func TestACountryDirectorRowsLinkShapeNamesTheYearAndTheLead(t *testing.T) {
+	for url, want := range map[string]string{
+		"/staff/cmwlead": "/staff/{id}",
+		"/analytics/country-director/drilldown?drill=pl&fy=2027": "/analytics/country-director/drilldown?drill=pl&fy={fy}",
+		"/budget": "/budget",
+	} {
+		if got := cdShape(url, "2027"); got != want {
+			t.Errorf("%s: %s", url, got)
+		}
+	}
+	// Python's round(round(x, 6), 1) for the same values.
+	for in, want := range map[float64]float64{4.949999999999999: 5.0, 4.95: 5.0, 4.749999999999999: 4.8,
+		4.85: 4.8, 4.849999: 4.8, 4.25: 4.2} {
+		if got := ssaScore(in); got != want {
+			t.Errorf("ssaScore(%v) = %v, want %v", in, got, want)
+		}
 	}
 }

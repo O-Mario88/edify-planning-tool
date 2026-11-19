@@ -125,3 +125,11 @@ func recommendation(targetPct int, improve *float64, planned int) string {
 	}
 	return "Keep Active"
 }
+
+// FollowUps is partner_follow_up.partners_needing_follow_up for country and
+// fy: {partner id: recommendation} for each Partner the Country Director
+// Analytics would have followed up (CDAnalyticsService.recommended_actions
+// counts them).
+func FollowUps(ctx context.Context, db schooldirectory.Querier, country, fy string) (map[string]string, error) {
+	return followUps(ctx, db, country, fy)
+}

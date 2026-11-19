@@ -46,6 +46,45 @@ func (r *Roster) Targets(p Person) Series {
 	return out
 }
 
+// SeriesOver is per_user_monthly_series(users, fy, areas) for p: their
+// targets as _targets_from reads them over the catalogue areas (explicit
+// months where an area has any, else the target profile's annual fallback
+// split over the twelve months; a priority's own annual target is not
+// read), and their validated achievements, each over keys. An area p has no
+// figures for is twelve zeros.
+func (r *Roster) SeriesOver(p Person, keys []string) (targets, achieved Series) {
+	targets, achieved = Series{}, Series{}
+	for _, key := range keys {
+		if months, ok := r.explicit[p.UserID][key]; ok {
+			var s [12]int
+			for i, v := range months {
+				if v != nil {
+					s[i] = *v
+				}
+			}
+			targets[key] = s
+		} else {
+			annual := 0
+			if profile := r.profiles[p.StaffID]; profile != nil {
+				for _, column := range rules.AnnualFallback[key] {
+					annual += profile[column]
+				}
+			}
+			base, rem := annual/12, annual%12
+			var s [12]int
+			for m := 1; m <= 12; m++ {
+				s[m-1] = base
+				if m <= rem {
+					s[m-1]++
+				}
+			}
+			targets[key] = s
+		}
+		achieved[key] = r.ledger[p.UserID][key]
+	}
+	return targets, achieved
+}
+
 // Achieved is _achievements_from: each area's validated quantity a month.
 func (r *Roster) Achieved(p Person) Series {
 	out := Series{}

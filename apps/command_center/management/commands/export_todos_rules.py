@@ -129,6 +129,23 @@ LINK_SHAPES = {
     "/budget": "/budget",
     "/disbursements": "/disbursements",
     "/cost-settings": "/cost-settings",
+    "/cost-settings?fy={fy}": "/cost-settings?fy=2028",
+    "/staff/{id}": "/staff/cmw0000000000000000000001",
+    "/analytics/country-director/drilldown?drill=risk&issue=no_ssa&fy={fy}": (
+        "/analytics/country-director/drilldown?drill=risk&issue=no_ssa&fy=2028"
+    ),
+    "/analytics/country-director/drilldown?drill=district_low_lship&fy={fy}": (
+        "/analytics/country-director/drilldown?drill=district_low_lship&fy=2028"
+    ),
+    "/analytics/country-director/drilldown?drill=partner&fy={fy}": (
+        "/analytics/country-director/drilldown?drill=partner&fy=2028"
+    ),
+    "/analytics/country-director/drilldown?drill=pl&fy={fy}": (
+        "/analytics/country-director/drilldown?drill=pl&fy=2028"
+    ),
+    "/analytics/country-director/drilldown?drill=budget&fy={fy}": (
+        "/analytics/country-director/drilldown?drill=budget&fy=2028"
+    ),
     "/work-plan?view=fy": "/work-plan?view=fy",
     "/admin-panel/users#partner-directory-title": (
         "/admin-panel/users#partner-directory-title"

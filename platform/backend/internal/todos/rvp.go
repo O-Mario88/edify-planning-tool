@@ -9,7 +9,8 @@ import (
 )
 
 // The RVP's and the Country Director's executive rows (todo_service
-// _rvp_todos and _strategy_note_todos).
+// _rvp_todos and _strategy_note_todos), and the Country Director's turn of
+// the builders other roles share.
 
 const (
 	rvpRole = "RegionalVicePresident"
@@ -121,4 +122,22 @@ func firstRunes(s string, n int) string {
 		return s
 	}
 	return string(runes[:n])
+}
+
+// cdOr is cd for the Country Director and other for everyone else.
+func cdOr(cd, other builder) builder {
+	return func(ctx context.Context, s *Service, r *reader) ([]todo, error) {
+		if r.role == cdRole {
+			return cd(ctx, s, r)
+		}
+		return other(ctx, s, r)
+	}
+}
+
+// directorSSAGuard is collection_todos for the Country Director, the
+// fallback verifier of SSA scores an Impact Assessment officer keyed: any
+// record awaiting verification passes the reader on.
+func directorSSAGuard(ctx context.Context, s *Service, _ *reader) ([]todo, error) {
+	return passOnIf(s.exists(ctx, `SELECT 1 FROM ssa_record WHERE deleted_at IS NULL AND verification_status = $1`,
+		rules.IA.CollectionRecordPending))
 }
