@@ -58,7 +58,7 @@ func text(t string) *screensv1.PagePanelItem {
 // Build answers path for p. served is false for a path this package does not
 // answer.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
-	if path != DuplicatesPath && path != ReturnedPath && path != HistoryPath && path != PartnerEvidencePath && path != SamplesPath && path != AnalyticsPath && path != StoriesPath && path != ComparePath && path != ReportsPath && path != LendingPath && path != VerificationPath && path != DashboardPath && path != NotificationsPath && path != UnmatchedPath {
+	if path != DuplicatesPath && path != ReturnedPath && path != HistoryPath && path != PartnerEvidencePath && path != SamplesPath && path != AnalyticsPath && path != StoriesPath && path != ComparePath && path != ReportsPath && path != LendingPath && path != VerificationPath && path != DashboardPath && path != NotificationsPath && path != UnmatchedPath && path != UploadHistoryPath {
 		return nil, false, nil
 	}
 	role, ok := rules.Pages[path].Roles[p.ActiveRole]
@@ -92,6 +92,8 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		return s.notifications(ctx, p)
 	case UnmatchedPath:
 		return s.unmatched(ctx, p, role, query)
+	case UploadHistoryPath:
+		return s.uploadHistory(ctx, p, role, query)
 	}
 	where, args, err := reach(ctx, s.db, p, s.now(), nil)
 	if err != nil {

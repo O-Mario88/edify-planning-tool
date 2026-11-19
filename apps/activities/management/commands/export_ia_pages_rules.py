@@ -42,6 +42,7 @@ PAGES = {
     "/ia/dashboard/": "ia_dashboard",
     "/ia/notifications/": "ia_notifications",
     "/ssa/unmatched": "data_quality_center",
+    "/ssa/upload/history/": "ia_upload_center",
 }
 
 #: The pages that draw the IA workspace strip (partials/_section_nav.html).
@@ -53,6 +54,7 @@ STRIP_PAGES = (
     "/ia/verification/",
     "/ia/dashboard/",
     "/ssa/unmatched",
+    "/ssa/upload/history/",
 )
 
 #: The roles ia_samples_view offers "Draw this week now" (can_draw).
@@ -283,6 +285,13 @@ def rules() -> dict:
         "notification_categories": list(IA_NOTIFICATION_CATEGORIES),
         "lending": _lending(),
         "dashboard": _dashboard(),
+        # SSA Upload History: who may upload official SSA (_may_upload_ssa);
+        # a reader the page opens to without it is refused by the view.
+        "ssa_upload_roles": sorted(
+            role.value
+            for role in EdifyRole
+            if has_permission(_role_user(role.value), Permission.SSA_UPLOAD.value)
+        ),
         "ia_verify_roles": sorted(
             role.value
             for role in EdifyRole

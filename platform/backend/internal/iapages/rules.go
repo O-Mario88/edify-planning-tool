@@ -33,6 +33,8 @@ var rules = func() (r struct {
 		Roles map[string]Role `json:"roles"`
 	} `json:"pages"`
 	IAVerifyRoles []string `json:"ia_verify_roles"`
+	// SSAUploadRoles may upload official SSA (SSA Upload History).
+	SSAUploadRoles []string `json:"ssa_upload_roles"`
 	// NotificationCategories are the categories Verification Notifications
 	// lists.
 	NotificationCategories []string `json:"notification_categories"`

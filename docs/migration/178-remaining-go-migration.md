@@ -277,3 +277,13 @@ are now `unmatched_service.QUEUE_DEFAULT_STATUSES`, exported. Golden
 eleven queries, 0 differing. Linking, creating a school, holding and
 ignoring stay the existing page's.
 
+`/ssa/upload/history/` is Go's in `internal/iapages` (upload_history.go):
+the SSA import batches the reader may open (the Admin all of them, Impact
+Assessment its country's uploaders' and its own, anyone else their own),
+each with the rows it imported, left unmatched and refused, filtered to
+batches with refused rows or the reader's own, newest first, fifty a page.
+A role the page opens to without the SSA upload permission is refused by
+the existing page: handed on. Golden
+(iapages/testdata/upload_history_golden.py): 36 answers over six readers and
+six queries, 0 differing.
+
