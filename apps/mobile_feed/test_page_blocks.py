@@ -1525,6 +1525,19 @@ LINK_HEADER = """
 """
 
 
+ADMIN_HEADER = """
+<main>
+<header class="edify-page-header admin-command__header mobile-home-hide">
+  <div class="edify-page-header__lead"><h1 class="edify-page-title edify-page-header__title">Platform Operations</h1></div>
+  <div class="admin-command__actions">
+    <a href="/admin-ops/my-plan" class="admin-button admin-button--primary"><svg></svg><span>Open Admin My Plan</span></a>
+    <a href="/country-profile" class="admin-button admin-button--secondary"><svg></svg><span>Open Country Profile</span></a>
+  </div>
+</header>
+</main>
+"""
+
+
 HCOS_HEADER = """
 <main>
 <div class="edify-page-header">
@@ -1644,6 +1657,31 @@ class HeaderActionsTest(SimpleTestCase):
                 ),
                 ("hr_overview", "HR overview", False, "/dashboard", False, False),
                 ("upload_center", "Upload Center", False, "/uploads", False, False),
+            ],
+        )
+
+    def test_the_admin_dashboards_header_links_are_actions(self):
+        page = page_blocks.read(ADMIN_HEADER, path="/dashboard", desktop=True)
+
+        self.assertEqual(
+            _actions(page),
+            [
+                (
+                    "open_admin_my_plan",
+                    "Open Admin My Plan",
+                    True,
+                    "/admin-ops/my-plan",
+                    False,
+                    False,
+                ),
+                (
+                    "open_country_profile",
+                    "Open Country Profile",
+                    False,
+                    "/country-profile",
+                    False,
+                    False,
+                ),
             ],
         )
 
