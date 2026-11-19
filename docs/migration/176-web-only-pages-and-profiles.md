@@ -918,3 +918,18 @@ seed's Accountant and HR queues are empty in both, so their builders are
 compared only as empty; states the seed lacks (returned work, overdue
 loans) are covered by the unit tests and the code read against each
 builder.
+
+**The RVP (same day).** `todos/rvp.go` builds `_rvp_todos` (every General
+Budget and Country Annual Budget of the year submitted to the RVP, in every
+country) and the Country Director's `_strategy_note_todos` (open RVP
+strategy notes addressed to them or to no one). The RVP's other rows that
+Go does not build pass the reader on: Regional Leads' submitted CCE reports
+(`regionalEngagementGuard`) and donor versions of impact reports awaiting
+approval (`donorReleaseGuard`). The gateway reads the new columns through
+`deploy/db/roles.sql`; `/dashboard` and `/country-budget/` join the To-Do
+link shapes. `golden.py` now also files a General Budget and an Annual
+Budget submitted to the RVP and a strategy note for the Country Director
+(`TABLES`), which `home_test.go` files again: 50 answers compared, 22 handed
+on, 0 differing, the RVP's three rows among them. The strategy note row is
+recorded but not yet compared: the Country Director stays handed on until
+`_cd_analytics_todos` (CDAnalyticsService.cd_todos) is in Go.

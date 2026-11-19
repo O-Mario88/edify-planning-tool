@@ -149,12 +149,20 @@ func escalationGuard(ctx context.Context, s *Service, _ *reader) ([]todo, error)
 // regionalEngagementGuard stands for the Regional Lead's coaching and
 // training feedback (_cce_leadership_todos for a lead, the Regional Lead
 // row of coaching_todos, the observations of partner_engagement_todos):
-// any Regional Lead engagement. The Regional Lead's own rows of
+// any Regional Lead engagement, and for the RVP any submitted monthly
+// report. The Regional Lead's own rows of
 // _cce_leadership_todos (the monthly report, the engagement rhythm, feedback
 // to share) are not built in Go: that reader is passed on.
 func regionalEngagementGuard(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 	if r.role == regionalLeadRole {
 		return nil, errPassOn
+	}
+	if r.role == rvpRole {
+		// The RVP's rows of the builder are the Regional Leads' submitted
+		// monthly reports to review: any such report passes them on.
+		if found, err := s.exists(ctx, `SELECT 1 FROM cce_regional_report WHERE status = 'submitted'`); err != nil || found {
+			return passOnIf(found, err)
+		}
 	}
 	return passOnIf(s.exists(ctx, `SELECT 1 FROM cce_regional_engagement`))
 }

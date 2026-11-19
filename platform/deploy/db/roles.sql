@@ -1081,3 +1081,11 @@ GRANT SELECT (activity_id, ia_verified) ON closure_checklist TO edify_gateway_ro
 GRANT SELECT (activity_id, netsuite_expense_id) ON completed_activity_snapshot TO edify_gateway_ro;
 -- Regional Lead Coaching: each conversation's agreed actions and follow-up.
 GRANT SELECT (agreed_actions, follow_up_due) ON cce_regional_engagement TO edify_gateway_ro;
+-- The RVP's To-Dos: each General Budget and Country Annual Budget submitted
+-- to them (todo_service._rvp_todos).
+GRANT SELECT (activity_count) ON monthly_work_plan_budget TO edify_gateway_ro;
+GRANT SELECT (total_amount, created_at) ON country_annual_budget TO edify_gateway_ro;
+-- The Country Director's To-Dos from the RVP's open strategy notes
+-- (todo_service._strategy_note_todos).
+GRANT SELECT (id, priority_label, scope, instruction, responsible_cd_id, deadline, status, created_at)
+  ON rvp_strategy_note TO edify_gateway_ro;

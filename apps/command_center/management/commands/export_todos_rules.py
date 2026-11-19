@@ -124,6 +124,8 @@ LINK_SHAPES = {
         "/ia/framework/?tab=rules&status=required"
     ),
     "/country-budget": "/country-budget",
+    "/country-budget/": "/country-budget/",
+    "/dashboard": "/dashboard",
     "/budget": "/budget",
     "/disbursements": "/disbursements",
     "/cost-settings": "/cost-settings",

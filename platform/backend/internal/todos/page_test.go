@@ -236,3 +236,13 @@ func TestARowsDueWordsAreTheExistingOnes(t *testing.T) {
 		}
 	}
 }
+
+func TestAStrategyNoteDescribesItsFirstCharacters(t *testing.T) {
+	long := strings.Repeat("é", strategyInstructionLength+5)
+	if got := firstRunes(long, strategyInstructionLength); len([]rune(got)) != strategyInstructionLength {
+		t.Errorf("%d runes, want %d", len([]rune(got)), strategyInstructionLength)
+	}
+	if got := firstRunes("short", strategyInstructionLength); got != "short" {
+		t.Errorf("%q", got)
+	}
+}

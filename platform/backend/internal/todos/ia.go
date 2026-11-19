@@ -97,7 +97,7 @@ func init() {
 		"apps.impact.framework_todos:framework_todos": onlyIA(frameworkTodos),
 		// A Business Transformation officer's conclusions are built (pcbt.go).
 		"apps.impact.learning_todos:learning_todos": byRole(learningTodos, learningGuard),
-		"apps.impact.report_todos:report_todos":     onlyIA(reportGuard),
+		"apps.impact.report_todos:report_todos":     byRole(onlyRole(rvpRole, donorReleaseGuard), reportGuard),
 		// A Programme Lead's portfolio passes them on (lead.go).
 		"apps.planning.coverage_todos:missing_training_todos": byRole(portfolioGuard, missingTrainingTodos),
 	} {
@@ -202,6 +202,13 @@ func learningGuard(ctx context.Context, s *Service, _ *reader) ([]todo, error) {
 // reportGuard is report_todos: any impact report passes the reader on.
 func reportGuard(ctx context.Context, s *Service, _ *reader) ([]todo, error) {
 	return passOnIf(s.exists(ctx, `SELECT 1 FROM impact_report`))
+}
+
+// donorReleaseGuard is report_todos for the RVP: its one row is the donor
+// versions of impact reports awaiting their approval, so any such release
+// passes the reader on.
+func donorReleaseGuard(ctx context.Context, s *Service, _ *reader) ([]todo, error) {
+	return passOnIf(s.exists(ctx, `SELECT 1 FROM impact_report_release WHERE audience = 'donor' AND status = 'pending_approval'`))
 }
 
 // loanGuardIA is _business_transformation_todos for IA: every row it adds

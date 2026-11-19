@@ -41,6 +41,8 @@ func init() {
 		"apps.impact.evidence_todos:evidence_todos":         byRole(evidenceTodos, evidenceGuardIA),
 		"apps.planning.fy_todos:fy_planning_todos":          fyPlanningTodos,
 		"apps.clusters.followups:attendance_todos":          attendanceTodos,
+		"_rvp_todos":                                        rvpTodos,
+		"_strategy_note_todos":                              strategyNoteTodos,
 	} {
 		register(name, build)
 	}

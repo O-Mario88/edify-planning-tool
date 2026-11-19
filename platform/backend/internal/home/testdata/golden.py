@@ -63,9 +63,63 @@ READERS = (
 )
 
 
+#: The tables the golden files rows in besides activities: the RVP's budgets
+#: to review and an RVP strategy note for the Country Director.
+TABLES = ("monthly_work_plan_budget", "country_annual_budget", "rvp_strategy_note")
+
+
 def clear():
     with connection.cursor() as cursor:
         cursor.execute('DELETE FROM "activity" WHERE id LIKE %s', [P + "%"])
+        for table in TABLES:
+            cursor.execute(f'DELETE FROM "{table}" WHERE id LIKE %s', [P + "%"])
+
+
+def file_executive_rows(today):
+    """A General Budget and a Country Annual Budget submitted to the RVP, and
+    an open strategy note addressed to the Country Director."""
+    from apps.monthly_work_plan.models import (
+        CountryAnnualBudget,
+        MonthlyWorkPlanBudget,
+        StrategyNote,
+    )
+
+    fy = str(today.year + 1 if today.month >= 10 else today.year)
+    MonthlyWorkPlanBudget.objects.create(
+        id=P + "budget",
+        fy=fy,
+        month_key=f"{fy}-gh",
+        country_id="Uganda",
+        status="submitted_to_rvp",
+        total_amount=12_345_000,
+        activity_count=17,
+    )
+    CountryAnnualBudget.objects.create(
+        id=P + "annual",
+        fy=fy,
+        country_id="Uganda",
+        status="submitted_to_rvp",
+        total_amount=987_654_321,
+    )
+    StrategyNote.objects.create(
+        id=P + "note",
+        author_id=User.objects.get(email="rvp@edify.org").id,
+        responsible_cd_id=User.objects.get(email="cd@edify.org").id,
+        priority_label="Learning outcomes",
+        scope="Central region",
+        instruction="Visit every school in the lowest decile before the term ends.",
+        deadline=today + timedelta(days=5),
+        status="open",
+    )
+
+
+def table_rows(table):
+    with connection.cursor() as cursor:
+        cursor.execute(
+            f'SELECT row_to_json(t)::text FROM "{table}" t WHERE id LIKE %s ORDER BY id',
+            [P + "%"],
+        )
+        return [json.loads(r[0]) for r in cursor.fetchall()]
 
 
 def at(day, hour, minute=0):
@@ -180,6 +234,8 @@ clear()
 try:
     now = dj_timezone.now()
     file_rows(dj_timezone.localdate())
+    file_executive_rows(dj_timezone.localdate())
+    tables = {table: table_rows(table) for table in TABLES}
     rows = [
         dict(zip([c.name for c in cur.description], r))
         for cur in [connection.cursor()]
@@ -195,6 +251,7 @@ try:
     out = {
         "now": now.isoformat(),
         "rows": [json.loads(r["row_to_json"]) for r in rows],
+        "tables": tables,
         "answers": answers,
     }
     with open(os.environ["GOLDEN_OUT"], "w", encoding="utf-8") as fh:

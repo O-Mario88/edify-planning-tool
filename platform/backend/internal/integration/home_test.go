@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
@@ -18,6 +19,10 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/home"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/todos"
 )
+
+// homeGoldenTables are the tables besides activity that golden.py files rows
+// in (its TABLES).
+var homeGoldenTables = []string{"monthly_work_plan_budget", "country_annual_budget", "rvp_strategy_note"}
 
 // TestHomeMatchesTheExistingFeed files the work internal/home/testdata/
 // golden.py made, and asks Go for each reader's Home at the instant the
@@ -34,8 +39,9 @@ func TestHomeMatchesTheExistingFeed(t *testing.T) {
 		t.Fatal(err)
 	}
 	var golden struct {
-		Now     time.Time         `json:"now"`
-		Rows    []json.RawMessage `json:"rows"`
+		Now     time.Time                    `json:"now"`
+		Rows    []json.RawMessage            `json:"rows"`
+		Tables  map[string][]json.RawMessage `json:"tables"`
 		Answers []struct {
 			Email       string          `json:"email"`
 			Status      int             `json:"status"`
@@ -49,16 +55,27 @@ func TestHomeMatchesTheExistingFeed(t *testing.T) {
 		t.Fatal(err)
 	}
 	ctx := context.Background()
+	// The work, then the RVP's budgets and strategy note golden.py files.
+	tables := append([]string{"activity"}, homeGoldenTables...)
+	filed := map[string][]json.RawMessage{"activity": golden.Rows}
+	for _, table := range homeGoldenTables {
+		filed[table] = golden.Tables[table]
+	}
 	clear := func() {
-		if _, err := admin.Exec(ctx, `DELETE FROM activity WHERE id LIKE 'ghome%'`); err != nil {
-			t.Errorf("clearing the work: %v", err)
+		for _, table := range tables {
+			if _, err := admin.Exec(ctx, `DELETE FROM `+pgx.Identifier{table}.Sanitize()+` WHERE id LIKE 'ghome%'`); err != nil {
+				t.Errorf("clearing %s: %v", table, err)
+			}
 		}
 	}
 	clear()
 	t.Cleanup(clear)
-	for _, row := range golden.Rows {
-		if _, err := admin.Exec(ctx, `INSERT INTO activity SELECT * FROM json_populate_record(NULL::activity, $1::json)`, string(row)); err != nil {
-			t.Fatalf("filing the work: %v", err)
+	for _, table := range tables {
+		name := pgx.Identifier{table}.Sanitize()
+		for _, row := range filed[table] {
+			if _, err := admin.Exec(ctx, `INSERT INTO `+name+` SELECT * FROM json_populate_record(NULL::`+name+`, $1::json)`, string(row)); err != nil {
+				t.Fatalf("filing %s: %v", table, err)
+			}
 		}
 	}
 	at := func() time.Time { return golden.Now }
