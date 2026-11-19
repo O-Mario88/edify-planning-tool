@@ -87,9 +87,9 @@ export default async function TodayNextPage() {
           <SectionHeader title="Waiting on you" count={total ?? waiting.length} href="/todos" />
           {waiting.length ? (
             <TaskList>
-              {waiting.map((row) => (
+              {waiting.map((row, i) => (
                 <TaskRow
-                  key={row.key}
+                  key={`${row.key}-${i}`}
                   title={row.title}
                   context={row.context}
                   status={row.statusLabel || row.dueLabel || undefined}
@@ -109,8 +109,8 @@ export default async function TodayNextPage() {
               <SectionHeader title="At a glance" />
               <Surface>
                 <div className="grid grid-cols-2 gap-4">
-                  {counted.map((f) => (
-                    <KpiStat key={`${f.key}-${f.label}`} label={f.label} value={Number(f.value.replace(/,/g, ''))} />
+                  {counted.map((f, i) => (
+                    <KpiStat key={`${f.key}-${i}`} label={f.label} value={Number(f.value.replace(/,/g, ''))} />
                   ))}
                 </div>
               </Surface>
@@ -120,8 +120,8 @@ export default async function TodayNextPage() {
             <>
               <SectionHeader title="Go to" />
               <div className="grid grid-cols-2 gap-2">
-                {home.shortcuts.map((s) => (
-                  <Button key={s.url} kind="secondary" href={s.url}>
+                {home.shortcuts.map((s, i) => (
+                  <Button key={`${s.url}-${i}`} kind="secondary" href={s.url}>
                     {s.label}
                   </Button>
                 ))}

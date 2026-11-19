@@ -136,8 +136,12 @@ export function TaskRow({
         <div className="min-w-0 flex-1">
           <p className="text-ds-body font-semibold text-ds-text">{title}</p>
           <p className="mt-0.5 text-ds-caption text-ds-text-subtle">{context}</p>
+          {status ? (
+            <p className="mt-1.5">
+              <StatusBadge tone={tone}>{status}</StatusBadge>
+            </p>
+          ) : null}
         </div>
-        {status ? <StatusBadge tone={tone}>{status}</StatusBadge> : null}
         <span className="shrink-0 text-ds-body font-semibold text-ds-primary">{action}</span>
       </a>
     </li>
