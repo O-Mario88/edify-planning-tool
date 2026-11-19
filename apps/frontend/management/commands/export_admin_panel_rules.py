@@ -34,13 +34,17 @@ PAGES = {
     "/admin-panel/audit-log": "audit_log",
     "/admin-panel/region-district-setup": "region_district_setup",
     "/admin-panel/notifications-mgmt": "notifications_mgmt",
+    "/admin-panel/page-access-matrix": "page_access_matrix",
 }
 
 
 def rules() -> dict:
     from apps.core.permissions import RolePermissionService, can_open_url
     from apps.core.rbac import EdifyRole
-    from apps.frontend.views.extended_views import WORKFLOW_RULES
+    from apps.frontend.views.extended_views import (
+        WORKFLOW_RULES,
+        access_matrix_pages,
+    )
 
     return {
         "pages": {
@@ -56,6 +60,12 @@ def rules() -> dict:
         },
         "workflow_rules": [[r["key"], r["label"]] for r in WORKFLOW_RULES],
         "missing_lines": missing_lines(),
+        # The Page & Feature Access Matrix: the routed pages it lists (name
+        # and path, by path) and the role columns, in order.
+        "access_matrix": {
+            "pages": [[p["name"], p["path"]] for p in access_matrix_pages()],
+            "roles": [role.value for role in EdifyRole],
+        },
         # Who may open a district's profile (school_links.district_link).
         "district_profile_roles": sorted(
             role.value

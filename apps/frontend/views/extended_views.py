@@ -4379,30 +4379,12 @@ def admin_workflow_rules_view(request):
     return render(request, "pages/admin/workflow_rules.html", context)
 
 
-@require_page_permission("page_access_matrix")
-def admin_page_access_matrix_view(request):
-    """Matrix displaying user page routing permissions.
-
-    Built entirely from real data: the routed pages are discovered by walking
-    the URL config for views wrapped in @require_page_permission (same
-    decorator enforcing access on every request — see apps.core.permissions),
-    and every cell is a live call to
-    RolePermissionService.can_view_page(user, page), the same function that
-    actually gates the route. No page names, role lists, or grants are
-    hand-typed here, mirroring how admin_roles_permissions_view above builds
-    its matrix from the real RolePermission table.
-    """
+def access_matrix_pages() -> list[dict]:
+    """The routed pages the Page & Feature Access Matrix lists: every view
+    wrapped in @require_page_permission, one per page key (the shortest-prefix
+    route), by path. Go's internal/adminpanel reads the same list from
+    rules.json."""
     from django.urls import get_resolver
-    from apps.core.rbac import EdifyRole
-    from apps.core.permissions import RolePermissionService
-
-    class _RoleProbe:
-        """Minimal stand-in for a user — can_view_page only reads active_role."""
-
-        is_authenticated = True
-
-        def __init__(self, role):
-            self.active_role = role
 
     def _discover_pages(patterns, prefix=""):
         found = []
@@ -4424,12 +4406,38 @@ def admin_page_access_matrix_view(request):
     for page_key, path in _discover_pages(get_resolver().url_patterns):
         pages_by_key.setdefault(page_key, "/" + path.lstrip("/"))
 
-    roles = [r.value for r in EdifyRole]
-
-    pages = [
+    return [
         {"key": key, "name": _humanize_rbac_token(key), "path": path}
         for key, path in sorted(pages_by_key.items(), key=lambda kv: kv[1])
     ]
+
+
+@require_page_permission("page_access_matrix")
+def admin_page_access_matrix_view(request):
+    """Matrix displaying user page routing permissions.
+
+    Built entirely from real data: the routed pages are discovered by walking
+    the URL config for views wrapped in @require_page_permission (same
+    decorator enforcing access on every request — see apps.core.permissions),
+    and every cell is a live call to
+    RolePermissionService.can_view_page(user, page), the same function that
+    actually gates the route. No page names, role lists, or grants are
+    hand-typed here, mirroring how admin_roles_permissions_view above builds
+    its matrix from the real RolePermission table.
+    """
+    from apps.core.rbac import EdifyRole
+    from apps.core.permissions import RolePermissionService
+
+    class _RoleProbe:
+        """Minimal stand-in for a user — can_view_page only reads active_role."""
+
+        is_authenticated = True
+
+        def __init__(self, role):
+            self.active_role = role
+
+    pages = access_matrix_pages()
+    roles = [r.value for r in EdifyRole]
 
     matrix = {
         p["name"]: {

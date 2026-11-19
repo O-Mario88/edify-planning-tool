@@ -6,7 +6,9 @@
 // the Admin Dashboard (/admin-panel, hub.go); and the Audit Log
 // (/admin-panel/audit-log, audit.go); and Geographical Location Setup
 // (/admin-panel/region-district-setup, geography.go); and Notification &
-// Alert Logs (/admin-panel/notifications-mgmt, notifications.go).
+// Alert Logs (/admin-panel/notifications-mgmt, notifications.go); and the
+// Page & Feature Access Matrix (/admin-panel/page-access-matrix,
+// access_matrix.go).
 //
 // The doors and the listed rules are exported to rules.json by `manage.py
 // export_admin_panel_rules`; apps/frontend/test_admin_panel_rules_export.py
@@ -43,6 +45,11 @@ var rules = func() (r struct {
 		OnlineTrainingTypes     []string `json:"online_training_types"`
 		OnlineMode              string   `json:"online_mode"`
 	} `json:"missing_lines"`
+	// AccessMatrix is the Page & Feature Access Matrix's pages and roles.
+	AccessMatrix struct {
+		Pages [][2]string `json:"pages"`
+		Roles []string    `json:"roles"`
+	} `json:"access_matrix"`
 	// DistrictProfileRoles may open a district's profile.
 	DistrictProfileRoles []string `json:"district_profile_roles"`
 }) {
@@ -89,6 +96,8 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		return s.geography(ctx, p)
 	case NotificationsPath:
 		return s.notifications(ctx, query)
+	case AccessMatrixPath:
+		return accessMatrix(query), true, nil
 	}
 	return workflowRules(), true, nil
 }

@@ -340,7 +340,13 @@ its recipient and role, priority and read state. Golden
 (adminpanel/testdata/notifications_golden.py, dated tomorrow): 6 answers, 0
 differing.
 
-Left in C6: `/admin-panel/page-access-matrix`, `/settings/activity-catalogue/`.
+`/admin-panel/page-access-matrix` is Go's too (adminpanel/access_matrix.go):
+every routed page by path and a column per role, from the list the view now
+builds with `extended_views.access_matrix_pages()` and the exporter writes;
+each cell is a grant icon the feed reads alike whether granted or not. 12
+answers over three readers and four pages, 0 differing.
+
+Left in C6: `/settings/activity-catalogue/`.
 Left in C5: `/ia/school-evidence/` and `/priorities/ssa-mapping`.
 
 ### Found on the way (2026-11-19): stale generated artefacts on this branch

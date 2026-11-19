@@ -1,4 +1,786 @@
 {
+  "access_matrix": {
+    "pages": [
+      [
+        "Disbursements",
+        "/accounts/activity-evidence/<str:activity_id>"
+      ],
+      [
+        "Monthly request",
+        "/accounts/monthly-request"
+      ],
+      [
+        "Acting leadership",
+        "/acting-leadership"
+      ],
+      [
+        "My actions",
+        "/actions/mine"
+      ],
+      [
+        "Actions sent",
+        "/actions/sent"
+      ],
+      [
+        "Activity timeline",
+        "/activities/<str:activity_id>/timeline/"
+      ],
+      [
+        "Admin incidents",
+        "/admin-ops/incidents"
+      ],
+      [
+        "Admin maintenance",
+        "/admin-ops/maintenance"
+      ],
+      [
+        "Admin my plan",
+        "/admin-ops/my-plan"
+      ],
+      [
+        "Admin planning",
+        "/admin-ops/planning"
+      ],
+      [
+        "Admin support queue",
+        "/admin-ops/support"
+      ],
+      [
+        "Admin team plans",
+        "/admin-ops/team-plans"
+      ],
+      [
+        "Admin dashboard",
+        "/admin-panel"
+      ],
+      [
+        "Audit log",
+        "/admin-panel/audit-log"
+      ],
+      [
+        "Data quality center",
+        "/admin-panel/data-quality-center"
+      ],
+      [
+        "Notifications mgmt",
+        "/admin-panel/notifications-mgmt"
+      ],
+      [
+        "Page access matrix",
+        "/admin-panel/page-access-matrix"
+      ],
+      [
+        "Region district setup",
+        "/admin-panel/region-district-setup"
+      ],
+      [
+        "Roles permissions",
+        "/admin-panel/roles-permissions"
+      ],
+      [
+        "Upload history",
+        "/admin-panel/school-upload-history"
+      ],
+      [
+        "Staff setup queue",
+        "/admin-panel/staff-setup-queue"
+      ],
+      [
+        "Users",
+        "/admin-panel/users"
+      ],
+      [
+        "Workflow rules",
+        "/admin-panel/workflow-rules"
+      ],
+      [
+        "Closure quality",
+        "/analytics/closure-quality"
+      ],
+      [
+        "Hr analytics",
+        "/analytics/people"
+      ],
+      [
+        "Pl analytics",
+        "/analytics/program-lead"
+      ],
+      [
+        "Analytics publishing",
+        "/analytics/publishing"
+      ],
+      [
+        "Closure impact",
+        "/analytics/school-closures"
+      ],
+      [
+        "Visit effectiveness",
+        "/analytics/visit-effectiveness"
+      ],
+      [
+        "Analytics",
+        "/api/analytics/combine-map-boundaries"
+      ],
+      [
+        "Monthly budget",
+        "/budget"
+      ],
+      [
+        "Consolidated fund allocation",
+        "/budgets/overview"
+      ],
+      [
+        "Business transformation",
+        "/business-transformation"
+      ],
+      [
+        "Business transformation finance",
+        "/business-transformation/business-accounting-finance"
+      ],
+      [
+        "Business transformation government",
+        "/business-transformation/government-requirements"
+      ],
+      [
+        "Business transformation reports",
+        "/business-transformation/impact-reports"
+      ],
+      [
+        "Calendar",
+        "/calendar"
+      ],
+      [
+        "Candidate pipeline",
+        "/candidate-pipeline"
+      ],
+      [
+        "Cce engagements",
+        "/cce-leadership/engagements/new"
+      ],
+      [
+        "Cce training feedback",
+        "/cce-leadership/feedback/<str:engagement_id>/acknowledge"
+      ],
+      [
+        "Cce reports",
+        "/cce-leadership/reports/new"
+      ],
+      [
+        "Cluster oversight",
+        "/cluster-oversight/"
+      ],
+      [
+        "Cluster scoring",
+        "/cluster-oversight/scoring"
+      ],
+      [
+        "Clusters",
+        "/clusters"
+      ],
+      [
+        "Cluster detail",
+        "/clusters/<str:cluster_id>/catchment-drawer"
+      ],
+      [
+        "Compensation benefits",
+        "/compensation-benefits/new"
+      ],
+      [
+        "Completed activities",
+        "/completed-activities"
+      ],
+      [
+        "Compliance register",
+        "/compliance-register/requirement"
+      ],
+      [
+        "Core school health",
+        "/core-school-health"
+      ],
+      [
+        "Core schools",
+        "/core-schools"
+      ],
+      [
+        "Core schools oversight",
+        "/core-schools-oversight/"
+      ],
+      [
+        "Cost intelligence",
+        "/cost-intelligence"
+      ],
+      [
+        "Cost settings",
+        "/cost-settings"
+      ],
+      [
+        "Country budget",
+        "/country-budget"
+      ],
+      [
+        "Country map",
+        "/country-map/"
+      ],
+      [
+        "Country planning oversight",
+        "/country-planning-oversight/"
+      ],
+      [
+        "Decision intelligence",
+        "/country-profile/decisions"
+      ],
+      [
+        "Coverage",
+        "/coverage"
+      ],
+      [
+        "Cpd learning",
+        "/cpd-learning"
+      ],
+      [
+        "Culture engagement",
+        "/culture-engagement"
+      ],
+      [
+        "Dashboard",
+        "/dashboard"
+      ],
+      [
+        "Cd analytics",
+        "/dashboard/cd-approve"
+      ],
+      [
+        "Data repair",
+        "/data-repair"
+      ],
+      [
+        "Debriefs list",
+        "/debriefs"
+      ],
+      [
+        "Debrief detail",
+        "/debriefs/<str:debrief_id>"
+      ],
+      [
+        "Decision log",
+        "/decision-log"
+      ],
+      [
+        "Declining schools",
+        "/declining-schools"
+      ],
+      [
+        "Employee relations",
+        "/employee-relations"
+      ],
+      [
+        "Escalations",
+        "/escalations"
+      ],
+      [
+        "Evidence center",
+        "/evidence/"
+      ],
+      [
+        "Extra work",
+        "/extra-work"
+      ],
+      [
+        "Fund approvals",
+        "/fund-approvals"
+      ],
+      [
+        "Weekly fund request disburse",
+        "/fund-requests/weekly/<str:request_id>/disburse"
+      ],
+      [
+        "Fund requests",
+        "/fund-requests/weekly/export-drawer"
+      ],
+      [
+        "Health safety",
+        "/health-safety"
+      ],
+      [
+        "Help",
+        "/help"
+      ],
+      [
+        "Home",
+        "/home"
+      ],
+      [
+        "Hr audit log",
+        "/hr-audit-log"
+      ],
+      [
+        "Hr today",
+        "/hr-today"
+      ],
+      [
+        "Performance console",
+        "/hr/performance-cycle"
+      ],
+      [
+        "Ia verification analytics",
+        "/ia/analytics/"
+      ],
+      [
+        "Ia attribution",
+        "/ia/attribution/"
+      ],
+      [
+        "Ia compare",
+        "/ia/compare/"
+      ],
+      [
+        "Ia dashboard",
+        "/ia/dashboard/"
+      ],
+      [
+        "Ia duplicates",
+        "/ia/duplicates/"
+      ],
+      [
+        "Ia framework",
+        "/ia/framework/"
+      ],
+      [
+        "Ia history",
+        "/ia/history/"
+      ],
+      [
+        "Impact reports",
+        "/ia/impact-reports/"
+      ],
+      [
+        "Ia learning",
+        "/ia/learning/"
+      ],
+      [
+        "Ia lending evidence",
+        "/ia/lending-evidence/"
+      ],
+      [
+        "Ia notifications",
+        "/ia/notifications/"
+      ],
+      [
+        "Ia partner evidence",
+        "/ia/partner-evidence/"
+      ],
+      [
+        "Ia returned",
+        "/ia/returned/"
+      ],
+      [
+        "Ia samples",
+        "/ia/samples/"
+      ],
+      [
+        "Ia school evidence",
+        "/ia/school-evidence/"
+      ],
+      [
+        "Ia stories",
+        "/ia/stories/"
+      ],
+      [
+        "Ia verification queue",
+        "/ia/verification/"
+      ],
+      [
+        "Ia review workspace",
+        "/ia/verification/<str:activity_id>/"
+      ],
+      [
+        "Impact analytics",
+        "/impact"
+      ],
+      [
+        "Leave approvals",
+        "/leave/approvals"
+      ],
+      [
+        "Leave calendar",
+        "/leave/calendar"
+      ],
+      [
+        "Leave coverage",
+        "/leave/coverage"
+      ],
+      [
+        "Leave policies",
+        "/leave/policies"
+      ],
+      [
+        "Team availability",
+        "/leave/team-availability"
+      ],
+      [
+        "Leave tracker",
+        "/leave/tracker"
+      ],
+      [
+        "Loans",
+        "/loan-applications/export.csv"
+      ],
+      [
+        "Schools",
+        "/map"
+      ],
+      [
+        "Messages",
+        "/messages"
+      ],
+      [
+        "Mfi portal",
+        "/mfi-portal"
+      ],
+      [
+        "My coaching",
+        "/my-coaching/<str:record_id>/acknowledge"
+      ],
+      [
+        "My performance",
+        "/my-performance"
+      ],
+      [
+        "My professional development",
+        "/my-professional-development"
+      ],
+      [
+        "My target",
+        "/my-targets"
+      ],
+      [
+        "My team",
+        "/my-team"
+      ],
+      [
+        "Offboarding",
+        "/offboarding/new"
+      ],
+      [
+        "Onboarding",
+        "/onboarding"
+      ],
+      [
+        "Org structure",
+        "/org-structure"
+      ],
+      [
+        "Ownership transfers",
+        "/ownership-transfers/"
+      ],
+      [
+        "Partner oversight",
+        "/partner-oversight/"
+      ],
+      [
+        "Partner activities",
+        "/partner/activities"
+      ],
+      [
+        "Partner assignments",
+        "/partner/assignments"
+      ],
+      [
+        "Partner evidence",
+        "/partner/evidence"
+      ],
+      [
+        "Partner my plan",
+        "/partner/invoices/new"
+      ],
+      [
+        "Partner schools",
+        "/partner/schools"
+      ],
+      [
+        "Partner today",
+        "/partner/today"
+      ],
+      [
+        "Partner users",
+        "/partner/users"
+      ],
+      [
+        "Partners",
+        "/partners"
+      ],
+      [
+        "Partner detail",
+        "/partners/<str:partner_id>"
+      ],
+      [
+        "Payroll readiness",
+        "/payroll-readiness"
+      ],
+      [
+        "Performance conversations",
+        "/performance-conversation"
+      ],
+      [
+        "Performance reviews",
+        "/performance-reviews"
+      ],
+      [
+        "Personal time off",
+        "/personal-time-off"
+      ],
+      [
+        "Pl review queue",
+        "/pl/review-queue"
+      ],
+      [
+        "Planning monitor",
+        "/planning-monitor/"
+      ],
+      [
+        "Fy planning policy",
+        "/planning/fiscal-years"
+      ],
+      [
+        "Planning",
+        "/planning/training-capacity"
+      ],
+      [
+        "Visit requests",
+        "/planning/visit-requests"
+      ],
+      [
+        "Policies",
+        "/policies"
+      ],
+      [
+        "Policy compliance",
+        "/policy-compliance"
+      ],
+      [
+        "Priorities master",
+        "/priorities"
+      ],
+      [
+        "Team guidance",
+        "/priorities/guidance/new"
+      ],
+      [
+        "Ssa mapping",
+        "/priorities/ssa-mapping"
+      ],
+      [
+        "Programme rollout",
+        "/programme-rollout/schools"
+      ],
+      [
+        "Programme schools",
+        "/programme-schools"
+      ],
+      [
+        "Projects",
+        "/projects"
+      ],
+      [
+        "Project capacity",
+        "/projects/capacity"
+      ],
+      [
+        "Project monitoring",
+        "/projects/monitoring"
+      ],
+      [
+        "Public holidays",
+        "/public-holidays"
+      ],
+      [
+        "Pulse surveys",
+        "/pulse-surveys"
+      ],
+      [
+        "Staff pulse",
+        "/pulse/<str:survey_id>"
+      ],
+      [
+        "Quality checks",
+        "/quality-checks"
+      ],
+      [
+        "Recognition",
+        "/recognition"
+      ],
+      [
+        "Recovery plans",
+        "/recovery-plans/new"
+      ],
+      [
+        "Recruitment",
+        "/recruitment"
+      ],
+      [
+        "Reports",
+        "/reports"
+      ],
+      [
+        "Rvp annual action",
+        "/rvp/annual/<str:budget_id>/action"
+      ],
+      [
+        "Rvp approvals",
+        "/rvp/approvals"
+      ],
+      [
+        "Rvp project decision",
+        "/rvp/project/<str:project_id>/decision"
+      ],
+      [
+        "Rvp strategy note",
+        "/rvp/strategy-note"
+      ],
+      [
+        "School directory",
+        "/schools"
+      ],
+      [
+        "School profile",
+        "/schools/<str:school_id>"
+      ],
+      [
+        "Closed schools",
+        "/schools/closed"
+      ],
+      [
+        "School upload",
+        "/schools/upload"
+      ],
+      [
+        "Search",
+        "/search"
+      ],
+      [
+        "Settings",
+        "/settings"
+      ],
+      [
+        "Ssa performance",
+        "/ssa"
+      ],
+      [
+        "Ssa",
+        "/ssa/manual/"
+      ],
+      [
+        "Ia upload center",
+        "/ssa/upload/history/"
+      ],
+      [
+        "Staff directory",
+        "/staff"
+      ],
+      [
+        "Staff activity",
+        "/staff-activity"
+      ],
+      [
+        "Staff",
+        "/staff/<str:user_id>"
+      ],
+      [
+        "Strategic priorities",
+        "/strategic-priorities"
+      ],
+      [
+        "Succession planning",
+        "/succession-planning"
+      ],
+      [
+        "Report problem",
+        "/support"
+      ],
+      [
+        "System health",
+        "/system-health"
+      ],
+      [
+        "Target distribution",
+        "/target-distribution"
+      ],
+      [
+        "Team target distribution",
+        "/target-distribution/team"
+      ],
+      [
+        "Team performance",
+        "/team-performance/"
+      ],
+      [
+        "Team performance targets",
+        "/team-performance/country-targets/"
+      ],
+      [
+        "Team targets",
+        "/team-targets"
+      ],
+      [
+        "Team coaching",
+        "/team/coaching/new"
+      ],
+      [
+        "Today",
+        "/today"
+      ],
+      [
+        "Todos",
+        "/todos"
+      ],
+      [
+        "Team planning oversight",
+        "/training-ceilings/country/set"
+      ],
+      [
+        "My plan",
+        "/training-summary/schools"
+      ],
+      [
+        "Uploads",
+        "/uploads"
+      ],
+      [
+        "Bulk completion",
+        "/uploads/bulk-completion/batch/<str:batch_id>"
+      ],
+      [
+        "Wellness",
+        "/wellness"
+      ],
+      [
+        "Work plan",
+        "/work-plan"
+      ],
+      [
+        "Workforce planning",
+        "/workforce-planning"
+      ]
+    ],
+    "roles": [
+      "CCEO",
+      "Program Lead",
+      "CountryDirector",
+      "RegionalVicePresident",
+      "RegionalProgramLead",
+      "ImpactAssessment",
+      "Accountant",
+      "HumanResources",
+      "ProjectCoordinator",
+      "PartnerAdmin",
+      "PartnerFieldOfficer",
+      "BusinessTransformationOfficer",
+      "MfiPartnerAdmin",
+      "MfiLoanOfficer",
+      "Admin",
+      "ClusterLeader"
+    ]
+  },
   "district_profile_roles": [
     "Accountant",
     "Admin",
@@ -49,6 +831,9 @@
       "ImpactAssessment"
     ],
     "/admin-panel/notifications-mgmt": [
+      "Admin"
+    ],
+    "/admin-panel/page-access-matrix": [
       "Admin"
     ],
     "/admin-panel/region-district-setup": [
