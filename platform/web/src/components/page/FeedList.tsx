@@ -117,7 +117,8 @@ function AdminPanel({ list, resolve }: { list: PageList; resolve: (href: string)
   // its empty third cell, as the template writes it.
   const logins = list.items.some((item) => item.meter);
   return (
-    <section className="admin-panel" aria-label={list.title || undefined} data-block="list" data-family="admin-panel" data-admin-logins={logins ? '' : undefined}>
+    // A card with a header is a structured surface (static/js/micro-ux.js), which consistency.css reads for its padding.
+    <section className="admin-panel edify-structured-surface" aria-label={list.title || undefined} data-block="list" data-family="admin-panel" data-admin-logins={logins ? '' : undefined}>
       <header className="admin-panel__header">
         <h2>{list.title}</h2>
         {list.subtitle ? <span className="edify-text-caption">{list.subtitle}</span> : null}

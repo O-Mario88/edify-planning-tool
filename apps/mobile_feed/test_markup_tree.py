@@ -124,3 +124,28 @@ class MarkupTableTextTest(SimpleTestCase):
         row = tbody["children"][0]
         self.assertEqual([c.get("tag") for c in tree["children"]], ["tbody"])
         self.assertEqual([c.get("tag") for c in row["children"]], ["td"])
+
+
+class StructuredSurfaceTest(SimpleTestCase):
+    """The existing web marks, once a page loads, each card with a header,
+    titlebar or table as a structured surface (static/js/micro-ux.js), which
+    the stylesheets read for the card's padding; the tree carries the mark."""
+
+    def test_a_card_with_a_header_is_marked_and_a_part_is_not(self):
+        tree = markup_tree.read(
+            page_blocks.parse(
+                "<div class='admin-workspace'>"
+                "<section class='admin-panel admin-partners'><header class='admin-panel__header'><h2>P</h2></header>"
+                "<div class='admin-mini-grid'><article class='admin-mini'><span>A</span></article></div>"
+                "<div class='admin-panel__empty'>x</div></section>"
+                "<section class='admin-panel'><p>No header</p></section>"
+                "</div>"
+            ).children[0]
+        )
+
+        first, second = tree["children"]
+        self.assertIn("edify-structured-surface", first["className"].split())
+        self.assertNotIn("data-edify-band-first", first.get("attrs", {}))
+        self.assertNotIn("edify-structured-surface", second["className"].split())
+        empty = first["children"][-1]
+        self.assertNotIn("edify-structured-surface", empty["className"].split())

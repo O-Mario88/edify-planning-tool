@@ -140,7 +140,8 @@ function AdminTable({ table, resolve }: { table: PageTable; resolve: (href: stri
   const headerHref = table.headerLink ? resolve(table.headerLink.href) : '';
   const footerHref = table.footerLink ? resolve(table.footerLink.href) : '';
   return (
-    <section className={table.cardClass || 'admin-panel'} aria-label={table.title || undefined} data-block="table" data-family="admin-panel">
+    // A card with a header is a structured surface (static/js/micro-ux.js), which consistency.css reads for its padding.
+    <section className={`${table.cardClass || 'admin-panel'} edify-structured-surface`} aria-label={table.title || undefined} data-block="table" data-family="admin-panel">
       <header className="admin-panel__header">
         <h2>
           {table.title}

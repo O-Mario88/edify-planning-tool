@@ -109,9 +109,85 @@ def _hidden(node) -> bool:
 
 
 def read(node) -> dict:
-    """``node`` as a markup tree (PageMarkupNode as JSON)."""
+    """``node`` as a markup tree (PageMarkupNode as JSON), with the marks the
+    existing web adds once a page loads (_mark_surfaces)."""
     budget = [MAX_NODES]
-    return _node(node, budget) or {"tag": "div"}
+    tree = _node(node, budget) or {"tag": "div"}
+    _mark_surfaces(tree, inside=False)
+    return tree
+
+
+#: static/js/micro-ux.js's surfaces: cards, panels and tiles by their class.
+SURFACE_CLASSES = frozenset(
+    {"card", "card-elevated", "card-flat", "card-insight", "premium-card", "premium-card-elevated",
+     "panel", "mini", "summary-card", "rail-card", "edify-kpi-card", "card-kpi", "edify-tile"}
+)  # fmt: skip
+SURFACE_PARTS = ("-card", "-panel", "-tile")
+#: A child that makes a surface structured: a header, titlebar or table.
+STRUCTURING = re.compile(r"(__header|titlebar|table-wrap|table-scroll)")
+PADDED = re.compile(r"(^|\s)p[xy]?-\d")
+
+
+def _classes(node: dict) -> list[str]:
+    return node.get("className", "").split()
+
+
+def _is_surface(node: dict) -> bool:
+    names = _classes(node)
+    joined = " ".join(names)
+    if any(name in SURFACE_CLASSES for name in names) or any(
+        part in joined for part in SURFACE_PARTS
+    ):
+        return True
+    return "edify-surface" in names and "rounded" in joined
+
+
+def _structures(child: dict) -> bool:
+    names = " ".join(_classes(child))
+    tag = child.get("tag", "")
+    return (
+        tag in ("header", "table")
+        or bool(STRUCTURING.search(names))
+        or "overflow-x-auto" in names.split()
+        or "overflow-auto" in names.split()
+    )
+
+
+def _mark_surfaces(node: dict, inside: bool) -> None:
+    """The structured-surface marks micro-ux.js adds as a page opens, which
+    consistency.css reads for a card's padding: a card, panel or tile (not
+    one of their parts) whose own children include a header, titlebar or
+    table is structured; so is an unpadded one whose child is a padded band."""
+    if not node.get("tag"):
+        return
+    surface = _is_surface(node)
+    if surface:
+        joined = " ".join(_classes(node))
+        part = any(part + "__" in joined for part in SURFACE_PARTS)
+        kids = [child for child in node.get("children", []) if child.get("tag")]
+        structured = not part and any(_structures(child) for child in kids)
+        if not structured and not part and not PADDED.search(joined):
+            structured = any(
+                re.search(r"(^|\s)px-\d", " ".join(_classes(child)))
+                and re.search(r"(^|\s)border-[bt](\s|$)", " ".join(_classes(child)))
+                for child in kids
+            )
+        if structured:
+            node["className"] = (joined + " edify-structured-surface").strip()
+            attrs = node.setdefault("attrs", {})
+            if inside:
+                attrs["data-edify-nested"] = ""
+            if kids and "titlebar" in " ".join(_classes(kids[0])):
+                attrs["data-edify-band-first"] = ""
+            last = kids[-1] if kids else {}
+            if last.get("tag") == "table" or {
+                "overflow-x-auto",
+                "overflow-auto",
+                "edify-record-table-wrap",
+            } & set(_classes(last)):
+                attrs["data-edify-table-last"] = ""
+    for child in node.get("children", []):
+        _mark_surfaces(child, inside or surface)
 
 
 def _node(node, budget: list[int]) -> dict | None:
