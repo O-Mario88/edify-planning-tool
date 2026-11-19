@@ -6,6 +6,7 @@
  * the design system and SAMPLE content, to review the structure before any
  * page is rebuilt. Nothing here reads or changes data.
  */
+import { Bell, Search } from 'lucide-react';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
@@ -48,16 +49,20 @@ function Phone({ title, children }: { title: string; children: ReactNode }) {
     <div className="w-[375px] max-w-full shrink-0 overflow-hidden rounded-[28px] border border-ds-border-strong bg-ds-bg shadow-ds-overlay">
       <div className="flex h-[52px] items-center justify-between border-b border-ds-border bg-ds-surface px-4">
         <div className="min-w-0">
-          <p className="text-ds-caption font-[600] text-ds-text-subtle">Thu 19 Nov · FY2027</p>
-          <p className="truncate text-ds-lead font-[700] text-ds-text">{title}</p>
+          <p className="text-ds-caption font-semibold text-ds-text-subtle">Thu 19 Nov · FY2027</p>
+          <p className="truncate text-ds-lead font-bold text-ds-text">{title}</p>
         </div>
         <div className="flex items-center gap-1 text-ds-text-muted" aria-hidden="true">
-          <span className="grid h-11 w-11 place-items-center">⌕</span>
-          <span className="grid h-11 w-11 place-items-center">●</span>
+          <span className="grid h-11 w-11 place-items-center">
+            <Search size={20} />
+          </span>
+          <span className="grid h-11 w-11 place-items-center">
+            <Bell size={20} />
+          </span>
         </div>
       </div>
       <div className="h-[704px] space-y-4 overflow-y-auto p-4">{children}</div>
-      <nav className="grid h-[56px] grid-cols-5 border-t border-ds-border bg-ds-surface text-ds-caption font-[600] text-ds-text-subtle">
+      <nav className="grid h-[56px] grid-cols-5 border-t border-ds-border bg-ds-surface text-ds-caption font-semibold text-ds-text-subtle">
         {['Today', 'My Plan', 'Schools', 'Messages', 'More'].map((item, i) => (
           <span key={item} className={`grid place-items-center ${i === 0 ? 'text-ds-primary' : ''}`}>
             {item}
@@ -83,7 +88,7 @@ function Pair({ title, why, before, after }: { title: string; why: string[]; bef
   return (
     <section className="space-y-4">
       <div>
-        <h2 className="text-ds-title font-[700] text-ds-text">{title}</h2>
+        <h2 className="text-ds-title font-bold text-ds-text">{title}</h2>
         <ul className="mt-2 list-disc space-y-1 pl-5 text-ds-body text-ds-text-muted">
           {why.map((line) => (
             <li key={line}>{line}</li>
@@ -105,8 +110,8 @@ function CceoToday() {
   return (
     <Phone title="Today">
       <Surface>
-        <p className="text-ds-caption font-[600] text-ds-text-subtle">Next up · 9:00</p>
-        <p className="mt-1 text-ds-lead font-[700] text-ds-text">Support visit — Kasawo Church of Uganda P/S</p>
+        <p className="text-ds-caption font-semibold text-ds-text-subtle">Next up · 9:00</p>
+        <p className="mt-1 text-ds-lead font-bold text-ds-text">Support visit — Kasawo Church of Uganda P/S</p>
         <p className="mt-1 text-ds-caption text-ds-text-subtle">Mukono · 1 of 3 stops on today&apos;s route</p>
         <div className="mt-3 grid grid-cols-2 gap-2">
           <Button href="#">Start visit</Button>
@@ -173,8 +178,8 @@ function AccountantMoney() {
             className="flex min-h-[var(--ds-target)] items-center justify-between rounded-ds-lg border border-ds-border bg-ds-surface px-4 py-3 shadow-ds-raised"
           >
             <div>
-              <p className="text-ds-caption font-[600] text-ds-text-subtle">{m.label}</p>
-              <p className="mt-0.5 text-ds-lead font-[700] tabular-nums text-ds-text">{m.amount}</p>
+              <p className="text-ds-caption font-semibold text-ds-text-subtle">{m.label}</p>
+              <p className="mt-0.5 text-ds-lead font-bold tabular-nums text-ds-text">{m.amount}</p>
             </div>
             <StatusBadge tone={m.tone}>{m.count} items</StatusBadge>
           </a>
@@ -190,8 +195,8 @@ export default function DesignPreviewPage() {
   return (
     <div className="space-y-12 bg-ds-bg p-6 text-ds-text">
       <header className="max-w-3xl">
-        <p className="text-ds-caption font-[700] uppercase tracking-wide text-ds-primary">Stage B · preview</p>
-        <h1 className="mt-1 text-ds-display font-[700]">Edify Enterprise Design System</h1>
+        <p className="text-ds-caption font-bold uppercase tracking-wide text-ds-primary">Stage B · preview</p>
+        <h1 className="mt-1 text-ds-display font-bold">Edify Enterprise Design System</h1>
         <p className="mt-2 text-ds-body text-ds-text-muted">
           Tokens and components for the redesigned web and native screens, and before/after pairs for three phone screens. Before is a real capture of the
           existing application; after is the proposed layout with sample content. Review the structure here before any page is rebuilt.
@@ -199,23 +204,23 @@ export default function DesignPreviewPage() {
       </header>
 
       <section className="space-y-3">
-        <h2 className="text-ds-title font-[700]">Colour</h2>
+        <h2 className="text-ds-title font-bold">Colour</h2>
         <p className="text-ds-body text-ds-text-muted">Every text and status colour meets WCAG 2.2 AA on the surfaces it is drawn on (checked when the tokens are built).</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
           {SWATCHES.map((name) => (
             <div key={name} className="overflow-hidden rounded-ds-md border border-ds-border bg-ds-surface">
               <div className="h-12" style={{ background: `var(--ds-${name})` }} />
-              <p className="px-2 py-1 text-ds-caption font-[600]">{name}</p>
+              <p className="px-2 py-1 text-ds-caption font-semibold">{name}</p>
             </div>
           ))}
         </div>
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-ds-title font-[700]">Type</h2>
+        <h2 className="text-ds-title font-bold">Type</h2>
         <div className="space-y-2 rounded-ds-lg border border-ds-border bg-ds-surface p-4">
           {TYPE.map(([name, className]) => (
-            <p key={name} className={`${className} font-[600]`}>
+            <p key={name} className={`${className} font-semibold`}>
               {name} · Planned 212 of 280 support visits
             </p>
           ))}
@@ -223,7 +228,7 @@ export default function DesignPreviewPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-ds-title font-[700]">Components</h2>
+        <h2 className="text-ds-title font-bold">Components</h2>
         <div className="grid gap-4 lg:grid-cols-2">
           <Surface>
             <div className="flex flex-wrap gap-2">
