@@ -36,6 +36,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/btpages"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/budgetpage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/calendarpage"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/catalogue"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/ccelead"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closurepages"
@@ -207,6 +208,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			plreview.NewService(pool, time.Now),
 			perfcycle.NewService(pool, time.Now),
 			perfconversation.NewService(pool, time.Now),
+			catalogue.NewService(pool, time.Now),
 			closurequality.NewService(pool, time.Now),
 			iaframework.NewService(pool),
 			ownership.NewService(pool),

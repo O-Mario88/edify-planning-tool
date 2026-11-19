@@ -1191,3 +1191,13 @@ GRANT SELECT (reporter_id, resolution) ON admin_support_ticket TO edify_gateway_
 -- statement and whether it gates the application.
 GRANT SELECT (comment) ON document_acknowledgement TO edify_gateway_ro;
 GRANT SELECT (description, agreement_statement, blocks_application_access) ON document_asset TO edify_gateway_ro;
+
+-- Activity Catalogue settings (internal/catalogue): each item's profiles,
+-- delivery eligibility and Salesforce record; its versions (number, reason,
+-- when); the mapping corrections waiting on review. Not a version's
+-- snapshot.
+GRANT SELECT (evidence_profile, salesforce_record_type, salesforce_expected_prefix, staff_delivery_allowed, partner_delivery_allowed,
+  individual_school_allowed, project_delivery_allowed) ON activity_catalogue_item TO edify_gateway_ro;
+GRANT SELECT (id, catalogue_item_id, version, change_reason, created_at) ON activity_catalogue_version TO edify_gateway_ro;
+GRANT SELECT (id, review_kind, source_model, source_record_id, source_value, candidate_codes, status, created_at)
+  ON activity_catalogue_review_queue TO edify_gateway_ro;

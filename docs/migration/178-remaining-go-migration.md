@@ -371,7 +371,17 @@ builds with `extended_views.access_matrix_pages()` and the exporter writes;
 each cell is a grant icon the feed reads alike whether granted or not. 12
 answers over three readers and four pages, 0 differing.
 
-Left in C6: `/settings/activity-catalogue/`.
+`/settings/activity-catalogue/` is Go's (internal/catalogue): the governed
+catalogue under its five filters (every item for a reader who manages it, the
+items in force today for anyone else), each card written as the template
+writes it and read by the feed's own rules (feeddom): its use count, the
+active mappings' interventions, evidence, cost and Salesforce profiles,
+eligibility and version history, a training's Edit drawer; for a manager the
+New activity button and the Catalogue Mapping Review card (its one form when
+a single correction waits). A reader without the catalogue's view
+permission is refused (403); ?new= (the drawer opened) is handed on. The
+project choice reads `workplan.ScopedProjects`. 30 answers of 6 readers over
+five filters, 0 differing.
 `/priorities/ssa-mapping` is Go's (iaframework/mapping.go) for the readers
 who keep the read-only register (the Programme Lead, the RVP, the Project
 Coordinator): rules_register's rows, fifty a page, each with its History
