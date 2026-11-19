@@ -334,9 +334,13 @@ of each group's state and districts when there are) and the new-district
 form. Golden (adminpanel/testdata/geography_golden.py) 3 readers with groups
 and the clean state 2, 0 differing.
 
-Left in C6:
-`/admin-panel/notifications-mgmt`, `/admin-panel/page-access-matrix`,
-`/settings/activity-catalogue/`.
+`/admin-panel/notifications-mgmt` is Go's too (adminpanel/notifications.go):
+the newest fifty notifications to anyone, each its title, words and time,
+its recipient and role, priority and read state. Golden
+(adminpanel/testdata/notifications_golden.py, dated tomorrow): 6 answers, 0
+differing.
+
+Left in C6: `/admin-panel/page-access-matrix`, `/settings/activity-catalogue/`.
 Left in C5: `/ia/school-evidence/` and `/priorities/ssa-mapping`.
 
 ### Found on the way (2026-11-19): stale generated artefacts on this branch
