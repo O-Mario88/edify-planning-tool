@@ -44,6 +44,7 @@ PAGES = {
     "/ssa/unmatched": "data_quality_center",
     "/ssa/upload/history/": "ia_upload_center",
     "/ssa/manual/": "ssa",
+    "/ssa/upload/": "ssa",
 }
 
 #: The pages that draw the IA workspace strip (partials/_section_nav.html).

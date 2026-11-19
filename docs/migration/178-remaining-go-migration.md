@@ -294,3 +294,9 @@ page opens to without that permission is sent away by the existing page and
 handed on. 24 answers over eight readers, 0 differing. Saving stays the
 existing page's.
 
+`/ssa/upload/` (Upload SSA Scores) is Go's in `internal/iapages`
+(upload_center.go): the sheet's columns, one per intervention, the two notes
+and the file picker, for the roles that may upload official SSA (others are
+sent away by the existing page and handed on). 8 readers, 0 differing.
+Uploading stays the existing page's.
+
