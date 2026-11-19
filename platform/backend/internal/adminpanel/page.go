@@ -3,7 +3,8 @@
 // extended_views.admin_workflow_rules_view, pages/admin/workflow_rules.html),
 // the reference list of the rules the system enforces in code; and School
 // Upload History (/admin-panel/school-upload-history, upload_history.go);
-// and the Admin Dashboard (/admin-panel, hub.go).
+// the Admin Dashboard (/admin-panel, hub.go); and the Audit Log
+// (/admin-panel/audit-log, audit.go).
 //
 // The doors and the listed rules are exported to rules.json by `manage.py
 // export_admin_panel_rules`; apps/frontend/test_admin_panel_rules_export.py
@@ -78,6 +79,8 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		return s.uploadHistory(ctx, p)
 	case HubPath:
 		return s.hub(ctx)
+	case AuditLogPath:
+		return s.auditLog(ctx, query)
 	}
 	return workflowRules(), true, nil
 }

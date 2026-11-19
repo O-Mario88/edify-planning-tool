@@ -31,6 +31,7 @@ PAGES = {
     "/admin-panel/workflow-rules": "workflow_rules",
     "/admin-panel/school-upload-history": "upload_history",
     "/admin-panel": "admin_dashboard",
+    "/admin-panel/audit-log": "audit_log",
 }
 
 

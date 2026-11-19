@@ -321,7 +321,13 @@ counts them (its exempt states are now
 and online-training rules). Golden (adminpanel/testdata/hub_golden.py, both
 alerts raised) 3 readers and the clean state 4, 0 differing.
 
-Left in C6: `/admin-panel/audit-log`,
+`/admin-panel/audit-log` is Go's too (adminpanel/audit.go): the newest
+hundred audit rows, each its action and time in Django's default wording
+("Nov. 20, 2026, noon"), fifty a page. Its golden
+(adminpanel/testdata/audit_golden.py) dates its rows tomorrow, so rows the
+suite writes meanwhile stay older: 12 answers, 0 differing.
+
+Left in C6:
 `/admin-panel/notifications-mgmt`, `/admin-panel/page-access-matrix`,
 `/admin-panel/region-district-setup`, `/settings/activity-catalogue/`.
 Left in C5: `/ia/school-evidence/` and `/priorities/ssa-mapping`.
