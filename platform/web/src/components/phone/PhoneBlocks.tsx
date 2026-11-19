@@ -8,6 +8,7 @@ import type { PageAction, PageBlock, PageFacts } from '@/gen/edify/screens/v1/pa
 import { actionHref, resolveHref } from '@/lib/feedPage';
 
 import { FeedBlocks } from '../page/FeedBlocks';
+import { PhoneChart } from './PhoneChart';
 import { PhoneFilters } from './PhoneFilters';
 import { PhoneLinkTabs } from './PhoneLinkTabs';
 import { PhoneList } from './PhoneList';
@@ -87,6 +88,8 @@ export function PhoneBlocks({ blocks, pagePath, drawerHref, selectable }: PhoneB
         return <PhonePanel key={index} panel={kind.value} resolve={resolve} />;
       case 'list':
         return <PhoneList key={index} list={kind.value} resolve={resolve} hrefOf={hrefOf} />;
+      case 'chart':
+        return <PhoneChart key={index} chart={kind.value} />;
       case 'record':
         return <PhoneRecord key={index} record={kind.value} pagePath={pagePath} drawerHref={drawerHref} selectable={selectable} />;
       case 'empty':

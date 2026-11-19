@@ -13,6 +13,7 @@ import { GetPageResponseSchema } from '@/gen/edify/screens/v1/page_screen_pb';
 
 import { PhoneBlocks } from './PhoneBlocks';
 import { PhonePage } from './PhonePage';
+import { scaleOf } from './PhoneChart';
 import { railTabs } from './PhoneLinkTabs';
 import { phoneTone, tileColumns } from './tone';
 
@@ -141,6 +142,23 @@ describe('a page on a phone', () => {
     expect(html).toContain('Show details');
   });
 
+  it('draws a chart as cut-out bars: the shortest value inside, a legend and the data list', () => {
+    const html = draw({
+      blocks: [{ chart: { title: 'SSA score', axisTitle: 'SSA score (0–10)', categories: ['Leadership'], series: [{ name: 'FY 2025/26', values: [5] }, { name: 'FY 2026/27', values: [3.6] }] } }],
+    });
+    expect(html).toContain('<span data-ph="chart-key">');
+    expect(html).toContain('role="img" aria-label="Leadership: 5 FY 2025/26, 3.6 FY 2026/27"');
+    expect(html).toMatch(/data-ph="chart-bar" data-light="true" style="--ph-shade:33%;--ph-share:0.6">3.6<\/span>/);
+    expect(html).toContain('<span data-ph="chart-unit">SSA score (0–10)</span>');
+    expect(html).toContain('View chart data');
+  });
+
+  it('says once that a chart with nothing in it has nothing yet', () => {
+    const html = draw({ blocks: [{ chart: { title: 'Visits', categories: ['Jul', 'Aug'], series: [{ name: 'Done', values: [0, 0] }] } }] });
+    expect(html).toContain('Nothing recorded for this period yet.');
+    expect(html).not.toContain('data-ph="chart-bar"');
+  });
+
   it('puts Export beside the title in the header', () => {
     const page = fromJson(GetPageResponseSchema, MY_PLAN);
     const html = renderToStaticMarkup(<PhonePage answer={page} pagePath="/my-plan" drawerHref={DRAWER} />);
@@ -163,6 +181,12 @@ describe('the phone rules', () => {
     expect(tileColumns(7, true)).toBe(4);
     expect(tileColumns(10, true)).toBe(5);
     expect(tileColumns(3, true)).toBe(3);
+  });
+
+  it('ends a chart scale on a round figure at or above the largest value', () => {
+    expect(scaleOf({ series: [{ values: [7.2] }], max: 10 } as never)).toEqual({ max: 10, step: 2 });
+    expect(scaleOf({ series: [{ values: [214, 77] }], max: 0 } as never)).toEqual({ max: 300, step: 100 });
+    expect(scaleOf({ series: [{ values: [0] }], max: 0 } as never)).toEqual({ max: 1, step: 1 });
   });
 
   it('reads the server tones as the app does', () => {

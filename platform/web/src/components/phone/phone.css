@@ -43,6 +43,7 @@
   --ph-info-soft: #eef7fd !important;
   --ph-card-shadow: 0 5px 20px -12px rgba(23, 48, 66, 0.23), 0 1px 3px 0 rgba(23, 48, 66, 0.07) !important;
   --ph-tile-shadow: 0 3px 12px 0 rgba(15, 23, 42, 0.06) !important;
+  --ph-series-1: #0e5da3 !important;
 
   display: flex !important;
   flex-direction: column !important;
@@ -82,6 +83,7 @@ html.dark [data-ph='page'] {
   --ph-warning-soft: rgba(137, 92, 24, 0.28) !important;
   --ph-info: #9bbbd6 !important;
   --ph-info-soft: rgba(69, 103, 132, 0.3) !important;
+  --ph-series-1: #4f9ae0 !important;
 }
 
 /* Tones a word, figure or tile takes. */
@@ -285,6 +287,28 @@ a[data-ph='tile']:active { background: var(--ph-primary-soft) !important; }
 [data-ph='record-open'] { display: flex !important; flex-direction: column !important; gap: 12px !important; padding-top: 12px !important; border-top: 1px solid var(--ph-raised-border) !important; }
 [data-ph='record-part'] { display: flex !important; flex-direction: column !important; gap: 12px !important; }
 [data-ph='record-status'] { margin: 0 !important; color: var(--ph-tone, var(--ph-text-muted)) !important; font-size: 12px !important; font-weight: 500 !important; }
+
+/* ── Charts (cut-out bars) ──────────────────────────────── */
+[data-ph='chart'] { --ph-end-room: 52px !important; display: flex !important; flex-direction: column !important; gap: 12px !important; }
+[data-ph='chart-legend'] { display: flex !important; flex-wrap: wrap !important; align-self: center !important; column-gap: 16px !important; row-gap: 4px !important; padding: 6px 10px !important; border: 1px solid var(--ph-border-strong) !important; }
+[data-ph='chart-key'] { display: inline-flex !important; align-items: center !important; gap: 6px !important; color: var(--ph-text-muted) !important; font-size: 12px !important; font-weight: 500 !important; }
+[data-ph='chart-swatch'] { display: inline-block !important; width: 12px !important; height: 12px !important; background: color-mix(in srgb, var(--ph-series-1) var(--ph-shade, 100%), var(--ph-raised)) !important; }
+[data-ph='chart-rows'] { display: flex !important; flex-direction: column !important; gap: 10px !important; }
+[data-ph='chart-name'] { display: block !important; margin-bottom: 2px !important; color: var(--ph-text) !important; font-size: 13px !important; font-weight: 500 !important; }
+[data-ph='chart-track'] { position: relative !important; display: block !important; height: 24px !important; margin-right: var(--ph-end-room) !important; }
+[data-ph='chart-whole'] { position: absolute !important; inset: 0 !important; background: color-mix(in srgb, var(--ph-series-1) 12%, var(--ph-raised)) !important; }
+[data-ph='chart-bar'] { position: absolute !important; top: 0 !important; left: 0 !important; display: flex !important; align-items: center !important; justify-content: flex-end !important; width: calc(var(--ph-share) * 100%) !important; height: 24px !important; padding-right: 6px !important; background: color-mix(in srgb, var(--ph-series-1) var(--ph-shade, 100%), var(--ph-raised)) !important; color: #ffffff !important; font-size: 13px !important; font-weight: 700 !important; box-sizing: border-box !important; }
+[data-ph='chart-bar'][data-light] { color: var(--ph-text) !important; }
+[data-ph='chart-end'] { position: absolute !important; top: 3px !important; left: calc(var(--ph-share) * 100%) !important; padding-left: 8px !important; overflow: hidden !important; color: var(--ph-text-muted) !important; font-size: 13px !important; font-weight: 500 !important; white-space: nowrap !important; }
+[data-ph='chart-axis'] { position: relative !important; display: block !important; height: 22px !important; margin-right: var(--ph-end-room) !important; border-top: 1.5px solid var(--ph-text-muted) !important; }
+[data-ph='chart-tick'] { position: absolute !important; top: 4px !important; left: calc(var(--ph-share) * 100% - 12px) !important; width: 24px !important; color: var(--ph-text-muted) !important; font-size: 12px !important; font-weight: 500 !important; text-align: center !important; }
+[data-ph='chart-unit'] { display: block !important; margin-right: var(--ph-end-room) !important; color: var(--ph-text-muted) !important; font-size: 13px !important; font-style: italic !important; font-weight: 500 !important; text-align: center !important; }
+[data-ph='chart-toggle'] { display: inline-flex !important; align-items: center !important; gap: 6px !important; min-height: 32px !important; color: var(--ph-text-muted) !important; font-size: 13px !important; font-weight: 600 !important; cursor: pointer !important; list-style: none !important; }
+[data-ph='chart-toggle']::-webkit-details-marker { display: none !important; }
+[data-ph='chart-data'][open] [data-ph='chart-toggle'] svg { transform: rotate(90deg) !important; }
+[data-ph='chart-list'] { border: 1px solid var(--ph-border) !important; border-radius: 8px !important; }
+[data-ph='chart-list-row'] { display: flex !important; flex-direction: column !important; gap: 2px !important; padding: 8px 12px !important; }
+[data-ph='chart-list-row'] + [data-ph='chart-list-row'] { border-top: 1px solid var(--ph-raised-border) !important; }
 
 /* The profile rail's straight dividers, between two tabs that are not open (PageHeaderParts TabRail). */
 [data-ph='switch'] [data-ph='seg']:not([aria-current='page'], [aria-pressed='true']) + [data-ph='seg']:not([aria-current='page'], [aria-pressed='true'])::before { content: '' !important; position: absolute !important; left: 0 !important; top: 8px !important; bottom: 8px !important; width: 1px !important; background: var(--ph-border) !important; }

@@ -140,6 +140,7 @@ const PHONE = create(GetPageResponseSchema, {
         },
       },
     },
+    { kind: { case: 'chart', value: BAR_CHART } },
     { kind: { case: 'panel', value: { title: 'Details', items: [{ kind: { case: 'fields', value: { facts: [{ label: 'District', value: 'Wakiso' }, { label: 'Cluster', value: 'Kira North' }] } } }, { kind: { case: 'rows', value: { rows: [{ label: 'Visits this year', value: '2', tone: 'good' }, { label: 'Overdue', value: '1', tone: 'alert' }] } } }] } } },
   ],
 });
