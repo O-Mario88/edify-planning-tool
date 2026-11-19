@@ -986,3 +986,29 @@ the two lending roles' and the two partner roles' queues (their loan and
 partner work), the partners' Home, and the Cluster Leader's raw To-Do rows
 (the role has no To-Do page). The Regional Lead's rows needed
 `cce_regional_report.review_note` granted to the gateway (roles.sql).
+
+**Delivery and lending partners (same day).** Owner: "port the partner and
+MFI queues to Go too". The To-Do reader resolves a partner login's
+organisation (`partnerassigned.PartnerIDs`, resolve_partner_ids) and the
+schools it holds (its assignments, released ones out), as resolve_user_scope
+gives them; Go's shared scope is untouched. `_activity_todos` now also reads
+the work assigned to the organisation; `_partner_assignment_todos` is built
+(each assignment awaiting the Schedule-or-Return decision); a partner keys SSA
+scores, so `collection_todos` gives them the returned-records row
+(`ssa_keying_roles`); `evidence_todos` treats them as the field roles they
+are. The lending roles' section of `_business_transformation_todos` builds
+"Correct returned loan record" over `btportfolio.LoansWhere`; its other rows
+link to `/business-transformation`, which these roles may not open, so the
+queue drops them (and Go passes the reader on should that gate open).
+Partners' Home is Go's too: its plan figures and upcoming work are the
+organisation's (`myplan.PlanOf{Partners}`), and a partner's team member, whom
+the feed redirects, is handed on. `golden.py` files a six-day-old
+assignment, a visit assigned to the partner and a returned loan (with its
+case). The guards that passed IA and the Country Director on for any loan
+now ask for the records their rows are drawn from (`loanGuardIA`,
+`learningGuard`), so a loan alone no longer hands them on. Grants added:
+`bt_mfi_membership`, `bt_mfi_loan.assigned_officer_reference` and
+`salesforce_returned_at`. Over the seed and those records: 73 answers
+compared, 3 handed on, 0 differing. Handed on: pl1's queue
+(`_pl_analytics_todos`, the team's core-school follow-ups and coverage pass
+that lead on) and the Cluster Leader's raw To-Do rows (no To-Do page).

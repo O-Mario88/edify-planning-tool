@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -25,7 +26,8 @@ import (
 
 // homeGoldenTables are the tables besides activity that golden.py files rows
 // in (its TABLES).
-var homeGoldenTables = []string{"monthly_work_plan_budget", "country_annual_budget", "rvp_strategy_note"}
+var homeGoldenTables = []string{"monthly_work_plan_budget", "country_annual_budget", "rvp_strategy_note",
+	"partner_assignment", "bt_case", "bt_mfi_loan"}
 
 // TestHomeMatchesTheExistingFeed files the work internal/home/testdata/
 // golden.py made, and asks Go for each reader's Home at the instant the
@@ -69,7 +71,7 @@ func TestHomeMatchesTheExistingFeed(t *testing.T) {
 		filed[table] = golden.Tables[table]
 	}
 	clear := func() {
-		for _, table := range tables {
+		for _, table := range slices.Backward(tables) {
 			if _, err := admin.Exec(ctx, `DELETE FROM `+pgx.Identifier{table}.Sanitize()+` WHERE id LIKE 'ghome%'`); err != nil {
 				t.Errorf("clearing %s: %v", table, err)
 			}

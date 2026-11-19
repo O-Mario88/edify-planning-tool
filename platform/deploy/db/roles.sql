@@ -1092,3 +1092,8 @@ GRANT SELECT (id, priority_label, scope, instruction, responsible_cd_id, deadlin
 -- The Regional Lead's To-Dos: the RVP's note on a returned monthly report
 -- (todo_service._cce_leadership_todos).
 GRANT SELECT (review_note) ON cce_regional_report TO edify_gateway_ro;
+-- The lending partners' To-Dos: the loans a partner administrator's
+-- memberships or a loan officer's own reach (bt_services.scoped_loans), and
+-- when Salesforce returned each.
+GRANT SELECT (user_id, mfi_id, role, active, officer_reference) ON bt_mfi_membership TO edify_gateway_ro;
+GRANT SELECT (assigned_officer_reference, salesforce_returned_at) ON bt_mfi_loan TO edify_gateway_ro;

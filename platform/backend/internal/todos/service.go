@@ -58,6 +58,8 @@ type reader struct {
 	// owners are the reader's two ids (_owner_ids and scoping.owner_ids:
 	// the account and the staff profile).
 	owners []string
+	// partners is the organisation a partner login acts as (scope.partner_ids).
+	partners []string
 }
 
 // errPassOn is a builder's answer when the reader has records it does not
@@ -143,6 +145,9 @@ func (s *Service) readQueue(ctx context.Context, p auth.Principal) (queue, bool,
 		return queue{}, true, err
 	}
 	r.scope = scope
+	if err := s.partnerScope(ctx, r); err != nil {
+		return queue{}, true, err
+	}
 	rows, served, err := collect(ctx, s, r, rules.Roles[p.ActiveRole].Builders)
 	if !served || err != nil {
 		return queue{}, served, err

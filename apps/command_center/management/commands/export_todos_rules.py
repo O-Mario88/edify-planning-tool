@@ -133,6 +133,8 @@ LINK_SHAPES = {
     "/staff/{id}": "/staff/cmw0000000000000000000001",
     "/cce-leadership/reports": "/cce-leadership/reports",
     "/cce-leadership/engagements": "/cce-leadership/engagements",
+    "/partner/assignments/{id}": "/partner/assignments/cmw0000000000000000000001",
+    "/loans#loan-record-title": "/loans#loan-record-title",
     "/analytics/country-director/drilldown?drill=risk&issue=no_ssa&fy={fy}": (
         "/analytics/country-director/drilldown?drill=risk&issue=no_ssa&fy=2028"
     ),
@@ -643,7 +645,10 @@ def pc_bt_rules() -> dict:
 
 def rules() -> dict:
     from apps.activities.models import Activity, ActivityType
-    from apps.business_transformation.models import VerificationRequirementStatus
+    from apps.business_transformation.models import (
+        SalesforceStatus,
+        VerificationRequirementStatus,
+    )
     from apps.clusters import followups, profile_insights
     from apps.command_center import todo_groups
     from apps.command_center import todo_service as ts
@@ -657,6 +662,7 @@ def rules() -> dict:
     from apps.planning.fy_policy import default_country
     from apps.projects.ssa_impact import Impact
     from apps.schools.lifecycle_models import OPERATING_STATUSES
+    from apps.ssa import collection_todos
 
     return {
         "roles": roles(),
@@ -688,6 +694,10 @@ def rules() -> dict:
         "monthly_returned_statuses": list(ts.MONTHLY_RETURNED_STATUSES),
         "partner_delay_settled_statuses": list(ts.PARTNER_DELAY_SETTLED_STATUSES),
         "returned_to_staff_status": PartnerAssignment.STATUS_RETURNED_TO_STAFF,
+        "partner_released_statuses": list(PartnerAssignment.RELEASED_STATUSES),
+        "partner_intake_statuses": list(ts.PARTNER_INTAKE_STATUSES),
+        "ssa_keying_roles": sorted(collection_todos.KEYING_ROLES),
+        "salesforce_returned_status": SalesforceStatus.RETURNED.value,
         "team_action_active_states": sorted(str(s) for s in ACTIVE_STATES),
         "visit_request_awaiting": visit_requests.AWAITING,
         "core_done_statuses": sorted(ts._CORE_DONE_STATUSES),

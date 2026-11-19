@@ -72,6 +72,10 @@ type Rules struct {
 	MonthlyReturnedStatuses     []string            `json:"monthly_returned_statuses"`
 	PartnerDelaySettledStatuses []string            `json:"partner_delay_settled_statuses"`
 	ReturnedToStaffStatus       string              `json:"returned_to_staff_status"`
+	PartnerReleasedStatuses     []string            `json:"partner_released_statuses"`
+	PartnerIntakeStatuses       []string            `json:"partner_intake_statuses"`
+	SSAKeyingRoles              []string            `json:"ssa_keying_roles"`
+	SalesforceReturnedStatus    string              `json:"salesforce_returned_status"`
 	TeamActionActiveStates      []string            `json:"team_action_active_states"`
 	VisitRequestAwaiting        string              `json:"visit_request_awaiting"`
 	CoreDoneStatuses            []string            `json:"core_done_statuses"`

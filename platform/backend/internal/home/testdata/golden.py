@@ -64,16 +64,76 @@ READERS = (
 )
 
 
-#: The tables the golden files rows in besides activities: the RVP's budgets
-#: to review and an RVP strategy note for the Country Director.
-TABLES = ("monthly_work_plan_budget", "country_annual_budget", "rvp_strategy_note")
+#: The tables the golden files rows in besides activities, in the order they
+#: are filed (cleared in reverse): the RVP's budgets to review and an RVP
+#: strategy note for the Country Director; a delivery partner's assignment
+#: awaiting their decision; a lending partner's loan (and its case) that
+#: Salesforce returned.
+TABLES = (
+    "monthly_work_plan_budget",
+    "country_annual_budget",
+    "rvp_strategy_note",
+    "partner_assignment",
+    "bt_case",
+    "bt_mfi_loan",
+)
 
 
 def clear():
     with connection.cursor() as cursor:
         cursor.execute('DELETE FROM "activity" WHERE id LIKE %s', [P + "%"])
-        for table in TABLES:
+        for table in reversed(TABLES):
             cursor.execute(f'DELETE FROM "{table}" WHERE id LIKE %s', [P + "%"])
+
+
+def file_partner_rows(today):
+    """For the delivery partner: an assignment awaiting their decision, six
+    days old, and a visit assigned to their organisation. For the lending
+    partner: a loan Salesforce returned, registered by its loan officer."""
+    from apps.business_transformation.models import (
+        LoanPurpose,
+        MfiLoan,
+        MfiMembership,
+        TransformationCase,
+    )
+    from apps.core.scoping import resolve_user_scope
+    from apps.partners.models import PartnerAssignment
+    from apps.schools.models import School
+
+    partner_user = User.objects.get(email="partner@edify.org")
+    partner_id = resolve_user_scope(partner_user).partner_ids[0]
+    school = School.objects.filter(deleted_at__isnull=True).order_by("id").first()
+    fy = str(today.year + 1 if today.month >= 10 else today.year)
+    PartnerAssignment.objects.create(
+        id=P + "assign", partner_id=partner_id, school=school, status="assigned"
+    )
+    PartnerAssignment.objects.filter(id=P + "assign").update(
+        created_at=dj_timezone.now() - timedelta(days=6)
+    )
+    Activity.objects.create(
+        id=P + "partnerwork",
+        activity_type="school_visit",
+        status="scheduled",
+        delivery_type="partner",
+        assigned_partner_id=partner_id,
+        school=school,
+        planned_date=today + timedelta(days=2),
+        fy=fy,
+    )
+    officer = User.objects.get(email="mfi-officer@edify.org")
+    mfi_id = MfiMembership.objects.filter(user=officer, active=True).first().mfi_id
+    case = TransformationCase.objects.create(id=P + "case", school=school, opened_fy=fy)
+    MfiLoan.objects.create(
+        id=P + "loan",
+        mfi_id=mfi_id,
+        school=school,
+        case=case,
+        purpose=LoanPurpose.objects.order_by("id").first(),
+        external_loan_reference="GHOME-001",
+        registered_by=officer.id,
+        salesforce_status="returned",
+        salesforce_returned_at=dj_timezone.now(),
+    )
 
 
 def file_executive_rows(today):
@@ -237,6 +297,7 @@ try:
     now = dj_timezone.now()
     file_rows(dj_timezone.localdate())
     file_executive_rows(dj_timezone.localdate())
+    file_partner_rows(dj_timezone.localdate())
     tables = {table: table_rows(table) for table in TABLES}
     rows = [
         dict(zip([c.name for c in cur.description], r))

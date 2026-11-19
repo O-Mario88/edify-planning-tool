@@ -22,7 +22,7 @@ func init() {
 		"_school_action_todos":                              schoolActionGuard,
 		"_visit_request_todos":                              visitRequestGuard,
 		"_partner_delay_todos":                              partnerDelayTodos,
-		"_partner_assignment_todos":                         partnerAssignmentGuard,
+		"_partner_assignment_todos":                         partnerAssignmentTodos,
 		"_project_ssa_todos":                                projectSSATodos,
 		"_extra_work_todos":                                 extraWorkTodos,
 		"_returned_assignment_todos":                        returnedAssignmentTodos,
@@ -95,8 +95,12 @@ func passOnIf(found bool, err error) ([]todo, error) {
 // (responsible, or monitoring partner delivery), at most 120, newest first,
 // each with its next action when that is the reader's to take or wait on.
 func activityTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
-	if len(r.owners) == 0 {
+	if len(r.owners) == 0 && len(r.partners) == 0 {
 		return nil, nil
+	}
+	partners := r.partners
+	if partners == nil {
+		partners = []string{}
 	}
 	rows, err := s.db.Query(ctx, `
 SELECT a.id, a.status, COALESCE(a.delivery_type, ''), COALESCE(a.evidence_status, ''), a.planned_date,
@@ -105,9 +109,10 @@ SELECT a.id, a.status, COALESCE(a.delivery_type, ''), COALESCE(a.evidence_status
   COALESCE(s.current_fy_ssa_status, ''), a.cluster_id IS NOT NULL, c.name
 FROM activity a LEFT OUTER JOIN school s ON s.id = a.school_id LEFT OUTER JOIN cluster c ON c.id = a.cluster_id
 WHERE a.deleted_at IS NULL AND a.fy = $1
-  AND (a.responsible_staff_id = ANY($2) OR (a.monitored_by_staff_id = ANY($2) AND a.delivery_type = 'partner'))
+  AND (a.responsible_staff_id = ANY($2) OR (a.monitored_by_staff_id = ANY($2) AND a.delivery_type = 'partner')
+       OR a.assigned_partner_id = ANY($4))
   AND NOT (a.status = ANY($3))
-ORDER BY a.created_at DESC LIMIT 120`, r.fy, r.owners, rules.ActivitySettledStatuses)
+ORDER BY a.created_at DESC LIMIT 120`, r.fy, r.owners, rules.ActivitySettledStatuses, partners)
 	if err != nil {
 		return nil, err
 	}
@@ -258,15 +263,6 @@ ORDER BY a.created_at DESC LIMIT 10`, r.owners, r.today, rules.PartnerDelaySettl
 			Actionable: true, Linked: where + " · partner", ActionLabel: "Open", ActionURL: "/my-plan/" + id,
 			Shape: "/my-plan/{id}", Due: dateOf(planned)}, err
 	})
-}
-
-// partnerAssignmentGuard stands for _partner_assignment_todos, which reads
-// the partner ids the scope resolves for the partner roles only.
-func partnerAssignmentGuard(_ context.Context, _ *Service, r *reader) ([]todo, error) {
-	if contains(rules.PartnerScopeRoles, r.role) {
-		return nil, errPassOn
-	}
-	return nil, nil
 }
 
 // projectSSATodos is _project_ssa_todos: schools the reader enrolled in a
@@ -780,6 +776,9 @@ func loanVerificationTodos(ctx context.Context, s *Service, r *reader) ([]todo, 
 	if r.role == cdRole {
 		return btDirectorTodos(ctx, s, r)
 	}
+	if r.role == mfiAdminRole || r.role == mfiOfficerRole {
+		return mfiTodos(ctx, s, r)
+	}
 	if r.role == leadRole {
 		return passOnIf(len(r.scope.OwnSchoolIDs) > 0, nil)
 	}
@@ -835,7 +834,7 @@ func returnedSSATodos(ctx context.Context, s *Service, r *reader) ([]todo, error
 		if _, err := passOnIf(s.exists(ctx, `SELECT 1 FROM ssa_import_batch WHERE uploaded_by = $1`, r.p.UserID)); err != nil {
 			return nil, err
 		}
-	} else if r.role != "CCEO" {
+	} else if !contains(rules.SSAKeyingRoles, r.role) {
 		return nil, errPassOn
 	}
 	return returnedSSARows(ctx, s, r)
@@ -876,7 +875,7 @@ WHERE deleted_at IS NULL AND verification_status = 'returned' AND collected_by_u
 // them passes the reader on; delivered OneTest visits with no results
 // recorded are a row each (ten).
 func evidenceTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
-	if !contains(rules.PCBT.EvidenceFieldRoles, r.role) || contains(rules.PartnerScopeRoles, r.role) {
+	if !contains(rules.PCBT.EvidenceFieldRoles, r.role) {
 		return nil, errPassOn
 	}
 	var parts []string

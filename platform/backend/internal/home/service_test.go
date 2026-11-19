@@ -48,7 +48,9 @@ func TestHomeHandsOnWhatTheExistingApplicationStillAnswers(t *testing.T) {
 	}{
 		{auth.Principal{Account: auth.Account{ActiveRole: "CCEO"}}, true},
 		{auth.Principal{Account: auth.Account{ActiveRole: "Admin"}}, true},
-		{auth.Principal{Account: auth.Account{ActiveRole: "PartnerFieldOfficer"}}, false},
+		// A partner's Home is their organisation's plan (a team member is
+		// handed on when Build reads the roster).
+		{auth.Principal{Account: auth.Account{ActiveRole: "PartnerFieldOfficer"}}, true},
 		{auth.Principal{Account: auth.Account{ActiveRole: "ClusterLeader"}}, false},
 		{auth.Principal{Account: auth.Account{ActiveRole: "CCEO", InActingAppointment: true}}, false},
 		{auth.Principal{Account: auth.Account{ActiveRole: "Nobody"}}, false},

@@ -813,6 +813,11 @@ IA_TODO_CATEGORY = "Data Quality & Verification"
 IA_TODO_WAITING_STATUS = "awaiting_ia_verification"
 
 
+#: The assignments awaiting the partner's Schedule-or-Return decision
+#: (_partner_assignment_todos).
+PARTNER_INTAKE_STATUSES = ("assigned", "pending_scheduling")
+
+
 def _partner_assignment_todos(principal, scope, today):
     """§16 the partner's intake obligations: every assignment awaiting the
     Schedule-or-Return decision is a task, closed by making the decision."""
@@ -825,7 +830,7 @@ def _partner_assignment_todos(principal, scope, today):
     for pa in (
         PartnerAssignment.objects.filter(
             partner_id__in=partner_ids,
-            status__in=["assigned", "pending_scheduling"],
+            status__in=list(PARTNER_INTAKE_STATUSES),
             scheduled_activity__isnull=True,
         )
         .select_related("school", "cluster")

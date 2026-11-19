@@ -195,12 +195,11 @@ func TestACorePlansGapsAreItsReturnedAndNextOpenSlots(t *testing.T) {
 	}
 }
 
-func TestAReaderIsPassedOnByAGuardOrAnApprovalTheyGive(t *testing.T) {
-	if _, err := partnerAssignmentGuard(context.Background(), nil, &reader{role: "PartnerAdmin"}); err != errPassOn {
-		t.Errorf("a partner: %v", err)
-	}
-	if got, err := partnerAssignmentGuard(context.Background(), nil, &reader{role: "CCEO"}); err != nil || got != nil {
-		t.Errorf("an officer: %v %v", got, err)
+func TestAReaderWithNoPartnerOrganisationHasNoAssignmentsToDecide(t *testing.T) {
+	for _, role := range []string{"PartnerAdmin", "CCEO"} {
+		if got, err := partnerAssignmentTodos(context.Background(), nil, &reader{role: role}); err != nil || got != nil {
+			t.Errorf("%s: %v %v", role, got, err)
+		}
 	}
 }
 

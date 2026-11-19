@@ -10,6 +10,7 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myplan"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partnerassigned"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/todos"
 )
@@ -58,14 +59,39 @@ func NewService(db schooldirectory.Querier, now func() time.Time) *Service {
 }
 
 // roleOf is the reader's Home rules, and whether Go answers their Home: a
-// role it has rules for that may open Home, working in its own capacity,
-// whose plan (if it has one) is a member of staff's own.
+// role it has rules for that may open Home, working in its own capacity.
 func roleOf(p auth.Principal) (Role, bool) {
 	role, ok := rules.Roles[p.ActiveRole]
-	if !ok || !role.Home || p.InActingAppointment || role.Slug == "PARTNER" {
+	if !ok || !role.Home || p.InActingAppointment {
 		return Role{}, false
 	}
 	return role, true
+}
+
+// partnerSlug is the delivery partners' role slug: their plan is their
+// organisation's.
+const partnerSlug = "PARTNER"
+
+// teamMember is whether p is a partner team member, whom the existing feed
+// sends to their own schools instead of Home (it answers the redirect,
+// which Go does not draw): the existing application answers them.
+func (s *Service) teamMember(ctx context.Context, p auth.Principal, role Role) (bool, error) {
+	if role.Slug != partnerSlug {
+		return false, nil
+	}
+	return partnerassigned.IsTeamMember(ctx, s.db, p)
+}
+
+// planOf is my_plan_activities' owner: a partner login's organisation
+// (resolve_partner_ids), else the reader's own two ids.
+func (s *Service) planOf(ctx context.Context, p auth.Principal, role Role) (myplan.PlanOf, error) {
+	plan := myplan.PlanOf{Owners: myplan.OwnerIDs(p)}
+	if role.Slug != partnerSlug {
+		return plan, nil
+	}
+	partners, err := partnerassigned.PartnerIDs(ctx, s.db, p)
+	plan.Partners = partners
+	return plan, err
 }
 
 // ErrForbidden is require_page's refusal: the reader's role may not open
@@ -100,6 +126,9 @@ func (s *Service) Build(ctx context.Context, p auth.Principal) (*screensv1.GetHo
 	if !ok {
 		return nil, refused(p), refusal(p)
 	}
+	if member, err := s.teamMember(ctx, p, role); err != nil || member {
+		return nil, false, err
+	}
 	now := s.now()
 	local := now.In(kampala)
 	today := time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC)
@@ -121,13 +150,16 @@ func (s *Service) Build(ctx context.Context, p auth.Principal) (*screensv1.GetHo
 		out.Glyphs[name] = rules.Icons[name]
 	}
 	if role.HasPlan {
-		owners := myplan.OwnerIDs(p)
-		counts, err := myplan.ReadHomeCounts(ctx, s.db, owners, fy, now)
+		plan, err := s.planOf(ctx, p, role)
+		if err != nil {
+			return nil, false, err
+		}
+		counts, err := myplan.ReadHomeCounts(ctx, s.db, plan, fy, now)
 		if err != nil {
 			return nil, false, err
 		}
 		out.Figures = append(out.Figures, planFiguresOf(counts)...)
-		upcoming, err := myplan.ReadHomeUpcoming(ctx, s.db, owners, fy, now, rules.UpcomingLimit)
+		upcoming, err := myplan.ReadHomeUpcoming(ctx, s.db, plan, fy, now, rules.UpcomingLimit)
 		if err != nil {
 			return nil, false, err
 		}

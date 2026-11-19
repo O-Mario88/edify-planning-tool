@@ -133,10 +133,24 @@ func quarterOf(month time.Month) string {
 // narrowed by the page's filters (_narrow): which states it leaves out is
 // the caller's.
 func planWhere(b *sqlb, owners []string, fy string, f Filters, today string) string {
+	return planWhereOf(b, PlanOf{Owners: owners}, fy, f, today)
+}
+
+// PlanOf is whose My Plan a read is (my_plan_activities): a delivery
+// partner's is the work assigned to its organisation, anyone else's the
+// work they own and deliver.
+type PlanOf struct {
+	Owners, Partners []string
+}
+
+func planWhereOf(b *sqlb, plan PlanOf, fy string, f Filters, today string) string {
 	r := rules.Plan
-	parts := []string{
-		"a.deleted_at IS NULL", "a.fy = " + b.arg(fy), "a.responsible_staff_id = ANY(" + b.arg(owners) + ")",
-		"a.delivery_type IS DISTINCT FROM 'partner'", notStatusIn(b, r.PartnerOnlyStatuses),
+	parts := []string{"a.deleted_at IS NULL", "a.fy = " + b.arg(fy)}
+	if len(plan.Partners) > 0 {
+		parts = append(parts, "a.assigned_partner_id = ANY("+b.arg(plan.Partners)+")")
+	} else {
+		parts = append(parts, "a.responsible_staff_id = ANY("+b.arg(plan.Owners)+")",
+			"a.delivery_type IS DISTINCT FROM 'partner'", notStatusIn(b, r.PartnerOnlyStatuses))
 	}
 	if f.Search != "" {
 		like := b.arg("%" + likeEscape(f.Search) + "%")

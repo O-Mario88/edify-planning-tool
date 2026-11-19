@@ -193,10 +193,13 @@ UNION ALL SELECT 1 FROM ia_verification_sample WHERE status = $4`,
 		rules.IA.QueueSSAPending, rules.IA.QueueUnmatchedOpen, rules.IA.QueueDuplicateOpen, rules.IA.QueueSamplePending))
 }
 
-// learningGuard is learning_todos: any loan (every lending queue is a
-// loan's) or impact finding passes the reader on.
-func learningGuard(ctx context.Context, s *Service, _ *reader) ([]todo, error) {
-	return passOnIf(s.exists(ctx, `SELECT 1 FROM bt_mfi_loan UNION ALL SELECT 1 FROM impact_finding`))
+// learningGuard is learning_todos for IA and the Country Director: a loan
+// impact conclusion not yet verified that is due or prepared (the lending
+// rows' records), or any impact finding, passes the reader on.
+func learningGuard(ctx context.Context, s *Service, r *reader) ([]todo, error) {
+	return passOnIf(s.exists(ctx, `SELECT 1 FROM bt_loan_impact_assessment
+WHERE ia_status <> 'verified' AND (due_date <= $1 OR prepared_at IS NOT NULL)
+UNION ALL SELECT 1 FROM impact_finding`, r.today))
 }
 
 // reportGuard is report_todos: any impact report passes the reader on.
@@ -211,10 +214,15 @@ func donorReleaseGuard(ctx context.Context, s *Service, _ *reader) ([]todo, erro
 	return passOnIf(s.exists(ctx, `SELECT 1 FROM impact_report_release WHERE audience = 'donor' AND status = 'pending_approval'`))
 }
 
-// loanGuardIA is _business_transformation_todos for IA: every row it adds
-// is a loan's, so any loan passes the reader on.
+// loanGuardIA is _business_transformation_todos for IA: a loan confirmed in
+// Salesforce awaiting IA validation, loan-use evidence awaiting
+// verification, or a reported enrolment snapshot (the records its rows are
+// drawn from) passes the reader on.
 func loanGuardIA(ctx context.Context, s *Service, _ *reader) ([]todo, error) {
-	return passOnIf(s.exists(ctx, `SELECT 1 FROM bt_mfi_loan`))
+	return passOnIf(s.exists(ctx, `SELECT 1 FROM bt_mfi_loan
+WHERE deleted_at IS NULL AND salesforce_status = 'confirmed' AND ia_validation_status = 'pending'
+UNION ALL SELECT 1 FROM bt_loan_verification_requirement WHERE status = 'awaiting_verification'
+UNION ALL SELECT 1 FROM bt_enrolment_snapshot WHERE status = 'reported'`))
 }
 
 // evidenceGuardIA is evidence_todos for IA: school evidence awaiting a

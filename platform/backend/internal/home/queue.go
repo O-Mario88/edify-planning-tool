@@ -33,6 +33,9 @@ func (s *Service) BuildQueue(ctx context.Context, p auth.Principal) (*screensv1.
 	if !ok {
 		return nil, refused(p), refusal(p)
 	}
+	if member, err := s.teamMember(ctx, p, role); err != nil || member {
+		return nil, false, err
+	}
 	specs, set := rules.Priorities.Roles[p.ActiveRole]
 	if !set {
 		return s.buildTodoQueue(ctx, p, role)
@@ -280,6 +283,9 @@ func (s *Service) BuildTodoFigures(ctx context.Context, p auth.Principal) (*scre
 	role, ok := roleOf(p)
 	if !ok {
 		return nil, refused(p), refusal(p)
+	}
+	if member, err := s.teamMember(ctx, p, role); err != nil || member {
+		return nil, false, err
 	}
 	counts, total, served, err := s.todos.QueueCounts(ctx, p)
 	if !served || err != nil {

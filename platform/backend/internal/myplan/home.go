@@ -17,9 +17,8 @@ type HomeCounts struct {
 	Upcoming, UnderWay, Overdue int
 }
 
-// ReadHomeCounts counts the plan of the people owners in the year fy on the
-// day today.
-func ReadHomeCounts(ctx context.Context, db schooldirectory.Querier, owners []string, fy string, today time.Time) (HomeCounts, error) {
+// ReadHomeCounts counts plan in the year fy on the day today.
+func ReadHomeCounts(ctx context.Context, db schooldirectory.Querier, plan PlanOf, fy string, today time.Time) (HomeCounts, error) {
 	day := today.In(kampala).Format(time.DateOnly)
 	var out HomeCounts
 	for _, state := range []struct {
@@ -27,7 +26,7 @@ func ReadHomeCounts(ctx context.Context, db schooldirectory.Querier, owners []st
 		into *int
 	}{{"upcoming", &out.Upcoming}, {"under_way", &out.UnderWay}, {"overdue", &out.Overdue}} {
 		b := &sqlb{}
-		where := planWhere(b, owners, fy, Filters{Status: state.name}, day)
+		where := planWhereOf(b, plan, fy, Filters{Status: state.name}, day)
 		if err := db.QueryRow(ctx, `SELECT count(*) `+planFrom+` WHERE `+where, b.args...).Scan(state.into); err != nil {
 			return out, fmt.Errorf("myplan: counting the plan's %s work: %w", state.name, err)
 		}
@@ -46,9 +45,9 @@ type HomeActivity struct {
 
 // ReadHomeUpcoming is home_service.upcoming_activities: the reader's next
 // not-started activities that carry a date, soonest first.
-func ReadHomeUpcoming(ctx context.Context, db schooldirectory.Querier, owners []string, fy string, today time.Time, limit int) ([]HomeActivity, error) {
+func ReadHomeUpcoming(ctx context.Context, db schooldirectory.Querier, plan PlanOf, fy string, today time.Time, limit int) ([]HomeActivity, error) {
 	b := &sqlb{}
-	where := planWhere(b, owners, fy, Filters{Status: "upcoming"}, today.In(kampala).Format(time.DateOnly))
+	where := planWhereOf(b, plan, fy, Filters{Status: "upcoming"}, today.In(kampala).Format(time.DateOnly))
 	rows, err := db.Query(ctx, `SELECT a.id, COALESCE(a.activity_purpose_text, ''), COALESCE(a.activity_type, ''), COALESCE(a.status, ''),
   COALESCE(a.school_id, ''), COALESCE(s.name, ''), COALESCE(a.cluster_id, ''), COALESCE(c.name, ''), a.planned_date, a.scheduled_date
 `+planFrom+` WHERE `+where+` AND (a.planned_date IS NOT NULL OR a.scheduled_date IS NOT NULL)

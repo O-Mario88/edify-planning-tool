@@ -1124,6 +1124,24 @@
    "RegionalProgramLead": false,
    "RegionalVicePresident": false
   },
+  "/loans#loan-record-title": {
+   "Accountant": false,
+   "Admin": false,
+   "BusinessTransformationOfficer": true,
+   "CCEO": true,
+   "ClusterLeader": false,
+   "CountryDirector": true,
+   "HumanResources": false,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": true,
+   "MfiPartnerAdmin": true,
+   "PartnerAdmin": false,
+   "PartnerFieldOfficer": false,
+   "Program Lead": false,
+   "ProjectCoordinator": false,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": true
+  },
   "/loans?open={id}#loan-register-title": {
    "Accountant": false,
    "Admin": false,
@@ -1251,6 +1269,24 @@
    "RegionalVicePresident": true
   },
   "/partner/activities/{id}/evidence": {
+   "Accountant": false,
+   "Admin": true,
+   "BusinessTransformationOfficer": false,
+   "CCEO": false,
+   "ClusterLeader": false,
+   "CountryDirector": false,
+   "HumanResources": false,
+   "ImpactAssessment": true,
+   "MfiLoanOfficer": false,
+   "MfiPartnerAdmin": false,
+   "PartnerAdmin": true,
+   "PartnerFieldOfficer": true,
+   "Program Lead": false,
+   "ProjectCoordinator": false,
+   "RegionalProgramLead": false,
+   "RegionalVicePresident": false
+  },
+  "/partner/assignments/{id}": {
    "Accountant": false,
    "Admin": true,
    "BusinessTransformationOfficer": false,
@@ -1514,6 +1550,15 @@
   "ia_verified",
   "awaiting_ia_verification",
   "submitted_to_pl"
+ ],
+ "partner_intake_statuses": [
+  "assigned",
+  "pending_scheduling"
+ ],
+ "partner_released_statuses": [
+  "returned_to_staff",
+  "returned",
+  "cancelled"
  ],
  "partner_scope_roles": [
   "PartnerAdmin",
@@ -2042,6 +2087,15 @@
    "strip": null
   }
  },
+ "salesforce_returned_status": "returned",
+ "ssa_keying_roles": [
+  "Admin",
+  "CCEO",
+  "ImpactAssessment",
+  "PartnerAdmin",
+  "PartnerFieldOfficer",
+  "Program Lead"
+ ],
  "target_review_stages_not_agreed": [
   "not_started",
   "priorities_draft",

@@ -160,6 +160,13 @@ func PartnerIDs(ctx context.Context, db schooldirectory.Querier, p auth.Principa
 	return (&Service{db: db}).partnerIDs(ctx, p)
 }
 
+// IsTeamMember is member_scope.is_team_member: a partner login that is a
+// roster entry's own and does not lead its team.
+func IsTeamMember(ctx context.Context, db schooldirectory.Querier, p auth.Principal) (bool, error) {
+	member, _, err := (&Service{db: db}).teamMember(ctx, p)
+	return member, err
+}
+
 // partnerIDs is resolve_partner_ids: the organisation whose login this is,
 // else the one a team member's login belongs to (partner roles only), else
 // the first partner under the demo role-bridge, else none.
