@@ -1130,3 +1130,10 @@ GRANT SELECT (id, activity_id, amount, month) ON activity_schedule_cost_line TO 
 GRANT SELECT (budget_line_id, status, disbursed_amount, accounted_amount) ON advance_request TO edify_gateway_ro;
 GRANT SELECT (fy, quarter, planned_date) ON activity TO edify_gateway_ro;
 GRANT SELECT (fy, total_amount, submitted_at, submitted_by_user_id, submission_version) ON monthly_work_plan_budget TO edify_gateway_ro;
+
+-- The Closure Readiness Workspace (internal/closurepages/queue.go): each
+-- activity's closure facts, read as ClosureEligibilityService.with_facts
+-- annotates them: whether the accountant entered a NetSuite expense, and
+-- which advances moved and were accounted for.
+GRANT SELECT (activity_id) ON netsuite_expense_record TO edify_gateway_ro;
+GRANT SELECT (activity_id, status, accountability_netsuite_id) ON advance_request TO edify_gateway_ro;

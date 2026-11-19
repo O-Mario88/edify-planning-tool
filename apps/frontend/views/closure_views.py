@@ -22,6 +22,16 @@ from apps.activities.closure_services import (
 # for the long tail.
 CLOSURE_QUEUE_LIMIT = 300
 CLOSURE_TAB_LIMIT = 100
+#: Work not yet done, which waits for no closure: the readiness queue leaves
+#: it out (Go's internal/closurepages reads the same list from rules.json).
+QUEUE_NOT_STARTED_STATUSES = (
+    "not_planned",
+    "planned",
+    "scheduled",
+    "rescheduled",
+    "assigned_to_partner",
+    "partner_scheduled",
+)
 
 
 #: The Analytics Publishing Status page's order (owner, 2026-11-18): the
@@ -106,16 +116,7 @@ def closure_readiness_queue_view(request):
     )
     base = (
         _in_scope(request, Activity.objects.filter(deleted_at__isnull=True))
-        .exclude(
-            status__in=[
-                "not_planned",
-                "planned",
-                "scheduled",
-                "rescheduled",
-                "assigned_to_partner",
-                "partner_scheduled",
-            ]
-        )
+        .exclude(status__in=QUEUE_NOT_STARTED_STATUSES)
         .exclude(called_off & ~money_moved)
         .select_related("school", "cluster")
         .order_by("-updated_at", "-id")

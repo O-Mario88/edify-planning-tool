@@ -1,8 +1,9 @@
 // Package closurepages is the closure workspace's pages in Go, as the
 // existing feed reads them: the Blocked Closures directory
 // (/activities/closure/blocked: closure_views.blocked_closure_view,
-// pages/closure/blocked_closure.html) and the Analytics Publishing Status
-// page (/analytics/publishing). Resolving a blocker is the existing
+// pages/closure/blocked_closure.html), the Closure Readiness Workspace
+// (/activities/closure, queue.go) and the Analytics Publishing Status page
+// (/analytics/publishing). Resolving a blocker and closing are the existing
 // application's.
 package closurepages
 
@@ -123,6 +124,9 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	}
 	if path == CompletedPath {
 		return s.completed(ctx, p, query)
+	}
+	if path == QueuePath {
+		return s.queue(ctx, p)
 	}
 	if path != BlockedPath {
 		return nil, false, nil

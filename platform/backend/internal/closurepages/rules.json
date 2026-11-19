@@ -6,55 +6,111 @@
     "published": 2,
     "recalculation_required": 0
   },
+  "queue": {
+    "called_off_statuses": [
+      "cancelled",
+      "rejected",
+      "deferred",
+      "not_planned"
+    ],
+    "cleared_advance_statuses": [
+      "accounted",
+      "reimbursed"
+    ],
+    "ia_verified_statuses": [
+      "ia_verified",
+      "closed",
+      "accountant_confirmed"
+    ],
+    "limit": 300,
+    "money_moved_advance_statuses": [
+      "disbursed",
+      "accountability_pending",
+      "accounted",
+      "reimbursement_submitted",
+      "reimbursement_disbursed",
+      "reimbursed"
+    ],
+    "no_salesforce_record_types": [
+      "NONE"
+    ],
+    "not_executed_statuses": [
+      "not_planned",
+      "awaiting_owner_approval",
+      "planned",
+      "scheduled",
+      "rescheduled",
+      "assigned_to_partner",
+      "partner_scheduled",
+      "rejected",
+      "cancelled",
+      "deferred"
+    ],
+    "not_started_statuses": [
+      "not_planned",
+      "planned",
+      "scheduled",
+      "rescheduled",
+      "assigned_to_partner",
+      "partner_scheduled"
+    ]
+  },
   "roles": {
     "Accountant": {
       "completed": true,
       "completed_strip": null,
       "open_school": false,
       "publishing": false,
-      "publishing_strip": null
+      "publishing_strip": null,
+      "queue": true
     },
     "Admin": {
       "completed": true,
       "completed_strip": null,
       "open_school": true,
       "publishing": true,
-      "publishing_strip": null
+      "publishing_strip": null,
+      "queue": true
     },
     "BusinessTransformationOfficer": {
       "completed": false,
       "completed_strip": null,
       "open_school": true,
       "publishing": false,
-      "publishing_strip": null
+      "publishing_strip": null,
+      "queue": false
     },
     "CCEO": {
       "completed": true,
       "completed_strip": null,
       "open_school": true,
       "publishing": false,
-      "publishing_strip": null
+      "publishing_strip": null,
+      "queue": true
     },
     "ClusterLeader": {
       "completed": false,
       "completed_strip": null,
       "open_school": false,
       "publishing": false,
-      "publishing_strip": null
+      "publishing_strip": null,
+      "queue": false
     },
     "CountryDirector": {
       "completed": true,
       "completed_strip": null,
       "open_school": true,
       "publishing": true,
-      "publishing_strip": null
+      "publishing_strip": null,
+      "queue": true
     },
     "HumanResources": {
       "completed": false,
       "completed_strip": null,
       "open_school": false,
       "publishing": false,
-      "publishing_strip": null
+      "publishing_strip": null,
+      "queue": false
     },
     "ImpactAssessment": {
       "completed": true,
@@ -196,63 +252,72 @@
             "label": "Data Quality"
           }
         ]
-      }
+      },
+      "queue": true
     },
     "MfiLoanOfficer": {
       "completed": false,
       "completed_strip": null,
       "open_school": false,
       "publishing": false,
-      "publishing_strip": null
+      "publishing_strip": null,
+      "queue": false
     },
     "MfiPartnerAdmin": {
       "completed": false,
       "completed_strip": null,
       "open_school": false,
       "publishing": false,
-      "publishing_strip": null
+      "publishing_strip": null,
+      "queue": false
     },
     "PartnerAdmin": {
       "completed": false,
       "completed_strip": null,
       "open_school": false,
       "publishing": false,
-      "publishing_strip": null
+      "publishing_strip": null,
+      "queue": false
     },
     "PartnerFieldOfficer": {
       "completed": false,
       "completed_strip": null,
       "open_school": false,
       "publishing": false,
-      "publishing_strip": null
+      "publishing_strip": null,
+      "queue": false
     },
     "Program Lead": {
       "completed": true,
       "completed_strip": null,
       "open_school": true,
       "publishing": false,
-      "publishing_strip": null
+      "publishing_strip": null,
+      "queue": true
     },
     "ProjectCoordinator": {
       "completed": true,
       "completed_strip": null,
       "open_school": true,
       "publishing": false,
-      "publishing_strip": null
+      "publishing_strip": null,
+      "queue": true
     },
     "RegionalProgramLead": {
       "completed": false,
       "completed_strip": null,
       "open_school": false,
       "publishing": false,
-      "publishing_strip": null
+      "publishing_strip": null,
+      "queue": false
     },
     "RegionalVicePresident": {
       "completed": false,
       "completed_strip": null,
       "open_school": false,
       "publishing": false,
-      "publishing_strip": null
+      "publishing_strip": null,
+      "queue": false
     }
   }
 }

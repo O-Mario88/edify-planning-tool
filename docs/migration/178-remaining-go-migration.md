@@ -185,6 +185,18 @@ page generate one as it opens: Go hands that on. Its golden
 (debriefs/testdata/weekly_golden.py, reports built by the service itself)
 is 36 answers over nine readers, 0 differing.
 
-Left in C3: `/today` (desk roles; the field roles are redirected and handed
-on), `/activities/closure`, `/search` with a query and
-`/planning/schedule` with a choice.
+`/activities/closure` (the Closure Readiness Workspace) is Go's in
+`internal/closurepages` (queue.go): the reader's work past its doing, newest
+first to the queue's 300, each activity's closure facts read in the listing
+query as with_facts annotates them (evidence, cost lines, NetSuite expense,
+cleared, moved and unaccounted advances, the publish record) and sorted into
+Ready, Finance, Accountability, Analytics and Blocked; called-off work stays
+only while money it was paid is out. Its golden
+(closurepages/testdata/queue_golden.py) is 8 readers, 0 differing. The list
+of not-yet-done states the view leaves out is now
+`closure_views.QUEUE_NOT_STARTED_STATUSES`, exported with the rest.
+
+Left in C3: `/today` — only the Admin opens it (field roles and Impact
+Assessment are redirected, which Go hands on): the desk queue with each
+row's decision buttons (today_actions adapters), snoozes and the cleared
+count; `/search` with a query; `/planning/schedule` with a choice.
