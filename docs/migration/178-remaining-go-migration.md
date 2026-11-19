@@ -174,6 +174,17 @@ once submitted, and the roles that open it but may not submit. Its golden
 (debriefs/testdata/submit_golden.py) is 24 answers over eight readers, 0
 differing. The form's saves stay the existing page's.
 
+`/debriefs/weekly-report` (the Weekly Debrief Report) is Go's too
+(debriefs/weekly.go): the report each role lands on (a Lead's team report,
+the country's for the Director, HR, the RVP and the Admin; HR and the RVP
+only once finalized), drawn from the snapshot locked when it was generated:
+the week's figures, missing teams, each theme under its kind with its trend,
+confidence and two sources, the team's submissions, the commentary and the
+PDF link. A Lead or Director with no report for the week has the existing
+page generate one as it opens: Go hands that on. Its golden
+(debriefs/testdata/weekly_golden.py, reports built by the service itself)
+is 36 answers over nine readers, 0 differing.
+
 Left in C3: `/today` (desk roles; the field roles are redirected and handed
-on), `/activities/closure`, `/debriefs/weekly-report`, `/search` with a
-query and `/planning/schedule` with a choice.
+on), `/activities/closure`, `/search` with a query and
+`/planning/schedule` with a choice.

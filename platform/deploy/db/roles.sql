@@ -927,6 +927,10 @@ GRANT SELECT (id, debrief_id, activity_id) ON daily_debrief_activity_link TO edi
 -- only for the debrief the reader submitted.
 GRANT SELECT (other_work_description, what_went_well, what_did_not_go_well, challenges_faced, recommendations)
   ON daily_debrief TO edify_gateway_ro;
+-- The Weekly Debrief Report (internal/debriefs/weekly.go): the report the
+-- reader's role lands on for the week, drawn from its locked snapshot.
+GRANT SELECT (scope_kind, scope_id, week_start, status, version, snapshot, commentary)
+  ON weekly_debrief_report TO edify_gateway_ro;
 GRANT SELECT (debrief_id, challenge_type) ON daily_debrief_challenge TO edify_gateway_ro;
 GRANT SELECT (debrief_id, status) ON daily_debrief_commitment TO edify_gateway_ro;
 GRANT SELECT (owner_user_id, status, due_date) ON daily_debrief_action TO edify_gateway_ro;

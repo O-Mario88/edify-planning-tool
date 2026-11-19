@@ -68,10 +68,13 @@ type debrief struct {
 
 func day(t time.Time) time.Time { return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC) }
 
-// Build answers /debriefs and /debriefs/submit.
+// Build answers /debriefs, /debriefs/submit and /debriefs/weekly-report.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
-	if path == SubmitPath {
+	switch path {
+	case SubmitPath:
 		return s.submit(ctx, p, query)
+	case WeeklyPath:
+		return s.weekly(ctx, p, query)
 	}
 	if path != PagePath {
 		return nil, false, nil

@@ -1,5 +1,6 @@
 // Package debriefs builds the Field Debrief Dashboard (/debriefs) and the
-// Daily Debrief (/debriefs/submit, submit.go). The dashboard: the strip
+// Daily Debrief (/debriefs/submit, submit.go) and the Weekly Debrief Report
+// (/debriefs/weekly-report, weekly.go). The dashboard: the strip
 // of the period's debriefs against the period before, the daily trend, the
 // debriefs by activity type and by risk, the top challenges, the reader's
 // action centre, the team and partner table under its tabs, the recent
@@ -51,6 +52,18 @@ var rules = func() (r struct {
 	DailyEditableStatuses  []string          `json:"daily_editable_statuses"`
 	ActivityStatuses       map[string]string `json:"activity_statuses"`
 	Interventions          map[string]string `json:"interventions"`
+	// The Weekly Debrief Report's (weekly.go).
+	Weekly struct {
+		Pages            map[string]bool   `json:"pages"`
+		TeamReader       string            `json:"team_reader"`
+		CountryReaders   []string          `json:"country_readers"`
+		OwnCountryReader string            `json:"own_country_reader"`
+		FinalizedReaders []string          `json:"finalized_readers"`
+		WritesOnOpen     []string          `json:"writes_on_open"`
+		Generators       []string          `json:"generators"`
+		Scopes           map[string]string `json:"scopes"`
+		Statuses         map[string]string `json:"statuses"`
+	} `json:"weekly"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {
 		panic(fmt.Sprintf("debriefs: reading rules.json: %v", err))
@@ -60,6 +73,9 @@ var rules = func() (r struct {
 	}
 	if len(r.SubmitPages) == 0 || len(r.SubmitterRoles) == 0 || len(r.ActivityStatuses) == 0 {
 		panic("debriefs: rules.json lacks the Daily Debrief's doors")
+	}
+	if len(r.Weekly.Pages) == 0 || r.Weekly.TeamReader == "" || len(r.Weekly.Scopes) == 0 {
+		panic("debriefs: rules.json lacks the Weekly Debrief Report's doors")
 	}
 	return r
 }()

@@ -240,5 +240,57 @@
     "PartnerFieldOfficer",
     "ProjectCoordinator",
     "Admin"
-  ]
+  ],
+  "weekly": {
+    "country_readers": [
+      "CountryDirector",
+      "HumanResources",
+      "RegionalVicePresident",
+      "Admin"
+    ],
+    "finalized_readers": [
+      "RegionalVicePresident",
+      "HumanResources"
+    ],
+    "generators": [
+      "Program Lead",
+      "CountryDirector",
+      "Admin"
+    ],
+    "own_country_reader": "CountryDirector",
+    "pages": {
+      "Accountant": false,
+      "Admin": true,
+      "BusinessTransformationOfficer": false,
+      "CCEO": true,
+      "ClusterLeader": false,
+      "CountryDirector": true,
+      "HumanResources": true,
+      "ImpactAssessment": true,
+      "MfiLoanOfficer": false,
+      "MfiPartnerAdmin": false,
+      "PartnerAdmin": true,
+      "PartnerFieldOfficer": true,
+      "Program Lead": true,
+      "ProjectCoordinator": true,
+      "RegionalProgramLead": false,
+      "RegionalVicePresident": true
+    },
+    "scopes": {
+      "country": "Country",
+      "hr_people": "HR People Intelligence",
+      "pl_team": "Program Lead Team",
+      "rvp": "Regional (RVP)"
+    },
+    "statuses": {
+      "draft": "Draft Generated",
+      "finalized": "Finalized",
+      "superseded": "Superseded"
+    },
+    "team_reader": "Program Lead",
+    "writes_on_open": [
+      "Program Lead",
+      "CountryDirector"
+    ]
+  }
 }
