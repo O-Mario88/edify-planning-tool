@@ -848,3 +848,35 @@ screen lay them out as a phone does.
 
 **Not changed:** the app itself already draws every screen from `theme.ts`;
 the Smart Route Planner keeps its owner-drawn teal (next-smart-field-routing).
+
+## 176.31 Home in Go (2026-11-19)
+
+Home (GetHome, GetHomeQueue, GetHomeTodoFigures) was passed through to the
+existing feed. The gateway now builds it (`internal/home`):
+
+- **Home**: the greeting, Today's overview from the reader's own My Plan
+  (`myplan.ReadHomeCounts`: the My Plan status filters each figure opens),
+  their upcoming activities (`myplan.ReadHomeUpcoming`) and Quick access.
+  What depends only on the role — Home access, title, whether it has a plan,
+  its Quick access — and Home's icons, figure labels, activity words and the
+  owner's Priority action rows are exported by
+  `manage.py export_home_rules` to `internal/home/rules.json`;
+  `apps/command_center/test_home_rules_export.py` fails when they drift.
+- **Priority actions** for a CCEO and a Programme Lead, each count from the
+  Go service behind its table: past-due plans (`myplan.ReadPastDue`,
+  `ReadTeamPastDue` with the lead's line-managed team), the Planning
+  Monitor's lists (`planningmonitor.ReadOwnSchools` for a CCEO, the lead's
+  team for a Lead, `HomeListCounts`), Completion Reviews waiting
+  (`plreview`), and a CCEO's no-SSA gap (`schooldirectory.CountNoSSA`). A
+  figure that cannot be read shows "Could not be counted just now", as on
+  the existing page.
+- **To-Do figures** from the Go To-Do queue (`todos.Service.QueueCounts`).
+
+Handed on to the existing application: a partner (whose plan is their
+organisation's), an acting appointment, a role without Home, other roles'
+Priority actions (the To-Do queue's rows, whose due and status words Go's
+queue does not keep), and To-Do figures for a role the Go queue does not
+build. `internal/home/testdata/golden.py` and
+`internal/integration/home_test.go` compare every seeded role's three
+answers at the instant the feed was asked: 29 compared, 25 handed on, 0
+differing.
