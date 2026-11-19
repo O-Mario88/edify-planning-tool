@@ -5,25 +5,14 @@
  * that hold something. Pure, so the choice is tested apart from the page.
  */
 import type { HomePriorityRow, HomeUpcoming } from '@/gen/edify/screens/v1/home_pb';
+import { homeTone } from '@/lib/homeScreen';
 
 export type Tone = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
 
-/** Go's tone words as the design system's. */
+/** Home's tone words (brand, info, plain, caution, alert, good: homeTone)
+ *  as the design system's tones. */
 export function toneOf(word: string): Tone {
-  switch (word) {
-    case 'danger':
-    case 'critical':
-      return 'danger';
-    case 'warning':
-      return 'warning';
-    case 'success':
-      return 'success';
-    case 'info':
-    case 'primary':
-      return 'info';
-    default:
-      return 'neutral';
-  }
+  return (homeTone(word) || 'neutral') as Tone;
 }
 
 /** A row that only reports nothing to do ("0 … — All clear"). */

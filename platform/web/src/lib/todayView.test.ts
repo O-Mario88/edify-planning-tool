@@ -11,10 +11,10 @@ const row = (key: string, over: Partial<{ count: number; statusTone: string }> =
 describe('waitingRows', () => {
   it('leaves out a row that only reports nothing to do, and keeps Home’s order', () => {
     const rows = [
-      row('overdue', { count: 8, statusTone: 'critical' }),
-      row('unclustered', { count: 0, statusTone: 'success' }),
+      row('overdue', { count: 8, statusTone: 'alert' }),
+      row('unclustered', { count: 0, statusTone: 'good' }),
       row('task', { count: 0, statusTone: 'info' }),
-      row('none-visited', { count: 3, statusTone: 'success' }),
+      row('none-visited', { count: 3, statusTone: 'good' }),
     ];
     expect(waitingRows(rows).map((r) => r.key)).toEqual(['overdue', 'task', 'none-visited']);
     expect(allClear(rows[1]!)).toBe(true);
@@ -40,9 +40,8 @@ describe('nextUp', () => {
 });
 
 describe('toneOf', () => {
-  it('reads Go’s tone words as the design system’s', () => {
-    expect(['critical', 'danger', 'warning', 'success', 'primary', 'info', 'plain', ''].map(toneOf)).toEqual([
-      'danger',
+  it('reads Home’s tone words as the design system’s', () => {
+    expect(['alert', 'caution', 'good', 'brand', 'info', 'plain', ''].map(toneOf)).toEqual([
       'danger',
       'warning',
       'success',
