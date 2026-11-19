@@ -4,7 +4,7 @@ import { IdentityService } from '@/gen/edify/identity/v1/identity_pb';
 import { MessagingService } from '@/gen/edify/messaging/v1/messaging_pb';
 import { NotificationCenterService } from '@/gen/edify/screens/v1/notification_center_pb';
 import { NavigationService } from '@/gen/edify/screens/v1/navigation_pb';
-import { SidebarBrand, SidebarNav, Sidebar } from '@/components/shell/Sidebar';
+import { Sidebar } from '@/components/shell/Sidebar';
 import { BottomNav } from '@/components/shell/BottomNav';
 import { TopBar } from '@/components/shell/TopBar';
 import { PhoneMenu } from '@/components/shell/TopBarControls';
@@ -14,6 +14,7 @@ import { environment } from '@/lib/environment';
 import { gatewayClient, isUnavailable } from '@/lib/gateway';
 import { pageSearch } from '@/lib/pageSearch';
 import { requestView } from '@/lib/requestView';
+import { withRoutePlanner } from '@/lib/routePlanner';
 import { initialsOf } from '@/lib/today';
 
 /*
@@ -46,6 +47,8 @@ export default async function ShellLayout({ children }: { children: ReactNode })
     ]),
   );
   const person = session.session;
+  // Smart Route Planner straight after My Plan, for a role that plans routes.
+  const sections = withRoutePlanner(navigation.sections, person?.activeRole ?? '');
   const account = {
     name: person?.name || person?.email || '',
     email: person?.email ?? '',
@@ -54,25 +57,17 @@ export default async function ShellLayout({ children }: { children: ReactNode })
     roles: (person?.roles ?? []).map((role) => ({ value: role, label: role })),
     path,
   };
-  const menu = (
-    <>
-      <SidebarBrand />
-      <div className="app-sidebar__nav-container">
-        <SidebarNav sections={navigation.sections} path={path} />
-      </div>
-    </>
-  );
   // The existing shell's frame (templates/layouts/shell.html): the sidebar
   // beside one column of the top bar over the scrolling workspace.
   return (
     <div className="edify-shell h-full flex overflow-hidden">
-      <Sidebar sections={navigation.sections} path={path} />
+      <Sidebar sections={sections} path={path} />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <TopBar search={pageSearch(path)} account={account} menu={menu} existingWebUrl={environment().existingWebUrl} counts={{ messages, notifications }} />
+        <TopBar search={pageSearch(path)} account={account} existingWebUrl={environment().existingWebUrl} counts={{ messages, notifications }} />
         <main id="main-content" tabIndex={-1} className="edify-workspace flex-1 overflow-y-auto focus:outline-none relative bg-[var(--edify-bg)]" data-density="compact">
           {children}
         </main>
-        <BottomNav items={navigation.bottom} path={path} more={<PhoneMenu asTab>{menu}</PhoneMenu>} />
+        <BottomNav items={navigation.bottom} path={path} more={<PhoneMenu asTab />} />
         <ViewportSync served={view} />
       </div>
     </div>

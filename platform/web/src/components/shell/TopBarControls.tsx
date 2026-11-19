@@ -5,8 +5,8 @@
    there: page history, the theme switch, the account menu (role switch,
    help, report, profile, sign out) and the phone menu. */
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import type { ReactNode } from 'react';
 
 import { applyThemeClass, chooseTheme, subscribeThemePreference } from '@/lib/themePreference';
 
@@ -190,42 +190,33 @@ export function AccountMenu({ name, initials, email = '', activeRole, roles, pat
   );
 }
 
-/** Below 1024px the sidebar opens from the top bar's menu button, as the existing drawer. */
-export function PhoneMenu({ children, asTab = false }: { children: ReactNode; asTab?: boolean }) {
-  const [open, setOpen] = useState(false);
+/** The page the phone's More opens: the reader's whole menu in the native app's design. */
+export const MORE_PATH = '/more';
+
+/**
+ * Below 1024px the menu is the native app's More page (owner, 2026-11-19: the
+ * same mobile navigation as the app, not the old blue sidebar): the bottom
+ * bar's More tab, and the top bar's menu button at tablet width, open it.
+ */
+export function PhoneMenu({ asTab = false }: { asTab?: boolean }) {
+  const current = usePathname() === MORE_PATH;
+  if (asTab) {
+    return (
+      <Link
+        href={MORE_PATH}
+        aria-current={current ? 'page' : undefined}
+        className={`relative flex h-16 flex-col items-center justify-center gap-1 text-[12px] font-semibold ${current ? 'text-[var(--brand-primary)] before:absolute before:left-1/4 before:right-1/4 before:top-0 before:h-[3px] before:rounded-b before:bg-[var(--brand-primary)]' : 'text-[var(--edify-text)]'}`}
+      >
+        <Icon name="menu" className="h-6 w-6" />
+        <span>More</span>
+      </Link>
+    );
+  }
   return (
-    <>
-      {asTab ? (
-        <button
-          type="button"
-          aria-label="More"
-          aria-expanded={open}
-          onClick={() => setOpen(true)}
-          className="flex h-16 flex-col items-center justify-center gap-1 text-[12px] font-semibold text-[var(--edify-text)]"
-        >
-          <Icon name="menu" className="h-6 w-6" />
-          <span>More</span>
-        </button>
-      ) : (
-        <button type="button" className={`${CONTROL} hidden md:flex lg:hidden`} aria-label="Open sidebar" aria-expanded={open} onClick={() => setOpen(true)}>
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-      )}
-      {open ? (
-        <div className="lg:hidden fixed inset-0 flex z-40" role="dialog" aria-modal="true" aria-label="Primary navigation">
-          <button type="button" aria-label="Close sidebar" className="fixed inset-0 bg-slate-600/75 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <div
-            className="app-sidebar relative flex h-full max-w-xs w-full flex-1 flex-col text-slate-100"
-            onClick={(event) => {
-              if ((event.target as HTMLElement).closest('a')) setOpen(false);
-            }}
-          >
-            {children}
-          </div>
-        </div>
-      ) : null}
-    </>
+    <Link href={MORE_PATH} className={`${CONTROL} hidden md:flex lg:hidden`} aria-label="Open the menu">
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </Link>
   );
 }

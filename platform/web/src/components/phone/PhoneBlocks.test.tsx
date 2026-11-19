@@ -11,7 +11,11 @@ import { describe, expect, it } from 'vitest';
 
 import { GetPageResponseSchema } from '@/gen/edify/screens/v1/page_screen_pb';
 
+import { NavItemSchema, NavSectionSchema } from '@/gen/edify/screens/v1/navigation_pb';
+import { create } from '@bufbuild/protobuf';
+
 import { PhoneBlocks } from './PhoneBlocks';
+import { PhoneMore } from './PhoneMore';
 import { PhonePage } from './PhonePage';
 import { scaleOf } from './PhoneChart';
 import { railTabs } from './PhoneLinkTabs';
@@ -164,6 +168,18 @@ describe('a page on a phone', () => {
     const html = renderToStaticMarkup(<PhonePage answer={page} pagePath="/my-plan" drawerHref={DRAWER} />);
     expect(html).toContain('<p data-ph="eyebrow">My Work</p>');
     expect(html).toMatch(/<div data-ph="title-row"><h1 data-ph="title">My Plan<\/h1><a data-ph="export"/);
+  });
+});
+
+describe('the phone menu behind More', () => {
+  it('draws the account, the roles to work as, the reader’s sections as rows, and Sign out', () => {
+    const sections = [create(NavSectionSchema, { label: 'Daily', items: [create(NavItemSchema, { label: 'My Plan', url: '/my-plan' }), create(NavItemSchema, { label: 'Smart Route Planner', url: '/my-plan/smart-route' })] })];
+    const html = renderToStaticMarkup(<PhoneMore name="Paul N." email="cceo@edify.org" activeRole="CCEO" roles={['CCEO', 'Program Lead']} sections={sections} />);
+    expect(html).toContain('<p data-ph="more-meta">CCEO · cceo@edify.org</p>');
+    expect(html).toContain('<input type="hidden" name="role" value="Program Lead"/>');
+    expect(html).toContain('<h2 data-ph="more-label">Daily</h2>');
+    expect(html).toMatch(/<a data-ph="more-row" href="\/my-plan\/smart-route">.*Smart Route Planner/);
+    expect(html).toContain('<form data-ph="more-form" action="/auth/sign-out" method="post">');
   });
 });
 

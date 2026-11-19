@@ -1,9 +1,11 @@
 import { create } from '@bufbuild/protobuf';
 import { describe, expect, it } from 'vitest';
 
+import { isSafeIcon } from './icon';
 import { RouteLegSchema, RouteTotalsSchema, SavedFieldDaySchema, SchoolPinSchema } from '@/gen/edify/routes/v1/routes_pb';
+import { NavItemSchema, NavSectionSchema } from '@/gen/edify/screens/v1/navigation_pb';
 
-import { dayClock, directionsUrl, fieldDayState, hoursMinutes, hrMin, km, legFigures, measureLabel, pinTone, totalFigures } from './routePlanner';
+import { ROUTE_PLANNER_PATH, withRoutePlanner, dayClock, directionsUrl, fieldDayState, hoursMinutes, hrMin, km, legFigures, measureLabel, pinTone, totalFigures } from './routePlanner';
 
 describe('figures are written as the designs write them', () => {
   it.each([
@@ -83,5 +85,33 @@ describe('the field day', () => {
   it('writes its times on the Kampala clock', () => {
     expect(dayClock('2026-11-18T05:02:00Z')).toBe('08:02');
     expect(dayClock('')).toBe('');
+  });
+});
+
+describe('the sidebar links the planner below My Plan', () => {
+  const sections = [
+    create(NavSectionSchema, {
+      label: 'Daily',
+      items: [
+        create(NavItemSchema, { label: 'Dashboard', url: '/dashboard' }),
+        create(NavItemSchema, { label: 'My Plan', url: '/my-plan' }),
+        create(NavItemSchema, { label: 'School Directory', url: '/schools' }),
+      ],
+    }),
+  ];
+
+  it('puts Smart Route Planner straight after My Plan for a role that plans', () => {
+    const [daily] = withRoutePlanner(sections, 'CCEO');
+    expect(daily?.items.map((item) => item.label)).toEqual(['Dashboard', 'My Plan', 'Smart Route Planner', 'School Directory']);
+    expect(daily?.items[2]?.url).toBe(ROUTE_PLANNER_PATH);
+    expect(isSafeIcon(daily?.items[2]?.iconSvg ?? '')).toBe(true);
+    // The gateway's answer is left as it was.
+    expect(sections[0]?.items).toHaveLength(3);
+  });
+
+  it('adds nothing for a role that does not plan, or where the link is already given', () => {
+    expect(withRoutePlanner(sections, 'HR')).toBe(sections);
+    const given = withRoutePlanner(sections, 'CCEO');
+    expect(withRoutePlanner(given, 'CCEO')).toBe(given);
   });
 });

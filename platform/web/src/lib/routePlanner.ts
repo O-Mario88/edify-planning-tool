@@ -4,6 +4,10 @@
  * the existing route engine's planning estimate for time. Nothing here makes
  * a figure up.
  */
+import { create } from '@bufbuild/protobuf';
+
+import { NavItemSchema } from '@/gen/edify/screens/v1/navigation_pb';
+import type { NavSection } from '@/gen/edify/screens/v1/navigation_pb';
 import type { Itinerary, RouteLeg, RouteTotals, SavedFieldDay, SchoolPin } from '@/gen/edify/routes/v1/routes_pb';
 
 export type Measure = 'road' | 'straight_line';
@@ -134,4 +138,31 @@ export function dayClock(rfc3339: string): string {
 /** Today's date in Kampala ("2026-11-18"), as the gateway's days are. */
 export function kampalaToday(now: Date = new Date()): string {
   return KAMPALA_DAY.format(now);
+}
+
+/** The planner's page in this web app. */
+export const ROUTE_PLANNER_PATH = '/my-plan/smart-route';
+
+/** Who plans routes (routeplan.PlannerRoles; the app's PLANNER_ROLES): the gateway decides. */
+const PLANNER_ROLES = new Set(['CCEO', 'Program Lead', 'ProjectCoordinator', 'CountryDirector', 'ImpactAssessment', 'Admin', 'PartnerAdmin', 'PartnerFieldOfficer', 'Accountant']);
+
+/** The app's route icon (lucide "route"), as the sidebar draws icons. */
+const ROUTE_ICON =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+  '<circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg>';
+
+/**
+ * The reader's navigation with Smart Route Planner straight after My Plan
+ * (owner, 2026-11-19), for a role that plans routes, as the app adds it to its
+ * own menu. The gateway's sections are left as they are.
+ */
+export function withRoutePlanner(sections: NavSection[], role: string): NavSection[] {
+  if (!PLANNER_ROLES.has(role)) return sections;
+  if (sections.some((section) => section.items.some((item) => item.url === ROUTE_PLANNER_PATH))) return sections;
+  const link = create(NavItemSchema, { label: 'Smart Route Planner', url: ROUTE_PLANNER_PATH, iconSvg: ROUTE_ICON, pageKey: 'smart_route_planner', native: true });
+  return sections.map((section) => {
+    const at = section.items.findIndex((item) => item.url === '/my-plan');
+    if (at < 0) return section;
+    return { ...section, items: [...section.items.slice(0, at + 1), link, ...section.items.slice(at + 1)] };
+  });
 }

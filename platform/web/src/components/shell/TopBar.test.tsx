@@ -8,7 +8,7 @@ const account = { name: 'Paul N.', initials: 'PN', activeRole: 'CCEO', roles: [{
 const search = { action: '/schools', placeholder: 'Search schools', value: '', keep: {} };
 
 function draw(counts: { messages: number; notifications: number }): string {
-  return renderToStaticMarkup(<TopBar search={search} account={account} menu={null} existingWebUrl="http://localhost:8182" counts={counts} />);
+  return renderToStaticMarkup(<TopBar search={search} account={account} existingWebUrl="http://localhost:8182" counts={counts} />);
 }
 
 describe('the top bar’s badges', () => {

@@ -1,8 +1,13 @@
+'use client';
+
 /*
  * The phone's bottom bar (components/mobile_bottom_nav.html): the gateway's
- * bottom destinations, then More, which opens the full menu.
+ * bottom destinations, then More, which opens the full menu. The open tab
+ * follows the page in the browser: the shell's layout is not redrawn when a
+ * link moves within it.
  */
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import type { NavItem } from '@/gen/edify/screens/v1/navigation_pb';
@@ -11,10 +16,11 @@ import { safeIcon } from '@/lib/icon';
 import { isCurrent } from './Sidebar';
 
 export function BottomNav({ items, path, more }: { items: NavItem[]; path: string; more: ReactNode }) {
+  const here = usePathname() ?? path;
   return (
     <nav aria-label="Primary navigation" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-[var(--edify-border)] bg-[var(--edify-topbar-bg)] pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
       {items.slice(0, 4).map((item) => {
-        const active = isCurrent(item.url, path);
+        const active = isCurrent(item.url, here);
         return (
           <Link
             key={item.url}

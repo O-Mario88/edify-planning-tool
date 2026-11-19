@@ -5,7 +5,6 @@
  * notifications, report a problem, the theme switch and the account menu.
  */
 import Link from 'next/link';
-import type { ReactNode } from 'react';
 
 import { badgeCount } from '@/lib/badgeCount';
 import { dateChip } from '@/lib/today';
@@ -45,12 +44,10 @@ const UTILITY = 'edify-topbar__icon-control edify-topbar__utility flex items-cen
 export function TopBar({
   search,
   account,
-  menu,
   counts = { messages: 0, notifications: 0 },
 }: {
   search: PageSearch;
   account: AccountMenuProps;
-  menu: ReactNode;
   existingWebUrl?: string;
   counts?: TopBarCounts;
 }) {
@@ -62,7 +59,7 @@ export function TopBar({
     <header className="edify-topbar shrink-0 relative z-10">
       <div className="edify-topbar__lead flex items-center gap-4 flex-1 min-w-0">
         <HistoryControls />
-        <PhoneMenu>{menu}</PhoneMenu>
+        <PhoneMenu />
         <search className="edify-topbar__search max-w-md w-full min-w-0 relative block" data-edify-has-submit="">
           <form method="get" action={search.action}>
             {Object.entries(search.keep).map(([name, value]) => (
