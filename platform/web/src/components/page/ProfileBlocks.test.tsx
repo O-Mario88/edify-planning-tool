@@ -55,16 +55,16 @@ describe('the profile’s blocks', () => {
     expect(html).toContain('1 visit is past its date and not done');
   });
 
-  it('draws a two-year chart as cut-out bars with a legend, ticks and its data table', () => {
+  it('draws a chart card as the existing web does, for its chart system to fill', () => {
     const html = draw({
-      blocks: [{ chart: { title: 'SSA score by intervention', horizontal: true, categories: ['Christlike Behaviour'], series: [{ name: 'FY 2025/26', values: [6.6] }, { name: 'FY 2026/27', values: [6.4] }], max: 10, axisTitle: 'SSA score (0–10)' } }],
+      blocks: [{ chart: { title: 'SSA score by intervention', subtitle: 'FY 2025/26 and FY 2026/27', horizontal: true, categories: ['Christlike Behaviour'], series: [{ name: 'FY 2025/26', values: [6.6] }, { name: 'FY 2026/27', values: [6.4] }], max: 10, axisTitle: 'SSA score (0–10)' } }],
     });
-    expect(html).toContain('aria-label="Legend"');
-    expect(html).toMatch(/left:0\.000%;width:64\.000%[^>]*><span[^>]*>6\.4<\/span>/);
-    expect(html).toContain('left:66.000%');
-    expect(html).toContain('>10<');
-    expect(html).toContain('SSA score (0–10)');
-    expect(html).toContain('View chart data');
+    // components/bar_chart.html: the card, its header (no title band) and the
+    // plot EdifyChartSystem draws into once the page runs (lib/legacyChart).
+    expect(html).toContain('<section class="card edify-data-chart" aria-label="SSA score by intervention" data-block="chart">');
+    expect(html).toContain('<header class="edify-data-chart__header" data-no-titlebar=""><h3 class="edify-data-chart__title">SSA score by intervention</h3>');
+    expect(html).toContain('<p class="edify-data-chart__subtitle">FY 2025/26 and FY 2026/27</p>');
+    expect(html).toContain('<div class="edify-data-chart__plot"></div>');
   });
 
   it('draws Participation’s switch with the open part shown and the other kept hidden', () => {
