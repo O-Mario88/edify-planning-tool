@@ -199,4 +199,14 @@ of not-yet-done states the view leaves out is now
 Left in C3: `/today` — only the Admin opens it (field roles and Impact
 Assessment are redirected, which Go hands on): the desk queue with each
 row's decision buttons (today_actions adapters), snoozes and the cleared
-count; `/search` with a query; `/planning/schedule` with a choice.
+count; `/planning/schedule` with a choice.
+
+`/search` with a query is Go's (fieldpages/search.go): the reader's
+direct-portfolio schools of that name, staff for the staff directory's roles
+(a country's own unless Admin, HR or the RVP, none without a country), and
+the work list_activities reaches at a school or cluster of that name (a
+country reader's country; else their schools, their staff-profile id, and a
+partner's organisation and the schools it holds), ten each, newest first.
+Its golden is 70 answers over ten readers and seven queries (wildcards, a
+padded query, nothing found), 0 differing. `_searches_every_country`'s roles
+are now `extended_views.EVERY_COUNTRY_SEARCH_ROLES`, exported.

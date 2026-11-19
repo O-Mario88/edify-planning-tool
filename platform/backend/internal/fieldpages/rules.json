@@ -1,4 +1,35 @@
 {
+  "activity_statuses": {
+    "accountant_confirmed": "Accountant Confirmed",
+    "assigned_to_partner": "Assigned to Partner",
+    "awaiting_ia_verification": "Awaiting IA Verification",
+    "awaiting_owner_approval": "Awaiting Owner Approval",
+    "cancelled": "Cancelled",
+    "closed": "Closed",
+    "completed": "Completed",
+    "completion_started": "Completion Started",
+    "deferred": "Deferred",
+    "evidence_accepted": "Evidence Accepted",
+    "evidence_uploaded": "Evidence Uploaded",
+    "ia_verified": "IA Verified",
+    "in_progress": "In Progress",
+    "not_planned": "Not Planned",
+    "partner_scheduled": "Partner Scheduled",
+    "planned": "Planned",
+    "rejected": "Rejected",
+    "rescheduled": "Rescheduled",
+    "returned": "Returned",
+    "returned_by_ia": "Returned by IA",
+    "returned_by_pl": "Returned by PL",
+    "salesforce_id_required": "Salesforce ID Required",
+    "scheduled": "Scheduled",
+    "submitted_to_pl": "Submitted to PL"
+  },
+  "every_country_search_roles": [
+    "Admin",
+    "HumanResources",
+    "RegionalVicePresident"
+  ],
   "interventions": [
     [
       "christlike_behaviour",
@@ -33,86 +64,107 @@
       "Enrolment"
     ]
   ],
+  "partner_released_statuses": [
+    "cancelled",
+    "returned",
+    "returned_to_staff"
+  ],
   "roles": {
     "Accountant": {
       "map": false,
       "schedule": true,
-      "search": true
+      "search": true,
+      "search_staff": false
     },
     "Admin": {
       "map": true,
       "schedule": true,
-      "search": true
+      "search": true,
+      "search_staff": true
     },
     "BusinessTransformationOfficer": {
       "map": false,
       "schedule": false,
-      "search": true
+      "search": true,
+      "search_staff": false
     },
     "CCEO": {
       "map": true,
       "schedule": true,
-      "search": true
+      "search": true,
+      "search_staff": false
     },
     "ClusterLeader": {
       "map": false,
       "schedule": false,
-      "search": false
+      "search": false,
+      "search_staff": false
     },
     "CountryDirector": {
       "map": true,
       "schedule": true,
-      "search": true
+      "search": true,
+      "search_staff": true
     },
     "HumanResources": {
       "map": false,
       "schedule": false,
-      "search": true
+      "search": true,
+      "search_staff": true
     },
     "ImpactAssessment": {
       "map": true,
       "schedule": true,
-      "search": true
+      "search": true,
+      "search_staff": true
     },
     "MfiLoanOfficer": {
       "map": false,
       "schedule": false,
-      "search": true
+      "search": true,
+      "search_staff": false
     },
     "MfiPartnerAdmin": {
       "map": false,
       "schedule": false,
-      "search": true
+      "search": true,
+      "search_staff": false
     },
     "PartnerAdmin": {
       "map": false,
       "schedule": false,
-      "search": true
+      "search": true,
+      "search_staff": false
     },
     "PartnerFieldOfficer": {
       "map": false,
       "schedule": false,
-      "search": true
+      "search": true,
+      "search_staff": false
     },
     "Program Lead": {
       "map": true,
       "schedule": true,
-      "search": true
+      "search": true,
+      "search_staff": true
     },
     "ProjectCoordinator": {
       "map": true,
       "schedule": true,
-      "search": true
+      "search": true,
+      "search_staff": false
     },
     "RegionalProgramLead": {
       "map": true,
       "schedule": false,
-      "search": true
+      "search": true,
+      "search_staff": false
     },
     "RegionalVicePresident": {
       "map": false,
       "schedule": false,
-      "search": true
+      "search": true,
+      "search_staff": true
     }
   }
 }

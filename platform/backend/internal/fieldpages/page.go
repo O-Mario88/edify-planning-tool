@@ -1,6 +1,7 @@
 // Package fieldpages builds the School Map (extended_views.map_view,
-// pages/map/index.html) and the empty Search page (search_view with no
-// query) as the existing feed reads them.
+// pages/map/index.html), the Search page (search_view; with a query,
+// search.go) and the Schedule School Visit form as the existing feed reads
+// them.
 package fieldpages
 
 import (
@@ -25,11 +26,15 @@ var rulesJSON []byte
 
 var rules = func() (r struct {
 	Roles map[string]struct {
-		Map      bool `json:"map"`
-		Search   bool `json:"search"`
-		Schedule bool `json:"schedule"`
+		Map         bool `json:"map"`
+		Search      bool `json:"search"`
+		Schedule    bool `json:"schedule"`
+		SearchStaff bool `json:"search_staff"`
 	} `json:"roles"`
-	Interventions [][2]string `json:"interventions"`
+	EveryCountrySearchRoles []string          `json:"every_country_search_roles"`
+	PartnerReleasedStatuses []string          `json:"partner_released_statuses"`
+	ActivityStatuses        map[string]string `json:"activity_statuses"`
+	Interventions           [][2]string       `json:"interventions"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {
 		panic(fmt.Sprintf("fieldpages: reading rules.json: %v", err))
@@ -62,7 +67,7 @@ func NewService(db schooldirectory.Querier, now func() time.Time) *Service {
 }
 
 // Build answers path for p; served is false for another path, a role
-// without rules, and a search with a query (the existing page's).
+// without rules, and a visit form with a choice made (the existing page's).
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
 	path = strings.TrimSuffix(path, "/")
 	if path != mapPath && path != searchPath && path != schedulePath {
@@ -85,8 +90,9 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		if !doors.Search {
 			return nil, true, pagegate.ErrNotAvailable
 		}
-		if strings.TrimSpace(query.Get("q")) != "" {
-			return nil, false, nil
+		if q := strings.TrimSpace(query.Get("q")); q != "" {
+			out, err := s.search(ctx, p, q)
+			return out, true, err
 		}
 		return page(header("Search", "Search", "Edify Operations · Search"), path), true, nil
 	}

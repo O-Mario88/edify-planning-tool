@@ -2373,13 +2373,22 @@ def settings_view(request):
     return render(request, "pages/settings/index.html", context)
 
 
-def _searches_every_country(user) -> bool:
-    role = getattr(user, "active_role", None)
-    return bool(getattr(user, "is_superuser", False)) or role in {
+#: The roles whose staff directory spans countries, so their search does too
+#: (Go's internal/fieldpages reads the same set from rules.json).
+EVERY_COUNTRY_SEARCH_ROLES = frozenset(
+    {
         EdifyRole.ADMIN.value,
         EdifyRole.HUMAN_RESOURCES.value,
         EdifyRole.REGIONAL_VICE_PRESIDENT.value,
     }
+)
+
+
+def _searches_every_country(user) -> bool:
+    role = getattr(user, "active_role", None)
+    return bool(getattr(user, "is_superuser", False)) or role in (
+        EVERY_COUNTRY_SEARCH_ROLES
+    )
 
 
 @require_page_permission("search")
