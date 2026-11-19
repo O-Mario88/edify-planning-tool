@@ -40,6 +40,7 @@ PAGES = {
     "/ia/lending-evidence/": "ia_lending_evidence",
     "/ia/verification/": "ia_verification_queue",
     "/ia/dashboard/": "ia_dashboard",
+    "/ia/notifications/": "ia_notifications",
 }
 
 #: The pages that draw the IA workspace strip (partials/_section_nav.html).
@@ -263,8 +264,12 @@ def rules() -> dict:
                 else None,
             }
         pages[path] = {"roles": roles}
+    from apps.frontend.views.ia_views import IA_NOTIFICATION_CATEGORIES
+
     return {
         "pages": pages,
+        # Verification Notifications: the categories it lists.
+        "notification_categories": list(IA_NOTIFICATION_CATEGORIES),
         "lending": _lending(),
         "dashboard": _dashboard(),
         "ia_verify_roles": sorted(

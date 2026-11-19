@@ -58,7 +58,7 @@ func text(t string) *screensv1.PagePanelItem {
 // Build answers path for p. served is false for a path this package does not
 // answer.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
-	if path != DuplicatesPath && path != ReturnedPath && path != HistoryPath && path != PartnerEvidencePath && path != SamplesPath && path != AnalyticsPath && path != StoriesPath && path != ComparePath && path != ReportsPath && path != LendingPath && path != VerificationPath && path != DashboardPath {
+	if path != DuplicatesPath && path != ReturnedPath && path != HistoryPath && path != PartnerEvidencePath && path != SamplesPath && path != AnalyticsPath && path != StoriesPath && path != ComparePath && path != ReportsPath && path != LendingPath && path != VerificationPath && path != DashboardPath && path != NotificationsPath {
 		return nil, false, nil
 	}
 	role, ok := rules.Pages[path].Roles[p.ActiveRole]
@@ -88,6 +88,8 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		return s.verification(ctx, p, role, query)
 	case DashboardPath:
 		return s.dashboard(ctx, p, role, query)
+	case NotificationsPath:
+		return s.notifications(ctx, p)
 	}
 	where, args, err := reach(ctx, s.db, p, s.now(), nil)
 	if err != nil {

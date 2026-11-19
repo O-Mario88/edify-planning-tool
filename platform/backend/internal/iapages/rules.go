@@ -32,8 +32,11 @@ var rules = func() (r struct {
 	Pages map[string]struct {
 		Roles map[string]Role `json:"roles"`
 	} `json:"pages"`
-	IAVerifyRoles []string          `json:"ia_verify_roles"`
-	ActivityTypes map[string]string `json:"activity_types"`
+	IAVerifyRoles []string `json:"ia_verify_roles"`
+	// NotificationCategories are the categories Verification Notifications
+	// lists.
+	NotificationCategories []string          `json:"notification_categories"`
+	ActivityTypes          map[string]string `json:"activity_types"`
 	// ExportRoles are offered Returned Activities' and Verification
 	// History's Export (the data-export permission).
 	ExportRoles []string `json:"export_roles"`
