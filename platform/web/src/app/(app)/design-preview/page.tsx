@@ -12,6 +12,7 @@ import type { ReactNode } from 'react';
 
 import {
   Button,
+  DataTable,
   EmptyState,
   KpiStat,
   SectionHeader,
@@ -22,6 +23,7 @@ import {
   TaskList,
   TaskRow,
 } from '@/components/eds';
+import type { DataColumn, DataRow } from '@/components/eds';
 
 export const metadata: Metadata = { title: 'Design preview — Edify' };
 
@@ -191,6 +193,22 @@ function AccountantMoney() {
   );
 }
 
+const SCHOOL_COLUMNS: DataColumn[] = [
+  { key: 'name', label: 'School', role: 'title' },
+  { key: 'id', label: 'School ID', role: 'context' },
+  { key: 'district', label: 'District', role: 'context' },
+  { key: 'visit', label: 'Last visit' },
+  { key: 'ssa', label: 'SSA average', numeric: true },
+  { key: 'cluster', label: 'Cluster' },
+  { key: 'state', label: 'Status', role: 'status' },
+];
+
+const SCHOOL_ROWS: DataRow[] = [
+  { id: '1', href: '#', tone: 'success', cells: { name: 'Kasawo Church of Uganda P/S', id: '001026', district: 'Mukono', visit: '17 Nov 2026', ssa: '3.4', cluster: 'Cluster A', state: 'Visited' } },
+  { id: '2', href: '#', tone: 'warning', cells: { name: 'Goma Division UMEA P/S', id: '001598', district: 'Mukono', visit: '2 Oct 2026', ssa: '2.8', cluster: 'Cluster A', state: 'Follow-up due' } },
+  { id: '3', href: '#', tone: 'danger', cells: { name: 'Kyampisi UMEA P/S', id: '002114', district: 'Mukono', visit: '', ssa: '2.1', cluster: '', state: 'Not visited' } },
+];
+
 export default function DesignPreviewPage() {
   return (
     <div className="space-y-12 bg-ds-bg p-6 text-ds-text">
@@ -248,6 +266,15 @@ export default function DesignPreviewPage() {
             <Skeleton />
           </Surface>
         </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-ds-title font-bold">Tables</h2>
+        <p className="text-ds-body text-ds-text-muted">
+          A table from 768px; below that each row shows the school, its School ID and district, and its status, with the other columns under More details
+          (owner, 2026-11-19: rows on phones). Resize the window to see both.
+        </p>
+        <DataTable caption="Schools, sample" columns={SCHOOL_COLUMNS} rows={SCHOOL_ROWS} empty={{ title: 'No schools', body: 'Schools appear here once they are assigned to you.' }} />
       </section>
 
       <Pair

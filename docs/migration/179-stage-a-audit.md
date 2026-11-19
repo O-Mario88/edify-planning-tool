@@ -135,8 +135,10 @@ before any page is rebuilt (177).
    phone (sideways scroll, no frozen columns); 177 asks for mobile row
    alternatives. Proposed: below 768 px a table becomes a list of rows that
    show the two or three columns that identify the record and its state,
-   opening the rest; at 768 and wider it stays a table. Not changed until
-   decided.
+   opening the rest; at 768 and wider it stays a table. **Decided
+   2026-11-19 (owner: "Rows on phones")**: the redesign's tables are the
+   design system's DataTable (180), rows below 768 px; the live web keeps its
+   tables until each page is rebuilt.
 2. **The greeting band on Home.** Proposed: drop it on phones (the role and
    date move to the top bar), so the first screen holds work.
 3. **Where leadership lands.** Proposed: the Country Director, Impact

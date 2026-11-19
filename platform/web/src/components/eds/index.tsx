@@ -198,3 +198,130 @@ export function Segmented({ items, active }: { items: string[]; active: string }
     </div>
   );
 }
+
+/** A column of a DataTable. On a phone the `title` column heads each row,
+ *  `context` columns are its second line and the `status` column its badge;
+ *  every other column is one tap away under "More details". */
+export type DataColumn = {
+  key: string;
+  label: string;
+  numeric?: boolean;
+  role?: 'title' | 'context' | 'status';
+};
+
+/** A row of a DataTable: its cells by column key, where it opens, and the
+ *  tone of its status. */
+export type DataRow = { id: string; href?: string; cells: Record<string, string>; tone?: Tone };
+
+/**
+ * A table at 768px and wider; below that (owner, 2026-11-19: "Rows on
+ * phones") a list of rows that show what identifies the record and its state,
+ * with the rest of its columns one tap away. Both are drawn from the same
+ * columns, and only one is shown at a time.
+ */
+export function DataTable({
+  caption,
+  columns,
+  rows,
+  empty,
+}: {
+  caption: string;
+  columns: DataColumn[];
+  rows: DataRow[];
+  empty: { title: string; body: string };
+}) {
+  if (!rows.length) return <EmptyState title={empty.title} body={empty.body} />;
+  const title = columns.find((c) => c.role === 'title') ?? columns[0];
+  const context = columns.filter((c) => c.role === 'context');
+  const status = columns.find((c) => c.role === 'status');
+  const rest = columns.filter((c) => c !== title && c !== status && !context.includes(c));
+  return (
+    <div>
+      <ul className="divide-y divide-ds-border overflow-hidden rounded-ds-lg border border-ds-border bg-ds-surface shadow-ds-raised md:hidden" aria-label={caption}>
+        {rows.map((row) => (
+          <li key={row.id} className="px-4 py-3">
+            <div className="flex items-start gap-3">
+              <div className="min-w-0 flex-1">
+                {row.href ? (
+                  <a href={row.href} className="text-ds-body font-semibold text-ds-primary underline-offset-4 hover:underline">
+                    {row.cells[title.key]}
+                  </a>
+                ) : (
+                  <p className="text-ds-body font-semibold text-ds-text">{row.cells[title.key]}</p>
+                )}
+                {context.length ? (
+                  <p className="mt-0.5 text-ds-caption text-ds-text-subtle">
+                    {context
+                      .map((c) => row.cells[c.key])
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </p>
+                ) : null}
+              </div>
+              {status && row.cells[status.key] ? <StatusBadge tone={row.tone}>{row.cells[status.key]}</StatusBadge> : null}
+            </div>
+            {rest.length ? (
+              <details className="mt-2">
+                <summary className="flex min-h-[var(--ds-target)] cursor-pointer items-center text-ds-caption font-semibold text-ds-primary">More details</summary>
+                <dl className="grid grid-cols-2 gap-x-4 gap-y-2 pb-1">
+                  {rest.map((c) => (
+                    <div key={c.key} className="min-w-0">
+                      <dt className="text-ds-caption text-ds-text-subtle">{c.label}</dt>
+                      <dd className={`text-ds-body font-medium text-ds-text ${c.numeric ? 'tabular-nums' : ''}`}>{row.cells[c.key] || '—'}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </details>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+      <div className="hidden overflow-x-auto rounded-ds-lg border border-ds-border bg-ds-surface shadow-ds-raised md:block">
+        <table className="w-full border-collapse text-left">
+          <caption className="sr-only">{caption}</caption>
+          <thead className="bg-ds-surface-sunken">
+            <tr>
+              {columns.map((c) => (
+                <th
+                  key={c.key}
+                  scope="col"
+                  className={`border-b border-ds-border px-4 py-2.5 text-ds-caption font-semibold text-ds-text-subtle ${c.numeric ? 'text-right' : ''}`}
+                >
+                  {c.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-ds-border">
+            {rows.map((row) => (
+              <tr key={row.id} className="hover:bg-ds-surface-sunken">
+                {columns.map((c) => {
+                  const value = row.cells[c.key] || '—';
+                  const body =
+                    c === title && row.href ? (
+                      <a href={row.href} className="font-semibold text-ds-primary underline-offset-4 hover:underline">
+                        {value}
+                      </a>
+                    ) : c === status && row.cells[c.key] ? (
+                      <StatusBadge tone={row.tone}>{value}</StatusBadge>
+                    ) : (
+                      value
+                    );
+                  return c === title ? (
+                    <th key={c.key} scope="row" className="px-4 py-3 text-ds-body font-semibold text-ds-text">
+                      {body}
+                    </th>
+                  ) : (
+                    <td key={c.key} className={`px-4 py-3 text-ds-body text-ds-text ${c.numeric ? 'text-right tabular-nums' : ''}`}>
+                      {body}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
