@@ -35,8 +35,15 @@ var rules = func() (r struct {
 	IAVerifyRoles []string `json:"ia_verify_roles"`
 	// NotificationCategories are the categories Verification Notifications
 	// lists.
-	NotificationCategories []string          `json:"notification_categories"`
-	ActivityTypes          map[string]string `json:"activity_types"`
+	NotificationCategories []string `json:"notification_categories"`
+	// Unmatched is the Unmatched SSA queue's: its statuses' names, what it
+	// lists by default and its page size.
+	Unmatched struct {
+		Statuses        [][2]string `json:"statuses"`
+		DefaultStatuses []string    `json:"default_statuses"`
+		PageSize        int         `json:"page_size"`
+	} `json:"unmatched"`
+	ActivityTypes map[string]string `json:"activity_types"`
 	// ExportRoles are offered Returned Activities' and Verification
 	// History's Export (the data-export permission).
 	ExportRoles []string `json:"export_roles"`

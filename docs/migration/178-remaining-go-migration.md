@@ -266,3 +266,14 @@ and the suggested fix. Golden (dataquality/testdata/duplicates_golden.py):
 20 answers over five readers and four pages, 0 differing. Marking a school
 unique stays the existing page's.
 
+`/ssa/unmatched` is Go's in `internal/iapages` (unmatched.go): the imported
+SSA rows no school matched, in the reader's country (by the batch's uploader
+or the suggested school), by status (pending and held unless one is asked),
+batch, district, School ID, confidence and upload dates, newest first, fifty
+a page with the existing page's own pager. A confidence float() refuses or a
+date that is not one hands on (the existing page fails). The default states
+are now `unmatched_service.QUEUE_DEFAULT_STATUSES`, exported. Golden
+(iapages/testdata/unmatched_golden.py): 55 answers over five readers and
+eleven queries, 0 differing. Linking, creating a school, holding and
+ignoring stay the existing page's.
+

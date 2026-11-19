@@ -1137,3 +1137,9 @@ GRANT SELECT (fy, total_amount, submitted_at, submitted_by_user_id, submission_v
 -- which advances moved and were accounted for.
 GRANT SELECT (activity_id) ON netsuite_expense_record TO edify_gateway_ro;
 GRANT SELECT (activity_id, status, accountability_netsuite_id) ON advance_request TO edify_gateway_ro;
+
+-- The Unmatched SSA queue (internal/iapages/unmatched.go): each imported row
+-- no school matched, its suggested school and confidence, and the batches.
+GRANT SELECT (id, school_id, school_name_raw, district_raw, date_of_ssa, reason, status, match_confidence, created_at)
+  ON unmatched_ssa_record TO edify_gateway_ro;
+

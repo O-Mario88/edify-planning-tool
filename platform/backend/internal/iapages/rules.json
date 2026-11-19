@@ -2036,6 +2036,114 @@
           "strip": null
         }
       }
+    },
+    "/ssa/unmatched": {
+      "roles": {
+        "Accountant": {
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "page": false,
+          "strip": null
+        },
+        "HumanResources": {
+          "page": false,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "page": true,
+          "strip": {
+            "label": "Impact Assessment",
+            "scrolls": true,
+            "tabs": [
+              {
+                "active": false,
+                "href": "/ia/dashboard/",
+                "label": "Overview"
+              },
+              {
+                "active": false,
+                "href": "/ia/framework/",
+                "label": "Framework & Strategy"
+              },
+              {
+                "active": true,
+                "href": "/ssa/unmatched",
+                "label": "Baseline & Field Data"
+              },
+              {
+                "active": false,
+                "href": "/ia/stories/",
+                "label": "School Progress"
+              },
+              {
+                "active": false,
+                "href": "/ia/learning/",
+                "label": "Analysis & Learning"
+              },
+              {
+                "active": false,
+                "href": "/ia/impact-reports/",
+                "label": "Reporting & Accountability"
+              },
+              {
+                "active": false,
+                "href": "/country-planning-oversight/",
+                "label": "Data Quality & Verification"
+              }
+            ]
+          }
+        },
+        "MfiLoanOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "page": false,
+          "strip": null
+        }
+      }
     }
   },
   "profile_required_evidence": {
@@ -2228,5 +2336,30 @@
       "Archived"
     ]
   ],
-  "table_page_size": 50
+  "table_page_size": 50,
+  "unmatched": {
+    "default_statuses": [
+      "pending",
+      "hold"
+    ],
+    "page_size": 50,
+    "statuses": [
+      [
+        "pending",
+        "Pending"
+      ],
+      [
+        "matched",
+        "Matched"
+      ],
+      [
+        "ignored",
+        "Ignored"
+      ],
+      [
+        "hold",
+        "Hold for Review"
+      ]
+    ]
+  }
 }

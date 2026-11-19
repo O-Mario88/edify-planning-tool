@@ -33,6 +33,9 @@ from django.db import DatabaseError, transaction
 from apps.core.exceptions import BadRequest, NotFoundError
 
 DEFAULT_PAGE_SIZE = 50
+#: The rows the queue lists when no status is asked for (Go's
+#: internal/iapages reads the same from rules.json).
+QUEUE_DEFAULT_STATUSES = ("pending", "hold")
 CANDIDATE_LIMIT = 200  # hard cap on the Python-fallback candidate pool
 
 
@@ -142,7 +145,7 @@ def get_unmatched_queue(
     if status:
         qs = qs.filter(status=status)
     else:
-        qs = qs.filter(status__in=["pending", "hold"])
+        qs = qs.filter(status__in=QUEUE_DEFAULT_STATUSES)
 
     batch_id = (filters.get("batch") or "").strip()
     if batch_id:

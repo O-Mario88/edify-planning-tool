@@ -41,6 +41,7 @@ PAGES = {
     "/ia/verification/": "ia_verification_queue",
     "/ia/dashboard/": "ia_dashboard",
     "/ia/notifications/": "ia_notifications",
+    "/ssa/unmatched": "data_quality_center",
 }
 
 #: The pages that draw the IA workspace strip (partials/_section_nav.html).
@@ -51,6 +52,7 @@ STRIP_PAGES = (
     "/ia/lending-evidence/",
     "/ia/verification/",
     "/ia/dashboard/",
+    "/ssa/unmatched",
 )
 
 #: The roles ia_samples_view offers "Draw this week now" (can_draw).
@@ -265,9 +267,18 @@ def rules() -> dict:
             }
         pages[path] = {"roles": roles}
     from apps.frontend.views.ia_views import IA_NOTIFICATION_CATEGORIES
+    from apps.schools.models import UnmatchedSSARecord
+    from apps.ssa import unmatched_service
 
     return {
         "pages": pages,
+        # The Unmatched SSA queue: its statuses' names, what it lists by
+        # default and its page size.
+        "unmatched": {
+            "statuses": [list(pair) for pair in UnmatchedSSARecord.STATUSES],
+            "default_statuses": list(unmatched_service.QUEUE_DEFAULT_STATUSES),
+            "page_size": unmatched_service.DEFAULT_PAGE_SIZE,
+        },
         # Verification Notifications: the categories it lists.
         "notification_categories": list(IA_NOTIFICATION_CATEGORIES),
         "lending": _lending(),
