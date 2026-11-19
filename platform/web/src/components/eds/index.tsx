@@ -230,8 +230,8 @@ export function DataTable({
   rows: DataRow[];
   empty: { title: string; body: string };
 }) {
-  if (!rows.length) return <EmptyState title={empty.title} body={empty.body} />;
   const title = columns.find((c) => c.role === 'title') ?? columns[0];
+  if (!rows.length || !title) return <EmptyState title={empty.title} body={empty.body} />;
   const context = columns.filter((c) => c.role === 'context');
   const status = columns.find((c) => c.role === 'status');
   const rest = columns.filter((c) => c !== title && c !== status && !context.includes(c));
