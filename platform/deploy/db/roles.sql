@@ -1097,3 +1097,22 @@ GRANT SELECT (review_note) ON cce_regional_report TO edify_gateway_ro;
 -- when Salesforce returned each.
 GRANT SELECT (user_id, mfi_id, role, active, officer_reference) ON bt_mfi_membership TO edify_gateway_ro;
 GRANT SELECT (assigned_officer_reference, salesforce_returned_at) ON bt_mfi_loan TO edify_gateway_ro;
+-- The Accounts desks (internal/financedesks): accountability records, the
+-- finance audit log, budget amendments, the cleared ledger's snapshots,
+-- returned and confirmed advances, and variance reviews.
+GRANT SELECT (id, activity_id, staff_id, amount_disbursed, actual_spend, variance, netsuite_expense_id, status, submitted_at)
+  ON accountability_record TO edify_gateway_ro;
+GRANT SELECT (id, activity_id, event_type, actor_id, actor_role, new_value, timestamp) ON finance_audit_log TO edify_gateway_ro;
+GRANT SELECT (id, activity_id, original_date, new_date, original_fy, original_quarter, new_fy, new_quarter, original_amount,
+  reason, status, review_note, created_at) ON budget_amendment TO edify_gateway_ro;
+GRANT SELECT (id, final_budget_amount, disbursed_amount, actual_spend_amount) ON completed_activity_snapshot TO edify_gateway_ro;
+GRANT SELECT (activity_id, amount, responsible_user_id, last_note, updated_at) ON advance_request TO edify_gateway_ro;
+GRANT SELECT (id, activity_id, budgeted_amount, disbursed_amount, actual_spend, variance, reason, status, created_at)
+  ON variance_review TO edify_gateway_ro;
+GRANT SELECT (est_cost_cents, payment_status) ON activity TO edify_gateway_ro;
+-- The Finance Blocked directory: each activity's evidence, Salesforce record
+-- and ID, and when it was created.
+GRANT SELECT (activity_id, quarantined) ON evidence_record TO edify_gateway_ro;
+GRANT SELECT (salesforce_record_type_snapshot, salesforce_activity_id, delivery_type, created_at) ON activity TO edify_gateway_ro;
+-- The Weekly Staff Fund Requests registry: each request's money.
+GRANT SELECT (total_amount, disbursed_amount) ON weekly_fund_request TO edify_gateway_ro;

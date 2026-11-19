@@ -1,0 +1,276 @@
+{
+  "activity_types": {
+    "baseline_ssa_visit": "SSA Visit",
+    "cluster_meeting": "Cluster Meeting",
+    "cluster_meeting_ssa_review": "Cluster Meeting + SSA Review",
+    "cluster_training": "Cluster Training",
+    "cluster_training_ssa_collection": "Cluster Training + SSA Collection",
+    "coaching_visit": "Coaching Visit",
+    "core_assessment_visit": "Core Assessment Visit",
+    "core_training": "Core Training",
+    "core_visit": "Core Visit",
+    "donor_visit": "Donor Visit",
+    "field_event": "Field Event",
+    "follow_up_visit": "Follow-up Visit",
+    "in_school_coaching_visit": "In-school Coaching Visit",
+    "in_school_support": "In-school Support",
+    "in_school_training": "In-school Training",
+    "partner_activity": "Partner Activity",
+    "partner_ssa_collection": "Partner SSA Collection",
+    "programme_event": "Programme Event",
+    "project_activity": "Project Activity",
+    "school_improvement_training": "School Improvement Training",
+    "school_invitation": "School Invitation",
+    "school_visit": "School Visit",
+    "school_visit_ssa_collection": "School Visit + SSA Collection",
+    "social_visit": "Social Visit",
+    "ssa_activity": "SSA Activity",
+    "story_gathering_visit": "Gathering Story",
+    "training": "Training",
+    "training_follow_up_visit": "Training Follow-up Visit"
+  },
+  "ia_verified_statuses": [
+    "ia_verified",
+    "closed",
+    "accountant_confirmed"
+  ],
+  "no_salesforce_record_types": [
+    "NONE"
+  ],
+  "not_in_plan_statuses": [
+    "cancelled",
+    "rejected",
+    "deferred",
+    "not_planned"
+  ],
+  "partner_paid_statuses": [
+    "disbursed",
+    "paid"
+  ],
+  "roles": {
+    "Accountant": {
+      "desks": {
+        "/accounts/accountability": true,
+        "/accounts/advances": true,
+        "/accounts/audit-log": true,
+        "/accounts/blocked": true,
+        "/accounts/budget-amendments": true,
+        "/accounts/cleared": true,
+        "/accounts/returned": true,
+        "/accounts/variance-review": true,
+        "/accounts/weekly-requests": true
+      },
+      "open_school": false
+    },
+    "Admin": {
+      "desks": {
+        "/accounts/accountability": true,
+        "/accounts/advances": true,
+        "/accounts/audit-log": true,
+        "/accounts/blocked": true,
+        "/accounts/budget-amendments": true,
+        "/accounts/cleared": true,
+        "/accounts/returned": true,
+        "/accounts/variance-review": true,
+        "/accounts/weekly-requests": true
+      },
+      "open_school": true
+    },
+    "BusinessTransformationOfficer": {
+      "desks": {
+        "/accounts/accountability": false,
+        "/accounts/advances": false,
+        "/accounts/audit-log": false,
+        "/accounts/blocked": false,
+        "/accounts/budget-amendments": false,
+        "/accounts/cleared": false,
+        "/accounts/returned": false,
+        "/accounts/variance-review": false,
+        "/accounts/weekly-requests": false
+      },
+      "open_school": true
+    },
+    "CCEO": {
+      "desks": {
+        "/accounts/accountability": false,
+        "/accounts/advances": false,
+        "/accounts/audit-log": false,
+        "/accounts/blocked": false,
+        "/accounts/budget-amendments": false,
+        "/accounts/cleared": false,
+        "/accounts/returned": false,
+        "/accounts/variance-review": false,
+        "/accounts/weekly-requests": false
+      },
+      "open_school": true
+    },
+    "ClusterLeader": {
+      "desks": {
+        "/accounts/accountability": false,
+        "/accounts/advances": false,
+        "/accounts/audit-log": false,
+        "/accounts/blocked": false,
+        "/accounts/budget-amendments": false,
+        "/accounts/cleared": false,
+        "/accounts/returned": false,
+        "/accounts/variance-review": false,
+        "/accounts/weekly-requests": false
+      },
+      "open_school": false
+    },
+    "CountryDirector": {
+      "desks": {
+        "/accounts/accountability": false,
+        "/accounts/advances": false,
+        "/accounts/audit-log": false,
+        "/accounts/blocked": false,
+        "/accounts/budget-amendments": false,
+        "/accounts/cleared": false,
+        "/accounts/returned": false,
+        "/accounts/variance-review": false,
+        "/accounts/weekly-requests": false
+      },
+      "open_school": true
+    },
+    "HumanResources": {
+      "desks": {
+        "/accounts/accountability": false,
+        "/accounts/advances": false,
+        "/accounts/audit-log": false,
+        "/accounts/blocked": false,
+        "/accounts/budget-amendments": false,
+        "/accounts/cleared": false,
+        "/accounts/returned": false,
+        "/accounts/variance-review": false,
+        "/accounts/weekly-requests": false
+      },
+      "open_school": false
+    },
+    "ImpactAssessment": {
+      "desks": {
+        "/accounts/accountability": true,
+        "/accounts/advances": true,
+        "/accounts/audit-log": true,
+        "/accounts/blocked": true,
+        "/accounts/budget-amendments": true,
+        "/accounts/cleared": true,
+        "/accounts/returned": true,
+        "/accounts/variance-review": true,
+        "/accounts/weekly-requests": true
+      },
+      "open_school": true
+    },
+    "MfiLoanOfficer": {
+      "desks": {
+        "/accounts/accountability": false,
+        "/accounts/advances": false,
+        "/accounts/audit-log": false,
+        "/accounts/blocked": false,
+        "/accounts/budget-amendments": false,
+        "/accounts/cleared": false,
+        "/accounts/returned": false,
+        "/accounts/variance-review": false,
+        "/accounts/weekly-requests": false
+      },
+      "open_school": false
+    },
+    "MfiPartnerAdmin": {
+      "desks": {
+        "/accounts/accountability": false,
+        "/accounts/advances": false,
+        "/accounts/audit-log": false,
+        "/accounts/blocked": false,
+        "/accounts/budget-amendments": false,
+        "/accounts/cleared": false,
+        "/accounts/returned": false,
+        "/accounts/variance-review": false,
+        "/accounts/weekly-requests": false
+      },
+      "open_school": false
+    },
+    "PartnerAdmin": {
+      "desks": {
+        "/accounts/accountability": false,
+        "/accounts/advances": false,
+        "/accounts/audit-log": false,
+        "/accounts/blocked": false,
+        "/accounts/budget-amendments": false,
+        "/accounts/cleared": false,
+        "/accounts/returned": false,
+        "/accounts/variance-review": false,
+        "/accounts/weekly-requests": false
+      },
+      "open_school": false
+    },
+    "PartnerFieldOfficer": {
+      "desks": {
+        "/accounts/accountability": false,
+        "/accounts/advances": false,
+        "/accounts/audit-log": false,
+        "/accounts/blocked": false,
+        "/accounts/budget-amendments": false,
+        "/accounts/cleared": false,
+        "/accounts/returned": false,
+        "/accounts/variance-review": false,
+        "/accounts/weekly-requests": false
+      },
+      "open_school": false
+    },
+    "Program Lead": {
+      "desks": {
+        "/accounts/accountability": false,
+        "/accounts/advances": false,
+        "/accounts/audit-log": false,
+        "/accounts/blocked": false,
+        "/accounts/budget-amendments": false,
+        "/accounts/cleared": false,
+        "/accounts/returned": false,
+        "/accounts/variance-review": false,
+        "/accounts/weekly-requests": false
+      },
+      "open_school": true
+    },
+    "ProjectCoordinator": {
+      "desks": {
+        "/accounts/accountability": false,
+        "/accounts/advances": false,
+        "/accounts/audit-log": false,
+        "/accounts/blocked": false,
+        "/accounts/budget-amendments": false,
+        "/accounts/cleared": false,
+        "/accounts/returned": false,
+        "/accounts/variance-review": false,
+        "/accounts/weekly-requests": false
+      },
+      "open_school": true
+    },
+    "RegionalProgramLead": {
+      "desks": {
+        "/accounts/accountability": false,
+        "/accounts/advances": false,
+        "/accounts/audit-log": false,
+        "/accounts/blocked": false,
+        "/accounts/budget-amendments": false,
+        "/accounts/cleared": false,
+        "/accounts/returned": false,
+        "/accounts/variance-review": false,
+        "/accounts/weekly-requests": false
+      },
+      "open_school": false
+    },
+    "RegionalVicePresident": {
+      "desks": {
+        "/accounts/accountability": false,
+        "/accounts/advances": false,
+        "/accounts/audit-log": false,
+        "/accounts/blocked": false,
+        "/accounts/budget-amendments": false,
+        "/accounts/cleared": false,
+        "/accounts/returned": false,
+        "/accounts/variance-review": false,
+        "/accounts/weekly-requests": false
+      },
+      "open_school": false
+    }
+  }
+}

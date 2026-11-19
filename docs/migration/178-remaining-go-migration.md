@@ -99,3 +99,30 @@ their own.
 
 C1 → C9, then D with each page, then E. After that the mobile-first redesign
 (177, Stage A first).
+
+## Done
+
+### C1 · The Accounts desks (2026-11-19)
+
+`internal/financedesks` builds all nine desks as the existing pages draw
+them: Accountability Pending (with its NetSuite drawer form), Ready for
+Advance Disbursement (with its disbursement dialog), the Finance Audit Log,
+the Finance Blocked directory (FinanceBlockedReasonService's four rules in
+one query, counted and paged in the database), Budget Amendments, the Cleared
+ledger, Returned corrections (`returned_correction_queue`), Variance Review
+and the Weekly Staff Fund Requests registry. The doors (`disbursements`:
+Accountant, Admin, Impact Assessment), the school-link rule, the activity
+types and the status lists come from `manage.py export_finance_desks_rules`
+(`apps/fund_requests/test_finance_desks_rules_export.py` fails on drift). A
+budget amendment already decided is handed on (its reviewer line is the
+existing page's). The gateway reads the new columns through
+`deploy/db/roles.sql`.
+
+Proved by `financedesks/testdata/golden.py`, which files an accountability
+record, an audit event, a variance review and an amendment on one completed
+activity, a closed activity, and an advance to disburse and one returned,
+then runs the unchanged oracle (web_page.py) for the Accountant, the Admin,
+IA and three readers the desks are refused to, on the first page and on the
+Blocked directory's and weekly requests' last pages;
+`integration/finance_desks_test.go` files the same records and asks Go:
+108 answers of 6 accounts, 0 differing.
