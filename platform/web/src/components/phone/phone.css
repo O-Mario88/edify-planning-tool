@@ -225,7 +225,8 @@ a[data-ph='tile']:active { background: var(--ph-primary-soft) !important; }
    from the one before, so nothing is a card squeezed inside the card. */
 [data-ph='seg-body'] { display: flex !important; flex-direction: column !important; }
 [data-ph='seg-body'] > :is([data-ph='panel-flat'], [data-ph='chips-area']) { border-top: 1px solid var(--ph-raised-border) !important; }
-[data-ph='chips-area'] { padding: 12px 16px !important; }
+[data-ph='chips-area'] { display: flex !important; padding: 12px 16px !important; }
+button[data-ph='menu-item'] { width: 100% !important; border: 0 !important; background: none !important; text-align: left !important; cursor: pointer !important; }
 
 /* ── Facts card ─────────────────────────────────────────── */
 [data-ph='facts'] { display: flex !important; flex-wrap: wrap !important; row-gap: 8px !important; column-gap: 32px !important; }

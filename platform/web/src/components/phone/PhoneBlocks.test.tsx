@@ -18,6 +18,7 @@ import { PhoneBlocks } from './PhoneBlocks';
 import { PhoneMore } from './PhoneMore';
 import { PhonePage } from './PhonePage';
 import { scaleOf } from './PhoneChart';
+import { railChips } from './PhoneChips';
 import { railTabs } from './PhoneLinkTabs';
 import { phoneTone, tileColumns } from './tone';
 
@@ -127,6 +128,47 @@ describe('a page on a phone', () => {
     expect(html).toContain('aria-label="Open: Chase delivery"');
   });
 
+  it('draws a switch card’s open part flat and ruled, its chips the app’s rail with More, no card inside the card', () => {
+    const html = draw({
+      blocks: [
+        {
+          segments: {
+            segments: [
+              {
+                label: 'This Week',
+                active: true,
+                blocks: [
+                  { panel: { title: 'What needs you now', badges: [{ text: '8 past due' }], items: [{ text: 'Past due plans' }] } },
+                  {
+                    chips: {
+                      name: 'cat',
+                      label: 'Which kind of plan',
+                      value: 'all',
+                      chips: [
+                        { label: 'All Categories', value: 'all' },
+                        { label: 'School Visits (6)', value: 'visits' },
+                        { label: 'Trainings (0)', value: 'trainings' },
+                        { label: 'Cluster Meetings (2)', value: 'meetings' },
+                      ],
+                    },
+                  },
+                ],
+              },
+              { label: 'Map', blocks: [] },
+            ],
+          },
+        },
+      ],
+    });
+    const body = html.slice(html.indexOf('data-ph="seg-body"'));
+    expect(body).toContain('<section data-ph="panel-flat" aria-label="What needs you now">');
+    expect(body).not.toContain('data-ph="card"');
+    expect(body).not.toContain('data-edify-tablist');
+    expect(body).toContain('<div data-ph="rail" role="group" aria-label="Which kind of plan">');
+    expect(body).toContain('aria-pressed="true">All Categories</button>');
+    expect(body).toContain('aria-label="More Which kind of plan, 2"');
+  });
+
   it('draws a record card with its tick, pills, facts and a way to open it', () => {
     const html = draw(
       {
@@ -195,6 +237,14 @@ describe('the phone rules', () => {
     const { shown, rest } = railTabs(tabs as never);
     expect(shown.map((tab) => tab.label)).toEqual(['A', 'C']);
     expect(rest.map((tab) => tab.label)).toEqual(['B', 'D']);
+  });
+
+  it('keeps the first chip and the chosen one on a chips rail', () => {
+    const chips = ['all', 'visits', 'trainings', 'meetings'].map((value) => ({ label: value, value, count: '' }));
+    expect(railChips(chips as never, 'all').shown.map((chip) => chip.value)).toEqual(['all', 'visits']);
+    const { shown, rest } = railChips(chips as never, 'meetings');
+    expect(shown.map((chip) => chip.value)).toEqual(['all', 'meetings']);
+    expect(rest.map((chip) => chip.value)).toEqual(['visits', 'trainings']);
   });
 
   it('sets tiles two a row on a phone and in even rows of at most five wider', () => {
