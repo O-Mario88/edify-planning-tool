@@ -38,7 +38,8 @@ export function PhoneSegments({ title, subtitle, caption, segments }: { title: s
         </div>
         {caption ? <p data-ph="caption">{caption}</p> : null}
       </div>
-      {segments[open]?.body}
+      {/* The open part's blocks, ruled one from the next inside this card. */}
+      <div data-ph="seg-body">{segments[open]?.body}</div>
     </section>
   );
 }

@@ -221,6 +221,11 @@ a[data-ph='tile']:active { background: var(--ph-primary-soft) !important; }
 [data-ph='switch'] [data-ph='seg']:is([aria-current='page'], [aria-pressed='true']) { color: #ffffff !important; }
 [data-ph='switch'] :is([aria-current='page'], [aria-pressed='true']) [data-ph='count'] { background: rgba(255, 255, 255, 0.22) !important; color: #ffffff !important; }
 [data-ph='caption'] { margin: 0 !important; color: var(--ph-text-muted) !important; font-size: 12px !important; font-weight: 500 !important; }
+/* The open part: its panels flat and its chips a second switch, each ruled
+   from the one before, so nothing is a card squeezed inside the card. */
+[data-ph='seg-body'] { display: flex !important; flex-direction: column !important; }
+[data-ph='seg-body'] > :is([data-ph='panel-flat'], [data-ph='chips-area']) { border-top: 1px solid var(--ph-raised-border) !important; }
+[data-ph='chips-area'] { padding: 12px 16px !important; }
 
 /* ── Facts card ─────────────────────────────────────────── */
 [data-ph='facts'] { display: flex !important; flex-wrap: wrap !important; row-gap: 8px !important; column-gap: 32px !important; }

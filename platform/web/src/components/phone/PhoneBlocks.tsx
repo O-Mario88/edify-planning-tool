@@ -9,6 +9,7 @@ import { actionHref, resolveHref } from '@/lib/feedPage';
 
 import { FeedBlocks } from '../page/FeedBlocks';
 import { PhoneChart } from './PhoneChart';
+import { PhoneChips } from './PhoneChips';
 import { PhoneFilters } from './PhoneFilters';
 import { PhoneLinkTabs } from './PhoneLinkTabs';
 import { PhoneList } from './PhoneList';
@@ -85,7 +86,7 @@ export function PhoneBlocks({ blocks, pagePath, drawerHref, selectable }: PhoneB
           </section>
         );
       case 'panel':
-        return <PhonePanel key={index} panel={kind.value} resolve={resolve} />;
+        return <PhonePanel key={index} panel={kind.value} resolve={resolve} bare={bare} />;
       case 'list':
         return <PhoneList key={index} list={kind.value} resolve={resolve} hrefOf={hrefOf} />;
       case 'chart':
@@ -109,6 +110,10 @@ export function PhoneBlocks({ blocks, pagePath, drawerHref, selectable }: PhoneB
             }))}
           />
         );
+      case 'chips':
+        // Inside a switch card the chips are that card's own second switch;
+        // on the page they keep the existing rail (FeedChips).
+        return bare ? <PhoneChips key={index} chips={kind.value} /> : <FeedBlocks key={index} blocks={[block]} pagePath={pagePath} drawerHref={drawerHref} selectable={selectable} />;
       case undefined:
         return null;
       default:

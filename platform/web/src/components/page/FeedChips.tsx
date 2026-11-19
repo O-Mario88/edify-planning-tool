@@ -25,7 +25,9 @@ function rowKeys(row: Element): Record<string, string> {
   }
 }
 
-export function FeedChips({ chips }: { chips: PageChips }) {
+/** The chosen chip and the rail element: on each choice the page's rows
+ *  show or hide (rowShows). Shared by FeedChips and the phone's PhoneChips. */
+export function useChipFilter(chips: PageChips) {
   const [value, setValue] = useState(chips.value);
   const rail = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -34,6 +36,11 @@ export function FeedChips({ chips }: { chips: PageChips }) {
       (row as HTMLElement).hidden = !rowShows(rowKeys(row), chips.name, value);
     });
   }, [chips.name, value]);
+  return { value, setValue, rail };
+}
+
+export function FeedChips({ chips }: { chips: PageChips }) {
+  const { value, setValue, rail } = useChipFilter(chips);
   // The existing tab rail of buttons (data-edify-tablist, the To-Do page's
   // Category and Priority), drawn by the existing stylesheets.
   return (

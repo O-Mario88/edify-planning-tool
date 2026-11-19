@@ -85,10 +85,12 @@ function Item({ item, resolve }: { item: PagePanelItem; resolve: (href: string) 
   }
 }
 
-export function PhonePanel({ panel, resolve }: { panel: PagePanel; resolve: (href: string) => string }) {
+/** bare: inside a card that switches between parts, drawn flat (a ruled
+ *  section of that card) rather than as a card inside the card. */
+export function PhonePanel({ panel, resolve, bare = false }: { panel: PagePanel; resolve: (href: string) => string; bare?: boolean }) {
   const hasHead = panel.title !== '' || panel.badges.length > 0;
   return (
-    <section data-ph="card" aria-label={panel.title || undefined}>
+    <section data-ph={bare ? 'panel-flat' : 'card'} aria-label={panel.title || undefined}>
       {hasHead ? (
         <div data-ph="panel-head">
           <div data-ph="panel-title-line">
