@@ -1,23 +1,16 @@
 /**
- * Where signing in lands, by role: the web's rule (apps/core/landing.py),
- * not a new one. Home for everyone, except the country readers, who start
- * on Country Oversight (owner, 2026-10-25) when they may open it. Whether
- * they may is the server's call: the page is in their menu only if so.
+ * Where signing in lands, by role: Home, every reader's own role home. The
+ * country readers (Impact Assessment, the Country Director, the RVP and the
+ * Regional Lead) used to start on Country Oversight (owner, 2026-10-25, the
+ * web's apps/core/landing.py); in the redesign they land on their own Home
+ * like everyone else (owner, 2026-11-19: "Own role home"), with their
+ * oversight one tap away in Home's quick access. The menu is still asked,
+ * so a later role landing can depend on what the reader may open.
  */
 import type { GetNavigationResponse } from './gen/edify/screens/v1/navigation_pb';
 
 export const HOME_URL = '/home';
-export const COUNTRY_OVERSIGHT_URL = '/country-planning-oversight/';
 
-const COUNTRY_OVERSIGHT_ROLES = new Set(['ImpactAssessment', 'CountryDirector', 'RegionalVicePresident', 'RegionalProgramLead']);
-
-const pathOf = (url: string) => url.split(/[?#]/)[0].replace(/\/+$/, '');
-
-export function landingUrl(activeRole: string, navigation: GetNavigationResponse | null): string {
-  if (!navigation || !COUNTRY_OVERSIGHT_ROLES.has(activeRole)) {
-    return HOME_URL;
-  }
-  const items = [...navigation.bottom, ...navigation.sections.flatMap((section) => section.items)];
-  const target = pathOf(COUNTRY_OVERSIGHT_URL);
-  return items.some((item) => pathOf(item.url) === target) ? COUNTRY_OVERSIGHT_URL : HOME_URL;
+export function landingUrl(_activeRole: string, _navigation: GetNavigationResponse | null): string {
+  return HOME_URL;
 }

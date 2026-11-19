@@ -11,26 +11,18 @@ const withOversight = create(GetNavigationResponseSchema, {
     }),
   ],
 });
-const withoutOversight = create(GetNavigationResponseSchema, { sections: [] });
 
-describe('where signing in lands, as on the web (apps/core/landing.py)', () => {
-  test('the country readers start on Country Oversight', () => {
+describe('where signing in lands (owner, 2026-11-19: own role home)', () => {
+  test('the country readers land on their own Home, even with Country Oversight in their menu', () => {
     for (const role of ['ImpactAssessment', 'CountryDirector', 'RegionalVicePresident', 'RegionalProgramLead']) {
-      expect(landingUrl(role, withOversight)).toBe('/country-planning-oversight/');
-    }
-  });
-
-  test('a country reader whose menu lacks the page lands on Home, never on a refusal', () => {
-    expect(landingUrl('CountryDirector', withoutOversight)).toBe('/home');
-  });
-
-  test('everyone else starts on Home, even with the page in their menu', () => {
-    for (const role of ['CCEO', 'Program Lead', 'Admin', 'Accountant']) {
       expect(landingUrl(role, withOversight)).toBe('/home');
     }
   });
 
-  test('before the menu has loaded, Home', () => {
+  test('everyone else lands on Home too, and so does anyone before the menu has loaded', () => {
+    for (const role of ['CCEO', 'Program Lead', 'Admin', 'Accountant']) {
+      expect(landingUrl(role, withOversight)).toBe('/home');
+    }
     expect(landingUrl('CountryDirector', null)).toBe('/home');
   });
 });

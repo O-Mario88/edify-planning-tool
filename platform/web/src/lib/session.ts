@@ -43,7 +43,7 @@ export function challengeCookie(secure: boolean): CookieOptions {
  * Where to go after signing in: a path on this site, never another origin
  * ("//evil", "https://…", "/\\evil" are refused).
  */
-export function safeNext(raw: string | null | undefined, fallback = '/schools'): string {
+export function safeNext(raw: string | null | undefined, fallback = '/home'): string {
   const value = (raw ?? '').trim();
   if (!value.startsWith('/') || value.startsWith('//') || value.startsWith('/\\') || value.includes('\n')) {
     return fallback;
