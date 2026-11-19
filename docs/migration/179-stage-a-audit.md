@@ -146,7 +146,13 @@ before any page is rebuilt (177).
 3. **Where leadership lands.** Proposed: the Country Director, Impact
    Assessment, the RVP and the Regional Lead land on a role home of their
    own, with Country Planning Oversight one tap away, rather than on its
-   filter form.
+   filter form. **Decided
+   2026-11-19 (owner: "Own role home")**: in the web app and the Expo app
+   every reader, the country readers included, lands on their own Home;
+   Home's quick access already holds their oversight (the Country
+   Director's "Dashboard" is Country Planning Oversight, Impact Assessment's
+   is the IA dashboard). The existing application keeps its landing until
+   the redesign replaces it.
 
 ## Next
 

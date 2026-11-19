@@ -68,8 +68,9 @@ Tables on phones is decided (rows, above), and so is the greeting band
 (owner, 2026-11-19: "Drop it on phones"): the web app's phone Home and the
 Expo app's Home open on the role and the greeting on two quiet lines, then
 the overview — checked in the browser at 375 and 1280 (the desktop page
-header is unchanged) and in the iOS Simulator. Where leadership lands (179)
-is the one decision left; the preview shows the proposed
+header is unchanged) and in the iOS Simulator. Where leadership lands is
+decided too ("Own role home"): both apps land every reader on Home. All
+three of 179's decisions are made; the preview shows the proposed
 answers so they can be judged side by side with today's screens.
 
 ## Next
