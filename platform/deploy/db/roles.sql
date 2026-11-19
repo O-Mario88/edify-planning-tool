@@ -1143,3 +1143,9 @@ GRANT SELECT (activity_id, status, accountability_netsuite_id) ON advance_reques
 GRANT SELECT (id, school_id, school_name_raw, district_raw, date_of_ssa, reason, status, match_confidence, created_at)
   ON unmatched_ssa_record TO edify_gateway_ro;
 
+-- School Upload History (internal/adminpanel/upload_history.go): each upload
+-- batch's file, type, source, row breakdown, state and error summary.
+GRANT SELECT (id, file_name, original_file_name, upload_type, source, error_summary, total_rows, created_rows,
+  updated_rows, failed_rows, created_at)
+  ON upload_batch TO edify_gateway_ro;
+

@@ -300,3 +300,21 @@ and the file picker, for the roles that may upload official SSA (others are
 sent away by the existing page and handed on). 8 readers, 0 differing.
 Uploading stays the existing page's.
 
+### C6 (part) · Workflow Rules and School Upload History (2026-11-19)
+
+The Admin Panel's pages live in `internal/adminpanel`, from
+`manage.py export_admin_panel_rules` (doors and the listed workflow rules;
+`extended_views.WORKFLOW_RULES` is now a named constant).
+`/admin-panel/workflow-rules` is the reference list of the rules enforced in
+code (4 readers, 0 differing). `/admin-panel/school-upload-history` is the
+newest fifty upload batches the reader may see (the Admin every batch,
+anyone else their country's uploaders' and their own), each with its file,
+type, row breakdown and state; a state with an error under it reads as one
+line. Golden (adminpanel/testdata/upload_history_golden.py): 8 answers, 0
+differing. Marking a batch failed stays the existing page's.
+
+Left in C6: `/admin-panel`, `/admin-panel/audit-log`,
+`/admin-panel/notifications-mgmt`, `/admin-panel/page-access-matrix`,
+`/admin-panel/region-district-setup`, `/settings/activity-catalogue/`.
+Left in C5: `/ia/school-evidence/` and `/priorities/ssa-mapping`.
+

@@ -4336,6 +4336,33 @@ def data_quality_issue_action_view(request, issue_id):
     return render(request, "partials/data_quality/issue_row.html", context)
 
 
+#: The rules the Workflow & Automation Rules page lists, each enforced in
+#: code (Go's internal/adminpanel reads the same list from rules.json).
+WORKFLOW_RULES = [
+    {
+        "key": "clustered_before_planning",
+        "label": "School must be clustered before planning",
+    },
+    {"key": "ssa_required", "label": "SSA required before planning"},
+    {
+        "key": "auto_budget_lines",
+        "label": "Activity scheduling creates budget automatically",
+    },
+    {
+        "key": "evidence_mandatory",
+        "label": "Evidence attachment required before completion",
+    },
+    {
+        "key": "sf_id_mandatory",
+        "label": "Activity Salesforce ID required before IA verification",
+    },
+    {
+        "key": "ia_before_accounts",
+        "label": "IA verification required before Accounts clearance",
+    },
+]
+
+
 @require_page_permission("workflow_rules")
 def admin_workflow_rules_view(request):
     """Workflow rules reference panel.
@@ -4346,32 +4373,8 @@ def admin_workflow_rules_view(request):
     used to offer fake toggle switches that didn't persist anything anywhere;
     that's been removed so the page stops lying about being configurable.
     """
-    rules = [
-        {
-            "key": "clustered_before_planning",
-            "label": "School must be clustered before planning",
-        },
-        {"key": "ssa_required", "label": "SSA required before planning"},
-        {
-            "key": "auto_budget_lines",
-            "label": "Activity scheduling creates budget automatically",
-        },
-        {
-            "key": "evidence_mandatory",
-            "label": "Evidence attachment required before completion",
-        },
-        {
-            "key": "sf_id_mandatory",
-            "label": "Activity Salesforce ID required before IA verification",
-        },
-        {
-            "key": "ia_before_accounts",
-            "label": "IA verification required before Accounts clearance",
-        },
-    ]
-
     context = {
-        "rules": rules,
+        "rules": WORKFLOW_RULES,
     }
     return render(request, "pages/admin/workflow_rules.html", context)
 

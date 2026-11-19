@@ -1,0 +1,37 @@
+{
+  "pages": {
+    "/admin-panel/school-upload-history": [
+      "Admin",
+      "ImpactAssessment"
+    ],
+    "/admin-panel/workflow-rules": [
+      "Admin"
+    ]
+  },
+  "workflow_rules": [
+    [
+      "clustered_before_planning",
+      "School must be clustered before planning"
+    ],
+    [
+      "ssa_required",
+      "SSA required before planning"
+    ],
+    [
+      "auto_budget_lines",
+      "Activity scheduling creates budget automatically"
+    ],
+    [
+      "evidence_mandatory",
+      "Evidence attachment required before completion"
+    ],
+    [
+      "sf_id_mandatory",
+      "Activity Salesforce ID required before IA verification"
+    ],
+    [
+      "ia_before_accounts",
+      "IA verification required before Accounts clearance"
+    ]
+  ]
+}
