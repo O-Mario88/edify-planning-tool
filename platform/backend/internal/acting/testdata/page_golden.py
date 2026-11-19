@@ -19,7 +19,7 @@ seat, which the existing application answers), and writes the rows and the answe
 
 import json
 import os
-from datetime import date
+from datetime import date, timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -85,7 +85,9 @@ def file(
     cancelled=False,
 ):
     start, end = month(offset)
-    stamp = NOW.isoformat()
+    # A second apart, so appointments starting the same month list in one
+    # order (start date, then newest first) on both sides, never the plan's.
+    stamp = (NOW - timedelta(seconds=n)).isoformat()
     with connection.cursor() as cursor:
         cursor.execute(
             "INSERT INTO acting_assignment (id, created_at, updated_at, role_key, acting_role, appointee_id, appointee_role, "
