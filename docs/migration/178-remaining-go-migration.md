@@ -199,7 +199,22 @@ of not-yet-done states the view leaves out is now
 Left in C3: `/today` — only the Admin opens it (field roles and Impact
 Assessment are redirected, which Go hands on): the desk queue with each
 row's decision buttons (today_actions adapters), snoozes and the cleared
-count; `/planning/schedule` with a choice.
+count.
+
+`/planning/schedule` with a choice is Go's (fieldpages/schedule.go): a
+training or meeting over the clusters the reader may plan in
+(cluster_queryset direct_only, by name; the chosen one selected when it is
+among them), the meeting's purpose category and the participants field, any
+other action read as the meeting title over the cluster list; a visit for a
+chosen direct-portfolio school fills its School ID. A chosen school with a
+confirmed SSA carries the SSA's recommended focus areas: handed on (the
+golden writes those answers as 302). Its golden
+(fieldpages/testdata/schedule_golden.py) is 60 answers over six readers and
+ten choices, 0 differing. Two gaps: every school in the test data has a
+confirmed SSA, so a chosen school without one (code filled, no
+recommendations) is built as the template draws it but not proved; and an
+empty `?action=` (Django: a meeting) reaches Go as no action, since the
+gateway drops empty query values, so Go draws the visit form there.
 
 `/search` with a query is Go's (fieldpages/search.go): the reader's
 direct-portfolio schools of that name, staff for the staff directory's roles

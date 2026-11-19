@@ -67,7 +67,8 @@ func NewService(db schooldirectory.Querier, now func() time.Time) *Service {
 }
 
 // Build answers path for p; served is false for another path, a role
-// without rules, and a visit form with a choice made (the existing page's).
+// without rules, and a visit form for a school with a confirmed SSA (the
+// existing page's).
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
 	path = strings.TrimSuffix(path, "/")
 	if path != mapPath && path != searchPath && path != schedulePath {
@@ -81,10 +82,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		if !doors.Schedule {
 			return nil, true, pagegate.ErrNotAvailable
 		}
-		if scheduleChosen(query) {
-			return nil, false, nil
-		}
-		return scheduleForm(), true, nil
+		return s.schedule(ctx, p, query)
 	}
 	if path == searchPath {
 		if !doors.Search {
