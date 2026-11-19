@@ -1,0 +1,133 @@
+{
+  "guide_roles": {
+    "accountant": "Accountant",
+    "admin": "Admin",
+    "business_transformation_officer": "BusinessTransformationOfficer",
+    "businesstransformationofficer": "BusinessTransformationOfficer",
+    "cceo": "CCEO",
+    "cluster_leader": "ClusterLeader",
+    "clusterleader": "ClusterLeader",
+    "country_director": "CountryDirector",
+    "country_program_lead": "Program Lead",
+    "countrydirector": "CountryDirector",
+    "human_resources": "HumanResources",
+    "humanresources": "HumanResources",
+    "impact_assessment": "ImpactAssessment",
+    "impactassessment": "ImpactAssessment",
+    "mfi_loan_officer": "MfiLoanOfficer",
+    "mfi_partner_admin": "MfiPartnerAdmin",
+    "mfiloanofficer": "MfiLoanOfficer",
+    "mfipartneradmin": "MfiPartnerAdmin",
+    "partner_admin": "PartnerAdmin",
+    "partner_field_officer": "PartnerFieldOfficer",
+    "partneradmin": "PartnerAdmin",
+    "partnerfieldofficer": "PartnerFieldOfficer",
+    "program lead": "Program Lead",
+    "program-lead": "Program Lead",
+    "program_accountant": "Accountant",
+    "project_coordinator": "ProjectCoordinator",
+    "projectcoordinator": "ProjectCoordinator",
+    "regional_program_lead": "RegionalProgramLead",
+    "regional_vice_president": "RegionalVicePresident",
+    "regionalprogramlead": "RegionalProgramLead",
+    "regionalvicepresident": "RegionalVicePresident"
+  },
+  "published": "published",
+  "readable_states": [
+    "published",
+    "review_due"
+  ],
+  "roles": {
+    "Accountant": {
+      "guide": "role-accountant",
+      "page": true,
+      "view": true
+    },
+    "Admin": {
+      "guide": "role-admin",
+      "page": true,
+      "view": true
+    },
+    "BusinessTransformationOfficer": {
+      "guide": "role-businesstransformationofficer",
+      "page": true,
+      "view": true
+    },
+    "CCEO": {
+      "guide": "role-cceo",
+      "page": true,
+      "view": true
+    },
+    "ClusterLeader": {
+      "guide": "role-clusterleader",
+      "page": false,
+      "view": false
+    },
+    "CountryDirector": {
+      "guide": "role-countrydirector",
+      "page": true,
+      "view": true
+    },
+    "HumanResources": {
+      "guide": "role-humanresources",
+      "page": true,
+      "view": true
+    },
+    "ImpactAssessment": {
+      "guide": "role-impactassessment",
+      "page": true,
+      "view": true
+    },
+    "MfiLoanOfficer": {
+      "guide": "role-mfiloanofficer",
+      "page": true,
+      "view": true
+    },
+    "MfiPartnerAdmin": {
+      "guide": "role-mfipartneradmin",
+      "page": true,
+      "view": true
+    },
+    "PartnerAdmin": {
+      "guide": "role-partneradmin",
+      "page": true,
+      "view": true
+    },
+    "PartnerFieldOfficer": {
+      "guide": "role-partnerfieldofficer",
+      "page": true,
+      "view": true
+    },
+    "Program Lead": {
+      "guide": "role-program-lead",
+      "page": true,
+      "view": true
+    },
+    "ProjectCoordinator": {
+      "guide": "role-projectcoordinator",
+      "page": true,
+      "view": true
+    },
+    "RegionalProgramLead": {
+      "guide": "role-regionalprogramlead",
+      "page": true,
+      "view": true
+    },
+    "RegionalVicePresident": {
+      "guide": "role-regionalvicepresident",
+      "page": true,
+      "view": true
+    }
+  },
+  "synonyms": {
+    "accountability code": "netsuite expense id",
+    "activity id": "salesforce activity id",
+    "advance request": "weekly fund request",
+    "fund request": "weekly fund request",
+    "netsuite id": "netsuite expense id",
+    "salesforce id": "salesforce activity id",
+    "school assessment": "ssa",
+    "sf id": "salesforce activity id",
+    "weekly request": "weekly fund request"
+  }
+}

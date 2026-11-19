@@ -1214,3 +1214,18 @@ GRANT SELECT (id, devotions_per_week, learners_in_groups, learners_enrolled, sta
 -- School Evidence's EdTech tab reads each deployment and check of use.
 GRANT SELECT (id, fy, asset_type, quantity, deployed_on, funding, learners_with_access, return_reason, country, created_at) ON impact_edtech_deployment TO edify_gateway_ro;
 GRANT SELECT (id, fy, deployment_id, checked_on, units_functional, teachers_using, learners_using, return_reason, country, created_at) ON impact_edtech_check TO edify_gateway_ro;
+-- The Knowledge Center's reading pages (internal/helpcenter).
+GRANT SELECT (id, created_at, updated_at, slug, title, summary, category_id, search_document, reviewer_name, estimated_reading_minutes, version, last_reviewed_at, review_due_at, reviewer_id, keywords, content, state, workflow, feature) ON help_center_helparticle TO edify_gateway_ro;
+GRANT SELECT (id, slug, name, description, sort_order) ON help_center_helpcategory TO edify_gateway_ro;
+GRANT SELECT (article_id, role) ON help_center_helparticleroleaccess TO edify_gateway_ro;
+GRANT SELECT (from_helparticle_id, to_helparticle_id) ON help_center_helparticle_related_articles TO edify_gateway_ro;
+GRANT SELECT (id, article_id, title, steps) ON help_center_helpwalkthrough TO edify_gateway_ro;
+GRANT SELECT (slug, term, definition, used_in, article_id) ON help_center_helpglossaryterm TO edify_gateway_ro;
+GRANT SELECT (id, title, version_label, summary, published_at) ON help_center_helpreleasenote TO edify_gateway_ro;
+GRANT SELECT (id) ON help_center_helparticleroutecontext TO edify_gateway_ro;
+GRANT SELECT (article_id, term) ON help_center_helpsearchkeyword TO edify_gateway_ro;
+GRANT SELECT (is_staff) ON "user" TO edify_gateway_ro;
+-- The Policy Agreement Center (uploadcenter/agreement.go).
+GRANT SELECT (id, title, description, slug, status, acknowledgement_reason, agreement_statement, required_reading_minutes, download_allowed, comment_required, acknowledgement_required, current_version_id) ON document_asset TO edify_gateway_ro;
+GRANT SELECT (id, version_number, effective_date) ON document_version TO edify_gateway_ro;
+GRANT SELECT (id, state, user_id, document_id, version_id, due_date, active_reading_seconds, session_count, responded_at, offline_attestation, created_at) ON document_acknowledgement TO edify_gateway_ro;

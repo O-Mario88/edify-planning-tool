@@ -222,24 +222,37 @@ func readDocuments(ctx context.Context, db schooldirectory.Querier) ([]*document
 	for _, d := range docs {
 		ids = append(ids, d.id)
 	}
-	rows, err = db.Query(ctx, `SELECT document_id, role, country, partner_id, project_id, user_id, effective_from
+	audiences, err := audienceRules(ctx, db, ids)
+	if err != nil {
+		return nil, err
+	}
+	for id, list := range audiences {
+		byID[id].rules = list
+	}
+	return docs, nil
+}
+
+// audienceRules reads each document's audience rules.
+func audienceRules(ctx context.Context, db schooldirectory.Querier, ids []string) (map[string][]rule, error) {
+	rows, err := db.Query(ctx, `SELECT document_id, role, country, partner_id, project_id, user_id, effective_from
 		FROM document_audience_rule WHERE document_id = ANY($1)`, ids)
 	if err != nil {
 		return nil, fmt.Errorf("uploadcenter: reading the audiences: %w", err)
 	}
+	out := map[string][]rule{}
 	err = forEach(rows, func(rs pgx.Rows) error {
 		var doc string
 		var x rule
 		if err := rs.Scan(&doc, &x.role, &x.country, &x.partner, &x.project, &x.user, &x.from); err != nil {
 			return err
 		}
-		byID[doc].rules = append(byID[doc].rules, x)
+		out[doc] = append(out[doc], x)
 		return nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("uploadcenter: reading the audiences: %w", err)
 	}
-	return docs, nil
+	return out, nil
 }
 
 // documents is _documents: the documents the reader administers, and the

@@ -8,7 +8,8 @@ may open the page, the upload actions it is offered, whether it has the
 Admin's upload drawer, the permissions that decide which uploads and
 figures it sees, and the role's slug (an audience rule may name either);
 the figures' labels; the names of each record type and status; the
-training document types; and the page size. A change to any of them must be
+training document types; the page size; and the names of an
+acknowledgement's states (the Policy Agreement Center). A change to any of them must be
 exported again; apps/documents/test_upload_center_rules_export.py fails
 until it is.
 
@@ -78,6 +79,7 @@ def roles() -> dict:
 def rules() -> dict:
     from apps.core.metrics import MetricValue, render_metric
     from apps.documents.models import (
+        AcknowledgementState,
         DocumentStatus,
         DocumentType,
         PreviewStatus,
@@ -117,6 +119,7 @@ def rules() -> dict:
         ],
         "role_choices": [r.value for r in EdifyRole],
         "page_size": UploadCenterService.PAGE_SIZE,
+        "acknowledgement_states": {k: str(v) for k, v in AcknowledgementState.choices},
     }
 
 

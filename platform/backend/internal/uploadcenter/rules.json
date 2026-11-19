@@ -1,4 +1,10 @@
 {
+  "acknowledgement_states": {
+    "agreed": "Agreed",
+    "disagreed": "Disagreed",
+    "pending": "Pending",
+    "superseded": "Superseded"
+  },
   "document_statuses": {
     "approved": "Approved",
     "archived": "Archived",

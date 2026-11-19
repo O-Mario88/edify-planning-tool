@@ -289,6 +289,14 @@ func Walk(n *Node, out []*screensv1.PageBlock) []*screensv1.PageBlock {
 }
 
 func blockOf(n *Node) *screensv1.PageBlock {
+	if n.tag == "dl" && n.find(func(x *Node) bool { return x.tag == "dt" }) != nil {
+		return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Facts{Facts: readFacts(n)}}
+	}
+	if surface(n) && !holdsBlocks(n) && n.find(func(x *Node) bool { return x.Later != nil }) == nil && n.text() != "" {
+		if p := ReadPanel(n); len(p.Items) > 0 || p.Title != "" {
+			return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: p}}
+		}
+	}
 	if n.tag == "table" {
 		return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: readTable(n)}}
 	}
@@ -299,7 +307,29 @@ func blockOf(n *Node) *screensv1.PageBlock {
 }
 
 func holdsBlocks(n *Node) bool {
-	return n.find(func(x *Node) bool { return x.pre != nil || x.tag == "table" }) != nil
+	return n.find(func(x *Node) bool { return x.pre != nil || x.tag == "table" || surface(x) }) != nil
+}
+
+// surface is a card the page draws as a surface of its own
+// (edify-surface rounded-surface): read as a panel, never inside another.
+func surface(n *Node) bool { return n.has("edify-surface") && n.has("rounded-surface") }
+
+// readFacts is page_blocks._facts: each term with the first value beside it
+// and that value's link.
+func readFacts(dl *Node) *screensv1.PageFacts {
+	out := &screensv1.PageFacts{}
+	for _, term := range dl.findAll(func(x *Node) bool { return x.tag == "dt" }) {
+		var value *Node
+		if term.parent != nil {
+			value = term.parent.find(func(x *Node) bool { return x.tag == "dd" })
+		}
+		f := &screensv1.PageFact{Label: term.text(), Href: hrefOf(value)}
+		if value != nil {
+			f.Value = value.text()
+		}
+		out.Facts = append(out.Facts, f)
+	}
+	return out
 }
 
 func holdsKnown(n *Node) bool {

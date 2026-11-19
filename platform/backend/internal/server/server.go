@@ -66,6 +66,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/fundapprovals"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/fyplanning"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/health"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/helpcenter"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/home"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/hrregister"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/hrtoday"
@@ -211,6 +212,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			perfconversation.NewService(pool, time.Now),
 			catalogue.NewService(pool, time.Now),
 			schoolevidence.NewService(pool, time.Now),
+			helpcenter.NewService(pool, time.Now),
 			closurequality.NewService(pool, time.Now),
 			iaframework.NewService(pool),
 			ownership.NewService(pool),

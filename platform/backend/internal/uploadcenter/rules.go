@@ -60,15 +60,16 @@ var rules = func() (r struct {
 	TypeLabels   map[string]string `json:"type_labels"`
 	// NewDocumentTypes are New Policy or Manual's document types in order,
 	// RoleChoices the roles it may be addressed to.
-	NewDocumentTypes     [][2]string       `json:"new_document_types"`
-	NewTrainingTypes     [][2]string       `json:"new_training_types"`
-	RoleChoices          []string          `json:"role_choices"`
-	DocumentStatuses     map[string]string `json:"document_statuses"`
-	PreviewStatuses      map[string]string `json:"preview_statuses"`
-	SchoolImportStatuses map[string]string `json:"school_import_statuses"`
-	SSAImportStatuses    map[string]string `json:"ssa_import_statuses"`
-	TrainingTypes        []string          `json:"training_types"`
-	PageSize             int               `json:"page_size"`
+	NewDocumentTypes      [][2]string       `json:"new_document_types"`
+	NewTrainingTypes      [][2]string       `json:"new_training_types"`
+	RoleChoices           []string          `json:"role_choices"`
+	DocumentStatuses      map[string]string `json:"document_statuses"`
+	PreviewStatuses       map[string]string `json:"preview_statuses"`
+	SchoolImportStatuses  map[string]string `json:"school_import_statuses"`
+	SSAImportStatuses     map[string]string `json:"ssa_import_statuses"`
+	TrainingTypes         []string          `json:"training_types"`
+	PageSize              int               `json:"page_size"`
+	AcknowledgementStates map[string]string `json:"acknowledgement_states"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {
 		panic(fmt.Sprintf("uploadcenter: reading rules.json: %v", err))

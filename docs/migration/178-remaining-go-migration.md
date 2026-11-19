@@ -500,6 +500,59 @@ acknowledgement). A reader without the kind's create permission is
 redirected, which Go hands on; every save stays with the existing
 application. 10 answers of 5 readers, 0 differing.
 
+### C9 · The Knowledge Center's reading pages (2026-11-19)
+
+`/help` and its reading pages are Go's (internal/helpcenter) for every role
+the view's page permission lets read them: the home (the reader's own role
+guide, the documentation areas, end-to-end workflows, common problems and,
+for an Admin or staff account, the manual download), an article with its
+meta, sections, walkthrough, related guides and feedback buttons (and the
+role-guide, workflow, feature and Getting Started addresses that open one;
+404 for no such article, 403 for one the role may not read), a category,
+troubleshooting, the glossary with its search, release notes and search
+(the synonyms, the match reason and the excerpt as services write them).
+Each page carries the role-aware table of contents (knowledge_tree) and is
+written as its template writes it, then read by the feed's own rules. Two
+of those rules were missing from feeddom and now are: a `dl` of terms is a
+facts block, and an `edify-surface rounded-surface` card is a panel of its
+own (and a part holding one is read inside). Lists sort title ties as the
+view's DISTINCT does: by slug in the contents, by the article's own columns
+in a list.
+
+Handed on, because the view writes on the read: the home and an article
+while no article exists (the canonical content is installed), the home
+while a published article is past its review date (it is marked) or no route
+has its article (the routes are mapped), and search when a result has no
+search document (it is rebuilt). Also handed on: the contextual help (its
+route sync is timed by a cache Go cannot read), the print view, the exports,
+the Help manager's pages, every save, and a reader the page permission
+refuses (the refusal is audited). The exporter writes who opens the pages,
+each role's guide, the role each guide address names, the synonyms and the
+readable states. Golden (helpcenter/testdata/golden.py, a `gshc` guide open
+to two roles with a walkthrough, a related guide and a glossary term, plus
+the route mappings): 182 answers of 7 readers over 21 pages and 10 searches,
+0 differing. The oracle cannot read a view's 404, so the not-found
+addresses are not in it.
+
+### C9 · The Policy Agreement Center (2026-11-19)
+
+`/policy-agreement` is Go's (uploadcenter/agreement.go) for every signed-in
+reader: each required policy waiting for their answer (its version,
+effective and due dates, why it is required, Read and Download, the active
+reading time against the minutes required with its completion, the
+response form and the outside-the-viewer attestation), or "Nothing is
+waiting for you", then their fifty newest completed answers. The audience
+reader is shared with the Upload Center (audienceRules). Handed on: a
+reading that would first give the reader a pending agreement
+(ensure_pending_for writes one for each mandatory policy in force whose
+audience holds them and that they have none of), and a reader with
+Safeguarding or the Apostles' Creed pending, whom the view sends to that
+document; every save stays with the existing application. Golden
+(uploadcenter/testdata/agreement_golden.py, `gpag` policies and answers): 4
+readers, 0 differing (two drawn, two handed on).
+
+Left in C: `/today` (it waits for the To-Do rows to carry ids, part of E).
+
 ### C8 · The Business Transformation workspace (2026-11-19)
 
 `/business-transformation` is Go's (btpages): the existing application
