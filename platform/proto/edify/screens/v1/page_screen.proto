@@ -37,4 +37,9 @@ message GetPageResponse {
   repeated PageDialog dialogs = 7;
   // The bar for the page's ticked rows, when it has one.
   PageSelection selection = 8;
+  // The class names of the existing page's own frame, the element that holds
+  // its content (its padding and width; a dashboard's container, which its
+  // stylesheet's container queries read). Given on a desktop reading; the
+  // web app draws the page in it.
+  string page_class = 9;
 }

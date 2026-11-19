@@ -99,7 +99,12 @@ type GetPageResponse struct {
 	// by a link to "#dialog=<key>".
 	Dialogs []*PageDialog `protobuf:"bytes,7,rep,name=dialogs,proto3" json:"dialogs,omitempty"`
 	// The bar for the page's ticked rows, when it has one.
-	Selection     *PageSelection `protobuf:"bytes,8,opt,name=selection,proto3" json:"selection,omitempty"`
+	Selection *PageSelection `protobuf:"bytes,8,opt,name=selection,proto3" json:"selection,omitempty"`
+	// The class names of the existing page's own frame, the element that holds
+	// its content (its padding and width; a dashboard's container, which its
+	// stylesheet's container queries read). Given on a desktop reading; the
+	// web app draws the page in it.
+	PageClass     string `protobuf:"bytes,9,opt,name=page_class,json=pageClass,proto3" json:"page_class,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -190,6 +195,13 @@ func (x *GetPageResponse) GetSelection() *PageSelection {
 	return nil
 }
 
+func (x *GetPageResponse) GetPageClass() string {
+	if x != nil {
+		return x.PageClass
+	}
+	return ""
+}
+
 var File_edify_screens_v1_page_screen_proto protoreflect.FileDescriptor
 
 const file_edify_screens_v1_page_screen_proto_rawDesc = "" +
@@ -202,7 +214,7 @@ const file_edify_screens_v1_page_screen_proto_rawDesc = "" +
 	"\n" +
 	"QueryEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xef\x02\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8e\x03\n" +
 	"\x0fGetPageResponse\x124\n" +
 	"\x06header\x18\x01 \x01(\v2\x1c.edify.screens.v1.PageHeaderR\x06header\x12-\n" +
 	"\x04tabs\x18\x02 \x03(\v2\x19.edify.screens.v1.PageTabR\x04tabs\x123\n" +
@@ -211,7 +223,9 @@ const file_edify_screens_v1_page_screen_proto_rawDesc = "" +
 	"\bredirect\x18\x05 \x01(\tR\bredirect\x12\x14\n" +
 	"\x05error\x18\x06 \x01(\tR\x05error\x126\n" +
 	"\adialogs\x18\a \x03(\v2\x1c.edify.screens.v1.PageDialogR\adialogs\x12=\n" +
-	"\tselection\x18\b \x01(\v2\x1f.edify.screens.v1.PageSelectionR\tselection2c\n" +
+	"\tselection\x18\b \x01(\v2\x1f.edify.screens.v1.PageSelectionR\tselection\x12\x1d\n" +
+	"\n" +
+	"page_class\x18\t \x01(\tR\tpageClass2c\n" +
 	"\x11PageScreenService\x12N\n" +
 	"\aGetPage\x12 .edify.screens.v1.GetPageRequest\x1a!.edify.screens.v1.GetPageResponseB\xe3\x01\n" +
 	"\x14com.edify.screens.v1B\x0fPageScreenProtoP\x01ZXgithub.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1;screensv1\xa2\x02\x03ESX\xaa\x02\x10Edify.Screens.V1\xca\x02\x10Edify\\Screens\\V1\xe2\x02\x1cEdify\\Screens\\V1\\GPBMetadata\xea\x02\x12Edify::Screens::V1b\x06proto3"

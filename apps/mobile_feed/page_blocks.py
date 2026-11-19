@@ -2216,4 +2216,19 @@ def _read(html: str, later, path: str) -> dict:
     }
     if ticks is not None:
         page["selection"] = ticks
+    if _DESKTOP.get() and (frame := _frame_class(main)):
+        page["pageClass"] = frame
     return page
+
+
+def _frame_class(main: Node) -> str:
+    """The class names of the page's own frame: the one element its content
+    sits in (a dashboard's .admin-command, a page's padded column)."""
+    parts = [
+        child
+        for child in main.children
+        if isinstance(child, Node) and child.tag not in SILENT
+    ]
+    if len(parts) != 1 or parts[0].tag not in ("div", "section", "article"):
+        return ""
+    return " ".join(parts[0].attrs.get("class", "").split())

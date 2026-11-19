@@ -1920,3 +1920,27 @@ class DesktopReadingTest(SimpleTestCase):
         self.assertIn("Hidden from lg", texts)
         for left_out in ("Only on a desktop", "Shown from lg", "Shown from md"):
             self.assertNotIn(left_out, texts)
+
+
+class PageFrameTest(SimpleTestCase):
+    """The existing page's own frame (its padding and width, a dashboard's
+    container) is given on a desktop reading, for the web app to draw in."""
+
+    FRAMED = """
+    <main><div class="admin-command edify-page-canvas" id="main-dashboard-container">
+      <header class="edify-page-header"><div class="edify-page-header__lead"><h1 class="edify-page-title">Platform Operations</h1></div></header>
+    </div></main>
+    """
+
+    def test_a_desktop_reading_gives_the_pages_frame(self):
+        page = page_blocks.read(self.FRAMED, path="/dashboard", desktop=True)
+
+        self.assertEqual(page["pageClass"], "admin-command edify-page-canvas")
+
+    def test_the_phone_reading_does_not(self):
+        self.assertNotIn("pageClass", page_blocks.read(self.FRAMED, path="/dashboard"))
+
+    def test_a_page_with_several_parts_at_its_top_has_no_frame(self):
+        loose = "<main><div class='a'>x</div><div class='b'>y</div></main>"
+
+        self.assertNotIn("pageClass", page_blocks.read(loose, path="/x", desktop=True))
