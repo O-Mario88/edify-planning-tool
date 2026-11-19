@@ -41,7 +41,7 @@ WHERE %s AND %s ORDER BY i.incident_date DESC`, since, scopeSQL, searchSQL), arg
 		return register{}, fmt.Errorf("hrregister: reading the safety incidents: %w", err)
 	}
 	reg := register{
-		path: "/health-safety", title: "Health & Safety", eyebrow: "Rewards and wellbeing",
+		path: "/health-safety", primary: hrToday, title: "Health & Safety", eyebrow: "Rewards and wellbeing",
 		description: "Occupational health and safety across the countries you oversee: incidents, near misses and hazards, " +
 			"and the corrective action taken.",
 		columns:    []string{"Incident", "Country", "Date", "Severity", "Days lost", "Status"},

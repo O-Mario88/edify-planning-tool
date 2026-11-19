@@ -49,7 +49,7 @@ SELECT (SELECT count(*) FROM p), (SELECT count(DISTINCT country) + CASE WHEN boo
 		return register{}, fmt.Errorf("hrregister: reading the workforce figures: %w", err)
 	}
 	reg := register{
-		path: "/hr-analytics", title: "HR Analytics & Workforce Insights", eyebrow: "Human Capital Operations",
+		path: "/hr-analytics", primary: &action{label: "Review HR Dashboard", href: "/dashboard"}, title: "HR Analytics & Workforce Insights", eyebrow: "Human Capital Operations",
 		description: "Live workforce, review, and compliance signals computed from current operational records. Unsupported " +
 			"demographic and salary-correlation claims are intentionally excluded.",
 		columns:    []string{"Country", "Department", "Headcount", "Active", "Pending", "Activation rate"},

@@ -43,9 +43,12 @@ FROM hr_vacancy v WHERE %s AND %s ORDER BY v.created_at DESC`, scopeSQL, searchS
 		path: "/recruitment", title: "Recruitment & Vacancies", eyebrow: "Staffing and recruiting",
 		description: "Staffing needs across the countries you oversee: new roles for growth and replacements after turnover, from request and approval to an open post.",
 		columns:     []string{"Vacancy", "Country", "Type", "Applications", "Target start", "Status"},
-		actions:     []action{{label: "Request a vacancy", drawer: "/recruitment/new"}, {label: "Candidate Pipeline", href: "/candidate-pipeline"}},
+		actions:     []action{{label: "Request a vacancy", drawer: "/recruitment/new"}},
 		emptyTitle:  "No vacancies yet",
 		emptyBody:   "Request a vacancy to start recruiting for a new role or to replace someone who is leaving.",
+	}
+	if consoleRole(in.principal.ActiveRole) {
+		reg.primary = &action{label: "Candidate Pipeline", href: "/candidate-pipeline"}
 	}
 	open, pending, replacements, applications := 0, 0, 0, 0
 	for _, v := range vacancies {

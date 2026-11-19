@@ -46,26 +46,30 @@ EXPORT_PATH = Path("platform/backend/internal/hrregister/rules.json")
 METRIC_SOURCE = "apps.frontend.views.hr_views:_metric"
 
 #: The registers Go answers: their path, page permission, the drawers their
-#: header buttons open and the labels of their context figures, as the views
-#: write them.
+#: header buttons open, the page their lead link opens (primary_action) and
+#: the labels of their context figures, as the views write them.
 PAGES = {
     "/org-structure": {
         "permission": "org_structure",
+        "primary": ["/staff"],
         "drawers": [],
         "metrics": ["People in scope", "Active", "Departments", "No reporting line"],
     },
     "/recognition": {
         "permission": "recognition",
+        "primary": ["/pulse-surveys"],
         "drawers": ["/recognition/new"],
         "metrics": ["Recognitions", "People recognised"],
     },
     "/onboarding": {
         "permission": "onboarding",
+        "primary": ["/candidate-pipeline"],
         "drawers": [],
         "metrics": ["Plans", "Overdue", "Awaiting supervisor", "Ready for activation"],
     },
     "/offboarding": {
         "permission": "offboarding",
+        "primary": ["/recruitment"],
         "drawers": ["/offboarding/new"],
         "metrics": [
             "In progress",
@@ -76,6 +80,7 @@ PAGES = {
     },
     "/recruitment": {
         "permission": "recruitment",
+        "primary": ["/candidate-pipeline"],
         "drawers": ["/recruitment/new"],
         # recruitment_view passes its header button to these roles only.
         "drawer_roles": ["HumanResources", "Admin"],
@@ -83,21 +88,25 @@ PAGES = {
     },
     "/candidate-pipeline": {
         "permission": "candidate_pipeline",
+        "primary": ["/recruitment"],
         "drawers": ["/candidate-pipeline/new"],
         "metrics": ["Applications", "Screening", "Interviews", "Offers", "Hired"],
     },
     "/compliance-register": {
         "permission": "compliance_register",
+        "primary": ["/policies"],
         "drawers": ["/compliance-register/new", "/compliance-register/requirement"],
         "metrics": ["Requirements", "Compliant", "Due soon", "Missing or expired"],
     },
     "/hr-audit-log": {
         "permission": "hr_audit_log",
+        "primary": ["/hr-today"],
         "drawers": [],
         "metrics": ["Events", "Refused actions", "Acting roles", "Showing"],
     },
     "/workforce-planning": {
         "permission": "workforce_planning",
+        "primary": ["/recruitment"],
         "drawers": ["/recruitment/new"],
         "metrics": [
             "Headcount",
@@ -108,6 +117,7 @@ PAGES = {
     },
     "/policies": {
         "permission": "policies",
+        "primary": ["/policy-compliance"],
         "drawers": [],
         "links": ["/uploads/new"],
         "metrics": [
@@ -120,6 +130,7 @@ PAGES = {
     },
     "/recovery-plans": {
         "permission": "recovery_plans",
+        "primary": ["/hr/performance-cycle"],
         "drawers": ["/recovery-plans/new"],
         "metrics": [
             "Awaiting authorisation",
@@ -130,11 +141,13 @@ PAGES = {
     },
     "/performance-reviews": {
         "permission": "performance_reviews",
+        "primary": ["/hr/performance-cycle"],
         "drawers": [],
         "metrics": ["Reviews", "Completed", "Overdue", "Awaiting calibration"],
     },
     "/compensation-benefits": {
         "permission": "compensation_benefits",
+        "primary": ["/staff"],
         "drawers": ["/compensation-benefits/new"],
         "metrics": [
             "Compensation profiles",
@@ -146,21 +159,25 @@ PAGES = {
     },
     "/pulse-surveys": {
         "permission": "pulse_surveys",
+        "primary": ["/recognition"],
         "drawers": ["/pulse-surveys/new"],
         "metrics": ["Open surveys", "Latest morale score"],
     },
     "/hr-analytics": {
         "permission": "hr_analytics",
+        "primary": ["/dashboard"],
         "drawers": [],
         "metrics": ["Headcount", "Countries", "Reviews due", "Compliance gaps"],
     },
     "/health-safety": {
         "permission": "health_safety",
+        "primary": ["/hr-today"],
         "drawers": ["/health-safety/new"],
         "metrics": ["Open incidents", "Serious incidents", "Near misses", "Days lost"],
     },
     "/employee-relations": {
         "permission": "employee_relations",
+        "primary": ["/hr-today"],
         "drawers": ["/employee-relations/new"],
         "metrics": [
             "Open cases",
@@ -170,6 +187,35 @@ PAGES = {
             "Critical",
             "Resolved",
         ],
+    },
+    "/culture-engagement": {
+        "permission": "culture_engagement",
+        "primary": ["/staff"],
+        "drawers": [],
+        "metrics": ["People", "Active", "Open relations cases", "Critical cases"],
+    },
+    "/payroll-readiness": {
+        "permission": "payroll_readiness",
+        "primary": ["/staff"],
+        "drawers": [],
+        "metrics": ["Current period", "Staff checked", "Ready", "Exceptions"],
+    },
+    "/succession-planning": {
+        "permission": "succession_planning",
+        "primary": ["/cpd-learning"],
+        "drawers": [],
+        "metrics": [
+            "Nominations",
+            "Ready now",
+            "6–12 months",
+            "Development required",
+        ],
+    },
+    "/wellness": {
+        "permission": "wellness",
+        "primary": ["/personal-time-off/"],
+        "drawers": [],
+        "metrics": ["Leave records", "Pending", "Approved", "Coverage gaps"],
     },
 }
 
@@ -193,7 +239,18 @@ def pages() -> dict:
                     if can_open_url(user, d)
                     and role.value in page.get("drawer_roles", [role.value])
                 ],
-                "links": [h for h in page.get("links", []) if can_open_url(user, h)],
+                # The header link buttons' pages and the lead link's
+                # (primary_action) the role may open; HR Today is offered
+                # only to a role that may view it (_hr_today_action).
+                "links": [
+                    h
+                    for h in page.get("links", []) + page.get("primary", [])
+                    if can_open_url(user, h)
+                    and (
+                        h != "/hr-today"
+                        or RolePermissionService.can_view_page(user, "hr_today")
+                    )
+                ],
             }
         out[path] = {"roles": roles}
     return out

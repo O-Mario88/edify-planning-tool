@@ -61,7 +61,7 @@ GROUP BY d.id, v.id ORDER BY d.title`, people, scope, searchSQL), args...)
 		return register{}, fmt.Errorf("hrregister: reading the policies: %w", err)
 	}
 	reg := register{
-		path: "/policies", title: "Policies & Documents", eyebrow: "Policy and compliance",
+		path: "/policies", primary: &action{label: "Policy Compliance", href: "/policy-compliance"}, title: "Policies & Documents", eyebrow: "Policy and compliance",
 		description: "The policies and manuals that apply to the countries you oversee: their current version, when each is due " +
 			"for review, and who has acknowledged it.",
 		columns:    []string{"Document", "Type", "Country", "Version", "Review by", "Acknowledged", "Status"},

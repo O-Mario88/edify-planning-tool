@@ -68,6 +68,9 @@ WHERE p.staff_id IN %s AND %s ORDER BY p.status, p.end_date`, who, searchSQL), a
 		emptyTitle: "No recovery plans in this scope",
 		emptyBody:  defaultEmptyBody,
 	}
+	if consoleRole(in.principal.ActiveRole) {
+		reg.primary = &action{label: "Open Performance Cycle", href: "/hr/performance-cycle"}
+	}
 	if team {
 		reg.emptyBody = "A plan you recommend for someone you review appears here while HR authorises it, and stays while you " +
 			"record its check-ins."

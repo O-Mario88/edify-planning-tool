@@ -72,7 +72,7 @@ FROM people p ORDER BY p.department, p.name`, reachSQL, searchSQL), args...)
 		return register{}, fmt.Errorf("hrregister: reading the organization structure: %w", err)
 	}
 	reg := register{
-		path: "/org-structure", title: "Organization Structure", eyebrow: "People and staffing",
+		path: "/org-structure", primary: &action{label: "Open People Directory", href: "/staff"}, title: "Organization Structure", eyebrow: "People and staffing",
 		description: "Reporting lines across the countries you oversee: who each person reports to, who reports to them, " +
 			"and where a line is missing.",
 		columns:    []string{"Team member", "Role", "Reports to", "Direct reports", "Department", "Country", "Lifecycle"},

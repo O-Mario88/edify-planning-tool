@@ -25,7 +25,7 @@ var (
 // (Service.recordAccess) before this is asked.
 func employeeRelations(ctx context.Context, in input) (register, error) {
 	reg := register{
-		path: "/employee-relations", title: "Employee Relations", eyebrow: "Employee relations",
+		path: "/employee-relations", primary: hrToday, title: "Employee Relations", eyebrow: "Employee relations",
 		description: "Disciplinary matters, grievances, disputes and investigations across the countries you oversee. " +
 			"Confidential cases show only to the people working them.",
 		columns:    []string{"Case", "Country", "Severity", "Investigator", "Opened", "Status"},

@@ -82,20 +82,7 @@ func strip(title string, figures ...kpi) *screensv1.PageBlock {
 			continue
 		}
 		seen[key] = true
-		helper, note, exact := f.helper, "", ""
-		if interventionNames.MatchString(helper) {
-			exact = helper
-			helper = abbreviate(helper)
-		}
-		if helper != "" && !(exact != "" && utf8.RuneCountInString(helper) <= rules.Engine.HelperFigureChars) {
-			if brief := briefHelper(helper); brief != helper {
-				note = exact
-				if note == "" {
-					note = f.helper
-				}
-				helper = brief
-			}
-		}
+		helper, note := helperAndNote(f.helper)
 		value := f.value
 		if value == "" {
 			value = "—"
@@ -269,6 +256,30 @@ func Strip(title string, figures []StripFigure) *screensv1.PageBlock {
 // BriefHelper is apps.core.metrics.payload.brief_helper, for the other pages
 // whose context figures are drawn by components/context_metrics.html.
 func BriefHelper(helper string) string { return briefHelper(helper) }
+
+// HelperAndNote is a figure's line under it as components/context_metrics.html
+// draws it: an intervention's name shortened to its code, kept whole when
+// that is short enough, else cut to a second figure (BriefHelper) with the
+// sentence kept as the note.
+func HelperAndNote(helper string) (string, string) { return helperAndNote(helper) }
+
+func helperAndNote(full string) (helper, note string) {
+	helper, exact := full, ""
+	if interventionNames.MatchString(helper) {
+		exact = helper
+		helper = abbreviate(helper)
+	}
+	if helper != "" && !(exact != "" && utf8.RuneCountInString(helper) <= rules.Engine.HelperFigureChars) {
+		if brief := briefHelper(helper); brief != helper {
+			note = exact
+			if note == "" {
+				note = full
+			}
+			helper = brief
+		}
+	}
+	return helper, note
+}
 
 // CompactMoney is kpi_metrics.kpi_value's figure as a strip shows it ("UGX
 // 1.23M" for a million or more), for the other pages whose figures are drawn

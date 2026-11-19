@@ -71,6 +71,9 @@ WHERE r.staff_id IN %s AND (r.fy = $%d OR r.fy IS NULL) AND %s ORDER BY r.due_da
 		emptyTitle: "No performance reviews in this scope",
 		emptyBody:  defaultEmptyBody,
 	}
+	if hr {
+		reg.primary = &action{label: "Open Performance Cycle", href: "/hr/performance-cycle?fy=" + fy}
+	}
 	done, overdueCount, calibrating := 0, 0, 0
 	for _, r := range reviews {
 		finished := slices.Contains(reviewDone, r.stage)

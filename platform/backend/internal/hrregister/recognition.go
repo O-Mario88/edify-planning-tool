@@ -58,7 +58,7 @@ WHERE %s AND %s ORDER BY r.awarded_on DESC`, since, scopeSQL, searchSQL), args..
 		return register{}, err
 	}
 	reg := register{
-		path: "/recognition", title: "Recognition", eyebrow: "Rewards and wellbeing",
+		path: "/recognition", primary: &action{label: "Staff Pulse Surveys", href: "/pulse-surveys"}, title: "Recognition", eyebrow: "Rewards and wellbeing",
 		description: "Recognition given to staff across the countries you oversee, so good work is named and nobody goes a year unrecognised.",
 		columns:     []string{"Team member", "Country", "Recognised for", "Citation", "Awarded"},
 		actions:     []action{{label: "Recognise someone", drawer: "/recognition/new"}},

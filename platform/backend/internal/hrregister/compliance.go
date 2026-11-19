@@ -63,7 +63,7 @@ ORDER BY CASE c.status WHEN 'Expired' THEN 0 WHEN 'Missing' THEN 1 WHEN 'Due Soo
 		return register{}, fmt.Errorf("hrregister: counting the requirements: %w", err)
 	}
 	reg := register{
-		path: "/compliance-register", title: "Employment Compliance", eyebrow: "Policy and compliance",
+		path: "/compliance-register", primary: &action{label: "Policies & Documents", href: "/policies"}, title: "Employment Compliance", eyebrow: "Policy and compliance",
 		description: "Country employment-law requirements (contracts, work permits, statutory registrations) and the evidence each " +
 			"employee holds. A status follows its document and expiry date.",
 		columns:    []string{"Team member", "Requirement", "Country", "Expiry", "Verified by", "Status"},

@@ -8,7 +8,7 @@ the audit row each reading appends.
 
 Only against a database whose name ends in "_test". It files cases, every id
 starting "gpe": each type, status and severity; open and closed; in Uganda
-and in Kenya; confidential ones owned or investigated by HR and ones they do
+and in Tanzania, a country no registry holds (Admin alone reads it); confidential ones owned or investigated by HR and ones they do
 not work; with a subject and none; opened on a day and not opened. It asks
 the app's feed as HR (with searches by type, status, country and the
 subject's name), Admin, Impact Assessment (who may open the register but
@@ -82,7 +82,7 @@ def file_rows():
             case_type=types[i % len(types)],
             status=statuses[(i * 3) % len(statuses)],
             severity=severities[i % len(severities)],
-            country="Kenya" if i % 5 == 4 else "Uganda",
+            country="Tanzania" if i % 5 == 4 else "Uganda",
             subject_staff=subjects[i % 2] if i % 3 else None,
             case_owner=hr if i % 4 == 0 else (admin if i % 4 == 1 else None),
             investigator=hr if i % 6 == 2 else None,
@@ -112,7 +112,7 @@ QUESTIONS = {
         {},
         {"q": "disciplinary"},
         {"q": "closed"},
-        {"q": "kenya"},
+        {"q": "tanzania"},
         {"q": "cceo"},
         {"q": "nothing-matches"},
     ],

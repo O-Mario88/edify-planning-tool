@@ -1159,3 +1159,10 @@ GRANT SELECT (id, group_id, district_id, created_at) ON secondary_district_group
 -- sent to (the columns above, and this one).
 GRANT SELECT (recipient_role) ON notification TO edify_gateway_ro;
 
+
+-- Payroll Readiness and Succession Planning (internal/hrregister/programmes.go):
+-- each check's person, period, exception and readiness flags (and its notes,
+-- which the search reads); each nomination's position, successor, readiness
+-- and when it changed. Not the nomination notes.
+GRANT SELECT (staff_id, payroll_period, has_exceptions, is_payroll_ready, exception_notes) ON hr_payroll_readiness TO edify_gateway_ro;
+GRANT SELECT (staff_successor_id, position_name, readiness, updated_at) ON hr_succession_candidate TO edify_gateway_ro;

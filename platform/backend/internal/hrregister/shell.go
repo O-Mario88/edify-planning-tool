@@ -3,6 +3,7 @@ package hrregister
 import (
 	"fmt"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -33,8 +34,12 @@ type register struct {
 	columns                           []string
 	rows                              [][]string
 	// rowActions are each row's own drawer buttons (none, or one list a row).
-	rowActions            [][]action
-	actions               []action
+	rowActions [][]action
+	actions    []action
+	// primary is the register's lead link (_render_workspace's
+	// primary_action), drawn for a role that may open its page; hrToday
+	// for the registers that offer HR Today.
+	primary               *action
 	emptyTitle, emptyBody string
 	// teamView is a Programme Lead's team register, which sits under My Team
 	// rather than Human Capital.
@@ -91,12 +96,7 @@ func figures(title string, metrics []metric) *screensv1.PageBlock {
 			continue
 		}
 		seen[key] = true
-		helper, note := m.helper, ""
-		if helper != "" {
-			if brief := schoolprofile.BriefHelper(helper); brief != helper {
-				helper, note = brief, m.helper
-			}
-		}
+		helper, note := schoolprofile.HelperAndNote(m.helper)
 		tone := ""
 		if helper != "" {
 			tone = m.tone
@@ -208,23 +208,51 @@ func urlencode(value string) string {
 	return b.String()
 }
 
-// render is _render_workspace as the feed reads the page.
+// hrToday is _hr_today_action: HR Today, for a role that may open it (the
+// rules' links hold it only where can_view_page("hr_today") holds too).
+var hrToday = &action{label: "HR Today", href: "/hr-today"}
+
+// consoleRole is CONSOLE_ROLES: the roles the performance console is for.
+func consoleRole(role string) bool { return role == "HumanResources" || role == "Admin" }
+
+// opens is the template's can_open over a header button: a drawer the role
+// may open, or a page among the role's links (by its path).
+func (r Role) opens(a action) bool {
+	if a.href == "" {
+		return slices.Contains(r.Drawers, a.drawer)
+	}
+	path, _, _ := strings.Cut(a.href, "?")
+	return slices.Contains(r.Links, path)
+}
+
+// render is _render_workspace as the feed reads the page: its header
+// buttons the role may open (each a primary button), the lead link (primary
+// unless the first header button is drawn) and the way back to HR overview,
+// or My Team on a team register.
 func render(reg register, role Role, query url.Values) *screensv1.GetPageResponse {
 	header := &screensv1.PageHeader{Eyebrow: reg.eyebrow, Title: reg.title, Description: reg.description}
 	for _, a := range reg.actions {
-		if a.href != "" {
-			// A link button is drawn for a role that may open its page; the
-			// feed does not read it (only drawer buttons).
+		if !role.opens(a) {
 			continue
 		}
-		for _, allowed := range role.Drawers {
-			if allowed == a.drawer {
-				header.Actions = append(header.Actions, &screensv1.PageAction{
-					Key: slug(a.label), Label: a.label, Enabled: true, Href: a.drawer, Drawer: true})
-				break
-			}
+		if a.href != "" {
+			header.Actions = append(header.Actions, &screensv1.PageAction{
+				Key: slug(a.label), Label: a.label, Primary: true, Enabled: true, Href: a.href})
+			continue
 		}
+		header.Actions = append(header.Actions, &screensv1.PageAction{
+			Key: slug(a.label), Label: a.label, Primary: true, Enabled: true, Href: a.drawer, Drawer: true})
 	}
+	if p := reg.primary; p != nil && role.opens(*p) {
+		lead := len(reg.actions) == 0 || !role.opens(reg.actions[0])
+		header.Actions = append(header.Actions, &screensv1.PageAction{
+			Key: slug(p.label), Label: p.label + " →", Primary: lead, Enabled: true, Href: p.href})
+	}
+	back := &screensv1.PageAction{Key: "hr_overview", Label: "HR overview", Enabled: true, Href: "/dashboard"}
+	if reg.teamView {
+		back = &screensv1.PageAction{Key: "my_team", Label: "My Team", Enabled: true, Href: "/my-team"}
+	}
+	header.Actions = append(header.Actions, back)
 	blocks := []*screensv1.PageBlock{breadcrumb(reg)}
 	if role.Strip != nil {
 		blocks = append(blocks, strip(role))

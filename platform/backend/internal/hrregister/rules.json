@@ -80,6 +80,7 @@
     "none": "No medical cover"
   },
   "metric_labels": {
+    "6–12 months": "6–12 months",
     "Acknowledgement rate": "Acknowledgement rate",
     "Acting roles": "Acting roles",
     "Active": "Active",
@@ -94,15 +95,20 @@
     "Compliance gaps": "Compliance gaps",
     "Compliant": "Compliant",
     "Countries": "Countries",
+    "Coverage gaps": "Coverage gaps",
     "Critical": "Critical",
+    "Critical cases": "Critical cases",
+    "Current period": "Current period",
     "Days lost": "Days lost",
     "Departments": "Departments",
+    "Development required": "Development required",
     "Disagreements": "Disagreements",
     "Disciplinary matters": "Disciplinary matters",
     "Due soon": "Due soon",
     "Ending in 30 days": "Ending in 30 days",
     "Escalated": "Escalated",
     "Events": "Events",
+    "Exceptions": "Exceptions",
     "Handover gaps": "Handover gaps",
     "Headcount": "Headcount",
     "Hired": "Hired",
@@ -110,28 +116,35 @@
     "In review": "In review",
     "Interviews": "Interviews",
     "Latest morale score": "Latest morale score",
+    "Leave records": "Leave records",
     "Leaving in 90 days": "Leaving in 90 days",
     "Missing or expired": "Missing or expired",
     "Missing profiles": "Missing profiles",
     "Near misses": "Near misses",
     "No reporting line": "No reporting line",
+    "Nominations": "Nominations",
     "Offers": "Offers",
     "Open": "Open",
     "Open cases": "Open cases",
     "Open incidents": "Open incidents",
+    "Open relations cases": "Open relations cases",
     "Open roles": "Open roles",
     "Open surveys": "Open surveys",
     "Overdue": "Overdue",
     "Past exit date, still active": "Past exit date, still active",
     "Pay reviews due": "Pay reviews due",
+    "Pending": "Pending",
     "Pending approval": "Pending approval",
+    "People": "People",
     "People in scope": "People in scope",
     "People recognised": "People recognised",
     "Plans": "Plans",
     "Policies in review": "Policies in review",
     "Policy reviews due": "Policy reviews due",
     "Published policies": "Published policies",
+    "Ready": "Ready",
     "Ready for activation": "Ready for activation",
+    "Ready now": "Ready now",
     "Recognitions": "Recognitions",
     "Refused actions": "Refused actions",
     "Replacements": "Replacements",
@@ -142,6 +155,7 @@
     "Screening": "Screening",
     "Serious incidents": "Serious incidents",
     "Showing": "Showing",
+    "Staff checked": "Staff checked",
     "Turnover this FY": "Turnover this FY",
     "Under investigation": "Under investigation",
     "Voluntary exits": "Voluntary exits"
@@ -173,7 +187,9 @@
           "drawers": [
             "/candidate-pipeline/new"
           ],
-          "links": [],
+          "links": [
+            "/recruitment"
+          ],
           "page": true,
           "strip": null
         },
@@ -197,7 +213,9 @@
         },
         "CountryDirector": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/recruitment"
+          ],
           "page": false,
           "strip": null
         },
@@ -205,7 +223,9 @@
           "drawers": [
             "/candidate-pipeline/new"
           ],
-          "links": [],
+          "links": [
+            "/recruitment"
+          ],
           "page": true,
           "strip": null
         },
@@ -213,7 +233,9 @@
           "drawers": [
             "/candidate-pipeline/new"
           ],
-          "links": [],
+          "links": [
+            "/recruitment"
+          ],
           "page": true,
           "strip": null
         },
@@ -279,7 +301,9 @@
           "drawers": [
             "/compensation-benefits/new"
           ],
-          "links": [],
+          "links": [
+            "/staff"
+          ],
           "page": true,
           "strip": null
         },
@@ -303,7 +327,9 @@
         },
         "CountryDirector": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/staff"
+          ],
           "page": false,
           "strip": null
         },
@@ -311,7 +337,9 @@
           "drawers": [
             "/compensation-benefits/new"
           ],
-          "links": [],
+          "links": [
+            "/staff"
+          ],
           "page": true,
           "strip": null
         },
@@ -319,7 +347,9 @@
           "drawers": [
             "/compensation-benefits/new"
           ],
-          "links": [],
+          "links": [
+            "/staff"
+          ],
           "page": true,
           "strip": null
         },
@@ -349,7 +379,9 @@
         },
         "Program Lead": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/staff"
+          ],
           "page": false,
           "strip": null
         },
@@ -367,7 +399,9 @@
         },
         "RegionalVicePresident": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/staff"
+          ],
           "page": false,
           "strip": null
         }
@@ -386,7 +420,9 @@
             "/compliance-register/new",
             "/compliance-register/requirement"
           ],
-          "links": [],
+          "links": [
+            "/policies"
+          ],
           "page": true,
           "strip": null
         },
@@ -419,7 +455,9 @@
             "/compliance-register/new",
             "/compliance-register/requirement"
           ],
-          "links": [],
+          "links": [
+            "/policies"
+          ],
           "page": true,
           "strip": null
         },
@@ -428,7 +466,9 @@
             "/compliance-register/new",
             "/compliance-register/requirement"
           ],
-          "links": [],
+          "links": [
+            "/policies"
+          ],
           "page": true,
           "strip": null
         },
@@ -477,6 +517,118 @@
         "RegionalVicePresident": {
           "drawers": [],
           "links": [],
+          "page": false,
+          "strip": null
+        }
+      }
+    },
+    "/culture-engagement": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [],
+          "links": [
+            "/staff"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "links": [
+            "/staff"
+          ],
+          "page": false,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [],
+          "links": [
+            "/staff"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [],
+          "links": [
+            "/staff"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "links": [
+            "/staff"
+          ],
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "links": [
+            "/staff"
+          ],
           "page": false,
           "strip": null
         }
@@ -494,7 +646,9 @@
           "drawers": [
             "/employee-relations/new"
           ],
-          "links": [],
+          "links": [
+            "/hr-today"
+          ],
           "page": true,
           "strip": null
         },
@@ -518,7 +672,9 @@
         },
         "CountryDirector": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/hr-today"
+          ],
           "page": false,
           "strip": null
         },
@@ -526,7 +682,9 @@
           "drawers": [
             "/employee-relations/new"
           ],
-          "links": [],
+          "links": [
+            "/hr-today"
+          ],
           "page": true,
           "strip": null
         },
@@ -534,7 +692,9 @@
           "drawers": [
             "/employee-relations/new"
           ],
-          "links": [],
+          "links": [
+            "/hr-today"
+          ],
           "page": true,
           "strip": null
         },
@@ -582,7 +742,9 @@
         },
         "RegionalVicePresident": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/hr-today"
+          ],
           "page": false,
           "strip": null
         }
@@ -600,7 +762,9 @@
           "drawers": [
             "/health-safety/new"
           ],
-          "links": [],
+          "links": [
+            "/hr-today"
+          ],
           "page": true,
           "strip": null
         },
@@ -624,7 +788,9 @@
         },
         "CountryDirector": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/hr-today"
+          ],
           "page": false,
           "strip": null
         },
@@ -632,7 +798,9 @@
           "drawers": [
             "/health-safety/new"
           ],
-          "links": [],
+          "links": [
+            "/hr-today"
+          ],
           "page": true,
           "strip": null
         },
@@ -640,7 +808,9 @@
           "drawers": [
             "/health-safety/new"
           ],
-          "links": [],
+          "links": [
+            "/hr-today"
+          ],
           "page": true,
           "strip": null
         },
@@ -688,7 +858,9 @@
         },
         "RegionalVicePresident": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/hr-today"
+          ],
           "page": false,
           "strip": null
         }
@@ -698,25 +870,33 @@
       "roles": {
         "Accountant": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/dashboard"
+          ],
           "page": false,
           "strip": null
         },
         "Admin": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/dashboard"
+          ],
           "page": true,
           "strip": null
         },
         "BusinessTransformationOfficer": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/dashboard"
+          ],
           "page": false,
           "strip": null
         },
         "CCEO": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/dashboard"
+          ],
           "page": false,
           "strip": null
         },
@@ -728,67 +908,89 @@
         },
         "CountryDirector": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/dashboard"
+          ],
           "page": true,
           "strip": null
         },
         "HumanResources": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/dashboard"
+          ],
           "page": true,
           "strip": null
         },
         "ImpactAssessment": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/dashboard"
+          ],
           "page": true,
           "strip": null
         },
         "MfiLoanOfficer": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/dashboard"
+          ],
           "page": false,
           "strip": null
         },
         "MfiPartnerAdmin": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/dashboard"
+          ],
           "page": false,
           "strip": null
         },
         "PartnerAdmin": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/dashboard"
+          ],
           "page": false,
           "strip": null
         },
         "PartnerFieldOfficer": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/dashboard"
+          ],
           "page": false,
           "strip": null
         },
         "Program Lead": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/dashboard"
+          ],
           "page": false,
           "strip": null
         },
         "ProjectCoordinator": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/dashboard"
+          ],
           "page": false,
           "strip": null
         },
         "RegionalProgramLead": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/dashboard"
+          ],
           "page": false,
           "strip": null
         },
         "RegionalVicePresident": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/dashboard"
+          ],
           "page": true,
           "strip": null
         }
@@ -804,7 +1006,9 @@
         },
         "Admin": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/hr-today"
+          ],
           "page": true,
           "strip": null
         },
@@ -828,19 +1032,25 @@
         },
         "CountryDirector": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/hr-today"
+          ],
           "page": false,
           "strip": null
         },
         "HumanResources": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/hr-today"
+          ],
           "page": true,
           "strip": null
         },
         "ImpactAssessment": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/hr-today"
+          ],
           "page": true,
           "strip": null
         },
@@ -888,7 +1098,9 @@
         },
         "RegionalVicePresident": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/hr-today"
+          ],
           "page": false,
           "strip": null
         }
@@ -906,7 +1118,9 @@
           "drawers": [
             "/offboarding/new"
           ],
-          "links": [],
+          "links": [
+            "/recruitment"
+          ],
           "page": true,
           "strip": null
         },
@@ -930,7 +1144,9 @@
         },
         "CountryDirector": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/recruitment"
+          ],
           "page": false,
           "strip": null
         },
@@ -938,7 +1154,9 @@
           "drawers": [
             "/offboarding/new"
           ],
-          "links": [],
+          "links": [
+            "/recruitment"
+          ],
           "page": true,
           "strip": null
         },
@@ -946,7 +1164,9 @@
           "drawers": [
             "/offboarding/new"
           ],
-          "links": [],
+          "links": [
+            "/recruitment"
+          ],
           "page": true,
           "strip": null
         },
@@ -1010,7 +1230,9 @@
         },
         "Admin": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/candidate-pipeline"
+          ],
           "page": true,
           "strip": null
         },
@@ -1040,13 +1262,17 @@
         },
         "HumanResources": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/candidate-pipeline"
+          ],
           "page": true,
           "strip": null
         },
         "ImpactAssessment": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/candidate-pipeline"
+          ],
           "page": true,
           "strip": null
         },
@@ -1110,7 +1336,9 @@
         },
         "Admin": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/staff"
+          ],
           "page": true,
           "strip": null
         },
@@ -1134,19 +1362,25 @@
         },
         "CountryDirector": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/staff"
+          ],
           "page": false,
           "strip": null
         },
         "HumanResources": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/staff"
+          ],
           "page": true,
           "strip": null
         },
         "ImpactAssessment": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/staff"
+          ],
           "page": true,
           "strip": null
         },
@@ -1176,7 +1410,9 @@
         },
         "Program Lead": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/staff"
+          ],
           "page": false,
           "strip": null
         },
@@ -1194,7 +1430,121 @@
         },
         "RegionalVicePresident": {
           "drawers": [],
+          "links": [
+            "/staff"
+          ],
+          "page": false,
+          "strip": null
+        }
+      }
+    },
+    "/payroll-readiness": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
           "links": [],
+          "page": true,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [],
+          "links": [
+            "/staff"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "links": [
+            "/staff"
+          ],
+          "page": false,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [],
+          "links": [
+            "/staff"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [],
+          "links": [
+            "/staff"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "links": [
+            "/staff"
+          ],
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "links": [
+            "/staff"
+          ],
           "page": false,
           "strip": null
         }
@@ -1210,7 +1560,9 @@
         },
         "Admin": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/hr/performance-cycle"
+          ],
           "page": true,
           "strip": null
         },
@@ -1240,13 +1592,17 @@
         },
         "HumanResources": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/hr/performance-cycle"
+          ],
           "page": true,
           "strip": null
         },
         "ImpactAssessment": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/hr/performance-cycle"
+          ],
           "page": true,
           "strip": null
         },
@@ -1341,7 +1697,8 @@
         "Admin": {
           "drawers": [],
           "links": [
-            "/uploads/new"
+            "/uploads/new",
+            "/policy-compliance"
           ],
           "page": true,
           "strip": null
@@ -1367,7 +1724,8 @@
         "CountryDirector": {
           "drawers": [],
           "links": [
-            "/uploads/new"
+            "/uploads/new",
+            "/policy-compliance"
           ],
           "page": false,
           "strip": null
@@ -1375,7 +1733,8 @@
         "HumanResources": {
           "drawers": [],
           "links": [
-            "/uploads/new"
+            "/uploads/new",
+            "/policy-compliance"
           ],
           "page": true,
           "strip": null
@@ -1383,7 +1742,8 @@
         "ImpactAssessment": {
           "drawers": [],
           "links": [
-            "/uploads/new"
+            "/uploads/new",
+            "/policy-compliance"
           ],
           "page": true,
           "strip": null
@@ -1414,7 +1774,9 @@
         },
         "Program Lead": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/policy-compliance"
+          ],
           "page": false,
           "strip": null
         },
@@ -1433,7 +1795,8 @@
         "RegionalVicePresident": {
           "drawers": [],
           "links": [
-            "/uploads/new"
+            "/uploads/new",
+            "/policy-compliance"
           ],
           "page": false,
           "strip": null
@@ -1452,7 +1815,9 @@
           "drawers": [
             "/pulse-surveys/new"
           ],
-          "links": [],
+          "links": [
+            "/recognition"
+          ],
           "page": true,
           "strip": null
         },
@@ -1484,7 +1849,9 @@
           "drawers": [
             "/pulse-surveys/new"
           ],
-          "links": [],
+          "links": [
+            "/recognition"
+          ],
           "page": true,
           "strip": null
         },
@@ -1492,7 +1859,9 @@
           "drawers": [
             "/pulse-surveys/new"
           ],
-          "links": [],
+          "links": [
+            "/recognition"
+          ],
           "page": true,
           "strip": null
         },
@@ -1558,7 +1927,9 @@
           "drawers": [
             "/recognition/new"
           ],
-          "links": [],
+          "links": [
+            "/pulse-surveys"
+          ],
           "page": true,
           "strip": null
         },
@@ -1590,7 +1961,9 @@
           "drawers": [
             "/recognition/new"
           ],
-          "links": [],
+          "links": [
+            "/pulse-surveys"
+          ],
           "page": true,
           "strip": null
         },
@@ -1598,7 +1971,9 @@
           "drawers": [
             "/recognition/new"
           ],
-          "links": [],
+          "links": [
+            "/pulse-surveys"
+          ],
           "page": true,
           "strip": null
         },
@@ -1664,7 +2039,9 @@
           "drawers": [
             "/recovery-plans/new"
           ],
-          "links": [],
+          "links": [
+            "/hr/performance-cycle"
+          ],
           "page": true,
           "strip": null
         },
@@ -1696,7 +2073,9 @@
           "drawers": [
             "/recovery-plans/new"
           ],
-          "links": [],
+          "links": [
+            "/hr/performance-cycle"
+          ],
           "page": true,
           "strip": null
         },
@@ -1704,7 +2083,9 @@
           "drawers": [
             "/recovery-plans/new"
           ],
-          "links": [],
+          "links": [
+            "/hr/performance-cycle"
+          ],
           "page": true,
           "strip": null
         },
@@ -1802,7 +2183,9 @@
           "drawers": [
             "/recruitment/new"
           ],
-          "links": [],
+          "links": [
+            "/candidate-pipeline"
+          ],
           "page": true,
           "strip": null
         },
@@ -1834,13 +2217,17 @@
           "drawers": [
             "/recruitment/new"
           ],
-          "links": [],
+          "links": [
+            "/candidate-pipeline"
+          ],
           "page": true,
           "strip": null
         },
         "ImpactAssessment": {
           "drawers": [],
-          "links": [],
+          "links": [
+            "/candidate-pipeline"
+          ],
           "page": true,
           "strip": null
         },
@@ -1894,6 +2281,244 @@
         }
       }
     },
+    "/succession-planning": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [],
+          "links": [
+            "/cpd-learning"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "links": [
+            "/cpd-learning"
+          ],
+          "page": false,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [],
+          "links": [
+            "/cpd-learning"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [],
+          "links": [
+            "/cpd-learning"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "links": [
+            "/cpd-learning"
+          ],
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "links": [
+            "/cpd-learning"
+          ],
+          "page": false,
+          "strip": null
+        }
+      }
+    },
+    "/wellness": {
+      "roles": {
+        "Accountant": {
+          "drawers": [],
+          "links": [
+            "/personal-time-off/"
+          ],
+          "page": false,
+          "strip": null
+        },
+        "Admin": {
+          "drawers": [],
+          "links": [
+            "/personal-time-off/"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "BusinessTransformationOfficer": {
+          "drawers": [],
+          "links": [
+            "/personal-time-off/"
+          ],
+          "page": false,
+          "strip": null
+        },
+        "CCEO": {
+          "drawers": [],
+          "links": [
+            "/personal-time-off/"
+          ],
+          "page": false,
+          "strip": null
+        },
+        "ClusterLeader": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "CountryDirector": {
+          "drawers": [],
+          "links": [
+            "/personal-time-off/"
+          ],
+          "page": false,
+          "strip": null
+        },
+        "HumanResources": {
+          "drawers": [],
+          "links": [
+            "/personal-time-off/"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "ImpactAssessment": {
+          "drawers": [],
+          "links": [
+            "/personal-time-off/"
+          ],
+          "page": true,
+          "strip": null
+        },
+        "MfiLoanOfficer": {
+          "drawers": [],
+          "links": [
+            "/personal-time-off/"
+          ],
+          "page": false,
+          "strip": null
+        },
+        "MfiPartnerAdmin": {
+          "drawers": [],
+          "links": [
+            "/personal-time-off/"
+          ],
+          "page": false,
+          "strip": null
+        },
+        "PartnerAdmin": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "PartnerFieldOfficer": {
+          "drawers": [],
+          "links": [],
+          "page": false,
+          "strip": null
+        },
+        "Program Lead": {
+          "drawers": [],
+          "links": [
+            "/personal-time-off/"
+          ],
+          "page": false,
+          "strip": null
+        },
+        "ProjectCoordinator": {
+          "drawers": [],
+          "links": [
+            "/personal-time-off/"
+          ],
+          "page": false,
+          "strip": null
+        },
+        "RegionalProgramLead": {
+          "drawers": [],
+          "links": [
+            "/personal-time-off/"
+          ],
+          "page": false,
+          "strip": null
+        },
+        "RegionalVicePresident": {
+          "drawers": [],
+          "links": [
+            "/personal-time-off/"
+          ],
+          "page": false,
+          "strip": null
+        }
+      }
+    },
     "/workforce-planning": {
       "roles": {
         "Accountant": {
@@ -1906,7 +2531,9 @@
           "drawers": [
             "/recruitment/new"
           ],
-          "links": [],
+          "links": [
+            "/recruitment"
+          ],
           "page": true,
           "strip": null
         },
@@ -1932,7 +2559,9 @@
           "drawers": [
             "/recruitment/new"
           ],
-          "links": [],
+          "links": [
+            "/recruitment"
+          ],
           "page": true,
           "strip": null
         },
@@ -1940,7 +2569,9 @@
           "drawers": [
             "/recruitment/new"
           ],
-          "links": [],
+          "links": [
+            "/recruitment"
+          ],
           "page": true,
           "strip": null
         },
@@ -1948,7 +2579,9 @@
           "drawers": [
             "/recruitment/new"
           ],
-          "links": [],
+          "links": [
+            "/recruitment"
+          ],
           "page": true,
           "strip": null
         },

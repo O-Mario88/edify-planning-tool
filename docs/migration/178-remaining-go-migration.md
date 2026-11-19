@@ -349,6 +349,39 @@ answers over three readers and four pages, 0 differing.
 Left in C6: `/settings/activity-catalogue/`.
 Left in C5: `/ia/school-evidence/` and `/priorities/ssa-mapping`.
 
+### C7 (part) · Four HR programme registers, and the registers' header buttons (2026-11-19)
+
+`/culture-engagement`, `/payroll-readiness`, `/succession-planning` and
+`/wellness` are Go's (hrregister/programmes.go), drawn by the same register
+shell as the other seventeen: teams by country and department with their
+activation beside the employee-relations cases the viewer may see; the
+payroll checks of the People in reach, the latest period counted; named
+successors by position with each nomination's UTC day; leave newest first
+with who covers it. They are web-only pages (the phone feed answers 501), so
+their golden goes through the web oracle
+(hrregister/testdata/programmes_golden.py, `gprg` rows): 180 answers over
+five readers and nine questions, 0 differing.
+
+Found on the way: the seventeen HR registers Go already answered had drifted
+from the existing pages without a test saying so — their golden was not in
+the suite run. The feed now reads a register's header link buttons: the
+view's lead link (`primary_action`, " →", primary unless the first header
+button is drawn, and only for a role that may open its page; HR Today only
+where `can_view_page("hr_today")` holds) and the way back (HR overview, or
+My Team on a team register). The shell draws them; the exporter writes, per
+role, which lead-link pages it may open. A figure's line naming an
+intervention is shortened to its code as components/context_metrics.html
+does (schoolprofile.HelperAndNote, now shared). The goldens' "other country"
+moved from Kenya to Tanzania: Go's regional reach is every registered country
+(owner, 2026-11-18) and Kenya is registered, so HR read Kenya's people in Go
+and not in the existing app; a country no registry holds is outside both.
+With that, all 562 register answers, 0 differing; Employee Relations 9, 0
+differing, its 8 audited readings sealed as the existing app seals them.
+The register golden reads the HR audit log, which Employee Relations' reads
+append to, so the suite writes it after the main run and compares it alone.
+
+Left in C7: `/performance-conversation`.
+
 ### Found on the way (2026-11-19): stale generated artefacts on this branch
 
 Only Platform CI runs on `feature/edify-go-rn-migration`; Django's suite runs

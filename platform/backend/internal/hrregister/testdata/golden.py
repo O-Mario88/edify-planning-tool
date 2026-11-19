@@ -8,7 +8,9 @@ application answers them for people the development seed does not hold.
 Only against a database whose name ends in "_test". It files a set of
 accounts and People records there, every id starting "ghr" (enough to page
 the register; departments, titles and none; pending, suspended and exited;
-two lines to one person, a top role with no line, another country, a deleted
+two lines to one person, a top role with no line, a country no registry
+holds (Admin alone reads it: the regional reach is every registered
+country), a deleted
 record and a deleted account), asks the app's feed (apps.mobile_feed.views.
 read_page, the views, the templates and the reader unmodified) a set of
 questions as three accounts, writes the rows and the answers to GOLDEN_OUT
@@ -128,7 +130,7 @@ def file_rows():
                 department=None
                 if i == 60
                 else ["Programmes", "Logistics", "Finance", "Finance"][i % 4],
-                country="Kenya" if i == 60 else "Uganda",
+                country="Tanzania" if i == 60 else "Uganda",
                 onboarding_state=["active", "active", "pending", "suspended", "exited"][
                     i % 5
                 ],
@@ -152,7 +154,7 @@ def file_rows():
         StaffRecognition.objects.create(
             id=f"ghrr{i:03d}",
             staff=profiles[i % 7],
-            country="Kenya" if i == 11 else "Uganda",
+            country="Tanzania" if i == 11 else "Uganda",
             category=categories[i % 5],
             citation=long if i % 3 == 0 else f"Recognised for work {i}",
             awarded_on=today
@@ -170,7 +172,7 @@ def file_rows():
     for i in range(10):
         SafetyIncident.objects.create(
             id=f"ghri{i:03d}",
-            country="Kenya" if i == 9 else "Uganda",
+            country="Tanzania" if i == 9 else "Uganda",
             affected_staff=profiles[i] if i % 3 else None,
             incident_date=today
             - timedelta(days=[3, 100, 364, 365, 366, 500, 4, 101, 363, 0][i]),
@@ -227,7 +229,7 @@ def file_candidates():
     vacancies = [
         Vacancy.objects.create(
             id=f"ghrv{i}",
-            country=["Uganda", "Uganda", "Kenya", "Uganda", "Uganda"][i],
+            country=["Uganda", "Uganda", "Tanzania", "Uganda", "Uganda"][i],
             department=["Programmes", "Finance", "Programmes", "Logistics", ""][i],
             role=["Field Officer", "Accountant", "Driver", "Officer", "Clerk"][i],
             status=["open", "pending_approval", "open", "draft", "PENDING_APPROVAL"][i],
@@ -277,7 +279,7 @@ def file_compliance(profiles, today):
     requirements = [
         ComplianceRequirement.objects.create(
             id=f"ghrq{i}",
-            country=["All", "Uganda", "Kenya", "Uganda"][i],
+            country=["All", "Uganda", "Tanzania", "Uganda"][i],
             name=["Signed contract", "NSSF registration", "Work permit", "Tax PIN"][i],
             is_mandatory=i != 3,
         )
@@ -306,7 +308,7 @@ def file_documents(profiles, today):
             title=f"Golden Policy {i}",
             document_type=kinds[i],
             category=["HR", "Finance", "HR", "Training", "HR", "Safety"][i],
-            country=["", "Uganda", "Kenya", "", "Uganda", "Uganda"][i],
+            country=["", "Uganda", "Tanzania", "", "Uganda", "Uganda"][i],
             status=statuses[i],
             acknowledgement_required=i != 1,
         )
@@ -424,7 +426,7 @@ def file_pulse(today):
         [3, 4, 3, 4, 3, 4, 3],
         [1, 2],
     ]
-    countries = [[], ["Uganda"], ["Uganda", "Kenya"], ["Kenya"], ["Uganda"]]
+    countries = [[], ["Uganda"], ["Uganda", "Tanzania"], ["Tanzania"], ["Uganda"]]
     for i in range(5):
         survey = PulseSurvey.objects.create(
             id=f"ghru{i}",
@@ -471,7 +473,7 @@ QUESTIONS = {
         {"q": "golden", "page": "2"},
         {"q": "golden person 0"},
         {"q": "finance"},
-        {"q": "kenya"},
+        {"q": "tanzania"},
     ],
     "hr@edify.org": [
         {},

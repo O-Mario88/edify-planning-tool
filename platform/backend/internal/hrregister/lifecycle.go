@@ -55,7 +55,7 @@ WHERE p.status <> 'closed' AND p.target_completion_date < $%d::date AND p.staff_
 		return register{}, fmt.Errorf("hrregister: counting the overdue onboarding plans: %w", err)
 	}
 	reg := register{
-		path: "/onboarding", title: "Staff Onboarding", eyebrow: "Staffing and recruiting",
+		path: "/onboarding", primary: &action{label: "Candidate Pipeline", href: "/candidate-pipeline"}, title: "Staff Onboarding", eyebrow: "Staffing and recruiting",
 		description: "New hires from invitation to activation: checklist, supervisor confirmation, and the probation decision.",
 		columns:     []string{"Team member", "Role", "Country", "Start date", "Checklist", "Status"},
 		emptyTitle:  "No onboarding plans in this scope",
@@ -125,7 +125,7 @@ WHERE p.last_working_day IS NOT NULL AND p.last_working_day < $%d::date AND NOT 
 		return register{}, fmt.Errorf("hrregister: counting the accounts past their exit: %w", err)
 	}
 	reg := register{
-		path: "/offboarding", title: "Staff Offboarding", eyebrow: "Staffing and recruiting",
+		path: "/offboarding", primary: &action{label: "Recruitment", href: "/recruitment"}, title: "Staff Offboarding", eyebrow: "Staffing and recruiting",
 		description: "Exits across the countries you oversee: the reason for leaving, the handover, and the account closed on the last working day.",
 		columns:     []string{"Team member", "Country", "Last working day", "Reason", "Handover owner", "Status"},
 		actions:     []action{{label: "Start an offboarding", drawer: "/offboarding/new"}},

@@ -108,7 +108,7 @@ FROM audit_log a WHERE %s ORDER BY a.created_at DESC LIMIT %d`, where, auditShow
 		return register{}, fmt.Errorf("hrregister: reading the HR trail: %w", err)
 	}
 	reg := register{
-		path: "/hr-audit-log", title: "HR System Audit Log", eyebrow: "Policy and compliance",
+		path: "/hr-audit-log", primary: hrToday, title: "HR System Audit Log", eyebrow: "Policy and compliance",
 		description: "Sensitive people decisions as recorded on the platform's tamper-evident, hash-chained audit trail. " +
 			"Payload detail stays out of the list to limit incidental PII exposure.",
 		columns:    []string{"Action", "Actor", "Role", "Record", "Outcome", "Timestamp"},

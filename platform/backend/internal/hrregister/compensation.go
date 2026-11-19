@@ -47,7 +47,7 @@ WHERE sp.deleted_at IS NULL AND u.deleted_at IS NULL AND %s AND NOT (sp.onboardi
 		return register{}, fmt.Errorf("hrregister: counting the people without a compensation record: %w", err)
 	}
 	reg := register{
-		path: "/compensation-benefits", title: "Compensation & Benefits", eyebrow: "Rewards and wellbeing",
+		path: "/compensation-benefits", primary: &action{label: "People Directory", href: "/staff"}, title: "Compensation & Benefits", eyebrow: "Rewards and wellbeing",
 		description: "Salary bands, medical cover, pension and review dates for the people you oversee. Amounts and bank details " +
 			"stay inside each record.",
 		columns:    []string{"Team member", "Country", "Salary band", "Medical cover", "Pension", "Next review", "Status"},

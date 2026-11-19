@@ -37,7 +37,7 @@ WHERE %s AND %s ORDER BY a.updated_at DESC`, scopeSQL, searchSQL), args...)
 		return register{}, fmt.Errorf("hrregister: reading the applications: %w", err)
 	}
 	reg := register{
-		path: "/candidate-pipeline", title: "Candidate Pipeline", eyebrow: "Staffing and recruiting",
+		path: "/candidate-pipeline", primary: &action{label: "Vacancies", href: "/recruitment"}, title: "Candidate Pipeline", eyebrow: "Staffing and recruiting",
 		description: "Every candidate against the vacancies you oversee, by selection stage, from application to hire.",
 		columns:     []string{"Candidate", "Vacancy", "Country", "Stage", "Updated"},
 		actions:     []action{{label: "Record a candidate", drawer: "/candidate-pipeline/new"}},

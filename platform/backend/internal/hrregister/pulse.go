@@ -86,7 +86,7 @@ FROM hr_pulse_survey s ORDER BY s.opens_on DESC`)
 		return register{}, fmt.Errorf("hrregister: reading the pulse surveys: %w", err)
 	}
 	reg := register{
-		path: "/pulse-surveys", title: "Staff Pulse Surveys", eyebrow: "Rewards and wellbeing",
+		path: "/pulse-surveys", primary: &action{label: "Recognition", href: "/recognition"}, title: "Staff Pulse Surveys", eyebrow: "Rewards and wellbeing",
 		description: "Short anonymous surveys on purpose, support, workload, recognition and growth, to find what demotivates " +
 			"staff before it costs a resignation. Results show only once five people have answered.",
 		columns:    []string{"Survey", "Countries", "Open", "Responses", "Score", "Status"},

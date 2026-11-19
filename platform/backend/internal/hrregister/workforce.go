@@ -146,7 +146,7 @@ SELECT v.country, COALESCE(v.department, ''), lower(COALESCE(v.status, '')) FROM
 		return keys[i].department < keys[j].department
 	})
 	reg := register{
-		path: "/workforce-planning", title: "Workforce Planning", eyebrow: "People and staffing",
+		path: "/workforce-planning", primary: &action{label: "Open Recruitment", href: "/recruitment"}, title: "Workforce Planning", eyebrow: "People and staffing",
 		description: "Staffing by country and department: headcount, who has left and who is leaving, and the roles open or " +
 			"awaiting approval to replace or grow.",
 		columns:    []string{"Department", "Country", "Headcount", "Pending activation", "Left this FY", "Leaving in 90 days", "Open roles", "Awaiting approval"},
