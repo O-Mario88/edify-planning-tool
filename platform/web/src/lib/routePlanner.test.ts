@@ -4,8 +4,9 @@ import { describe, expect, it } from 'vitest';
 import { isSafeIcon } from './icon';
 import { RouteLegSchema, RouteTotalsSchema, SavedFieldDaySchema, SchoolPinSchema } from '@/gen/edify/routes/v1/routes_pb';
 import { NavItemSchema, NavSectionSchema } from '@/gen/edify/screens/v1/navigation_pb';
+import { HomeShortcutSchema } from '@/gen/edify/screens/v1/home_pb';
 
-import { ROUTE_PLANNER_PATH, withRoutePlanner, dayClock, directionsUrl, fieldDayState, hoursMinutes, hrMin, km, legFigures, measureLabel, pinTone, totalFigures } from './routePlanner';
+import { ROUTE_PLANNER_PATH, withRoutePlanner, withRouteShortcut, dayClock, directionsUrl, fieldDayState, hoursMinutes, hrMin, km, legFigures, measureLabel, pinTone, totalFigures } from './routePlanner';
 
 describe('figures are written as the designs write them', () => {
   it.each([
@@ -113,5 +114,23 @@ describe('the sidebar links the planner below My Plan', () => {
     expect(withRoutePlanner(sections, 'HR')).toBe(sections);
     const given = withRoutePlanner(sections, 'CCEO');
     expect(withRoutePlanner(given, 'CCEO')).toBe(given);
+  });
+});
+
+describe('Home’s Quick access opens Smart Route in My Plan’s place', () => {
+  const shortcuts = ['Dashboard:/dashboard', 'Clusters:/clusters', 'My Plan:/my-plan', 'Calendar:/calendar'].map((pair) => {
+    const [label, url] = pair.split(':');
+    return create(HomeShortcutSchema, { label, url });
+  });
+
+  it('swaps My Plan for Smart Route, linked to the planner, for a role that plans', () => {
+    const swapped = withRouteShortcut(shortcuts, 'CCEO');
+    expect(swapped.map((shortcut) => `${shortcut.label}:${shortcut.url}`)).toEqual(['Dashboard:/dashboard', 'Clusters:/clusters', `Smart Route:${ROUTE_PLANNER_PATH}`, 'Calendar:/calendar']);
+    expect(isSafeIcon(swapped[2]?.iconSvg ?? '')).toBe(true);
+    expect(shortcuts[2]?.label).toBe('My Plan');
+  });
+
+  it('leaves another role’s shortcuts as they were', () => {
+    expect(withRouteShortcut(shortcuts, 'HR')).toBe(shortcuts);
   });
 });

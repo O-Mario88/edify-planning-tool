@@ -17,6 +17,7 @@ import type {
 } from '../gen/edify/screens/v1/home_pb';
 import { fonts, radius, toneColors, useTheme } from '../theme';
 import { EdifyLogo } from '../ui/EdifyLogo';
+import { routeShortcuts } from './route/routeData';
 import { SvgIcon } from '../ui/SvgIcon';
 
 const HERO_OVERLAP = 24;
@@ -45,7 +46,8 @@ interface QueueState {
 }
 
 export function HomeScreen({ onOpen }: HomeScreenProps) {
-  const { api, signOut } = useSession();
+  const { api, signOut, state } = useSession();
+  const role = state.status === 'signedIn' ? state.session.activeRole : '';
   const { colors, isDark } = useTheme();
   const [home, setHome] = useState<GetHomeResponse | null>(null);
   const [figures, setFigures] = useState<readonly HomeFigure[]>([]);
@@ -203,7 +205,7 @@ export function HomeScreen({ onOpen }: HomeScreenProps) {
             ) : null}
           </View>
 
-          {home.shortcuts.length > 0 ? (
+          {routeShortcuts(home.shortcuts, role).length > 0 ? (
             <View style={cardStyle}>
               <View style={styles.cardHead}>
                 <View style={styles.cardTitleRow}>
@@ -212,7 +214,7 @@ export function HomeScreen({ onOpen }: HomeScreenProps) {
                 </View>
               </View>
               <View style={styles.grid}>
-                {home.shortcuts.map((shortcut) => (
+                {routeShortcuts(home.shortcuts, role).map((shortcut) => (
                   <Pressable
                     key={shortcut.url}
                     onPress={() => onOpen(shortcut.url, shortcut.label)}

@@ -1,7 +1,8 @@
 import { create } from '@bufbuild/protobuf';
 
 import { RouteLegSchema, RouteTotalsSchema, SavedFieldDaySchema, SchoolPinSchema } from '../gen/edify/routes/v1/routes_pb';
-import { LOCATION_REPORTS_URL, OFFLINE_QUEUE_URL, ROUTE_URL, dateOf, dayClock, directionsUrl, fieldDayState, nearOf, routeUrl, hrMin, isRouteUrl, legText, routeSection, shortName, totalFigures } from '../screens/route/routeData';
+import { HomeShortcutSchema } from '../gen/edify/screens/v1/home_pb';
+import { LOCATION_REPORTS_URL, OFFLINE_QUEUE_URL, ROUTE_URL, routeShortcuts, dateOf, dayClock, directionsUrl, fieldDayState, nearOf, routeUrl, hrMin, isRouteUrl, legText, routeSection, shortName, totalFigures } from '../screens/route/routeData';
 
 describe('the route planner in the app', () => {
   it('is listed for field staff only, natively', () => {
@@ -71,5 +72,23 @@ describe('the field day, as the web keeps it', () => {
   it('writes recorded times on the Kampala clock', () => {
     expect(dayClock('2026-11-18T05:02:00Z')).toBe('08:02');
     expect(dayClock('')).toBe('');
+  });
+});
+
+describe('Home’s Quick access opens Smart Route in My Plan’s place', () => {
+  const shortcuts = [
+    create(HomeShortcutSchema, { label: 'Dashboard', url: '/dashboard' }),
+    create(HomeShortcutSchema, { label: 'My Plan', url: '/my-plan' }),
+  ];
+
+  it('swaps My Plan for Smart Route, opening the native planner, for a role that plans', () => {
+    const swapped = routeShortcuts(shortcuts, 'CCEO');
+    expect(swapped.map((shortcut) => [shortcut.label, shortcut.url])).toEqual([['Dashboard', '/dashboard'], ['Smart Route', ROUTE_URL]]);
+    expect(swapped[1]?.iconSvg).toContain('<svg');
+    expect(shortcuts[1]?.label).toBe('My Plan');
+  });
+
+  it('leaves another role’s shortcuts as they were', () => {
+    expect(routeShortcuts(shortcuts, 'HR')).toBe(shortcuts);
   });
 });

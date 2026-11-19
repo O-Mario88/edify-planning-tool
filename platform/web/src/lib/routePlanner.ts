@@ -8,6 +8,8 @@ import { create } from '@bufbuild/protobuf';
 
 import { NavItemSchema } from '@/gen/edify/screens/v1/navigation_pb';
 import type { NavSection } from '@/gen/edify/screens/v1/navigation_pb';
+import { HomeShortcutSchema } from '@/gen/edify/screens/v1/home_pb';
+import type { HomeShortcut } from '@/gen/edify/screens/v1/home_pb';
 import type { Itinerary, RouteLeg, RouteTotals, SavedFieldDay, SchoolPin } from '@/gen/edify/routes/v1/routes_pb';
 
 export type Measure = 'road' | 'straight_line';
@@ -165,4 +167,17 @@ export function withRoutePlanner(sections: NavSection[], role: string): NavSecti
     if (at < 0) return section;
     return { ...section, items: [...section.items.slice(0, at + 1), link, ...section.items.slice(at + 1)] };
   });
+}
+
+/**
+ * Home's Quick access with Smart Route in My Plan's place (owner, 2026-11-19:
+ * "on the quick access change My Plan to Smart Route … link it to route
+ * planner"), for a role that plans routes. Another role's shortcuts are left
+ * as the gateway gave them.
+ */
+export function withRouteShortcut(shortcuts: HomeShortcut[], role: string): HomeShortcut[] {
+  if (!PLANNER_ROLES.has(role)) return shortcuts;
+  return shortcuts.map((shortcut) =>
+    shortcut.url.replace(/\/$/, '') === '/my-plan' ? create(HomeShortcutSchema, { label: 'Smart Route', url: ROUTE_PLANNER_PATH, iconSvg: ROUTE_ICON }) : shortcut,
+  );
 }

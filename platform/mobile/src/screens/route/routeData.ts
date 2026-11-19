@@ -7,6 +7,8 @@
 import { create } from '@bufbuild/protobuf';
 
 import type { Itinerary, RouteLeg, RouteTotals, SavedFieldDay, SchoolPin } from '../../gen/edify/routes/v1/routes_pb';
+import { HomeShortcutSchema } from '../../gen/edify/screens/v1/home_pb';
+import type { HomeShortcut } from '../../gen/edify/screens/v1/home_pb';
 import type { NavSection } from '../../gen/edify/screens/v1/navigation_pb';
 import { NavItemSchema, NavSectionSchema } from '../../gen/edify/screens/v1/navigation_pb';
 
@@ -59,6 +61,24 @@ const REVIEWER_ROLES = new Set(['Program Lead', 'CountryDirector', 'Admin']);
 
 /** Who captures school locations by GPS (routeplan.CaptureRoles); the gateway decides. */
 export const CAPTURE_ROLES = new Set(['CCEO', 'Program Lead']);
+
+/** The route icon (lucide "route"), as Home's shortcuts carry icons. */
+const ROUTE_ICON =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+  '<circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg>';
+
+/**
+ * Home's Quick access with Smart Route in My Plan's place (owner, 2026-11-19:
+ * "on the quick access change My Plan to Smart Route … link it to route
+ * planner"), for a role that plans routes; it opens the native planner.
+ * Another role's shortcuts are left as the gateway gave them.
+ */
+export function routeShortcuts(shortcuts: HomeShortcut[], role: string): HomeShortcut[] {
+  if (!PLANNER_ROLES.has(role)) return shortcuts;
+  return shortcuts.map((shortcut) =>
+    shortcut.url.replace(/\/$/, '') === '/my-plan' ? create(HomeShortcutSchema, { label: 'Smart Route', url: ROUTE_URL, iconSvg: ROUTE_ICON }) : shortcut,
+  );
+}
 
 /** The planner's menu section, or null for a role that neither plans nor reviews locations. */
 export function routeSection(role: string): NavSection | null {
