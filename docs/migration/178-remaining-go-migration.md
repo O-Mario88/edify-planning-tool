@@ -166,6 +166,14 @@ over eight readers, 16 answers, 0 differing.
 no cluster is listed) is Go's too; a chosen action, school or cluster is
 handed on. With it the golden is 24 answers over three pages, 0 differing.
 
+`/debriefs/submit` (the Daily Debrief) is Go's in `internal/debriefs`
+(submit.go): the reader's work for today ticked as get_state ticks it, the
+activity they came to discuss carried in through the same ownership, a
+draft's or returned debrief's answers in the form, the read-only summary
+once submitted, and the roles that open it but may not submit. Its golden
+(debriefs/testdata/submit_golden.py) is 24 answers over eight readers, 0
+differing. The form's saves stay the existing page's.
+
 Left in C3: `/today` (desk roles; the field roles are redirected and handed
-on), `/activities/closure`, `/debriefs/submit`, `/debriefs/weekly-report`,
-`/search` with a query and `/planning/schedule` with a choice.
+on), `/activities/closure`, `/debriefs/weekly-report`, `/search` with a
+query and `/planning/schedule` with a choice.

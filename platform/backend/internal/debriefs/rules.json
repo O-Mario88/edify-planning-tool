@@ -1,4 +1,30 @@
 {
+  "activity_statuses": {
+    "accountant_confirmed": "Accountant Confirmed",
+    "assigned_to_partner": "Assigned to Partner",
+    "awaiting_ia_verification": "Awaiting IA Verification",
+    "awaiting_owner_approval": "Awaiting Owner Approval",
+    "cancelled": "Cancelled",
+    "closed": "Closed",
+    "completed": "Completed",
+    "completion_started": "Completion Started",
+    "deferred": "Deferred",
+    "evidence_accepted": "Evidence Accepted",
+    "evidence_uploaded": "Evidence Uploaded",
+    "ia_verified": "IA Verified",
+    "in_progress": "In Progress",
+    "not_planned": "Not Planned",
+    "partner_scheduled": "Partner Scheduled",
+    "planned": "Planned",
+    "rejected": "Rejected",
+    "rescheduled": "Rescheduled",
+    "returned": "Returned",
+    "returned_by_ia": "Returned by IA",
+    "returned_by_pl": "Returned by PL",
+    "salesforce_id_required": "Salesforce ID Required",
+    "scheduled": "Scheduled",
+    "submitted_to_pl": "Submitted to PL"
+  },
   "activity_types": {
     "baseline_ssa_visit": "SSA Visit",
     "cluster_meeting": "Cluster Meeting",
@@ -62,6 +88,36 @@
     "postponed": "Postponed",
     "rescheduled": "Rescheduled",
     "unsuccessful": "Unsuccessful"
+  },
+  "daily_editable_statuses": [
+    "draft",
+    "clarification_requested",
+    "returned"
+  ],
+  "daily_hidden_statuses": [
+    "cancelled"
+  ],
+  "daily_preselect_statuses": [
+    "in_progress",
+    "completion_started",
+    "evidence_uploaded",
+    "evidence_accepted",
+    "salesforce_id_required",
+    "submitted_to_pl",
+    "awaiting_ia_verification",
+    "ia_verified",
+    "accountant_confirmed",
+    "completed"
+  ],
+  "interventions": {
+    "christlike_behaviour": "Christlike Behaviour",
+    "enrolment": "Enrolment",
+    "exposure_to_word_of_god": "Exposure to the Word of God",
+    "financial_health": "Financial Health",
+    "government_requirement": "Government Requirements",
+    "leadership": "Leadership",
+    "learning_environment": "Learning Environment",
+    "teaching_environment": "Teacher's Environment"
   },
   "kinds": {
     "activity": "Activity Debrief",
@@ -158,5 +214,31 @@
     "reviewed": "Reviewed",
     "submitted": "Submitted",
     "updated": "Updated"
-  }
+  },
+  "submit_pages": {
+    "Accountant": false,
+    "Admin": true,
+    "BusinessTransformationOfficer": false,
+    "CCEO": true,
+    "ClusterLeader": false,
+    "CountryDirector": true,
+    "HumanResources": true,
+    "ImpactAssessment": true,
+    "MfiLoanOfficer": false,
+    "MfiPartnerAdmin": false,
+    "PartnerAdmin": true,
+    "PartnerFieldOfficer": true,
+    "Program Lead": true,
+    "ProjectCoordinator": true,
+    "RegionalProgramLead": false,
+    "RegionalVicePresident": true
+  },
+  "submitter_roles": [
+    "CCEO",
+    "Program Lead",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "ProjectCoordinator",
+    "Admin"
+  ]
 }

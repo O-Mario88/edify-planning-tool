@@ -922,6 +922,11 @@ GRANT SELECT (id, deleted_at, fy, date, status, risk_level, completion_status, s
   ON daily_debrief TO edify_gateway_ro;
 GRANT SELECT (debrief_id, recipient_user_id) ON daily_debrief_recipient TO edify_gateway_ro;
 GRANT SELECT (id, debrief_id, activity_id) ON daily_debrief_activity_link TO edify_gateway_ro;
+-- The Daily Debrief (internal/debriefs/submit.go): the reader's own day's
+-- debrief, with what they wrote, read back into their form. Go reads these
+-- only for the debrief the reader submitted.
+GRANT SELECT (other_work_description, what_went_well, what_did_not_go_well, challenges_faced, recommendations)
+  ON daily_debrief TO edify_gateway_ro;
 GRANT SELECT (debrief_id, challenge_type) ON daily_debrief_challenge TO edify_gateway_ro;
 GRANT SELECT (debrief_id, status) ON daily_debrief_commitment TO edify_gateway_ro;
 GRANT SELECT (owner_user_id, status, due_date) ON daily_debrief_action TO edify_gateway_ro;

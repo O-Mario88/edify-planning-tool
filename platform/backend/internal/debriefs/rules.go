@@ -1,4 +1,5 @@
-// Package debriefs builds the Field Debrief Dashboard (/debriefs): the strip
+// Package debriefs builds the Field Debrief Dashboard (/debriefs) and the
+// Daily Debrief (/debriefs/submit, submit.go). The dashboard: the strip
 // of the period's debriefs against the period before, the daily trend, the
 // debriefs by activity type and by risk, the top challenges, the reader's
 // action centre, the team and partner table under its tabs, the recent
@@ -42,12 +43,23 @@ var rules = func() (r struct {
 	ActivityTypes      map[string]string `json:"activity_types"`
 	MetricLabels       []string          `json:"metric_labels"`
 	PageSize           int               `json:"page_size"`
+	// The Daily Debrief's (submit.go).
+	SubmitPages            map[string]bool   `json:"submit_pages"`
+	SubmitterRoles         []string          `json:"submitter_roles"`
+	DailyPreselectStatuses []string          `json:"daily_preselect_statuses"`
+	DailyHiddenStatuses    []string          `json:"daily_hidden_statuses"`
+	DailyEditableStatuses  []string          `json:"daily_editable_statuses"`
+	ActivityStatuses       map[string]string `json:"activity_statuses"`
+	Interventions          map[string]string `json:"interventions"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {
 		panic(fmt.Sprintf("debriefs: reading rules.json: %v", err))
 	}
 	if len(r.MetricLabels) != 8 || r.PageSize <= 0 {
 		panic("debriefs: rules.json lacks the figures' labels or the page size")
+	}
+	if len(r.SubmitPages) == 0 || len(r.SubmitterRoles) == 0 || len(r.ActivityStatuses) == 0 {
+		panic("debriefs: rules.json lacks the Daily Debrief's doors")
 	}
 	return r
 }()
