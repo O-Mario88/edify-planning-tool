@@ -248,3 +248,21 @@ six queries and the three pages, 0 differing.
 Left, in order: `/today` (Admin's desk queue, with E), C2
 `/finance/fund-allocation`, C5–C9, D, E.
 
+### C5 (part) · Verification Notifications and the Duplicate Review Queue (2026-11-19)
+
+The C5 pages live at their trailing-slash paths (`/ssa/manual/`,
+`/ssa/upload/`, `/ssa/upload/history/`, `/ia/notifications/`,
+`/ia/school-evidence/`); without the slash Django has no route.
+
+`/ia/notifications/` is Go's in `internal/iapages` (notifications.go): the
+reader's newest fifty notices under the verification categories, each its
+title (a link to its record when it has one), its time and its words.
+Golden (iapages/testdata/notifications_golden.py): 4 readers, 0 differing.
+
+`/data-quality/duplicates` is Go's in `internal/dataquality`
+(duplicates.go): the open duplicate risks at operating schools, newest
+first, fifty a page, each school's name and duplicate state, its district
+and the suggested fix. Golden (dataquality/testdata/duplicates_golden.py):
+20 answers over five readers and four pages, 0 differing. Marking a school
+unique stays the existing page's.
+

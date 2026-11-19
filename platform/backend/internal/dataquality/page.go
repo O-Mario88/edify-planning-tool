@@ -44,6 +44,9 @@ var rules = func() (r struct {
 		Strip          *decisionlog.Strip `json:"strip"`
 		SetupQueue     bool               `json:"setup_queue"`
 		SchoolProfiles bool               `json:"school_profiles"`
+		// The Duplicate Review Queue's (duplicates.go).
+		DistrictProfiles bool `json:"district_profiles"`
+		Duplicates       bool `json:"duplicates"`
 	} `json:"roles"`
 	Tiles                [][3]string `json:"tiles"`
 	Sections             [][2]string `json:"sections"`
@@ -83,6 +86,9 @@ func link(t, href string) *screensv1.PagePanelItem {
 
 // Build answers Path.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if path == DuplicatesPath {
+		return s.duplicates(ctx, p, query)
+	}
 	if path != Path {
 		return nil, false, nil
 	}

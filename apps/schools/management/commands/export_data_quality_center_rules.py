@@ -7,8 +7,10 @@ platform/backend/internal/dataquality/rules.json: who may open the page, the
 IA workspace strip each draws, who may open the staff setup queue and a
 school's profile; the quality states the tiles count; the issue sections in
 order; the statuses that keep a school operating; the unmatched-SSA states
-still waiting; and the tables' page size. A change to any of them must be
-exported again; apps/schools/test_data_quality_center_rules_export.py fails
+still waiting; and the tables' page size. And the Duplicate Review Queue's
+(/data-quality/duplicates: duplicate_review_view): who opens it and who may
+open a district's profile from it. A change to any of them must be exported
+again; apps/schools/test_data_quality_center_rules_export.py fails
 until it is.
 
     python manage.py export_data_quality_center_rules
@@ -30,6 +32,7 @@ EXPORT_PATH = Path("platform/backend/internal/dataquality/rules.json")
 
 PAGE_PATH = "/admin-panel/data-quality-center"
 PAGE_PERMISSION = "data_quality_center"
+DUPLICATES_PATH = "/data-quality/duplicates"
 
 #: The tiles, in order: the quality state each counts.
 TILES = [
@@ -73,6 +76,9 @@ def rules() -> dict:
             else None,
             "setup_queue": bool(can_open_url(user, "/admin-panel/staff-setup-queue")),
             "school_profiles": bool(can_open_url(user, "/schools/0")),
+            "district_profiles": bool(can_open_url(user, "/districts/0")),
+            "duplicates": RolePermissionService.can_view_page(user, PAGE_PERMISSION)
+            and bool(can_open_url(user, DUPLICATES_PATH)),
         }
     return {
         "roles": roles,

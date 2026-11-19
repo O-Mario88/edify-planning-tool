@@ -6,48 +6,64 @@
   "page_size": 50,
   "roles": {
     "Accountant": {
+      "district_profiles": true,
+      "duplicates": false,
       "page": false,
       "school_profiles": false,
       "setup_queue": false,
       "strip": null
     },
     "Admin": {
+      "district_profiles": true,
+      "duplicates": true,
       "page": true,
       "school_profiles": true,
       "setup_queue": true,
       "strip": null
     },
     "BusinessTransformationOfficer": {
+      "district_profiles": false,
+      "duplicates": false,
       "page": false,
       "school_profiles": true,
       "setup_queue": false,
       "strip": null
     },
     "CCEO": {
+      "district_profiles": true,
+      "duplicates": false,
       "page": false,
       "school_profiles": true,
       "setup_queue": false,
       "strip": null
     },
     "ClusterLeader": {
+      "district_profiles": false,
+      "duplicates": false,
       "page": false,
       "school_profiles": false,
       "setup_queue": false,
       "strip": null
     },
     "CountryDirector": {
+      "district_profiles": true,
+      "duplicates": false,
       "page": false,
       "school_profiles": true,
       "setup_queue": true,
       "strip": null
     },
     "HumanResources": {
+      "district_profiles": false,
+      "duplicates": false,
       "page": false,
       "school_profiles": false,
       "setup_queue": true,
       "strip": null
     },
     "ImpactAssessment": {
+      "district_profiles": true,
+      "duplicates": true,
       "page": true,
       "school_profiles": true,
       "setup_queue": true,
@@ -94,48 +110,64 @@
       }
     },
     "MfiLoanOfficer": {
+      "district_profiles": false,
+      "duplicates": false,
       "page": false,
       "school_profiles": false,
       "setup_queue": false,
       "strip": null
     },
     "MfiPartnerAdmin": {
+      "district_profiles": false,
+      "duplicates": false,
       "page": false,
       "school_profiles": false,
       "setup_queue": false,
       "strip": null
     },
     "PartnerAdmin": {
+      "district_profiles": false,
+      "duplicates": false,
       "page": false,
       "school_profiles": false,
       "setup_queue": false,
       "strip": null
     },
     "PartnerFieldOfficer": {
+      "district_profiles": false,
+      "duplicates": false,
       "page": false,
       "school_profiles": false,
       "setup_queue": false,
       "strip": null
     },
     "Program Lead": {
+      "district_profiles": true,
+      "duplicates": false,
       "page": false,
       "school_profiles": true,
       "setup_queue": false,
       "strip": null
     },
     "ProjectCoordinator": {
+      "district_profiles": true,
+      "duplicates": false,
       "page": false,
       "school_profiles": true,
       "setup_queue": false,
       "strip": null
     },
     "RegionalProgramLead": {
+      "district_profiles": false,
+      "duplicates": false,
       "page": false,
       "school_profiles": false,
       "setup_queue": false,
       "strip": null
     },
     "RegionalVicePresident": {
+      "district_profiles": false,
+      "duplicates": false,
       "page": false,
       "school_profiles": false,
       "setup_queue": false,
