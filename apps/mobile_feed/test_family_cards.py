@@ -133,3 +133,81 @@ class CardsInsideAPartTest(SimpleTestCase):
             [b["list"]["title"] for b in blocks],
             ["Critical Now", "Recent Incidents", "Sign-ins", "Critical Now"],
         )
+
+
+TABLE_CARDS = """
+<main>
+<section class="admin-panel admin-priorities" aria-labelledby="p">
+  <header class="admin-panel__header">
+    <h2 id="p">Today’s Priorities <span class="admin-count">6</span></h2>
+    <a href="/calendar">View Calendar</a>
+  </header>
+  <div class="admin-table-wrap">
+    <table class="admin-table admin-table--priorities">
+      <thead><tr><th scope="col">Activity</th><th scope="col">Status</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Cluster Training</strong></td><td><span class="admin-status s-blue">Scheduled</span></td></tr>
+        <tr><td><strong>Core Visit</strong></td><td><span class="admin-status s-red">Critical</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <a class="admin-panel__footer-link" href="/planning">View all priorities (6) <span aria-hidden="true">→</span></a>
+</section>
+<section class="admin-panel admin-clusters" aria-labelledby="c">
+  <header class="admin-panel__header"><h2 id="c">Cluster Performance</h2><a href="/clusters">View All</a></header>
+  <div class="admin-table-wrap">
+    <table class="admin-table admin-table--clusters">
+      <thead><tr><th scope="col">Cluster</th><th scope="col">Status</th></tr></thead>
+      <tbody><tr><td colspan="2"><div class="admin-empty admin-empty--table"><span>No clusters configured yet.</span></div></td></tr></tbody>
+    </table>
+  </div>
+</section>
+</main>
+"""
+
+
+class AdminTableCardsTest(SimpleTestCase):
+    def setUp(self):
+        self.blocks = page_blocks.read(TABLE_CARDS, path="/dashboard", desktop=True)[
+            "blocks"
+        ]
+
+    def test_a_table_card_is_one_table_of_its_family_with_its_links(self):
+        table = self.blocks[0]["table"]
+
+        self.assertEqual(
+            (
+                table["title"],
+                table["count"],
+                table["family"],
+                table["cardClass"],
+                table["tableClass"],
+            ),
+            (
+                "Today’s Priorities",
+                "6",
+                "admin-panel",
+                "admin-panel admin-priorities",
+                "admin-table admin-table--priorities",
+            ),
+        )
+        self.assertEqual(
+            table["headerLink"], {"text": "View Calendar", "href": "/calendar"}
+        )
+        self.assertEqual(
+            table["footerLink"],
+            {"text": "View all priorities (6)", "href": "/planning"},
+        )
+        self.assertEqual(len(self.blocks), 2)
+
+    def test_a_status_keeps_its_colour(self):
+        rows = self.blocks[0]["table"]["rows"]
+
+        self.assertEqual([row["cells"][1]["tone"] for row in rows], ["info", "danger"])
+
+    def test_a_card_with_no_rows_says_so(self):
+        table = self.blocks[1]["table"]
+
+        self.assertEqual(
+            (table["rows"], table["emptyMessage"]), ([], "No clusters configured yet.")
+        )

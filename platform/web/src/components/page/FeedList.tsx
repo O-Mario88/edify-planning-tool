@@ -112,8 +112,12 @@ const ADMIN_STATUS: Readonly<Record<string, string>> = { danger: 's-red', warnin
  * step or bar, drawn by the existing admin-dashboard stylesheet.
  */
 function AdminPanel({ list, resolve }: { list: PageList; resolve: (href: string) => string }) {
+  // A card of bars is the Sign-ins card, whose rows the stylesheet lays out
+  // as day, figure and bar ([data-admin-logins]); a row without a bar keeps
+  // its empty third cell, as the template writes it.
+  const logins = list.items.some((item) => item.meter);
   return (
-    <section className="admin-panel" aria-label={list.title || undefined} data-block="list" data-family="admin-panel">
+    <section className="admin-panel" aria-label={list.title || undefined} data-block="list" data-family="admin-panel" data-admin-logins={logins ? '' : undefined}>
       <header className="admin-panel__header">
         <h2>{list.title}</h2>
         {list.subtitle ? <span className="edify-text-caption">{list.subtitle}</span> : null}
@@ -139,6 +143,8 @@ function AdminPanel({ list, resolve }: { list: PageList; resolve: (href: string)
               <span className="admin-presence-bar" aria-hidden="true">
                 <i style={{ '--w': `${Math.round(item.meter.fraction * 100)}%` } as React.CSSProperties} />
               </span>
+            ) : logins ? (
+              <span />
             ) : null}
           </div>
         );

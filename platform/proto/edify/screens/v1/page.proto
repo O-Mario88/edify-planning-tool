@@ -191,6 +191,18 @@ message PageTable {
   // The empty state's way out ("Open Planning").
   PageAction empty_action = 8;
   PagePager pager = 9;
+  // The existing card the table is drawn in ("admin-panel": the Admin
+  // dashboard's cards); empty for the shared table card.
+  string family = 10;
+  // That card's and that table's own class names, as the existing page
+  // writes them ("admin-panel admin-priorities", "admin-table
+  // admin-table--priorities"), so its stylesheet draws them.
+  string card_class = 11;
+  string table_class = 12;
+  // The link at the card's head ("View Calendar") and at its foot ("View all
+  // priorities (6)").
+  PageLink header_link = 13;
+  PageLink footer_link = 14;
 }
 
 message PageLinkTab {

@@ -384,7 +384,44 @@ describe('the Admin dashboard’s cards', () => {
   it('draws each row as the existing target row', () => {
     expect(html).toContain('<div class="admin-target-row"><a href="/admin-ops/incidents/i2">INC-000267 · exceeds the SLO</a><strong>35×</strong><span class="admin-status s-orange">Open</span></div>');
     expect(html).toContain('<span class="admin-presence-bar" aria-hidden="true"><i style="--w:40%"></i></span>');
-    expect(html).toContain('<div class="admin-target-row admin-target-row--head"><span>Week of</span><strong>Sign-ins</strong></div>');
+    expect(html).toContain('<div class="admin-target-row admin-target-row--head"><span>Week of</span><strong>Sign-ins</strong><span></span></div>');
+    expect(html).toContain('data-family="admin-panel" data-admin-logins=""');
     expect(html).toContain('<p class="admin-panel__empty">Nothing critical is open.</p>');
+  });
+});
+
+describe('the Admin dashboard’s table cards', () => {
+  const html = draw(
+    {
+      blocks: [
+        {
+          table: {
+            title: 'Today’s Priorities',
+            count: '6',
+            family: 'admin-panel',
+            cardClass: 'admin-panel admin-priorities',
+            tableClass: 'admin-table admin-table--priorities',
+            headerLink: { text: 'View Calendar', href: '/calendar' },
+            footerLink: { text: 'View all priorities (6)', href: '/planning' },
+            columns: [{ label: 'Activity' }, { label: 'Status' }],
+            rows: [{ cells: [{ text: 'Core Visit', strong: true }, { text: 'Critical', tone: 'danger' }] }],
+          },
+        },
+        { table: { title: 'Cluster Performance', family: 'admin-panel', columns: [{ label: 'Cluster' }], emptyMessage: 'No clusters configured yet.' } },
+      ],
+    },
+    '/dashboard',
+  );
+
+  it('draws the card, its table and its links with the existing classes', () => {
+    expect(html).toContain('<section class="admin-panel admin-priorities"');
+    expect(html).toContain('<h2>Today’s Priorities <span class="admin-count">6</span></h2><a href="/calendar">View Calendar</a>');
+    expect(html).toContain('<div class="admin-table-wrap"><table class="admin-table admin-table--priorities">');
+    expect(html).toContain('<td data-label="Activity"><strong>Core Visit</strong></td><td data-label="Status"><span class="admin-status s-red">Critical</span></td>');
+    expect(html).toContain('<a class="admin-panel__footer-link" href="/planning">View all priorities (6) <span aria-hidden="true">→</span></a>');
+  });
+
+  it('says a card with no rows has none, in its own empty row', () => {
+    expect(html).toContain('<tr class="admin-table__empty-row"><td colSpan="1"><div class="admin-empty admin-empty--table"><span>No clusters configured yet.</span></div></td></tr>');
   });
 });

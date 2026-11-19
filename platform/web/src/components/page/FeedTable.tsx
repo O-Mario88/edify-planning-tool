@@ -127,10 +127,87 @@ function RowDetails({ row, columns, resolve, id, subject, drawerHref }: { row: P
   );
 }
 
+/** A cell tone as the Admin dashboard's .admin-status colour. */
+const ADMIN_STATUS: Readonly<Record<string, string>> = { danger: 's-red', warning: 's-orange', info: 's-blue', success: 's-green' };
+
+/**
+ * A table in the Admin dashboard's own card (.admin-panel around
+ * .admin-table, partials/dashboards/admin/operations.html): the card's and
+ * table's own class names, its head link and foot link, a status as its
+ * coloured word, and the card's own empty row.
+ */
+function AdminTable({ table, resolve }: { table: PageTable; resolve: (href: string) => string }) {
+  const headerHref = table.headerLink ? resolve(table.headerLink.href) : '';
+  const footerHref = table.footerLink ? resolve(table.footerLink.href) : '';
+  return (
+    <section className={table.cardClass || 'admin-panel'} aria-label={table.title || undefined} data-block="table" data-family="admin-panel">
+      <header className="admin-panel__header">
+        <h2>
+          {table.title}
+          {table.count ? (
+            <>
+              {' '}
+              <span className="admin-count">{table.count}</span>
+            </>
+          ) : null}
+        </h2>
+        {table.headerLink && headerHref ? <Link href={headerHref}>{table.headerLink.text}</Link> : null}
+      </header>
+      <div className="admin-table-wrap">
+        <table className={table.tableClass || 'admin-table'}>
+          {table.title ? <caption className="sr-only">{table.title}</caption> : null}
+          <thead>
+            <tr>
+              {table.columns.map((column) => (
+                <th key={column.label} scope="col">
+                  {column.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {table.rows.length ? (
+              table.rows.map((row, index) => (
+                <tr key={index}>
+                  {row.cells.map((cell, cellIndex) => {
+                    const href = resolve(cell.href);
+                    const status = ADMIN_STATUS[edifyTone(cell.tone)];
+                    const text = status ? <span className={`admin-status ${status}`}>{cell.text}</span> : cell.strong ? <strong>{cell.text}</strong> : cell.text;
+                    return (
+                      <td key={cellIndex} data-label={table.columns[cellIndex]?.label || undefined}>
+                        {href ? <Link href={href}>{text}</Link> : text}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))
+            ) : (
+              <tr className="admin-table__empty-row">
+                <td colSpan={Math.max(table.columns.length, 1)}>
+                  <div className="admin-empty admin-empty--table">
+                    <span>{table.emptyMessage}</span>
+                  </div>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+        {table.pager ? <Pager pager={{ ...table.pager, pages: table.pager.pages.map((page) => ({ ...page, href: resolve(page.href) })) }} /> : null}
+      </div>
+      {table.footerLink && footerHref ? (
+        <Link className="admin-panel__footer-link" href={footerHref}>
+          {table.footerLink.text} <span aria-hidden="true">→</span>
+        </Link>
+      ) : null}
+    </section>
+  );
+}
+
 export function FeedTable({ table, pagePath, drawerHref, selectable, footer }: FeedTableProps) {
   const resolve = (href: string) => resolveHref(pagePath, href);
   const hrefOf = (action: PageAction) => actionHref(action, pagePath, drawerHref);
   const [open, setOpen] = useState<number | null>(null);
+  if (table.family === 'admin-panel') return <AdminTable table={table} resolve={resolve} />;
   const ticks = selectable && table.rows.some((row) => row.pickId);
   const opens = table.rows.some((row) => row.details.length || row.detailBlocks.length);
   const span = table.columns.length + (ticks ? 1 : 0) + (opens ? 1 : 0);

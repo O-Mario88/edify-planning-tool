@@ -111,3 +111,70 @@ def read_admin_panel(node) -> dict:
             "items": [_row(row) for row in rows],
         }
     }
+
+
+def status_tone(cell) -> str:
+    """The tone of an .admin-status inside ``cell``, or empty."""
+    status = cell.find(lambda n: n.has("admin-status"))
+    if status is None:
+        return ""
+    return next((tone for marker, tone in STATUS_TONES if status.has(marker)), "")
+
+
+def is_admin_table(node) -> bool:
+    """An .admin-panel card around a table (Today's Priorities, Priority
+    Schools, Cluster Performance)."""
+    return node.has("admin-panel") and node.find(lambda n: n.tag == "table") is not None
+
+
+def _link(node) -> dict | None:
+    if node is None:
+        return None
+    return {"text": node.text().rstrip(ARROW).strip(), "href": node.get("href")}
+
+
+def read_admin_table(node, read_table) -> dict:
+    """The card as one table block of family admin-panel: its title and
+    count, the links at its head and foot, and its own class names, with the
+    rows ``read_table(holder, table)`` reads (page_blocks._table)."""
+    table = node.find(lambda n: n.tag == "table")
+    block = read_table(node, table)
+    header = node.find(lambda n: n.has("admin-panel__header"))
+    heading = (
+        header.find(lambda n: n.tag in ("h2", "h3")) if header is not None else None
+    )
+    count = (
+        heading.find(lambda n: n.has("admin-count")) if heading is not None else None
+    )
+    title = heading.text() if heading is not None else ""
+    if count is not None:
+        title = title.removesuffix(count.text()).strip()
+    head_link = (
+        header.find(
+            lambda n: n.tag == "a" and (heading is None or n.parent is not heading)
+        )
+        if header is not None
+        else None
+    )
+    empty = table.find(lambda n: n.has("admin-empty"))
+    rows = block.get("rows", [])
+    if empty is not None and len(rows) <= 1:
+        message = empty.find(lambda n: n.tag == "span")
+        block["rows"] = []
+        block["emptyMessage"] = (message or empty).text()
+    block.update(
+        {
+            "title": title,
+            "count": count.text() if count is not None else "",
+            "family": "admin-panel",
+            "cardClass": " ".join(c for c in (node.get("class") or "").split()),
+            "tableClass": " ".join(c for c in (table.get("class") or "").split()),
+        }
+    )
+    if (link := _link(head_link)) is not None:
+        block["headerLink"] = link
+    if (
+        link := _link(node.find(lambda n: n.has("admin-panel__footer-link")))
+    ) is not None:
+        block["footerLink"] = link
+    return {"table": block}

@@ -531,6 +531,8 @@ def _cell(cell: Node) -> dict:
             "strong": False,
             "actions": _row_actions(cell),
         }
+    from apps.mobile_feed import family_cards
+
     tone = cell.find(lambda n: bool(n.get("data-edify-tone")))
     strong = cell.find(lambda n: n.tag in ("strong", "b"))
     text = cell.text()
@@ -540,7 +542,7 @@ def _cell(cell: Node) -> dict:
         "href": _href(cell),
         "tone": badge_tone
         if is_badge
-        else (tone.get("data-edify-tone") if tone else ""),
+        else (tone.get("data-edify-tone") if tone else family_cards.status_tone(cell)),
         "strong": bool(strong and strong.text() == text),
         "badge": is_badge,
     }
@@ -2021,6 +2023,9 @@ def _blocks(node: Node, out: list[dict], later=None) -> list[dict]:
             continue
         if family_cards.is_admin_panel(child):
             out.append(family_cards.read_admin_panel(child))
+            continue
+        if family_cards.is_admin_table(child):
+            out.append(family_cards.read_admin_table(child, _table))
             continue
         if (several := _several_blocks(child)) is not None:
             out.extend(several)
