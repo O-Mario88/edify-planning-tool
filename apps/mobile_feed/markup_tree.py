@@ -59,6 +59,8 @@ SVG_VALUE = re.compile(r"^[A-Za-z0-9 .,#()\-]{0,4000}$")
 MAX_VALUE = 500
 #: Most elements one part carries.
 MAX_NODES = 6000
+#: Table parts, where HTML allows no text of their own (whitespace included).
+NO_TEXT = frozenset({"table", "thead", "tbody", "tfoot", "tr"})
 
 
 def is_root(node) -> bool:
@@ -127,6 +129,8 @@ def _node(node, budget: list[int]) -> dict | None:
     for child in node.children:
         if isinstance(child, str):
             text = " ".join(child.split())
+            if not text and node.tag in NO_TEXT:
+                continue
             if text or (child and children):
                 children.append({"text": text or " "})
         elif (read_child := _node(child, budget)) is not None:

@@ -53,4 +53,9 @@ describe('a part drawn from its elements', () => {
     });
     expect(html).toBe('<div><a>bad</a><a>far</a><span></span></div>');
   });
+
+  it('draws no text inside table parts', () => {
+    const html = draw({ root: { tag: 'table', children: [{ text: ' ' }, { tag: 'tbody', children: [{ text: ' ' }, { tag: 'tr', children: [{ text: ' ' }, { tag: 'td', children: [{ text: 'A' }] }] }] }] } });
+    expect(html).toBe('<table><tbody><tr><td>A</td></tr></tbody></table>');
+  });
 });

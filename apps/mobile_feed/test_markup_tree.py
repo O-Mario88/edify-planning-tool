@@ -110,3 +110,17 @@ class MarkupSafetyTest(SimpleTestCase):
         self.assertEqual(
             [span.get("style", {}) for span in spans], [{"width": "40%"}, {}]
         )
+
+
+class MarkupTableTextTest(SimpleTestCase):
+    def test_table_parts_carry_no_whitespace_of_their_own(self):
+        tree = markup_tree.read(
+            page_blocks.parse(
+                "<table class='admin-table'> <tbody> <tr> <td>A</td> </tr> </tbody> </table>"
+            ).children[0]
+        )
+
+        tbody = tree["children"][0]
+        row = tbody["children"][0]
+        self.assertEqual([c.get("tag") for c in tree["children"]], ["tbody"])
+        self.assertEqual([c.get("tag") for c in row["children"]], ["td"])
