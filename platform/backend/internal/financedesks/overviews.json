@@ -1,0 +1,139 @@
+{
+  "accounted_advance_statuses": [
+    "accounted",
+    "reimbursed"
+  ],
+  "approved_advance_statuses": [
+    "confirmed_for_advance",
+    "submitted_to_accountant",
+    "disbursed",
+    "accountability_pending",
+    "accounted"
+  ],
+  "awaiting_weekly_statuses": [
+    "submitted_to_pl",
+    "submitted_to_cd"
+  ],
+  "budget_status_labels": {
+    "admin_plan_added": "Admin Plan Added",
+    "approved_by_rvp": "Approved by RVP",
+    "cd_review": "CD Review",
+    "closed": "Closed",
+    "disbursed": "Disbursed",
+    "draft_generated": "Draft Generated",
+    "returned_by_rvp": "Returned by RVP",
+    "sent_to_accountant": "Sent to Accountant",
+    "submitted_to_rvp": "Submitted to RVP"
+  },
+  "disbursed_advance_statuses": [
+    "disbursed",
+    "accountability_pending",
+    "accounted",
+    "reimbursement_submitted",
+    "reimbursement_disbursed",
+    "reimbursed"
+  ],
+  "locked_budget_statuses": [
+    "approved_by_rvp",
+    "closed",
+    "disbursed",
+    "sent_to_accountant",
+    "submitted_to_rvp"
+  ],
+  "non_fundable_statuses": [
+    "cancelled",
+    "rejected",
+    "deferred",
+    "awaiting_owner_approval"
+  ],
+  "requested_advance_statuses": [
+    "pending_responsible_confirmation",
+    "confirmed_for_advance",
+    "submitted_to_accountant",
+    "disbursed",
+    "accountability_pending",
+    "accounted"
+  ],
+  "roles": {
+    "Accountant": {
+      "history": true,
+      "history_reads": true,
+      "overview": true
+    },
+    "Admin": {
+      "history": true,
+      "history_reads": true,
+      "overview": true
+    },
+    "BusinessTransformationOfficer": {
+      "history": false,
+      "history_reads": false,
+      "overview": false
+    },
+    "CCEO": {
+      "history": false,
+      "history_reads": false,
+      "overview": false
+    },
+    "ClusterLeader": {
+      "history": false,
+      "history_reads": false,
+      "overview": false
+    },
+    "CountryDirector": {
+      "history": true,
+      "history_reads": true,
+      "overview": true
+    },
+    "HumanResources": {
+      "history": false,
+      "history_reads": false,
+      "overview": false
+    },
+    "ImpactAssessment": {
+      "history": true,
+      "history_reads": true,
+      "overview": true
+    },
+    "MfiLoanOfficer": {
+      "history": false,
+      "history_reads": false,
+      "overview": false
+    },
+    "MfiPartnerAdmin": {
+      "history": false,
+      "history_reads": false,
+      "overview": false
+    },
+    "PartnerAdmin": {
+      "history": false,
+      "history_reads": false,
+      "overview": false
+    },
+    "PartnerFieldOfficer": {
+      "history": false,
+      "history_reads": false,
+      "overview": false
+    },
+    "Program Lead": {
+      "history": false,
+      "history_reads": false,
+      "overview": false
+    },
+    "ProjectCoordinator": {
+      "history": false,
+      "history_reads": false,
+      "overview": false
+    },
+    "RegionalProgramLead": {
+      "history": false,
+      "history_reads": false,
+      "overview": false
+    },
+    "RegionalVicePresident": {
+      "history": true,
+      "history_reads": true,
+      "overview": true
+    }
+  }
+}

@@ -50,6 +50,12 @@ var desks = map[string]desk{
 // not answer, a role it has no rules for, and a reading it hands on.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
 	path = strings.TrimSuffix(path, "/")
+	if page, handled, served, err := s.buildOverview(ctx, p.ActiveRole, path, query); handled {
+		if page != nil {
+			page.WebPath = path
+		}
+		return page, served, err
+	}
 	build, ok := desks[path]
 	if !ok {
 		return nil, false, nil
@@ -71,6 +77,9 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	page.WebPath = path
 	return page, true, nil
 }
+
+// errNotAvailable is a page the role may not open.
+var errNotAvailable = pagegate.ErrNotAvailable
 
 // errHandOn is a desk's answer for a reading Go does not draw.
 var errHandOn = handOn{}

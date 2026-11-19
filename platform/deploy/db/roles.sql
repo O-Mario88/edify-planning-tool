@@ -1116,3 +1116,8 @@ GRANT SELECT (activity_id, quarantined) ON evidence_record TO edify_gateway_ro;
 GRANT SELECT (salesforce_record_type_snapshot, salesforce_activity_id, delivery_type, created_at) ON activity TO edify_gateway_ro;
 -- The Weekly Staff Fund Requests registry: each request's money.
 GRANT SELECT (total_amount, disbursed_amount) ON weekly_fund_request TO edify_gateway_ro;
+-- The Budget Overview's rollups and the Submitted Budgets history.
+GRANT SELECT (id, activity_id, amount, month) ON activity_schedule_cost_line TO edify_gateway_ro;
+GRANT SELECT (budget_line_id, status, disbursed_amount, accounted_amount) ON advance_request TO edify_gateway_ro;
+GRANT SELECT (fy, quarter, planned_date) ON activity TO edify_gateway_ro;
+GRANT SELECT (fy, total_amount, submitted_at, submitted_by_user_id, submission_version) ON monthly_work_plan_budget TO edify_gateway_ro;

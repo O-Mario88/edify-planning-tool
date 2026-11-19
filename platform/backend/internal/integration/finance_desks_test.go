@@ -18,12 +18,14 @@ import (
 var financeDesksBuilt = []string{
 	"/accounts/accountability", "/accounts/advances", "/accounts/audit-log", "/accounts/blocked", "/accounts/budget-amendments",
 	"/accounts/cleared", "/accounts/returned", "/accounts/variance-review", "/accounts/weekly-requests",
+	"/budgets/overview", "/country-budget/history",
 }
 
 // TestTheAccountsDesksMatchTheExistingPages files the records
 // internal/financedesks/testdata/golden.py filed (an accountability record,
 // an audit event, a variance review and an amendment on one completed
-// activity, a closed activity, an advance to disburse and a returned one),
+// activity, a closed activity, an advance to disburse and a returned one, a
+// weekly request awaiting approval and a budget submitted to the RVP),
 // asks each desk Go builds as each reader the golden asked, and compares the
 // whole page. Skipped unless EDIFY_FINANCE_DESKS_GOLDEN names that file,
 // written within the hour.
@@ -50,7 +52,7 @@ func TestTheAccountsDesksMatchTheExistingPages(t *testing.T) {
 	skipWhenStale(t, golden.Written)
 	// The order golden.py files them in (its TABLES); cleared in reverse.
 	tables := []string{"activity", "activity_schedule_cost_line", "advance_request", "accountability_record",
-		"finance_audit_log", "variance_review", "budget_amendment"}
+		"finance_audit_log", "variance_review", "budget_amendment", "weekly_fund_request", "monthly_work_plan_budget"}
 	ctx := context.Background()
 	clear := func() {
 		for _, table := range slices.Backward(tables) {

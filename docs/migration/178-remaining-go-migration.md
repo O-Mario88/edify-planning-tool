@@ -126,3 +126,24 @@ IA and three readers the desks are refused to, on the first page and on the
 Blocked directory's and weekly requests' last pages;
 `integration/finance_desks_test.go` files the same records and asks Go:
 108 answers of 6 accounts, 0 differing.
+
+### C2 · The Budget Overview and Submitted Budgets (2026-11-19)
+
+The same package builds `/budgets/overview` (fy_budget and monthly_budgets:
+the FY's cost lines summed over a LEFT JOIN to their advances, as the
+existing aggregate counts a line once per advance; the fundable figures over
+live work, the money moved over every line; the notice of weekly requests
+awaiting approval; the months with planned or requested money) and
+`/country-budget/history` (the year's locked budgets, newest month first,
+with their submitter's name). The "Scheduled Activities" figure is always
+"—": the template reads `fy_data.activity_count`, a key fy_budget does not
+carry. A search or another year on the history is handed on. Rules:
+`manage.py export_finance_overviews_rules` (`financedesks/overviews.json`);
+the Budget Overview's awaiting statuses are now a named constant in
+`finance_views` rather than inline. The desks golden files a weekly request
+awaiting approval and a budget submitted to the RVP, and gives the cost lines
+a month: 154 answers of 7 accounts across eleven pages, 0 differing.
+
+Still to do in C2: `/finance/fund-allocation`, the country scope of
+`budget_workspace` (its activity cost plan and time views), which `budgetpage`
+does not port.

@@ -587,6 +587,11 @@ def finance_return_action(request):
     return saved_and_reloaded()
 
 
+#: The weekly requests the Budget Overview's notice counts as awaiting
+#: approval.
+AWAITING_APPROVAL_WEEKLY_STATUSES = ("submitted_to_pl", "submitted_to_cd")
+
+
 @require_page_permission("consolidated_fund_allocation")
 def budget_overview_view(request):
     """Budget overview — CD/Accountant view."""
@@ -620,7 +625,7 @@ def budget_overview_view(request):
             monthly_data.append(m_data)
 
     pending_approvals = WeeklyFundRequest.objects.filter(
-        status__in=["submitted_to_pl", "submitted_to_cd"]
+        status__in=list(AWAITING_APPROVAL_WEEKLY_STATUSES)
     ).count()
 
     context = {

@@ -45,12 +45,16 @@ DESKS = (
     "/accounts/returned",
     "/accounts/variance-review",
     "/accounts/weekly-requests",
+    # The finance overviews.
+    "/budgets/overview",
+    "/country-budget/history",
 )
 READERS = (
     "accountant@edify.org",
     "admin@edify.org",
     "ia@edify.org",
     "cd@edify.org",
+    "rvp@edify.org",
     "cceo1@edify.org",
     "pl1@edify.org",
 )
@@ -63,6 +67,8 @@ TABLES = (
     "finance_audit_log",
     "variance_review",
     "budget_amendment",
+    "weekly_fund_request",
+    "monthly_work_plan_budget",
 )
 
 
@@ -122,6 +128,8 @@ def file_rows(today):
             label="Transport",
             unit_cost=Decimal(amount),
             amount=Decimal(amount),
+            # The calendar month the Budget Overview groups the line under.
+            month=work.planned_date.month,
         )
         AdvanceRequest.objects.create(
             id=P + "adv" + work.id[len(P) :],
@@ -163,6 +171,31 @@ def file_rows(today):
         variance=Decimal("18500"),
         reason="Fewer participants than planned.",
         status="pending",
+    )
+    from apps.fund_requests.models import WeeklyFundRequest
+    from apps.monthly_work_plan.models import MonthlyWorkPlanBudget
+
+    # The Budget Overview's notice of requests awaiting approval, and a month
+    # in the Submitted Budgets history.
+    WeeklyFundRequest.objects.create(
+        id=P + "week",
+        fy=fy,
+        week_start_date=today - timedelta(days=today.weekday()),
+        week_end_date=today - timedelta(days=today.weekday()) + timedelta(days=6),
+        responsible_user=officer.id,
+        status="submitted_to_pl",
+        total_amount=180000,
+    )
+    MonthlyWorkPlanBudget.objects.create(
+        id=P + "budget",
+        fy=fy,
+        month_key=f"{int(fy) - 1}-11",
+        country_id="Golden Country",
+        status="submitted_to_rvp",
+        total_amount=12_345_000,
+        activity_count=17,
+        submitted_at=timezone.now() - timedelta(days=2),
+        submitted_by_user_id=User.objects.get(email="cd@edify.org").id,
     )
     BudgetAmendment.objects.create(
         id=P + "amend",
