@@ -35,8 +35,8 @@ const HINT_MS = 4000;
 const HINT = { fill: '#d85b13', ink: '#17232b' } as const;
 /** The hint shows once per session, as the web's does until a swipe. */
 let hintSeen = false;
-/** A phone's tables as row cards (owner, 2026-11-19); false brings back the sideways table. */
-const ROWS_ON_PHONES = true;
+/** A phone's tables as row cards (owner, 2026-11-19), reversed for the spreadsheet on every screen (2026-11-20). */
+const ROWS_ON_PHONES = false;
 /** From this width (a tablet) a table is drawn as a table. */
 const TABLE_FROM = 768;
 

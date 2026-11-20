@@ -2,17 +2,15 @@
 
 /*
  * A record table as the app draws it (PageTableView.tsx): a card with its
- * title bar, its rows as cards (owner, 2026-11-19: "Rows on phones", which
- * replaced 2026-09-27's tables stay tables; docs/migration/181 Phase 5), a
- * note under it, or the empty state in place of its rows. Each row card
- * names its record with its ID and status, shows its first facts, and opens
- * the rest under "All details" (lib/rowCard). A long table (16 rows or more
- * on the page: a directory) is a compact list instead, each row one line
- * that opens its whole card in a sheet (owner, 2026-11-20). With
- * ROWS_ON_PHONES off, the table scrolls sideways in its own region. A table wider than the screen shows the slim orange
- * "Swipe to view more columns" pill once, which leaves after about four
- * seconds (owner, 2026-10-02). A row with details opens under itself, one
- * at a time; ticked rows feed the page's bar (input[data-pick]).
+ * title bar, the table itself, a note under it, or the empty state in place
+ * of its rows. On every screen the table is a spreadsheet that scrolls
+ * sideways in its own region (owner, 2026-11-20: "i like the spreadsheet
+ * list format better on all screen", which reversed 2026-11-19's row cards).
+ * ROWS_ON_PHONES brings back the row cards and, from 16 rows, the compact
+ * list with its sheet (lib/rowCard). A table wider than the screen shows the
+ * slim orange "Swipe to view more columns" pill once, which leaves after
+ * about four seconds (owner, 2026-10-02). A row with details opens under
+ * itself, one at a time; ticked rows feed the page's bar (input[data-pick]).
  */
 import { ChevronDown, ChevronRight, X } from 'lucide-react';
 import { Fragment, useEffect, useRef, useState } from 'react';
@@ -30,8 +28,8 @@ import { phoneTone } from './tone';
 /** The hint shows once per visit, as the app's does until a swipe. */
 let hintSeen = false;
 
-/** A phone's tables as row cards (owner, 2026-11-19); false brings back the sideways table. */
-const ROWS_ON_PHONES = true;
+/** A phone's tables as row cards (owner, 2026-11-19), reversed for the spreadsheet on every screen (2026-11-20). */
+const ROWS_ON_PHONES = false;
 
 /** What a row is called: the record it links to, else its first words. */
 function rowName(row: PageRow): string {
