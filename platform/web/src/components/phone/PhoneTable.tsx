@@ -6,19 +6,22 @@
  * replaced 2026-09-27's tables stay tables; docs/migration/181 Phase 5), a
  * note under it, or the empty state in place of its rows. Each row card
  * names its record with its ID and status, shows its first facts, and opens
- * the rest under "All details" (lib/rowCard). With ROWS_ON_PHONES off, the
- * table scrolls sideways in its own region instead. A table wider than the screen shows the slim orange
+ * the rest under "All details" (lib/rowCard). A long table (16 rows or more
+ * on the page: a directory) is a compact list instead, each row one line
+ * that opens its whole card in a sheet (owner, 2026-11-20). With
+ * ROWS_ON_PHONES off, the table scrolls sideways in its own region. A table wider than the screen shows the slim orange
  * "Swipe to view more columns" pill once, which leaves after about four
  * seconds (owner, 2026-10-02). A row with details opens under itself, one
  * at a time; ticked rows feed the page's bar (input[data-pick]).
  */
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, X } from 'lucide-react';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import type { PageAction, PageRow, PageTable } from '@/gen/edify/screens/v1/page_pb';
 import { actionHref, isActionsCell, resolveHref } from '@/lib/feedPage';
-import { rowCard } from '@/lib/rowCard';
+import { asList, rowCard, summaryOf } from '@/lib/rowCard';
+import type { RowCard, RowFact } from '@/lib/rowCard';
 
 import { CellActions } from '../page/FeedTable';
 import { PhoneEmpty, PhonePager } from './PhoneParts';
@@ -70,7 +73,11 @@ export function PhoneTable({ table, pagePath, drawerHref, selectable, bare = fal
         <PhoneEmpty message={table.emptyMessage} action={table.emptyAction} hrefOf={hrefOf} />
       ) : (
         ROWS_ON_PHONES ? (
-          <Cards table={table} resolve={resolve} hrefOf={hrefOf} selectable={selectable} />
+          asList(table.rows.length) ? (
+            <List table={table} resolve={resolve} hrefOf={hrefOf} selectable={selectable} />
+          ) : (
+            <Cards table={table} resolve={resolve} hrefOf={hrefOf} selectable={selectable} />
+          )
         ) : (
           <Grid table={table} resolve={resolve} hrefOf={hrefOf} selectable={selectable} />
         )
@@ -338,6 +345,132 @@ function Cards({ table, resolve, hrefOf, selectable }: GridProps) {
           );
         })}
       </ul>
+    </div>
+  );
+}
+
+function Facts({ facts, resolve }: { facts: readonly RowFact[]; resolve: (href: string) => string }) {
+  return (
+    <dl data-ph="row-facts">
+      {facts.map((fact, i) => (
+        <div key={`${fact.label}-${i}`} data-ph="row-fact">
+          <dt>{fact.label}</dt>
+          <dd data-ph-tone={phoneTone(fact.cell.tone) || undefined}>
+            {fact.cell.href ? <a href={resolve(fact.cell.href)}>{fact.cell.text}</a> : fact.cell.text}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+interface SheetProps {
+  readonly card: RowCard;
+  readonly row: PageRow;
+  readonly resolve: (href: string) => string;
+  readonly hrefOf: (action: PageAction) => string;
+  readonly onClose: () => void;
+}
+
+/** A row's whole card, in the sheet a compact list opens. */
+function SheetBody({ card, row, resolve, hrefOf, onClose }: SheetProps) {
+  const name = rowName(row);
+  const statusTone = card.status ? phoneTone(card.status.tone) : undefined;
+  return (
+    <>
+      <div data-ph="sheet-head">
+        <div data-ph="row-name-wrap">
+          {card.title?.href ? (
+            <a data-ph="row-name" href={resolve(card.title.href)}>
+              {card.title.text}
+            </a>
+          ) : (
+            <span data-ph="row-name">{card.title?.text ?? name}</span>
+          )}
+          {card.id ? (
+            <span data-ph="row-id">
+              {card.id.label} {card.id.cell.text}
+            </span>
+          ) : null}
+        </div>
+        {card.status ? (
+          <span data-ph="row-status" data-ph-tone={statusTone && statusTone !== 'brand' ? statusTone : undefined}>
+            {card.status.text}
+          </span>
+        ) : null}
+        <button type="button" data-ph="sheet-close" aria-label="Close" onClick={onClose}>
+          <X size={18} aria-hidden="true" />
+        </button>
+      </div>
+      {card.lead.length + card.rest.length > 0 ? <Facts facts={[...card.lead, ...card.rest]} resolve={resolve} /> : null}
+      {row.details.length ? (
+        <div data-ph="details-facts">
+          {row.details.map((fact) => (
+            <span key={fact.label} data-ph="details-fact" data-ph-tone={phoneTone(fact.tone)}>
+              {fact.label}: {fact.href ? <a href={resolve(fact.href)}><b>{fact.value}</b></a> : <b>{fact.value}</b>}
+            </span>
+          ))}
+        </div>
+      ) : null}
+      {row.detailsHref || card.actions ? (
+        <div data-ph="row-foot">
+          {row.detailsHref ? (
+            <a data-ph="details-link" href={resolve(row.detailsHref)}>
+              Open {name} profile
+            </a>
+          ) : (
+            <span />
+          )}
+          {card.actions ? <CellActions actions={card.actions.actions} subject={name} hrefOf={hrefOf} /> : null}
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+/** A long table (a directory): one line a row, its card in a sheet. The sheet
+ *  is a modal dialog, in the top layer above the phone layout's containers. */
+function List({ table, resolve, hrefOf, selectable }: GridProps) {
+  const [open, setOpen] = useState<number | null>(null);
+  const sheet = useRef<HTMLDialogElement>(null);
+  const ticks = selectable && table.rows.some((row) => row.pickId);
+  useEffect(() => {
+    const dialog = sheet.current;
+    if (!dialog) return;
+    if (open !== null && !dialog.open) dialog.showModal();
+    if (open === null && dialog.open) dialog.close();
+  }, [open]);
+  const openRow = open !== null ? table.rows[open] : undefined;
+  return (
+    <div data-ph="rows-wrap">
+      {ticks ? (
+        <label data-ph="rows-all">
+          <input type="checkbox" aria-label="Select all on this page" onChange={tickAll} />
+          Select all on this page
+        </label>
+      ) : null}
+      <ul data-ph="list-rows" aria-label={table.title || 'Rows'}>
+        {table.rows.map((row, rowIndex) => {
+          const card = rowCard(table.columns, row);
+          const name = rowName(row);
+          const line = [card.id ? `${card.id.label} ${card.id.cell.text}` : '', summaryOf(card)].filter((s) => s !== '').join(' · ');
+          return (
+            <li key={rowIndex} data-ph="list-row" data-row-tone={row.tone || undefined}>
+              {ticks && row.pickId ? <input type="checkbox" data-pick={row.pickId} aria-label={row.pickLabel || `Select ${name}`} /> : null}
+              <button type="button" data-ph="list-open" aria-haspopup="dialog" onClick={() => setOpen(rowIndex)}>
+                <span data-ph="list-title">{card.title?.text ?? name}</span>
+                {line ? <span data-ph="list-line">{line}</span> : null}
+              </button>
+              <ChevronRight size={16} aria-hidden="true" data-ph="list-chevron" />
+            </li>
+          );
+        })}
+      </ul>
+      <dialog ref={sheet} data-ph="sheet" aria-label={openRow ? rowName(openRow) : 'Details'} onClose={() => setOpen(null)}>
+        {openRow ? (
+          <SheetBody card={rowCard(table.columns, openRow)} row={openRow} resolve={resolve} hrefOf={hrefOf} onClose={() => setOpen(null)} />
+        ) : null}
+      </dialog>
     </div>
   );
 }

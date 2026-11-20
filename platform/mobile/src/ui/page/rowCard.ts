@@ -56,3 +56,20 @@ export function rowCard(columns: readonly PageColumn[], row: PageRow): RowCard {
     actions: actionsAt >= 0 ? cells[actionsAt] : undefined,
   };
 }
+
+/** From this many rows on a page a phone shows the table as a compact list,
+ *  each row one line that opens its card in a sheet (owner, 2026-11-20:
+ *  cards for work queues, the list for long directories). */
+export const LIST_FROM = 16;
+
+/** Whether a table of this many rows is a compact list on a phone. */
+export function asList(rowCount: number): boolean {
+  return rowCount >= LIST_FROM;
+}
+
+/** A compact list row's line under the title: its status and its first two
+ *  facts, in the card's order ("Overdue · 3 Apr 2026 · Moses K."). */
+export function summaryOf(card: RowCard): string {
+  return [card.status?.text ?? '', ...card.lead.slice(0, 2).map((f) => f.cell.text)].filter((s) => s.trim() !== '').join(' · ');
+}
+

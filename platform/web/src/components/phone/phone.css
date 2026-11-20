@@ -401,3 +401,18 @@ a[data-ph='row-name'] { color: var(--ph-link) !important; }
 [data-ph='row-more'] { display: inline-flex !important; align-items: center !important; gap: 4px !important; min-height: 36px !important; padding: 0 !important; border: 0 !important; background: none !important; color: var(--ph-link) !important; font: inherit !important; font-size: 13px !important; font-weight: 600 !important; cursor: pointer !important; }
 [data-ph='row-details'] { display: flex !important; flex-direction: column !important; gap: 10px !important; padding: 12px !important; border-radius: 10px !important; background: var(--ph-surface) !important; }
 
+/* ── Compact list + sheet (a long table on a phone; PhoneTable List) ── */
+[data-ph='list-rows'] { list-style: none !important; margin: 0 !important; padding: 0 !important; }
+[data-ph='list-row'] { display: flex !important; align-items: center !important; gap: 10px !important; padding: 0 16px !important; border-top: 1px solid var(--ph-raised-border) !important; }
+[data-ph='list-row'][data-row-tone='danger'] { box-shadow: inset 3px 0 0 var(--ph-danger) !important; }
+[data-ph='list-row'] input[type='checkbox'] { flex-shrink: 0 !important; }
+[data-ph='list-open'] { display: flex !important; flex: 1 1 auto !important; flex-direction: column !important; align-items: flex-start !important; gap: 2px !important; min-width: 0 !important; min-height: 52px !important; padding: 9px 0 !important; border: 0 !important; background: none !important; text-align: left !important; font: inherit !important; cursor: pointer !important; }
+[data-ph='list-title'] { color: var(--ph-text) !important; font-size: 14px !important; line-height: 19px !important; font-weight: 600 !important; overflow-wrap: anywhere !important; }
+[data-ph='list-line'] { color: var(--ph-text-muted) !important; font-size: 12px !important; line-height: 16px !important; font-weight: 500 !important; overflow-wrap: anywhere !important; }
+[data-ph='list-chevron'] { flex-shrink: 0 !important; color: var(--ph-text-muted) !important; }
+dialog[data-ph='sheet'] { width: 100% !important; max-width: 640px !important; max-height: 85vh !important; margin: auto auto 0 !important; padding: 16px 16px 28px !important; border: 0 !important; border-radius: 18px 18px 0 0 !important; background: var(--ph-raised) !important; color: var(--ph-text) !important; overflow-y: auto !important; }
+dialog[data-ph='sheet'][open] { display: flex !important; flex-direction: column !important; gap: 14px !important; }
+dialog[data-ph='sheet']::backdrop { background: rgba(15, 23, 42, 0.45) !important; }
+[data-ph='sheet-head'] { display: flex !important; align-items: flex-start !important; gap: 10px !important; }
+[data-ph='sheet-close'] { display: grid !important; place-items: center !important; flex-shrink: 0 !important; width: 36px !important; height: 36px !important; margin: -6px -6px 0 0 !important; border: 0 !important; border-radius: 999px !important; background: var(--ph-surface) !important; color: var(--ph-text) !important; cursor: pointer !important; }
+

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { PageColumnSchema, PageRowSchema } from '@/gen/edify/screens/v1/page_pb';
 
-import { LEAD_FACTS, rowCard } from './rowCard';
+import { LEAD_FACTS, LIST_FROM, asList, rowCard, summaryOf } from './rowCard';
 
 const columns = ['School ID', 'School Name', 'District', 'Status', 'Planned', 'Visits', 'Trainings', 'Owner', ''].map((label, i) =>
   create(PageColumnSchema, { label, numeric: i === 5 || i === 6 }),
@@ -44,5 +44,21 @@ describe('a row read as a card', () => {
     const first = rowCard(columns, create(PageRowSchema, { cells: [{ text: '' }, { text: 'Kampala' }, { text: 'Central' }] }));
     expect(first.title?.text).toBe('Kampala');
     expect(first.lead.map((f) => f.cell.text)).toEqual(['Central']);
+  });
+});
+
+describe('a long table on a phone', () => {
+  it('is a compact list from 16 rows, cards below', () => {
+    expect(asList(15)).toBe(false);
+    expect(asList(LIST_FROM)).toBe(true);
+    expect(asList(50)).toBe(true);
+  });
+
+  it('sums a row up in one line: its status, then its first two facts', () => {
+    const row = create(PageRowSchema, {
+      cells: [{ text: '1688' }, { text: 'Mukono Primary School', href: '/schools/1688' }, { text: 'Mukono' }, { text: 'Overdue', tone: 'danger' }, { text: '1 Apr 2026' }],
+    });
+    expect(summaryOf(rowCard(columns, row))).toBe('Overdue · Mukono · 1 Apr 2026');
+    expect(summaryOf(rowCard(columns, create(PageRowSchema, { cells: [{ text: '' }, { text: 'Kampala' }] })))).toBe('');
   });
 });
