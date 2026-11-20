@@ -454,6 +454,10 @@ dialog[data-ph='sheet'] [data-ph='row-name'] { font-size: 16px !important; line-
 [data-ph='tiles-folded'] [data-ph='explain-toggle'] { padding: 0 4px !important; }
 [data-ph='tiles-folded'] details[open] > [data-ph='tiles'] { margin-top: 8px !important; }
 
+/* A strip of link chips scrolls sideways; a chip never shrinks under its
+   words, which ran into the next chip on a phone (2026-11-20). */
+[data-ph='strip'] > [data-ph='strip-link'] { flex-shrink: 0 !important; white-space: nowrap !important; }
+
 /* Last: whatever this layer gives a part's display, hidden hides it. */
 [data-ph][hidden], [data-ph] [hidden] { display: none !important; }
 
