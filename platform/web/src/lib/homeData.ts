@@ -21,7 +21,10 @@ export type HomeParts = {
   /** The reader's active role, as the session holds it. */
   role: string;
 };
-export type HomeAnswer = { kind: 'home'; parts: HomeParts } | { kind: 'elsewhere'; url: string } | { kind: 'notMoved' };
+export type HomeAnswer = { kind: 'home'; parts: HomeParts } | { kind: 'elsewhere'; url: string } | { kind: 'notMoved' } | { kind: 'appOnly' };
+
+/** Roles whose work lives only in the Edify app: Home is not theirs on the web. */
+const APP_ONLY_ROLES: ReadonlySet<string> = new Set(['ClusterLeader']);
 
 /** Each part of Home; where the reader starts instead; or not moved yet. */
 export async function askHome(): Promise<HomeAnswer> {
@@ -40,7 +43,11 @@ export async function askHome(): Promise<HomeAnswer> {
       }
       return { kind: 'home', parts: { home, queue, figures: queue.queueFigures, total: queue.priorityTotal, role } };
     } catch (error) {
-      if (isNotFound(error)) notFound();
+      if (isNotFound(error)) {
+        const session = await gatewayClient(IdentityService, token).getSession({});
+        if (APP_ONLY_ROLES.has(session.session?.activeRole ?? '')) return { kind: 'appOnly' };
+        notFound();
+      }
       if (isUnavailable(error)) return { kind: 'notMoved' };
       throw error;
     }

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import type { HomePriorityRow, HomeUpcoming } from '@/gen/edify/screens/v1/home_pb';
+import { AppOnly } from '@/components/page/AppOnly';
 import { NotMovedYet } from '@/components/page/NotMovedYet';
 import { environment } from '@/lib/environment';
 import { TodayScreen } from '@/components/today/TodayScreen';
@@ -171,6 +172,7 @@ export default async function HomePage() {
   const answer = await askHome();
   if (answer.kind === 'elsewhere') redirect(answer.url);
   if (answer.kind === 'notMoved') return <NotMovedYet href={`${environment().existingWebUrl}/home`} />;
+  if (answer.kind === 'appOnly') return <AppOnly />;
   // The CCEO's Home is the redesigned Today (docs/migration/177 stage D),
   // checked against this page's own figures and rows for a CCEO before it
   // replaced it; every other role keeps this page until its Home is rebuilt.

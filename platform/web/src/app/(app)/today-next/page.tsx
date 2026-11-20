@@ -4,7 +4,7 @@
  * same Go answer, for a role whose Home is not rebuilt yet.
  */
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 import { NotMovedYet } from '@/components/page/NotMovedYet';
 import { TodayScreen } from '@/components/today/TodayScreen';
@@ -17,5 +17,6 @@ export default async function TodayNextPage() {
   const answer = await askHome();
   if (answer.kind === 'elsewhere') redirect(answer.url);
   if (answer.kind === 'notMoved') return <NotMovedYet href={`${environment().existingWebUrl}/home`} />;
+  if (answer.kind === 'appOnly') notFound();
   return <TodayScreen parts={answer.parts} note="Redesign preview, from your live queue." />;
 }
