@@ -7,6 +7,7 @@
 import type { ReactNode } from 'react';
 import type { PageAction, PageBlock, PageLinkTabs } from '@/gen/edify/screens/v1/page_pb';
 import { actionHref, resolveHref } from '@/lib/feedPage';
+import { liftHeroes } from '@/lib/heroStrip';
 import { headingOnly, tableNote } from '@/lib/tableNote';
 
 import { BUTTON_PRIMARY } from '../blocks/buttons';
@@ -88,7 +89,9 @@ export function inGroups(blocks: readonly PageBlock[], draw: (block: PageBlock, 
   return out;
 }
 
-export function FeedBlocks({ blocks, pagePath, drawerHref, selectable, clearFilters = true }: FeedBlocksProps) {
+export function FeedBlocks({ blocks: given, pagePath, drawerHref, selectable, clearFilters = true }: FeedBlocksProps) {
+  // The page's hero figures lead it, larger (lib/heroStrip, owner 2026-11-20).
+  const { blocks, heroAt } = liftHeroes(given, pagePath);
   const resolve = (href: string) => resolveHref(pagePath, href);
   const hrefOf = (action: PageAction) => actionHref(action, pagePath, drawerHref);
   const pagerOf = (block: PageBlock | undefined) =>
@@ -117,7 +120,7 @@ export function FeedBlocks({ blocks, pagePath, drawerHref, selectable, clearFilt
               />
             );
           case 'strip':
-            return <FeedStrip key={index} strip={kind.value} resolve={resolve} />;
+            return <FeedStrip key={index} strip={kind.value} resolve={resolve} hero={index === heroAt} />;
           case 'panel': {
             const heading = headingOnly(block);
             if (heading) {

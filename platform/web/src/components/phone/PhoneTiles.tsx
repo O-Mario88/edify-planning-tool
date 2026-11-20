@@ -7,10 +7,11 @@
  */
 import type { CSSProperties } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { Banknote, Calendar, CalendarCheck, ChartColumn, Clock, GraduationCap, Info, LayoutGrid, Route, School, TriangleAlert, Users } from 'lucide-react';
+import { Banknote, Calendar, CalendarCheck, ChartColumn, ChevronDown, Clock, GraduationCap, Info, LayoutGrid, Route, School, TriangleAlert, Users } from 'lucide-react';
 
 import type { PageMetric, PageStrip } from '@/gen/edify/screens/v1/page_pb';
 import { figureIcon } from '@/lib/figureIcon';
+import { foldFigures } from '@/lib/heroStrip';
 import type { FigureIconName } from '@/lib/figureIcon';
 
 import { phoneTone, tileColumns } from './tone';
@@ -88,15 +89,43 @@ function Tile({ metric, resolve }: { metric: PageMetric; resolve: (href: string)
   );
 }
 
-export function PhoneTiles({ strip, resolve }: { strip: PageStrip; resolve: (href: string) => string }) {
-  const count = strip.metrics.length;
-  const style = { '--ph-columns': tileColumns(count, false), '--ph-wide-columns': tileColumns(count, true) } as CSSProperties;
-  const tiles = (
-    <div data-ph="tiles" role="group" aria-label={strip.title || undefined} style={style}>
-      {strip.metrics.map((metric) => (
+interface PhoneTilesProps {
+  strip: PageStrip;
+  resolve: (href: string) => string;
+  /** The page's hero figures (lib/heroStrip liftHeroes): larger, none folded. */
+  hero?: boolean;
+}
+
+export function PhoneTiles({ strip, resolve, hero = false }: PhoneTilesProps) {
+  // Every strip shows its main figures and folds the rest (owner, 2026-11-20:
+  // "reduce the number of tiles and do it throughout the platform").
+  const { shown, folded } = hero ? { shown: strip.metrics, folded: [] } : foldFigures(strip.metrics);
+  const grid = (metrics: readonly PageMetric[], label?: string) => (
+    <div
+      data-ph="tiles"
+      data-hero={hero || undefined}
+      role="group"
+      aria-label={label}
+      style={{ '--ph-columns': tileColumns(metrics.length, false), '--ph-wide-columns': tileColumns(metrics.length, true) } as CSSProperties}
+    >
+      {metrics.map((metric) => (
         <Tile key={metric.label} metric={metric} resolve={resolve} />
       ))}
     </div>
+  );
+  const tiles = folded.length ? (
+    <div data-ph="tiles-folded">
+      {grid(shown, strip.title || undefined)}
+      <details data-ph="explain" data-bare>
+        <summary data-ph="explain-toggle">
+          <ChevronDown aria-hidden="true" size={16} data-ph="explain-chevron" />
+          <span>All figures ({strip.metrics.length})</span>
+        </summary>
+        {grid(folded, 'More figures')}
+      </details>
+    </div>
+  ) : (
+    grid(shown, strip.title || undefined)
   );
   if (!strip.subtitle) return tiles;
   return (

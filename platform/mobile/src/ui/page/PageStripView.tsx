@@ -12,12 +12,14 @@
  * its heading and the line under it over the tiles.
  */
 import type { ComponentType } from 'react';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import {
   Banknote,
   Calendar,
   CalendarCheck,
   ChartColumn,
+  ChevronDown,
   Clock,
   GraduationCap,
   Info,
@@ -32,6 +34,7 @@ import type { PageMetric, PageStrip } from '../../gen/edify/screens/v1/page_pb';
 import { fonts, useTheme } from '../../theme';
 import type { Palette } from '../../theme';
 import { figureIcon, tileColumns } from './figureTiles';
+import { foldFigures } from './heroStrip';
 import type { FigureIconName } from './figureTiles';
 import { toneColor, usePageLink } from './shared';
 
@@ -66,21 +69,54 @@ function tintOf(colors: Palette, metric: PageMetric, icon: FigureIconName): stri
   return colors.primary;
 }
 
-export function PageStripView({ strip }: { readonly strip: PageStrip }) {
+interface PageStripViewProps {
+  readonly strip: PageStrip;
+  /** The page's hero figures (heroStrip liftHeroes): larger, none folded. */
+  readonly isHero?: boolean;
+}
+
+export function PageStripView({ strip, isHero = false }: PageStripViewProps) {
   const { colors } = useTheme();
   const { width } = useWindowDimensions();
-  const columns = tileColumns(strip.metrics.length, width);
+  const [isOpen, setOpen] = useState(false);
+  // Every strip shows its main figures and folds the rest (owner, 2026-11-20:
+  // "reduce the number of tiles and do it throughout the platform").
+  const { shown, folded } = isHero ? { shown: [...strip.metrics], folded: [] } : foldFigures(strip.metrics);
   const compact = width < COMPACT_BELOW;
   const gap = compact ? COMPACT_GAP : GAP;
-  const tiles = (
-    <View accessibilityLabel={strip.title} style={[styles.grid, { margin: -gap / 2 }]}>
-      {strip.metrics.map((metric) => (
-        <View key={metric.label} style={{ width: `${100 / columns}%`, padding: gap / 2 }}>
-          <Tile metric={metric} compact={compact} />
-        </View>
-      ))}
-    </View>
-  );
+  const grid = (metrics: readonly PageMetric[], label?: string) => {
+    const columns = tileColumns(metrics.length, width);
+    return (
+      <View accessibilityLabel={label} style={[styles.grid, { margin: -gap / 2 }]}>
+        {metrics.map((metric) => (
+          <View key={metric.label} style={{ width: `${100 / columns}%`, padding: gap / 2 }}>
+            <Tile metric={metric} compact={compact} isHero={isHero} />
+          </View>
+        ))}
+      </View>
+    );
+  };
+  const tiles =
+    folded.length > 0 ? (
+      <View style={styles.folded}>
+        {grid(shown, strip.title)}
+        <Pressable
+          onPress={() => setOpen(!isOpen)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: isOpen }}
+          hitSlop={4}
+          style={styles.foldToggle}
+        >
+          <View style={isOpen ? styles.foldOpen : null}>
+            <ChevronDown size={16} color={colors.tableLink} />
+          </View>
+          <Text style={[styles.foldLabel, { color: colors.tableLink }]}>All figures ({strip.metrics.length})</Text>
+        </Pressable>
+        {isOpen ? grid(folded, 'More figures') : null}
+      </View>
+    ) : (
+      grid(shown, strip.title)
+    );
   if (!strip.subtitle) {
     return tiles;
   }
@@ -97,7 +133,7 @@ export function PageStripView({ strip }: { readonly strip: PageStrip }) {
   );
 }
 
-function Tile({ metric, compact }: { readonly metric: PageMetric; readonly compact: boolean }) {
+function Tile({ metric, compact, isHero = false }: { readonly metric: PageMetric; readonly compact: boolean; readonly isHero?: boolean }) {
   const { colors } = useTheme();
   const openLink = usePageLink();
   const icon = figureIcon(metric.label);
@@ -123,7 +159,12 @@ function Tile({ metric, compact }: { readonly metric: PageMetric; readonly compa
             <View style={[styles.icon, styles.iconCompact, { backgroundColor: `${tint}1f` }]}>
               <Icon size={18} color={tint} />
             </View>
-            <Text style={[styles.value, styles.valueCompact, { color: valueColor }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+            <Text
+              style={[styles.value, styles.valueCompact, isHero && styles.valueHero, { color: valueColor }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+            >
               {metric.value}
             </Text>
           </View>
@@ -136,7 +177,7 @@ function Tile({ metric, compact }: { readonly metric: PageMetric; readonly compa
             <Icon size={20} color={tint} />
           </View>
           <View style={styles.words}>
-            <Text style={[styles.value, { color: valueColor }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+            <Text style={[styles.value, isHero && styles.valueHero, { color: valueColor }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
               {metric.value}
             </Text>
             <Text style={[styles.label, { color: colors.textMuted }]}>{metric.label}</Text>
@@ -179,6 +220,12 @@ const styles = StyleSheet.create({
   words: { flexGrow: 1, flexShrink: 1, minWidth: 0, gap: 1 },
   value: { fontFamily: fonts.bold, fontSize: 20, lineHeight: 24 },
   valueCompact: { fontSize: 18, lineHeight: 22 },
+  // A page's hero figures (heroStrip): larger.
+  valueHero: { fontSize: 28, lineHeight: 32 },
+  folded: { gap: 6 },
+  foldToggle: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, minHeight: 44, paddingHorizontal: 4 },
+  foldOpen: { transform: [{ rotate: '180deg' }] },
+  foldLabel: { fontFamily: fonts.semibold, fontSize: 13 },
   small: { fontSize: 12, lineHeight: 16 },
   label: { fontFamily: fonts.medium, fontSize: 13 },
   helper: { fontFamily: fonts.medium, fontSize: 12 },

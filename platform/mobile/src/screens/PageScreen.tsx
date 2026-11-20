@@ -256,7 +256,7 @@ export function PageScreen({ path, initialQuery = {}, isNative, onOpen, onOpenSc
               ) : null}
               {data ? (
                 <View style={{ opacity: isBusy ? 0.6 : 1 }}>
-                  <PageBlocksView blocks={data.blocks} onFilter={filter} isRaised={false} />
+                  <PageBlocksView blocks={data.blocks} onFilter={filter} isRaised={false} pagePath={path} />
                 </View>
               ) : error ? null : (
                 <PageSkeleton />

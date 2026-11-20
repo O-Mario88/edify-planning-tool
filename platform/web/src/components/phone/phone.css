@@ -450,3 +450,10 @@ dialog[data-ph='sheet'] [data-ph='row-name'] { font-size: 16px !important; line-
 [data-ph='record-title'], [data-ph='record-toggle'] { min-height: 36px !important; min-block-size: 36px !important; }
 [data-ph='record-title'] { display: inline-flex !important; align-items: center !important; }
 [data-ph] .row-menu__trigger, [data-ph] .edify-pagination__control { min-height: 36px !important; min-block-size: 36px !important; min-width: 36px !important; }
+
+/* A page's hero figures, larger (owner, 2026-11-20); a strip's folded
+   figures sit under its "All figures" chevron (lib/heroStrip). */
+[data-ph='tiles'][data-hero] [data-ph='tile-value'] { font-size: 26px !important; line-height: 30px !important; }
+[data-ph='tiles-folded'] { display: flex !important; flex-direction: column !important; gap: 4px !important; }
+[data-ph='tiles-folded'] [data-ph='explain-toggle'] { padding: 0 4px !important; }
+[data-ph='tiles-folded'] details[open] > [data-ph='tiles'] { margin-top: 8px !important; }

@@ -21,6 +21,7 @@ import { PageRecordView } from './PageRecordView';
 import { PageStripView } from './PageStripView';
 import { EmptyState, Explanation, PageTableView, Pager } from './PageTableView';
 import { ChipContext, cardStyles, usePageLink } from './shared';
+import { liftHeroes } from './heroStrip';
 import { headingOnly, tableNote } from './tableNote';
 
 /** A table's note on a card of its own, folded under its chevron. */
@@ -40,9 +41,12 @@ interface PageBlocksViewProps {
   readonly onFilter: (name: string, value: string, hidden: Readonly<Record<string, string>>) => void;
   /** Filters on the card colour (a profile) rather than the field colour. */
   readonly isRaised?: boolean;
+  /** The page's web path, which names its hero figures (heroStrip). */
+  readonly pagePath?: string;
 }
 
-export function PageBlocksView({ blocks, onFilter, isRaised = true }: PageBlocksViewProps) {
+export function PageBlocksView({ blocks, onFilter, isRaised = true, pagePath = '' }: PageBlocksViewProps) {
+  const lifted = useMemo(() => liftHeroes(blocks, pagePath), [blocks, pagePath]);
   // The page's chip filters start on the values its script starts them on.
   const opening = useMemo(
     () =>
@@ -64,8 +68,13 @@ export function PageBlocksView({ blocks, onFilter, isRaised = true }: PageBlocks
   return (
     <ChipContext.Provider value={chips}>
       <View style={styles.stack}>
-        {blocks.map((block, index) => {
+        {lifted.blocks.map((block, index) => {
+          const blocks = lifted.blocks;
           const next = blocks[index + 1];
+          // The page's hero figures lead it, larger (heroStrip, owner 2026-11-20).
+          if (index === lifted.heroAt && block.kind.case === 'strip') {
+            return <PageStripView key={index} strip={block.kind.value} isHero />;
+          }
           // The calendar's month block stands in for the event-type segments
           // before it, which carry the same month as text (docs/migration/54.5).
           if (block.kind.case === 'segments' && next?.kind.case === 'calendar') {

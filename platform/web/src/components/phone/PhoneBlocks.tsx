@@ -6,6 +6,7 @@
  */
 import type { PageAction, PageBlock, PageFacts } from '@/gen/edify/screens/v1/page_pb';
 import { actionHref, resolveHref } from '@/lib/feedPage';
+import { liftHeroes } from '@/lib/heroStrip';
 import { headingOnly, tableNote } from '@/lib/tableNote';
 
 import { Explanation } from '../page/Explanation';
@@ -48,7 +49,9 @@ function FactsCard({ facts, resolve }: { facts: PageFacts; resolve: (href: strin
   );
 }
 
-export function PhoneBlocks({ blocks, pagePath, drawerHref, selectable }: PhoneBlocksProps) {
+export function PhoneBlocks({ blocks: given, pagePath, drawerHref, selectable }: PhoneBlocksProps) {
+  // The page's hero figures lead it, larger (lib/heroStrip, owner 2026-11-20).
+  const { blocks, heroAt } = liftHeroes(given, pagePath);
   const resolve = (href: string) => resolveHref(pagePath, href);
   const hrefOf = (action: PageAction) => actionHref(action, pagePath, drawerHref);
   const draw = (list: readonly PageBlock[], index: number, bare = false) => {
@@ -75,7 +78,7 @@ export function PhoneBlocks({ blocks, pagePath, drawerHref, selectable }: PhoneB
       case 'linkTabs':
         return <PhoneLinkTabs key={index} tabs={kind.value} resolve={resolve} besideHref={kind.value.beside ? hrefOf(kind.value.beside) : undefined} />;
       case 'strip':
-        return <PhoneTiles key={index} strip={kind.value} resolve={resolve} />;
+        return <PhoneTiles key={index} strip={kind.value} resolve={resolve} hero={list === blocks && index === heroAt} />;
       case 'table': {
         const next = list[index + 1];
         const footer = next?.kind.case === 'pager' ? <PhonePager pager={next.kind.value} resolve={resolve} /> : undefined;
