@@ -19,6 +19,8 @@ wrong with each in the browser's own measurements, not by eye:
   empty-card              a card with nothing in it
   small-tap-target        on a phone, a button or link under 32px tall
   page-error              the page answered with an error or did not load
+  a11y                    with --axe: a serious or critical WCAG 2.2 AA
+                          violation axe-core finds (rule and how many places)
 
 Writes report.json (every finding) and report.md (counts by check, then the
 pages with findings) to --out. Nothing is sent anywhere else.
@@ -64,6 +66,19 @@ SKIP = re.compile(
 )
 #: How long a page may take to settle.
 SETTLE_MS = 1200
+#: The WCAG levels axe checks, and the violations that count as findings.
+AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]
+AXE_IMPACTS = {"serious", "critical"}
+#: Where an installed axe-core is looked for when --axe names no file.
+AXE_PATHS = (
+    "node_modules/axe-core/axe.min.js",
+    "platform/web/node_modules/axe-core/axe.min.js",
+)
+
+AXE_RUN = """async (tags) => {
+  const result = await window.axe.run(document.querySelector('main') || document, {runOnly: {type: 'tag', values: tags}});
+  return result.violations.map((v) => ({id: v.id, impact: v.impact, count: v.nodes.length}));
+}"""
 
 #: The checks, run in the page. Each returns a list of short examples (what
 #: was found, where), so the report can say what to look at.
@@ -137,7 +152,17 @@ def destinations(page, limit: int) -> list[str]:
     return out[:limit]
 
 
-def check(page, base: str, path: str, size: str) -> dict:
+def accessibility(page, axe: Path) -> list[str]:
+    """Serious and critical WCAG violations axe-core finds on the page."""
+    page.add_script_tag(path=str(axe))
+    return [
+        f"{v['id']} ({v['count']})"
+        for v in page.evaluate(AXE_RUN, AXE_TAGS)
+        if v.get("impact") in AXE_IMPACTS
+    ]
+
+
+def check(page, base: str, path: str, size: str, axe: Path | None = None) -> dict:
     found: dict = {"path": path, "size": size}
     try:
         response = page.goto(base + path, wait_until="networkidle", timeout=60000)
@@ -145,6 +170,8 @@ def check(page, base: str, path: str, size: str) -> dict:
         status = response.status if response else None
         found["landed"] = urlparse(page.url).path
         findings = page.evaluate(CHECKS, size)
+        if axe is not None:
+            findings["a11y"] = accessibility(page, axe)
         if status and status >= 400:
             findings["page-error"] = [f"answered {status}"]
     except Exception as exc:  # noqa: BLE001 - a page that fails is a finding, not fatal
@@ -181,7 +208,32 @@ def main() -> int:
     parser.add_argument("--pages", type=int, default=60)
     parser.add_argument("--roles", default="")
     parser.add_argument("--sizes", default=",".join(SIZES))
+    parser.add_argument(
+        "--axe",
+        nargs="?",
+        const="",
+        default=None,
+        help="also check accessibility with axe-core (a path to axe.min.js, or found under node_modules)",
+    )
+    parser.add_argument(
+        "--fail",
+        action="store_true",
+        help="exit 1 when anything is found (the CI gate)",
+    )
     args = parser.parse_args()
+    axe: Path | None = None
+    if args.axe is not None:
+        axe = (
+            Path(args.axe)
+            if args.axe
+            else next((Path(p) for p in AXE_PATHS if Path(p).exists()), None)
+        )
+        if axe is None or not axe.exists():
+            print(
+                "axe-core not found: npm ci, or pass --axe <path to axe.min.js>",
+                file=sys.stderr,
+            )
+            return 2
     if urlparse(args.base).hostname not in LOCAL:
         print(
             "sweep.py signs in to a local development application only", file=sys.stderr
@@ -230,7 +282,7 @@ def main() -> int:
                         p for p in destinations(page, args.pages) if p != landing
                     ]
                 for path in paths:
-                    row = check(page, args.base, path, size)
+                    row = check(page, args.base, path, size, axe)
                     row["role"] = role
                     rows.append(row)
                     print(
@@ -246,8 +298,9 @@ def main() -> int:
         encoding="utf-8",
     )
     (out / "report.md").write_text(report(rows), encoding="utf-8")
-    print(f"{len(rows)} page loads; report in {out}")
-    return 0
+    found = sum(1 for row in rows if row["findings"])
+    print(f"{len(rows)} page loads, {found} with findings; report in {out}")
+    return 1 if args.fail and found else 0
 
 
 if __name__ == "__main__":

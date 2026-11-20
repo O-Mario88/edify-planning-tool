@@ -360,6 +360,137 @@ jobs:
       # test:compare) needs the existing web, the gateway and seed accounts on
       # one machine. It is run locally, not here.
 
+  ui-sweep:
+    name: UI sweep (report only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    # Every role's pages at phone and desktop size, checked by the browser's
+    # own measurements and axe-core (platform/tools/ui-sweep,
+    # docs/migration/181 Phase 1). Report-only until the sweep reaches zero
+    # findings: the report is uploaded and the build does not fail on it.
+    continue-on-error: true
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: edify_ci_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # Throwaway values for the service container and the demo seed above.
+      # Nothing here is a real credential.
+      ADMIN_URL: postgresql://postgres:postgres@localhost:5432/edify_ci_test
+      CI_SIGNING_SECRET: ci-only-signing-secret-0123456789abcdefghijklmnop
+      CI_GATEWAY_PASSWORD: ci-only-gateway-password
+      DEMO_LOGIN_PASSWORD: ci-only-demo-password
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+          cache-dependency-path: requirements/*.txt
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: platform/backend/go.sum
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: platform/web/package-lock.json
+
+      - name: Build the existing schema with synthetic data
+        env:
+          DATABASE_URL: ${{ env.ADMIN_URL }}
+          JWT_SECRET: ${{ env.CI_SIGNING_SECRET }}
+          SECRET_KEY: ${{ env.CI_SIGNING_SECRET }}
+          DJANGO_SETTINGS_MODULE: config.settings.dev
+          ENABLE_BACKGROUND_JOBS: "false"
+        run: |
+          python -m pip install -r requirements/dev.txt
+          python manage.py migrate --noinput
+          python manage.py seed --demo
+
+      - name: Start the gateway
+        env:
+          EDIFY_ENV: test
+          EDIFY_ADMIN_DATABASE_URL: ${{ env.ADMIN_URL }}
+          EDIFY_JWT_SECRET: ${{ env.CI_SIGNING_SECRET }}
+          EDIFY_HTTP_ADDR: 127.0.0.1:8090
+        run: |
+          platform/deploy/db/apply-roles.sh
+          psql "$ADMIN_URL" --set ON_ERROR_STOP=1 \
+            --command "ALTER ROLE edify_gateway PASSWORD '${CI_GATEWAY_PASSWORD}'"
+          (cd platform/backend && \
+            EDIFY_MIGRATE_DATABASE_URL="$ADMIN_URL" go run ./cmd/schemactl migrate \
+              --schema=country_registry --confirm-database=edify_ci_test && \
+            EDIFY_MIGRATE_DATABASE_URL="$ADMIN_URL" go run ./cmd/countryctl seed-legacy \
+              --confirm-database=edify_ci_test)
+          (cd platform/backend && go build -o /tmp/gateway ./cmd/gateway)
+          EDIFY_DATABASE_URL="postgresql://edify_gateway:${CI_GATEWAY_PASSWORD}@localhost:5432/edify_ci_test" \
+            /tmp/gateway > /tmp/gateway.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            curl --silent --fail http://127.0.0.1:8090/readyz > /dev/null && break
+            sleep 1
+          done
+
+      # A development build of the web app on the gateway above (the app
+      # refuses anything else, src/lib/environment.ts).
+      - name: Build and start the web app
+        working-directory: platform/web
+        env:
+          EDIFY_ENV: development
+          EDIFY_GATEWAY_URL: http://localhost:8090
+          EDIFY_EXISTING_WEB_URL: http://localhost:8010
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: |
+          npm ci
+          npm run build
+          npx next start --port 3000 > /tmp/web.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            curl --silent --fail http://localhost:3000/login > /dev/null && break
+            sleep 1
+          done
+
+      - name: Install the sweep's browser
+        run: python -m playwright install --with-deps chromium
+
+      - name: Sweep every role at phone and desktop size
+        env:
+          SWEEP_PASSWORD: ${{ env.DEMO_LOGIN_PASSWORD }}
+        run: |
+          python platform/tools/ui-sweep/sweep.py --base http://localhost:3000 \
+            --sizes phone,desktop --axe platform/web/node_modules/axe-core/axe.min.js \
+            --out /tmp/ui-sweep
+          cat /tmp/ui-sweep/report.md | head -60 >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep the report
+        if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.2
+        with:
+          name: ui-sweep
+          path: |
+            /tmp/ui-sweep
+            /tmp/gateway.log
+            /tmp/web.log
+          if-no-files-found: ignore
+
   images:
     name: Container images build
     runs-on: ubuntu-latest
