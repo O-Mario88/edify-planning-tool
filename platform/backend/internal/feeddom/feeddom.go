@@ -139,19 +139,46 @@ var silent = map[string]bool{"script": true, "style": true, "svg": true, "noscri
 // screen reader hears left out.
 func (n *Node) text() string { return n.textOf(true) }
 
+// partJoiner is page_blocks._PART_JOINER: what joins two parts the page
+// draws apart with nothing between them.
+const partJoiner = " · "
+
+// textOf is Node.text: the element's words, whitespace collapsed, what only
+// a screen reader hears left out when shown. Where one element's words end
+// in a lower-case letter and the next element's start with a capital, with
+// nothing between them, the two read apart, joined by partJoiner
+// (page_blocks._sentence_edges): "Cluster Meetings · UGX 291K".
 func (n *Node) textOf(shown bool) string {
 	var b strings.Builder
+	edge := false
+	write := func(s string) {
+		if s == "" {
+			edge = false
+			return
+		}
+		if edge && b.Len() > 0 {
+			last, _ := utf8.DecodeLastRuneInString(b.String())
+			first, _ := utf8.DecodeRuneInString(s)
+			if unicode.IsLower(last) && unicode.IsUpper(first) {
+				b.WriteString(partJoiner)
+			}
+		}
+		b.WriteString(s)
+		edge = false
+	}
 	var collect func(*Node)
 	collect = func(x *Node) {
 		for _, c := range x.children {
 			switch v := c.(type) {
 			case string:
-				b.WriteString(v)
+				write(v)
 			case *Node:
 				if silent[v.tag] || (shown && v.has("sr-only")) {
 					continue
 				}
+				edge = true
 				collect(v)
+				edge = true
 			}
 		}
 	}

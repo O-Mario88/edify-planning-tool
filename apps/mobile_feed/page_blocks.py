@@ -45,11 +45,15 @@ METER_SHARE = re.compile(r"(?:inline-size|width)\s*:\s*([\d.]+)%")
 _EDGE = "\x00"
 
 
+#: What joins two parts the page draws apart (the platform's own joiner).
+_PART_JOINER = " · "
+
+
 def _sentence_edges(parts: list[str]) -> str:
-    """``parts`` joined, a full stop and a space put where one element's
-    words end in a lower-case letter and the next element's start with a
-    capital, with nothing between them: the page draws them as a title and
-    the line under it."""
+    """``parts`` joined, " · " put where one element's words end in a
+    lower-case letter and the next element's start with a capital, with
+    nothing between them: the page draws them as two parts (a title and the
+    line under it, a label and its figure)."""
     out = ""
     edge = False
     for part in parts:
@@ -57,7 +61,7 @@ def _sentence_edges(parts: list[str]) -> str:
             edge = True
             continue
         if edge and part and out and out[-1].islower() and part[0].isupper():
-            out += ". "
+            out += _PART_JOINER
         out += part
         edge = False
     return out
@@ -97,24 +101,28 @@ class Node:
 
     def text(self, *, shown: bool = True) -> str:
         """The element's text, whitespace collapsed. ``shown`` leaves out what
-        only a screen reader hears (``sr-only``), as the page shows it. A
-        title and the line after it, drawn as two elements with nothing
-        between ("NSSF compliance" then "National Social …"), read as two
-        sentences rather than one run-together word."""
+        only a screen reader hears (``sr-only``), as the page shows it. Two
+        parts drawn as elements with nothing between them ("NSSF compliance"
+        then "National Social …", "Cluster Meetings" then "UGX 291K") read
+        apart, joined by " · ", rather than as one run-together word."""
         parts: list[str] = []
         self._collect(parts, shown)
         return " ".join(_sentence_edges(parts).split())
 
-    def _collect(self, parts: list[str], shown: bool) -> None:
+    def _collect(self, parts: list[str], shown: bool, *, edges: bool = True) -> None:
+        """The element's words in order; ``edges`` marks where each element
+        inside starts and ends (for text()), running text leaves them out."""
         for child in self.children:
             if isinstance(child, str):
                 parts.append(child)
             elif child.tag in SILENT or (shown and child.has("sr-only")):
                 continue
-            else:
+            elif edges:
                 parts.append(_EDGE)
                 child._collect(parts, shown)
                 parts.append(_EDGE)
+            else:
+                child._collect(parts, shown, edges=False)
 
 
 def _attrs(pairs) -> dict:
@@ -1107,7 +1115,7 @@ def _sentences(node: Node, skip: set[int], out: list[dict]) -> list[dict]:
             lead = child.text()
         if _is_link(child) and child.text():
             links.append(_link_item(child))
-        child._collect(parts, True)
+        child._collect(parts, True, edges=False)
     flush()
     return out
 
