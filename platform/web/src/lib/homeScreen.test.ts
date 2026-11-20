@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { GetHomeResponseSchema, HomeFigureSchema } from '@/gen/edify/screens/v1/home_pb';
 
-import { homeDate, homeFigures, homeHeader, homeTone } from './homeScreen';
+import { heroFirst, homeDate, homeFigures, homeHeader, homeTone } from './homeScreen';
 
 const figure = (key: string, over: Partial<{ value: string; tone: string; loading: boolean }> = {}) =>
   create(HomeFigureSchema, { key, label: key.toUpperCase(), url: '/todos', description: `${key} described`, ...over });
@@ -23,6 +23,29 @@ describe('homeFigures', () => {
 
   it('keeps a figure that came with its own value', () => {
     expect(homeFigures([figure('schools', { value: '12', tone: 'good' })], [])[0]).toMatchObject({ value: '12', tone: 'good', loading: false });
+  });
+});
+
+describe('heroFirst', () => {
+  const cards = homeFigures([figure('upcoming'), figure('under_way'), figure('overdue'), figure('waiting_me')], []);
+
+  it('puts a CCEO’s two hero figures, Overdue and Waiting on you, first and marks them (owner, 2026-11-20)', () => {
+    const shown = heroFirst(cards, 'CCEO');
+    expect(shown.map((c) => [c.key, c.hero])).toEqual([
+      ['overdue', true],
+      ['waiting_me', true],
+      ['upcoming', false],
+      ['under_way', false],
+    ]);
+  });
+
+  it('leaves another role’s figures as they come, none a hero', () => {
+    expect(heroFirst(cards, 'Accountant').map((c) => [c.key, c.hero])).toEqual([
+      ['upcoming', false],
+      ['under_way', false],
+      ['overdue', false],
+      ['waiting_me', false],
+    ]);
   });
 });
 

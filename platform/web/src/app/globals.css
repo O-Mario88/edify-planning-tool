@@ -172,3 +172,31 @@ select.edify-select {
   table[data-titled][data-titled][data-titled]:not(#edify-heading-none) > thead > tr > :is(th, td) {
   text-transform: none !important;
 }
+
+/* HERO FIGURES (owner, 2026-11-20, doc 181 §6.1: a CCEO's are Overdue and
+   Waiting on you). The overview keeps its card and its four figures; the
+   heroes come first, two to the row and larger, and the others follow as a
+   compact row under them. lib/homeScreen heroFirst marks them. */
+.edify-home__figures[data-heroes] > li {
+  grid-column: span 2;
+}
+.edify-home__figures[data-heroes] > li[data-home-hero] > .edify-home__figure {
+  min-height: 6.25rem;
+  padding: 0.875rem 1rem;
+}
+.edify-home__figures[data-heroes] > li[data-home-hero] .edify-home__figure-value {
+  font-size: 2rem;
+  line-height: 1.1;
+}
+.edify-home__figures[data-heroes] > li[data-home-hero] .edify-home__figure-label {
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+}
+.edify-home__figures[data-heroes] > li:not([data-home-hero]) > .edify-home__figure {
+  flex-direction: row;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+}
+

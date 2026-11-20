@@ -20,6 +20,7 @@ import { routeShortcuts } from './route/routeData';
 import { SvgIcon } from '../ui/SvgIcon';
 import { TodayScreen } from './TodayScreen';
 import { redesignedToday } from '../ds/todayView';
+import { splitHeroes } from './homeHeroes';
 
 const MORNING_ENDS = 12;
 const AFTERNOON_ENDS = 17;
@@ -136,6 +137,7 @@ export function HomeScreen({ onOpen }: HomeScreenProps) {
     );
   }
 
+  const { heroes, rest } = splitHeroes(figures, home?.roleTitle ?? '');
   return (
     <ScrollView
       contentContainerStyle={styles.page}
@@ -168,11 +170,26 @@ export function HomeScreen({ onOpen }: HomeScreenProps) {
                 {home.todayLabel} · FY{home.fy}
               </Text>
             </View>
-            <View style={styles.grid}>
-              {figures.map((figure) => (
-                <FigureTile key={figure.key} figure={figure} onOpen={onOpen} />
-              ))}
-            </View>
+            {heroes.length > 0 ? (
+              <>
+                <View style={styles.grid}>
+                  {heroes.map((figure) => (
+                    <FigureTile key={figure.key} figure={figure} onOpen={onOpen} isHero />
+                  ))}
+                </View>
+                <View style={[styles.grid, styles.restRow]}>
+                  {rest.map((figure) => (
+                    <FigureTile key={figure.key} figure={figure} onOpen={onOpen} isCompact />
+                  ))}
+                </View>
+              </>
+            ) : (
+              <View style={styles.grid}>
+                {figures.map((figure) => (
+                  <FigureTile key={figure.key} figure={figure} onOpen={onOpen} />
+                ))}
+              </View>
+            )}
           </View>
 
           <View style={cardStyle}>
@@ -290,7 +307,16 @@ export function HomeScreen({ onOpen }: HomeScreenProps) {
 
 type Open = (url: string, label: string) => void;
 
-function FigureTile({ figure, onOpen }: { readonly figure: HomeFigure; readonly onOpen: Open }) {
+interface FigureTileProps {
+  readonly figure: HomeFigure;
+  readonly onOpen: Open;
+  /** One of the role's hero figures: larger (homeHeroes). */
+  readonly isHero?: boolean;
+  /** A figure under the heroes: a compact row of icon, value and label. */
+  readonly isCompact?: boolean;
+}
+
+function FigureTile({ figure, onOpen, isHero = false, isCompact = false }: FigureTileProps) {
   const { colors } = useTheme();
   const tone = toneColors(colors, figure.tone);
   const isTinted = figureWashed(figure.tone);
@@ -301,6 +327,8 @@ function FigureTile({ figure, onOpen }: { readonly figure: HomeFigure; readonly 
       accessibilityLabel={`${figure.label}: ${figure.loading ? 'loading' : figure.value}. ${figure.description}`}
       style={[
         styles.figure,
+        isHero && styles.heroFigure,
+        isCompact && styles.compactFigure,
         { borderColor: colors.raisedBorder, backgroundColor: isTinted ? tone.soft : colors.surface },
       ]}
     >
@@ -308,11 +336,11 @@ function FigureTile({ figure, onOpen }: { readonly figure: HomeFigure; readonly 
       {figure.loading ? (
         <View style={[styles.skeleton, styles.skeletonValue, { backgroundColor: colors.border }]} />
       ) : (
-        <Text style={[styles.figureValue, { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>
+        <Text style={[styles.figureValue, isHero && styles.heroValue, { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>
           {figure.value}
         </Text>
       )}
-      <Text style={[styles.figureLabel, { color: colors.textMuted }]} numberOfLines={2}>
+      <Text style={[styles.figureLabel, isHero && styles.heroLabel, { color: colors.textMuted }]} numberOfLines={2}>
         {figure.label}
       </Text>
     </Pressable>
@@ -488,6 +516,12 @@ const styles = StyleSheet.create({
     minHeight: 94,
   },
   figureValue: { fontFamily: fonts.medium, fontSize: 18, lineHeight: 20.8 },
+  // The role's hero figures (homeHeroes): larger; the rest a compact row.
+  heroFigure: { minHeight: 112, paddingVertical: 14 },
+  heroValue: { fontFamily: fonts.bold, fontSize: 30, lineHeight: 34 },
+  heroLabel: { fontFamily: fonts.semibold, fontSize: 13, lineHeight: 16 },
+  compactFigure: { flexDirection: 'row', gap: 6, minHeight: 44, paddingVertical: 8 },
+  restRow: { marginTop: 8 },
   figureLabel: { fontFamily: fonts.medium, fontSize: 12, lineHeight: 14.4, textAlign: 'center' },
   list: { gap: 8 },
   item: {

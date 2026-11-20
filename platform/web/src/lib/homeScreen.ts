@@ -51,6 +51,23 @@ export function homeFigures(figures: readonly HomeFigure[], queue: readonly Home
   });
 }
 
+/** Each role's hero figures, the one or two that decide today's work, drawn
+ *  large and first (owner, 2026-11-20, doc 181 §6.1: a CCEO's are Overdue
+ *  and Waiting on you). A role not named keeps its figures as they come. */
+export const HERO_FIGURES: Readonly<Record<string, readonly string[]>> = {
+  CCEO: ['overdue', 'waiting_me'],
+};
+
+/** The overview's figures with the role's heroes first, each marked. */
+export function heroFirst(cards: readonly HomeFigureCard[], roleTitle: string): (HomeFigureCard & { hero: boolean })[] {
+  const heroes = HERO_FIGURES[roleTitle] ?? [];
+  const marked = cards.map((c) => ({ ...c, hero: heroes.includes(c.key) }));
+  return [
+    ...heroes.flatMap((key) => marked.filter((c) => c.key === key)),
+    ...marked.filter((c) => !c.hero),
+  ];
+}
+
 /** The desk header's words: "Home · Admin", the greeting by name. */
 export function homeHeader(home: GetHomeResponse): { eyebrow: string; title: string; description: string } {
   return {

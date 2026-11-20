@@ -8,7 +8,7 @@ import { NotMovedYet } from '@/components/page/NotMovedYet';
 import { environment } from '@/lib/environment';
 import { TodayScreen } from '@/components/today/TodayScreen';
 import { askHome } from '@/lib/homeData';
-import { homeDate, homeFigures, homeHeader } from '@/lib/homeScreen';
+import { heroFirst, homeDate, homeFigures, homeHeader } from '@/lib/homeScreen';
 import type { HomeFigureCard } from '@/lib/homeScreen';
 import { safeIcon } from '@/lib/icon';
 
@@ -179,7 +179,8 @@ export default async function HomePage() {
   if (REDESIGNED.has(answer.parts.role)) return <TodayScreen parts={answer.parts} />;
   const { home, queue, figures, total } = answer.parts;
   const header = homeHeader(home);
-  const cards = homeFigures(home.figures, figures);
+  const cards = heroFirst(homeFigures(home.figures, figures), home.roleTitle);
+  const heroes = cards.filter((c) => c.hero).length;
   const rows = queue.priorityRows;
   return (
     <div className="edify-home" data-mobile-family="home" data-page="/home">
@@ -206,9 +207,9 @@ export default async function HomePage() {
             {homeDate(home)}
           </time>
         </div>
-        <ul className="edify-home__figures" role="list" data-count={cards.length}>
+        <ul className="edify-home__figures" role="list" data-count={cards.length} data-heroes={heroes || undefined}>
           {cards.map((card) => (
-            <li key={card.key}>
+            <li key={card.key} data-home-hero={card.hero || undefined}>
               <Figure card={card} />
             </li>
           ))}
