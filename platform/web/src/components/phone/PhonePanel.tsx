@@ -8,6 +8,9 @@ import type { CSSProperties } from 'react';
 
 import type { PagePanel, PagePanelItem } from '@/gen/edify/screens/v1/page_pb';
 
+import { isStepper } from '@/lib/presentBlocks';
+
+import { PeriodStepper } from '../page/PeriodStepper';
 import { phoneTone } from './tone';
 
 function Item({ item, resolve }: { item: PagePanelItem; resolve: (href: string) => string }) {
@@ -48,6 +51,7 @@ function Item({ item, resolve }: { item: PagePanelItem; resolve: (href: string) 
         </div>
       );
     case 'links':
+      if (isStepper(kind.value.links)) return <PeriodStepper links={kind.value.links} resolve={resolve} phone />;
       return (
         <div data-ph="panel-links">
           {kind.value.links.map((link) => {

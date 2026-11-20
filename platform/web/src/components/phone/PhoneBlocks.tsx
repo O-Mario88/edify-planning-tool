@@ -7,6 +7,7 @@
 import type { PageAction, PageBlock, PageFacts } from '@/gen/edify/screens/v1/page_pb';
 import { actionHref, resolveHref } from '@/lib/feedPage';
 import { liftHeroes } from '@/lib/heroStrip';
+import { presentBlocks } from '@/lib/presentBlocks';
 import { headingOnly, tableNote } from '@/lib/tableNote';
 
 import { Explanation } from '../page/Explanation';
@@ -51,7 +52,8 @@ function FactsCard({ facts, resolve }: { facts: PageFacts; resolve: (href: strin
 
 export function PhoneBlocks({ blocks: given, pagePath, drawerHref, selectable }: PhoneBlocksProps) {
   // The page's hero figures lead it, larger (lib/heroStrip, owner 2026-11-20).
-  const { blocks, heroAt } = liftHeroes(given, pagePath);
+  // Counted links read as figure tiles (lib/presentBlocks, owner 2026-11-20).
+  const { blocks, heroAt } = liftHeroes(presentBlocks(given), pagePath);
   const resolve = (href: string) => resolveHref(pagePath, href);
   const hrefOf = (action: PageAction) => actionHref(action, pagePath, drawerHref);
   const draw = (list: readonly PageBlock[], index: number, bare = false) => {

@@ -480,6 +480,26 @@ dialog[data-ph='sheet'] [data-ph='row-name'] { font-size: 16px !important; line-
   [data-ph='tile-info'] { top: 10px !important; right: 10px !important; }
 }
 
+/* A strip of sibling pages in the tabs' segment shape (owner, 2026-11-20;
+   tabs keep the segment shape, the open one is never a pill): one bordered
+   rail with straight dividers and curved ends, scrolling sideways when long.
+   A count at a tab's end is its badge. Inside a card that switches between
+   parts it keeps the card's 16px inset. */
+[data-ph='strip'] { gap: 0 !important; width: max-content !important; max-width: 100% !important; padding: 0 !important; border: 1px solid var(--ph-raised-border) !important; border-radius: 10px !important; background: var(--ph-raised) !important; }
+[data-ph='strip-link'] { position: relative !important; gap: 6px !important; height: 36px !important; padding: 0 14px !important; border: 0 !important; border-radius: 0 !important; background: none !important; font-size: 13px !important; }
+[data-ph='strip-link']:first-of-type { border-radius: 9px 0 0 9px !important; }
+[data-ph='strip-link']:last-child { border-radius: 0 9px 9px 0 !important; }
+[data-ph='strip-link']:first-of-type:last-child { border-radius: 9px !important; }
+[data-ph='strip-link'][aria-current='page'] { border: 0 !important; background: var(--ph-segment) !important; color: #ffffff !important; }
+[data-ph='strip-link']:not([aria-current='page']) + [data-ph='strip-link']:not([aria-current='page'])::before { content: '' !important; position: absolute !important; left: 0 !important; top: 9px !important; bottom: 9px !important; width: 1px !important; background: var(--ph-border) !important; }
+[data-ph='strip-link'][aria-current='page'] [data-ph='count'] { background: rgba(255, 255, 255, 0.22) !important; color: #ffffff !important; }
+[data-ph='seg-body'] > [data-ph='strip'] { max-width: calc(100% - 32px) !important; margin: 12px 16px !important; }
+/* Links that step through periods, as one segmented control the width of
+   the card (PeriodStepper). */
+[data-ph='stepper'] { display: flex !important; width: 100% !important; overflow: hidden !important; border: 1px solid var(--ph-raised-border) !important; border-radius: 10px !important; background: var(--ph-raised) !important; }
+[data-ph='step'] { display: inline-flex !important; flex: 1 1 0 !important; min-width: 0 !important; align-items: center !important; justify-content: center !important; gap: 4px !important; height: 36px !important; padding: 0 8px !important; color: var(--ph-text) !important; font-size: 13px !important; font-weight: 600 !important; white-space: nowrap !important; text-decoration: none !important; }
+[data-ph='step'] + [data-ph='step'] { border-left: 1px solid var(--ph-raised-border) !important; }
+
 /* Last: whatever this layer gives a part's display, hidden hides it. */
 [data-ph][hidden], [data-ph] [hidden] { display: none !important; }
 

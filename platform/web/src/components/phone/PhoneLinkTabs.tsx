@@ -7,6 +7,7 @@
 import { CalendarDays } from 'lucide-react';
 
 import type { PageLinkTab, PageLinkTabs } from '@/gen/edify/screens/v1/page_pb';
+import { tabCount } from '@/lib/presentBlocks';
 
 import { MorePanel } from './MorePanel';
 
@@ -15,6 +16,17 @@ export function railTabs(tabs: readonly PageLinkTab[]): { shown: PageLinkTab[]; 
   const open = tabs.findIndex((tab) => tab.active);
   const keep = new Set([0, open > 0 ? open : 1]);
   return { shown: tabs.filter((_, index) => keep.has(index)), rest: tabs.filter((_, index) => !keep.has(index)) };
+}
+
+/** A tab's words, with a count at its end drawn as its badge ("My activities 8"). */
+function StripWords({ label }: { label: string }) {
+  const { label: words, count } = tabCount(label);
+  return (
+    <>
+      {words}
+      {count ? <span data-ph="count">{count}</span> : null}
+    </>
+  );
 }
 
 interface PhoneLinkTabsProps {
@@ -31,7 +43,7 @@ export function PhoneLinkTabs({ tabs, resolve, besideHref }: PhoneLinkTabsProps)
         {tabs.label ? <span data-ph="strip-label">{tabs.label}</span> : null}
         {tabs.tabs.map((tab) => (
           <a key={tab.href} data-ph="strip-link" href={resolve(tab.href)} aria-current={tab.active ? 'page' : undefined}>
-            {tab.label}
+            <StripWords label={tab.label} />
           </a>
         ))}
       </nav>

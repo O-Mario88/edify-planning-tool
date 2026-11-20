@@ -8,6 +8,7 @@ import type { ReactNode } from 'react';
 import type { PageAction, PageBlock, PageLinkTabs } from '@/gen/edify/screens/v1/page_pb';
 import { actionHref, resolveHref } from '@/lib/feedPage';
 import { liftHeroes } from '@/lib/heroStrip';
+import { presentBlocks, tabCount } from '@/lib/presentBlocks';
 import { headingOnly, tableNote } from '@/lib/tableNote';
 
 import { BUTTON_PRIMARY } from '../blocks/buttons';
@@ -38,11 +39,13 @@ export interface FeedBlocksProps {
 }
 
 function LinkTabsBlock({ rail, pagePath, hrefOf }: { rail: PageLinkTabs; pagePath: string; hrefOf: (action: PageAction) => string }) {
-  const resolved = { ...rail, tabs: rail.tabs.map((tab) => ({ ...tab, href: resolveHref(pagePath, tab.href) })) };
+  // A count at a label's end ("My activities 8") is drawn as the tab's badge.
+  const counted = rail.tabs.map((tab) => tabCount(tab.label));
+  const resolved = { ...rail, tabs: rail.tabs.map((tab, index) => ({ ...tab, label: counted[index]?.label ?? tab.label, href: resolveHref(pagePath, tab.href) })) };
   const beside = rail.beside;
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <TabRail rail={resolved} />
+      <TabRail rail={resolved} counts={counted.map((c) => c.count || undefined)} />
       {beside ? (
         <a href={hrefOf(beside)} className={BUTTON_PRIMARY} data-action={beside.key}>
           <Icon name="calendar" className="h-[18px] w-[18px]" />
@@ -91,7 +94,8 @@ export function inGroups(blocks: readonly PageBlock[], draw: (block: PageBlock, 
 
 export function FeedBlocks({ blocks: given, pagePath, drawerHref, selectable, clearFilters = true }: FeedBlocksProps) {
   // The page's hero figures lead it, larger (lib/heroStrip, owner 2026-11-20).
-  const { blocks, heroAt } = liftHeroes(given, pagePath);
+  // Counted links read as figure tiles (lib/presentBlocks, owner 2026-11-20).
+  const { blocks, heroAt } = liftHeroes(presentBlocks(given), pagePath);
   const resolve = (href: string) => resolveHref(pagePath, href);
   const hrefOf = (action: PageAction) => actionHref(action, pagePath, drawerHref);
   const pagerOf = (block: PageBlock | undefined) =>

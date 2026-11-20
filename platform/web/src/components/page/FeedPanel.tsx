@@ -8,9 +8,11 @@ import { Fragment } from 'react';
 import type { ReactNode } from 'react';
 
 import type { PagePanel, PagePanelItem } from '@/gen/edify/screens/v1/page_pb';
+import { isStepper } from '@/lib/presentBlocks';
 import { noteTone, sentenceParts } from '@/lib/sentence';
 
 import { Badge } from '../blocks/Badge';
+import { PeriodStepper } from './PeriodStepper';
 import { textTone } from '../blocks/tones';
 
 /** A paragraph read whole: its bold opening, its links at their words. */
@@ -153,6 +155,25 @@ export function FeedPanel({ panel, resolve, drawerHref = '', nested = false, foo
       <div data-block="panel" data-loose-text="" className="space-y-1 edify-text-caption edify-text-muted">
         {items}
       </div>
+    );
+  }
+  // A heading with links that step through periods ("‹ Previous week" …
+  // "Next week ›"): the stepper sits right of the title, the line under it.
+  const stepAt = panel.items.findIndex((item) => item.kind.case === 'links' && isStepper(item.kind.value.links));
+  const stepItem = panel.items[stepAt];
+  if (stepItem?.kind.case === 'links' && panel.title && !nested) {
+    const rest = items.filter((_, index) => index !== stepAt);
+    return (
+      <section aria-label={panel.title} data-block="panel" className="card px-4 py-3">
+        <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <div className="min-w-0">
+            <h2 className="text-[length:var(--edify-text-title-size)] font-bold">{panel.title}</h2>
+            {panel.subtitle ? <p className="edify-text-caption edify-text-muted">{panel.subtitle}</p> : null}
+          </div>
+          <PeriodStepper links={stepItem.kind.value.links} resolve={resolve} />
+        </header>
+        {rest.length ? <div className="mt-2 space-y-1.5">{rest}</div> : null}
+      </section>
     );
   }
   return (
