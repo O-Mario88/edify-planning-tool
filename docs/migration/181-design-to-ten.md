@@ -247,11 +247,36 @@ start the day the owner answers §6.1 and §6.2.
 - **Quality system:** `platform/tools/ui-sweep` (every role × phone, tablet
   and desktop, plus axe) runs in Platform CI, report-only until it reaches
   zero findings.
-- **Phase 5:** on phones, tables are row cards in both apps, with the
-  record, ID, status, the first four facts, and "All details" for the rest.
-  One constant, `ROWS_ON_PHONES`, switches back to the sideways table.
+- **Phase 5, reversed by the owner the same day:** row cards, then a
+  compact list with a detail sheet from 16 rows, were built in both apps;
+  the owner chose "the spreadsheet list format better on all screen", so
+  `ROWS_ON_PHONES` is off and the code is kept. Tables were then made more
+  premium ("just make them look more premium"): a white title bar, a light
+  column band closed by one fine line, no rules between column names, finer
+  row hairlines, edges on the 16px content line, linked names in link blue
+  on phones too, a quiet "—" in an empty cell, and column names in proper
+  Title Case (`lib/titleCase`). Row height stays the owner's pinned 32px
+  (2026-09-05; the owner declined 40px).
+- **Explanations fold** (owner: "hide all the explanations ... using a
+  chevron"): a table's footnote, and a title-less one-text panel right after
+  a table (`lib/tableNote`), sit closed under "Explanation" on desktop,
+  phone web and the app. A title-only panel is a section heading, not an
+  empty card.
+- **School IDs:** every School ID column read empty in both apps because
+  the feed ran pages without the middleware that fills `{% school_code %}`.
+  The feed now runs it, and every Go page writes the same words
+  (`internal/schoolcode`, about twenty pages).
+- **§6.1 and §6.2 answered** (owner, 2026-11-20): a CCEO's hero figures are
+  Overdue and Waiting on you (Home draws them first and larger, both apps);
+  Overdue is one figure, this financial year only: Home's tile and the "My
+  Overdue Plans" row count the same work and open the same list. The
+  dashboard's "What needs you now" table still lists every year's, and a
+  Lead's team row stays that table's count.
+- **Sweep findings:** colour contrast on record cards, nameless selects,
+  the calendar's grid rows, small phone targets, cut-off directory names,
+  run-together parts and the unfocusable scroll region are fixed.
 
-**Still open:** the full baseline sweep after these fixes; Phases 2 and 4,
-which wait on §6.1 and §6.2; Phase 3, one visual system on desktop;
-Phase 6, drawers, toasts, copy and motion; Phase 7, sessions with users.
+**Still open:** the sweep re-run to zero and its CI gate; Phase 3, one
+visual system on desktop; Phase 6, drawers (Django's until each save cuts
+over), toasts, copy and motion; Phase 7, sessions with users.
 
