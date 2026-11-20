@@ -274,13 +274,22 @@ func cardPlace(r *planRow, empty string) *screensv1.PageCell {
 	return place
 }
 
-// cardCode is the cards' School ID cell: {% school_code %} is a token span
-// the feed reads as nothing.
+// cardCode is the cards' School ID cell: the ID the web fills in for its
+// {% school_code %} tag.
 func cardCode(r *planRow) *screensv1.PageCell {
 	if r.schoolID.truthy() {
-		return &screensv1.PageCell{}
+		return &screensv1.PageCell{Text: filledCode(r.row)}
 	}
 	return &screensv1.PageCell{Text: dash}
+}
+
+// filledCode is what the web writes for {% school_code row.school_id %}: a
+// live school's ID, else "ID unavailable".
+func filledCode(r *row) string {
+	if r.a == nil || !r.a.schoolLive {
+		return closedschools.SchoolCode("")
+	}
+	return closedschools.SchoolCode(r.schoolID.value)
 }
 
 func cardTable(title string, labels []string, numericLast bool, rows []*screensv1.PageRow) *screensv1.PageBlock {

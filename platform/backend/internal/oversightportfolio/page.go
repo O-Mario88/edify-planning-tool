@@ -212,9 +212,11 @@ func cell(t, href string) *screensv1.PageCell { return &screensv1.PageCell{Text:
 // schoolRow is one school's row. Its school code is drawn as a token the
 // page fills in after it renders, which the feed reads as no text.
 func schoolRow(s school) *screensv1.PageRow {
+	// The school's ID as the web fills in its {% school_code %} tag (the
+	// portfolio's schools are live).
 	code := "—"
 	if s.code != "" {
-		code = ""
+		code = closedschools.SchoolCode(s.code)
 	}
 	district := s.district
 	if district == "" {

@@ -16,6 +16,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/btportfolio"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolcode"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 )
 
@@ -82,8 +83,8 @@ func (s *Service) portal(ctx context.Context, p auth.Principal, path string, que
 }
 
 // portalLoans is "Your MFI loans". The School ID cell is a placeholder the
-// web fills after the page is drawn (school_code), so the feed reads it
-// empty.
+// web fills after the page is drawn (school_code); it is filled the same way
+// here.
 func (s *Service) portalLoans(ctx context.Context, p auth.Principal, f btportfolio.Filters, now time.Time, query url.Values) ([]*screensv1.PageBlock, error) {
 	list, err := s.loanRows(ctx, p, f, now)
 	if err != nil {
@@ -98,15 +99,23 @@ func (s *Service) portalLoans(ctx context.Context, p auth.Principal, f btportfol
 	}
 	r := btportfolio.Rules
 	shown, pager := paged(list, "loans_page", query)
+	refs := []string{}
+	for _, x := range shown {
+		refs = append(refs, x.schoolPK)
+	}
+	codes, err := schoolcode.Lookup(ctx, s.db, refs)
+	if err != nil {
+		return nil, err
+	}
 	out := []*screensv1.PageRow{}
 	for _, x := range shown {
 		school := &screensv1.PageCell{Text: closedschools.Collapse(x.school)}
 		if x.school != "" && x.schoolPK != "" && slices.Contains(r.SchoolLinkRoles, p.ActiveRole) {
 			school.Href = "/schools/" + url.PathEscape(x.schoolPK)
 		}
-		code := &screensv1.PageCell{}
-		if x.schoolPK == "" {
-			code.Text = "—"
+		code := &screensv1.PageCell{Text: "—"}
+		if x.schoolPK != "" {
+			code.Text = codes.Of(x.schoolPK)
 		}
 		out = append(out, &screensv1.PageRow{Cells: []*screensv1.PageCell{
 			{Text: closedschools.Collapse(x.ref)}, code, school, {Text: closedschools.Collapse(x.purpose)},

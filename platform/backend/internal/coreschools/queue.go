@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 )
 
@@ -188,7 +189,9 @@ func (pg *page) queue(ctx context.Context) ([]*screensv1.PageBlock, error) {
 	cols = append(cols, &screensv1.PageColumn{Label: "Actions", Numeric: true})
 	t := &screensv1.PageTable{Columns: cols}
 	for _, q := range rows {
-		code := ""
+		// The school's ID as the web fills in its {% school_code %} tag (the
+		// queue's schools are live).
+		code := closedschools.SchoolCode(q.code)
 		if q.code == "" {
 			code = "—"
 		}

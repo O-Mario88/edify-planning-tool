@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
 )
 
 // deliveryState is one school's delivery chain over its core visits and
@@ -116,7 +118,8 @@ func (pg *page) oversightBlocks(ctx context.Context) ([]*screensv1.PageBlock, er
 
 // oversightCells is one school's row of the read-only table.
 func oversightCells(r row, partner int, d deliveryState, sent map[[2]string]string) []*screensv1.PageCell {
-	code := ""
+	// The school's ID as the web fills in its {% school_code %} tag.
+	code := closedschools.SchoolCode(r.code)
 	if r.code == "" {
 		code = "—"
 	}

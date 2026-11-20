@@ -26,11 +26,13 @@ const TeamPlansPath = "/admin-ops/team-plans"
 type planRow struct {
 	ID, Owner, Monitor, Type, Status, Delivery, Partner, Project string
 	School, SchoolID, Cluster                                    *string
-	Planned                                                      *time.Time
-	Reschedules                                                  int
-	Salesforce, IAState, Payment                                 string
-	CostMissing                                                  bool
-	Updated                                                      time.Time
+	// Code is the live school's School ID, as the web fills it in.
+	Code                         string
+	Planned                      *time.Time
+	Reschedules                  int
+	Salesforce, IAState, Payment string
+	CostMissing                  bool
+	Updated                      time.Time
 }
 
 // person is _people_index's entry.
@@ -102,7 +104,7 @@ func (s *Service) teamPlans(ctx context.Context, p auth.Principal, query url.Val
 	rows, err := s.db.Query(ctx, `
 SELECT a.id, COALESCE(a.responsible_staff_id, ''), COALESCE(a.monitored_by_staff_id, ''), a.activity_type, a.status,
   COALESCE(a.delivery_type, ''), COALESCE(a.assigned_partner_id, ''), COALESCE(a.project_id, ''),
-  s.name, s.id, cl.name, a.planned_date, COALESCE(a.reschedule_count, 0), COALESCE(a.salesforce_activity_id, ''),
+  s.name, s.id, COALESCE(CASE WHEN s.deleted_at IS NULL THEN s.school_id END, ''), cl.name, a.planned_date, COALESCE(a.reschedule_count, 0), COALESCE(a.salesforce_activity_id, ''),
   COALESCE(a.ia_verification_status, ''), COALESCE(a.payment_status, ''), a.cost_missing, a.updated_at
 FROM activity a LEFT JOIN school s ON s.id = a.school_id LEFT JOIN cluster cl ON cl.id = a.cluster_id
 WHERE `+where+fmt.Sprintf(`
@@ -113,7 +115,7 @@ ORDER BY a.planned_date, a.planned_month, a.planned_week, a.id LIMIT $%d`, len(a
 	list, err := pgx.CollectRows(rows, func(r pgx.CollectableRow) (planRow, error) {
 		var x planRow
 		err := r.Scan(&x.ID, &x.Owner, &x.Monitor, &x.Type, &x.Status, &x.Delivery, &x.Partner, &x.Project,
-			&x.School, &x.SchoolID, &x.Cluster, &x.Planned, &x.Reschedules, &x.Salesforce,
+			&x.School, &x.SchoolID, &x.Code, &x.Cluster, &x.Planned, &x.Reschedules, &x.Salesforce,
 			&x.IAState, &x.Payment, &x.CostMissing, &x.Updated)
 		return x, err
 	})

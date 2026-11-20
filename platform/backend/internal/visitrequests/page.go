@@ -9,6 +9,7 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/calendarpage"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/tablepager"
@@ -49,7 +50,9 @@ type request struct {
 	id, kind, status, note, person string
 	schoolID, schoolName, district string
 	districtID                     string
-	planned                        *time.Time
+	// code is the live school's School ID, as the web fills it in.
+	code    string
+	planned *time.Time
 }
 
 // ownerIDs is scoping.owner_ids: both ids a person's work is filed under.
@@ -82,7 +85,7 @@ func (s *Service) readRequests(ctx context.Context, ids []string, mine bool) ([]
 	}
 	rows, err := s.db.Query(ctx, `
 SELECT a.id, a.activity_type, a.status, a.owner_decision_note, COALESCE(`+person+`, ''),
-  COALESCE(s.id, ''), COALESCE(s.name, ''), COALESCE(d.name, ''), COALESCE(d.id, ''), a.planned_date
+  COALESCE(s.id, ''), COALESCE(s.name, ''), COALESCE(CASE WHEN s.deleted_at IS NULL THEN s.school_id END, ''), COALESCE(d.name, ''), COALESCE(d.id, ''), a.planned_date
 FROM activity a
 LEFT JOIN school s ON s.id = a.school_id
 LEFT JOIN district d ON d.id = s.district_id
@@ -95,7 +98,7 @@ ORDER BY `+order+limit, args...)
 	out := []request{}
 	for rows.Next() {
 		var r request
-		if err := rows.Scan(&r.id, &r.kind, &r.status, &r.note, &r.person, &r.schoolID, &r.schoolName, &r.district,
+		if err := rows.Scan(&r.id, &r.kind, &r.status, &r.note, &r.person, &r.schoolID, &r.schoolName, &r.code, &r.district,
 			&r.districtID, &r.planned); err != nil {
 			return nil, fmt.Errorf("visitrequests: reading a request: %w", err)
 		}
@@ -209,11 +212,10 @@ func mineBlocks(mine []request, d role, query url.Values) []*screensv1.PageBlock
 		{Label: "Owner asked"}, {Label: "Decision"}}}
 	page := tablepager.Paginate(len(mine), minePageSize, query, minePageParam)
 	for _, r := range mine[page.Start:page.End] {
-		// The School ID is written in after the page is drawn; the feed
-		// reads its place as empty.
+		// The School ID as the web fills it in after the page is drawn.
 		code, school := "—", &screensv1.PageCell{Text: "—" + calendarpage.ActivityTypeLabel(r.kind)}
 		if r.schoolID != "" {
-			code = ""
+			code = closedschools.SchoolCode(r.code)
 			school.Text = r.schoolName + calendarpage.ActivityTypeLabel(r.kind)
 			if d.OpenSchool {
 				school.Href = "/schools/" + r.schoolID

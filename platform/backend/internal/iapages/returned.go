@@ -24,7 +24,7 @@ const returnedPageSize = 50
 // the last changed first, each with the reasons its verification gave.
 func (s *Service) returned(ctx context.Context, p auth.Principal, query url.Values, where string, args []any) (*screensv1.GetPageResponse, bool, error) {
 	rows, err := s.db.Query(ctx, fmt.Sprintf(`
-SELECT a.id, a.activity_type, a.school_id, sc.name, a.responsible_staff_id, a.updated_at,
+SELECT a.id, a.activity_type, a.school_id, sc.name, COALESCE(CASE WHEN sc.deleted_at IS NULL THEN sc.school_id END, ''), a.responsible_staff_id, a.updated_at,
        COALESCE((SELECT string_agg(r.reason, ', ') FROM ia_verification v JOIN ia_returned_reason r ON r.verification_id = v.id
                  WHERE v.activity_id = a.id), '')
 FROM activity a LEFT JOIN school sc ON sc.id = a.school_id
@@ -37,12 +37,13 @@ ORDER BY a.updated_at DESC`, where), args...)
 	type item struct {
 		id, kind, reasons string
 		school, name      *string
+		code              string
 		staff             *string
 		at                time.Time
 	}
 	items, err := pgx.CollectRows(rows, func(r pgx.CollectableRow) (item, error) {
 		var it item
-		err := r.Scan(&it.id, &it.kind, &it.school, &it.name, &it.staff, &it.at, &it.reasons)
+		err := r.Scan(&it.id, &it.kind, &it.school, &it.name, &it.code, &it.staff, &it.at, &it.reasons)
 		return it, err
 	})
 	if err != nil {
@@ -74,12 +75,11 @@ ORDER BY a.updated_at DESC`, where), args...)
 		if !ok {
 			kind = it.kind
 		}
-		// {% school_code %} writes a token the response middleware fills in,
-		// which the feed's render never runs: the app reads it empty.
+		// The school's ID as the web fills in its {% school_code %} tag.
 		code := "—"
 		school := &screensv1.PageCell{Text: "Cluster"}
 		if s := deref(it.school); s != "" {
-			code = ""
+			code = closedschools.SchoolCode(it.code)
 			school = &screensv1.PageCell{Text: deref(it.name)}
 			if links && school.Text != "" {
 				school.Href = "/schools/" + url.PathEscape(s)

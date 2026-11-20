@@ -22,7 +22,7 @@ const HistoryPath = "/ia/history/"
 // stored) and whether it counts in analytics; 50 a page.
 func (s *Service) history(ctx context.Context, p auth.Principal, query url.Values, where string, args []any) (*screensv1.GetPageResponse, bool, error) {
 	rows, err := s.db.Query(ctx, fmt.Sprintf(`
-SELECT a.id, a.activity_type, a.school_id, sc.name, cl.name, p.name, a.responsible_staff_id,
+SELECT a.id, a.activity_type, a.school_id, sc.name, COALESCE(CASE WHEN sc.deleted_at IS NULL THEN sc.school_id END, ''), cl.name, p.name, a.responsible_staff_id,
        h.verified_by, vu.name, h.verified_at, h.analytics_included
 FROM ia_verification_history h JOIN activity a ON a.id = h.activity_id
 LEFT JOIN school sc ON sc.id = a.school_id LEFT JOIN cluster cl ON cl.id = a.cluster_id
@@ -37,13 +37,14 @@ ORDER BY h.verified_at DESC`, where), args...)
 	type entry struct {
 		id, kind, verifiedBy                        string
 		school, schoolName, cluster, partner, staff *string
+		filled                                      string
 		verifier                                    *string
 		at                                          time.Time
 		included                                    bool
 	}
 	entries, err := pgx.CollectRows(rows, func(r pgx.CollectableRow) (entry, error) {
 		var e entry
-		err := r.Scan(&e.id, &e.kind, &e.school, &e.schoolName, &e.cluster, &e.partner, &e.staff,
+		err := r.Scan(&e.id, &e.kind, &e.school, &e.schoolName, &e.filled, &e.cluster, &e.partner, &e.staff,
 			&e.verifiedBy, &e.verifier, &e.at, &e.included)
 		return e, err
 	})
@@ -77,7 +78,7 @@ ORDER BY h.verified_at DESC`, where), args...)
 		}
 		code, place := "—", "Cluster-wide"
 		if deref(e.school) != "" {
-			code, place = "", deref(e.schoolName)
+			code, place = closedschools.SchoolCode(e.filled), deref(e.schoolName)
 		}
 		if c := deref(e.cluster); c != "" {
 			place += " " + c

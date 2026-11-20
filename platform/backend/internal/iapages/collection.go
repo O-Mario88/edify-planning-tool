@@ -427,7 +427,9 @@ ORDER BY a.school_id, a.planned_date ASC NULLS LAST`, ids, c.OpenStatuses)
 		if district == "" {
 			district = "—"
 		}
-		code := ""
+		// The school's ID as the web fills in its {% school_code %} tag (the
+		// worklist's schools are live).
+		code := closedschools.SchoolCode(x.code)
 		if x.code == "" {
 			code = "—"
 		}

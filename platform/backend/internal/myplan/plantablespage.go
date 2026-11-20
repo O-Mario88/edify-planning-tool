@@ -382,8 +382,7 @@ func dayOffCard(rows []*planRow) *screensv1.PageBlock {
 	for _, r := range rows {
 		code := dash
 		if r.schoolID.truthy() {
-			// {% school_code %} is a token span the feed reads as nothing.
-			code = ""
+			code = filledCode(r.row)
 		}
 		place := &screensv1.PageCell{}
 		switch {

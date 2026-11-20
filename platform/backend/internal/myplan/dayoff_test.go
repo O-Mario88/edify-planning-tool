@@ -11,7 +11,7 @@ func TestADayOffMarksThePlannedDayTheTintAndTheCard(t *testing.T) {
 	day := time.Date(2026, 11, 16, 0, 0, 0, 0, time.UTC)
 	mark := &calendarpage.DayOffMark{Label: "Public holiday", Summary: "Mon 16 Nov · Public holiday"}
 	label := "School Visit"
-	held := &planRow{row: &row{a: &activity{id: "a1", plannedDate: &day, delivery: sp("staff")}, schoolName: "Hill School",
+	held := &planRow{row: &row{a: &activity{id: "a1", plannedDate: &day, delivery: sp("staff"), schoolLive: true}, schoolName: "Hill School",
 		schoolID: schoolID{value: "S1"}, activityTypeLabel: &label}, dayOff: mark, canPick: true, inTable: true}
 	if got := held.dayOffFlag(); got != " Public holiday: reschedule" {
 		t.Errorf("flag %q", got)
@@ -40,7 +40,7 @@ func TestADayOffMarksThePlannedDayTheTintAndTheCard(t *testing.T) {
 		t.Fatalf("card %v", table)
 	}
 	rows := table.GetRows()
-	if c := rows[0].GetCells(); c[0].GetText() != "" || c[1].GetHref() != "/schools/S1" || c[3].GetText() != mark.Summary ||
+	if c := rows[0].GetCells(); c[0].GetText() != "S1" || c[1].GetHref() != "/schools/S1" || c[3].GetText() != mark.Summary ||
 		rows[0].GetPickLabel() != "Select School Visit at Hill School on 16 Nov 2026" {
 		t.Errorf("school row %v", rows[0])
 	}

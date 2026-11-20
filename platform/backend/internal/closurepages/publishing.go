@@ -9,6 +9,7 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/calendarpage"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/stafflogs"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/tablepager"
@@ -33,7 +34,9 @@ const (
 type publishRecord struct {
 	activityID, kind, status, message string
 	schoolID, schoolName              string
-	published                         *time.Time
+	// code is the live school's School ID, as the web fills it in.
+	code      string
+	published *time.Time
 }
 
 // readPublishRecords is the view's queryset: failures first, then pending,
@@ -44,7 +47,7 @@ func (s *Service) readPublishRecords(ctx context.Context) ([]publishRecord, erro
 		statuses, ranks = append(statuses, status), append(ranks, rank)
 	}
 	rows, err := s.db.Query(ctx, `
-SELECT r.activity_id, a.activity_type, r.status, COALESCE(r.error_message, ''), COALESCE(sc.id, ''), COALESCE(sc.name, ''),
+SELECT r.activity_id, a.activity_type, r.status, COALESCE(r.error_message, ''), COALESCE(sc.id, ''), COALESCE(sc.name, ''), COALESCE(CASE WHEN sc.deleted_at IS NULL THEN sc.school_id END, ''),
   r.published_at
 FROM analytics_publish_record r
 INNER JOIN activity a ON a.id = r.activity_id
@@ -58,7 +61,7 @@ ORDER BY COALESCE(rank.n, $3), r.created_at, r.activity_id, r.id`, statuses, ran
 	out := []publishRecord{}
 	for rows.Next() {
 		var r publishRecord
-		if err := rows.Scan(&r.activityID, &r.kind, &r.status, &r.message, &r.schoolID, &r.schoolName, &r.published); err != nil {
+		if err := rows.Scan(&r.activityID, &r.kind, &r.status, &r.message, &r.schoolID, &r.schoolName, &r.code, &r.published); err != nil {
 			return nil, fmt.Errorf("closurepages: reading a publish record: %w", err)
 		}
 		out = append(out, r)
@@ -104,11 +107,10 @@ func publishingTable(list []publishRecord, d role, query url.Values) []*screensv
 		if len([]rune(short)) > 8 {
 			short = string([]rune(short)[:8])
 		}
-		// The School ID is written in after the page is drawn; the feed reads
-		// its place as empty.
+		// The School ID as the web fills it in after the page is drawn.
 		code, school := "—", &screensv1.PageCell{Text: "Cluster-wide"}
 		if r.schoolID != "" {
-			code, school.Text = "", r.schoolName
+			code, school.Text = closedschools.SchoolCode(r.code), r.schoolName
 			if d.OpenSchool {
 				school.Href = "/schools/" + r.schoolID
 			}

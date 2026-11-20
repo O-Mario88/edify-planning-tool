@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolcode"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -33,7 +34,9 @@ const (
 
 // coverageRow is training_coverage.Commitment as the table draws it.
 type coverageRow struct {
-	schoolPK, schoolName     string
+	schoolPK, schoolName string
+	// code is the School ID the web fills in for the row's school.
+	code                     string
 	trainingID, trainingName string
 	staffID, staffName       string
 	route, status            string
@@ -558,6 +561,17 @@ func coverageTable(ctx context.Context, q schooldirectory.Querier, staff []profi
 		rows = append(rows, missing...)
 	}
 	rows = inOrder(rows)
+	refs := make([]string, 0, len(rows))
+	for _, r := range rows {
+		refs = append(refs, r.schoolPK)
+	}
+	codes, err := schoolcode.Lookup(ctx, q, refs)
+	if err != nil {
+		return coverage{}, err
+	}
+	for i := range rows {
+		rows[i].code = codes.Of(rows[i].schoolPK)
+	}
 	out := coverage{rows: rows, show: show, schoolCount: len(schoolsOf(rows)), needsTraining: show == showRemaining && training == nil}
 	for _, key := range rules.Coverage.StatusOrder {
 		if n := len(at[key]); n > 0 {

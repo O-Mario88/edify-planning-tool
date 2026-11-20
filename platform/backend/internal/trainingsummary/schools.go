@@ -81,8 +81,8 @@ func coverageCells(r coverageRow, opens bool) []*screensv1.PageCell {
 		}
 	}
 	return []*screensv1.PageCell{
-		// {% school_code %} is a token span the feed reads as nothing.
-		plain(""),
+		// The school's ID as the web fills in its {% school_code %} tag.
+		plain(r.code),
 		{Text: collapse(r.schoolName), Href: "/schools/" + r.schoolPK},
 		plain(collapse(r.trainingName)),
 		staffLinkCell(r.staffName, r.staffID, opens),

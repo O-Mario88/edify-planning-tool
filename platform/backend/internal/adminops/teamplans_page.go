@@ -108,8 +108,8 @@ func choice(name, caption, blank, asked string, options [][2]string) *screensv1.
 	return f
 }
 
-// planCells is one row's cells. The school's ID is a {% school_code %}
-// token the feed reads empty; the school is a link for a reader who may
+// planCells is one row's cells. The school's ID is the one the web fills in
+// for its {% school_code %} tag; the school is a link for a reader who may
 // open profiles (the page's readers all may).
 func planCells(x planRow, na todos.NextAction, owner person, partners map[string]string, today time.Time) []*screensv1.PageCell {
 	user := owner.name
@@ -132,7 +132,7 @@ func planCells(x planRow, na todos.NextAction, owner person, partners map[string
 	}
 	code, targetCell := "—", &screensv1.PageCell{Text: collapse(target)}
 	if x.SchoolID != nil {
-		code = ""
+		code = closedschools.SchoolCode(x.Code)
 		targetCell.Href = "/schools/" + *x.SchoolID
 	}
 	planned := "—"

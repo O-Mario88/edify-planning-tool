@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/tablepager"
 )
 
@@ -46,7 +47,7 @@ func (s *Service) blocked(ctx context.Context, d role, query url.Values) (*scree
 	p := tablepager.Paginate(total, pageSize, query, blockedParam)
 	rows, err := s.db.Query(ctx, `
 SELECT a.id, COALESCE(a.activity_type, ''), COALESCE(a.status, ''), COALESCE(a.responsible_staff_id, ''),
-  COALESCE(a.school_id, ''), COALESCE(sc.name, ''), COALESCE(a.delivery_type, ''),
+  COALESCE(a.school_id, ''), COALESCE(sc.name, ''), COALESCE(CASE WHEN sc.deleted_at IS NULL THEN sc.school_id END, ''), COALESCE(a.delivery_type, ''),
   EXISTS (SELECT 1 FROM evidence_record e WHERE e.activity_id = a.id AND NOT e.quarantined),
   EXISTS (SELECT 1 FROM activity_schedule_cost_line l WHERE l.activity_id = a.id),
   UPPER(COALESCE(a.salesforce_record_type_snapshot, '')), COALESCE(a.salesforce_activity_id, '')
@@ -57,12 +58,12 @@ ORDER BY a.created_at DESC, a.id DESC LIMIT $4 OFFSET $5`, rules.NotInPlanStatus
 		return nil, fmt.Errorf("financedesks: reading the blocked work: %w", err)
 	}
 	type work struct {
-		id, kind, status, owner, schoolID, name, delivery, recordType, sfID string
-		evidence, lines                                                     bool
+		id, kind, status, owner, schoolID, name, filled, delivery, recordType, sfID string
+		evidence, lines                                                             bool
 	}
 	list, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (work, error) {
 		var w work
-		return w, row.Scan(&w.id, &w.kind, &w.status, &w.owner, &w.schoolID, &w.name, &w.delivery, &w.evidence, &w.lines,
+		return w, row.Scan(&w.id, &w.kind, &w.status, &w.owner, &w.schoolID, &w.name, &w.filled, &w.delivery, &w.evidence, &w.lines,
 			&w.recordType, &w.sfID)
 	})
 	if err != nil {
@@ -114,7 +115,7 @@ ORDER BY a.created_at DESC, a.id DESC LIMIT $4 OFFSET $5`, rules.NotInPlanStatus
 		}
 		code, where := "—", cell("Cluster-wide")
 		if w.schoolID != "" {
-			code, where = "", school(d, w.schoolID, w.name)
+			code, where = closedschools.SchoolCode(w.filled), school(d, w.schoolID, w.name)
 		}
 		out = append(out, &screensv1.PageRow{Cells: []*screensv1.PageCell{
 			cell(joined("#"+short(w.id), typeLabel(w.kind))), cell(owner), cell(code), where, badge(label), cell(ia),

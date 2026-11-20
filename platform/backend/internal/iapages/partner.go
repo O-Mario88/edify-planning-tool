@@ -24,8 +24,10 @@ const partnerPageParam = "partner_evidence_queue_rows_page"
 // partnerWork is one partner activity awaiting IA, with what its row shows.
 type partnerWork struct {
 	ID, Kind, School, SchoolID, Cluster, Partner, Officer, Profile string
-	Submitted                                                      *time.Time
-	Held                                                           []string
+	// Code is the live school's School ID, as the web fills it in.
+	Code      string
+	Submitted *time.Time
+	Held      []string
 }
 
 // partnerEvidence is ia_partner_evidence_queue_view: the partner work in
@@ -36,7 +38,7 @@ type partnerWork struct {
 func (s *Service) partnerEvidence(ctx context.Context, p auth.Principal, query url.Values, where string, args []any) (*screensv1.GetPageResponse, bool, error) {
 	args = append(args, rules.QueuePageSize)
 	rows, err := s.db.Query(ctx, fmt.Sprintf(`
-SELECT a.id, a.activity_type, COALESCE(a.school_id, ''), COALESCE(sc.name, ''), COALESCE(c.name, ''),
+SELECT a.id, a.activity_type, COALESCE(a.school_id, ''), COALESCE(sc.name, ''), COALESCE(CASE WHEN sc.deleted_at IS NULL THEN sc.school_id END, ''), COALESCE(c.name, ''),
   COALESCE(pa.name, ''), COALESCE(pu.name, ''), COALESCE(a.evidence_profile_snapshot, ''), a.submitted_to_ia_at,
   ARRAY(SELECT DISTINCT e.kind FROM evidence_record e WHERE e.activity_id = a.id AND NOT e.quarantined ORDER BY 1),
   count(*) OVER ()
@@ -51,7 +53,7 @@ ORDER BY a.submitted_to_ia_at LIMIT $%d`, where, len(args)), args...)
 	total := 0
 	work, err := pgx.CollectRows(rows, func(r pgx.CollectableRow) (partnerWork, error) {
 		var w partnerWork
-		err := r.Scan(&w.ID, &w.Kind, &w.SchoolID, &w.School, &w.Cluster, &w.Partner, &w.Officer, &w.Profile, &w.Submitted, &w.Held, &total)
+		err := r.Scan(&w.ID, &w.Kind, &w.SchoolID, &w.School, &w.Code, &w.Cluster, &w.Partner, &w.Officer, &w.Profile, &w.Submitted, &w.Held, &total)
 		return w, err
 	})
 	if err != nil {
@@ -106,10 +108,10 @@ func partnerPage(p auth.Principal, work []partnerWork, total int, now time.Time,
 	number, pages := closedschools.PageOf(query.Get(partnerPageParam), len(work), returnedPageSize)
 	for _, w := range work[(number-1)*returnedPageSize : min(number*returnedPageSize, len(work))] {
 		review := "/ia/partner-evidence/" + w.ID + "/"
-		// {% school_code %} is a token the feed never fills: read empty.
+		// The school's ID as the web fills in its {% school_code %} tag.
 		code := "—"
 		if w.SchoolID != "" {
-			code = ""
+			code = closedschools.SchoolCode(w.Code)
 		}
 		where := "Field work"
 		switch {

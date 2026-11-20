@@ -32,7 +32,11 @@ type sample struct {
 	SSAID, SSASchoolID                          string
 	SSADate                                     *time.Time
 	SchoolName                                  *string
-	Excluded                                    bool
+	// SchoolCode is the sample's school's School ID, SchoolLive whether that
+	// school is live (the web fills in the ID of a live school only).
+	SchoolCode string
+	SchoolLive bool
+	Excluded   bool
 }
 
 // samples is ia_samples_view: the samples in the reader's reach (activities
@@ -82,6 +86,8 @@ func (s *Service) samples(ctx context.Context, p auth.Principal, role Role, quer
 SELECT v.id, v.subject_type, v.method, v.status, v.outcome_note, v.original_verifier, v.checked_by, v.checked_at, v.sampled_at,
   COALESCE(v.activity_id, ''), COALESCE(a.activity_type, ''), COALESCE(v.ssa_record_id, ''), COALESCE(r.school_id, ''), r.date_of_ssa,
   CASE WHEN v.subject_type = 'ssa_record' AND v.ssa_record_id IS NOT NULL THEN rs.name ELSE asch.name END,
+  COALESCE(CASE WHEN v.subject_type = 'ssa_record' AND v.ssa_record_id IS NOT NULL THEN rs.school_id ELSE asch.school_id END, ''),
+  COALESCE(CASE WHEN v.subject_type = 'ssa_record' AND v.ssa_record_id IS NOT NULL THEN rs.deleted_at IS NULL ELSE asch.deleted_at IS NULL END, false),
   EXISTS (SELECT 1 FROM ia_verification_history h WHERE h.activity_id = v.activity_id AND NOT h.analytics_included)
 %sLEFT JOIN school rs ON rs.id = r.school_id LEFT JOIN school asch ON asch.id = a.school_id
 WHERE %s ORDER BY v.status, v.sampled_at DESC LIMIT $%d OFFSET $%d`, from, where, len(pageArgs)-1, len(pageArgs)), pageArgs...)
@@ -91,7 +97,7 @@ WHERE %s ORDER BY v.status, v.sampled_at DESC LIMIT $%d OFFSET $%d`, from, where
 	list, err := pgx.CollectRows(rows, func(r pgx.CollectableRow) (sample, error) {
 		var x sample
 		err := r.Scan(&x.ID, &x.Subject, &x.Method, &x.Status, &x.Note, &x.Verifier, &x.Checker, &x.CheckedAt, &x.SampledAt,
-			&x.ActivityID, &x.ActivityType, &x.SSAID, &x.SSASchoolID, &x.SSADate, &x.SchoolName, &x.Excluded)
+			&x.ActivityID, &x.ActivityType, &x.SSAID, &x.SSASchoolID, &x.SSADate, &x.SchoolName, &x.SchoolCode, &x.SchoolLive, &x.Excluded)
 		return x, err
 	})
 	if err != nil {
@@ -184,11 +190,15 @@ func samplesPage(p auth.Principal, role Role, list []sample, names map[string]st
 		if hasSchool {
 			school = *x.SchoolName
 		}
-		// {% school_code %}: the feed never fills the token, so a school's
-		// ID reads empty; no school reads a dash.
+		// The school's ID as the web fills in its {% school_code %} tag; a
+		// school without one, or no school, reads a dash.
 		code := "—"
-		if hasSchool {
-			code = ""
+		switch {
+		case !hasSchool || x.SchoolCode == "":
+		case x.SchoolLive:
+			code = x.SchoolCode
+		default:
+			code = closedschools.SchoolCode("")
 		}
 		var record, href string
 		if isSSASample(x) {

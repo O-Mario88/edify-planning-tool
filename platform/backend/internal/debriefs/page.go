@@ -21,6 +21,7 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolcode"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -715,7 +716,8 @@ func (r *reader) tableBlock(ctx context.Context, rows []debrief, tab string) (*s
 		}
 		if len(d.schools) > 0 {
 			if d.schools[0] != "" {
-				school = ""
+				// The school's ID as the web fills in its {% school_code %} tag.
+				school = look.codes.Of(d.schools[0])
 			}
 			if target == "" {
 				target = look.schools[d.schools[0]]
@@ -750,6 +752,8 @@ func (r *reader) tableBlock(ctx context.Context, rows []debrief, tab string) (*s
 
 type lookups struct {
 	names, partners, schools, firstLink map[string]string
+	// codes are the first schools' IDs as the web fills them in.
+	codes schoolcode.Codes
 }
 
 // lookups is _table_rows' reads: the authors, the partners and first
@@ -790,7 +794,12 @@ func (r *reader) lookups(ctx context.Context, rows []debrief) (lookups, error) {
 	if err := read(`SELECT id, name FROM school WHERE id = ANY($1) AND deleted_at IS NULL`, l.schools, schools); err != nil {
 		return l, err
 	}
-	err := read(`SELECT DISTINCT ON (l.debrief_id) l.debrief_id, COALESCE(a.activity_type, '')
+	codes, err := schoolcode.Lookup(ctx, r.db, schools)
+	if err != nil {
+		return l, err
+	}
+	l.codes = codes
+	err = read(`SELECT DISTINCT ON (l.debrief_id) l.debrief_id, COALESCE(a.activity_type, '')
 		FROM daily_debrief_activity_link l LEFT JOIN activity a ON a.id = l.activity_id
 		WHERE l.debrief_id = ANY($1) ORDER BY l.debrief_id, l.id`, l.firstLink, ids(rows))
 	if err != nil {

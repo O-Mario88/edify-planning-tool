@@ -84,7 +84,9 @@ func NewService(db schooldirectory.Querier, now func() time.Time) *Service {
 
 // record is one SSA record as the queue's row reads it.
 type record struct {
-	id, schoolPK, code, school, district        string
+	id, schoolPK, code, school, district string
+	// live is whether the school is live: the web fills in a live school's ID.
+	live                                        bool
 	collector, uploader, returner, kind, source string
 	reason, visitID, visitDelivery              string
 	date                                        *time.Time
@@ -215,7 +217,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	number, pages := closedschools.PageOf(query.Get("records_page"), total, size)
 	a, decidable, listed := build(true, true)
 	limit, offset := a.add(size), a.add((number-1)*size)
-	rows, err := s.db.Query(ctx, `SELECT r.id, s.id, COALESCE(s.school_id, ''), s.name, COALESCE(d.name, ''),
+	rows, err := s.db.Query(ctx, `SELECT r.id, s.id, COALESCE(s.school_id, ''), s.deleted_at IS NULL, s.name, COALESCE(d.name, ''),
   COALESCE(r.collected_by_user_id, ''), COALESCE(r.uploaded_by, ''), COALESCE(r.returned_by_user_id, ''), COALESCE(r.collector_type, ''),
   COALESCE(r.verification_source, ''), COALESCE(r.return_reason, ''), COALESCE(v.id, ''), COALESCE(v.delivery_type, ''),
   r.date_of_ssa, r.average_score, COALESCE(`+decidable+`, FALSE)
@@ -226,7 +228,7 @@ WHERE `+listed+` ORDER BY r.date_of_ssa DESC, r.id LIMIT `+limit+` OFFSET `+offs
 	}
 	list, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (record, error) {
 		var x record
-		return x, row.Scan(&x.id, &x.schoolPK, &x.code, &x.school, &x.district, &x.collector, &x.uploader, &x.returner, &x.kind,
+		return x, row.Scan(&x.id, &x.schoolPK, &x.code, &x.live, &x.school, &x.district, &x.collector, &x.uploader, &x.returner, &x.kind,
 			&x.source, &x.reason, &x.visitID, &x.visitDelivery, &x.date, &x.average, &x.decidable)
 	})
 	if err != nil {
@@ -419,7 +421,11 @@ func row(p auth.Principal, x record, status string, names map[string]string, own
 	visit := visitURL(p, x)
 	code := "—"
 	if x.code != "" {
-		code = "" // {% school_code %} reads empty in the feed
+		// The school's ID as the web fills in its {% school_code %} tag.
+		code = closedschools.SchoolCode("")
+		if x.live {
+			code = x.code
+		}
 	}
 	district := x.district
 	if district == "" {

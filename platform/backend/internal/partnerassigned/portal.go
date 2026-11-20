@@ -144,7 +144,9 @@ ORDER BY s.name`, partners, rules.CalledOffStatuses)
 // logged is one activity on the Activity Log.
 type logged struct {
 	id, kind, status, schoolID, school, clusterID, cluster string
-	planned                                                *time.Time
+	// code is the live school's School ID, as the web fills it in.
+	code    string
+	planned *time.Time
 }
 
 // activityLog is partner_activities_view: the assignments awaiting the
@@ -158,7 +160,7 @@ func (s *Service) activityLog(ctx context.Context, p auth.Principal, partners []
 	}
 	rows, err := s.db.Query(ctx, `
 SELECT a.id, COALESCE(a.activity_type, ''), COALESCE(a.status, ''), COALESCE(s.id, ''), COALESCE(s.name, ''),
-  COALESCE(c.id, ''), COALESCE(c.name, ''), a.planned_date
+  COALESCE(CASE WHEN s.deleted_at IS NULL THEN s.school_id END, ''), COALESCE(c.id, ''), COALESCE(c.name, ''), a.planned_date
 FROM activity a LEFT JOIN school s ON s.id = a.school_id LEFT JOIN cluster c ON c.id = a.cluster_id
 WHERE a.assigned_partner_id = ANY($1) AND a.deleted_at IS NULL AND `+where+`
 ORDER BY a.planned_date DESC NULLS FIRST, a.id DESC LIMIT `+strconv.Itoa(rules.LogLimit), args...)
@@ -167,7 +169,7 @@ ORDER BY a.planned_date DESC NULLS FIRST, a.id DESC LIMIT `+strconv.Itoa(rules.L
 	}
 	work, err := pgx.CollectRows(rows, func(r pgx.CollectableRow) (logged, error) {
 		var l logged
-		return l, r.Scan(&l.id, &l.kind, &l.status, &l.schoolID, &l.school, &l.clusterID, &l.cluster, &l.planned)
+		return l, r.Scan(&l.id, &l.kind, &l.status, &l.schoolID, &l.school, &l.code, &l.clusterID, &l.cluster, &l.planned)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("partnerassigned: reading the activity log: %w", err)
@@ -248,8 +250,8 @@ ORDER BY a.planned_date DESC NULLS FIRST, a.id DESC LIMIT `+strconv.Itoa(rules.L
 		}
 		code := &screensv1.PageCell{Text: "—"}
 		if w.schoolID != "" {
-			// school_code: the feed reads the token's empty span.
-			code = &screensv1.PageCell{}
+			// The school's ID as the web fills in its school_code tag.
+			code = &screensv1.PageCell{Text: closedschools.SchoolCode(w.code)}
 		}
 		out = append(out, &screensv1.PageRow{Cells: []*screensv1.PageCell{
 			code, place, {Text: kind}, {Text: date}, badge(stafflogs.StatusLabel(w.status)),

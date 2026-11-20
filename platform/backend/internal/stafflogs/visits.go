@@ -11,6 +11,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/tablepager"
@@ -42,8 +43,10 @@ func NewService(db schooldirectory.Querier, now func() time.Time) *Service {
 
 // visit is one row of the log.
 type visit struct {
-	id, kind, status       string
-	schoolID, schoolName   string
+	id, kind, status     string
+	schoolID, schoolName string
+	// code is the live school's School ID, as the web fills it in.
+	code                   string
 	clusterID, clusterName string
 	planned                *time.Time
 }
@@ -68,7 +71,7 @@ func (s *Service) readVisits(ctx context.Context, userID, status, search string)
 		where += fmt.Sprintf(" AND (UPPER(s.name::text) LIKE UPPER($%[1]d) OR UPPER(cl.name::text) LIKE UPPER($%[1]d))", len(args))
 	}
 	rows, err := s.db.Query(ctx, `
-SELECT a.id, a.activity_type, a.status, COALESCE(s.id, ''), COALESCE(s.name, ''), COALESCE(cl.id, ''), COALESCE(cl.name, ''),
+SELECT a.id, a.activity_type, a.status, COALESCE(s.id, ''), COALESCE(s.name, ''), COALESCE(CASE WHEN s.deleted_at IS NULL THEN s.school_id END, ''), COALESCE(cl.id, ''), COALESCE(cl.name, ''),
   a.planned_date
 FROM activity a
 LEFT JOIN school s ON s.id = a.school_id
@@ -83,7 +86,7 @@ LIMIT $3`, args...)
 	out := []visit{}
 	for rows.Next() {
 		var v visit
-		if err := rows.Scan(&v.id, &v.kind, &v.status, &v.schoolID, &v.schoolName, &v.clusterID, &v.clusterName,
+		if err := rows.Scan(&v.id, &v.kind, &v.status, &v.schoolID, &v.schoolName, &v.code, &v.clusterID, &v.clusterName,
 			&v.planned); err != nil {
 			return nil, fmt.Errorf("stafflogs: reading a visit: %w", err)
 		}
@@ -160,12 +163,11 @@ func visitBlocks(visits []visit, d role, query url.Values) []*screensv1.PageBloc
 		{Label: "Date"}, {Label: "Status"}, {Label: ""}}}
 	page := tablepager.Paginate(len(visits), visitsPageSize, query, visitsPageParam)
 	for _, v := range visits[page.Start:page.End] {
-		// The School ID is written in after the page is drawn; the feed
-		// reads its place as empty.
+		// The School ID as the web fills it in after the page is drawn.
 		code, school, cluster := "—", "No school", "—"
 		cell := &screensv1.PageCell{}
 		if v.schoolID != "" {
-			code, school = "", v.schoolName
+			code, school = closedschools.SchoolCode(v.code), v.schoolName
 			if d.OpenSchool {
 				cell.Href = "/schools/" + v.schoolID
 			}

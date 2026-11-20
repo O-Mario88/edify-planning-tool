@@ -13,6 +13,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/allocations"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolcode"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 )
@@ -54,9 +55,11 @@ type enrolment struct {
 type evidenceRow struct {
 	schoolID, school, ownerID, owner, projectID, project string
 	code, intervention, state, status, action, due       string
-	baseline, followUp                                   *float64
-	measured                                             bool
-	delta                                                *float64
+	// schoolCode is the school's ID as the web fills it in.
+	schoolCode         string
+	baseline, followUp *float64
+	measured           bool
+	delta              *float64
 }
 
 // cohortDomain is one row of _cohort_domains.
@@ -337,6 +340,17 @@ ORDER BY a.follow_up_due_on ASC NULLS LAST, s.name, a.project_id`, from, t, wher
 	}
 	if err := s.baselineDetails(ctx, list, w.rows); err != nil {
 		return w, err
+	}
+	refs := make([]string, 0, len(w.rows))
+	for _, r := range w.rows {
+		refs = append(refs, r.schoolID)
+	}
+	codes, err := schoolcode.Lookup(ctx, s.db, refs)
+	if err != nil {
+		return w, err
+	}
+	for i := range w.rows {
+		w.rows[i].schoolCode = codes.Of(w.rows[i].schoolID)
 	}
 	owners := []string{}
 	for _, r := range w.rows {
@@ -737,7 +751,7 @@ func cohortBlocks(w outcomeWorkspace) []*screensv1.PageBlock {
 	}
 	list := &screensv1.PageTable{Columns: columns("School ID", "School", "Project", "Domain", "SSA scores", "Evidence", "Follow-up due", "Account owner", "Next action")}
 	for _, r := range w.rows {
-		code := ""
+		code := r.schoolCode
 		if r.schoolID == "" {
 			code = "—"
 		}

@@ -90,6 +90,8 @@ type closureRow struct {
 	enrolment                                         *int
 	underReview                                       int
 	reopenedAt                                        *time.Time
+	// live is whether the school is live: the web fills in a live school's ID.
+	live bool
 }
 
 // lagSQL is the recording lag as the summary annotates it:
@@ -180,7 +182,8 @@ func (s *Service) closures(ctx context.Context, match, order string, args ...any
 	args = append(args, rules.MaxRows)
 	rows, err := s.db.Query(ctx, fmt.Sprintf(`
 SELECT s.id, COALESCE(s.school_id, ''), s.name, COALESCE(d.name, ''), c.reason_category, COALESCE(s.duplicate_status, ''),
-  c.effective_date, (c.created_at AT TIME ZONE 'UTC')::date, c.enrollment_at_closure, c.locked_activities_for_review, c.reopened_at
+  c.effective_date, (c.created_at AT TIME ZONE 'UTC')::date, c.enrollment_at_closure, c.locked_activities_for_review, c.reopened_at,
+  s.deleted_at IS NULL
 FROM school_closure c JOIN school s ON s.id = c.school_id LEFT JOIN district d ON d.id = s.district_id
 WHERE %s ORDER BY %s LIMIT $%d`, match, order, len(args)), args...)
 	if err != nil {
@@ -189,7 +192,7 @@ WHERE %s ORDER BY %s LIMIT $%d`, match, order, len(args)), args...)
 	return pgx.CollectRows(rows, func(r pgx.CollectableRow) (closureRow, error) {
 		var x closureRow
 		return x, r.Scan(&x.schoolPK, &x.code, &x.name, &x.district, &x.reason, &x.dupStatus,
-			&x.effective, &x.createdDay, &x.enrolment, &x.underReview, &x.reopenedAt)
+			&x.effective, &x.createdDay, &x.enrolment, &x.underReview, &x.reopenedAt, &x.live)
 	})
 }
 

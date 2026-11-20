@@ -12,6 +12,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/budgetpage"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/stafflogs"
 )
 
@@ -84,7 +85,7 @@ func netsuiteForm(today time.Time) *screensv1.PageBlock {
 
 func (s *Service) advances(ctx context.Context, d role, query url.Values) (*screensv1.GetPageResponse, error) {
 	rows, err := s.db.Query(ctx, `
-SELECT a.id, COALESCE(a.responsible_staff_id, ''), COALESCE(a.school_id, ''), COALESCE(sc.name, ''), COALESCE(a.activity_type, ''),
+SELECT a.id, COALESCE(a.responsible_staff_id, ''), COALESCE(a.school_id, ''), COALESCE(sc.name, ''), COALESCE(CASE WHEN sc.deleted_at IS NULL THEN sc.school_id END, ''), COALESCE(a.activity_type, ''),
   a.planned_date, COALESCE(a.est_cost_cents, 0)
 FROM activity a LEFT JOIN school sc ON sc.id = a.school_id
 WHERE a.deleted_at IS NULL AND a.delivery_type = 'staff'
@@ -95,10 +96,10 @@ ORDER BY a.created_at DESC, a.id`, rules.PartnerPaidStatuses)
 		return nil, fmt.Errorf("financedesks: reading the advances: %w", err)
 	}
 	list, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (*screensv1.PageRow, error) {
-		var id, staff, schoolID, name, kind string
+		var id, staff, schoolID, name, filled, kind string
 		var planned *time.Time
 		var cost int64
-		if err := row.Scan(&id, &staff, &schoolID, &name, &kind, &planned, &cost); err != nil {
+		if err := row.Scan(&id, &staff, &schoolID, &name, &filled, &kind, &planned, &cost); err != nil {
 			return nil, err
 		}
 		if staff == "" {
@@ -106,7 +107,7 @@ ORDER BY a.created_at DESC, a.id`, rules.PartnerPaidStatuses)
 		}
 		code, where := "—", cell("School / Cluster Cluster-wide")
 		if schoolID != "" {
-			code = ""
+			code = closedschools.SchoolCode(filled)
 			where = school(d, schoolID, "School / Cluster "+name)
 		}
 		day := ""
@@ -187,7 +188,7 @@ const amendmentOpen = "submitted"
 
 func (s *Service) budgetAmendments(ctx context.Context, d role, query url.Values) (*screensv1.GetPageResponse, error) {
 	rows, err := s.db.Query(ctx, `
-SELECT a.activity_type, COALESCE(a.school_id, ''), COALESCE(sc.name, ''), m.original_date, m.new_date,
+SELECT a.activity_type, COALESCE(a.school_id, ''), COALESCE(sc.name, ''), COALESCE(CASE WHEN sc.deleted_at IS NULL THEN sc.school_id END, ''), m.original_date, m.new_date,
   m.original_fy, m.original_quarter, m.new_fy, m.new_quarter, m.original_amount, m.reason, m.status, COALESCE(m.review_note, '')
 FROM budget_amendment m JOIN activity a ON a.id = m.activity_id LEFT JOIN school sc ON sc.id = a.school_id
 ORDER BY m.created_at DESC, m.id LIMIT $1`, amendmentLimit)
@@ -196,6 +197,7 @@ ORDER BY m.created_at DESC, m.id LIMIT $1`, amendmentLimit)
 	}
 	type amendment struct {
 		kind, schoolID, name     *string
+		filled                   string
 		from, to                 *time.Time
 		fromFY, fromQ, toFY, toQ *string
 		amount                   int64
@@ -204,7 +206,7 @@ ORDER BY m.created_at DESC, m.id LIMIT $1`, amendmentLimit)
 	list, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (amendment, error) {
 		var m amendment
 		var schoolID, name string
-		err := row.Scan(&m.kind, &schoolID, &name, &m.from, &m.to, &m.fromFY, &m.fromQ, &m.toFY, &m.toQ,
+		err := row.Scan(&m.kind, &schoolID, &name, &m.filled, &m.from, &m.to, &m.fromFY, &m.fromQ, &m.toFY, &m.toQ,
 			&m.amount, &m.reason, &m.status, &m.note)
 		m.schoolID, m.name = &schoolID, &name
 		return m, err
@@ -227,7 +229,7 @@ ORDER BY m.created_at DESC, m.id LIMIT $1`, amendmentLimit)
 		}
 		code, where := "—", cell("—")
 		if *m.schoolID != "" {
-			code, where = "", school(d, *m.schoolID, *m.name)
+			code, where = closedschools.SchoolCode(m.filled), school(d, *m.schoolID, *m.name)
 		}
 		from := "—"
 		if m.from != nil {
@@ -308,7 +310,7 @@ ORDER BY a.updated_at DESC, a.id`)
 
 func (s *Service) returned(ctx context.Context, d role, query url.Values) (*screensv1.GetPageResponse, error) {
 	rows, err := s.db.Query(ctx, `
-SELECT a.id, COALESCE(a.activity_type, ''), COALESCE(a.school_id, ''), COALESCE(sc.name, ''), ar.amount,
+SELECT a.id, COALESCE(a.activity_type, ''), COALESCE(a.school_id, ''), COALESCE(sc.name, ''), COALESCE(CASE WHEN sc.deleted_at IS NULL THEN sc.school_id END, ''), ar.amount,
   COALESCE(ar.responsible_user_id, ''), u.id IS NOT NULL, u.name, COALESCE(ar.last_note, ''), ar.updated_at
 FROM advance_request ar JOIN activity a ON a.id = ar.activity_id LEFT JOIN school sc ON sc.id = a.school_id
   LEFT JOIN "user" u ON u.id = ar.responsible_user_id
@@ -318,12 +320,12 @@ ORDER BY ar.updated_at DESC, ar.id`)
 		return nil, fmt.Errorf("financedesks: reading the returned advances: %w", err)
 	}
 	list, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (*screensv1.PageRow, error) {
-		var id, kind, schoolID, name, owner, reason string
+		var id, kind, schoolID, name, filled, owner, reason string
 		var amount int64
 		var known bool
 		var ownerName *string
 		var updated time.Time
-		if err := row.Scan(&id, &kind, &schoolID, &name, &amount, &owner, &known, &ownerName, &reason, &updated); err != nil {
+		if err := row.Scan(&id, &kind, &schoolID, &name, &filled, &amount, &owner, &known, &ownerName, &reason, &updated); err != nil {
 			return nil, err
 		}
 		to := "Unassigned"
@@ -335,7 +337,7 @@ ORDER BY ar.updated_at DESC, ar.id`)
 		}
 		code, where := "—", cell("Cluster-wide")
 		if schoolID != "" {
-			code, where = "", school(d, schoolID, name)
+			code, where = closedschools.SchoolCode(filled), school(d, schoolID, name)
 		}
 		return &screensv1.PageRow{Cells: []*screensv1.PageCell{
 			cell(joined("#"+short(id), typeLabel(kind))), cell(code), where, cell(budgetpage.UGXCompact(amount)), cell(to),
@@ -354,7 +356,7 @@ ORDER BY ar.updated_at DESC, ar.id`)
 
 func (s *Service) varianceReview(ctx context.Context, d role, query url.Values) (*screensv1.GetPageResponse, error) {
 	rows, err := s.db.Query(ctx, `
-SELECT a.id, COALESCE(a.activity_type, ''), COALESCE(a.school_id, ''), COALESCE(sc.name, ''), v.budgeted_amount,
+SELECT a.id, COALESCE(a.activity_type, ''), COALESCE(a.school_id, ''), COALESCE(sc.name, ''), COALESCE(CASE WHEN sc.deleted_at IS NULL THEN sc.school_id END, ''), v.budgeted_amount,
   v.disbursed_amount, v.actual_spend, v.variance, COALESCE(v.reason, '')
 FROM variance_review v JOIN activity a ON a.id = v.activity_id LEFT JOIN school sc ON sc.id = a.school_id
 WHERE v.status = 'pending'
@@ -363,9 +365,9 @@ ORDER BY v.created_at, v.id`)
 		return nil, fmt.Errorf("financedesks: reading the variance reviews: %w", err)
 	}
 	list, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (*screensv1.PageRow, error) {
-		var id, kind, schoolID, name, reason string
+		var id, kind, schoolID, name, filled, reason string
 		var budgeted, disbursed, spend, variance int64
-		if err := row.Scan(&id, &kind, &schoolID, &name, &budgeted, &disbursed, &spend, &variance, &reason); err != nil {
+		if err := row.Scan(&id, &kind, &schoolID, &name, &filled, &budgeted, &disbursed, &spend, &variance, &reason); err != nil {
 			return nil, err
 		}
 		if reason == "" {
@@ -373,7 +375,7 @@ ORDER BY v.created_at, v.id`)
 		}
 		code, where := "—", cell("Cluster-wide")
 		if schoolID != "" {
-			code, where = "", school(d, schoolID, name)
+			code, where = closedschools.SchoolCode(filled), school(d, schoolID, name)
 		}
 		return &screensv1.PageRow{Cells: []*screensv1.PageCell{
 			cell(joined("#"+short(id), typeLabel(kind))), cell(code), where, cell(ugxInt(budgeted)), cell(ugxInt(disbursed)),

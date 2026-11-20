@@ -28,6 +28,7 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/budgetpage"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
 	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/fundworkspace"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
@@ -93,8 +94,10 @@ type invoice struct {
 // work is one piece of verified partner work awaiting clearance.
 type work struct {
 	id, kind, partnerID, partner, staff, schoolID, school string
-	scheduled                                             *time.Time
-	planned, paid                                         int64
+	// code is the live school's School ID, as the web fills it in.
+	code          string
+	scheduled     *time.Time
+	planned, paid int64
 }
 
 // Build answers /accounts/partner-payments/.
@@ -179,7 +182,7 @@ SELECT a.id, a.activity_type, COALESCE(a.assigned_partner_id, ''),
   COALESCE((SELECT CASE WHEN u.id IS NULL THEN sp.id ELSE u.name END FROM staff_profile sp LEFT JOIN "user" u ON u.id = sp.user_id
             WHERE sp.id = a.responsible_staff_id AND sp.deleted_at IS NULL),
            (SELECT u.name FROM "user" u WHERE u.id = a.responsible_staff_id), ''),
-  COALESCE(s.id, ''), COALESCE(s.name, ''), a.scheduled_date,
+  COALESCE(s.id, ''), COALESCE(s.name, ''), COALESCE(CASE WHEN s.deleted_at IS NULL THEN s.school_id END, ''), a.scheduled_date,
   COALESCE((SELECT SUM(l.amount) FROM activity_schedule_cost_line l WHERE l.activity_id = a.id), 0),
   COALESCE((SELECT SUM(pp.amount_paid) FROM partner_payment pp WHERE pp.activity_id = a.id), 0)
 FROM activity a LEFT JOIN school s ON s.id = a.school_id
@@ -192,7 +195,7 @@ ORDER BY a.created_at DESC`, rules.NonFundableStatuses, rules.PartnerPayableStat
 	}
 	out, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (work, error) {
 		var w work
-		err := row.Scan(&w.id, &w.kind, &w.partnerID, &w.partner, &w.staff, &w.schoolID, &w.school, &w.scheduled, &w.planned, &w.paid)
+		err := row.Scan(&w.id, &w.kind, &w.partnerID, &w.partner, &w.staff, &w.schoolID, &w.school, &w.code, &w.scheduled, &w.planned, &w.paid)
 		return w, err
 	})
 	if err != nil {
@@ -265,11 +268,10 @@ func workTable(works []work, role roleRules, currency string) *screensv1.PageBlo
 		if l, ok := rules.ActivityTypes[w.kind]; ok {
 			kind = l
 		}
-		// school_code writes an empty holder the web fills in; the feed
-		// reads it as nothing.
+		// The school's ID as the web fills it in (school_code).
 		code, place := "—", cell("Cluster-wide")
 		if w.schoolID != "" {
-			code, place = "", cell(w.school)
+			code, place = closedschools.SchoolCode(w.code), cell(w.school)
 			if role.SchoolLinks && w.school != "" {
 				place.Href = "/schools/" + url.PathEscape(w.schoolID)
 			}

@@ -133,7 +133,7 @@ func TestSchoolRowWritesTheTemplatesWords(t *testing.T) {
 	}{
 		{school{name: "A", district: "", clusterID: ""}, []string{"—", "A", "—", "No cluster", "Nothing planned", "0", "0", "—", "UGX 0"}},
 		{school{code: "12", name: "B", districtID: "d", district: "Mukono", clusterID: "c", clusterName: "", activities: 3, visits: 2, trainings: 1, firstDate: &day, budget: 1234567},
-			[]string{"", "B", "Mukono", "—", "3 planned", "2", "1", "5 Oct 2026", "UGX 1,234,567"}},
+			[]string{"12", "B", "Mukono", "—", "3 planned", "2", "1", "5 Oct 2026", "UGX 1,234,567"}},
 	}
 	for _, c := range cases {
 		cells := schoolRow(c.s).GetCells()

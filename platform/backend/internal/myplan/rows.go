@@ -39,8 +39,11 @@ type activity struct {
 	actualDelivery, executionStarted                  *time.Time
 	submittedToIA, plReviewed, plannedBefore          *time.Time
 
-	hasSchool                            bool
-	schoolCode, schoolName, schoolType   *string
+	hasSchool                          bool
+	schoolCode, schoolName, schoolType *string
+	// schoolLive is whether the school is live: the web fills in a live
+	// school's ID for its {% school_code %} tag.
+	schoolLive                           bool
 	schoolDistrictID, schoolDistrictName *string
 	hasCluster                           bool
 	clusterName, clusterDistrictID       *string
@@ -65,7 +68,7 @@ const activitySelect = `SELECT a.id, a.activity_type, COALESCE(a.status, ''), a.
   a.programme_delivery_mode, a.planning_source, COALESCE(a.cost_missing, false), a.paired_school_visit_id,
   a.ia_verification_status, COALESCE(a.ssa_collection_expected, false), a.daily_visit_batch_id, a.event_district_id,
   a.actual_delivery_date, a.execution_started_at, a.submitted_to_ia_at, a.pl_reviewed_at, a.planned_date_before_completion,
-  s.id IS NOT NULL, s.school_id, s.name, s.school_type, s.district_id, sd.name,
+  s.id IS NOT NULL, s.school_id, COALESCE(s.deleted_at IS NULL, false), s.name, s.school_type, s.district_id, sd.name,
   c.id IS NOT NULL, c.name, c.district_id, s.cluster_id
 FROM activity a
 LEFT JOIN school s ON s.id = a.school_id
@@ -96,7 +99,7 @@ ORDER BY a.planned_date ASC, a.created_at ASC`, ids)
 			&a.deliveryMode, &a.planningSource, &a.costMissing, &a.pairedVisit,
 			&a.iaVerification, &a.ssaExpected, &a.batchID, &a.eventDistrictID,
 			&a.actualDelivery, &a.executionStarted, &a.submittedToIA, &a.plReviewed, &a.plannedBefore,
-			&a.hasSchool, &a.schoolCode, &a.schoolName, &a.schoolType, &a.schoolDistrictID, &a.schoolDistrictName,
+			&a.hasSchool, &a.schoolCode, &a.schoolLive, &a.schoolName, &a.schoolType, &a.schoolDistrictID, &a.schoolDistrictName,
 			&a.hasCluster, &a.clusterName, &a.clusterDistrictID, &a.schoolClusterID); err != nil {
 			return nil, fmt.Errorf("myplan: activities: %w", err)
 		}

@@ -163,7 +163,6 @@ func reopenedBlocks(list []closureRow, query url.Values) []*screensv1.PageBlock 
 	}
 	rows := []*screensv1.PageRow{}
 	for _, c := range list {
-		// {% school_code %} reads empty in the feed.
 		where := c.name + " " + c.code
 		if c.district != "" {
 			where += " · " + c.district
@@ -171,7 +170,7 @@ func reopenedBlocks(list []closureRow, query url.Values) []*screensv1.PageBlock 
 		reopenedDay := c.reopenedAt.UTC()
 		closedFor := int(dayOf(reopenedDay).Sub(c.effective).Hours() / 24)
 		rows = append(rows, &screensv1.PageRow{Cells: []*screensv1.PageCell{
-			cell(""), {Text: closedschools.Collapse(where), Href: "/schools/" + c.code},
+			cell(liveCode(c)), {Text: closedschools.Collapse(where), Href: "/schools/" + c.code},
 			cell(c.effective.Format("2 Jan 2006")), cell(c.reopenedAt.In(zone).Format("2 Jan 2006")),
 			cell(strconv.Itoa(closedFor)), cell(reasonLabel(c.reason)),
 		}})
@@ -184,4 +183,13 @@ func reopenedBlocks(list []closureRow, query url.Values) []*screensv1.PageBlock 
 // dayOf is the calendar day of t, at midnight UTC.
 func dayOf(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
+}
+
+// liveCode is the school's ID as the web fills in its {% school_code %} tag:
+// a live school's ID, else "ID unavailable".
+func liveCode(c closureRow) string {
+	if !c.live {
+		return closedschools.SchoolCode("")
+	}
+	return closedschools.SchoolCode(c.code)
 }

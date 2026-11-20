@@ -76,8 +76,8 @@ type action struct {
 	ResolvedBySystem                                                   bool
 	// Read beside it.
 	School, District, Counterparty string
-	// SchoolCode is the school's School ID, for any school the action names,
-	// as the web's middleware reads it (deleted or not).
+	// SchoolCode is the live school's School ID, as the web's middleware
+	// fills it in.
 	SchoolCode string
 }
 
@@ -241,7 +241,8 @@ WHERE s.id = ANY($1)`, ids)
 			return nil, err
 		}
 		if !live {
-			name, district = "", ""
+			// The web names a deleted school by neither name nor ID.
+			name, district, code = "", "", ""
 		}
 		out[id] = [3]string{name, district, code}
 	}

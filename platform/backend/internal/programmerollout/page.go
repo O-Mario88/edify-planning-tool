@@ -14,6 +14,7 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolcode"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 )
@@ -435,6 +436,14 @@ func (s *Service) trainings(ctx context.Context, sc *scope, fy string, today tim
 		return nil, false, nil
 	}
 	ut := &screensv1.PageTable{Columns: columns("Date", "Training", "School ID", "School or cluster", "Delivered by", "Intervention", "State", "")}
+	refs := []string{}
+	for _, r := range soon[start:end] {
+		refs = append(refs, r.schoolID)
+	}
+	codes, err := schoolcode.Lookup(ctx, s.db, refs)
+	if err != nil {
+		return nil, true, err
+	}
 	for _, r := range soon[start:end] {
 		when := ""
 		if r.planned != nil {
@@ -447,9 +456,10 @@ func (s *Service) trainings(ctx context.Context, sc *scope, fy string, today tim
 		if place == "" {
 			place = "No school or cluster"
 		}
+		// The school's ID as the web fills in its {% school_code %} tag.
 		code := "—"
 		if r.schoolID != "" {
-			code = ""
+			code = codes.Of(r.schoolID)
 		}
 		by := deliveredBy(sc, names, r)
 		if r.delivery == "partner" {
