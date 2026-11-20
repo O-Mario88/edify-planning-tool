@@ -1,9 +1,10 @@
 """A screen-by-screen check of the web app, every role at three sizes.
 
     SWEEP_PASSWORD=<local seed password> python platform/tools/ui-sweep/sweep.py \\
-        --base http://127.0.0.1:3000 --out "<folder>" [--roles CCEO,Admin] [--pages 60]
+        --base http://localhost:3000 --out "<folder>" [--roles CCEO,Admin] [--pages 60]
 
-Signs in to the LOCAL web app only (the base must be a localhost address) as
+Signs in to the LOCAL web app only (the base must be a localhost address;
+use "localhost", as the app refuses a sign-in posted from 127.0.0.1) as
 each role's seeded account, opens every page its menu links to at phone
 (390x844), tablet (768x1024) and desktop (1440x900), and records what is
 wrong with each in the browser's own measurements, not by eye:
@@ -175,7 +176,7 @@ def report(rows: list[dict]) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--base", default="http://127.0.0.1:3000")
+    parser.add_argument("--base", default="http://localhost:3000")
     parser.add_argument("--out", required=True)
     parser.add_argument("--pages", type=int, default=60)
     parser.add_argument("--roles", default="")
