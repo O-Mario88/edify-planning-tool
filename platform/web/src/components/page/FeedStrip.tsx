@@ -25,8 +25,11 @@ const TINTS: Readonly<Record<FigureTint, { icon: string; line: string }>> = {
   primary: { icon: 'var(--edify-primary)', line: 'var(--edify-text-muted)' },
 };
 
+/** A tile's words never stack a word a line (2026-11-20): the tiles are at
+ *  least this wide, and the info mark sits in the corner instead of taking a
+ *  column from the label. */
 const TILE =
-  'flex items-center gap-4 rounded-[16px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] px-5 py-4 text-left no-underline shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-14px_rgba(15,23,42,0.18)] transition-[box-shadow,border-color] duration-[180ms] motion-reduce:transition-none';
+  'relative flex items-center gap-4 rounded-[16px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] px-5 py-4 text-left no-underline shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-14px_rgba(15,23,42,0.18)] transition-[box-shadow,border-color] duration-[180ms] motion-reduce:transition-none';
 const LINKED =
   'hover:border-[var(--edify-border-strong)] hover:shadow-[0_1px_2px_rgba(15,23,42,0.06),0_12px_28px_-12px_rgba(15,23,42,0.24)] focus-visible:outline-2 focus-visible:outline-offset-2';
 
@@ -53,7 +56,7 @@ function Tile({ metric, href }: { metric: PageMetric; href: string }) {
         ) : null}
       </span>
       {metric.note ? (
-        <span className="shrink-0 self-start text-[var(--edify-text-subtle)]" title={metric.note}>
+        <span className="absolute right-3 top-3 text-[var(--edify-text-subtle)]" title={metric.note}>
           <Info size={18} aria-hidden="true" />
           <span className="sr-only" data-kpi-note>
             {metric.note}
@@ -83,7 +86,7 @@ export function FeedStrip({ strip, resolve }: { strip: PageStrip; resolve: (href
           {strip.subtitle ? <p className="text-[13px] text-[var(--edify-text-muted)]">{strip.subtitle}</p> : null}
         </header>
       ) : null}
-      <div role="list" className="grid grid-cols-[repeat(auto-fill,minmax(212px,1fr))] gap-4">
+      <div role="list" className="grid grid-cols-[repeat(auto-fill,minmax(256px,1fr))] gap-4">
         {strip.metrics.map((metric) => (
           <Tile key={metric.label} metric={metric} href={metric.href ? resolve(metric.href) : ''} />
         ))}

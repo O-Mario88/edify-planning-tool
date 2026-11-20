@@ -21,7 +21,7 @@ import { PageRecordView } from './PageRecordView';
 import { PageStripView } from './PageStripView';
 import { EmptyState, Explanation, PageTableView, Pager } from './PageTableView';
 import { ChipContext, cardStyles, usePageLink } from './shared';
-import { tableNote } from './tableNote';
+import { headingOnly, tableNote } from './tableNote';
 
 /** A table's note on a card of its own, folded under its chevron. */
 function NoteCard({ text }: { readonly text: string }) {
@@ -87,6 +87,11 @@ export function PageBlocksView({ blocks, onFilter, isRaised = true }: PageBlocks
           const note = tableNote(blocks, index);
           if (note) {
             return <NoteCard key={index} text={note} />;
+          }
+          // A panel that is only a title heads the block after it (2026-11-20).
+          const heading = headingOnly(block);
+          if (heading) {
+            return <Block key={index} block={{ ...block, kind: { case: 'section', value: heading.title } } as PageBlock} onFilter={onFilter} isRaised={isRaised} />;
           }
           return <Block key={index} block={block} onFilter={onFilter} isRaised={isRaised} />;
         })}

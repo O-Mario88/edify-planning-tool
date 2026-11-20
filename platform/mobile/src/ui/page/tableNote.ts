@@ -34,3 +34,15 @@ export function tableNote(blocks: readonly PageBlock[], index: number): string |
   while (before >= 0 && isPager(blocks[before])) before -= 1;
   return blocks[before]?.kind.case === 'table' ? text : null;
 }
+
+/** A panel that is only a title (and perhaps the line under it): a heading
+ *  over the block after it, drawn as the page's section headings are rather
+ *  than as an empty card (2026-11-20: My Plan's "My training summary FY
+ *  2027" drew a card with nothing in it over its own table). */
+export function headingOnly(block: PageBlock | undefined): { title: string; subtitle: string } | null {
+  const kind = block?.kind;
+  if (kind?.case !== 'panel') return null;
+  const { title, subtitle, badges, items } = kind.value;
+  if (title.trim() === '' || badges.length > 0 || items.length > 0) return null;
+  return { title, subtitle };
+}

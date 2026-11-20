@@ -7,7 +7,7 @@
 import type { ReactNode } from 'react';
 import type { PageAction, PageBlock, PageLinkTabs } from '@/gen/edify/screens/v1/page_pb';
 import { actionHref, resolveHref } from '@/lib/feedPage';
-import { tableNote } from '@/lib/tableNote';
+import { headingOnly, tableNote } from '@/lib/tableNote';
 
 import { BUTTON_PRIMARY } from '../blocks/buttons';
 import { FilterBar } from '../blocks/FilterBar';
@@ -119,6 +119,15 @@ export function FeedBlocks({ blocks, pagePath, drawerHref, selectable, clearFilt
           case 'strip':
             return <FeedStrip key={index} strip={kind.value} resolve={resolve} />;
           case 'panel': {
+            const heading = headingOnly(block);
+            if (heading) {
+              return (
+                <div key={index} className="pt-2" data-block="heading">
+                  <h2 className="text-[length:var(--edify-text-title-size)] font-bold">{heading.title}</h2>
+                  {heading.subtitle ? <p className="edify-text-caption edify-text-muted">{heading.subtitle}</p> : null}
+                </div>
+              );
+            }
             const note = tableNote(blocks, index);
             if (note) {
               return (

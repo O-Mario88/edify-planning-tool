@@ -6,7 +6,7 @@
  */
 import type { PageAction, PageBlock, PageFacts } from '@/gen/edify/screens/v1/page_pb';
 import { actionHref, resolveHref } from '@/lib/feedPage';
-import { tableNote } from '@/lib/tableNote';
+import { headingOnly, tableNote } from '@/lib/tableNote';
 
 import { Explanation } from '../page/Explanation';
 import { FeedBlocks } from '../page/FeedBlocks';
@@ -93,6 +93,14 @@ export function PhoneBlocks({ blocks, pagePath, drawerHref, selectable }: PhoneB
           </section>
         );
       case 'panel': {
+        const heading = headingOnly(block);
+        if (heading) {
+          return (
+            <h2 key={index} data-ph="section">
+              {heading.title}
+            </h2>
+          );
+        }
         const note = tableNote(list, index);
         if (note) {
           return (

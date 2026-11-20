@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { GetPageResponseSchema } from '@/gen/edify/screens/v1/page_screen_pb';
 
-import { tableNote } from './tableNote';
+import { headingOnly, tableNote } from './tableNote';
 
 const NOTE = 'A school counts from the day it is committed: planned by you, assigned to a partner, or on a group training.';
 const table: JsonValue = { table: { title: 'My training summary', columns: [{ label: 'Training' }], rows: [{ cells: [{ text: 'Leadership' }] }] } };
@@ -28,5 +28,19 @@ describe('a table note sent as its own block', () => {
     expect(tableNote(blocksOf(table, note('No planning records match your filters.')), 1)).toBeNull();
     expect(tableNote(blocksOf(table, pagerPanel), 1)).toBeNull();
     expect(tableNote(blocksOf(table), 0)).toBeNull();
+  });
+});
+
+describe('a panel that is only a title', () => {
+  it('is a heading, with the line under it', () => {
+    expect(headingOnly(blocksOf({ panel: { title: 'My training summary FY 2027' } })[0])).toEqual({ title: 'My training summary FY 2027', subtitle: '' });
+    expect(headingOnly(blocksOf({ panel: { title: 'Summary', subtitle: 'FY 2027' } })[0])).toEqual({ title: 'Summary', subtitle: 'FY 2027' });
+  });
+
+  it('is not a panel with something in it, with badges, or with no title', () => {
+    expect(headingOnly(blocksOf({ panel: { title: 'Details', items: [{ text: 'Kira' }] } })[0])).toBeNull();
+    expect(headingOnly(blocksOf({ panel: { title: 'Details', badges: [{ text: 'Open' }] } })[0])).toBeNull();
+    expect(headingOnly(blocksOf({ panel: {} })[0])).toBeNull();
+    expect(headingOnly(blocksOf(table)[0])).toBeNull();
   });
 });
