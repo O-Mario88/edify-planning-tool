@@ -409,7 +409,7 @@ func dashboardResponse(p auth.Principal, role Role, h header, view string, viewB
 	blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Strip{Strip: &screensv1.PageStrip{Title: "Verification workload", Metrics: metrics}}})
 	if len(h.cards) == 0 {
 		blocks = append(blocks, panelOf("Oldest waiting records", linksItem(&screensv1.PageLink{Text: "Full queue", Href: VerificationPath})),
-			&screensv1.PageBlock{Kind: &screensv1.PageBlock_Empty{Empty: "Verification queue is clearNew submissions will appear here automatically."}})
+			&screensv1.PageBlock{Kind: &screensv1.PageBlock_Empty{Empty: "Verification queue is clear. New submissions will appear here automatically."}})
 	} else {
 		items := []*screensv1.PagePanelItem{}
 		for _, c := range h.cards {

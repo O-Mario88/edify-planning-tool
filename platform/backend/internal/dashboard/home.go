@@ -240,9 +240,9 @@ func (h home) doNext(pastDue int) []*screensv1.PageBlock {
 	}
 	band.Items = []*screensv1.PagePanelItem{{Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{
 		Links: []*screensv1.PageLink{{Text: "Open full plan", Href: "/my-plan"}}}}}}
-	empty := "No urgent field workYour next scheduled activity will appear here."
+	empty := "No urgent field work. Your next scheduled activity will appear here."
 	if pastDue > 0 {
-		empty = fmt.Sprintf("%d past dueFinish, reschedule or cancel them in What needs you now.", pastDue)
+		empty = fmt.Sprintf("%d past due. Finish, reschedule or cancel them in What needs you now.", pastDue)
 	}
 	return []*screensv1.PageBlock{
 		{Kind: &screensv1.PageBlock_Panel{Panel: band}},

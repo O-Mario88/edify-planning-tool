@@ -895,7 +895,35 @@ def _empty_message(node: Node) -> str:
     message = (
         empty.find(lambda n: n.has("edify-empty-state__message")) if empty else None
     )
-    return (message or empty).text() if empty else ""
+    if empty is None:
+        return ""
+    if message is not None:
+        return message.text()
+    return _empty_parts(empty)
+
+
+#: Marks that already end a sentence.
+_SENTENCE_ENDS = (".", "!", "?", ":")
+
+
+def _empty_parts(empty: Node) -> str:
+    """An empty state drawn as parts (a bold title, then a line under it):
+    each part a sentence, so "8 past due" and "Finish …" do not run together.
+    Running text (words beside elements) reads as written."""
+    if any(isinstance(child, str) and child.strip() for child in empty.children):
+        return empty.text()
+    parts = [
+        child.text()
+        for child in empty.children
+        if isinstance(child, Node) and child.text()
+    ]
+    if len(parts) < 2:
+        return empty.text()
+    *lead, last = parts
+    return " ".join(
+        [part if part.endswith(_SENTENCE_ENDS) else f"{part}." for part in lead]
+        + [last]
+    )
 
 
 def _chart(section: Node) -> dict:

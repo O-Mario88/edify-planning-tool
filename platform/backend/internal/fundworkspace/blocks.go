@@ -111,7 +111,7 @@ func Mix(title, currency string, labels []string, totals map[string]int64) *scre
 	}
 	if len(ordered) == 0 {
 		return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{
-			Title: title, EmptyMessage: "No costed activities this monthThe budget mix fills in as plans are costed."}}}
+			Title: title, EmptyMessage: "No costed activities this month. The budget mix fills in as plans are costed."}}}
 	}
 	var total int64
 	for _, s := range ordered {

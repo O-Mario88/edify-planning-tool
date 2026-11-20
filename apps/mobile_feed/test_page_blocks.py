@@ -1944,3 +1944,40 @@ class PageFrameTest(SimpleTestCase):
         loose = "<main><div class='a'>x</div><div class='b'>y</div></main>"
 
         self.assertNotIn("pageClass", page_blocks.read(loose, path="/x", desktop=True))
+
+
+class EmptyStatePartsTest(SimpleTestCase):
+    """An empty state drawn as a bold line and a line under it reads as two
+    sentences, not one run-together word ("8 past dueFinish …")."""
+
+    def _empty(self, html: str) -> str:
+        blocks = page_blocks.read(f"<main>{html}</main>")["blocks"]
+        return next(block["empty"] for block in blocks if "empty" in block)
+
+    def test_a_title_and_a_line_read_as_two_sentences(self):
+        self.assertEqual(
+            self._empty(
+                '<a class="edify-empty-state" href="/dashboard"><strong>8 past due</strong>'
+                "<span>Finish, reschedule or cancel them in What needs you now.</span></a>"
+            ),
+            "8 past due. Finish, reschedule or cancel them in What needs you now.",
+        )
+
+    def test_a_title_that_ends_a_sentence_keeps_its_own_mark(self):
+        self.assertEqual(
+            self._empty('<div class="edify-empty-state"><strong>All clear!</strong><span>Nothing waits.</span></div>'),
+            "All clear! Nothing waits.",
+        )
+
+    def test_a_message_or_running_text_reads_as_written(self):
+        self.assertEqual(
+            self._empty(
+                '<div class="edify-empty-state"><span class="edify-empty-state__mark"><svg></svg></span>'
+                '<p class="edify-empty-state__message">No record yet: the figure is 0.</p></div>'
+            ),
+            "No record yet: the figure is 0.",
+        )
+        self.assertEqual(
+            self._empty('<div class="edify-empty-state">No schools <b>yet</b> in this cluster.</div>'),
+            "No schools yet in this cluster.",
+        )

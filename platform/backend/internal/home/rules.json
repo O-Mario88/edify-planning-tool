@@ -46,7 +46,7 @@
       "CCEO": [
         {
           "action": "Open",
-          "counts": "past their date, not completed",
+          "counts": "past their date and not complete, from any year",
           "icon": "warning",
           "key": "my_overdue",
           "line": "",
@@ -108,7 +108,7 @@
       "Program Lead": [
         {
           "action": "Open",
-          "counts": "past their date, not completed",
+          "counts": "past their date and not complete, from any year",
           "icon": "warning",
           "key": "my_overdue",
           "line": "",
@@ -118,7 +118,7 @@
         },
         {
           "action": "Follow up",
-          "counts": "past their date, not completed",
+          "counts": "past their date and not complete, from any year",
           "icon": "bell",
           "key": "team_overdue",
           "line": "",

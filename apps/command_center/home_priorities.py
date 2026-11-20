@@ -89,14 +89,14 @@ SPECS: dict[str, tuple[str, str, str, str, str | None]] = {
         "",
         "warning",
         "Open",
-        "past their date, not completed",
+        "past their date and not complete, from any year",
     ),
     "team_overdue": (
         "Follow up with CCEOs Overdue Plans",
         "",
         "bell",
         "Follow up",
-        "past their date, not completed",
+        "past their date and not complete, from any year",
     ),
     "not_clustered": (
         "Schools Not Clustered",
