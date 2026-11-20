@@ -211,3 +211,16 @@ select.edify-select {
     font-size: 1.75rem;
   }
 }
+
+/* COMPACT LAYOUT, DESKTOP (owner, 2026-11-20: "compact beautifully laid out
+   cards, tables, tiles, filter, headers"). Measured, the page header sat
+   flush on the block under it, and an empty table's line sat on the card's
+   very edge (the existing web's inline empty line has no inset). The page's
+   rhythm is 12px; a card's words start on its 16px content line. */
+[data-page] > header + * {
+  margin-top: 0.75rem !important;
+}
+main [data-block='table'] > .edify-empty-state--line.edify-empty-state--line.edify-empty-state--line {
+  padding: 0.625rem 1rem !important;
+}
+
