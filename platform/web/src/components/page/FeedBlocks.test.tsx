@@ -136,8 +136,8 @@ describe('My Plan blocks', () => {
     expect(html).toMatch(/data-count="true">0</);
   });
 
-  it('heads a strip with its title, as the existing context-metrics row does', () => {
-    expect(html).toContain('<h2 class="context-metrics__title">Plan Breakdown by Period</h2>');
+  it('heads a strip of tiles with its title', () => {
+    expect(html).toMatch(/<h2[^>]*>Plan Breakdown by Period<\/h2>/);
   });
 });
 

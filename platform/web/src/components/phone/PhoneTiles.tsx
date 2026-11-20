@@ -15,7 +15,9 @@ import type { FigureIconName } from '@/lib/figureIcon';
 
 import { phoneTone, tileColumns } from './tone';
 
-const ICONS: Readonly<Record<FigureIconName, LucideIcon>> = {
+/** A figure's icon by what its label names (lib/figureIcon), for every
+ *  tile: the phone's here and the desktop's (page/FeedStrip). */
+export const FIGURE_ICONS: Readonly<Record<FigureIconName, LucideIcon>> = {
   school: School,
   cluster: LayoutGrid,
   route: Route,
@@ -29,21 +31,31 @@ const ICONS: Readonly<Record<FigureIconName, LucideIcon>> = {
   chart: ChartColumn,
 };
 
+export type FigureTint = 'success' | 'danger' | 'warning' | 'info' | 'primary';
+
 /** A tile's tint: its tone where it has one, else what its icon says. */
-function tintOf(metric: PageMetric, icon: FigureIconName): string {
+export function figureTint(metric: PageMetric, icon: FigureIconName): FigureTint {
   const tone = phoneTone(metric.tone);
-  if (tone === 'good') return 'var(--ph-success)';
-  if (tone === 'alert') return 'var(--ph-danger)';
-  if (tone === 'caution') return 'var(--ph-warning)';
-  if (tone === 'info') return 'var(--ph-link)';
-  if (icon === 'alert') return 'var(--ph-danger)';
-  if (icon === 'check') return 'var(--ph-success)';
-  return 'var(--ph-primary)';
+  if (tone === 'good') return 'success';
+  if (tone === 'alert') return 'danger';
+  if (tone === 'caution') return 'warning';
+  if (tone === 'info') return 'info';
+  if (icon === 'alert') return 'danger';
+  if (icon === 'check') return 'success';
+  return 'primary';
 }
+
+const PHONE_TINT: Readonly<Record<FigureTint, string>> = {
+  success: 'var(--ph-success)',
+  danger: 'var(--ph-danger)',
+  warning: 'var(--ph-warning)',
+  info: 'var(--ph-link)',
+  primary: 'var(--ph-primary)',
+};
 
 function Tile({ metric, resolve }: { metric: PageMetric; resolve: (href: string) => string }) {
   const icon = figureIcon(metric.label);
-  const Icon = ICONS[icon];
+  const Icon = FIGURE_ICONS[icon];
   const tone = phoneTone(metric.tone);
   const body = (
     <>
@@ -64,7 +76,7 @@ function Tile({ metric, resolve }: { metric: PageMetric; resolve: (href: string)
       ) : null}
     </>
   );
-  const style = { '--ph-tint': tintOf(metric, icon) } as CSSProperties;
+  const style = { '--ph-tint': PHONE_TINT[figureTint(metric, icon)] } as CSSProperties;
   return metric.href ? (
     <a data-ph="tile" data-noted={metric.note ? true : undefined} href={resolve(metric.href)} style={style}>
       {body}

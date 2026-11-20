@@ -3,10 +3,11 @@
  * tiles reference is what I want for the entire platform", the Smart Route
  * Planner's figure cards): each tile a tinted icon, the figure, its label and
  * the short line under it, with an info mark where the figure has a note. Two
- * a row on a phone and compact there, without the icon (owner, 2026-11-20:
- * "Smaller tiles, all shown"), so every figure shows in a few rows; on a
- * tablet or wider, icon beside figure, in even rows of at most five
- * (figureTiles.tileColumns). The strip's title is the tiles' name for a
+ * a row on a phone, compact there (owner, 2026-11-20: "Smaller tiles, all
+ * shown", then "look at those tiles they are more beautiful"): the tinted
+ * icon beside the figure, the label and its line under both at the tile's
+ * full width; on a tablet or wider, icon beside figure and label, in even
+ * rows of at most five (figureTiles.tileColumns). The strip's title is the tiles' name for a
  * screen reader; a titled strip (My Plan's Plan Breakdown by Period) shows
  * its heading and the line under it over the tiles.
  */
@@ -116,18 +117,33 @@ function Tile({ metric, compact }: { readonly metric: PageMetric; readonly compa
         { backgroundColor: pressed ? colors.primarySoft : colors.raised, borderColor: colors.raisedBorder },
       ]}
     >
-      {compact ? null : (
-        <View style={[styles.icon, { backgroundColor: `${tint}1a` }]}>
-          <Icon size={20} color={tint} />
-        </View>
+      {compact ? (
+        <>
+          <View style={[styles.head, metric.note ? styles.besideInfo : null]}>
+            <View style={[styles.icon, styles.iconCompact, { backgroundColor: `${tint}1f` }]}>
+              <Icon size={18} color={tint} />
+            </View>
+            <Text style={[styles.value, styles.valueCompact, { color: valueColor }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+              {metric.value}
+            </Text>
+          </View>
+          <Text style={[styles.label, styles.small, { color: colors.textMuted }]}>{metric.label}</Text>
+          {metric.helper ? <Text style={[styles.helper, styles.small, { color: colors.textMuted }]}>{metric.helper}</Text> : null}
+        </>
+      ) : (
+        <>
+          <View style={[styles.icon, { backgroundColor: `${tint}1a` }]}>
+            <Icon size={20} color={tint} />
+          </View>
+          <View style={styles.words}>
+            <Text style={[styles.value, { color: valueColor }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+              {metric.value}
+            </Text>
+            <Text style={[styles.label, { color: colors.textMuted }]}>{metric.label}</Text>
+            {metric.helper ? <Text style={[styles.helper, { color: colors.textMuted }]}>{metric.helper}</Text> : null}
+          </View>
+        </>
       )}
-      <View style={[styles.words, compact && metric.note ? styles.besideInfo : null]}>
-        <Text style={[styles.value, compact && styles.valueCompact, { color: valueColor }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-          {metric.value}
-        </Text>
-        <Text style={[styles.label, compact && styles.small, { color: colors.textMuted }]}>{metric.label}</Text>
-        {metric.helper ? <Text style={[styles.helper, compact && styles.small, { color: colors.textMuted }]}>{metric.helper}</Text> : null}
-      </View>
       {metric.note ? (
         <View style={compact ? styles.infoCorner : undefined}>
           <Info size={compact ? 14 : 16} color={colors.textMuted} />
@@ -154,9 +170,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     boxShadow: TILE_SHADOW,
   },
-  compact: { flexDirection: 'column', gap: 0, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 12 },
-  infoCorner: { position: 'absolute', top: 10, right: 10 },
-  besideInfo: { paddingRight: 18 },
+  compact: { flexDirection: 'column', alignItems: 'stretch', gap: 6, borderRadius: 14, padding: 12 },
+  head: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  iconCompact: { width: 34, height: 34 },
+  infoCorner: { position: 'absolute', top: 12, right: 12 },
+  besideInfo: { paddingRight: 20 },
   icon: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   words: { flexGrow: 1, flexShrink: 1, minWidth: 0, gap: 1 },
   value: { fontFamily: fonts.bold, fontSize: 20, lineHeight: 24 },

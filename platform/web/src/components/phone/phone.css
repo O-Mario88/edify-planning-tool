@@ -129,19 +129,22 @@ a[data-ph='tile']:active { background: var(--ph-primary-soft) !important; }
 [data-ph='tile-label'] { color: var(--ph-text-muted) !important; font-size: 13px !important; font-weight: 500 !important; }
 [data-ph='tile-helper'] { color: var(--ph-text-muted) !important; font-size: 12px !important; font-weight: 500 !important; }
 [data-ph='tile-info'] { position: absolute !important; top: 12px !important; right: 12px !important; color: var(--ph-text-muted) !important; }
-/* Compact on a phone (owner, 2026-11-20: "Smaller tiles, all shown"): every
-   figure stays, without the icon box, so a page's figures take a few rows
-   rather than screens. A tablet and up keep the tiles above. */
+/* On a phone (owner, 2026-11-20: "Smaller tiles, all shown", then "look at
+   those tiles they are more beautiful"): every figure stays, as a small
+   card after the Smart Route Planner's: the tinted icon beside the figure,
+   the label and its line under both at the card's full width, so a page's
+   figures take a few rows. A tablet and up keep the tiles above. */
 @container ph-blocks (max-width: 47.999rem) {
-  [data-ph='tiles'] { gap: 8px !important; }
-  [data-ph='tile'] { flex-direction: column !important; gap: 0 !important; padding: 10px 12px !important; border-radius: 10px !important; }
-  [data-ph='tile-icon'] { display: none !important; }
-  [data-ph='tile-value'] { font-size: 18px !important; line-height: 22px !important; }
-  [data-ph='tile-label'] { font-size: 12px !important; line-height: 16px !important; }
-  [data-ph='tile-helper'] { font-size: 12px !important; line-height: 16px !important; }
-  [data-ph='tile'][data-noted] [data-ph='tile-words'] { padding-right: 18px !important; }
-  [data-ph='tile-info'] { top: 10px !important; right: 10px !important; }
-  [data-ph='tile-info'] svg { width: 14px !important; height: 14px !important; }
+  [data-ph='tiles'] { gap: 10px !important; }
+  [data-ph='tile'] { display: grid !important; grid-template-columns: 34px minmax(0, 1fr) !important; column-gap: 10px !important; row-gap: 6px !important; align-items: center !important; align-content: start !important; padding: 12px !important; border-radius: 14px !important; }
+  [data-ph='tile-icon'] { display: flex !important; width: 34px !important; height: 34px !important; border-radius: 10px !important; }
+  [data-ph='tile-icon'] svg { width: 18px !important; height: 18px !important; }
+  [data-ph='tile-words'] { display: contents !important; }
+  [data-ph='tile-value'] { grid-column: 2 !important; font-size: 18px !important; line-height: 22px !important; }
+  [data-ph='tile'][data-noted] [data-ph='tile-value'] { padding-right: 20px !important; }
+  [data-ph='tile-label'], [data-ph='tile-helper'] { grid-column: 1 / -1 !important; font-size: 12px !important; line-height: 16px !important; }
+  [data-ph='tile-info'] { top: 12px !important; right: 12px !important; }
+  [data-ph='tile-info'] svg { width: 16px !important; height: 16px !important; }
 }
 [data-ph='tiles-card'] { display: flex !important; flex-direction: column !important; gap: 12px !important; padding: 16px !important; border: 1px solid var(--ph-raised-border) !important; border-radius: 10px !important; background: var(--ph-raised) !important; box-shadow: var(--ph-tile-shadow) !important; }
 [data-ph='tiles-title'] { text-transform: none !important; letter-spacing: normal !important; margin: 0 !important; color: var(--ph-accent-text) !important; font-size: 15px !important; font-weight: 600 !important; }

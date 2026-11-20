@@ -1,8 +1,7 @@
 /**
- * A strip's figures are drawn as the existing web's context-metrics row
- * (templates/components/context_metrics.html): each fact its label, figure
- * and the line under it, linked where it opens a page, its note kept for a
- * screen reader.
+ * A strip's figures are drawn as tiles (owner, 2026-11-20): each its tinted
+ * icon, figure, label and the line under it, the whole tile a link where it
+ * opens a page, its note kept for a screen reader.
  */
 import { create } from '@bufbuild/protobuf';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -23,17 +22,18 @@ const strip = create(PageStripSchema, {
 });
 
 describe('a strip', () => {
-  it('draws one context-metrics row of facts: label, figure, the line under it', () => {
+  it('draws a tile for each figure: its icon, figure, label and the line under it', () => {
     const html = renderToStaticMarkup(<FeedStrip strip={strip} resolve={(href) => href} />);
-    expect(html).toContain('class="context-metrics"');
     expect(html).toContain('data-kpi-count="3"');
-    expect(html.match(/class="context-metrics__fact"/g)).toHaveLength(3);
-    expect(html).toMatch(/context-metrics__label[^>]*>Client Schools<\/span><strong class="context-metrics__value"[^>]*>558<\/strong><span class="context-metrics__helper"[^>]*>80% of total<\/span>/);
+    expect(html.match(/data-figure=""/g)).toHaveLength(3);
+    expect(html.match(/<svg/g)?.length).toBeGreaterThanOrEqual(3);
+    expect(html).toMatch(/>558<\/span><span[^>]*>Client Schools<\/span><span[^>]*>80% of total<\/span>/);
+    expect(html).not.toContain('context-metrics');
   });
 
   it('links a figure that opens a page, and keeps a note for a screen reader', () => {
     const html = renderToStaticMarkup(<FeedStrip strip={strip} resolve={(href) => href} />);
-    expect(html).toContain('<a class="context-metrics__link" href="/schools?school_type=client">');
+    expect(html).toMatch(/<a class="[^"]*" data-figure="" role="listitem" href="\/schools\?school_type=client">/);
     expect(html).toMatch(/data-kpi-note[^>]*>Past their date, not completed</);
   });
 
