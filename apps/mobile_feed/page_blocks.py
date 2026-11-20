@@ -99,14 +99,19 @@ class Node:
     def find_all(self, test) -> list[Node]:
         return [node for node in self.nodes() if test(node)]
 
-    def text(self, *, shown: bool = True) -> str:
+    def text(self, *, shown: bool = True, apart: bool = True) -> str:
         """The element's text, whitespace collapsed. ``shown`` leaves out what
         only a screen reader hears (``sr-only``), as the page shows it. Two
         parts drawn as elements with nothing between them ("NSSF compliance"
         then "National Social …", "Cluster Meetings" then "UGX 291K") read
-        apart, joined by " · ", rather than as one run-together word."""
+        apart, joined by " · ", rather than as one run-together word.
+        ``apart=False`` is the reading without the joiner, for the rules
+        that count a part's words to decide what kind of part it is: they
+        decide as they always have, only the words shown change."""
         parts: list[str] = []
         self._collect(parts, shown)
+        if not apart:
+            return " ".join("".join(p for p in parts if p != _EDGE).split())
         return " ".join(_sentence_edges(parts).split())
 
     def _collect(self, parts: list[str], shown: bool, *, edges: bool = True) -> None:
@@ -2014,7 +2019,7 @@ def _fallback(node: Node) -> dict | None:
     # A heading that is only a figure ("0") is a tile's number, not a title.
     if node.tag in SECTION_HEADINGS and any(c.isalpha() for c in node.text()):
         return {"section": node.text()}
-    if len(node.text().split()) < MIN_FALLBACK_WORDS:
+    if len(node.text(apart=False).split()) < MIN_FALLBACK_WORDS:
         return None
     panel = _panel(node)
     if not panel["items"] and not panel["title"]:

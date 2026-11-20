@@ -182,7 +182,14 @@ func JoinParts(parts ...string) string {
 // textOf is Node.text: the element's words, whitespace collapsed, what only
 // a screen reader hears left out when shown, parts drawn apart read apart
 // (joiner): "Cluster Meetings · UGX 291K".
-func (n *Node) textOf(shown bool) string {
+func (n *Node) textOf(shown bool) string { return n.reading(shown, true) }
+
+// wordsText is Node.text(apart=False): the reading without partJoiner, for
+// the rules that count a part's words to decide what kind of part it is
+// (fallback), so they decide as they always have.
+func (n *Node) wordsText() string { return n.reading(true, false) }
+
+func (n *Node) reading(shown, apart bool) string {
 	var j joiner
 	var collect func(*Node)
 	collect = func(x *Node) {
@@ -194,9 +201,9 @@ func (n *Node) textOf(shown bool) string {
 				if silent[v.tag] || (shown && v.has("sr-only")) {
 					continue
 				}
-				j.edge = true
+				j.edge = apart
 				collect(v)
-				j.edge = true
+				j.edge = apart
 			}
 		}
 	}
@@ -389,7 +396,7 @@ func fallback(n *Node) *screensv1.PageBlock {
 	if (n.tag == "h2" || n.tag == "h3") && strings.IndexFunc(text, unicode.IsLetter) >= 0 {
 		return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Section{Section: text}}
 	}
-	if len(strings.Fields(text)) < 2 {
+	if len(strings.Fields(n.wordsText())) < 2 {
 		return nil
 	}
 	p := ReadPanel(n)

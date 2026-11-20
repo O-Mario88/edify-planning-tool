@@ -47,7 +47,10 @@ def _is_card(node: Node) -> bool:
     ):
         return False
     # A full surface (a section card with its own list) is read on its own.
-    if node.has("edify-surface") or len(node.text().split()) > MAX_CARD_WORDS:
+    if (
+        node.has("edify-surface")
+        or len(node.text(apart=False).split()) > MAX_CARD_WORDS
+    ):
         return False
     if node.find(lambda n: n.tag in NOT_SMALL or n.has("edify-data-chart")):
         return False
@@ -99,7 +102,7 @@ def _is_pill(node: Node) -> bool:
     return (
         node.tag == "span"
         and (node.has("rounded-full") or node.has("rounded-pill"))
-        and 0 < len(node.text().split()) <= MAX_PILL_WORDS
+        and 0 < len(node.text(apart=False).split()) <= MAX_PILL_WORDS
     )
 
 
@@ -149,7 +152,9 @@ def _is_strip_card(card: Node) -> bool:
         lambda n: n.tag in (*NOT_SMALL, "h2", "h3", "h4") or n.has("edify-data-chart")
     ):
         return False
-    outside = len(card.text().split()) - len(strips[0].text().split())
+    outside = len(card.text(apart=False).split()) - len(
+        strips[0].text(apart=False).split()
+    )
     return 0 < outside <= MAX_CARD_WORDS
 
 
