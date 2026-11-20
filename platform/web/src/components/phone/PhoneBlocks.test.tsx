@@ -103,17 +103,20 @@ describe('a page on a phone', () => {
     expect(html).toContain('More 1');
   });
 
-  it('draws a record table with its count, toned rows, details and the pager as its foot', () => {
+  it('draws a record table as row cards with its count, tone, tick, ID, facts, details and the pager as its foot', () => {
     const html = draw(MY_PLAN, true);
     expect(html).toContain('<h2 data-ph="table-title">Returned — Needs Correction</h2>');
     expect(html).toContain('aria-label="1 listed"');
-    expect(html).toContain('<tr data-row-tone="overdue">');
+    expect(html).not.toContain('data-ph="grid"');
+    expect(html).toContain('<li data-ph="row" data-row-tone="overdue">');
     expect(html).toContain('<input type="checkbox" data-pick="41" aria-label="Select Kimenyedde Primary"/>');
-    expect(html).toContain('aria-label="Show the details of Kimenyedde Primary"');
-    expect(html).toContain('<th scope="col" data-numeric="true">Visits</th>');
+    expect(html).toContain('<a data-ph="row-name" href="/schools/1/">Kimenyedde Primary</a>');
+    expect(html).toContain('<span data-ph="row-id">School Id SCH-1</span>');
+    expect(html).toMatch(/<dt>Visits<\/dt><dd>2<\/dd>/);
+    expect(html).toContain('>All details');
     // The pager after the table is drawn once, inside the table's card.
     expect(html.match(/data-ph="pager"/g)).toHaveLength(1);
-    expect(html.indexOf('data-ph="pager"')).toBeGreaterThan(html.indexOf('data-ph="grid"'));
+    expect(html.indexOf('data-ph="pager"')).toBeGreaterThan(html.indexOf('data-ph="rows"'));
   });
 
   it('draws panels and lists as the app does, keeping the chips keys', () => {

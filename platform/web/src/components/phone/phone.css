@@ -386,7 +386,7 @@ a[data-ph='panel-link'] { align-items: flex-start !important; }
 [data-ph='row'] { display: flex !important; flex-direction: column !important; gap: 10px !important; padding: 14px 16px !important; border-top: 1px solid var(--ph-raised-border) !important; }
 [data-ph='row'][data-row-tone='danger'] { box-shadow: inset 3px 0 0 var(--ph-danger) !important; }
 [data-ph='row-head'] { display: flex !important; align-items: flex-start !important; gap: 10px !important; }
-[data-ph='row-head'] input[type='checkbox'] { margin-top: 2px !important; flex-shrink: 0 !important; }
+[data-ph='row-head'] input[type='checkbox'] { align-self: flex-start !important; margin: 2px 0 0 !important; flex-shrink: 0 !important; }
 [data-ph='row-name-wrap'] { display: flex !important; flex: 1 1 auto !important; flex-direction: column !important; gap: 2px !important; min-width: 0 !important; }
 [data-ph='row-name'] { color: var(--ph-text) !important; font-size: 14px !important; line-height: 19px !important; font-weight: 700 !important; text-decoration: none !important; overflow-wrap: anywhere !important; }
 a[data-ph='row-name'] { color: var(--ph-link) !important; }
