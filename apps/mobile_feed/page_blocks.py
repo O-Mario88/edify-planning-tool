@@ -41,6 +41,28 @@ PICK_CELL = "school-plan-table__select"
 METER_SHARE = re.compile(r"(?:inline-size|width)\s*:\s*([\d.]+)%")
 
 
+#: Where one element ends or starts inside another's text (Node._collect).
+_EDGE = "\x00"
+
+
+def _sentence_edges(parts: list[str]) -> str:
+    """``parts`` joined, a full stop and a space put where one element's
+    words end in a lower-case letter and the next element's start with a
+    capital, with nothing between them: the page draws them as a title and
+    the line under it."""
+    out = ""
+    edge = False
+    for part in parts:
+        if part == _EDGE:
+            edge = True
+            continue
+        if edge and part and out and out[-1].islower() and part[0].isupper():
+            out += ". "
+        out += part
+        edge = False
+    return out
+
+
 class Node:
     __slots__ = ("tag", "attrs", "children", "parent")
 
@@ -75,10 +97,13 @@ class Node:
 
     def text(self, *, shown: bool = True) -> str:
         """The element's text, whitespace collapsed. ``shown`` leaves out what
-        only a screen reader hears (``sr-only``), as the page shows it."""
+        only a screen reader hears (``sr-only``), as the page shows it. A
+        title and the line after it, drawn as two elements with nothing
+        between ("NSSF compliance" then "National Social …"), read as two
+        sentences rather than one run-together word."""
         parts: list[str] = []
         self._collect(parts, shown)
-        return " ".join("".join(parts).split())
+        return " ".join(_sentence_edges(parts).split())
 
     def _collect(self, parts: list[str], shown: bool) -> None:
         for child in self.children:
@@ -87,7 +112,9 @@ class Node:
             elif child.tag in SILENT or (shown and child.has("sr-only")):
                 continue
             else:
+                parts.append(_EDGE)
                 child._collect(parts, shown)
+                parts.append(_EDGE)
 
 
 def _attrs(pairs) -> dict:

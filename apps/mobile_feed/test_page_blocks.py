@@ -1752,7 +1752,7 @@ class PlanningChipsTest(SimpleTestCase):
     def test_each_chip_is_a_pill_with_the_pages_tone(self):
         visits, trainings, lock = self.first[1:]
 
-        self.assertEqual(visits["text"], "1 Planned1 VerifiedVisit held")
+        self.assertEqual(visits["text"], "1 Planned1 Verified. Visit held")
         self.assertEqual(
             visits["pills"],
             [
@@ -1985,3 +1985,34 @@ class EmptyStatePartsTest(SimpleTestCase):
             ),
             "No schools yet in this cluster.",
         )
+
+
+class TitleAndLineTextTest(SimpleTestCase):
+    """A title element and the line after it, drawn with nothing between them,
+    read as two sentences wherever the page draws them (2026-11-20 sweep:
+    "NSSF complianceNational Social Security Fund")."""
+
+    def _text(self, html: str) -> str:
+        return page_blocks.parse(html).text()
+
+    def test_a_title_and_the_line_after_it_read_as_two_sentences(self):
+        cases = {
+            "<div><strong>NSSF compliance</strong><span>National Social Security Fund</span></div>": "NSSF compliance. National Social Security Fund",
+            "<td><b>No team leave history</b><p>Approved and pending team requests will appear here.</p></td>": "No team leave history. Approved and pending team requests will appear here.",
+            "<a><span>394 schools</span><span>Missing a verified SSA this year</span></a>": "394 schools. Missing a verified SSA this year",
+        }
+        for html, read in cases.items():
+            with self.subTest(html=html):
+                self.assertEqual(self._text(html), read)
+
+    def test_parts_that_already_read_apart_are_left_alone(self):
+        cases = {
+            "<p><b>3</b><span>schools</span></p>": "3schools",
+            "<p><span>Kampala</span> <span>Central</span></p>": "Kampala Central",
+            "<p>Visits <b>Planned</b> this week</p>": "Visits Planned this week",
+            "<p><span>Done.</span><span>Next</span></p>": "Done.Next",
+            "<p><span>UGX</span><span>Budget</span></p>": "UGXBudget",
+        }
+        for html, read in cases.items():
+            with self.subTest(html=html):
+                self.assertEqual(self._text(html), read)
