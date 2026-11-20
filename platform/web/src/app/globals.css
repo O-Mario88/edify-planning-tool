@@ -155,9 +155,10 @@ select.edify-select {
    size the pager, a row's menu and its details toggle for a mouse (18-28px);
    a finger gets at least 36px. */
 @media (max-width: 63.999rem) {
-  main .edify-pagination .edify-pagination__control,
-  main .row-menu .row-menu__trigger,
-  main button.edify-detail-toggle {
+  /* `:not(#edify-touch)` outranks the existing web's sized controls. */
+  main .edify-pagination .edify-pagination__control:not(#edify-touch),
+  main .row-menu .row-menu__trigger:not(#edify-touch),
+  main button.edify-detail-toggle:not(#edify-touch) {
     min-width: 36px !important;
     min-height: 36px !important;
   }
@@ -231,5 +232,13 @@ main [data-block='table'] > .edify-empty-state--line.edify-empty-state--line.edi
 main section.card[data-block]:not(#edify-card-corner),
 main section.admin-panel[data-block]:not(#edify-card-corner) {
   border-radius: 12px !important;
+}
+/* A school's name in the directory wraps whole (owner, 2026-10-02: text
+   wraps, never cut); the existing web clamps a list title to two lines. */
+main [data-directory-name]:not(#edify-wrap) {
+  display: block !important;
+  -webkit-line-clamp: unset !important;
+  line-clamp: none !important;
+  overflow: visible !important;
 }
 

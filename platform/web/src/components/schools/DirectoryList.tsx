@@ -88,7 +88,7 @@ function Row({ school, props, open, onToggle, picked, onPick }: {
           <span className="sr-only">School ID </span>
           {school.schoolId}
         </span>
-        <h2 className="min-w-0 flex-1 break-words text-[length:var(--edify-text-label-size)] font-semibold leading-[1.3] text-[var(--edify-text)] xl:flex-none xl:basis-[24rem]">{name}</h2>
+        <h2 data-directory-name className="min-w-0 flex-1 break-words text-[length:var(--edify-text-label-size)] font-semibold leading-[1.3] text-[var(--edify-text)] xl:flex-none xl:basis-[24rem]">{name}</h2>
         <span className="hidden min-w-0 flex-1 truncate xl:block" data-fact="district">{school.district}</span>
         <span className="hidden min-w-0 flex-1 truncate xl:block" data-fact="cluster">{school.clusterName}</span>
         <span className="hidden shrink-0 xl:block" data-fact="visit">
