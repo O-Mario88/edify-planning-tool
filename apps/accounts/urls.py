@@ -58,6 +58,12 @@ urlpatterns = [
         gateway_relay.activity_changed,
         name="activity-changed",
     ),
+    # What follows a school visit's completion Go made (docs/migration/183).
+    path(
+        "internal/visit-completed",
+        gateway_relay.visit_completed,
+        name="visit-completed",
+    ),
     path(
         "internal/costs-to-follow",
         gateway_relay.costs_to_follow,

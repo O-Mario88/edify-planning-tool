@@ -44,6 +44,10 @@ type GoSaves struct {
 	// internal/activities where Go takes it; everything else is forwarded
 	// as before. Nothing in the app reaches it yet (38.1).
 	ScheduleClusterMeeting bool
+	// CompleteVisit: the app's Complete drawer hands 183.1's staff school
+	// visits in through internal/activities (docs/migration/183); everything
+	// else is forwarded as before.
+	CompleteVisit bool
 }
 
 const (
@@ -69,11 +73,14 @@ const (
 	// SaveScheduleClusterMeeting is the name EDIFY_GO_SAVES uses for a
 	// cluster meeting.
 	SaveScheduleClusterMeeting = "schedule_cluster_meeting"
+	// SaveCompleteVisit is the name EDIFY_GO_SAVES uses for a staff school
+	// visit's completion.
+	SaveCompleteVisit = "complete_visit"
 )
 
 // knownGoSaves are the saves the switch can name.
 var knownGoSaves = []string{SaveScheduleVisit, SaveRescheduleVisit, SaveCancelVisit, SaveEditVisit, SaveScheduleTrainingPair,
-	SaveGroupReschedule, SaveGroupCancel, SaveScheduleGroupTraining, SaveScheduleClusterMeeting}
+	SaveGroupReschedule, SaveGroupCancel, SaveScheduleGroupTraining, SaveScheduleClusterMeeting, SaveCompleteVisit}
 
 // loadGoSaves reads EDIFY_GO_SAVES. A Go save asks the existing application
 // for the drawer's form and for the pricing (money stays Django's until
@@ -101,6 +108,7 @@ func loadGoSaves(env Environment, getenv func(string) string, existingApp, inter
 		out.GroupCancel = out.GroupCancel || name == SaveGroupCancel
 		out.ScheduleGroupTraining = out.ScheduleGroupTraining || name == SaveScheduleGroupTraining
 		out.ScheduleClusterMeeting = out.ScheduleClusterMeeting || name == SaveScheduleClusterMeeting
+		out.CompleteVisit = out.CompleteVisit || name == SaveCompleteVisit
 	}
 	if existingApp == "" || internalKey == "" {
 		return GoSaves{}, fmt.Errorf("config: %s needs %s and %s: the save asks the existing application for the form and the pricing",
@@ -119,6 +127,7 @@ func (g GoSaves) Names() []string {
 		{g.ScheduleVisit, SaveScheduleVisit}, {g.RescheduleVisit, SaveRescheduleVisit}, {g.CancelVisit, SaveCancelVisit},
 		{g.EditVisit, SaveEditVisit}, {g.ScheduleTrainingPair, SaveScheduleTrainingPair}, {g.GroupReschedule, SaveGroupReschedule},
 		{g.GroupCancel, SaveGroupCancel}, {g.ScheduleGroupTraining, SaveScheduleGroupTraining}, {g.ScheduleClusterMeeting, SaveScheduleClusterMeeting},
+		{g.CompleteVisit, SaveCompleteVisit},
 	} {
 		if s.on {
 			out = append(out, s.name)

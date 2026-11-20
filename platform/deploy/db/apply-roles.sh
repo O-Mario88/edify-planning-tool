@@ -72,6 +72,8 @@ psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/evidence_roles.sql"
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/activities_roles.sql"
 # Cancelling a visit withdraws its unmoved advances through one narrow function.
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/advance_withdraw_roles.sql"
+# Completing a staff school visit hands it in through one narrow function.
+psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/completion_roles.sql"
 # Snoozing a To-Do from Today: one table's insert and its three updated columns.
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/todo_roles.sql"
 # Undoing a snooze removes that one row through one narrow function.

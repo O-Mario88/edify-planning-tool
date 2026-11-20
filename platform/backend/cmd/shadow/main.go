@@ -28,6 +28,7 @@ import (
 	"fmt"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/parity"
 	"os"
+	"regexp"
 	"slices"
 	"sort"
 	"strings"
@@ -370,6 +371,9 @@ func plainJSON(v any) string {
 	return strings.TrimSuffix(buf.String(), "\n")
 }
 
+// pathToken is one word of a path or its query: what an id in it reads as.
+var pathToken = regexp.MustCompile(`[A-Za-z0-9]+`)
+
 func settle(v any, made map[string]bool, w window) any {
 	switch x := v.(type) {
 	case string:
@@ -380,14 +384,15 @@ func settle(v any, made map[string]bool, w window) any {
 			return "<now>"
 		}
 		if strings.Contains(x, "/") {
-			// A path naming a row the run made ("/admin-ops/incidents/<id>").
-			parts := strings.Split(x, "/")
-			for i, part := range parts {
+			// A path naming a row the run made ("/admin-ops/incidents/<id>",
+			// "/pl/review-queue?open=<id>"): each id in it, in its segments
+			// or its query.
+			return pathToken.ReplaceAllStringFunc(x, func(part string) string {
 				if made[part] {
-					parts[i] = "<new>"
+					return "<new>"
 				}
-			}
-			return strings.Join(parts, "/")
+				return part
+			})
 		}
 		return x
 	case []any:

@@ -1580,8 +1580,17 @@ EDIT_SAVE = "edit_activity"
 GROUP_RESCHEDULE_SAVE = "activity_group_reschedule"
 GROUP_CANCEL_SAVE = "activity_group_cancel"
 #: Every save whose form the gateway may ask for.
+#: And a school visit's completion (docs/migration/183).
+COMPLETE_SAVE = "complete_activity"
 FORM_ONLY_SAVES = frozenset(
-    {RESCHEDULE_SAVE, CANCEL_SAVE, EDIT_SAVE, GROUP_RESCHEDULE_SAVE, GROUP_CANCEL_SAVE}
+    {
+        RESCHEDULE_SAVE,
+        CANCEL_SAVE,
+        EDIT_SAVE,
+        GROUP_RESCHEDULE_SAVE,
+        GROUP_CANCEL_SAVE,
+        COMPLETE_SAVE,
+    }
 )
 #: The export drawers open and save as any drawer (apps.mobile_feed.exports).
 DRAWER_VIEWS = DRAWER_VIEWS | exports.EXPORT_DRAWERS
@@ -1718,10 +1727,12 @@ class DrawerFeedView(APIView):
             return Response({"error": "This drawer cannot be saved here."}, status=400)
         form_data = drawer_blocks.form_data(html, values)
         if request.query_params.get("form_only") == "1":
-            # The Reschedule, Cancel, Edit and group saves' forms, for the
-            # gateway's Go saves (docs/migration/29, 30, 31, 33): what the
-            # save would post, where, and the request facts its rows carry.
-            # Nothing is saved; no other drawer answers a form.
+            # The Reschedule, Cancel, Edit, group and completion saves' forms,
+            # for the gateway's Go saves (docs/migration/29, 30, 31, 33, 183):
+            # what the save would post, where, and the request facts its rows
+            # carry. Nothing is saved; no other drawer answers a form. (The
+            # completion drawer, like the web's, starts a visit not yet begun
+            # as it opens: complete_drawer_view.)
             if match.url_name not in FORM_ONLY_SAVES:
                 return Response(
                     {"error": "This drawer has no form to give."}, status=400

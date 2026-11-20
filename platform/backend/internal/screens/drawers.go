@@ -158,6 +158,12 @@ func (s *Service) SaveDrawer(
 			}
 			return connect.NewResponse(answer), nil
 		}
+		if answer, served, err := s.completeInGo(ctx, forwarded); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(answer), nil
+		}
 	}
 	return send[screensv1.SaveDrawerResponse](ctx, s, pathPageDrawer, forwarded)
 }

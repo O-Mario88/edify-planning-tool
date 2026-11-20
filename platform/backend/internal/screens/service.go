@@ -81,9 +81,10 @@ type Service struct {
 	groupTrainings GroupTrainingSaver
 	// clusterMeetings is nil unless EDIFY_GO_SAVES names schedule_cluster_meeting (49).
 	clusterMeetings ClusterMeetingSaver
-	moves           MoveSaver   // nil unless EDIFY_GO_SAVES names reschedule_visit
-	cancels         CancelSaver // nil unless EDIFY_GO_SAVES names cancel_visit
-	edits           EditSaver   // nil unless EDIFY_GO_SAVES names edit_visit
+	moves           MoveSaver     // nil unless EDIFY_GO_SAVES names reschedule_visit
+	cancels         CancelSaver   // nil unless EDIFY_GO_SAVES names cancel_visit
+	edits           EditSaver     // nil unless EDIFY_GO_SAVES names edit_visit
+	completions     CompleteSaver // nil unless EDIFY_GO_SAVES names complete_visit (183)
 	// groupMoves and groupCancels: nil unless EDIFY_GO_SAVES names
 	// group_reschedule or group_cancel (docs/migration/33).
 	groupMoves   GroupMoveSaver

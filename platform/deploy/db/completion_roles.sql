@@ -1,0 +1,119 @@
+-- The tenth Go save, completing a staff school visit (docs/migration/183),
+-- hands the visit in for its Programme Lead's review, as the existing
+-- completion does (apps.frontend.views.my_plan_views.complete_activity_action
+-- → apps.activities.services.complete → salesforce.reserve_salesforce_id).
+-- Those writes touch columns the gateway may never change itself
+-- (internal/dbguard protectedColumns: the delivery day, the Salesforce ID,
+-- the evidence status) and two tables it holds nothing on. As for the
+-- cancel's advances (30 §30.4, 03 §3.7), the gateway gets one narrow
+-- function and no grant: it may ask this function, which makes exactly one
+-- visit's hand-in and nothing else, and only for 183.1's case — a staff
+-- school visit (a School Visit, or a donor, story-gathering, invitation or
+-- social visit) outside a cluster, already started (completion_started),
+-- with no Salesforce reference and no completion verification yet.
+--
+-- The function answers '' when it handed the visit in, and otherwise writes
+-- nothing and says why: 'changed' (the visit is not 183.1's case under its
+-- lock), 'own_reference' or 'verification' (it already holds one),
+-- 'called_off' (the ID is held by cancelled, deferred or removed work, which
+-- the existing reservation releases: handed on), or 'held:<activity id>'
+-- (the ID is live work's: refused, in the existing words, by the caller).
+-- A race the pre-check missed meets the unique constraint (23505).
+--
+-- The function's owner is a NOLOGIN role nobody is a member of, holding only
+-- the columns the hand-in reads and writes. Applied after
+-- activities_roles.sql (apply-roles.sh, the integration TestMain).
+-- Idempotent. A new database object: production needs the owner's approval
+-- at cutover.
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'edify_completion_owner') THEN
+    CREATE ROLE edify_completion_owner NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOINHERIT;
+  END IF;
+END
+$$;
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM edify_completion_owner;
+GRANT USAGE ON SCHEMA public TO edify_completion_owner;
+GRANT SELECT (id, status, delivery_type, activity_type, cluster_id, deleted_at, evidence_status,
+              actual_outcome, actual_observations, follow_up_note)
+  ON activity TO edify_completion_owner;
+GRANT UPDATE (salesforce_activity_id, salesforce_activity_type, teachers_attended, leaders_attended,
+              other_participants, attended_school_ids, actual_delivery_date, actual_outcome,
+              actual_observations, follow_up_note, status, evidence_status, updated_at)
+  ON activity TO edify_completion_owner;
+GRANT SELECT (activity_id, normalized_value) ON activity_salesforce_reference TO edify_completion_owner;
+GRANT INSERT (id, created_at, updated_at, raw_value, normalized_value, activity_type, expected_prefix,
+              entry_source, entered_by, entered_at, activity_id)
+  ON activity_salesforce_reference TO edify_completion_owner;
+GRANT SELECT (activity_id) ON activity_completion_verification TO edify_completion_owner;
+GRANT INSERT (id, created_at, updated_at, salesforce_id, entered_by, entered_at, status, activity_id)
+  ON activity_completion_verification TO edify_completion_owner;
+
+CREATE SCHEMA IF NOT EXISTS gateway_completion AUTHORIZATION edify_completion_owner;
+REVOKE ALL ON SCHEMA gateway_completion FROM PUBLIC;
+
+SET ROLE edify_completion_owner;
+CREATE OR REPLACE FUNCTION gateway_completion.hand_in_school_visit(
+  target varchar, delivered date, raw_value varchar, normalized varchar,
+  teachers integer, leaders integer, other integer,
+  outcome text, observations text, follow_up text,
+  entered_by varchar, at timestamptz, reference_id varchar, verification_id varchar
+) RETURNS text
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  visit record;
+  holder record;
+BEGIN
+  SELECT a.status, a.delivery_type, a.activity_type, a.cluster_id, a.deleted_at
+    INTO visit FROM public.activity a WHERE a.id = target FOR UPDATE;
+  IF NOT FOUND OR visit.status IS DISTINCT FROM 'completion_started'
+     OR visit.delivery_type IS DISTINCT FROM 'staff'
+     OR NOT (visit.activity_type = ANY (ARRAY['school_visit', 'donor_visit', 'story_gathering_visit',
+                                              'school_invitation', 'social_visit']::varchar[]))
+     OR visit.cluster_id IS NOT NULL OR visit.deleted_at IS NOT NULL THEN
+    RETURN 'changed';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.activity_salesforce_reference r WHERE r.activity_id = target) THEN
+    RETURN 'own_reference';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.activity_completion_verification v WHERE v.activity_id = target) THEN
+    RETURN 'verification';
+  END IF;
+  SELECT h.id, h.status, h.deleted_at INTO holder
+    FROM public.activity_salesforce_reference r JOIN public.activity h ON h.id = r.activity_id
+   WHERE r.normalized_value = normalized;
+  IF FOUND THEN
+    IF holder.deleted_at IS NOT NULL OR holder.status IN ('cancelled', 'deferred') THEN
+      RETURN 'called_off';
+    END IF;
+    RETURN 'held:' || holder.id;
+  END IF;
+  INSERT INTO public.activity_salesforce_reference (id, created_at, updated_at, raw_value, normalized_value,
+    activity_type, expected_prefix, entry_source, entered_by, entered_at, activity_id)
+  VALUES (reference_id, at, at, raw_value, normalized, visit.activity_type, 'SVE-', 'staff_self_entry',
+    entered_by, at, target);
+  UPDATE public.activity a SET
+    salesforce_activity_id = normalized, salesforce_activity_type = 'visit',
+    teachers_attended = teachers, leaders_attended = leaders, other_participants = other,
+    attended_school_ids = '{}', actual_delivery_date = delivered,
+    actual_outcome = COALESCE(outcome, a.actual_outcome),
+    actual_observations = COALESCE(observations, a.actual_observations),
+    follow_up_note = COALESCE(follow_up, a.follow_up_note),
+    status = 'submitted_to_pl',
+    evidence_status = CASE WHEN a.evidence_status = 'none' THEN 'accepted' ELSE a.evidence_status END,
+    updated_at = at
+  WHERE a.id = target;
+  INSERT INTO public.activity_completion_verification (id, created_at, updated_at, salesforce_id, entered_by,
+    entered_at, status, activity_id)
+  VALUES (verification_id, at, at, normalized, entered_by, at, 'pending', target);
+  RETURN '';
+END
+$fn$;
+REVOKE ALL ON FUNCTION gateway_completion.hand_in_school_visit(varchar, date, varchar, varchar, integer,
+  integer, integer, text, text, text, varchar, timestamptz, varchar, varchar) FROM PUBLIC;
+RESET ROLE;
+
+GRANT USAGE ON SCHEMA gateway_completion TO edify_activities_rw;
+GRANT EXECUTE ON FUNCTION gateway_completion.hand_in_school_visit(varchar, date, varchar, varchar, integer,
+  integer, integer, text, text, text, varchar, timestamptz, varchar, varchar) TO edify_activities_rw;

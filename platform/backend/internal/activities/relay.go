@@ -176,3 +176,19 @@ func (h *HTTPPricing) GroupCheck(ctx context.Context, q GroupQuestion) (GroupVer
 	}
 	return answer.GroupVerdict, nil
 }
+
+// HandedIn asks /api/auth/internal/visit-completed (docs/migration/183):
+// the reviewer told, the overdue reminder closed, plan.changed said.
+func (h *HTTPPricing) HandedIn(ctx context.Context, activityID, userID, role string) error {
+	var answer struct {
+		OK bool `json:"ok"`
+	}
+	if err := h.post(ctx, "/api/auth/internal/visit-completed",
+		map[string]any{"activityId": activityID, "userId": userID, "role": role}, &answer); err != nil {
+		return err
+	}
+	if !answer.OK {
+		return fmt.Errorf("activities: the hand-in's notices were not answered")
+	}
+	return nil
+}

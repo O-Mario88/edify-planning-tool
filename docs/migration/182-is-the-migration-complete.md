@@ -34,7 +34,7 @@ integration suite apart from School Evidence's pre-existing option order).
 | Where a save is made | Count |
 |---|---|
 | Django views marked POST-only (`@require_POST`, `require_http_methods(["POST"])`) | about 197, plus views that check the method in their body |
-| Go saves of the existing app's records (`EDIFY_GO_SAVES`, all **off** by default) | 9: schedule, reschedule, cancel and edit a visit; the training pair; group reschedule and cancel; group training; cluster meeting |
+| Go saves of the existing app's records (`EDIFY_GO_SAVES`, all **off** by default) | 10: schedule, reschedule, cancel and edit a visit; the training pair; group reschedule and cancel; group training; cluster meeting; and, since doc 183, an officer completing their own staff school visit |
 | Go-only records, written by Go alone (Go-owned schemas or new features) | loans and the school loan portal, the Cluster Leader portal, field routes and GPS capture, country settings (Edify Global), sign-in sessions, accounts administration, acting leadership, to-do snooze, My PD, the audit chain |
 
 Every other write (drawers, approvals, completion and evidence, SSA,

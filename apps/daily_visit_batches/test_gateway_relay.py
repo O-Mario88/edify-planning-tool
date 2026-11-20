@@ -32,6 +32,7 @@ class GatewayRelayDoorsTest(SimpleTestCase):
             gateway_relay.visit_cancel_check,
             gateway_relay.costs_to_follow,
             gateway_relay.activity_changed,
+            gateway_relay.visit_completed,
         ):
             self.assertEqual(_post(view, {}).status_code, 404)
 
@@ -43,6 +44,7 @@ class GatewayRelayDoorsTest(SimpleTestCase):
             gateway_relay.visit_cancel_check,
             gateway_relay.costs_to_follow,
             gateway_relay.activity_changed,
+            gateway_relay.visit_completed,
         ):
             self.assertEqual(_post(view, {}, key="wrong").status_code, 403)
 
@@ -231,3 +233,16 @@ class OnlineCostTest(SimpleTestCase):
                 "calculatedBy": "u1",
             },
         )
+
+    @override_settings(EDIFY_INTERNAL_KEY=KEY)
+    def test_the_completion_door_takes_an_activity_a_person_and_a_role(self):
+        for body in (
+            {},
+            {"activityId": "a", "userId": "u"},
+            {"activityId": "", "userId": "u", "role": "CCEO"},
+            {"activityId": "x" * 31, "userId": "u", "role": "CCEO"},
+            {"activityId": "a", "userId": 5, "role": "CCEO"},
+        ):
+            answer = _post(gateway_relay.visit_completed, body)
+            self.assertEqual(answer.status_code, 400, body)
+            self.assertEqual(json.loads(answer.content)["reason"], "bad_fields", body)

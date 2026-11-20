@@ -27,6 +27,12 @@ func TestOnlyTheRunsOwnIdsAndTimesAreSetAside(t *testing.T) {
 	if got := normalised(old, "activity", nil, w)[0]; got != `{"created_at":"2026-11-11T09:00:00Z","id":"x"}` {
 		t.Errorf("a time outside the run and an existing id are kept: %s", got)
 	}
+	// A path naming a row the run made, in a segment or its query (a review
+	// notice's "/pl/review-queue?open=<id>").
+	route := []map[string]any{{"target_route": "/pl/review-queue?open=a1", "path": "/my-plan/a1/complete-drawer"}}
+	if got := normalised(route, "notification", map[string]bool{"a1": true}, w)[0]; got != `{"path":"/my-plan/<new>/complete-drawer","target_route":"/pl/review-queue?open=<new>"}` {
+		t.Errorf("an id in a path: %s", got)
+	}
 	if got := normalised([]map[string]any{{"seq": 7.0, "hash": "h"}}, "audit_log", nil, w)[0]; got != `{"hash":"<chain>","seq":"<chain>"}` {
 		t.Errorf("the chain's own columns: %s", got)
 	}

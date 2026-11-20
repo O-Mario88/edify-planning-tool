@@ -1,0 +1,146 @@
+[
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7vrk008fvxekheps",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "donor_visit",
+   "scheduled_date": "2026-11-20",
+   "activity_purpose_text": "[shadow-m8] A",
+   "expected_outcome": "[shadow-m8] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7wf5008ft3ekheff",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "story_gathering",
+   "scheduled_date": "2026-11-20",
+   "activity_purpose_text": "[shadow-m8] B",
+   "expected_outcome": "[shadow-m8] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7ugn00b7crekhe2v",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "ssa_support",
+   "scheduled_date": "2026-11-20",
+   "activity_purpose_text": "[shadow-m8] C",
+   "expected_outcome": "[shadow-m8] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7tuf00vs2pekhefs",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "social_visit",
+   "scheduled_date": "2026-11-20",
+   "activity_purpose_text": "[shadow-m8] D",
+   "expected_outcome": "[shadow-m8] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/my-plan/cmwd2x84s00djhqhkdjwe/complete-drawer",
+  "form": "/my-plan/cmwd2x84s00djhqhkdjwe/complete",
+  "set": {
+   "actual_delivery_date": "2026-11-20",
+   "salesforce_id": "SV-990001",
+   "actual_outcome": "[shadow-m8] outcome",
+   "actual_observations": "[shadow-m8] observations"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/my-plan/{activity:[shadow-m8] A}/complete-drawer",
+  "form": "/my-plan/{activity:[shadow-m8] A}/complete",
+  "set": {
+   "actual_delivery_date": "2026-11-20",
+   "salesforce_id": "990001"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/my-plan/{activity:[shadow-m8] A}/complete-drawer",
+  "form": "/my-plan/{activity:[shadow-m8] A}/complete",
+  "set": {
+   "actual_delivery_date": "2026-11-20",
+   "salesforce_id": "sv-990001"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/my-plan/{activity:[shadow-m8] A}/complete-drawer",
+  "form": "/my-plan/{activity:[shadow-m8] A}/complete",
+  "set": {
+   "actual_delivery_date": "2026-11-20",
+   "salesforce_id": " sve-990002 ",
+   "actual_outcome": "  [shadow-m8] A done  "
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/my-plan/{activity:[shadow-m8] C}/complete-drawer",
+  "form": "/my-plan/{activity:[shadow-m8] C}/complete",
+  "set": {
+   "actual_delivery_date": "2026-11-20",
+   "salesforce_id": "SV-990003"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/my-plan/{activity:[shadow-m8] B}/complete-drawer",
+  "form": "/my-plan/{activity:[shadow-m8] B}/complete",
+  "set": {
+   "actual_delivery_date": "2026-11-20",
+   "salesforce_id": "TS-990004"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/my-plan/{activity:[shadow-m8] B}/complete-drawer",
+  "form": "/my-plan/{activity:[shadow-m8] B}/complete",
+  "set": {
+   "actual_delivery_date": "2026-11-20",
+   "salesforce_id": "SV-990004",
+   "actual_observations": "[shadow-m8] B seen"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/my-plan/{activity:[shadow-m8] D}/complete-drawer",
+  "form": "/my-plan/{activity:[shadow-m8] D}/complete",
+  "set": {
+   "actual_delivery_date": "2026-11-20",
+   "salesforce_id": "a0b1c2d3e4f5g6h"
+  }
+ }
+]

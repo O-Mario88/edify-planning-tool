@@ -851,3 +851,56 @@ def activity_changed(request):
         except Exception:  # noqa: BLE001 — a page left stale, no more
             logger.warning("Activity changed: announcing failed", exc_info=True)
     return JsonResponse({"ok": True}, status=200)
+
+
+#: The status a completion Go made hands the work in at (docs/migration/183):
+#: a CCEO's own school visit, routed to their Programme Lead.
+HANDED_IN_STATUS = "submitted_to_pl"
+
+
+@csrf_exempt  # A server's key, never a browser's session.
+@require_POST
+def visit_completed(request):
+    """What follows a school visit's completion Go made (docs/migration/183),
+    once Go's save has committed, exactly as the existing completion follows
+    its own: ``services._handed_in`` (the reviewer told, or a lead's own work
+    approved; the day it moves to, which Go only completes when it is the
+    planned day), the overdue reminder closed, and ``plan.changed`` said. The
+    notices are the existing application's until M11; none of it can undo the
+    completion. Asked for a visit in any other state, it does nothing."""
+    refusal = internal_key_refusal(request)
+    if refusal is not None:
+        return refusal
+    body = _body(request)
+    if body is None:
+        return JsonResponse({"ok": False, "reason": "not_an_object"}, status=400)
+    activity_id, user_id, role = (
+        body.get("activityId"),
+        body.get("userId"),
+        body.get("role"),
+    )
+    if not all(
+        isinstance(value, str) and 0 < len(value) <= 30
+        for value in (activity_id, user_id)
+    ) or not isinstance(role, str):
+        return JsonResponse({"ok": False, "reason": "bad_fields"}, status=400)
+    from apps.accounts.models import User
+
+    principal = User.objects.filter(id=user_id, is_active=True).first()
+    if principal is None or role not in (principal.roles or []):
+        return JsonResponse({"ok": False, "reason": "bad_principal"}, status=400)
+    # The role the person is working in, as their request carries it.
+    principal.active_role = role
+    from apps.activities import live, services
+    from apps.activities.models import Activity
+
+    activity = Activity.objects.filter(id=activity_id, deleted_at__isnull=True).first()
+    if activity is None or activity.status != HANDED_IN_STATUS:
+        return JsonResponse({"ok": True, "handedIn": False}, status=200)
+    services._handed_in(activity, HANDED_IN_STATUS, principal)
+    services._resolve_overdue_reminder(activity)
+    try:
+        live.announce_activity(activity)
+    except Exception:  # noqa: BLE001 — a page left stale, no more
+        logger.warning("Visit completed: announcing failed", exc_info=True)
+    return JsonResponse({"ok": True, "handedIn": True}, status=200)

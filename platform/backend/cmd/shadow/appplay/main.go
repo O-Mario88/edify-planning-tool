@@ -140,7 +140,7 @@ func play(gateway, scenarioPath, out, password string) error {
 		} else if m := moveDrawer.FindStringSubmatch(s.Open); m != nil {
 			a, err = playMove(ctx, pageDrawers, token, m[1], m[2], s)
 		} else if m := editDrawer.FindStringSubmatch(s.Open); m != nil {
-			a, err = playEdit(ctx, pageDrawers, token, m[1], s)
+			a, err = playEdit(ctx, pageDrawers, token, m[1], m[2], s)
 		} else {
 			a, err = playStep(ctx, drawers, token, s)
 		}
@@ -444,18 +444,19 @@ ORDER BY created_at DESC LIMIT 1`, m[1]).Scan(&activityID)
 	return activityID, nil
 }
 
-// editDrawer is My Plan's Edit drawer (docs/migration/31).
-var editDrawer = regexp.MustCompile(`^/my-plan/([^/]+)/edit-drawer$`)
+// editDrawer is My Plan's Edit drawer (docs/migration/31), or its Complete
+// drawer (docs/migration/183), which the app fills the same way.
+var editDrawer = regexp.MustCompile(`^/my-plan/([^/]+)/(edit|complete)-drawer$`)
 
-// playEdit plays an Edit step as the app does (drawerLogic.ts): every
-// field's value as the drawer gives it, the step's choices over them, and
-// then only the fields shown for those values sent.
-func playEdit(ctx context.Context, drawers screensv1connect.PageDrawerServiceClient, token, target string, s step) (answer, error) {
+// playEdit plays an Edit or Complete step as the app does (drawerLogic.ts):
+// every field's value as the drawer gives it, the step's choices over them,
+// and then only the fields shown for those values sent.
+func playEdit(ctx context.Context, drawers screensv1connect.PageDrawerServiceClient, token, target, kind string, s step) (answer, error) {
 	activityID, err := findActivity(ctx, target)
 	if err != nil {
 		return answer{}, err
 	}
-	path := "/my-plan/" + activityID + "/edit-drawer"
+	path := "/my-plan/" + activityID + "/" + kind + "-drawer"
 	got, err := drawers.GetDrawer(ctx, withToken(&screensv1.GetDrawerRequest{Path: path}, token))
 	if err != nil {
 		return failed(err), nil
