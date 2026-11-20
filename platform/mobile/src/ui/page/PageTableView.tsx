@@ -1,13 +1,16 @@
 /**
  * A record table as the web draws it on a phone: a card with its title bar,
- * the table scrolling sideways in its own region (owner, 2026-09-27: tables
- * stay tables), a note under it, or the empty state in place of its rows.
+ * its rows as cards on a phone (owner, 2026-11-19: "Rows on phones", which
+ * replaced 2026-09-27's tables stay tables; rowCard.ts picks each card's
+ * title, ID, status and facts, the rest under "All details"), the table
+ * scrolling sideways in its own region on a tablet, a note under it, or the
+ * empty state in place of its rows.
  * The first time a table is wider than the screen, the slim orange "Swipe to
  * view more columns" pill shows over its header and leaves (owner,
  * 2026-10-02: never black, gone after about four seconds).
  */
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Check, ChevronDown, ChevronRight, Inbox, Minus } from 'lucide-react-native';
 
 import type { PageAction, PageCell, PageColumn, PagePager, PageRow, PageTable } from '../../gen/edify/screens/v1/page_pb';
@@ -15,6 +18,8 @@ import type { Palette } from '../../theme';
 import { fonts, useTheme } from '../../theme';
 import { PageBlockView } from './PageBlocksView';
 import { RowActions } from './RowActions';
+import { rowCard } from './rowCard';
+import type { RowFact } from './rowCard';
 import { cardStyles, toneColor, usePageLink, usePicks } from './shared';
 
 /** The Actions column: the menu button, and a row's own button beside it. */
@@ -29,6 +34,10 @@ const HINT_MS = 4000;
 const HINT = { fill: '#d85b13', ink: '#17232b' } as const;
 /** The hint shows once per session, as the web's does until a swipe. */
 let hintSeen = false;
+/** A phone's tables as row cards (owner, 2026-11-19); false brings back the sideways table. */
+const ROWS_ON_PHONES = true;
+/** From this width (a tablet) a table is drawn as a table. */
+const TABLE_FROM = 768;
 
 /** A column wide enough for its widest line (the web lays tables out by content). */
 function columnWidth(column: PageColumn, cells: readonly PageCell[]): number {
@@ -51,6 +60,8 @@ interface PageTableViewProps {
 
 export function PageTableView({ table, isBare = false }: PageTableViewProps) {
   const { colors } = useTheme();
+  const { width } = useWindowDimensions();
+  const asCards = ROWS_ON_PHONES && width < TABLE_FROM;
   const hasTitle = table.title !== '' || table.subtitle !== '' || table.count !== '';
   return (
     <View
@@ -75,6 +86,8 @@ export function PageTableView({ table, isBare = false }: PageTableViewProps) {
       ) : null}
       {table.rows.length === 0 && table.emptyMessage ? (
         <EmptyState message={table.emptyMessage} action={table.emptyAction} />
+      ) : asCards ? (
+        <Cards table={table} />
       ) : (
         <Grid table={table} />
       )}
@@ -258,6 +271,159 @@ function BodyRow({ row, table, widths, isFirst, opens, picks, isOpen, onToggle, 
 
 /** What an open row shows under it, as wide as the screen: the record's
  * "Label: value" facts and the link to its own page. */
+/** The soft fill behind a status word in its tone. */
+function toneSoft(colors: Palette, tone: string): string {
+  const ink = toneColor(colors, tone);
+  if (ink === colors.success) return colors.successSoft;
+  if (ink === colors.danger) return colors.dangerSoft;
+  if (ink === colors.warning) return colors.warningSoft;
+  if (ink === colors.link) return colors.infoSoft;
+  return colors.surfaceMuted;
+}
+
+function Cards({ table }: { readonly table: PageTable }) {
+  const { colors } = useTheme();
+  const pick = usePicks();
+  const pickable = pick.isOn ? table.rows.map((row) => row.pickId).filter((id) => id !== '') : [];
+  const ticked = pickable.filter((id) => pick.picked.includes(id)).length;
+  // As the table: one row open at a time.
+  const [openRow, setOpenRow] = useState<number | null>(null);
+  return (
+    <View>
+      {pickable.length > 0 ? (
+        <Pressable
+          onPress={() => pick.set(pickable, ticked < pickable.length)}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: ticked === pickable.length ? true : ticked > 0 ? 'mixed' : false }}
+          style={[styles.cardsAll, { borderTopColor: colors.raisedBorder }]}
+        >
+          <TickBox isOn={ticked === pickable.length} isPart={ticked > 0 && ticked < pickable.length} />
+          <Text style={[styles.cardsAllText, { color: colors.textMuted }]}>Select all on this page</Text>
+        </Pressable>
+      ) : null}
+      {table.rows.map((row, index) => (
+        <RowCardView
+          key={index}
+          table={table}
+          row={row}
+          isOpen={openRow === index}
+          onToggle={() => setOpenRow(openRow === index ? null : index)}
+        />
+      ))}
+    </View>
+  );
+}
+
+function FactGrid({ facts }: { readonly facts: readonly RowFact[] }) {
+  const { colors } = useTheme();
+  const openLink = usePageLink();
+  return (
+    <View style={styles.cardFacts}>
+      {facts.map((fact, index) => (
+        <View key={`${fact.label}-${index}`} style={styles.cardFact}>
+          <Text style={[styles.cardFactLabel, { color: colors.textMuted }]}>{fact.label}</Text>
+          <Text
+            onPress={fact.cell.href ? () => openLink(fact.cell.href) : undefined}
+            accessibilityRole={fact.cell.href ? 'link' : undefined}
+            style={[styles.cardFactValue, { color: fact.cell.href ? colors.link : (toneColor(colors, fact.cell.tone) ?? colors.text) }]}
+          >
+            {fact.cell.text}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+interface RowCardViewProps {
+  readonly table: PageTable;
+  readonly row: PageRow;
+  readonly isOpen: boolean;
+  readonly onToggle: () => void;
+}
+
+function RowCardView({ table, row, isOpen, onToggle }: RowCardViewProps) {
+  const { colors } = useTheme();
+  const openLink = usePageLink();
+  const pick = usePicks();
+  const card = rowCard(table.columns, row);
+  const name = rowName(row);
+  const isTicked = row.pickId !== '' && pick.picked.includes(row.pickId);
+  const more = card.rest.length > 0 || row.details.length > 0 || row.detailsHref !== '' || row.detailBlocks.length > 0;
+  const statusInk = card.status ? (toneColor(colors, card.status.tone) ?? colors.text) : colors.text;
+  return (
+    <View
+      style={[
+        styles.card,
+        { borderTopColor: colors.raisedBorder },
+        row.tone === 'overdue' ? { borderLeftWidth: 3, borderLeftColor: colors.danger } : null,
+        row.tone === 'done' ? { backgroundColor: colors.successSoft } : null,
+      ]}
+    >
+      <View style={styles.cardHead}>
+        {pick.isOn && row.pickId ? (
+          <Pressable
+            onPress={() => pick.set([row.pickId], !isTicked)}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: isTicked }}
+            accessibilityLabel={row.pickLabel || `Select ${name}`}
+            hitSlop={10}
+            style={styles.cardTick}
+          >
+            <TickBox isOn={isTicked} />
+          </Pressable>
+        ) : null}
+        <View style={styles.cardName}>
+          <Text
+            onPress={card.title?.href ? () => openLink(card.title?.href ?? '') : undefined}
+            accessibilityRole={card.title?.href ? 'link' : 'header'}
+            style={[styles.cardTitle, { color: card.title?.href ? colors.link : colors.text }]}
+          >
+            {card.title?.text ?? name}
+          </Text>
+          {card.id ? (
+            <Text style={[styles.cardId, { color: colors.textMuted }]}>
+              {card.id.label} {card.id.cell.text}
+            </Text>
+          ) : null}
+        </View>
+        {card.status ? (
+          <View style={[styles.cardStatus, { backgroundColor: toneSoft(colors, card.status.tone) }]}>
+            <Text style={[styles.cardStatusText, { color: statusInk }]}>{card.status.text}</Text>
+          </View>
+        ) : null}
+      </View>
+      {card.lead.length > 0 ? <FactGrid facts={card.lead} /> : null}
+      {more || card.actions ? (
+        <View style={styles.cardFoot}>
+          {more ? (
+            <Pressable
+              onPress={onToggle}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: isOpen }}
+              accessibilityLabel={`${isOpen ? 'Hide' : 'All'} details of ${name}`}
+              hitSlop={8}
+              style={styles.cardMore}
+            >
+              <Text style={[styles.cardMoreText, { color: colors.link }]}>{isOpen ? 'Hide details' : 'All details'}</Text>
+              {isOpen ? <ChevronDown size={14} color={colors.link} /> : <ChevronRight size={14} color={colors.link} />}
+            </Pressable>
+          ) : (
+            <View />
+          )}
+          {card.actions ? <RowActions actions={card.actions.actions} label={name} /> : null}
+        </View>
+      ) : null}
+      {isOpen ? (
+        <View style={[styles.cardDetails, { backgroundColor: colors.surface }]}>
+          {card.rest.length > 0 ? <FactGrid facts={card.rest} /> : null}
+          {row.details.length > 0 || row.detailsHref || row.detailBlocks.length > 0 ? <RowDetails row={row} width={0} /> : null}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
 function RowDetails({ row, width }: { readonly row: PageRow; readonly width: number }) {
   const { colors } = useTheme();
   const openLink = usePageLink();
@@ -421,6 +587,24 @@ export function EmptyState({ message, action }: { readonly message: string; read
 
 const styles = StyleSheet.create({
   clip: { overflow: 'hidden' },
+  cardsAll: { flexDirection: 'row', alignItems: 'center', gap: 8, borderTopWidth: 1, paddingHorizontal: 16, paddingVertical: 10 },
+  cardsAllText: { fontFamily: fonts.semibold, fontSize: 12 },
+  card: { borderTopWidth: 1, paddingHorizontal: 16, paddingVertical: 14, gap: 10 },
+  cardHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  cardTick: { paddingTop: 2 },
+  cardName: { flex: 1, minWidth: 0, gap: 2 },
+  cardTitle: { fontFamily: fonts.bold, fontSize: 14, lineHeight: 19 },
+  cardId: { fontFamily: fonts.medium, fontSize: 12 },
+  cardStatus: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2, flexShrink: 0 },
+  cardStatusText: { fontFamily: fonts.semibold, fontSize: 12, lineHeight: 18 },
+  cardFacts: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 8 },
+  cardFact: { width: '50%', paddingRight: 12, gap: 1 },
+  cardFactLabel: { fontFamily: fonts.medium, fontSize: 12 },
+  cardFactValue: { fontFamily: fonts.semibold, fontSize: 13 },
+  cardFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  cardMore: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 36 },
+  cardMoreText: { fontFamily: fonts.semibold, fontSize: 13 },
+  cardDetails: { borderRadius: 10, overflow: 'hidden', gap: 10, paddingTop: 12 },
   expander: { alignItems: 'center', justifyContent: 'center', alignSelf: 'stretch' },
   pickCell: { alignItems: 'center', justifyContent: 'center', alignSelf: 'stretch' },
   tick: { width: 16, height: 16, borderWidth: 1, borderRadius: 4, alignItems: 'center', justifyContent: 'center' },
