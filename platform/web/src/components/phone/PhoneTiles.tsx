@@ -1,8 +1,9 @@
 /*
  * A figure strip as the app's tiles (mobile/src/ui/page/PageStripView.tsx):
  * each a tinted icon, the figure, its label and the line under it, with an
- * info mark where the figure has a note. Two a row on a phone, the icon over
- * the figure on a narrow one; even rows of at most five from a tablet up.
+ * info mark where the figure has a note. Two a row on a phone, compact there
+ * (no icon box; phone.css), so every figure shows in a few rows; even rows
+ * of at most five from a tablet up.
  */
 import type { CSSProperties } from 'react';
 import type { LucideIcon } from 'lucide-react';
@@ -65,11 +66,11 @@ function Tile({ metric, resolve }: { metric: PageMetric; resolve: (href: string)
   );
   const style = { '--ph-tint': tintOf(metric, icon) } as CSSProperties;
   return metric.href ? (
-    <a data-ph="tile" href={resolve(metric.href)} style={style}>
+    <a data-ph="tile" data-noted={metric.note ? true : undefined} href={resolve(metric.href)} style={style}>
       {body}
     </a>
   ) : (
-    <div data-ph="tile" style={style}>
+    <div data-ph="tile" data-noted={metric.note ? true : undefined} style={style}>
       {body}
     </div>
   );

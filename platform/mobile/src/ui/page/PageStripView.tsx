@@ -3,8 +3,10 @@
  * tiles reference is what I want for the entire platform", the Smart Route
  * Planner's figure cards): each tile a tinted icon, the figure, its label and
  * the short line under it, with an info mark where the figure has a note. Two
- * a row on a phone, the icon over the figure; on a tablet or wider, side by
- * side, in even rows of at most five (figureTiles.tileColumns). The strip's title is the tiles' name for a
+ * a row on a phone and compact there, without the icon (owner, 2026-11-20:
+ * "Smaller tiles, all shown"), so every figure shows in a few rows; on a
+ * tablet or wider, icon beside figure, in even rows of at most five
+ * (figureTiles.tileColumns). The strip's title is the tiles' name for a
  * screen reader; a titled strip (My Plan's Plan Breakdown by Period) shows
  * its heading and the line under it over the tiles.
  */
@@ -50,8 +52,9 @@ const ICONS: Readonly<Record<FigureIconName, IconComponent>> = {
 
 const TILE_SHADOW = '0px 3px 12px 0px rgba(15, 23, 42, 0.06)';
 const GAP = 12;
-/** Below this width a tile's icon sits over its figure, leaving the label the tile's width. */
-const STACK_BELOW = 480;
+const COMPACT_GAP = 8;
+/** Below this width (a phone) tiles are compact: no icon, a smaller figure. */
+const COMPACT_BELOW = 768;
 
 /** A tile's tint: its tone where it has one, else what its icon says. */
 function tintOf(colors: Palette, metric: PageMetric, icon: FigureIconName): string {
@@ -66,11 +69,13 @@ export function PageStripView({ strip }: { readonly strip: PageStrip }) {
   const { colors } = useTheme();
   const { width } = useWindowDimensions();
   const columns = tileColumns(strip.metrics.length, width);
+  const compact = width < COMPACT_BELOW;
+  const gap = compact ? COMPACT_GAP : GAP;
   const tiles = (
-    <View accessibilityLabel={strip.title} style={styles.grid}>
+    <View accessibilityLabel={strip.title} style={[styles.grid, { margin: -gap / 2 }]}>
       {strip.metrics.map((metric) => (
-        <View key={metric.label} style={{ width: `${100 / columns}%`, padding: GAP / 2 }}>
-          <Tile metric={metric} stacked={width < STACK_BELOW} />
+        <View key={metric.label} style={{ width: `${100 / columns}%`, padding: gap / 2 }}>
+          <Tile metric={metric} compact={compact} />
         </View>
       ))}
     </View>
@@ -91,7 +96,7 @@ export function PageStripView({ strip }: { readonly strip: PageStrip }) {
   );
 }
 
-function Tile({ metric, stacked }: { readonly metric: PageMetric; readonly stacked: boolean }) {
+function Tile({ metric, compact }: { readonly metric: PageMetric; readonly compact: boolean }) {
   const { colors } = useTheme();
   const openLink = usePageLink();
   const icon = figureIcon(metric.label);
@@ -107,23 +112,25 @@ function Tile({ metric, stacked }: { readonly metric: PageMetric; readonly stack
       accessibilityLabel={label}
       style={({ pressed }) => [
         styles.tile,
-        stacked && styles.stacked,
+        compact && styles.compact,
         { backgroundColor: pressed ? colors.primarySoft : colors.raised, borderColor: colors.raisedBorder },
       ]}
     >
-      <View style={[styles.icon, { backgroundColor: `${tint}1a` }]}>
-        <Icon size={20} color={tint} />
-      </View>
-      <View style={styles.words}>
-        <Text style={[styles.value, { color: valueColor }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+      {compact ? null : (
+        <View style={[styles.icon, { backgroundColor: `${tint}1a` }]}>
+          <Icon size={20} color={tint} />
+        </View>
+      )}
+      <View style={[styles.words, compact && metric.note ? styles.besideInfo : null]}>
+        <Text style={[styles.value, compact && styles.valueCompact, { color: valueColor }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
           {metric.value}
         </Text>
-        <Text style={[styles.label, { color: colors.textMuted }]}>{metric.label}</Text>
-        {metric.helper ? <Text style={[styles.helper, { color: colors.textMuted }]}>{metric.helper}</Text> : null}
+        <Text style={[styles.label, compact && styles.small, { color: colors.textMuted }]}>{metric.label}</Text>
+        {metric.helper ? <Text style={[styles.helper, compact && styles.small, { color: colors.textMuted }]}>{metric.helper}</Text> : null}
       </View>
       {metric.note ? (
-        <View style={stacked ? styles.infoCorner : undefined}>
-          <Info size={16} color={colors.textMuted} />
+        <View style={compact ? styles.infoCorner : undefined}>
+          <Info size={compact ? 14 : 16} color={colors.textMuted} />
         </View>
       ) : null}
     </Pressable>
@@ -131,7 +138,7 @@ function Tile({ metric, stacked }: { readonly metric: PageMetric; readonly stack
 }
 
 const styles = StyleSheet.create({
-  grid: { flexDirection: 'row', flexWrap: 'wrap', margin: -GAP / 2 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap' },
   titled: { borderWidth: 1, borderRadius: 10, padding: 16, gap: 12, boxShadow: TILE_SHADOW },
   heading: { gap: 2 },
   title: { fontFamily: fonts.semibold, fontSize: 15 },
@@ -147,11 +154,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     boxShadow: TILE_SHADOW,
   },
-  stacked: { flexDirection: 'column', gap: 8 },
-  infoCorner: { position: 'absolute', top: 12, right: 12 },
+  compact: { flexDirection: 'column', gap: 0, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 12 },
+  infoCorner: { position: 'absolute', top: 10, right: 10 },
+  besideInfo: { paddingRight: 18 },
   icon: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   words: { flexGrow: 1, flexShrink: 1, minWidth: 0, gap: 1 },
   value: { fontFamily: fonts.bold, fontSize: 20, lineHeight: 24 },
+  valueCompact: { fontSize: 18, lineHeight: 22 },
+  small: { fontSize: 12, lineHeight: 16 },
   label: { fontFamily: fonts.medium, fontSize: 13 },
   helper: { fontFamily: fonts.medium, fontSize: 12 },
 });
