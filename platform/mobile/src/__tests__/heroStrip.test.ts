@@ -51,3 +51,59 @@ describe('a strip of many figures', () => {
     expect(foldFigures(figures)).toEqual({ shown: figures, folded: [] });
   });
 });
+
+describe('a page whose figures in view are its planned work', () => {
+  const m = (label: string, value = '0') => ({ label, value });
+  const myPlan = (visits: string, trainings: string, meetings: string, week: string) => [
+    m('My Activities Planned This Week', week),
+    m('My Activities Planned This Month', week),
+    m('My Activities Planned This Quarter', week),
+    m('My Activities Planned This Financial Year', week),
+    m('School Visits Scheduled This Period', visits),
+    m('Trainings Scheduled This Period', trainings),
+    m('Cluster Meetings Scheduled This Period', meetings),
+    m('My Completed Share of Planned Work', '15.4%'),
+  ];
+  const labels = (fs: { label: string }[]) => fs.map((f) => f.label);
+
+  test('keeps My Plan’s planned figures in view in the owner’s order, the completed share always (owner, 2026-11-20)', () => {
+    const { shown, folded } = foldFigures(myPlan('7', '3', '1', '1'), '/my-plan');
+    expect(labels(shown)).toEqual([
+      'School Visits Scheduled This Period',
+      'Trainings Scheduled This Period',
+      'Cluster Meetings Scheduled This Period',
+      'My Completed Share of Planned Work',
+    ]);
+    expect(labels(folded)).toEqual([
+      'My Activities Planned This Week',
+      'My Activities Planned This Month',
+      'My Activities Planned This Quarter',
+      'My Activities Planned This Financial Year',
+    ]);
+  });
+
+  test('folds a figure with nothing planned and lets the next planned one in', () => {
+    expect(labels(foldFigures(myPlan('7', '0', '0', '2'), '/my-plan').shown)).toEqual([
+      'School Visits Scheduled This Period',
+      'My Activities Planned This Week',
+      'My Activities Planned This Month',
+      'My Completed Share of Planned Work',
+    ]);
+  });
+
+  test('shows the visit target when nothing is planned yet', () => {
+    expect(labels(foldFigures(myPlan('0', '0', '0', '0'), '/my-plan').shown)).toEqual([
+      'School Visits Scheduled This Period',
+      'My Completed Share of Planned Work',
+    ]);
+  });
+
+  test('keeps the gateway’s order elsewhere', () => {
+    expect(labels(foldFigures(myPlan('7', '3', '1', '1'), '/dashboard').shown)).toEqual([
+      'My Activities Planned This Week',
+      'My Activities Planned This Month',
+      'My Activities Planned This Quarter',
+      'My Activities Planned This Financial Year',
+    ]);
+  });
+});

@@ -78,7 +78,7 @@ export function PhoneBlocks({ blocks: given, pagePath, drawerHref, selectable }:
       case 'linkTabs':
         return <PhoneLinkTabs key={index} tabs={kind.value} resolve={resolve} besideHref={kind.value.beside ? hrefOf(kind.value.beside) : undefined} />;
       case 'strip':
-        return <PhoneTiles key={index} strip={kind.value} resolve={resolve} hero={list === blocks && index === heroAt} />;
+        return <PhoneTiles key={index} strip={kind.value} resolve={resolve} hero={list === blocks && index === heroAt} pagePath={pagePath} />;
       case 'table': {
         const next = list[index + 1];
         const footer = next?.kind.case === 'pager' ? <PhonePager pager={next.kind.value} resolve={resolve} /> : undefined;

@@ -83,17 +83,19 @@ interface FeedStripProps {
   resolve: (href: string) => string;
   /** The page's hero figures (lib/heroStrip liftHeroes): larger, none folded. */
   hero?: boolean;
+  /** The page, which may name the figures it keeps in view (FIGURES_IN_VIEW_BY_PAGE). */
+  pagePath?: string;
 }
 
 /** Compact (owner, 2026-11-20: "compact beautifully laid out cards, tables,
  *  tiles"): 12px between tiles, as between a page's blocks. */
 const TILE_GRID = 'grid grid-cols-[repeat(auto-fill,minmax(256px,1fr))] gap-3';
 
-export function FeedStrip({ strip, resolve, hero = false }: FeedStripProps) {
+export function FeedStrip({ strip, resolve, hero = false, pagePath = '' }: FeedStripProps) {
   if (!strip.metrics.length) return null;
   // Every strip shows its main figures and folds the rest (owner, 2026-11-20:
   // "reduce the number of tiles and do it throughout the platform").
-  const { shown, folded } = hero ? { shown: strip.metrics, folded: [] } : foldFigures(strip.metrics);
+  const { shown, folded } = hero ? { shown: strip.metrics, folded: [] } : foldFigures(strip.metrics, pagePath);
   const tile = (metric: PageMetric) => <Tile key={metric.label} metric={metric} href={metric.href ? resolve(metric.href) : ''} hero={hero} />;
   return (
     <section data-block="strip" data-kpi-count={strip.metrics.length} data-hero={hero || undefined} aria-label={strip.title || (hero ? 'What decides your work' : 'Performance overview')} className="space-y-2">

@@ -280,6 +280,17 @@ start the day the owner answers §6.1 and §6.2.
   Lead's dashboard leads with Waiting on You and Visits Planned Against
   Target, lifted out of their strips into a larger hero strip (owner's
   choice the same day).
+- **My Plan shows its planned work** (owner, 2026-11-20, "it should show
+  tiles based on what has been planned"): up to three figures with
+  something planned, in the owner's order (School Visits, Core Visits
+  Scheduled when such a figure exists, Trainings, Cluster Meetings, then
+  the period counts), with My Completed Share always in view; nothing
+  planned shows School Visits. The rest fold.
+- **Compact layout** (owner: "compact beautifully laid out cards, tables,
+  tiles, filter, headers"): measured on seven pages at 1440 and 390 px, then
+  one 12px rhythm between blocks and tiles, tighter phone headers (25–31px
+  back), compact tiles (10–14px shorter), 12px card corners, and an empty
+  table line on the 16px content line.
 - **Sweep findings:** colour contrast on record cards, nameless selects,
   the calendar's grid rows, small phone targets, cut-off directory names,
   run-together parts and the unfocusable scroll region are fixed.

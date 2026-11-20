@@ -73,15 +73,17 @@ interface PageStripViewProps {
   readonly strip: PageStrip;
   /** The page's hero figures (heroStrip liftHeroes): larger, none folded. */
   readonly isHero?: boolean;
+  /** The page, which may keep its planned work in view (PLANNED_FIRST_BY_PAGE). */
+  readonly pagePath?: string;
 }
 
-export function PageStripView({ strip, isHero = false }: PageStripViewProps) {
+export function PageStripView({ strip, isHero = false, pagePath = '' }: PageStripViewProps) {
   const { colors } = useTheme();
   const { width } = useWindowDimensions();
   const [isOpen, setOpen] = useState(false);
   // Every strip shows its main figures and folds the rest (owner, 2026-11-20:
   // "reduce the number of tiles and do it throughout the platform").
-  const { shown, folded } = isHero ? { shown: [...strip.metrics], folded: [] } : foldFigures(strip.metrics);
+  const { shown, folded } = isHero ? { shown: [...strip.metrics], folded: [] } : foldFigures(strip.metrics, pagePath);
   const compact = width < COMPACT_BELOW;
   const gap = compact ? COMPACT_GAP : GAP;
   const grid = (metrics: readonly PageMetric[], label?: string) => {

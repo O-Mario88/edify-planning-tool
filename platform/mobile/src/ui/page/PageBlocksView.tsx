@@ -100,9 +100,9 @@ export function PageBlocksView({ blocks, onFilter, isRaised = true, pagePath = '
           // A panel that is only a title heads the block after it (2026-11-20).
           const heading = headingOnly(block);
           if (heading) {
-            return <Block key={index} block={{ ...block, kind: { case: 'section', value: heading.title } } as PageBlock} onFilter={onFilter} isRaised={isRaised} />;
+            return <Block key={index} block={{ ...block, kind: { case: 'section', value: heading.title } } as PageBlock} onFilter={onFilter} isRaised={isRaised} pagePath={pagePath} />;
           }
-          return <Block key={index} block={block} onFilter={onFilter} isRaised={isRaised} />;
+          return <Block key={index} block={block} onFilter={onFilter} isRaised={isRaised} pagePath={pagePath} />;
         })}
       </View>
     </ChipContext.Provider>
@@ -118,9 +118,11 @@ interface BlockProps {
   readonly block: PageBlock;
   readonly onFilter: PageBlocksViewProps['onFilter'];
   readonly isRaised?: boolean;
+  /** The page, which may name the figures its strips keep in view. */
+  readonly pagePath?: string;
 }
 
-function Block({ block, onFilter, isRaised = true }: BlockProps) {
+function Block({ block, onFilter, isRaised = true, pagePath = '' }: BlockProps) {
   const { colors } = useTheme();
   const kind = block.kind;
   switch (kind.case) {
@@ -147,7 +149,7 @@ function Block({ block, onFilter, isRaised = true }: BlockProps) {
     case 'chips':
       return <PageChipsView chips={kind.value} />;
     case 'strip':
-      return <PageStripView strip={kind.value} />;
+      return <PageStripView strip={kind.value} pagePath={pagePath} />;
     case 'table':
       return <PageTableView table={kind.value} />;
     case 'rail':

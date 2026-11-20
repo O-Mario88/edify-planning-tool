@@ -120,7 +120,7 @@ export function FeedBlocks({ blocks: given, pagePath, drawerHref, selectable, cl
               />
             );
           case 'strip':
-            return <FeedStrip key={index} strip={kind.value} resolve={resolve} hero={index === heroAt} />;
+            return <FeedStrip key={index} strip={kind.value} resolve={resolve} hero={index === heroAt} pagePath={pagePath} />;
           case 'panel': {
             const heading = headingOnly(block);
             if (heading) {

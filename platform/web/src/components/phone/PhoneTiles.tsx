@@ -94,12 +94,14 @@ interface PhoneTilesProps {
   resolve: (href: string) => string;
   /** The page's hero figures (lib/heroStrip liftHeroes): larger, none folded. */
   hero?: boolean;
+  /** The page, which may name the figures it keeps in view (FIGURES_IN_VIEW_BY_PAGE). */
+  pagePath?: string;
 }
 
-export function PhoneTiles({ strip, resolve, hero = false }: PhoneTilesProps) {
+export function PhoneTiles({ strip, resolve, hero = false, pagePath = '' }: PhoneTilesProps) {
   // Every strip shows its main figures and folds the rest (owner, 2026-11-20:
   // "reduce the number of tiles and do it throughout the platform").
-  const { shown, folded } = hero ? { shown: strip.metrics, folded: [] } : foldFigures(strip.metrics);
+  const { shown, folded } = hero ? { shown: strip.metrics, folded: [] } : foldFigures(strip.metrics, pagePath);
   const grid = (metrics: readonly PageMetric[], label?: string) => (
     <div
       data-ph="tiles"

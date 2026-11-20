@@ -48,6 +48,52 @@ export function liftHeroes(blocks: readonly PageBlock[], pagePath: string): { bl
  *  the summary tables"). */
 export const FIGURES_SHOWN = 4;
 
+/** A page whose figures in view are its planned work (owner, 2026-11-20:
+ *  "it should show tiles based on what has been planned"): the figures with
+ *  something planned, in the owner's order, up to FIGURES_SHOWN with the
+ *  always-shown ones; nothing planned shows `empty`. The rest fold.
+ *  My Plan: the visit target first, then trainings, cluster meetings and the
+ *  period counts; the completed share always. "Core Visits Scheduled" is the
+ *  owner's second figure; the gateway sends no such figure yet, so it takes
+ *  its place once one exists. */
+export interface PlannedFirst {
+  readonly order: readonly string[];
+  readonly always: readonly string[];
+  readonly empty: string;
+}
+
+export const PLANNED_FIRST_BY_PAGE: Readonly<Record<string, PlannedFirst>> = {
+  '/my-plan': {
+    order: [
+      'School Visits Scheduled This Period',
+      'Core Visits Scheduled',
+      'Trainings Scheduled This Period',
+      'Cluster Meetings Scheduled This Period',
+      'My Activities Planned This Week',
+      'My Activities Planned This Month',
+      'My Activities Planned This Quarter',
+      'My Activities Planned This Financial Year',
+    ],
+    always: ['My Completed Share of Planned Work'],
+    empty: 'School Visits Scheduled This Period',
+  },
+};
+
+/** Whether a figure counts something planned: a number above zero. */
+function planned(value: string): boolean {
+  const n = Number.parseFloat(value.replace(/,/g, ''));
+  return Number.isFinite(n) && n > 0;
+}
+
+function plannedFirst<T extends { readonly value: string; readonly label: string }>(figures: readonly T[], rule: PlannedFirst): { shown: T[]; folded: T[] } {
+  const room = FIGURES_SHOWN - rule.always.length;
+  const byLabel = (label: string) => figures.filter((f) => f.label === label);
+  let lead = rule.order.flatMap(byLabel).filter((f) => planned(f.value)).slice(0, room);
+  if (lead.length === 0) lead = byLabel(rule.empty);
+  const shown = [...lead, ...rule.always.flatMap(byLabel)];
+  return { shown, folded: figures.filter((f) => !shown.includes(f)) };
+}
+
 /** A figure with nothing to show yet: "Not measured", a dash, or blank. */
 function unmeasured(value: string): boolean {
   const v = value.trim();
@@ -57,7 +103,14 @@ function unmeasured(value: string): boolean {
 /** A strip's figures split into the ones it shows, its first FIGURES_SHOWN
  *  measured figures in the gateway's order, and the ones folded under "All
  *  figures". A strip of FIGURES_SHOWN or fewer folds nothing. */
-export function foldFigures<T extends { readonly value: string }>(figures: readonly T[]): { shown: T[]; folded: T[] } {
+export function foldFigures<T extends { readonly value: string; readonly label: string }>(
+  figures: readonly T[],
+  pagePath = '',
+): { shown: T[]; folded: T[] } {
+  const rule = PLANNED_FIRST_BY_PAGE[pagePath.replace(/\/+$/, '') || '/'];
+  if (rule && figures.some((f) => rule.order.includes(f.label) || rule.always.includes(f.label))) {
+    return plannedFirst(figures, rule);
+  }
   if (figures.length <= FIGURES_SHOWN) return { shown: [...figures], folded: [] };
   const shown: T[] = [];
   const folded: T[] = [];
