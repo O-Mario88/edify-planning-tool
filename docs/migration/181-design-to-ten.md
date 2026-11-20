@@ -223,3 +223,35 @@ Phases overlap; the work is one page at a time across both apps.
 Phase 0 and Phase 1 need no new decisions: wire the sweep and axe into CI,
 then work the sweep's findings to zero on every role and size. Phase 2 and 4
 start the day the owner answers §6.1 and §6.2.
+
+## 9. Progress
+
+**2026-11-20**
+- **Tiles** (owner: "look at those tiles they are more beautiful"): every
+  figure strip is now a tile with its tinted icon, figure, label and line.
+  On desktop they sit four across (`page/FeedStrip`); on phones the icon
+  sits beside the figure, in both apps.
+- **Phase 1, visible defects:**
+  - Text no longer runs together: both readers join two parts with " · ",
+    Go matches every golden, and the word-count rules decide as before.
+  - Text is no longer cut: table cells, row sub-lines and Admin dashboard
+    rows wrap.
+  - Rails and switches fold into More instead of overflowing.
+  - No card sits inside a card; an empty pager draws nothing.
+  - On narrow phones the filter row holds two filters in both apps.
+  - The Cluster Leader's web landing is "your work is in the Edify app".
+  - Pages load as an outline of the page on web and app.
+  - Tap targets on touch are at least 36px.
+- **Accessibility:** axe runs in the sweep. The contrast, scrollable-region
+  and label-in-name findings on the core pages are fixed.
+- **Quality system:** `platform/tools/ui-sweep` (every role × phone, tablet
+  and desktop, plus axe) runs in Platform CI, report-only until it reaches
+  zero findings.
+- **Phase 5:** on phones, tables are row cards in both apps, with the
+  record, ID, status, the first four facts, and "All details" for the rest.
+  One constant, `ROWS_ON_PHONES`, switches back to the sideways table.
+
+**Still open:** the full baseline sweep after these fixes; Phases 2 and 4,
+which wait on §6.1 and §6.2; Phase 3, one visual system on desktop;
+Phase 6, drawers, toasts, copy and motion; Phase 7, sessions with users.
+
