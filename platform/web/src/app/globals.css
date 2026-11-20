@@ -259,3 +259,17 @@ main [data-directory-name]:not(#edify-wrap) {
   max-height: none !important;
 }
 
+
+/* REDUCED MOTION, everywhere (design pass 2026-11-20): a reader who asked the
+   system for less motion gets no animation or sliding anywhere, not only in
+   the phone layer, which keeps its own rules (a layered rule wins). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
