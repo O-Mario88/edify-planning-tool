@@ -178,8 +178,18 @@ select.edify-select {
    Waiting on you). The overview keeps its card and its four figures; the
    heroes come first, two to the row and larger, and the others follow as a
    compact row under them. lib/homeScreen heroFirst marks them. */
+/* Four columns whatever the count: the two heroes side by side, the rest
+   sharing the row under them; one left over takes the row (a desk role's
+   Critical and To-Do, then Due today). Its three-figure grid would have put
+   each hero on a row of its own, two-thirds wide. */
+.edify-home__figures[data-heroes][data-count] {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
 .edify-home__figures[data-heroes] > li {
   grid-column: span 2;
+}
+.edify-home__figures[data-heroes][data-count="3"] > li:not([data-home-hero]) {
+  grid-column: span 4;
 }
 .edify-home__figures[data-heroes] > li[data-home-hero] > .edify-home__figure {
   min-height: 6.25rem;
@@ -210,6 +220,12 @@ select.edify-select {
   }
   .edify-home__figures[data-heroes] > li[data-home-hero] .edify-home__figure-value {
     font-size: 1.75rem;
+  }
+  /* The smaller figures read from the left as the heroes do, not centred
+     across a wide row. */
+  .edify-home__figures[data-heroes] > li:not([data-home-hero]) > .edify-home__figure {
+    justify-content: flex-start;
+    padding-inline: 1.25rem;
   }
 }
 
