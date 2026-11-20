@@ -100,7 +100,7 @@ export function FeedRecord({ record, pagePath, drawerHref }: FeedRecordProps) {
             onClick={toggle}
             aria-expanded={open}
             aria-label={open ? `Hide details for ${record.title}` : `Show details for ${record.title}`}
-            className="-ml-1 grid h-6 w-6 shrink-0 place-items-center rounded text-[var(--edify-text-muted)] hover:bg-[var(--edify-surface-muted)]"
+            className="edify-detail-toggle -ml-1 grid h-6 w-6 shrink-0 place-items-center rounded text-[var(--edify-text-muted)] hover:bg-[var(--edify-surface-muted)]"
           >
             <Icon name="chevronRight" className={`h-4 w-4 transition-transform ${open ? 'rotate-90' : ''}`} />
           </button>

@@ -150,3 +150,15 @@ select.edify-select {
   border: 3px solid #fff;
   box-shadow: 0 0 0 8px color-mix(in srgb, var(--brand-primary) 20%, transparent);
 }
+
+/* Touch sizes below a laptop (2026-11-20 sweep): the existing stylesheets
+   size the pager, a row's menu and its details toggle for a mouse (18-28px);
+   a finger gets at least 36px. */
+@media (max-width: 63.999rem) {
+  main .edify-pagination .edify-pagination__control,
+  main .row-menu .row-menu__trigger,
+  main button.edify-detail-toggle {
+    min-width: 36px !important;
+    min-height: 36px !important;
+  }
+}

@@ -293,7 +293,7 @@ export function FeedTable({ table, pagePath, drawerHref, selectable, footer }: F
                               aria-expanded={open === index}
                               aria-controls={detailsId}
                               aria-label={open === index ? `Hide details for ${subject}` : `Show details for ${subject}`}
-                              className="grid h-6 w-6 place-items-center rounded text-[var(--edify-text-muted)] hover:bg-[var(--edify-surface-muted)]"
+                              className="edify-detail-toggle grid h-6 w-6 place-items-center rounded text-[var(--edify-text-muted)] hover:bg-[var(--edify-surface-muted)]"
                             >
                               <Icon name="chevronRight" className={`h-4 w-4 transition-transform ${open === index ? 'rotate-90' : ''}`} />
                             </button>
