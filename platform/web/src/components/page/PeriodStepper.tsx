@@ -17,12 +17,13 @@ const DESKTOP_STEP =
   'focus-visible:outline-[var(--brand-primary)] [&+&]:border-l [&+&]:border-[var(--edify-border)]';
 
 export function PeriodStepper({ links, resolve, phone = false }: { links: readonly PageLink[]; resolve: (href: string) => string; phone?: boolean }) {
+  // Keyed by place and words: from last week, "This week" and "Next week" share an href.
   const steps = links.map((link) => ({ link, ...stepOf(link) }));
   if (phone) {
     return (
       <nav data-ph="stepper" aria-label="Choose the period">
-        {steps.map(({ link, words, way }) => (
-          <a key={link.href || words} data-ph="step" data-way={way} href={resolve(link.href)}>
+        {steps.map(({ link, words, way }, index) => (
+          <a key={`${index}-${words}`} data-ph="step" data-way={way} href={resolve(link.href)}>
             {way === 'back' ? <ChevronLeft size={16} aria-hidden="true" /> : null}
             <span>{words}</span>
             {way === 'forward' ? <ChevronRight size={16} aria-hidden="true" /> : null}
@@ -37,8 +38,8 @@ export function PeriodStepper({ links, resolve, phone = false }: { links: readon
       data-block="stepper"
       className="inline-flex shrink-0 overflow-hidden rounded-[8px] border border-[var(--edify-border)] bg-[var(--edify-surface)]"
     >
-      {steps.map(({ link, words, way }) => (
-        <Link key={link.href || words} href={resolve(link.href)} className={DESKTOP_STEP} rel={way === 'back' ? 'prev' : way === 'forward' ? 'next' : undefined}>
+      {steps.map(({ link, words, way }, index) => (
+        <Link key={`${index}-${words}`} href={resolve(link.href)} className={DESKTOP_STEP} rel={way === 'back' ? 'prev' : way === 'forward' ? 'next' : undefined}>
           {way === 'back' ? <ChevronLeft className="h-4 w-4" aria-hidden="true" /> : null}
           <span>{words}</span>
           {way === 'forward' ? <ChevronRight className="h-4 w-4" aria-hidden="true" /> : null}
