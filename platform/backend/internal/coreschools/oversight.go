@@ -98,7 +98,7 @@ func (pg *page) oversightBlocks(ctx context.Context) ([]*screensv1.PageBlock, er
 	}
 	t := &screensv1.PageTable{Title: fmt.Sprintf("Team Core Schools (%d)", len(pg.all)), Subtitle: "Read-Only Team Oversight"}
 	if len(rows) == 0 {
-		t.EmptyMessage = "Nothing to oversee here No core schools in your team match these filters."
+		t.EmptyMessage = "Nothing to oversee here. No core schools in your team match these filters."
 	} else {
 		t.Columns = columnsOf("School ID", "School", "Responsible CCEO", "Assessment", "Visits", "Trainings", "Partner", "Delivery", "Blocker", "Action")
 		for _, r := range rows {

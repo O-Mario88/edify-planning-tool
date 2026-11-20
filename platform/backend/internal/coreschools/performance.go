@@ -369,7 +369,7 @@ func (pg *page) performance(ctx context.Context) ([]*screensv1.PageBlock, error)
 	}
 	region := oversight()
 	if len(f.regions) == 0 {
-		region = append(region, text("No regional comparison available No regions in the selected scope hold core schools."))
+		region = append(region, text("No regional comparison available. No regions in the selected scope hold core schools."))
 		blocks = append(blocks, panel("Performance by Region", "Average verified core score across regional teams.", region))
 	} else {
 		blocks = append(blocks, panel("Performance by Region", "Average verified core score across regional teams.", region))
@@ -404,7 +404,7 @@ func (pg *page) performance(ctx context.Context) ([]*screensv1.PageBlock, error)
 		panel("Staff vs Partner by Intervention", "Average verified core score per intervention (0–10); gap in score points.",
 			append(oversight(), text("Not enough comparable data. A row appears only when an intervention has both staff-led and Partner-owned slots with verified scores — comparisons are never invented from one side."))),
 		panel("Verified Assessment Outcome Trend", "Average verified core assessment score across real assessment periods.",
-			append(oversight(), text("Not enough comparable assessment history yet The trend appears once at least two verified assessment periods exist for this scope."))),
+			append(oversight(), text("Not enough comparable assessment history yet. The trend appears once at least two verified assessment periods exist for this scope."))),
 	)
 	return blocks, nil
 }

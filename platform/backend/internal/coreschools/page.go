@@ -313,9 +313,9 @@ func (pg *page) matrixBlocks(ctx context.Context) ([]*screensv1.PageBlock, error
 	blocks := []*screensv1.PageBlock{textPanel(fmt.Sprintf("Core Schools Matrix (%d Schools)", len(pg.all)),
 		"Click a school to view SSA scores and live support counts")}
 	if len(pg.shown) == 0 {
-		empty := "No Core Schools in your portfolio Only schools assigned directly to you appear here."
+		empty := "No Core Schools in your portfolio. Only schools assigned directly to you appear here."
 		if pg.f.narrowed() {
-			empty = "No Core Schools match these filters Clear a filter or change the search to widen the list."
+			empty = "No Core Schools match these filters. Clear a filter or change the search to widen the list."
 		} else if pg.hasTeamCore {
 			empty += " View Team Core Oversight"
 		}
