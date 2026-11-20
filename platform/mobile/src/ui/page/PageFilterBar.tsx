@@ -1,10 +1,11 @@
 /**
- * A page's filter bar on a phone: as many selects as the row holds (three)
- * and the rest under More, a dropdown of labelled selects, as the web's
+ * A page's filter bar on a phone: as many selects as the row holds (three;
+ * two on a narrow phone, so a value such as "All quarters" is never cut,
+ * as the web's phone row does, PhoneFilters.inRowFor) and the rest under More, a dropdown of labelled selects, as the web's
  * micro-ux.js does with its filter toolbars. A change reports the select's
  * name and value; the form's hidden values go with every change.
  */
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { ChevronDown, ChevronUp } from 'lucide-react-native';
 
 import type { PageFilter, PageFilters } from '../../gen/edify/screens/v1/page_pb';
@@ -14,6 +15,15 @@ import { Select } from '../Select';
 
 /** Selects a phone's filter row holds before the rest go under More. */
 const IN_ROW = 3;
+/** On a row narrower than this a third select would cut its value. */
+const NARROW_ROW = 480;
+/** The page's own side padding, either side of the row (PageScreen). */
+const PAGE_GUTTERS = 32;
+
+/** How many selects a row of this width holds (the web's inRowFor). */
+export function inRowFor(rowWidth: number): number {
+  return rowWidth > 0 && rowWidth < NARROW_ROW ? IN_ROW - 1 : IN_ROW;
+}
 const MORE_WIDTH = 272;
 /** One labelled select in the More panel, and the panel's padding. */
 const MORE_FIELD_HEIGHT = 56;
@@ -29,8 +39,10 @@ interface PageFilterBarProps {
 
 export function PageFilterBar({ filters, onFilter, isRaised = false }: PageFilterBarProps) {
   const { colors } = useTheme();
-  const shown = filters.filters.slice(0, IN_ROW);
-  const rest = filters.filters.slice(IN_ROW);
+  const { width } = useWindowDimensions();
+  const inRow = inRowFor(width - PAGE_GUTTERS);
+  const shown = filters.filters.slice(0, inRow);
+  const rest = filters.filters.slice(inRow);
   const more = useDropdown(rest.length * MORE_FIELD_HEIGHT + MORE_PADDING);
   const moreSet = rest.filter((filter) => filter.value !== (filter.options[0]?.value ?? '')).length;
   const change = (filter: PageFilter, value: string) => onFilter(filter.name, value, filters.hidden);
