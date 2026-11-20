@@ -351,9 +351,9 @@ func panelOf(title string, items ...*screensv1.PagePanelItem) *screensv1.PageBlo
 func (o operations) block() *screensv1.PageBlock {
 	queues := linksItem(
 		&screensv1.PageLink{Text: "SSA review · Confirm assessment records", Href: "/ssa/verification/", Caption: strconv.Itoa(o.ssaPending)},
-		&screensv1.PageLink{Text: "Evidence reviewUploaded files awaiting a decision", Href: "/evidence/", Caption: strconv.Itoa(o.evidencePending)},
-		&screensv1.PageLink{Text: "Returned workCorrections still outstanding", Href: "/ia/returned/", Caption: strconv.Itoa(o.returnedOpen)},
-		&screensv1.PageLink{Text: "Duplicate reviewPotential duplicate activities", Href: "/ia/duplicates/", Caption: strconv.Itoa(o.duplicateRisk)},
+		&screensv1.PageLink{Text: "Evidence review · Uploaded files awaiting a decision", Href: "/evidence/", Caption: strconv.Itoa(o.evidencePending)},
+		&screensv1.PageLink{Text: "Returned work · Corrections still outstanding", Href: "/ia/returned/", Caption: strconv.Itoa(o.returnedOpen)},
+		&screensv1.PageLink{Text: "Duplicate review · Potential duplicate activities", Href: "/ia/duplicates/", Caption: strconv.Itoa(o.duplicateRisk)},
 	)
 	lines := []*screensv1.PageLink{}
 	for i, e := range o.exceptions {
