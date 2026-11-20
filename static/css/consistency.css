@@ -2761,7 +2761,10 @@ main :is(.apexcharts-datalabel-value) {
 
 :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
   table:not(.sr-only):not(.edify-visually-hidden) thead th:not(:last-child) {
-  border-inline-end: 1px solid color-mix(in srgb, var(--edify-table-header-divider, var(--edify-border)) 62%, transparent) !important;
+  /* No rule between column names (2026-11-20, more premium): the band and
+     the line under it hold the head together; the columns' own alignment
+     separates them. */
+  border-inline-end: 0 !important;
 }
 
 :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
@@ -4473,7 +4476,11 @@ main textarea,
    Its colours are the --edify-band-* tokens (design-system.css), so the band
    is restyled in one place. Other themes retain their own header treatment. */
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar {
-  background: var(--edify-band-surface) !important;
+  /* On the card, over a hairline, with room to breathe (2026-11-20, more
+     premium); the tinted column band under it marks where the table starts. */
+  background: var(--edify-titlebar-surface, var(--edify-band-surface)) !important;
+  border-block-end: 1px solid var(--edify-table-divider) !important;
+  padding-block: .625rem !important;
   color: var(--edify-band-ink) !important;
   /* Never closer to the band's own edge than a cell is to its neighbour: a
      band that cannot bleed (a chart's, inside a padded column) keeps its
@@ -4528,7 +4535,9 @@ main textarea,
    class a table would have to carry. */
 :root :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
   table:not(.sr-only):not(.edify-visually-hidden):not(#edify-heading-none) > thead > tr > :is(th, td) {
-  border-block-end: 2px solid var(--edify-border-strong) !important;
+  /* One fine line (2026-11-20); it was 2px, which read as a rule drawn
+     under the head rather than its edge. */
+  border-block-end: 1px solid var(--edify-border-strong) !important;
   /* The cells' own ink: --edify-text-muted is what a table cell is drawn in. */
   color: var(--edify-text-muted) !important;
   font-size: var(--edify-text-table-heading-size) !important;
@@ -5432,4 +5441,23 @@ main .edify-structured-surface:not(
   .sal-aside, .spp-intelligence, .spp-next-step, .spp-bulk
 ) > :is(nav, [role="tablist"], .edify-tab-container) {
   --edify-fill-inset: var(--edify-section-inset);
+}
+
+/* PREMIUM TABLE EDGES (owner, 2026-11-20: "just make them look more
+   premium"). A record table's first and last columns sit on the card's
+   content line, as its title does (ONE CONTENT LINE), not a cell's padding
+   in from the card's edge; and a cell with nothing to say shows a quiet
+   dash, so an empty column reads as "none" rather than a gap in the grid. */
+:root :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .edify-record-table.edify-record-table :is(thead, tbody) > tr > :is(th, td):first-child:not([colspan]) {
+  padding-inline-start: max(var(--edify-card-inset, 1rem), var(--edify-table-cell-padding-inline)) !important;
+}
+:root :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .edify-record-table.edify-record-table :is(thead, tbody) > tr > :is(th, td):last-child:not([colspan]) {
+  padding-inline-end: max(var(--edify-card-inset, 1rem), var(--edify-table-cell-padding-inline)) !important;
+}
+:root :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .edify-record-table tbody > tr > td > span:only-child:empty::after {
+  content: "—";
+  color: color-mix(in srgb, var(--edify-text-muted) 55%, transparent);
 }

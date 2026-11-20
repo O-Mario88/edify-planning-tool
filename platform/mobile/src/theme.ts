@@ -48,6 +48,10 @@ export interface Palette {
   readonly confirmBorder: string;
   /** Record tables' header row. */
   readonly tableHead: string;
+  /** The hairline between a table's rows (the web's --ph-table-line). */
+  readonly tableLine: string;
+  /** A linked name in a table cell, link blue as on the web (--ph-table-link). */
+  readonly tableLink: string;
   /** Charts' first series (--edify-series-1). */
   readonly series1: string;
   readonly heroGradient: readonly [string, string, ...string[]];
@@ -87,7 +91,9 @@ const light: Palette = {
   fieldBorder: '#858e98',
   outlineBorder: '#8ac6ea',
   confirmBorder: '#fee685',
-  tableHead: '#dce6ec',
+  tableHead: '#edf2f6',
+  tableLine: '#e2e8ec',
+  tableLink: '#0e5da3',
   series1: '#0e5da3',
   heroGradient: ['#001d39', '#062847', '#0a4d86'],
   heroRule: 'rgba(189, 216, 233, 0.72)',
@@ -127,6 +133,8 @@ const dark: Palette = {
   outlineBorder: '#3c6f96',
   confirmBorder: 'rgba(231, 180, 90, 0.45)',
   tableHead: '#1d2b36',
+  tableLine: '#283640',
+  tableLink: '#a9cee8',
   series1: '#4f9ae0',
   heroGradient: ['#0a1118', '#0b141c'],
   heroRule: '#31404d',

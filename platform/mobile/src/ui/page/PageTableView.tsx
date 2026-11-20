@@ -39,6 +39,21 @@ let hintSeen = false;
 const ROWS_ON_PHONES = false;
 /** From this width (a tablet) a table is drawn as a table. */
 const TABLE_FROM = 768;
+/** A cell's own side padding, and the first and last columns' outer one: the
+ *  card's 16pt content line (owner, 2026-11-20: "just make them look more
+ *  premium", as the web's phone grid). */
+const CELL_SIDE = 14;
+const EDGE_SIDE = 16;
+/** What an empty cell shows: a quiet dash, so an empty column reads as none. */
+const NOTHING = '\u2014';
+
+/** The outer padding of a column at the table's edge, if it is one. */
+function edgePad(index: number, count: number, isLead: boolean): { paddingLeft?: number; paddingRight?: number } {
+  return {
+    ...(index === 0 && isLead ? { paddingLeft: EDGE_SIDE } : null),
+    ...(index === count - 1 ? { paddingRight: EDGE_SIDE } : null),
+  };
+}
 
 /** A column wide enough for its widest line (the web lays tables out by content). */
 function columnWidth(column: PageColumn, cells: readonly PageCell[]): number {
@@ -48,7 +63,7 @@ function columnWidth(column: PageColumn, cells: readonly PageCell[]): number {
   }
   const longest = Math.max(
     column.label.length * 8.4 + 32,
-    ...cells.map((cell) => cell.text.length * (cell.strong ? 7.6 : 7.2) + 24),
+    ...cells.map((cell) => cell.text.length * (cell.strong || cell.href ? 7.6 : 7.2) + CELL_SIDE * 2),
   );
   return Math.round(Math.min(Math.max(longest, 64), 300));
 }
@@ -103,15 +118,20 @@ export function PageTableView({ table, isBare = false }: PageTableViewProps) {
 function Grid({ table }: { readonly table: PageTable }) {
   const { colors } = useTheme();
   const [viewWidth, setViewWidth] = useState(0);
-  const widths = table.columns.map((column, index) =>
-    columnWidth(
-      column,
-      table.rows.map((row) => row.cells[index]).filter((cell): cell is PageCell => cell !== undefined),
-    ),
-  );
   const opens = table.rows.some((row) => row.details.length > 0 || row.detailsHref !== '');
   const pick = usePicks();
   const pickable = pick.isOn ? table.rows.map((row) => row.pickId).filter((id) => id !== '') : [];
+  // The first column leads the row when no tick box or chevron comes before it.
+  const isLead = pickable.length === 0 && !opens;
+  const widths = table.columns.map((column, index) => {
+    const edges = (index === 0 && isLead ? EDGE_SIDE - CELL_SIDE : 0) + (index === table.columns.length - 1 ? EDGE_SIDE - CELL_SIDE : 0);
+    return (
+      columnWidth(
+        column,
+        table.rows.map((row) => row.cells[index]).filter((cell): cell is PageCell => cell !== undefined),
+      ) + edges
+    );
+  });
   const ticked = pickable.filter((id) => pick.picked.includes(id)).length;
   const contentWidth =
     widths.reduce((sum, width) => sum + width, 0) + (opens ? EXPANDER_WIDTH : 0) + (pickable.length > 0 ? PICK_WIDTH : 0);
@@ -123,7 +143,7 @@ function Grid({ table }: { readonly table: PageTable }) {
       <ScrollView horizontal showsHorizontalScrollIndicator onScrollBeginDrag={() => (hintSeen = true)}>
         <View>
           {table.columns.length > 0 ? (
-            <View style={[styles.row, { backgroundColor: colors.tableHead }]}>
+            <View style={[styles.row, styles.headRow, { backgroundColor: colors.tableHead, borderBottomColor: colors.borderStrong }]}>
               {pickable.length > 0 ? (
                 <Pressable
                   onPress={() => pick.set(pickable, ticked < pickable.length)}
@@ -143,6 +163,7 @@ function Grid({ table }: { readonly table: PageTable }) {
                   style={[
                     styles.head,
                     { width: widths[index], color: colors.textMuted },
+                    edgePad(index, table.columns.length, isLead),
                     column.numeric && styles.numeric,
                   ]}
                 >
@@ -158,6 +179,7 @@ function Grid({ table }: { readonly table: PageTable }) {
               table={table}
               widths={widths}
               isFirst={rowIndex === 0}
+              isLead={isLead}
               opens={opens}
               picks={pickable.length > 0}
               isOpen={openRow === rowIndex}
@@ -177,6 +199,8 @@ interface BodyRowProps {
   readonly table: PageTable;
   readonly widths: readonly number[];
   readonly isFirst: boolean;
+  /** The first column is the row's first cell (no tick box or chevron before it). */
+  readonly isLead: boolean;
   /** The table has rows that open: every row keeps the chevron column. */
   readonly opens: boolean;
   /** The table's rows can be ticked for the page's bar: every row keeps the tick column. */
@@ -188,7 +212,7 @@ interface BodyRowProps {
 }
 
 /** One record row: its cells, and what opening it shows under it. */
-function BodyRow({ row, table, widths, isFirst, opens, picks, isOpen, onToggle, detailsWidth }: BodyRowProps) {
+function BodyRow({ row, table, widths, isFirst, isLead, opens, picks, isOpen, onToggle, detailsWidth }: BodyRowProps) {
   const { colors } = useTheme();
   const openLink = usePageLink();
   const pick = usePicks();
@@ -203,7 +227,7 @@ function BodyRow({ row, table, widths, isFirst, opens, picks, isOpen, onToggle, 
         accessibilityHint={canOpen ? `${isOpen ? 'Hides' : 'Shows'} the details of ${rowName(row)}` : undefined}
         style={[
           styles.row,
-          { borderTopColor: colors.raisedBorder },
+          { borderTopColor: colors.tableLine },
           !isFirst && styles.ruled,
           row.tone === 'done' ? { backgroundColor: colors.successSoft } : null,
           isOpen ? { backgroundColor: colors.primarySoft } : null,
@@ -233,35 +257,43 @@ function BodyRow({ row, table, widths, isFirst, opens, picks, isOpen, onToggle, 
         {row.cells.map((cell, index) => {
           if (cell.actions.length > 0) {
             return (
-              <View key={index} style={[styles.cellBox, { width: widths[index] ?? ACTIONS_WIDTH }]}>
+              <View key={index} style={[styles.cellBox, { width: widths[index] ?? ACTIONS_WIDTH }, edgePad(index, row.cells.length, isLead)]}>
                 <RowActions actions={cell.actions} label={rowName(row)} />
               </View>
             );
           }
-          const color = rowInk(colors, row) ?? toneColor(colors, cell.tone) ?? (cell.strong ? colors.text : colors.textMuted);
+          const isEmpty = cell.text.trim() === '';
+          const isLink = cell.href !== '' && !isEmpty;
+          // A linked name is link blue, as on the web (2026-11-20); a row's or a cell's tone still wins.
+          const color =
+            rowInk(colors, row) ??
+            toneColor(colors, cell.tone) ??
+            (isEmpty ? colors.textSubtle : isLink ? colors.tableLink : cell.strong ? colors.text : colors.textMuted);
           // A cell's text wraps in full, never cut (owner, 2026-10-02).
           const text = (
             <Text
               style={[
                 styles.cell,
-                { color, fontFamily: cell.strong ? fonts.bold : fonts.medium },
+                { color, fontFamily: cell.strong ? fonts.bold : isLink ? fonts.semibold : fonts.medium },
+                isEmpty && styles.nothing,
                 table.columns[index]?.numeric && styles.numeric,
               ]}
             >
-              {cell.text}
+              {isEmpty ? NOTHING : cell.text}
             </Text>
           );
+          const edge = edgePad(index, row.cells.length, isLead);
           return cell.href ? (
             <Pressable
               key={index}
               onPress={() => openLink(cell.href)}
               accessibilityRole="link"
-              style={[styles.cellBox, { width: widths[index] ?? 120 }]}
+              style={[styles.cellBox, { width: widths[index] ?? 120 }, edge]}
             >
               {text}
             </Pressable>
           ) : (
-            <View key={index} style={[styles.cellBox, { width: widths[index] ?? 120 }]}>
+            <View key={index} style={[styles.cellBox, { width: widths[index] ?? 120 }, edge]}>
               {text}
             </View>
           );
@@ -767,16 +799,18 @@ const styles = StyleSheet.create({
   pageGap: { borderColor: 'transparent' },
   pageText: { fontFamily: fonts.bold, fontSize: 12 },
   row: { flexDirection: 'row' },
+  headRow: { borderBottomWidth: 1 },
   ruled: { borderTopWidth: 1 },
   head: {
     fontFamily: fonts.bold,
     fontSize: 14,
-    lineHeight: 32,
-    paddingHorizontal: 12,
+    lineHeight: 40,
+    paddingHorizontal: CELL_SIDE,
     textTransform: 'capitalize',
   },
-  cellBox: { minHeight: 32, justifyContent: 'center', paddingHorizontal: 12, paddingVertical: 6 },
-  cell: { fontSize: 13 },
+  cellBox: { minHeight: 44, justifyContent: 'center', paddingHorizontal: CELL_SIDE, paddingVertical: 10 },
+  cell: { fontSize: 13, lineHeight: 18 },
+  nothing: { opacity: 0.7 },
   numeric: { textAlign: 'right' },
   footnote: { fontFamily: fonts.semibold, fontSize: 13, lineHeight: 18, paddingHorizontal: 16, paddingVertical: 10 },
   empty: { alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 20 },

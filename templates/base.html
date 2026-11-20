@@ -95,7 +95,7 @@ whole, and nothing about the settled page changes. Browsers that do not know
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20261023blue2">
+<link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20261120table">
 <link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20261023hover2">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20261002tokens2">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20261025feel7">
@@ -121,7 +121,7 @@ other page was relying on them.
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20261023blue2">{% endblock %}
+{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20261120table">{% endblock %}
 <link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20261023donext1">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20261009signin1">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
