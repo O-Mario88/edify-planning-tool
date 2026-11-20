@@ -61,6 +61,15 @@ export default async function ShellLayout({ children }: { children: ReactNode })
   // beside one column of the top bar over the scrolling workspace.
   return (
     <div className="edify-shell h-full flex overflow-hidden">
+      {/* The first stop for a keyboard: past the sidebar and the top bar to the
+          page itself (WCAG 2.4.1, keyboard pass 2026-11-20); shown only when
+          focused. */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-[8px] focus:bg-[var(--edify-surface)] focus:px-4 focus:py-2 focus:font-semibold focus:text-[var(--brand-primary-text)] focus:shadow-[var(--edify-shadow-sm)] focus:outline focus:outline-2 focus:outline-[var(--edify-accent)]"
+      >
+        Skip to main content
+      </a>
       <Sidebar sections={sections} path={path} />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar search={pageSearch(path)} account={account} existingWebUrl={environment().existingWebUrl} counts={{ messages, notifications }} />
