@@ -22,6 +22,7 @@ import { PageStripView } from './PageStripView';
 import { EmptyState, Explanation, PageTableView, Pager } from './PageTableView';
 import { ChipContext, cardStyles, usePageLink } from './shared';
 import { liftHeroes } from './heroStrip';
+import { presentBlocks } from './presentBlocks';
 import { headingOnly, tableNote } from './tableNote';
 
 /** A table's note on a card of its own, folded under its chevron. */
@@ -46,7 +47,8 @@ interface PageBlocksViewProps {
 }
 
 export function PageBlocksView({ blocks, onFilter, isRaised = true, pagePath = '' }: PageBlocksViewProps) {
-  const lifted = useMemo(() => liftHeroes(blocks, pagePath), [blocks, pagePath]);
+  // Counted links read as figure tiles (presentBlocks, owner 2026-11-20).
+  const lifted = useMemo(() => liftHeroes(presentBlocks(blocks), pagePath), [blocks, pagePath]);
   // The page's chip filters start on the values its script starts them on.
   const opening = useMemo(
     () =>
@@ -259,11 +261,11 @@ function SegmentsCard({ segments, onFilter }: { readonly segments: PageSegments;
         </ScrollView>
         {segments.caption ? <Text style={[styles.caption, { color: colors.textMuted }]}>{segments.caption}</Text> : null}
       </View>
-      {shown?.blocks.map((block, index) => {
+      {(shown ? presentBlocks(shown.blocks) : []).map((block, index, inner) => {
         if (block.kind.case === 'table') {
           return <PageTableView key={index} table={block.kind.value} isBare />;
         }
-        const note = tableNote(shown.blocks, index);
+        const note = tableNote(inner, index);
         if (note) {
           return <Explanation key={index} text={note} />;
         }

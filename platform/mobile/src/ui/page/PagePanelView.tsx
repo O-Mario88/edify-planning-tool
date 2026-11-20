@@ -4,10 +4,40 @@
  * order — sub-headings, paragraphs, fields ("Label: value", one to a line), data rows, linked lists and a meter.
  */
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 
-import type { PageFact, PagePanel, PagePanelItem } from '../../gen/edify/screens/v1/page_pb';
+import type { PageFact, PageLink, PagePanel, PagePanelItem } from '../../gen/edify/screens/v1/page_pb';
 import { fonts, useTheme } from '../../theme';
+import { isStepper, stepOf } from './presentBlocks';
 import { cardStyles, toneColor, usePageLink } from './shared';
+
+/** Links that step through periods ("‹ Previous week" … "Next week ›") as one
+ *  segmented control the card's width, as on the web (PeriodStepper). From
+ *  last week "This week" leads where "Next week" does, so it is dropped. */
+function Stepper({ links }: { readonly links: readonly PageLink[] }) {
+  const { colors } = useTheme();
+  const openLink = usePageLink();
+  const all = links.map((link) => ({ link, ...stepOf(link) }));
+  const steps = all.filter((step) => step.way !== 'here' || !all.some((other) => other !== step && other.link.href === step.link.href));
+  return (
+    <View style={[styles.stepper, { borderColor: colors.raisedBorder, backgroundColor: colors.raised }]} accessibilityLabel="Choose the period">
+      {steps.map(({ link, words, way }, index) => (
+        <Pressable
+          key={`${index}-${words}`}
+          onPress={() => openLink(link.href)}
+          accessibilityRole="link"
+          style={[styles.step, index > 0 && { borderLeftWidth: 1, borderLeftColor: colors.raisedBorder }]}
+        >
+          {way === 'back' ? <ChevronLeft size={16} color={colors.text} /> : null}
+          <Text style={[styles.stepText, { color: colors.text }]} numberOfLines={1}>
+            {words}
+          </Text>
+          {way === 'forward' ? <ChevronRight size={16} color={colors.text} /> : null}
+        </Pressable>
+      ))}
+    </View>
+  );
+}
 
 export function PagePanelView({ panel }: { readonly panel: PagePanel }) {
   const { colors } = useTheme();
@@ -79,6 +109,7 @@ function Item({ item }: { readonly item: PagePanelItem }) {
         </View>
       );
     case 'links':
+      if (isStepper(kind.value.links)) return <Stepper links={kind.value.links} />;
       return (
         <View style={styles.links}>
           {kind.value.links.map((link) => (
@@ -152,6 +183,9 @@ const styles = StyleSheet.create({
   dataValue: { fontFamily: fonts.bold, fontSize: 13, fontVariant: ['tabular-nums'], textAlign: 'right' },
   dataMeta: { fontFamily: fonts.semibold, fontSize: 13 },
   links: { gap: 8 },
+  stepper: { flexDirection: 'row', borderWidth: 1, borderRadius: 10, overflow: 'hidden' },
+  step: { flex: 1, height: 36, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingHorizontal: 8 },
+  stepText: { fontFamily: fonts.semibold, fontSize: 13 },
   linkText: { fontFamily: fonts.semibold, fontSize: 15 },
   caption: { fontFamily: fonts.semibold, fontSize: 12 },
   meter: { gap: 8 },

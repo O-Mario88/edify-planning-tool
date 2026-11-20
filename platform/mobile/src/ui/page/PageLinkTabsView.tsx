@@ -11,6 +11,7 @@ import type { PageLinkTabs } from '../../gen/edify/screens/v1/page_pb';
 import { fonts, radius, useTheme } from '../../theme';
 import { Dropdown, MenuList, menuHeight, useDropdown } from '../Dropdown';
 import { railTabs } from './pageLinks';
+import { tabCount } from './presentBlocks';
 import { usePageLink } from './shared';
 
 export function PageLinkTabsView({ tabs }: { readonly tabs: PageLinkTabs }) {
@@ -23,22 +24,39 @@ function SectionStrip({ tabs }: { readonly tabs: PageLinkTabs }) {
   const { colors } = useTheme();
   const openLink = usePageLink();
   return (
+    // The tabs' segment shape (owner, 2026-11-20): one bordered rail with
+    // straight dividers and curved ends, scrolling sideways when long; a
+    // count at a tab's end is its badge ("My activities 8").
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
       {tabs.label ? <Text style={[styles.stripLabel, { color: colors.textSubtle }]}>{tabs.label}</Text> : null}
-      {tabs.tabs.map((tab) => (
-        <Pressable
-          key={tab.href}
-          onPress={() => openLink(tab.href)}
-          accessibilityRole="link"
-          accessibilityState={{ selected: tab.active }}
-          style={[
-            styles.stripLink,
-            { borderColor: tab.active ? colors.segmentActive : colors.raisedBorder, backgroundColor: tab.active ? colors.segmentActive : colors.raised },
-          ]}
-        >
-          <Text style={[styles.tabText, tab.active ? styles.tabOn : { color: colors.text }]}>{tab.label}</Text>
-        </Pressable>
-      ))}
+      <View style={[styles.rail, { backgroundColor: colors.raised, borderColor: colors.raisedBorder }]}>
+        {tabs.tabs.map((tab, index) => {
+          const { label, count } = tabCount(tab.label);
+          const divided = index > 0 && !tab.active && !tabs.tabs[index - 1]?.active;
+          return (
+            <Pressable
+              key={tab.href}
+              onPress={() => openLink(tab.href)}
+              accessibilityRole="link"
+              accessibilityState={{ selected: tab.active }}
+              style={[
+                styles.stripLink,
+                index === 0 && styles.first,
+                index === tabs.tabs.length - 1 && styles.last,
+                tab.active && { backgroundColor: colors.segmentActive },
+                divided && { borderLeftWidth: 1, borderLeftColor: colors.border },
+              ]}
+            >
+              <Text style={[styles.tabText, tab.active ? styles.tabOn : { color: colors.text }]}>{label}</Text>
+              {count ? (
+                <View style={[styles.count, { backgroundColor: tab.active ? 'rgba(255,255,255,0.22)' : colors.border }]}>
+                  <Text style={[styles.countText, { color: tab.active ? '#ffffff' : colors.text }]}>{count}</Text>
+                </View>
+              ) : null}
+            </Pressable>
+          );
+        })}
+      </View>
     </ScrollView>
   );
 }
@@ -117,9 +135,10 @@ function Rail({ tabs }: { readonly tabs: PageLinkTabs }) {
 }
 
 const styles = StyleSheet.create({
-  strip: { alignItems: 'center', gap: 6, paddingRight: 16 },
+  strip: { alignItems: 'center', gap: 6 },
   stripLabel: { fontFamily: fonts.semibold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.4, marginRight: 4 },
-  stripLink: { height: 32, borderWidth: 1, borderRadius: radius.sm, paddingHorizontal: 12, justifyContent: 'center' },
+  stripLink: { height: 36, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10 },
+  last: { borderTopRightRadius: radius.sm - 1, borderBottomRightRadius: radius.sm - 1 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   rail: { flexDirection: 'row', alignItems: 'center', flexShrink: 1, borderWidth: 1, borderRadius: radius.sm },
   tab: { height: 36, paddingHorizontal: 16, justifyContent: 'center' },
