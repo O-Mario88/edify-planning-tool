@@ -19,6 +19,7 @@ import type { ReactNode } from 'react';
 import type { PageAction, PageRow, PageTable } from '@/gen/edify/screens/v1/page_pb';
 import { actionHref, isActionsCell, resolveHref } from '@/lib/feedPage';
 import { asList, rowCard, summaryOf } from '@/lib/rowCard';
+import { titleCase } from '@/lib/titleCase';
 import type { RowCard, RowFact } from '@/lib/rowCard';
 
 import { Explanation } from '../page/Explanation';
@@ -141,7 +142,7 @@ function Grid({ table, resolve, hrefOf, selectable }: GridProps) {
               {opens ? <th scope="col" aria-label="Details" /> : null}
               {table.columns.map((column, index) => (
                 <th key={`${column.label}-${index}`} scope="col" data-numeric={column.numeric || undefined}>
-                  {column.label}
+                  {titleCase(column.label)}
                 </th>
               ))}
             </tr>

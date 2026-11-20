@@ -162,3 +162,13 @@ select.edify-select {
     min-height: 36px !important;
   }
 }
+
+/* A table's column names arrive in Title Case (lib/titleCase: "Part of the
+   Plan", "School ID"); the existing web's capitalize (consistency.css,
+   COLUMN HEADINGS) would undo the small words and the initialisms, so a
+   table that says so (data-titled) keeps its names as written (2026-11-20).
+   Three attribute tests outrank that rule's weight. */
+:root :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table[data-titled][data-titled][data-titled]:not(#edify-heading-none) > thead > tr > :is(th, td) {
+  text-transform: none !important;
+}

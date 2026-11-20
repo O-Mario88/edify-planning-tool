@@ -15,6 +15,7 @@ import type { ReactNode } from 'react';
 
 import type { PageAction, PageCell, PageRow, PageTable } from '@/gen/edify/screens/v1/page_pb';
 import { actionHref, isActionsCell, isHeadingRow, resolveHref, splitActions } from '@/lib/feedPage';
+import { titleCase } from '@/lib/titleCase';
 
 import { Badge } from '../blocks/Badge';
 import { PlanningChips } from '../blocks/PlanningChips';
@@ -156,13 +157,13 @@ function AdminTable({ table, resolve }: { table: PageTable; resolve: (href: stri
         {table.headerLink && headerHref ? <Link href={headerHref}>{table.headerLink.text}</Link> : null}
       </header>
       <div className="admin-table-wrap">
-        <table className={table.tableClass || 'admin-table'}>
+        <table className={table.tableClass || 'admin-table'} data-titled>
           {table.title ? <caption className="sr-only">{table.title}</caption> : null}
           <thead>
             <tr>
               {table.columns.map((column) => (
                 <th key={column.label} scope="col">
-                  {column.label}
+                  {titleCase(column.label)}
                 </th>
               ))}
             </tr>
@@ -233,7 +234,7 @@ export function FeedTable({ table, pagePath, drawerHref, selectable, footer }: F
       {table.rows.length ? (
         // A region a keyboard can reach and scroll (WCAG: scrollable-region-focusable).
         <div className="overflow-x-auto" tabIndex={0} role="region" aria-label={`${table.title || 'Table'}, scrolls sideways`}>
-          <table className="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll">
+          <table className="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll" data-titled>
             {table.columns.length ? (
               <thead>
                 <tr>
@@ -256,7 +257,7 @@ export function FeedTable({ table, pagePath, drawerHref, selectable, footer }: F
                   {opens ? <th scope="col" className={`${CELL} w-6`}><span className="sr-only">Details</span></th> : null}
                   {table.columns.map((column) => (
                     <th key={column.label} scope="col" className={`${CELL} ${column.numeric ? 'text-right' : ''}`}>
-                      {column.label}
+                      {titleCase(column.label)}
                     </th>
                   ))}
                 </tr>

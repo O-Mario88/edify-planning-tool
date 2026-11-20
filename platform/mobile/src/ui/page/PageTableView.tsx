@@ -20,6 +20,7 @@ import { fonts, useTheme } from '../../theme';
 import { PageBlockView } from './PageBlocksView';
 import { RowActions } from './RowActions';
 import { asList, rowCard, summaryOf } from './rowCard';
+import { titleCase } from './titleCase';
 import type { RowCard, RowFact } from './rowCard';
 import { cardStyles, toneColor, usePageLink, usePicks } from './shared';
 
@@ -167,7 +168,7 @@ function Grid({ table }: { readonly table: PageTable }) {
                     column.numeric && styles.numeric,
                   ]}
                 >
-                  {column.label}
+                  {titleCase(column.label)}
                 </Text>
               ))}
             </View>
@@ -836,7 +837,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 32,
     paddingHorizontal: CELL_SIDE,
-    textTransform: 'capitalize',
   },
   cellBox: { minHeight: 32, justifyContent: 'center', paddingHorizontal: CELL_SIDE, paddingVertical: 7 },
   cell: { fontSize: 13, lineHeight: 18 },

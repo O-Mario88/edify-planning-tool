@@ -421,7 +421,7 @@ describe('the Admin dashboard’s table cards', () => {
   it('draws the card, its table and its links with the existing classes', () => {
     expect(html).toContain('<section class="admin-panel admin-priorities edify-structured-surface"');
     expect(html).toContain('<h2>Today’s Priorities <span class="admin-count">6</span></h2><a href="/calendar">View Calendar</a>');
-    expect(html).toContain('<div class="admin-table-wrap"><table class="admin-table admin-table--priorities">');
+    expect(html).toContain('<div class="admin-table-wrap"><table class="admin-table admin-table--priorities" data-titled="true">');
     expect(html).toContain('<td data-label="Activity"><strong>Core Visit</strong></td><td data-label="Status"><span class="admin-status s-red">Critical</span></td>');
     expect(html).toContain('<a class="admin-panel__footer-link" href="/planning">View all priorities (6) <span aria-hidden="true">→</span></a>');
   });
