@@ -272,6 +272,14 @@ start the day the owner answers §6.1 and §6.2.
   Overdue Plans" row count the same work and open the same list. The
   dashboard's "What needs you now" table still lists every year's, and a
   Lead's team row stays that table's count.
+- **Fewer tiles, platform-wide** (owner: "reduce the number of kpi stats to
+  the major used ... do it throughout the platform"): every figure strip on
+  web and app shows at most four figures, in the gateway's order, with
+  "Not measured" ones moved to the fold first; the rest sit under a closed
+  "All figures (n)" chevron (`lib/heroStrip` foldFigures). A Programme
+  Lead's dashboard leads with Waiting on You and Visits Planned Against
+  Target, lifted out of their strips into a larger hero strip (owner's
+  choice the same day).
 - **Sweep findings:** colour contrast on record cards, nameless selects,
   the calendar's grid rows, small phone targets, cut-off directory names,
   run-together parts and the unfocusable scroll region are fixed.
