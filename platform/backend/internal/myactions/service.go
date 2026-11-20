@@ -76,6 +76,9 @@ type action struct {
 	ResolvedBySystem                                                   bool
 	// Read beside it.
 	School, District, Counterparty string
+	// SchoolCode is the school's School ID, for any school the action names,
+	// as the web's middleware reads it (deleted or not).
+	SchoolCode string
 }
 
 // counts are _counts over everything handed to the reader.
@@ -195,7 +198,7 @@ FROM team_action WHERE %s ORDER BY due_date ASC, created_at DESC LIMIT %d`, sd.c
 		a := &list[i]
 		a.Counterparty = names[a.CounterpartyID]
 		place := places[a.SchoolPK]
-		a.School, a.District = place[0], place[1]
+		a.School, a.District, a.SchoolCode = place[0], place[1], place[2]
 	}
 	return list, nil
 }
@@ -219,23 +222,28 @@ func (s *Service) names(ctx context.Context, ids []string) (map[string]string, e
 	return out, rows.Err()
 }
 
-// schools are the live schools' names and districts by record id.
-func (s *Service) schools(ctx context.Context, ids []string) (map[string][2]string, error) {
+// schools are the live schools' names and districts, and every named
+// school's School ID, by record id.
+func (s *Service) schools(ctx context.Context, ids []string) (map[string][3]string, error) {
 	rows, err := s.db.Query(ctx, `
-SELECT s.id, COALESCE(s.name, ''), COALESCE(d.name, '')
+SELECT s.id, COALESCE(s.name, ''), COALESCE(d.name, ''), COALESCE(s.school_id, ''), s.deleted_at IS NULL
 FROM school s LEFT OUTER JOIN district d ON d.id = s.district_id
-WHERE s.id = ANY($1) AND s.deleted_at IS NULL`, ids)
+WHERE s.id = ANY($1)`, ids)
 	if err != nil {
 		return nil, fmt.Errorf("myactions: reading the schools: %w", err)
 	}
 	defer rows.Close()
-	out := map[string][2]string{}
+	out := map[string][3]string{}
 	for rows.Next() {
-		var id, name, district string
-		if err := rows.Scan(&id, &name, &district); err != nil {
+		var id, name, district, code string
+		var live bool
+		if err := rows.Scan(&id, &name, &district, &code, &live); err != nil {
 			return nil, err
 		}
-		out[id] = [2]string{name, district}
+		if !live {
+			name, district = "", ""
+		}
+		out[id] = [3]string{name, district, code}
 	}
 	return out, rows.Err()
 }

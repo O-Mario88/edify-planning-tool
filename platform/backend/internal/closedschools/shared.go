@@ -15,6 +15,17 @@ import (
 // table pager ({% paginate %} and components/table_pager.html) as the feed
 // reads it under a card with no heading.
 
+// SchoolCode is what the web writes for a {% school_code %} tag after a page
+// renders (apps/core/school_identity_middleware.py, which the feed now runs
+// too): the school's School ID, or "ID unavailable" for a school without one
+// or a reference that matches no school.
+func SchoolCode(code string) string {
+	if code == "" {
+		return "ID unavailable"
+	}
+	return code
+}
+
 // Collapse is the feed's reading of a text: its whitespace run together.
 func Collapse(text string) string { return collapse(text) }
 

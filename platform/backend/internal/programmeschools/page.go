@@ -169,8 +169,7 @@ func row(s school, d Doors) *screensv1.PageRow {
 		action = cell("View", "/schools/"+s.Code, "")
 	}
 	return &screensv1.PageRow{Cells: []*screensv1.PageCell{
-		// The School ID is filled in by the page's script, so the feed reads none.
-		cell("", "", ""),
+		cell(closedschools.SchoolCode(s.Code), "", ""),
 		cell(s.Name+" "+s.Code, "/schools/"+s.Code, ""),
 		cell(s.TypeLabel, "", ""),
 		cell(orElse(s.District, "—"), "", ""),

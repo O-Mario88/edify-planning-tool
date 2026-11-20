@@ -110,8 +110,7 @@ func row(c closure, d Doors) *screensv1.PageRow {
 		enrolment = comma(*c.Enrollment)
 	}
 	return &screensv1.PageRow{Cells: []*screensv1.PageCell{
-		// The School ID is filled in by the page's script, so the feed reads none.
-		cell("", ""),
+		cell(SchoolCode(c.SchoolCode), ""),
 		cell(c.SchoolName+" "+c.SchoolCode, profile),
 		cell(orDash(c.District), ""),
 		cell(orDash(c.Owner), ""),

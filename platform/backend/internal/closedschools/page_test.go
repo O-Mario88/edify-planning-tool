@@ -198,7 +198,7 @@ func TestARowOfTheArchive(t *testing.T) {
 			closure: closure{SchoolID: "sch1", SchoolCode: "1078", SchoolName: "Central  Primary", District: "Mukono", Owner: " Paul   N. ",
 				Effective: day, Type: "temporary", ReasonCategory: "low_enrolment", Reason: long, Enrollment: n(12345)},
 			doors:   Doors{Page: true, Profiles: true},
-			want:    []string{"", "Central Primary 1078", "Mukono", "Paul N.", "5 Sep 2026", "Temporarily closed", "Low enrolment The proprietor closed the school after two terms without enough learners to pay the tea…", "12,345", "View"},
+			want:    []string{"1078", "Central Primary 1078", "Mukono", "Paul N.", "5 Sep 2026", "Temporarily closed", "Low enrolment The proprietor closed the school after two terms without enough learners to pay the tea…", "12,345", "View"},
 			profile: "/schools/sch1", view: "/schools/1078",
 		},
 		{
@@ -206,21 +206,21 @@ func TestARowOfTheArchive(t *testing.T) {
 			closure: closure{SchoolID: "sch 2", SchoolCode: "S/2", SchoolName: "Hill", Effective: day.AddDate(0, 3, 20),
 				Type: "sabbatical", ReasonCategory: "mystery", Enrollment: n(0)},
 			doors:   Doors{Page: true, Profiles: true},
-			want:    []string{"", "Hill S/2", "—", "—", "25 Dec 2026", "sabbatical", "mystery", "Not recorded", "View"},
+			want:    []string{"S/2", "Hill S/2", "—", "—", "25 Dec 2026", "sabbatical", "mystery", "Not recorded", "View"},
 			profile: "/schools/sch%202", view: "/schools/S/2",
 		},
 		{
 			name:    "a reader who may not open profiles is given the name as text",
 			closure: closure{SchoolID: "sch3", SchoolCode: "3", SchoolName: "Lake", Effective: day, Type: "permanent", ReasonCategory: "other", Reason: "short"},
 			doors:   Doors{Page: true},
-			want:    []string{"", "Lake 3", "—", "—", "5 Sep 2026", "Permanently closed", "Other short", "Not recorded", "View"},
+			want:    []string{"3", "Lake 3", "—", "—", "5 Sep 2026", "Permanently closed", "Other short", "Not recorded", "View"},
 			view:    "/schools/3",
 		},
 		{
 			name:    "a school with no name has nothing to link",
 			closure: closure{SchoolID: "sch4", SchoolCode: "4", Effective: day, Type: "permanent", ReasonCategory: "other"},
 			doors:   Doors{Page: true, Profiles: true},
-			want:    []string{"", "4", "—", "—", "5 Sep 2026", "Permanently closed", "Other", "Not recorded", "View"},
+			want:    []string{"4", "4", "—", "—", "5 Sep 2026", "Permanently closed", "Other", "Not recorded", "View"},
 			view:    "/schools/4",
 		},
 	} {
@@ -303,5 +303,16 @@ func TestTheYearsLabelAndTheSearchPattern(t *testing.T) {
 	}
 	if got := collapse(" a\x1cb \u00a0 c\n"); got != "a b c" {
 		t.Errorf("collapse = %q", got)
+	}
+}
+
+// A School ID cell reads as the web's middleware fills it in: the school's
+// ID, or "ID unavailable" for a school without one.
+func TestSchoolCodeIsTheWebsFilledInID(t *testing.T) {
+	if got := SchoolCode("1599"); got != "1599" {
+		t.Fatalf("SchoolCode(1599) = %q", got)
+	}
+	if got := SchoolCode(""); got != "ID unavailable" {
+		t.Fatalf("SchoolCode(\"\") = %q", got)
 	}
 }

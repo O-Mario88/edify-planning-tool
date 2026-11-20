@@ -165,12 +165,12 @@ func actionCell(a action, sender bool) *screensv1.PageCell {
 	return c
 }
 
-// row is one action as the table writes it. The School ID is filled in by
-// the page's script, so the feed reads none.
+// row is one action as the table writes it: the school's ID as the web
+// fills it in, or a dash for an action on no school.
 func row(a action, today time.Time, sender bool) *screensv1.PageRow {
 	id := "—"
 	if a.SchoolPK != "" {
-		id = ""
+		id = closedschools.SchoolCode(a.SchoolCode)
 	}
 	return &screensv1.PageRow{Cells: []*screensv1.PageCell{
 		{Text: id},
