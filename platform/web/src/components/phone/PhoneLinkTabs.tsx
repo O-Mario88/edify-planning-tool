@@ -49,7 +49,7 @@ export function PhoneLinkTabs({ tabs, resolve, besideHref }: PhoneLinkTabsProps)
         {rest.length > 0 ? (
           <MorePanel
             look="seg"
-            label={`More tabs, ${rest.length}`}
+            label={`More ${rest.length} tabs`}
             words={
               <>
                 More <span data-ph="count">{rest.length}</span>

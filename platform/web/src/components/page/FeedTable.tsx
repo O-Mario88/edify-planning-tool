@@ -230,7 +230,8 @@ export function FeedTable({ table, pagePath, drawerHref, selectable, footer }: F
         </header>
       ) : null}
       {table.rows.length ? (
-        <div className="overflow-x-auto">
+        // A region a keyboard can reach and scroll (WCAG: scrollable-region-focusable).
+        <div className="overflow-x-auto" tabIndex={0} role="region" aria-label={`${table.title || 'Table'}, scrolls sideways`}>
           <table className="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll">
             {table.columns.length ? (
               <thead>

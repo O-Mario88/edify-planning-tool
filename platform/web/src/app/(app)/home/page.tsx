@@ -187,7 +187,7 @@ export default async function HomePage() {
           greeting band on phones): the role and the greeting on two quiet
           lines; from 64rem the page header below takes their place. */}
       <header className="lg:hidden" style={{ padding: '0.75rem var(--home-gutter) 0.25rem' }}>
-        <p className="text-ds-caption font-semibold text-ds-text-subtle">{header.eyebrow}</p>
+        <p className="text-ds-caption font-semibold text-ds-text-muted">{header.eyebrow}</p>
         <h1 className="mt-0.5 text-ds-title font-bold text-ds-text">{header.title}</h1>
       </header>
       <header className="edify-page-header edify-home__desk-head mobile-home-hide">

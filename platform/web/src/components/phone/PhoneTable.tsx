@@ -95,7 +95,8 @@ function Grid({ table, resolve, hrefOf, selectable }: GridProps) {
   }, []);
   const columnCount = table.columns.length + (opens ? 1 : 0) + (ticks ? 1 : 0);
   return (
-    <div data-ph="scroller" ref={scroller} onScroll={() => setHint(false)}>
+    // A region a keyboard can reach and scroll (WCAG: scrollable-region-focusable).
+    <div data-ph="scroller" ref={scroller} onScroll={() => setHint(false)} tabIndex={0} role="region" aria-label={`${table.title || 'Table'}, scrolls sideways`}>
       {hint ? (
         <span data-ph="hint" aria-hidden="true">
           Swipe to view more columns

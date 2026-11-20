@@ -64,7 +64,7 @@ export function PhoneFilters({ filters, action }: { filters: PageFilters; action
         </label>
       ))}
       {rest.length > 0 ? (
-        <MorePanel look="more-button" roomy label={`More filters${restSet ? `, ${restSet} set` : ''}`} words={`More${restSet ? ` ${restSet}` : ''}`}>
+        <MorePanel look="more-button" roomy label={`More${restSet ? ` ${restSet}` : ''} filters${restSet ? `, ${restSet} set` : ''}`} words={`More${restSet ? ` ${restSet}` : ''}`}>
           {rest.map((filter) => (
             <label key={filter.name} data-ph="more-field">
               <span data-ph="filter-label">{filter.label}</span>

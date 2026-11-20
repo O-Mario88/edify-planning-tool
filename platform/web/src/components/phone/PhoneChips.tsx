@@ -36,7 +36,7 @@ export function PhoneChips({ chips }: { chips: PageChips }) {
           <MorePanel
             key={value}
             look="seg"
-            label={`More ${chips.label || 'choices'}, ${rest.length}`}
+            label={`More ${rest.length}, ${chips.label || 'choices'}`}
             words={
               <>
                 More <span data-ph="count">{rest.length}</span>

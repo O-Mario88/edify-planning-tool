@@ -85,7 +85,7 @@ export function PhoneSegments({ title, subtitle, caption, segments }: { title: s
             <MorePanel
               key={open}
               look="seg"
-              label={`More parts, ${rest.length}`}
+              label={`More ${rest.length} parts`}
               words={
                 <>
                   More <span data-ph="count">{rest.length}</span>

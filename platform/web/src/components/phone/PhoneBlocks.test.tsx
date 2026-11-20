@@ -99,7 +99,7 @@ describe('a page on a phone', () => {
     expect(html).toContain('<form data-ph="filters" aria-label="Filters" action="/my-plan" method="get">');
     expect(html).toContain('<input type="hidden" name="period" value="fy"/>');
     expect(html.match(/data-ph="filter"/g)).toHaveLength(3);
-    expect(html).toContain('aria-label="More filters, 1 set"');
+    expect(html).toContain('aria-label="More 1 filters, 1 set"');
     expect(html).toContain('More 1');
   });
 
@@ -168,7 +168,7 @@ describe('a page on a phone', () => {
     expect(body).not.toContain('data-edify-tablist');
     expect(body).toContain('<div data-ph="rail" role="group" aria-label="Which kind of plan">');
     expect(body).toContain('aria-pressed="true">All Categories</button>');
-    expect(body).toContain('aria-label="More Which kind of plan, 2"');
+    expect(body).toContain('aria-label="More 2, Which kind of plan"');
   });
 
   it('draws no card for a pager with nothing to page, on the page or inside a switch card', () => {
@@ -184,7 +184,7 @@ describe('a page on a phone', () => {
     const html = draw({ blocks: [{ chips: { name: 'cat', label: 'Category', value: 'all', chips: [{ label: 'All', value: 'all' }, { label: 'Planning', value: 'planning' }, { label: 'Partner', value: 'partner' }] } }] });
     expect(html).toContain('<div data-ph="rail" role="group" aria-label="Category">');
     expect(html).not.toContain('data-edify-tablist');
-    expect(html).toContain('aria-label="More Category, 1"');
+    expect(html).toContain('aria-label="More 1, Category"');
   });
 
   it('draws a record card with its tick, pills, facts and a way to open it', () => {
