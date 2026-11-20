@@ -39,6 +39,18 @@ case "${1:-}" in
     dropdb --if-exists "$base"
     createdb "$base"
     pg_dump --no-privileges "$source_db" | psql --quiet --set ON_ERROR_STOP=1 "$base" >/dev/null
+    # The Go-owned schemas (country_registry, school_loans …) grant their
+    # tables in their own migrations (internal/*/schema/migrations), which
+    # apply-roles.sh does not repeat, so --no-privileges leaves the gateway
+    # without them (docs/migration/183 §183.4). Their GRANT statements are
+    # carried from the source, for those schemas only; public's grants are
+    # still apply-roles.sh's alone.
+    schemas="$(psql --no-psqlrc -At -d "$source_db" -c "SELECT nspname FROM pg_namespace
+      WHERE nspname <> 'public' AND nspname <> 'information_schema' AND nspname NOT LIKE 'pg\\_%'")"
+    for schema in $schemas; do
+      pg_dump --schema-only --schema="$schema" "$source_db" | { grep -E '^GRANT ' || true; } |
+        psql --quiet --set ON_ERROR_STOP=1 "$base" >/dev/null
+    done
     echo "made $base from $source_db"
     ;;
   fresh)

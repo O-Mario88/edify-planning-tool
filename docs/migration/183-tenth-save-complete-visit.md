@@ -149,10 +149,14 @@ shadow exit 0
    (`/pl/review-queue?open=<id>`), not only between slashes. Before, the
    review notices of Django-made completions differed by the new visit's id
    alone.
-4. The copies need the Edify Global schema's grants (`country_registry`),
-   which no roles file applies; `copies.sh` copies no grants. For this proof
-   they were copied from the development database's ACLs onto the two shadow
-   copies. A roles file for them is still to do.
+4. The copies lacked the Go-owned schemas' grants (`country_registry`,
+   `school_loans` …). Those schemas grant their tables in their own
+   migrations, which `apply-roles.sh` does not repeat, and `copies.sh` dumps
+   with `--no-privileges`. For this proof they were copied from the
+   development database's ACLs onto the two shadow copies. `copies.sh base`
+   now carries the source's GRANT statements for those schemas only; public's
+   grants stay `apply-roles.sh`'s. A base made with it gives the gateway
+   `country_registry.country_membership` and `school_loans` again.
 
 **Tests.**
 - `internal/activities/complete_test.go`: the ID normalised as Python
