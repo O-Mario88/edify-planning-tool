@@ -133,3 +133,7 @@ Nothing is claimed verified without evidence.
   for both apps (every colour pair at WCAG AA, checked when built), the first
   components (`components/eds`) and `/design-preview` with before/after
   pairs for three phone screens.
+- The route from here to 10/10 on phone and desktop is
+  `181-design-to-ten.md` (2026-11-20): what 10 means in measurable terms,
+  the ten workstreams, the phases with their exit checks and the owner's
+  open decisions.

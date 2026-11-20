@@ -94,3 +94,6 @@ like the previous home screen better"). The switch is off in both apps (web
 No role's Home is replaced unless the owner asks. Before another core
 screen is redesigned, the owner says what to carry over from the existing
 one.
+
+The full route to 10/10 on phone and desktop, built on these tokens and
+parts, is `181-design-to-ten.md`.
