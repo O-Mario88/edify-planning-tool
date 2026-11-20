@@ -19,6 +19,7 @@ import { PhoneMore } from './PhoneMore';
 import { PhonePage } from './PhonePage';
 import { scaleOf } from './PhoneChart';
 import { railChips } from './PhoneChips';
+import { inRowFor } from './PhoneFilters';
 import { railTabs } from './PhoneLinkTabs';
 import { foldSegments } from './PhoneSegments';
 import { phoneTone, tileColumns } from './tone';
@@ -262,6 +263,14 @@ describe('the phone rules', () => {
     const { shown, rest } = railChips(chips as never, 'meetings');
     expect(shown.map((chip) => chip.value)).toEqual(['all', 'meetings']);
     expect(rest.map((chip) => chip.value)).toEqual(['visits', 'trainings']);
+  });
+
+  it('holds three filters in a row, two on a narrow phone', () => {
+    expect(inRowFor(358)).toBe(2);
+    expect(inRowFor(479)).toBe(2);
+    expect(inRowFor(480)).toBe(3);
+    expect(inRowFor(720)).toBe(3);
+    expect(inRowFor(0)).toBe(3);
   });
 
   it('keeps the first part and the open one on a folded switch, then the open one alone', () => {
