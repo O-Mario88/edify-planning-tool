@@ -2,7 +2,8 @@
  * A record table as the web draws it on a phone: a card with its title bar,
  * its rows as cards on a phone (owner, 2026-11-19: "Rows on phones", which
  * replaced 2026-09-27's tables stay tables; rowCard.ts picks each card's
- * title, ID, status and facts, the rest under "All details"), the table
+ * title, ID, status and facts, the rest under "All details"; a long table,
+ * 16 rows or more, a compact list whose rows open their card in a sheet), the table
  * scrolling sideways in its own region on a tablet, a note under it, or the
  * empty state in place of its rows.
  * The first time a table is wider than the screen, the slim orange "Swipe to
@@ -10,16 +11,16 @@
  * 2026-10-02: never black, gone after about four seconds).
  */
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { Check, ChevronDown, ChevronRight, Inbox, Minus } from 'lucide-react-native';
+import { Animated, Modal, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Check, ChevronDown, ChevronRight, Inbox, Minus, X } from 'lucide-react-native';
 
 import type { PageAction, PageCell, PageColumn, PagePager, PageRow, PageTable } from '../../gen/edify/screens/v1/page_pb';
 import type { Palette } from '../../theme';
 import { fonts, useTheme } from '../../theme';
 import { PageBlockView } from './PageBlocksView';
 import { RowActions } from './RowActions';
-import { rowCard } from './rowCard';
-import type { RowFact } from './rowCard';
+import { asList, rowCard, summaryOf } from './rowCard';
+import type { RowCard, RowFact } from './rowCard';
 import { cardStyles, toneColor, usePageLink, usePicks } from './shared';
 
 /** The Actions column: the menu button, and a row's own button beside it. */
@@ -86,6 +87,8 @@ export function PageTableView({ table, isBare = false }: PageTableViewProps) {
       ) : null}
       {table.rows.length === 0 && table.emptyMessage ? (
         <EmptyState message={table.emptyMessage} action={table.emptyAction} />
+      ) : asCards && asList(table.rows.length) ? (
+        <ListRows table={table} />
       ) : asCards ? (
         <Cards table={table} />
       ) : (
@@ -424,6 +427,123 @@ function RowCardView({ table, row, isOpen, onToggle }: RowCardViewProps) {
   );
 }
 
+interface SheetContentProps {
+  readonly card: RowCard;
+  readonly row: PageRow;
+  readonly onClose: () => void;
+}
+
+/** A row's whole card, in the sheet a compact list opens. */
+function SheetContent({ card, row, onClose }: SheetContentProps) {
+  const { colors } = useTheme();
+  const openLink = usePageLink();
+  const name = rowName(row);
+  const statusInk = card.status ? (toneColor(colors, card.status.tone) ?? colors.text) : colors.text;
+  return (
+    <View style={styles.sheetBody}>
+      <View style={styles.cardHead}>
+        <View style={styles.cardName}>
+          <Text
+            onPress={card.title?.href ? () => openLink(card.title?.href ?? '') : undefined}
+            accessibilityRole={card.title?.href ? 'link' : 'header'}
+            style={[styles.sheetTitle, { color: card.title?.href ? colors.link : colors.text }]}
+          >
+            {card.title?.text ?? name}
+          </Text>
+          {card.id ? (
+            <Text style={[styles.cardId, { color: colors.textMuted }]}>
+              {card.id.label} {card.id.cell.text}
+            </Text>
+          ) : null}
+        </View>
+        {card.status ? (
+          <View style={[styles.cardStatus, { backgroundColor: toneSoft(colors, card.status.tone) }]}>
+            <Text style={[styles.cardStatusText, { color: statusInk }]}>{card.status.text}</Text>
+          </View>
+        ) : null}
+        <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" hitSlop={8} style={[styles.sheetClose, { backgroundColor: colors.surface }]}>
+          <X size={18} color={colors.text} />
+        </Pressable>
+      </View>
+      {card.lead.length + card.rest.length > 0 ? <FactGrid facts={[...card.lead, ...card.rest]} /> : null}
+      {row.details.length > 0 || row.detailsHref || row.detailBlocks.length > 0 ? <RowDetails row={row} width={0} /> : null}
+      {card.actions ? (
+        <View style={styles.sheetActions}>
+          <RowActions actions={card.actions.actions} label={name} />
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+/** A long table (a directory) on a phone: one line a row, its card in a sheet. */
+function ListRows({ table }: { readonly table: PageTable }) {
+  const { colors } = useTheme();
+  const pick = usePicks();
+  const pickable = pick.isOn ? table.rows.map((row) => row.pickId).filter((id) => id !== '') : [];
+  const ticked = pickable.filter((id) => pick.picked.includes(id)).length;
+  const [open, setOpen] = useState<number | null>(null);
+  const openRow = open !== null ? table.rows[open] : undefined;
+  return (
+    <View>
+      {pickable.length > 0 ? (
+        <Pressable
+          onPress={() => pick.set(pickable, ticked < pickable.length)}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: ticked === pickable.length ? true : ticked > 0 ? 'mixed' : false }}
+          style={[styles.cardsAll, { borderTopColor: colors.raisedBorder }]}
+        >
+          <TickBox isOn={ticked === pickable.length} isPart={ticked > 0 && ticked < pickable.length} />
+          <Text style={[styles.cardsAllText, { color: colors.textMuted }]}>Select all on this page</Text>
+        </Pressable>
+      ) : null}
+      {table.rows.map((row, index) => {
+        const card = rowCard(table.columns, row);
+        const name = rowName(row);
+        const isTicked = row.pickId !== '' && pick.picked.includes(row.pickId);
+        const line = [card.id ? `${card.id.label} ${card.id.cell.text}` : '', summaryOf(card)].filter((s) => s !== '').join(' · ');
+        return (
+          <View
+            key={index}
+            style={[styles.listRow, { borderTopColor: colors.raisedBorder }, row.tone === 'overdue' ? { borderLeftWidth: 3, borderLeftColor: colors.danger } : null]}
+          >
+            {pick.isOn && row.pickId ? (
+              <Pressable
+                onPress={() => pick.set([row.pickId], !isTicked)}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: isTicked }}
+                accessibilityLabel={row.pickLabel || `Select ${name}`}
+                hitSlop={10}
+              >
+                <TickBox isOn={isTicked} />
+              </Pressable>
+            ) : null}
+            <Pressable
+              onPress={() => setOpen(index)}
+              accessibilityRole="button"
+              accessibilityLabel={[card.title?.text ?? name, line].filter(Boolean).join('. ')}
+              accessibilityHint="Opens its details"
+              style={styles.listOpen}
+            >
+              <Text style={[styles.listTitle, { color: colors.text }]}>{card.title?.text ?? name}</Text>
+              {line ? <Text style={[styles.listLine, { color: colors.textMuted }]}>{line}</Text> : null}
+            </Pressable>
+            <ChevronRight size={16} color={colors.textMuted} />
+          </View>
+        );
+      })}
+      <Modal visible={openRow !== undefined} transparent animationType="slide" onRequestClose={() => setOpen(null)}>
+        <View style={styles.sheetLayer}>
+          <Pressable style={styles.sheetBackdrop} onPress={() => setOpen(null)} accessibilityRole="button" accessibilityLabel="Close details" />
+          <View style={[styles.sheet, { backgroundColor: colors.raised }]}>
+            <ScrollView>{openRow ? <SheetContent card={rowCard(table.columns, openRow)} row={openRow} onClose={() => setOpen(null)} /> : null}</ScrollView>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
 function RowDetails({ row, width }: { readonly row: PageRow; readonly width: number }) {
   const { colors } = useTheme();
   const openLink = usePageLink();
@@ -605,6 +725,17 @@ const styles = StyleSheet.create({
   cardMore: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 36 },
   cardMoreText: { fontFamily: fonts.semibold, fontSize: 13 },
   cardDetails: { borderRadius: 10, overflow: 'hidden', gap: 10, paddingTop: 12 },
+  listRow: { flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: 1, paddingHorizontal: 16 },
+  listOpen: { flex: 1, minHeight: 52, justifyContent: 'center', paddingVertical: 9, gap: 2 },
+  listTitle: { fontFamily: fonts.semibold, fontSize: 14, lineHeight: 19 },
+  listLine: { fontFamily: fonts.medium, fontSize: 12, lineHeight: 16 },
+  sheetLayer: { flex: 1, justifyContent: 'flex-end' },
+  sheetBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(15, 23, 42, 0.45)' },
+  sheet: { maxHeight: '85%', borderTopLeftRadius: 18, borderTopRightRadius: 18, paddingBottom: 28 },
+  sheetBody: { padding: 16, gap: 14 },
+  sheetTitle: { fontFamily: fonts.bold, fontSize: 16, lineHeight: 21 },
+  sheetClose: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  sheetActions: { alignItems: 'flex-end' },
   expander: { alignItems: 'center', justifyContent: 'center', alignSelf: 'stretch' },
   pickCell: { alignItems: 'center', justifyContent: 'center', alignSelf: 'stretch' },
   tick: { width: 16, height: 16, borderWidth: 1, borderRadius: 4, alignItems: 'center', justifyContent: 'center' },
