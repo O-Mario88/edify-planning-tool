@@ -71,7 +71,8 @@ function Group({ item, links }: { item: PageListItem; links: Links }) {
   return (
     <li data-ph="list-row" data-list-row={JSON.stringify(item.keys)}>
       <details data-ph="list-group">
-        <summary data-ph="list-main" aria-label={`${item.title}, ${item.count}`}>
+        {/* Named by what it shows: the title, its lines and the count (WCAG 2.5.3). */}
+        <summary data-ph="list-main">
           <span data-ph="list-chevron" aria-hidden="true">
             <ChevronRight size={16} />
           </span>

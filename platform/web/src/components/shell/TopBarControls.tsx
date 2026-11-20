@@ -132,13 +132,15 @@ export function AccountMenu({ name, initials, email = '', activeRole, roles, pat
     <div className="edify-topbar__account relative" ref={ref}>
       <button
         type="button"
-        aria-label="Account menu"
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen(!open)}
         className={`${CONTROL} edify-topbar__icon-control--avatar text-white text-[12px] font-semibold`}
       >
+        {/* The initials are a picture of the person; the button is named in
+            words (WCAG 2.5.3 asks a label to hold what is shown). */}
         <span aria-hidden="true">{initials}</span>
+        <span className="sr-only">Account menu</span>
       </button>
       {open ? (
         <div

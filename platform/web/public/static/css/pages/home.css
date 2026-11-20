@@ -485,11 +485,11 @@
   height: 1.5rem;
 }
 
+/* A shortcut's name wraps whole, however many lines it takes ("Leave &
+   Personal Time Off" was cut at two; owner, 2026-10-02: text wraps). */
 .edify-home__shortcut-label {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
+  display: block;
+  overflow-wrap: anywhere;
   font-size: var(--edify-text-micro-size);
   font-weight: 600;
   line-height: 1.2;

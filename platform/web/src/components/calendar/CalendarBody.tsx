@@ -86,7 +86,9 @@ function Block({ block, ...props }: { block: PageBlock } & Omit<CalendarBodyProp
     if (composer) {
       // The composer saves on the existing web, where it opens.
       return (
-        <a href={props.existingHref} className={`${BUTTON_OUTLINE} self-start`} aria-label={kind.value.title || composer}>
+        // Named by its own words (WCAG 2.5.3); the panel's title ("Add an
+        // organization event") is its tooltip.
+        <a href={props.existingHref} className={`${BUTTON_OUTLINE} self-start`} title={kind.value.title || undefined}>
           <Icon name="plus" className="h-4 w-4" />
           {composer}
         </a>
