@@ -336,7 +336,7 @@ func (v view) readinessCell(l Line, scope, planned, target, left string, plainTa
 			}
 		}
 		if l.over() > 0 {
-			c.add(" " + intcomma(l.over()) + " over")
+			c.add(" (" + intcomma(l.over()) + " over)")
 		}
 	case l.Planned > 0:
 		c.count(l.Planned, v.gapURL(planned, scope, ""), "", "")
@@ -565,7 +565,7 @@ func (v view) detailRow(name *cell, f map[string]any, staff Line, scope string, 
 		if subtotal {
 			visits.add(fmt.Sprintf(" %d past the ceiling by %s", get("over_ceiling_people"), intcomma(n)))
 		} else {
-			visits.add(" " + intcomma(n) + " over")
+			visits.add(" (" + intcomma(n) + " over)")
 		}
 		visits.toned("danger")
 	}

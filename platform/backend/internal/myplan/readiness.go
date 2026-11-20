@@ -114,11 +114,11 @@ func readinessTable(target, planned int, fy string, request Query) *screensv1.Pa
 			readinessCell(target-planned, "staff_visits_left", "warning", request),
 			{Text: fmt.Sprintf("%d%%", percent), Tone: tone},
 		}},
-		none("Schools in training in-school and group trainings"),
-		none("Partner visits dated by Partners"),
+		none("Schools in training (in-school and group trainings)"),
+		none("Partner visits (dated by Partners)"),
 		none("Core partner trainings"),
 		none("Schools assigned to a Partner"),
-		none("Schools assigned to a project those you added, of your project ceilings put together"),
+		none("Schools assigned to a project (those you added, of your project ceilings put together)"),
 	}
 	// Each part's share stops at 100; readiness is their plain average,
 	// rounded down: the visits part at 0 and three parts asking nothing.

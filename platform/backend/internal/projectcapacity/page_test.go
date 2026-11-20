@@ -38,7 +38,7 @@ func TestVisitsAreReadAgainstTheRolesCeilingAndPastItInTheDangerTone(t *testing.
 	if c := visits(allocation{Planned: 13, Ceiling: 560}); c.GetText() != "13 / 560" || c.GetTone() != "" {
 		t.Errorf("under: %v", c)
 	}
-	if c := visits(allocation{Planned: 283, Ceiling: 280}); c.GetText() != "283 / 280 3 over" || c.GetTone() != "danger" {
+	if c := visits(allocation{Planned: 283, Ceiling: 280}); c.GetText() != "283 / 280 (3 over)" || c.GetTone() != "danger" {
 		t.Errorf("over: %v", c)
 	}
 }

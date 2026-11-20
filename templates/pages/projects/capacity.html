@@ -95,7 +95,7 @@ rather than in every card (owner, 2026-09-30: show each thing once).{% endcommen
           <td class="text-right tabular-nums">{{ a.assigned }}</td>
           <td class="text-right tabular-nums"><strong>{{ a.remaining }}</strong></td>
           <td class="text-right tabular-nums">{{ a.utilization|floatformat:"-1" }}%</td>
-          <td class="text-right tabular-nums" data-visit-load>{% if a.visits_ceiling %}{{ a.visits_planned }} / {{ a.visits_ceiling }}{% if a.visits_over %} <span class="edify-status-text" data-edify-tone="danger">{{ a.visits_over }} over</span>{% endif %}{% else %}{{ a.visits_planned }}{% endif %}</td>
+          <td class="text-right tabular-nums" data-visit-load>{% if a.visits_ceiling %}{{ a.visits_planned }} / {{ a.visits_ceiling }}{% if a.visits_over %} <span class="edify-status-text" data-edify-tone="danger">({{ a.visits_over }} over)</span>{% endif %}{% else %}{{ a.visits_planned }}{% endif %}</td>
           <td><span class="partner-status-chip" data-tone="{% if section.blocked %}neutral{% elif a.status == 'full' %}danger{% elif a.status == 'near' %}warning{% else %}success{% endif %}">{% if section.blocked %}Blocked{% else %}{{ a.status_label }}{% endif %}</span></td>
           <td class="text-right">
             {% row_actions a.staff_name %}

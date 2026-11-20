@@ -99,7 +99,7 @@ func visits(a allocation) *screensv1.PageCell {
 	}
 	cell := &screensv1.PageCell{Text: planned + " / " + strconv.Itoa(a.Ceiling)}
 	if over := a.Planned - a.Ceiling; over > 0 {
-		cell.Text += " " + strconv.Itoa(over) + " over"
+		cell.Text += " (" + strconv.Itoa(over) + " over)"
 		cell.Tone = "danger"
 	}
 	return cell
