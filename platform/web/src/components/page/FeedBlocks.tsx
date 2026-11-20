@@ -4,6 +4,7 @@
  * any other kind the gateway may add later is named as not drawn yet rather
  * than silently dropped.
  */
+import { Inbox } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { PageAction, PageBlock, PageLinkTabs } from '@/gen/edify/screens/v1/page_pb';
 import { actionHref, resolveHref } from '@/lib/feedPage';
@@ -189,6 +190,13 @@ export function FeedBlocks({ blocks: given, pagePath, drawerHref, selectable, cl
           case 'form':
             return <FeedForm key={index} form={kind.value} drawerHref={drawerHref} />;
           case 'empty':
+            // An empty state is a quiet card with its mark, as on the phone, not loose text under the last card.
+            return (
+              <div key={index} data-block="empty" className="card flex items-center justify-center gap-2 px-4 py-5 text-[length:var(--edify-text-label-size)] font-medium text-[var(--edify-text-muted)]">
+                <Inbox className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
+                <span>{kind.value}</span>
+              </div>
+            );
           case 'scopeLine':
             return <p key={index} className="text-[length:var(--edify-text-label-size)] font-medium text-[var(--edify-text-muted)]">{kind.value}</p>;
           case undefined:
