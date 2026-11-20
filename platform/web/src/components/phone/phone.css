@@ -235,6 +235,7 @@ a[data-ph='tile']:active { background: var(--ph-primary-soft) !important; }
 /* A table's explanation, folded under a chevron and closed until tapped
    (owner, 2026-11-20; components/page/Explanation.tsx). */
 [data-ph='explain'] { border-top: 1px solid var(--ph-table-line) !important; }
+[data-ph='explain'][data-bare] { border-top: 0 !important; }
 [data-ph='explain-toggle'] { display: flex !important; align-items: center !important; gap: 6px !important; width: fit-content !important; min-height: 40px !important; padding: 0 16px !important; list-style: none !important; color: var(--ph-table-link) !important; font-size: 13px !important; font-weight: 600 !important; cursor: pointer !important; }
 [data-ph='explain-toggle']::-webkit-details-marker { display: none !important; }
 [data-ph='explain-chevron'] { flex-shrink: 0 !important; transition: transform 0.15s ease !important; }

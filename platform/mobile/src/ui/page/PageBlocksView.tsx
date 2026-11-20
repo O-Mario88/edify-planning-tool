@@ -19,8 +19,19 @@ import { PagePanelView } from './PagePanelView';
 import { PageRailView } from './PageRailView';
 import { PageRecordView } from './PageRecordView';
 import { PageStripView } from './PageStripView';
-import { EmptyState, PageTableView, Pager } from './PageTableView';
+import { EmptyState, Explanation, PageTableView, Pager } from './PageTableView';
 import { ChipContext, cardStyles, usePageLink } from './shared';
+import { tableNote } from './tableNote';
+
+/** A table's note on a card of its own, folded under its chevron. */
+function NoteCard({ text }: { readonly text: string }) {
+  const { colors } = useTheme();
+  return (
+    <View style={[cardStyles.card, { backgroundColor: colors.raised, borderColor: colors.border, overflow: 'hidden' }]}>
+      <Explanation text={text} isBare />
+    </View>
+  );
+}
 
 interface PageBlocksViewProps {
   readonly blocks: readonly PageBlock[];
@@ -71,6 +82,11 @@ export function PageBlocksView({ blocks, onFilter, isRaised = true }: PageBlocks
                 onFilter={onFilter}
               />
             );
+          }
+          // A table's note sent as its own block folds as a footnote does (2026-11-20).
+          const note = tableNote(blocks, index);
+          if (note) {
+            return <NoteCard key={index} text={note} />;
           }
           return <Block key={index} block={block} onFilter={onFilter} isRaised={isRaised} />;
         })}
@@ -230,6 +246,10 @@ function SegmentsCard({ segments, onFilter }: { readonly segments: PageSegments;
       {shown?.blocks.map((block, index) => {
         if (block.kind.case === 'table') {
           return <PageTableView key={index} table={block.kind.value} isBare />;
+        }
+        const note = tableNote(shown.blocks, index);
+        if (note) {
+          return <Explanation key={index} text={note} />;
         }
         return <Block key={index} block={block} onFilter={onFilter} />;
       })}

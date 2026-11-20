@@ -14,10 +14,19 @@ import { Icon } from '../shell/icons';
 /** What the closed fold says. */
 export const EXPLANATION_LABEL = 'Explanation';
 
-export function Explanation({ text, phone = false }: { readonly text: string; readonly phone?: boolean }) {
+interface ExplanationProps {
+  readonly text: string;
+  /** The phone layer's markup. */
+  readonly phone?: boolean;
+  /** On a card of its own (a note sent after its table, lib/tableNote): no
+   *  line above it. */
+  readonly bare?: boolean;
+}
+
+export function Explanation({ text, phone = false, bare = false }: ExplanationProps) {
   if (phone) {
     return (
-      <details data-ph="explain">
+      <details data-ph="explain" data-bare={bare || undefined}>
         <summary data-ph="explain-toggle">
           <ChevronDown aria-hidden="true" size={16} data-ph="explain-chevron" />
           <span>{EXPLANATION_LABEL}</span>
@@ -27,7 +36,7 @@ export function Explanation({ text, phone = false }: { readonly text: string; re
     );
   }
   return (
-    <details className="group border-t edify-border-top" data-explanation>
+    <details className={bare ? 'group' : 'group border-t edify-border-top'} data-explanation>
       <summary className="flex w-fit cursor-pointer list-none items-center gap-1.5 px-4 py-2.5 edify-text-caption font-semibold edify-primary-text [&::-webkit-details-marker]:hidden">
         <Icon name="chevronDown" className="h-4 w-4 transition-transform group-open:rotate-180" />
         <span>{EXPLANATION_LABEL}</span>

@@ -7,12 +7,14 @@
 import type { ReactNode } from 'react';
 import type { PageAction, PageBlock, PageLinkTabs } from '@/gen/edify/screens/v1/page_pb';
 import { actionHref, resolveHref } from '@/lib/feedPage';
+import { tableNote } from '@/lib/tableNote';
 
 import { BUTTON_PRIMARY } from '../blocks/buttons';
 import { FilterBar } from '../blocks/FilterBar';
 import { Pager } from '../blocks/Pager';
 import { TabRail } from '../blocks/TabRail';
 import { Icon } from '../shell/icons';
+import { Explanation } from './Explanation';
 import { FeedChart } from './FeedChart';
 import { FeedChips } from './FeedChips';
 import { FeedFacts } from './FeedFacts';
@@ -116,8 +118,17 @@ export function FeedBlocks({ blocks, pagePath, drawerHref, selectable, clearFilt
             );
           case 'strip':
             return <FeedStrip key={index} strip={kind.value} resolve={resolve} />;
-          case 'panel':
+          case 'panel': {
+            const note = tableNote(blocks, index);
+            if (note) {
+              return (
+                <section key={index} className="card p-0 overflow-hidden" data-block="note">
+                  <Explanation text={note} bare />
+                </section>
+              );
+            }
             return <FeedPanel key={index} panel={kind.value} resolve={resolve} drawerHref={drawerHref} footer={footer} />;
+          }
           case 'linkTabs':
             return <LinkTabsBlock key={index} rail={kind.value} pagePath={pagePath} hrefOf={hrefOf} />;
           case 'table':

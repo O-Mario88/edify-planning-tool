@@ -6,7 +6,9 @@
  */
 import type { PageAction, PageBlock, PageFacts } from '@/gen/edify/screens/v1/page_pb';
 import { actionHref, resolveHref } from '@/lib/feedPage';
+import { tableNote } from '@/lib/tableNote';
 
+import { Explanation } from '../page/Explanation';
 import { FeedBlocks } from '../page/FeedBlocks';
 import { PhoneChart } from './PhoneChart';
 import { PhoneChips } from './PhoneChips';
@@ -90,8 +92,17 @@ export function PhoneBlocks({ blocks, pagePath, drawerHref, selectable }: PhoneB
             <PhonePager pager={kind.value} resolve={resolve} alone />
           </section>
         );
-      case 'panel':
+      case 'panel': {
+        const note = tableNote(list, index);
+        if (note) {
+          return (
+            <section key={index} data-ph={bare ? 'panel-flat' : 'card'}>
+              <Explanation text={note} phone bare />
+            </section>
+          );
+        }
         return <PhonePanel key={index} panel={kind.value} resolve={resolve} bare={bare} />;
+      }
       case 'list':
         return <PhoneList key={index} list={kind.value} resolve={resolve} hrefOf={hrefOf} />;
       case 'chart':

@@ -218,11 +218,11 @@ export const EXPLANATION_LABEL = 'Explanation';
  * tapped (owner, 2026-11-20: "they should by default be hidden and only
  * opened by tapping the unhide icon/chevron"), as the web's
  * (components/page/Explanation.tsx). */
-export function Explanation({ text }: { readonly text: string }) {
+export function Explanation({ text, isBare = false }: { readonly text: string; readonly isBare?: boolean }) {
   const { colors } = useTheme();
   const [isOpen, setOpen] = useState(false);
   return (
-    <View style={[styles.explain, { borderTopColor: colors.tableLine }]}>
+    <View style={isBare ? null : [styles.explain, { borderTopColor: colors.tableLine }]}>
       <Pressable
         onPress={() => setOpen(!isOpen)}
         accessibilityRole="button"
