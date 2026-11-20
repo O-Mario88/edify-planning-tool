@@ -223,4 +223,11 @@ select.edify-select {
 main [data-block='table'] > .edify-empty-state--line.edify-empty-state--line.edify-empty-state--line {
   padding: 0.625rem 1rem !important;
 }
+/* One corner on every card (2026-11-20 audit: panel and table cards drew
+   10px on about 100 desktop pages while Home drew 16px and the phone 12px):
+   the surface radius, 12px, on desktop as on the phone and the app. */
+main section.card[data-block],
+main section.admin-panel[data-block] {
+  border-radius: 12px !important;
+}
 
