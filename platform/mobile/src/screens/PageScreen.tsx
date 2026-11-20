@@ -11,7 +11,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ComponentRef } from 'react';
-import { ActivityIndicator, Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { ChevronLeft, Download } from 'lucide-react-native';
 
@@ -22,6 +22,7 @@ import type { PageAction } from '../gen/edify/screens/v1/page_pb';
 import { fonts, radius, useTheme } from '../theme';
 import { MakeRoomContext } from '../ui/Dropdown';
 import { PageBlocksView } from '../ui/page/PageBlocksView';
+import { PageSkeleton } from '../ui/page/PageSkeleton';
 import { ActionButton, Badge, Description, TabRail } from '../ui/page/PageHeaderParts';
 import { selectionPath, webPageFor } from '../ui/page/pageLinks';
 import { PageFormContext, PageLinkContext, PickContext } from '../ui/page/shared';
@@ -258,7 +259,7 @@ export function PageScreen({ path, initialQuery = {}, isNative, onOpen, onOpenSc
                   <PageBlocksView blocks={data.blocks} onFilter={filter} isRaised={false} />
                 </View>
               ) : error ? null : (
-                <ActivityIndicator color={colors.primary} accessibilityLabel="Loading" />
+                <PageSkeleton />
               )}
             </ScrollView>
             {drawer ? (
