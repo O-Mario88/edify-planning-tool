@@ -402,7 +402,7 @@ func (pg *page) performance(ctx context.Context) ([]*screensv1.PageBlock, error)
 	}
 	blocks = append(blocks,
 		panel("Staff vs Partner by Intervention", "Average verified core score per intervention (0–10); gap in score points.",
-			append(oversight(), text("Not enough comparable data A row appears only when an intervention has both staff-led and Partner-owned slots with verified scores — comparisons are never invented from one side."))),
+			append(oversight(), text("Not enough comparable data. A row appears only when an intervention has both staff-led and Partner-owned slots with verified scores — comparisons are never invented from one side."))),
 		panel("Verified Assessment Outcome Trend", "Average verified core assessment score across real assessment periods.",
 			append(oversight(), text("Not enough comparable assessment history yet The trend appears once at least two verified assessment periods exist for this scope."))),
 	)

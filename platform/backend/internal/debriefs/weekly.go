@@ -177,7 +177,7 @@ func noReport(role string) *screensv1.PageBlock {
 	if slices.Contains(w.FinalizedReaders, role) {
 		note = "The Country Director has not finalized this week's country report yet."
 	}
-	text := "No report for this week yet " + note
+	text := "No report for this week yet. " + note
 	if slices.Contains(w.Generators, role) {
 		text += " Generate Draft Report"
 	}
@@ -264,7 +264,7 @@ func (r *weeklyReport) blocks(start time.Time) []*screensv1.PageBlock {
 // time the kind changes (regroup), or the empty note.
 func (r *weeklyReport) clusterBlocks() []*screensv1.PageBlock {
 	if len(r.snapshot.Clusters) == 0 {
-		note := "No consolidated themes this week No daily debriefs matched this reporting week"
+		note := "No consolidated themes this week. No daily debriefs matched this reporting week"
 		if r.scope == "country" {
 			note += " from finalized team reports"
 		}
