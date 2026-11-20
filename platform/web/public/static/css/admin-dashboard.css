@@ -330,7 +330,8 @@
 .admin-target-list { display: grid; }
 .admin-target-row { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.5rem; padding: 0.82rem 0.9rem; border-bottom: 1px solid var(--edify-border); color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); }
 .admin-target-row:last-child { border-bottom: 0; }
-.admin-target-row > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A row's words wrap rather than being cut short (owner rule, text wraps). */
+.admin-target-row > span:first-child { overflow-wrap: anywhere; }
 .admin-target-row > strong { color: var(--edify-text); font-size: var(--edify-text-micro-size); font-weight: 600; font-variant-numeric: tabular-nums; }
 .admin-target-row > .admin-status { grid-column: 2; }
 /* A row's next step is a link that looks like one — the danger ink says it is
@@ -345,7 +346,7 @@
   white-space: nowrap;
 }
 .admin-target-row > .admin-next-step:hover { text-decoration-thickness: 2px; }
-.admin-target-row > a:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--edify-text); }
+.admin-target-row > a:first-child { min-width: 0; overflow-wrap: anywhere; color: var(--edify-text); }
 .admin-target-row > a:first-child:hover { text-decoration: underline; }
 
 /* Sign-ins: a day, its count, and a bar of that count against the busiest day.

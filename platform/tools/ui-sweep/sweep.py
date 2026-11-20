@@ -103,7 +103,11 @@ CHECKS = r"""(size) => {
     if (!vis(e) || e.closest('select, input, textarea, [role=listbox], [data-ph=tile-value]')) return false;
     const cs = getComputedStyle(e);
     if (cs.textOverflow !== 'ellipsis' && cs.webkitLineClamp === 'none') return false;
-    return e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 1;
+    // A month grid's event cut to one line is whole on hover: its title holds it.
+    const titled = e.closest('[title]');
+    if (titled && titled.getAttribute('title').includes(e.textContent.trim())) return false;
+    // Under 3px of height is line-height, not words cut off.
+    return e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 2;
   }).map(say).slice(0, 8);
   const walker = document.createTreeWalker(main, NodeFilter.SHOW_TEXT);
   const runTogether = [];
