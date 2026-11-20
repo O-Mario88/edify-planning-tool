@@ -1323,3 +1323,43 @@ class PageDrawerFeedTest(SchoolActionFeedTest):
             self.drawer(f"/activities/{self.visit.id}/evidence").status_code, 404
         )
         self.assertEqual(self.drawer("/users").status_code, 404)
+
+
+class PageSchoolIdTest(TestCase):
+    """A page the feed reads shows each school's ID as the web does: the
+    School Identity middleware fills the IDs in after a page renders, and the
+    feed runs a page's view without the middleware stack, so it fills them in
+    the same way (2026-11-20: the School ID column was empty in the apps)."""
+
+    def setUp(self):
+        from apps.accounts.models import StaffSchoolAssignment
+        from apps.schools.models import School
+
+        self.user = User.objects.create(
+            email="officer@example.org",
+            name="Ada Lovelace",
+            roles=["CCEO"],
+            active_role="CCEO",
+            status="active",
+            is_active=True,
+        )
+        profile = StaffProfile.objects.create(user=self.user)
+        school = School.objects.create(
+            school_id="EDU-77",
+            name="Champion Primary",
+            school_type="champion",
+        )
+        StaffSchoolAssignment.objects.create(staff=profile, school_id=school.id)
+
+    def test_the_school_id_column_reads_the_schools_id(self):
+        from apps.mobile_feed import views
+
+        response = views._run_page(
+            self.user, "/programme-schools", {}, views.NATIVE_PAGES
+        )
+
+        html = response.content.decode()
+        self.assertNotIn("data-school-code-token", html)
+        self.assertIn(
+            '<span class="school-list-id" title="School ID">EDU-77</span>', html
+        )

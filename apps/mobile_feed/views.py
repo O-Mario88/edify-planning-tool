@@ -1365,9 +1365,19 @@ def _run_page(
     page_request = _page_get(user, path, params, headers)
     page_request.resolver_match = match
     response = match.func(page_request, *match.args, **match.kwargs)
+    return _rendered(response, page_request)
+
+
+def _rendered(response, page_request):
+    """A view's response as the web sends it: rendered, and each school's ID
+    filled in. The web fills the IDs after a page renders (the School
+    Identity middleware); a view the feed runs has no middleware stack, so
+    without this every School ID column read empty in the apps (2026-11-20)."""
+    from apps.core.school_identity_middleware import SchoolIdentityMiddleware
+
     if hasattr(response, "render") and not getattr(response, "is_rendered", True):
         response.render()
-    return response
+    return SchoolIdentityMiddleware(lambda _request: response)(page_request)
 
 
 def page_body(html: str, path: str, later=None, desktop: bool = False) -> dict:
@@ -1605,11 +1615,11 @@ def _page_drawer_html(user, path: str, query: dict) -> tuple[int, str]:
         else:
             page_request.GET[key] = value
     try:
-        response = match.func(page_request, *match.args, **match.kwargs)
+        response = _rendered(
+            match.func(page_request, *match.args, **match.kwargs), page_request
+        )
     except Http404:
         return 404, ""
-    if hasattr(response, "render") and not getattr(response, "is_rendered", True):
-        response.render()
     return response.status_code, response.content.decode()
 
 
