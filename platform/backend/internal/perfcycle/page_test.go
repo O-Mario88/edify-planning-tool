@@ -44,7 +44,7 @@ func TestTheControlsReadAsTheFeedReadsThem(t *testing.T) {
 		f.Items[0].GetField().Value != "priority_setting" || len(f.Items[0].GetField().Options) != 5 || f.Items[1].GetField().Kind != "date" {
 		t.Fatalf("window form: %v", f)
 	}
-	if got := controls("2027", true, "year_end").GetPanel().Items[0].GetText(); got != "Activate window FY priority settingQ1 conversationMid-year review (Q2)Q3 conversationEnd-of-year review (Q4) Deadline Activate & freeze snapshots Close window" {
+	if got := controls("2027", true, "year_end").GetPanel().Items[0].GetText(); got != "Activate window FY priority setting · Q1 conversation · Mid-year review (Q2)Q3 conversation · End-of-year review (Q4) Deadline Activate & freeze snapshots Close window" {
 		t.Errorf("open window: %q", got)
 	}
 }

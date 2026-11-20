@@ -469,7 +469,7 @@ func (v view) cardNode(c card) *feeddom.Node {
 			),
 		),
 		el("dl", "partner-activity-card__summary",
-			el("div", "", el("dt", "", "Contact Person"), el("dd", "", orDefault(p.contact, "Not recorded"), el("small", "", orDefault(p.phone, "Phone not recorded")))),
+			el("div", "", el("dt", "", "Contact Person"), el("dd", "", el("span", "", orDefault(p.contact, "Not recorded")), " ", el("small", "", orDefault(p.phone, "Phone not recorded")))),
 			el("div", "", el("dt", "", "Assigned Schools"), el("dd", "", fmt.Sprint(c.schools))),
 			el("div", "", el("dt", "", "Scheduled"), el("dd", "", fmt.Sprint(c.scheduled))),
 			el("div", "", el("dt", "", "Pending"), el("dd", "", fmt.Sprint(c.queued))),

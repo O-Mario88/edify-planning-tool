@@ -67,7 +67,7 @@
               </div>
             </div>
             <dl class="partner-activity-card__summary">
-              <div><dt>Contact Person</dt><dd>{{ card.partner.contact_person|default:"Not recorded" }}<small>{{ card.partner.phone|default:"Phone not recorded" }}</small></dd></div>
+              <div><dt>Contact Person</dt><dd><span>{{ card.partner.contact_person|default:"Not recorded" }}</span> <small>{{ card.partner.phone|default:"Phone not recorded" }}</small></dd></div>
               <div><dt>Assigned Schools</dt><dd>{{ card.assigned_school_count }}</dd></div>
               <div><dt>Scheduled</dt><dd class="partner-activity-card__positive">{{ card.scheduled_count }}</dd></div>
               <div><dt>Pending</dt><dd class="partner-activity-card__warning">{{ card.pending_count }}</dd></div>

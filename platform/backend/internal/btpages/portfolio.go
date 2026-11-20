@@ -17,6 +17,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/btportfolio"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/feeddom"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
@@ -642,7 +643,8 @@ WHERE country_code = 'UG' AND active ORDER BY label`)
 		if err := rows.Scan(&label, &authority); err != nil {
 			return nil, fmt.Errorf("btpages: reading the requirements: %w", err)
 		}
-		links = append(links, &screensv1.PageLink{Text: closedschools.Collapse(label + authority)})
+		// The requirement and its authority are two lines: read apart.
+		links = append(links, &screensv1.PageLink{Text: closedschools.Collapse(feeddom.JoinParts(label, authority))})
 	}
 	items := []*screensv1.PagePanelItem{}
 	if len(links) > 0 {

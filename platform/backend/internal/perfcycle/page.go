@@ -29,6 +29,7 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/feeddom"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/hrregister"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
@@ -255,10 +256,13 @@ func controls(fy string, open bool, window string) *screensv1.PageBlock {
 			text("Open FY" + fy + " cycle & draft agreements")}}}}
 	}
 	if window != "none" {
-		labels := ""
+		// The windows are the select's options, read apart where a lower-case
+		// word meets a capital (feeddom.JoinParts), as the feed reads them.
+		parts := []string{}
 		for _, w := range rules.Windows {
-			labels += w[1]
+			parts = append(parts, w[1])
 		}
+		labels := feeddom.JoinParts(parts...)
 		return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{Items: []*screensv1.PagePanelItem{
 			text("Activate window " + labels + " Deadline Activate & freeze snapshots Close window")}}}}
 	}
