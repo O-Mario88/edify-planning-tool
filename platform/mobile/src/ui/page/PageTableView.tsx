@@ -730,7 +730,7 @@ const styles = StyleSheet.create({
   listTitle: { fontFamily: fonts.semibold, fontSize: 14, lineHeight: 19 },
   listLine: { fontFamily: fonts.medium, fontSize: 12, lineHeight: 16 },
   sheetLayer: { flex: 1, justifyContent: 'flex-end' },
-  sheetBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(15, 23, 42, 0.45)' },
+  sheetBackdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: 'rgba(15, 23, 42, 0.45)' },
   sheet: { maxHeight: '85%', borderTopLeftRadius: 18, borderTopRightRadius: 18, paddingBottom: 28 },
   sheetBody: { padding: 16, gap: 14 },
   sheetTitle: { fontFamily: fonts.bold, fontSize: 16, lineHeight: 21 },
