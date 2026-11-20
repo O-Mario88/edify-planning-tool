@@ -39,12 +39,29 @@ describe('heroFirst', () => {
     ]);
   });
 
-  it('leaves another role’s figures as they come, none a hero', () => {
-    expect(heroFirst(cards, 'Accountant').map((c) => [c.key, c.hero])).toEqual([
+  it('gives every role with its own plan the same two, Overdue and To-Do (the partners)', () => {
+    expect(heroFirst(cards, 'Partner').map((c) => [c.key, c.hero])).toEqual([
+      ['overdue', true],
+      ['waiting_me', true],
       ['upcoming', false],
       ['under_way', false],
-      ['overdue', false],
-      ['waiting_me', false],
+    ]);
+  });
+
+  it('leads a desk role with Critical and To-Do (the Country Director, IA, the Accountant)', () => {
+    const desk = homeFigures([figure('waiting_me'), figure('due_today'), figure('critical')], []);
+    expect(heroFirst(desk, 'Country Director').map((c) => [c.key, c.hero])).toEqual([
+      ['critical', true],
+      ['waiting_me', true],
+      ['due_today', false],
+    ]);
+  });
+
+  it('leaves figures with neither as they come, none a hero', () => {
+    const other = homeFigures([figure('due_today'), figure('upcoming')], []);
+    expect(heroFirst(other, 'Admin').map((c) => [c.key, c.hero])).toEqual([
+      ['due_today', false],
+      ['upcoming', false],
     ]);
   });
 });

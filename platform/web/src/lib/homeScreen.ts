@@ -53,14 +53,27 @@ export function homeFigures(figures: readonly HomeFigure[], queue: readonly Home
 
 /** Each role's hero figures, the one or two that decide today's work, drawn
  *  large and first (owner, 2026-11-20, doc 181 §6.1: a CCEO's are Overdue
- *  and Waiting on you). A role not named keeps its figures as they come. */
+ *  and Waiting on you). Every role has them (owner, 2026-11-20: "complete
+ *  those to zero"): a role with its own plan leads with Overdue and To-Do,
+ *  as a CCEO does (the partners); a desk role, whose Home is its To-Dos,
+ *  with Critical and To-Do (the Country Director, IA, the Accountant). A
+ *  role named here keeps its own. */
 export const HERO_FIGURES: Readonly<Record<string, readonly string[]>> = {
   CCEO: ['overdue', 'waiting_me'],
 };
 
+/** The heroes for a role whose Home shows these figure keys. */
+export function heroKeys(keys: readonly string[], roleTitle: string): readonly string[] {
+  const named = HERO_FIGURES[roleTitle];
+  if (named) return named;
+  if (keys.includes('overdue')) return ['overdue', 'waiting_me'];
+  if (keys.includes('critical')) return ['critical', 'waiting_me'];
+  return [];
+}
+
 /** The overview's figures with the role's heroes first, each marked. */
 export function heroFirst(cards: readonly HomeFigureCard[], roleTitle: string): (HomeFigureCard & { hero: boolean })[] {
-  const heroes = HERO_FIGURES[roleTitle] ?? [];
+  const heroes = heroKeys(cards.map((c) => c.key), roleTitle);
   const marked = cards.map((c) => ({ ...c, hero: heroes.includes(c.key) }));
   return [
     ...heroes.flatMap((key) => marked.filter((c) => c.key === key)),
