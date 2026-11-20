@@ -351,7 +351,7 @@ func (pg *page) performance(ctx context.Context) ([]*screensv1.PageBlock, error)
 			staff = append(staff, text("Organization average: "+org+" · ▲▼ vs average, in score points"))
 		}
 	} else {
-		staff = append(staff, text("No staff portfolios in scope Rows appear when staff own core schools with verified assessments."))
+		staff = append(staff, text("No staff portfolios in scope. Rows appear when staff own core schools with verified assessments."))
 	}
 	partners := []*screensv1.PagePanelItem{{Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{
 		Links: []*screensv1.PageLink{{Text: "View Full Report →", Href: "/partners"}}}}}}
@@ -361,7 +361,7 @@ func (pg *page) performance(ctx context.Context) ([]*screensv1.PageBlock, error)
 			partners = append(partners, text("Organization average: "+org))
 		}
 	} else {
-		partners = append(partners, text("No Partner portfolios in scope Rows appear when Partners are assigned core schools with verified assessments."))
+		partners = append(partners, text("No Partner portfolios in scope. Rows appear when Partners are assigned core schools with verified assessments."))
 	}
 	blocks := []*screensv1.PageBlock{
 		panel("Core School Outcomes by Staff", "Average verified core score of each staff portfolio — school-outcome context, not a performance rating.", staff),
