@@ -199,4 +199,15 @@ select.edify-select {
   min-height: 2.75rem;
   padding: 0.5rem 0.75rem;
 }
-
+/* On a desktop the overview's figures read across (icon, value, label in a
+   row), so a hero needs size, not height: a larger figure in a row of
+   normal height. */
+@media (min-width: 64rem) {
+  .edify-home__figures[data-heroes] > li[data-home-hero] > .edify-home__figure {
+    min-height: 4.5rem;
+    padding: 0.75rem 1.25rem;
+  }
+  .edify-home__figures[data-heroes] > li[data-home-hero] .edify-home__figure-value {
+    font-size: 1.75rem;
+  }
+}
