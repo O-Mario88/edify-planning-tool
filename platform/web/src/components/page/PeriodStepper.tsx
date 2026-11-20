@@ -17,8 +17,11 @@ const DESKTOP_STEP =
   'focus-visible:outline-[var(--brand-primary)] [&+&]:border-l [&+&]:border-[var(--edify-border)]';
 
 export function PeriodStepper({ links, resolve, phone = false }: { links: readonly PageLink[]; resolve: (href: string) => string; phone?: boolean }) {
-  // Keyed by place and words: from last week, "This week" and "Next week" share an href.
-  const steps = links.map((link) => ({ link, ...stepOf(link) }));
+  // From last week, "This week" and "Next week" lead to the same week: the
+  // jump back to now is dropped where a step already goes there. Keyed by
+  // place and words, as hrefs can repeat.
+  const all = links.map((link) => ({ link, ...stepOf(link) }));
+  const steps = all.filter((step) => step.way !== 'here' || !all.some((other) => other !== step && other.link.href === step.link.href));
   if (phone) {
     return (
       <nav data-ph="stepper" aria-label="Choose the period">
