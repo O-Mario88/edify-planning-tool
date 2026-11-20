@@ -21,6 +21,7 @@ import { PlanningChips } from '../blocks/PlanningChips';
 import { RowActions } from '../blocks/RowActions';
 import { edifyTone, textTone } from '../blocks/tones';
 import { Icon } from '../shell/icons';
+import { Explanation } from './Explanation';
 import { FeedPanel } from './FeedPanel';
 import { Pager } from '../blocks/Pager';
 
@@ -338,7 +339,7 @@ export function FeedTable({ table, pagePath, drawerHref, selectable, footer }: F
           ) : null}
         </div>
       )}
-      {table.footnote ? <p className="border-t edify-border-top px-4 py-3 edify-text-caption edify-text-muted">{table.footnote}</p> : null}
+      {table.footnote ? <Explanation text={table.footnote} /> : null}
       {table.pager ? <Pager pager={{ ...table.pager, pages: table.pager.pages.map((page) => ({ ...page, href: resolve(page.href) })) }} /> : null}
       {footer}
     </section>

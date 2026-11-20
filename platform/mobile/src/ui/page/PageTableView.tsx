@@ -110,7 +110,7 @@ export function PageTableView({ table, isBare = false }: PageTableViewProps) {
         <Grid table={table} />
       )}
       {table.pager ? <Pager pager={table.pager} /> : null}
-      {table.footnote ? <Text style={[styles.footnote, { color: colors.textMuted }]}>{table.footnote}</Text> : null}
+      {table.footnote ? <Explanation text={table.footnote} /> : null}
     </View>
   );
 }
@@ -209,6 +209,36 @@ interface BodyRowProps {
   readonly onToggle: () => void;
   /** The screen's width, which an open row's details fill. */
   readonly detailsWidth: number;
+}
+
+/** What a table's folded explanation says while it is closed. */
+export const EXPLANATION_LABEL = 'Explanation';
+
+/** A table's explanation (its footnote) folded under a chevron, closed until
+ * tapped (owner, 2026-11-20: "they should by default be hidden and only
+ * opened by tapping the unhide icon/chevron"), as the web's
+ * (components/page/Explanation.tsx). */
+export function Explanation({ text }: { readonly text: string }) {
+  const { colors } = useTheme();
+  const [isOpen, setOpen] = useState(false);
+  return (
+    <View style={[styles.explain, { borderTopColor: colors.tableLine }]}>
+      <Pressable
+        onPress={() => setOpen(!isOpen)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: isOpen }}
+        accessibilityLabel={EXPLANATION_LABEL}
+        hitSlop={4}
+        style={styles.explainToggle}
+      >
+        <View style={isOpen ? styles.explainOpen : null}>
+          <ChevronDown size={16} color={colors.tableLink} />
+        </View>
+        <Text style={[styles.explainLabel, { color: colors.tableLink }]}>{EXPLANATION_LABEL}</Text>
+      </Pressable>
+      {isOpen ? <Text style={[styles.footnote, styles.explainText, { color: colors.textMuted }]}>{text}</Text> : null}
+    </View>
+  );
 }
 
 /** One record row: its cells, and what opening it shows under it. */
@@ -813,6 +843,11 @@ const styles = StyleSheet.create({
   nothing: { opacity: 0.7 },
   numeric: { textAlign: 'right' },
   footnote: { fontFamily: fonts.semibold, fontSize: 13, lineHeight: 18, paddingHorizontal: 16, paddingVertical: 10 },
+  explain: { borderTopWidth: 1 },
+  explainToggle: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, minHeight: 44, paddingHorizontal: 16 },
+  explainOpen: { transform: [{ rotate: '180deg' }] },
+  explainLabel: { fontFamily: fonts.semibold, fontSize: 13 },
+  explainText: { paddingTop: 0 },
   empty: { alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 20 },
   emptyMark: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   emptyText: { fontFamily: fonts.medium, fontSize: 13, textAlign: 'center' },

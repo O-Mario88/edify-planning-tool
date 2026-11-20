@@ -117,6 +117,12 @@ describe('a page on a phone', () => {
     expect(html.indexOf('data-ph="pager"')).toBeGreaterThan(html.indexOf('data-ph="grid"'));
   });
 
+  it('folds a table explanation under a chevron, closed until it is tapped', () => {
+    const html = draw({ blocks: [{ table: { title: 'Planned and remaining', columns: [{ label: 'Part' }], rows: [{ cells: [{ text: 'Your visits' }] }], footnote: 'Your target is 560 visits a year.' } }] });
+    expect(html).toMatch(/<details data-ph="explain"><summary data-ph="explain-toggle"><svg[^>]*data-ph="explain-chevron"[^>]*>.*?<\/svg><span>Explanation<\/span><\/summary><p data-ph="footnote">Your target is 560 visits a year\.<\/p><\/details>/);
+    expect(html).not.toMatch(/<details[^>]* open/);
+  });
+
   it('draws panels and lists as the app does, keeping the chips keys', () => {
     const html = draw({
       blocks: [

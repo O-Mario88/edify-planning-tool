@@ -21,6 +21,7 @@ import { actionHref, isActionsCell, resolveHref } from '@/lib/feedPage';
 import { asList, rowCard, summaryOf } from '@/lib/rowCard';
 import type { RowCard, RowFact } from '@/lib/rowCard';
 
+import { Explanation } from '../page/Explanation';
 import { CellActions } from '../page/FeedTable';
 import { PhoneEmpty, PhonePager } from './PhoneParts';
 import { phoneTone } from './tone';
@@ -82,7 +83,7 @@ export function PhoneTable({ table, pagePath, drawerHref, selectable, bare = fal
       )}
       {table.pager ? <PhonePager pager={table.pager} resolve={resolve} /> : null}
       {footer}
-      {table.footnote ? <p data-ph="footnote">{table.footnote}</p> : null}
+      {table.footnote ? <Explanation text={table.footnote} phone /> : null}
     </>
   );
   return bare ? body : <section data-ph="card" aria-label={table.title || undefined}>{body}</section>;

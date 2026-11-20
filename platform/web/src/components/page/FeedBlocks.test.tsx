@@ -121,6 +121,11 @@ describe('My Plan blocks', () => {
     expect(html).toContain('Open Calendar');
   });
 
+  it('folds the table explanation under a chevron, closed until it is opened', () => {
+    expect(html).toMatch(/<details class="[^"]*" data-explanation="true"><summary[^>]*><svg[^>]*>.*?<\/svg><span>Explanation<\/span><\/summary><p[^>]*>Your target is 560 visits a year\.<\/p><\/details>/);
+    expect(html).not.toMatch(/<details[^>]* open/);
+  });
+
   it('draws the readiness table with its line, numeric columns, tones and note', () => {
     expect(html).toContain('Planned and remaining · FY 2027');
     expect(html).toContain('Readiness 75% · 0 schools held');
