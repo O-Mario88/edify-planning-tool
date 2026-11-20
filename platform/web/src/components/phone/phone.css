@@ -379,3 +379,25 @@ a[data-ph='panel-link'] { align-items: flex-start !important; }
 [data-ph][hidden], [data-ph] [hidden] { display: none !important; }
 
 }
+
+/* ── Row cards (owner, 2026-11-19: "Rows on phones"; PhoneTable Cards) ── */
+[data-ph='rows-all'] { display: flex !important; align-items: center !important; gap: 8px !important; padding: 10px 16px !important; border-top: 1px solid var(--ph-raised-border) !important; color: var(--ph-text-muted) !important; font-size: 12px !important; font-weight: 600 !important; }
+[data-ph='rows'] { list-style: none !important; margin: 0 !important; padding: 0 !important; }
+[data-ph='row'] { display: flex !important; flex-direction: column !important; gap: 10px !important; padding: 14px 16px !important; border-top: 1px solid var(--ph-raised-border) !important; }
+[data-ph='row'][data-row-tone='danger'] { box-shadow: inset 3px 0 0 var(--ph-danger) !important; }
+[data-ph='row-head'] { display: flex !important; align-items: flex-start !important; gap: 10px !important; }
+[data-ph='row-head'] input[type='checkbox'] { margin-top: 2px !important; flex-shrink: 0 !important; }
+[data-ph='row-name-wrap'] { display: flex !important; flex: 1 1 auto !important; flex-direction: column !important; gap: 2px !important; min-width: 0 !important; }
+[data-ph='row-name'] { color: var(--ph-text) !important; font-size: 14px !important; line-height: 19px !important; font-weight: 700 !important; text-decoration: none !important; overflow-wrap: anywhere !important; }
+a[data-ph='row-name'] { color: var(--ph-link) !important; }
+[data-ph='row-id'] { color: var(--ph-text-muted) !important; font-size: 12px !important; font-weight: 500 !important; }
+[data-ph='row-status'] { flex-shrink: 0 !important; padding: 2px 10px !important; border-radius: 999px !important; background: var(--ph-tone-soft, var(--ph-surface)) !important; color: var(--ph-tone, var(--ph-text)) !important; font-size: 12px !important; line-height: 18px !important; font-weight: 600 !important; white-space: nowrap !important; }
+[data-ph='row-facts'] { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px 16px !important; margin: 0 !important; }
+[data-ph='row-fact'] { display: flex !important; flex-direction: column !important; gap: 1px !important; min-width: 0 !important; }
+[data-ph='row-fact'] dt { margin: 0 !important; color: var(--ph-text-muted) !important; font-size: 12px !important; font-weight: 500 !important; }
+[data-ph='row-fact'] dd { margin: 0 !important; color: var(--ph-tone, var(--ph-text)) !important; font-size: 13px !important; font-weight: 600 !important; overflow-wrap: anywhere !important; }
+[data-ph='row-fact'] dd a { color: var(--ph-link) !important; }
+[data-ph='row-foot'] { display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 12px !important; }
+[data-ph='row-more'] { display: inline-flex !important; align-items: center !important; gap: 4px !important; min-height: 36px !important; padding: 0 !important; border: 0 !important; background: none !important; color: var(--ph-link) !important; font: inherit !important; font-size: 13px !important; font-weight: 600 !important; cursor: pointer !important; }
+[data-ph='row-details'] { display: flex !important; flex-direction: column !important; gap: 10px !important; padding: 12px !important; border-radius: 10px !important; background: var(--ph-surface) !important; }
+

@@ -2,9 +2,12 @@
 
 /*
  * A record table as the app draws it (PageTableView.tsx): a card with its
- * title bar, the table scrolling sideways in its own region (owner,
- * 2026-09-27: tables stay tables), a note under it, or the empty state in
- * place of its rows. A table wider than the screen shows the slim orange
+ * title bar, its rows as cards (owner, 2026-11-19: "Rows on phones", which
+ * replaced 2026-09-27's tables stay tables; docs/migration/181 Phase 5), a
+ * note under it, or the empty state in place of its rows. Each row card
+ * names its record with its ID and status, shows its first facts, and opens
+ * the rest under "All details" (lib/rowCard). With ROWS_ON_PHONES off, the
+ * table scrolls sideways in its own region instead. A table wider than the screen shows the slim orange
  * "Swipe to view more columns" pill once, which leaves after about four
  * seconds (owner, 2026-10-02). A row with details opens under itself, one
  * at a time; ticked rows feed the page's bar (input[data-pick]).
@@ -15,6 +18,7 @@ import type { ReactNode } from 'react';
 
 import type { PageAction, PageRow, PageTable } from '@/gen/edify/screens/v1/page_pb';
 import { actionHref, isActionsCell, resolveHref } from '@/lib/feedPage';
+import { rowCard } from '@/lib/rowCard';
 
 import { CellActions } from '../page/FeedTable';
 import { PhoneEmpty, PhonePager } from './PhoneParts';
@@ -22,6 +26,9 @@ import { phoneTone } from './tone';
 
 /** The hint shows once per visit, as the app's does until a swipe. */
 let hintSeen = false;
+
+/** A phone's tables as row cards (owner, 2026-11-19); false brings back the sideways table. */
+const ROWS_ON_PHONES = true;
 
 /** What a row is called: the record it links to, else its first words. */
 function rowName(row: PageRow): string {
@@ -62,7 +69,11 @@ export function PhoneTable({ table, pagePath, drawerHref, selectable, bare = fal
       {table.rows.length === 0 && table.emptyMessage ? (
         <PhoneEmpty message={table.emptyMessage} action={table.emptyAction} hrefOf={hrefOf} />
       ) : (
-        <Grid table={table} resolve={resolve} hrefOf={hrefOf} selectable={selectable} />
+        ROWS_ON_PHONES ? (
+          <Cards table={table} resolve={resolve} hrefOf={hrefOf} selectable={selectable} />
+        ) : (
+          <Grid table={table} resolve={resolve} hrefOf={hrefOf} selectable={selectable} />
+        )
       )}
       {table.pager ? <PhonePager pager={table.pager} resolve={resolve} /> : null}
       {footer}
@@ -206,3 +217,128 @@ function Grid({ table, resolve, hrefOf, selectable }: GridProps) {
     </div>
   );
 }
+
+/** A tick that sets every row's tick on the page (the bar counts them). */
+function tickAll(event: { currentTarget: HTMLInputElement }) {
+  const on = event.currentTarget.checked;
+  event.currentTarget
+    .closest('[data-ph="rows-wrap"]')
+    ?.querySelectorAll<HTMLInputElement>('input[data-pick]')
+    .forEach((box) => {
+      box.checked = on;
+      box.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+}
+
+function Cards({ table, resolve, hrefOf, selectable }: GridProps) {
+  const [openRow, setOpenRow] = useState<number | null>(null);
+  const ticks = selectable && table.rows.some((row) => row.pickId);
+  return (
+    <div data-ph="rows-wrap">
+      {ticks ? (
+        <label data-ph="rows-all">
+          <input type="checkbox" aria-label="Select all on this page" onChange={tickAll} />
+          Select all on this page
+        </label>
+      ) : null}
+      <ul data-ph="rows" aria-label={table.title || 'Rows'}>
+        {table.rows.map((row, rowIndex) => {
+          const card = rowCard(table.columns, row);
+          const name = rowName(row);
+          const isOpen = openRow === rowIndex;
+          const more = card.rest.length > 0 || row.details.length > 0 || row.detailsHref !== '';
+          const detailsId = `ph-card-${rowIndex}`;
+          const statusTone = card.status ? phoneTone(card.status.tone) : undefined;
+          return (
+            <li key={rowIndex} data-ph="row" data-row-tone={row.tone || undefined}>
+              <div data-ph="row-head">
+                {ticks && row.pickId ? <input type="checkbox" data-pick={row.pickId} aria-label={row.pickLabel || `Select ${name}`} /> : null}
+                <div data-ph="row-name-wrap">
+                  {card.title?.href ? (
+                    <a data-ph="row-name" href={resolve(card.title.href)}>
+                      {card.title.text}
+                    </a>
+                  ) : (
+                    <span data-ph="row-name">{card.title?.text ?? name}</span>
+                  )}
+                  {card.id ? (
+                    <span data-ph="row-id">
+                      {card.id.label} {card.id.cell.text}
+                    </span>
+                  ) : null}
+                </div>
+                {card.status ? (
+                  <span data-ph="row-status" data-ph-tone={statusTone && statusTone !== 'brand' ? statusTone : undefined}>
+                    {card.status.text}
+                  </span>
+                ) : null}
+              </div>
+              {card.lead.length ? (
+                <dl data-ph="row-facts">
+                  {card.lead.map((fact, i) => (
+                    <div key={`${fact.label}-${i}`} data-ph="row-fact">
+                      <dt>{fact.label}</dt>
+                      <dd data-ph-tone={phoneTone(fact.cell.tone) || undefined}>
+                        {fact.cell.href ? <a href={resolve(fact.cell.href)}>{fact.cell.text}</a> : fact.cell.text}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : null}
+              {more || card.actions ? (
+                <div data-ph="row-foot">
+                  {more ? (
+                    <button
+                      type="button"
+                      data-ph="row-more"
+                      aria-expanded={isOpen}
+                      aria-controls={detailsId}
+                      onClick={() => setOpenRow(isOpen ? null : rowIndex)}
+                    >
+                      {isOpen ? 'Hide details' : 'All details'}
+                      {isOpen ? <ChevronDown size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
+                    </button>
+                  ) : (
+                    <span />
+                  )}
+                  {card.actions ? <CellActions actions={card.actions.actions} subject={name} hrefOf={hrefOf} /> : null}
+                </div>
+              ) : null}
+              {isOpen ? (
+                <div data-ph="row-details" id={detailsId}>
+                  {card.rest.length ? (
+                    <dl data-ph="row-facts">
+                      {card.rest.map((fact, i) => (
+                        <div key={`${fact.label}-${i}`} data-ph="row-fact">
+                          <dt>{fact.label}</dt>
+                          <dd data-ph-tone={phoneTone(fact.cell.tone) || undefined}>
+                            {fact.cell.href ? <a href={resolve(fact.cell.href)}>{fact.cell.text}</a> : fact.cell.text}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  ) : null}
+                  {row.details.length ? (
+                    <div data-ph="details-facts">
+                      {row.details.map((fact) => (
+                        <span key={fact.label} data-ph="details-fact" data-ph-tone={phoneTone(fact.tone)}>
+                          {fact.label}: {fact.href ? <a href={resolve(fact.href)}><b>{fact.value}</b></a> : <b>{fact.value}</b>}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                  {row.detailsHref ? (
+                    <a data-ph="details-link" href={resolve(row.detailsHref)}>
+                      Open {name} profile
+                    </a>
+                  ) : null}
+                </div>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
