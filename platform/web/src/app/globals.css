@@ -226,8 +226,10 @@ main [data-block='table'] > .edify-empty-state--line.edify-empty-state--line.edi
 /* One corner on every card (2026-11-20 audit: panel and table cards drew
    10px on about 100 desktop pages while Home drew 16px and the phone 12px):
    the surface radius, 12px, on desktop as on the phone and the app. */
-main section.card[data-block],
-main section.admin-panel[data-block] {
+/* The existing web's card rule (`main :where(.card…):is(*, ._._._._._)…`)
+   carries a stack of classes; `:not(#edify-card-corner)` outranks it. */
+main section.card[data-block]:not(#edify-card-corner),
+main section.admin-panel[data-block]:not(#edify-card-corner) {
   border-radius: 12px !important;
 }
 
