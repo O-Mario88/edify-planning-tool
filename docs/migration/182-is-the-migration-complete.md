@@ -72,3 +72,31 @@ measured), the writer role's column grants (docs 03 §3.7), the Go service
 behind `EDIFY_GO_SAVES`, and its shadow proof on fresh copies (0 tables
 differing). Production cutover still needs the owner's approval,
 reconciliation and recovery testing.
+
+## The next save, M8: completing a visit (analysis, 2026-11-20)
+
+`POST /my-plan/<id>/complete` (`my_plan_views.complete_activity_action`)
+is one transaction (`transaction.atomic`) of five steps:
+
+1. `_complete_with_purpose`: the purpose the drawer gave, which may move
+   the activity's purpose fields.
+2. `start_completion` (or `start_in_school_training_pair`) when the
+   activity is still scheduled: status moves to in progress.
+3. `_submit_accountability`: the advance's accountability, **money** (M12).
+4. `_record_completion_ssa`: SSA scores collected on the visit (M7).
+5. `complete_activity` (or `complete_in_school_training_pair`) with the
+   payload (completed day, School Visit ID, attendance), then `audit_log`.
+
+Opening the drawer can already write (step 2 runs on open: "Auto-start
+completion if in scheduling status").
+
+So completion crosses three milestones. As with the costs in doc 27, Go
+makes its own part (purpose, start, completion, audit) and asks Django to
+settle the money (accountability) and record the SSA scores, inside the
+same refusal rules, until M7 and M12 move. Before building, its own doc
+must measure every table one completion writes (a staff visit, a training
+pair, a cluster session with attendance), and the writer role needs grants
+for the completion columns dbguard refuses today (status, actual delivery
+date, the School Visit ID, completion timestamps), each named in docs 03
+§3.7. Then the shadow proof, scenario by scenario, as in doc 49.
+
