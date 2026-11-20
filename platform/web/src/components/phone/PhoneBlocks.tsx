@@ -131,12 +131,15 @@ export function PhoneBlocks({ blocks: given, pagePath, drawerHref, selectable }:
             title={kind.value.title}
             subtitle={kind.value.subtitle}
             caption={kind.value.caption}
-            segments={kind.value.segments.map((segment) => ({
-              label: segment.label,
-              count: segment.count,
-              active: segment.active,
-              body: <>{segment.blocks.map((_, innerIndex) => draw(segment.blocks, innerIndex, true))}</>,
-            }))}
+            segments={kind.value.segments.map((segment) => {
+              const inner = presentBlocks(segment.blocks);
+              return {
+                label: segment.label,
+                count: segment.count,
+                active: segment.active,
+                body: <>{inner.map((_, innerIndex) => draw(inner, innerIndex, true))}</>,
+              };
+            })}
           />
         );
       case 'chips':
