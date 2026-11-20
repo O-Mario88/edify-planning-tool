@@ -17,7 +17,9 @@ wrong with each in the browser's own measurements, not by eye:
   words-run-together      "8 past dueFinish": two parts with no space between
   not-drawn               a part the web cannot draw yet
   empty-card              a card with nothing in it
-  small-tap-target        on a phone, a button or link under 32px tall
+  small-tap-target        on a phone, a button or link under 32px tall (a link
+                          inside a sentence, a table cell or a line of facts is
+                          an inline target, WCAG 2.5.8's exception)
   page-error              the page answered with an error or did not load
   a11y                    with --axe: a serious or critical WCAG 2.2 AA
                           violation axe-core finds (rule and how many places)
@@ -124,7 +126,7 @@ CHECKS = r"""(size) => {
   out['not-drawn'] = [...main.querySelectorAll('[data-block=not-drawn]')].filter(vis).map(say);
   out['empty-card'] = inPh('[data-ph=card]').filter((e) => !e.textContent.trim() && !e.querySelector('img, svg, canvas, input, select')).map(() => 'a card with nothing in it');
   out['small-tap-target'] = size !== 'phone' ? [] : [...main.querySelectorAll('button, a[href], [role=button]')]
-    .filter((e) => vis(e) && !e.closest('p, td, li, [data-ph=panel-field], [data-ph=fact]'))
+    .filter((e) => vis(e) && !e.closest('p, td, li, [data-ph=panel-field], [data-ph=fact], [data-ph=details-fact]'))
     .filter((e) => { const r = e.getBoundingClientRect(); return r.height > 0 && r.height < 32; })
     .map((e) => `${say(e)} (${Math.round(e.getBoundingClientRect().height)}px)`).slice(0, 8);
   return out;

@@ -15,10 +15,11 @@ describe('the top bar’s badges', () => {
   it('draws the notifications figure on the bell and none on Messages at zero', () => {
     const html = draw({ messages: 0, notifications: 4 });
     expect(html.match(/data-count-badge/g)).toHaveLength(1);
-    expect(html).toMatch(/aria-label="Notifications"[^]*?data-count-badge[^>]*>4<\/span>/);
+    expect(html).toMatch(/aria-label="Notifications, 4 unread"[^]*?data-count-badge[^>]*>4<\/span>/);
+    expect(html).toMatch(/aria-label="Messages"/);
   });
 
   it('caps a long figure at 99+', () => {
-    expect(draw({ messages: 138, notifications: 0 })).toMatch(/aria-label="Messages"[^]*?data-count-badge[^>]*>99\+<\/span>/);
+    expect(draw({ messages: 138, notifications: 0 })).toMatch(/aria-label="Messages, 99\+ unread"[^]*?data-count-badge[^>]*aria-hidden="true"[^>]*>99\+<\/span>/);
   });
 });

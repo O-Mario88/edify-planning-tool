@@ -9,3 +9,11 @@ export function badgeCount(count: number): string {
   if (count <= 0) return '';
   return count > MOST_SHOWN ? `${MOST_SHOWN}+` : String(count);
 }
+
+/** A top-bar control's accessible name with its unread figure as the badge
+ *  shows it, "Notifications, 3 unread": the visible figure is part of the
+ *  name (WCAG 2.5.3), and the badge itself is not read twice. */
+export function unreadName(label: string, count: number): string {
+  const text = badgeCount(count);
+  return text ? `${label}, ${text} unread` : label;
+}

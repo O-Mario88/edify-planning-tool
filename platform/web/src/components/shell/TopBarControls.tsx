@@ -138,7 +138,7 @@ export function AccountMenu({ name, initials, email = '', activeRole, roles, pat
         onClick={() => setOpen(!open)}
         className={`${CONTROL} edify-topbar__icon-control--avatar text-white text-[12px] font-semibold`}
       >
-        <span>{initials}</span>
+        <span aria-hidden="true">{initials}</span>
       </button>
       {open ? (
         <div

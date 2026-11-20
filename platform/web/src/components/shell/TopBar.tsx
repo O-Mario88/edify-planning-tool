@@ -6,7 +6,7 @@
  */
 import Link from 'next/link';
 
-import { badgeCount } from '@/lib/badgeCount';
+import { badgeCount, unreadName } from '@/lib/badgeCount';
 import { dateChip } from '@/lib/today';
 
 import { AccountMenu, HistoryControls, PhoneMenu, ThemeToggle } from './TopBarControls';
@@ -32,8 +32,10 @@ export interface TopBarCounts {
 function CountBadge({ count }: { count: number }) {
   const text = badgeCount(count);
   if (!text) return null;
+  // The figure is said in the control's own name (unreadName), so the badge
+  // is not read a second time.
   return (
-    <span data-count-badge className="notification-badge absolute top-1 right-1">
+    <span data-count-badge aria-hidden="true" className="notification-badge absolute top-1 right-1">
       {text}
     </span>
   );
@@ -102,7 +104,7 @@ export function TopBar({
         </span>
       </div>
       <div className="edify-topbar__utilities flex items-center gap-2 shrink-0">
-        <Link href="/messages" className={`${UTILITY} edify-topbar__utility--messages`} title="Messages" aria-label="Messages">
+        <Link href="/messages" className={`${UTILITY} edify-topbar__utility--messages`} title="Messages" aria-label={unreadName('Messages', counts.messages)}>
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
             <path
               strokeLinecap="round"
@@ -112,7 +114,7 @@ export function TopBar({
           </svg>
           <CountBadge count={counts.messages} />
         </Link>
-        <Link href="/notifications" className={`${UTILITY} edify-topbar__utility--notifications`} title="Notifications" aria-label="Notifications">
+        <Link href="/notifications" className={`${UTILITY} edify-topbar__utility--notifications`} title="Notifications" aria-label={unreadName('Notifications', counts.notifications)}>
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
             <path
               strokeLinecap="round"
