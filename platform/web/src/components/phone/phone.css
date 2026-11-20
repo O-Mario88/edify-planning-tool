@@ -444,3 +444,9 @@ dialog[data-ph='sheet']::backdrop { background: rgba(15, 23, 42, 0.45) !importan
 [data-ph='list-open'], [data-ph='list-open'] > span { white-space: normal !important; }
 dialog[data-ph='sheet'] [data-ph='row-name'] { font-size: 16px !important; line-height: 21px !important; font-weight: 700 !important; }
 
+/* A finger's targets on a phone (2026-11-20 sweep): a record's name, its
+   details toggle, a row's Actions menu and the pager's buttons were 18-28px
+   tall; each is now at least 36px, its words still where they were. */
+[data-ph='record-title'], [data-ph='record-toggle'] { min-height: 36px !important; min-block-size: 36px !important; }
+[data-ph='record-title'] { display: inline-flex !important; align-items: center !important; }
+[data-ph] .row-menu__trigger, [data-ph] .edify-pagination__control { min-height: 36px !important; min-block-size: 36px !important; min-width: 36px !important; }

@@ -64,7 +64,11 @@ export default async function ShellLayout({ children }: { children: ReactNode })
       <Sidebar sections={sections} path={path} />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar search={pageSearch(path)} account={account} existingWebUrl={environment().existingWebUrl} counts={{ messages, notifications }} />
-        <main id="main-content" tabIndex={-1} className="edify-workspace flex-1 overflow-y-auto focus:outline-none relative bg-[var(--edify-bg)]" data-density="compact">
+        {/* The page scrolls inside main, so main takes keyboard focus (tab order),
+            or a page with nothing to tab to could not be scrolled by keyboard
+            (axe scrollable-region-focusable, 2026-11-20); the ring shows only
+            when it is reached by keyboard. */}
+        <main id="main-content" tabIndex={0} className="edify-workspace flex-1 overflow-y-auto focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--edify-accent)] relative bg-[var(--edify-bg)]" data-density="compact">
           {children}
         </main>
         <BottomNav items={navigation.bottom} path={path} more={<PhoneMenu asTab />} />

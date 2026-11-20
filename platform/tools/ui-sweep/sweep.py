@@ -109,13 +109,16 @@ CHECKS = r"""(size) => {
     // Under 3px of height is line-height, not words cut off.
     return e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 2;
   }).map(say).slice(0, 8);
+  const CAMEL_WORDS = new Set(['currentColor']);
   const walker = document.createTreeWalker(main, NodeFilter.SHOW_TEXT);
   const runTogether = [];
   for (let n = walker.nextNode(); n; n = walker.nextNode()) {
     const el = n.parentElement;
     if (!el || !vis(el) || el.closest('script, style, code, svg')) continue;
     const m = n.textContent.match(/\b[a-z]{2,}[a-z][A-Z][a-z]{2,}\b/);
-    if (m) runTogether.push(`${m[0]} in "${n.textContent.trim().slice(0, 60)}"`);
+    // A real camel-case word in the text (a CSS keyword System Health names)
+    // is not two words run together.
+    if (m && !CAMEL_WORDS.has(m[0])) runTogether.push(`${m[0]} in "${n.textContent.trim().slice(0, 60)}"`);
   }
   out['words-run-together'] = runTogether.slice(0, 8);
   out['not-drawn'] = [...main.querySelectorAll('[data-block=not-drawn]')].filter(vis).map(say);
