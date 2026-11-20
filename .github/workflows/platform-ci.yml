@@ -361,14 +361,14 @@ jobs:
       # one machine. It is run locally, not here.
 
   ui-sweep:
-    name: UI sweep (report only)
+    name: UI sweep
     runs-on: ubuntu-latest
     timeout-minutes: 75
     # Every role's pages at phone and desktop size, checked by the browser's
     # own measurements and axe-core (platform/tools/ui-sweep,
-    # docs/migration/181 Phase 1). Report-only until the sweep reaches zero
-    # findings: the report is uploaded and the build does not fail on it.
-    continue-on-error: true
+    # docs/migration/181 Phase 1). A gate since the sweep reached zero
+    # findings (896 page loads, 2026-11-20): any finding fails the build, and
+    # the report is uploaded either way.
 
     services:
       postgres:
@@ -475,10 +475,12 @@ jobs:
         env:
           SWEEP_PASSWORD: ${{ env.DEMO_LOGIN_PASSWORD }}
         run: |
+          status=0
           python platform/tools/ui-sweep/sweep.py --base http://localhost:3000 \
             --sizes phone,desktop --axe platform/web/node_modules/axe-core/axe.min.js \
-            --out /tmp/ui-sweep
+            --out /tmp/ui-sweep --fail || status=$?
           cat /tmp/ui-sweep/report.md | head -60 >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
 
       - name: Keep the report
         if: always()

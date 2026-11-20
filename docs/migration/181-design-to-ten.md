@@ -295,7 +295,24 @@ start the day the owner answers §6.1 and §6.2.
   the calendar's grid rows, small phone targets, cut-off directory names,
   run-together parts and the unfocusable scroll region are fixed.
 
-**Still open:** the sweep re-run to zero and its CI gate; Phase 3, one
-visual system on desktop; Phase 6, drawers (Django's until each save cuts
-over), toasts, copy and motion; Phase 7, sessions with users.
+**Sweep at zero, gate on (2026-11-20, afternoon).** The local sweep went
+from 214 page loads with findings (2026-11-20-c, 1,344 loads) to 13
+(2026-11-20-d) and then none in a re-probe of those pages:
+- the phone's swipe hint is white on `#c2510f` (4.69:1), where the brand
+  orange read 3.87:1;
+- the top bar's Messages and Notifications are named with the figure their
+  badge shows ("Notifications, 4 unread");
+- the account button is named in words and its initials are hidden;
+- the calendar's composer and the phone's grouped To-Dos are named by the
+  words they show;
+- a home shortcut's name wraps whole.
+
+The sweep's tap check also exempts a link inside a record's line of facts, an
+inline target under WCAG 2.5.8, as it already exempts cells and sentences.
+Platform CI's own sweep then read **896 page loads, 0 with findings** (run
+44717508691), so the job is now a gate (`--fail`, no `continue-on-error`).
+
+**Still open:** Phase 3, one visual system on desktop; Phase 6, drawers
+(Django's until each save cuts over), toasts, copy and motion; Phase 7,
+sessions with users.
 
