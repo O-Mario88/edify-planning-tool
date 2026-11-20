@@ -458,6 +458,25 @@ dialog[data-ph='sheet'] [data-ph='row-name'] { font-size: 16px !important; line-
    words, which ran into the next chip on a phone (2026-11-20). */
 [data-ph='strip'] > [data-ph='strip-link'] { flex-shrink: 0 !important; white-space: nowrap !important; }
 
+/* COMPACT (owner, 2026-11-20: "compact beautifully laid out cards, tables,
+   tiles, filter, headers"). Measured before: the header took the first
+   149-233px, tiles 82-136px, cards 10px corners against Home's 16px. One
+   rhythm now: 8px inside the header, 12px between blocks and tiles, 12px
+   corners, compact tiles. */
+[data-ph='page'] { gap: 8px !important; padding-top: 14px !important; }
+[data-ph='eyebrow'] { font-size: 11px !important; line-height: 14px !important; }
+[data-ph='description'] { margin: 0 !important; font-size: 13px !important; line-height: 18px !important; }
+[data-ph='controls'] { gap: 6px !important; }
+[data-ph='blocks'] { gap: 12px !important; margin-top: 4px !important; }
+[data-ph='card'] { border-radius: 12px !important; }
+@container ph-blocks (max-width: 47.999rem) {
+  [data-ph='tiles'] { gap: 8px !important; }
+  [data-ph='tile'] { grid-template-columns: 30px minmax(0, 1fr) !important; column-gap: 8px !important; row-gap: 4px !important; padding: 10px !important; border-radius: 12px !important; }
+  [data-ph='tile-icon'] { width: 30px !important; height: 30px !important; border-radius: 9px !important; }
+  [data-ph='tile-icon'] svg { width: 16px !important; height: 16px !important; }
+  [data-ph='tile-info'] { top: 10px !important; right: 10px !important; }
+}
+
 /* Last: whatever this layer gives a part's display, hidden hides it. */
 [data-ph][hidden], [data-ph] [hidden] { display: none !important; }
 

@@ -88,7 +88,7 @@ export async function ProfilePage({ schoolId, query }: { schoolId: string; query
   const { frame, main, rail } = splitRail(answer.blocks);
   const props = { pagePath, drawerHref, selectable, clearFilters: false };
   return (
-    <div className="mx-auto max-w-[1500px] space-y-4 px-4 pb-24 pt-5 sm:px-6 lg:pb-8" data-page={pagePath} data-tab={activeTab}>
+    <div className="mx-auto max-w-[1500px] space-y-3 px-4 pb-24 pt-4 sm:px-6 lg:pb-8" data-page={pagePath} data-tab={activeTab}>
       {answer.header ? <PageHeader header={answer.header} hrefOf={hrefOf} /> : null}
       {answer.tabs.length ? <TabRail rail={profileTabs(answer.tabs, pagePath, profileYear(answer.blocks, asked.fy))} /> : null}
       {rail.length ? (

@@ -157,7 +157,7 @@ function Tile({ metric, compact, isHero = false }: { readonly metric: PageMetric
         <>
           <View style={[styles.head, metric.note ? styles.besideInfo : null]}>
             <View style={[styles.icon, styles.iconCompact, { backgroundColor: `${tint}1f` }]}>
-              <Icon size={18} color={tint} />
+              <Icon size={16} color={tint} />
             </View>
             <Text
               style={[styles.value, styles.valueCompact, isHero && styles.valueHero, { color: valueColor }]}
@@ -206,14 +206,16 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 10,
     borderWidth: 1,
-    borderRadius: 14,
-    paddingVertical: 12,
+    borderRadius: 12,
+    paddingVertical: 10,
     paddingHorizontal: 12,
     boxShadow: TILE_SHADOW,
   },
-  compact: { flexDirection: 'column', alignItems: 'stretch', gap: 6, borderRadius: 14, padding: 12 },
+  // Compact (owner, 2026-11-20: "compact beautifully laid out ... tiles"),
+  // as the web's phone tiles: 10px inside, a 30pt icon, 4pt between lines.
+  compact: { flexDirection: 'column', alignItems: 'stretch', gap: 4, borderRadius: 12, padding: 10 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  iconCompact: { width: 34, height: 34 },
+  iconCompact: { width: 30, height: 30, borderRadius: 9 },
   infoCorner: { position: 'absolute', top: 12, right: 12 },
   besideInfo: { paddingRight: 20 },
   icon: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },

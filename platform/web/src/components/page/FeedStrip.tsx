@@ -31,7 +31,7 @@ const TINTS: Readonly<Record<FigureTint, { icon: string; line: string }>> = {
  *  least this wide, and the info mark sits in the corner instead of taking a
  *  column from the label. */
 const TILE =
-  'relative flex items-center gap-4 rounded-[16px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] px-5 py-4 text-left no-underline shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-14px_rgba(15,23,42,0.18)] transition-[box-shadow,border-color] duration-[180ms] motion-reduce:transition-none';
+  'relative flex items-center gap-3 rounded-[12px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] px-4 py-3 text-left no-underline shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-14px_rgba(15,23,42,0.18)] transition-[box-shadow,border-color] duration-[180ms] motion-reduce:transition-none';
 const LINKED =
   'hover:border-[var(--edify-border-strong)] hover:shadow-[0_1px_2px_rgba(15,23,42,0.06),0_12px_28px_-12px_rgba(15,23,42,0.24)] focus-visible:outline-2 focus-visible:outline-offset-2';
 
@@ -43,13 +43,13 @@ function Tile({ metric, href, hero = false }: { metric: PageMetric; href: string
     <>
       <span
         aria-hidden="true"
-        className={hero ? 'grid h-14 w-14 shrink-0 place-items-center rounded-[14px]' : 'grid h-12 w-12 shrink-0 place-items-center rounded-[12px]'}
+        className={hero ? 'grid h-12 w-12 shrink-0 place-items-center rounded-[12px]' : 'grid h-10 w-10 shrink-0 place-items-center rounded-[10px]'}
         style={{ background: `color-mix(in srgb, ${tint.icon} 12%, transparent)`, color: tint.icon }}
       >
-        <Icon size={24} strokeWidth={1.75} />
+        <Icon size={hero ? 22 : 20} strokeWidth={1.75} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className={`block font-bold tracking-[-0.01em] text-[var(--edify-text)] tabular-nums ${hero ? 'text-[30px] leading-[36px]' : 'text-[22px] leading-[28px]'}`}>{metric.value}</span>
+        <span className={`block font-bold tracking-[-0.01em] text-[var(--edify-text)] tabular-nums ${hero ? 'text-[28px] leading-[32px]' : 'text-[20px] leading-[24px]'}`}>{metric.value}</span>
         <span className="block text-[13.7px] font-medium leading-[18px] text-[var(--edify-text-muted)]">{metric.label}</span>
         {metric.helper ? (
           <span className="mt-1 block text-[12px] font-semibold leading-[16px]" style={{ color: tint.line }}>
@@ -85,7 +85,9 @@ interface FeedStripProps {
   hero?: boolean;
 }
 
-const TILE_GRID = 'grid grid-cols-[repeat(auto-fill,minmax(256px,1fr))] gap-4';
+/** Compact (owner, 2026-11-20: "compact beautifully laid out cards, tables,
+ *  tiles"): 12px between tiles, as between a page's blocks. */
+const TILE_GRID = 'grid grid-cols-[repeat(auto-fill,minmax(256px,1fr))] gap-3';
 
 export function FeedStrip({ strip, resolve, hero = false }: FeedStripProps) {
   if (!strip.metrics.length) return null;
@@ -94,14 +96,14 @@ export function FeedStrip({ strip, resolve, hero = false }: FeedStripProps) {
   const { shown, folded } = hero ? { shown: strip.metrics, folded: [] } : foldFigures(strip.metrics);
   const tile = (metric: PageMetric) => <Tile key={metric.label} metric={metric} href={metric.href ? resolve(metric.href) : ''} hero={hero} />;
   return (
-    <section data-block="strip" data-kpi-count={strip.metrics.length} data-hero={hero || undefined} aria-label={strip.title || (hero ? 'What decides your work' : 'Performance overview')} className="space-y-3">
+    <section data-block="strip" data-kpi-count={strip.metrics.length} data-hero={hero || undefined} aria-label={strip.title || (hero ? 'What decides your work' : 'Performance overview')} className="space-y-2">
       {strip.title || strip.subtitle ? (
         <header>
           {strip.title ? <h2 className="text-[16px] font-bold text-[var(--edify-text)]">{strip.title}</h2> : null}
           {strip.subtitle ? <p className="text-[13px] text-[var(--edify-text-muted)]">{strip.subtitle}</p> : null}
         </header>
       ) : null}
-      <div role="list" className={hero ? 'grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4' : TILE_GRID}>
+      <div role="list" className={hero ? 'grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-3' : TILE_GRID}>
         {shown.map(tile)}
       </div>
       {folded.length ? (

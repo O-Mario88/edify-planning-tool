@@ -72,7 +72,8 @@ export function toneColor(colors: Palette, tone: string): string | undefined {
 }
 
 export const cardStyles = StyleSheet.create({
-  card: { borderWidth: 1, borderRadius: 10, boxShadow: CARD_SHADOW },
+  // 12pt corners on every card, as the web's (owner's drawer reference, 12px).
+  card: { borderWidth: 1, borderRadius: 12, boxShadow: CARD_SHADOW },
   padded: { padding: 16 },
 });
 

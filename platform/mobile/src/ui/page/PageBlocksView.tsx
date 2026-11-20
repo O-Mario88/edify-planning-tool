@@ -272,7 +272,8 @@ function SegmentsCard({ segments, onFilter }: { readonly segments: PageSegments;
 }
 
 const styles = StyleSheet.create({
-  stack: { gap: 16 },
+  // One rhythm between a page's blocks, as the web's (2026-11-20, compact).
+  stack: { gap: 12 },
   scope: { fontFamily: fonts.medium, fontSize: 13 },
   section: { borderTopWidth: 1, paddingTop: 14, marginTop: 6 },
   sectionText: { fontFamily: fonts.bold, fontSize: 17, letterSpacing: -0.2 },

@@ -73,7 +73,7 @@ export async function FeedPage({ path, query, alsoAs = [] }: { path: string; que
   return (
     // The existing page's own frame (its padding and width; a dashboard's
     // container, which its stylesheet's container queries read), else ours.
-    <div className={answer.pageClass || 'mx-auto max-w-[1500px] space-y-4 px-4 pb-24 pt-5 sm:px-6 lg:pb-8'} data-page={pagePath}>
+    <div className={answer.pageClass || 'mx-auto max-w-[1500px] space-y-3 px-4 pb-24 pt-4 sm:px-6 lg:pb-8'} data-page={pagePath}>
       {answer.header ? <PageHeader header={answer.header} hrefOf={hrefOf} /> : null}
       <FeedBlocks blocks={answer.blocks} pagePath={pagePath} drawerHref={drawerHref} selectable={Boolean(answer.selection?.actions.length)} />
       {answer.selection?.actions.length ? <SelectionBar selection={answer.selection} pageHref={drawerHref} /> : null}

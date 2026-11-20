@@ -331,13 +331,14 @@ function ExportButton({ action, onPress }: { readonly action: PageAction; readon
 }
 
 const styles = StyleSheet.create({
-  page: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 32, gap: 12 },
+  // Compact (owner, 2026-11-20): 8pt between the header's parts, as the web.
+  page: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 32, gap: 8 },
   back: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start' },
   backText: { fontFamily: fonts.semibold, fontSize: 12, textTransform: 'uppercase' },
-  eyebrow: { fontFamily: fonts.semibold, fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.4 },
+  eyebrow: { fontFamily: fonts.semibold, fontSize: 11, lineHeight: 14, textTransform: 'uppercase', letterSpacing: 0.4 },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   title: { flexShrink: 1, fontFamily: fonts.bold, fontSize: 20, lineHeight: 24 },
-  controls: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  controls: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
   export: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 32, borderWidth: 1, borderRadius: radius.sm, paddingHorizontal: 12 },
   exportText: { fontFamily: fonts.semibold, fontSize: 12 },
   error: { fontFamily: fonts.medium, fontSize: 13 },

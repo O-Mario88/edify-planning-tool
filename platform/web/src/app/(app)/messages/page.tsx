@@ -148,7 +148,7 @@ export default async function MessagesPage({ searchParams }: { searchParams: Sea
   const pager = inboxPager(answer);
   const open = answer.threads.find((row) => row.id === answer.selectedThreadId);
   return (
-    <div className="mx-auto max-w-[1500px] space-y-4 px-4 pb-24 pt-5 sm:px-6 lg:pb-8" data-page={MESSAGES_PATH}>
+    <div className="mx-auto max-w-[1500px] space-y-3 px-4 pb-24 pt-4 sm:px-6 lg:pb-8" data-page={MESSAGES_PATH}>
       <PageHeader header={messagesHeader(answer, existingWebUrl)} hrefOf={(action) => action.href} />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <TabRail rail={rail} counts={counts} />
