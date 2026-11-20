@@ -1,4 +1,4 @@
-import { inRowFor } from '../ui/page/PageFilterBar';
+import { inRowFor } from '../ui/page/filterRow';
 
 describe('the filter row', () => {
   test('holds two selects on a narrow phone, so no value is cut, and three from a 480px row', () => {

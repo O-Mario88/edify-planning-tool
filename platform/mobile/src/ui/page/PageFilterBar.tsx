@@ -12,18 +12,9 @@ import type { PageFilter, PageFilters } from '../../gen/edify/screens/v1/page_pb
 import { fonts, radius, useTheme } from '../../theme';
 import { Dropdown, useDropdown } from '../Dropdown';
 import { Select } from '../Select';
+import { PAGE_GUTTERS, inRowFor } from './filterRow';
 
-/** Selects a phone's filter row holds before the rest go under More. */
-const IN_ROW = 3;
-/** On a row narrower than this a third select would cut its value. */
-const NARROW_ROW = 480;
-/** The page's own side padding, either side of the row (PageScreen). */
-const PAGE_GUTTERS = 32;
 
-/** How many selects a row of this width holds (the web's inRowFor). */
-export function inRowFor(rowWidth: number): number {
-  return rowWidth > 0 && rowWidth < NARROW_ROW ? IN_ROW - 1 : IN_ROW;
-}
 const MORE_WIDTH = 272;
 /** One labelled select in the More panel, and the panel's padding. */
 const MORE_FIELD_HEIGHT = 56;
