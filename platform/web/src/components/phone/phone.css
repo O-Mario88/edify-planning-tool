@@ -242,6 +242,14 @@ a[data-ph='tile']:active { background: var(--ph-primary-soft) !important; }
 [data-ph='chips-area'] { display: flex !important; }
 [data-ph='seg-body'] > [data-ph='chips-area'] { padding: 12px 16px !important; }
 [data-ph='switch'][data-folded] { overflow: visible !important; }
+/* Rails and switches never scroll and never cut a label: on a narrow phone
+   their tabs sit closer, and a tab that still does not fit shrinks, its
+   label wrapping onto a second line (2026-11-20 sweep: Budget's "Monthly
+   Budget | Quarterly Budget | More" was 13px over at 390px). */
+@container ph-blocks (max-width: 29.999rem) {
+  :is([data-ph='rail'], [data-ph='switch']) > [data-ph='seg'], :is([data-ph='rail'], [data-ph='switch']) > [data-ph='more'] > [data-ph='seg'] { padding: 0 10px !important; }
+}
+:is([data-ph='rail'], [data-ph='switch']) > [data-ph='seg'] { flex-shrink: 1 !important; min-width: 0 !important; white-space: normal !important; text-align: center !important; line-height: 15px !important; }
 button[data-ph='menu-item'] { width: 100% !important; border: 0 !important; background: none !important; text-align: left !important; cursor: pointer !important; }
 
 /* ── Facts card ─────────────────────────────────────────── */
