@@ -22,7 +22,7 @@ describe('a panel of counted links', () => {
       ['0', 'Past their day, not completed', '/x?2'],
       ['8', 'Past due, any age', '/x?3'],
     ]);
-    expect(metrics[3]?.note).toBe('8 past due, any age');
+    expect(metrics.every((m) => m.note === '')).toBe(true);
   });
 
   it('leaves links that are not all counted, and a single counted link, as they came', () => {

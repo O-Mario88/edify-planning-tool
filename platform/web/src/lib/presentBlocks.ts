@@ -33,7 +33,8 @@ export function countedFigures(links: readonly PageLink[]): PageMetric[] | null 
   for (const link of links) {
     const match = COUNTED.exec(link.text.trim());
     if (!match || link.drawer) return null;
-    figures.push(create(PageMetricSchema, { value: match[1], label: sentenceCase(match[2] ?? ''), href: link.href, note: link.text.trim() }));
+    // No note: the figure and its words say it all, so the tile draws no info mark.
+    figures.push(create(PageMetricSchema, { value: match[1], label: sentenceCase(match[2] ?? ''), href: link.href }));
   }
   return figures;
 }
