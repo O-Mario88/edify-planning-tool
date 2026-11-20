@@ -804,11 +804,11 @@ const styles = StyleSheet.create({
   head: {
     fontFamily: fonts.bold,
     fontSize: 14,
-    lineHeight: 40,
+    lineHeight: 32,
     paddingHorizontal: CELL_SIDE,
     textTransform: 'capitalize',
   },
-  cellBox: { minHeight: 44, justifyContent: 'center', paddingHorizontal: CELL_SIDE, paddingVertical: 10 },
+  cellBox: { minHeight: 32, justifyContent: 'center', paddingHorizontal: CELL_SIDE, paddingVertical: 7 },
   cell: { fontSize: 13, lineHeight: 18 },
   nothing: { opacity: 0.7 },
   numeric: { textAlign: 'right' },
