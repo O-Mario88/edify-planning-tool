@@ -415,4 +415,8 @@ dialog[data-ph='sheet'][open] { display: flex !important; flex-direction: column
 dialog[data-ph='sheet']::backdrop { background: rgba(15, 23, 42, 0.45) !important; }
 [data-ph='sheet-head'] { display: flex !important; align-items: flex-start !important; gap: 10px !important; }
 [data-ph='sheet-close'] { display: grid !important; place-items: center !important; flex-shrink: 0 !important; width: 36px !important; height: 36px !important; margin: -6px -6px 0 0 !important; border: 0 !important; border-radius: 999px !important; background: var(--ph-surface) !important; color: var(--ph-text) !important; cursor: pointer !important; }
+/* The existing stylesheets keep a button's words on one line and set a
+   dialog's words to 500: a list row's words wrap, a sheet's name is bold. */
+[data-ph='list-open'], [data-ph='list-open'] > span { white-space: normal !important; }
+dialog[data-ph='sheet'] [data-ph='row-name'] { font-size: 16px !important; line-height: 21px !important; font-weight: 700 !important; }
 
