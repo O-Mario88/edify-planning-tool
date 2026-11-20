@@ -221,7 +221,8 @@ a[data-ph='tile']:active { background: var(--ph-primary-soft) !important; }
 [data-ph='details-facts'] { display: flex !important; flex-wrap: wrap !important; column-gap: 18px !important; row-gap: 6px !important; }
 [data-ph='details-fact'] { color: var(--ph-text-muted) !important; font-size: 12px !important; line-height: 17px !important; font-weight: 500 !important; }
 [data-ph='details-fact'] b { color: var(--ph-tone, var(--ph-link)) !important; font-weight: 700 !important; }
-[data-ph='hint'] { position: absolute !important; top: 7px !important; right: 20px !important; z-index: 2 !important; padding: 2px 10px !important; border-radius: 999px !important; background: #d85b13 !important; color: #17232b !important; font-size: 12px !important; font-weight: 600 !important; white-space: nowrap !important; pointer-events: none !important; animation: ph-hint 4.3s ease forwards !important; }
+/* White on the orange: 4.84:1, where the dark ink read 4.13:1 (axe, 2026-11-20). */
+[data-ph='hint'] { position: absolute !important; top: 7px !important; right: 20px !important; z-index: 2 !important; padding: 2px 10px !important; border-radius: 999px !important; background: #d85b13 !important; color: #ffffff !important; font-size: 12px !important; font-weight: 600 !important; white-space: nowrap !important; pointer-events: none !important; animation: ph-hint 4.3s ease forwards !important; }
 @keyframes ph-hint {
   0%, 9% { transform: translateX(0); opacity: 1; }
   18% { transform: translateX(-6px); }

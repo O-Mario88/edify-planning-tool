@@ -33,7 +33,8 @@ const PICK_WIDTH = 40;
 const ROW_BUTTON_WIDTH = 84;
 
 const HINT_MS = 4000;
-const HINT = { fill: '#d85b13', ink: '#17232b' } as const;
+// White on the orange reads 4.84:1; the dark ink read 4.13:1 (axe, 2026-11-20).
+const HINT = { fill: '#d85b13', ink: '#ffffff' } as const;
 /** The hint shows once per session, as the web's does until a swipe. */
 let hintSeen = false;
 /** A phone's tables as row cards (owner, 2026-11-19), reversed for the spreadsheet on every screen (2026-11-20). */
