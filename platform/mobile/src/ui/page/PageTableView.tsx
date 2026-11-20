@@ -223,9 +223,9 @@ function BodyRow({ row, table, widths, isFirst, opens, picks, isOpen, onToggle, 
             );
           }
           const color = rowInk(colors, row) ?? toneColor(colors, cell.tone) ?? (cell.strong ? colors.text : colors.textMuted);
+          // A cell's text wraps in full, never cut (owner, 2026-10-02).
           const text = (
             <Text
-              numberOfLines={2}
               style={[
                 styles.cell,
                 { color, fontFamily: cell.strong ? fonts.bold : fonts.medium },
