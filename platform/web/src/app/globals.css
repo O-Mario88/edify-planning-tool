@@ -240,5 +240,6 @@ main [data-directory-name]:not(#edify-wrap) {
   -webkit-line-clamp: unset !important;
   line-clamp: none !important;
   overflow: visible !important;
+  max-height: none !important;
 }
 
