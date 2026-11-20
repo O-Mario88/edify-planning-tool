@@ -10,6 +10,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/feeddom"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/oversightportfolio"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
@@ -276,7 +277,7 @@ func (g districtGroup) blocks() []*screensv1.PageBlock {
 	for _, d := range g.districts {
 		f := d.figures
 		t.Rows = append(t.Rows, &screensv1.PageRow{Cells: []*screensv1.PageCell{
-			cell(d.name + d.region), cell(strconv.Itoa(d.schools)), cell(strconv.Itoa(d.schoolsPlanned)), cell(strconv.Itoa(d.schoolsAchieved)),
+			cell(feeddom.JoinParts(d.name, d.region)), cell(strconv.Itoa(d.schools)), cell(strconv.Itoa(d.schoolsPlanned)), cell(strconv.Itoa(d.schoolsAchieved)),
 			{Text: fmt.Sprintf("%d%%", pyPercent(d.schoolsAchieved, d.schools)), Strong: true},
 			cell(strconv.Itoa(f.planned)), cell(strconv.Itoa(f.achieved)), cell(strconv.Itoa(f.waiting)), cell(strconv.Itoa(f.returned)),
 			{Text: fmt.Sprintf("%d%%", pyPercent(f.achieved, f.planned)), Strong: true},

@@ -143,47 +143,65 @@ func (n *Node) text() string { return n.textOf(true) }
 // draws apart with nothing between them.
 const partJoiner = " · "
 
-// textOf is Node.text: the element's words, whitespace collapsed, what only
-// a screen reader hears left out when shown. Where one element's words end
-// in a lower-case letter and the next element's start with a capital, with
-// nothing between them, the two read apart, joined by partJoiner
-// (page_blocks._sentence_edges): "Cluster Meetings · UGX 291K".
-func (n *Node) textOf(shown bool) string {
-	var b strings.Builder
-	edge := false
-	write := func(s string) {
-		if s == "" {
-			edge = false
-			return
-		}
-		if edge && b.Len() > 0 {
-			last, _ := utf8.DecodeLastRuneInString(b.String())
-			first, _ := utf8.DecodeRuneInString(s)
-			if unicode.IsLower(last) && unicode.IsUpper(first) {
-				b.WriteString(partJoiner)
-			}
-		}
-		b.WriteString(s)
-		edge = false
+// joiner gathers words as Node.text reads them: at an element's edge, where
+// the words so far end in a lower-case letter and the next start with a
+// capital, it puts partJoiner between them (page_blocks._sentence_edges).
+type joiner struct {
+	b    strings.Builder
+	edge bool
+}
+
+func (j *joiner) write(s string) {
+	if s == "" {
+		j.edge = false
+		return
 	}
+	if j.edge && j.b.Len() > 0 {
+		last, _ := utf8.DecodeLastRuneInString(j.b.String())
+		first, _ := utf8.DecodeRuneInString(s)
+		if unicode.IsLower(last) && unicode.IsUpper(first) {
+			j.b.WriteString(partJoiner)
+		}
+	}
+	j.b.WriteString(s)
+	j.edge = false
+}
+
+// JoinParts is the text of parts a page draws as elements side by side, as
+// Node.text reads them: "Cluster Meetings", "UGX 291K" read
+// "Cluster Meetings · UGX 291K"; "Unit", "schools" read "Unitschools".
+func JoinParts(parts ...string) string {
+	var j joiner
+	for _, p := range parts {
+		j.edge = true
+		j.write(p)
+	}
+	return j.b.String()
+}
+
+// textOf is Node.text: the element's words, whitespace collapsed, what only
+// a screen reader hears left out when shown, parts drawn apart read apart
+// (joiner): "Cluster Meetings · UGX 291K".
+func (n *Node) textOf(shown bool) string {
+	var j joiner
 	var collect func(*Node)
 	collect = func(x *Node) {
 		for _, c := range x.children {
 			switch v := c.(type) {
 			case string:
-				write(v)
+				j.write(v)
 			case *Node:
 				if silent[v.tag] || (shown && v.has("sr-only")) {
 					continue
 				}
-				edge = true
+				j.edge = true
 				collect(v)
-				edge = true
+				j.edge = true
 			}
 		}
 	}
 	collect(n)
-	return strings.Join(strings.Fields(b.String()), " ")
+	return strings.Join(strings.Fields(j.b.String()), " ")
 }
 
 // collect is Node._collect(parts, shown=True): the element's words as

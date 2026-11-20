@@ -24,3 +24,29 @@ func TestTwoPartsDrawnApartReadApart(t *testing.T) {
 		}
 	}
 }
+
+// JoinParts reads parts drawn side by side as Node.text reads the same
+// elements: the Target Distribution's details, a fund legend's line.
+func TestJoinPartsReadsAsTheElementsWouldRead(t *testing.T) {
+	cases := []struct {
+		parts []string
+		want  string
+	}{
+		{[]string{"Cluster Meetings", "UGX 291K"}, "Cluster Meetings · UGX 291K"},
+		{[]string{"Unit", "schools", "Portfolio"}, "Unitschools · Portfolio"},
+		{[]string{"Unit", "", "Portfolio"}, "Unit · Portfolio"},
+		{[]string{"Rescheduled 2 time(s)", "Mukono Primary"}, "Rescheduled 2 time(s)Mukono Primary"},
+	}
+	for _, c := range cases {
+		if got := JoinParts(c.parts...); got != c.want {
+			t.Errorf("%q: %q, want %q", c.parts, got, c.want)
+		}
+		el := El("div", "")
+		for _, p := range c.parts {
+			el.children = append(el.children, El("span", "", p))
+		}
+		if got := el.Text(); got != c.want {
+			t.Errorf("%q as elements: %q, want %q", c.parts, got, c.want)
+		}
+	}
+}

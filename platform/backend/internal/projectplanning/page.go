@@ -660,7 +660,7 @@ func (pg *page) queue() []*screensv1.PageBlock {
 	}
 	if len(pg.pageRows) == 0 {
 		t.Rows = []*screensv1.PageRow{{Cells: []*screensv1.PageCell{
-			cell("No project schools match these filtersClear the filters or assign schools to a project from the School Directory.")}}}
+			cell("No project schools match these filters · Clear the filters or assign schools to a project from the School Directory.")}}}
 	}
 	stable := pg.stable()
 	for i := 0; i < len(pg.pageRows); {

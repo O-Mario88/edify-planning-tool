@@ -10,6 +10,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/feeddom"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/fundworkspace"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/todos"
 )
@@ -339,7 +340,7 @@ func (pg *page) aside() (string, []*screensv1.PagePanelItem) {
 	if len(pg.attention) > 0 {
 		links := []*screensv1.PageLink{}
 		for _, a := range pg.attention {
-			links = append(links, &screensv1.PageLink{Text: "!", Href: a.url, Caption: a.issue + a.title + " · →", Drawer: true})
+			links = append(links, &screensv1.PageLink{Text: "!", Href: a.url, Caption: feeddom.JoinParts(a.issue, a.title) + " · →", Drawer: true})
 		}
 		sections = append(sections, section{"Attention Needed", []*screensv1.PagePanelItem{text(strconv.Itoa(len(pg.attention))), fundworkspace.Links(links...)}})
 	}

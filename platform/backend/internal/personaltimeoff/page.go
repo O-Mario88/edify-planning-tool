@@ -253,7 +253,7 @@ func (v *view) trackerBlocks() []*screensv1.PageBlock {
 	}
 	if len(v.tracker) == 0 {
 		rows = append(rows, &screensv1.PageRow{Cells: []*screensv1.PageCell{
-			cell("No team leave historyApproved and pending team requests will appear here.")}})
+			cell("No team leave history · Approved and pending team requests will appear here.")}})
 	}
 	return []*screensv1.PageBlock{panel("Team leave tracker", ""),
 		{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{Columns: columns, Rows: rows}}}}

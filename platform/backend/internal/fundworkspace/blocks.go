@@ -10,6 +10,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/budgetpage"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/feeddom"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 )
 
@@ -123,7 +124,7 @@ func Mix(title, currency string, labels []string, totals map[string]int64) *scre
 		if pct := budgetpage.Percentage(s.total, total); pct >= 7 {
 			items = append(items, Text(fmt.Sprintf("%d%%", pct)))
 		}
-		legend = append(legend, &screensv1.PageLink{Text: s.label + budgetpage.CompactIn(currency, s.total)})
+		legend = append(legend, &screensv1.PageLink{Text: feeddom.JoinParts(s.label, budgetpage.CompactIn(currency, s.total))})
 	}
 	return Panel(title, append(items, Links(legend...))...)
 }

@@ -9,6 +9,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/allocations"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/feeddom"
 )
 
 // tableColumns are the master table's heads.
@@ -130,8 +131,9 @@ func (ws *workspace) cells(r *row, number int, sel selection) []*screensv1.PageC
 	case r.state != nil && !r.state.summable:
 		balance = "Open"
 	}
-	details := "View milestone detailsActivity" + r.activity + "Unit" + unit + "PortfolioCore " + orDash(r.core) +
-		" · Client " + orDash(r.client) + "Method" + method + "Owner" + owner
+	// The details drawer's labels and values, read as the page draws them.
+	details := feeddom.JoinParts("View milestone details", "Activity", r.activity, "Unit", unit, "Portfolio",
+		"Core "+orDash(r.core)+" · Client "+orDash(r.client), "Method", method, "Owner", owner)
 	return []*screensv1.PageCell{
 		{Text: strconv.Itoa(number)}, {Text: r.priority.title}, {Text: r.title, Strong: true}, {Text: r.activity},
 		{Text: orDash(r.target)}, {Text: unit}, {Text: orDash(r.core)}, {Text: orDash(r.client)}, {Text: method},
@@ -145,13 +147,13 @@ func (sel selection) rowAction(ws *workspace, r *row) string {
 	if sel.role.Distributor && ws.published && r.method == fieldCascade && !r.needsConfirmation {
 		switch r.status {
 		case "Distributed":
-			return "ReviewLocked allocation"
+			return "Review · Locked allocation"
 		case "Ready to approve":
-			return "ApproveZero balance"
+			return "Approve · Zero balance"
 		case "Balance open":
 			return "Continue" + orDash(r.remaining) + " remaining"
 		}
-		return "DistributeTo Program Leads"
+		return "Distribute · To Program Leads"
 	}
 	if sel.role.Director && !ws.published {
 		return "Confirm source figure"
