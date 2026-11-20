@@ -1965,7 +1965,9 @@ class EmptyStatePartsTest(SimpleTestCase):
 
     def test_a_title_that_ends_a_sentence_keeps_its_own_mark(self):
         self.assertEqual(
-            self._empty('<div class="edify-empty-state"><strong>All clear!</strong><span>Nothing waits.</span></div>'),
+            self._empty(
+                '<div class="edify-empty-state"><strong>All clear!</strong><span>Nothing waits.</span></div>'
+            ),
             "All clear! Nothing waits.",
         )
 
@@ -1978,6 +1980,8 @@ class EmptyStatePartsTest(SimpleTestCase):
             "No record yet: the figure is 0.",
         )
         self.assertEqual(
-            self._empty('<div class="edify-empty-state">No schools <b>yet</b> in this cluster.</div>'),
+            self._empty(
+                '<div class="edify-empty-state">No schools <b>yet</b> in this cluster.</div>'
+            ),
             "No schools yet in this cluster.",
         )
