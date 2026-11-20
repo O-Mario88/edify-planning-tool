@@ -11,6 +11,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 
 import type { PageFilter, PageFilters } from '@/gen/edify/screens/v1/page_pb';
 
+import { selectName } from '../blocks/FilterBar';
 import { MorePanel } from './MorePanel';
 
 /** Selects a phone's filter row holds before the rest go under More. */
@@ -26,7 +27,7 @@ export function inRowFor(width: number): number {
 
 function FilterSelect({ filter, onChange }: { filter: PageFilter; onChange: () => void }) {
   return (
-    <select data-ph="select" name={filter.name} defaultValue={filter.value} aria-label={filter.label} onChange={onChange}>
+    <select data-ph="select" name={filter.name} defaultValue={filter.value} aria-label={selectName(filter)} onChange={onChange}>
       {filter.options.map((option) => (
         <option key={option.value} value={option.value}>
           {option.label}

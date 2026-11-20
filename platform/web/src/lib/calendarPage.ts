@@ -71,6 +71,15 @@ export function mondayOffset(year: number, month: number): number {
   return (new Date(Date.UTC(year, month - 1, 1)).getUTCDay() + 6) % 7;
 }
 
+/** A month's cells, blanks included, cut into weeks of seven: each the
+ *  grid's row, so a screen reader reads the days as a grid (2026-11-20, axe:
+ *  a gridcell needs a row). */
+export function weeksOf<T>(cells: readonly T[]): T[][] {
+  const weeks: T[][] = [];
+  for (let start = 0; start < cells.length; start += 7) weeks.push(cells.slice(start, start + 7));
+  return weeks;
+}
+
 function eventOf(event: PageCalendarEvent): CalendarEvent {
   return {
     kind: event.kind,

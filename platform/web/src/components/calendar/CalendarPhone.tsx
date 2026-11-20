@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 import type { CalendarMonth } from '@/lib/calendarPage';
-import { mondayOffset, monthLinks } from '@/lib/calendarPage';
+import { mondayOffset, monthLinks, weeksOf } from '@/lib/calendarPage';
 
 import { Icon } from '../shell/icons';
 import { CalendarAgenda } from './CalendarAgenda';
@@ -56,11 +56,14 @@ export function CalendarPhone({ month, today, eyebrow, query, dayEmpty }: Calend
         </nav>
       </header>
       <div className="grid grid-cols-7 gap-y-1 px-3 pb-4 pt-3 text-center" role="grid" aria-label={month.title}>
-        {INITIALS.map((initial, index) => (
-          <span key={index} role="columnheader" className="pb-1 text-[12px] font-semibold">{initial}</span>
-        ))}
-        {Array.from({ length: lead }, (_, index) => <span key={`lead-${index}`} aria-hidden="true" />)}
-        {month.days.map((day) => (
+        <div role="row" className="contents">
+          {INITIALS.map((initial, index) => (
+            <span key={index} role="columnheader" className="pb-1 text-[12px] font-semibold">{initial}</span>
+          ))}
+        </div>
+        {weeksOf([
+        ...Array.from({ length: lead }, (_, index) => <span key={`lead-${index}`} aria-hidden="true" />),
+        ...month.days.map((day) => (
           <button
             key={day.day}
             type="button"
@@ -77,6 +80,11 @@ export function CalendarPhone({ month, today, eyebrow, query, dayEmpty }: Calend
               ))}
             </span>
           </button>
+        )),
+        ]).map((week, index) => (
+          <div key={index} role="row" className="contents">
+            {week}
+          </div>
         ))}
       </div>
       <div className="border-t border-[var(--edify-border)] py-3">

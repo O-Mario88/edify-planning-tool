@@ -9,7 +9,7 @@
 import Link from 'next/link';
 
 import type { CalendarMonth } from '@/lib/calendarPage';
-import { mondayOffset, monthLinks, viewLink } from '@/lib/calendarPage';
+import { mondayOffset, monthLinks, viewLink, weeksOf } from '@/lib/calendarPage';
 
 import { BUTTON_OUTLINE, BUTTON_PRIMARY } from '../blocks/buttons';
 import { Icon } from '../shell/icons';
@@ -79,8 +79,9 @@ function Grid({ month, today }: { month: CalendarMonth; today: number }) {
         ))}
       </div>
       <div className="grid grid-cols-7">
-        {Array.from({ length: lead }, (_, index) => blank(`lead-${index}`))}
-        {month.days.map((day) => (
+        {weeksOf([
+        ...Array.from({ length: lead }, (_, index) => blank(`lead-${index}`)),
+        ...month.days.map((day) => (
           <article
             key={day.day}
             role="gridcell"
@@ -96,8 +97,14 @@ function Grid({ month, today }: { month: CalendarMonth; today: number }) {
               {day.events.map((event, index) => <CalendarEventChip key={index} event={event} compact />)}
             </div>
           </article>
+        )),
+        ...Array.from({ length: trail }, (_, index) => blank(`trail-${index}`)),
+        ]).map((week, index) => (
+          // Each week is a row of the grid; `contents` keeps the seven columns.
+          <div key={index} role="row" className="contents">
+            {week}
+          </div>
         ))}
-        {Array.from({ length: trail }, (_, index) => blank(`trail-${index}`))}
       </div>
     </div>
   );

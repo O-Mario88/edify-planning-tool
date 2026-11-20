@@ -60,12 +60,14 @@ export function textTone(tone: string): string {
  * danger, warning and success colours for its toned ones.
  */
 const RECORD_FACT: Readonly<Record<string, string>> = {
-  alert: 'text-[var(--edify-danger)]',
-  danger: 'text-[var(--edify-danger)]',
-  caution: 'text-[var(--edify-warning)]',
-  warning: 'text-[var(--edify-warning)]',
-  good: 'text-[var(--edify-success)]',
-  success: 'text-[var(--edify-success)]',
+  // The tones' text shades (TEXT, above): the bright tone colours read at
+  // 2.1–2.5:1 on a white card, under WCAG's 4.5:1 (axe, 2026-11-20).
+  alert: TEXT.danger as string,
+  danger: TEXT.danger as string,
+  caution: TEXT.warning as string,
+  warning: TEXT.warning as string,
+  good: TEXT.success as string,
+  success: TEXT.success as string,
 };
 
 export function recordFactTone(tone: string): string {

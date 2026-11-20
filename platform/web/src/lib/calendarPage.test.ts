@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { PageCalendarSchema, PagePanelSchema } from '@/gen/edify/screens/v1/page_pb';
 
-import { daysInMonth, kindLink, mondayOffset, monthLinks, monthOf, peopleStrips, todayIn, viewLink } from './calendarPage';
+import { daysInMonth, kindLink, mondayOffset, monthLinks, monthOf, peopleStrips, todayIn, viewLink, weeksOf } from './calendarPage';
 
 type Item = NonNullable<MessageInitShape<typeof PagePanelSchema>['items']>[number];
 
@@ -130,5 +130,12 @@ describe('kindLink and todayIn', () => {
     // 22:30 UTC on 13 November is already the 14th in Kampala.
     expect(todayIn(new Date(Date.UTC(2026, 10, 13, 22, 30)), 2026, 11)).toBe(14);
     expect(todayIn(new Date(Date.UTC(2026, 10, 13, 22, 30)), 2026, 12)).toBe(0);
+  });
+});
+
+describe('a month cut into weeks', () => {
+  it('is rows of seven, the last one short when the month ends mid-week', () => {
+    expect(weeksOf([1, 2, 3, 4, 5, 6, 7, 8, 9])).toEqual([[1, 2, 3, 4, 5, 6, 7], [8, 9]]);
+    expect(weeksOf([])).toEqual([]);
   });
 });

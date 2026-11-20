@@ -39,6 +39,12 @@ function applied(filter: Filter): boolean {
   return !filter.disabled && !all(filter.value.trim()) && filter.options.some((option) => all(option.value));
 }
 
+/** A select's accessible name: its label, else its caption, else its field
+ *  name in words (a select Go sends without a label read as nameless). */
+export function selectName(filter: { label: string; caption?: string; name: string }): string {
+  return filter.label || filter.caption || filter.name.replace(/[_-]+/g, ' ').replace(/^./, (c) => c.toUpperCase());
+}
+
 /** A field as the existing filter row draws it (micro-ux.js arrangeFilterRows). */
 function Field({ filter, onChange, inRow = true }: { filter: Filter; onChange: () => void; inRow?: boolean }) {
   return (
@@ -48,7 +54,7 @@ function Field({ filter, onChange, inRow = true }: { filter: Filter; onChange: (
       </span>
       <select
         name={filter.name}
-        aria-label={filter.label}
+        aria-label={selectName(filter)}
         defaultValue={filter.value}
         disabled={filter.disabled}
         onChange={onChange}

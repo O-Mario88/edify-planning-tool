@@ -329,7 +329,7 @@ describe('filters the page folds under its own More filters (web-fixes-2)', () =
 });
 
 describe('a record card’s facts in the existing card’s colours (web-fixes-2)', () => {
-  it('draws plain values in the accent blue and toned ones in the card’s red, amber and green', () => {
+  it('draws plain values in the accent blue and toned ones in the card’s red, amber and green, in their readable text shades', () => {
     const html = draw({
       blocks: [
         {
@@ -347,9 +347,9 @@ describe('a record card’s facts in the existing card’s colours (web-fixes-2)
       ],
     }, '/clusters');
     expect(html).toMatch(/<dd class="[^"]*text-\[var\(--edify-accent-text\)\][^"]*">7</);
-    expect(html).toMatch(/<dd class="[^"]*text-\[var\(--edify-danger\)\][^"]*">2</);
-    expect(html).toMatch(/<dd class="[^"]*text-\[var\(--edify-warning\)\][^"]*">2 schools</);
-    expect(html).toMatch(/<dd class="[^"]*text-\[var\(--edify-success\)\][^"]*">5</);
+    expect(html).toMatch(/<dd class="[^"]*text-\[#be123c\][^"]*">2</);
+    expect(html).toMatch(/<dd class="[^"]*text-\[var\(--edify-warning-text\)\][^"]*">2 schools</);
+    expect(html).toMatch(/<dd class="[^"]*text-\[#047857\][^"]*">5</);
     expect(html).toMatch(/<dd class="[^"]*text-\[var\(--edify-accent-text\)\][^"]*">Schedule training</);
   });
 });
