@@ -399,10 +399,6 @@ button[data-ph='menu-item'] { width: 100% !important; border: 0 !important; back
 a[data-ph]:is([data-ph='panel-link'], [data-ph='list-main'], [data-ph='tile'], [data-ph='back'], [data-ph='details-link']) { justify-content: flex-start !important; text-align: left !important; }
 a[data-ph='panel-link'] { align-items: flex-start !important; }
 
-/* Last: whatever this layer gives a part's display, hidden hides it. */
-[data-ph][hidden], [data-ph] [hidden] { display: none !important; }
-
-}
 
 /* ── Row cards (owner, 2026-11-19: "Rows on phones"; PhoneTable Cards) ── */
 [data-ph='rows-all'] { display: flex !important; align-items: center !important; gap: 8px !important; padding: 10px 16px !important; border-top: 1px solid var(--ph-raised-border) !important; color: var(--ph-text-muted) !important; font-size: 12px !important; font-weight: 600 !important; }
@@ -457,3 +453,8 @@ dialog[data-ph='sheet'] [data-ph='row-name'] { font-size: 16px !important; line-
 [data-ph='tiles-folded'] { display: flex !important; flex-direction: column !important; gap: 4px !important; }
 [data-ph='tiles-folded'] [data-ph='explain-toggle'] { padding: 0 4px !important; }
 [data-ph='tiles-folded'] details[open] > [data-ph='tiles'] { margin-top: 8px !important; }
+
+/* Last: whatever this layer gives a part's display, hidden hides it. */
+[data-ph][hidden], [data-ph] [hidden] { display: none !important; }
+
+}
