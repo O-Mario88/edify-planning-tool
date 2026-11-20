@@ -89,7 +89,7 @@ SPECS: dict[str, tuple[str, str, str, str, str | None]] = {
         "",
         "warning",
         "Open",
-        "past their date and not complete, from any year",
+        "not started and past their date, this financial year",
     ),
     "team_overdue": (
         "Follow up with CCEOs Overdue Plans",
@@ -160,9 +160,8 @@ def _on_dashboard(query: str, anchor: str, fy) -> str:
 
 def _url(key: str, role: str, fy) -> str:
     if key == "my_overdue":
-        if role == PL:
-            return "/dashboard?view=week&plans=own#what-needs-you-now"
-        return "/dashboard?view=week#what-needs-you-now"
+        # Home's Overdue figure's own list (owner, 2026-11-20: one Overdue).
+        return "/my-plan?status=overdue"
     if key == "team_overdue":
         return "/dashboard?view=week&plans=team#what-needs-you-now"
     if key == "verify":
@@ -183,18 +182,27 @@ def _url(key: str, role: str, fy) -> str:
 
 
 # ── The figures ─────────────────────────────────────────────────────────────
-def _overdue(user, role) -> dict[str, int]:
-    """The dashboard overdue table's counts: a CCEO's own; a Lead's own and
-    their team's, its My Plans and Team Plans."""
-    from apps.my_plan.past_due_service import get_past_due_dashboard_context
+def _overdue(user, role, fy) -> dict[str, int]:
+    """The reader's own Overdue: this financial year's plan, not started,
+    its date passed, the very count of Home's Overdue figure (owner,
+    2026-11-20: "One figure, this year only"; the dashboard's table still lists
+    every year's, where older work is followed up). A Lead's team row stays
+    the dashboard's Team Plans count."""
+    from apps.my_plan.services import my_plan_activities, plan_state_q
 
-    table = get_past_due_dashboard_context(user)
+    today = timezone.localdate()
+    out = {
+        "my_overdue": my_plan_activities(user, fy)
+        .filter(plan_state_q("overdue", today))
+        .count()
+    }
     if role == PL:
-        return {
-            "my_overdue": table["pl_own_past_due_count"],
-            "team_overdue": table["pl_team_past_due_count"],
-        }
-    return {"my_overdue": table["past_due_total_count"]}
+        from apps.my_plan.past_due_service import get_past_due_dashboard_context
+
+        out["team_overdue"] = get_past_due_dashboard_context(user)[
+            "pl_team_past_due_count"
+        ]
+    return out
 
 
 def _school_counts(user, role, fy) -> dict[str, int]:
@@ -245,7 +253,7 @@ def _read(name, compute):
 
 def _counts(user, role, fy) -> dict[str, int | None]:
     keys = ROLE_ROWS[role]
-    overdue = _read("overdue", lambda: _overdue(user, role)) or {}
+    overdue = _read("overdue", lambda: _overdue(user, role, fy)) or {}
     schools = _read("school_rows", lambda: _school_counts(user, role, fy)) or {}
     # A figure missing from here was not read: its row shows no number.
     counts: dict[str, int | None] = {**overdue, **schools}

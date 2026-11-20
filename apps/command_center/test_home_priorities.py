@@ -129,6 +129,10 @@ class HomePrioritiesTest(TestCase):
         work(cls.cceo_sp, "submitted_to_pl", -1)
         # Lena: one overdue of her own.
         work(cls.lead_sp, "scheduled", -2)
+        # Last year's overdue visit of Cara's: not this year's Overdue (owner,
+        # 2026-11-20: one Overdue figure, this financial year only).
+        old = work(cls.cceo_sp, "scheduled", -400)
+        Activity.objects.filter(pk=old.pk).update(fy=str(int(cls.fy) - 1))
 
     def _rows(self, user):
         return {row["key"]: row for row in role_priorities(user)}
@@ -162,10 +166,8 @@ class HomePrioritiesTest(TestCase):
 
     def test_each_cceo_row_opens_the_table_that_lists_what_it_counts(self):
         cceo = self._rows(self.cceo)
-        # The dashboard's own overdue table, "What needs you now".
-        self.assertEqual(
-            cceo["my_overdue"]["url"], "/dashboard?view=week#what-needs-you-now"
-        )
+        # My Plan's Overdue list, which Home's Overdue figure opens too.
+        self.assertEqual(cceo["my_overdue"]["url"], "/my-plan?status=overdue")
         self.assertEqual(
             cceo["not_clustered"]["url"], "/my-plan?list=not_clustered#plan-list"
         )
@@ -178,11 +180,9 @@ class HomePrioritiesTest(TestCase):
 
     def test_each_lead_row_opens_the_dashboard_table_that_lists_it(self):
         lead = self._rows(self.lead)
-        # The dashboard's overdue table, narrowed to whose plans the row names.
-        self.assertEqual(
-            lead["my_overdue"]["url"],
-            "/dashboard?view=week&plans=own#what-needs-you-now",
-        )
+        # Their own overdue work is My Plan's Overdue list, as Home's figure;
+        # their team's is the dashboard's table narrowed to Team Plans.
+        self.assertEqual(lead["my_overdue"]["url"], "/my-plan?status=overdue")
         self.assertEqual(
             lead["team_overdue"]["url"],
             "/dashboard?view=week&plans=team#what-needs-you-now",
@@ -213,14 +213,14 @@ class HomePrioritiesTest(TestCase):
         and overdue table are in."""
         self.client.force_login(self.lead)
         lead = self._rows(self.lead)
-        dashboard = self.client.get(lead["my_overdue"]["url"]).content.decode()
+        dashboard = self.client.get(lead["team_overdue"]["url"]).content.decode()
         self.assertIn('id="what-needs-you-now"', dashboard)
         # Cara's past-due plans would open the team popup on a plain visit;
         # a link to one table is not covered by it.
         self.assertIn(
             "edifyPastDuePopupDue", self.client.get("/dashboard").content.decode()
         )
-        for key in ("my_overdue", "team_overdue", "not_clustered", "verify"):
+        for key in ("team_overdue", "not_clustered", "verify"):
             with self.subTest(popup=key):
                 html = self.client.get(lead[key]["url"]).content.decode()
                 self.assertNotIn("edifyPastDuePopupDue", html)
@@ -248,11 +248,23 @@ class HomePrioritiesTest(TestCase):
         # A page to open, nothing to count.
         self.assertIsNone(cceo["my_performance"]["count"])
 
-    def test_a_cceos_overdue_count_is_the_dashboard_tables(self):
+    def test_a_cceos_overdue_count_is_homes_overdue_figure(self):
+        """One Overdue figure, this financial year only (owner, 2026-11-20):
+        the row counts what Home's Overdue tile counts, not last year's."""
+        from apps.command_center.home_service import plan_figures
+
         cceo = self._rows(self.cceo)
+        tile = next(
+            f
+            for f in plan_figures(self.cceo, self.today, self.fy)
+            if f["key"] == "overdue"
+        )
+        self.assertEqual(cceo["my_overdue"]["count"], 2)
+        self.assertEqual(str(cceo["my_overdue"]["count"]), str(tile["value"]))
+        # The dashboard's table still lists every year's (it is where older
+        # work is followed up).
         table = get_past_due_dashboard_context(self.cceo)
-        self.assertEqual(cceo["my_overdue"]["count"], table["past_due_total_count"])
-        self.assertGreaterEqual(cceo["my_overdue"]["count"], 2)
+        self.assertGreater(table["past_due_total_count"], 2)
 
     def test_a_cceos_school_counts_match_the_my_plan_list_they_open(self):
         officer = own_monitor(self.cceo, str(self.fy))
@@ -332,11 +344,11 @@ class HomePrioritiesTest(TestCase):
     def test_a_leads_counts_separate_their_own_work_from_their_cceos(self):
         lead = self._rows(self.lead)
         table = get_past_due_dashboard_context(self.lead)
-        # Lena's one overdue visit, and Cara's two: the dashboard's My Plans
-        # and Team Plans.
+        # Lena's one overdue visit this year: Home's Overdue figure.
         self.assertEqual(lead["my_overdue"]["count"], 1)
-        self.assertEqual(lead["my_overdue"]["count"], table["pl_own_past_due_count"])
-        self.assertEqual(lead["team_overdue"]["count"], 2)
+        # The team row is the dashboard's Team Plans table, every year's:
+        # Cara's two this year and her one from last year.
+        self.assertEqual(lead["team_overdue"]["count"], 3)
         self.assertEqual(lead["team_overdue"]["count"], table["pl_team_past_due_count"])
         self.assertEqual(lead["verify"]["count"], 1)
         # The team's schools: Cara holds both, and neither has a completed

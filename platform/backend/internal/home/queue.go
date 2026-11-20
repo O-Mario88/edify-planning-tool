@@ -146,7 +146,21 @@ func (s *Service) priorityCounts(ctx context.Context, p auth.Principal, specs []
 		}
 	}
 	read("overdue", func() error {
+		// The reader's own Overdue is Home's Overdue figure: this year's
+		// plan, not started, its date passed (owner, 2026-11-20: "One
+		// figure, this year only"; home_priorities._overdue).
+		role, _ := roleOf(p)
+		plan, err := s.planOf(ctx, p, role)
+		if err != nil {
+			return err
+		}
+		own, err := myplan.ReadHomeCounts(ctx, s.db, plan, fy, now)
+		if err != nil {
+			return err
+		}
+		counts["my_overdue"] = own.Overdue
 		if lead {
+			// A Lead's team row stays the dashboard's Team Plans count.
 			team, err := teamIDs(ctx, s.db, p, now)
 			if err != nil {
 				return err
@@ -155,14 +169,8 @@ func (s *Service) priorityCounts(ctx context.Context, p auth.Principal, specs []
 			if err != nil {
 				return err
 			}
-			counts["my_overdue"], counts["team_overdue"] = past.Owned(), past.Team()
-			return nil
+			counts["team_overdue"] = past.Team()
 		}
-		past, err := myplan.ReadPastDue(ctx, s.db, myplan.OwnerIDs(p), now)
-		if err != nil {
-			return err
-		}
-		counts["my_overdue"] = past.Total()
 		return nil
 	})
 	read("school_rows", func() error {

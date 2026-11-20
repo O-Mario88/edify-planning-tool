@@ -46,13 +46,13 @@
       "CCEO": [
         {
           "action": "Open",
-          "counts": "past their date and not complete, from any year",
+          "counts": "not started and past their date, this financial year",
           "icon": "warning",
           "key": "my_overdue",
           "line": "",
           "one": "",
           "title": "My Overdue Plans",
-          "url": "/dashboard?view=week#what-needs-you-now"
+          "url": "/my-plan?status=overdue"
         },
         {
           "action": "Cluster",
@@ -108,13 +108,13 @@
       "Program Lead": [
         {
           "action": "Open",
-          "counts": "past their date and not complete, from any year",
+          "counts": "not started and past their date, this financial year",
           "icon": "warning",
           "key": "my_overdue",
           "line": "",
           "one": "",
           "title": "My Overdue Plans",
-          "url": "/dashboard?view=week&plans=own#what-needs-you-now"
+          "url": "/my-plan?status=overdue"
         },
         {
           "action": "Follow up",
