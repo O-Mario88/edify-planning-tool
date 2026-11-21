@@ -47,7 +47,7 @@ deployed, or connected to production.
 | [182-is-the-migration-complete.md](182-is-the-migration-complete.md) | Is the migration complete (2026-11-20): reads 206 of 347 routes in Go; writes about 9 of 200-plus, all off by default; the order of the remaining saves |
 | [183-tenth-save-complete-visit.md](183-tenth-save-complete-visit.md) | The tenth save (M8): an officer completes their own staff school visit with its Salesforce ID, behind `EDIFY_GO_SAVES=complete_visit`; one narrow function; app-level proof 0 of 12 answers and 0 of 17 tables differing |
 | [184-design-to-zero.md](184-design-to-zero.md) | Design to zero (2026-11-20): what is closed and gated, the figure-scope decisions for the owner, the desktop CSS budget that only falls, and the user-testing kit |
-| [185-coverage-ledger.md](185-coverage-ledger.md) | Coverage ledger (generated, 2026-11-21): every surface × role × platform with its task, proposed change, acceptance check and status; rebuilt by `platform/tools/coverage-ledger/build.py` |
+| [187-coverage-ledger.md](187-coverage-ledger.md) | Coverage ledger (generated, 2026-11-21): every surface × role × platform with its task, proposed change, acceptance check and status; rebuilt by `platform/tools/coverage-ledger/build.py` |
 
 The code is under [`platform/`](../../platform/README.md).
 

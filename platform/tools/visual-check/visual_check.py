@@ -1,5 +1,5 @@
 """Before/after screenshots of the local web, compared pixel by pixel
-(docs/migration/185). It signs in to the LOCAL web only, reads pages, and
+(docs/migration/187). It signs in to the LOCAL web only, reads pages, and
 writes nothing anywhere but the folder it is given.
 
     VISUAL_PASSWORD=<local seed password> python platform/tools/visual-check/visual_check.py \\
