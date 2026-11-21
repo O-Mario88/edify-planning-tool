@@ -86,7 +86,7 @@
   .bg-blue-600, .bg-blue-700, .bg-indigo-600, .bg-indigo-700,
   .bg-sky-600, .bg-sky-700
 ):not(:disabled):not([aria-disabled="true"]) {
-  color: #ffffff !important;
+  color: var(--edify-brand-panel-text) !important;
   background-color: var(--edify-primary-action-fill) !important;
   border-color: var(--edify-primary-action-border) !important;
   text-shadow: none !important;
@@ -136,7 +136,7 @@
     .bg-blue-600, .bg-blue-700, .bg-indigo-600, .bg-indigo-700,
     .bg-sky-600, .bg-sky-700
   ):hover:not(:disabled):not([aria-disabled="true"]) {
-    color: #ffffff !important;
+    color: var(--edify-brand-panel-text) !important;
     background-color: var(--edify-primary-action-fill-hover) !important;
     background-image: none !important;
     border-color: var(--edify-primary-action-fill-hover) !important;
@@ -644,7 +644,7 @@ main :is(
   [data-edify-tab][aria-pressed="true"],
   [data-edify-tab].is-active
 ) :is(span, strong, div, b, small, p, label) {
-  color: #ffffff;
+  color: var(--edify-brand-panel-text);
 }
 
 main :is(
@@ -656,7 +656,7 @@ main :is(
 ) .edify-avatar-neutral {
   background-color: rgba(255, 255, 255, 0.25);
   border: 1px solid rgba(255, 255, 255, 0.4);
-  color: #ffffff;
+  color: var(--edify-brand-panel-text);
 }
 
 main :is(
@@ -667,7 +667,7 @@ main :is(
   [data-edify-tab].is-active
 ) .pill-neutral {
   background-color: rgba(255, 255, 255, 0.25);
-  color: #ffffff;
+  color: var(--edify-brand-panel-text);
 }
 
 /* ── Tabs do not invert on hover ───────────────────────────────────────────
@@ -1136,7 +1136,7 @@ main .edify-rail-more__menu > .edify-rail-more__item:focus-visible {
 }
 main .edify-rail-more__menu > .edify-rail-more__item:is(.is-active, .active, [aria-selected="true"], [aria-current], [aria-pressed="true"]) {
   background: var(--edify-primary) !important;
-  color: #fff !important;
+  color: var(--edify-brand-panel-text) !important;
   font-weight: 600 !important;
 }
 
@@ -1218,7 +1218,7 @@ main :is([role="tablist"], .edify-tab-container, [data-edify-tablist],
   white-space: nowrap;
 }
 .edify-view-switch > button + button { border-inline-start: 1px solid var(--edify-border); }
-.edify-view-switch > button[aria-pressed="true"] { background: var(--edify-primary); color: #fff; }
+.edify-view-switch > button[aria-pressed="true"] { background: var(--edify-primary); color: var(--edify-brand-panel-text); }
 .edify-view-switch > button:focus-visible { outline: 2px solid var(--edify-primary); outline-offset: -3px; }
 
 .edify-view-toolbar > .edify-filter-bar { inline-size: auto; }
@@ -1339,7 +1339,7 @@ main :is([role="tablist"], .edify-tab-container, [data-edify-tablist],
   padding-inline: 0.3rem;
   border-radius: 999px;
   background: var(--color-edify-primary);
-  color: #fff;
+  color: var(--edify-brand-panel-text);
   font-size: var(--edify-text-micro-size);
   font-variant-numeric: tabular-nums;
 }

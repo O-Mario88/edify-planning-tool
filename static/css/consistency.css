@@ -99,7 +99,7 @@ html.light :where(.bg-amber-500, .bg-emerald-500, .bg-cyan-500,
   .bg-fuchsia-500, .bg-lime-600):where(.text-white):not(button):not(a) { color: #0f172a; }
 /* rose-500 passes with NEITHER white (3.8) nor dark (4.2) text at body sizes,
  * so the fill steps to rose-600 and the white label then reads 4.7:1. */
-html.light :where(.bg-rose-500):where(.text-white) { background-color: #e11d48; }
+html.light :where(.bg-rose-500):where(.text-white) { background-color: var(--edify-danger-solid); }
 
 /* Orange status text (SF/reconciliation labels): orange-600 on the orange-50
  * tint reads 3.37:1; orange-700 clears AA while keeping the hue family. */
@@ -226,7 +226,7 @@ html.light :is([class~="bg-slate-900"], [class~="bg-slate-800"], [class*="bg-[va
 /* The brand-text alias is the dark navy in light mode — inside a dark hero it
  * reads 1.92:1, so it lifts to the light brand tone there. !important matches
  * the alias's own importance. */
-html.light :is([class~="bg-slate-900"], [class~="bg-slate-800"], [class*="bg-[var(--edify-primary"]) .edify-primary-text { color: #8ac6ea !important; }
+html.light :is([class~="bg-slate-900"], [class~="bg-slate-800"], [class*="bg-[var(--edify-primary"]) .edify-primary-text { color: var(--brand-primary-border) !important; }
 
 .edify-primary-on-solid {
   color: var(--brand-primary-on-solid) !important;
@@ -519,14 +519,14 @@ main .edify-selected-surface,
 .edify-selected-surface {
   border-color: #2563eb !important;
   background-color: #2563eb !important;
-  color: #ffffff !important;
+  color: var(--edify-brand-panel-text) !important;
   box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3) !important;
 }
 
 main .edify-selected-surface *,
 .edify-selected-surface *,
 .edify-selected-surface :is(strong, .edify-kpi-strip__value, .edify-kpi-strip__icon, .edify-kpi-strip__label, .edify-kpi-strip__helper, h1, h2, h3, p, span, small, svg) {
-  color: #ffffff !important;
+  color: var(--edify-brand-panel-text) !important;
 }
 
 main .edify-selected-surface :is(.text-slate-400, .text-slate-500, .text-blue-100, .edify-kpi-strip__label, .edify-kpi-strip__helper, small) {
@@ -539,14 +539,14 @@ button.edify-primary-solid,
 .edify-btn-primary {
   background-color: #2563eb !important;
   border-color: #2563eb !important;
-  color: #ffffff !important;
+  color: var(--edify-brand-panel-text) !important;
 }
 
 .edify-action-button.primary:hover,
 button.edify-primary-solid:hover,
 .edify-btn-primary:hover {
-  background-color: #1d4ed8 !important;
-  border-color: #1d4ed8 !important;
+  background-color: var(--edify-info-text) !important;
+  border-color: var(--edify-info-text) !important;
 }
 
 /* Financial and specialist matrices occasionally use the canonical accent as
@@ -1971,14 +1971,14 @@ main .help-stat-list dt {
 /* IA hero actions now use the same primary/secondary button treatments as the
    rest of the platform instead of the removed navy banner's inverse palette. */
 main .ia-hero .ia-button--primary {
-  color: #ffffff !important;
+  color: var(--edify-brand-panel-text) !important;
   background: var(--edify-accent) !important;
   border-color: var(--edify-accent) !important;
   box-shadow: none !important;
 }
 
 main .ia-hero .ia-button--primary:hover {
-  color: #ffffff !important;
+  color: var(--edify-brand-panel-text) !important;
   background: var(--edify-accent-hover) !important;
   border-color: var(--edify-accent-hover) !important;
 }
@@ -4404,7 +4404,7 @@ main textarea,
   :is(.school-record-action--schedule, .btn-primary) {
   background-color: #0284c7 !important;
   border: 1px solid #0284c7 !important;
-  color: #ffffff !important;
+  color: var(--edify-brand-panel-text) !important;
   box-shadow: 0 1px 2px rgba(2, 132, 199, 0.15) !important;
 }
 :root :is(main, .drawer-body, [role="dialog"])
@@ -4412,13 +4412,13 @@ main textarea,
   :is(.school-record-action--schedule, .btn-primary):hover:not(:disabled) {
   background-color: #0369a1 !important;
   border-color: #0369a1 !important;
-  color: #ffffff !important;
+  color: var(--edify-brand-panel-text) !important;
 }
 
 :root :is(main, .drawer-body, [role="dialog"])
   :is(.school-record-row, .school-list-card, .cluster-card, table.edify-plain-table, table.edify-record-table, table.edify-data-table)
   :is(.school-record-action--danger) {
-  background-color: #fef2f2 !important;
+  background-color: var(--edify-danger-light) !important;
   border: 1px solid #fecaca !important;
   color: #dc2626 !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
@@ -4428,13 +4428,13 @@ main textarea,
   :is(.school-record-action--danger):hover:not(:disabled) {
   background-color: #dc2626 !important;
   border-color: #dc2626 !important;
-  color: #ffffff !important;
+  color: var(--edify-brand-panel-text) !important;
 }
 
 :root :is(main, .drawer-body, [role="dialog"])
   :is(.school-record-row, .school-list-card, .cluster-card, table.edify-plain-table, table.edify-record-table, table.edify-data-table)
   :is(.school-record-action--assign) {
-  background-color: #ffffff !important;
+  background-color: var(--edify-brand-panel-text) !important;
   border: 1px solid #cbd5e1 !important;
   color: #334155 !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;

@@ -50,7 +50,7 @@
     radial-gradient(circle at 85% 15%, color-mix(in srgb, var(--edify-accent) 32%, transparent), transparent 36%),
     linear-gradient(135deg, #203843, #172a34 62%, #12232c);
   box-shadow: var(--edify-shadow-lg);
-  color: #fff;
+  color: var(--edify-brand-panel-text);
 }
 
 .ia-hero::after {
@@ -97,7 +97,7 @@
 
 .ia-hero h1 {
   margin: 0;
-  color: #fff;
+  color: var(--edify-brand-panel-text);
   font-size: clamp(1.6rem, 2.5vw, 2.2rem);
   font-weight: 700;
   letter-spacing: -0.035em;
@@ -173,14 +173,14 @@
 .ia-button--primary {
   background-color: var(--brand-primary);
   border-color: var(--brand-primary);
-  color: #ffffff;
+  color: var(--edify-brand-panel-text);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
 }
 
 .ia-button--primary:hover {
   background-color: var(--brand-primary-hover);
   border-color: var(--brand-primary-hover);
-  color: #ffffff;
+  color: var(--edify-brand-panel-text);
 }
 
 .ia-button--primary span {
@@ -203,7 +203,7 @@
 .ia-button--secondary {
   border-color: rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.07);
-  color: #fff;
+  color: var(--edify-brand-panel-text);
 }
 
 .ia-button--secondary:hover {

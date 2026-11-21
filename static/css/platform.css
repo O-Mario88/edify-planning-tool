@@ -540,7 +540,7 @@ main :is(a, button, input, summary):is(.btn, .edify-action-button, .btn-premium-
 
 main :where(.btn-primary, .edify-action-button.primary, .btn-premium-primary,
   .school-record-action--schedule) {
-  color: var(--edify-on-accent, #ffffff) !important;
+  color: var(--edify-on-accent, var(--edify-brand-panel-text)) !important;
   background-color: var(--edify-accent) !important;
   background-image: none !important;
   border: 1px solid var(--edify-accent) !important;
@@ -548,7 +548,7 @@ main :where(.btn-primary, .edify-action-button.primary, .btn-premium-primary,
 }
 main :where(.btn-primary, .edify-action-button.primary, .btn-premium-primary,
   .school-record-action--schedule):hover:not(:disabled) {
-  color: var(--edify-on-accent, #ffffff) !important;
+  color: var(--edify-on-accent, var(--edify-brand-panel-text)) !important;
   background-color: var(--edify-accent-hover) !important;
   background-image: none !important;
 }
@@ -1504,7 +1504,7 @@ main .platform-hero {
 
 main .platform-hero h1 {
   max-inline-size: none;
-  color: #fff !important;
+  color: var(--edify-brand-panel-text) !important;
   font-size: var(--edify-text-display-size) !important;
   font-weight: 600 !important;
 }
@@ -2476,7 +2476,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 .school-directory-row__quick-action.is-project {
   border-color: var(--edify-accent);
   background: var(--edify-accent);
-  color: var(--edify-on-accent, #fff);
+  color: var(--edify-on-accent, var(--edify-brand-panel-text));
 }
 
 .school-directory-row__quick-action:hover {
@@ -2488,7 +2488,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 
 .school-directory-row__quick-action.is-project:hover {
   background: color-mix(in oklab, var(--edify-accent) 86%, #000);
-  color: var(--edify-on-accent, #fff);
+  color: var(--edify-on-accent, var(--edify-brand-panel-text));
 }
 
 .school-directory-row__quick-action:focus-visible {
@@ -3554,7 +3554,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 .school-record-action--danger:hover:not(:disabled) {
   background: var(--edify-danger-text, #b91c1c);
   border-color: var(--edify-danger-text, #b91c1c);
-  color: var(--edify-on-accent, #fff);
+  color: var(--edify-on-accent, var(--edify-brand-panel-text));
 }
 
 .school-record-action:disabled {

@@ -21,7 +21,7 @@
   padding-inline: 0.35rem;
   border-radius: var(--edify-radius-pill);
   background: var(--edify-danger, #dc2626);
-  color: #fff;
+  color: var(--edify-brand-panel-text);
   font-size: var(--edify-text-micro-size);
   font-weight: 700;
   line-height: 1;
@@ -90,19 +90,19 @@
    with no opt-out for a record row, so these selectors repeat the table class
    to outrank it — for this table alone (Who's Online did the same). */
 :root :is(main, .drawer-body) table.sal-table.sal-table.sal-table.sal-table tbody tr.sal-person--online > td {
-  background-color: color-mix(in srgb, var(--edify-success, #16a34a) 10%, var(--edify-surface-raised, #fff)) !important;
+  background-color: color-mix(in srgb, var(--edify-success, #16a34a) 10%, var(--edify-surface-raised, var(--edify-brand-panel-text))) !important;
 }
 :root :is(main, .drawer-body) table.sal-table.sal-table.sal-table.sal-table tbody tr.sal-person--online > td:first-child {
   box-shadow: inset 3px 0 0 var(--edify-success, #16a34a) !important;
 }
 :root :is(main, .drawer-body) table.sal-table.sal-table.sal-table.sal-table tbody tr.sal-person--open > td {
-  background-color: color-mix(in srgb, var(--edify-accent, #285b96) 9%, var(--edify-surface-raised, #fff)) !important;
+  background-color: color-mix(in srgb, var(--edify-accent, #285b96) 9%, var(--edify-surface-raised, var(--edify-brand-panel-text))) !important;
 }
 :root :is(main, .drawer-body) table.sal-table.sal-table.sal-table.sal-table tbody tr.sal-person--open > td:first-child {
   box-shadow: inset 3px 0 0 var(--edify-accent, #285b96) !important;
 }
 :root :is(main, .drawer-body) table.sal-table.sal-table.sal-table.sal-table tbody tr.sal-detailrow > td {
-  background-color: color-mix(in srgb, var(--edify-accent, #285b96) 4%, var(--edify-surface-raised, #fff)) !important;
+  background-color: color-mix(in srgb, var(--edify-accent, #285b96) 4%, var(--edify-surface-raised, var(--edify-brand-panel-text))) !important;
 }
 .sal-empty { text-align: center; padding: 2rem 1rem !important; color: var(--edify-text-subtle); }
 .sal-grouphead .edify-group-head__count { font-weight: 600; }
@@ -182,7 +182,7 @@
 .sal-usage--good { color: var(--edify-success, #15803d); }
 .sal-usage--watch { color: var(--edify-warning, #b45309); }
 .sal-usage--alarm { color: var(--edify-danger, #b91c1c); }
-.sal-usage--calm { color: var(--edify-info, #1d4ed8); }
+.sal-usage--calm { color: var(--edify-info, var(--edify-info-text)); }
 .sal-usage--muted { color: var(--edify-text-subtle); }
 
 /* ── The opened row ─────────────────────────────────────────────────────
@@ -245,7 +245,7 @@
   padding: 0.75rem 0.85rem;
   border: 1px solid var(--sal-line);
   border-radius: var(--edify-radius-md, 12px);
-  background: var(--edify-surface, #fff);
+  background: var(--edify-surface, var(--edify-brand-panel-text));
 }
 .sal-box h4, .sal-subhead { margin: 0; font-size: var(--edify-text-micro-size); font-weight: 700; color: var(--edify-text); }
 .sal-subhead { margin-block-start: 0.75rem; }
@@ -347,7 +347,7 @@
 .sal-split > span { display: block; block-size: 100%; }
 .sal-split__desktop { background: var(--edify-accent, #285b96); }
 .sal-split__mobile { background: var(--sal-online, #16a34a); }
-.sal-split__tablet { background: #8b5cf6; }
+.sal-split__tablet { background: var(--edify-purple); }
 
 /* ── Follow-up drawer and page ─────────────────────────────────────────── */
 .sal-snapshot {

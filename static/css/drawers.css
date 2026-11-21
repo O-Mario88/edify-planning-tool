@@ -657,7 +657,7 @@
 .drawer-body .bg-blue-50 { background: var(--edify-info-light) !important; }
 
 /* Buttons inside drawers */
-.drawer-body .bg-indigo-600, .drawer-body .bg-blue-600 { background: var(--edify-accent) !important; color: #fff !important; }
+.drawer-body .bg-indigo-600, .drawer-body .bg-blue-600 { background: var(--edify-accent) !important; color: var(--edify-brand-panel-text) !important; }
 .drawer-body .hover\:bg-indigo-700:hover, .drawer-body .hover\:bg-blue-700:hover { background: var(--edify-accent-hover) !important; }
 
 /* Divide lines — kill the grid effect */
@@ -793,7 +793,7 @@
 /* ── Premium Buttons ───────────────────────────────────────────────────── */
 .btn-premium-primary {
   background-color: var(--edify-accent) !important;
-  color: #ffffff !important;
+  color: var(--edify-brand-panel-text) !important;
   border: none !important;
   border-radius: var(--edify-radius-md) !important;
   font-weight: 600 !important;
@@ -1465,7 +1465,7 @@
 .drawer-footer :where(button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"]), a.btn-premium-primary),
 .drawer-body form > :where(.flex):last-child > button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"]),
 .drawer-body .btn-premium-primary {
-  color: var(--edify-on-accent, #fff) !important;
+  color: var(--edify-on-accent, var(--edify-brand-panel-text)) !important;
   border: 1px solid color-mix(in srgb, var(--edify-accent) 78%, #072e50) !important;
   background-color: var(--edify-accent) !important;
   background-image: linear-gradient(105deg, color-mix(in srgb, var(--edify-accent) 78%, #063f73), var(--edify-accent)) !important;
@@ -1475,7 +1475,7 @@
 .drawer-footer :where(button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"]), a.btn-premium-primary):hover:not(:disabled),
 .drawer-body form > :where(.flex):last-child > button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"]):hover:not(:disabled),
 .drawer-body .btn-premium-primary:hover:not(:disabled) {
-  color: var(--edify-on-accent, #fff) !important;
+  color: var(--edify-on-accent, var(--edify-brand-panel-text)) !important;
   background-color: var(--edify-accent-hover) !important;
   background-image: linear-gradient(105deg, var(--edify-primary-hover, var(--edify-accent-hover)), var(--edify-accent-hover)) !important;
   transform: translateY(-1px);
@@ -1547,14 +1547,14 @@
 }
 
 .edify-popup-dialog__surface :where(button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"]), .btn-primary) {
-  color: #ffffff !important;
+  color: var(--edify-brand-panel-text) !important;
   border-color: color-mix(in srgb, var(--edify-accent) 78%, #072e50) !important;
   background-color: var(--edify-accent) !important;
   background-image: linear-gradient(105deg, color-mix(in srgb, var(--edify-accent) 78%, #063f73), var(--edify-accent)) !important;
 }
 
 .edify-popup-dialog__surface :where(button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"]), .btn-primary):hover:not(:disabled) {
-  color: #ffffff !important;
+  color: var(--edify-brand-panel-text) !important;
   background-color: var(--edify-accent-hover) !important;
   background-image: linear-gradient(105deg, var(--edify-primary-hover, var(--edify-accent-hover)), var(--edify-accent-hover)) !important;
 }
@@ -1627,14 +1627,14 @@
 }
 
 .edify-form-dialog__surface :where(button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"]), .btn-primary) {
-  color: #ffffff !important;
+  color: var(--edify-brand-panel-text) !important;
   border-color: color-mix(in srgb, var(--edify-accent) 78%, #072e50) !important;
   background-color: var(--edify-accent) !important;
   background-image: linear-gradient(105deg, color-mix(in srgb, var(--edify-accent) 78%, #063f73), var(--edify-accent)) !important;
 }
 
 .edify-form-dialog__surface :where(button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"]), .btn-primary):hover:not(:disabled) {
-  color: #ffffff !important;
+  color: var(--edify-brand-panel-text) !important;
   background-color: var(--edify-accent-hover) !important;
   background-image: linear-gradient(105deg, var(--edify-primary-hover, var(--edify-accent-hover)), var(--edify-accent-hover)) !important;
 }

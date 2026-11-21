@@ -302,7 +302,7 @@ body { font-size-adjust: none; }
   .edify-datepick__day[aria-selected="true"],
   .edify-datepick__month[aria-pressed="true"] {
     background: var(--edify-primary-action-fill, var(--edify-accent)) !important;
-    color: var(--edify-primary-action-ink, #fff) !important;
+    color: var(--edify-primary-action-ink, var(--edify-brand-panel-text)) !important;
     font-weight: 700 !important;
     box-shadow: none !important;
   }
@@ -310,7 +310,7 @@ body { font-size-adjust: none; }
   .edify-datepick__day[aria-selected="true"]:hover,
   .edify-datepick__month[aria-pressed="true"]:hover {
     background: var(--edify-primary-action-fill-hover, var(--edify-accent)) !important;
-    color: var(--edify-primary-action-ink, #fff) !important;
+    color: var(--edify-primary-action-ink, var(--edify-brand-panel-text)) !important;
   }
 
   :where(.edify-datepick__pop) button[aria-disabled="true"] {

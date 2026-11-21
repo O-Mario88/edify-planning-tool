@@ -95,7 +95,7 @@
 
 .school-planning-badge[data-planning-tone="planned"] {
   background-color: #fbbf24;
-  border-color: #f59e0b;
+  border-color: var(--edify-warning);
   color: #78350f;
 }
 
@@ -687,7 +687,7 @@ main .pagination button:hover, main .pagination a:hover {
 
 .edify-sidebar {
   background-color: var(--edify-primary, #2e505f);
-  color: #ffffff;
+  color: var(--edify-brand-panel-text);
   display: flex;
   flex-direction: column;
   border-right: 1px solid rgba(255, 255, 255, 0.05);
@@ -1326,7 +1326,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
    satisfy the global Geist-only rule; the visual emphasis is preserved. */
 .budget-category-name {
   font-style: italic !important;
-  color: #ffffff !important;
+  color: var(--edify-brand-panel-text) !important;
   font-weight: 700;
   letter-spacing: 0.01em;
 }
@@ -1437,7 +1437,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
 }
 .btn-outline-warning:hover {
   background-color: var(--edify-warning) !important;
-  color: #ffffff !important;
+  color: var(--edify-brand-panel-text) !important;
   transform: translateY(-1px);
 }
 
@@ -3661,7 +3661,7 @@ svg[data-edify-svg-typography] text {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--edify-brand-panel-text);
   background: var(--brand-primary);
   border: 0;
   border-radius: var(--edify-radius-pill);
@@ -3779,7 +3779,7 @@ svg[data-edify-svg-typography] text {
    white bar — invisible (2026-08 UI/UX review). */
 .edify-topbar__icon-control--avatar {
   background: var(--brand-primary);
-  color: #fff;
+  color: var(--edify-brand-panel-text);
   border: 0;
   border-radius: var(--edify-radius-pill);
   font-weight: 600;
@@ -3787,7 +3787,7 @@ svg[data-edify-svg-typography] text {
 }
 .edify-topbar__icon-control--avatar:hover {
   background: var(--brand-primary-hover, var(--brand-primary));
-  color: #fff;
+  color: var(--edify-brand-panel-text);
 }
 .edify-topbar__icon-control--avatar:focus-visible {
   outline: none;
@@ -3886,7 +3886,7 @@ main .apexcharts-canvas > svg.apexcharts-svg {
 }
 
 .apexcharts-xaxistooltip {
-  color: #fff;
+  color: var(--edify-brand-panel-text);
   background: var(--edify-chart-tooltip);
   border: 0;
   border-radius: var(--edify-radius-xs);
@@ -4491,7 +4491,7 @@ main .apexcharts-canvas > svg.apexcharts-svg {
 .budget-ledger-table th:first-child { width: 38%; }
 .budget-ledger-table tr:not(.budget-ledger-subtotal) > :nth-child(2), .budget-ledger-table tr:not(.budget-ledger-subtotal) > :nth-child(3) { text-align: center; }
 .budget-ledger-table tr > :nth-child(n+4), .budget-ledger-table .budget-ledger-subtotal td, .budget-ledger-table tfoot td { text-align: right; white-space: nowrap; }
-.budget-ledger-table .budget-ledger-band > * { background: #145b9a; color: #fff; }
+.budget-ledger-table .budget-ledger-band > * { background: #145b9a; color: var(--edify-brand-panel-text); }
 .budget-ledger-band span { font-size: var(--edify-text-micro-size); font-weight: 500; margin-left: 4px; }
 .budget-ledger-table .budget-ledger-subtotal > * { background: var(--edify-surface-muted); color: var(--edify-text); font-weight: 700; }
 .budget-ledger-table tfoot td { font-weight: 700; text-align: right !important; }
@@ -4501,11 +4501,11 @@ main .apexcharts-canvas > svg.apexcharts-svg {
 main .budget-ledger table.budget-ledger-table { border-collapse: collapse; font-size: var(--edify-text-body-size) !important; }
 main .budget-ledger table.budget-ledger-table :is(th, td) { padding: 5px 9px !important; border: 0 !important; font-size: var(--edify-text-body-size) !important; }
 main .budget-ledger table.budget-ledger-table th[scope="row"] { white-space: normal; text-wrap: wrap; }
-main .budget-ledger table.budget-ledger-table .budget-ledger-band > * { background: #145b9a !important; color: #fff !important; }
+main .budget-ledger table.budget-ledger-table .budget-ledger-band > * { background: #145b9a !important; color: var(--edify-brand-panel-text) !important; }
 /* A band that lives in <thead> must outrank the platform's neutral heading contract (main table thead th). */
-main .budget-ledger table.budget-ledger-table thead .budget-ledger-band > th { background-color: #145b9a !important; color: #fff !important; font-weight: 600 !important; border-block-end: 0 !important; }
+main .budget-ledger table.budget-ledger-table thead .budget-ledger-band > th { background-color: #145b9a !important; color: var(--edify-brand-panel-text) !important; font-weight: 600 !important; border-block-end: 0 !important; }
 main .budget-ledger table.budget-ledger-table .budget-ledger-subtotal > * { background: var(--edify-surface-muted) !important; color: var(--edify-text) !important; font-weight: 700 !important; }
-main .budget-ledger table.budget-ledger-table tbody tr:not(.budget-ledger-band):not(.budget-ledger-subtotal) { background: var(--edify-surface, #fff) !important; }
+main .budget-ledger table.budget-ledger-table tbody tr:not(.budget-ledger-band):not(.budget-ledger-subtotal) { background: var(--edify-surface, var(--edify-brand-panel-text)) !important; }
 /* The grand total reads as the loudest row of the ledger. */
 main .budget-ledger table.budget-ledger-table tfoot .budget-ledger-band > * { font-weight: 700 !important; }
 /* Four-column category breakdown (fund detail) in the same dress, without the six-column minimum. */
@@ -5474,9 +5474,9 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
 .edify-cutout__name { color: var(--edify-text); text-align: end; overflow-wrap: anywhere; }
 .edify-cutout__track { position: relative; display: block; block-size: 1.5rem; }
 .edify-cutout__bar { position: absolute; inset-block: 0; inset-inline-start: 0; display: flex; align-items: center; justify-content: flex-end; }
-.edify-cutout__bar b { padding-inline: .375rem; color: #fff; font-weight: 600; white-space: nowrap; }
+.edify-cutout__bar b { padding-inline: .375rem; color: var(--edify-brand-panel-text); font-weight: 600; white-space: nowrap; }
 .edify-cutout__end { position: absolute; inset-block: 0; display: flex; align-items: center; padding-inline: .5rem; white-space: nowrap; }
-.edify-cutout__end--inside { transform: translateX(-100%); color: #fff; font-weight: 600; }
+.edify-cutout__end--inside { transform: translateX(-100%); color: var(--edify-brand-panel-text); font-weight: 600; }
 /* A part of a whole: centred value, a surface hairline between parts. */
 .edify-cutout__bar--part { justify-content: center; box-shadow: inset -1px 0 0 var(--edify-surface); }
 /* A line that opens something (a Lead's row): the pointer, a tint on hover
@@ -5505,7 +5505,7 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
 .edify-cutcol__column { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: var(--cutcol-plot) auto; row-gap: .375rem; min-inline-size: 0; }
 .edify-cutcol__track { position: relative; display: block; block-size: var(--cutcol-plot); border-block-end: 1.5px solid var(--edify-text-muted); }
 .edify-cutcol__bar { position: absolute; inset-block-end: 0; inset-inline: max(14%, calc(50% - 1.5rem)); display: flex; justify-content: center; align-items: flex-start; }
-.edify-cutcol__bar b { padding-block-start: .25rem; color: #fff; font-weight: 600; white-space: nowrap; }
+.edify-cutcol__bar b { padding-block-start: .25rem; color: var(--edify-brand-panel-text); font-weight: 600; white-space: nowrap; }
 .edify-cutcol__end { position: absolute; inset-inline: 0; padding-block-end: .25rem; text-align: center; white-space: nowrap; }
 .edify-cutcol__name { color: var(--edify-text); text-align: center; line-height: 1.25; overflow-wrap: break-word; }
 .edify-cutcol .edify-cutout__unit { padding-inline-start: 0; }

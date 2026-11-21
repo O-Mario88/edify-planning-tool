@@ -337,7 +337,7 @@
   border-radius: var(--radius-pill, 9999px);
 
   background: var(--edify-danger);
-  color: var(--edify-danger-ink, #fff);
+  color: var(--edify-danger-ink, var(--edify-brand-panel-text));
   font-size: var(--edify-text-micro-size);
   font-weight: 700;
   line-height: 1.125rem;
