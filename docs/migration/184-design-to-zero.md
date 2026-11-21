@@ -116,3 +116,37 @@ Closed and gated: visible defects (sweep 0), accessibility (axe 0),
 keyboard, error and empty states, motion, heroes for every role, app parity
 for this pass. Measured and only falling: the desktop system (§3). Waiting
 on the owner: figure scope (§2), save wording (§4), the user sessions (§5).
+
+## 7. The owner's word, 2026-11-21: "please proceed"
+
+The three recommendations above were taken, and the first retirement made:
+
+- **"No data" figures** read "—" with why under it ("Nothing planned yet"
+  where the figure measures planned work, otherwise "Nothing recorded yet"),
+  on the web and in the app (`presentBlocks.nothingYet`, tested on both).
+- **Core Schools opens on the team's for a lead with none of their own.**
+  With no lens asked, a reader who holds no core school directly but whose
+  team does opens on Team Core Oversight; anyone holding core schools still
+  opens on their own, and "My Core Schools" asks for its lens by name
+  (`lens=mine`). Changed in the existing web (`core_schools_views.py`, its
+  tab, hidden field and Clear link) and in Go (`internal/coreschools`) in
+  the same commit, so the golden comparison stays equal. Django tests: the
+  two that asserted the old default now ask for `lens=mine`, and a new one
+  proves the team-first default (104 tests pass in those modules).
+  **Planning is unchanged:** it is the officer's own scheduling page, built
+  from the direct portfolio with Schedule on every row; a team lens there
+  would be a new feature with write controls, not a default. A lead's
+  team planning is the dashboard's and Planning Monitor's.
+- **Save messages in the app say "Saved."** The app reads the page again
+  after every save, so "Press Refresh to see it on the page" was untrue
+  there; any other sentence a save gives is kept (`savedWords`, tested).
+  The existing web keeps its words: its pages do not redraw after a save
+  (owner, 2026-10-12), so the instruction is true there.
+- **First retirement of hard-coded colours.** Every colour in the page
+  stylesheets (`static/css/pages`) that exactly equals a light-theme design
+  token now is that token: 127 colours across eight sheets (94 of them in
+  Team Performance). Nothing changes in light mode by construction; those
+  pages now follow the theme. The budget now measures hand-written debt
+  only (not the compiled Tailwind bundles, not the tokens' own
+  definitions): **4,002 forced overrides and 866 hard-coded colours**,
+  the new ceiling.
