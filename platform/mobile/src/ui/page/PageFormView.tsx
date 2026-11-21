@@ -16,6 +16,7 @@ import { asDrawer, initialValues, isShown, missingField, valuesToSend } from '..
 import { DrawerButton, DrawerNote } from '../drawerParts';
 import type { DrawerField } from '../../gen/edify/screens/v1/form_pb';
 import { PageFormContext, cardStyles } from './shared';
+import { savedWords } from './savedWords';
 
 export function PageFormView({ form }: { readonly form: PageForm }) {
   const { api } = useSession();
@@ -45,7 +46,7 @@ export function PageFormView({ form }: { readonly form: PageForm }) {
       const answer = await api.saveDrawer(host.path, valuesToSend(drawer, values), form.key);
       if (answer.saved) {
         setValues(initialValues(drawer));
-        host.onSaved(answer.message);
+        host.onSaved(savedWords(answer.message));
         return;
       }
       setError(answer.error || 'This could not be saved.');

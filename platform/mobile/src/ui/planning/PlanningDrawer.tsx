@@ -16,6 +16,7 @@ import { AssignFields } from './AssignFields';
 import { ScheduleFields } from './ScheduleFields';
 import { assignValues, initialState, missingField, scheduleBlocked, scheduleParts, scheduleValues } from './planningLogic';
 import type { PlanningState, RequiredField } from './planningLogic';
+import { savedWords } from '../page/savedWords';
 
 /** The drawer's title while it loads, as the profile's button names it. */
 const LOADING_TITLES: Readonly<Record<string, string>> = { schedule: 'Schedule', assign: 'Assign to Partner' };
@@ -118,7 +119,7 @@ export function PlanningDrawer({ schoolId, kind, onClose, onSaved, onOpenWeb }: 
     try {
       const answer = await api.savePlanningDrawer(schoolId, kind, values);
       if (answer.saved) {
-        onSaved(answer.message);
+        onSaved(savedWords(answer.message));
         return;
       }
       setError(answer.error || 'This could not be saved.');

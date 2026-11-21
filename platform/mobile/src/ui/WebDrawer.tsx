@@ -21,6 +21,7 @@ import { DrawerItemView } from './drawerFields';
 import { ExportProgress } from './ExportProgress';
 import { clearedBy, initialValues, isShown, missingField, valuesToSend } from './drawerLogic';
 import type { Reloaded } from './drawerLogic';
+import { savedWords } from './page/savedWords';
 
 /** Which drawer: one of a school's (edit, close, ssa-entry), or any drawer a
  * page opens, by its web path. */
@@ -129,7 +130,7 @@ export function WebDrawer({ source, onClose, onSaved, onUnavailable }: WebDrawer
         return;
       }
       if (answer.saved) {
-        onSaved(answer.message, answer.redirect);
+        onSaved(savedWords(answer.message), answer.redirect);
         return;
       }
       if (answer.drawer) {
