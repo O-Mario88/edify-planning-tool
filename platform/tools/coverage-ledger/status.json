@@ -10,6 +10,19 @@
   "test": "platform/tools/visual-check/visual_check.py capture + compare --tolerance 8",
   "evidence": "2026-11-21: same reference set as desktop-web (phone 390x844 and narrow 320x640 for all 16 roles); 0 of 64 changed on recapture."
  },
+ "/dashboard|*|desktop-web": {
+  "status": "changed and verified",
+  "observation": "Overdue Tasks (not started, date passed) read 0 beside '8 past due' (any unfinished dated work) with nothing saying why: all 8 were done but missing their Salesforce ID.",
+  "implementation": "What needs you now carries a scope line ('Any age: N not started, N started or returned, N done but missing a Salesforce ID or form'); the Overdue Tasks tile links to it. Django and Go together (commit ae97c8146).",
+  "test": "apps/my_plan/test_past_due_service.py PastDueScopeLineTest (fixture where tile 1, past due 3); internal/myplan TestPastDueScopeLine",
+  "evidence": "2026-11-21, checked as a CCEO (the route is not in the permissions matrix, so its rows are unmapped): Django tests pass; dashboard golden 8 answers of 2 accounts, 0 differing; integration suite 237/0 after the school-evidence order fix."
+ },
+ "/dashboard|*|phone-web": {
+  "status": "changed and verified",
+  "observation": "Same section and line on phone; the Do next band still points at What needs you now.",
+  "test": "as desktop-web",
+  "evidence": "2026-11-21: same golden comparison (the feed the phone draws)."
+ },
  "/todos|CCEO|phone-web": {
   "status": "verified as-is",
   "observation": "The Do next card (subject, place, Open) is the first block under the header, above the four counts, in the opening 390x844 viewport; urgency order kept.",

@@ -6,24 +6,24 @@ Surfaces: 315 canonical routes (trailing-slash twins folded in as aliases). Rows
 
 ## By status
 
-- pending: 5027
+- pending: 5025
 - verified as-is: 35
-- changed and verified: 0
+- changed and verified: 2
 - blocked: 34
 
 ## By platform
 
 | | pending | verified as-is | changed and verified | blocked |
 |---|---|---|---|---|
-| desktop-web | 2142 | 17 | 0 | 17 |
+| desktop-web | 2141 | 17 | 1 | 17 |
 | native | 744 | 0 | 0 | 0 |
-| phone-web | 2141 | 18 | 0 | 17 |
+| phone-web | 2140 | 18 | 1 | 17 |
 
 ## By role
 
 | | pending | verified as-is | changed and verified | blocked |
 |---|---|---|---|---|
-| (unmapped) | 195 | 0 | 0 | 0 |
+| (unmapped) | 193 | 0 | 2 | 0 |
 | Acct | 272 | 2 | 0 | 2 |
 | Acting CD | 266 | 2 | 0 | 2 |
 | Acting PL | 270 | 2 | 0 | 2 |
