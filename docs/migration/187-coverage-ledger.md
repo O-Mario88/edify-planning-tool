@@ -6,42 +6,42 @@ Surfaces: 315 canonical routes (trailing-slash twins folded in as aliases). Rows
 
 ## By status
 
-- pending: 5096
-- verified as-is: 0
+- pending: 5027
+- verified as-is: 35
 - changed and verified: 0
-- blocked: 0
+- blocked: 34
 
 ## By platform
 
 | | pending | verified as-is | changed and verified | blocked |
 |---|---|---|---|---|
-| desktop-web | 2176 | 0 | 0 | 0 |
+| desktop-web | 2142 | 17 | 0 | 17 |
 | native | 744 | 0 | 0 | 0 |
-| phone-web | 2176 | 0 | 0 | 0 |
+| phone-web | 2141 | 18 | 0 | 17 |
 
 ## By role
 
 | | pending | verified as-is | changed and verified | blocked |
 |---|---|---|---|---|
 | (unmapped) | 195 | 0 | 0 | 0 |
-| Acct | 276 | 0 | 0 | 0 |
-| Acting CD | 270 | 0 | 0 | 0 |
-| Acting PL | 274 | 0 | 0 | 0 |
-| Admin | 543 | 0 | 0 | 0 |
-| BT | 187 | 0 | 0 | 0 |
-| CCEO | 280 | 0 | 0 | 0 |
-| CD | 357 | 0 | 0 | 0 |
+| Acct | 272 | 2 | 0 | 2 |
+| Acting CD | 266 | 2 | 0 | 2 |
+| Acting PL | 270 | 2 | 0 | 2 |
+| Admin | 539 | 2 | 0 | 2 |
+| BT | 183 | 2 | 0 | 2 |
+| CCEO | 275 | 3 | 0 | 2 |
+| CD | 353 | 2 | 0 | 2 |
 | ClusterLdr | 99 | 0 | 0 | 0 |
-| HR | 298 | 0 | 0 | 0 |
-| IA | 508 | 0 | 0 | 0 |
-| LenderAdm | 174 | 0 | 0 | 0 |
-| LoanOff | 174 | 0 | 0 | 0 |
-| PC | 261 | 0 | 0 | 0 |
-| PL | 308 | 0 | 0 | 0 |
-| PartnerAdm | 214 | 0 | 0 | 0 |
-| PartnerFO | 214 | 0 | 0 | 0 |
-| RPL | 195 | 0 | 0 | 0 |
-| RVP | 269 | 0 | 0 | 0 |
+| HR | 294 | 2 | 0 | 2 |
+| IA | 504 | 2 | 0 | 2 |
+| LenderAdm | 170 | 2 | 0 | 2 |
+| LoanOff | 170 | 2 | 0 | 2 |
+| PC | 257 | 2 | 0 | 2 |
+| PL | 304 | 2 | 0 | 2 |
+| PartnerAdm | 210 | 2 | 0 | 2 |
+| PartnerFO | 210 | 2 | 0 | 2 |
+| RPL | 191 | 2 | 0 | 2 |
+| RVP | 265 | 2 | 0 | 2 |
 
 ## Drawers
 

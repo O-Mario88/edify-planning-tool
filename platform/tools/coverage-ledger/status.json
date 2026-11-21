@@ -1,0 +1,23 @@
+{
+ "/home|*|desktop-web": {
+  "status": "verified as-is",
+  "observation": "Reference preserved: greeting, hero order, spacing, navigation and counts per role.",
+  "test": "platform/tools/visual-check/visual_check.py capture + compare --tolerance 8",
+  "evidence": "2026-11-21: ui-sweep/home-reference-2026-11-21b (outside the repo): 16 seeded roles x desktop, tablet, phone, narrow, light (64) and night (32); every screen landed on /home; a second capture of the same code: 0 of 64 screens changed."
+ },
+ "/home|*|phone-web": {
+  "status": "verified as-is",
+  "test": "platform/tools/visual-check/visual_check.py capture + compare --tolerance 8",
+  "evidence": "2026-11-21: same reference set as desktop-web (phone 390x844 and narrow 320x640 for all 16 roles); 0 of 64 changed on recapture."
+ },
+ "/todos|CCEO|phone-web": {
+  "status": "verified as-is",
+  "observation": "The Do next card (subject, place, Open) is the first block under the header, above the four counts, in the opening 390x844 viewport; urgency order kept.",
+  "test": "apps/command_center/test_todo_counts_follow_resolution.py",
+  "evidence": "2026-11-21: capture of /todos as cceo1 at 390x844; resolving one of two weekly fund requests drops total, Waiting on me and Finance by one and removes its row (2 tests pass)."
+ },
+ "/support|*|*": {
+  "status": "blocked",
+  "observation": "Being built in Antigravity's uncommitted work on feature/edify-go-rn-migration (platform/web/src/app/(app)/support); not duplicated here. Verify once it lands."
+ }
+}
