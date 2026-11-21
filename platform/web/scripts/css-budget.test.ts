@@ -16,7 +16,7 @@ const LEGACY = join(__dirname, '..', '..', '..', 'static', 'css');
 
 /** Measured 2026-11-21 (doc 184 §3), after the page sheets' colours became
  *  their equal tokens. Lower these as the counts fall; never raise them. */
-const BASELINE = { important: 4002, hexColours: 711 };
+const BASELINE = { important: 3978, hexColours: 711 };
 
 /** Compiled bundles (Tailwind's, npm run build:css): their colours are the
  *  framework's palette, not hand-written debt. */

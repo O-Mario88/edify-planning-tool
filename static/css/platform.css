@@ -1008,8 +1008,6 @@ main :where(
      2026-09-27: "the tab on planning page is not consistent"): a 7rem floor
      gave "Clusters" twice the side space of "Assigned to Partner". */
   min-inline-size: 0 !important;
-  min-block-size: 2.375rem !important;
-  block-size: auto !important;
   /* Size from the complete label before sharing any spare rail width. The
      old fixed 7rem basis made long nowrap labels paint outside their active
      surface, so the highlight appeared shorter than its text. `auto` keeps
@@ -1025,7 +1023,6 @@ main :where(
   color: var(--edify-text-muted) !important;
   font-size: var(--edify-text-label-size) !important;
   font-weight: 600 !important;
-  line-height: var(--edify-text-label-leading) !important;
   white-space: nowrap;
   text-align: center;
   text-decoration: none;

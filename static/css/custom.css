@@ -3086,7 +3086,6 @@ html, body {
   border-top-color: #34d399;
 }
 .dark .mfr-aw-grand, .glass .mfr-aw-grand {
-  background: linear-gradient(135deg, rgba(52,211,153,.28) 0%, rgba(251,191,36,.18) 100%) !important;
 }
 .currency-display {
   display: inline-flex;
@@ -3840,10 +3839,8 @@ html, body {
   white-space: nowrap;
 }
 .partner-activity-card__positive {
-  color: var(--brand-success) !important;
 }
 .partner-activity-card__warning {
-  color: var(--brand-warn) !important;
 }
 .partner-activity-card__table-wrap {
   overflow-x: auto;
