@@ -40,6 +40,7 @@ const (
 	envReleaseVersion = "EDIFY_RELEASE"
 	envCORSOrigins    = "EDIFY_CORS_ALLOWED_ORIGINS"
 	envExistingAppURL = "EDIFY_EXISTING_APP_URL"
+	envStrictReads    = "EDIFY_STRICT_READS"
 )
 
 // weakSecretFragments mark placeholder secrets that must never sign tokens
@@ -77,6 +78,10 @@ type Config struct {
 	// SAME environment. The gateway asks it for the screens whose rules have
 	// not been ported yet. Empty disables those screens.
 	ExistingAppURL string
+	// StrictReads refuses any read hand-on to the existing application
+	// (EDIFY_STRICT_READS=true), so reads are answered only by Go while saves
+	// may still forward. Off by default.
+	StrictReads bool
 
 	// AnalyticsAddr is the internal gRPC address of the Python analytics
 	// worker. Empty disables the worker; the gateway then answers without it.
@@ -142,6 +147,7 @@ func Load(getenv func(string) string) (Config, error) {
 		AnalyticsAddr:       strings.TrimSpace(getenv(envAnalyticsAddr)),
 		CORSAllowedOrigins:  splitList(getenv(envCORSOrigins)),
 		ExistingAppURL:      strings.TrimRight(strings.TrimSpace(getenv(envExistingAppURL)), "/"),
+		StrictReads:         isTruthy(getenv(envStrictReads)),
 	}
 
 	if cfg.DatabaseURL == "" {
@@ -273,4 +279,13 @@ func firstNonEmpty(values ...string) string {
 		}
 	}
 	return ""
+}
+
+func isTruthy(raw string) bool {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "1", "true", "yes", "on":
+		return true
+	default:
+		return false
+	}
 }

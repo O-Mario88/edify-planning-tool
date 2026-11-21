@@ -16,6 +16,9 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -75,20 +78,28 @@ func run(logger *slog.Logger) error {
 
 	// The School Loan Application Portal's delivery worker: it sends each
 	// lender its referral notification from the outbox, with retries.
+	var workers sync.WaitGroup
+	startWorker := func(fn func()) {
+		workers.Add(1)
+		go func() {
+			defer workers.Done()
+			fn()
+		}()
+	}
 	worker := loans.NewWorker(loans.NewStore(pool), loans.NewMailer(cfg.Loans), cfg.Loans.PublicBaseURL, logger, time.Now)
-	go worker.Run(ctx, server.LoansSchemaReady(pool))
+	startWorker(func() { worker.Run(ctx, server.LoansSchemaReady(pool)) })
 	// School notifications and weekly repayment reminders. Without an SMS
 	// provider they wait in the history marked as such; none is claimed sent.
 	smsWorker := loans.NewSMSWorker(loans.NewStore(pool), loans.NewSMSProvider(cfg.Loans), loans.DeriveKeys(cfg.JWTSecret),
 		cfg.Loans.PublicBaseURL, logger, time.Now).WithCooldown(cfg.Loans.ReminderCooldownDays)
-	go smsWorker.Run(ctx, server.LoansSchemaReady(pool))
+	startWorker(func() { smsWorker.Run(ctx, server.LoansSchemaReady(pool)) })
 	// Cluster Actions: reminders, overdue notices and policy escalation every
 	// thirty minutes; notices relayed into Edify's notifications every minute.
 	actions, noticeSender, clusterReady := server.ClusterActionFollowUp(cfg, pool, logger)
 	if noticeSender == nil {
 		logger.Warn("cluster actions: no EDIFY_INTERNAL_KEY or existing application; notices stay queued")
 	}
-	go actions.RunFollowUp(ctx, noticeSender, 30*time.Minute, clusterReady, logger)
+	startWorker(func() { actions.RunFollowUp(ctx, noticeSender, 30*time.Minute, clusterReady, logger) })
 
 	server := &http.Server{
 		Addr:              cfg.HTTPAddr,
@@ -114,6 +125,7 @@ func run(logger *slog.Logger) error {
 
 	select {
 	case err := <-failed:
+		stop()
 		return fmt.Errorf("gateway: serving: %w", err)
 	case <-ctx.Done():
 	}
@@ -123,7 +135,32 @@ func run(logger *slog.Logger) error {
 	if err := server.Shutdown(shutdownCtx); err != nil {
 		return fmt.Errorf("gateway: shutting down: %w", err)
 	}
+	workersDone := make(chan struct{})
+	go func() {
+		workers.Wait()
+		close(workersDone)
+	}()
+	select {
+	case <-workersDone:
+	case <-shutdownCtx.Done():
+		logger.Warn("gateway: background workers did not exit before shutdown timeout")
+	}
 	return nil
+}
+
+func configuredMaxDBConns() int32 {
+	raw := strings.TrimSpace(os.Getenv("EDIFY_DB_MAX_CONNS"))
+	if raw == "" {
+		return maxDBConnections
+	}
+	n, err := strconv.Atoi(raw)
+	if err != nil || n < 2 {
+		return maxDBConnections
+	}
+	if n > 64 {
+		return 64
+	}
+	return int32(n)
 }
 
 // openDatabase is the only way the gateway obtains a connection pool, and it
@@ -139,7 +176,7 @@ func openDatabase(ctx context.Context, cfg config.Config, logger *slog.Logger) (
 	if err != nil {
 		return nil, errors.New("gateway: the database URL could not be parsed")
 	}
-	poolConfig.MaxConns = maxDBConnections
+	poolConfig.MaxConns = configuredMaxDBConns()
 	// Every session starts read-only. The database role is the real limit
 	// (deploy/db/roles.sql); this makes an accidental write fail even where
 	// a developer connects with a broader local role.

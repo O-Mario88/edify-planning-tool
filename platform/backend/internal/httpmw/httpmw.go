@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"runtime/debug"
+	"strings"
 	"time"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/trace"
@@ -46,8 +47,19 @@ func (r *statusRecorder) Unwrap() http.ResponseWriter {
 	return r.ResponseWriter
 }
 
+// redactLogPath strips shared secrets embedded in webhook paths (such as
+// /sms/delivery-report/{secret}) before they reach structured access logs.
+func redactLogPath(path string) string {
+	const smsPrefix = "/sms/delivery-report/"
+	if strings.HasPrefix(path, smsPrefix) && len(path) > len(smsPrefix) {
+		return smsPrefix + "[redacted]"
+	}
+	return path
+}
+
 // AccessLog writes one structured line per request. It never logs headers,
-// query strings or bodies, so no token or personal data reaches the log.
+// query strings, webhook secrets or bodies, so no token or personal data
+// reaches the log.
 func AccessLog(logger *slog.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		started := time.Now()
@@ -57,7 +69,7 @@ func AccessLog(logger *slog.Logger, next http.Handler) http.Handler {
 		span := trace.FromContext(request.Context())
 		logger.LogAttrs(request.Context(), slog.LevelInfo, "request",
 			slog.String("method", request.Method),
-			slog.String("path", request.URL.Path),
+			slog.String("path", redactLogPath(request.URL.Path)),
 			slog.Int("status", recorder.status),
 			slog.Duration("duration", time.Since(started)),
 			slog.String("request_id", span.RequestID),

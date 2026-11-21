@@ -188,6 +188,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		existingApp = feed.NewClient(cfg.ExistingAppURL, logger)
 	}
 	screenService := screens.NewService(existingApp).TrustProxyHeaders(cfg.Loans.TrustProxyHeaders).
+		WithStrictReads(cfg.StrictReads).
 		WithDirectory(schooldirectory.NewService(pool, time.Now), logger).
 		WithProfile(schoolprofile.NewService(pool, time.Now), logger).
 		WithHome(home.NewService(pool, time.Now), logger).

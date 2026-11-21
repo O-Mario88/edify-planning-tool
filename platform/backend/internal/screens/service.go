@@ -93,11 +93,36 @@ type Service struct {
 	// trustProxy reads a page reader's address from X-Forwarded-For, for an
 	// audited read behind the platform's load balancer.
 	trustProxy bool
+	// strictReads refuses handing reads back to the existing application even
+	// when existingApp is configured (for saves).
+	strictReads bool
+	// fallbacks counts every attempted call to the existing application.
+	fallbacks *FallbackTracker
 }
 
 // NewService wires the service. existingApp may be nil.
 func NewService(existingApp Fetcher) *Service {
-	return &Service{existingApp: existingApp}
+	return &Service{existingApp: existingApp, fallbacks: NewFallbackTracker()}
+}
+
+// WithFallbackTracker installs a custom fallback tracker (for tests and
+// acceptance rehearsals).
+func (s *Service) WithFallbackTracker(tracker *FallbackTracker) *Service {
+	s.fallbacks = tracker
+	return s
+}
+
+// FallbackCounts returns a snapshot of all attempted Django calls recorded on
+// this service.
+func (s *Service) FallbackCounts() map[FallbackKey]int64 {
+	return s.fallbacks.Counts()
+}
+
+// WithStrictReads refuses any read hand-on to the existing application when
+// strict is true. Saves still forward through existingApp as before.
+func (s *Service) WithStrictReads(strict bool) *Service {
+	s.strictReads = strict
+	return s
 }
 
 // TrustProxyHeaders reads a page reader's address from X-Forwarded-For (the
@@ -141,14 +166,17 @@ func fetch[T any, M interface {
 	*T
 	proto.Message
 }](ctx context.Context, s *Service, path string) (*connect.Response[T], error) {
-	if s.existingApp == nil {
+	if s.strictReads || s.existingApp == nil {
+		s.fallbacks.Record(ctx, s.logger, "GET", path, FallbackBlocked)
 		return nil, apierr.New(ctx, connect.CodeUnavailable, apierr.ReasonScreenUnavailable,
 			"This screen is not available here yet. Use the Edify web app.")
 	}
 	message := new(T)
 	if err := s.existingApp.Get(ctx, path, M(message)); err != nil {
+		s.fallbacks.Record(ctx, s.logger, "GET", path, FallbackFailed)
 		return nil, err
 	}
+	s.fallbacks.Record(ctx, s.logger, "GET", path, FallbackForwarded)
 	return connect.NewResponse(message), nil
 }
 
@@ -318,13 +346,16 @@ func send[T any, M interface {
 	proto.Message
 }](ctx context.Context, s *Service, path string, in proto.Message) (*connect.Response[T], error) {
 	if s.existingApp == nil {
+		s.fallbacks.Record(ctx, s.logger, "POST", path, FallbackBlocked)
 		return nil, apierr.New(ctx, connect.CodeUnavailable, apierr.ReasonScreenUnavailable,
 			"This action is not available here yet. Use the Edify web app.")
 	}
 	message := new(T)
 	if err := s.existingApp.Post(ctx, path, in, M(message)); err != nil {
+		s.fallbacks.Record(ctx, s.logger, "POST", path, FallbackFailed)
 		return nil, err
 	}
+	s.fallbacks.Record(ctx, s.logger, "POST", path, FallbackForwarded)
 	return connect.NewResponse(message), nil
 }
 
