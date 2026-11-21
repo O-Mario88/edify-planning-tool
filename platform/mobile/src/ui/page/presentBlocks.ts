@@ -9,6 +9,9 @@
  *   one stepper control, not a column of underlined links.
  * - A tab whose label ends in its count ("My activities 8") is drawn with
  *   the count as a badge, as the existing web draws it.
+ * - A figure with nothing to count reads "—" with why under it ("Nothing
+ *   planned yet"), never "No data" (owner, 2026-11-21: "please proceed",
+ *   doc 184 §2).
  */
 import { create } from '@bufbuild/protobuf';
 
@@ -65,9 +68,23 @@ export function tabCount(label: string): { readonly label: string; readonly coun
   return { label: match[1] ?? label, count: Number(match[2]) };
 }
 
+/** A figure with nothing to count: "No data" as the existing pages write it. */
+const NOTHING = /^no data$/i;
+
+/** A figure's "No data" as a dash and why, its other words as they came. */
+export function nothingYet(metric: PageMetric): PageMetric {
+  if (!NOTHING.test(metric.value.trim())) return metric;
+  const why = /planned/i.test(metric.label) ? 'Nothing planned yet' : 'Nothing recorded yet';
+  return create(PageMetricSchema, { ...metric, value: '—', helper: metric.helper || why });
+}
+
 /** The page's blocks with a panel of counted links turned into a row of figure tiles. */
 export function presentBlocks(blocks: readonly PageBlock[]): PageBlock[] {
   return blocks.map((block) => {
+    if (block.kind.case === 'strip' && block.kind.value.metrics.some((m) => NOTHING.test(m.value.trim()))) {
+      const strip = create(PageStripSchema, { ...block.kind.value, metrics: block.kind.value.metrics.map(nothingYet) });
+      return create(PageBlockSchema, { group: block.group, kind: { case: 'strip', value: strip } });
+    }
     if (block.kind.case !== 'panel') return block;
     const panel = block.kind.value;
     const only = panel.items.length === 1 ? panel.items[0] : undefined;

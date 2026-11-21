@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import type { PageLink } from '@/gen/edify/screens/v1/page_pb';
 import { GetPageResponseSchema } from '@/gen/edify/screens/v1/page_screen_pb';
 
-import { isStepper, presentBlocks, stepOf, tabCount } from './presentBlocks';
+import { isStepper, nothingYet, presentBlocks, stepOf, tabCount } from './presentBlocks';
 
 const blocksOf = (...blocks: JsonValue[]) => fromJson(GetPageResponseSchema, { blocks }).blocks;
 const links = (...texts: string[]): JsonValue => ({ panel: { items: [{ links: { links: texts.map((text, i) => ({ text, href: `/x?${i}` })) } }] } });
@@ -55,5 +55,22 @@ describe('a tab’s count', () => {
     expect(tabCount('Week 47')).toEqual({ label: 'Week 47', count: 0 });
     expect(tabCount('FY 2027')).toEqual({ label: 'FY 2027', count: 0 });
     expect(tabCount('Q1')).toEqual({ label: 'Q1', count: 0 });
+  });
+});
+
+describe('a figure with nothing to count', () => {
+  it('reads a dash with why under it, never "No data" (owner, 2026-11-21)', () => {
+    const [strip] = presentBlocks(blocksOf({ strip: { metrics: [{ label: 'My Completed Share of Planned Work', value: 'No data' }, { label: 'Schools', value: '12' }] } }));
+    const metrics = strip?.kind.case === 'strip' ? strip.kind.value.metrics : [];
+    expect(metrics.map((m) => [m.value, m.helper])).toEqual([
+      ['—', 'Nothing planned yet'],
+      ['12', ''],
+    ]);
+  });
+
+  it('keeps a figure’s own line under it, and says "recorded" where nothing is planned', () => {
+    const kept = nothingYet({ label: 'Avg. Score', value: 'No data', helper: 'No SSA yet' } as never);
+    expect([kept.value, kept.helper]).toEqual(['—', 'No SSA yet']);
+    expect(nothingYet({ label: 'Avg. Score', value: 'no data', helper: '' } as never).helper).toBe('Nothing recorded yet');
   });
 });
