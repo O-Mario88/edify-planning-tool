@@ -79,6 +79,8 @@ const (
 	advanceWithdrawRolesFile = "../../../deploy/db/advance_withdraw_roles.sql"
 	// Completing a staff school visit: the narrow function that hands it in.
 	completionRolesFile = "../../../deploy/db/completion_roles.sql"
+	// Native Go notification read-state transitions (M11).
+	notificationRolesFile = "../../../deploy/db/notification_roles.sql"
 	// Snoozing a To-Do from Today: one table's insert and three updated columns.
 	todoRolesFile = "../../../deploy/db/todo_roles.sql"
 	// Undoing a snooze: the narrow function that removes that one row.
@@ -292,6 +294,13 @@ func prepareGatewayRole(ctx context.Context) (string, error) {
 		return "", err
 	}
 	if _, err := conn.Conn().PgConn().Exec(ctx, string(completionRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	notificationRoles, err := os.ReadFile(filepath.FromSlash(notificationRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(notificationRoles)).ReadAll(); err != nil {
 		return "", err
 	}
 	todoRoles, err := os.ReadFile(filepath.FromSlash(todoRolesFile))

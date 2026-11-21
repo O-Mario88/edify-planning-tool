@@ -1,3 +1,7 @@
+import { RefreshInbox } from '@/components/blocks/RefreshInbox';
+import { NotificationButton } from '@/components/notifications/NotificationButton';
+import { NotificationStatusAction } from '@/gen/edify/screens/v1/notification_center_pb';
+import { BUTTON_OUTLINE } from '@/components/blocks/buttons';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Code, ConnectError } from '@connectrpc/connect';
@@ -79,7 +83,11 @@ export default async function NotificationsPage({ searchParams }: { searchParams
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-4 px-4 pb-5 pt-5 sm:px-6">
-      <PageHeader header={notificationHeader()} hrefOf={() => `${existingWebUrl}${NOTIFICATIONS_PATH}`} />
+      <RefreshInbox />
+      <PageHeader header={notificationHeader()} hrefOf={() => NOTIFICATIONS_PATH}>
+        <NotificationButton action={NotificationStatusAction.READ_ALL} className={BUTTON_OUTLINE}>Mark All Read</NotificationButton>
+        <NotificationButton action={NotificationStatusAction.ARCHIVE_READ} className={BUTTON_OUTLINE}>Archive All Read</NotificationButton>
+      </PageHeader>
       <KpiStrip strip={notificationStrip(answer)} />
       <FilterBar
         action={NOTIFICATIONS_PATH}

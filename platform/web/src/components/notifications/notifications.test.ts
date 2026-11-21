@@ -29,7 +29,7 @@ describe('NotificationList', () => {
     expect(html).toContain('&lt;b&gt;Bold&lt;/b&gt; &amp; co');
     expect(text(html)).toContain('Follow_Up Critical Action Required Body Nov 3, 2026 00:30 From Pat Link: activity (None)');
     expect(html).toContain(`href="${WEB}/activities/1?a=1&amp;b=2"`);
-    expect(html).toContain(`href="${WEB}/notifications/n1/read?redirect=/notifications"`);
+    expect(html).toMatch(/<button[^>]*type="submit"[^>]*>Mark read<\/button>/);
     expect(text(html)).toContain('Open Record Mark read Archive');
   });
 

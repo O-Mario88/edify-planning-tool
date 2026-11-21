@@ -5,10 +5,9 @@
  * and on the right the record's button, Mark read and Archive. Unread rows
  * carry the soft blue. Every word that is data is the gateway's.
  *
- * Marking read, archiving and the bulk buttons are saves the existing web
- * still makes (docs/migration/43, "What is left"): they open the existing
- * page, where the same controls do them.
  */
+import { NotificationButton } from './NotificationButton';
+import { NotificationStatusAction } from '@/gen/edify/screens/v1/notification_center_pb';
 import type { NotificationItem } from '@/gen/edify/screens/v1/notification_center_pb';
 import { Icon } from '@/components/shell/icons';
 import { badgeClasses } from '@/components/blocks/tones';
@@ -65,14 +64,14 @@ function Row({ item, existingWebUrl }: { item: NotificationItem; existingWebUrl:
         ) : null}
         <div className="flex items-center gap-3 text-[length:var(--edify-text-micro-size)] font-bold text-[var(--edify-text-muted)]">
           {item.canMarkRead ? (
-            <a href={`${existingWebUrl}/notifications/${encodeURIComponent(item.id)}/read?redirect=/notifications`} className="inline-flex min-h-6 items-center whitespace-nowrap">
+            <NotificationButton action={NotificationStatusAction.READ} id={item.id} className="inline-flex min-h-6 items-center whitespace-nowrap">
               Mark read
-            </a>
+            </NotificationButton>
           ) : null}
           {item.canArchive ? (
-            <a href={`${existingWebUrl}/notifications`} className="inline-flex min-h-6 items-center hover:text-[#dc2626]">
+            <NotificationButton action={NotificationStatusAction.ARCHIVE} id={item.id} className="inline-flex min-h-6 items-center hover:text-[#dc2626]">
               Archive
-            </a>
+            </NotificationButton>
           ) : null}
         </div>
       </div>

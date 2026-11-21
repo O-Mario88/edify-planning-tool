@@ -182,3 +182,29 @@ SELECT COUNT(*) FROM notification n JOIN "user" u ON u.id = n.recipient_id
 		t.Fatalf("a Cluster Leader's bell: %d %v, want %d", n, err, want)
 	}
 }
+
+func TestNotificationStatusActionsRespectRecipientAndCurrentStatus(t *testing.T) {
+	fileNotifications(t)
+	const email = "hr@edify.org"
+	borrowAccount(t, email)
+	borrowAccount(t, "pl1@edify.org")
+	own := sessionOf(t, email, seededPassword).GetAccessToken()
+	other := sessionOf(t, "pl1@edify.org", seededPassword).GetAccessToken()
+	client := screensv1connect.NewNotificationCenterServiceClient(http.DefaultClient, baseURL)
+	change := func(token string, action screensv1.NotificationStatusAction, id string, want int64) {
+		t.Helper()
+		resp, err := client.UpdateNotificationStatus(context.Background(), authed(&screensv1.UpdateNotificationStatusRequest{Action: action, NotificationId: id}, token))
+		if err != nil || resp.Msg.GetChanged() != want {
+			t.Fatalf("action %v on %q: got %v, %v; want %d changes", action, id, resp, err, want)
+		}
+	}
+	read := screensv1.NotificationStatusAction_NOTIFICATION_STATUS_ACTION_READ
+	archive := screensv1.NotificationStatusAction_NOTIFICATION_STATUS_ACTION_ARCHIVE
+	change(other, archive, "gpn901", 0)
+	change(own, read, "gpn901", 1)
+	change(own, read, "gpn901", 0)
+	change(own, archive, "gpn901", 1)
+	change(own, read, "gpn901", 0)
+	change(own, screensv1.NotificationStatusAction_NOTIFICATION_STATUS_ACTION_READ_ALL, "", 1)
+	change(own, screensv1.NotificationStatusAction_NOTIFICATION_STATUS_ACTION_ARCHIVE_READ, "", 2)
+}
