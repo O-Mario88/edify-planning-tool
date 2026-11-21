@@ -24,7 +24,7 @@
      (owner, 2026-10-18: "professional and enterprise grade design
      consistency across the platform"). In the dark and blue themes the
      raised step painted these cards lighter than the rest of the platform. */
-  --cpo-surface: var(--edify-card-surface, var(--edify-surface-raised, #fff));
+  --cpo-surface: var(--edify-card-surface, var(--edify-surface-raised, var(--edify-brand-panel-text)));
   --cpo-inset: var(--edify-card-inset, 1rem);
   --cpo-sunk: #f5f7f9;
   --cpo-accent: #0f5a47;
@@ -271,12 +271,12 @@
 }
 .cpo-apply {
   background: var(--cpo-accent);
-  color: #fff;
+  color: var(--edify-brand-panel-text);
   border: 1px solid var(--cpo-accent);
   min-inline-size: 7.5rem;
 }
 .cpo-apply:hover { background: var(--cpo-accent-hover); border-color: var(--cpo-accent-hover); }
-:root:is(.theme-dark, .theme-blue) .cpo-apply { color: #ffffff; }
+:root:is(.theme-dark, .theme-blue) .cpo-apply { color: var(--edify-brand-panel-text); }
 .cpo-reset {
   background: var(--cpo-surface);
   color: var(--cpo-ink);
@@ -1412,10 +1412,10 @@
 .cxo-shortcut--primary {
   background: var(--cxo-total);
   border-color: var(--cxo-total);
-  color: #fff;
+  color: var(--edify-brand-panel-text);
 }
 .cxo-shortcut--primary:hover { background: color-mix(in srgb, var(--cxo-total) 88%, black); }
-:root:is(.theme-dark, .theme-blue) .cxo-shortcut--primary { color: #ffffff; }
+:root:is(.theme-dark, .theme-blue) .cxo-shortcut--primary { color: var(--edify-brand-panel-text); }
 
 /* The table. */
 .cxo-drill-bar {
@@ -1519,12 +1519,12 @@
 .cpo-flag .cpo-ug-black { fill: #000; }
 .cpo-flag .cpo-ug-gold { fill: #fcdc04; }
 .cpo-flag .cpo-ug-crimson { fill: #d90000; }
-.cpo-flag .cpo-ug-white { fill: #fff; }
+.cpo-flag .cpo-ug-white { fill: var(--edify-brand-panel-text); }
 .cpo-flag .cpo-ug-grey { fill: #9ca6a8; }
 .cpo-flag .cpo-ug-gold-line { fill: none; stroke: #fcdc04; }
 .cpo-flag .cpo-ug-black-line { fill: none; stroke: #000; }
 /* The mark inside a filled status dot. */
-.cpo-dotmark { fill: none; stroke: #fff; }
+.cpo-dotmark { fill: none; stroke: var(--edify-brand-panel-text); }
 
 /* Locked period snapshots (spec §22), in the drawer: the hierarchy steps in
    as the page's table does, and the lists wrap there too. */

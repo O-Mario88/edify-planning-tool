@@ -1135,7 +1135,7 @@
   padding-inline: .75rem;
   border-radius: var(--edify-radius-control);
   background: var(--edify-primary, var(--edify-accent));
-  color: #fff;
+  color: var(--edify-brand-panel-text);
   font-size: var(--edify-text-micro-size);
   font-weight: 700;
   white-space: nowrap;
@@ -1414,7 +1414,7 @@
   scrollbar-width: thin;
   border: 1px solid var(--edify-border, #e2e8f0);
   border-radius: var(--edify-radius-md, .75rem);
-  background: var(--edify-surface, #fff);
+  background: var(--edify-surface, var(--edify-brand-panel-text));
 }
 
 .impact-table-scroll:focus-visible {
@@ -1463,7 +1463,7 @@
 }
 
 .impact-analysis-table tbody tr:nth-child(even) :where(th, td) {
-  background: color-mix(in srgb, var(--edify-surface-soft, #f8fafc) 55%, var(--edify-surface, #fff));
+  background: color-mix(in srgb, var(--edify-surface-soft, #f8fafc) 55%, var(--edify-surface, var(--edify-brand-panel-text)));
 }
 
 .impact-analysis-table tbody th[scope="row"] {
@@ -1478,7 +1478,7 @@
 }
 
 .impact-analysis-table tbody tr:nth-child(even) th[scope="row"] {
-  background: color-mix(in srgb, var(--edify-surface-soft, #f8fafc) 55%, var(--edify-surface, #fff));
+  background: color-mix(in srgb, var(--edify-surface-soft, #f8fafc) 55%, var(--edify-surface, var(--edify-brand-panel-text)));
 }
 
 .impact-analysis-table tbody th strong,
@@ -1508,7 +1508,7 @@
 }
 
 .impact-signal--negative {
-  color: var(--edify-danger, #be123c);
+  color: var(--edify-danger, var(--edify-danger-text));
 }
 
 .impact-signal--insufficient {

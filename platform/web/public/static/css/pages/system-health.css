@@ -20,7 +20,7 @@ main .platform-hero {
 
 main .platform-hero h1 {
   max-inline-size: none;
-  color: #fff;
+  color: var(--edify-brand-panel-text);
   font-size: var(--edify-text-display-size);
   font-weight: 600;
 }

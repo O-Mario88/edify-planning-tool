@@ -411,7 +411,7 @@ main [data-oversight-workspace] .edify-training-group-toggle:hover {
 .cd-officer-card {
   border: 1px solid var(--edify-border, #e2e8f0);
   border-radius: var(--edify-radius-lg, 0.5rem);
-  background: var(--edify-surface-raised, #ffffff);
+  background: var(--edify-surface-raised, var(--edify-brand-panel-text));
   overflow: hidden;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
   margin-bottom: 0.75rem;
@@ -427,7 +427,7 @@ main [data-oversight-workspace] .edify-training-group-toggle:hover {
   gap: 0.75rem;
   padding: 0.75rem 1rem;
   cursor: pointer;
-  background: var(--edify-surface-raised, #ffffff);
+  background: var(--edify-surface-raised, var(--edify-brand-panel-text));
   list-style: none;
   border-bottom: 1px solid transparent;
   transition: background-color 0.15s ease;
@@ -439,7 +439,7 @@ main [data-oversight-workspace] .edify-training-group-toggle:hover {
 }
 .cd-officer-card[open] > .cd-officer-summary {
   border-bottom-color: var(--edify-border, #e2e8f0);
-  background: color-mix(in srgb, var(--color-edify-primary, #1e40af) 3%, var(--edify-surface-raised, #ffffff));
+  background: color-mix(in srgb, var(--color-edify-primary, #1e40af) 3%, var(--edify-surface-raised, var(--edify-brand-panel-text)));
 }
 
 .cd-officer-chevron {

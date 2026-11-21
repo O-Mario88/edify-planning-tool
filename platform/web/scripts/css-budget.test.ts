@@ -14,14 +14,22 @@ import { describe, expect, it } from 'vitest';
 
 const LEGACY = join(__dirname, '..', '..', '..', 'static', 'css');
 
-/** Measured 2026-11-20 (doc 184 §3). Lower these as the counts fall; never raise them. */
-const BASELINE = { important: 4105, hexColours: 2550 };
+/** Measured 2026-11-21 (doc 184 §3), after the page sheets' colours became
+ *  their equal tokens. Lower these as the counts fall; never raise them. */
+const BASELINE = { important: 4002, hexColours: 866 };
+
+/** Compiled bundles (Tailwind's, npm run build:css): their colours are the
+ *  framework's palette, not hand-written debt. */
+const COMPILED = new Set(['main.css', 'tokens.css']);
+
+/** A token's own definition ("--edify-x: #fff;") is the system, not debt. */
+const DEFINITION = /^\s*--[\w-]+\s*:/;
 
 function cssFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
     const path = join(dir, name);
     if (statSync(path).isDirectory()) return name === 'build' ? [] : cssFiles(path);
-    return name.endsWith('.css') && !name.endsWith('.min.css') ? [path] : [];
+    return name.endsWith('.css') && !name.endsWith('.min.css') && !COMPILED.has(name) ? [path] : [];
   });
 }
 
@@ -31,7 +39,10 @@ function measure(): { important: number; hexColours: number } {
   for (const file of cssFiles(LEGACY)) {
     const css = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
     important += css.split('!important').length - 1;
-    hexColours += (css.match(/#[0-9a-fA-F]{3,8}\b/g) ?? []).length;
+    for (const declaration of css.split(';')) {
+      if (DEFINITION.test(declaration.split('{').at(-1) ?? '')) continue;
+      hexColours += (declaration.match(/#[0-9a-fA-F]{3,8}\b/g) ?? []).length;
+    }
   }
   return { important, hexColours };
 }

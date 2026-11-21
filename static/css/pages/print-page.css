@@ -17,7 +17,7 @@
     block-size: auto;
     max-block-size: none;
     overflow: visible;
-    background: #fff;
+    background: var(--edify-brand-panel-text);
   }
 
   html .app-sidebar,

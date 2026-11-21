@@ -295,7 +295,7 @@
 .sp-upcoming span, .sp-upcoming small { color: var(--edify-text-muted); font-size: var(--edify-text-label-size); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sp-upcoming a { color: var(--edify-accent-text); font-size: var(--edify-text-label-size); font-weight: 700; }
 .sp-attention { gap: 8px; padding: 9px 10px; border: 1px solid var(--edify-border); border-radius: var(--edify-radius-sm); color: var(--edify-text); }
-.sp-attention > span { width: 22px; height: 22px; display: grid; place-items: center; border-radius: var(--edify-radius-pill); color: #fff; background: var(--edify-warning); font-size: var(--edify-text-label-size); font-weight: 700; }
+.sp-attention > span { width: 22px; height: 22px; display: grid; place-items: center; border-radius: var(--edify-radius-pill); color: var(--edify-brand-panel-text); background: var(--edify-warning); font-size: var(--edify-text-label-size); font-weight: 700; }
 .sp-attention--danger > span { background: var(--edify-danger); }
 .sp-attention--info > span { background: var(--edify-accent); }
 .sp-attention div { min-width: 0; display: grid; flex: 1; }
