@@ -261,7 +261,9 @@ def _learning_tab(request, *, fy: str, status: str) -> dict:
             .distinct()
             if s and s.strip()
         },
-        key=str.lower,
+        # Subjects differing only in case keep one order (the set's own
+        # order changes between processes); Go sorts the same way.
+        key=lambda s: (s.lower(), s),
     )
     if subject and subject not in subjects:
         subject = ""

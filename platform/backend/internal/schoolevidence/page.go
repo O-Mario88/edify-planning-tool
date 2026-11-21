@@ -389,8 +389,21 @@ WHERE l.deleted_at IS NULL AND l.school_id IN (SELECT s.id FROM school s WHERE `
 	if err != nil {
 		return nil, fmt.Errorf("schoolevidence: reading the subjects: %w", err)
 	}
-	sort.SliceStable(subjects, func(i, j int) bool { return strings.ToLower(subjects[i]) < strings.ToLower(subjects[j]) })
+	sortSubjects(subjects)
 	return subjects, nil
+}
+
+// sortSubjects is the existing page's sorted(..., key=lambda s: (s.lower(),
+// s)): case-blind, and subjects that differ only in case in code-point order,
+// so "English" and "english" come out the same way every time.
+func sortSubjects(subjects []string) {
+	sort.Slice(subjects, func(i, j int) bool {
+		a, b := strings.ToLower(subjects[i]), strings.ToLower(subjects[j])
+		if a != b {
+			return a < b
+		}
+		return subjects[i] < subjects[j]
+	})
 }
 
 // cell is the evidence table's cell: a dash for nothing. The template
