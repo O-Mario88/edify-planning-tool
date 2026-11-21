@@ -2,8 +2,8 @@
 // @generated from file edify/screens/v1/notification_center.proto (package edify.screens.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { PageInfo } from "../../common/v1/common_pb";
 import { file_edify_common_v1_common } from "../../common/v1/common_pb";
 import type { Message } from "@bufbuild/protobuf";
@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file edify/screens/v1/notification_center.proto.
  */
 export const file_edify_screens_v1_notification_center: GenFile = /*@__PURE__*/
-  fileDesc("CiplZGlmeS9zY3JlZW5zL3YxL25vdGlmaWNhdGlvbl9jZW50ZXIucHJvdG8SEGVkaWZ5LnNjcmVlbnMudjEiIwohR2V0VW5yZWFkTm90aWZpY2F0aW9uQ291bnRSZXF1ZXN0IjQKIkdldFVucmVhZE5vdGlmaWNhdGlvbkNvdW50UmVzcG9uc2USDgoGdW5yZWFkGAEgASgFIqwBChxHZXROb3RpZmljYXRpb25DZW50ZXJSZXF1ZXN0EhMKBnN0YXR1cxgBIAEoCUgAiAEBEhAKCHByaW9yaXR5GAIgASgJEhAKCGNhdGVnb3J5GAMgASgJEhcKD2FjdGlvbl9yZXF1aXJlZBgEIAEoCBIJCgFxGAUgASgJEgwKBHBhZ2UYBiABKAkSFgoOc2V0dGluZ3Nfc2F2ZWQYByABKAhCCQoHX3N0YXR1cyK9AgodR2V0Tm90aWZpY2F0aW9uQ2VudGVyUmVzcG9uc2USMAoEa3BpcxgBIAEoCzIiLmVkaWZ5LnNjcmVlbnMudjEuTm90aWZpY2F0aW9uS3BpcxI2CgdmaWx0ZXJzGAIgASgLMiUuZWRpZnkuc2NyZWVucy52MS5Ob3RpZmljYXRpb25GaWx0ZXJzEjkKDW5vdGlmaWNhdGlvbnMYAyADKAsyIi5lZGlmeS5zY3JlZW5zLnYxLk5vdGlmaWNhdGlvbkl0ZW0SJwoEcGFnZRgEIAEoCzIZLmVkaWZ5LmNvbW1vbi52MS5QYWdlSW5mbxI4CghkZWxpdmVyeRgFIAEoCzImLmVkaWZ5LnNjcmVlbnMudjEuTm90aWZpY2F0aW9uRGVsaXZlcnkSFAoMcGFnZV9udW1iZXJzGAYgAygFIj0KEE5vdGlmaWNhdGlvbktwaXMSFwoPYWN0aW9uX3JlcXVpcmVkGAEgASgFEhAKCGNyaXRpY2FsGAIgASgFIqcBChNOb3RpZmljYXRpb25GaWx0ZXJzEg4KBnN0YXR1cxgBIAEoCRIQCghwcmlvcml0eRgCIAEoCRIQCghjYXRlZ29yeRgDIAEoCRIXCg9hY3Rpb25fcmVxdWlyZWQYBCABKAgSCQoBcRgFIAEoCRI4CgpjYXRlZ29yaWVzGAYgAygLMiQuZWRpZnkuc2NyZWVucy52MS5Ob3RpZmljYXRpb25PcHRpb24iMgoSTm90aWZpY2F0aW9uT3B0aW9uEg0KBXZhbHVlGAEgASgJEg0KBWxhYmVsGAIgASgJIvYCChBOb3RpZmljYXRpb25JdGVtEgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEgwKBGJvZHkYAyABKAkSEAoIY2F0ZWdvcnkYBCABKAkSFgoOY2F0ZWdvcnlfbGFiZWwYBSABKAkSEAoIcHJpb3JpdHkYBiABKAkSFgoOcHJpb3JpdHlfbGFiZWwYByABKAkSDgoGc3RhdHVzGAggASgJEg4KBnVucmVhZBgJIAEoCBIXCg9hY3Rpb25fcmVxdWlyZWQYCiABKAgSFQoNY3JlYXRlZF9sYWJlbBgLIAEoCRITCgtzZW5kZXJfbmFtZRgMIAEoCRIUCgxjb250ZXh0X3R5cGUYDSABKAkSEgoKY29udGV4dF9pZBgOIAEoCRIUCgx0YXJnZXRfcm91dGUYDyABKAkSFAoMYWN0aW9uX2xhYmVsGBAgASgJEhUKDWNhbl9tYXJrX3JlYWQYESABKAgSEwoLY2FuX2FyY2hpdmUYEiABKAgivwEKFE5vdGlmaWNhdGlvbkRlbGl2ZXJ5EhUKDWVtYWlsX2VuYWJsZWQYASABKAgSFAoMcHVzaF9lbmFibGVkGAIgASgIEg8KB2FkZHJlc3MYAyABKAkSGAoQZW1haWxfY29uZmlndXJlZBgEIAEoCBJACgpjYXRlZ29yaWVzGAUgAygLMiwuZWRpZnkuc2NyZWVucy52MS5Ob3RpZmljYXRpb25DYXRlZ29yeUNob2ljZRINCgVzYXZlZBgGIAEoCCJJChpOb3RpZmljYXRpb25DYXRlZ29yeUNob2ljZRINCgV2YWx1ZRgBIAEoCRINCgVsYWJlbBgCIAEoCRINCgVtdXRlZBgDIAEoCDKfAgoZTm90aWZpY2F0aW9uQ2VudGVyU2VydmljZRJ4ChVHZXROb3RpZmljYXRpb25DZW50ZXISLi5lZGlmeS5zY3JlZW5zLnYxLkdldE5vdGlmaWNhdGlvbkNlbnRlclJlcXVlc3QaLy5lZGlmeS5zY3JlZW5zLnYxLkdldE5vdGlmaWNhdGlvbkNlbnRlclJlc3BvbnNlEocBChpHZXRVbnJlYWROb3RpZmljYXRpb25Db3VudBIzLmVkaWZ5LnNjcmVlbnMudjEuR2V0VW5yZWFkTm90aWZpY2F0aW9uQ291bnRSZXF1ZXN0GjQuZWRpZnkuc2NyZWVucy52MS5HZXRVbnJlYWROb3RpZmljYXRpb25Db3VudFJlc3BvbnNlQusBChRjb20uZWRpZnkuc2NyZWVucy52MUIXTm90aWZpY2F0aW9uQ2VudGVyUHJvdG9QAVpYZ2l0aHViLmNvbS9PLU1hcmlvODgvZWRpZnktcGxhbm5pbmctdG9vbC9wbGF0Zm9ybS9iYWNrZW5kL2dlbi9lZGlmeS9zY3JlZW5zL3YxO3NjcmVlbnN2MaICA0VTWKoCEEVkaWZ5LlNjcmVlbnMuVjHKAhBFZGlmeVxTY3JlZW5zXFYx4gIcRWRpZnlcU2NyZWVuc1xWMVxHUEJNZXRhZGF0YeoCEkVkaWZ5OjpTY3JlZW5zOjpWMWIGcHJvdG8z", [file_edify_common_v1_common]);
+  fileDesc("CiplZGlmeS9zY3JlZW5zL3YxL25vdGlmaWNhdGlvbl9jZW50ZXIucHJvdG8SEGVkaWZ5LnNjcmVlbnMudjEiIwohR2V0VW5yZWFkTm90aWZpY2F0aW9uQ291bnRSZXF1ZXN0IjQKIkdldFVucmVhZE5vdGlmaWNhdGlvbkNvdW50UmVzcG9uc2USDgoGdW5yZWFkGAEgASgFIqwBChxHZXROb3RpZmljYXRpb25DZW50ZXJSZXF1ZXN0EhMKBnN0YXR1cxgBIAEoCUgAiAEBEhAKCHByaW9yaXR5GAIgASgJEhAKCGNhdGVnb3J5GAMgASgJEhcKD2FjdGlvbl9yZXF1aXJlZBgEIAEoCBIJCgFxGAUgASgJEgwKBHBhZ2UYBiABKAkSFgoOc2V0dGluZ3Nfc2F2ZWQYByABKAhCCQoHX3N0YXR1cyK9AgodR2V0Tm90aWZpY2F0aW9uQ2VudGVyUmVzcG9uc2USMAoEa3BpcxgBIAEoCzIiLmVkaWZ5LnNjcmVlbnMudjEuTm90aWZpY2F0aW9uS3BpcxI2CgdmaWx0ZXJzGAIgASgLMiUuZWRpZnkuc2NyZWVucy52MS5Ob3RpZmljYXRpb25GaWx0ZXJzEjkKDW5vdGlmaWNhdGlvbnMYAyADKAsyIi5lZGlmeS5zY3JlZW5zLnYxLk5vdGlmaWNhdGlvbkl0ZW0SJwoEcGFnZRgEIAEoCzIZLmVkaWZ5LmNvbW1vbi52MS5QYWdlSW5mbxI4CghkZWxpdmVyeRgFIAEoCzImLmVkaWZ5LnNjcmVlbnMudjEuTm90aWZpY2F0aW9uRGVsaXZlcnkSFAoMcGFnZV9udW1iZXJzGAYgAygFIj0KEE5vdGlmaWNhdGlvbktwaXMSFwoPYWN0aW9uX3JlcXVpcmVkGAEgASgFEhAKCGNyaXRpY2FsGAIgASgFIqcBChNOb3RpZmljYXRpb25GaWx0ZXJzEg4KBnN0YXR1cxgBIAEoCRIQCghwcmlvcml0eRgCIAEoCRIQCghjYXRlZ29yeRgDIAEoCRIXCg9hY3Rpb25fcmVxdWlyZWQYBCABKAgSCQoBcRgFIAEoCRI4CgpjYXRlZ29yaWVzGAYgAygLMiQuZWRpZnkuc2NyZWVucy52MS5Ob3RpZmljYXRpb25PcHRpb24iMgoSTm90aWZpY2F0aW9uT3B0aW9uEg0KBXZhbHVlGAEgASgJEg0KBWxhYmVsGAIgASgJIvYCChBOb3RpZmljYXRpb25JdGVtEgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEgwKBGJvZHkYAyABKAkSEAoIY2F0ZWdvcnkYBCABKAkSFgoOY2F0ZWdvcnlfbGFiZWwYBSABKAkSEAoIcHJpb3JpdHkYBiABKAkSFgoOcHJpb3JpdHlfbGFiZWwYByABKAkSDgoGc3RhdHVzGAggASgJEg4KBnVucmVhZBgJIAEoCBIXCg9hY3Rpb25fcmVxdWlyZWQYCiABKAgSFQoNY3JlYXRlZF9sYWJlbBgLIAEoCRITCgtzZW5kZXJfbmFtZRgMIAEoCRIUCgxjb250ZXh0X3R5cGUYDSABKAkSEgoKY29udGV4dF9pZBgOIAEoCRIUCgx0YXJnZXRfcm91dGUYDyABKAkSFAoMYWN0aW9uX2xhYmVsGBAgASgJEhUKDWNhbl9tYXJrX3JlYWQYESABKAgSEwoLY2FuX2FyY2hpdmUYEiABKAgivwEKFE5vdGlmaWNhdGlvbkRlbGl2ZXJ5EhUKDWVtYWlsX2VuYWJsZWQYASABKAgSFAoMcHVzaF9lbmFibGVkGAIgASgIEg8KB2FkZHJlc3MYAyABKAkSGAoQZW1haWxfY29uZmlndXJlZBgEIAEoCBJACgpjYXRlZ29yaWVzGAUgAygLMiwuZWRpZnkuc2NyZWVucy52MS5Ob3RpZmljYXRpb25DYXRlZ29yeUNob2ljZRINCgVzYXZlZBgGIAEoCCJJChpOb3RpZmljYXRpb25DYXRlZ29yeUNob2ljZRINCgV2YWx1ZRgBIAEoCRINCgVsYWJlbBgCIAEoCRINCgVtdXRlZBgDIAEoCCJ2Ch9VcGRhdGVOb3RpZmljYXRpb25TdGF0dXNSZXF1ZXN0EjoKBmFjdGlvbhgBIAEoDjIqLmVkaWZ5LnNjcmVlbnMudjEuTm90aWZpY2F0aW9uU3RhdHVzQWN0aW9uEhcKD25vdGlmaWNhdGlvbl9pZBgCIAEoCSIzCiBVcGRhdGVOb3RpZmljYXRpb25TdGF0dXNSZXNwb25zZRIPCgdjaGFuZ2VkGAEgASgDKukBChhOb3RpZmljYXRpb25TdGF0dXNBY3Rpb24SKgomTk9USUZJQ0FUSU9OX1NUQVRVU19BQ1RJT05fVU5TUEVDSUZJRUQQABIjCh9OT1RJRklDQVRJT05fU1RBVFVTX0FDVElPTl9SRUFEEAESJgoiTk9USUZJQ0FUSU9OX1NUQVRVU19BQ1RJT05fQVJDSElWRRACEicKI05PVElGSUNBVElPTl9TVEFUVVNfQUNUSU9OX1JFQURfQUxMEAMSKwonTk9USUZJQ0FUSU9OX1NUQVRVU19BQ1RJT05fQVJDSElWRV9SRUFEEAQyowMKGU5vdGlmaWNhdGlvbkNlbnRlclNlcnZpY2USeAoVR2V0Tm90aWZpY2F0aW9uQ2VudGVyEi4uZWRpZnkuc2NyZWVucy52MS5HZXROb3RpZmljYXRpb25DZW50ZXJSZXF1ZXN0Gi8uZWRpZnkuc2NyZWVucy52MS5HZXROb3RpZmljYXRpb25DZW50ZXJSZXNwb25zZRKHAQoaR2V0VW5yZWFkTm90aWZpY2F0aW9uQ291bnQSMy5lZGlmeS5zY3JlZW5zLnYxLkdldFVucmVhZE5vdGlmaWNhdGlvbkNvdW50UmVxdWVzdBo0LmVkaWZ5LnNjcmVlbnMudjEuR2V0VW5yZWFkTm90aWZpY2F0aW9uQ291bnRSZXNwb25zZRKBAQoYVXBkYXRlTm90aWZpY2F0aW9uU3RhdHVzEjEuZWRpZnkuc2NyZWVucy52MS5VcGRhdGVOb3RpZmljYXRpb25TdGF0dXNSZXF1ZXN0GjIuZWRpZnkuc2NyZWVucy52MS5VcGRhdGVOb3RpZmljYXRpb25TdGF0dXNSZXNwb25zZULrAQoUY29tLmVkaWZ5LnNjcmVlbnMudjFCF05vdGlmaWNhdGlvbkNlbnRlclByb3RvUAFaWGdpdGh1Yi5jb20vTy1NYXJpbzg4L2VkaWZ5LXBsYW5uaW5nLXRvb2wvcGxhdGZvcm0vYmFja2VuZC9nZW4vZWRpZnkvc2NyZWVucy92MTtzY3JlZW5zdjGiAgNFU1iqAhBFZGlmeS5TY3JlZW5zLlYxygIQRWRpZnlcU2NyZWVuc1xWMeICHEVkaWZ5XFNjcmVlbnNcVjFcR1BCTWV0YWRhdGHqAhJFZGlmeTo6U2NyZWVuczo6VjFiBnByb3RvMw", [file_edify_common_v1_common]);
 
 /**
  * @generated from message edify.screens.v1.GetUnreadNotificationCountRequest
@@ -450,6 +450,81 @@ export const NotificationCategoryChoiceSchema: GenMessage<NotificationCategoryCh
   messageDesc(file_edify_screens_v1_notification_center, 9);
 
 /**
+ * @generated from message edify.screens.v1.UpdateNotificationStatusRequest
+ */
+export type UpdateNotificationStatusRequest = Message<"edify.screens.v1.UpdateNotificationStatusRequest"> & {
+  /**
+   * @generated from field: edify.screens.v1.NotificationStatusAction action = 1;
+   */
+  action: NotificationStatusAction;
+
+  /**
+   * @generated from field: string notification_id = 2;
+   */
+  notificationId: string;
+};
+
+/**
+ * Describes the message edify.screens.v1.UpdateNotificationStatusRequest.
+ * Use `create(UpdateNotificationStatusRequestSchema)` to create a new message.
+ */
+export const UpdateNotificationStatusRequestSchema: GenMessage<UpdateNotificationStatusRequest> = /*@__PURE__*/
+  messageDesc(file_edify_screens_v1_notification_center, 10);
+
+/**
+ * @generated from message edify.screens.v1.UpdateNotificationStatusResponse
+ */
+export type UpdateNotificationStatusResponse = Message<"edify.screens.v1.UpdateNotificationStatusResponse"> & {
+  /**
+   * @generated from field: int64 changed = 1;
+   */
+  changed: bigint;
+};
+
+/**
+ * Describes the message edify.screens.v1.UpdateNotificationStatusResponse.
+ * Use `create(UpdateNotificationStatusResponseSchema)` to create a new message.
+ */
+export const UpdateNotificationStatusResponseSchema: GenMessage<UpdateNotificationStatusResponse> = /*@__PURE__*/
+  messageDesc(file_edify_screens_v1_notification_center, 11);
+
+/**
+ * @generated from enum edify.screens.v1.NotificationStatusAction
+ */
+export enum NotificationStatusAction {
+  /**
+   * @generated from enum value: NOTIFICATION_STATUS_ACTION_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: NOTIFICATION_STATUS_ACTION_READ = 1;
+   */
+  READ = 1,
+
+  /**
+   * @generated from enum value: NOTIFICATION_STATUS_ACTION_ARCHIVE = 2;
+   */
+  ARCHIVE = 2,
+
+  /**
+   * @generated from enum value: NOTIFICATION_STATUS_ACTION_READ_ALL = 3;
+   */
+  READ_ALL = 3,
+
+  /**
+   * @generated from enum value: NOTIFICATION_STATUS_ACTION_ARCHIVE_READ = 4;
+   */
+  ARCHIVE_READ = 4,
+}
+
+/**
+ * Describes the enum edify.screens.v1.NotificationStatusAction.
+ */
+export const NotificationStatusActionSchema: GenEnum<NotificationStatusAction> = /*@__PURE__*/
+  enumDesc(file_edify_screens_v1_notification_center, 0);
+
+/**
  * The notification centre, as the existing web page builds it for the
  * signed-in person (apps.frontend.views.staff_views.notifications_page_view
  * and pages/notifications/index.html): the same figures, filters,
@@ -478,6 +553,14 @@ export const NotificationCenterService: GenService<{
     methodKind: "unary";
     input: typeof GetUnreadNotificationCountRequestSchema;
     output: typeof GetUnreadNotificationCountResponseSchema;
+  },
+  /**
+   * @generated from rpc edify.screens.v1.NotificationCenterService.UpdateNotificationStatus
+   */
+  updateNotificationStatus: {
+    methodKind: "unary";
+    input: typeof UpdateNotificationStatusRequestSchema;
+    output: typeof UpdateNotificationStatusResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_edify_screens_v1_notification_center, 0);

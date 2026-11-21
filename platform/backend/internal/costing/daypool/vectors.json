@@ -1,0 +1,5912 @@
+{
+  "accommodation_key_for_user": [
+    {
+      "active_role": null,
+      "answer": "secondary_accommodation_per_night",
+      "roles": []
+    },
+    {
+      "active_role": "CCEO",
+      "answer": "secondary_accommodation_per_night",
+      "roles": []
+    },
+    {
+      "active_role": "CountryDirector",
+      "answer": "management_accommodation_per_night",
+      "roles": []
+    },
+    {
+      "active_role": "CCEO",
+      "answer": "secondary_accommodation_per_night",
+      "roles": [
+        "CCEO"
+      ]
+    },
+    {
+      "active_role": "Program Lead",
+      "answer": "management_accommodation_per_night",
+      "roles": [
+        "Program Lead"
+      ]
+    },
+    {
+      "active_role": "CCEO",
+      "answer": "management_accommodation_per_night",
+      "roles": [
+        "CCEO",
+        "Admin"
+      ]
+    },
+    {
+      "active_role": "CCEO",
+      "answer": "management_accommodation_per_night",
+      "roles": [
+        "CCEO",
+        "Program Lead"
+      ]
+    },
+    {
+      "active_role": "HumanResources",
+      "answer": "management_accommodation_per_night",
+      "roles": [
+        "HumanResources"
+      ]
+    },
+    {
+      "active_role": "PartnerAdmin",
+      "answer": "secondary_accommodation_per_night",
+      "roles": [
+        "PartnerAdmin"
+      ]
+    }
+  ],
+  "allocate_pool": [
+    {
+      "answer": [],
+      "n": 0,
+      "pool": {
+        "lunch_per_day": 12001,
+        "primary_transport_per_day": 50000
+      }
+    },
+    {
+      "answer": [
+        {
+          "lunch_per_day": 12001,
+          "primary_transport_per_day": 50000
+        }
+      ],
+      "n": 1,
+      "pool": {
+        "lunch_per_day": 12001,
+        "primary_transport_per_day": 50000
+      }
+    },
+    {
+      "answer": [
+        {
+          "lunch_per_day": 6001,
+          "primary_transport_per_day": 25000
+        },
+        {
+          "lunch_per_day": 6000,
+          "primary_transport_per_day": 25000
+        }
+      ],
+      "n": 2,
+      "pool": {
+        "lunch_per_day": 12001,
+        "primary_transport_per_day": 50000
+      }
+    },
+    {
+      "answer": [
+        {
+          "lunch_per_day": 4001,
+          "primary_transport_per_day": 16667
+        },
+        {
+          "lunch_per_day": 4000,
+          "primary_transport_per_day": 16667
+        },
+        {
+          "lunch_per_day": 4000,
+          "primary_transport_per_day": 16666
+        }
+      ],
+      "n": 3,
+      "pool": {
+        "lunch_per_day": 12001,
+        "primary_transport_per_day": 50000
+      }
+    },
+    {
+      "answer": [
+        {
+          "lunch_per_day": 3001,
+          "primary_transport_per_day": 12500
+        },
+        {
+          "lunch_per_day": 3000,
+          "primary_transport_per_day": 12500
+        },
+        {
+          "lunch_per_day": 3000,
+          "primary_transport_per_day": 12500
+        },
+        {
+          "lunch_per_day": 3000,
+          "primary_transport_per_day": 12500
+        }
+      ],
+      "n": 4,
+      "pool": {
+        "lunch_per_day": 12001,
+        "primary_transport_per_day": 50000
+      }
+    },
+    {
+      "answer": [
+        {
+          "lunch_per_day": 2401,
+          "primary_transport_per_day": 10000
+        },
+        {
+          "lunch_per_day": 2400,
+          "primary_transport_per_day": 10000
+        },
+        {
+          "lunch_per_day": 2400,
+          "primary_transport_per_day": 10000
+        },
+        {
+          "lunch_per_day": 2400,
+          "primary_transport_per_day": 10000
+        },
+        {
+          "lunch_per_day": 2400,
+          "primary_transport_per_day": 10000
+        }
+      ],
+      "n": 5,
+      "pool": {
+        "lunch_per_day": 12001,
+        "primary_transport_per_day": 50000
+      }
+    },
+    {
+      "answer": [
+        {
+          "lunch_per_day": 2001,
+          "primary_transport_per_day": 8334
+        },
+        {
+          "lunch_per_day": 2000,
+          "primary_transport_per_day": 8334
+        },
+        {
+          "lunch_per_day": 2000,
+          "primary_transport_per_day": 8333
+        },
+        {
+          "lunch_per_day": 2000,
+          "primary_transport_per_day": 8333
+        },
+        {
+          "lunch_per_day": 2000,
+          "primary_transport_per_day": 8333
+        },
+        {
+          "lunch_per_day": 2000,
+          "primary_transport_per_day": 8333
+        }
+      ],
+      "n": 6,
+      "pool": {
+        "lunch_per_day": 12001,
+        "primary_transport_per_day": 50000
+      }
+    },
+    {
+      "answer": [
+        {
+          "lunch_per_day": 1715,
+          "primary_transport_per_day": 7143
+        },
+        {
+          "lunch_per_day": 1715,
+          "primary_transport_per_day": 7143
+        },
+        {
+          "lunch_per_day": 1715,
+          "primary_transport_per_day": 7143
+        },
+        {
+          "lunch_per_day": 1714,
+          "primary_transport_per_day": 7143
+        },
+        {
+          "lunch_per_day": 1714,
+          "primary_transport_per_day": 7143
+        },
+        {
+          "lunch_per_day": 1714,
+          "primary_transport_per_day": 7143
+        },
+        {
+          "lunch_per_day": 1714,
+          "primary_transport_per_day": 7142
+        }
+      ],
+      "n": 7,
+      "pool": {
+        "lunch_per_day": 12001,
+        "primary_transport_per_day": 50000
+      }
+    },
+    {
+      "answer": [],
+      "n": 0,
+      "pool": {
+        "lunch_per_day": 0,
+        "secondary_transport_per_day": 7
+      }
+    },
+    {
+      "answer": [
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 7
+        }
+      ],
+      "n": 1,
+      "pool": {
+        "lunch_per_day": 0,
+        "secondary_transport_per_day": 7
+      }
+    },
+    {
+      "answer": [
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 4
+        },
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 3
+        }
+      ],
+      "n": 2,
+      "pool": {
+        "lunch_per_day": 0,
+        "secondary_transport_per_day": 7
+      }
+    },
+    {
+      "answer": [
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 3
+        },
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 2
+        },
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 2
+        }
+      ],
+      "n": 3,
+      "pool": {
+        "lunch_per_day": 0,
+        "secondary_transport_per_day": 7
+      }
+    },
+    {
+      "answer": [
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 2
+        },
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 2
+        },
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 2
+        },
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 1
+        }
+      ],
+      "n": 4,
+      "pool": {
+        "lunch_per_day": 0,
+        "secondary_transport_per_day": 7
+      }
+    },
+    {
+      "answer": [
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 2
+        },
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 2
+        },
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 1
+        },
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 1
+        },
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 1
+        }
+      ],
+      "n": 5,
+      "pool": {
+        "lunch_per_day": 0,
+        "secondary_transport_per_day": 7
+      }
+    },
+    {
+      "answer": [
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 2
+        },
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 1
+        },
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 1
+        },
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 1
+        },
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 1
+        },
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 1
+        }
+      ],
+      "n": 6,
+      "pool": {
+        "lunch_per_day": 0,
+        "secondary_transport_per_day": 7
+      }
+    },
+    {
+      "answer": [
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 1
+        },
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 1
+        },
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 1
+        },
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 1
+        },
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 1
+        },
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 1
+        },
+        {
+          "lunch_per_day": 0,
+          "secondary_transport_per_day": 1
+        }
+      ],
+      "n": 7,
+      "pool": {
+        "lunch_per_day": 0,
+        "secondary_transport_per_day": 7
+      }
+    }
+  ],
+  "compute_daily_pool": [
+    {
+      "accommodation_key": null,
+      "district_type": "primary",
+      "pool": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000
+      },
+      "rates": {
+        "lunch_per_day": 12000,
+        "management_accommodation_per_night": 110000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_breakfast_per_day": 8000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "return_day": false
+    },
+    {
+      "accommodation_key": null,
+      "district_type": "primary",
+      "pool": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000
+      },
+      "rates": {
+        "lunch_per_day": 12000,
+        "management_accommodation_per_night": 110000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_breakfast_per_day": 8000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "return_day": true
+    },
+    {
+      "accommodation_key": "secondary_accommodation_per_night",
+      "district_type": "primary",
+      "pool": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000
+      },
+      "rates": {
+        "lunch_per_day": 12000,
+        "management_accommodation_per_night": 110000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_breakfast_per_day": 8000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "return_day": false
+    },
+    {
+      "accommodation_key": "secondary_accommodation_per_night",
+      "district_type": "primary",
+      "pool": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000
+      },
+      "rates": {
+        "lunch_per_day": 12000,
+        "management_accommodation_per_night": 110000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_breakfast_per_day": 8000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "return_day": true
+    },
+    {
+      "accommodation_key": "management_accommodation_per_night",
+      "district_type": "primary",
+      "pool": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000
+      },
+      "rates": {
+        "lunch_per_day": 12000,
+        "management_accommodation_per_night": 110000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_breakfast_per_day": 8000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "return_day": false
+    },
+    {
+      "accommodation_key": "management_accommodation_per_night",
+      "district_type": "primary",
+      "pool": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000
+      },
+      "rates": {
+        "lunch_per_day": 12000,
+        "management_accommodation_per_night": 110000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_breakfast_per_day": 8000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "return_day": true
+    },
+    {
+      "accommodation_key": "something_else",
+      "district_type": "primary",
+      "pool": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000
+      },
+      "rates": {
+        "lunch_per_day": 12000,
+        "management_accommodation_per_night": 110000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_breakfast_per_day": 8000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "return_day": false
+    },
+    {
+      "accommodation_key": "something_else",
+      "district_type": "primary",
+      "pool": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000
+      },
+      "rates": {
+        "lunch_per_day": 12000,
+        "management_accommodation_per_night": 110000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_breakfast_per_day": 8000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "return_day": true
+    },
+    {
+      "accommodation_key": null,
+      "district_type": "secondary",
+      "pool": {
+        "lunch_per_day": 12000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_breakfast_per_day": 8000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "rates": {
+        "lunch_per_day": 12000,
+        "management_accommodation_per_night": 110000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_breakfast_per_day": 8000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "return_day": false
+    },
+    {
+      "accommodation_key": null,
+      "district_type": "secondary",
+      "pool": {
+        "lunch_per_day": 12000,
+        "secondary_breakfast_per_day": 8000,
+        "secondary_transport_per_day": 90000
+      },
+      "rates": {
+        "lunch_per_day": 12000,
+        "management_accommodation_per_night": 110000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_breakfast_per_day": 8000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "return_day": true
+    },
+    {
+      "accommodation_key": "secondary_accommodation_per_night",
+      "district_type": "secondary",
+      "pool": {
+        "lunch_per_day": 12000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_breakfast_per_day": 8000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "rates": {
+        "lunch_per_day": 12000,
+        "management_accommodation_per_night": 110000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_breakfast_per_day": 8000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "return_day": false
+    },
+    {
+      "accommodation_key": "secondary_accommodation_per_night",
+      "district_type": "secondary",
+      "pool": {
+        "lunch_per_day": 12000,
+        "secondary_breakfast_per_day": 8000,
+        "secondary_transport_per_day": 90000
+      },
+      "rates": {
+        "lunch_per_day": 12000,
+        "management_accommodation_per_night": 110000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_breakfast_per_day": 8000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "return_day": true
+    },
+    {
+      "accommodation_key": "management_accommodation_per_night",
+      "district_type": "secondary",
+      "pool": {
+        "lunch_per_day": 12000,
+        "management_accommodation_per_night": 110000,
+        "secondary_breakfast_per_day": 8000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "rates": {
+        "lunch_per_day": 12000,
+        "management_accommodation_per_night": 110000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_breakfast_per_day": 8000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "return_day": false
+    },
+    {
+      "accommodation_key": "management_accommodation_per_night",
+      "district_type": "secondary",
+      "pool": {
+        "lunch_per_day": 12000,
+        "secondary_breakfast_per_day": 8000,
+        "secondary_transport_per_day": 90000
+      },
+      "rates": {
+        "lunch_per_day": 12000,
+        "management_accommodation_per_night": 110000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_breakfast_per_day": 8000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "return_day": true
+    },
+    {
+      "accommodation_key": "something_else",
+      "district_type": "secondary",
+      "pool": {
+        "lunch_per_day": 12000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_breakfast_per_day": 8000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "rates": {
+        "lunch_per_day": 12000,
+        "management_accommodation_per_night": 110000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_breakfast_per_day": 8000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "return_day": false
+    },
+    {
+      "accommodation_key": "something_else",
+      "district_type": "secondary",
+      "pool": {
+        "lunch_per_day": 12000,
+        "secondary_breakfast_per_day": 8000,
+        "secondary_transport_per_day": 90000
+      },
+      "rates": {
+        "lunch_per_day": 12000,
+        "management_accommodation_per_night": 110000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_breakfast_per_day": 8000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "return_day": true
+    },
+    {
+      "accommodation_key": null,
+      "district_type": "primary",
+      "pool": {
+        "lunch_per_day": 10001,
+        "primary_transport_per_day": 40000
+      },
+      "rates": {
+        "primary_lunch_per_day": 10001,
+        "primary_transport_per_day": 40000,
+        "secondary_accommodation_per_night": 65000,
+        "secondary_breakfast_per_day": 7003,
+        "secondary_overnight_dinner_per_day": 14999,
+        "secondary_transport_per_day": 80001
+      },
+      "return_day": false
+    },
+    {
+      "accommodation_key": null,
+      "district_type": "primary",
+      "pool": {
+        "lunch_per_day": 10001,
+        "primary_transport_per_day": 40000
+      },
+      "rates": {
+        "primary_lunch_per_day": 10001,
+        "primary_transport_per_day": 40000,
+        "secondary_accommodation_per_night": 65000,
+        "secondary_breakfast_per_day": 7003,
+        "secondary_overnight_dinner_per_day": 14999,
+        "secondary_transport_per_day": 80001
+      },
+      "return_day": true
+    },
+    {
+      "accommodation_key": "secondary_accommodation_per_night",
+      "district_type": "primary",
+      "pool": {
+        "lunch_per_day": 10001,
+        "primary_transport_per_day": 40000
+      },
+      "rates": {
+        "primary_lunch_per_day": 10001,
+        "primary_transport_per_day": 40000,
+        "secondary_accommodation_per_night": 65000,
+        "secondary_breakfast_per_day": 7003,
+        "secondary_overnight_dinner_per_day": 14999,
+        "secondary_transport_per_day": 80001
+      },
+      "return_day": false
+    },
+    {
+      "accommodation_key": "secondary_accommodation_per_night",
+      "district_type": "primary",
+      "pool": {
+        "lunch_per_day": 10001,
+        "primary_transport_per_day": 40000
+      },
+      "rates": {
+        "primary_lunch_per_day": 10001,
+        "primary_transport_per_day": 40000,
+        "secondary_accommodation_per_night": 65000,
+        "secondary_breakfast_per_day": 7003,
+        "secondary_overnight_dinner_per_day": 14999,
+        "secondary_transport_per_day": 80001
+      },
+      "return_day": true
+    },
+    {
+      "accommodation_key": "management_accommodation_per_night",
+      "district_type": "primary",
+      "pool": {
+        "lunch_per_day": 10001,
+        "primary_transport_per_day": 40000
+      },
+      "rates": {
+        "primary_lunch_per_day": 10001,
+        "primary_transport_per_day": 40000,
+        "secondary_accommodation_per_night": 65000,
+        "secondary_breakfast_per_day": 7003,
+        "secondary_overnight_dinner_per_day": 14999,
+        "secondary_transport_per_day": 80001
+      },
+      "return_day": false
+    },
+    {
+      "accommodation_key": "management_accommodation_per_night",
+      "district_type": "primary",
+      "pool": {
+        "lunch_per_day": 10001,
+        "primary_transport_per_day": 40000
+      },
+      "rates": {
+        "primary_lunch_per_day": 10001,
+        "primary_transport_per_day": 40000,
+        "secondary_accommodation_per_night": 65000,
+        "secondary_breakfast_per_day": 7003,
+        "secondary_overnight_dinner_per_day": 14999,
+        "secondary_transport_per_day": 80001
+      },
+      "return_day": true
+    },
+    {
+      "accommodation_key": "something_else",
+      "district_type": "primary",
+      "pool": {
+        "lunch_per_day": 10001,
+        "primary_transport_per_day": 40000
+      },
+      "rates": {
+        "primary_lunch_per_day": 10001,
+        "primary_transport_per_day": 40000,
+        "secondary_accommodation_per_night": 65000,
+        "secondary_breakfast_per_day": 7003,
+        "secondary_overnight_dinner_per_day": 14999,
+        "secondary_transport_per_day": 80001
+      },
+      "return_day": false
+    },
+    {
+      "accommodation_key": "something_else",
+      "district_type": "primary",
+      "pool": {
+        "lunch_per_day": 10001,
+        "primary_transport_per_day": 40000
+      },
+      "rates": {
+        "primary_lunch_per_day": 10001,
+        "primary_transport_per_day": 40000,
+        "secondary_accommodation_per_night": 65000,
+        "secondary_breakfast_per_day": 7003,
+        "secondary_overnight_dinner_per_day": 14999,
+        "secondary_transport_per_day": 80001
+      },
+      "return_day": true
+    },
+    {
+      "accommodation_key": null,
+      "district_type": "secondary",
+      "pool": {
+        "lunch_per_day": 10001,
+        "secondary_accommodation_per_night": 65000,
+        "secondary_breakfast_per_day": 7003,
+        "secondary_overnight_dinner_per_day": 14999,
+        "secondary_transport_per_day": 80001
+      },
+      "rates": {
+        "primary_lunch_per_day": 10001,
+        "primary_transport_per_day": 40000,
+        "secondary_accommodation_per_night": 65000,
+        "secondary_breakfast_per_day": 7003,
+        "secondary_overnight_dinner_per_day": 14999,
+        "secondary_transport_per_day": 80001
+      },
+      "return_day": false
+    },
+    {
+      "accommodation_key": null,
+      "district_type": "secondary",
+      "pool": {
+        "lunch_per_day": 10001,
+        "secondary_breakfast_per_day": 7003,
+        "secondary_transport_per_day": 80001
+      },
+      "rates": {
+        "primary_lunch_per_day": 10001,
+        "primary_transport_per_day": 40000,
+        "secondary_accommodation_per_night": 65000,
+        "secondary_breakfast_per_day": 7003,
+        "secondary_overnight_dinner_per_day": 14999,
+        "secondary_transport_per_day": 80001
+      },
+      "return_day": true
+    },
+    {
+      "accommodation_key": "secondary_accommodation_per_night",
+      "district_type": "secondary",
+      "pool": {
+        "lunch_per_day": 10001,
+        "secondary_accommodation_per_night": 65000,
+        "secondary_breakfast_per_day": 7003,
+        "secondary_overnight_dinner_per_day": 14999,
+        "secondary_transport_per_day": 80001
+      },
+      "rates": {
+        "primary_lunch_per_day": 10001,
+        "primary_transport_per_day": 40000,
+        "secondary_accommodation_per_night": 65000,
+        "secondary_breakfast_per_day": 7003,
+        "secondary_overnight_dinner_per_day": 14999,
+        "secondary_transport_per_day": 80001
+      },
+      "return_day": false
+    },
+    {
+      "accommodation_key": "secondary_accommodation_per_night",
+      "district_type": "secondary",
+      "pool": {
+        "lunch_per_day": 10001,
+        "secondary_breakfast_per_day": 7003,
+        "secondary_transport_per_day": 80001
+      },
+      "rates": {
+        "primary_lunch_per_day": 10001,
+        "primary_transport_per_day": 40000,
+        "secondary_accommodation_per_night": 65000,
+        "secondary_breakfast_per_day": 7003,
+        "secondary_overnight_dinner_per_day": 14999,
+        "secondary_transport_per_day": 80001
+      },
+      "return_day": true
+    },
+    {
+      "accommodation_key": "management_accommodation_per_night",
+      "district_type": "secondary",
+      "pool": {
+        "lunch_per_day": 10001,
+        "management_accommodation_per_night": 65000,
+        "secondary_breakfast_per_day": 7003,
+        "secondary_overnight_dinner_per_day": 14999,
+        "secondary_transport_per_day": 80001
+      },
+      "rates": {
+        "primary_lunch_per_day": 10001,
+        "primary_transport_per_day": 40000,
+        "secondary_accommodation_per_night": 65000,
+        "secondary_breakfast_per_day": 7003,
+        "secondary_overnight_dinner_per_day": 14999,
+        "secondary_transport_per_day": 80001
+      },
+      "return_day": false
+    },
+    {
+      "accommodation_key": "management_accommodation_per_night",
+      "district_type": "secondary",
+      "pool": {
+        "lunch_per_day": 10001,
+        "secondary_breakfast_per_day": 7003,
+        "secondary_transport_per_day": 80001
+      },
+      "rates": {
+        "primary_lunch_per_day": 10001,
+        "primary_transport_per_day": 40000,
+        "secondary_accommodation_per_night": 65000,
+        "secondary_breakfast_per_day": 7003,
+        "secondary_overnight_dinner_per_day": 14999,
+        "secondary_transport_per_day": 80001
+      },
+      "return_day": true
+    },
+    {
+      "accommodation_key": "something_else",
+      "district_type": "secondary",
+      "pool": {
+        "lunch_per_day": 10001,
+        "secondary_accommodation_per_night": 65000,
+        "secondary_breakfast_per_day": 7003,
+        "secondary_overnight_dinner_per_day": 14999,
+        "secondary_transport_per_day": 80001
+      },
+      "rates": {
+        "primary_lunch_per_day": 10001,
+        "primary_transport_per_day": 40000,
+        "secondary_accommodation_per_night": 65000,
+        "secondary_breakfast_per_day": 7003,
+        "secondary_overnight_dinner_per_day": 14999,
+        "secondary_transport_per_day": 80001
+      },
+      "return_day": false
+    },
+    {
+      "accommodation_key": "something_else",
+      "district_type": "secondary",
+      "pool": {
+        "lunch_per_day": 10001,
+        "secondary_breakfast_per_day": 7003,
+        "secondary_transport_per_day": 80001
+      },
+      "rates": {
+        "primary_lunch_per_day": 10001,
+        "primary_transport_per_day": 40000,
+        "secondary_accommodation_per_night": 65000,
+        "secondary_breakfast_per_day": 7003,
+        "secondary_overnight_dinner_per_day": 14999,
+        "secondary_transport_per_day": 80001
+      },
+      "return_day": true
+    },
+    {
+      "accommodation_key": null,
+      "district_type": "primary",
+      "pool": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000
+      },
+      "rates": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "return_day": false
+    },
+    {
+      "accommodation_key": null,
+      "district_type": "primary",
+      "pool": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000
+      },
+      "rates": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "return_day": true
+    },
+    {
+      "accommodation_key": "secondary_accommodation_per_night",
+      "district_type": "primary",
+      "pool": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000
+      },
+      "rates": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "return_day": false
+    },
+    {
+      "accommodation_key": "secondary_accommodation_per_night",
+      "district_type": "primary",
+      "pool": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000
+      },
+      "rates": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "return_day": true
+    },
+    {
+      "accommodation_key": "management_accommodation_per_night",
+      "district_type": "primary",
+      "pool": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000
+      },
+      "rates": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "return_day": false
+    },
+    {
+      "accommodation_key": "management_accommodation_per_night",
+      "district_type": "primary",
+      "pool": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000
+      },
+      "rates": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "return_day": true
+    },
+    {
+      "accommodation_key": "something_else",
+      "district_type": "primary",
+      "pool": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000
+      },
+      "rates": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "return_day": false
+    },
+    {
+      "accommodation_key": "something_else",
+      "district_type": "primary",
+      "pool": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000
+      },
+      "rates": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "return_day": true
+    },
+    {
+      "accommodation_key": null,
+      "district_type": "secondary",
+      "rates": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "refused": "Cost Catalogue is missing required rate(s) for secondary district visits: secondary_breakfast_per_day. Ask the CD to add them in Cost Settings.",
+      "return_day": false
+    },
+    {
+      "accommodation_key": null,
+      "district_type": "secondary",
+      "rates": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "refused": "Cost Catalogue is missing required rate(s) for secondary district visits: secondary_breakfast_per_day. Ask the CD to add them in Cost Settings.",
+      "return_day": true
+    },
+    {
+      "accommodation_key": "secondary_accommodation_per_night",
+      "district_type": "secondary",
+      "rates": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "refused": "Cost Catalogue is missing required rate(s) for secondary district visits: secondary_breakfast_per_day. Ask the CD to add them in Cost Settings.",
+      "return_day": false
+    },
+    {
+      "accommodation_key": "secondary_accommodation_per_night",
+      "district_type": "secondary",
+      "rates": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "refused": "Cost Catalogue is missing required rate(s) for secondary district visits: secondary_breakfast_per_day. Ask the CD to add them in Cost Settings.",
+      "return_day": true
+    },
+    {
+      "accommodation_key": "management_accommodation_per_night",
+      "district_type": "secondary",
+      "rates": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "refused": "Cost Catalogue is missing required rate(s) for secondary district visits: secondary_breakfast_per_day. Ask the CD to add them in Cost Settings.",
+      "return_day": false
+    },
+    {
+      "accommodation_key": "management_accommodation_per_night",
+      "district_type": "secondary",
+      "rates": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "refused": "Cost Catalogue is missing required rate(s) for secondary district visits: secondary_breakfast_per_day. Ask the CD to add them in Cost Settings.",
+      "return_day": true
+    },
+    {
+      "accommodation_key": "something_else",
+      "district_type": "secondary",
+      "rates": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "refused": "Cost Catalogue is missing required rate(s) for secondary district visits: secondary_breakfast_per_day. Ask the CD to add them in Cost Settings.",
+      "return_day": false
+    },
+    {
+      "accommodation_key": "something_else",
+      "district_type": "secondary",
+      "rates": {
+        "lunch_per_day": 12000,
+        "primary_transport_per_day": 50000,
+        "secondary_accommodation_per_night": 70000,
+        "secondary_overnight_dinner_per_day": 15000,
+        "secondary_transport_per_day": 90000
+      },
+      "refused": "Cost Catalogue is missing required rate(s) for secondary district visits: secondary_breakfast_per_day. Ask the CD to add them in Cost Settings.",
+      "return_day": true
+    },
+    {
+      "accommodation_key": null,
+      "district_type": "primary",
+      "rates": {},
+      "refused": "Cost Catalogue is missing required rate(s) for primary district visits: primary_transport_per_day, lunch_per_day. Ask the CD to add them in Cost Settings.",
+      "return_day": false
+    },
+    {
+      "accommodation_key": null,
+      "district_type": "primary",
+      "rates": {},
+      "refused": "Cost Catalogue is missing required rate(s) for primary district visits: primary_transport_per_day, lunch_per_day. Ask the CD to add them in Cost Settings.",
+      "return_day": true
+    },
+    {
+      "accommodation_key": "secondary_accommodation_per_night",
+      "district_type": "primary",
+      "rates": {},
+      "refused": "Cost Catalogue is missing required rate(s) for primary district visits: primary_transport_per_day, lunch_per_day. Ask the CD to add them in Cost Settings.",
+      "return_day": false
+    },
+    {
+      "accommodation_key": "secondary_accommodation_per_night",
+      "district_type": "primary",
+      "rates": {},
+      "refused": "Cost Catalogue is missing required rate(s) for primary district visits: primary_transport_per_day, lunch_per_day. Ask the CD to add them in Cost Settings.",
+      "return_day": true
+    },
+    {
+      "accommodation_key": "management_accommodation_per_night",
+      "district_type": "primary",
+      "rates": {},
+      "refused": "Cost Catalogue is missing required rate(s) for primary district visits: primary_transport_per_day, lunch_per_day. Ask the CD to add them in Cost Settings.",
+      "return_day": false
+    },
+    {
+      "accommodation_key": "management_accommodation_per_night",
+      "district_type": "primary",
+      "rates": {},
+      "refused": "Cost Catalogue is missing required rate(s) for primary district visits: primary_transport_per_day, lunch_per_day. Ask the CD to add them in Cost Settings.",
+      "return_day": true
+    },
+    {
+      "accommodation_key": "something_else",
+      "district_type": "primary",
+      "rates": {},
+      "refused": "Cost Catalogue is missing required rate(s) for primary district visits: primary_transport_per_day, lunch_per_day. Ask the CD to add them in Cost Settings.",
+      "return_day": false
+    },
+    {
+      "accommodation_key": "something_else",
+      "district_type": "primary",
+      "rates": {},
+      "refused": "Cost Catalogue is missing required rate(s) for primary district visits: primary_transport_per_day, lunch_per_day. Ask the CD to add them in Cost Settings.",
+      "return_day": true
+    },
+    {
+      "accommodation_key": null,
+      "district_type": "secondary",
+      "rates": {},
+      "refused": "Cost Catalogue is missing required rate(s) for secondary district visits: secondary_transport_per_day, lunch_per_day, secondary_breakfast_per_day, secondary_overnight_dinner_per_day, secondary_accommodation_per_night. Ask the CD to add them in Cost Settings.",
+      "return_day": false
+    },
+    {
+      "accommodation_key": null,
+      "district_type": "secondary",
+      "rates": {},
+      "refused": "Cost Catalogue is missing required rate(s) for secondary district visits: secondary_transport_per_day, lunch_per_day, secondary_breakfast_per_day. Ask the CD to add them in Cost Settings.",
+      "return_day": true
+    },
+    {
+      "accommodation_key": "secondary_accommodation_per_night",
+      "district_type": "secondary",
+      "rates": {},
+      "refused": "Cost Catalogue is missing required rate(s) for secondary district visits: secondary_transport_per_day, lunch_per_day, secondary_breakfast_per_day, secondary_overnight_dinner_per_day, secondary_accommodation_per_night. Ask the CD to add them in Cost Settings.",
+      "return_day": false
+    },
+    {
+      "accommodation_key": "secondary_accommodation_per_night",
+      "district_type": "secondary",
+      "rates": {},
+      "refused": "Cost Catalogue is missing required rate(s) for secondary district visits: secondary_transport_per_day, lunch_per_day, secondary_breakfast_per_day. Ask the CD to add them in Cost Settings.",
+      "return_day": true
+    },
+    {
+      "accommodation_key": "management_accommodation_per_night",
+      "district_type": "secondary",
+      "rates": {},
+      "refused": "Cost Catalogue is missing required rate(s) for secondary district visits: secondary_transport_per_day, lunch_per_day, secondary_breakfast_per_day, secondary_overnight_dinner_per_day, management_accommodation_per_night. Ask the CD to add them in Cost Settings.",
+      "return_day": false
+    },
+    {
+      "accommodation_key": "management_accommodation_per_night",
+      "district_type": "secondary",
+      "rates": {},
+      "refused": "Cost Catalogue is missing required rate(s) for secondary district visits: secondary_transport_per_day, lunch_per_day, secondary_breakfast_per_day. Ask the CD to add them in Cost Settings.",
+      "return_day": true
+    },
+    {
+      "accommodation_key": "something_else",
+      "district_type": "secondary",
+      "rates": {},
+      "refused": "Cost Catalogue is missing required rate(s) for secondary district visits: secondary_transport_per_day, lunch_per_day, secondary_breakfast_per_day, secondary_overnight_dinner_per_day, secondary_accommodation_per_night. Ask the CD to add them in Cost Settings.",
+      "return_day": false
+    },
+    {
+      "accommodation_key": "something_else",
+      "district_type": "secondary",
+      "rates": {},
+      "refused": "Cost Catalogue is missing required rate(s) for secondary district visits: secondary_transport_per_day, lunch_per_day, secondary_breakfast_per_day. Ask the CD to add them in Cost Settings.",
+      "return_day": true
+    }
+  ],
+  "day_district_mark": [
+    {
+      "answer": "primary",
+      "types": []
+    },
+    {
+      "answer": "primary",
+      "types": [
+        null
+      ]
+    },
+    {
+      "answer": "primary",
+      "types": [
+        "primary"
+      ]
+    },
+    {
+      "answer": "secondary",
+      "types": [
+        "secondary"
+      ]
+    },
+    {
+      "answer": "primary",
+      "types": [
+        "primary",
+        "primary"
+      ]
+    },
+    {
+      "answer": "secondary",
+      "types": [
+        "secondary",
+        "secondary"
+      ]
+    },
+    {
+      "answer": "mixed",
+      "types": [
+        "primary",
+        "secondary"
+      ]
+    },
+    {
+      "answer": "mixed",
+      "types": [
+        null,
+        "secondary"
+      ]
+    },
+    {
+      "answer": "mixed",
+      "types": [
+        "",
+        "secondary",
+        "primary"
+      ]
+    }
+  ],
+  "day_keys": [
+    {
+      "accommodation_key": null,
+      "answer": [
+        "primary_transport_per_day",
+        "lunch_per_day"
+      ],
+      "district_type": "primary",
+      "return_day": false
+    },
+    {
+      "accommodation_key": null,
+      "answer": [
+        "primary_transport_per_day",
+        "lunch_per_day"
+      ],
+      "district_type": "primary",
+      "return_day": true
+    },
+    {
+      "accommodation_key": "secondary_accommodation_per_night",
+      "answer": [
+        "primary_transport_per_day",
+        "lunch_per_day"
+      ],
+      "district_type": "primary",
+      "return_day": false
+    },
+    {
+      "accommodation_key": "secondary_accommodation_per_night",
+      "answer": [
+        "primary_transport_per_day",
+        "lunch_per_day"
+      ],
+      "district_type": "primary",
+      "return_day": true
+    },
+    {
+      "accommodation_key": "management_accommodation_per_night",
+      "answer": [
+        "primary_transport_per_day",
+        "lunch_per_day"
+      ],
+      "district_type": "primary",
+      "return_day": false
+    },
+    {
+      "accommodation_key": "management_accommodation_per_night",
+      "answer": [
+        "primary_transport_per_day",
+        "lunch_per_day"
+      ],
+      "district_type": "primary",
+      "return_day": true
+    },
+    {
+      "accommodation_key": "something_else",
+      "answer": [
+        "primary_transport_per_day",
+        "lunch_per_day"
+      ],
+      "district_type": "primary",
+      "return_day": false
+    },
+    {
+      "accommodation_key": "something_else",
+      "answer": [
+        "primary_transport_per_day",
+        "lunch_per_day"
+      ],
+      "district_type": "primary",
+      "return_day": true
+    },
+    {
+      "accommodation_key": null,
+      "answer": [
+        "secondary_transport_per_day",
+        "lunch_per_day",
+        "secondary_breakfast_per_day",
+        "secondary_overnight_dinner_per_day",
+        "secondary_accommodation_per_night"
+      ],
+      "district_type": "secondary",
+      "return_day": false
+    },
+    {
+      "accommodation_key": null,
+      "answer": [
+        "secondary_transport_per_day",
+        "lunch_per_day",
+        "secondary_breakfast_per_day"
+      ],
+      "district_type": "secondary",
+      "return_day": true
+    },
+    {
+      "accommodation_key": "secondary_accommodation_per_night",
+      "answer": [
+        "secondary_transport_per_day",
+        "lunch_per_day",
+        "secondary_breakfast_per_day",
+        "secondary_overnight_dinner_per_day",
+        "secondary_accommodation_per_night"
+      ],
+      "district_type": "secondary",
+      "return_day": false
+    },
+    {
+      "accommodation_key": "secondary_accommodation_per_night",
+      "answer": [
+        "secondary_transport_per_day",
+        "lunch_per_day",
+        "secondary_breakfast_per_day"
+      ],
+      "district_type": "secondary",
+      "return_day": true
+    },
+    {
+      "accommodation_key": "management_accommodation_per_night",
+      "answer": [
+        "secondary_transport_per_day",
+        "lunch_per_day",
+        "secondary_breakfast_per_day",
+        "secondary_overnight_dinner_per_day",
+        "management_accommodation_per_night"
+      ],
+      "district_type": "secondary",
+      "return_day": false
+    },
+    {
+      "accommodation_key": "management_accommodation_per_night",
+      "answer": [
+        "secondary_transport_per_day",
+        "lunch_per_day",
+        "secondary_breakfast_per_day"
+      ],
+      "district_type": "secondary",
+      "return_day": true
+    },
+    {
+      "accommodation_key": "something_else",
+      "answer": [
+        "secondary_transport_per_day",
+        "lunch_per_day",
+        "secondary_breakfast_per_day",
+        "secondary_overnight_dinner_per_day",
+        "secondary_accommodation_per_night"
+      ],
+      "district_type": "secondary",
+      "return_day": false
+    },
+    {
+      "accommodation_key": "something_else",
+      "answer": [
+        "secondary_transport_per_day",
+        "lunch_per_day",
+        "secondary_breakfast_per_day"
+      ],
+      "district_type": "secondary",
+      "return_day": true
+    }
+  ],
+  "holds_field_role": [
+    {
+      "active_role": null,
+      "answer": false,
+      "roles": []
+    },
+    {
+      "active_role": "CCEO",
+      "answer": true,
+      "roles": []
+    },
+    {
+      "active_role": "CountryDirector",
+      "answer": false,
+      "roles": []
+    },
+    {
+      "active_role": "CCEO",
+      "answer": true,
+      "roles": [
+        "CCEO"
+      ]
+    },
+    {
+      "active_role": "Program Lead",
+      "answer": true,
+      "roles": [
+        "Program Lead"
+      ]
+    },
+    {
+      "active_role": "CCEO",
+      "answer": true,
+      "roles": [
+        "CCEO",
+        "Admin"
+      ]
+    },
+    {
+      "active_role": "CCEO",
+      "answer": true,
+      "roles": [
+        "CCEO",
+        "Program Lead"
+      ]
+    },
+    {
+      "active_role": "HumanResources",
+      "answer": false,
+      "roles": [
+        "HumanResources"
+      ]
+    },
+    {
+      "active_role": "PartnerAdmin",
+      "answer": false,
+      "roles": [
+        "PartnerAdmin"
+      ]
+    }
+  ],
+  "hq_district_type": [
+    {
+      "answer": "secondary",
+      "district": null
+    },
+    {
+      "answer": "secondary",
+      "district": ""
+    },
+    {
+      "answer": "primary",
+      "district": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "district": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "district": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "district": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "district": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "district": "Lira"
+    }
+  ],
+  "resolve_district_type": [
+    {
+      "answer": "error",
+      "primary": null,
+      "role": null,
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": null,
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": null,
+      "role": null,
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": null,
+      "role": null,
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": null,
+      "role": null,
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": null,
+      "role": null,
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": null,
+      "role": null,
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": null,
+      "role": null,
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": null,
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": null,
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "",
+      "role": null,
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "",
+      "role": null,
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "",
+      "role": null,
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "",
+      "role": null,
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "",
+      "role": null,
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "",
+      "role": null,
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Kampala",
+      "role": null,
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Kampala",
+      "role": null,
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "Kampala",
+      "role": null,
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "Kampala",
+      "role": null,
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "Kampala",
+      "role": null,
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": null,
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": null,
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": null,
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": " wakiso ",
+      "role": null,
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": " wakiso ",
+      "role": null,
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": " wakiso ",
+      "role": null,
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": " wakiso ",
+      "role": null,
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": " wakiso ",
+      "role": null,
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": null,
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": null,
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": null,
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "MUKONO",
+      "role": null,
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "MUKONO",
+      "role": null,
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "MUKONO",
+      "role": null,
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "MUKONO",
+      "role": null,
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "MUKONO",
+      "role": null,
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": null,
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": null,
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": null,
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Gulu",
+      "role": null,
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Gulu",
+      "role": null,
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": null,
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": null,
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": null,
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": null,
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": null,
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": null,
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "gulu",
+      "role": null,
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "gulu",
+      "role": null,
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": null,
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": null,
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": null,
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": null,
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": null,
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": null,
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Lira",
+      "role": null,
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Lira",
+      "role": null,
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "Lira",
+      "role": null,
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "Lira",
+      "role": null,
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "Lira",
+      "role": null,
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": null,
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": null,
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": null,
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": null,
+      "role": "",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": null,
+      "role": "",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": null,
+      "role": "",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": null,
+      "role": "",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": null,
+      "role": "",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": null,
+      "role": "",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "",
+      "role": "",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "",
+      "role": "",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "",
+      "role": "",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "",
+      "role": "",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "",
+      "role": "",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "",
+      "role": "",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Kampala",
+      "role": "",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Kampala",
+      "role": "",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "Kampala",
+      "role": "",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "Kampala",
+      "role": "",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "Kampala",
+      "role": "",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": " wakiso ",
+      "role": "",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": " wakiso ",
+      "role": "",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": " wakiso ",
+      "role": "",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": " wakiso ",
+      "role": "",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": " wakiso ",
+      "role": "",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "MUKONO",
+      "role": "",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "MUKONO",
+      "role": "",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "MUKONO",
+      "role": "",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "MUKONO",
+      "role": "",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "MUKONO",
+      "role": "",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Gulu",
+      "role": "",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Gulu",
+      "role": "",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": "",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": "",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": "",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "gulu",
+      "role": "",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "gulu",
+      "role": "",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": "",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": "",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": "",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Lira",
+      "role": "",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Lira",
+      "role": "",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "Lira",
+      "role": "",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "Lira",
+      "role": "",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "Lira",
+      "role": "",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "CCEO",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "CCEO",
+      "target": ""
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "CCEO",
+      "target": "Kampala"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "CCEO",
+      "target": " wakiso "
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "CCEO",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "CCEO",
+      "target": "Gulu"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "CCEO",
+      "target": "gulu"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "CCEO",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "CCEO",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "CCEO",
+      "target": ""
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "CCEO",
+      "target": "Kampala"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "CCEO",
+      "target": " wakiso "
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "CCEO",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "CCEO",
+      "target": "Gulu"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "CCEO",
+      "target": "gulu"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "CCEO",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Kampala",
+      "role": "CCEO",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Kampala",
+      "role": "CCEO",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "Kampala",
+      "role": "CCEO",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "CCEO",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "CCEO",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "CCEO",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "CCEO",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "CCEO",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": " wakiso ",
+      "role": "CCEO",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": " wakiso ",
+      "role": "CCEO",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "CCEO",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": " wakiso ",
+      "role": "CCEO",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "CCEO",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "CCEO",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "CCEO",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "CCEO",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "MUKONO",
+      "role": "CCEO",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "MUKONO",
+      "role": "CCEO",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "CCEO",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "CCEO",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "MUKONO",
+      "role": "CCEO",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "CCEO",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "CCEO",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "CCEO",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Gulu",
+      "role": "CCEO",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Gulu",
+      "role": "CCEO",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "CCEO",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "CCEO",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "CCEO",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": "CCEO",
+      "target": "Gulu"
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": "CCEO",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "CCEO",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "gulu",
+      "role": "CCEO",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "gulu",
+      "role": "CCEO",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "CCEO",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "CCEO",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "CCEO",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": "CCEO",
+      "target": "Gulu"
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": "CCEO",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "CCEO",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Lira",
+      "role": "CCEO",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Lira",
+      "role": "CCEO",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "CCEO",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "CCEO",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "CCEO",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "CCEO",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "CCEO",
+      "target": "gulu"
+    },
+    {
+      "answer": "primary",
+      "primary": "Lira",
+      "role": "CCEO",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "Program Lead",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "Program Lead",
+      "target": ""
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "Program Lead",
+      "target": "Kampala"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "Program Lead",
+      "target": " wakiso "
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "Program Lead",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "Program Lead",
+      "target": "Gulu"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "Program Lead",
+      "target": "gulu"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "Program Lead",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "Program Lead",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "Program Lead",
+      "target": ""
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "Program Lead",
+      "target": "Kampala"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "Program Lead",
+      "target": " wakiso "
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "Program Lead",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "Program Lead",
+      "target": "Gulu"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "Program Lead",
+      "target": "gulu"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "Program Lead",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Kampala",
+      "role": "Program Lead",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Kampala",
+      "role": "Program Lead",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "Kampala",
+      "role": "Program Lead",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "Program Lead",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "Program Lead",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "Program Lead",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "Program Lead",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "Program Lead",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": " wakiso ",
+      "role": "Program Lead",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": " wakiso ",
+      "role": "Program Lead",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "Program Lead",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": " wakiso ",
+      "role": "Program Lead",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "Program Lead",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "Program Lead",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "Program Lead",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "Program Lead",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "MUKONO",
+      "role": "Program Lead",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "MUKONO",
+      "role": "Program Lead",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "Program Lead",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "Program Lead",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "MUKONO",
+      "role": "Program Lead",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "Program Lead",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "Program Lead",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "Program Lead",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Gulu",
+      "role": "Program Lead",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Gulu",
+      "role": "Program Lead",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "Program Lead",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "Program Lead",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "Program Lead",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": "Program Lead",
+      "target": "Gulu"
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": "Program Lead",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "Program Lead",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "gulu",
+      "role": "Program Lead",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "gulu",
+      "role": "Program Lead",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "Program Lead",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "Program Lead",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "Program Lead",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": "Program Lead",
+      "target": "Gulu"
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": "Program Lead",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "Program Lead",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Lira",
+      "role": "Program Lead",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Lira",
+      "role": "Program Lead",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "Program Lead",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "Program Lead",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "Program Lead",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "Program Lead",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "Program Lead",
+      "target": "gulu"
+    },
+    {
+      "answer": "primary",
+      "primary": "Lira",
+      "role": "Program Lead",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "CountryDirector",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "CountryDirector",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": null,
+      "role": "CountryDirector",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": null,
+      "role": "CountryDirector",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": null,
+      "role": "CountryDirector",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": null,
+      "role": "CountryDirector",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": null,
+      "role": "CountryDirector",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": null,
+      "role": "CountryDirector",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "CountryDirector",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "CountryDirector",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "",
+      "role": "CountryDirector",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "",
+      "role": "CountryDirector",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "",
+      "role": "CountryDirector",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "",
+      "role": "CountryDirector",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "",
+      "role": "CountryDirector",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "",
+      "role": "CountryDirector",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Kampala",
+      "role": "CountryDirector",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Kampala",
+      "role": "CountryDirector",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "Kampala",
+      "role": "CountryDirector",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "Kampala",
+      "role": "CountryDirector",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "Kampala",
+      "role": "CountryDirector",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "CountryDirector",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "CountryDirector",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "CountryDirector",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": " wakiso ",
+      "role": "CountryDirector",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": " wakiso ",
+      "role": "CountryDirector",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": " wakiso ",
+      "role": "CountryDirector",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": " wakiso ",
+      "role": "CountryDirector",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": " wakiso ",
+      "role": "CountryDirector",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "CountryDirector",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "CountryDirector",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "CountryDirector",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "MUKONO",
+      "role": "CountryDirector",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "MUKONO",
+      "role": "CountryDirector",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "MUKONO",
+      "role": "CountryDirector",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "MUKONO",
+      "role": "CountryDirector",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "MUKONO",
+      "role": "CountryDirector",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "CountryDirector",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "CountryDirector",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "CountryDirector",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Gulu",
+      "role": "CountryDirector",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Gulu",
+      "role": "CountryDirector",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": "CountryDirector",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": "CountryDirector",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": "CountryDirector",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "CountryDirector",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "CountryDirector",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "CountryDirector",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "gulu",
+      "role": "CountryDirector",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "gulu",
+      "role": "CountryDirector",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": "CountryDirector",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": "CountryDirector",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": "CountryDirector",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "CountryDirector",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "CountryDirector",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "CountryDirector",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Lira",
+      "role": "CountryDirector",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Lira",
+      "role": "CountryDirector",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "Lira",
+      "role": "CountryDirector",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "Lira",
+      "role": "CountryDirector",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "Lira",
+      "role": "CountryDirector",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "CountryDirector",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "CountryDirector",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "CountryDirector",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "ImpactAssessment",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "ImpactAssessment",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": null,
+      "role": "ImpactAssessment",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": null,
+      "role": "ImpactAssessment",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": null,
+      "role": "ImpactAssessment",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": null,
+      "role": "ImpactAssessment",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": null,
+      "role": "ImpactAssessment",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": null,
+      "role": "ImpactAssessment",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "ImpactAssessment",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "ImpactAssessment",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "",
+      "role": "ImpactAssessment",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "",
+      "role": "ImpactAssessment",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "",
+      "role": "ImpactAssessment",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "",
+      "role": "ImpactAssessment",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "",
+      "role": "ImpactAssessment",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "",
+      "role": "ImpactAssessment",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Kampala",
+      "role": "ImpactAssessment",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Kampala",
+      "role": "ImpactAssessment",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "Kampala",
+      "role": "ImpactAssessment",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "Kampala",
+      "role": "ImpactAssessment",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "Kampala",
+      "role": "ImpactAssessment",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "ImpactAssessment",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "ImpactAssessment",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "ImpactAssessment",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": " wakiso ",
+      "role": "ImpactAssessment",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": " wakiso ",
+      "role": "ImpactAssessment",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": " wakiso ",
+      "role": "ImpactAssessment",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": " wakiso ",
+      "role": "ImpactAssessment",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": " wakiso ",
+      "role": "ImpactAssessment",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "ImpactAssessment",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "ImpactAssessment",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "ImpactAssessment",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "MUKONO",
+      "role": "ImpactAssessment",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "MUKONO",
+      "role": "ImpactAssessment",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "MUKONO",
+      "role": "ImpactAssessment",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "MUKONO",
+      "role": "ImpactAssessment",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "MUKONO",
+      "role": "ImpactAssessment",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "ImpactAssessment",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "ImpactAssessment",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "ImpactAssessment",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Gulu",
+      "role": "ImpactAssessment",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Gulu",
+      "role": "ImpactAssessment",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": "ImpactAssessment",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": "ImpactAssessment",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": "ImpactAssessment",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "ImpactAssessment",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "ImpactAssessment",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "ImpactAssessment",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "gulu",
+      "role": "ImpactAssessment",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "gulu",
+      "role": "ImpactAssessment",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": "ImpactAssessment",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": "ImpactAssessment",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": "ImpactAssessment",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "ImpactAssessment",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "ImpactAssessment",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "ImpactAssessment",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Lira",
+      "role": "ImpactAssessment",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Lira",
+      "role": "ImpactAssessment",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "Lira",
+      "role": "ImpactAssessment",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "Lira",
+      "role": "ImpactAssessment",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "Lira",
+      "role": "ImpactAssessment",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "ImpactAssessment",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "ImpactAssessment",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "ImpactAssessment",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "Admin",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "Admin",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": null,
+      "role": "Admin",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": null,
+      "role": "Admin",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": null,
+      "role": "Admin",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": null,
+      "role": "Admin",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": null,
+      "role": "Admin",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": null,
+      "role": "Admin",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "Admin",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "Admin",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "",
+      "role": "Admin",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "",
+      "role": "Admin",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "",
+      "role": "Admin",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "",
+      "role": "Admin",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "",
+      "role": "Admin",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "",
+      "role": "Admin",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Kampala",
+      "role": "Admin",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Kampala",
+      "role": "Admin",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "Kampala",
+      "role": "Admin",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "Kampala",
+      "role": "Admin",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "Kampala",
+      "role": "Admin",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "Admin",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "Admin",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "Admin",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": " wakiso ",
+      "role": "Admin",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": " wakiso ",
+      "role": "Admin",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": " wakiso ",
+      "role": "Admin",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": " wakiso ",
+      "role": "Admin",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": " wakiso ",
+      "role": "Admin",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "Admin",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "Admin",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "Admin",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "MUKONO",
+      "role": "Admin",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "MUKONO",
+      "role": "Admin",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "MUKONO",
+      "role": "Admin",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "MUKONO",
+      "role": "Admin",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "MUKONO",
+      "role": "Admin",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "Admin",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "Admin",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "Admin",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Gulu",
+      "role": "Admin",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Gulu",
+      "role": "Admin",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": "Admin",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": "Admin",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": "Admin",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "Admin",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "Admin",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "Admin",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "gulu",
+      "role": "Admin",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "gulu",
+      "role": "Admin",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": "Admin",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": "Admin",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": "Admin",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "Admin",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "Admin",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "Admin",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Lira",
+      "role": "Admin",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Lira",
+      "role": "Admin",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "Lira",
+      "role": "Admin",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": "Lira",
+      "role": "Admin",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "Lira",
+      "role": "Admin",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "Admin",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "Admin",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "Admin",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "pl",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "pl",
+      "target": ""
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "pl",
+      "target": "Kampala"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "pl",
+      "target": " wakiso "
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "pl",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "pl",
+      "target": "Gulu"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "pl",
+      "target": "gulu"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "pl",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "pl",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "pl",
+      "target": ""
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "pl",
+      "target": "Kampala"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "pl",
+      "target": " wakiso "
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "pl",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "pl",
+      "target": "Gulu"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "pl",
+      "target": "gulu"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "pl",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Kampala",
+      "role": "pl",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Kampala",
+      "role": "pl",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "Kampala",
+      "role": "pl",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "pl",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "pl",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "pl",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "pl",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "pl",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": " wakiso ",
+      "role": "pl",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": " wakiso ",
+      "role": "pl",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "pl",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": " wakiso ",
+      "role": "pl",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "pl",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "pl",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "pl",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "pl",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "MUKONO",
+      "role": "pl",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "MUKONO",
+      "role": "pl",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "pl",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "pl",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "MUKONO",
+      "role": "pl",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "pl",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "pl",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "pl",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Gulu",
+      "role": "pl",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Gulu",
+      "role": "pl",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "pl",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "pl",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "pl",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": "pl",
+      "target": "Gulu"
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": "pl",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "pl",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "gulu",
+      "role": "pl",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "gulu",
+      "role": "pl",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "pl",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "pl",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "pl",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": "pl",
+      "target": "Gulu"
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": "pl",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "pl",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Lira",
+      "role": "pl",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Lira",
+      "role": "pl",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "pl",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "pl",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "pl",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "pl",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "pl",
+      "target": "gulu"
+    },
+    {
+      "answer": "primary",
+      "primary": "Lira",
+      "role": "pl",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": " Program Lead ",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": " Program Lead ",
+      "target": ""
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": " Program Lead ",
+      "target": "Kampala"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": " Program Lead ",
+      "target": " wakiso "
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": " Program Lead ",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": " Program Lead ",
+      "target": "Gulu"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": " Program Lead ",
+      "target": "gulu"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": " Program Lead ",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": " Program Lead ",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": " Program Lead ",
+      "target": ""
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": " Program Lead ",
+      "target": "Kampala"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": " Program Lead ",
+      "target": " wakiso "
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": " Program Lead ",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": " Program Lead ",
+      "target": "Gulu"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": " Program Lead ",
+      "target": "gulu"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": " Program Lead ",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Kampala",
+      "role": " Program Lead ",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Kampala",
+      "role": " Program Lead ",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "Kampala",
+      "role": " Program Lead ",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": " Program Lead ",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": " Program Lead ",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": " Program Lead ",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": " Program Lead ",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": " Program Lead ",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": " wakiso ",
+      "role": " Program Lead ",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": " wakiso ",
+      "role": " Program Lead ",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": " Program Lead ",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": " wakiso ",
+      "role": " Program Lead ",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": " Program Lead ",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": " Program Lead ",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": " Program Lead ",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": " Program Lead ",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "MUKONO",
+      "role": " Program Lead ",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "MUKONO",
+      "role": " Program Lead ",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": " Program Lead ",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": " Program Lead ",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "MUKONO",
+      "role": " Program Lead ",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": " Program Lead ",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": " Program Lead ",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": " Program Lead ",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Gulu",
+      "role": " Program Lead ",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Gulu",
+      "role": " Program Lead ",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": " Program Lead ",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": " Program Lead ",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": " Program Lead ",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": " Program Lead ",
+      "target": "Gulu"
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": " Program Lead ",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": " Program Lead ",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "gulu",
+      "role": " Program Lead ",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "gulu",
+      "role": " Program Lead ",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": " Program Lead ",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": " Program Lead ",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": " Program Lead ",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": " Program Lead ",
+      "target": "Gulu"
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": " Program Lead ",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": " Program Lead ",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Lira",
+      "role": " Program Lead ",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Lira",
+      "role": " Program Lead ",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": " Program Lead ",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": " Program Lead ",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": " Program Lead ",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": " Program Lead ",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": " Program Lead ",
+      "target": "gulu"
+    },
+    {
+      "answer": "primary",
+      "primary": "Lira",
+      "role": " Program Lead ",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "PROGRAMME LEAD",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "PROGRAMME LEAD",
+      "target": ""
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "PROGRAMME LEAD",
+      "target": "Kampala"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "PROGRAMME LEAD",
+      "target": " wakiso "
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "PROGRAMME LEAD",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "PROGRAMME LEAD",
+      "target": "Gulu"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "PROGRAMME LEAD",
+      "target": "gulu"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "PROGRAMME LEAD",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "PROGRAMME LEAD",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "PROGRAMME LEAD",
+      "target": ""
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "PROGRAMME LEAD",
+      "target": "Kampala"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "PROGRAMME LEAD",
+      "target": " wakiso "
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "PROGRAMME LEAD",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "PROGRAMME LEAD",
+      "target": "Gulu"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "PROGRAMME LEAD",
+      "target": "gulu"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "PROGRAMME LEAD",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Kampala",
+      "role": "PROGRAMME LEAD",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Kampala",
+      "role": "PROGRAMME LEAD",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "Kampala",
+      "role": "PROGRAMME LEAD",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "PROGRAMME LEAD",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "PROGRAMME LEAD",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "PROGRAMME LEAD",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "PROGRAMME LEAD",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "PROGRAMME LEAD",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": " wakiso ",
+      "role": "PROGRAMME LEAD",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": " wakiso ",
+      "role": "PROGRAMME LEAD",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "PROGRAMME LEAD",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": " wakiso ",
+      "role": "PROGRAMME LEAD",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "PROGRAMME LEAD",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "PROGRAMME LEAD",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "PROGRAMME LEAD",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "PROGRAMME LEAD",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "MUKONO",
+      "role": "PROGRAMME LEAD",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "MUKONO",
+      "role": "PROGRAMME LEAD",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "PROGRAMME LEAD",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "PROGRAMME LEAD",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "MUKONO",
+      "role": "PROGRAMME LEAD",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "PROGRAMME LEAD",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "PROGRAMME LEAD",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "PROGRAMME LEAD",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Gulu",
+      "role": "PROGRAMME LEAD",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Gulu",
+      "role": "PROGRAMME LEAD",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "PROGRAMME LEAD",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "PROGRAMME LEAD",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "PROGRAMME LEAD",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": "PROGRAMME LEAD",
+      "target": "Gulu"
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": "PROGRAMME LEAD",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "PROGRAMME LEAD",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "gulu",
+      "role": "PROGRAMME LEAD",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "gulu",
+      "role": "PROGRAMME LEAD",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "PROGRAMME LEAD",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "PROGRAMME LEAD",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "PROGRAMME LEAD",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": "PROGRAMME LEAD",
+      "target": "Gulu"
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": "PROGRAMME LEAD",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "PROGRAMME LEAD",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Lira",
+      "role": "PROGRAMME LEAD",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Lira",
+      "role": "PROGRAMME LEAD",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "PROGRAMME LEAD",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "PROGRAMME LEAD",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "PROGRAMME LEAD",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "PROGRAMME LEAD",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "PROGRAMME LEAD",
+      "target": "gulu"
+    },
+    {
+      "answer": "primary",
+      "primary": "Lira",
+      "role": "PROGRAMME LEAD",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "cceo",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "cceo",
+      "target": ""
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "cceo",
+      "target": "Kampala"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "cceo",
+      "target": " wakiso "
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "cceo",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "cceo",
+      "target": "Gulu"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "cceo",
+      "target": "gulu"
+    },
+    {
+      "answer": "error",
+      "primary": null,
+      "role": "cceo",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "cceo",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "cceo",
+      "target": ""
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "cceo",
+      "target": "Kampala"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "cceo",
+      "target": " wakiso "
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "cceo",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "cceo",
+      "target": "Gulu"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "cceo",
+      "target": "gulu"
+    },
+    {
+      "answer": "error",
+      "primary": "",
+      "role": "cceo",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Kampala",
+      "role": "cceo",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Kampala",
+      "role": "cceo",
+      "target": ""
+    },
+    {
+      "answer": "primary",
+      "primary": "Kampala",
+      "role": "cceo",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "cceo",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "cceo",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "cceo",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "cceo",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Kampala",
+      "role": "cceo",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": " wakiso ",
+      "role": "cceo",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": " wakiso ",
+      "role": "cceo",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "cceo",
+      "target": "Kampala"
+    },
+    {
+      "answer": "primary",
+      "primary": " wakiso ",
+      "role": "cceo",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "cceo",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "cceo",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "cceo",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": " wakiso ",
+      "role": "cceo",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "MUKONO",
+      "role": "cceo",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "MUKONO",
+      "role": "cceo",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "cceo",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "cceo",
+      "target": " wakiso "
+    },
+    {
+      "answer": "primary",
+      "primary": "MUKONO",
+      "role": "cceo",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "cceo",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "cceo",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "MUKONO",
+      "role": "cceo",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Gulu",
+      "role": "cceo",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Gulu",
+      "role": "cceo",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "cceo",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "cceo",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "cceo",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": "cceo",
+      "target": "Gulu"
+    },
+    {
+      "answer": "primary",
+      "primary": "Gulu",
+      "role": "cceo",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Gulu",
+      "role": "cceo",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "gulu",
+      "role": "cceo",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "gulu",
+      "role": "cceo",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "cceo",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "cceo",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "cceo",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": "cceo",
+      "target": "Gulu"
+    },
+    {
+      "answer": "primary",
+      "primary": "gulu",
+      "role": "cceo",
+      "target": "gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "gulu",
+      "role": "cceo",
+      "target": "Lira"
+    },
+    {
+      "answer": "error",
+      "primary": "Lira",
+      "role": "cceo",
+      "target": null
+    },
+    {
+      "answer": "error",
+      "primary": "Lira",
+      "role": "cceo",
+      "target": ""
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "cceo",
+      "target": "Kampala"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "cceo",
+      "target": " wakiso "
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "cceo",
+      "target": "MUKONO"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "cceo",
+      "target": "Gulu"
+    },
+    {
+      "answer": "secondary",
+      "primary": "Lira",
+      "role": "cceo",
+      "target": "gulu"
+    },
+    {
+      "answer": "primary",
+      "primary": "Lira",
+      "role": "cceo",
+      "target": "Lira"
+    }
+  ]
+}

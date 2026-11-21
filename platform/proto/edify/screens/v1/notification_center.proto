@@ -15,6 +15,7 @@ service NotificationCenterService {
   // not resolved (apps.core.context_processors.sidebar_counts). Every signed-in
   // role has the bell, so no role is refused.
   rpc GetUnreadNotificationCount(GetUnreadNotificationCountRequest) returns (GetUnreadNotificationCountResponse);
+  rpc UpdateNotificationStatus(UpdateNotificationStatusRequest) returns (UpdateNotificationStatusResponse);
 }
 
 message GetUnreadNotificationCountRequest {}
@@ -129,4 +130,21 @@ message NotificationCategoryChoice {
   string value = 1;
   string label = 2;
   bool muted = 3;
+}
+
+enum NotificationStatusAction {
+  NOTIFICATION_STATUS_ACTION_UNSPECIFIED = 0;
+  NOTIFICATION_STATUS_ACTION_READ = 1;
+  NOTIFICATION_STATUS_ACTION_ARCHIVE = 2;
+  NOTIFICATION_STATUS_ACTION_READ_ALL = 3;
+  NOTIFICATION_STATUS_ACTION_ARCHIVE_READ = 4;
+}
+
+message UpdateNotificationStatusRequest {
+  NotificationStatusAction action = 1;
+  string notification_id = 2;
+}
+
+message UpdateNotificationStatusResponse {
+  int64 changed = 1;
 }

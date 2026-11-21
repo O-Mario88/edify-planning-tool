@@ -11,12 +11,12 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	commonv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/common/v1"
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
-	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
 // ErrNotAvailable is the page refused to the reader's role (the existing
@@ -37,13 +37,13 @@ const defaultActionLabel = "Open Record"
 
 // Service builds the notification centre.
 type Service struct {
-	db              schooldirectory.Querier
+	db              *pgxpool.Pool
 	emailConfigured bool
 }
 
 // NewService wires the service to the database it reads. emailConfigured
 // is whether the server sends email (EmailConfigured).
-func NewService(db schooldirectory.Querier, emailConfigured bool) *Service {
+func NewService(db *pgxpool.Pool, emailConfigured bool) *Service {
 	return &Service{db: db, emailConfigured: emailConfigured}
 }
 

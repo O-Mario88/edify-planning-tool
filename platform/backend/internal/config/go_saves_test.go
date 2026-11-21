@@ -19,24 +19,24 @@ func TestGoSavesAreOffUnlessNamedAndOnlyInDevelopmentOrStaging(t *testing.T) {
 		{name: "on in development", env: "development", saves: "schedule_visit", app: "http://localhost:8010", key: key, want: true},
 		{name: "refused in test", env: "test", saves: "schedule_visit", app: "http://localhost:8010", key: key, wantErr: "refused in test"},
 		{name: "an unknown save", env: "development", saves: "schedule_visit,pay_everyone", app: "http://localhost:8010", key: key, wantErr: `"pay_everyone"`},
-		{name: "without the existing application", env: "development", saves: "schedule_visit", key: key, wantErr: "EDIFY_EXISTING_APP_URL"},
-		{name: "without the internal key", env: "development", saves: "schedule_visit", app: "http://localhost:8010", wantErr: "EDIFY_INTERNAL_KEY"},
+		{name: "without the existing application (Django-absent)", env: "development", saves: "schedule_visit", key: key, want: true},
+		{name: "without the internal key (Django-absent)", env: "development", saves: "schedule_visit", app: "http://localhost:8010", want: true},
 		{name: "the move alone", env: "development", saves: "reschedule_visit", app: "http://localhost:8010", key: key, wantMove: true},
 		{name: "both saves", env: "development", saves: "schedule_visit, reschedule_visit", app: "http://localhost:8010", key: key, want: true, wantMove: true},
 		{name: "the move refused in test", env: "test", saves: "reschedule_visit", app: "http://localhost:8010", key: key, wantErr: "refused in test"},
-		{name: "the move without the internal key", env: "development", saves: "reschedule_visit", app: "http://localhost:8010", wantErr: "EDIFY_INTERNAL_KEY"},
+		{name: "the move without the internal key (Django-absent)", env: "development", saves: "reschedule_visit", app: "http://localhost:8010", wantMove: true},
 		{name: "the cancel alone", env: "development", saves: "cancel_visit", app: "http://localhost:8010", key: key, wantCancel: true},
 		{name: "all three saves", env: "development", saves: "schedule_visit,reschedule_visit,cancel_visit", app: "http://localhost:8010", key: key, want: true, wantMove: true, wantCancel: true},
 		{name: "the cancel refused in test", env: "test", saves: "cancel_visit", app: "http://localhost:8010", key: key, wantErr: "refused in test"},
-		{name: "the cancel without the existing application", env: "development", saves: "cancel_visit", key: key, wantErr: "EDIFY_EXISTING_APP_URL"},
+		{name: "the cancel without the existing application (Django-absent)", env: "development", saves: "cancel_visit", key: key, wantCancel: true},
 		{name: "the edit alone", env: "development", saves: "edit_visit", app: "http://localhost:8010", key: key, wantEdit: true},
 		{name: "all four saves", env: "development", saves: "schedule_visit,reschedule_visit,cancel_visit,edit_visit", app: "http://localhost:8010", key: key, want: true, wantMove: true, wantCancel: true, wantEdit: true},
 		{name: "the edit refused in test", env: "test", saves: "edit_visit", app: "http://localhost:8010", key: key, wantErr: "refused in test"},
-		{name: "the edit without the internal key", env: "development", saves: "edit_visit", app: "http://localhost:8010", wantErr: "EDIFY_INTERNAL_KEY"},
+		{name: "the edit without the internal key (Django-absent)", env: "development", saves: "edit_visit", app: "http://localhost:8010", wantEdit: true},
 		{name: "the training pair alone", env: "development", saves: "schedule_training_pair", app: "http://localhost:8010", key: key, wantPair: true},
 		{name: "the training pair beside the visit", env: "development", saves: "schedule_visit,schedule_training_pair", app: "http://localhost:8010", key: key, want: true, wantPair: true},
 		{name: "the training pair refused in test", env: "test", saves: "schedule_training_pair", app: "http://localhost:8010", key: key, wantErr: "refused in test"},
-		{name: "the training pair without the existing application", env: "development", saves: "schedule_training_pair", key: key, wantErr: "EDIFY_EXISTING_APP_URL"},
+		{name: "the training pair without the existing application (Django-absent)", env: "development", saves: "schedule_training_pair", key: key, wantPair: true},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -99,7 +99,7 @@ func TestTheGroupSavesAreOffUnlessNamed(t *testing.T) {
 		{env: "development", saves: "group_cancel", app: app, cancel: true},
 		{env: "staging", saves: "group_reschedule,group_cancel", app: app, move: true, cancel: true},
 		{env: "test", saves: "group_cancel", app: app, wantErr: "refused in test"},
-		{env: "development", saves: "group_reschedule", wantErr: "EDIFY_EXISTING_APP_URL"},
+		{env: "development", saves: "group_reschedule", move: true},
 	} {
 		saves, err := loadGoSaves(Environment(c.env), env(map[string]string{"EDIFY_GO_SAVES": c.saves}), c.app, key)
 		if c.wantErr != "" {
@@ -131,7 +131,7 @@ func TestTheGroupTrainingSaveIsOffUnlessNamed(t *testing.T) {
 		{env: "staging", saves: "schedule_visit,schedule_group_training", app: app, on: true},
 		{env: "test", saves: "schedule_group_training", app: app, wantErr: "refused in test"},
 		{env: "production", saves: "schedule_group_training", app: app, wantErr: "refused in production"},
-		{env: "development", saves: "schedule_group_training", wantErr: "EDIFY_EXISTING_APP_URL"},
+		{env: "development", saves: "schedule_group_training", on: true},
 	} {
 		saves, err := loadGoSaves(Environment(c.env), env(map[string]string{"EDIFY_GO_SAVES": c.saves}), c.app, key)
 		if c.wantErr != "" {
@@ -163,7 +163,7 @@ func TestTheClusterMeetingSaveIsOffUnlessNamed(t *testing.T) {
 		{env: "staging", saves: "schedule_group_training,schedule_cluster_meeting", app: app, on: true},
 		{env: "test", saves: "schedule_cluster_meeting", app: app, wantErr: "refused in test"},
 		{env: "production", saves: "schedule_cluster_meeting", app: app, wantErr: "refused in production"},
-		{env: "development", saves: "schedule_cluster_meeting", wantErr: "EDIFY_EXISTING_APP_URL"},
+		{env: "development", saves: "schedule_cluster_meeting", on: true},
 	} {
 		saves, err := loadGoSaves(Environment(c.env), env(map[string]string{"EDIFY_GO_SAVES": c.saves}), c.app, key)
 		if c.wantErr != "" {

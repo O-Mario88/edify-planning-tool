@@ -17,6 +17,21 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/trace"
 )
 
+// Ledger is the posting boundary for loan money events, satisfied by both
+// LedgerClient (legacy Django HTTP) and NativeLedger (Go PostgreSQL SECURITY DEFINER).
+type Ledger interface {
+	CreateReferral(ctx context.Context, r ReferralRequest) (string, error)
+	RegisterLoan(ctx context.Context, r LoanRegistration) (string, error)
+	ReserveFacility(ctx context.Context, facilityID, loanID string, amount ledger.Money, key string) (string, error)
+	PostDisbursement(ctx context.Context, d DisbursementPosting) (string, error)
+	PostSchedule(ctx context.Context, loanID string, version int, rows []ledger.Installment) error
+	PostRepayment(ctx context.Context, r RepaymentPosting) (string, error)
+	ReverseRepayment(ctx context.Context, transactionID, key, reason, reference, evidence string) (string, error)
+	SetOfficerReference(ctx context.Context, mfiID, userID, reference string) error
+	SetPurposePlan(ctx context.Context, loanID string, lines []PurposeLine) error
+	RecordEnrolmentBaseline(ctx context.Context, loanID string, learners int, asOf time.Time, cohort, evidence string) error
+}
+
 // LedgerClient posts the money events of a loan to the existing ledger
 // (apps/business_transformation, /api/business-transformation/...), as the
 // signed-in person: the existing application checks their permission and

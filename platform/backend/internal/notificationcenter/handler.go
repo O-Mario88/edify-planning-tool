@@ -63,3 +63,37 @@ func (h *Handler) GetUnreadNotificationCount(
 	}
 	return connect.NewResponse(&screensv1.GetUnreadNotificationCountResponse{Unread: unread}), nil
 }
+
+// UpdateNotificationStatus only changes rows owned by the signed-in recipient.
+func (h *Handler) UpdateNotificationStatus(ctx context.Context, req *connect.Request[screensv1.UpdateNotificationStatusRequest]) (*connect.Response[screensv1.UpdateNotificationStatusResponse], error) {
+	p, ok := auth.PrincipalFrom(ctx)
+	if !ok {
+		return nil, apierr.New(ctx, connect.CodeUnauthenticated, apierr.ReasonAuthMissing, "Sign in first.")
+	}
+	if !rules.Roles[roleOf(p)].Page {
+		return nil, apierr.New(ctx, connect.CodePermissionDenied, apierr.ReasonPermissionDenied, "You do not have access to Notifications.")
+	}
+	id := req.Msg.GetNotificationId()
+	action := req.Msg.GetAction()
+	single := action == screensv1.NotificationStatusAction_NOTIFICATION_STATUS_ACTION_READ || action == screensv1.NotificationStatusAction_NOTIFICATION_STATUS_ACTION_ARCHIVE
+	if single != (id != "") || len(id) > 30 {
+		return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "Check the selected notification.")
+	}
+	writer := NewWriter(h.service.db, nil)
+	var changed int
+	var err error
+	switch action {
+	case screensv1.NotificationStatusAction_NOTIFICATION_STATUS_ACTION_READ:
+		changed, err = writer.MarkRead(ctx, id, p.UserID)
+	case screensv1.NotificationStatusAction_NOTIFICATION_STATUS_ACTION_READ_ALL:
+		changed, err = writer.MarkAllRead(ctx, p.UserID)
+	case screensv1.NotificationStatusAction_NOTIFICATION_STATUS_ACTION_ARCHIVE, screensv1.NotificationStatusAction_NOTIFICATION_STATUS_ACTION_ARCHIVE_READ:
+		changed, err = writer.archive(ctx, p.UserID, id)
+	default:
+		return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "Unknown notification action.")
+	}
+	if err != nil {
+		return nil, apierr.Internal(ctx, h.logger, err)
+	}
+	return connect.NewResponse(&screensv1.UpdateNotificationStatusResponse{Changed: int64(changed)}), nil
+}

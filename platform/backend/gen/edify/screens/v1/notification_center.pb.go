@@ -22,6 +22,61 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type NotificationStatusAction int32
+
+const (
+	NotificationStatusAction_NOTIFICATION_STATUS_ACTION_UNSPECIFIED  NotificationStatusAction = 0
+	NotificationStatusAction_NOTIFICATION_STATUS_ACTION_READ         NotificationStatusAction = 1
+	NotificationStatusAction_NOTIFICATION_STATUS_ACTION_ARCHIVE      NotificationStatusAction = 2
+	NotificationStatusAction_NOTIFICATION_STATUS_ACTION_READ_ALL     NotificationStatusAction = 3
+	NotificationStatusAction_NOTIFICATION_STATUS_ACTION_ARCHIVE_READ NotificationStatusAction = 4
+)
+
+// Enum value maps for NotificationStatusAction.
+var (
+	NotificationStatusAction_name = map[int32]string{
+		0: "NOTIFICATION_STATUS_ACTION_UNSPECIFIED",
+		1: "NOTIFICATION_STATUS_ACTION_READ",
+		2: "NOTIFICATION_STATUS_ACTION_ARCHIVE",
+		3: "NOTIFICATION_STATUS_ACTION_READ_ALL",
+		4: "NOTIFICATION_STATUS_ACTION_ARCHIVE_READ",
+	}
+	NotificationStatusAction_value = map[string]int32{
+		"NOTIFICATION_STATUS_ACTION_UNSPECIFIED":  0,
+		"NOTIFICATION_STATUS_ACTION_READ":         1,
+		"NOTIFICATION_STATUS_ACTION_ARCHIVE":      2,
+		"NOTIFICATION_STATUS_ACTION_READ_ALL":     3,
+		"NOTIFICATION_STATUS_ACTION_ARCHIVE_READ": 4,
+	}
+)
+
+func (x NotificationStatusAction) Enum() *NotificationStatusAction {
+	p := new(NotificationStatusAction)
+	*p = x
+	return p
+}
+
+func (x NotificationStatusAction) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (NotificationStatusAction) Descriptor() protoreflect.EnumDescriptor {
+	return file_edify_screens_v1_notification_center_proto_enumTypes[0].Descriptor()
+}
+
+func (NotificationStatusAction) Type() protoreflect.EnumType {
+	return &file_edify_screens_v1_notification_center_proto_enumTypes[0]
+}
+
+func (x NotificationStatusAction) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use NotificationStatusAction.Descriptor instead.
+func (NotificationStatusAction) EnumDescriptor() ([]byte, []int) {
+	return file_edify_screens_v1_notification_center_proto_rawDescGZIP(), []int{0}
+}
+
 type GetUnreadNotificationCountRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -824,6 +879,102 @@ func (x *NotificationCategoryChoice) GetMuted() bool {
 	return false
 }
 
+type UpdateNotificationStatusRequest struct {
+	state          protoimpl.MessageState   `protogen:"open.v1"`
+	Action         NotificationStatusAction `protobuf:"varint,1,opt,name=action,proto3,enum=edify.screens.v1.NotificationStatusAction" json:"action,omitempty"`
+	NotificationId string                   `protobuf:"bytes,2,opt,name=notification_id,json=notificationId,proto3" json:"notification_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *UpdateNotificationStatusRequest) Reset() {
+	*x = UpdateNotificationStatusRequest{}
+	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateNotificationStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateNotificationStatusRequest) ProtoMessage() {}
+
+func (x *UpdateNotificationStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateNotificationStatusRequest.ProtoReflect.Descriptor instead.
+func (*UpdateNotificationStatusRequest) Descriptor() ([]byte, []int) {
+	return file_edify_screens_v1_notification_center_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *UpdateNotificationStatusRequest) GetAction() NotificationStatusAction {
+	if x != nil {
+		return x.Action
+	}
+	return NotificationStatusAction_NOTIFICATION_STATUS_ACTION_UNSPECIFIED
+}
+
+func (x *UpdateNotificationStatusRequest) GetNotificationId() string {
+	if x != nil {
+		return x.NotificationId
+	}
+	return ""
+}
+
+type UpdateNotificationStatusResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Changed       int64                  `protobuf:"varint,1,opt,name=changed,proto3" json:"changed,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateNotificationStatusResponse) Reset() {
+	*x = UpdateNotificationStatusResponse{}
+	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateNotificationStatusResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateNotificationStatusResponse) ProtoMessage() {}
+
+func (x *UpdateNotificationStatusResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_screens_v1_notification_center_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateNotificationStatusResponse.ProtoReflect.Descriptor instead.
+func (*UpdateNotificationStatusResponse) Descriptor() ([]byte, []int) {
+	return file_edify_screens_v1_notification_center_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *UpdateNotificationStatusResponse) GetChanged() int64 {
+	if x != nil {
+		return x.Changed
+	}
+	return 0
+}
+
 var File_edify_screens_v1_notification_center_proto protoreflect.FileDescriptor
 
 const file_edify_screens_v1_notification_center_proto_rawDesc = "" +
@@ -898,10 +1049,22 @@ const file_edify_screens_v1_notification_center_proto_rawDesc = "" +
 	"\x1aNotificationCategoryChoice\x12\x14\n" +
 	"\x05value\x18\x01 \x01(\tR\x05value\x12\x14\n" +
 	"\x05label\x18\x02 \x01(\tR\x05label\x12\x14\n" +
-	"\x05muted\x18\x03 \x01(\bR\x05muted2\x9f\x02\n" +
+	"\x05muted\x18\x03 \x01(\bR\x05muted\"\x8e\x01\n" +
+	"\x1fUpdateNotificationStatusRequest\x12B\n" +
+	"\x06action\x18\x01 \x01(\x0e2*.edify.screens.v1.NotificationStatusActionR\x06action\x12'\n" +
+	"\x0fnotification_id\x18\x02 \x01(\tR\x0enotificationId\"<\n" +
+	" UpdateNotificationStatusResponse\x12\x18\n" +
+	"\achanged\x18\x01 \x01(\x03R\achanged*\xe9\x01\n" +
+	"\x18NotificationStatusAction\x12*\n" +
+	"&NOTIFICATION_STATUS_ACTION_UNSPECIFIED\x10\x00\x12#\n" +
+	"\x1fNOTIFICATION_STATUS_ACTION_READ\x10\x01\x12&\n" +
+	"\"NOTIFICATION_STATUS_ACTION_ARCHIVE\x10\x02\x12'\n" +
+	"#NOTIFICATION_STATUS_ACTION_READ_ALL\x10\x03\x12+\n" +
+	"'NOTIFICATION_STATUS_ACTION_ARCHIVE_READ\x10\x042\xa3\x03\n" +
 	"\x19NotificationCenterService\x12x\n" +
 	"\x15GetNotificationCenter\x12..edify.screens.v1.GetNotificationCenterRequest\x1a/.edify.screens.v1.GetNotificationCenterResponse\x12\x87\x01\n" +
-	"\x1aGetUnreadNotificationCount\x123.edify.screens.v1.GetUnreadNotificationCountRequest\x1a4.edify.screens.v1.GetUnreadNotificationCountResponseB\xeb\x01\n" +
+	"\x1aGetUnreadNotificationCount\x123.edify.screens.v1.GetUnreadNotificationCountRequest\x1a4.edify.screens.v1.GetUnreadNotificationCountResponse\x12\x81\x01\n" +
+	"\x18UpdateNotificationStatus\x121.edify.screens.v1.UpdateNotificationStatusRequest\x1a2.edify.screens.v1.UpdateNotificationStatusResponseB\xeb\x01\n" +
 	"\x14com.edify.screens.v1B\x17NotificationCenterProtoP\x01ZXgithub.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1;screensv1\xa2\x02\x03ESX\xaa\x02\x10Edify.Screens.V1\xca\x02\x10Edify\\Screens\\V1\xe2\x02\x1cEdify\\Screens\\V1\\GPBMetadata\xea\x02\x12Edify::Screens::V1b\x06proto3"
 
 var (
@@ -916,37 +1079,44 @@ func file_edify_screens_v1_notification_center_proto_rawDescGZIP() []byte {
 	return file_edify_screens_v1_notification_center_proto_rawDescData
 }
 
-var file_edify_screens_v1_notification_center_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_edify_screens_v1_notification_center_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_edify_screens_v1_notification_center_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_edify_screens_v1_notification_center_proto_goTypes = []any{
-	(*GetUnreadNotificationCountRequest)(nil),  // 0: edify.screens.v1.GetUnreadNotificationCountRequest
-	(*GetUnreadNotificationCountResponse)(nil), // 1: edify.screens.v1.GetUnreadNotificationCountResponse
-	(*GetNotificationCenterRequest)(nil),       // 2: edify.screens.v1.GetNotificationCenterRequest
-	(*GetNotificationCenterResponse)(nil),      // 3: edify.screens.v1.GetNotificationCenterResponse
-	(*NotificationKpis)(nil),                   // 4: edify.screens.v1.NotificationKpis
-	(*NotificationFilters)(nil),                // 5: edify.screens.v1.NotificationFilters
-	(*NotificationOption)(nil),                 // 6: edify.screens.v1.NotificationOption
-	(*NotificationItem)(nil),                   // 7: edify.screens.v1.NotificationItem
-	(*NotificationDelivery)(nil),               // 8: edify.screens.v1.NotificationDelivery
-	(*NotificationCategoryChoice)(nil),         // 9: edify.screens.v1.NotificationCategoryChoice
-	(*v1.PageInfo)(nil),                        // 10: edify.common.v1.PageInfo
+	(NotificationStatusAction)(0),              // 0: edify.screens.v1.NotificationStatusAction
+	(*GetUnreadNotificationCountRequest)(nil),  // 1: edify.screens.v1.GetUnreadNotificationCountRequest
+	(*GetUnreadNotificationCountResponse)(nil), // 2: edify.screens.v1.GetUnreadNotificationCountResponse
+	(*GetNotificationCenterRequest)(nil),       // 3: edify.screens.v1.GetNotificationCenterRequest
+	(*GetNotificationCenterResponse)(nil),      // 4: edify.screens.v1.GetNotificationCenterResponse
+	(*NotificationKpis)(nil),                   // 5: edify.screens.v1.NotificationKpis
+	(*NotificationFilters)(nil),                // 6: edify.screens.v1.NotificationFilters
+	(*NotificationOption)(nil),                 // 7: edify.screens.v1.NotificationOption
+	(*NotificationItem)(nil),                   // 8: edify.screens.v1.NotificationItem
+	(*NotificationDelivery)(nil),               // 9: edify.screens.v1.NotificationDelivery
+	(*NotificationCategoryChoice)(nil),         // 10: edify.screens.v1.NotificationCategoryChoice
+	(*UpdateNotificationStatusRequest)(nil),    // 11: edify.screens.v1.UpdateNotificationStatusRequest
+	(*UpdateNotificationStatusResponse)(nil),   // 12: edify.screens.v1.UpdateNotificationStatusResponse
+	(*v1.PageInfo)(nil),                        // 13: edify.common.v1.PageInfo
 }
 var file_edify_screens_v1_notification_center_proto_depIdxs = []int32{
-	4,  // 0: edify.screens.v1.GetNotificationCenterResponse.kpis:type_name -> edify.screens.v1.NotificationKpis
-	5,  // 1: edify.screens.v1.GetNotificationCenterResponse.filters:type_name -> edify.screens.v1.NotificationFilters
-	7,  // 2: edify.screens.v1.GetNotificationCenterResponse.notifications:type_name -> edify.screens.v1.NotificationItem
-	10, // 3: edify.screens.v1.GetNotificationCenterResponse.page:type_name -> edify.common.v1.PageInfo
-	8,  // 4: edify.screens.v1.GetNotificationCenterResponse.delivery:type_name -> edify.screens.v1.NotificationDelivery
-	6,  // 5: edify.screens.v1.NotificationFilters.categories:type_name -> edify.screens.v1.NotificationOption
-	9,  // 6: edify.screens.v1.NotificationDelivery.categories:type_name -> edify.screens.v1.NotificationCategoryChoice
-	2,  // 7: edify.screens.v1.NotificationCenterService.GetNotificationCenter:input_type -> edify.screens.v1.GetNotificationCenterRequest
-	0,  // 8: edify.screens.v1.NotificationCenterService.GetUnreadNotificationCount:input_type -> edify.screens.v1.GetUnreadNotificationCountRequest
-	3,  // 9: edify.screens.v1.NotificationCenterService.GetNotificationCenter:output_type -> edify.screens.v1.GetNotificationCenterResponse
-	1,  // 10: edify.screens.v1.NotificationCenterService.GetUnreadNotificationCount:output_type -> edify.screens.v1.GetUnreadNotificationCountResponse
-	9,  // [9:11] is the sub-list for method output_type
-	7,  // [7:9] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	5,  // 0: edify.screens.v1.GetNotificationCenterResponse.kpis:type_name -> edify.screens.v1.NotificationKpis
+	6,  // 1: edify.screens.v1.GetNotificationCenterResponse.filters:type_name -> edify.screens.v1.NotificationFilters
+	8,  // 2: edify.screens.v1.GetNotificationCenterResponse.notifications:type_name -> edify.screens.v1.NotificationItem
+	13, // 3: edify.screens.v1.GetNotificationCenterResponse.page:type_name -> edify.common.v1.PageInfo
+	9,  // 4: edify.screens.v1.GetNotificationCenterResponse.delivery:type_name -> edify.screens.v1.NotificationDelivery
+	7,  // 5: edify.screens.v1.NotificationFilters.categories:type_name -> edify.screens.v1.NotificationOption
+	10, // 6: edify.screens.v1.NotificationDelivery.categories:type_name -> edify.screens.v1.NotificationCategoryChoice
+	0,  // 7: edify.screens.v1.UpdateNotificationStatusRequest.action:type_name -> edify.screens.v1.NotificationStatusAction
+	3,  // 8: edify.screens.v1.NotificationCenterService.GetNotificationCenter:input_type -> edify.screens.v1.GetNotificationCenterRequest
+	1,  // 9: edify.screens.v1.NotificationCenterService.GetUnreadNotificationCount:input_type -> edify.screens.v1.GetUnreadNotificationCountRequest
+	11, // 10: edify.screens.v1.NotificationCenterService.UpdateNotificationStatus:input_type -> edify.screens.v1.UpdateNotificationStatusRequest
+	4,  // 11: edify.screens.v1.NotificationCenterService.GetNotificationCenter:output_type -> edify.screens.v1.GetNotificationCenterResponse
+	2,  // 12: edify.screens.v1.NotificationCenterService.GetUnreadNotificationCount:output_type -> edify.screens.v1.GetUnreadNotificationCountResponse
+	12, // 13: edify.screens.v1.NotificationCenterService.UpdateNotificationStatus:output_type -> edify.screens.v1.UpdateNotificationStatusResponse
+	11, // [11:14] is the sub-list for method output_type
+	8,  // [8:11] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_edify_screens_v1_notification_center_proto_init() }
@@ -960,13 +1130,14 @@ func file_edify_screens_v1_notification_center_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_edify_screens_v1_notification_center_proto_rawDesc), len(file_edify_screens_v1_notification_center_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   10,
+			NumEnums:      1,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_edify_screens_v1_notification_center_proto_goTypes,
 		DependencyIndexes: file_edify_screens_v1_notification_center_proto_depIdxs,
+		EnumInfos:         file_edify_screens_v1_notification_center_proto_enumTypes,
 		MessageInfos:      file_edify_screens_v1_notification_center_proto_msgTypes,
 	}.Build()
 	File_edify_screens_v1_notification_center_proto = out.File

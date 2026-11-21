@@ -16,7 +16,7 @@ import (
 // statements are computed from that ledger's postings.
 type Lending struct {
 	store  *Store
-	ledger *LedgerClient
+	ledger Ledger
 	keys   Keys
 	cfg    config.Loans
 	mailer Mailer
@@ -27,7 +27,7 @@ type Lending struct {
 }
 
 // NewLending returns the lender portal.
-func NewLending(store *Store, ledgerClient *LedgerClient, keys Keys, cfg config.Loans, mailer Mailer, sms SMSProvider,
+func NewLending(store *Store, ledgerClient Ledger, keys Keys, cfg config.Loans, mailer Mailer, sms SMSProvider,
 	ready func(context.Context) error, logger *slog.Logger, now func() time.Time) *Lending {
 	if now == nil {
 		now = time.Now

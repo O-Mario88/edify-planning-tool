@@ -1,0 +1,105 @@
+{
+  "district": {
+    "field_role_aliases": [
+      "cceo",
+      "pl",
+      "program lead",
+      "programme lead"
+    ],
+    "field_roles": [
+      "CCEO",
+      "Program Lead"
+    ],
+    "hq_zone": [
+      "kampala",
+      "mukono",
+      "wakiso"
+    ],
+    "management_accommodation_roles": [
+      "Accountant",
+      "Admin",
+      "BusinessTransformationOfficer",
+      "CountryDirector",
+      "HumanResources",
+      "ImpactAssessment",
+      "Program Lead",
+      "ProjectCoordinator",
+      "RegionalProgramLead",
+      "RegionalVicePresident"
+    ],
+    "primary": "primary",
+    "secondary": "secondary"
+  },
+  "non_fundable_statuses": [
+    "cancelled",
+    "rejected",
+    "deferred",
+    "awaiting_owner_approval"
+  ],
+  "pricing": {
+    "accommodation_key": "secondary_accommodation_per_night",
+    "day_mark_labels": {
+      "mixed": "Mixed",
+      "primary": "Primary District",
+      "secondary": "Secondary District"
+    },
+    "key_labels": {
+      "lunch_per_day": "Lunch",
+      "management_accommodation_per_night": "Accommodation",
+      "primary_transport_per_day": "Transport Primary District",
+      "secondary_accommodation_per_night": "Accommodation",
+      "secondary_breakfast_per_day": "Breakfast",
+      "secondary_overnight_dinner_per_day": "Dinner",
+      "secondary_transport_per_day": "Transport Secondary District"
+    },
+    "management_accommodation_key": "management_accommodation_per_night",
+    "mixed_transport_label": "Transport Mixed District",
+    "optional_keys": {
+      "primary": [],
+      "secondary": []
+    },
+    "required_keys": {
+      "primary": [
+        "primary_transport_per_day",
+        "lunch_per_day"
+      ],
+      "secondary": [
+        "secondary_transport_per_day",
+        "lunch_per_day",
+        "secondary_breakfast_per_day",
+        "secondary_overnight_dinner_per_day",
+        "secondary_accommodation_per_night"
+      ]
+    },
+    "return_day_dropped_keys": [
+      "management_accommodation_per_night",
+      "secondary_accommodation_per_night",
+      "secondary_overnight_dinner_per_day"
+    ]
+  },
+  "rate_aliases": {
+    "client_partner_visit": [
+      "partner_visit_lump_sum"
+    ],
+    "cluster_meetings_trainings_meals": [
+      "cluster_meeting_participant_meal_cost_per_head",
+      "meals_per_participant"
+    ],
+    "core_partner_visit": [
+      "partner_visit_lump_sum"
+    ],
+    "lunch_per_day": [
+      "primary_lunch_per_day",
+      "secondary_lunch_per_day"
+    ],
+    "management_accommodation_per_night": [
+      "secondary_accommodation_per_night"
+    ],
+    "partner_meetings": [
+      "partner_visit_lump_sum"
+    ],
+    "tot_trainings_meals": [
+      "group_training_participant_meal_cost_per_head"
+    ]
+  }
+}

@@ -28,7 +28,7 @@ const roleClusterLeader = "ClusterLeader"
 // ShareService serves edify.loans.v1.LoanShareService.
 type ShareService struct {
 	store   *Store
-	ledger  *LedgerClient
+	ledger  Ledger
 	base    string
 	logger  *slog.Logger
 	now     func() time.Time
@@ -37,7 +37,7 @@ type ShareService struct {
 }
 
 // NewShareService returns the service; base is the public address.
-func NewShareService(store *Store, ledgerClient *LedgerClient, base string, ready func(context.Context) error, logger *slog.Logger, now func() time.Time) *ShareService {
+func NewShareService(store *Store, ledgerClient Ledger, base string, ready func(context.Context) error, logger *slog.Logger, now func() time.Time) *ShareService {
 	if now == nil {
 		now = time.Now
 	}

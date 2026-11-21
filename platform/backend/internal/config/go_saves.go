@@ -48,6 +48,9 @@ type GoSaves struct {
 	// visits in through internal/activities (docs/migration/183); everything
 	// else is forwarded as before.
 	CompleteVisit bool
+	// PLReview: Programme Lead approve and return decisions (M9) run natively
+	// in Go through internal/plreview with zero Django calls.
+	PLReview bool
 }
 
 const (
@@ -76,11 +79,14 @@ const (
 	// SaveCompleteVisit is the name EDIFY_GO_SAVES uses for a staff school
 	// visit's completion.
 	SaveCompleteVisit = "complete_visit"
+	// SavePLReview is the name EDIFY_GO_SAVES uses for Programme Lead
+	// completion approval and return (M9, zero Django calls).
+	SavePLReview = "pl_review"
 )
 
 // knownGoSaves are the saves the switch can name.
 var knownGoSaves = []string{SaveScheduleVisit, SaveRescheduleVisit, SaveCancelVisit, SaveEditVisit, SaveScheduleTrainingPair,
-	SaveGroupReschedule, SaveGroupCancel, SaveScheduleGroupTraining, SaveScheduleClusterMeeting, SaveCompleteVisit}
+	SaveGroupReschedule, SaveGroupCancel, SaveScheduleGroupTraining, SaveScheduleClusterMeeting, SaveCompleteVisit, SavePLReview}
 
 // loadGoSaves reads EDIFY_GO_SAVES. A Go save asks the existing application
 // for the drawer's form and for the pricing (money stays Django's until
@@ -109,11 +115,10 @@ func loadGoSaves(env Environment, getenv func(string) string, existingApp, inter
 		out.ScheduleGroupTraining = out.ScheduleGroupTraining || name == SaveScheduleGroupTraining
 		out.ScheduleClusterMeeting = out.ScheduleClusterMeeting || name == SaveScheduleClusterMeeting
 		out.CompleteVisit = out.CompleteVisit || name == SaveCompleteVisit
+		out.PLReview = out.PLReview || name == SavePLReview
 	}
-	if existingApp == "" || internalKey == "" {
-		return GoSaves{}, fmt.Errorf("config: %s needs %s and %s: the save asks the existing application for the form and the pricing",
-			envGoSaves, envExistingAppURL, envInternalKey)
-	}
+	// All 11 Go saves now support Django-absent direct execution (Batch 10)
+	// using native Go pricing, notifications, and direct form parsing.
 	return out, nil
 }
 
@@ -127,7 +132,7 @@ func (g GoSaves) Names() []string {
 		{g.ScheduleVisit, SaveScheduleVisit}, {g.RescheduleVisit, SaveRescheduleVisit}, {g.CancelVisit, SaveCancelVisit},
 		{g.EditVisit, SaveEditVisit}, {g.ScheduleTrainingPair, SaveScheduleTrainingPair}, {g.GroupReschedule, SaveGroupReschedule},
 		{g.GroupCancel, SaveGroupCancel}, {g.ScheduleGroupTraining, SaveScheduleGroupTraining}, {g.ScheduleClusterMeeting, SaveScheduleClusterMeeting},
-		{g.CompleteVisit, SaveCompleteVisit},
+		{g.CompleteVisit, SaveCompleteVisit}, {g.PLReview, SavePLReview},
 	} {
 		if s.on {
 			out = append(out, s.name)
