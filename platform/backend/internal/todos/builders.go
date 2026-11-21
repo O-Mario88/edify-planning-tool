@@ -19,8 +19,8 @@ import (
 func init() {
 	for name, build := range map[string]func(context.Context, *Service, *reader) ([]todo, error){
 		"_activity_todos":                                   activityTodos,
-		"_school_action_todos":                              schoolActionGuard,
-		"_visit_request_todos":                              visitRequestGuard,
+		"_school_action_todos":                              schoolActionTodos,
+		"_visit_request_todos":                              visitRequestTodos,
 		"_partner_delay_todos":                              partnerDelayTodos,
 		"_partner_assignment_todos":                         partnerAssignmentTodos,
 		"_project_ssa_todos":                                projectSSATodos,
@@ -29,15 +29,15 @@ func init() {
 		"_fund_request_todos":                               fundRequestTodos,
 		"_school_quality_todos":                             schoolQualityTodos,
 		"_route_todos":                                      routeTodos,
-		"_my_target_todos":                                  myTargetGuard,
+		"_my_target_todos":                                  myTargetTodos,
 		"_core_school_todos":                                coreSchoolTodos,
-		"_pd_todos":                                         pdGuard,
-		"_field_debrief_todos":                              fieldDebriefGuard,
+		"_pd_todos":                                         pdTodos,
+		"_field_debrief_todos":                              fieldDebriefTodos,
 		"_business_transformation_todos":                    byRole(loanVerificationTodos, loanGuardIA),
-		"apps.staff_activity.todos:follow_up_todos":         followUpGuard,
+		"apps.staff_activity.todos:follow_up_todos":         followUpTodos,
 		"apps.cce_leadership.todos:coaching_todos":          coachingTodos,
 		"apps.cce_leadership.guidance_todos:guidance_todos": guidanceTodos,
-		"apps.ssa.collection_todos:collection_todos":        byRole(cdOr(directorSSAGuard, returnedSSATodos), collectionIA),
+		"apps.ssa.collection_todos:collection_todos":        byRole(cdOr(directorSSATodos, returnedSSATodos), collectionIA),
 		"apps.impact.evidence_todos:evidence_todos":         byRole(cdOr(evidenceGuardIA, evidenceTodos), evidenceGuardIA),
 		"apps.planning.fy_todos:fy_planning_todos":          fyPlanningTodos,
 		"apps.clusters.followups:attendance_todos":          attendanceTodos,
@@ -63,6 +63,10 @@ func pyStr(s *string) string {
 func dateOf(t time.Time) *time.Time {
 	d := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
 	return &d
+}
+
+func fmtDayMon(t time.Time) string {
+	return t.Format("2 Jan")
 }
 
 func plural(n int, word string) string {
@@ -226,11 +230,57 @@ func schoolActionGuard(ctx context.Context, s *Service, r *reader) ([]todo, erro
 		r.p.UserID, rules.TeamActionActiveStates))
 }
 
-// visitRequestGuard stands for _visit_request_todos: visits into the
-// reader's portfolio waiting for their yes.
-func visitRequestGuard(ctx context.Context, s *Service, r *reader) ([]todo, error) {
-	return passOnIf(s.exists(ctx, `SELECT 1 FROM activity WHERE deleted_at IS NULL AND status = $1 AND approval_owner_id = ANY($2)`,
-		rules.VisitRequestAwaiting, r.owners))
+// visitRequestTodos is _visit_request_todos: visits into the reader's
+// portfolio waiting for their yes, oldest planned date first, at most ten.
+func visitRequestTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
+	if len(r.owners) == 0 {
+		return nil, nil
+	}
+	rows, err := s.db.Query(ctx, `
+SELECT a.id, a.planned_date, a.school_id IS NOT NULL, s.name,
+       COALESCE(u_direct.name, u_staff.name, '')
+FROM activity a
+LEFT OUTER JOIN school s ON s.id = a.school_id
+LEFT OUTER JOIN "user" u_direct ON u_direct.id = a.responsible_staff_id
+LEFT OUTER JOIN staff_profile sp ON sp.id = a.responsible_staff_id
+LEFT OUTER JOIN "user" u_staff ON u_staff.id = sp.user_id
+WHERE a.deleted_at IS NULL AND a.status = $1 AND a.approval_owner_id = ANY($2)
+ORDER BY a.planned_date ASC NULLS LAST, a.created_at ASC
+LIMIT 10`, rules.VisitRequestAwaiting, r.owners)
+	if err != nil {
+		return nil, err
+	}
+	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (todo, error) {
+		var id, requester string
+		var planned *time.Time
+		var hasSchool bool
+		var schoolName *string
+		err := row.Scan(&id, &planned, &hasSchool, &schoolName, &requester)
+		where := "your school"
+		if hasSchool && schoolName != nil && *schoolName != "" {
+			where = *schoolName
+		}
+		if requester == "" {
+			requester = "A staff member"
+		}
+		when := "a date to confirm"
+		var due *time.Time
+		if planned != nil {
+			when = fmtDayMon(*planned)
+			due = dateOf(*planned)
+		}
+		return todo{
+			ID: "visitreq-" + id, Title: "Decide on Visit Request",
+			Description: fmt.Sprintf("%s asks to visit %s on %s", requester, where, when),
+			Described:   true,
+			Category:    "Execution", Priority: "high",
+			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info",
+			DueLabel: when, DueTone: "neutral",
+			Linked: where + " · visit request", ActionLabel: "Decide",
+			ActionURL: "/planning/visit-requests", Shape: "/planning/visit-requests",
+			Actionable: true, Due: due,
+		}, err
+	})
 }
 
 // partnerDelayTodos is _partner_delay_todos: partner work the reader
@@ -613,18 +663,114 @@ func followUpGuard(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 	return passOnIf(s.exists(ctx, `SELECT 1 FROM staff_usage_follow_up WHERE assignee_id = $1 OR created_by_id = $1`, r.p.UserID))
 }
 
-// coachingGuard stands for coaching_todos: coaching addressed to the reader
-// and not yet acknowledged.
-func coachingGuard(ctx context.Context, s *Service, r *reader) ([]todo, error) {
-	return passOnIf(s.exists(ctx, `SELECT 1 FROM cce_cceo_coaching WHERE acknowledged_at IS NULL
-  AND (cceo_user_id = $1 OR cceo_staff_id = $2)`, r.p.UserID, r.p.StaffProfileID))
+var coachingKindLabels = map[string]string{
+	"one_to_one":           "Monthly one-to-one",
+	"field_observation":    "School visit observation",
+	"training_observation": "Training observation",
+	"performance_checkin":  "Performance check-in",
+	"debrief_feedback":     "Field debrief feedback",
+	"recognition":          "Recognition",
+	"regional_feedback":    "Regional Lead feedback passed on",
 }
 
-// guidanceGuard stands for guidance_todos: guidance addressed to the reader
-// and not yet acknowledged.
-func guidanceGuard(ctx context.Context, s *Service, r *reader) ([]todo, error) {
-	return passOnIf(s.exists(ctx, `SELECT 1 FROM cce_team_guidance_receipt WHERE acknowledged_at IS NULL
-  AND (recipient_user_id = $1 OR recipient_staff_id = $2)`, r.p.UserID, r.p.StaffProfileID))
+func truncateRunes(s string, max int) string {
+	r := []rune(s)
+	if len(r) <= max {
+		return s
+	}
+	return string(r[:max])
+}
+
+// officerCoachingTodos is coaching_todos._officer_todos: shared coaching
+// records addressed to this CCEO and not yet acknowledged, at most eight.
+func officerCoachingTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
+	rows, err := s.db.Query(ctx, `
+SELECT c.id, COALESCE(c.subject, ''), COALESCE(c.kind, ''), COALESCE(u.name, '')
+FROM cce_cceo_coaching c
+LEFT OUTER JOIN "user" u ON u.id = c.author_id
+WHERE c.shared_at IS NOT NULL AND c.acknowledged_at IS NULL
+  AND (c.cceo_user_id = $1 OR ($2 <> '' AND c.cceo_staff_id = $2))
+ORDER BY c.shared_at ASC, c.created_at ASC
+LIMIT 8`, r.p.UserID, r.p.StaffProfileID)
+	if err != nil {
+		return nil, err
+	}
+	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (todo, error) {
+		var id, subject, kind, lead string
+		err := row.Scan(&id, &subject, &kind, &lead)
+		if lead == "" {
+			lead = "your Programme Lead"
+		}
+		linked := coachingKindLabels[kind]
+		if linked == "" {
+			linked = "Coaching"
+		}
+		return todo{
+			ID: "coaching-acknowledge-" + id, Title: "Acknowledge coaching from " + lead,
+			Description: truncateRunes(subject, 180), Described: true,
+			Category: "Coaching", Priority: "high",
+			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "warning",
+			DueLabel: "—", DueTone: "neutral",
+			Linked: linked, ActionLabel: "Acknowledge",
+			ActionURL: "/my-coaching?open=" + id, Shape: "/my-coaching?open={id}",
+			Actionable: true, Due: &r.today,
+		}, err
+	})
+}
+
+// officerGuidanceTodos is guidance_todos._officer_todos: issued, active
+// guidance receipts for this CCEO not yet acknowledged, at most eight.
+func officerGuidanceTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
+	rows, err := s.db.Query(ctx, `
+SELECT rec.id, g.id, COALESCE(g.title, ''), g.review_on, COALESCE(u.name, '')
+FROM cce_team_guidance_receipt rec
+INNER JOIN cce_team_guidance g ON g.id = rec.guidance_id
+LEFT OUTER JOIN "user" u ON u.id = g.author_id
+WHERE rec.acknowledged_at IS NULL
+  AND g.issued_at IS NOT NULL AND g.withdrawn_at IS NULL
+  AND (rec.recipient_user_id = $1 OR ($2 <> '' AND rec.recipient_staff_id = $2))
+ORDER BY g.issued_at ASC, rec.created_at ASC
+LIMIT 8`, r.p.UserID, r.p.StaffProfileID)
+	if err != nil {
+		return nil, err
+	}
+	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (todo, error) {
+		var receiptID, guidanceID, title, lead string
+		var reviewOn *time.Time
+		err := row.Scan(&receiptID, &guidanceID, &title, &reviewOn, &lead)
+		if lead == "" {
+			lead = "your Programme Lead"
+		}
+		overdue := reviewOn != nil && dateOf(*reviewOn).Before(r.today)
+		statusKey, statusLabel, statusTone := "waiting_me", "Waiting on Me", "warning"
+		if overdue {
+			statusKey, statusLabel, statusTone = "overdue", "Overdue", "danger"
+		} else if reviewOn != nil && dateOf(*reviewOn).Equal(r.today) {
+			statusKey, statusLabel, statusTone = "due_today", "Due Today", "warning"
+		}
+		dueLabel, dueTone := "—", "neutral"
+		due := &r.today
+		if reviewOn != nil {
+			d := dateOf(*reviewOn)
+			dueLabel = fmtDayMon(*d)
+			due = d
+			if overdue {
+				dueTone = "danger"
+			} else {
+				dueTone = "warning"
+			}
+		}
+		return todo{
+			ID: "guidance-acknowledge-" + receiptID, Title: "Acknowledge guidance from " + lead,
+			Description: truncateRunes(title, 180), Described: true,
+			Category: "Priorities", Priority: "high",
+			StatusKey: statusKey, StatusLabel: statusLabel, StatusTone: statusTone,
+			DueLabel: dueLabel, DueTone: dueTone,
+			Linked: title, ActionLabel: "Acknowledge",
+			ActionURL: "/priorities?guidance=" + guidanceID, Shape: "/priorities?guidance={id}",
+			Actionable: true, Due: due,
+		}, err
+	})
 }
 
 // coreSchoolTodos is _core_school_todos for a field officer: for each core

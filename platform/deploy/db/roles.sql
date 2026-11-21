@@ -285,7 +285,8 @@ GRANT SELECT (deleted_at) ON daily_debrief TO edify_gateway_ro;
 GRANT SELECT (owner_user_id) ON daily_debrief_action TO edify_gateway_ro;
 GRANT SELECT (assignee_id, created_by_id) ON staff_usage_follow_up TO edify_gateway_ro;
 GRANT SELECT (acknowledged_at, cceo_user_id, cceo_staff_id) ON cce_cceo_coaching TO edify_gateway_ro;
-GRANT SELECT (acknowledged_at, recipient_user_id, recipient_staff_id) ON cce_team_guidance_receipt TO edify_gateway_ro;
+GRANT SELECT (id, guidance_id, acknowledged_at, recipient_user_id, recipient_staff_id, created_at) ON cce_team_guidance_receipt TO edify_gateway_ro;
+GRANT SELECT (id, title, author_id, issued_at, withdrawn_at, review_on) ON cce_team_guidance TO edify_gateway_ro;
 GRANT SELECT (activity_id) ON bt_loan_verification_requirement TO edify_gateway_ro;
 GRANT SELECT (collected_by_user_id, returned_at) ON ssa_record TO edify_gateway_ro;
 GRANT SELECT (recorded_by_user_id, source_activity_id) ON impact_learning_result TO edify_gateway_ro;
@@ -838,6 +839,7 @@ GRANT SELECT (activity_id, planned_date, responsible_user_id, amount, disbursed_
 -- the dates a rate card is in force and its material-difference threshold.
 GRANT SELECT (printing_pages, photocopy_pages, photocopy_copies) ON activity TO edify_gateway_ro;
 GRANT SELECT (effective_from, effective_to, material_difference_threshold_bps) ON cost_catalogue TO edify_gateway_ro;
+GRANT SELECT (currency, required_school_visits_per_day) ON cost_catalogue TO edify_gateway_ro;
 
 -- The day a visit shares, priced read-only (internal/pricing/day.go): the
 -- district type it was last priced as and how many schools it held.
@@ -1232,3 +1234,15 @@ GRANT SELECT (id, state, user_id, document_id, version_id, due_date, active_read
 -- The Today page (internal/todaypage).
 GRANT SELECT (user_id, todo_id, until) ON command_center_todo_snooze TO edify_gateway_ro;
 GRANT SELECT (user_id, created_at) ON command_center_today_action TO edify_gateway_ro;
+-- Contextual help (/help/context, internal/helpcontext) and Uganda cutover todos builders (Batch 9).
+GRANT SELECT (article_id, route_pattern, workflow_status, priority) ON help_center_helparticleroutecontext TO edify_gateway_ro;
+GRANT SELECT (id, requested_action, workflow_route, priority, due_date, state, school_id, sender_id, recipient_id, created_at) ON team_action TO edify_gateway_ro;
+GRANT SELECT (id, partner_id, status, created_at) ON partner_invoice TO edify_gateway_ro;
+GRANT SELECT (id, invoice_id, activity_id) ON partner_invoice_item TO edify_gateway_ro;
+GRANT SELECT (id, staff_id, status, type, days, start_date) ON leave TO edify_gateway_ro;
+GRANT SELECT (id, raised_by_user_id, raised_by_name, assigned_to_user_id, addressed_role, subject, requested_decision, severity, category, due_date, status, created_at) ON leadership_escalation TO edify_gateway_ro;
+GRANT SELECT (id, staff_id, course_name, status, updated_at) ON pd_request TO edify_gateway_ro;
+GRANT SELECT (id, debrief_id, action, issue, owner_user_id, status, due_date) ON daily_debrief_action TO edify_gateway_ro;
+GRANT SELECT (id, assignee_id, created_by_id, note, status, due_date) ON staff_usage_follow_up TO edify_gateway_ro;
+-- Evidence metadata read (uri is restricted to SECURITY DEFINER gateway_field_ops.read_evidence_uri).
+GRANT SELECT (id, activity_id, quarantined, status, kind, original_name, mime_type) ON evidence_record TO edify_gateway_ro;

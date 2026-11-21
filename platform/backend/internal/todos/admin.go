@@ -41,11 +41,11 @@ type CountryBudgetRules struct {
 
 func init() {
 	for name, build := range map[string]func(context.Context, *Service, *reader) ([]todo, error){
-		"_hr_exception_todos":   hrExceptionGuard,
-		"_accountant_todos":     accountantGuard,
+		"_hr_exception_todos":   hrExceptionTodos,
+		"_accountant_todos":     accountantTodos,
 		"_country_budget_todos": countryBudgetTodos,
 		"_cost_catalogue_todos": costCatalogueTodos,
-		"_escalation_todos":     escalationGuard,
+		"_escalation_todos":     escalationTodos,
 		"apps.partners.user_setup_todos:partner_user_setup_todos": partnerUserSetupTodos,
 	} {
 		register(name, build)

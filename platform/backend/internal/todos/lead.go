@@ -2,6 +2,7 @@ package todos
 
 import (
 	"context"
+	"fmt"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/ccelead"
 	"net/url"
 	"time"
@@ -48,14 +49,14 @@ const teamTargetsMissingSFIDs = 5
 
 func init() {
 	for name, build := range map[string]func(context.Context, *Service, *reader) ([]todo, error){
-		"_pl_review_todos":       plReviewGuard,
-		"_partner_invoice_todos": partnerInvoiceGuard,
-		"_leave_todos":           leaveGuard,
-		"_cd_flag_todos":         cdFlagGuard,
+		"_pl_review_todos":       plReviewTodos,
+		"_partner_invoice_todos": partnerInvoiceTodos,
+		"_leave_todos":           leaveTodos,
+		"_cd_flag_todos":         cdFlagTodos,
 		"_pl_analytics_todos":    plAnalyticsGuard,
 		"_team_target_todos":     teamTargetGuard,
 		"_cce_leadership_todos":  regionalEngagementGuard,
-		"apps.flags.escalation_todos:pl_escalation_todos":         escalationGuard,
+		"apps.flags.escalation_todos:pl_escalation_todos":         escalationTodos,
 		"apps.hr.review_todos:reviewer_todos":                     reviewerTodos,
 		"apps.hr.distribution_todos:distribution_todos":           distributionGuard,
 		"apps.partners.engagement_todos:partner_engagement_todos": partnerEngagementGuard,
@@ -130,16 +131,110 @@ func leaveGuard(ctx context.Context, s *Service, _ *reader) ([]todo, error) {
 	return passOnIf(s.exists(ctx, `SELECT 1 FROM leave`))
 }
 
-// cdFlagGuard stands for _cd_flag_todos: for a Programme Lead and Impact
-// Assessment, a flag assigned to the reader (whatever its status, so the
-// guard never misses one). The Country Director's and the Admin's desk
-// follows up every overdue open flag, so for any other reader any flag
-// passes them on.
-func cdFlagGuard(ctx context.Context, s *Service, r *reader) ([]todo, error) {
-	if r.role != leadRole && r.role != roleIA {
-		return passOnIf(s.exists(ctx, `SELECT 1 FROM cd_flag`))
+// cdFlagTodos is _cd_flag_todos: open quality flags assigned to a Programme
+// Lead or Impact Assessment, and overdue open flags followed up by a Country
+// Director or Admin. Every other role has none.
+func cdFlagTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
+	var out []todo
+	if r.role == leadRole || r.role == roleIA {
+		rows, err := s.db.Query(ctx, `
+SELECT id, COALESCE(note, ''), COALESCE(priority, ''), COALESCE(due_date, ''), COALESCE(scope_name, '')
+FROM cd_flag
+WHERE assigned_to_user_id = $1 AND status = 'open'
+ORDER BY created_at ASC
+LIMIT 10`, r.p.UserID)
+		if err != nil {
+			return nil, err
+		}
+		got, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (todo, error) {
+			var id, note, priority, dueRaw, scopeName string
+			err := row.Scan(&id, &note, &priority, &dueRaw, &scopeName)
+			desc := "A flag from the Country Director."
+			if note != "" {
+				desc = truncateRunes(note, 160)
+			}
+			prio := "high"
+			if priority == "high" {
+				prio = "critical"
+			}
+			dueLabel, dueTone := "—", "neutral"
+			if dueRaw != "" {
+				dueLabel, dueTone = dueRaw, "warning"
+			}
+			linked := scopeName
+			if linked == "" {
+				linked = "Quality flag"
+			}
+			var due *time.Time
+			if parsed, perr := time.Parse("2006-01-02", dueRaw); perr == nil {
+				due = dateOf(parsed)
+			}
+			return todo{
+				ID: "cdflag-" + id, Title: "Respond to CD Flag",
+				Description: desc, Described: true,
+				Category: "Leadership", Priority: prio,
+				StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "warning",
+				DueLabel: dueLabel, DueTone: dueTone,
+				Linked: linked, ActionLabel: "Respond",
+				ActionURL: "/quality-checks", Shape: "/quality-checks",
+				Actionable: true, Due: due,
+			}, err
+		})
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, got...)
 	}
-	return passOnIf(s.exists(ctx, `SELECT 1 FROM cd_flag WHERE assigned_to_user_id = $1`, r.p.UserID))
+	if r.role == "CountryDirector" || r.role == "Admin" {
+		rows, err := s.db.Query(ctx, `
+SELECT id, COALESCE(due_date, ''), COALESCE(scope_name, '')
+FROM cd_flag
+WHERE status = 'open'
+ORDER BY created_at ASC
+LIMIT 50`)
+		if err != nil {
+			return nil, err
+		}
+		type flagRow struct{ id, dueRaw, scopeName string }
+		flags, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (flagRow, error) {
+			var f flagRow
+			return f, row.Scan(&f.id, &f.dueRaw, &f.scopeName)
+		})
+		if err != nil {
+			return nil, err
+		}
+		for _, f := range flags {
+			parsed, perr := time.Parse("2006-01-02", f.dueRaw)
+			if perr != nil {
+				continue
+			}
+			due := dateOf(parsed)
+			if !due.Before(r.today) {
+				continue
+			}
+			scopeLabel := f.scopeName
+			if scopeLabel == "" {
+				scopeLabel = "A flag"
+			}
+			linked := f.scopeName
+			if linked == "" {
+				linked = "Quality flag"
+			}
+			dueStr := fmtDayMon(*due)
+			out = append(out, todo{
+				ID: "cdflag-overdue-" + f.id, Title: "Follow Up Overdue Flag",
+				Description: fmt.Sprintf("%s was due %s and is still open.", scopeLabel, dueStr),
+				Described:   true,
+				Category:    "Leadership", Priority: "high",
+				StatusKey: "overdue", StatusLabel: "Overdue", StatusTone: "danger",
+				DueLabel: dueStr, DueTone: "warning",
+				Linked: linked, ActionLabel: "Follow up",
+				ActionURL: "/quality-checks", Shape: "/quality-checks",
+				Actionable: true, Due: due,
+			})
+		}
+	}
+	return out, nil
 }
 
 // escalationGuard stands for pl_escalation_todos: any leadership escalation.
@@ -300,23 +395,29 @@ UNION ALL SELECT 1 FROM monthly_personal_target WHERE user_id = ANY($1) AND targ
 		team, r.fys(), rules.Lead.TeamTargetsCompletedStatuses, teamTargetsMissingSFIDs))
 }
 
-// guidanceTodos is guidance_todos: for an officer, guidance to acknowledge
-// passes them on; for a lead, guidance they issued passes them on.
+// guidanceTodos is guidance_todos: for an officer, guidance to acknowledge is
+// built directly; for a lead, guidance they issued passes them on.
 func guidanceTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 	if r.role == leadRole {
 		return passOnIf(s.exists(ctx, `SELECT 1 FROM cce_team_guidance WHERE author_id = $1`, r.p.UserID))
 	}
-	return guidanceGuard(ctx, s, r)
+	if r.role != "CCEO" {
+		return nil, nil
+	}
+	return officerGuidanceTodos(ctx, s, r)
 }
 
-// coachingTodos is coaching_todos. An officer's coaching to acknowledge
-// passes them on. For a lead, the month's one-to-ones still to hold are
+// coachingTodos is coaching_todos. An officer's coaching to acknowledge is
+// built directly. For a lead, the month's one-to-ones still to hold are
 // built (cce_leadership.todos._lead_todos, coaching.monthly_one_to_ones);
 // coaching the lead wrote (drafts to share, follow-ups due) and Regional
 // Lead coaching pass the lead on.
 func coachingTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
+	if r.role == "CCEO" {
+		return officerCoachingTodos(ctx, s, r)
+	}
 	if r.role != leadRole {
-		return coachingGuard(ctx, s, r)
+		return nil, nil
 	}
 	if found, err := s.exists(ctx, `SELECT 1 FROM cce_cceo_coaching WHERE author_id = $1
 UNION ALL SELECT 1 FROM cce_regional_engagement`, r.p.UserID); err != nil || found {

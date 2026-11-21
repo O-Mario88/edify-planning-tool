@@ -8,14 +8,13 @@ import (
 	"strings"
 	"testing"
 
-	"connectrpc.com/connect"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-// The Admin's queue (docs/migration/57-todos-cd-admin.md): Go answers the
-// Admin; the General Budget's three desks the Admin sits at, the missing
-// cost catalogue rates and the partner logins still to set up are built;
-// a policy waiting on HR passes the Admin on.
+// The Admin's queue (docs/migration/57-todos-cd-admin.md + Uganda cutover):
+// Go answers the Admin natively; the General Budget's three desks the Admin
+// sits at, the missing cost catalogue rates, the partner logins still to set
+// up, and HR policies awaiting publication are all built in Go.
 func TestTodosAnswerTheAdminsQueue(t *testing.T) {
 	ctx := context.Background()
 	const who = "admin@edify.org"
@@ -94,7 +93,11 @@ VALUES ('gtad-annual-1', now(), now(), '2099', 'Uganda', 0, 0, 0, 0, 0, 0, 0, 0,
 	if _, err := admin.Exec(ctx, `UPDATE document_asset SET status = 'approved' WHERE id = $1`, doc); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := ask(); connect.CodeOf(err) != connect.CodeUnavailable {
-		t.Fatalf("with a policy waiting on HR: %v, want it passed to the existing application", err)
+	got, err = ask()
+	if err != nil {
+		t.Fatalf("with a policy waiting on HR: %v", err)
+	}
+	if !strings.Contains(got, "Publish ") || !strings.Contains(got, "HR polic") || !strings.Contains(got, "/hr/policies") {
+		t.Fatalf("with a policy waiting on HR: expected native Go HR policy todo, got: %s", got)
 	}
 }

@@ -105,6 +105,9 @@ LINK_SHAPES = {
     "/team/coaching?open=new&cceo={id}&kind=one_to_one": (
         "/team/coaching?open=new&cceo=cmw0000000000000000000001&kind=one_to_one"
     ),
+    "/my-coaching?open={id}": "/my-coaching?open=cmw0000000000000000000001",
+    "/priorities?guidance={id}": "/priorities?guidance=cmw0000000000000000000001",
+    "/quality-checks": "/quality-checks",
     "/performance-conversation?staff={id}": (
         "/performance-conversation?staff=cmw0000000000000000000001"
     ),
@@ -164,6 +167,19 @@ LINK_SHAPES = {
         "/business-transformation/impact-reports"
     ),
     "/business-transformation": "/business-transformation",
+    # Cutover native Go builders (internal/todos/cutover_builders.go).
+    "/accounts/partner-payments": "/accounts/partner-payments",
+    "/debriefs": "/debriefs",
+    "/escalations": "/escalations",
+    "/fund-approvals": "/fund-approvals",
+    "/hr/policies": "/hr/policies",
+    "/leave/approvals": "/leave/approvals",
+    "/my-actions": "/my-actions",
+    "/my-professional-development": "/my-professional-development",
+    "/my-target": "/my-target",
+    "/pl/review-queue": "/pl/review-queue",
+    "/ssa/verification/": "/ssa/verification/",
+    "/staff-activity": "/staff-activity",
 }
 
 #: The categories the row template draws an icon for; any other category is

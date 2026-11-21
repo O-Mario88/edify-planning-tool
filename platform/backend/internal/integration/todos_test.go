@@ -7,11 +7,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
 	"connectrpc.com/connect"
 	"github.com/jackc/pgx/v5"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // todosGoldenEnv names a file of the existing feed's To-Do answers over
@@ -80,9 +82,8 @@ func TestTodosMatchTheExistingFeedOverSyntheticRecords(t *testing.T) {
 	compareGolden(t, "/todos", golden.Answers)
 }
 
-// A record Go does not build rows from yet (here a school action handed to
-// the officer) passes the officer on to the existing application, which
-// this gateway does not have; without one the officer's queue is Go's.
+// School actions handed to the officer are built natively in Go (Uganda
+// cutover); a Programme Lead with an unported guard still passes on.
 func TestTodosPassAReaderOnWhenAGuardedRecordIsTheirs(t *testing.T) {
 	ctx := context.Background()
 	me, lead := userIDOf(t, "cceo@edify.org"), userIDOf(t, "pl1@edify.org")
@@ -98,10 +99,18 @@ func TestTodosPassAReaderOnWhenAGuardedRecordIsTheirs(t *testing.T) {
 	fileTeamActions(t, []teamActionRow{{ID: "gpa910001", CreatedAt: time.Now().Format(time.RFC3339), ConditionKey: "gpa-todo-1",
 		IssueType: "no_visit", SchoolID: school, SenderID: lead, RecipientID: me, RequestedAction: "[Go parity check] Visit",
 		WorkflowRoute: "/schools/" + school, State: "open"}})
-	if _, err := pageOf(token, "/todos", nil); connect.CodeOf(err) != connect.CodeUnavailable {
-		t.Fatalf("with a school action: %v, want it passed to the existing application", err)
+	page, err := pageOf(token, "/todos", nil)
+	if err != nil {
+		t.Fatalf("with a school action: %v", err)
 	}
-	// pl1 is passed on here too: one of the Programme Lead's guards finds a
+	raw, err := protojson.Marshal(page)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if body := string(raw); !strings.Contains(body, "[Go parity check] Visit") || !strings.Contains(body, "/schools/"+school) {
+		t.Fatalf("with a school action: expected native Go school action row, got: %s", body)
+	}
+	// pl1 is still passed on when an unported Programme Lead guard finds a
 	// record in this database (docs/migration/55-todos-pl.md).
 	borrowAccount(t, "pl1@edify.org")
 	leadToken := sessionOf(t, "pl1@edify.org", seededPassword).GetAccessToken()
