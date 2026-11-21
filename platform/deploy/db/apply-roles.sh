@@ -76,6 +76,18 @@ psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/advance_withdraw_roles
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/completion_roles.sql"
 # Native Go notification delivery and read-state transitions (M11).
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/notification_roles.sql"
+# Programme Lead approval and return through two narrow functions (M9).
+psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/pl_review_roles.sql"
+# Native Go loan ledger writer with idempotency-key deduplication (Batch 10).
+psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/loans_ledger_roles.sql"
+# Native Go field ops writers: evidence, IA verification, SSA, partners (Batch 11).
+psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/field_ops_roles.sql"
+# Native Go finance & money writers: weekly requests, advances, monthly budgets (Batch 12).
+psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/finance_roles.sql"
+# Native Go workforce ops writers: profile, leave, escalations, help feedback (Batch 13).
+psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/workforce_ops_roles.sql"
+# Native Go messaging read-thread, reply, compose, star, archive (Step 3C).
+psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/messaging_roles.sql"
 # Snoozing a To-Do from Today: one table's insert and its three updated columns.
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/todo_roles.sql"
 # Undoing a snooze removes that one row through one narrow function.

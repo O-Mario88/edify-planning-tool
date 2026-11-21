@@ -81,6 +81,18 @@ const (
 	completionRolesFile = "../../../deploy/db/completion_roles.sql"
 	// Native Go notification read-state transitions (M11).
 	notificationRolesFile = "../../../deploy/db/notification_roles.sql"
+	// Programme Lead approval and return through two narrow functions (M9).
+	plReviewRolesFile = "../../../deploy/db/pl_review_roles.sql"
+	// Native Go loan ledger writer with idempotency-key deduplication (Batch 10).
+	loansLedgerRolesFile = "../../../deploy/db/loans_ledger_roles.sql"
+	// Native Go field ops writers: evidence, IA verification, SSA, partners (Batch 11).
+	fieldOpsRolesFile = "../../../deploy/db/field_ops_roles.sql"
+	// Native Go finance & money writers: weekly requests, advances, monthly budgets (Batch 12).
+	financeRolesFile = "../../../deploy/db/finance_roles.sql"
+	// Native Go workforce ops writers: profile, leave, escalations, help feedback (Batch 13).
+	workforceOpsRolesFile = "../../../deploy/db/workforce_ops_roles.sql"
+	// Native Go messaging read-thread, reply, compose, star, archive (Step 3C).
+	messagingRolesFile = "../../../deploy/db/messaging_roles.sql"
 	// Snoozing a To-Do from Today: one table's insert and three updated columns.
 	todoRolesFile = "../../../deploy/db/todo_roles.sql"
 	// Undoing a snooze: the narrow function that removes that one row.
@@ -301,6 +313,48 @@ func prepareGatewayRole(ctx context.Context) (string, error) {
 		return "", err
 	}
 	if _, err := conn.Conn().PgConn().Exec(ctx, string(notificationRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	plReviewRoles, err := os.ReadFile(filepath.FromSlash(plReviewRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(plReviewRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	loansLedgerRoles, err := os.ReadFile(filepath.FromSlash(loansLedgerRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(loansLedgerRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	fieldOpsRoles, err := os.ReadFile(filepath.FromSlash(fieldOpsRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(fieldOpsRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	financeRoles, err := os.ReadFile(filepath.FromSlash(financeRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(financeRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	workforceOpsRoles, err := os.ReadFile(filepath.FromSlash(workforceOpsRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(workforceOpsRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	messagingRoles, err := os.ReadFile(filepath.FromSlash(messagingRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(messagingRoles)).ReadAll(); err != nil {
 		return "", err
 	}
 	todoRoles, err := os.ReadFile(filepath.FromSlash(todoRolesFile))
