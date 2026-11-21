@@ -150,3 +150,38 @@ The three recommendations above were taken, and the first retirement made:
   only (not the compiled Tailwind bundles, not the tokens' own
   definitions): **4,002 forced overrides and 866 hard-coded colours**,
   the new ceiling.
+
+## 8. The desktop system and the drawers' words, 2026-11-21 (later)
+
+**A safety net first.** `shots.py` (scratch tooling) captures Home,
+Dashboard, My Plan, Schools, Calendar, To-Do, Planning and Core Schools for a
+CCEO and a Programme Lead at desktop and phone width, in light and night
+mode, and compares two captures pixel by pixel. Two captures of the same
+code: 0 of 32 screens differ. A candidate stylesheet is previewed by serving
+it to the browser, so nothing live changes until it passes.
+
+- **Colours: 866 → 711.** Every hand-written colour in the shared sheets
+  that exactly equals a light-theme token became that token, but only in a
+  declaration's value: never in a selector (Tailwind's `.bg-\[\#f4f6f8\]`
+  names a colour; the first attempt broke the build there and was redone),
+  never in a token's own definition, and never in a night-mode rule (`.dark
+  …`, `prefers-color-scheme: dark`), where a light value means nothing. 155
+  swaps; yesterday's 127 page-sheet swaps were checked the same way.
+  Result in both modes: no screen changed (the only differences are a few
+  anti-aliased text pixels in the top bar, at most 175 pixels per screen).
+- **Overrides: 4,002 → 3,978.** Only overrides that provably never win were
+  removed: in one file and one context, a later rule with the identical
+  selector sets the same property with `!important`. The first parser
+  misread a nested `@supports` block and broke the build; it was discarded
+  and redone skipping nested rules, and the diff checked to remove only
+  those declaration lines. No screen changed. The remaining 3,978 decide
+  real layout and go only as each page is rewritten in the new components.
+- **Drawers' words.** The completion drawer says where a visit moves when
+  done on another day, "Not enough time" for a missing SSA (its stored value
+  unchanged), and every accountability hint says "Needed when the amount
+  spent and the amount returned do not add up to the amount given" instead
+  of "spent + returned ≠ disbursed"; the RVP footer names the two IDs in
+  words. Drawer tests pass.
+- **Found, not caused here:** four `apps.team_performance.test_report`
+  tests fail (a portfolio count of 0 where 2 is expected) at yesterday's
+  commit as well; they predate this work.
