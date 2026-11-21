@@ -66,7 +66,7 @@ its money move to that day and its planned day is free
 <div class="space-y-1" data-completed-on>
 <label for="actual_delivery_date" class="block edify-text-caption font-semibold text-slate-600">{% if act.activityType == "school_visit" %}Date the school was visited{% elif act.activityType == "cluster_meeting" %}Date the meeting was held{% elif "training" in act.activityType %}Date the training was held{% else %}Date completed{% endif %} <span class="text-rose-500">*</span></label>
 <input type="date" name="actual_delivery_date" id="actual_delivery_date" required max="{{ today_iso }}" value="{{ act.actualDeliveryDate|default:today_iso }}" aria-describedby="actual-delivery-date-help" class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] focus:outline-none focus:ring-2 edify-primary-focus">
-<p id="actual-delivery-date-help" class="edify-text-caption text-slate-500">Today or an earlier day. Done before its planned day, it moves to this day with its cost, and the planned day is free for other work.</p>
+<p id="actual-delivery-date-help" class="edify-text-caption text-slate-500">Today or an earlier day. If it was done on another day than planned, the visit and its cost move to that day, and the planned day is freed.</p>
 </div>
 
 {% if purpose_choices %}
@@ -244,7 +244,7 @@ purpose is in-school training and ssa collection").{% endcomment %}
 <option value="">Choose a reason…</option>
 <option value="School leader unavailable">School leader unavailable</option>
 <option value="Assessment not completed">Assessment not completed</option>
-<option value="Time insufficient">Time insufficient</option>
+<option value="Time insufficient">Not enough time</option>
 <option value="Data collection postponed">Data collection postponed</option>
 <option value="Wrong school visited">Wrong school visited</option>
 <option value="Other">Other</option>
@@ -346,7 +346,7 @@ class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] 
 aria-describedby="variance-note-help"
 placeholder="Why the amounts differ"
 class="w-full rounded-control border border-slate-200 px-3 py-2 text-[16px] sm:text-[13px] focus:outline-none focus:ring-2 edify-primary-focus"></textarea>
-<p id="variance-note-help" class="edify-text-caption text-slate-500">Required if spent + returned ≠ disbursed.</p>
+<p id="variance-note-help" class="edify-text-caption text-slate-500">Needed when the amount spent and the amount returned do not add up to the amount given.</p>
 </div>
 </div>
 {% endif %}
