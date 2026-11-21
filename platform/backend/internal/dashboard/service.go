@@ -42,6 +42,8 @@ var rulesJSON []byte
 type metric struct {
 	Label  string `json:"label"`
 	Helper string `json:"helper"`
+	// Where the tile opens (CCEO_KPI_LINKS), "" for a tile that opens nothing.
+	Href string `json:"href"`
 }
 
 var rules = func() (r struct {

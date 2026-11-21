@@ -381,7 +381,15 @@ class DesignSystemContractTest(SimpleTestCase):
         self.assertIn(".edify-popup-dialog {", drawer_css)
         self.assertIn("place-items: center;", drawer_css)
         self.assertIn(".edify-popup-dialog__surface {", drawer_css)
-        self.assertIn("border-radius: var(--edify-radius-xl) !important;", drawer_css)
+        # The surface's corners are the drawer reference's (owner,
+        # 2026-10-31): the last .edify-popup-dialog__surface rule sets them,
+        # and the earlier forced radius it always beat was removed with the
+        # other dead overrides (doc 184 §8).
+        last_surface = drawer_css.rsplit(".edify-popup-dialog__surface {", 1)[1]
+        self.assertIn(
+            "border-radius: var(--edify-drawer-radius) !important;",
+            last_surface.split("}", 1)[0],
+        )
 
         for source in (
             "templates/partials/core_schools/schedule_visit_drawer.html",

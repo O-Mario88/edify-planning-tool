@@ -39,6 +39,7 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
           </span>
         </div>
         <p class="text-[12px] text-slate-500 dark:text-slate-400">Past due plans requiring completion, rescheduling or cancellation</p>
+        {% if past_due_scope_line %}<p class="text-[12px] text-slate-500 dark:text-slate-400" data-past-due-scope>{{ past_due_scope_line }}</p>{% endif %}
       </div>
     </div>
 

@@ -184,18 +184,22 @@
     "metrics": [
       {
         "helper": "Activities done",
+        "href": "",
         "label": "Completed Tasks"
       },
       {
         "helper": "Started, not yet verified",
+        "href": "",
         "label": "In Progress"
       },
       {
         "helper": "Not started, date ahead",
+        "href": "",
         "label": "Planned Tasks"
       },
       {
         "helper": "Not started, date passed",
+        "href": "/dashboard?view=week#what-needs-you-now",
         "label": "Overdue Tasks"
       }
     ],

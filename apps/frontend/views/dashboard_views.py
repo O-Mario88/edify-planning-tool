@@ -1181,7 +1181,12 @@ def dashboard_view(request):
 
         cceo_kpi_items = [
             render_precomputed_metric_item(
-                metric, str(count), helper=helper, icon=icon, variant=variant
+                metric,
+                str(count),
+                helper=helper,
+                icon=icon,
+                variant=variant,
+                drilldown_url=CCEO_KPI_LINKS.get(metric),
             )
             for (metric, helper, icon, variant), count in zip(
                 CCEO_KPI_METRICS,
@@ -1713,6 +1718,12 @@ CCEO_KPI_METRICS = (
         "danger",
     ),
 )
+#: Where a tile of the week at a glance opens. Overdue Tasks opens "What
+#: needs you now", whose scope line counts the same not-started work beside
+#: the rest of what is past due (implementation brief 2026-11-21).
+CCEO_KPI_LINKS = {
+    "frontend_views_dashboard_views_overdue_tasks": "/dashboard?view=week#what-needs-you-now",
+}
 #: A field officer's Home views: (key, label, description).
 CCEO_VIEW_TABS = (
     (

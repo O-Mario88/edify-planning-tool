@@ -219,3 +219,75 @@ class PastDueServiceTest(TestCase):
         self.assertIn("Action Required", notif.title)
         self.assertIn("past due", notif.body)
         self.assertEqual(notif.target_route, f"/my-plan/{self.cceo_past_due_visit.id}")
+
+
+class PastDueScopeLineTest(TestCase):
+    """The dashboard's "Overdue Tasks" and "N past due" count different work
+    (implementation brief 2026-11-21, /dashboard): the tile counts work not
+    started whose date has passed, the section everything dated before today
+    that is not finished. The section says what its figure holds, so the two
+    can be read together, and the tile opens the section."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.fy = get_operational_fy()
+        region = Region.objects.create(id="r_scope", name="Central Region")
+        district = District.objects.create(id="d_scope", name="Wakiso", region=region)
+        school = School.objects.create(
+            school_id="sch_scope",
+            name="St. Kizito Primary",
+            district=district,
+            region=region,
+        )
+        cls.user = User.objects.create(
+            email="cceo_scope@test.com",
+            name="Grace Officer",
+            roles=[EdifyRole.CCEO.value],
+            active_role=EdifyRole.CCEO.value,
+            status="active",
+            is_active=True,
+        )
+        cls.profile = StaffProfile.objects.create(user=cls.user, title="Grace Officer")
+        past = timezone.localdate() - timedelta(days=4)
+        for status in ("scheduled", "in_progress", "completed"):
+            Activity.objects.create(
+                activity_type="school_visit",
+                status=status,
+                planned_date=past,
+                school=school,
+                responsible_staff_id=cls.profile.id,
+                fy=cls.fy,
+            )
+
+    def test_the_past_due_figure_names_what_it_holds(self):
+        ctx = past_due_service.get_past_due_dashboard_context(self.user)
+        self.assertEqual(ctx["past_due_total_count"], 3)
+        self.assertEqual(
+            ctx["past_due_scope_line"],
+            "Any age: 1 not started, 1 started or returned, "
+            "1 done but missing a Salesforce ID or form",
+        )
+
+    def test_nothing_past_due_has_no_scope_line(self):
+        Activity.objects.filter(responsible_staff_id=self.profile.id).update(
+            planned_date=timezone.localdate() + timedelta(days=2)
+        )
+        ctx = past_due_service.get_past_due_dashboard_context(self.user)
+        self.assertEqual(ctx["past_due_scope_line"], "")
+
+    def test_the_dashboard_shows_both_scopes_and_the_tile_opens_the_list(self):
+        client = Client()
+        client.force_login(self.user)
+        page = client.get("/dashboard").content.decode()
+        self.assertIn("Overdue Tasks", page)
+        self.assertIn("Not started, date passed", page)
+        self.assertIn("3 past due", page)
+        self.assertIn(
+            "Any age: 1 not started, 1 started or returned, "
+            "1 done but missing a Salesforce ID or form",
+            page,
+        )
+        self.assertIn(
+            'href="/dashboard?view=week#what-needs-you-now" class="context-metrics__link"',
+            page,
+        )

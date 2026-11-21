@@ -28,6 +28,40 @@ type PastDue struct {
 	Lead                   bool
 	Scope                  string
 	count, owned, teamWork int
+	// How far the past-due work got: not started, started or returned, and
+	// done but missing its Salesforce ID or form (past_due_scope_line).
+	notStarted, underWay, unfinishedDone int
+}
+
+// ScopeLine is past_due_scope_line: what the past-due figure holds, by how
+// far each plan got, parts with nothing left out; "" with nothing past due.
+func (p PastDue) ScopeLine() string {
+	var parts []string
+	for _, part := range []struct {
+		n     int
+		words string
+	}{
+		{p.notStarted, "not started"},
+		{p.underWay, "started or returned"},
+		{p.unfinishedDone, "done but missing a Salesforce ID or form"},
+	} {
+		if part.n > 0 {
+			parts = append(parts, fmt.Sprintf("%d %s", part.n, part.words))
+		}
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	return "Any age: " + strings.Join(parts, ", ")
+}
+
+// stage counts a live (not done) past-due plan as not started or under way.
+func (p *PastDue) stage(a *activity) {
+	if in(rules.Plan.NotStartedStatuses, a.status) {
+		p.notStarted++
+	} else {
+		p.underWay++
+	}
 }
 
 // Total is past_due_total_count: every past-due plan, whoever's.
@@ -112,6 +146,13 @@ AND a.status = ANY($4) AND `+pastWhere+` AND `+staffPlanWhere+order,
 		listed = append(listed, a)
 	}
 	var out PastDue
+	for _, a := range listed {
+		if in(rules.Plan.OfficerCompletedStatuses, a.status) {
+			out.unfinishedDone++
+		} else {
+			out.stage(a)
+		}
+	}
 	var visits, trainings, meetings []*activity
 	for _, a := range listed {
 		switch {
@@ -193,6 +234,7 @@ ORDER BY a.planned_date ASC, a.scheduled_date ASC, a.id ASC`,
 		}
 		mineToo := in(own, str(a.staffID)) || (!isSet(a.staffID) && in(own, str(extras[id].monitored)))
 		out.count++
+		out.stage(a)
 		if mineToo {
 			out.owned++
 		} else {
@@ -453,6 +495,9 @@ func PastDueBlocks(p PastDue) []*screensv1.PageBlock {
 	head := &screensv1.PagePanel{Title: "What needs you now",
 		Badges: []*screensv1.PageBadge{{Text: fmt.Sprintf("%d past due", total), Tone: "alert"}},
 		Items:  []*screensv1.PagePanelItem{panelText("Past due plans requiring completion, rescheduling or cancellation")}}
+	if line := p.ScopeLine(); line != "" {
+		head.Items = append(head.Items, panelText(line))
+	}
 	blocks := []*screensv1.PageBlock{{Kind: &screensv1.PageBlock_Panel{Panel: head}}}
 	if p.Lead && total == 0 {
 		// The backlog's fold, empty, is read into the section's panel.

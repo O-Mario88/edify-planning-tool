@@ -206,7 +206,7 @@ func (h home) header(today time.Time) *screensv1.PageHeader {
 func (h home) strip() *screensv1.PageBlock {
 	strip := &screensv1.PageStrip{Title: "Week at a glance"}
 	for i, m := range rules.Officer.Metrics {
-		strip.Metrics = append(strip.Metrics, &screensv1.PageMetric{Label: m.Label, Value: fmt.Sprint(h.counts[i]), Note: m.Helper})
+		strip.Metrics = append(strip.Metrics, &screensv1.PageMetric{Label: m.Label, Value: fmt.Sprint(h.counts[i]), Note: m.Helper, Href: m.Href})
 	}
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Strip{Strip: strip}}
 }

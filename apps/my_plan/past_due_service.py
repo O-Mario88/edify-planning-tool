@@ -13,7 +13,10 @@ from django.utils import timezone
 from apps.accounts.models import StaffProfile, User
 from apps.activities.models import Activity
 from apps.core.clock import local_day
-from apps.core.activity_types import COMPLETED_WORK_STATUSES
+from apps.core.activity_types import (
+    COMPLETED_WORK_STATUSES,
+    NOT_STARTED_ACTIVITY_STATUSES,
+)
 from apps.notifications.models import Notification
 from apps.projects.models import is_outside_ssa
 
@@ -156,17 +159,26 @@ def get_past_due_dashboard_context(user, scope: str = "") -> dict[str, Any]:
     # past-due plans. Building all of them was 2.2 s of every PL dashboard
     # load on a production-sized estate, outside the dashboard's own cache
     # (performance rescue, 2026-09-23).
-    light = list(
+    live = list(
         qs.values_list(
-            "id", "activity_type", "responsible_staff_id", "monitored_by_staff_id"
+            "id",
+            "activity_type",
+            "responsible_staff_id",
+            "monitored_by_staff_id",
+            "status",
         )
     )
+    light = [row[:4] for row in live]
+    not_started = sum(1 for row in live if row[4] in NOT_STARTED_ACTIVITY_STATUSES)
+    unfinished_done = 0
     if not is_pl:
         # The officer's own past work that a status calls done but that is
         # missing its Salesforce ID or its form is not complete (owner,
         # 2026-09-26), and it is theirs to finish: it is listed here rather
         # than on a separate "Waiting on you" list.
-        light += _incomplete_past_work(own_ids, user, today)
+        incomplete = _incomplete_past_work(own_ids, user, today)
+        unfinished_done = len(incomplete)
+        light += incomplete
     if not light:
         return _empty_past_due_context(is_pl, scope)
 
@@ -211,6 +223,9 @@ def get_past_due_dashboard_context(user, scope: str = "") -> dict[str, Any]:
         "past_due_team": PastDueRows(team_ids, build),
         "pl_team_past_due_unsent": len([i for i in team_ids if i not in sent]),
         "past_due_total_count": len(light),
+        "past_due_scope_line": past_due_scope_line(
+            not_started, len(live) - not_started, unfinished_done
+        ),
         "pl_own_past_due_count": own_count,
         "pl_team_past_due_count": team_count,
         "past_due_school_visits": past_due_school_visits,
@@ -223,6 +238,23 @@ def get_past_due_dashboard_context(user, scope: str = "") -> dict[str, Any]:
         "past_due_scope_tabs": _scope_tabs(len(light), own_count, team_count),
         "is_pl": is_pl,
     }
+
+
+def past_due_scope_line(not_started: int, under_way: int, unfinished_done: int) -> str:
+    """What "N past due" holds, beside the dashboard's "Overdue Tasks" (work
+    not started, date passed): every plan dated before today and not
+    finished, of any age, by how far it got. Parts with nothing are left out;
+    with nothing past due there is no line."""
+    parts = [
+        f"{count} {words}"
+        for count, words in (
+            (not_started, "not started"),
+            (under_way, "started or returned"),
+            (unfinished_done, "done but missing a Salesforce ID or form"),
+        )
+        if count
+    ]
+    return "Any age: " + ", ".join(parts) if parts else ""
 
 
 def _scope_tabs(total: int, own: int, team: int) -> list[tuple[str, str, int]]:
@@ -577,6 +609,7 @@ def _empty_past_due_context(is_pl: bool, scope: str = "") -> dict[str, Any]:
         "past_due_team": [],
         "pl_team_past_due_unsent": 0,
         "past_due_total_count": 0,
+        "past_due_scope_line": "",
         "pl_own_past_due_count": 0,
         "pl_team_past_due_count": 0,
         "past_due_school_visits": [],

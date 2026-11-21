@@ -64,6 +64,7 @@ def officer() -> dict:
             {
                 "label": render_precomputed_metric_item(key, "0")["label"],
                 "helper": helper,
+                "href": views.CCEO_KPI_LINKS.get(key, ""),
             }
             for key, helper, _icon, _variant in views.CCEO_KPI_METRICS
         ],

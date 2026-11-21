@@ -3948,7 +3948,7 @@
    "audit_id": "KPI-SOURCE-208",
    "kind": "other",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 512,
+   "line": 526,
    "label": "Search Core Schools by name, ID, district or owner",
    "keys": [
     "hx_get",
@@ -4098,7 +4098,7 @@
    "audit_id": "KPI-SOURCE-216",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 4861,
+   "line": 4869,
    "label": null,
    "keys": [
     "count",
@@ -42097,7 +42097,7 @@
   {
    "audit_id": "KPI-PAYLOAD-010",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 367,
+   "line": 381,
    "function": "core_schools_view",
    "target": "kpi_strip_items",
    "source_item_count": 7,
@@ -42128,7 +42128,7 @@
   {
    "audit_id": "KPI-PAYLOAD-011",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 1573,
+   "line": 1578,
    "function": "dashboard_view",
    "target": "unknown",
    "source_item_count": 7,
