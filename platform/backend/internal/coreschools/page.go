@@ -149,8 +149,20 @@ func (s *Service) build(ctx context.Context, p auth.Principal, d door, query url
 	if pg.hasTeamCore, err = s.teamCore(ctx, pg.scope); err != nil {
 		return nil, err
 	}
-	// A lens the reader cannot hold falls back to their own schools.
-	pg.oversight = query.Get("lens") == "oversight" && pg.hasTeamCore
+	// With no lens asked, a reader who holds no core school directly but whose
+	// team does (a Programme Lead) opens on the team's (owner, 2026-11-21,
+	// doc 184 §2; core_schools_views, the same rule). A lens the reader cannot
+	// hold falls back to their own schools.
+	switch asked := query.Get("lens"); {
+	case asked == "oversight":
+		pg.oversight = pg.hasTeamCore
+	case asked == "" && pg.hasTeamCore:
+		holds, err := s.holdsCore(ctx, pg.scope)
+		if err != nil {
+			return nil, err
+		}
+		pg.oversight = !holds
+	}
 	pending, err := healPending(ctx, s.db, pg.scope, pg.oversight, pg.fy, pg.operational)
 	if err != nil {
 		return nil, err
@@ -175,6 +187,19 @@ func (s *Service) build(ctx context.Context, p auth.Principal, d door, query url
 }
 
 // teamCore is whether the reader's team holds any core-lifecycle school.
+// holdsCore is whether the reader's direct portfolio holds a core school
+// (direct_portfolio_schools(scope).filter(school_type="core").exists()).
+func (s *Service) holdsCore(ctx context.Context, scope schooldirectory.Scope) (bool, error) {
+	a := &sqlArgs{}
+	clause := lensClause(scope, false, a)
+	var holds bool
+	if err := s.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM school s WHERE `+clause+` AND s.school_type = 'core')`,
+		a.list...).Scan(&holds); err != nil {
+		return false, fmt.Errorf("coreschools: reading the reader's own core schools: %w", err)
+	}
+	return holds, nil
+}
+
 func (s *Service) teamCore(ctx context.Context, scope schooldirectory.Scope) (bool, error) {
 	team := teamSchoolIDs(scope)
 	if len(team) == 0 {
@@ -230,7 +255,7 @@ func (pg *page) response(ctx context.Context) (*screensv1.GetPageResponse, error
 func (pg *page) lensTabs() *screensv1.PageBlock {
 	size := strconv.Itoa(pg.perPage)
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_LinkTabs{LinkTabs: &screensv1.PageLinkTabs{Tabs: []*screensv1.PageLinkTab{
-		{Label: "My Core Schools", Href: "/core-schools?fy=" + pg.fy + "&per_page=" + size, Active: !pg.oversight},
+		{Label: "My Core Schools", Href: "/core-schools?lens=mine&fy=" + pg.fy + "&per_page=" + size, Active: !pg.oversight},
 		{Label: "Team Core Oversight", Href: "/core-schools?lens=oversight&fy=" + pg.fy + "&per_page=" + size, Active: pg.oversight},
 	}}}}
 }

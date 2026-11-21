@@ -31,7 +31,7 @@ exists to avoid.
 {% endcomment %}
 {% if has_team_core %}
 <nav data-edify-tablist aria-label="Core schools portfolio scope" class="core-scope-switch">
-  <a href="/core-schools?fy={{ fy }}&per_page={{ per_page }}" data-edify-tab{% if not is_oversight_lens %} aria-current="page"{% endif %}>
+  <a href="/core-schools?lens=mine&fy={{ fy }}&per_page={{ per_page }}" data-edify-tab{% if not is_oversight_lens %} aria-current="page"{% endif %}>
     My Core Schools
   </a>
   {% comment %}

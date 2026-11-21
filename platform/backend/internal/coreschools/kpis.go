@@ -218,8 +218,11 @@ var _ = slices.Contains[[]string]
 // read-only lens, the lens.
 func (pg *page) hidden() map[string]string {
 	out := map[string]string{"page": strconv.Itoa(pg.number), "per_page": strconv.Itoa(pg.perPage)}
-	if pg.oversight {
+	switch {
+	case pg.oversight:
 		out["lens"] = "oversight"
+	case pg.hasTeamCore:
+		out["lens"] = "mine"
 	}
 	return out
 }

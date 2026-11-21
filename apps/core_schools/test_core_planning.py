@@ -355,10 +355,21 @@ class CoreSchoolsPlanningTest(TestCase):
         The work is still visible — on the read-only oversight lens, where the
         next step is to ask the CCEO who owns it.
         """
-        html = self._client(self.pl).get("/core-schools").content.decode()
+        html = self._client(self.pl).get("/core-schools?lens=mine").content.decode()
         self.assertNotIn("Alpha Core School", html)
         self.assertIn("No Core Schools in your portfolio", html)
         self.assertIn("lens=oversight", html)
+
+    def test_a_lead_with_no_core_school_of_their_own_opens_on_the_teams(self):
+        """Owner, 2026-11-21 (doc 184 §2): a Programme Lead's dashboard
+        counts the team's core schools, so Core Schools opens on the team's
+        read-only lens rather than on an empty list of their own; My Core
+        Schools is asked for by name."""
+        html = self._client(self.pl).get("/core-schools").content.decode()
+        self.assertIn("Alpha Core School", html)
+        self.assertIn("Read-Only Team Oversight", html)
+        self.assertIn("lens=mine", html)
+        self.assertNotIn("/core-schools/schedule-", html)
 
     def test_pl_sees_the_supervised_core_school_on_the_oversight_lens(self):
         response = self._client(self.pl).get("/core-schools?lens=oversight")

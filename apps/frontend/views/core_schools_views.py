@@ -235,7 +235,21 @@ def core_schools_view(request):
         .filter(school_type__in=CORE_LIFECYCLE_TYPES)
         .exists()
     )
-    lens = "oversight" if request.GET.get("lens") == "oversight" else "direct"
+    # With no lens asked, a reader who holds no core school directly but whose
+    # team does (a Programme Lead) opens on the team's, not on an empty list
+    # of their own (owner, 2026-11-21, doc 184 §2); "My Core Schools" asks
+    # for its lens by name (lens=mine), so it stays there.
+    asked = request.GET.get("lens")
+    if asked == "oversight":
+        lens = "oversight"
+    elif asked:
+        lens = "direct"
+    else:
+        from apps.core.scoping import direct_portfolio_schools
+
+        own = direct_portfolio_schools(scope)
+        holds_core = own is not None and own.filter(school_type="core").exists()
+        lens = "direct" if holds_core or not has_team_core else "oversight"
     if lens == "oversight" and not has_team_core:
         lens = "direct"
 

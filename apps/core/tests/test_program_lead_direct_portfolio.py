@@ -319,7 +319,9 @@ class OperationalSurfacesTest(ProgramLeadDirectPortfolioBase):
 
     def test_the_empty_operational_list_points_at_the_oversight_lens(self):
         StaffSchoolAssignment.objects.filter(staff=self.pl_profile).delete()
-        body = self.client.get("/core-schools").content.decode()
+        # Their own list, asked for by name: with no lens a lead who holds no
+        # core school opens on the team's (owner, 2026-11-21).
+        body = self.client.get("/core-schools?lens=mine").content.decode()
         self.assertIn("No Core Schools in your portfolio", body)
         self.assertIn("lens=oversight", body)
 
