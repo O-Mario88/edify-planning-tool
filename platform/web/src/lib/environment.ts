@@ -69,10 +69,16 @@ export function loadEnvironment(vars: Readonly<Record<string, string | undefined
     );
   }
   const gateway = parseBaseUrl('EDIFY_GATEWAY_URL', vars.EDIFY_GATEWAY_URL);
-  const existing = parseBaseUrl('EDIFY_EXISTING_WEB_URL', vars.EDIFY_EXISTING_WEB_URL);
   assertAllowed('EDIFY_GATEWAY_URL', name, gateway);
-  assertAllowed('EDIFY_EXISTING_WEB_URL', name, existing);
-  return { name, gatewayUrl: gateway.url, existingWebUrl: existing.url };
+  // EDIFY_EXISTING_WEB_URL is optional in Django-absent cutover deployments.
+  const rawExisting = (vars.EDIFY_EXISTING_WEB_URL ?? '').trim();
+  let existingWebUrl = '';
+  if (rawExisting !== '') {
+    const existing = parseBaseUrl('EDIFY_EXISTING_WEB_URL', rawExisting);
+    assertAllowed('EDIFY_EXISTING_WEB_URL', name, existing);
+    existingWebUrl = existing.url;
+  }
+  return { name, gatewayUrl: gateway.url, existingWebUrl };
 }
 
 let cached: WebEnvironment | undefined;

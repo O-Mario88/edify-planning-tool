@@ -32,6 +32,14 @@ describe('loadEnvironment', () => {
     expect(() => loadEnvironment({ ...DEV, EDIFY_GATEWAY_URL: 'localhost:8090' })).toThrow(EnvironmentError);
   });
 
+  it('allows omitting EDIFY_EXISTING_WEB_URL for Django-absent cutover builds', () => {
+    expect(loadEnvironment({ EDIFY_ENV: 'development', EDIFY_GATEWAY_URL: 'http://127.0.0.1:8090' })).toEqual({
+      name: 'development',
+      gatewayUrl: 'http://127.0.0.1:8090',
+      existingWebUrl: '',
+    });
+  });
+
   it('names production hosts', () => {
     expect(isProductionHost('edifyplanning.app.')).toBe(true);
     expect(isProductionHost('staging.edify.example')).toBe(false);

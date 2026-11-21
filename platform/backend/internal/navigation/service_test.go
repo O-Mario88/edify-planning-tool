@@ -158,3 +158,34 @@ func TestEachAnswerIsItsOwnMessage(t *testing.T) {
 		t.Fatal("answers share their items")
 	}
 }
+
+func TestActingCapacitiesAreAnsweredFromTheirExportedMenus(t *testing.T) {
+	for key, want := range rules.Acting {
+		t.Run(key, func(t *testing.T) {
+			db := &team{}
+			p := principal("CCEO", "u1")
+			p.InActingAppointment = true
+			p.Acting = &auth.ActingAppointment{RoleKey: key, InCapacity: true}
+			bottom, menu, served := keys(t, NewService(db), p)
+			if !served {
+				t.Fatalf("%s: not served", key)
+			}
+			if len(bottom) != len(want.Bottom) || len(menu) != len(want.items())-len(want.Bottom) {
+				t.Errorf("%s: %d bar, %d menu items; want %d, %d", key, len(bottom), len(menu), len(want.Bottom), len(want.items())-len(want.Bottom))
+			}
+			if db.asked != 0 {
+				t.Errorf("%s: asked partner roster %d times", key, db.asked)
+			}
+		})
+	}
+}
+
+func TestUnknownActingPolicyKeyIsLeftToTheExistingApplication(t *testing.T) {
+	p := principal("CCEO", "u1")
+	p.InActingAppointment = true
+	p.Acting = &auth.ActingAppointment{RoleKey: "acting_unknown", InCapacity: true}
+	got, served, err := NewService(&team{}).Build(context.Background(), p)
+	if got != nil || served || err != nil {
+		t.Fatalf("got %v, %v, %v", got, served, err)
+	}
+}

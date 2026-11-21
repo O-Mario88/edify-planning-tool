@@ -156,6 +156,41 @@ func ParseFieldKey(raw string) (FieldKey, error) {
 // errNoFieldKey: the value is encrypted and this process has no key.
 var errNoFieldKey = errors.New("signin: no field encryption key is configured")
 
+// VerifyTOTP checks a 6-digit RFC 6238 authenticator code against a base32
+// secret with ±1 step drift.
+func VerifyTOTP(secret, submitted string, now time.Time) bool {
+	return totpMatches(secret, submitted, now)
+}
+
+// Seal encrypts plain in the same "v1:<iv>:<tag>:<ciphertext>" AES-256-GCM
+// format Open decrypts. When no FieldKey is configured it returns plain as-is.
+func (k FieldKey) Seal(plain string) (string, error) {
+	if len(k) == 0 {
+		return plain, nil
+	}
+	block, err := aes.NewCipher(k)
+	if err != nil {
+		return "", err
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := rand.Read(nonce); err != nil {
+		return "", err
+	}
+	sealed := gcm.Seal(nil, nonce, []byte(plain), nil)
+	tagStart := len(sealed) - gcm.Overhead()
+	ct := sealed[:tagStart]
+	tag := sealed[tagStart:]
+	return fmt.Sprintf("v1:%s:%s:%s",
+		base64.StdEncoding.EncodeToString(nonce),
+		base64.StdEncoding.EncodeToString(tag),
+		base64.StdEncoding.EncodeToString(ct),
+	), nil
+}
+
 // Open returns the plain value of a stored restricted field. A value that
 // is not encrypted is returned as it is, as the existing code tolerates.
 func (k FieldKey) Open(stored string) (string, error) {

@@ -47,3 +47,42 @@ class NavigationRulesExportTest(SimpleTestCase):
             }
             self.assertFalse(keys & MEMBER_WITHHELD_PAGES, role)
             self.assertLess(keys, whole, role)
+
+    def test_acting_capacities_withhold_the_substantive_leaders_pages(self):
+        import json
+
+        from apps.acting.policy import ACTING_ROLES
+
+        rules = json.loads(rendered())
+        self.assertEqual(set(rules["acting"].keys()), set(ACTING_ROLES.keys()))
+        for key, entry in ACTING_ROLES.items():
+            menu = rules["acting"][key]
+            keys = {i["page_key"] for s in menu["sections"] for i in s["items"]}
+            bottom_keys = {i["page_key"] for i in menu["bottom"]}
+            all_keys = keys | bottom_keys
+            whole = {
+                i["page_key"]
+                for s in rules["roles"][entry.acting_role_value]["sections"]
+                for i in s["items"]
+            }
+            self.assertFalse(all_keys & entry.withheld_pages, key)
+            self.assertLess(keys, whole, key)
+
+    def test_school_links_follow_directory_permissions(self):
+        from apps.core.management.commands.export_navigation_rules import (
+            rules,
+            _role_user,
+        )
+        from apps.core.permissions import RolePermissionService
+
+        for role, menu in rules()["roles"].items():
+            items = menu["bottom"] + [
+                i for section in menu["sections"] for i in section["items"]
+            ]
+            if any(i["url"] == "/schools" for i in items):
+                self.assertTrue(
+                    RolePermissionService.can_view_page(
+                        _role_user(role), "school_directory"
+                    ),
+                    role,
+                )

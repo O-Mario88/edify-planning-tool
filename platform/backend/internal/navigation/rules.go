@@ -48,6 +48,9 @@ type Rules struct {
 	Roles map[string]Menu `json:"roles"`
 	// TeamMembers is a partner team member's navigation, by partner role.
 	TeamMembers map[string]Menu `json:"team_members"`
+	// Acting is the navigation of a staff member working in an acting
+	// capacity, by acting policy key (acting_pl, acting_cd).
+	Acting map[string]Menu `json:"acting"`
 	// PartnerTeam names the roles whose logins may be team members.
 	PartnerTeam decisionlog.PartnerTeam `json:"partner_team"`
 	// Icons are the SVG drawings the items name by place.
@@ -59,10 +62,10 @@ var rules = mustLoad(rulesJSON)
 func mustLoad(raw []byte) Rules {
 	var r Rules
 	if err := json.Unmarshal(raw, &r); err != nil || len(r.Roles) == 0 || len(r.Icons) == 0 ||
-		len(r.TeamMembers) != len(r.PartnerTeam.Roles) {
+		len(r.TeamMembers) != len(r.PartnerTeam.Roles) || len(r.Acting) == 0 {
 		panic(fmt.Sprintf("navigation: the embedded rules are unreadable: %v", err))
 	}
-	for _, menus := range []map[string]Menu{r.Roles, r.TeamMembers} {
+	for _, menus := range []map[string]Menu{r.Roles, r.TeamMembers, r.Acting} {
 		for role, menu := range menus {
 			for _, item := range menu.items() {
 				if item.Icon < 0 || item.Icon >= len(r.Icons) {

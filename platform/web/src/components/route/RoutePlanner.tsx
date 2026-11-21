@@ -71,7 +71,8 @@ export interface RoutePlannerProps {
   near?: string;
 }
 
-export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster, near = '' }: RoutePlannerProps) {
+export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, district, cluster, near = '' }: RoutePlannerProps) {
+  void _existingWebUrl;
   const router = useRouter();
   const day = useMemo(() => fromJson(GetFieldDayResponseSchema, dayJson), [dayJson]);
   const [itinerary, setItinerary] = useState<Itinerary | undefined>(day.recommended);
@@ -230,7 +231,7 @@ export function RoutePlanner({ day: dayJson, existingWebUrl, district, cluster, 
   const directions = directionsUrl(placedStops(itinerary));
   const addHref = (s: Suggestion | SchoolPin) => {
     const pin = s.$typeName === 'edify.routes.v1.Suggestion' ? s.school! : s;
-    return `${existingWebUrl}/schools/${encodeURIComponent(pin.code || pin.schoolId)}`;
+    return `/schools/${encodeURIComponent(pin.code || pin.schoolId)}`;
   };
 
   const move = (index: number, by: number) => {

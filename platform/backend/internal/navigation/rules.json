@@ -1,4 +1,582 @@
 {
+  "acting": {
+    "acting_cd": {
+      "bottom": [
+        {
+          "icon": 0,
+          "label": "Home",
+          "native": false,
+          "page_key": "home",
+          "url": "/home"
+        },
+        {
+          "icon": 25,
+          "label": "Reports",
+          "native": true,
+          "page_key": "reports",
+          "url": "/reports"
+        },
+        {
+          "icon": 3,
+          "label": "Messages",
+          "native": false,
+          "page_key": "messages",
+          "url": "/messages"
+        },
+        {
+          "icon": 5,
+          "label": "To-Do",
+          "native": true,
+          "page_key": "todos",
+          "url": "/todos"
+        }
+      ],
+      "sections": [
+        {
+          "items": [
+            {
+              "icon": 4,
+              "label": "Dashboard",
+              "native": true,
+              "page_key": "dashboard",
+              "url": "/country-planning-oversight/"
+            },
+            {
+              "icon": 26,
+              "label": "Staff Activity",
+              "native": true,
+              "page_key": "staff_activity",
+              "url": "/staff-activity"
+            },
+            {
+              "icon": 12,
+              "label": "Planning Monitor",
+              "native": true,
+              "page_key": "planning_monitor",
+              "url": "/planning-monitor/"
+            },
+            {
+              "icon": 5,
+              "label": "Planning",
+              "native": true,
+              "page_key": "planning",
+              "url": "/planning"
+            },
+            {
+              "icon": 2,
+              "label": "School Directory",
+              "native": false,
+              "page_key": "schools",
+              "url": "/schools"
+            },
+            {
+              "icon": 6,
+              "label": "Clusters",
+              "native": true,
+              "page_key": "clusters",
+              "url": "/clusters"
+            },
+            {
+              "icon": 7,
+              "label": "Calendar",
+              "native": true,
+              "page_key": "calendar",
+              "url": "/calendar"
+            },
+            {
+              "icon": 8,
+              "label": "Programme Schools",
+              "native": true,
+              "page_key": "programme_schools",
+              "url": "/programme-schools"
+            },
+            {
+              "icon": 5,
+              "label": "To-Do",
+              "native": true,
+              "page_key": "todos",
+              "url": "/todos"
+            },
+            {
+              "icon": 5,
+              "label": "My Actions",
+              "native": true,
+              "page_key": "my_actions",
+              "url": "/actions/mine"
+            }
+          ],
+          "label": "DAILY"
+        },
+        {
+          "items": [
+            {
+              "icon": 5,
+              "label": "Planning Oversight",
+              "native": true,
+              "page_key": "team_planning_oversight",
+              "url": "/team-planning-oversight/"
+            },
+            {
+              "icon": 27,
+              "label": "Country Map",
+              "native": true,
+              "page_key": "country_map",
+              "url": "/country-map/"
+            },
+            {
+              "icon": 6,
+              "label": "Cluster Oversight",
+              "native": true,
+              "page_key": "cluster_oversight",
+              "url": "/cluster-oversight/"
+            },
+            {
+              "icon": 8,
+              "label": "Core School Oversight",
+              "native": true,
+              "page_key": "core_schools_oversight",
+              "url": "/core-schools-oversight/"
+            },
+            {
+              "icon": 10,
+              "label": "Partner Oversight",
+              "native": true,
+              "page_key": "partner_oversight",
+              "url": "/partner-oversight/"
+            },
+            {
+              "icon": 6,
+              "label": "Project Monitoring",
+              "native": true,
+              "page_key": "project_monitoring",
+              "url": "/projects/monitoring"
+            }
+          ],
+          "label": "OVERSIGHT"
+        },
+        {
+          "items": [
+            {
+              "icon": 12,
+              "label": "Team Performance",
+              "native": true,
+              "page_key": "team_performance",
+              "url": "/team-performance/"
+            },
+            {
+              "icon": 13,
+              "label": "Escalations",
+              "native": true,
+              "page_key": "escalations",
+              "url": "/escalations"
+            },
+            {
+              "icon": 13,
+              "label": "Actions Sent",
+              "native": true,
+              "page_key": "actions_sent",
+              "url": "/actions/sent"
+            },
+            {
+              "icon": 5,
+              "label": "Quality Flags",
+              "native": true,
+              "page_key": "quality_checks",
+              "url": "/quality-checks"
+            },
+            {
+              "icon": 9,
+              "label": "Field Debrief",
+              "native": true,
+              "page_key": "daily_debrief",
+              "url": "/debriefs"
+            },
+            {
+              "icon": 13,
+              "label": "Training Feedback",
+              "native": true,
+              "page_key": "cce_training_feedback",
+              "url": "/cce-leadership/feedback"
+            },
+            {
+              "icon": 28,
+              "label": "Sample Checks",
+              "native": true,
+              "page_key": "ia_samples",
+              "url": "/ia/samples/"
+            },
+            {
+              "icon": 30,
+              "label": "Recruitment",
+              "native": true,
+              "page_key": "recruitment",
+              "url": "/recruitment"
+            },
+            {
+              "icon": 31,
+              "label": "People Directory",
+              "native": true,
+              "page_key": "staff",
+              "url": "/staff"
+            }
+          ],
+          "label": "WEEKLY"
+        },
+        {
+          "items": [
+            {
+              "icon": 15,
+              "label": "Work Plan",
+              "native": true,
+              "page_key": "work_plan",
+              "url": "/work-plan"
+            },
+            {
+              "icon": 25,
+              "label": "Reports",
+              "native": true,
+              "page_key": "reports",
+              "url": "/reports"
+            },
+            {
+              "icon": 16,
+              "label": "Decision Log",
+              "native": true,
+              "page_key": "decision_log",
+              "url": "/decision-log"
+            },
+            {
+              "icon": 12,
+              "label": "Acting Leadership",
+              "native": true,
+              "page_key": "acting_leadership",
+              "url": "/acting-leadership"
+            },
+            {
+              "icon": 25,
+              "label": "Impact Reports",
+              "native": true,
+              "page_key": "impact_reports",
+              "url": "/ia/impact-reports/"
+            },
+            {
+              "icon": 32,
+              "label": "Programme Learning",
+              "native": true,
+              "page_key": "ia_learning",
+              "url": "/ia/learning/"
+            },
+            {
+              "icon": 33,
+              "label": "Verification Analytics",
+              "native": true,
+              "page_key": "ia_verification_analytics",
+              "url": "/ia/analytics/"
+            },
+            {
+              "icon": 34,
+              "label": "Policy Compliance",
+              "native": true,
+              "page_key": "policy_compliance",
+              "url": "/policy-compliance"
+            }
+          ],
+          "label": "MONTHLY"
+        },
+        {
+          "items": [
+            {
+              "icon": 18,
+              "label": "Priorities",
+              "native": true,
+              "page_key": "priorities_master",
+              "url": "/target-distribution"
+            }
+          ],
+          "label": "PLANNING CYCLE"
+        },
+        {
+          "items": [
+            {
+              "icon": 21,
+              "label": "Closed Schools",
+              "native": true,
+              "page_key": "closed_schools",
+              "url": "/schools/closed"
+            }
+          ],
+          "label": "REFERENCE"
+        }
+      ]
+    },
+    "acting_pl": {
+      "bottom": [
+        {
+          "icon": 0,
+          "label": "Home",
+          "native": false,
+          "page_key": "home",
+          "url": "/home"
+        },
+        {
+          "icon": 1,
+          "label": "My Plan",
+          "native": true,
+          "page_key": "my_plan",
+          "url": "/my-plan"
+        },
+        {
+          "icon": 5,
+          "label": "Oversight",
+          "native": true,
+          "page_key": "team_planning_oversight",
+          "url": "/team-planning-oversight/"
+        },
+        {
+          "icon": 3,
+          "label": "Messages",
+          "native": false,
+          "page_key": "messages",
+          "url": "/messages"
+        }
+      ],
+      "sections": [
+        {
+          "items": [
+            {
+              "icon": 4,
+              "label": "Dashboard",
+              "native": true,
+              "page_key": "dashboard",
+              "url": "/dashboard"
+            },
+            {
+              "icon": 5,
+              "label": "Planning",
+              "native": true,
+              "page_key": "planning",
+              "url": "/planning"
+            },
+            {
+              "icon": 1,
+              "label": "My Plan",
+              "native": true,
+              "page_key": "my_plan",
+              "url": "/my-plan"
+            },
+            {
+              "icon": 2,
+              "label": "School Directory",
+              "native": false,
+              "page_key": "schools",
+              "url": "/schools"
+            },
+            {
+              "icon": 6,
+              "label": "Clusters",
+              "native": true,
+              "page_key": "clusters",
+              "url": "/clusters"
+            },
+            {
+              "icon": 7,
+              "label": "Calendar",
+              "native": true,
+              "page_key": "calendar",
+              "url": "/calendar"
+            },
+            {
+              "icon": 8,
+              "label": "Core Schools",
+              "native": true,
+              "page_key": "core_schools",
+              "url": "/core-schools"
+            },
+            {
+              "icon": 8,
+              "label": "Programme Schools",
+              "native": true,
+              "page_key": "programme_schools",
+              "url": "/programme-schools"
+            },
+            {
+              "icon": 5,
+              "label": "To-Do",
+              "native": true,
+              "page_key": "todos",
+              "url": "/todos"
+            },
+            {
+              "icon": 5,
+              "label": "My Actions",
+              "native": true,
+              "page_key": "my_actions",
+              "url": "/actions/mine"
+            }
+          ],
+          "label": "DAILY"
+        },
+        {
+          "items": [
+            {
+              "icon": 5,
+              "label": "Planning Oversight",
+              "native": true,
+              "page_key": "team_planning_oversight",
+              "url": "/team-planning-oversight/"
+            },
+            {
+              "icon": 6,
+              "label": "Cluster Oversight",
+              "native": true,
+              "page_key": "cluster_oversight",
+              "url": "/cluster-oversight/"
+            },
+            {
+              "icon": 8,
+              "label": "Core School Oversight",
+              "native": true,
+              "page_key": "core_schools_oversight",
+              "url": "/core-schools-oversight/"
+            },
+            {
+              "icon": 10,
+              "label": "Partner Oversight",
+              "native": true,
+              "page_key": "partner_oversight",
+              "url": "/partner-oversight/"
+            },
+            {
+              "icon": 6,
+              "label": "Project Monitoring",
+              "native": true,
+              "page_key": "project_monitoring",
+              "url": "/projects/monitoring"
+            }
+          ],
+          "label": "OVERSIGHT"
+        },
+        {
+          "items": [
+            {
+              "icon": 12,
+              "label": "My Team",
+              "native": true,
+              "page_key": "my_team",
+              "url": "/my-team"
+            },
+            {
+              "icon": 9,
+              "label": "Field Debrief",
+              "native": true,
+              "page_key": "daily_debrief",
+              "url": "/debriefs"
+            },
+            {
+              "icon": 12,
+              "label": "Team Performance",
+              "native": true,
+              "page_key": "team_performance",
+              "url": "/team-performance/"
+            },
+            {
+              "icon": 3,
+              "label": "Coaching",
+              "native": true,
+              "page_key": "team_coaching",
+              "url": "/team/coaching"
+            },
+            {
+              "icon": 13,
+              "label": "Escalations",
+              "native": true,
+              "page_key": "escalations",
+              "url": "/escalations"
+            },
+            {
+              "icon": 5,
+              "label": "Team Assignments",
+              "native": true,
+              "page_key": "actions_sent",
+              "url": "/actions/sent"
+            },
+            {
+              "icon": 5,
+              "label": "Quality Flags",
+              "native": true,
+              "page_key": "quality_checks",
+              "url": "/quality-checks"
+            },
+            {
+              "icon": 24,
+              "label": "Programme Rollout",
+              "native": true,
+              "page_key": "programme_rollout",
+              "url": "/programme-rollout"
+            },
+            {
+              "icon": 13,
+              "label": "Regional Lead",
+              "native": true,
+              "page_key": "cce_training_feedback",
+              "url": "/cce-leadership/feedback"
+            }
+          ],
+          "label": "WEEKLY"
+        },
+        {
+          "items": [
+            {
+              "icon": 15,
+              "label": "Work Plan",
+              "native": true,
+              "page_key": "work_plan",
+              "url": "/work-plan"
+            },
+            {
+              "icon": 16,
+              "label": "Decision Log",
+              "native": true,
+              "page_key": "decision_log",
+              "url": "/decision-log"
+            },
+            {
+              "icon": 12,
+              "label": "Acting Leadership",
+              "native": true,
+              "page_key": "acting_leadership",
+              "url": "/acting-leadership"
+            }
+          ],
+          "label": "MONTHLY"
+        },
+        {
+          "items": [
+            {
+              "icon": 18,
+              "label": "Priorities",
+              "native": true,
+              "page_key": "priorities_master",
+              "url": "/priorities/master"
+            }
+          ],
+          "label": "PLANNING CYCLE"
+        },
+        {
+          "items": [
+            {
+              "icon": 21,
+              "label": "Closed Schools",
+              "native": true,
+              "page_key": "closed_schools",
+              "url": "/schools/closed"
+            }
+          ],
+          "label": "REFERENCE"
+        }
+      ]
+    }
+  },
   "icons": [
     "<svg class=\"app-sidebar__item-icon-svg\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M3 10.5 12 3l9 7.5M5 9v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V9\" /></svg>",
     "<svg class=\"app-sidebar__item-icon-svg\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zM12 11l2 2-4 4\" /></svg>",
@@ -102,13 +680,6 @@
               "native": true,
               "page_key": "dashboard",
               "url": "/dashboard"
-            },
-            {
-              "icon": 2,
-              "label": "School Directory",
-              "native": false,
-              "page_key": "schools",
-              "url": "/schools"
             },
             {
               "icon": 11,
@@ -2009,13 +2580,6 @@
               "url": "/hr-today"
             },
             {
-              "icon": 2,
-              "label": "School Directory",
-              "native": false,
-              "page_key": "schools",
-              "url": "/schools"
-            },
-            {
               "icon": 7,
               "label": "Calendar",
               "native": true,
@@ -3872,13 +4436,6 @@
               "native": true,
               "page_key": "dashboard",
               "url": "/dashboard"
-            },
-            {
-              "icon": 2,
-              "label": "School Directory",
-              "native": false,
-              "page_key": "schools",
-              "url": "/schools"
             },
             {
               "icon": 7,

@@ -47,6 +47,41 @@ def _team_member(role: str):
     return user
 
 
+def _acting_user(entry):
+    """A staff login working in an acting capacity (apps.acting.services.build_context)."""
+    from datetime import date
+
+    from apps.core.acting import CONTEXT_ATTR, ActingContext
+
+    user = SimpleNamespace(**vars(_role_user(entry.appointee_role.value)))
+    user.pk = user.id = user.user_id = f"acting-{entry.key}"
+    setattr(
+        user,
+        CONTEXT_ATTR,
+        ActingContext(
+            assignment_id=f"export-{entry.key}",
+            acting_role=entry.acting_role_value,
+            substantive_role=entry.appointee_role.value,
+            label=entry.label,
+            short_label=entry.short_label,
+            scope_type=entry.scope_type,
+            seat_staff_id="export-seat-staff",
+            seat_user_id="export-seat-user",
+            seat_name="Export Seat",
+            country="Uganda",
+            start_date=date(2026, 1, 1),
+            end_date=date(2026, 1, 31),
+            appointed_by_id="export-appointer",
+            appointed_by_name="Export Appointer",
+            withheld_permissions=entry.withheld_permission_values(),
+            withheld_pages=frozenset(entry.withheld_pages),
+            withheld_authorities=frozenset(entry.withheld_authorities),
+        ),
+    )
+    user.active_role = entry.acting_role_value
+    return user
+
+
 def _navigation(user, icons: list[str]) -> dict:
     """The feed's answer for this reader, icons by their place in `icons`."""
     from apps.core.navigation import build_mobile_nav_for_user, build_sidebar_for_user
@@ -80,6 +115,7 @@ def _navigation(user, icons: list[str]) -> dict:
 
 
 def rules() -> dict:
+    from apps.acting.policy import ACTING_ROLES
     from apps.core.rbac import EdifyRole
     from apps.partners.member_scope import _PARTNER_ROLES
 
@@ -90,9 +126,14 @@ def rules() -> dict:
     team_members = {
         role: _navigation(_team_member(role), icons) for role in _PARTNER_ROLES
     }
+    acting = {
+        key: _navigation(_acting_user(entry), icons)
+        for key, entry in ACTING_ROLES.items()
+    }
     return {
         "roles": roles,
         "team_members": team_members,
+        "acting": acting,
         "partner_team": {"withheld": True, "roles": list(_PARTNER_ROLES)},
         "icons": icons,
     }

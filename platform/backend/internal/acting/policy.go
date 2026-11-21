@@ -14,6 +14,8 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"slices"
+	"strings"
 	"time"
 	_ "time/tzdata" // the platform's day is Kampala's wherever the gateway runs
 )
@@ -67,6 +69,88 @@ func ByKey(key string) (Role, bool) {
 		}
 	}
 	return Role{}, false
+}
+
+// pageKeyPaths maps Django page permission keys in acting_policy.json's
+// withheld_pages to their web URL prefixes so Go can enforce acting
+// withholdings without falling back to Django.
+var pageKeyPaths = map[string][]string{
+	"analytics_publishing":            {"/analytics/publishing"},
+	"business_transformation":         {"/business-transformation"},
+	"business_transformation_reports": {"/business-transformation/reports"},
+	"cluster_scoring":                 {"/clusters/scoring"},
+	"consolidated_fund_allocation":    {"/finance/consolidated"},
+	"cost_settings":                   {"/cost-settings"},
+	"country_budget":                  {"/country-budget"},
+	"cpd_learning":                    {"/cpd", "/learning"},
+	"extra_work":                      {"/extra-work"},
+	"fund_approvals":                  {"/fund-approvals"},
+	"fund_requests":                   {"/fund-requests"},
+	"fy_planning_policy":              {"/planning/policy"},
+	"hr_analytics":                    {"/hr/analytics"},
+	"hr_today":                        {"/hr/today", "/hr"},
+	"ia_lending_evidence":             {"/ia/lending"},
+	"ia_review_workspace":             {"/ia/review"},
+	"ia_verification_queue":           {"/ia/verification"},
+	"leave_approvals":                 {"/leave/approvals"},
+	"leave_coverage":                  {"/leave/coverage"},
+	"leave_requests":                  {"/leave/requests"},
+	"loans":                           {"/loans"},
+	"monthly_budget":                  {"/monthly-budget"},
+	"monthly_request":                 {"/monthly-request"},
+	"my_budget":                       {"/my-budget"},
+	"my_performance":                  {"/my-performance"},
+	"my_plan":                         {"/my-plan"},
+	"my_professional_development":     {"/my-professional-development"},
+	"my_target":                       {"/my-target"},
+	"performance_conversations":       {"/performance/conversations"},
+	"performance_development":         {"/performance/development"},
+	"performance_documents":           {"/performance/documents"},
+	"performance_reviews":             {"/performance/reviews"},
+	"performance_values":              {"/performance/values"},
+	"personal_time_off":               {"/personal-time-off"},
+	"recovery_plans":                  {"/recovery-plans"},
+	"staff_pulse":                     {"/staff-pulse"},
+	"staff_setup_queue":               {"/staff-setup"},
+	"team_target_distribution":        {"/target-distribution"},
+	"uploads":                         {"/uploads"},
+	"users":                           {"/users", "/admin/users", "/admin-panel/users"},
+	"weekly_fund_request":             {"/weekly-fund-request"},
+	"workforce_planning":              {"/workforce-planning"},
+}
+
+// WithheldPage reports whether path is withheld for an acting principal holding
+// roleKey (e.g. "acting_pl" or "acting_cd") according to acting_policy.json.
+func WithheldPage(roleKey, path string) bool {
+	entry, ok := ByKey(roleKey)
+	if !ok {
+		return false
+	}
+	raw, ok := entry.Granted["withheld_pages"].([]any)
+	if !ok || len(raw) == 0 {
+		return false
+	}
+	norm := strings.TrimRight(strings.TrimSpace(path), "/")
+	if norm == "" {
+		norm = "/"
+	}
+	withheld := make([]string, 0, len(raw))
+	for _, item := range raw {
+		if s, ok := item.(string); ok {
+			withheld = append(withheld, s)
+		}
+	}
+	for key, prefixes := range pageKeyPaths {
+		if !slices.Contains(withheld, key) {
+			continue
+		}
+		for _, prefix := range prefixes {
+			if norm == prefix || strings.HasPrefix(norm, prefix+"/") {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // offeredBy is the appointment a permanent holder of role may make.

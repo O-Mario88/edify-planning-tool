@@ -54,7 +54,11 @@ LIMIT 1 FOR UPDATE`, hashToken(raw)).Scan(&id, &expires)
 		}
 		if _, err := tx.Exec(ctx, `
 UPDATE "user" SET password = $2, password_reset_token_hash = NULL, password_reset_expires = NULL,
-       password_set_at = $3
+       password_set_at = $3,
+       failed_login_count = CASE WHEN COALESCE(lockout_escalated, false) THEN failed_login_count ELSE 0 END,
+       failed_login_streak_started_at = CASE WHEN COALESCE(lockout_escalated, false) THEN failed_login_streak_started_at ELSE NULL END,
+       locked_until = CASE WHEN COALESCE(lockout_escalated, false) THEN locked_until ELSE NULL END,
+       lockout_cycle_count = CASE WHEN COALESCE(lockout_escalated, false) THEN lockout_cycle_count ELSE 0 END
 WHERE id = $1`, id, encoded, now); err != nil {
 			return fmt.Errorf("signin: setting the password: %w", err)
 		}

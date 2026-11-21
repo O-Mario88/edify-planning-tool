@@ -608,8 +608,13 @@ UPDATE "user" SET password_reset_token_hash = $2, password_reset_expires = $3 WH
 }
 
 // SetTemporaryPassword is set_temporary_password: a password the person
-// must change, every session ended, any lockout lifted.
+// must change, every session ended, any lockout lifted. An administrator
+// cannot reset their own password here (main commit 6c1a52d09) so they cannot
+// sign themselves out or lock themselves out.
 func (s *Service) SetTemporaryPassword(ctx context.Context, principal auth.Principal, id, password string) error {
+	if id == principal.UserID {
+		return refuse("Change your own password from your Profile instead of resetting it from Users.")
+	}
 	now := s.deps.Now()
 	var email, name string
 	err := s.deps.Store.write(ctx, func(tx pgx.Tx) error {

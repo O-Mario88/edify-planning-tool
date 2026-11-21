@@ -3279,6 +3279,8 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
     """Generates the grouped list of visible sidebar links for the given user."""
     from apps.core.acting import page_withheld
 
+    from apps.core.permissions import RolePermissionService
+
     role = get_user_role_slug(user)
     if not role:
         return []
@@ -3368,6 +3370,10 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
                 # Per-role URL override (e.g. a Project Coordinator's "Planning"
                 # points to the project-scoped planning page).
                 url = item.get("role_urls", {}).get(role, item["url"])
+                if url == "/schools" and not RolePermissionService.can_view_page(
+                    user, "school_directory"
+                ):
+                    continue
                 # Active check: exact match for the dashboard and the /projects
                 # hub (whose children — /projects/planning etc. — are their own
                 # nav items); prefix match for everything else.

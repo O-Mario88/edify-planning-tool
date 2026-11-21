@@ -20,11 +20,22 @@ func NewService(db schooldirectory.Querier) *Service {
 	return &Service{db: db, rules: rules}
 }
 
-// Build answers the reader's navigation. served is false where the existing
-// application still answers: a role the rules do not name, and a Partner
-// Admin on a team whose partner record is not theirs (whether they lead it
-// is the existing partner scope's).
+// Build answers the reader's navigation, including staff working in an acting
+// capacity. served is false where the existing application still answers: a
+// role or acting policy key the rules do not name, and a Partner Admin on a
+// team whose partner record is not theirs (whether they lead it is the
+// existing partner scope's).
 func (s *Service) Build(ctx context.Context, p auth.Principal) (*screensv1.GetNavigationResponse, bool, error) {
+	if p.InActingAppointment {
+		if p.Acting == nil {
+			return nil, false, nil
+		}
+		menu, ok := s.rules.Acting[p.Acting.RoleKey]
+		if !ok {
+			return nil, false, nil
+		}
+		return s.response(menu), true, nil
+	}
 	menu, ok := s.rules.Roles[p.ActiveRole]
 	if !ok {
 		return nil, false, nil

@@ -78,7 +78,7 @@ function RecordHeader({ header, hrefOf }: { header: PageHeaderMessage; hrefOf: (
   );
 }
 
-export function PageHeader({ header, hrefOf }: { header: PageHeaderMessage; hrefOf: (action: PageAction) => string }) {
+export function PageHeader({ header, hrefOf, children }: { header: PageHeaderMessage; hrefOf: (action: PageAction) => string; children?: React.ReactNode }) {
   if (header.badges.length || header.backLabel) return <RecordHeader header={header} hrefOf={hrefOf} />;
   // The canonical page header (templates/components/page_header.html).
   return (
@@ -88,9 +88,9 @@ export function PageHeader({ header, hrefOf }: { header: PageHeaderMessage; href
         <h1 className="edify-page-title edify-page-header__title">{header.title}</h1>
         {header.description ? <p className="edify-page-header__description">{header.description}</p> : null}
       </div>
-      {header.actions.length ? (
+      {(children || header.actions.length) ? (
         <div className="edify-page-header__controls">
-          {header.actions.map((action) => (
+          {children ?? header.actions.map((action) => (
             <HeaderAction key={action.key} action={action} href={hrefOf(action)} />
           ))}
         </div>

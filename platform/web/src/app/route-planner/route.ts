@@ -20,6 +20,7 @@ import {
   SaveFieldDayResponseSchema,
 } from '@/gen/edify/routes/v1/routes_pb';
 import { gatewayClient, isNotFound, isUnauthenticated, messageOf } from '@/lib/gateway';
+import { isSameOrigin } from '@/lib/routes';
 import { ACCESS_COOKIE } from '@/lib/session';
 
 /**
@@ -30,6 +31,7 @@ import { ACCESS_COOKIE } from '@/lib/session';
  * schedules, moves or completes an activity.
  */
 export async function POST(request: NextRequest) {
+  if (!isSameOrigin(request)) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   const token = (await cookies()).get(ACCESS_COOKIE)?.value;
   if (!token) return NextResponse.json({ error: 'signed_out' }, { status: 401 });
   let body: { op?: string; request?: JsonValue };

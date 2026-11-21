@@ -63,12 +63,12 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
         className="relative hidden flex-col justify-between overflow-hidden bg-[#001d39] bg-cover bg-center px-12 py-12 text-white lg:flex"
         style={{
           backgroundImage:
-            'linear-gradient(180deg, rgba(0,29,57,0.82), rgba(6,40,71,0.86) 55%, rgba(10,77,134,0.9)), url(/images/login-classroom-portrait.jpg)',
+            'linear-gradient(180deg, rgba(0,29,57,0.82), rgba(6,40,71,0.86) 55%, rgba(10,77,134,0.9)), url(/static/images/login-classroom-portrait.jpg)',
         }}
       >
         <div className="flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/logo.png" alt="Edify" width={110} height={45} className="h-auto w-[110px]" />
+          <img src="/static/images/logo.png" alt="Edify" width={110} height={45} className="h-auto w-[110px]" />
           <span className="h-[42px] w-px bg-[rgba(189,216,233,0.72)]" aria-hidden="true" />
           <span className="text-[0.9375rem] leading-[1.35] text-[rgba(215,230,239,0.88)]">
             Planning &amp;
@@ -118,7 +118,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
             <span
               role="img"
               aria-label="Edify"
-              className="mx-auto block h-[47px] w-[114px] bg-[#0b4a82] [mask-image:url(/images/logo.png)] [mask-repeat:no-repeat] [mask-size:contain] [mask-position:center]"
+              className="mx-auto block h-[47px] w-[114px] bg-[#0b4a82] [mask-image:url(/static/images/logo.png)] [mask-repeat:no-repeat] [mask-size:contain] [mask-position:center]"
             />
             <h2 className="mt-5 text-[1.5rem] font-bold text-[#17232b]">{codeStep ? 'Enter your code' : 'Sign in'}</h2>
             <p className="mt-2 text-[0.9375rem] text-[#4d6170]">
