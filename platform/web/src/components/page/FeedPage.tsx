@@ -53,7 +53,11 @@ export async function askPage(path: string, query: Record<string, string>): Prom
  * A spelling the gateway does not know moves on to the next
  * (lib/pageSpellings); the page is not found only when none answers.
  */
-async function askFirst(paths: readonly string[], query: Record<string, string>, desktop: boolean): Promise<GetPageResponse | null> {
+export async function askFirst(
+  paths: readonly string[],
+  query: Record<string, string>,
+  desktop: boolean,
+): Promise<GetPageResponse | null> {
   const answer = await firstAnswer(paths, (path) => askSpelling(path, query, desktop));
   if (answer.kind === 'notFound') notFound();
   return answer.kind === 'page' ? answer.page : null;
