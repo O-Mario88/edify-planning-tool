@@ -19,7 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	PortfolioAnalyticsService_SummarizePortfolio_FullMethodName = "/edify.analytics.v1.PortfolioAnalyticsService/SummarizePortfolio"
+	PortfolioAnalyticsService_SummarizePortfolio_FullMethodName        = "/edify.analytics.v1.PortfolioAnalyticsService/SummarizePortfolio"
+	PortfolioAnalyticsService_AnalyzeSsa_FullMethodName                = "/edify.analytics.v1.PortfolioAnalyticsService/AnalyzeSsa"
+	PortfolioAnalyticsService_AnalyzeCoverageGaps_FullMethodName       = "/edify.analytics.v1.PortfolioAnalyticsService/AnalyzeCoverageGaps"
+	PortfolioAnalyticsService_AnalyzeRouteEfficiency_FullMethodName    = "/edify.analytics.v1.PortfolioAnalyticsService/AnalyzeRouteEfficiency"
+	PortfolioAnalyticsService_ComputePredictiveInsights_FullMethodName = "/edify.analytics.v1.PortfolioAnalyticsService/ComputePredictiveInsights"
+	PortfolioAnalyticsService_GenerateGlobalReport_FullMethodName      = "/edify.analytics.v1.PortfolioAnalyticsService/GenerateGlobalReport"
 )
 
 // PortfolioAnalyticsServiceClient is the client API for PortfolioAnalyticsService service.
@@ -28,9 +33,15 @@ const (
 //
 // INTERNAL. Called by the Go gateway only, never by a client. The worker
 // holds no database connection and decides nothing: it receives rows the
-// gateway has already authorised and returns descriptive statistics.
+// gateway has already authorised and returns descriptive, predictive, and
+// cross-country analytics.
 type PortfolioAnalyticsServiceClient interface {
 	SummarizePortfolio(ctx context.Context, in *SummarizePortfolioRequest, opts ...grpc.CallOption) (*SummarizePortfolioResponse, error)
+	AnalyzeSsa(ctx context.Context, in *AnalyzeSsaRequest, opts ...grpc.CallOption) (*AnalyzeSsaResponse, error)
+	AnalyzeCoverageGaps(ctx context.Context, in *AnalyzeCoverageGapsRequest, opts ...grpc.CallOption) (*AnalyzeCoverageGapsResponse, error)
+	AnalyzeRouteEfficiency(ctx context.Context, in *AnalyzeRouteEfficiencyRequest, opts ...grpc.CallOption) (*AnalyzeRouteEfficiencyResponse, error)
+	ComputePredictiveInsights(ctx context.Context, in *ComputePredictiveInsightsRequest, opts ...grpc.CallOption) (*ComputePredictiveInsightsResponse, error)
+	GenerateGlobalReport(ctx context.Context, in *GenerateGlobalReportRequest, opts ...grpc.CallOption) (*GenerateGlobalReportResponse, error)
 }
 
 type portfolioAnalyticsServiceClient struct {
@@ -51,15 +62,71 @@ func (c *portfolioAnalyticsServiceClient) SummarizePortfolio(ctx context.Context
 	return out, nil
 }
 
+func (c *portfolioAnalyticsServiceClient) AnalyzeSsa(ctx context.Context, in *AnalyzeSsaRequest, opts ...grpc.CallOption) (*AnalyzeSsaResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AnalyzeSsaResponse)
+	err := c.cc.Invoke(ctx, PortfolioAnalyticsService_AnalyzeSsa_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *portfolioAnalyticsServiceClient) AnalyzeCoverageGaps(ctx context.Context, in *AnalyzeCoverageGapsRequest, opts ...grpc.CallOption) (*AnalyzeCoverageGapsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AnalyzeCoverageGapsResponse)
+	err := c.cc.Invoke(ctx, PortfolioAnalyticsService_AnalyzeCoverageGaps_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *portfolioAnalyticsServiceClient) AnalyzeRouteEfficiency(ctx context.Context, in *AnalyzeRouteEfficiencyRequest, opts ...grpc.CallOption) (*AnalyzeRouteEfficiencyResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AnalyzeRouteEfficiencyResponse)
+	err := c.cc.Invoke(ctx, PortfolioAnalyticsService_AnalyzeRouteEfficiency_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *portfolioAnalyticsServiceClient) ComputePredictiveInsights(ctx context.Context, in *ComputePredictiveInsightsRequest, opts ...grpc.CallOption) (*ComputePredictiveInsightsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ComputePredictiveInsightsResponse)
+	err := c.cc.Invoke(ctx, PortfolioAnalyticsService_ComputePredictiveInsights_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *portfolioAnalyticsServiceClient) GenerateGlobalReport(ctx context.Context, in *GenerateGlobalReportRequest, opts ...grpc.CallOption) (*GenerateGlobalReportResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenerateGlobalReportResponse)
+	err := c.cc.Invoke(ctx, PortfolioAnalyticsService_GenerateGlobalReport_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PortfolioAnalyticsServiceServer is the server API for PortfolioAnalyticsService service.
 // All implementations must embed UnimplementedPortfolioAnalyticsServiceServer
 // for forward compatibility.
 //
 // INTERNAL. Called by the Go gateway only, never by a client. The worker
 // holds no database connection and decides nothing: it receives rows the
-// gateway has already authorised and returns descriptive statistics.
+// gateway has already authorised and returns descriptive, predictive, and
+// cross-country analytics.
 type PortfolioAnalyticsServiceServer interface {
 	SummarizePortfolio(context.Context, *SummarizePortfolioRequest) (*SummarizePortfolioResponse, error)
+	AnalyzeSsa(context.Context, *AnalyzeSsaRequest) (*AnalyzeSsaResponse, error)
+	AnalyzeCoverageGaps(context.Context, *AnalyzeCoverageGapsRequest) (*AnalyzeCoverageGapsResponse, error)
+	AnalyzeRouteEfficiency(context.Context, *AnalyzeRouteEfficiencyRequest) (*AnalyzeRouteEfficiencyResponse, error)
+	ComputePredictiveInsights(context.Context, *ComputePredictiveInsightsRequest) (*ComputePredictiveInsightsResponse, error)
+	GenerateGlobalReport(context.Context, *GenerateGlobalReportRequest) (*GenerateGlobalReportResponse, error)
 	mustEmbedUnimplementedPortfolioAnalyticsServiceServer()
 }
 
@@ -72,6 +139,21 @@ type UnimplementedPortfolioAnalyticsServiceServer struct{}
 
 func (UnimplementedPortfolioAnalyticsServiceServer) SummarizePortfolio(context.Context, *SummarizePortfolioRequest) (*SummarizePortfolioResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SummarizePortfolio not implemented")
+}
+func (UnimplementedPortfolioAnalyticsServiceServer) AnalyzeSsa(context.Context, *AnalyzeSsaRequest) (*AnalyzeSsaResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AnalyzeSsa not implemented")
+}
+func (UnimplementedPortfolioAnalyticsServiceServer) AnalyzeCoverageGaps(context.Context, *AnalyzeCoverageGapsRequest) (*AnalyzeCoverageGapsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AnalyzeCoverageGaps not implemented")
+}
+func (UnimplementedPortfolioAnalyticsServiceServer) AnalyzeRouteEfficiency(context.Context, *AnalyzeRouteEfficiencyRequest) (*AnalyzeRouteEfficiencyResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AnalyzeRouteEfficiency not implemented")
+}
+func (UnimplementedPortfolioAnalyticsServiceServer) ComputePredictiveInsights(context.Context, *ComputePredictiveInsightsRequest) (*ComputePredictiveInsightsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ComputePredictiveInsights not implemented")
+}
+func (UnimplementedPortfolioAnalyticsServiceServer) GenerateGlobalReport(context.Context, *GenerateGlobalReportRequest) (*GenerateGlobalReportResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GenerateGlobalReport not implemented")
 }
 func (UnimplementedPortfolioAnalyticsServiceServer) mustEmbedUnimplementedPortfolioAnalyticsServiceServer() {
 }
@@ -113,6 +195,96 @@ func _PortfolioAnalyticsService_SummarizePortfolio_Handler(srv interface{}, ctx 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PortfolioAnalyticsService_AnalyzeSsa_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AnalyzeSsaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PortfolioAnalyticsServiceServer).AnalyzeSsa(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PortfolioAnalyticsService_AnalyzeSsa_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PortfolioAnalyticsServiceServer).AnalyzeSsa(ctx, req.(*AnalyzeSsaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PortfolioAnalyticsService_AnalyzeCoverageGaps_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AnalyzeCoverageGapsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PortfolioAnalyticsServiceServer).AnalyzeCoverageGaps(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PortfolioAnalyticsService_AnalyzeCoverageGaps_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PortfolioAnalyticsServiceServer).AnalyzeCoverageGaps(ctx, req.(*AnalyzeCoverageGapsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PortfolioAnalyticsService_AnalyzeRouteEfficiency_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AnalyzeRouteEfficiencyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PortfolioAnalyticsServiceServer).AnalyzeRouteEfficiency(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PortfolioAnalyticsService_AnalyzeRouteEfficiency_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PortfolioAnalyticsServiceServer).AnalyzeRouteEfficiency(ctx, req.(*AnalyzeRouteEfficiencyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PortfolioAnalyticsService_ComputePredictiveInsights_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ComputePredictiveInsightsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PortfolioAnalyticsServiceServer).ComputePredictiveInsights(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PortfolioAnalyticsService_ComputePredictiveInsights_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PortfolioAnalyticsServiceServer).ComputePredictiveInsights(ctx, req.(*ComputePredictiveInsightsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PortfolioAnalyticsService_GenerateGlobalReport_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GenerateGlobalReportRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PortfolioAnalyticsServiceServer).GenerateGlobalReport(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PortfolioAnalyticsService_GenerateGlobalReport_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PortfolioAnalyticsServiceServer).GenerateGlobalReport(ctx, req.(*GenerateGlobalReportRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PortfolioAnalyticsService_ServiceDesc is the grpc.ServiceDesc for PortfolioAnalyticsService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -123,6 +295,26 @@ var PortfolioAnalyticsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SummarizePortfolio",
 			Handler:    _PortfolioAnalyticsService_SummarizePortfolio_Handler,
+		},
+		{
+			MethodName: "AnalyzeSsa",
+			Handler:    _PortfolioAnalyticsService_AnalyzeSsa_Handler,
+		},
+		{
+			MethodName: "AnalyzeCoverageGaps",
+			Handler:    _PortfolioAnalyticsService_AnalyzeCoverageGaps_Handler,
+		},
+		{
+			MethodName: "AnalyzeRouteEfficiency",
+			Handler:    _PortfolioAnalyticsService_AnalyzeRouteEfficiency_Handler,
+		},
+		{
+			MethodName: "ComputePredictiveInsights",
+			Handler:    _PortfolioAnalyticsService_ComputePredictiveInsights_Handler,
+		},
+		{
+			MethodName: "GenerateGlobalReport",
+			Handler:    _PortfolioAnalyticsService_GenerateGlobalReport_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

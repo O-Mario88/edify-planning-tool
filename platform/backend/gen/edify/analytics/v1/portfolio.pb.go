@@ -193,6 +193,1458 @@ func (x *SummarizePortfolioResponse) GetMedianEnrollment() float64 {
 	return 0
 }
 
+type SsaSchoolRecord struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	SchoolId           string                 `protobuf:"bytes,1,opt,name=school_id,json=schoolId,proto3" json:"school_id,omitempty"`
+	CurrentScore       *float64               `protobuf:"fixed64,2,opt,name=current_score,json=currentScore,proto3,oneof" json:"current_score,omitempty"`
+	PreviousScore      *float64               `protobuf:"fixed64,3,opt,name=previous_score,json=previousScore,proto3,oneof" json:"previous_score,omitempty"`
+	InterventionScores map[string]float64     `protobuf:"bytes,4,rep,name=intervention_scores,json=interventionScores,proto3" json:"intervention_scores,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"fixed64,2,opt,name=value"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *SsaSchoolRecord) Reset() {
+	*x = SsaSchoolRecord{}
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SsaSchoolRecord) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SsaSchoolRecord) ProtoMessage() {}
+
+func (x *SsaSchoolRecord) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SsaSchoolRecord.ProtoReflect.Descriptor instead.
+func (*SsaSchoolRecord) Descriptor() ([]byte, []int) {
+	return file_edify_analytics_v1_portfolio_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *SsaSchoolRecord) GetSchoolId() string {
+	if x != nil {
+		return x.SchoolId
+	}
+	return ""
+}
+
+func (x *SsaSchoolRecord) GetCurrentScore() float64 {
+	if x != nil && x.CurrentScore != nil {
+		return *x.CurrentScore
+	}
+	return 0
+}
+
+func (x *SsaSchoolRecord) GetPreviousScore() float64 {
+	if x != nil && x.PreviousScore != nil {
+		return *x.PreviousScore
+	}
+	return 0
+}
+
+func (x *SsaSchoolRecord) GetInterventionScores() map[string]float64 {
+	if x != nil {
+		return x.InterventionScores
+	}
+	return nil
+}
+
+type InterventionSummary struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Intervention  string                 `protobuf:"bytes,1,opt,name=intervention,proto3" json:"intervention,omitempty"`
+	AssessedCount int32                  `protobuf:"varint,2,opt,name=assessed_count,json=assessedCount,proto3" json:"assessed_count,omitempty"`
+	AverageScore  float64                `protobuf:"fixed64,3,opt,name=average_score,json=averageScore,proto3" json:"average_score,omitempty"`
+	MinScore      float64                `protobuf:"fixed64,4,opt,name=min_score,json=minScore,proto3" json:"min_score,omitempty"`
+	MaxScore      float64                `protobuf:"fixed64,5,opt,name=max_score,json=maxScore,proto3" json:"max_score,omitempty"`
+	UrgentCount   int32                  `protobuf:"varint,6,opt,name=urgent_count,json=urgentCount,proto3" json:"urgent_count,omitempty"`
+	WatchCount    int32                  `protobuf:"varint,7,opt,name=watch_count,json=watchCount,proto3" json:"watch_count,omitempty"`
+	StrongCount   int32                  `protobuf:"varint,8,opt,name=strong_count,json=strongCount,proto3" json:"strong_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InterventionSummary) Reset() {
+	*x = InterventionSummary{}
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InterventionSummary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InterventionSummary) ProtoMessage() {}
+
+func (x *InterventionSummary) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InterventionSummary.ProtoReflect.Descriptor instead.
+func (*InterventionSummary) Descriptor() ([]byte, []int) {
+	return file_edify_analytics_v1_portfolio_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *InterventionSummary) GetIntervention() string {
+	if x != nil {
+		return x.Intervention
+	}
+	return ""
+}
+
+func (x *InterventionSummary) GetAssessedCount() int32 {
+	if x != nil {
+		return x.AssessedCount
+	}
+	return 0
+}
+
+func (x *InterventionSummary) GetAverageScore() float64 {
+	if x != nil {
+		return x.AverageScore
+	}
+	return 0
+}
+
+func (x *InterventionSummary) GetMinScore() float64 {
+	if x != nil {
+		return x.MinScore
+	}
+	return 0
+}
+
+func (x *InterventionSummary) GetMaxScore() float64 {
+	if x != nil {
+		return x.MaxScore
+	}
+	return 0
+}
+
+func (x *InterventionSummary) GetUrgentCount() int32 {
+	if x != nil {
+		return x.UrgentCount
+	}
+	return 0
+}
+
+func (x *InterventionSummary) GetWatchCount() int32 {
+	if x != nil {
+		return x.WatchCount
+	}
+	return 0
+}
+
+func (x *InterventionSummary) GetStrongCount() int32 {
+	if x != nil {
+		return x.StrongCount
+	}
+	return 0
+}
+
+type AnalyzeSsaRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Records       []*SsaSchoolRecord     `protobuf:"bytes,1,rep,name=records,proto3" json:"records,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AnalyzeSsaRequest) Reset() {
+	*x = AnalyzeSsaRequest{}
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AnalyzeSsaRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AnalyzeSsaRequest) ProtoMessage() {}
+
+func (x *AnalyzeSsaRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AnalyzeSsaRequest.ProtoReflect.Descriptor instead.
+func (*AnalyzeSsaRequest) Descriptor() ([]byte, []int) {
+	return file_edify_analytics_v1_portfolio_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *AnalyzeSsaRequest) GetRecords() []*SsaSchoolRecord {
+	if x != nil {
+		return x.Records
+	}
+	return nil
+}
+
+type AnalyzeSsaResponse struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	TotalSchools    int32                  `protobuf:"varint,1,opt,name=total_schools,json=totalSchools,proto3" json:"total_schools,omitempty"`
+	AssessedSchools int32                  `protobuf:"varint,2,opt,name=assessed_schools,json=assessedSchools,proto3" json:"assessed_schools,omitempty"`
+	ComparedSchools int32                  `protobuf:"varint,3,opt,name=compared_schools,json=comparedSchools,proto3" json:"compared_schools,omitempty"`
+	ImprovedSchools int32                  `protobuf:"varint,4,opt,name=improved_schools,json=improvedSchools,proto3" json:"improved_schools,omitempty"`
+	DeclinedSchools int32                  `protobuf:"varint,5,opt,name=declined_schools,json=declinedSchools,proto3" json:"declined_schools,omitempty"`
+	AverageScore    float64                `protobuf:"fixed64,6,opt,name=average_score,json=averageScore,proto3" json:"average_score,omitempty"`
+	AverageDelta    float64                `protobuf:"fixed64,7,opt,name=average_delta,json=averageDelta,proto3" json:"average_delta,omitempty"`
+	OnTrackCount    int32                  `protobuf:"varint,8,opt,name=on_track_count,json=onTrackCount,proto3" json:"on_track_count,omitempty"`
+	WatchCount      int32                  `protobuf:"varint,9,opt,name=watch_count,json=watchCount,proto3" json:"watch_count,omitempty"`
+	CriticalCount   int32                  `protobuf:"varint,10,opt,name=critical_count,json=criticalCount,proto3" json:"critical_count,omitempty"`
+	Interventions   []*InterventionSummary `protobuf:"bytes,11,rep,name=interventions,proto3" json:"interventions,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *AnalyzeSsaResponse) Reset() {
+	*x = AnalyzeSsaResponse{}
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AnalyzeSsaResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AnalyzeSsaResponse) ProtoMessage() {}
+
+func (x *AnalyzeSsaResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AnalyzeSsaResponse.ProtoReflect.Descriptor instead.
+func (*AnalyzeSsaResponse) Descriptor() ([]byte, []int) {
+	return file_edify_analytics_v1_portfolio_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *AnalyzeSsaResponse) GetTotalSchools() int32 {
+	if x != nil {
+		return x.TotalSchools
+	}
+	return 0
+}
+
+func (x *AnalyzeSsaResponse) GetAssessedSchools() int32 {
+	if x != nil {
+		return x.AssessedSchools
+	}
+	return 0
+}
+
+func (x *AnalyzeSsaResponse) GetComparedSchools() int32 {
+	if x != nil {
+		return x.ComparedSchools
+	}
+	return 0
+}
+
+func (x *AnalyzeSsaResponse) GetImprovedSchools() int32 {
+	if x != nil {
+		return x.ImprovedSchools
+	}
+	return 0
+}
+
+func (x *AnalyzeSsaResponse) GetDeclinedSchools() int32 {
+	if x != nil {
+		return x.DeclinedSchools
+	}
+	return 0
+}
+
+func (x *AnalyzeSsaResponse) GetAverageScore() float64 {
+	if x != nil {
+		return x.AverageScore
+	}
+	return 0
+}
+
+func (x *AnalyzeSsaResponse) GetAverageDelta() float64 {
+	if x != nil {
+		return x.AverageDelta
+	}
+	return 0
+}
+
+func (x *AnalyzeSsaResponse) GetOnTrackCount() int32 {
+	if x != nil {
+		return x.OnTrackCount
+	}
+	return 0
+}
+
+func (x *AnalyzeSsaResponse) GetWatchCount() int32 {
+	if x != nil {
+		return x.WatchCount
+	}
+	return 0
+}
+
+func (x *AnalyzeSsaResponse) GetCriticalCount() int32 {
+	if x != nil {
+		return x.CriticalCount
+	}
+	return 0
+}
+
+func (x *AnalyzeSsaResponse) GetInterventions() []*InterventionSummary {
+	if x != nil {
+		return x.Interventions
+	}
+	return nil
+}
+
+type CoverageSchoolRecord struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AreaName      string                 `protobuf:"bytes,1,opt,name=area_name,json=areaName,proto3" json:"area_name,omitempty"`
+	HasSsa        bool                   `protobuf:"varint,2,opt,name=has_ssa,json=hasSsa,proto3" json:"has_ssa,omitempty"`
+	Visited       bool                   `protobuf:"varint,3,opt,name=visited,proto3" json:"visited,omitempty"`
+	Trained       bool                   `protobuf:"varint,4,opt,name=trained,proto3" json:"trained,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CoverageSchoolRecord) Reset() {
+	*x = CoverageSchoolRecord{}
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CoverageSchoolRecord) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CoverageSchoolRecord) ProtoMessage() {}
+
+func (x *CoverageSchoolRecord) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CoverageSchoolRecord.ProtoReflect.Descriptor instead.
+func (*CoverageSchoolRecord) Descriptor() ([]byte, []int) {
+	return file_edify_analytics_v1_portfolio_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *CoverageSchoolRecord) GetAreaName() string {
+	if x != nil {
+		return x.AreaName
+	}
+	return ""
+}
+
+func (x *CoverageSchoolRecord) GetHasSsa() bool {
+	if x != nil {
+		return x.HasSsa
+	}
+	return false
+}
+
+func (x *CoverageSchoolRecord) GetVisited() bool {
+	if x != nil {
+		return x.Visited
+	}
+	return false
+}
+
+func (x *CoverageSchoolRecord) GetTrained() bool {
+	if x != nil {
+		return x.Trained
+	}
+	return false
+}
+
+type AreaCoverageGap struct {
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	AreaName            string                 `protobuf:"bytes,1,opt,name=area_name,json=areaName,proto3" json:"area_name,omitempty"`
+	TotalSchools        int32                  `protobuf:"varint,2,opt,name=total_schools,json=totalSchools,proto3" json:"total_schools,omitempty"`
+	SsaCovered          int32                  `protobuf:"varint,3,opt,name=ssa_covered,json=ssaCovered,proto3" json:"ssa_covered,omitempty"`
+	VisitedSchools      int32                  `protobuf:"varint,4,opt,name=visited_schools,json=visitedSchools,proto3" json:"visited_schools,omitempty"`
+	TrainedSchools      int32                  `protobuf:"varint,5,opt,name=trained_schools,json=trainedSchools,proto3" json:"trained_schools,omitempty"`
+	SsaCoveragePct      float64                `protobuf:"fixed64,6,opt,name=ssa_coverage_pct,json=ssaCoveragePct,proto3" json:"ssa_coverage_pct,omitempty"`
+	VisitCoveragePct    float64                `protobuf:"fixed64,7,opt,name=visit_coverage_pct,json=visitCoveragePct,proto3" json:"visit_coverage_pct,omitempty"`
+	TrainingCoveragePct float64                `protobuf:"fixed64,8,opt,name=training_coverage_pct,json=trainingCoveragePct,proto3" json:"training_coverage_pct,omitempty"`
+	UnassessedGap       int32                  `protobuf:"varint,9,opt,name=unassessed_gap,json=unassessedGap,proto3" json:"unassessed_gap,omitempty"`
+	UnvisitedGap        int32                  `protobuf:"varint,10,opt,name=unvisited_gap,json=unvisitedGap,proto3" json:"unvisited_gap,omitempty"`
+	CompositeGapScore   float64                `protobuf:"fixed64,11,opt,name=composite_gap_score,json=compositeGapScore,proto3" json:"composite_gap_score,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *AreaCoverageGap) Reset() {
+	*x = AreaCoverageGap{}
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AreaCoverageGap) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AreaCoverageGap) ProtoMessage() {}
+
+func (x *AreaCoverageGap) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AreaCoverageGap.ProtoReflect.Descriptor instead.
+func (*AreaCoverageGap) Descriptor() ([]byte, []int) {
+	return file_edify_analytics_v1_portfolio_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *AreaCoverageGap) GetAreaName() string {
+	if x != nil {
+		return x.AreaName
+	}
+	return ""
+}
+
+func (x *AreaCoverageGap) GetTotalSchools() int32 {
+	if x != nil {
+		return x.TotalSchools
+	}
+	return 0
+}
+
+func (x *AreaCoverageGap) GetSsaCovered() int32 {
+	if x != nil {
+		return x.SsaCovered
+	}
+	return 0
+}
+
+func (x *AreaCoverageGap) GetVisitedSchools() int32 {
+	if x != nil {
+		return x.VisitedSchools
+	}
+	return 0
+}
+
+func (x *AreaCoverageGap) GetTrainedSchools() int32 {
+	if x != nil {
+		return x.TrainedSchools
+	}
+	return 0
+}
+
+func (x *AreaCoverageGap) GetSsaCoveragePct() float64 {
+	if x != nil {
+		return x.SsaCoveragePct
+	}
+	return 0
+}
+
+func (x *AreaCoverageGap) GetVisitCoveragePct() float64 {
+	if x != nil {
+		return x.VisitCoveragePct
+	}
+	return 0
+}
+
+func (x *AreaCoverageGap) GetTrainingCoveragePct() float64 {
+	if x != nil {
+		return x.TrainingCoveragePct
+	}
+	return 0
+}
+
+func (x *AreaCoverageGap) GetUnassessedGap() int32 {
+	if x != nil {
+		return x.UnassessedGap
+	}
+	return 0
+}
+
+func (x *AreaCoverageGap) GetUnvisitedGap() int32 {
+	if x != nil {
+		return x.UnvisitedGap
+	}
+	return 0
+}
+
+func (x *AreaCoverageGap) GetCompositeGapScore() float64 {
+	if x != nil {
+		return x.CompositeGapScore
+	}
+	return 0
+}
+
+type AnalyzeCoverageGapsRequest struct {
+	state         protoimpl.MessageState  `protogen:"open.v1"`
+	Records       []*CoverageSchoolRecord `protobuf:"bytes,1,rep,name=records,proto3" json:"records,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AnalyzeCoverageGapsRequest) Reset() {
+	*x = AnalyzeCoverageGapsRequest{}
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AnalyzeCoverageGapsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AnalyzeCoverageGapsRequest) ProtoMessage() {}
+
+func (x *AnalyzeCoverageGapsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AnalyzeCoverageGapsRequest.ProtoReflect.Descriptor instead.
+func (*AnalyzeCoverageGapsRequest) Descriptor() ([]byte, []int) {
+	return file_edify_analytics_v1_portfolio_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *AnalyzeCoverageGapsRequest) GetRecords() []*CoverageSchoolRecord {
+	if x != nil {
+		return x.Records
+	}
+	return nil
+}
+
+type AnalyzeCoverageGapsResponse struct {
+	state                      protoimpl.MessageState `protogen:"open.v1"`
+	TotalSchools               int32                  `protobuf:"varint,1,opt,name=total_schools,json=totalSchools,proto3" json:"total_schools,omitempty"`
+	OverallSsaCoveragePct      float64                `protobuf:"fixed64,2,opt,name=overall_ssa_coverage_pct,json=overallSsaCoveragePct,proto3" json:"overall_ssa_coverage_pct,omitempty"`
+	OverallVisitCoveragePct    float64                `protobuf:"fixed64,3,opt,name=overall_visit_coverage_pct,json=overallVisitCoveragePct,proto3" json:"overall_visit_coverage_pct,omitempty"`
+	OverallTrainingCoveragePct float64                `protobuf:"fixed64,4,opt,name=overall_training_coverage_pct,json=overallTrainingCoveragePct,proto3" json:"overall_training_coverage_pct,omitempty"`
+	Areas                      []*AreaCoverageGap     `protobuf:"bytes,5,rep,name=areas,proto3" json:"areas,omitempty"`
+	unknownFields              protoimpl.UnknownFields
+	sizeCache                  protoimpl.SizeCache
+}
+
+func (x *AnalyzeCoverageGapsResponse) Reset() {
+	*x = AnalyzeCoverageGapsResponse{}
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AnalyzeCoverageGapsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AnalyzeCoverageGapsResponse) ProtoMessage() {}
+
+func (x *AnalyzeCoverageGapsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AnalyzeCoverageGapsResponse.ProtoReflect.Descriptor instead.
+func (*AnalyzeCoverageGapsResponse) Descriptor() ([]byte, []int) {
+	return file_edify_analytics_v1_portfolio_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *AnalyzeCoverageGapsResponse) GetTotalSchools() int32 {
+	if x != nil {
+		return x.TotalSchools
+	}
+	return 0
+}
+
+func (x *AnalyzeCoverageGapsResponse) GetOverallSsaCoveragePct() float64 {
+	if x != nil {
+		return x.OverallSsaCoveragePct
+	}
+	return 0
+}
+
+func (x *AnalyzeCoverageGapsResponse) GetOverallVisitCoveragePct() float64 {
+	if x != nil {
+		return x.OverallVisitCoveragePct
+	}
+	return 0
+}
+
+func (x *AnalyzeCoverageGapsResponse) GetOverallTrainingCoveragePct() float64 {
+	if x != nil {
+		return x.OverallTrainingCoveragePct
+	}
+	return 0
+}
+
+func (x *AnalyzeCoverageGapsResponse) GetAreas() []*AreaCoverageGap {
+	if x != nil {
+		return x.Areas
+	}
+	return nil
+}
+
+type FieldDayRoute struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	StaffId         string                 `protobuf:"bytes,1,opt,name=staff_id,json=staffId,proto3" json:"staff_id,omitempty"`
+	StopsCompleted  int32                  `protobuf:"varint,2,opt,name=stops_completed,json=stopsCompleted,proto3" json:"stops_completed,omitempty"`
+	TotalDistanceKm float64                `protobuf:"fixed64,3,opt,name=total_distance_km,json=totalDistanceKm,proto3" json:"total_distance_km,omitempty"`
+	TravelMinutes   int32                  `protobuf:"varint,4,opt,name=travel_minutes,json=travelMinutes,proto3" json:"travel_minutes,omitempty"`
+	SchoolMinutes   int32                  `protobuf:"varint,5,opt,name=school_minutes,json=schoolMinutes,proto3" json:"school_minutes,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *FieldDayRoute) Reset() {
+	*x = FieldDayRoute{}
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FieldDayRoute) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FieldDayRoute) ProtoMessage() {}
+
+func (x *FieldDayRoute) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FieldDayRoute.ProtoReflect.Descriptor instead.
+func (*FieldDayRoute) Descriptor() ([]byte, []int) {
+	return file_edify_analytics_v1_portfolio_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *FieldDayRoute) GetStaffId() string {
+	if x != nil {
+		return x.StaffId
+	}
+	return ""
+}
+
+func (x *FieldDayRoute) GetStopsCompleted() int32 {
+	if x != nil {
+		return x.StopsCompleted
+	}
+	return 0
+}
+
+func (x *FieldDayRoute) GetTotalDistanceKm() float64 {
+	if x != nil {
+		return x.TotalDistanceKm
+	}
+	return 0
+}
+
+func (x *FieldDayRoute) GetTravelMinutes() int32 {
+	if x != nil {
+		return x.TravelMinutes
+	}
+	return 0
+}
+
+func (x *FieldDayRoute) GetSchoolMinutes() int32 {
+	if x != nil {
+		return x.SchoolMinutes
+	}
+	return 0
+}
+
+type AnalyzeRouteEfficiencyRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FieldDays     []*FieldDayRoute       `protobuf:"bytes,1,rep,name=field_days,json=fieldDays,proto3" json:"field_days,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AnalyzeRouteEfficiencyRequest) Reset() {
+	*x = AnalyzeRouteEfficiencyRequest{}
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AnalyzeRouteEfficiencyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AnalyzeRouteEfficiencyRequest) ProtoMessage() {}
+
+func (x *AnalyzeRouteEfficiencyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AnalyzeRouteEfficiencyRequest.ProtoReflect.Descriptor instead.
+func (*AnalyzeRouteEfficiencyRequest) Descriptor() ([]byte, []int) {
+	return file_edify_analytics_v1_portfolio_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *AnalyzeRouteEfficiencyRequest) GetFieldDays() []*FieldDayRoute {
+	if x != nil {
+		return x.FieldDays
+	}
+	return nil
+}
+
+type AnalyzeRouteEfficiencyResponse struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	FieldDayCount      int32                  `protobuf:"varint,1,opt,name=field_day_count,json=fieldDayCount,proto3" json:"field_day_count,omitempty"`
+	TotalStops         int32                  `protobuf:"varint,2,opt,name=total_stops,json=totalStops,proto3" json:"total_stops,omitempty"`
+	TotalDistanceKm    float64                `protobuf:"fixed64,3,opt,name=total_distance_km,json=totalDistanceKm,proto3" json:"total_distance_km,omitempty"`
+	AverageStopsPerDay float64                `protobuf:"fixed64,4,opt,name=average_stops_per_day,json=averageStopsPerDay,proto3" json:"average_stops_per_day,omitempty"`
+	AverageKmPerStop   float64                `protobuf:"fixed64,5,opt,name=average_km_per_stop,json=averageKmPerStop,proto3" json:"average_km_per_stop,omitempty"`
+	SchoolTimeSharePct float64                `protobuf:"fixed64,6,opt,name=school_time_share_pct,json=schoolTimeSharePct,proto3" json:"school_time_share_pct,omitempty"`
+	EfficiencyScore    float64                `protobuf:"fixed64,7,opt,name=efficiency_score,json=efficiencyScore,proto3" json:"efficiency_score,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *AnalyzeRouteEfficiencyResponse) Reset() {
+	*x = AnalyzeRouteEfficiencyResponse{}
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AnalyzeRouteEfficiencyResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AnalyzeRouteEfficiencyResponse) ProtoMessage() {}
+
+func (x *AnalyzeRouteEfficiencyResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AnalyzeRouteEfficiencyResponse.ProtoReflect.Descriptor instead.
+func (*AnalyzeRouteEfficiencyResponse) Descriptor() ([]byte, []int) {
+	return file_edify_analytics_v1_portfolio_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *AnalyzeRouteEfficiencyResponse) GetFieldDayCount() int32 {
+	if x != nil {
+		return x.FieldDayCount
+	}
+	return 0
+}
+
+func (x *AnalyzeRouteEfficiencyResponse) GetTotalStops() int32 {
+	if x != nil {
+		return x.TotalStops
+	}
+	return 0
+}
+
+func (x *AnalyzeRouteEfficiencyResponse) GetTotalDistanceKm() float64 {
+	if x != nil {
+		return x.TotalDistanceKm
+	}
+	return 0
+}
+
+func (x *AnalyzeRouteEfficiencyResponse) GetAverageStopsPerDay() float64 {
+	if x != nil {
+		return x.AverageStopsPerDay
+	}
+	return 0
+}
+
+func (x *AnalyzeRouteEfficiencyResponse) GetAverageKmPerStop() float64 {
+	if x != nil {
+		return x.AverageKmPerStop
+	}
+	return 0
+}
+
+func (x *AnalyzeRouteEfficiencyResponse) GetSchoolTimeSharePct() float64 {
+	if x != nil {
+		return x.SchoolTimeSharePct
+	}
+	return 0
+}
+
+func (x *AnalyzeRouteEfficiencyResponse) GetEfficiencyScore() float64 {
+	if x != nil {
+		return x.EfficiencyScore
+	}
+	return 0
+}
+
+type SchoolRiskInput struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	SchoolId           string                 `protobuf:"bytes,1,opt,name=school_id,json=schoolId,proto3" json:"school_id,omitempty"`
+	LatestSsa          *float64               `protobuf:"fixed64,2,opt,name=latest_ssa,json=latestSsa,proto3,oneof" json:"latest_ssa,omitempty"`
+	SsaDelta           *float64               `protobuf:"fixed64,3,opt,name=ssa_delta,json=ssaDelta,proto3,oneof" json:"ssa_delta,omitempty"`
+	DaysSinceLastVisit int32                  `protobuf:"varint,4,opt,name=days_since_last_visit,json=daysSinceLastVisit,proto3" json:"days_since_last_visit,omitempty"`
+	HasCluster         bool                   `protobuf:"varint,5,opt,name=has_cluster,json=hasCluster,proto3" json:"has_cluster,omitempty"`
+	PackageComplete    bool                   `protobuf:"varint,6,opt,name=package_complete,json=packageComplete,proto3" json:"package_complete,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *SchoolRiskInput) Reset() {
+	*x = SchoolRiskInput{}
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SchoolRiskInput) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SchoolRiskInput) ProtoMessage() {}
+
+func (x *SchoolRiskInput) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SchoolRiskInput.ProtoReflect.Descriptor instead.
+func (*SchoolRiskInput) Descriptor() ([]byte, []int) {
+	return file_edify_analytics_v1_portfolio_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *SchoolRiskInput) GetSchoolId() string {
+	if x != nil {
+		return x.SchoolId
+	}
+	return ""
+}
+
+func (x *SchoolRiskInput) GetLatestSsa() float64 {
+	if x != nil && x.LatestSsa != nil {
+		return *x.LatestSsa
+	}
+	return 0
+}
+
+func (x *SchoolRiskInput) GetSsaDelta() float64 {
+	if x != nil && x.SsaDelta != nil {
+		return *x.SsaDelta
+	}
+	return 0
+}
+
+func (x *SchoolRiskInput) GetDaysSinceLastVisit() int32 {
+	if x != nil {
+		return x.DaysSinceLastVisit
+	}
+	return 0
+}
+
+func (x *SchoolRiskInput) GetHasCluster() bool {
+	if x != nil {
+		return x.HasCluster
+	}
+	return false
+}
+
+func (x *SchoolRiskInput) GetPackageComplete() bool {
+	if x != nil {
+		return x.PackageComplete
+	}
+	return false
+}
+
+type SchoolRiskPrediction struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	SchoolId          string                 `protobuf:"bytes,1,opt,name=school_id,json=schoolId,proto3" json:"school_id,omitempty"`
+	RiskScore         float64                `protobuf:"fixed64,2,opt,name=risk_score,json=riskScore,proto3" json:"risk_score,omitempty"`
+	RiskTier          string                 `protobuf:"bytes,3,opt,name=risk_tier,json=riskTier,proto3" json:"risk_tier,omitempty"`
+	Drivers           []string               `protobuf:"bytes,4,rep,name=drivers,proto3" json:"drivers,omitempty"`
+	RecommendedAction string                 `protobuf:"bytes,5,opt,name=recommended_action,json=recommendedAction,proto3" json:"recommended_action,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *SchoolRiskPrediction) Reset() {
+	*x = SchoolRiskPrediction{}
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SchoolRiskPrediction) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SchoolRiskPrediction) ProtoMessage() {}
+
+func (x *SchoolRiskPrediction) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SchoolRiskPrediction.ProtoReflect.Descriptor instead.
+func (*SchoolRiskPrediction) Descriptor() ([]byte, []int) {
+	return file_edify_analytics_v1_portfolio_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *SchoolRiskPrediction) GetSchoolId() string {
+	if x != nil {
+		return x.SchoolId
+	}
+	return ""
+}
+
+func (x *SchoolRiskPrediction) GetRiskScore() float64 {
+	if x != nil {
+		return x.RiskScore
+	}
+	return 0
+}
+
+func (x *SchoolRiskPrediction) GetRiskTier() string {
+	if x != nil {
+		return x.RiskTier
+	}
+	return ""
+}
+
+func (x *SchoolRiskPrediction) GetDrivers() []string {
+	if x != nil {
+		return x.Drivers
+	}
+	return nil
+}
+
+func (x *SchoolRiskPrediction) GetRecommendedAction() string {
+	if x != nil {
+		return x.RecommendedAction
+	}
+	return ""
+}
+
+type ComputePredictiveInsightsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Schools       []*SchoolRiskInput     `protobuf:"bytes,1,rep,name=schools,proto3" json:"schools,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ComputePredictiveInsightsRequest) Reset() {
+	*x = ComputePredictiveInsightsRequest{}
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ComputePredictiveInsightsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ComputePredictiveInsightsRequest) ProtoMessage() {}
+
+func (x *ComputePredictiveInsightsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ComputePredictiveInsightsRequest.ProtoReflect.Descriptor instead.
+func (*ComputePredictiveInsightsRequest) Descriptor() ([]byte, []int) {
+	return file_edify_analytics_v1_portfolio_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *ComputePredictiveInsightsRequest) GetSchools() []*SchoolRiskInput {
+	if x != nil {
+		return x.Schools
+	}
+	return nil
+}
+
+type ComputePredictiveInsightsResponse struct {
+	state           protoimpl.MessageState  `protogen:"open.v1"`
+	HighRiskCount   int32                   `protobuf:"varint,1,opt,name=high_risk_count,json=highRiskCount,proto3" json:"high_risk_count,omitempty"`
+	MediumRiskCount int32                   `protobuf:"varint,2,opt,name=medium_risk_count,json=mediumRiskCount,proto3" json:"medium_risk_count,omitempty"`
+	LowRiskCount    int32                   `protobuf:"varint,3,opt,name=low_risk_count,json=lowRiskCount,proto3" json:"low_risk_count,omitempty"`
+	Predictions     []*SchoolRiskPrediction `protobuf:"bytes,4,rep,name=predictions,proto3" json:"predictions,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *ComputePredictiveInsightsResponse) Reset() {
+	*x = ComputePredictiveInsightsResponse{}
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ComputePredictiveInsightsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ComputePredictiveInsightsResponse) ProtoMessage() {}
+
+func (x *ComputePredictiveInsightsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ComputePredictiveInsightsResponse.ProtoReflect.Descriptor instead.
+func (*ComputePredictiveInsightsResponse) Descriptor() ([]byte, []int) {
+	return file_edify_analytics_v1_portfolio_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *ComputePredictiveInsightsResponse) GetHighRiskCount() int32 {
+	if x != nil {
+		return x.HighRiskCount
+	}
+	return 0
+}
+
+func (x *ComputePredictiveInsightsResponse) GetMediumRiskCount() int32 {
+	if x != nil {
+		return x.MediumRiskCount
+	}
+	return 0
+}
+
+func (x *ComputePredictiveInsightsResponse) GetLowRiskCount() int32 {
+	if x != nil {
+		return x.LowRiskCount
+	}
+	return 0
+}
+
+func (x *ComputePredictiveInsightsResponse) GetPredictions() []*SchoolRiskPrediction {
+	if x != nil {
+		return x.Predictions
+	}
+	return nil
+}
+
+type CountryMetricInput struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	CountryCode     string                 `protobuf:"bytes,1,opt,name=country_code,json=countryCode,proto3" json:"country_code,omitempty"`
+	SchoolCount     int32                  `protobuf:"varint,2,opt,name=school_count,json=schoolCount,proto3" json:"school_count,omitempty"`
+	AssessedSchools int32                  `protobuf:"varint,3,opt,name=assessed_schools,json=assessedSchools,proto3" json:"assessed_schools,omitempty"`
+	VisitedSchools  int32                  `protobuf:"varint,4,opt,name=visited_schools,json=visitedSchools,proto3" json:"visited_schools,omitempty"`
+	AverageSsa      float64                `protobuf:"fixed64,5,opt,name=average_ssa,json=averageSsa,proto3" json:"average_ssa,omitempty"`
+	TotalEnrollment int64                  `protobuf:"varint,6,opt,name=total_enrollment,json=totalEnrollment,proto3" json:"total_enrollment,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *CountryMetricInput) Reset() {
+	*x = CountryMetricInput{}
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CountryMetricInput) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CountryMetricInput) ProtoMessage() {}
+
+func (x *CountryMetricInput) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CountryMetricInput.ProtoReflect.Descriptor instead.
+func (*CountryMetricInput) Descriptor() ([]byte, []int) {
+	return file_edify_analytics_v1_portfolio_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *CountryMetricInput) GetCountryCode() string {
+	if x != nil {
+		return x.CountryCode
+	}
+	return ""
+}
+
+func (x *CountryMetricInput) GetSchoolCount() int32 {
+	if x != nil {
+		return x.SchoolCount
+	}
+	return 0
+}
+
+func (x *CountryMetricInput) GetAssessedSchools() int32 {
+	if x != nil {
+		return x.AssessedSchools
+	}
+	return 0
+}
+
+func (x *CountryMetricInput) GetVisitedSchools() int32 {
+	if x != nil {
+		return x.VisitedSchools
+	}
+	return 0
+}
+
+func (x *CountryMetricInput) GetAverageSsa() float64 {
+	if x != nil {
+		return x.AverageSsa
+	}
+	return 0
+}
+
+func (x *CountryMetricInput) GetTotalEnrollment() int64 {
+	if x != nil {
+		return x.TotalEnrollment
+	}
+	return 0
+}
+
+type CountryGlobalRow struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	CountryCode      string                 `protobuf:"bytes,1,opt,name=country_code,json=countryCode,proto3" json:"country_code,omitempty"`
+	SchoolCount      int32                  `protobuf:"varint,2,opt,name=school_count,json=schoolCount,proto3" json:"school_count,omitempty"`
+	SsaCoveragePct   float64                `protobuf:"fixed64,3,opt,name=ssa_coverage_pct,json=ssaCoveragePct,proto3" json:"ssa_coverage_pct,omitempty"`
+	VisitCoveragePct float64                `protobuf:"fixed64,4,opt,name=visit_coverage_pct,json=visitCoveragePct,proto3" json:"visit_coverage_pct,omitempty"`
+	AverageSsa       float64                `protobuf:"fixed64,5,opt,name=average_ssa,json=averageSsa,proto3" json:"average_ssa,omitempty"`
+	TotalEnrollment  int64                  `protobuf:"varint,6,opt,name=total_enrollment,json=totalEnrollment,proto3" json:"total_enrollment,omitempty"`
+	Suppressed       bool                   `protobuf:"varint,7,opt,name=suppressed,proto3" json:"suppressed,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *CountryGlobalRow) Reset() {
+	*x = CountryGlobalRow{}
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CountryGlobalRow) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CountryGlobalRow) ProtoMessage() {}
+
+func (x *CountryGlobalRow) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CountryGlobalRow.ProtoReflect.Descriptor instead.
+func (*CountryGlobalRow) Descriptor() ([]byte, []int) {
+	return file_edify_analytics_v1_portfolio_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *CountryGlobalRow) GetCountryCode() string {
+	if x != nil {
+		return x.CountryCode
+	}
+	return ""
+}
+
+func (x *CountryGlobalRow) GetSchoolCount() int32 {
+	if x != nil {
+		return x.SchoolCount
+	}
+	return 0
+}
+
+func (x *CountryGlobalRow) GetSsaCoveragePct() float64 {
+	if x != nil {
+		return x.SsaCoveragePct
+	}
+	return 0
+}
+
+func (x *CountryGlobalRow) GetVisitCoveragePct() float64 {
+	if x != nil {
+		return x.VisitCoveragePct
+	}
+	return 0
+}
+
+func (x *CountryGlobalRow) GetAverageSsa() float64 {
+	if x != nil {
+		return x.AverageSsa
+	}
+	return 0
+}
+
+func (x *CountryGlobalRow) GetTotalEnrollment() int64 {
+	if x != nil {
+		return x.TotalEnrollment
+	}
+	return 0
+}
+
+func (x *CountryGlobalRow) GetSuppressed() bool {
+	if x != nil {
+		return x.Suppressed
+	}
+	return false
+}
+
+type GenerateGlobalReportRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Countries     []*CountryMetricInput  `protobuf:"bytes,1,rep,name=countries,proto3" json:"countries,omitempty"`
+	MinCohortSize int32                  `protobuf:"varint,2,opt,name=min_cohort_size,json=minCohortSize,proto3" json:"min_cohort_size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GenerateGlobalReportRequest) Reset() {
+	*x = GenerateGlobalReportRequest{}
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GenerateGlobalReportRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenerateGlobalReportRequest) ProtoMessage() {}
+
+func (x *GenerateGlobalReportRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GenerateGlobalReportRequest.ProtoReflect.Descriptor instead.
+func (*GenerateGlobalReportRequest) Descriptor() ([]byte, []int) {
+	return file_edify_analytics_v1_portfolio_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *GenerateGlobalReportRequest) GetCountries() []*CountryMetricInput {
+	if x != nil {
+		return x.Countries
+	}
+	return nil
+}
+
+func (x *GenerateGlobalReportRequest) GetMinCohortSize() int32 {
+	if x != nil {
+		return x.MinCohortSize
+	}
+	return 0
+}
+
+type GenerateGlobalReportResponse struct {
+	state                   protoimpl.MessageState `protogen:"open.v1"`
+	CountryCount            int32                  `protobuf:"varint,1,opt,name=country_count,json=countryCount,proto3" json:"country_count,omitempty"`
+	TotalSchools            int32                  `protobuf:"varint,2,opt,name=total_schools,json=totalSchools,proto3" json:"total_schools,omitempty"`
+	TotalEnrollment         int64                  `protobuf:"varint,3,opt,name=total_enrollment,json=totalEnrollment,proto3" json:"total_enrollment,omitempty"`
+	WeightedAverageSsa      float64                `protobuf:"fixed64,4,opt,name=weighted_average_ssa,json=weightedAverageSsa,proto3" json:"weighted_average_ssa,omitempty"`
+	OverallSsaCoveragePct   float64                `protobuf:"fixed64,5,opt,name=overall_ssa_coverage_pct,json=overallSsaCoveragePct,proto3" json:"overall_ssa_coverage_pct,omitempty"`
+	OverallVisitCoveragePct float64                `protobuf:"fixed64,6,opt,name=overall_visit_coverage_pct,json=overallVisitCoveragePct,proto3" json:"overall_visit_coverage_pct,omitempty"`
+	Countries               []*CountryGlobalRow    `protobuf:"bytes,7,rep,name=countries,proto3" json:"countries,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
+}
+
+func (x *GenerateGlobalReportResponse) Reset() {
+	*x = GenerateGlobalReportResponse{}
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GenerateGlobalReportResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenerateGlobalReportResponse) ProtoMessage() {}
+
+func (x *GenerateGlobalReportResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_edify_analytics_v1_portfolio_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GenerateGlobalReportResponse.ProtoReflect.Descriptor instead.
+func (*GenerateGlobalReportResponse) Descriptor() ([]byte, []int) {
+	return file_edify_analytics_v1_portfolio_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *GenerateGlobalReportResponse) GetCountryCount() int32 {
+	if x != nil {
+		return x.CountryCount
+	}
+	return 0
+}
+
+func (x *GenerateGlobalReportResponse) GetTotalSchools() int32 {
+	if x != nil {
+		return x.TotalSchools
+	}
+	return 0
+}
+
+func (x *GenerateGlobalReportResponse) GetTotalEnrollment() int64 {
+	if x != nil {
+		return x.TotalEnrollment
+	}
+	return 0
+}
+
+func (x *GenerateGlobalReportResponse) GetWeightedAverageSsa() float64 {
+	if x != nil {
+		return x.WeightedAverageSsa
+	}
+	return 0
+}
+
+func (x *GenerateGlobalReportResponse) GetOverallSsaCoveragePct() float64 {
+	if x != nil {
+		return x.OverallSsaCoveragePct
+	}
+	return 0
+}
+
+func (x *GenerateGlobalReportResponse) GetOverallVisitCoveragePct() float64 {
+	if x != nil {
+		return x.OverallVisitCoveragePct
+	}
+	return 0
+}
+
+func (x *GenerateGlobalReportResponse) GetCountries() []*CountryGlobalRow {
+	if x != nil {
+		return x.Countries
+	}
+	return nil
+}
+
 var File_edify_analytics_v1_portfolio_proto protoreflect.FileDescriptor
 
 const file_edify_analytics_v1_portfolio_proto_rawDesc = "" +
@@ -215,9 +1667,152 @@ const file_edify_analytics_v1_portfolio_proto_rawDesc = "" +
 	"\x11median_enrollment\x18\x05 \x01(\x01R\x10medianEnrollment\x1a@\n" +
 	"\x12SchoolsByTypeEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x012\x90\x01\n" +
+	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x01\"\xde\x02\n" +
+	"\x0fSsaSchoolRecord\x12\x1b\n" +
+	"\tschool_id\x18\x01 \x01(\tR\bschoolId\x12(\n" +
+	"\rcurrent_score\x18\x02 \x01(\x01H\x00R\fcurrentScore\x88\x01\x01\x12*\n" +
+	"\x0eprevious_score\x18\x03 \x01(\x01H\x01R\rpreviousScore\x88\x01\x01\x12l\n" +
+	"\x13intervention_scores\x18\x04 \x03(\v2;.edify.analytics.v1.SsaSchoolRecord.InterventionScoresEntryR\x12interventionScores\x1aE\n" +
+	"\x17InterventionScoresEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x01R\x05value:\x028\x01B\x10\n" +
+	"\x0e_current_scoreB\x11\n" +
+	"\x0f_previous_score\"\xa6\x02\n" +
+	"\x13InterventionSummary\x12\"\n" +
+	"\fintervention\x18\x01 \x01(\tR\fintervention\x12%\n" +
+	"\x0eassessed_count\x18\x02 \x01(\x05R\rassessedCount\x12#\n" +
+	"\raverage_score\x18\x03 \x01(\x01R\faverageScore\x12\x1b\n" +
+	"\tmin_score\x18\x04 \x01(\x01R\bminScore\x12\x1b\n" +
+	"\tmax_score\x18\x05 \x01(\x01R\bmaxScore\x12!\n" +
+	"\furgent_count\x18\x06 \x01(\x05R\vurgentCount\x12\x1f\n" +
+	"\vwatch_count\x18\a \x01(\x05R\n" +
+	"watchCount\x12!\n" +
+	"\fstrong_count\x18\b \x01(\x05R\vstrongCount\"R\n" +
+	"\x11AnalyzeSsaRequest\x12=\n" +
+	"\arecords\x18\x01 \x03(\v2#.edify.analytics.v1.SsaSchoolRecordR\arecords\"\xec\x03\n" +
+	"\x12AnalyzeSsaResponse\x12#\n" +
+	"\rtotal_schools\x18\x01 \x01(\x05R\ftotalSchools\x12)\n" +
+	"\x10assessed_schools\x18\x02 \x01(\x05R\x0fassessedSchools\x12)\n" +
+	"\x10compared_schools\x18\x03 \x01(\x05R\x0fcomparedSchools\x12)\n" +
+	"\x10improved_schools\x18\x04 \x01(\x05R\x0fimprovedSchools\x12)\n" +
+	"\x10declined_schools\x18\x05 \x01(\x05R\x0fdeclinedSchools\x12#\n" +
+	"\raverage_score\x18\x06 \x01(\x01R\faverageScore\x12#\n" +
+	"\raverage_delta\x18\a \x01(\x01R\faverageDelta\x12$\n" +
+	"\x0eon_track_count\x18\b \x01(\x05R\fonTrackCount\x12\x1f\n" +
+	"\vwatch_count\x18\t \x01(\x05R\n" +
+	"watchCount\x12%\n" +
+	"\x0ecritical_count\x18\n" +
+	" \x01(\x05R\rcriticalCount\x12M\n" +
+	"\rinterventions\x18\v \x03(\v2'.edify.analytics.v1.InterventionSummaryR\rinterventions\"\x80\x01\n" +
+	"\x14CoverageSchoolRecord\x12\x1b\n" +
+	"\tarea_name\x18\x01 \x01(\tR\bareaName\x12\x17\n" +
+	"\ahas_ssa\x18\x02 \x01(\bR\x06hasSsa\x12\x18\n" +
+	"\avisited\x18\x03 \x01(\bR\avisited\x12\x18\n" +
+	"\atrained\x18\x04 \x01(\bR\atrained\"\xce\x03\n" +
+	"\x0fAreaCoverageGap\x12\x1b\n" +
+	"\tarea_name\x18\x01 \x01(\tR\bareaName\x12#\n" +
+	"\rtotal_schools\x18\x02 \x01(\x05R\ftotalSchools\x12\x1f\n" +
+	"\vssa_covered\x18\x03 \x01(\x05R\n" +
+	"ssaCovered\x12'\n" +
+	"\x0fvisited_schools\x18\x04 \x01(\x05R\x0evisitedSchools\x12'\n" +
+	"\x0ftrained_schools\x18\x05 \x01(\x05R\x0etrainedSchools\x12(\n" +
+	"\x10ssa_coverage_pct\x18\x06 \x01(\x01R\x0essaCoveragePct\x12,\n" +
+	"\x12visit_coverage_pct\x18\a \x01(\x01R\x10visitCoveragePct\x122\n" +
+	"\x15training_coverage_pct\x18\b \x01(\x01R\x13trainingCoveragePct\x12%\n" +
+	"\x0eunassessed_gap\x18\t \x01(\x05R\runassessedGap\x12#\n" +
+	"\runvisited_gap\x18\n" +
+	" \x01(\x05R\funvisitedGap\x12.\n" +
+	"\x13composite_gap_score\x18\v \x01(\x01R\x11compositeGapScore\"`\n" +
+	"\x1aAnalyzeCoverageGapsRequest\x12B\n" +
+	"\arecords\x18\x01 \x03(\v2(.edify.analytics.v1.CoverageSchoolRecordR\arecords\"\xb6\x02\n" +
+	"\x1bAnalyzeCoverageGapsResponse\x12#\n" +
+	"\rtotal_schools\x18\x01 \x01(\x05R\ftotalSchools\x127\n" +
+	"\x18overall_ssa_coverage_pct\x18\x02 \x01(\x01R\x15overallSsaCoveragePct\x12;\n" +
+	"\x1aoverall_visit_coverage_pct\x18\x03 \x01(\x01R\x17overallVisitCoveragePct\x12A\n" +
+	"\x1doverall_training_coverage_pct\x18\x04 \x01(\x01R\x1aoverallTrainingCoveragePct\x129\n" +
+	"\x05areas\x18\x05 \x03(\v2#.edify.analytics.v1.AreaCoverageGapR\x05areas\"\xcd\x01\n" +
+	"\rFieldDayRoute\x12\x19\n" +
+	"\bstaff_id\x18\x01 \x01(\tR\astaffId\x12'\n" +
+	"\x0fstops_completed\x18\x02 \x01(\x05R\x0estopsCompleted\x12*\n" +
+	"\x11total_distance_km\x18\x03 \x01(\x01R\x0ftotalDistanceKm\x12%\n" +
+	"\x0etravel_minutes\x18\x04 \x01(\x05R\rtravelMinutes\x12%\n" +
+	"\x0eschool_minutes\x18\x05 \x01(\x05R\rschoolMinutes\"a\n" +
+	"\x1dAnalyzeRouteEfficiencyRequest\x12@\n" +
+	"\n" +
+	"field_days\x18\x01 \x03(\v2!.edify.analytics.v1.FieldDayRouteR\tfieldDays\"\xd5\x02\n" +
+	"\x1eAnalyzeRouteEfficiencyResponse\x12&\n" +
+	"\x0ffield_day_count\x18\x01 \x01(\x05R\rfieldDayCount\x12\x1f\n" +
+	"\vtotal_stops\x18\x02 \x01(\x05R\n" +
+	"totalStops\x12*\n" +
+	"\x11total_distance_km\x18\x03 \x01(\x01R\x0ftotalDistanceKm\x121\n" +
+	"\x15average_stops_per_day\x18\x04 \x01(\x01R\x12averageStopsPerDay\x12-\n" +
+	"\x13average_km_per_stop\x18\x05 \x01(\x01R\x10averageKmPerStop\x121\n" +
+	"\x15school_time_share_pct\x18\x06 \x01(\x01R\x12schoolTimeSharePct\x12)\n" +
+	"\x10efficiency_score\x18\a \x01(\x01R\x0fefficiencyScore\"\x90\x02\n" +
+	"\x0fSchoolRiskInput\x12\x1b\n" +
+	"\tschool_id\x18\x01 \x01(\tR\bschoolId\x12\"\n" +
+	"\n" +
+	"latest_ssa\x18\x02 \x01(\x01H\x00R\tlatestSsa\x88\x01\x01\x12 \n" +
+	"\tssa_delta\x18\x03 \x01(\x01H\x01R\bssaDelta\x88\x01\x01\x121\n" +
+	"\x15days_since_last_visit\x18\x04 \x01(\x05R\x12daysSinceLastVisit\x12\x1f\n" +
+	"\vhas_cluster\x18\x05 \x01(\bR\n" +
+	"hasCluster\x12)\n" +
+	"\x10package_complete\x18\x06 \x01(\bR\x0fpackageCompleteB\r\n" +
+	"\v_latest_ssaB\f\n" +
+	"\n" +
+	"_ssa_delta\"\xb8\x01\n" +
+	"\x14SchoolRiskPrediction\x12\x1b\n" +
+	"\tschool_id\x18\x01 \x01(\tR\bschoolId\x12\x1d\n" +
+	"\n" +
+	"risk_score\x18\x02 \x01(\x01R\triskScore\x12\x1b\n" +
+	"\trisk_tier\x18\x03 \x01(\tR\briskTier\x12\x18\n" +
+	"\adrivers\x18\x04 \x03(\tR\adrivers\x12-\n" +
+	"\x12recommended_action\x18\x05 \x01(\tR\x11recommendedAction\"a\n" +
+	" ComputePredictiveInsightsRequest\x12=\n" +
+	"\aschools\x18\x01 \x03(\v2#.edify.analytics.v1.SchoolRiskInputR\aschools\"\xe9\x01\n" +
+	"!ComputePredictiveInsightsResponse\x12&\n" +
+	"\x0fhigh_risk_count\x18\x01 \x01(\x05R\rhighRiskCount\x12*\n" +
+	"\x11medium_risk_count\x18\x02 \x01(\x05R\x0fmediumRiskCount\x12$\n" +
+	"\x0elow_risk_count\x18\x03 \x01(\x05R\flowRiskCount\x12J\n" +
+	"\vpredictions\x18\x04 \x03(\v2(.edify.analytics.v1.SchoolRiskPredictionR\vpredictions\"\xfa\x01\n" +
+	"\x12CountryMetricInput\x12!\n" +
+	"\fcountry_code\x18\x01 \x01(\tR\vcountryCode\x12!\n" +
+	"\fschool_count\x18\x02 \x01(\x05R\vschoolCount\x12)\n" +
+	"\x10assessed_schools\x18\x03 \x01(\x05R\x0fassessedSchools\x12'\n" +
+	"\x0fvisited_schools\x18\x04 \x01(\x05R\x0evisitedSchools\x12\x1f\n" +
+	"\vaverage_ssa\x18\x05 \x01(\x01R\n" +
+	"averageSsa\x12)\n" +
+	"\x10total_enrollment\x18\x06 \x01(\x03R\x0ftotalEnrollment\"\x9c\x02\n" +
+	"\x10CountryGlobalRow\x12!\n" +
+	"\fcountry_code\x18\x01 \x01(\tR\vcountryCode\x12!\n" +
+	"\fschool_count\x18\x02 \x01(\x05R\vschoolCount\x12(\n" +
+	"\x10ssa_coverage_pct\x18\x03 \x01(\x01R\x0essaCoveragePct\x12,\n" +
+	"\x12visit_coverage_pct\x18\x04 \x01(\x01R\x10visitCoveragePct\x12\x1f\n" +
+	"\vaverage_ssa\x18\x05 \x01(\x01R\n" +
+	"averageSsa\x12)\n" +
+	"\x10total_enrollment\x18\x06 \x01(\x03R\x0ftotalEnrollment\x12\x1e\n" +
+	"\n" +
+	"suppressed\x18\a \x01(\bR\n" +
+	"suppressed\"\x8b\x01\n" +
+	"\x1bGenerateGlobalReportRequest\x12D\n" +
+	"\tcountries\x18\x01 \x03(\v2&.edify.analytics.v1.CountryMetricInputR\tcountries\x12&\n" +
+	"\x0fmin_cohort_size\x18\x02 \x01(\x05R\rminCohortSize\"\xff\x02\n" +
+	"\x1cGenerateGlobalReportResponse\x12#\n" +
+	"\rcountry_count\x18\x01 \x01(\x05R\fcountryCount\x12#\n" +
+	"\rtotal_schools\x18\x02 \x01(\x05R\ftotalSchools\x12)\n" +
+	"\x10total_enrollment\x18\x03 \x01(\x03R\x0ftotalEnrollment\x120\n" +
+	"\x14weighted_average_ssa\x18\x04 \x01(\x01R\x12weightedAverageSsa\x127\n" +
+	"\x18overall_ssa_coverage_pct\x18\x05 \x01(\x01R\x15overallSsaCoveragePct\x12;\n" +
+	"\x1aoverall_visit_coverage_pct\x18\x06 \x01(\x01R\x17overallVisitCoveragePct\x12B\n" +
+	"\tcountries\x18\a \x03(\v2$.edify.analytics.v1.CountryGlobalRowR\tcountries2\xec\x05\n" +
 	"\x19PortfolioAnalyticsService\x12s\n" +
-	"\x12SummarizePortfolio\x12-.edify.analytics.v1.SummarizePortfolioRequest\x1a..edify.analytics.v1.SummarizePortfolioResponseB\xf0\x01\n" +
+	"\x12SummarizePortfolio\x12-.edify.analytics.v1.SummarizePortfolioRequest\x1a..edify.analytics.v1.SummarizePortfolioResponse\x12[\n" +
+	"\n" +
+	"AnalyzeSsa\x12%.edify.analytics.v1.AnalyzeSsaRequest\x1a&.edify.analytics.v1.AnalyzeSsaResponse\x12v\n" +
+	"\x13AnalyzeCoverageGaps\x12..edify.analytics.v1.AnalyzeCoverageGapsRequest\x1a/.edify.analytics.v1.AnalyzeCoverageGapsResponse\x12\x7f\n" +
+	"\x16AnalyzeRouteEfficiency\x121.edify.analytics.v1.AnalyzeRouteEfficiencyRequest\x1a2.edify.analytics.v1.AnalyzeRouteEfficiencyResponse\x12\x88\x01\n" +
+	"\x19ComputePredictiveInsights\x124.edify.analytics.v1.ComputePredictiveInsightsRequest\x1a5.edify.analytics.v1.ComputePredictiveInsightsResponse\x12y\n" +
+	"\x14GenerateGlobalReport\x12/.edify.analytics.v1.GenerateGlobalReportRequest\x1a0.edify.analytics.v1.GenerateGlobalReportResponseB\xf0\x01\n" +
 	"\x16com.edify.analytics.v1B\x0ePortfolioProtoP\x01Z\\github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/analytics/v1;analyticsv1\xa2\x02\x03EAX\xaa\x02\x12Edify.Analytics.V1\xca\x02\x12Edify\\Analytics\\V1\xe2\x02\x1eEdify\\Analytics\\V1\\GPBMetadata\xea\x02\x14Edify::Analytics::V1b\x06proto3"
 
 var (
@@ -232,23 +1827,63 @@ func file_edify_analytics_v1_portfolio_proto_rawDescGZIP() []byte {
 	return file_edify_analytics_v1_portfolio_proto_rawDescData
 }
 
-var file_edify_analytics_v1_portfolio_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_edify_analytics_v1_portfolio_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
 var file_edify_analytics_v1_portfolio_proto_goTypes = []any{
-	(*PortfolioSchool)(nil),            // 0: edify.analytics.v1.PortfolioSchool
-	(*SummarizePortfolioRequest)(nil),  // 1: edify.analytics.v1.SummarizePortfolioRequest
-	(*SummarizePortfolioResponse)(nil), // 2: edify.analytics.v1.SummarizePortfolioResponse
-	nil,                                // 3: edify.analytics.v1.SummarizePortfolioResponse.SchoolsByTypeEntry
+	(*PortfolioSchool)(nil),                   // 0: edify.analytics.v1.PortfolioSchool
+	(*SummarizePortfolioRequest)(nil),         // 1: edify.analytics.v1.SummarizePortfolioRequest
+	(*SummarizePortfolioResponse)(nil),        // 2: edify.analytics.v1.SummarizePortfolioResponse
+	(*SsaSchoolRecord)(nil),                   // 3: edify.analytics.v1.SsaSchoolRecord
+	(*InterventionSummary)(nil),               // 4: edify.analytics.v1.InterventionSummary
+	(*AnalyzeSsaRequest)(nil),                 // 5: edify.analytics.v1.AnalyzeSsaRequest
+	(*AnalyzeSsaResponse)(nil),                // 6: edify.analytics.v1.AnalyzeSsaResponse
+	(*CoverageSchoolRecord)(nil),              // 7: edify.analytics.v1.CoverageSchoolRecord
+	(*AreaCoverageGap)(nil),                   // 8: edify.analytics.v1.AreaCoverageGap
+	(*AnalyzeCoverageGapsRequest)(nil),        // 9: edify.analytics.v1.AnalyzeCoverageGapsRequest
+	(*AnalyzeCoverageGapsResponse)(nil),       // 10: edify.analytics.v1.AnalyzeCoverageGapsResponse
+	(*FieldDayRoute)(nil),                     // 11: edify.analytics.v1.FieldDayRoute
+	(*AnalyzeRouteEfficiencyRequest)(nil),     // 12: edify.analytics.v1.AnalyzeRouteEfficiencyRequest
+	(*AnalyzeRouteEfficiencyResponse)(nil),    // 13: edify.analytics.v1.AnalyzeRouteEfficiencyResponse
+	(*SchoolRiskInput)(nil),                   // 14: edify.analytics.v1.SchoolRiskInput
+	(*SchoolRiskPrediction)(nil),              // 15: edify.analytics.v1.SchoolRiskPrediction
+	(*ComputePredictiveInsightsRequest)(nil),  // 16: edify.analytics.v1.ComputePredictiveInsightsRequest
+	(*ComputePredictiveInsightsResponse)(nil), // 17: edify.analytics.v1.ComputePredictiveInsightsResponse
+	(*CountryMetricInput)(nil),                // 18: edify.analytics.v1.CountryMetricInput
+	(*CountryGlobalRow)(nil),                  // 19: edify.analytics.v1.CountryGlobalRow
+	(*GenerateGlobalReportRequest)(nil),       // 20: edify.analytics.v1.GenerateGlobalReportRequest
+	(*GenerateGlobalReportResponse)(nil),      // 21: edify.analytics.v1.GenerateGlobalReportResponse
+	nil,                                       // 22: edify.analytics.v1.SummarizePortfolioResponse.SchoolsByTypeEntry
+	nil,                                       // 23: edify.analytics.v1.SsaSchoolRecord.InterventionScoresEntry
 }
 var file_edify_analytics_v1_portfolio_proto_depIdxs = []int32{
-	0, // 0: edify.analytics.v1.SummarizePortfolioRequest.schools:type_name -> edify.analytics.v1.PortfolioSchool
-	3, // 1: edify.analytics.v1.SummarizePortfolioResponse.schools_by_type:type_name -> edify.analytics.v1.SummarizePortfolioResponse.SchoolsByTypeEntry
-	1, // 2: edify.analytics.v1.PortfolioAnalyticsService.SummarizePortfolio:input_type -> edify.analytics.v1.SummarizePortfolioRequest
-	2, // 3: edify.analytics.v1.PortfolioAnalyticsService.SummarizePortfolio:output_type -> edify.analytics.v1.SummarizePortfolioResponse
-	3, // [3:4] is the sub-list for method output_type
-	2, // [2:3] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	0,  // 0: edify.analytics.v1.SummarizePortfolioRequest.schools:type_name -> edify.analytics.v1.PortfolioSchool
+	22, // 1: edify.analytics.v1.SummarizePortfolioResponse.schools_by_type:type_name -> edify.analytics.v1.SummarizePortfolioResponse.SchoolsByTypeEntry
+	23, // 2: edify.analytics.v1.SsaSchoolRecord.intervention_scores:type_name -> edify.analytics.v1.SsaSchoolRecord.InterventionScoresEntry
+	3,  // 3: edify.analytics.v1.AnalyzeSsaRequest.records:type_name -> edify.analytics.v1.SsaSchoolRecord
+	4,  // 4: edify.analytics.v1.AnalyzeSsaResponse.interventions:type_name -> edify.analytics.v1.InterventionSummary
+	7,  // 5: edify.analytics.v1.AnalyzeCoverageGapsRequest.records:type_name -> edify.analytics.v1.CoverageSchoolRecord
+	8,  // 6: edify.analytics.v1.AnalyzeCoverageGapsResponse.areas:type_name -> edify.analytics.v1.AreaCoverageGap
+	11, // 7: edify.analytics.v1.AnalyzeRouteEfficiencyRequest.field_days:type_name -> edify.analytics.v1.FieldDayRoute
+	14, // 8: edify.analytics.v1.ComputePredictiveInsightsRequest.schools:type_name -> edify.analytics.v1.SchoolRiskInput
+	15, // 9: edify.analytics.v1.ComputePredictiveInsightsResponse.predictions:type_name -> edify.analytics.v1.SchoolRiskPrediction
+	18, // 10: edify.analytics.v1.GenerateGlobalReportRequest.countries:type_name -> edify.analytics.v1.CountryMetricInput
+	19, // 11: edify.analytics.v1.GenerateGlobalReportResponse.countries:type_name -> edify.analytics.v1.CountryGlobalRow
+	1,  // 12: edify.analytics.v1.PortfolioAnalyticsService.SummarizePortfolio:input_type -> edify.analytics.v1.SummarizePortfolioRequest
+	5,  // 13: edify.analytics.v1.PortfolioAnalyticsService.AnalyzeSsa:input_type -> edify.analytics.v1.AnalyzeSsaRequest
+	9,  // 14: edify.analytics.v1.PortfolioAnalyticsService.AnalyzeCoverageGaps:input_type -> edify.analytics.v1.AnalyzeCoverageGapsRequest
+	12, // 15: edify.analytics.v1.PortfolioAnalyticsService.AnalyzeRouteEfficiency:input_type -> edify.analytics.v1.AnalyzeRouteEfficiencyRequest
+	16, // 16: edify.analytics.v1.PortfolioAnalyticsService.ComputePredictiveInsights:input_type -> edify.analytics.v1.ComputePredictiveInsightsRequest
+	20, // 17: edify.analytics.v1.PortfolioAnalyticsService.GenerateGlobalReport:input_type -> edify.analytics.v1.GenerateGlobalReportRequest
+	2,  // 18: edify.analytics.v1.PortfolioAnalyticsService.SummarizePortfolio:output_type -> edify.analytics.v1.SummarizePortfolioResponse
+	6,  // 19: edify.analytics.v1.PortfolioAnalyticsService.AnalyzeSsa:output_type -> edify.analytics.v1.AnalyzeSsaResponse
+	10, // 20: edify.analytics.v1.PortfolioAnalyticsService.AnalyzeCoverageGaps:output_type -> edify.analytics.v1.AnalyzeCoverageGapsResponse
+	13, // 21: edify.analytics.v1.PortfolioAnalyticsService.AnalyzeRouteEfficiency:output_type -> edify.analytics.v1.AnalyzeRouteEfficiencyResponse
+	17, // 22: edify.analytics.v1.PortfolioAnalyticsService.ComputePredictiveInsights:output_type -> edify.analytics.v1.ComputePredictiveInsightsResponse
+	21, // 23: edify.analytics.v1.PortfolioAnalyticsService.GenerateGlobalReport:output_type -> edify.analytics.v1.GenerateGlobalReportResponse
+	18, // [18:24] is the sub-list for method output_type
+	12, // [12:18] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_edify_analytics_v1_portfolio_proto_init() }
@@ -257,13 +1892,15 @@ func file_edify_analytics_v1_portfolio_proto_init() {
 		return
 	}
 	file_edify_analytics_v1_portfolio_proto_msgTypes[0].OneofWrappers = []any{}
+	file_edify_analytics_v1_portfolio_proto_msgTypes[3].OneofWrappers = []any{}
+	file_edify_analytics_v1_portfolio_proto_msgTypes[14].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_edify_analytics_v1_portfolio_proto_rawDesc), len(file_edify_analytics_v1_portfolio_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   24,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

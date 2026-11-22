@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file edify/analytics/v1/portfolio.proto.
  */
 export const file_edify_analytics_v1_portfolio: GenFile = /*@__PURE__*/
-  fileDesc("CiJlZGlmeS9hbmFseXRpY3MvdjEvcG9ydGZvbGlvLnByb3RvEhJlZGlmeS5hbmFseXRpY3MudjEiTgoPUG9ydGZvbGlvU2Nob29sEhMKC3NjaG9vbF90eXBlGAEgASgJEhcKCmVucm9sbG1lbnQYAiABKAVIAIgBAUINCgtfZW5yb2xsbWVudCJRChlTdW1tYXJpemVQb3J0Zm9saW9SZXF1ZXN0EjQKB3NjaG9vbHMYASADKAsyIy5lZGlmeS5hbmFseXRpY3MudjEuUG9ydGZvbGlvU2Nob29sIpoCChpTdW1tYXJpemVQb3J0Zm9saW9SZXNwb25zZRIUCgxzY2hvb2xfY291bnQYASABKAUSWgoPc2Nob29sc19ieV90eXBlGAIgAygLMkEuZWRpZnkuYW5hbHl0aWNzLnYxLlN1bW1hcml6ZVBvcnRmb2xpb1Jlc3BvbnNlLlNjaG9vbHNCeVR5cGVFbnRyeRIfChdzY2hvb2xzX3dpdGhfZW5yb2xsbWVudBgDIAEoBRIYChB0b3RhbF9lbnJvbGxtZW50GAQgASgDEhkKEW1lZGlhbl9lbnJvbGxtZW50GAUgASgBGjQKElNjaG9vbHNCeVR5cGVFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAU6AjgBMpABChlQb3J0Zm9saW9BbmFseXRpY3NTZXJ2aWNlEnMKElN1bW1hcml6ZVBvcnRmb2xpbxItLmVkaWZ5LmFuYWx5dGljcy52MS5TdW1tYXJpemVQb3J0Zm9saW9SZXF1ZXN0Gi4uZWRpZnkuYW5hbHl0aWNzLnYxLlN1bW1hcml6ZVBvcnRmb2xpb1Jlc3BvbnNlQvABChZjb20uZWRpZnkuYW5hbHl0aWNzLnYxQg5Qb3J0Zm9saW9Qcm90b1ABWlxnaXRodWIuY29tL08tTWFyaW84OC9lZGlmeS1wbGFubmluZy10b29sL3BsYXRmb3JtL2JhY2tlbmQvZ2VuL2VkaWZ5L2FuYWx5dGljcy92MTthbmFseXRpY3N2MaICA0VBWKoCEkVkaWZ5LkFuYWx5dGljcy5WMcoCEkVkaWZ5XEFuYWx5dGljc1xWMeICHkVkaWZ5XEFuYWx5dGljc1xWMVxHUEJNZXRhZGF0YeoCFEVkaWZ5OjpBbmFseXRpY3M6OlYxYgZwcm90bzM");
+  fileDesc("CiJlZGlmeS9hbmFseXRpY3MvdjEvcG9ydGZvbGlvLnByb3RvEhJlZGlmeS5hbmFseXRpY3MudjEiTgoPUG9ydGZvbGlvU2Nob29sEhMKC3NjaG9vbF90eXBlGAEgASgJEhcKCmVucm9sbG1lbnQYAiABKAVIAIgBAUINCgtfZW5yb2xsbWVudCJRChlTdW1tYXJpemVQb3J0Zm9saW9SZXF1ZXN0EjQKB3NjaG9vbHMYASADKAsyIy5lZGlmeS5hbmFseXRpY3MudjEuUG9ydGZvbGlvU2Nob29sIpoCChpTdW1tYXJpemVQb3J0Zm9saW9SZXNwb25zZRIUCgxzY2hvb2xfY291bnQYASABKAUSWgoPc2Nob29sc19ieV90eXBlGAIgAygLMkEuZWRpZnkuYW5hbHl0aWNzLnYxLlN1bW1hcml6ZVBvcnRmb2xpb1Jlc3BvbnNlLlNjaG9vbHNCeVR5cGVFbnRyeRIfChdzY2hvb2xzX3dpdGhfZW5yb2xsbWVudBgDIAEoBRIYChB0b3RhbF9lbnJvbGxtZW50GAQgASgDEhkKEW1lZGlhbl9lbnJvbGxtZW50GAUgASgBGjQKElNjaG9vbHNCeVR5cGVFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAU6AjgBIpcCCg9Tc2FTY2hvb2xSZWNvcmQSEQoJc2Nob29sX2lkGAEgASgJEhoKDWN1cnJlbnRfc2NvcmUYAiABKAFIAIgBARIbCg5wcmV2aW91c19zY29yZRgDIAEoAUgBiAEBElgKE2ludGVydmVudGlvbl9zY29yZXMYBCADKAsyOy5lZGlmeS5hbmFseXRpY3MudjEuU3NhU2Nob29sUmVjb3JkLkludGVydmVudGlvblNjb3Jlc0VudHJ5GjkKF0ludGVydmVudGlvblNjb3Jlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoAToCOAFCEAoOX2N1cnJlbnRfc2NvcmVCEQoPX3ByZXZpb3VzX3Njb3JlIsEBChNJbnRlcnZlbnRpb25TdW1tYXJ5EhQKDGludGVydmVudGlvbhgBIAEoCRIWCg5hc3Nlc3NlZF9jb3VudBgCIAEoBRIVCg1hdmVyYWdlX3Njb3JlGAMgASgBEhEKCW1pbl9zY29yZRgEIAEoARIRCgltYXhfc2NvcmUYBSABKAESFAoMdXJnZW50X2NvdW50GAYgASgFEhMKC3dhdGNoX2NvdW50GAcgASgFEhQKDHN0cm9uZ19jb3VudBgIIAEoBSJJChFBbmFseXplU3NhUmVxdWVzdBI0CgdyZWNvcmRzGAEgAygLMiMuZWRpZnkuYW5hbHl0aWNzLnYxLlNzYVNjaG9vbFJlY29yZCLGAgoSQW5hbHl6ZVNzYVJlc3BvbnNlEhUKDXRvdGFsX3NjaG9vbHMYASABKAUSGAoQYXNzZXNzZWRfc2Nob29scxgCIAEoBRIYChBjb21wYXJlZF9zY2hvb2xzGAMgASgFEhgKEGltcHJvdmVkX3NjaG9vbHMYBCABKAUSGAoQZGVjbGluZWRfc2Nob29scxgFIAEoBRIVCg1hdmVyYWdlX3Njb3JlGAYgASgBEhUKDWF2ZXJhZ2VfZGVsdGEYByABKAESFgoOb25fdHJhY2tfY291bnQYCCABKAUSEwoLd2F0Y2hfY291bnQYCSABKAUSFgoOY3JpdGljYWxfY291bnQYCiABKAUSPgoNaW50ZXJ2ZW50aW9ucxgLIAMoCzInLmVkaWZ5LmFuYWx5dGljcy52MS5JbnRlcnZlbnRpb25TdW1tYXJ5IlwKFENvdmVyYWdlU2Nob29sUmVjb3JkEhEKCWFyZWFfbmFtZRgBIAEoCRIPCgdoYXNfc3NhGAIgASgIEg8KB3Zpc2l0ZWQYAyABKAgSDwoHdHJhaW5lZBgEIAEoCCKjAgoPQXJlYUNvdmVyYWdlR2FwEhEKCWFyZWFfbmFtZRgBIAEoCRIVCg10b3RhbF9zY2hvb2xzGAIgASgFEhMKC3NzYV9jb3ZlcmVkGAMgASgFEhcKD3Zpc2l0ZWRfc2Nob29scxgEIAEoBRIXCg90cmFpbmVkX3NjaG9vbHMYBSABKAUSGAoQc3NhX2NvdmVyYWdlX3BjdBgGIAEoARIaChJ2aXNpdF9jb3ZlcmFnZV9wY3QYByABKAESHQoVdHJhaW5pbmdfY292ZXJhZ2VfcGN0GAggASgBEhYKDnVuYXNzZXNzZWRfZ2FwGAkgASgFEhUKDXVudmlzaXRlZF9nYXAYCiABKAUSGwoTY29tcG9zaXRlX2dhcF9zY29yZRgLIAEoASJXChpBbmFseXplQ292ZXJhZ2VHYXBzUmVxdWVzdBI5CgdyZWNvcmRzGAEgAygLMiguZWRpZnkuYW5hbHl0aWNzLnYxLkNvdmVyYWdlU2Nob29sUmVjb3JkItUBChtBbmFseXplQ292ZXJhZ2VHYXBzUmVzcG9uc2USFQoNdG90YWxfc2Nob29scxgBIAEoBRIgChhvdmVyYWxsX3NzYV9jb3ZlcmFnZV9wY3QYAiABKAESIgoab3ZlcmFsbF92aXNpdF9jb3ZlcmFnZV9wY3QYAyABKAESJQodb3ZlcmFsbF90cmFpbmluZ19jb3ZlcmFnZV9wY3QYBCABKAESMgoFYXJlYXMYBSADKAsyIy5lZGlmeS5hbmFseXRpY3MudjEuQXJlYUNvdmVyYWdlR2FwIoUBCg1GaWVsZERheVJvdXRlEhAKCHN0YWZmX2lkGAEgASgJEhcKD3N0b3BzX2NvbXBsZXRlZBgCIAEoBRIZChF0b3RhbF9kaXN0YW5jZV9rbRgDIAEoARIWCg50cmF2ZWxfbWludXRlcxgEIAEoBRIWCg5zY2hvb2xfbWludXRlcxgFIAEoBSJWCh1BbmFseXplUm91dGVFZmZpY2llbmN5UmVxdWVzdBI1CgpmaWVsZF9kYXlzGAEgAygLMiEuZWRpZnkuYW5hbHl0aWNzLnYxLkZpZWxkRGF5Um91dGUi3gEKHkFuYWx5emVSb3V0ZUVmZmljaWVuY3lSZXNwb25zZRIXCg9maWVsZF9kYXlfY291bnQYASABKAUSEwoLdG90YWxfc3RvcHMYAiABKAUSGQoRdG90YWxfZGlzdGFuY2Vfa20YAyABKAESHQoVYXZlcmFnZV9zdG9wc19wZXJfZGF5GAQgASgBEhsKE2F2ZXJhZ2Vfa21fcGVyX3N0b3AYBSABKAESHQoVc2Nob29sX3RpbWVfc2hhcmVfcGN0GAYgASgBEhgKEGVmZmljaWVuY3lfc2NvcmUYByABKAEiwAEKD1NjaG9vbFJpc2tJbnB1dBIRCglzY2hvb2xfaWQYASABKAkSFwoKbGF0ZXN0X3NzYRgCIAEoAUgAiAEBEhYKCXNzYV9kZWx0YRgDIAEoAUgBiAEBEh0KFWRheXNfc2luY2VfbGFzdF92aXNpdBgEIAEoBRITCgtoYXNfY2x1c3RlchgFIAEoCBIYChBwYWNrYWdlX2NvbXBsZXRlGAYgASgIQg0KC19sYXRlc3Rfc3NhQgwKCl9zc2FfZGVsdGEifQoUU2Nob29sUmlza1ByZWRpY3Rpb24SEQoJc2Nob29sX2lkGAEgASgJEhIKCnJpc2tfc2NvcmUYAiABKAESEQoJcmlza190aWVyGAMgASgJEg8KB2RyaXZlcnMYBCADKAkSGgoScmVjb21tZW5kZWRfYWN0aW9uGAUgASgJIlgKIENvbXB1dGVQcmVkaWN0aXZlSW5zaWdodHNSZXF1ZXN0EjQKB3NjaG9vbHMYASADKAsyIy5lZGlmeS5hbmFseXRpY3MudjEuU2Nob29sUmlza0lucHV0Iq4BCiFDb21wdXRlUHJlZGljdGl2ZUluc2lnaHRzUmVzcG9uc2USFwoPaGlnaF9yaXNrX2NvdW50GAEgASgFEhkKEW1lZGl1bV9yaXNrX2NvdW50GAIgASgFEhYKDmxvd19yaXNrX2NvdW50GAMgASgFEj0KC3ByZWRpY3Rpb25zGAQgAygLMiguZWRpZnkuYW5hbHl0aWNzLnYxLlNjaG9vbFJpc2tQcmVkaWN0aW9uIqIBChJDb3VudHJ5TWV0cmljSW5wdXQSFAoMY291bnRyeV9jb2RlGAEgASgJEhQKDHNjaG9vbF9jb3VudBgCIAEoBRIYChBhc3Nlc3NlZF9zY2hvb2xzGAMgASgFEhcKD3Zpc2l0ZWRfc2Nob29scxgEIAEoBRITCgthdmVyYWdlX3NzYRgFIAEoARIYChB0b3RhbF9lbnJvbGxtZW50GAYgASgDIrcBChBDb3VudHJ5R2xvYmFsUm93EhQKDGNvdW50cnlfY29kZRgBIAEoCRIUCgxzY2hvb2xfY291bnQYAiABKAUSGAoQc3NhX2NvdmVyYWdlX3BjdBgDIAEoARIaChJ2aXNpdF9jb3ZlcmFnZV9wY3QYBCABKAESEwoLYXZlcmFnZV9zc2EYBSABKAESGAoQdG90YWxfZW5yb2xsbWVudBgGIAEoAxISCgpzdXBwcmVzc2VkGAcgASgIInEKG0dlbmVyYXRlR2xvYmFsUmVwb3J0UmVxdWVzdBI5Cgljb3VudHJpZXMYASADKAsyJi5lZGlmeS5hbmFseXRpY3MudjEuQ291bnRyeU1ldHJpY0lucHV0EhcKD21pbl9jb2hvcnRfc2l6ZRgCIAEoBSKDAgocR2VuZXJhdGVHbG9iYWxSZXBvcnRSZXNwb25zZRIVCg1jb3VudHJ5X2NvdW50GAEgASgFEhUKDXRvdGFsX3NjaG9vbHMYAiABKAUSGAoQdG90YWxfZW5yb2xsbWVudBgDIAEoAxIcChR3ZWlnaHRlZF9hdmVyYWdlX3NzYRgEIAEoARIgChhvdmVyYWxsX3NzYV9jb3ZlcmFnZV9wY3QYBSABKAESIgoab3ZlcmFsbF92aXNpdF9jb3ZlcmFnZV9wY3QYBiABKAESNwoJY291bnRyaWVzGAcgAygLMiQuZWRpZnkuYW5hbHl0aWNzLnYxLkNvdW50cnlHbG9iYWxSb3cy7AUKGVBvcnRmb2xpb0FuYWx5dGljc1NlcnZpY2UScwoSU3VtbWFyaXplUG9ydGZvbGlvEi0uZWRpZnkuYW5hbHl0aWNzLnYxLlN1bW1hcml6ZVBvcnRmb2xpb1JlcXVlc3QaLi5lZGlmeS5hbmFseXRpY3MudjEuU3VtbWFyaXplUG9ydGZvbGlvUmVzcG9uc2USWwoKQW5hbHl6ZVNzYRIlLmVkaWZ5LmFuYWx5dGljcy52MS5BbmFseXplU3NhUmVxdWVzdBomLmVkaWZ5LmFuYWx5dGljcy52MS5BbmFseXplU3NhUmVzcG9uc2USdgoTQW5hbHl6ZUNvdmVyYWdlR2FwcxIuLmVkaWZ5LmFuYWx5dGljcy52MS5BbmFseXplQ292ZXJhZ2VHYXBzUmVxdWVzdBovLmVkaWZ5LmFuYWx5dGljcy52MS5BbmFseXplQ292ZXJhZ2VHYXBzUmVzcG9uc2USfwoWQW5hbHl6ZVJvdXRlRWZmaWNpZW5jeRIxLmVkaWZ5LmFuYWx5dGljcy52MS5BbmFseXplUm91dGVFZmZpY2llbmN5UmVxdWVzdBoyLmVkaWZ5LmFuYWx5dGljcy52MS5BbmFseXplUm91dGVFZmZpY2llbmN5UmVzcG9uc2USiAEKGUNvbXB1dGVQcmVkaWN0aXZlSW5zaWdodHMSNC5lZGlmeS5hbmFseXRpY3MudjEuQ29tcHV0ZVByZWRpY3RpdmVJbnNpZ2h0c1JlcXVlc3QaNS5lZGlmeS5hbmFseXRpY3MudjEuQ29tcHV0ZVByZWRpY3RpdmVJbnNpZ2h0c1Jlc3BvbnNlEnkKFEdlbmVyYXRlR2xvYmFsUmVwb3J0Ei8uZWRpZnkuYW5hbHl0aWNzLnYxLkdlbmVyYXRlR2xvYmFsUmVwb3J0UmVxdWVzdBowLmVkaWZ5LmFuYWx5dGljcy52MS5HZW5lcmF0ZUdsb2JhbFJlcG9ydFJlc3BvbnNlQvABChZjb20uZWRpZnkuYW5hbHl0aWNzLnYxQg5Qb3J0Zm9saW9Qcm90b1ABWlxnaXRodWIuY29tL08tTWFyaW84OC9lZGlmeS1wbGFubmluZy10b29sL3BsYXRmb3JtL2JhY2tlbmQvZ2VuL2VkaWZ5L2FuYWx5dGljcy92MTthbmFseXRpY3N2MaICA0VBWKoCEkVkaWZ5LkFuYWx5dGljcy5WMcoCEkVkaWZ5XEFuYWx5dGljc1xWMeICHkVkaWZ5XEFuYWx5dGljc1xWMVxHUEJNZXRhZGF0YeoCFEVkaWZ5OjpBbmFseXRpY3M6OlYxYgZwcm90bzM");
 
 /**
  * @generated from message edify.analytics.v1.PortfolioSchool
@@ -89,9 +89,718 @@ export const SummarizePortfolioResponseSchema: GenMessage<SummarizePortfolioResp
   messageDesc(file_edify_analytics_v1_portfolio, 2);
 
 /**
+ * @generated from message edify.analytics.v1.SsaSchoolRecord
+ */
+export type SsaSchoolRecord = Message<"edify.analytics.v1.SsaSchoolRecord"> & {
+  /**
+   * @generated from field: string school_id = 1;
+   */
+  schoolId: string;
+
+  /**
+   * @generated from field: optional double current_score = 2;
+   */
+  currentScore?: number | undefined;
+
+  /**
+   * @generated from field: optional double previous_score = 3;
+   */
+  previousScore?: number | undefined;
+
+  /**
+   * @generated from field: map<string, double> intervention_scores = 4;
+   */
+  interventionScores: { [key: string]: number };
+};
+
+/**
+ * Describes the message edify.analytics.v1.SsaSchoolRecord.
+ * Use `create(SsaSchoolRecordSchema)` to create a new message.
+ */
+export const SsaSchoolRecordSchema: GenMessage<SsaSchoolRecord> = /*@__PURE__*/
+  messageDesc(file_edify_analytics_v1_portfolio, 3);
+
+/**
+ * @generated from message edify.analytics.v1.InterventionSummary
+ */
+export type InterventionSummary = Message<"edify.analytics.v1.InterventionSummary"> & {
+  /**
+   * @generated from field: string intervention = 1;
+   */
+  intervention: string;
+
+  /**
+   * @generated from field: int32 assessed_count = 2;
+   */
+  assessedCount: number;
+
+  /**
+   * @generated from field: double average_score = 3;
+   */
+  averageScore: number;
+
+  /**
+   * @generated from field: double min_score = 4;
+   */
+  minScore: number;
+
+  /**
+   * @generated from field: double max_score = 5;
+   */
+  maxScore: number;
+
+  /**
+   * @generated from field: int32 urgent_count = 6;
+   */
+  urgentCount: number;
+
+  /**
+   * @generated from field: int32 watch_count = 7;
+   */
+  watchCount: number;
+
+  /**
+   * @generated from field: int32 strong_count = 8;
+   */
+  strongCount: number;
+};
+
+/**
+ * Describes the message edify.analytics.v1.InterventionSummary.
+ * Use `create(InterventionSummarySchema)` to create a new message.
+ */
+export const InterventionSummarySchema: GenMessage<InterventionSummary> = /*@__PURE__*/
+  messageDesc(file_edify_analytics_v1_portfolio, 4);
+
+/**
+ * @generated from message edify.analytics.v1.AnalyzeSsaRequest
+ */
+export type AnalyzeSsaRequest = Message<"edify.analytics.v1.AnalyzeSsaRequest"> & {
+  /**
+   * @generated from field: repeated edify.analytics.v1.SsaSchoolRecord records = 1;
+   */
+  records: SsaSchoolRecord[];
+};
+
+/**
+ * Describes the message edify.analytics.v1.AnalyzeSsaRequest.
+ * Use `create(AnalyzeSsaRequestSchema)` to create a new message.
+ */
+export const AnalyzeSsaRequestSchema: GenMessage<AnalyzeSsaRequest> = /*@__PURE__*/
+  messageDesc(file_edify_analytics_v1_portfolio, 5);
+
+/**
+ * @generated from message edify.analytics.v1.AnalyzeSsaResponse
+ */
+export type AnalyzeSsaResponse = Message<"edify.analytics.v1.AnalyzeSsaResponse"> & {
+  /**
+   * @generated from field: int32 total_schools = 1;
+   */
+  totalSchools: number;
+
+  /**
+   * @generated from field: int32 assessed_schools = 2;
+   */
+  assessedSchools: number;
+
+  /**
+   * @generated from field: int32 compared_schools = 3;
+   */
+  comparedSchools: number;
+
+  /**
+   * @generated from field: int32 improved_schools = 4;
+   */
+  improvedSchools: number;
+
+  /**
+   * @generated from field: int32 declined_schools = 5;
+   */
+  declinedSchools: number;
+
+  /**
+   * @generated from field: double average_score = 6;
+   */
+  averageScore: number;
+
+  /**
+   * @generated from field: double average_delta = 7;
+   */
+  averageDelta: number;
+
+  /**
+   * @generated from field: int32 on_track_count = 8;
+   */
+  onTrackCount: number;
+
+  /**
+   * @generated from field: int32 watch_count = 9;
+   */
+  watchCount: number;
+
+  /**
+   * @generated from field: int32 critical_count = 10;
+   */
+  criticalCount: number;
+
+  /**
+   * @generated from field: repeated edify.analytics.v1.InterventionSummary interventions = 11;
+   */
+  interventions: InterventionSummary[];
+};
+
+/**
+ * Describes the message edify.analytics.v1.AnalyzeSsaResponse.
+ * Use `create(AnalyzeSsaResponseSchema)` to create a new message.
+ */
+export const AnalyzeSsaResponseSchema: GenMessage<AnalyzeSsaResponse> = /*@__PURE__*/
+  messageDesc(file_edify_analytics_v1_portfolio, 6);
+
+/**
+ * @generated from message edify.analytics.v1.CoverageSchoolRecord
+ */
+export type CoverageSchoolRecord = Message<"edify.analytics.v1.CoverageSchoolRecord"> & {
+  /**
+   * @generated from field: string area_name = 1;
+   */
+  areaName: string;
+
+  /**
+   * @generated from field: bool has_ssa = 2;
+   */
+  hasSsa: boolean;
+
+  /**
+   * @generated from field: bool visited = 3;
+   */
+  visited: boolean;
+
+  /**
+   * @generated from field: bool trained = 4;
+   */
+  trained: boolean;
+};
+
+/**
+ * Describes the message edify.analytics.v1.CoverageSchoolRecord.
+ * Use `create(CoverageSchoolRecordSchema)` to create a new message.
+ */
+export const CoverageSchoolRecordSchema: GenMessage<CoverageSchoolRecord> = /*@__PURE__*/
+  messageDesc(file_edify_analytics_v1_portfolio, 7);
+
+/**
+ * @generated from message edify.analytics.v1.AreaCoverageGap
+ */
+export type AreaCoverageGap = Message<"edify.analytics.v1.AreaCoverageGap"> & {
+  /**
+   * @generated from field: string area_name = 1;
+   */
+  areaName: string;
+
+  /**
+   * @generated from field: int32 total_schools = 2;
+   */
+  totalSchools: number;
+
+  /**
+   * @generated from field: int32 ssa_covered = 3;
+   */
+  ssaCovered: number;
+
+  /**
+   * @generated from field: int32 visited_schools = 4;
+   */
+  visitedSchools: number;
+
+  /**
+   * @generated from field: int32 trained_schools = 5;
+   */
+  trainedSchools: number;
+
+  /**
+   * @generated from field: double ssa_coverage_pct = 6;
+   */
+  ssaCoveragePct: number;
+
+  /**
+   * @generated from field: double visit_coverage_pct = 7;
+   */
+  visitCoveragePct: number;
+
+  /**
+   * @generated from field: double training_coverage_pct = 8;
+   */
+  trainingCoveragePct: number;
+
+  /**
+   * @generated from field: int32 unassessed_gap = 9;
+   */
+  unassessedGap: number;
+
+  /**
+   * @generated from field: int32 unvisited_gap = 10;
+   */
+  unvisitedGap: number;
+
+  /**
+   * @generated from field: double composite_gap_score = 11;
+   */
+  compositeGapScore: number;
+};
+
+/**
+ * Describes the message edify.analytics.v1.AreaCoverageGap.
+ * Use `create(AreaCoverageGapSchema)` to create a new message.
+ */
+export const AreaCoverageGapSchema: GenMessage<AreaCoverageGap> = /*@__PURE__*/
+  messageDesc(file_edify_analytics_v1_portfolio, 8);
+
+/**
+ * @generated from message edify.analytics.v1.AnalyzeCoverageGapsRequest
+ */
+export type AnalyzeCoverageGapsRequest = Message<"edify.analytics.v1.AnalyzeCoverageGapsRequest"> & {
+  /**
+   * @generated from field: repeated edify.analytics.v1.CoverageSchoolRecord records = 1;
+   */
+  records: CoverageSchoolRecord[];
+};
+
+/**
+ * Describes the message edify.analytics.v1.AnalyzeCoverageGapsRequest.
+ * Use `create(AnalyzeCoverageGapsRequestSchema)` to create a new message.
+ */
+export const AnalyzeCoverageGapsRequestSchema: GenMessage<AnalyzeCoverageGapsRequest> = /*@__PURE__*/
+  messageDesc(file_edify_analytics_v1_portfolio, 9);
+
+/**
+ * @generated from message edify.analytics.v1.AnalyzeCoverageGapsResponse
+ */
+export type AnalyzeCoverageGapsResponse = Message<"edify.analytics.v1.AnalyzeCoverageGapsResponse"> & {
+  /**
+   * @generated from field: int32 total_schools = 1;
+   */
+  totalSchools: number;
+
+  /**
+   * @generated from field: double overall_ssa_coverage_pct = 2;
+   */
+  overallSsaCoveragePct: number;
+
+  /**
+   * @generated from field: double overall_visit_coverage_pct = 3;
+   */
+  overallVisitCoveragePct: number;
+
+  /**
+   * @generated from field: double overall_training_coverage_pct = 4;
+   */
+  overallTrainingCoveragePct: number;
+
+  /**
+   * @generated from field: repeated edify.analytics.v1.AreaCoverageGap areas = 5;
+   */
+  areas: AreaCoverageGap[];
+};
+
+/**
+ * Describes the message edify.analytics.v1.AnalyzeCoverageGapsResponse.
+ * Use `create(AnalyzeCoverageGapsResponseSchema)` to create a new message.
+ */
+export const AnalyzeCoverageGapsResponseSchema: GenMessage<AnalyzeCoverageGapsResponse> = /*@__PURE__*/
+  messageDesc(file_edify_analytics_v1_portfolio, 10);
+
+/**
+ * @generated from message edify.analytics.v1.FieldDayRoute
+ */
+export type FieldDayRoute = Message<"edify.analytics.v1.FieldDayRoute"> & {
+  /**
+   * @generated from field: string staff_id = 1;
+   */
+  staffId: string;
+
+  /**
+   * @generated from field: int32 stops_completed = 2;
+   */
+  stopsCompleted: number;
+
+  /**
+   * @generated from field: double total_distance_km = 3;
+   */
+  totalDistanceKm: number;
+
+  /**
+   * @generated from field: int32 travel_minutes = 4;
+   */
+  travelMinutes: number;
+
+  /**
+   * @generated from field: int32 school_minutes = 5;
+   */
+  schoolMinutes: number;
+};
+
+/**
+ * Describes the message edify.analytics.v1.FieldDayRoute.
+ * Use `create(FieldDayRouteSchema)` to create a new message.
+ */
+export const FieldDayRouteSchema: GenMessage<FieldDayRoute> = /*@__PURE__*/
+  messageDesc(file_edify_analytics_v1_portfolio, 11);
+
+/**
+ * @generated from message edify.analytics.v1.AnalyzeRouteEfficiencyRequest
+ */
+export type AnalyzeRouteEfficiencyRequest = Message<"edify.analytics.v1.AnalyzeRouteEfficiencyRequest"> & {
+  /**
+   * @generated from field: repeated edify.analytics.v1.FieldDayRoute field_days = 1;
+   */
+  fieldDays: FieldDayRoute[];
+};
+
+/**
+ * Describes the message edify.analytics.v1.AnalyzeRouteEfficiencyRequest.
+ * Use `create(AnalyzeRouteEfficiencyRequestSchema)` to create a new message.
+ */
+export const AnalyzeRouteEfficiencyRequestSchema: GenMessage<AnalyzeRouteEfficiencyRequest> = /*@__PURE__*/
+  messageDesc(file_edify_analytics_v1_portfolio, 12);
+
+/**
+ * @generated from message edify.analytics.v1.AnalyzeRouteEfficiencyResponse
+ */
+export type AnalyzeRouteEfficiencyResponse = Message<"edify.analytics.v1.AnalyzeRouteEfficiencyResponse"> & {
+  /**
+   * @generated from field: int32 field_day_count = 1;
+   */
+  fieldDayCount: number;
+
+  /**
+   * @generated from field: int32 total_stops = 2;
+   */
+  totalStops: number;
+
+  /**
+   * @generated from field: double total_distance_km = 3;
+   */
+  totalDistanceKm: number;
+
+  /**
+   * @generated from field: double average_stops_per_day = 4;
+   */
+  averageStopsPerDay: number;
+
+  /**
+   * @generated from field: double average_km_per_stop = 5;
+   */
+  averageKmPerStop: number;
+
+  /**
+   * @generated from field: double school_time_share_pct = 6;
+   */
+  schoolTimeSharePct: number;
+
+  /**
+   * @generated from field: double efficiency_score = 7;
+   */
+  efficiencyScore: number;
+};
+
+/**
+ * Describes the message edify.analytics.v1.AnalyzeRouteEfficiencyResponse.
+ * Use `create(AnalyzeRouteEfficiencyResponseSchema)` to create a new message.
+ */
+export const AnalyzeRouteEfficiencyResponseSchema: GenMessage<AnalyzeRouteEfficiencyResponse> = /*@__PURE__*/
+  messageDesc(file_edify_analytics_v1_portfolio, 13);
+
+/**
+ * @generated from message edify.analytics.v1.SchoolRiskInput
+ */
+export type SchoolRiskInput = Message<"edify.analytics.v1.SchoolRiskInput"> & {
+  /**
+   * @generated from field: string school_id = 1;
+   */
+  schoolId: string;
+
+  /**
+   * @generated from field: optional double latest_ssa = 2;
+   */
+  latestSsa?: number | undefined;
+
+  /**
+   * @generated from field: optional double ssa_delta = 3;
+   */
+  ssaDelta?: number | undefined;
+
+  /**
+   * @generated from field: int32 days_since_last_visit = 4;
+   */
+  daysSinceLastVisit: number;
+
+  /**
+   * @generated from field: bool has_cluster = 5;
+   */
+  hasCluster: boolean;
+
+  /**
+   * @generated from field: bool package_complete = 6;
+   */
+  packageComplete: boolean;
+};
+
+/**
+ * Describes the message edify.analytics.v1.SchoolRiskInput.
+ * Use `create(SchoolRiskInputSchema)` to create a new message.
+ */
+export const SchoolRiskInputSchema: GenMessage<SchoolRiskInput> = /*@__PURE__*/
+  messageDesc(file_edify_analytics_v1_portfolio, 14);
+
+/**
+ * @generated from message edify.analytics.v1.SchoolRiskPrediction
+ */
+export type SchoolRiskPrediction = Message<"edify.analytics.v1.SchoolRiskPrediction"> & {
+  /**
+   * @generated from field: string school_id = 1;
+   */
+  schoolId: string;
+
+  /**
+   * @generated from field: double risk_score = 2;
+   */
+  riskScore: number;
+
+  /**
+   * @generated from field: string risk_tier = 3;
+   */
+  riskTier: string;
+
+  /**
+   * @generated from field: repeated string drivers = 4;
+   */
+  drivers: string[];
+
+  /**
+   * @generated from field: string recommended_action = 5;
+   */
+  recommendedAction: string;
+};
+
+/**
+ * Describes the message edify.analytics.v1.SchoolRiskPrediction.
+ * Use `create(SchoolRiskPredictionSchema)` to create a new message.
+ */
+export const SchoolRiskPredictionSchema: GenMessage<SchoolRiskPrediction> = /*@__PURE__*/
+  messageDesc(file_edify_analytics_v1_portfolio, 15);
+
+/**
+ * @generated from message edify.analytics.v1.ComputePredictiveInsightsRequest
+ */
+export type ComputePredictiveInsightsRequest = Message<"edify.analytics.v1.ComputePredictiveInsightsRequest"> & {
+  /**
+   * @generated from field: repeated edify.analytics.v1.SchoolRiskInput schools = 1;
+   */
+  schools: SchoolRiskInput[];
+};
+
+/**
+ * Describes the message edify.analytics.v1.ComputePredictiveInsightsRequest.
+ * Use `create(ComputePredictiveInsightsRequestSchema)` to create a new message.
+ */
+export const ComputePredictiveInsightsRequestSchema: GenMessage<ComputePredictiveInsightsRequest> = /*@__PURE__*/
+  messageDesc(file_edify_analytics_v1_portfolio, 16);
+
+/**
+ * @generated from message edify.analytics.v1.ComputePredictiveInsightsResponse
+ */
+export type ComputePredictiveInsightsResponse = Message<"edify.analytics.v1.ComputePredictiveInsightsResponse"> & {
+  /**
+   * @generated from field: int32 high_risk_count = 1;
+   */
+  highRiskCount: number;
+
+  /**
+   * @generated from field: int32 medium_risk_count = 2;
+   */
+  mediumRiskCount: number;
+
+  /**
+   * @generated from field: int32 low_risk_count = 3;
+   */
+  lowRiskCount: number;
+
+  /**
+   * @generated from field: repeated edify.analytics.v1.SchoolRiskPrediction predictions = 4;
+   */
+  predictions: SchoolRiskPrediction[];
+};
+
+/**
+ * Describes the message edify.analytics.v1.ComputePredictiveInsightsResponse.
+ * Use `create(ComputePredictiveInsightsResponseSchema)` to create a new message.
+ */
+export const ComputePredictiveInsightsResponseSchema: GenMessage<ComputePredictiveInsightsResponse> = /*@__PURE__*/
+  messageDesc(file_edify_analytics_v1_portfolio, 17);
+
+/**
+ * @generated from message edify.analytics.v1.CountryMetricInput
+ */
+export type CountryMetricInput = Message<"edify.analytics.v1.CountryMetricInput"> & {
+  /**
+   * @generated from field: string country_code = 1;
+   */
+  countryCode: string;
+
+  /**
+   * @generated from field: int32 school_count = 2;
+   */
+  schoolCount: number;
+
+  /**
+   * @generated from field: int32 assessed_schools = 3;
+   */
+  assessedSchools: number;
+
+  /**
+   * @generated from field: int32 visited_schools = 4;
+   */
+  visitedSchools: number;
+
+  /**
+   * @generated from field: double average_ssa = 5;
+   */
+  averageSsa: number;
+
+  /**
+   * @generated from field: int64 total_enrollment = 6;
+   */
+  totalEnrollment: bigint;
+};
+
+/**
+ * Describes the message edify.analytics.v1.CountryMetricInput.
+ * Use `create(CountryMetricInputSchema)` to create a new message.
+ */
+export const CountryMetricInputSchema: GenMessage<CountryMetricInput> = /*@__PURE__*/
+  messageDesc(file_edify_analytics_v1_portfolio, 18);
+
+/**
+ * @generated from message edify.analytics.v1.CountryGlobalRow
+ */
+export type CountryGlobalRow = Message<"edify.analytics.v1.CountryGlobalRow"> & {
+  /**
+   * @generated from field: string country_code = 1;
+   */
+  countryCode: string;
+
+  /**
+   * @generated from field: int32 school_count = 2;
+   */
+  schoolCount: number;
+
+  /**
+   * @generated from field: double ssa_coverage_pct = 3;
+   */
+  ssaCoveragePct: number;
+
+  /**
+   * @generated from field: double visit_coverage_pct = 4;
+   */
+  visitCoveragePct: number;
+
+  /**
+   * @generated from field: double average_ssa = 5;
+   */
+  averageSsa: number;
+
+  /**
+   * @generated from field: int64 total_enrollment = 6;
+   */
+  totalEnrollment: bigint;
+
+  /**
+   * @generated from field: bool suppressed = 7;
+   */
+  suppressed: boolean;
+};
+
+/**
+ * Describes the message edify.analytics.v1.CountryGlobalRow.
+ * Use `create(CountryGlobalRowSchema)` to create a new message.
+ */
+export const CountryGlobalRowSchema: GenMessage<CountryGlobalRow> = /*@__PURE__*/
+  messageDesc(file_edify_analytics_v1_portfolio, 19);
+
+/**
+ * @generated from message edify.analytics.v1.GenerateGlobalReportRequest
+ */
+export type GenerateGlobalReportRequest = Message<"edify.analytics.v1.GenerateGlobalReportRequest"> & {
+  /**
+   * @generated from field: repeated edify.analytics.v1.CountryMetricInput countries = 1;
+   */
+  countries: CountryMetricInput[];
+
+  /**
+   * @generated from field: int32 min_cohort_size = 2;
+   */
+  minCohortSize: number;
+};
+
+/**
+ * Describes the message edify.analytics.v1.GenerateGlobalReportRequest.
+ * Use `create(GenerateGlobalReportRequestSchema)` to create a new message.
+ */
+export const GenerateGlobalReportRequestSchema: GenMessage<GenerateGlobalReportRequest> = /*@__PURE__*/
+  messageDesc(file_edify_analytics_v1_portfolio, 20);
+
+/**
+ * @generated from message edify.analytics.v1.GenerateGlobalReportResponse
+ */
+export type GenerateGlobalReportResponse = Message<"edify.analytics.v1.GenerateGlobalReportResponse"> & {
+  /**
+   * @generated from field: int32 country_count = 1;
+   */
+  countryCount: number;
+
+  /**
+   * @generated from field: int32 total_schools = 2;
+   */
+  totalSchools: number;
+
+  /**
+   * @generated from field: int64 total_enrollment = 3;
+   */
+  totalEnrollment: bigint;
+
+  /**
+   * @generated from field: double weighted_average_ssa = 4;
+   */
+  weightedAverageSsa: number;
+
+  /**
+   * @generated from field: double overall_ssa_coverage_pct = 5;
+   */
+  overallSsaCoveragePct: number;
+
+  /**
+   * @generated from field: double overall_visit_coverage_pct = 6;
+   */
+  overallVisitCoveragePct: number;
+
+  /**
+   * @generated from field: repeated edify.analytics.v1.CountryGlobalRow countries = 7;
+   */
+  countries: CountryGlobalRow[];
+};
+
+/**
+ * Describes the message edify.analytics.v1.GenerateGlobalReportResponse.
+ * Use `create(GenerateGlobalReportResponseSchema)` to create a new message.
+ */
+export const GenerateGlobalReportResponseSchema: GenMessage<GenerateGlobalReportResponse> = /*@__PURE__*/
+  messageDesc(file_edify_analytics_v1_portfolio, 21);
+
+/**
  * INTERNAL. Called by the Go gateway only, never by a client. The worker
  * holds no database connection and decides nothing: it receives rows the
- * gateway has already authorised and returns descriptive statistics.
+ * gateway has already authorised and returns descriptive, predictive, and
+ * cross-country analytics.
  *
  * @generated from service edify.analytics.v1.PortfolioAnalyticsService
  */
@@ -103,6 +812,46 @@ export const PortfolioAnalyticsService: GenService<{
     methodKind: "unary";
     input: typeof SummarizePortfolioRequestSchema;
     output: typeof SummarizePortfolioResponseSchema;
+  },
+  /**
+   * @generated from rpc edify.analytics.v1.PortfolioAnalyticsService.AnalyzeSsa
+   */
+  analyzeSsa: {
+    methodKind: "unary";
+    input: typeof AnalyzeSsaRequestSchema;
+    output: typeof AnalyzeSsaResponseSchema;
+  },
+  /**
+   * @generated from rpc edify.analytics.v1.PortfolioAnalyticsService.AnalyzeCoverageGaps
+   */
+  analyzeCoverageGaps: {
+    methodKind: "unary";
+    input: typeof AnalyzeCoverageGapsRequestSchema;
+    output: typeof AnalyzeCoverageGapsResponseSchema;
+  },
+  /**
+   * @generated from rpc edify.analytics.v1.PortfolioAnalyticsService.AnalyzeRouteEfficiency
+   */
+  analyzeRouteEfficiency: {
+    methodKind: "unary";
+    input: typeof AnalyzeRouteEfficiencyRequestSchema;
+    output: typeof AnalyzeRouteEfficiencyResponseSchema;
+  },
+  /**
+   * @generated from rpc edify.analytics.v1.PortfolioAnalyticsService.ComputePredictiveInsights
+   */
+  computePredictiveInsights: {
+    methodKind: "unary";
+    input: typeof ComputePredictiveInsightsRequestSchema;
+    output: typeof ComputePredictiveInsightsResponseSchema;
+  },
+  /**
+   * @generated from rpc edify.analytics.v1.PortfolioAnalyticsService.GenerateGlobalReport
+   */
+  generateGlobalReport: {
+    methodKind: "unary";
+    input: typeof GenerateGlobalReportRequestSchema;
+    output: typeof GenerateGlobalReportResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_edify_analytics_v1_portfolio, 0);

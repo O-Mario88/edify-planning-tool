@@ -37,12 +37,32 @@ const (
 	// PortfolioAnalyticsServiceSummarizePortfolioProcedure is the fully-qualified name of the
 	// PortfolioAnalyticsService's SummarizePortfolio RPC.
 	PortfolioAnalyticsServiceSummarizePortfolioProcedure = "/edify.analytics.v1.PortfolioAnalyticsService/SummarizePortfolio"
+	// PortfolioAnalyticsServiceAnalyzeSsaProcedure is the fully-qualified name of the
+	// PortfolioAnalyticsService's AnalyzeSsa RPC.
+	PortfolioAnalyticsServiceAnalyzeSsaProcedure = "/edify.analytics.v1.PortfolioAnalyticsService/AnalyzeSsa"
+	// PortfolioAnalyticsServiceAnalyzeCoverageGapsProcedure is the fully-qualified name of the
+	// PortfolioAnalyticsService's AnalyzeCoverageGaps RPC.
+	PortfolioAnalyticsServiceAnalyzeCoverageGapsProcedure = "/edify.analytics.v1.PortfolioAnalyticsService/AnalyzeCoverageGaps"
+	// PortfolioAnalyticsServiceAnalyzeRouteEfficiencyProcedure is the fully-qualified name of the
+	// PortfolioAnalyticsService's AnalyzeRouteEfficiency RPC.
+	PortfolioAnalyticsServiceAnalyzeRouteEfficiencyProcedure = "/edify.analytics.v1.PortfolioAnalyticsService/AnalyzeRouteEfficiency"
+	// PortfolioAnalyticsServiceComputePredictiveInsightsProcedure is the fully-qualified name of the
+	// PortfolioAnalyticsService's ComputePredictiveInsights RPC.
+	PortfolioAnalyticsServiceComputePredictiveInsightsProcedure = "/edify.analytics.v1.PortfolioAnalyticsService/ComputePredictiveInsights"
+	// PortfolioAnalyticsServiceGenerateGlobalReportProcedure is the fully-qualified name of the
+	// PortfolioAnalyticsService's GenerateGlobalReport RPC.
+	PortfolioAnalyticsServiceGenerateGlobalReportProcedure = "/edify.analytics.v1.PortfolioAnalyticsService/GenerateGlobalReport"
 )
 
 // PortfolioAnalyticsServiceClient is a client for the edify.analytics.v1.PortfolioAnalyticsService
 // service.
 type PortfolioAnalyticsServiceClient interface {
 	SummarizePortfolio(context.Context, *connect.Request[v1.SummarizePortfolioRequest]) (*connect.Response[v1.SummarizePortfolioResponse], error)
+	AnalyzeSsa(context.Context, *connect.Request[v1.AnalyzeSsaRequest]) (*connect.Response[v1.AnalyzeSsaResponse], error)
+	AnalyzeCoverageGaps(context.Context, *connect.Request[v1.AnalyzeCoverageGapsRequest]) (*connect.Response[v1.AnalyzeCoverageGapsResponse], error)
+	AnalyzeRouteEfficiency(context.Context, *connect.Request[v1.AnalyzeRouteEfficiencyRequest]) (*connect.Response[v1.AnalyzeRouteEfficiencyResponse], error)
+	ComputePredictiveInsights(context.Context, *connect.Request[v1.ComputePredictiveInsightsRequest]) (*connect.Response[v1.ComputePredictiveInsightsResponse], error)
+	GenerateGlobalReport(context.Context, *connect.Request[v1.GenerateGlobalReportRequest]) (*connect.Response[v1.GenerateGlobalReportResponse], error)
 }
 
 // NewPortfolioAnalyticsServiceClient constructs a client for the
@@ -63,12 +83,47 @@ func NewPortfolioAnalyticsServiceClient(httpClient connect.HTTPClient, baseURL s
 			connect.WithSchema(portfolioAnalyticsServiceMethods.ByName("SummarizePortfolio")),
 			connect.WithClientOptions(opts...),
 		),
+		analyzeSsa: connect.NewClient[v1.AnalyzeSsaRequest, v1.AnalyzeSsaResponse](
+			httpClient,
+			baseURL+PortfolioAnalyticsServiceAnalyzeSsaProcedure,
+			connect.WithSchema(portfolioAnalyticsServiceMethods.ByName("AnalyzeSsa")),
+			connect.WithClientOptions(opts...),
+		),
+		analyzeCoverageGaps: connect.NewClient[v1.AnalyzeCoverageGapsRequest, v1.AnalyzeCoverageGapsResponse](
+			httpClient,
+			baseURL+PortfolioAnalyticsServiceAnalyzeCoverageGapsProcedure,
+			connect.WithSchema(portfolioAnalyticsServiceMethods.ByName("AnalyzeCoverageGaps")),
+			connect.WithClientOptions(opts...),
+		),
+		analyzeRouteEfficiency: connect.NewClient[v1.AnalyzeRouteEfficiencyRequest, v1.AnalyzeRouteEfficiencyResponse](
+			httpClient,
+			baseURL+PortfolioAnalyticsServiceAnalyzeRouteEfficiencyProcedure,
+			connect.WithSchema(portfolioAnalyticsServiceMethods.ByName("AnalyzeRouteEfficiency")),
+			connect.WithClientOptions(opts...),
+		),
+		computePredictiveInsights: connect.NewClient[v1.ComputePredictiveInsightsRequest, v1.ComputePredictiveInsightsResponse](
+			httpClient,
+			baseURL+PortfolioAnalyticsServiceComputePredictiveInsightsProcedure,
+			connect.WithSchema(portfolioAnalyticsServiceMethods.ByName("ComputePredictiveInsights")),
+			connect.WithClientOptions(opts...),
+		),
+		generateGlobalReport: connect.NewClient[v1.GenerateGlobalReportRequest, v1.GenerateGlobalReportResponse](
+			httpClient,
+			baseURL+PortfolioAnalyticsServiceGenerateGlobalReportProcedure,
+			connect.WithSchema(portfolioAnalyticsServiceMethods.ByName("GenerateGlobalReport")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // portfolioAnalyticsServiceClient implements PortfolioAnalyticsServiceClient.
 type portfolioAnalyticsServiceClient struct {
-	summarizePortfolio *connect.Client[v1.SummarizePortfolioRequest, v1.SummarizePortfolioResponse]
+	summarizePortfolio        *connect.Client[v1.SummarizePortfolioRequest, v1.SummarizePortfolioResponse]
+	analyzeSsa                *connect.Client[v1.AnalyzeSsaRequest, v1.AnalyzeSsaResponse]
+	analyzeCoverageGaps       *connect.Client[v1.AnalyzeCoverageGapsRequest, v1.AnalyzeCoverageGapsResponse]
+	analyzeRouteEfficiency    *connect.Client[v1.AnalyzeRouteEfficiencyRequest, v1.AnalyzeRouteEfficiencyResponse]
+	computePredictiveInsights *connect.Client[v1.ComputePredictiveInsightsRequest, v1.ComputePredictiveInsightsResponse]
+	generateGlobalReport      *connect.Client[v1.GenerateGlobalReportRequest, v1.GenerateGlobalReportResponse]
 }
 
 // SummarizePortfolio calls edify.analytics.v1.PortfolioAnalyticsService.SummarizePortfolio.
@@ -76,10 +131,41 @@ func (c *portfolioAnalyticsServiceClient) SummarizePortfolio(ctx context.Context
 	return c.summarizePortfolio.CallUnary(ctx, req)
 }
 
+// AnalyzeSsa calls edify.analytics.v1.PortfolioAnalyticsService.AnalyzeSsa.
+func (c *portfolioAnalyticsServiceClient) AnalyzeSsa(ctx context.Context, req *connect.Request[v1.AnalyzeSsaRequest]) (*connect.Response[v1.AnalyzeSsaResponse], error) {
+	return c.analyzeSsa.CallUnary(ctx, req)
+}
+
+// AnalyzeCoverageGaps calls edify.analytics.v1.PortfolioAnalyticsService.AnalyzeCoverageGaps.
+func (c *portfolioAnalyticsServiceClient) AnalyzeCoverageGaps(ctx context.Context, req *connect.Request[v1.AnalyzeCoverageGapsRequest]) (*connect.Response[v1.AnalyzeCoverageGapsResponse], error) {
+	return c.analyzeCoverageGaps.CallUnary(ctx, req)
+}
+
+// AnalyzeRouteEfficiency calls edify.analytics.v1.PortfolioAnalyticsService.AnalyzeRouteEfficiency.
+func (c *portfolioAnalyticsServiceClient) AnalyzeRouteEfficiency(ctx context.Context, req *connect.Request[v1.AnalyzeRouteEfficiencyRequest]) (*connect.Response[v1.AnalyzeRouteEfficiencyResponse], error) {
+	return c.analyzeRouteEfficiency.CallUnary(ctx, req)
+}
+
+// ComputePredictiveInsights calls
+// edify.analytics.v1.PortfolioAnalyticsService.ComputePredictiveInsights.
+func (c *portfolioAnalyticsServiceClient) ComputePredictiveInsights(ctx context.Context, req *connect.Request[v1.ComputePredictiveInsightsRequest]) (*connect.Response[v1.ComputePredictiveInsightsResponse], error) {
+	return c.computePredictiveInsights.CallUnary(ctx, req)
+}
+
+// GenerateGlobalReport calls edify.analytics.v1.PortfolioAnalyticsService.GenerateGlobalReport.
+func (c *portfolioAnalyticsServiceClient) GenerateGlobalReport(ctx context.Context, req *connect.Request[v1.GenerateGlobalReportRequest]) (*connect.Response[v1.GenerateGlobalReportResponse], error) {
+	return c.generateGlobalReport.CallUnary(ctx, req)
+}
+
 // PortfolioAnalyticsServiceHandler is an implementation of the
 // edify.analytics.v1.PortfolioAnalyticsService service.
 type PortfolioAnalyticsServiceHandler interface {
 	SummarizePortfolio(context.Context, *connect.Request[v1.SummarizePortfolioRequest]) (*connect.Response[v1.SummarizePortfolioResponse], error)
+	AnalyzeSsa(context.Context, *connect.Request[v1.AnalyzeSsaRequest]) (*connect.Response[v1.AnalyzeSsaResponse], error)
+	AnalyzeCoverageGaps(context.Context, *connect.Request[v1.AnalyzeCoverageGapsRequest]) (*connect.Response[v1.AnalyzeCoverageGapsResponse], error)
+	AnalyzeRouteEfficiency(context.Context, *connect.Request[v1.AnalyzeRouteEfficiencyRequest]) (*connect.Response[v1.AnalyzeRouteEfficiencyResponse], error)
+	ComputePredictiveInsights(context.Context, *connect.Request[v1.ComputePredictiveInsightsRequest]) (*connect.Response[v1.ComputePredictiveInsightsResponse], error)
+	GenerateGlobalReport(context.Context, *connect.Request[v1.GenerateGlobalReportRequest]) (*connect.Response[v1.GenerateGlobalReportResponse], error)
 }
 
 // NewPortfolioAnalyticsServiceHandler builds an HTTP handler from the service implementation. It
@@ -95,10 +181,50 @@ func NewPortfolioAnalyticsServiceHandler(svc PortfolioAnalyticsServiceHandler, o
 		connect.WithSchema(portfolioAnalyticsServiceMethods.ByName("SummarizePortfolio")),
 		connect.WithHandlerOptions(opts...),
 	)
+	portfolioAnalyticsServiceAnalyzeSsaHandler := connect.NewUnaryHandler(
+		PortfolioAnalyticsServiceAnalyzeSsaProcedure,
+		svc.AnalyzeSsa,
+		connect.WithSchema(portfolioAnalyticsServiceMethods.ByName("AnalyzeSsa")),
+		connect.WithHandlerOptions(opts...),
+	)
+	portfolioAnalyticsServiceAnalyzeCoverageGapsHandler := connect.NewUnaryHandler(
+		PortfolioAnalyticsServiceAnalyzeCoverageGapsProcedure,
+		svc.AnalyzeCoverageGaps,
+		connect.WithSchema(portfolioAnalyticsServiceMethods.ByName("AnalyzeCoverageGaps")),
+		connect.WithHandlerOptions(opts...),
+	)
+	portfolioAnalyticsServiceAnalyzeRouteEfficiencyHandler := connect.NewUnaryHandler(
+		PortfolioAnalyticsServiceAnalyzeRouteEfficiencyProcedure,
+		svc.AnalyzeRouteEfficiency,
+		connect.WithSchema(portfolioAnalyticsServiceMethods.ByName("AnalyzeRouteEfficiency")),
+		connect.WithHandlerOptions(opts...),
+	)
+	portfolioAnalyticsServiceComputePredictiveInsightsHandler := connect.NewUnaryHandler(
+		PortfolioAnalyticsServiceComputePredictiveInsightsProcedure,
+		svc.ComputePredictiveInsights,
+		connect.WithSchema(portfolioAnalyticsServiceMethods.ByName("ComputePredictiveInsights")),
+		connect.WithHandlerOptions(opts...),
+	)
+	portfolioAnalyticsServiceGenerateGlobalReportHandler := connect.NewUnaryHandler(
+		PortfolioAnalyticsServiceGenerateGlobalReportProcedure,
+		svc.GenerateGlobalReport,
+		connect.WithSchema(portfolioAnalyticsServiceMethods.ByName("GenerateGlobalReport")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/edify.analytics.v1.PortfolioAnalyticsService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case PortfolioAnalyticsServiceSummarizePortfolioProcedure:
 			portfolioAnalyticsServiceSummarizePortfolioHandler.ServeHTTP(w, r)
+		case PortfolioAnalyticsServiceAnalyzeSsaProcedure:
+			portfolioAnalyticsServiceAnalyzeSsaHandler.ServeHTTP(w, r)
+		case PortfolioAnalyticsServiceAnalyzeCoverageGapsProcedure:
+			portfolioAnalyticsServiceAnalyzeCoverageGapsHandler.ServeHTTP(w, r)
+		case PortfolioAnalyticsServiceAnalyzeRouteEfficiencyProcedure:
+			portfolioAnalyticsServiceAnalyzeRouteEfficiencyHandler.ServeHTTP(w, r)
+		case PortfolioAnalyticsServiceComputePredictiveInsightsProcedure:
+			portfolioAnalyticsServiceComputePredictiveInsightsHandler.ServeHTTP(w, r)
+		case PortfolioAnalyticsServiceGenerateGlobalReportProcedure:
+			portfolioAnalyticsServiceGenerateGlobalReportHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -110,4 +236,24 @@ type UnimplementedPortfolioAnalyticsServiceHandler struct{}
 
 func (UnimplementedPortfolioAnalyticsServiceHandler) SummarizePortfolio(context.Context, *connect.Request[v1.SummarizePortfolioRequest]) (*connect.Response[v1.SummarizePortfolioResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.analytics.v1.PortfolioAnalyticsService.SummarizePortfolio is not implemented"))
+}
+
+func (UnimplementedPortfolioAnalyticsServiceHandler) AnalyzeSsa(context.Context, *connect.Request[v1.AnalyzeSsaRequest]) (*connect.Response[v1.AnalyzeSsaResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.analytics.v1.PortfolioAnalyticsService.AnalyzeSsa is not implemented"))
+}
+
+func (UnimplementedPortfolioAnalyticsServiceHandler) AnalyzeCoverageGaps(context.Context, *connect.Request[v1.AnalyzeCoverageGapsRequest]) (*connect.Response[v1.AnalyzeCoverageGapsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.analytics.v1.PortfolioAnalyticsService.AnalyzeCoverageGaps is not implemented"))
+}
+
+func (UnimplementedPortfolioAnalyticsServiceHandler) AnalyzeRouteEfficiency(context.Context, *connect.Request[v1.AnalyzeRouteEfficiencyRequest]) (*connect.Response[v1.AnalyzeRouteEfficiencyResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.analytics.v1.PortfolioAnalyticsService.AnalyzeRouteEfficiency is not implemented"))
+}
+
+func (UnimplementedPortfolioAnalyticsServiceHandler) ComputePredictiveInsights(context.Context, *connect.Request[v1.ComputePredictiveInsightsRequest]) (*connect.Response[v1.ComputePredictiveInsightsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.analytics.v1.PortfolioAnalyticsService.ComputePredictiveInsights is not implemented"))
+}
+
+func (UnimplementedPortfolioAnalyticsServiceHandler) GenerateGlobalReport(context.Context, *connect.Request[v1.GenerateGlobalReportRequest]) (*connect.Response[v1.GenerateGlobalReportResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("edify.analytics.v1.PortfolioAnalyticsService.GenerateGlobalReport is not implemented"))
 }

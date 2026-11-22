@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\"edify/analytics/v1/portfolio.proto\x12\x12\x65\x64ify.analytics.v1\"N\n\x0fPortfolioSchool\x12\x13\n\x0bschool_type\x18\x01 \x01(\t\x12\x17\n\nenrollment\x18\x02 \x01(\x05H\x00\x88\x01\x01\x42\r\n\x0b_enrollment\"Q\n\x19SummarizePortfolioRequest\x12\x34\n\x07schools\x18\x01 \x03(\x0b\x32#.edify.analytics.v1.PortfolioSchool\"\x9a\x02\n\x1aSummarizePortfolioResponse\x12\x14\n\x0cschool_count\x18\x01 \x01(\x05\x12Z\n\x0fschools_by_type\x18\x02 \x03(\x0b\x32\x41.edify.analytics.v1.SummarizePortfolioResponse.SchoolsByTypeEntry\x12\x1f\n\x17schools_with_enrollment\x18\x03 \x01(\x05\x12\x18\n\x10total_enrollment\x18\x04 \x01(\x03\x12\x19\n\x11median_enrollment\x18\x05 \x01(\x01\x1a\x34\n\x12SchoolsByTypeEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x05:\x02\x38\x01\x32\x90\x01\n\x19PortfolioAnalyticsService\x12s\n\x12SummarizePortfolio\x12-.edify.analytics.v1.SummarizePortfolioRequest\x1a..edify.analytics.v1.SummarizePortfolioResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\"edify/analytics/v1/portfolio.proto\x12\x12\x65\x64ify.analytics.v1\"N\n\x0fPortfolioSchool\x12\x13\n\x0bschool_type\x18\x01 \x01(\t\x12\x17\n\nenrollment\x18\x02 \x01(\x05H\x00\x88\x01\x01\x42\r\n\x0b_enrollment\"Q\n\x19SummarizePortfolioRequest\x12\x34\n\x07schools\x18\x01 \x03(\x0b\x32#.edify.analytics.v1.PortfolioSchool\"\x9a\x02\n\x1aSummarizePortfolioResponse\x12\x14\n\x0cschool_count\x18\x01 \x01(\x05\x12Z\n\x0fschools_by_type\x18\x02 \x03(\x0b\x32\x41.edify.analytics.v1.SummarizePortfolioResponse.SchoolsByTypeEntry\x12\x1f\n\x17schools_with_enrollment\x18\x03 \x01(\x05\x12\x18\n\x10total_enrollment\x18\x04 \x01(\x03\x12\x19\n\x11median_enrollment\x18\x05 \x01(\x01\x1a\x34\n\x12SchoolsByTypeEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x05:\x02\x38\x01\"\x97\x02\n\x0fSsaSchoolRecord\x12\x11\n\tschool_id\x18\x01 \x01(\t\x12\x1a\n\rcurrent_score\x18\x02 \x01(\x01H\x00\x88\x01\x01\x12\x1b\n\x0eprevious_score\x18\x03 \x01(\x01H\x01\x88\x01\x01\x12X\n\x13intervention_scores\x18\x04 \x03(\x0b\x32;.edify.analytics.v1.SsaSchoolRecord.InterventionScoresEntry\x1a\x39\n\x17InterventionScoresEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x01:\x02\x38\x01\x42\x10\n\x0e_current_scoreB\x11\n\x0f_previous_score\"\xc1\x01\n\x13InterventionSummary\x12\x14\n\x0cintervention\x18\x01 \x01(\t\x12\x16\n\x0e\x61ssessed_count\x18\x02 \x01(\x05\x12\x15\n\raverage_score\x18\x03 \x01(\x01\x12\x11\n\tmin_score\x18\x04 \x01(\x01\x12\x11\n\tmax_score\x18\x05 \x01(\x01\x12\x14\n\x0curgent_count\x18\x06 \x01(\x05\x12\x13\n\x0bwatch_count\x18\x07 \x01(\x05\x12\x14\n\x0cstrong_count\x18\x08 \x01(\x05\"I\n\x11\x41nalyzeSsaRequest\x12\x34\n\x07records\x18\x01 \x03(\x0b\x32#.edify.analytics.v1.SsaSchoolRecord\"\xc6\x02\n\x12\x41nalyzeSsaResponse\x12\x15\n\rtotal_schools\x18\x01 \x01(\x05\x12\x18\n\x10\x61ssessed_schools\x18\x02 \x01(\x05\x12\x18\n\x10\x63ompared_schools\x18\x03 \x01(\x05\x12\x18\n\x10improved_schools\x18\x04 \x01(\x05\x12\x18\n\x10\x64\x65\x63lined_schools\x18\x05 \x01(\x05\x12\x15\n\raverage_score\x18\x06 \x01(\x01\x12\x15\n\raverage_delta\x18\x07 \x01(\x01\x12\x16\n\x0eon_track_count\x18\x08 \x01(\x05\x12\x13\n\x0bwatch_count\x18\t \x01(\x05\x12\x16\n\x0e\x63ritical_count\x18\n \x01(\x05\x12>\n\rinterventions\x18\x0b \x03(\x0b\x32\'.edify.analytics.v1.InterventionSummary\"\\\n\x14\x43overageSchoolRecord\x12\x11\n\tarea_name\x18\x01 \x01(\t\x12\x0f\n\x07has_ssa\x18\x02 \x01(\x08\x12\x0f\n\x07visited\x18\x03 \x01(\x08\x12\x0f\n\x07trained\x18\x04 \x01(\x08\"\xa3\x02\n\x0f\x41reaCoverageGap\x12\x11\n\tarea_name\x18\x01 \x01(\t\x12\x15\n\rtotal_schools\x18\x02 \x01(\x05\x12\x13\n\x0bssa_covered\x18\x03 \x01(\x05\x12\x17\n\x0fvisited_schools\x18\x04 \x01(\x05\x12\x17\n\x0ftrained_schools\x18\x05 \x01(\x05\x12\x18\n\x10ssa_coverage_pct\x18\x06 \x01(\x01\x12\x1a\n\x12visit_coverage_pct\x18\x07 \x01(\x01\x12\x1d\n\x15training_coverage_pct\x18\x08 \x01(\x01\x12\x16\n\x0eunassessed_gap\x18\t \x01(\x05\x12\x15\n\runvisited_gap\x18\n \x01(\x05\x12\x1b\n\x13\x63omposite_gap_score\x18\x0b \x01(\x01\"W\n\x1a\x41nalyzeCoverageGapsRequest\x12\x39\n\x07records\x18\x01 \x03(\x0b\x32(.edify.analytics.v1.CoverageSchoolRecord\"\xd5\x01\n\x1b\x41nalyzeCoverageGapsResponse\x12\x15\n\rtotal_schools\x18\x01 \x01(\x05\x12 \n\x18overall_ssa_coverage_pct\x18\x02 \x01(\x01\x12\"\n\x1aoverall_visit_coverage_pct\x18\x03 \x01(\x01\x12%\n\x1doverall_training_coverage_pct\x18\x04 \x01(\x01\x12\x32\n\x05\x61reas\x18\x05 \x03(\x0b\x32#.edify.analytics.v1.AreaCoverageGap\"\x85\x01\n\rFieldDayRoute\x12\x10\n\x08staff_id\x18\x01 \x01(\t\x12\x17\n\x0fstops_completed\x18\x02 \x01(\x05\x12\x19\n\x11total_distance_km\x18\x03 \x01(\x01\x12\x16\n\x0etravel_minutes\x18\x04 \x01(\x05\x12\x16\n\x0eschool_minutes\x18\x05 \x01(\x05\"V\n\x1d\x41nalyzeRouteEfficiencyRequest\x12\x35\n\nfield_days\x18\x01 \x03(\x0b\x32!.edify.analytics.v1.FieldDayRoute\"\xde\x01\n\x1e\x41nalyzeRouteEfficiencyResponse\x12\x17\n\x0f\x66ield_day_count\x18\x01 \x01(\x05\x12\x13\n\x0btotal_stops\x18\x02 \x01(\x05\x12\x19\n\x11total_distance_km\x18\x03 \x01(\x01\x12\x1d\n\x15\x61verage_stops_per_day\x18\x04 \x01(\x01\x12\x1b\n\x13\x61verage_km_per_stop\x18\x05 \x01(\x01\x12\x1d\n\x15school_time_share_pct\x18\x06 \x01(\x01\x12\x18\n\x10\x65\x66\x66iciency_score\x18\x07 \x01(\x01\"\xc0\x01\n\x0fSchoolRiskInput\x12\x11\n\tschool_id\x18\x01 \x01(\t\x12\x17\n\nlatest_ssa\x18\x02 \x01(\x01H\x00\x88\x01\x01\x12\x16\n\tssa_delta\x18\x03 \x01(\x01H\x01\x88\x01\x01\x12\x1d\n\x15\x64\x61ys_since_last_visit\x18\x04 \x01(\x05\x12\x13\n\x0bhas_cluster\x18\x05 \x01(\x08\x12\x18\n\x10package_complete\x18\x06 \x01(\x08\x42\r\n\x0b_latest_ssaB\x0c\n\n_ssa_delta\"}\n\x14SchoolRiskPrediction\x12\x11\n\tschool_id\x18\x01 \x01(\t\x12\x12\n\nrisk_score\x18\x02 \x01(\x01\x12\x11\n\trisk_tier\x18\x03 \x01(\t\x12\x0f\n\x07\x64rivers\x18\x04 \x03(\t\x12\x1a\n\x12recommended_action\x18\x05 \x01(\t\"X\n ComputePredictiveInsightsRequest\x12\x34\n\x07schools\x18\x01 \x03(\x0b\x32#.edify.analytics.v1.SchoolRiskInput\"\xae\x01\n!ComputePredictiveInsightsResponse\x12\x17\n\x0fhigh_risk_count\x18\x01 \x01(\x05\x12\x19\n\x11medium_risk_count\x18\x02 \x01(\x05\x12\x16\n\x0elow_risk_count\x18\x03 \x01(\x05\x12=\n\x0bpredictions\x18\x04 \x03(\x0b\x32(.edify.analytics.v1.SchoolRiskPrediction\"\xa2\x01\n\x12\x43ountryMetricInput\x12\x14\n\x0c\x63ountry_code\x18\x01 \x01(\t\x12\x14\n\x0cschool_count\x18\x02 \x01(\x05\x12\x18\n\x10\x61ssessed_schools\x18\x03 \x01(\x05\x12\x17\n\x0fvisited_schools\x18\x04 \x01(\x05\x12\x13\n\x0b\x61verage_ssa\x18\x05 \x01(\x01\x12\x18\n\x10total_enrollment\x18\x06 \x01(\x03\"\xb7\x01\n\x10\x43ountryGlobalRow\x12\x14\n\x0c\x63ountry_code\x18\x01 \x01(\t\x12\x14\n\x0cschool_count\x18\x02 \x01(\x05\x12\x18\n\x10ssa_coverage_pct\x18\x03 \x01(\x01\x12\x1a\n\x12visit_coverage_pct\x18\x04 \x01(\x01\x12\x13\n\x0b\x61verage_ssa\x18\x05 \x01(\x01\x12\x18\n\x10total_enrollment\x18\x06 \x01(\x03\x12\x12\n\nsuppressed\x18\x07 \x01(\x08\"q\n\x1bGenerateGlobalReportRequest\x12\x39\n\tcountries\x18\x01 \x03(\x0b\x32&.edify.analytics.v1.CountryMetricInput\x12\x17\n\x0fmin_cohort_size\x18\x02 \x01(\x05\"\x83\x02\n\x1cGenerateGlobalReportResponse\x12\x15\n\rcountry_count\x18\x01 \x01(\x05\x12\x15\n\rtotal_schools\x18\x02 \x01(\x05\x12\x18\n\x10total_enrollment\x18\x03 \x01(\x03\x12\x1c\n\x14weighted_average_ssa\x18\x04 \x01(\x01\x12 \n\x18overall_ssa_coverage_pct\x18\x05 \x01(\x01\x12\"\n\x1aoverall_visit_coverage_pct\x18\x06 \x01(\x01\x12\x37\n\tcountries\x18\x07 \x03(\x0b\x32$.edify.analytics.v1.CountryGlobalRow2\xec\x05\n\x19PortfolioAnalyticsService\x12s\n\x12SummarizePortfolio\x12-.edify.analytics.v1.SummarizePortfolioRequest\x1a..edify.analytics.v1.SummarizePortfolioResponse\x12[\n\nAnalyzeSsa\x12%.edify.analytics.v1.AnalyzeSsaRequest\x1a&.edify.analytics.v1.AnalyzeSsaResponse\x12v\n\x13\x41nalyzeCoverageGaps\x12..edify.analytics.v1.AnalyzeCoverageGapsRequest\x1a/.edify.analytics.v1.AnalyzeCoverageGapsResponse\x12\x7f\n\x16\x41nalyzeRouteEfficiency\x12\x31.edify.analytics.v1.AnalyzeRouteEfficiencyRequest\x1a\x32.edify.analytics.v1.AnalyzeRouteEfficiencyResponse\x12\x88\x01\n\x19\x43omputePredictiveInsights\x12\x34.edify.analytics.v1.ComputePredictiveInsightsRequest\x1a\x35.edify.analytics.v1.ComputePredictiveInsightsResponse\x12y\n\x14GenerateGlobalReport\x12/.edify.analytics.v1.GenerateGlobalReportRequest\x1a\x30.edify.analytics.v1.GenerateGlobalReportResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -33,6 +33,8 @@ if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
   _globals['_SUMMARIZEPORTFOLIORESPONSE_SCHOOLSBYTYPEENTRY']._loaded_options = None
   _globals['_SUMMARIZEPORTFOLIORESPONSE_SCHOOLSBYTYPEENTRY']._serialized_options = b'8\001'
+  _globals['_SSASCHOOLRECORD_INTERVENTIONSCORESENTRY']._loaded_options = None
+  _globals['_SSASCHOOLRECORD_INTERVENTIONSCORESENTRY']._serialized_options = b'8\001'
   _globals['_PORTFOLIOSCHOOL']._serialized_start=58
   _globals['_PORTFOLIOSCHOOL']._serialized_end=136
   _globals['_SUMMARIZEPORTFOLIOREQUEST']._serialized_start=138
@@ -41,6 +43,46 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_SUMMARIZEPORTFOLIORESPONSE']._serialized_end=504
   _globals['_SUMMARIZEPORTFOLIORESPONSE_SCHOOLSBYTYPEENTRY']._serialized_start=452
   _globals['_SUMMARIZEPORTFOLIORESPONSE_SCHOOLSBYTYPEENTRY']._serialized_end=504
-  _globals['_PORTFOLIOANALYTICSSERVICE']._serialized_start=507
-  _globals['_PORTFOLIOANALYTICSSERVICE']._serialized_end=651
+  _globals['_SSASCHOOLRECORD']._serialized_start=507
+  _globals['_SSASCHOOLRECORD']._serialized_end=786
+  _globals['_SSASCHOOLRECORD_INTERVENTIONSCORESENTRY']._serialized_start=692
+  _globals['_SSASCHOOLRECORD_INTERVENTIONSCORESENTRY']._serialized_end=749
+  _globals['_INTERVENTIONSUMMARY']._serialized_start=789
+  _globals['_INTERVENTIONSUMMARY']._serialized_end=982
+  _globals['_ANALYZESSAREQUEST']._serialized_start=984
+  _globals['_ANALYZESSAREQUEST']._serialized_end=1057
+  _globals['_ANALYZESSARESPONSE']._serialized_start=1060
+  _globals['_ANALYZESSARESPONSE']._serialized_end=1386
+  _globals['_COVERAGESCHOOLRECORD']._serialized_start=1388
+  _globals['_COVERAGESCHOOLRECORD']._serialized_end=1480
+  _globals['_AREACOVERAGEGAP']._serialized_start=1483
+  _globals['_AREACOVERAGEGAP']._serialized_end=1774
+  _globals['_ANALYZECOVERAGEGAPSREQUEST']._serialized_start=1776
+  _globals['_ANALYZECOVERAGEGAPSREQUEST']._serialized_end=1863
+  _globals['_ANALYZECOVERAGEGAPSRESPONSE']._serialized_start=1866
+  _globals['_ANALYZECOVERAGEGAPSRESPONSE']._serialized_end=2079
+  _globals['_FIELDDAYROUTE']._serialized_start=2082
+  _globals['_FIELDDAYROUTE']._serialized_end=2215
+  _globals['_ANALYZEROUTEEFFICIENCYREQUEST']._serialized_start=2217
+  _globals['_ANALYZEROUTEEFFICIENCYREQUEST']._serialized_end=2303
+  _globals['_ANALYZEROUTEEFFICIENCYRESPONSE']._serialized_start=2306
+  _globals['_ANALYZEROUTEEFFICIENCYRESPONSE']._serialized_end=2528
+  _globals['_SCHOOLRISKINPUT']._serialized_start=2531
+  _globals['_SCHOOLRISKINPUT']._serialized_end=2723
+  _globals['_SCHOOLRISKPREDICTION']._serialized_start=2725
+  _globals['_SCHOOLRISKPREDICTION']._serialized_end=2850
+  _globals['_COMPUTEPREDICTIVEINSIGHTSREQUEST']._serialized_start=2852
+  _globals['_COMPUTEPREDICTIVEINSIGHTSREQUEST']._serialized_end=2940
+  _globals['_COMPUTEPREDICTIVEINSIGHTSRESPONSE']._serialized_start=2943
+  _globals['_COMPUTEPREDICTIVEINSIGHTSRESPONSE']._serialized_end=3117
+  _globals['_COUNTRYMETRICINPUT']._serialized_start=3120
+  _globals['_COUNTRYMETRICINPUT']._serialized_end=3282
+  _globals['_COUNTRYGLOBALROW']._serialized_start=3285
+  _globals['_COUNTRYGLOBALROW']._serialized_end=3468
+  _globals['_GENERATEGLOBALREPORTREQUEST']._serialized_start=3470
+  _globals['_GENERATEGLOBALREPORTREQUEST']._serialized_end=3583
+  _globals['_GENERATEGLOBALREPORTRESPONSE']._serialized_start=3586
+  _globals['_GENERATEGLOBALREPORTRESPONSE']._serialized_end=3845
+  _globals['_PORTFOLIOANALYTICSSERVICE']._serialized_start=3848
+  _globals['_PORTFOLIOANALYTICSSERVICE']._serialized_end=4596
 # @@protoc_insertion_point(module_scope)

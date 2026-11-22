@@ -28,7 +28,8 @@ if _version_not_supported:
 class PortfolioAnalyticsServiceStub:
     """INTERNAL. Called by the Go gateway only, never by a client. The worker
     holds no database connection and decides nothing: it receives rows the
-    gateway has already authorised and returns descriptive statistics.
+    gateway has already authorised and returns descriptive, predictive, and
+    cross-country analytics.
     """
 
     def __init__(self, channel):
@@ -42,15 +43,71 @@ class PortfolioAnalyticsServiceStub:
                 request_serializer=edify_dot_analytics_dot_v1_dot_portfolio__pb2.SummarizePortfolioRequest.SerializeToString,
                 response_deserializer=edify_dot_analytics_dot_v1_dot_portfolio__pb2.SummarizePortfolioResponse.FromString,
                 _registered_method=True)
+        self.AnalyzeSsa = channel.unary_unary(
+                '/edify.analytics.v1.PortfolioAnalyticsService/AnalyzeSsa',
+                request_serializer=edify_dot_analytics_dot_v1_dot_portfolio__pb2.AnalyzeSsaRequest.SerializeToString,
+                response_deserializer=edify_dot_analytics_dot_v1_dot_portfolio__pb2.AnalyzeSsaResponse.FromString,
+                _registered_method=True)
+        self.AnalyzeCoverageGaps = channel.unary_unary(
+                '/edify.analytics.v1.PortfolioAnalyticsService/AnalyzeCoverageGaps',
+                request_serializer=edify_dot_analytics_dot_v1_dot_portfolio__pb2.AnalyzeCoverageGapsRequest.SerializeToString,
+                response_deserializer=edify_dot_analytics_dot_v1_dot_portfolio__pb2.AnalyzeCoverageGapsResponse.FromString,
+                _registered_method=True)
+        self.AnalyzeRouteEfficiency = channel.unary_unary(
+                '/edify.analytics.v1.PortfolioAnalyticsService/AnalyzeRouteEfficiency',
+                request_serializer=edify_dot_analytics_dot_v1_dot_portfolio__pb2.AnalyzeRouteEfficiencyRequest.SerializeToString,
+                response_deserializer=edify_dot_analytics_dot_v1_dot_portfolio__pb2.AnalyzeRouteEfficiencyResponse.FromString,
+                _registered_method=True)
+        self.ComputePredictiveInsights = channel.unary_unary(
+                '/edify.analytics.v1.PortfolioAnalyticsService/ComputePredictiveInsights',
+                request_serializer=edify_dot_analytics_dot_v1_dot_portfolio__pb2.ComputePredictiveInsightsRequest.SerializeToString,
+                response_deserializer=edify_dot_analytics_dot_v1_dot_portfolio__pb2.ComputePredictiveInsightsResponse.FromString,
+                _registered_method=True)
+        self.GenerateGlobalReport = channel.unary_unary(
+                '/edify.analytics.v1.PortfolioAnalyticsService/GenerateGlobalReport',
+                request_serializer=edify_dot_analytics_dot_v1_dot_portfolio__pb2.GenerateGlobalReportRequest.SerializeToString,
+                response_deserializer=edify_dot_analytics_dot_v1_dot_portfolio__pb2.GenerateGlobalReportResponse.FromString,
+                _registered_method=True)
 
 
 class PortfolioAnalyticsServiceServicer:
     """INTERNAL. Called by the Go gateway only, never by a client. The worker
     holds no database connection and decides nothing: it receives rows the
-    gateway has already authorised and returns descriptive statistics.
+    gateway has already authorised and returns descriptive, predictive, and
+    cross-country analytics.
     """
 
     def SummarizePortfolio(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def AnalyzeSsa(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def AnalyzeCoverageGaps(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def AnalyzeRouteEfficiency(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ComputePredictiveInsights(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GenerateGlobalReport(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -64,6 +121,31 @@ def add_PortfolioAnalyticsServiceServicer_to_server(servicer, server):
                     request_deserializer=edify_dot_analytics_dot_v1_dot_portfolio__pb2.SummarizePortfolioRequest.FromString,
                     response_serializer=edify_dot_analytics_dot_v1_dot_portfolio__pb2.SummarizePortfolioResponse.SerializeToString,
             ),
+            'AnalyzeSsa': grpc.unary_unary_rpc_method_handler(
+                    servicer.AnalyzeSsa,
+                    request_deserializer=edify_dot_analytics_dot_v1_dot_portfolio__pb2.AnalyzeSsaRequest.FromString,
+                    response_serializer=edify_dot_analytics_dot_v1_dot_portfolio__pb2.AnalyzeSsaResponse.SerializeToString,
+            ),
+            'AnalyzeCoverageGaps': grpc.unary_unary_rpc_method_handler(
+                    servicer.AnalyzeCoverageGaps,
+                    request_deserializer=edify_dot_analytics_dot_v1_dot_portfolio__pb2.AnalyzeCoverageGapsRequest.FromString,
+                    response_serializer=edify_dot_analytics_dot_v1_dot_portfolio__pb2.AnalyzeCoverageGapsResponse.SerializeToString,
+            ),
+            'AnalyzeRouteEfficiency': grpc.unary_unary_rpc_method_handler(
+                    servicer.AnalyzeRouteEfficiency,
+                    request_deserializer=edify_dot_analytics_dot_v1_dot_portfolio__pb2.AnalyzeRouteEfficiencyRequest.FromString,
+                    response_serializer=edify_dot_analytics_dot_v1_dot_portfolio__pb2.AnalyzeRouteEfficiencyResponse.SerializeToString,
+            ),
+            'ComputePredictiveInsights': grpc.unary_unary_rpc_method_handler(
+                    servicer.ComputePredictiveInsights,
+                    request_deserializer=edify_dot_analytics_dot_v1_dot_portfolio__pb2.ComputePredictiveInsightsRequest.FromString,
+                    response_serializer=edify_dot_analytics_dot_v1_dot_portfolio__pb2.ComputePredictiveInsightsResponse.SerializeToString,
+            ),
+            'GenerateGlobalReport': grpc.unary_unary_rpc_method_handler(
+                    servicer.GenerateGlobalReport,
+                    request_deserializer=edify_dot_analytics_dot_v1_dot_portfolio__pb2.GenerateGlobalReportRequest.FromString,
+                    response_serializer=edify_dot_analytics_dot_v1_dot_portfolio__pb2.GenerateGlobalReportResponse.SerializeToString,
+            ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
             'edify.analytics.v1.PortfolioAnalyticsService', rpc_method_handlers)
@@ -75,7 +157,8 @@ def add_PortfolioAnalyticsServiceServicer_to_server(servicer, server):
 class PortfolioAnalyticsService:
     """INTERNAL. Called by the Go gateway only, never by a client. The worker
     holds no database connection and decides nothing: it receives rows the
-    gateway has already authorised and returns descriptive statistics.
+    gateway has already authorised and returns descriptive, predictive, and
+    cross-country analytics.
     """
 
     @staticmethod
@@ -95,6 +178,141 @@ class PortfolioAnalyticsService:
             '/edify.analytics.v1.PortfolioAnalyticsService/SummarizePortfolio',
             edify_dot_analytics_dot_v1_dot_portfolio__pb2.SummarizePortfolioRequest.SerializeToString,
             edify_dot_analytics_dot_v1_dot_portfolio__pb2.SummarizePortfolioResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def AnalyzeSsa(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/edify.analytics.v1.PortfolioAnalyticsService/AnalyzeSsa',
+            edify_dot_analytics_dot_v1_dot_portfolio__pb2.AnalyzeSsaRequest.SerializeToString,
+            edify_dot_analytics_dot_v1_dot_portfolio__pb2.AnalyzeSsaResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def AnalyzeCoverageGaps(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/edify.analytics.v1.PortfolioAnalyticsService/AnalyzeCoverageGaps',
+            edify_dot_analytics_dot_v1_dot_portfolio__pb2.AnalyzeCoverageGapsRequest.SerializeToString,
+            edify_dot_analytics_dot_v1_dot_portfolio__pb2.AnalyzeCoverageGapsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def AnalyzeRouteEfficiency(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/edify.analytics.v1.PortfolioAnalyticsService/AnalyzeRouteEfficiency',
+            edify_dot_analytics_dot_v1_dot_portfolio__pb2.AnalyzeRouteEfficiencyRequest.SerializeToString,
+            edify_dot_analytics_dot_v1_dot_portfolio__pb2.AnalyzeRouteEfficiencyResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ComputePredictiveInsights(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/edify.analytics.v1.PortfolioAnalyticsService/ComputePredictiveInsights',
+            edify_dot_analytics_dot_v1_dot_portfolio__pb2.ComputePredictiveInsightsRequest.SerializeToString,
+            edify_dot_analytics_dot_v1_dot_portfolio__pb2.ComputePredictiveInsightsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GenerateGlobalReport(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/edify.analytics.v1.PortfolioAnalyticsService/GenerateGlobalReport',
+            edify_dot_analytics_dot_v1_dot_portfolio__pb2.GenerateGlobalReportRequest.SerializeToString,
+            edify_dot_analytics_dot_v1_dot_portfolio__pb2.GenerateGlobalReportResponse.FromString,
             options,
             channel_credentials,
             insecure,

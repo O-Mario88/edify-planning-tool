@@ -4,9 +4,15 @@ package edify.analytics.v1;
 
 // INTERNAL. Called by the Go gateway only, never by a client. The worker
 // holds no database connection and decides nothing: it receives rows the
-// gateway has already authorised and returns descriptive statistics.
+// gateway has already authorised and returns descriptive, predictive, and
+// cross-country analytics.
 service PortfolioAnalyticsService {
   rpc SummarizePortfolio(SummarizePortfolioRequest) returns (SummarizePortfolioResponse);
+  rpc AnalyzeSsa(AnalyzeSsaRequest) returns (AnalyzeSsaResponse);
+  rpc AnalyzeCoverageGaps(AnalyzeCoverageGapsRequest) returns (AnalyzeCoverageGapsResponse);
+  rpc AnalyzeRouteEfficiency(AnalyzeRouteEfficiencyRequest) returns (AnalyzeRouteEfficiencyResponse);
+  rpc ComputePredictiveInsights(ComputePredictiveInsightsRequest) returns (ComputePredictiveInsightsResponse);
+  rpc GenerateGlobalReport(GenerateGlobalReportRequest) returns (GenerateGlobalReportResponse);
 }
 
 message PortfolioSchool {
@@ -24,4 +30,167 @@ message SummarizePortfolioResponse {
   int32 schools_with_enrollment = 3;
   int64 total_enrollment = 4;
   double median_enrollment = 5;
+}
+
+// ── 1. SSA Scoring & Analysis ────────────────────────────────────────────
+
+message SsaSchoolRecord {
+  string school_id = 1;
+  optional double current_score = 2;
+  optional double previous_score = 3;
+  map<string, double> intervention_scores = 4;
+}
+
+message InterventionSummary {
+  string intervention = 1;
+  int32 assessed_count = 2;
+  double average_score = 3;
+  double min_score = 4;
+  double max_score = 5;
+  int32 urgent_count = 6;
+  int32 watch_count = 7;
+  int32 strong_count = 8;
+}
+
+message AnalyzeSsaRequest {
+  repeated SsaSchoolRecord records = 1;
+}
+
+message AnalyzeSsaResponse {
+  int32 total_schools = 1;
+  int32 assessed_schools = 2;
+  int32 compared_schools = 3;
+  int32 improved_schools = 4;
+  int32 declined_schools = 5;
+  double average_score = 6;
+  double average_delta = 7;
+  int32 on_track_count = 8;
+  int32 watch_count = 9;
+  int32 critical_count = 10;
+  repeated InterventionSummary interventions = 11;
+}
+
+// ── 2. Coverage & Gap Analysis ───────────────────────────────────────────
+
+message CoverageSchoolRecord {
+  string area_name = 1;
+  bool has_ssa = 2;
+  bool visited = 3;
+  bool trained = 4;
+}
+
+message AreaCoverageGap {
+  string area_name = 1;
+  int32 total_schools = 2;
+  int32 ssa_covered = 3;
+  int32 visited_schools = 4;
+  int32 trained_schools = 5;
+  double ssa_coverage_pct = 6;
+  double visit_coverage_pct = 7;
+  double training_coverage_pct = 8;
+  int32 unassessed_gap = 9;
+  int32 unvisited_gap = 10;
+  double composite_gap_score = 11;
+}
+
+message AnalyzeCoverageGapsRequest {
+  repeated CoverageSchoolRecord records = 1;
+}
+
+message AnalyzeCoverageGapsResponse {
+  int32 total_schools = 1;
+  double overall_ssa_coverage_pct = 2;
+  double overall_visit_coverage_pct = 3;
+  double overall_training_coverage_pct = 4;
+  repeated AreaCoverageGap areas = 5;
+}
+
+// ── 3. Route & Field Efficiency ──────────────────────────────────────────
+
+message FieldDayRoute {
+  string staff_id = 1;
+  int32 stops_completed = 2;
+  double total_distance_km = 3;
+  int32 travel_minutes = 4;
+  int32 school_minutes = 5;
+}
+
+message AnalyzeRouteEfficiencyRequest {
+  repeated FieldDayRoute field_days = 1;
+}
+
+message AnalyzeRouteEfficiencyResponse {
+  int32 field_day_count = 1;
+  int32 total_stops = 2;
+  double total_distance_km = 3;
+  double average_stops_per_day = 4;
+  double average_km_per_stop = 5;
+  double school_time_share_pct = 6;
+  double efficiency_score = 7;
+}
+
+// ── 4. Predictive Insights ───────────────────────────────────────────────
+
+message SchoolRiskInput {
+  string school_id = 1;
+  optional double latest_ssa = 2;
+  optional double ssa_delta = 3;
+  int32 days_since_last_visit = 4;
+  bool has_cluster = 5;
+  bool package_complete = 6;
+}
+
+message SchoolRiskPrediction {
+  string school_id = 1;
+  double risk_score = 2;
+  string risk_tier = 3;
+  repeated string drivers = 4;
+  string recommended_action = 5;
+}
+
+message ComputePredictiveInsightsRequest {
+  repeated SchoolRiskInput schools = 1;
+}
+
+message ComputePredictiveInsightsResponse {
+  int32 high_risk_count = 1;
+  int32 medium_risk_count = 2;
+  int32 low_risk_count = 3;
+  repeated SchoolRiskPrediction predictions = 4;
+}
+
+// ── 5. Cross-Country & Global Reports (Anonymized) ───────────────────────
+
+message CountryMetricInput {
+  string country_code = 1;
+  int32 school_count = 2;
+  int32 assessed_schools = 3;
+  int32 visited_schools = 4;
+  double average_ssa = 5;
+  int64 total_enrollment = 6;
+}
+
+message CountryGlobalRow {
+  string country_code = 1;
+  int32 school_count = 2;
+  double ssa_coverage_pct = 3;
+  double visit_coverage_pct = 4;
+  double average_ssa = 5;
+  int64 total_enrollment = 6;
+  bool suppressed = 7;
+}
+
+message GenerateGlobalReportRequest {
+  repeated CountryMetricInput countries = 1;
+  int32 min_cohort_size = 2;
+}
+
+message GenerateGlobalReportResponse {
+  int32 country_count = 1;
+  int32 total_schools = 2;
+  int64 total_enrollment = 3;
+  double weighted_average_ssa = 4;
+  double overall_ssa_coverage_pct = 5;
+  double overall_visit_coverage_pct = 6;
+  repeated CountryGlobalRow countries = 7;
 }
