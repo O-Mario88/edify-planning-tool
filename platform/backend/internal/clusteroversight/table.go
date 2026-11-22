@@ -9,13 +9,16 @@ import (
 // columnCount is the Command Center's columns (workspace.COMMAND_COLUMNS).
 const columnCount = 19
 
-// cell is one cell of a section's table (workspace.cell, cluster_cell): its
-// text, its tone, and for a figure with schools behind it the cluster
-// profile tab that lists them.
+// cell is one cell of a section's table (workspace.cell, cluster_cell,
+// school_cell): its text, its tone, and where it links.
 type cell struct {
 	text, tone string
 	// cluster is set on a cell that opens the cluster, at query's tab.
 	cluster, query string
+	// school is set on a cell that opens a school profile (/schools/<id>).
+	school string
+	// href is set on a cell with a direct relative link (e.g. CSV download).
+	href string
 }
 
 // plain is workspace.cell: a dash for nothing.
@@ -26,6 +29,12 @@ func plain(text string) cell {
 	return cell{text: text}
 }
 
+func plainTone(text, tone string) cell {
+	c := plain(text)
+	c.tone = tone
+	return c
+}
+
 // link is workspace.cluster_cell: a figure that opens the cluster profile
 // at the tab that explains it; a dash opens nothing.
 func link(text, clusterID, query, tone string) cell {
@@ -33,6 +42,24 @@ func link(text, clusterID, query, tone string) cell {
 	c.tone = tone
 	if c.text != rules.Dash {
 		c.cluster, c.query = clusterID, query
+	}
+	return c
+}
+
+// schoolLink is workspace.school_cell: opens the school profile.
+func schoolLink(name, schoolID string) cell {
+	c := plain(name)
+	if c.text != rules.Dash {
+		c.school = schoolID
+	}
+	return c
+}
+
+func hrefCell(text, href, tone string) cell {
+	c := plain(text)
+	c.tone = tone
+	if c.text != rules.Dash {
+		c.href = href
 	}
 	return c
 }
@@ -71,19 +98,22 @@ func trim(s string) string { return strings.TrimSpace(s) }
 // table is a section's table, described (workspace.Table).
 type table struct {
 	title, summary, note, empty string
+	columns                     []Column
 	rows                        [][]cell
 }
 
 // workspace is the reader's clusters and everything read about them
 // (workspace.Workspace).
 type workspace struct {
-	fy       string
-	clusters []clusterRow
-	owners   map[string]string
-	facts    map[string]facts
-	cards    map[string]scorecard
-	now      map[string]ssaNow
-	last     map[string]string
+	fy         string
+	clusters   []clusterRow
+	owners     map[string]string
+	facts      map[string]facts
+	cards      map[string]scorecard
+	now        map[string]ssaNow
+	last       map[string]string
+	settings   settings
+	settingRow *settingRow
 	// mine are the clusters filed under the reader's own ids.
 	mine map[string]bool
 }
@@ -91,11 +121,14 @@ type workspace struct {
 // load is workspace.load, from the records: each cluster's facts and
 // scorecard. today is the local day, which decides what was due by now.
 func load(r *records, fy, today string, readerIDs []string) workspace {
+	s := settingsOf(r.Setting)
 	ws := workspace{
 		fy: fy, clusters: r.Clusters, owners: r.Owners, last: r.LastDelivered,
+		settings: s, settingRow: r.Setting,
 		facts: map[string]facts{}, cards: map[string]scorecard{}, now: map[string]ssaNow{}, mine: map[string]bool{},
 	}
 	members := map[string][]string{}
+	memberRows := map[string][]memberRow{}
 	clusterOf, country := map[string]string{}, map[string]string{}
 	known := map[string]bool{}
 	for _, c := range r.Clusters {
@@ -106,6 +139,7 @@ func load(r *records, fy, today string, readerIDs []string) workspace {
 	}
 	for _, m := range r.Members {
 		members[m.ClusterID] = append(members[m.ClusterID], m.ID)
+		memberRows[m.ClusterID] = append(memberRows[m.ClusterID], m)
 		clusterOf[m.ID], country[m.ID] = m.ClusterID, m.Country
 	}
 	sessions := map[string][]sessionRow{}
@@ -134,6 +168,23 @@ func load(r *records, fy, today string, readerIDs []string) workspace {
 			funded[cluster]++
 		}
 	}
+	loansByCluster := map[string]*loanSummary{}
+	for _, l := range r.Loans {
+		cluster, ok := clusterOf[l.SchoolID]
+		if !ok {
+			continue
+		}
+		ls := loansByCluster[cluster]
+		if ls == nil {
+			ls = &loanSummary{bySchool: map[string]int{}}
+			loansByCluster[cluster] = ls
+		}
+		ls.loanCount++
+		ls.bySchool[l.SchoolID]++
+		if in(rules.FundedLoanStatuses, l.Status) {
+			ls.disbursed += l.DisbursedAmount
+		}
+	}
 	told := map[string]stories{}
 	for _, story := range r.Stories {
 		cluster := story.ClusterID
@@ -143,12 +194,23 @@ func load(r *records, fy, today string, readerIDs []string) workspace {
 				continue
 			}
 		}
-		s := told[cluster]
-		s.count++
-		if story.Status == rules.StoryApprovedStatus {
-			s.approved++
+		st := told[cluster]
+		st.count++
+		switch story.Status {
+		case rules.StoryApprovedStatus:
+			st.approved++
+		case "submitted", "returned":
+			st.waiting++
 		}
-		told[cluster] = s
+		if story.HasEvidence {
+			st.withEvidence++
+		} else if story.Status != "rejected" {
+			st.withoutEvidence++
+		}
+		if story.Date != "" && story.Date > st.latestDate {
+			st.latestDate = story.Date
+		}
+		told[cluster] = st
 	}
 	plans := map[string]*plan{}
 	for _, row := range r.Plan {
@@ -157,16 +219,21 @@ func load(r *records, fy, today string, readerIDs []string) workspace {
 		}
 		plans[row.ClusterID].add(row, today)
 	}
-	s := settingsOf(r.Setting)
 	scored := currentScores(r.YearRecords, r.YearScores)
 	for _, c := range r.Clusters {
+		ls := loanSummary{bySchool: map[string]int{}}
+		if found := loansByCluster[c.ID]; found != nil {
+			ls = *found
+		}
 		f := facts{
 			members:    members[c.ID],
-			attendance: attendanceOf(members[c.ID], sessions[c.ID], register, fy),
+			memberRows: memberRows[c.ID],
+			attendance: attendanceOf(memberRows[c.ID], sessions[c.ID], register, fy),
 			movement:   movementOf(members[c.ID], classified),
-			enrolment:  enrolmentOf(members[c.ID], yearly, fy),
+			enrolment:  enrolmentOf(memberRows[c.ID], yearly, fy),
 			learning:   learningOf(members[c.ID], learned, fy),
 			stories:    told[c.ID],
+			loans:      ls,
 			funded:     funded[c.ID],
 		}
 		if p := plans[c.ID]; p != nil {
@@ -203,8 +270,11 @@ func scoreCell(c composite, clusterID, fy string) cell {
 // line. mayReadLoans is whether the count of schools holding a loan opens
 // the loans tab.
 func (ws workspace) command(mayReadLoans bool) table {
-	clusters := ws.clusters
-	t := table{title: rules.Command.Title, note: rules.Command.Note, empty: rules.Command.Empty}
+	return ws.commandFor(ws.clusters, rules.Command.Title, rules.Command.Empty, mayReadLoans)
+}
+
+func (ws workspace) commandFor(clusters []clusterRow, title, empty string, mayReadLoans bool) table {
+	t := table{title: title, columns: rules.Command.Columns, note: rules.Command.Note, empty: empty}
 	invited, attended, absent, schools := 0, 0, 0, 0
 	for _, c := range clusters {
 		f, card, now := ws.facts[c.ID], ws.cards[c.ID], ws.now[c.ID]

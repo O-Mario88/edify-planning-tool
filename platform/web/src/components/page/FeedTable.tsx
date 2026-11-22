@@ -88,12 +88,18 @@ function CellText({ cell, resolve }: { cell: PageCell; resolve: (href: string) =
   ) : (
     <span className={cell.strong ? 'font-semibold' : undefined}>{cell.text}</span>
   );
-  return href ? (
+  if (!href) return text;
+  if (href.includes('format=csv') || href.startsWith('/exports/')) {
+    return (
+      <a href={href} download className="inline no-underline hover:underline font-semibold edify-primary-text">
+        {text}
+      </a>
+    );
+  }
+  return (
     <Link href={href} className="inline no-underline hover:underline font-semibold edify-primary-text">
       {text}
     </Link>
-  ) : (
-    text
   );
 }
 

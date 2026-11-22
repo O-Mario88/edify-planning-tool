@@ -5,24 +5,49 @@ import "sort"
 // session is one delivered meeting or group training with a register
 // (profile_insights.SessionRow).
 type session struct {
+	id, name          string
 	heldOn, fy, area  string
 	isTraining        bool
+	teachers, leaders int
 	invited, attended map[string]bool
+}
+
+func (s session) rate() *int {
+	if len(s.invited) == 0 {
+		return nil
+	}
+	v := pyRoundInt(float64(100*min(len(s.attended), len(s.invited))) / float64(len(s.invited)))
+	return &v
 }
 
 // schoolAttendance is a member school at its cluster's sessions
 // (profile_insights.SchoolAttendanceRow).
 type schoolAttendance struct {
+	id, code, name    string
 	invited, attended int
 	lastAttended      string
 	missedInARow      int
 }
 
+func (s schoolAttendance) rate() *int {
+	if s.invited == 0 {
+		return nil
+	}
+	v := pyRoundInt(float64(100*s.attended) / float64(s.invited))
+	return &v
+}
+
+func (s schoolAttendance) isDrifting() bool {
+	return s.missedInARow >= rules.MissedInARowAlert
+}
+
 // attendance is profile_insights._attendance_of for one cluster.
 type attendance struct {
-	schools []schoolAttendance
+	schools      []schoolAttendance
+	driftingRows []schoolAttendance
 	// sessions are the year's, allSessions every year's, newest first.
 	sessions, allSessions []session
+	withoutRegister       int
 	drifting, represented int
 	invitedTotal          int
 	attendedTotal         int
@@ -40,12 +65,15 @@ type attendance struct {
 // row" counts back from the latest session a school was invited to, across
 // years. A delivered session nobody was ticked at has no register and
 // counts against no school.
-func attendanceOf(members []string, sessions []sessionRow, register map[string]map[string]registerRow, fy string) attendance {
+func attendanceOf(members []memberRow, sessions []sessionRow, register map[string]map[string]registerRow, fy string) attendance {
 	type entry struct {
 		heldOn   string
 		attended bool
 	}
 	rows := make([]schoolAttendance, len(members))
+	for i, m := range members {
+		rows[i] = schoolAttendance{id: m.ID, code: m.Code, name: m.Name}
+	}
 	timeline := make([][]entry, len(members))
 	out := attendance{}
 	for _, activity := range sessions {
@@ -63,17 +91,30 @@ func attendanceOf(members []string, sessions []sessionRow, register map[string]m
 			came[school] = true
 		}
 		if len(came) == 0 {
+			out.withoutRegister++
 			continue
 		}
 		for school := range came {
 			asked[school] = true
 		}
+		name := activity.Name
+		if name == "" {
+			name = sessionDisplayName(activity.Type, "", "", false)
+		}
 		s := session{
+			id: activity.ID, name: name,
 			heldOn: activity.HeldOn, fy: activity.FY, area: activity.Focus,
 			isTraining: in(rules.TrainingTypes, activity.Type), invited: asked, attended: came,
 		}
+		for school := range came {
+			if row, ok := register[activity.ID][school]; ok {
+				s.teachers += row.Teachers
+				s.leaders += row.Leaders
+			}
+		}
 		out.allSessions = append(out.allSessions, s)
-		for i, school := range members {
+		for i, m := range members {
+			school := m.ID
 			if !asked[school] {
 				continue
 			}
@@ -109,8 +150,9 @@ func attendanceOf(members []string, sessions []sessionRow, register map[string]m
 		}
 	}
 	for _, row := range rows {
-		if row.missedInARow >= rules.MissedInARowAlert {
+		if row.isDrifting() {
 			out.drifting++
+			out.driftingRows = append(out.driftingRows, row)
 		}
 		if row.attended > 0 {
 			out.represented++
@@ -118,6 +160,12 @@ func attendanceOf(members []string, sessions []sessionRow, register map[string]m
 		out.invitedTotal += row.invited
 		out.attendedTotal += row.attended
 	}
+	sort.SliceStable(out.driftingRows, func(a, b int) bool {
+		if out.driftingRows[a].missedInARow != out.driftingRows[b].missedInARow {
+			return out.driftingRows[a].missedInARow > out.driftingRows[b].missedInARow
+		}
+		return out.driftingRows[a].name < out.driftingRows[b].name
+	})
 	if out.invitedTotal > 0 {
 		rate := pyRoundInt(float64(100*out.attendedTotal) / float64(out.invitedTotal))
 		out.rate = &rate

@@ -50,24 +50,63 @@ func NewService(db schooldirectory.Querier, now func() time.Time) *Service {
 	return &Service{db: db, now: now}
 }
 
+type resolvedRoute struct {
+	kind    string // "section", "scoring", "unknown"
+	section string
+	webPath string
+}
+
+func resolvePath(path string) (resolvedRoute, bool) {
+	if path == Path || path == under {
+		return resolvedRoute{kind: "section", section: rules.DefaultSection, webPath: Path}, true
+	}
+	if !strings.HasPrefix(path, Path) {
+		return resolvedRoute{}, false
+	}
+	rest := strings.TrimSuffix(strings.TrimPrefix(path, Path), "/")
+	if rest == "" {
+		return resolvedRoute{kind: "section", section: rules.DefaultSection, webPath: Path}, true
+	}
+	if strings.Contains(rest, "/") {
+		return resolvedRoute{kind: "unknown"}, true
+	}
+	if rest == "scoring" {
+		return resolvedRoute{kind: "scoring", webPath: "/cluster-oversight/scoring"}, true
+	}
+	if isBuiltInSection(rest) {
+		return resolvedRoute{kind: "section", section: rest, webPath: "/cluster-oversight/" + rest}, true
+	}
+	return resolvedRoute{kind: "unknown"}, true
+}
+
 // Build answers path for p with the page's query. served is false for a
 // path this package does not answer.
 //
-// The existing feed opens the page at Path only. Every other address under
-// it (a section's own, the scoring page, the page without its slash) is not
-// found there for every reader, and so it is here; should the feed come to
-// open the sections (rules.FeedOpensSections), they are the existing
-// application's until Go builds them.
+// Every built-in Cluster Oversight section (/cluster-oversight/,
+// /cluster-oversight/<section>) and /cluster-oversight/scoring is served
+// directly in Go. Unknown paths under /cluster-oversight/ return
+// ErrNotAvailable rather than falling back to Command Center.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
-	if path != Path {
-		if (path == under || strings.HasPrefix(path, Path)) && !rules.FeedOpensSections {
-			return nil, true, ErrNotAvailable
-		}
+	route, mine := resolvePath(path)
+	if !mine {
 		return nil, false, nil
+	}
+	if route.kind == "unknown" {
+		return nil, true, ErrNotAvailable
 	}
 	doors, ok := rules.Doors[p.ActiveRole]
 	if !ok || !doors.Page {
 		return nil, true, ErrNotAvailable
+	}
+	if route.kind == "scoring" {
+		if !doors.Scoring {
+			return nil, true, ErrNotAvailable
+		}
+		setting, err := readScoreSetting(ctx, s.db)
+		if err != nil {
+			return nil, true, err
+		}
+		return scoringPage(setting), true, nil
 	}
 	now := s.now()
 	scope, err := schooldirectory.ResolveScope(ctx, s.db, p, now)
@@ -89,7 +128,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if err != nil {
 		return nil, true, err
 	}
-	return page(found, reader{doors: doors, ids: nonEmpty(p.UserID, p.StaffProfileID)}, fy, years, now.In(kampala).Format(time.DateOnly), query), true, nil
+	return sectionPage(found, reader{doors: doors, ids: nonEmpty(p.UserID, p.StaffProfileID)}, route.section, route.webPath, fy, years, now.In(kampala).Format(time.DateOnly), query), true, nil
 }
 
 // yearOptions is the view's sorted(fy_options(), reverse=True).
@@ -119,22 +158,22 @@ type reader struct {
 
 // page is the Command Center drawn from the records for one reader.
 func page(r *records, who reader, fy string, years []string, today string, query url.Values) *screensv1.GetPageResponse {
+	return sectionPage(r, who, rules.DefaultSection, Path, fy, years, today, query)
+}
+
+func sectionPage(r *records, who reader, sectionKey, webPath, fy string, years []string, today string, query url.Values) *screensv1.GetPageResponse {
 	ws := load(r, fy, today, who.ids)
-	section := Section{}
-	for _, s := range rules.Sections {
-		if s.Key == rules.DefaultSection {
-			section = s
-		}
-	}
+	section, _ := sectionMeta(sectionKey)
 	// My Clusters is for someone who holds one, among more than they hold.
 	showMine := len(ws.mine) > 0 && len(ws.mine) != len(ws.clusters)
+	tbl := ws.buildSection(section.Key, who.doors, ssaArea(query), impactView(query))
 	return &screensv1.GetPageResponse{
 		Header: header(section, who.doors, fy, query),
 		Blocks: []*screensv1.PageBlock{
 			sectionTabs(section.Key, fy, who.doors, showMine),
-			yearFilter(fy, years),
-			tableBlock(ws.command(who.doors.Loans), who.doors, query),
+			filtersBlock(section.Key, fy, years, query),
+			tableBlock(tbl, who.doors, query),
 		},
-		WebPath: Path,
+		WebPath: webPath,
 	}
 }

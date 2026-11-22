@@ -196,7 +196,7 @@ GRANT SELECT (id, closure_type, owner_at_closure, owner_name_at_closure, reopene
 -- Cluster Oversight's Command Center: the weights and maturity rules its
 -- scores are made with (the newest row), where the Country Director or
 -- Impact Assessment has set any.
-GRANT SELECT (health_weights, impact_weights, teacher_weights, leader_weights, maturity_rules, created_at)
+GRANT SELECT (health_weights, impact_weights, teacher_weights, leader_weights, maturity_rules, set_by, note, created_at)
   ON cluster_score_setting TO edify_gateway_ro;
 -- The Planning page: whether the country's operational rate card is published
 -- (active_catalogue), which Cost Blocked counts.

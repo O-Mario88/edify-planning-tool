@@ -194,6 +194,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	if cfg.ExistingAppURL != "" {
 		existingApp = feed.NewClient(cfg.ExistingAppURL, logger)
 	}
+	clusterOversightSvc := clusteroversight.NewService(pool, time.Now)
 	screenService := screens.NewService(existingApp).TrustProxyHeaders(cfg.Loans.TrustProxyHeaders).
 		WithStrictReads(cfg.StrictReads).
 		WithDirectory(schooldirectory.NewService(pool, time.Now), logger).
@@ -204,7 +205,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			clusterpage.NewService(pool, time.Now),
 			closedschools.NewService(pool, time.Now),
 			programmeschools.NewService(pool, time.Now),
-			clusteroversight.NewService(pool, time.Now),
+			clusterOversightSvc,
 			planningpage.NewService(pool, time.Now),
 			decisionlog.NewService(pool, time.Now),
 			escalations.NewService(pool, time.Now),
@@ -362,6 +363,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	mux.Handle(screensv1connect.NewPageDrawerServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewExportServiceHandler(screenService, options...))
 	exportsMgr.RegisterHTTP(mux, authenticator)
+	clusterOversightSvc.RegisterHTTP(mux, authenticator)
 	fieldOpsSvc.RegisterHTTP(mux, authenticator)
 	financeOpsSvc.RegisterHTTP(mux, authenticator)
 	workforceOpsSvc.RegisterHTTP(mux, authenticator)

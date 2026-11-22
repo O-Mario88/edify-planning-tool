@@ -4,6 +4,8 @@ package integration
 
 import (
 	"context"
+	"io"
+	"net/http"
 	"strings"
 	"testing"
 
@@ -107,17 +109,113 @@ func TestAnOfficerWithNoClustersReadsAnEmptyCommandCenter(t *testing.T) {
 	}
 }
 
-func TestClusterOversightIsNotThereForARoleOutsideItNorAtASectionsAddress(t *testing.T) {
+func TestClusterOversightServesAllSectionsScoringAndCSVWithoutDjango(t *testing.T) {
 	borrowAccount(t, "coordinator@edify.org")
-	token := sessionOf(t, "coordinator@edify.org", seededPassword).GetAccessToken()
-	if _, err := pageOf(token, clusterOversight, nil); connect.CodeOf(err) != connect.CodeNotFound {
-		t.Fatalf("a Project Coordinator opening Cluster Oversight: %v, want not found", err)
-	}
-	borrowAccount(t, "admin@edify.org")
-	token = sessionOf(t, "admin@edify.org", seededPassword).GetAccessToken()
-	for _, path := range []string{"/cluster-oversight/ssa", "/cluster-oversight", "/cluster-oversight/scoring"} {
-		if _, err := pageOf(token, path, nil); connect.CodeOf(err) != connect.CodeNotFound {
-			t.Fatalf("%s: %v, want not found, as the existing feed answers", path, err)
+	coordToken := sessionOf(t, "coordinator@edify.org", seededPassword).GetAccessToken()
+	for _, path := range []string{clusterOversight, "/cluster-oversight/ssa", "/cluster-oversight/scoring"} {
+		if _, err := pageOf(coordToken, path, nil); connect.CodeOf(err) != connect.CodeNotFound {
+			t.Fatalf("a Project Coordinator opening %s: %v, want not found", path, err)
 		}
+	}
+
+	borrowAccount(t, "cceo@edify.org")
+	cceoToken := sessionOf(t, "cceo@edify.org", seededPassword).GetAccessToken()
+	if _, err := pageOf(cceoToken, "/cluster-oversight/scoring", nil); connect.CodeOf(err) != connect.CodeNotFound {
+		t.Fatalf("a CCEO opening /cluster-oversight/scoring: %v, want not found", err)
+	}
+
+	borrowAccount(t, "admin@edify.org")
+	adminToken := sessionOf(t, "admin@edify.org", seededPassword).GetAccessToken()
+
+	// Unknown sections must fail cleanly, never silently falling back to Command Center.
+	for _, bad := range []string{"/cluster-oversight/nonexistent", "/cluster-oversight/ssa/extra"} {
+		if _, err := pageOf(adminToken, bad, nil); connect.CodeOf(err) != connect.CodeNotFound {
+			t.Fatalf("%s: %v, want not found", bad, err)
+		}
+	}
+
+	// Every in-workspace section opens its own title, active tab, and table.
+	sections := map[string]string{
+		"command":    "Command Center",
+		"my":         "My Clusters",
+		"meetings":   "Meetings",
+		"training":   "Training",
+		"attendance": "Attendance",
+		"schools":    "Schools",
+		"ssa":        "SSA Performance",
+		"teachers":   "Teacher Impact",
+		"leaders":    "Leader Impact",
+		"students":   "Student Impact",
+		"academic":   "Academic Impact",
+		"loans":      "Loans & BT",
+		"stories":    "MSCS",
+		"impact":     "Impact Analytics",
+		"planning":   "Planning",
+		"evidence":   "Evidence",
+		"reports":    "Reports",
+	}
+	for key, wantTitle := range sections {
+		got, err := pageOf(adminToken, "/cluster-oversight/"+key, nil)
+		if err != nil {
+			t.Fatalf("section %s failed: %v", key, err)
+		}
+		if got.GetHeader().GetTitle() != wantTitle {
+			t.Errorf("section %s: title %q, want %q", key, got.GetHeader().GetTitle(), wantTitle)
+		}
+		if got.GetWebPath() != "/cluster-oversight/"+key {
+			t.Errorf("section %s: web_path %q", key, got.GetWebPath())
+		}
+		if tbl := oversightTable(t, got); tbl.GetTitle() == "" {
+			t.Errorf("section %s: empty table title", key)
+		}
+	}
+
+	// SSA area filter & Impact courses view work with real seeded data.
+	ssaFiltered, err := pageOf(adminToken, "/cluster-oversight/ssa", map[string]string{"area": "leadership"})
+	if err != nil {
+		t.Fatalf("ssa filtered: %v", err)
+	}
+	if !strings.Contains(oversightTable(t, ssaFiltered).GetTitle(), "Leadership") {
+		t.Fatalf("ssa filtered table title: %q", oversightTable(t, ssaFiltered).GetTitle())
+	}
+	impactCourses, err := pageOf(adminToken, "/cluster-oversight/impact", map[string]string{"view": "courses"})
+	if err != nil {
+		t.Fatalf("impact courses: %v", err)
+	}
+	if !strings.Contains(oversightTable(t, impactCourses).GetTitle(), "SSA Movement After Each Training") {
+		t.Fatalf("impact courses title: %q", oversightTable(t, impactCourses).GetTitle())
+	}
+
+	// Scoring opens for Admin.
+	scoring, err := pageOf(adminToken, "/cluster-oversight/scoring", nil)
+	if err != nil {
+		t.Fatalf("scoring failed for Admin: %v", err)
+	}
+	if scoring.GetHeader().GetTitle() != "Cluster Scoring" || len(scoring.GetBlocks()) != 6 {
+		t.Fatalf("scoring: title=%q blocks=%d", scoring.GetHeader().GetTitle(), len(scoring.GetBlocks()))
+	}
+
+	// CSV endpoint serves real CSV for Admin and refuses CCEO (Export=false).
+	req, _ := http.NewRequest("GET", baseURL+"/api/v1/cluster-oversight/command/csv", nil)
+	req.Header.Set("Authorization", "Bearer "+adminToken)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("csv request: %v", err)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	if resp.StatusCode != http.StatusOK || !strings.Contains(resp.Header.Get("Content-Type"), "text/csv") || !strings.Contains(string(body), "Cluster,District,CCEO") {
+		t.Fatalf("admin csv: status=%d ct=%q body=%q", resp.StatusCode, resp.Header.Get("Content-Type"), string(body[:min(len(body), 120)]))
+	}
+
+	reqDenied, _ := http.NewRequest("GET", baseURL+"/api/v1/cluster-oversight/command/csv", nil)
+	reqDenied.Header.Set("Authorization", "Bearer "+cceoToken)
+	respDenied, err := http.DefaultClient.Do(reqDenied)
+	if err != nil {
+		t.Fatalf("cceo csv request: %v", err)
+	}
+	_ = respDenied.Body.Close()
+	if respDenied.StatusCode != http.StatusForbidden {
+		t.Fatalf("cceo csv: status=%d, want 403", respDenied.StatusCode)
 	}
 }

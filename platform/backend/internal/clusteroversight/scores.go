@@ -142,11 +142,13 @@ func share(of, whole int) *float64 {
 // facts is what the page knows about one cluster (scores.gather for it).
 type facts struct {
 	members    []string
+	memberRows []memberRow
 	attendance attendance
 	movement   map[string]*areaMovement
 	enrolment  enrolment
 	learning   learning
 	stories    stories
+	loans      loanSummary
 	plan       plan
 	funded     int
 }
@@ -264,10 +266,10 @@ func compositeOf(key string, values map[string]*float64, s settings) composite {
 	return c
 }
 
-// scorecard is scores.Scorecard, as far as the page reads it.
+// scorecard is scores.Scorecard: all four composites and maturity level.
 type scorecard struct {
-	health, impact composite
-	maturity       int
+	health, impact, teacher, leader composite
+	maturity                        int
 }
 
 // maturityLabel is the level's name; a cluster on no level has no schools.
@@ -284,14 +286,24 @@ func maturityLabel(level int) string {
 // indices are themselves parts of Cluster Impact.
 func scorecardOf(f facts, fy string, s settings) scorecard {
 	values := f.values(fy)
-	for _, key := range []string{"teacher", "leader"} {
-		values[key] = nil
-		if score := compositeOf(key, values, s).score(); score != nil {
-			index := float64(*score)
-			values[key] = &index
-		}
+	teacher := compositeOf("teacher", values, s)
+	leader := compositeOf("leader", values, s)
+	values["teacher"] = nil
+	if score := teacher.score(); score != nil {
+		index := float64(*score)
+		values["teacher"] = &index
 	}
-	card := scorecard{health: compositeOf("health", values, s), impact: compositeOf("impact", values, s)}
+	values["leader"] = nil
+	if score := leader.score(); score != nil {
+		index := float64(*score)
+		values["leader"] = &index
+	}
+	card := scorecard{
+		health:  compositeOf("health", values, s),
+		impact:  compositeOf("impact", values, s),
+		teacher: teacher,
+		leader:  leader,
+	}
 	card.maturity = maturity(f, card, values["ssa"], s.maturity)
 	return card
 }

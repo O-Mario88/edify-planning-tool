@@ -80,14 +80,41 @@ func sectionTabs(active, fy string, d Doors, showMine bool) *screensv1.PageBlock
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_LinkTabs{LinkTabs: &screensv1.PageLinkTabs{Tabs: tabs, Scrolls: true}}}
 }
 
-// yearFilter is the page's one filter on the Command Center: the fiscal
-// year, newest first.
-func yearFilter(fy string, years []string) *screensv1.PageBlock {
-	f := &screensv1.PageFilter{Name: "fy", Label: "Fiscal year", Value: fy}
+// filtersBlock is the page's filters: always fiscal year, plus SSA area on
+// the SSA Performance section and View on Impact Analytics.
+func filtersBlock(sectionKey, fy string, years []string, query url.Values) *screensv1.PageBlock {
+	fyFilter := &screensv1.PageFilter{Name: "fy", Label: "Fiscal year", Value: fy}
 	for _, y := range years {
-		f.Options = append(f.Options, &screensv1.PageFilterOption{Value: y, Label: "FY " + y})
+		fyFilter.Options = append(fyFilter.Options, &screensv1.PageFilterOption{Value: y, Label: "FY " + y})
 	}
-	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Filters{Filters: &screensv1.PageFilters{Filters: []*screensv1.PageFilter{f}}}}
+	filters := []*screensv1.PageFilter{fyFilter}
+	if sectionKey == "ssa" {
+		areaFilter := &screensv1.PageFilter{
+			Name:  "area",
+			Label: "SSA area",
+			Value: ssaArea(query),
+			Options: []*screensv1.PageFilterOption{
+				{Value: "", Label: "All SSA Areas"},
+			},
+		}
+		for _, iv := range rules.SSAInterventions {
+			areaFilter.Options = append(areaFilter.Options, &screensv1.PageFilterOption{Value: iv[0], Label: iv[1]})
+		}
+		filters = append(filters, areaFilter)
+	}
+	if sectionKey == "impact" {
+		viewFilter := &screensv1.PageFilter{
+			Name:  "view",
+			Label: "View",
+			Value: impactView(query),
+			Options: []*screensv1.PageFilterOption{
+				{Value: "clusters", Label: "Clusters Compared"},
+				{Value: "courses", Label: "Training Effectiveness"},
+			},
+		}
+		filters = append(filters, viewFilter)
+	}
+	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Filters{Filters: &screensv1.PageFilters{Filters: filters}}}
 }
 
 // pageNumber is {% paginate %}'s reading of the page asked for: a number
@@ -189,10 +216,16 @@ func pager(number, pages, total, shown int, query url.Values) *screensv1.PagePag
 
 // cellOf is one cell as the template draws it and the feed reads it: a
 // figure with schools behind it links to the cluster profile (the cluster's
-// own page for its name) for a reader that page lets in.
+// own page for its name) for a reader that page lets in; a school name links
+// to the school profile; a direct href links to its path.
 func cellOf(c cell, d Doors) *screensv1.PageCell {
 	out := &screensv1.PageCell{Text: collapse(c.text), Tone: c.tone}
-	if c.cluster != "" && d.Cluster {
+	switch {
+	case c.href != "":
+		out.Href = c.href
+	case c.school != "":
+		out.Href = "/schools/" + c.school
+	case c.cluster != "" && d.Cluster:
 		out.Href = "/clusters/" + c.cluster
 		if c.query != "" {
 			out.Href += "/profile" + c.query
@@ -209,7 +242,11 @@ func tableBlock(t table, d Doors, query url.Values) *screensv1.PageBlock {
 		out.EmptyMessage = collapse(t.empty)
 		return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: out}}
 	}
-	for _, column := range rules.Command.Columns {
+	cols := t.columns
+	if len(cols) == 0 {
+		cols = rules.Command.Columns
+	}
+	for _, column := range cols {
 		out.Columns = append(out.Columns, &screensv1.PageColumn{Label: collapse(column.Label), Numeric: column.Numeric})
 	}
 	number, pages := pageNumber(query.Get(pageParam), len(t.rows))

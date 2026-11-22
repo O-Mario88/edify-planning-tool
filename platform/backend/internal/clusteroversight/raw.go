@@ -33,6 +33,9 @@ type records struct {
 	// Funded is one school id for each funded loan the page's statement
 	// tells apart (see funded in read.go).
 	Funded []string `json:"funded"`
+	// Loans are the non-canceled loans for member schools, used by loan-enabled
+	// sections when the reader may view the loan register.
+	Loans []loanRow `json:"loans,omitempty"`
 	// Stories are the change stories that are not drafts.
 	Stories []storyRow `json:"stories"`
 	// Plan is the year's meetings and group trainings still in the plan.
@@ -57,8 +60,11 @@ type clusterRow struct {
 }
 
 type memberRow struct {
-	ID        string `json:"id"`
-	ClusterID string `json:"cluster_id"`
+	ID         string `json:"id"`
+	Code       string `json:"code,omitempty"`
+	Name       string `json:"name,omitempty"`
+	ClusterID  string `json:"cluster_id"`
+	Enrollment *int   `json:"enrollment,omitempty"`
 	// Country is the school's region's, "" where it has none.
 	Country string `json:"country"`
 }
@@ -67,6 +73,7 @@ type sessionRow struct {
 	ID        string   `json:"id"`
 	ClusterID string   `json:"cluster_id"`
 	Type      string   `json:"type"`
+	Name      string   `json:"name,omitempty"`
 	FY        string   `json:"fy"`
 	Focus     string   `json:"focus"`
 	Attended  []string `json:"attended"`
@@ -118,10 +125,18 @@ type learningRow struct {
 	Learners int     `json:"learners"`
 }
 
+type loanRow struct {
+	SchoolID        string  `json:"school_id"`
+	Status          string  `json:"status"`
+	DisbursedAmount float64 `json:"disbursed_amount"`
+}
+
 type storyRow struct {
-	ClusterID string `json:"cluster_id"`
-	SchoolID  string `json:"school_id"`
-	Status    string `json:"status"`
+	ClusterID   string `json:"cluster_id"`
+	SchoolID    string `json:"school_id"`
+	Status      string `json:"status"`
+	Date        string `json:"date,omitempty"`
+	HasEvidence bool   `json:"has_evidence,omitempty"`
 }
 
 type planRow struct {
@@ -133,11 +148,15 @@ type planRow struct {
 
 // settingRow is a ClusterScoreSetting row's stored weights and rules.
 type settingRow struct {
-	Health   map[string]json.RawMessage `json:"health"`
-	Impact   map[string]json.RawMessage `json:"impact"`
-	Teacher  map[string]json.RawMessage `json:"teacher"`
-	Leader   map[string]json.RawMessage `json:"leader"`
-	Maturity map[string]json.RawMessage `json:"maturity"`
+	Health    map[string]json.RawMessage `json:"health"`
+	Impact    map[string]json.RawMessage `json:"impact"`
+	Teacher   map[string]json.RawMessage `json:"teacher"`
+	Leader    map[string]json.RawMessage `json:"leader"`
+	Maturity  map[string]json.RawMessage `json:"maturity"`
+	SetBy     string                     `json:"set_by,omitempty"`
+	SetByName string                     `json:"set_by_name,omitempty"`
+	SetAt     string                     `json:"set_at,omitempty"`
+	Note      string                     `json:"note,omitempty"`
 }
 
 type yearRecordRow struct {

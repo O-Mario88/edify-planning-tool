@@ -2,13 +2,29 @@ package clusteroversight
 
 import "strconv"
 
-// enrolment is outcomes.EnrolmentSummary for one cluster, as far as the
-// page reads it: like for like, only the schools with a figure in both
-// years.
+// schoolEnrolment is one member school's enrolment summary.
+type schoolEnrolment struct {
+	latest    *int
+	growthPct *float64
+}
+
+// enrolment is outcomes.EnrolmentSummary for one cluster: like for like,
+// only the schools with a figure in both years.
 type enrolment struct {
+	schoolCount             int
 	compared, before, after int
+	latestTotal             int
 	// grew is how many compared schools' enrolment rose.
 	grew int
+	rows map[string]schoolEnrolment
+}
+
+func (e enrolment) change() *int {
+	if e.compared == 0 {
+		return nil
+	}
+	v := e.after - e.before
+	return &v
 }
 
 // growthPct is outcomes._growth_pct over the compared schools: nil with
@@ -22,21 +38,30 @@ func (e enrolment) growthPct() *float64 {
 }
 
 // enrolmentOf is outcomes.enrolment_by_cluster for one cluster's members.
-func enrolmentOf(members []string, yearly map[string]map[string]int, fy string) enrolment {
+func enrolmentOf(members []memberRow, yearly map[string]map[string]int, fy string) enrolment {
 	previous := previousFY(fy)
-	out := enrolment{}
-	for _, school := range members {
+	out := enrolment{schoolCount: len(members), rows: map[string]schoolEnrolment{}}
+	for _, m := range members {
+		school := m.ID
+		row := schoolEnrolment{latest: m.Enrollment}
+		if m.Enrollment != nil && *m.Enrollment > 0 {
+			out.latestTotal += *m.Enrollment
+		}
 		before, hadBefore := yearly[school][previous]
 		after, hasAfter := yearly[school][fy]
-		if !hadBefore || !hasAfter {
-			continue
+		if hadBefore && hasAfter {
+			out.compared++
+			out.before += before
+			out.after += after
+			if after-before > 0 {
+				out.grew++
+			}
+			if before != 0 {
+				g := pyRound(float64(100*(after-before))/float64(before), 1)
+				row.growthPct = &g
+			}
 		}
-		out.compared++
-		out.before += before
-		out.after += after
-		if after-before > 0 {
-			out.grew++
-		}
+		out.rows[school] = row
 	}
 	return out
 }
@@ -47,11 +72,11 @@ func previousFY(fy string) string {
 	return strconv.Itoa(year - 1)
 }
 
-// learning is outcomes.LearningSummary for one cluster, as far as the page
-// reads it.
+// learning is outcomes.LearningSummary for one cluster.
 type learning struct {
-	compared, improved, declined int
-	before, after                *float64
+	compared, improved, unchanged, declined int
+	before, after                           *float64
+	changes                                 map[string]*float64
 }
 
 // change is LearningSummary.change, in percentage points.
@@ -96,7 +121,7 @@ func schoolScores(rows []learningRow) map[string]map[string]float64 {
 // learningOf is outcomes.learning_by_cluster for one cluster's members.
 func learningOf(members []string, scores map[string]map[string]float64, fy string) learning {
 	previous := previousFY(fy)
-	out := learning{}
+	out := learning{changes: map[string]*float64{}}
 	befores, afters := []float64{}, []float64{}
 	for _, school := range members {
 		before, hadBefore := scores[school][previous]
@@ -106,20 +131,35 @@ func learningOf(members []string, scores map[string]map[string]float64, fy strin
 		}
 		out.compared++
 		befores, afters = append(befores, before), append(afters, after)
-		switch moved := pyRound(after-before, 1); {
+		moved := pyRound(after-before, 1)
+		out.changes[school] = &moved
+		switch {
 		case moved > 0:
 			out.improved++
 		case moved < 0:
 			out.declined++
+		default:
+			out.unchanged++
 		}
 	}
 	out.before, out.after = meanOrNil(befores), meanOrNil(afters)
 	return out
 }
 
-// stories is outcomes.StorySummary for one cluster, as far as the page
-// reads it: every story that is not a draft, and the approved among them.
-type stories struct{ count, approved int }
+// stories is outcomes.StorySummary for one cluster: every story that is not
+// a draft, approved, waiting with a reviewer, evidence counts, and latest date.
+type stories struct {
+	count, approved, waiting      int
+	withEvidence, withoutEvidence int
+	latestDate                    string
+}
+
+// loanSummary is outcomes.LoanSummary for one cluster.
+type loanSummary struct {
+	loanCount int
+	disbursed float64
+	bySchool  map[string]int
+}
 
 // plan is scores._session_plan for one cluster: of the year's meetings and
 // group trainings still in the plan, how many were due by today, how many of

@@ -158,24 +158,10 @@ WHERE c.deleted_at IS NULL AND `+where(b)+` ORDER BY c.name ASC`, func(rows pgx.
 	}
 
 	// scores.current_settings: the newest weights row.
-	var health, impact, teacher, leader, maturity []byte
-	switch err := q.QueryRow(ctx, `
-SELECT health_weights, impact_weights, teacher_weights, leader_weights, maturity_rules
-FROM cluster_score_setting ORDER BY created_at DESC LIMIT 1`).Scan(&health, &impact, &teacher, &leader, &maturity); {
-	case errors.Is(err, pgx.ErrNoRows):
-	case err != nil:
-		return nil, fmt.Errorf("clusteroversight: reading the score weights: %w", err)
-	default:
-		// A stored value that is not an object names no part.
-		object := func(raw []byte) map[string]json.RawMessage {
-			parts := map[string]json.RawMessage{}
-			_ = json.Unmarshal(raw, &parts)
-			return parts
-		}
-		out.Setting = &settingRow{
-			Health: object(health), Impact: object(impact), Teacher: object(teacher),
-			Leader: object(leader), Maturity: object(maturity),
-		}
+	if setting, err := readScoreSetting(ctx, q); err != nil {
+		return nil, err
+	} else {
+		out.Setting = setting
 	}
 	if len(ids) == 0 {
 		return out, nil
@@ -208,12 +194,12 @@ WHERE sp.deleted_at IS NULL AND (sp.id = ANY($1) OR sp.user_id = ANY($1))`, func
 	// profile_insights.member_schools: the operating schools, by name.
 	schools := []string{}
 	if err := each(ctx, q, "the member schools", `
-SELECT s.id, s.cluster_id, `+registry.SchoolCountryName("s")+`
+SELECT s.id, COALESCE(s.school_id, ''), s.name, s.cluster_id, s.enrollment, `+registry.SchoolCountryName("s")+`
 FROM school s
 WHERE s.deleted_at IS NULL AND s.operational_status = ANY($1) AND s.cluster_id = ANY($2)
 ORDER BY s.name ASC`, func(rows pgx.Rows) error {
 		var m memberRow
-		if err := rows.Scan(&m.ID, &m.ClusterID, &m.Country); err != nil {
+		if err := rows.Scan(&m.ID, &m.Code, &m.Name, &m.ClusterID, &m.Enrollment, &m.Country); err != nil {
 			return err
 		}
 		out.Members = append(out.Members, m)
@@ -227,15 +213,21 @@ ORDER BY s.name ASC`, func(rows pgx.Rows) error {
 	sessions := []string{}
 	if err := each(ctx, q, "the delivered sessions", `
 SELECT a.id, a.cluster_id, a.activity_type, COALESCE(a.fy, ''), COALESCE(a.focus_intervention, ''),
-  COALESCE(a.attended_school_ids, '{}'), COALESCE(COALESCE(a.actual_delivery_date, a.planned_date)::text, '')
+  COALESCE(a.attended_school_ids, '{}'), COALESCE(COALESCE(a.actual_delivery_date, a.planned_date)::text, ''),
+  COALESCE(tc.display_name, ''), COALESCE(ci.display_name, ''), COALESCE(ci.is_training_course, false)
 FROM activity a
+LEFT JOIN activity_catalogue_item tc ON a.training_course_id = tc.id
+LEFT JOIN activity_catalogue_item ci ON a.catalogue_item_id = ci.id
 WHERE a.deleted_at IS NULL AND a.activity_type = ANY($1) AND a.cluster_id = ANY($2) AND a.school_id IS NULL
   AND a.status = ANY($3)
 ORDER BY a.created_at DESC`, func(rows pgx.Rows) error {
 		var a sessionRow
-		if err := rows.Scan(&a.ID, &a.ClusterID, &a.Type, &a.FY, &a.Focus, &a.Attended, &a.HeldOn); err != nil {
+		var tcName, ciName string
+		var ciIsTraining bool
+		if err := rows.Scan(&a.ID, &a.ClusterID, &a.Type, &a.FY, &a.Focus, &a.Attended, &a.HeldOn, &tcName, &ciName, &ciIsTraining); err != nil {
 			return err
 		}
+		a.Name = sessionDisplayName(a.Type, tcName, ciName, ciIsTraining)
 		out.Sessions = append(out.Sessions, a)
 		sessions = append(sessions, a.ID)
 		return nil
@@ -297,12 +289,12 @@ GROUP BY 1`, func(rows pgx.Rows) error {
 	// outcomes.stories_by_cluster: filed against a cluster, or written about
 	// one of its schools; a draft is its author's own.
 	if err := each(ctx, q, "the change stories", `
-SELECT COALESCE(m.cluster_id, ''), COALESCE(m.school_id, ''), m.status
+SELECT COALESCE(m.cluster_id, ''), COALESCE(m.school_id, ''), m.status, COALESCE(m.story_date::text, ''), COALESCE(m.evidence_uri, '') <> ''
 FROM mscs_story m
 WHERE (m.cluster_id = ANY($1) OR m.school_id = ANY($2)) AND NOT (m.status = $3)
 ORDER BY m.story_date DESC, m.created_at DESC`, func(rows pgx.Rows) error {
 		var row storyRow
-		if err := rows.Scan(&row.ClusterID, &row.SchoolID, &row.Status); err != nil {
+		if err := rows.Scan(&row.ClusterID, &row.SchoolID, &row.Status, &row.Date, &row.HasEvidence); err != nil {
 			return err
 		}
 		out.Stories = append(out.Stories, row)
@@ -461,7 +453,7 @@ ORDER BY l.assessed_on DESC, 1 ASC`, func(rows pgx.Rows) error {
 	// schools but, ordered by the model, tells loans apart by their
 	// disbursement date and the moment they were made as well: a school with
 	// two funded loans is counted twice. Go counts what the page counts.
-	return out, each(ctx, q, "the funded loans", `
+	if err := each(ctx, q, "the funded loans", `
 SELECT DISTINCT l.school_id, l.disbursement_date, l.created_at FROM bt_mfi_loan l
 WHERE l.deleted_at IS NULL AND l.school_id = ANY($1::varchar[]) AND l.status = ANY($2)
 ORDER BY l.disbursement_date DESC, l.created_at DESC`, func(rows pgx.Rows) error {
@@ -472,5 +464,74 @@ ORDER BY l.disbursement_date DESC, l.created_at DESC`, func(rows pgx.Rows) error
 		}
 		out.Funded = append(out.Funded, school)
 		return nil
-	}, schools, rules.FundedLoanStatuses)
+	}, schools, rules.FundedLoanStatuses); err != nil {
+		return nil, err
+	}
+
+	// outcomes.loans_by_cluster: non-canceled loans for the member schools in
+	// the reader's scope (loan columns are emitted only when doors.Loans is true).
+	return out, each(ctx, q, "the loans", `
+SELECT l.school_id, l.status, COALESCE(l.disbursed_amount::text, '0')
+FROM bt_mfi_loan l
+WHERE l.deleted_at IS NULL AND l.status <> 'canceled' AND l.school_id = ANY($1::varchar[])
+ORDER BY l.disbursement_date DESC, l.created_at DESC`, func(rows pgx.Rows) error {
+		var row loanRow
+		var amountText string
+		if err := rows.Scan(&row.SchoolID, &row.Status, &amountText); err != nil {
+			return err
+		}
+		if v, err := strconv.ParseFloat(amountText, 64); err == nil {
+			row.DisbursedAmount = v
+		}
+		out.Loans = append(out.Loans, row)
+		return nil
+	}, schools)
+}
+
+func readScoreSetting(ctx context.Context, q schooldirectory.Querier) (*settingRow, error) {
+	var health, impact, teacher, leader, maturity []byte
+	var setBy, setByName, setAt, note string
+	err := q.QueryRow(ctx, `
+SELECT cs.health_weights, cs.impact_weights, cs.teacher_weights, cs.leader_weights, cs.maturity_rules,
+  COALESCE(cs.set_by, ''), COALESCE(u.name, ''), COALESCE((cs.created_at AT TIME ZONE 'Africa/Kampala')::date::text, ''), COALESCE(cs.note, '')
+FROM cluster_score_setting cs
+LEFT JOIN "user" u ON u.id = cs.set_by
+ORDER BY cs.created_at DESC LIMIT 1`).Scan(&health, &impact, &teacher, &leader, &maturity, &setBy, &setByName, &setAt, &note)
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+		return nil, nil
+	case err != nil:
+		return nil, fmt.Errorf("clusteroversight: reading the score weights: %w", err)
+	default:
+		object := func(raw []byte) map[string]json.RawMessage {
+			parts := map[string]json.RawMessage{}
+			_ = json.Unmarshal(raw, &parts)
+			return parts
+		}
+		return &settingRow{
+			Health: object(health), Impact: object(impact), Teacher: object(teacher),
+			Leader: object(leader), Maturity: object(maturity),
+			SetBy: setBy, SetByName: setByName, SetAt: setAt, Note: note,
+		}, nil
+	}
+}
+
+func sessionDisplayName(activityType, tcName, ciName string, ciIsTraining bool) string {
+	if in(rules.TrainingTypes, activityType) {
+		if tcName != "" {
+			return tcName
+		}
+		if ciIsTraining && ciName != "" {
+			return ciName
+		}
+		return "Not yet named"
+	}
+	switch activityType {
+	case "cluster_meeting":
+		return "Cluster Meeting"
+	case "cluster_meeting_ssa_review":
+		return "Cluster Meeting + SSA Review"
+	default:
+		return pyTitle(replaceUnderscores(activityType))
+	}
 }

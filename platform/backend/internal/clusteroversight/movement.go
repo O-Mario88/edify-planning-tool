@@ -187,15 +187,45 @@ func classify(r *records, country map[string]string) map[string]schoolPairs {
 	return out
 }
 
+// schoolMovementRow is one school's movement on an SSA area or overall.
+type schoolMovementRow struct {
+	before, after *float64
+	change        *float64
+	verdict       string
+	verdictLabel  string
+	tone          string
+}
+
+func verdictMeta(v string) (label, tone string) {
+	c := rules.Change
+	switch v {
+	case c.Improved:
+		return "Improved", "success"
+	case c.MaintainedStrong:
+		return "Maintained Strong", "success"
+	case c.NoChange:
+		return "No Change", "neutral"
+	case c.Declined:
+		return "Declined", "danger"
+	default:
+		return "Not Compared", "neutral"
+	}
+}
+
 // areaMovement is one SSA area's year-on-year movement across a cluster's
-// schools (profile_insights.AreaMovement), as far as the page reads it.
+// schools (profile_insights.AreaMovement).
 type areaMovement struct {
-	compared, improved, maintainedStrong, notCompared int
+	compared, improved, noChange, maintainedStrong, declined, notCompared int
 	// before and after are the means of the compared schools, nil with none.
 	before, after *float64
 	// verdicts is each compared member's classification.
 	verdicts map[string]string
+	// schools is each member school's movement row, keyed by school id.
+	schools map[string]schoolMovementRow
 }
+
+// held is AreaMovement.held (no_change + maintained_strong).
+func (a areaMovement) held() int { return a.noChange + a.maintainedStrong }
 
 // change is AreaMovement.change.
 func (a areaMovement) change() *float64 {
@@ -211,8 +241,12 @@ func (a *areaMovement) count(school, classification string) {
 	switch classification {
 	case rules.Change.Improved:
 		a.improved++
+	case rules.Change.NoChange:
+		a.noChange++
 	case rules.Change.MaintainedStrong:
 		a.maintainedStrong++
+	case rules.Change.Declined:
+		a.declined++
 	}
 	a.verdicts[school] = classification
 }
@@ -230,17 +264,24 @@ func meanOrNil(values []float64) *float64 {
 // row (each school's verdict across its areas, not an average of the area
 // rows) and one row for each intervention.
 func movementOf(members []string, classified map[string]schoolPairs) map[string]*areaMovement {
-	out := map[string]*areaMovement{overall: {verdicts: map[string]string{}}}
-	for _, iv := range rules.SSAInterventions {
-		out[iv[0]] = &areaMovement{verdicts: map[string]string{}}
+	out := map[string]*areaMovement{
+		overall: {verdicts: map[string]string{}, schools: map[string]schoolMovementRow{}},
 	}
+	areaBefores := map[string][]float64{}
+	areaAfters := map[string][]float64{}
+	for _, iv := range rules.SSAInterventions {
+		out[iv[0]] = &areaMovement{verdicts: map[string]string{}, schools: map[string]schoolMovementRow{}}
+	}
+	notComparedRow := schoolMovementRow{verdict: "not_compared", verdictLabel: "Not Compared", tone: "neutral"}
 	befores, afters := []float64{}, []float64{}
 	for _, school := range members {
 		found, ok := classified[school]
 		if !ok {
 			out[overall].notCompared++
+			out[overall].schools[school] = notComparedRow
 			for _, iv := range rules.SSAInterventions {
 				out[iv[0]].notCompared++
+				out[iv[0]].schools[school] = notComparedRow
 			}
 			continue
 		}
@@ -249,16 +290,37 @@ func movementOf(members []string, classified map[string]schoolPairs) map[string]
 		for _, p := range found.pairs {
 			was, is = append(was, p.before), append(is, p.after)
 			out[p.intervention].count(school, p.classification)
+			areaBefores[p.intervention] = append(areaBefores[p.intervention], p.before)
+			areaAfters[p.intervention] = append(areaAfters[p.intervention], p.after)
+			pb, pa := pyRound(p.before, 1), pyRound(p.after, 1)
+			pc := pyRound(pa-pb, 1)
+			lbl, tn := verdictMeta(p.classification)
+			out[p.intervention].schools[school] = schoolMovementRow{
+				before: &pb, after: &pa, change: &pc,
+				verdict: p.classification, verdictLabel: lbl, tone: tn,
+			}
 			scored[p.intervention] = true
 		}
 		for _, iv := range rules.SSAInterventions {
 			if !scored[iv[0]] {
 				out[iv[0]].notCompared++
+				out[iv[0]].schools[school] = notComparedRow
 			}
 		}
 		out[overall].count(school, found.verdict)
-		befores, afters = append(befores, pyRound(mean(was), 1)), append(afters, pyRound(mean(is), 1))
+		ob, oa := pyRound(mean(was), 1), pyRound(mean(is), 1)
+		oc := pyRound(oa-ob, 1)
+		olbl, otn := verdictMeta(found.verdict)
+		out[overall].schools[school] = schoolMovementRow{
+			before: &ob, after: &oa, change: &oc,
+			verdict: found.verdict, verdictLabel: olbl, tone: otn,
+		}
+		befores, afters = append(befores, ob), append(afters, oa)
 	}
 	out[overall].before, out[overall].after = meanOrNil(befores), meanOrNil(afters)
+	for _, iv := range rules.SSAInterventions {
+		out[iv[0]].before = meanOrNil(areaBefores[iv[0]])
+		out[iv[0]].after = meanOrNil(areaAfters[iv[0]])
+	}
 	return out
 }

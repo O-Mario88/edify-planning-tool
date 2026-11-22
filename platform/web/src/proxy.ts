@@ -28,6 +28,16 @@ export function proxy(request: NextRequest) {
   }
   const forwarded = new Headers(request.headers);
   forwarded.set('x-edify-path', path);
+  if (request.method === 'GET' && /^\/cluster-oversight\/directory\/?$/.test(pathname)) {
+    return NextResponse.redirect(new URL('/clusters', request.url));
+  }
+  if (request.method === 'GET' && request.nextUrl.searchParams.get('format') === 'csv') {
+    const csvMatch = pathname.match(/^\/cluster-oversight\/([a-z]+)\/?$/);
+    if (csvMatch?.[1]) {
+      const target = new URL(`/exports/cluster-oversight/${csvMatch[1]}${search}`, request.url);
+      return NextResponse.rewrite(target, { request: { headers: forwarded } });
+    }
+  }
   return NextResponse.next({ request: { headers: forwarded } });
 }
 

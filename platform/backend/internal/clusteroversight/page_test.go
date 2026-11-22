@@ -24,10 +24,10 @@ func principal(role string) auth.Principal {
 // so the service needs no database here.
 func TestOnlyThePageItselfIsAnsweredAndOnlyForItsRoles(t *testing.T) {
 	s := NewService(nil, nil)
-	for _, path := range []string{"/cluster-oversight", "/cluster-oversight/ssa", "/cluster-oversight/scoring", "/cluster-oversight/command/"} {
+	for _, path := range []string{"/cluster-oversight/unknown", "/cluster-oversight/command/extra", "/cluster-oversight/does-not-exist/"} {
 		_, served, err := s.Build(context.Background(), principal("Admin"), path, url.Values{})
 		if !served || !errors.Is(err, ErrNotAvailable) {
-			t.Errorf("%s: served %v, %v; the feed does not open it", path, served, err)
+			t.Errorf("%s: served %v, %v; unknown section must fail cleanly", path, served, err)
 		}
 	}
 	for _, path := range []string{"/clusters", "/cluster-oversights/", "/cluster-management/"} {
@@ -36,15 +36,131 @@ func TestOnlyThePageItselfIsAnsweredAndOnlyForItsRoles(t *testing.T) {
 		}
 	}
 	for _, role := range []string{"ProjectCoordinator", "BusinessTransformationOfficer", "Partner", "NoSuchRole", ""} {
-		_, served, err := s.Build(context.Background(), principal(role), Path, url.Values{})
+		for _, path := range []string{Path, "/cluster-oversight/ssa", "/cluster-oversight/scoring"} {
+			_, served, err := s.Build(context.Background(), principal(role), path, url.Values{})
+			if !served || !errors.Is(err, ErrNotAvailable) {
+				t.Errorf("%q on %s: served %v, %v; the page refuses the role", role, path, served, err)
+			}
+		}
+	}
+	for _, role := range []string{"CCEO", "Program Lead", "Accountant", "RegionalVicePresident", "RegionalProgramLead"} {
+		_, served, err := s.Build(context.Background(), principal(role), "/cluster-oversight/scoring", url.Values{})
 		if !served || !errors.Is(err, ErrNotAvailable) {
-			t.Errorf("%q: served %v, %v; the page refuses the role", role, served, err)
+			t.Errorf("%q on scoring: served %v, %v; scoring is restricted to Admin/CD/IA", role, served, err)
 		}
 	}
 	for _, role := range []string{"CCEO", "Program Lead", "ImpactAssessment", "CountryDirector", "RegionalVicePresident", "RegionalProgramLead", "Accountant", "Admin"} {
 		if !rules.Doors[role].Page {
 			t.Errorf("%s may open the page", role)
 		}
+	}
+}
+
+func TestAllSectionsRenderDistinctTablesAndScoring(t *testing.T) {
+	owner := "u1"
+	enrol := 120
+	recs := &records{
+		Clusters: []clusterRow{
+			{ID: "c1", Name: "Alpha Cluster", District: "Kampala", OwnerID: &owner},
+			{ID: "c2", Name: "Beta Cluster", District: "Wakiso"},
+		},
+		Owners: map[string]string{"u1": "Alice Officer"},
+		Members: []memberRow{
+			{ID: "s1", Code: "UG-001", Name: "Alpha Primary", ClusterID: "c1", Enrollment: &enrol, Country: "Uganda"},
+			{ID: "s2", Code: "UG-002", Name: "Beta Primary", ClusterID: "c2", Country: "Uganda"},
+		},
+		Sessions: []sessionRow{
+			{ID: "a1", ClusterID: "c1", Type: "cluster_meeting", Name: "Cluster Meeting", FY: "2027", HeldOn: "2026-10-15"},
+			{ID: "a2", ClusterID: "c1", Type: "cluster_training", Name: "Literacy", FY: "2027", Focus: "leadership", HeldOn: "2026-10-20"},
+			{ID: "a3", ClusterID: "c1", Type: "cluster_meeting", Name: "Cluster Meeting", FY: "2027", HeldOn: "2026-10-25"},
+		},
+		Register: []registerRow{
+			{ActivityID: "a1", SchoolID: "s1", Invited: true, Attended: true, Teachers: 4, Leaders: 2},
+			{ActivityID: "a2", SchoolID: "s1", Invited: true, Attended: true, Teachers: 6, Leaders: 1},
+		},
+		LatestBefore: []latestRow{{SchoolID: "s1", RecordID: "r0", TakenOn: "2025-11-01"}},
+		LatestNow:    []latestRow{{SchoolID: "s1", RecordID: "r1", TakenOn: "2026-10-01"}},
+		PairScores: []scoreRow{
+			{RecordID: "r0", Intervention: "leadership", Score: 5.0},
+			{RecordID: "r1", Intervention: "leadership", Score: 6.5},
+		},
+		Enrolment: []enrolmentRow{
+			{SchoolID: "s1", FY: "2026", Enrollment: 100},
+			{SchoolID: "s1", FY: "2027", Enrollment: 120},
+		},
+		Learning: []learningRow{
+			{SchoolID: "s1", FY: "2026", Mean: 60, Max: 100, Learners: 50},
+			{SchoolID: "s1", FY: "2027", Mean: 72, Max: 100, Learners: 55},
+		},
+		Funded: []string{"s1"},
+		Loans:  []loanRow{{SchoolID: "s1", Status: "active", DisbursedAmount: 5000000}},
+		Stories: []storyRow{
+			{ClusterID: "c1", SchoolID: "s1", Status: "approved", Date: "2026-10-18", HasEvidence: true},
+			{ClusterID: "c1", SchoolID: "s1", Status: "submitted", Date: "2026-10-19", HasEvidence: false},
+		},
+		Plan: []planRow{
+			{ClusterID: "c1", Type: "cluster_meeting", Status: "completed", Planned: "2026-10-15"},
+			{ClusterID: "c1", Type: "cluster_training", Status: "completed", Planned: "2026-10-20"},
+		},
+	}
+	who := reader{doors: rules.Doors["CountryDirector"], ids: []string{"u1"}}
+	years := []string{"2027", "2026", "2025"}
+	wantTitles := map[string]string{
+		"command":    "Command Center",
+		"my":         "My Clusters",
+		"meetings":   "Meetings",
+		"training":   "Training",
+		"attendance": "Attendance",
+		"schools":    "Schools",
+		"ssa":        "SSA Performance",
+		"teachers":   "Teacher Impact",
+		"leaders":    "Leader Impact",
+		"students":   "Student Impact",
+		"academic":   "Academic Impact",
+		"loans":      "Loans & BT",
+		"stories":    "MSCS",
+		"impact":     "Impact Analytics",
+		"planning":   "Planning",
+		"evidence":   "Evidence",
+		"reports":    "Reports",
+	}
+	for key, wantTitle := range wantTitles {
+		got := sectionPage(recs, who, key, "/cluster-oversight/"+key, "2027", years, "2026-11-22", url.Values{})
+		if got.GetHeader().GetTitle() != wantTitle {
+			t.Errorf("%s: title %q, want %q", key, got.GetHeader().GetTitle(), wantTitle)
+		}
+		if got.GetWebPath() != "/cluster-oversight/"+key {
+			t.Errorf("%s: web_path %q", key, got.GetWebPath())
+		}
+		if tbl := got.GetBlocks()[2].GetTable(); tbl == nil {
+			t.Errorf("%s: missing table block", key)
+		}
+	}
+	// SSA section exposes the area filter and updates title when area is chosen.
+	ssaResp := sectionPage(recs, who, "ssa", "/cluster-oversight/ssa", "2027", years, "2026-11-22", url.Values{"area": {"leadership"}})
+	if len(ssaResp.GetBlocks()[1].GetFilters().GetFilters()) != 2 {
+		t.Fatalf("ssa filters: %v", ssaResp.GetBlocks()[1].GetFilters())
+	}
+	if ssaResp.GetBlocks()[2].GetTable().GetTitle() != "SSA Performance: Leadership, FY 2026 to FY 2027" {
+		t.Fatalf("ssa filtered title: %q", ssaResp.GetBlocks()[2].GetTable().GetTitle())
+	}
+	// Impact courses view renders course effectiveness rows.
+	coursesResp := sectionPage(recs, who, "impact", "/cluster-oversight/impact", "2027", years, "2026-11-22", url.Values{"view": {"courses"}})
+	if len(coursesResp.GetBlocks()[1].GetFilters().GetFilters()) != 2 {
+		t.Fatalf("impact filters: %v", coursesResp.GetBlocks()[1].GetFilters())
+	}
+	coursesTbl := coursesResp.GetBlocks()[2].GetTable()
+	if coursesTbl.GetTitle() != "SSA Movement After Each Training, FY 2026 to FY 2027" || len(coursesTbl.GetRows()) != 1 {
+		t.Fatalf("impact courses: title=%q rows=%d", coursesTbl.GetTitle(), len(coursesTbl.GetRows()))
+	}
+	// Scoring page builds 1 facts block + 4 score tables + 1 maturity table.
+	scoring := scoringPage(nil)
+	if scoring.GetHeader().GetTitle() != "Cluster Scoring" || len(scoring.GetBlocks()) != 6 {
+		t.Fatalf("scoring: title=%q blocks=%d", scoring.GetHeader().GetTitle(), len(scoring.GetBlocks()))
+	}
+	// CSV encoding protects against formula injection while preserving signed numbers.
+	if csvSafe("=SUM(A1)") != "'=SUM(A1)" || csvSafe("+1.5%") != "+1.5%" || csvSafe("-0.3") != "-0.3" || csvSafe("+cmd") != "'+cmd" {
+		t.Fatalf("csvSafe mismatch")
 	}
 }
 
