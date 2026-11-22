@@ -6,6 +6,7 @@ package workforceops
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -142,4 +143,51 @@ func (s *Service) RecordHelpFeedback(ctx context.Context, p auth.Principal, arti
 			articleID, p.UserID, p.ActiveRole, helpful, feedbackType, comment, pageContext).Scan(&id)
 	})
 	return id, err
+}
+
+// TransitionTeamAction applies a lifecycle transition to a team_action row
+// (acknowledge, start, block, return, cancel, escalate, resolve) and appends
+// a canonical SHA-256 audit row in the same transaction.
+func (s *Service) TransitionTeamAction(ctx context.Context, p auth.Principal, actionID, transition, reason string) (string, error) {
+	if p.UserID == "" || p.ActiveRole == "ClusterLeader" {
+		return "", ErrForbidden
+	}
+	actionID = strings.TrimSpace(actionID)
+	transition = strings.TrimSpace(transition)
+	reason = strings.TrimSpace(reason)
+	if actionID == "" || transition == "" {
+		return "", ErrInvalidInput
+	}
+	now := s.clock()
+	var state string
+	err := withRW(ctx, s.pool, func(tx pgx.Tx) error {
+		if err := tx.QueryRow(ctx,
+			`SELECT gateway_workforce_ops.transition_team_action($1,$2,$3,$4,$5,$6)`,
+			actionID, transition, p.UserID, p.ActiveRole, reason, now).Scan(&state); err != nil {
+			msg := err.Error()
+			switch {
+			case strings.Contains(msg, "workforceops: forbidden:"):
+				return fmt.Errorf("%w: %s", ErrForbidden, strings.TrimSpace(strings.SplitN(msg, "workforceops: forbidden:", 2)[1]))
+			case strings.Contains(msg, "workforceops: invalid:"):
+				return fmt.Errorf("%w: %s", ErrInvalidInput, strings.TrimSpace(strings.SplitN(msg, "workforceops: invalid:", 2)[1]))
+			default:
+				return err
+			}
+		}
+		_, err := audit.Append(ctx, tx, audit.Entry{
+			Action:      "team_action." + transition,
+			SubjectKind: audit.Text("team_action"),
+			SubjectID:   audit.Text(actionID),
+			ActorID:     audit.Text(p.UserID),
+			ActorRole:   audit.Text(p.ActiveRole),
+			Success:     true,
+			Payload: map[string]any{
+				"transition": transition,
+				"state":      state,
+				"reason":     reason,
+			},
+		}, now)
+		return err
+	})
+	return state, err
 }

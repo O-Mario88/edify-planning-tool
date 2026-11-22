@@ -70,6 +70,7 @@ func NewService(db schooldirectory.Querier, now func() time.Time) *Service {
 
 // action is one team_action row with the names the row shows.
 type action struct {
+	ID                                                                 string
 	SchoolPK, IssueType, RequestedAction, Route, State, ReturnedReason string
 	CounterpartyID                                                     string
 	DueDate                                                            *time.Time
@@ -89,7 +90,11 @@ type counts struct {
 // Build answers path for p with the page's query. served is false for a
 // path this package does not answer.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
-	sd, ok := sides[path]
+	clean := strings.TrimRight(path, "/")
+	if clean == "/my-actions" || clean == "/planning/my-actions" {
+		clean = Path
+	}
+	sd, ok := sides[clean]
 	if !ok {
 		return nil, false, nil
 	}
@@ -103,7 +108,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		return nil, true, err
 	case member == decisionlog.TeamMember:
 		return nil, true, ErrNotAvailable
-	case member == decisionlog.Undecided:
+	case member == decisionlog.Undecided && !pagegate.DjangoAbsent(ctx):
 		return nil, false, nil
 	}
 	tab := closedschools.StripSpace(query.Get("tab"))
@@ -165,14 +170,14 @@ func (s *Service) actions(ctx context.Context, sd side, userID, tab string) ([]a
 	args := []any{userID}
 	where := sd.reader + " = $1" + tabFilter(tab, &args)
 	rows, err := s.db.Query(ctx, fmt.Sprintf(`
-SELECT school_id, issue_type, requested_action, workflow_route, state, returned_reason, %s, due_date, resolved_by_system
+SELECT id, school_id, issue_type, requested_action, workflow_route, state, returned_reason, %s, due_date, resolved_by_system
 FROM team_action WHERE %s ORDER BY due_date ASC, created_at DESC LIMIT %d`, sd.counterparty, where, sd.limit), args...)
 	if err != nil {
 		return nil, fmt.Errorf("myactions: reading the actions: %w", err)
 	}
 	list, err := pgx.CollectRows(rows, func(r pgx.CollectableRow) (action, error) {
 		var a action
-		err := r.Scan(&a.SchoolPK, &a.IssueType, &a.RequestedAction, &a.Route, &a.State, &a.ReturnedReason, &a.CounterpartyID,
+		err := r.Scan(&a.ID, &a.SchoolPK, &a.IssueType, &a.RequestedAction, &a.Route, &a.State, &a.ReturnedReason, &a.CounterpartyID,
 			&a.DueDate, &a.ResolvedBySystem)
 		return a, err
 	})

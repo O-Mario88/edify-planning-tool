@@ -28,8 +28,9 @@ var (
 	reAdvanceTransition = regexp.MustCompile(`^/finance/advances/([A-Za-z0-9_-]+)/(disburse|confirm_receipt|submit_accountability|verify_return)/?$`)
 	reLeaveDecide       = regexp.MustCompile(`^/(?:leave|hr/leave-approvals)/([A-Za-z0-9_-]+)/decide/?$`)
 	reEscalationDecide  = regexp.MustCompile(`^/escalations/([A-Za-z0-9_-]+)/decide/?$`)
-	reProfileEdit       = regexp.MustCompile(`^/profile/edit/?$`)
-	reHelpFeedback      = regexp.MustCompile(`^/help/([A-Za-z0-9_-]+)/feedback/?$`)
+	reProfileEdit          = regexp.MustCompile(`^/profile/edit/?$`)
+	reHelpFeedback         = regexp.MustCompile(`^/help/([A-Za-z0-9_-]+)/feedback/?$`)
+	reTeamActionTransition = regexp.MustCompile(`^/actions/([A-Za-z0-9_-]+)/(acknowledge|start|block|return|cancel|escalate|resolve)/?$`)
 )
 
 // WithOpsSaves connects native Go FieldOps, FinanceOps, and WorkforceOps
@@ -112,6 +113,10 @@ func (s *Service) opsInGo(ctx context.Context, req *screensv1.SaveDrawerRequest)
 			helpful := strings.EqualFold(strings.TrimSpace(vals["helpful"]), "true") || vals["helpful"] == "1"
 			_, err := s.workforceOps.RecordHelpFeedback(ctx, p, m[1], helpful, vals["feedback_type"], vals["comment"], vals["page_context"])
 			return opsDrawerResult(ctx, "saved", "Feedback recorded.", err)
+		}
+		if m := reTeamActionTransition.FindStringSubmatch(rawPath); m != nil {
+			status, err := s.workforceOps.TransitionTeamAction(ctx, p, m[1], m[2], vals["reason"])
+			return opsDrawerResult(ctx, status, "Action updated.", err)
 		}
 	}
 

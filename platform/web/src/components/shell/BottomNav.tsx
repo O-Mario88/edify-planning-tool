@@ -13,14 +13,19 @@ import type { ReactNode } from 'react';
 import type { NavItem } from '@/gen/edify/screens/v1/navigation_pb';
 import { safeIcon } from '@/lib/icon';
 
-import { isCurrent } from './Sidebar';
+import { resolveActiveNavKey } from './Sidebar';
 
 export function BottomNav({ items, path, more }: { items: NavItem[]; path: string; more: ReactNode }) {
   const here = usePathname() ?? path;
+  const visible = items.slice(0, 4);
+  const activeKey = resolveActiveNavKey(
+    visible.map((item, index) => ({ key: `${index}:${item.url}`, url: item.url, pageKey: item.pageKey })),
+    here,
+  );
   return (
     <nav aria-label="Primary navigation" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-[var(--edify-border)] bg-[var(--edify-topbar-bg)] pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
-      {items.slice(0, 4).map((item) => {
-        const active = isCurrent(item.url, here);
+      {visible.map((item, index) => {
+        const active = `${index}:${item.url}` === activeKey;
         return (
           <Link
             key={item.url}

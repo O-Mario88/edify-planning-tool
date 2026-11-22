@@ -148,18 +148,29 @@ func due(a action, today time.Time) string {
 
 // actionCell is the row's way on. Active work opens its route: from the
 // Actions menu where the row has a second step (Acknowledge for the
-// recipient, Escalate for the sender of overdue work; neither reaches the
-// app), else as the row's own link. A blank route opens nothing. Closed work
-// views the school.
+// recipient on open work, Escalate for the sender on overdue work), else as
+// the row's own link. A blank route opens nothing. Closed work views the
+// school.
 func actionCell(a action, sender bool) *screensv1.PageCell {
 	c := &screensv1.PageCell{}
 	switch {
 	case !active(a.State):
 		c.Actions = []*screensv1.PageAction{{Key: "button", Label: "View school", Primary: true, Enabled: true, Href: "/schools/" + a.SchoolPK}}
-	case a.Route == "":
-	case !sender || a.State == rules.OverdueState:
-		c.Actions = []*screensv1.PageAction{{Key: "menu", Label: "Open", Enabled: true, Href: a.Route}}
-	default:
+	case !sender:
+		if a.Route != "" {
+			c.Actions = append(c.Actions, &screensv1.PageAction{Key: "menu", Label: "Open", Enabled: true, Href: a.Route})
+		}
+		if a.ID != "" && a.State == "open" {
+			c.Actions = append(c.Actions, &screensv1.PageAction{Key: "menu", Label: "Acknowledge", Enabled: true, Href: "/actions/" + a.ID + "/acknowledge"})
+		}
+	case a.State == rules.OverdueState:
+		if a.Route != "" {
+			c.Actions = append(c.Actions, &screensv1.PageAction{Key: "menu", Label: "Open", Enabled: true, Href: a.Route})
+		}
+		if a.ID != "" {
+			c.Actions = append(c.Actions, &screensv1.PageAction{Key: "menu", Label: "Escalate", Enabled: true, Href: "/actions/" + a.ID + "/escalate"})
+		}
+	case a.Route != "":
 		c.Actions = []*screensv1.PageAction{{Key: "button", Label: "Open", Primary: true, Enabled: true, Href: a.Route}}
 	}
 	return c

@@ -10,9 +10,11 @@
  * whole, with no frozen column (owner, 2026-09-30).
  */
 import Link from 'next/link';
-import { Fragment, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Fragment, useState, useTransition } from 'react';
 import type { ReactNode } from 'react';
 
+import { transitionTeamAction } from '@/app/(app)/actions/transition';
 import type { PageAction, PageCell, PageRow, PageTable } from '@/gen/edify/screens/v1/page_pb';
 import { actionHref, isActionsCell, isHeadingRow, resolveHref, splitActions } from '@/lib/feedPage';
 import { titleCase } from '@/lib/titleCase';
@@ -70,10 +72,20 @@ function CellText({ cell, resolve }: { cell: PageCell; resolve: (href: string) =
   );
 }
 
+const TEAM_ACTION_POST_RE = /^\/actions\/[A-Za-z0-9_-]+\/(acknowledge|start|block|return|cancel|escalate|resolve)$/;
+
 export function CellActions({ actions, subject, hrefOf }: { actions: readonly PageAction[]; subject: string; hrefOf: (action: PageAction) => string }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [feedback, setFeedback] = useState<string | null>(null);
   const { buttons, menu } = splitActions(actions);
   return (
     <div className="flex items-center justify-end gap-2">
+      {feedback ? (
+        <span role="alert" className="text-[11px] font-semibold text-[#be123c] dark:text-[var(--edify-danger)]">
+          {feedback}
+        </span>
+      ) : null}
       {buttons.map((action) =>
         action.enabled ? (
           <a key={action.label} href={hrefOf(action)} className="inline-flex h-6 items-center rounded-[var(--radius-control)] border border-[var(--brand-primary-border)] bg-[var(--edify-surface)] px-3 text-[length:var(--edify-text-label-size)] font-semibold text-[var(--brand-primary-text)] dark:text-[var(--edify-accent-text)]">
@@ -87,7 +99,30 @@ export function CellActions({ actions, subject, hrefOf }: { actions: readonly Pa
       )}
       <RowActions
         subject={subject}
-        actions={menu.map((action) => ({ key: `${action.key}:${action.label}`, label: action.label, enabled: action.enabled, reason: action.reason, href: hrefOf(action) }))}
+        actions={menu.map((action) => {
+          const href = hrefOf(action);
+          const isTeamPost = action.enabled && !action.drawer && TEAM_ACTION_POST_RE.test(href.split('?')[0] ?? '');
+          return {
+            key: `${action.key}:${action.label}`,
+            label: pending && isTeamPost ? `${action.label}…` : action.label,
+            enabled: action.enabled && !pending,
+            reason: action.reason,
+            href,
+            onSelect: isTeamPost
+              ? () => {
+                  setFeedback(null);
+                  startTransition(async () => {
+                    const res = await transitionTeamAction(href);
+                    if (res.ok) {
+                      router.refresh();
+                    } else {
+                      setFeedback(res.message);
+                    }
+                  });
+                }
+              : undefined,
+          };
+        })}
       />
     </div>
   );

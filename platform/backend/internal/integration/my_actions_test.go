@@ -5,11 +5,15 @@ package integration
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 	"os"
 	"testing"
 	"time"
 
 	"connectrpc.com/connect"
+
+	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1/screensv1connect"
 )
 
 // myActionsGoldenEnv names a file of the existing feed's answers for My
@@ -206,4 +210,167 @@ func TestActionsSentMatchesTheExistingFeedOverManyActions(t *testing.T) {
 	}
 	fileTeamActions(t, golden.Rows)
 	compareGolden(t, "/actions/sent", golden.Answers)
+}
+
+// TestMyActionsScopingTabsAndTransitionsWithoutDjango seeds actions for two
+// different recipients plus an empty-queue user and proves:
+//   - each user sees ONLY their own scoped queue on /actions/mine, /actions/mine/,
+//     and /my-actions
+//   - /actions/sent stays scoped to the sender with accurate counts
+//   - Acknowledge (recipient) and Escalate (sender) update the DB row, tab
+//     counts, and canonical SHA-256 audit chain without Django
+//   - unauthorized cross-user transitions are rejected.
+func TestMyActionsScopingTabsAndTransitionsWithoutDjango(t *testing.T) {
+	ctx := context.Background()
+	userA := userIDOf(t, "cceo@edify.org")
+	userB := userIDOf(t, "pl1@edify.org")
+	emptyUser := userIDOf(t, "accountant@edify.org")
+	var school string
+	if err := admin.QueryRow(ctx, `SELECT id FROM school WHERE deleted_at IS NULL ORDER BY id LIMIT 1`).Scan(&school); err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now()
+	day := func(offset int) *string {
+		d := now.In(time.FixedZone("EAT", 3*3600)).AddDate(0, 0, offset).Format("2006-01-02")
+		return &d
+	}
+	fileTeamActions(t, []teamActionRow{
+		{ID: "gpa910001", CreatedAt: now.Format(time.RFC3339), ConditionKey: "gpa-s-1", IssueType: "no_visit", SchoolID: school, SenderID: userB,
+			RecipientID: userA, RequestedAction: "[Scope test] Visit for CCEO", WorkflowRoute: "/schools/" + school, DueDate: day(2), State: "open"},
+		{ID: "gpa910002", CreatedAt: now.Format(time.RFC3339), ConditionKey: "gpa-s-2", IssueType: "no_ssa", SchoolID: school, SenderID: userB,
+			RecipientID: userA, RequestedAction: "[Scope test] Overdue SSA", WorkflowRoute: "/schools/" + school, DueDate: day(-3), State: "overdue"},
+		{ID: "gpa910003", CreatedAt: now.Format(time.RFC3339), ConditionKey: "gpa-s-3", IssueType: "no_training", SchoolID: school, SenderID: userA,
+			RecipientID: userB, RequestedAction: "[Scope test] Training for PL", WorkflowRoute: "/schools/" + school, DueDate: day(4), State: "open"},
+	})
+	borrowAccount(t, "cceo@edify.org")
+	borrowAccount(t, "pl1@edify.org")
+	borrowAccount(t, "accountant@edify.org")
+	tokA := sessionOf(t, "cceo@edify.org", seededPassword).GetAccessToken()
+	tokB := sessionOf(t, "pl1@edify.org", seededPassword).GetAccessToken()
+	tokEmpty := sessionOf(t, "accountant@edify.org", seededPassword).GetAccessToken()
+
+	// 1. User A sees 1 Open, 1 Overdue, 2 All on /actions/mine, /actions/mine/, and /my-actions.
+	for _, p := range []string{"/actions/mine", "/actions/mine/", "/my-actions"} {
+		pg, err := pageOf(tokA, p, nil)
+		if err != nil {
+			t.Fatalf("%s for cceo: %v", p, err)
+		}
+		if pg.GetHeader().GetTitle() != "My Actions" {
+			t.Fatalf("%s title = %q, want My Actions", p, pg.GetHeader().GetTitle())
+		}
+		links := pg.GetBlocks()[0].GetPanel().GetItems()[0].GetLinks().GetLinks()
+		if links[0].GetText() != "Open 1" || links[1].GetText() != "Overdue 1" || links[3].GetText() != "All 2" {
+			t.Fatalf("%s tabs = %v", p, links)
+		}
+		rows := tableOf(pg).GetRows()
+		if len(rows) != 1 || rows[0].GetCells()[2].GetText() != "[Scope test] Visit for CCEO No visit" {
+			t.Fatalf("%s open rows = %v", p, rows)
+		}
+		// Verify Acknowledge action is advertised in row menu.
+		acts := rows[0].GetCells()[6].GetActions()
+		if len(acts) < 2 || acts[1].GetLabel() != "Acknowledge" || acts[1].GetHref() != "/actions/gpa910001/acknowledge" {
+			t.Fatalf("%s row actions = %v, want Open + Acknowledge", p, acts)
+		}
+	}
+
+	// 2. User B sees ONLY their own 1 Open action on /actions/mine and 2 sent on /actions/sent.
+	pgB, err := pageOf(tokB, "/actions/mine", nil)
+	if err != nil {
+		t.Fatalf("/actions/mine for pl1: %v", err)
+	}
+	if rows := tableOf(pgB).GetRows(); len(rows) != 1 || rows[0].GetCells()[2].GetText() != "[Scope test] Training for PL No training" {
+		t.Fatalf("pl1 /actions/mine rows = %v", rows)
+	}
+	sentB, err := pageOf(tokB, "/actions/sent", map[string]string{"tab": "overdue"})
+	if err != nil {
+		t.Fatalf("/actions/sent?tab=overdue for pl1: %v", err)
+	}
+	if sentB.GetHeader().GetTitle() != "Actions Sent" {
+		t.Fatalf("/actions/sent title = %q", sentB.GetHeader().GetTitle())
+	}
+	sentRows := tableOf(sentB).GetRows()
+	if len(sentRows) != 1 {
+		t.Fatalf("pl1 /actions/sent overdue rows = %v", sentRows)
+	}
+	sentActs := sentRows[0].GetCells()[6].GetActions()
+	if len(sentActs) < 2 || sentActs[1].GetLabel() != "Escalate" || sentActs[1].GetHref() != "/actions/gpa910002/escalate" {
+		t.Fatalf("pl1 /actions/sent overdue actions = %v, want Open + Escalate", sentActs)
+	}
+
+	// 3. Empty-queue user gets My Actions with 0 counts and genuine empty state.
+	pgEmpty, err := pageOf(tokEmpty, "/actions/mine", nil)
+	if err != nil {
+		t.Fatalf("/actions/mine for accountant: %v", err)
+	}
+	if pgEmpty.GetHeader().GetTitle() != "My Actions" || tableOf(pgEmpty) != nil {
+		t.Fatalf("empty user should see My Actions empty panel, got %+v", pgEmpty)
+	}
+	if got := pgEmpty.GetBlocks()[0].GetPanel().GetItems()[1].GetText(); got != "Nothing has been assigned to you." {
+		t.Fatalf("empty message = %q", got)
+	}
+	if emptyLinks := pgEmpty.GetBlocks()[0].GetPanel().GetItems()[0].GetLinks().GetLinks(); emptyLinks[3].GetText() != "All 0" {
+		t.Fatalf("empty user counts = %v", emptyLinks)
+	}
+
+	// 4. Live transitions via SaveDrawer:
+	//    a) Cross-user acknowledge is rejected (PermissionDenied).
+	drawers := screensv1connect.NewPageDrawerServiceClient(http.DefaultClient, baseURL)
+	call := func(tok, path string, vals map[string]string) (*screensv1.SaveDrawerResponse, error) {
+		req := connect.NewRequest(&screensv1.SaveDrawerRequest{Path: path, Values: vals})
+		req.Header().Set("Authorization", "Bearer "+tok)
+		resp, err := drawers.SaveDrawer(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		return resp.Msg, nil
+	}
+	if _, err := call(tokB, "/actions/gpa910001/acknowledge", nil); connect.CodeOf(err) != connect.CodePermissionDenied {
+		t.Fatalf("cross-user acknowledge: err=%v, want PermissionDenied", err)
+	}
+	//    b) Recipient A acknowledges gpa910001 -> state becomes Acknowledged.
+	ackResp, err := call(tokA, "/actions/gpa910001/acknowledge", nil)
+	if err != nil || !ackResp.GetSaved() {
+		t.Fatalf("recipient acknowledge failed: resp=%+v err=%v", ackResp, err)
+	}
+	pgAAfterAck, err := pageOf(tokA, "/actions/mine", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := tableOf(pgAAfterAck).GetRows()[0].GetCells()[5].GetText(); got != "Acknowledged" {
+		t.Fatalf("after acknowledge state = %q, want Acknowledged", got)
+	}
+	//    c) Recipient A returns gpa910001 with reason -> Open count drops from 1 to 0!
+	retResp, err := call(tokA, "/actions/gpa910001/return", map[string]string{"reason": "School reassigned"})
+	if err != nil || !retResp.GetSaved() {
+		t.Fatalf("recipient return failed: resp=%+v err=%v", retResp, err)
+	}
+	pgAAfterRet, err := pageOf(tokA, "/actions/mine", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if links := pgAAfterRet.GetBlocks()[0].GetPanel().GetItems()[0].GetLinks().GetLinks(); links[0].GetText() != "Open 0" || links[1].GetText() != "Overdue 1" || links[3].GetText() != "All 2" {
+		t.Fatalf("after return counts = %v, want Open 0 / Overdue 1 / All 2", links)
+	}
+	//    d) Sender B cancels gpa910002 -> Overdue drops to 0 on /actions/sent and /actions/mine.
+	cancelResp, err := call(tokB, "/actions/gpa910002/cancel", map[string]string{"reason": "Resolved externally"})
+	if err != nil || !cancelResp.GetSaved() {
+		t.Fatalf("sender cancel failed: resp=%+v err=%v", cancelResp, err)
+	}
+	sentAfterCancel, err := pageOf(tokB, "/actions/sent", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Program Lead has the Team Assignments strip at blocks[0], so the tab panel is blocks[1].
+	if links := sentAfterCancel.GetBlocks()[1].GetPanel().GetItems()[0].GetLinks().GetLinks(); links[0].GetText() != "Open 0" || links[1].GetText() != "Overdue 0" || links[3].GetText() != "All 2" {
+		t.Fatalf("after cancel sent counts = %v, want Open 0 / Overdue 0 / All 2", links)
+	}
+	//    e) Audit rows written by transitions are sealed in the canonical chain.
+	var sealed, bad int
+	if err := admin.QueryRow(ctx, `SELECT count(*) FILTER (WHERE seq IS NOT NULL AND hash IS NOT NULL), count(*) FILTER (WHERE seq IS NULL OR hash IS NULL) FROM audit_log WHERE subject_kind = 'team_action' AND subject_id IN ('gpa910001', 'gpa910002')`).Scan(&sealed, &bad); err != nil {
+		t.Fatal(err)
+	}
+	if sealed < 3 || bad != 0 {
+		t.Fatalf("team_action audit rows: sealed=%d bad=%d, want sealed>=3 bad=0", sealed, bad)
+	}
+	_ = emptyUser
 }

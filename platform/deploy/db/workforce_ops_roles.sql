@@ -20,6 +20,13 @@ GRANT SELECT, INSERT, UPDATE ON
     cce_team_guidance_receipt,
     help_center_helparticlefeedback
 TO edify_workforce_ops_owner;
+GRANT SELECT, UPDATE (
+    state, acknowledged_at, started_at, blocked_reason, returned_reason,
+    resolved_at, resolved_by_system, manual_resolution_reason,
+    escalated_at, escalated_to_id, updated_at
+) ON public.team_action TO edify_workforce_ops_owner;
+GRANT SELECT (id, user_id) ON public.staff_profile TO edify_workforce_ops_owner;
+GRANT SELECT (supervisee_id, supervisor_id, created_at) ON public.staff_supervisor_assignment TO edify_workforce_ops_owner;
 
 CREATE SCHEMA IF NOT EXISTS gateway_workforce_ops AUTHORIZATION edify_workforce_ops_owner;
 REVOKE ALL ON SCHEMA gateway_workforce_ops FROM PUBLIC;
@@ -92,10 +99,126 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION gateway_workforce_ops.transition_team_action(
+    p_action_id text, p_transition text, p_actor_id text, p_actor_role text, p_reason text, p_now timestamptz
+) RETURNS text
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $$
+DECLARE
+    v_row public.team_action%ROWTYPE;
+    v_is_admin boolean := (p_actor_role = 'Admin');
+    v_reason text := COALESCE(trim(p_reason), '');
+    v_target text;
+    v_next text;
+    v_active boolean;
+BEGIN
+    SELECT * INTO v_row FROM public.team_action WHERE id = p_action_id FOR UPDATE;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'workforceops: forbidden: action not found';
+    END IF;
+
+    IF p_transition IN ('acknowledge', 'start', 'block', 'return') THEN
+        IF p_actor_id <> v_row.recipient_id AND NOT v_is_admin THEN
+            RAISE EXCEPTION 'workforceops: forbidden: this action was not assigned to you';
+        END IF;
+    ELSIF p_transition IN ('cancel', 'escalate', 'resolve') THEN
+        IF p_transition = 'cancel' THEN
+            IF p_actor_id <> v_row.sender_id AND p_actor_role NOT IN ('Admin', 'CountryDirector') THEN
+                RAISE EXCEPTION 'workforceops: forbidden: only the sender can cancel this action';
+            END IF;
+        ELSIF p_actor_id <> v_row.sender_id AND NOT v_is_admin THEN
+            RAISE EXCEPTION 'workforceops: forbidden: you did not send this action';
+        END IF;
+    ELSE
+        RAISE EXCEPTION 'workforceops: invalid: unknown transition %', p_transition;
+    END IF;
+
+    v_active := v_row.state IN ('open', 'acknowledged', 'in_progress', 'blocked', 'overdue', 'escalated');
+
+    IF p_transition = 'acknowledge' THEN
+        IF v_row.state <> 'open' THEN
+            RETURN v_row.state;
+        END IF;
+        v_next := 'acknowledged';
+        UPDATE public.team_action
+        SET state = v_next, acknowledged_at = p_now, updated_at = p_now
+        WHERE id = p_action_id;
+    ELSIF p_transition = 'start' THEN
+        IF v_row.state NOT IN ('open', 'acknowledged', 'blocked', 'overdue') THEN
+            RETURN v_row.state;
+        END IF;
+        v_next := 'in_progress';
+        UPDATE public.team_action
+        SET state = v_next, started_at = COALESCE(started_at, p_now), updated_at = p_now
+        WHERE id = p_action_id;
+    ELSIF p_transition = 'block' THEN
+        IF v_reason = '' THEN
+            RAISE EXCEPTION 'workforceops: invalid: say what is blocking this before marking it blocked';
+        END IF;
+        v_next := 'blocked';
+        UPDATE public.team_action
+        SET state = v_next, blocked_reason = v_reason, updated_at = p_now
+        WHERE id = p_action_id;
+    ELSIF p_transition = 'return' THEN
+        IF v_reason = '' THEN
+            RAISE EXCEPTION 'workforceops: invalid: say why you are returning this before sending it back';
+        END IF;
+        IF NOT v_active THEN
+            RAISE EXCEPTION 'workforceops: invalid: this action is already closed';
+        END IF;
+        v_next := 'returned';
+        UPDATE public.team_action
+        SET state = v_next, returned_reason = v_reason, resolved_at = p_now, updated_at = p_now
+        WHERE id = p_action_id;
+    ELSIF p_transition = 'cancel' THEN
+        IF NOT v_active THEN
+            RAISE EXCEPTION 'workforceops: invalid: this action is already closed';
+        END IF;
+        v_next := 'cancelled';
+        UPDATE public.team_action
+        SET state = v_next, returned_reason = v_reason, resolved_at = p_now, updated_at = p_now
+        WHERE id = p_action_id;
+    ELSIF p_transition = 'escalate' THEN
+        IF NOT v_active THEN
+            RAISE EXCEPTION 'workforceops: invalid: this action is already closed';
+        END IF;
+        SELECT sup.user_id INTO v_target
+        FROM public.staff_profile me
+        JOIN public.staff_supervisor_assignment sa ON sa.supervisee_id = me.id
+        JOIN public.staff_profile sup ON sup.id = sa.supervisor_id
+        WHERE me.user_id = v_row.sender_id AND sup.user_id IS NOT NULL
+        ORDER BY sa.created_at ASC
+        LIMIT 1;
+        IF v_target IS NULL OR v_target = '' THEN
+            RAISE EXCEPTION 'workforceops: invalid: no supervisor is recorded above the sender to escalate to';
+        END IF;
+        v_next := 'escalated';
+        UPDATE public.team_action
+        SET state = v_next, escalated_at = p_now, escalated_to_id = v_target, updated_at = p_now
+        WHERE id = p_action_id;
+    ELSIF p_transition = 'resolve' THEN
+        IF v_row.issue_type IN ('no_ssa', 'low_ssa', 'no_visit', 'no_training', 'no_visit_or_training') THEN
+            RAISE EXCEPTION 'workforceops: invalid: system-verifiable actions close automatically once the record shows the work is done';
+        END IF;
+        IF v_reason = '' THEN
+            RAISE EXCEPTION 'workforceops: invalid: a manual resolution needs a reason';
+        END IF;
+        v_next := 'resolved';
+        UPDATE public.team_action
+        SET state = v_next, resolved_at = p_now, resolved_by_system = false,
+            manual_resolution_reason = v_reason, updated_at = p_now
+        WHERE id = p_action_id;
+    END IF;
+
+    -- Callers append the canonical SHA-256 audit_log entry in Go via audit.Append.
+    RETURN v_next;
+END;
+$$;
+
 ALTER FUNCTION gateway_workforce_ops.update_own_profile(text, text, text) OWNER TO edify_workforce_ops_owner;
 ALTER FUNCTION gateway_workforce_ops.decide_leave(text, text, text, text, text) OWNER TO edify_workforce_ops_owner;
 ALTER FUNCTION gateway_workforce_ops.decide_escalation(text, text, text, text, text) OWNER TO edify_workforce_ops_owner;
 ALTER FUNCTION gateway_workforce_ops.record_help_feedback(text, text, text, boolean, text, text, text) OWNER TO edify_workforce_ops_owner;
+ALTER FUNCTION gateway_workforce_ops.transition_team_action(text, text, text, text, text, timestamptz) OWNER TO edify_workforce_ops_owner;
 
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA gateway_workforce_ops FROM PUBLIC;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA gateway_workforce_ops TO edify_gateway;
