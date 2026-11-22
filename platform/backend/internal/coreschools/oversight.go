@@ -9,6 +9,7 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterpage"
 )
 
 // deliveryState is one school's delivery chain over its core visits and
@@ -104,7 +105,7 @@ func (pg *page) oversightBlocks(ctx context.Context) ([]*screensv1.PageBlock, er
 	} else {
 		t.Columns = columnsOf("School ID", "School", "Responsible CCEO", "Assessment", "Visits", "Trainings", "Partner", "Delivery", "Blocker", "Action")
 		for _, r := range rows {
-			t.Rows = append(t.Rows, &screensv1.PageRow{Cells: oversightCells(r, partners[r.id], delivery[r.id], sent)})
+			t.Rows = append(t.Rows, pg.oversightRow(r, partners[r.id], delivery[r.id], sent))
 		}
 		first := (pg.number-1)*pg.perPage + 1
 		t.Footnote = fmt.Sprintf("Showing %d–%d of %d", first, first+len(pg.shown)-1, len(pg.all))
@@ -164,6 +165,63 @@ func oversightCells(r row, partner int, d deliveryState, sent map[[2]string]stri
 	return []*screensv1.PageCell{{Text: code}, {Text: r.name + " " + district, Href: "/schools/" + r.code}, owner, {Text: assessment},
 		{Text: fmt.Sprintf("%d / %d", r.visits, r.visitsTarget)}, {Text: fmt.Sprintf("%d / %d", r.trainings, r.trainingsTarget)},
 		{Text: support}, {Text: flags}, {Text: blocker}, action}
+}
+
+func (pg *page) oversightRow(r row, partner int, d deliveryState, sent map[[2]string]string) *screensv1.PageRow {
+	orDash := func(s string) string {
+		if s == "" {
+			return "—"
+		}
+		return s
+	}
+	district := &screensv1.PageFact{Label: "District", Value: orDash(r.districtName)}
+	if r.districtID != "" && r.districtName != "" {
+		district.Href = "/districts/" + r.districtID
+	}
+	cluster := &screensv1.PageFact{Label: "Cluster", Value: "Not assigned"}
+	if r.clusterName != "" && r.clusterName != "—" {
+		cluster.Value = r.clusterName
+		if r.clusterID != "" && pg.door.OpenClusters {
+			cluster.Href = "/clusters/" + r.clusterID
+		}
+	}
+	owner := &screensv1.PageFact{Label: "Staff Name", Value: orDash(r.staffName)}
+	if r.ownerID != "" {
+		owner.Href = "/staff/" + r.ownerID
+	}
+	enrolment := "0"
+	if r.enrollment != nil {
+		enrolment = strconv.Itoa(*r.enrollment)
+	}
+	ssa := "Not assessed"
+	if r.ssaAverage != nil {
+		ssa = clusterpage.ScoreText(*r.ssaAverage) + "/10"
+	}
+	details := []*screensv1.PageFact{
+		district,
+		{Label: "Shipping Address", Value: orDash(r.shipping)},
+		{Label: "School Type", Value: orDash(schoolTypeLabel(r.schoolType))},
+		cluster,
+		{Label: "Enrollment", Value: enrolment},
+		{Label: "Phone", Value: orDash(r.phone)},
+		{Label: "Primary Contact", Value: orDash(r.contact)},
+		owner,
+		{Label: "SSA", Value: ssa},
+	}
+	items := []*screensv1.PagePanelItem{{Kind: &screensv1.PagePanelItem_Text{Text: "Latest confirmed assessment · FY " + pg.fy}}}
+	if r.hasScores {
+		items = append(items, clusterpage.ScoreGroupItems(r.ssaGroups)...)
+	} else {
+		items = append(items, &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Text{Text: "No confirmed SSA scores are available yet."}})
+	}
+	return &screensv1.PageRow{
+		Cells:       oversightCells(r, partner, d, sent),
+		Details:     details,
+		DetailsHref: "/schools/" + r.code,
+		DetailBlocks: []*screensv1.PageBlock{{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{
+			Title: "Intervention scores", Subtitle: "SSA detail", Items: items,
+		}}}},
+	}
 }
 
 func columnsOf(labels ...string) []*screensv1.PageColumn {

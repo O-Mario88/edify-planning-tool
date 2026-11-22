@@ -11,7 +11,7 @@
  */
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Fragment, useState, useTransition } from 'react';
+import { Fragment, useId, useState, useTransition } from 'react';
 import type { ReactNode } from 'react';
 
 import { transitionTeamAction } from '@/app/(app)/actions/transition';
@@ -23,7 +23,6 @@ import { Badge } from '../blocks/Badge';
 import { PlanningChips } from '../blocks/PlanningChips';
 import { RowActions } from '../blocks/RowActions';
 import { edifyTone, textTone } from '../blocks/tones';
-import { Icon } from '../shell/icons';
 import { Explanation } from './Explanation';
 import { FeedPanel } from './FeedPanel';
 import { Pager } from '../blocks/Pager';
@@ -50,6 +49,32 @@ const ROW_TONES: Readonly<Record<string, string>> = {
 
 const CELL = 'px-3 py-2';
 
+const INTERACTIVE_SELECTOR = 'a, button, input, label, select, textarea, [role="menu"], [role="menuitem"], [data-row-actions]';
+
+function isInteractiveTarget(target: EventTarget | null): boolean {
+  return target instanceof Element && Boolean(target.closest(INTERACTIVE_SELECTOR));
+}
+
+/** Stable identifier for a row so filtering, sorting or paging cannot attach details to another record. */
+export function stableRowKey(row: PageRow, fallbackIndex: number): string {
+  if (row.pickId) return `pick:${row.pickId}`;
+  if (row.detailsHref) return `detail:${row.detailsHref}`;
+  const linked = row.cells.find((cell) => cell.href);
+  if (linked?.href) return `href:${linked.href}:${row.cells[0]?.text ?? ''}`;
+  const signature = row.cells
+    .map((cell) => cell.text.trim())
+    .filter(Boolean)
+    .slice(0, 3)
+    .join('|');
+  return signature ? `sig:${signature}` : `row:${fallbackIndex}`;
+}
+
+function profileLinkLabel(subject: string, href: string): string {
+  if (href.startsWith('/clusters/')) return `Open ${subject} cluster profile`;
+  if (href.startsWith('/schools/')) return `Open ${subject} school profile`;
+  return `Open ${subject} profile`;
+}
+
 function CellText({ cell, resolve }: { cell: PageCell; resolve: (href: string) => string }) {
   const href = resolve(cell.href);
   if (cell.pills.length) return <PlanningChips pills={cell.pills} />;
@@ -64,7 +89,7 @@ function CellText({ cell, resolve }: { cell: PageCell; resolve: (href: string) =
     <span className={cell.strong ? 'font-semibold' : undefined}>{cell.text}</span>
   );
   return href ? (
-    <Link href={href} className="no-underline hover:opacity-90 font-semibold edify-primary-text">
+    <Link href={href} className="inline no-underline hover:underline font-semibold edify-primary-text">
       {text}
     </Link>
   ) : (
@@ -131,33 +156,47 @@ export function CellActions({ actions, subject, hrefOf }: { actions: readonly Pa
 function RowDetails({ row, columns, resolve, id, subject, drawerHref }: { row: PageRow; columns: number; resolve: (href: string) => string; id: string; subject: string; drawerHref: string }) {
   const detailsHref = resolve(row.detailsHref);
   return (
-    <tr id={id} className="border-b border-[var(--edify-table-divider)] bg-[var(--edify-card-surface)]">
-      <td colSpan={columns} className="px-4 py-3">
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">
-          {row.details.map((fact) => {
-            const href = resolve(fact.href);
-            return (
-              <div key={fact.label} className="min-w-0">
-                <dt className="text-[length:var(--edify-text-micro-size)] font-medium text-[var(--edify-text-muted)]">{fact.label}:</dt>
-                <dd className={`truncate font-medium ${textTone(fact.tone)}`}>
-                  {href ? <Link href={href} className="hover:underline">{fact.value}</Link> : fact.value}
-                </dd>
-              </div>
-            );
-          })}
-        </dl>
+    <tr
+      id={id}
+      data-row-details=""
+      onClick={(event) => event.stopPropagation()}
+      className="border-b border-[var(--edify-table-divider)] bg-[var(--edify-card-surface)] whitespace-normal"
+    >
+      <td colSpan={columns} className="space-y-3 px-4 py-3">
+        {detailsHref ? (
+          <div>
+            <Link href={detailsHref} className="inline text-[13px] font-bold text-[var(--edify-text)] hover:underline">
+              {profileLinkLabel(subject, detailsHref)}
+            </Link>
+          </div>
+        ) : null}
+        {row.details.length ? (
+          <dl className="flex flex-wrap gap-x-5 gap-y-1.5 text-[length:var(--edify-text-label-size)]">
+            {row.details.map((fact) => {
+              const href = resolve(fact.href);
+              return (
+                <div key={fact.label} className="flex min-w-0 items-baseline gap-1">
+                  <dt className="font-medium text-[var(--edify-text-muted)]">{fact.label}:</dt>
+                  <dd className={`font-semibold ${textTone(fact.tone)}`}>
+                    {href ? (
+                      <Link href={href} className="inline text-[var(--brand-primary-text)] hover:underline dark:text-[var(--edify-accent-text)]">
+                        {fact.value}
+                      </Link>
+                    ) : (
+                      fact.value
+                    )}
+                  </dd>
+                </div>
+              );
+            })}
+          </dl>
+        ) : null}
         {row.detailBlocks.length ? (
-          <div className="mt-3 grid gap-3">
+          <div className="space-y-3">
             {row.detailBlocks.map((block, index) =>
               block.kind.case === 'panel' ? <FeedPanel key={index} panel={block.kind.value} resolve={resolve} drawerHref={drawerHref} nested /> : null,
             )}
           </div>
-        ) : null}
-        {detailsHref ? (
-          <Link href={detailsHref} className="mt-3 inline-block text-[13px] font-semibold text-[var(--brand-primary-text)] underline dark:text-[var(--edify-accent-text)]">
-            {/* templates/partials/planning/school_row.html */}
-            Open {subject} school profile
-          </Link>
         ) : null}
       </td>
     </tr>
@@ -244,11 +283,11 @@ function AdminTable({ table, resolve }: { table: PageTable; resolve: (href: stri
 export function FeedTable({ table, pagePath, drawerHref, selectable, footer }: FeedTableProps) {
   const resolve = (href: string) => resolveHref(pagePath, href);
   const hrefOf = (action: PageAction) => actionHref(action, pagePath, drawerHref);
-  const [open, setOpen] = useState<number | null>(null);
+  const [openKey, setOpenKey] = useState<string | null>(null);
+  const tableId = useId();
   if (table.family === 'admin-panel') return <AdminTable table={table} resolve={resolve} />;
   const ticks = selectable && table.rows.some((row) => row.pickId);
-  const opens = table.rows.some((row) => row.details.length || row.detailBlocks.length);
-  const span = table.columns.length + (ticks ? 1 : 0) + (opens ? 1 : 0);
+  const span = table.columns.length + (ticks ? 1 : 0);
   const emptyHref = table.emptyAction ? hrefOf(table.emptyAction) : '';
   const titled = Boolean(table.title || table.count);
 
@@ -280,8 +319,8 @@ export function FeedTable({ table, pagePath, drawerHref, selectable, footer }: F
                         aria-label="Select all on this page"
                         className="h-4 w-4 accent-[var(--brand-primary)]"
                         onChange={(event) => {
-                          const table = event.currentTarget.closest('table');
-                          table?.querySelectorAll<HTMLInputElement>('input[data-pick]').forEach((box) => {
+                          const tbl = event.currentTarget.closest('table');
+                          tbl?.querySelectorAll<HTMLInputElement>('input[data-pick]').forEach((box) => {
                             box.checked = event.currentTarget.checked;
                             box.dispatchEvent(new Event('change', { bubbles: true }));
                           });
@@ -289,7 +328,6 @@ export function FeedTable({ table, pagePath, drawerHref, selectable, footer }: F
                       />
                     </th>
                   ) : null}
-                  {opens ? <th scope="col" className={`${CELL} w-6`}><span className="sr-only">Details</span></th> : null}
                   {table.columns.map((column) => (
                     <th key={column.label} scope="col" className={`${CELL} ${column.numeric ? 'text-right' : ''}`}>
                       {titleCase(column.label)}
@@ -302,39 +340,40 @@ export function FeedTable({ table, pagePath, drawerHref, selectable, footer }: F
               {table.rows.map((row, index) => {
                 if (isHeadingRow(row, table.columns)) {
                   return (
-                    <tr key={index} className="edify-group-head" data-heading>
+                    <tr key={`head:${row.cells[0]?.text ?? index}`} className="edify-group-head" data-heading>
                       <th colSpan={span} scope="colgroup">
                         <span className="edify-group-head__label">{row.cells[0]?.text}</span>
                       </th>
                     </tr>
                   );
                 }
+                const rowKey = stableRowKey(row, index);
                 const subject = row.cells.find((cell) => cell.href)?.text ?? row.cells[1]?.text ?? row.cells[0]?.text ?? '';
-                const detailsId = `row-details-${index}`;
+                const detailsId = `row-details-${tableId}-${rowKey.replace(/[^A-Za-z0-9_-]/g, '-')}`;
                 const hasDetails = row.details.length > 0 || row.detailBlocks.length > 0;
+                const isOpen = openKey === rowKey;
+                const rowTone = ROW_TONES[row.tone] ?? '';
+                const interactiveClass = hasDetails
+                  ? 'cursor-pointer transition-colors hover:bg-[color-mix(in_oklab,var(--edify-surface-muted)_55%,transparent)] focus-within:bg-[color-mix(in_oklab,var(--edify-surface-muted)_40%,transparent)]'
+                  : '';
                 return (
-                  <Fragment key={index}>
-                    <tr className={ROW_TONES[row.tone] ?? undefined} data-row={row.pickId || undefined} data-tone={row.tone || undefined}>
+                  <Fragment key={rowKey}>
+                    <tr
+                      className={`${rowTone} ${interactiveClass}`.trim() || undefined}
+                      data-row={row.pickId || undefined}
+                      data-tone={row.tone || undefined}
+                      data-open={isOpen ? 'true' : undefined}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        if (!hasDetails || isInteractiveTarget(event.target)) return;
+                        if (window.getSelection()?.toString()) return;
+                        setOpenKey(isOpen ? null : rowKey);
+                      }}
+                    >
                       {ticks ? (
                         <td className={CELL}>
                           {row.pickId ? (
                             <input type="checkbox" data-pick={row.pickId} aria-label={row.pickLabel || `Select ${subject}`} className="h-4 w-4 accent-[var(--brand-primary)]" />
-                          ) : null}
-                        </td>
-                      ) : null}
-                      {opens ? (
-                        <td className={CELL}>
-                          {hasDetails ? (
-                            <button
-                              type="button"
-                              onClick={() => setOpen(open === index ? null : index)}
-                              aria-expanded={open === index}
-                              aria-controls={detailsId}
-                              aria-label={open === index ? `Hide details for ${subject}` : `Show details for ${subject}`}
-                              className="edify-detail-toggle grid h-6 w-6 place-items-center rounded text-[var(--edify-text-muted)] hover:bg-[var(--edify-surface-muted)]"
-                            >
-                              <Icon name="chevronRight" className={`h-4 w-4 transition-transform ${open === index ? 'rotate-90' : ''}`} />
-                            </button>
                           ) : null}
                         </td>
                       ) : null}
@@ -344,11 +383,26 @@ export function FeedTable({ table, pagePath, drawerHref, selectable, footer }: F
                           className={`${CELL} ${table.columns[cellIndex]?.numeric ? 'text-right tabular-nums' : ''} ${isActionsCell(cell) ? 'w-px' : ''}`}
                           data-label={table.columns[cellIndex]?.label || undefined}
                         >
+                          {cellIndex === 0 && hasDetails ? (
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setOpenKey(isOpen ? null : rowKey);
+                              }}
+                              aria-expanded={isOpen}
+                              aria-controls={detailsId}
+                              aria-label={isOpen ? `Hide details for ${subject}` : `Show details for ${subject}`}
+                              className="sr-only focus:not-sr-only focus:mr-1.5 focus:inline-flex focus:items-center focus:rounded focus:bg-[var(--edify-surface)] focus:px-1.5 focus:py-0.5 focus:text-[11px] focus:font-semibold focus:text-[var(--brand-primary-text)] focus:outline focus:outline-2 focus:outline-[var(--edify-accent)]"
+                            >
+                              {isOpen ? 'Hide details' : 'Show details'}
+                            </button>
+                          ) : null}
                           {isActionsCell(cell) ? <CellActions actions={cell.actions} subject={subject} hrefOf={hrefOf} /> : <CellText cell={cell} resolve={resolve} />}
                         </td>
                       ))}
                     </tr>
-                    {open === index && hasDetails ? <RowDetails row={row} columns={span} resolve={resolve} id={detailsId} subject={subject} drawerHref={drawerHref} /> : null}
+                    {isOpen && hasDetails ? <RowDetails row={row} columns={span} resolve={resolve} id={detailsId} subject={subject} drawerHref={drawerHref} /> : null}
                   </Fragment>
                 );
               })}

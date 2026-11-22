@@ -152,6 +152,18 @@ func (pg *page) programme(ctx context.Context) ([]*screensv1.PageBlock, error) {
 		if err != nil {
 			return nil, err
 		}
+		scores, err := latestConfirmedScores(ctx, pg.db, pks, pg.fy)
+		if err != nil {
+			return nil, err
+		}
+		clusters, err := names(ctx, pg.db, `SELECT id, name FROM cluster WHERE id = ANY($1) AND deleted_at IS NULL`, clusterIDs(shown))
+		if err != nil {
+			return nil, err
+		}
+		owners, err := staffNames(ctx, pg.db, shown)
+		if err != nil {
+			return nil, err
+		}
 		heads := []string{"School ID", "School name", "District", "Visit plan status"}
 		if !outreach {
 			heads = append(heads, "Training plan status")
@@ -181,7 +193,11 @@ func (pg *page) programme(ctx context.Context) ([]*screensv1.PageBlock, error) {
 			if district == "" {
 				district = "—"
 			}
-			cells := []*screensv1.PageCell{{Text: sc.code}, {Text: sc.name, Href: "/schools/" + sc.code}, {Text: district}, visit}
+			districtCell := &screensv1.PageCell{Text: district}
+			if sc.districtID != "" && sc.districtName != "" {
+				districtCell.Href = "/districts/" + sc.districtID
+			}
+			cells := []*screensv1.PageCell{{Text: sc.code}, {Text: sc.name, Href: "/schools/" + sc.code}, districtCell, visit}
 			if !outreach {
 				cells = append(cells, &screensv1.PageCell{Text: clusterpage.JoinedChips(b.TrainingChips(), b.ClusterMeetingChips()),
 					Pills: clusterpage.ChipPills(b.TrainingChips(), b.ClusterMeetingChips())})
@@ -202,7 +218,71 @@ func (pg *page) programme(ctx context.Context) ([]*screensv1.PageBlock, error) {
 			if !pg.oversight && pg.mayPlan(sc) {
 				action = &screensv1.PageCell{Text: "Schedule"}
 			}
-			row := &screensv1.PageRow{Cells: append(cells, &screensv1.PageCell{Text: planned}, action)}
+			orDash := func(v string) string {
+				if v == "" {
+					return "—"
+				}
+				return v
+			}
+			clusterName := "Not assigned"
+			clusterHref := ""
+			if sc.clusterID != "" {
+				if cn, ok := clusters[sc.clusterID]; ok && cn != "" {
+					clusterName = cn
+					if pg.door.OpenClusters {
+						clusterHref = "/clusters/" + sc.clusterID
+					}
+				}
+			}
+			staffName := owners[sc.ownerID]
+			if staffName == "" {
+				staffName = orDash(sc.ownerRaw)
+			}
+			staffHref := ""
+			if sc.ownerID != "" {
+				staffHref = "/staff/" + sc.ownerID
+			}
+			enrolment := "0"
+			if sc.enrollment != nil {
+				enrolment = strconv.Itoa(*sc.enrollment)
+			}
+			ssaText := "Not assessed"
+			var groups []schooldirectory.SSAGroup
+			hasScores := false
+			if scScores, ok := scores[sc.id]; ok {
+				groups, hasScores = schooldirectory.SSAGroups(scScores)
+				if avg, _ := schooldirectory.SSAAverage(scScores); avg != nil {
+					ssaText = clusterpage.ScoreText(*avg) + "/10"
+				}
+			}
+			ssaItems := []*screensv1.PagePanelItem{{Kind: &screensv1.PagePanelItem_Text{Text: "Latest confirmed assessment · FY " + pg.fy}}}
+			if hasScores {
+				ssaItems = append(ssaItems, clusterpage.ScoreGroupItems(groups)...)
+			} else {
+				ssaItems = append(ssaItems, &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Text{Text: "No confirmed SSA scores are available yet."}})
+			}
+			districtFact := &screensv1.PageFact{Label: "District", Value: district}
+			if sc.districtID != "" && sc.districtName != "" {
+				districtFact.Href = "/districts/" + sc.districtID
+			}
+			row := &screensv1.PageRow{
+				Cells: append(cells, &screensv1.PageCell{Text: planned}, action),
+				Details: []*screensv1.PageFact{
+					districtFact,
+					{Label: "Shipping Address", Value: orDash(sc.shipping)},
+					{Label: "School Type", Value: label},
+					{Label: "Cluster", Value: clusterName, Href: clusterHref},
+					{Label: "Enrollment", Value: enrolment},
+					{Label: "Phone", Value: orDash(sc.phone)},
+					{Label: "Primary Contact", Value: orDash(sc.contact)},
+					{Label: "Staff Name", Value: staffName, Href: staffHref},
+					{Label: "SSA", Value: ssaText},
+				},
+				DetailsHref: "/schools/" + sc.code,
+				DetailBlocks: []*screensv1.PageBlock{{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{
+					Title: "Intervention scores", Subtitle: "SSA detail", Items: ssaItems,
+				}}}},
+			}
 			if pg.tick {
 				row.PickId = sc.code
 			}

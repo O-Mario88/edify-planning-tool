@@ -117,14 +117,27 @@ export function PageTableView({ table, isBare = false }: PageTableViewProps) {
   );
 }
 
+/** Stable identifier for a row so filtering, sorting or paging cannot attach details to a different record. */
+function stableRowKey(row: PageRow, fallbackIndex: number): string {
+  if (row.pickId) return `pick:${row.pickId}`;
+  if (row.detailsHref) return `detail:${row.detailsHref}`;
+  const linked = row.cells.find((cell) => cell.href);
+  if (linked?.href) return `href:${linked.href}:${row.cells[0]?.text ?? ''}`;
+  const signature = row.cells
+    .map((cell) => cell.text.trim())
+    .filter(Boolean)
+    .slice(0, 3)
+    .join('|');
+  return signature ? `sig:${signature}` : `row:${fallbackIndex}`;
+}
+
 function Grid({ table }: { readonly table: PageTable }) {
   const { colors } = useTheme();
   const [viewWidth, setViewWidth] = useState(0);
-  const opens = table.rows.some((row) => row.details.length > 0 || row.detailsHref !== '');
   const pick = usePicks();
   const pickable = pick.isOn ? table.rows.map((row) => row.pickId).filter((id) => id !== '') : [];
-  // The first column leads the row when no tick box or chevron comes before it.
-  const isLead = pickable.length === 0 && !opens;
+  // The first column leads the row when no tick box comes before it.
+  const isLead = pickable.length === 0;
   const widths = table.columns.map((column, index) => {
     const edges = (index === 0 && isLead ? EDGE_SIDE - CELL_SIDE : 0) + (index === table.columns.length - 1 ? EDGE_SIDE - CELL_SIDE : 0);
     return (
@@ -135,11 +148,10 @@ function Grid({ table }: { readonly table: PageTable }) {
     );
   });
   const ticked = pickable.filter((id) => pick.picked.includes(id)).length;
-  const contentWidth =
-    widths.reduce((sum, width) => sum + width, 0) + (opens ? EXPANDER_WIDTH : 0) + (pickable.length > 0 ? PICK_WIDTH : 0);
+  const contentWidth = widths.reduce((sum, width) => sum + width, 0) + (pickable.length > 0 ? PICK_WIDTH : 0);
   const isWide = viewWidth > 0 && contentWidth > viewWidth + 2;
-  // As the web's table: one row open at a time.
-  const [openRow, setOpenRow] = useState<number | null>(null);
+  // As the web's table: one row open at a time, keyed by stable record ID.
+  const [openRowKey, setOpenRowKey] = useState<string | null>(null);
   return (
     <View onLayout={(event) => setViewWidth(event.nativeEvent.layout.width)}>
       <ScrollView horizontal showsHorizontalScrollIndicator onScrollBeginDrag={() => (hintSeen = true)}>
@@ -157,7 +169,6 @@ function Grid({ table }: { readonly table: PageTable }) {
                   <TickBox isOn={ticked === pickable.length} isPart={ticked > 0 && ticked < pickable.length} />
                 </Pressable>
               ) : null}
-              {opens ? <View style={{ width: EXPANDER_WIDTH }} /> : null}
               {table.columns.map((column, index) => (
                 <Text
                   key={`${column.label}-${index}`}
@@ -174,21 +185,23 @@ function Grid({ table }: { readonly table: PageTable }) {
               ))}
             </View>
           ) : null}
-          {table.rows.map((row, rowIndex) => (
-            <BodyRow
-              key={rowIndex}
-              row={row}
-              table={table}
-              widths={widths}
-              isFirst={rowIndex === 0}
-              isLead={isLead}
-              opens={opens}
-              picks={pickable.length > 0}
-              isOpen={openRow === rowIndex}
-              onToggle={() => setOpenRow(openRow === rowIndex ? null : rowIndex)}
-              detailsWidth={viewWidth}
-            />
-          ))}
+          {table.rows.map((row, rowIndex) => {
+            const rowKey = stableRowKey(row, rowIndex);
+            return (
+              <BodyRow
+                key={rowKey}
+                row={row}
+                table={table}
+                widths={widths}
+                isFirst={rowIndex === 0}
+                isLead={isLead}
+                picks={pickable.length > 0}
+                isOpen={openRowKey === rowKey}
+                onToggle={() => setOpenRowKey(openRowKey === rowKey ? null : rowKey)}
+                detailsWidth={viewWidth}
+              />
+            );
+          })}
         </View>
       </ScrollView>
       {isWide ? <ScrollHint /> : null}
@@ -201,10 +214,8 @@ interface BodyRowProps {
   readonly table: PageTable;
   readonly widths: readonly number[];
   readonly isFirst: boolean;
-  /** The first column is the row's first cell (no tick box or chevron before it). */
+  /** The first column is the row's first cell (no tick box before it). */
   readonly isLead: boolean;
-  /** The table has rows that open: every row keeps the chevron column. */
-  readonly opens: boolean;
   /** The table's rows can be ticked for the page's bar: every row keeps the tick column. */
   readonly picks: boolean;
   readonly isOpen: boolean;
@@ -244,12 +255,13 @@ export function Explanation({ text, isBare = false }: { readonly text: string; r
 }
 
 /** One record row: its cells, and what opening it shows under it. */
-function BodyRow({ row, table, widths, isFirst, isLead, opens, picks, isOpen, onToggle, detailsWidth }: BodyRowProps) {
+function BodyRow({ row, table, widths, isFirst, isLead, picks, isOpen, onToggle, detailsWidth }: BodyRowProps) {
   const { colors } = useTheme();
   const openLink = usePageLink();
   const pick = usePicks();
   const isTicked = row.pickId !== '' && pick.picked.includes(row.pickId);
-  const canOpen = row.details.length > 0 || row.detailsHref !== '';
+  const canOpen = row.details.length > 0 || row.detailBlocks.length > 0 || row.detailsHref !== '';
+  const primaryHref = row.detailsHref || row.cells.find((cell) => cell.href)?.href || '';
   return (
     <View>
       <Pressable
@@ -257,6 +269,17 @@ function BodyRow({ row, table, widths, isFirst, isLead, opens, picks, isOpen, on
         onPress={onToggle}
         accessibilityState={canOpen ? { expanded: isOpen } : undefined}
         accessibilityHint={canOpen ? `${isOpen ? 'Hides' : 'Shows'} the details of ${rowName(row)}` : undefined}
+        accessibilityActions={[
+          ...(canOpen ? [{ name: 'activate', label: `${isOpen ? 'Hide' : 'Show'} details for ${rowName(row)}` }] : []),
+          ...(primaryHref ? [{ name: 'openProfile', label: `Open ${rowName(row)} profile` }] : []),
+        ]}
+        onAccessibilityAction={(event) => {
+          if (event.nativeEvent.actionName === 'openProfile' && primaryHref) {
+            openLink(primaryHref);
+          } else if (canOpen) {
+            onToggle();
+          }
+        }}
         style={[
           styles.row,
           { borderTopColor: colors.tableLine },
@@ -280,12 +303,6 @@ function BodyRow({ row, table, widths, isFirst, isLead, opens, picks, isOpen, on
             ) : null}
           </View>
         ) : null}
-        {opens ? (
-          <View style={[styles.expander, { width: EXPANDER_WIDTH }]}>
-            {canOpen && isOpen ? <ChevronDown size={14} color={colors.textMuted} /> : null}
-            {canOpen && !isOpen ? <ChevronRight size={14} color={colors.textMuted} /> : null}
-          </View>
-        ) : null}
         {row.cells.map((cell, index) => {
           if (cell.actions.length > 0) {
             return (
@@ -301,32 +318,21 @@ function BodyRow({ row, table, widths, isFirst, isLead, opens, picks, isOpen, on
             rowInk(colors, row) ??
             toneColor(colors, cell.tone) ??
             (isEmpty ? colors.textSubtle : isLink ? colors.tableLink : cell.strong ? colors.text : colors.textMuted);
-          // A cell's text wraps in full, never cut (owner, 2026-10-02).
-          const text = (
-            <Text
-              style={[
-                styles.cell,
-                { color, fontFamily: cell.strong ? fonts.bold : isLink ? fonts.semibold : fonts.medium },
-                isEmpty && styles.nothing,
-                table.columns[index]?.numeric && styles.numeric,
-              ]}
-            >
-              {isEmpty ? NOTHING : cell.text}
-            </Text>
-          );
           const edge = edgePad(index, row.cells.length, isLead);
-          return cell.href ? (
-            <Pressable
-              key={index}
-              onPress={() => openLink(cell.href)}
-              accessibilityRole="link"
-              style={[styles.cellBox, { width: widths[index] ?? 120 }, edge]}
-            >
-              {text}
-            </Pressable>
-          ) : (
-            <View key={index} style={[styles.cellBox, { width: widths[index] ?? 120 }, edge]}>
-              {text}
+          return (
+            <View key={index} style={[styles.cellBox, { width: widths[index] ?? 120, alignItems: table.columns[index]?.numeric ? 'flex-end' : 'flex-start' }, edge]}>
+              <Text
+                onPress={isLink ? () => openLink(cell.href) : undefined}
+                accessibilityRole={isLink ? 'link' : undefined}
+                style={[
+                  styles.cell,
+                  { color, fontFamily: cell.strong ? fonts.bold : isLink ? fonts.semibold : fonts.medium },
+                  isEmpty && styles.nothing,
+                  table.columns[index]?.numeric && styles.numeric,
+                ]}
+              >
+                {isEmpty ? NOTHING : cell.text}
+              </Text>
             </View>
           );
         })}

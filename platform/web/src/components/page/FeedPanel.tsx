@@ -12,6 +12,7 @@ import { isStepper } from '@/lib/presentBlocks';
 import { noteTone, sentenceParts } from '@/lib/sentence';
 
 import { Badge } from '../blocks/Badge';
+import { SsaDetailPanel, isSsaDetailPanel, ssaModelFromPanel } from '../blocks/SsaDetailPanel';
 import { PeriodStepper } from './PeriodStepper';
 import { textTone } from '../blocks/tones';
 
@@ -47,12 +48,23 @@ function Item({ item, resolve, drawerHref }: { item: PagePanelItem; resolve: (hr
     case 'fields':
       return (
         <dl className="grid grid-cols-1 gap-x-6 gap-y-1.5 sm:grid-cols-2 lg:grid-cols-3">
-          {kind.value.facts.map((fact) => (
-            <div key={fact.label} className="min-w-0">
-              <dt className="text-[length:var(--edify-text-micro-size)] font-medium text-[var(--edify-text-muted)]">{fact.label}</dt>
-              <dd className={`font-medium ${textTone(fact.tone)}`}>{fact.value}</dd>
-            </div>
-          ))}
+          {kind.value.facts.map((fact) => {
+            const href = resolve(fact.href);
+            return (
+              <div key={fact.label} className="min-w-0">
+                <dt className="text-[length:var(--edify-text-micro-size)] font-medium text-[var(--edify-text-muted)]">{fact.label}</dt>
+                <dd className={`font-medium ${textTone(fact.tone)}`}>
+                  {href ? (
+                    <Link href={href} className="inline font-semibold text-[var(--brand-primary-text)] hover:underline dark:text-[var(--edify-accent-text)]">
+                      {fact.value}
+                    </Link>
+                  ) : (
+                    fact.value
+                  )}
+                </dd>
+              </div>
+            );
+          })}
         </dl>
       );
     case 'rows':
@@ -124,6 +136,9 @@ export interface FeedPanelProps {
 }
 
 export function FeedPanel({ panel, resolve, drawerHref = '', nested = false, footer }: FeedPanelProps) {
+  if (isSsaDetailPanel(panel) && !footer) {
+    return <SsaDetailPanel model={ssaModelFromPanel(panel)} />;
+  }
   const items = panel.items.map((item, index) => <Item key={index} item={item} resolve={resolve} drawerHref={drawerHref} />);
   const note = noteTone(panel);
   if (note && !footer) {

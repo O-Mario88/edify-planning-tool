@@ -12,8 +12,8 @@
  * about four seconds (owner, 2026-10-02). A row with details opens under
  * itself, one at a time; ticked rows feed the page's bar (input[data-pick]).
  */
-import { ChevronDown, ChevronRight, X } from 'lucide-react';
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { X } from 'lucide-react';
+import { Fragment, useEffect, useId, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import type { PageAction, PageRow, PageTable } from '@/gen/edify/screens/v1/page_pb';
@@ -23,9 +23,16 @@ import { titleCase } from '@/lib/titleCase';
 import type { RowCard, RowFact } from '@/lib/rowCard';
 
 import { Explanation } from '../page/Explanation';
-import { CellActions } from '../page/FeedTable';
+import { CellActions, stableRowKey } from '../page/FeedTable';
+import { PhonePanel } from './PhonePanel';
 import { PhoneEmpty, PhonePager } from './PhoneParts';
 import { phoneTone } from './tone';
+
+const INTERACTIVE_SELECTOR = 'a, button, input, label, select, textarea, [role="menu"], [role="menuitem"], [data-row-actions]';
+
+function isInteractiveTarget(target: EventTarget | null): boolean {
+  return target instanceof Element && Boolean(target.closest(INTERACTIVE_SELECTOR));
+}
 
 /** The hint shows once per visit, as the app's does until a swipe. */
 let hintSeen = false;
@@ -100,8 +107,8 @@ interface GridProps {
 function Grid({ table, resolve, hrefOf, selectable }: GridProps) {
   const scroller = useRef<HTMLDivElement>(null);
   const [hint, setHint] = useState(false);
-  const [openRow, setOpenRow] = useState<number | null>(null);
-  const opens = table.rows.some((row) => row.details.length > 0 || row.detailsHref !== '');
+  const [openKey, setOpenKey] = useState<string | null>(null);
+  const tableId = useId();
   const ticks = selectable && table.rows.some((row) => row.pickId);
   useEffect(() => {
     const node = scroller.current;
@@ -111,7 +118,7 @@ function Grid({ table, resolve, hrefOf, selectable }: GridProps) {
     const timer = window.setTimeout(() => setHint(false), 4300);
     return () => window.clearTimeout(timer);
   }, []);
-  const columnCount = table.columns.length + (opens ? 1 : 0) + (ticks ? 1 : 0);
+  const columnCount = table.columns.length + (ticks ? 1 : 0);
   return (
     // A region a keyboard can reach and scroll (WCAG: scrollable-region-focusable).
     <div data-ph="scroller" ref={scroller} onScroll={() => setHint(false)} tabIndex={0} role="region" aria-label={`${table.title || 'Table'}, scrolls sideways`}>
@@ -139,7 +146,6 @@ function Grid({ table, resolve, hrefOf, selectable }: GridProps) {
                   />
                 </th>
               ) : null}
-              {opens ? <th scope="col" aria-label="Details" /> : null}
               {table.columns.map((column, index) => (
                 <th key={`${column.label}-${index}`} scope="col" data-numeric={column.numeric || undefined}>
                   {titleCase(column.label)}
@@ -150,36 +156,48 @@ function Grid({ table, resolve, hrefOf, selectable }: GridProps) {
         ) : null}
         <tbody>
           {table.rows.map((row, rowIndex) => {
-            const canOpen = row.details.length > 0 || row.detailsHref !== '';
-            const isOpen = openRow === rowIndex;
+            const rowKey = stableRowKey(row, rowIndex);
+            const canOpen = row.details.length > 0 || row.detailBlocks.length > 0 || row.detailsHref !== '';
+            const isOpen = openKey === rowKey;
             const name = rowName(row);
-            const detailsId = `ph-row-${rowIndex}`;
+            const detailsId = `ph-row-${tableId}-${rowKey.replace(/[^A-Za-z0-9_-]/g, '-')}`;
             return (
-              <Fragment key={rowIndex}>
-                <tr data-row-tone={row.tone || undefined} data-open={isOpen || undefined}>
+              <Fragment key={rowKey}>
+                <tr
+                  data-row-tone={row.tone || undefined}
+                  data-open={isOpen || undefined}
+                  className={canOpen ? 'cursor-pointer' : undefined}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    if (!canOpen || isInteractiveTarget(event.target)) return;
+                    if (window.getSelection()?.toString()) return;
+                    setOpenKey(isOpen ? null : rowKey);
+                  }}
+                >
                   {ticks ? (
                     <td>{row.pickId ? <input type="checkbox" data-pick={row.pickId} aria-label={row.pickLabel || `Select ${name}`} /> : null}</td>
                   ) : null}
-                  {opens ? (
-                    <td data-ph-cell="expander">
-                      {canOpen ? (
+                  {row.cells.map((cell, index) => {
+                    const disclosure =
+                      index === 0 && canOpen ? (
                         <button
                           type="button"
-                          data-ph="expander"
                           aria-expanded={isOpen}
                           aria-controls={detailsId}
-                          aria-label={`${isOpen ? 'Hide' : 'Show'} the details of ${name}`}
-                          onClick={() => setOpenRow(isOpen ? null : rowIndex)}
+                          aria-label={`${isOpen ? 'Hide' : 'Show'} details for ${name}`}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setOpenKey(isOpen ? null : rowKey);
+                          }}
+                          className="sr-only focus:not-sr-only focus:mr-1.5 focus:inline-flex focus:items-center focus:rounded focus:bg-[var(--edify-surface)] focus:px-1.5 focus:py-0.5 focus:text-[11px] focus:font-semibold focus:text-[var(--brand-primary-text)] focus:outline focus:outline-2 focus:outline-[var(--edify-accent)]"
                         >
-                          {isOpen ? <ChevronDown size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
+                          {isOpen ? 'Hide details' : 'Show details'}
                         </button>
-                      ) : null}
-                    </td>
-                  ) : null}
-                  {row.cells.map((cell, index) => {
+                      ) : null;
                     if (isActionsCell(cell)) {
                       return (
                         <td key={index}>
+                          {disclosure}
                           <CellActions actions={cell.actions} subject={name} hrefOf={hrefOf} />
                         </td>
                       );
@@ -193,26 +211,45 @@ function Grid({ table, resolve, hrefOf, selectable }: GridProps) {
                         data-ph-tone={tone && tone !== 'brand' ? tone : undefined}
                         data-numeric={table.columns[index]?.numeric || undefined}
                       >
-                        {cell.href ? <a href={resolve(cell.href)}>{text}</a> : text}
+                        {disclosure}
+                        {cell.href ? (
+                          <a href={resolve(cell.href)} className="inline">
+                            {text}
+                          </a>
+                        ) : (
+                          text
+                        )}
                       </td>
                     );
                   })}
                 </tr>
                 {isOpen ? (
-                  <tr data-ph="details" id={detailsId}>
+                  <tr data-ph="details" id={detailsId} onClick={(event) => event.stopPropagation()}>
                     <td colSpan={columnCount}>
                       {row.detailsHref ? (
-                        <a data-ph="details-link" href={resolve(row.detailsHref)}>
+                        <a data-ph="details-link" href={resolve(row.detailsHref)} className="inline">
                           Open {name} profile
                         </a>
                       ) : null}
-                      <div data-ph="details-facts">
-                        {row.details.map((fact) => (
-                          <span key={fact.label} data-ph="details-fact" data-ph-tone={phoneTone(fact.tone)}>
-                            {fact.label}: {fact.href ? <a href={resolve(fact.href)}><b>{fact.value}</b></a> : <b>{fact.value}</b>}
-                          </span>
-                        ))}
-                      </div>
+                      {row.details.length > 0 ? (
+                        <div data-ph="details-facts">
+                          {row.details.map((fact) => (
+                            <span key={fact.label} data-ph="details-fact" data-ph-tone={phoneTone(fact.tone)}>
+                              {fact.label}:{' '}
+                              {fact.href ? (
+                                <a href={resolve(fact.href)} className="inline">
+                                  <b>{fact.value}</b>
+                                </a>
+                              ) : (
+                                <b>{fact.value}</b>
+                              )}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                      {row.detailBlocks.map((block, index) =>
+                        block.kind.case === 'panel' ? <PhonePanel key={index} panel={block.kind.value} resolve={resolve} /> : null,
+                      )}
                     </td>
                   </tr>
                 ) : null}
@@ -303,7 +340,6 @@ function Cards({ table, resolve, hrefOf, selectable }: GridProps) {
                       onClick={() => setOpenRow(isOpen ? null : rowIndex)}
                     >
                       {isOpen ? 'Hide details' : 'All details'}
-                      {isOpen ? <ChevronDown size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
                     </button>
                   ) : (
                     <span />
@@ -461,7 +497,6 @@ function List({ table, resolve, hrefOf, selectable }: GridProps) {
                 <span data-ph="list-title">{card.title?.text ?? name}</span>
                 {line ? <span data-ph="list-line">{line}</span> : null}
               </button>
-              <ChevronRight size={16} aria-hidden="true" data-ph="list-chevron" />
             </li>
           );
         })}

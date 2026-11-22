@@ -8,7 +8,6 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { ChevronDown, ChevronUp } from 'lucide-react-native';
 
 import { describe, useSession } from '../../auth/SessionContext';
 import type { PageBlock, PageRecord } from '../../gen/edify/screens/v1/page_pb';
@@ -35,69 +34,74 @@ export function PageRecordView({ record }: { readonly record: PageRecord }) {
         { backgroundColor: colors.raised, borderColor: isTicked ? colors.primary : colors.border },
       ]}
     >
-      <View style={styles.head}>
-        {canTick ? (
-          <Pressable
-            onPress={() => pick.set([record.pickId], !isTicked)}
-            accessibilityRole="checkbox"
-            accessibilityState={{ checked: isTicked }}
-            accessibilityLabel={record.pickLabel || `Select ${record.title}`}
-            hitSlop={10}
-            style={styles.tick}
-          >
-            <TickBox isOn={isTicked} />
-          </Pressable>
-        ) : null}
-        <View style={styles.titleRow}>
-          <Text
-            onPress={() => (canOpen ? setIsOpen(!isOpen) : record.href ? openLink(record.href) : undefined)}
-            accessibilityRole="button"
-            accessibilityState={canOpen ? { expanded: isOpen } : undefined}
-            accessibilityLabel={canOpen ? `${isOpen ? 'Hide' : 'Show'} details for ${record.title}` : record.title}
-            style={[styles.title, { color: colors.text }]}
-          >
-            {record.title}
-          </Text>
-          {record.badges.map((badge) => {
-            const tone = toneColors(colors, badge.tone);
-            return (
-              <View key={badge.text} style={[styles.badge, { backgroundColor: tone.soft }]}>
-                <Text style={[styles.badgeText, { color: tone.fg }]}>{badge.text}</Text>
-              </View>
-            );
-          })}
-        </View>
-        {record.actions.length > 0 ? <RowActions actions={record.actions} label={record.title} /> : null}
-      </View>
-      {record.subtitle ? <Text style={[styles.subtitle, { color: colors.textMuted }]}>{record.subtitle}</Text> : null}
-      {record.facts.length > 0 ? (
-        <View style={styles.facts}>
-          {record.facts.map((fact) => (
-            <Text key={fact.label} style={[styles.factLabel, { color: colors.textMuted }]}>
-              {fact.label}:{' '}
-              <Text
-                onPress={fact.href ? () => openLink(fact.href) : undefined}
-                accessibilityRole={fact.href ? 'link' : undefined}
-                style={[styles.factValue, { color: toneColor(colors, fact.tone) ?? (fact.href ? colors.link : colors.text) }]}
-              >
-                {fact.value}
-              </Text>
+      <Pressable
+        disabled={!canOpen}
+        onPress={() => setIsOpen(!isOpen)}
+        accessibilityState={canOpen ? { expanded: isOpen } : undefined}
+        accessibilityActions={[
+          ...(canOpen ? [{ name: 'activate', label: `${isOpen ? 'Hide' : 'Show'} details for ${record.title}` }] : []),
+          ...(record.href ? [{ name: 'openProfile', label: `Open ${record.title} profile` }] : []),
+        ]}
+        onAccessibilityAction={(event) => {
+          if (event.nativeEvent.actionName === 'openProfile' && record.href) {
+            openLink(record.href);
+          } else if (canOpen) {
+            setIsOpen(!isOpen);
+          }
+        }}
+        style={styles.summary}
+      >
+        <View style={styles.head}>
+          {canTick ? (
+            <Pressable
+              onPress={() => pick.set([record.pickId], !isTicked)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: isTicked }}
+              accessibilityLabel={record.pickLabel || `Select ${record.title}`}
+              hitSlop={10}
+              style={styles.tick}
+            >
+              <TickBox isOn={isTicked} />
+            </Pressable>
+          ) : null}
+          <View style={styles.titleRow}>
+            <Text
+              onPress={record.href ? () => openLink(record.href) : undefined}
+              accessibilityRole={record.href ? 'link' : 'header'}
+              accessibilityLabel={record.href ? `Open ${record.title} profile` : record.title}
+              style={[styles.title, { color: colors.text }]}
+            >
+              {record.title}
             </Text>
-          ))}
+            {record.badges.map((badge) => {
+              const tone = toneColors(colors, badge.tone);
+              return (
+                <View key={badge.text} style={[styles.badge, { backgroundColor: tone.soft }]}>
+                  <Text style={[styles.badgeText, { color: tone.fg }]}>{badge.text}</Text>
+                </View>
+              );
+            })}
+          </View>
+          {record.actions.length > 0 ? <RowActions actions={record.actions} label={record.title} /> : null}
         </View>
-      ) : null}
-      {canOpen ? (
-        <Pressable
-          onPress={() => setIsOpen(!isOpen)}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: isOpen }}
-          hitSlop={6}
-          style={styles.toggle}
-        >
-          <Text style={[styles.toggleText, { color: colors.link }]}>{isOpen ? 'Hide details' : 'Show details'}</Text>
-          {isOpen ? <ChevronUp size={14} color={colors.link} /> : <ChevronDown size={14} color={colors.link} />}
-        </Pressable>
-      ) : null}
+        {record.subtitle ? <Text style={[styles.subtitle, { color: colors.textMuted }]}>{record.subtitle}</Text> : null}
+        {record.facts.length > 0 ? (
+          <View style={styles.facts}>
+            {record.facts.map((fact) => (
+              <Text key={fact.label} style={[styles.factLabel, { color: colors.textMuted }]}>
+                {fact.label}:{' '}
+                <Text
+                  onPress={fact.href ? () => openLink(fact.href) : undefined}
+                  accessibilityRole={fact.href ? 'link' : undefined}
+                  style={[styles.factValue, { color: toneColor(colors, fact.tone) ?? (fact.href ? colors.link : colors.text) }]}
+                >
+                  {fact.value}
+                </Text>
+              </Text>
+            ))}
+          </View>
+        ) : null}
+      </Pressable>
       {isOpen ? (
         <View style={[styles.details, { borderTopColor: colors.raisedBorder }]}>
           {record.href ? (
@@ -174,6 +178,7 @@ function OpenedPart({ part }: { readonly part: Opened }) {
 
 const styles = StyleSheet.create({
   card: { padding: 16, gap: 10 },
+  summary: { gap: 10 },
   head: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
   titleRow: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   tick: { paddingTop: 2 },

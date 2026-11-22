@@ -83,7 +83,22 @@ export function SchoolRow({
         isLast && styles.rowLast,
       ]}
     >
-      <View style={styles.summary}>
+      <Pressable
+        onPress={onToggle}
+        accessibilityState={{ expanded: isOpen }}
+        accessibilityActions={[
+          { name: 'activate', label: `${isOpen ? 'Hide' : 'Show'} details for ${school.name}` },
+          ...(onOpen ? [{ name: 'openProfile', label: `Open ${school.name}'s profile` }] : []),
+        ]}
+        onAccessibilityAction={(event) => {
+          if (event.nativeEvent.actionName === 'openProfile' && onOpen) {
+            onOpen();
+          } else {
+            onToggle();
+          }
+        }}
+        style={styles.summary}
+      >
         {canAct ? (
           <Pressable
             onPress={onSelect}
@@ -95,30 +110,26 @@ export function SchoolRow({
             <TickBox isChecked={isSelected} />
           </Pressable>
         ) : null}
-        <Pressable
-          onPress={onToggle}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: isOpen }}
-          accessibilityLabel={`${isOpen ? 'Hide' : 'Show'} details for ${school.name}, School ID ${school.schoolId}`}
-          style={[styles.summaryTap, onOpen ? null : styles.grow]}
-        >
-          <View style={[styles.idPill, { borderColor: colors.borderStrong, backgroundColor: colors.surfaceMuted }]}>
-            <Text style={[styles.idText, { color: colors.text }]}>{school.schoolId}</Text>
-          </View>
-          {onOpen ? null : <Name school={school} isOpen={isOpen} />}
-        </Pressable>
-        {onOpen ? (
-          // The name is a link to the profile, as on the web; the rest of the
-          // row shows its details. Siblings, not nested, so each takes its tap.
-          <Pressable
-            onPress={onOpen}
-            accessibilityRole="link"
-            accessibilityLabel={`Open ${school.name}'s profile`}
-            style={styles.nameLink}
-          >
-            <Name school={school} isOpen={isOpen} />
-          </Pressable>
-        ) : null}
+        <View style={[styles.idPill, { borderColor: colors.borderStrong, backgroundColor: colors.surfaceMuted }]}>
+          <Text style={[styles.idText, { color: colors.text }]}>{school.schoolId}</Text>
+        </View>
+        <View style={styles.nameSlot}>
+          {onOpen ? (
+            <Text
+              onPress={onOpen}
+              accessibilityRole="link"
+              accessibilityLabel={`Open ${school.name}'s profile`}
+              style={[styles.nameInline, { color: colors.text }]}
+              numberOfLines={isOpen ? 3 : 1}
+            >
+              {school.name}
+            </Text>
+          ) : (
+            <Text style={[styles.nameInline, { color: colors.text }]} numberOfLines={isOpen ? 3 : 1}>
+              {school.name}
+            </Text>
+          )}
+        </View>
         {canAct && actions.length > 0 ? (
           <Pressable
             ref={menu.triggerRef}
@@ -138,7 +149,7 @@ export function SchoolRow({
             {menu.isOpen ? <ChevronUp size={14} color={colors.link} /> : <ChevronDown size={14} color={colors.link} />}
           </Pressable>
         ) : null}
-      </View>
+      </Pressable>
       {isOpen ? (
         <View style={[styles.details, { borderTopColor: colors.raisedBorder }]}>
           {facts.map(([label, value]) => (
@@ -187,28 +198,32 @@ export function SchoolRow({
               {school.trainingCount}
             </Text>
           </View>
-          {school.ssaGroups
-            .filter((group) => group.items.length > 0)
-            .map((group) => {
-              const tone = toneColors(colors, badgeTone(group.tone));
-              return (
-                <View key={group.key} style={[styles.ssaGroup, { borderColor: colors.raisedBorder }]}>
-                  <Text style={[styles.ssaTitle, { color: tone.fg }]}>{group.title}</Text>
-                  {group.items.map((item) => {
-                    const band = toneColors(colors, badgeTone(item.bandTone));
-                    return (
-                      <View key={item.label} style={styles.ssaItem}>
-                        <Text style={[styles.factValue, styles.ssaLabel, { color: colors.text }]}>{item.label}</Text>
-                        <Text style={[styles.factValue, { color: colors.text }]}>{item.score.toFixed(1)}</Text>
-                        <View style={[styles.badge, { backgroundColor: band.soft }]}>
-                          <Text style={[styles.badgeText, { color: band.fg }]}>{item.band}</Text>
+          {school.ssaGroups.some((group) => group.items.length > 0) ? (
+            school.ssaGroups
+              .filter((group) => group.items.length > 0)
+              .map((group) => {
+                const tone = toneColors(colors, badgeTone(group.tone));
+                return (
+                  <View key={group.key} style={[styles.ssaGroup, { borderColor: colors.raisedBorder }]}>
+                    <Text style={[styles.ssaTitle, { color: tone.fg }]}>{group.title}</Text>
+                    {group.items.map((item) => {
+                      const band = toneColors(colors, badgeTone(item.bandTone));
+                      return (
+                        <View key={item.label} style={styles.ssaItem}>
+                          <Text style={[styles.factValue, styles.ssaLabel, { color: colors.text }]}>{item.label}</Text>
+                          <Text style={[styles.factValue, { color: colors.text }]}>{item.score.toFixed(1)}</Text>
+                          <View style={[styles.badge, { backgroundColor: band.soft }]}>
+                            <Text style={[styles.badgeText, { color: band.fg }]}>{item.band}</Text>
+                          </View>
                         </View>
-                      </View>
-                    );
-                  })}
-                </View>
-              );
-            })}
+                      );
+                    })}
+                  </View>
+                );
+              })
+          ) : (
+            <Text style={[styles.caption, { color: colors.textSubtle }]}>No confirmed SSA scores are available yet.</Text>
+          )}
         </View>
       ) : null}
       <Dropdown
@@ -222,15 +237,6 @@ export function SchoolRow({
         <MenuList items={actions} onClose={menu.close} />
       </Dropdown>
     </View>
-  );
-}
-
-function Name({ school, isOpen }: { readonly school: DirectorySchool; readonly isOpen: boolean }) {
-  const { colors } = useTheme();
-  return (
-    <Text style={[styles.name, { color: colors.text }]} numberOfLines={isOpen ? 3 : 1}>
-      {school.name}
-    </Text>
   );
 }
 
@@ -252,14 +258,10 @@ const styles = StyleSheet.create({
   row: { borderLeftWidth: 1, borderRightWidth: 1, borderTopWidth: 1 },
   rowLast: { borderBottomWidth: 1, borderBottomLeftRadius: radius.lg, borderBottomRightRadius: radius.lg },
   summary: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 37, paddingHorizontal: 12, paddingVertical: 6 },
-  summaryTap: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 32 },
-  // Only while the name sits inside this button; with a name link the
-  // button keeps the pill's own width (web reads flex: 0 as zero width).
-  grow: { flex: 1 },
-  nameLink: { flex: 1, minHeight: 32, flexDirection: 'row', alignItems: 'center' },
+  nameSlot: { flex: 1, flexDirection: 'row', alignItems: 'center', minWidth: 0 },
+  nameInline: { flexShrink: 1, fontFamily: fonts.semibold, fontSize: 12 },
   idPill: { borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 1, minWidth: 44, alignItems: 'center' },
   idText: { fontFamily: fonts.semibold, fontSize: 12 },
-  name: { flex: 1, fontFamily: fonts.semibold, fontSize: 12 },
   actions: {
     flexDirection: 'row',
     alignItems: 'center',

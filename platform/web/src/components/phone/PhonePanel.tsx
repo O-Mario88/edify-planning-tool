@@ -11,6 +11,7 @@ import type { PagePanel, PagePanelItem } from '@/gen/edify/screens/v1/page_pb';
 import { isStepper } from '@/lib/presentBlocks';
 
 import { PeriodStepper } from '../page/PeriodStepper';
+import { SsaDetailPanel, isSsaDetailPanel, ssaModelFromPanel } from '../blocks/SsaDetailPanel';
 import { phoneTone } from './tone';
 
 function Item({ item, resolve }: { item: PagePanelItem; resolve: (href: string) => string }) {
@@ -92,6 +93,9 @@ function Item({ item, resolve }: { item: PagePanelItem; resolve: (href: string) 
 /** bare: inside a card that switches between parts, drawn flat (a ruled
  *  section of that card) rather than as a card inside the card. */
 export function PhonePanel({ panel, resolve, bare = false }: { panel: PagePanel; resolve: (href: string) => string; bare?: boolean }) {
+  if (isSsaDetailPanel(panel)) {
+    return <SsaDetailPanel model={ssaModelFromPanel(panel)} />;
+  }
   const hasHead = panel.title !== '' || panel.badges.length > 0;
   return (
     <section data-ph={bare ? 'panel-flat' : 'card'} aria-label={panel.title || undefined}>

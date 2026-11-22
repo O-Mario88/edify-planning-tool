@@ -129,14 +129,14 @@ WHERE deleted_at IS NULL AND (id = ANY($1) OR user_id = ANY($1))`, func(rows pgx
 
 // listedSchool is one row of the list (services.cluster_schools).
 type listedSchool struct {
-	ID, Code, Name, Type, District string
-	HasDistrict                    bool
-	Shipping, Contact, Phone       string
-	OwnerID, OwnerRaw              string
-	Enrolment                      int
-	LastVisit, LastTraining        *time.Time
-	scores                         []schooldirectory.SSAScore
-	gate                           visitgate.Gate
+	ID, Code, Name, Type, DistrictID, District string
+	HasDistrict                                bool
+	Shipping, Contact, Phone                   string
+	OwnerID, OwnerRaw                          string
+	Enrolment                                  int
+	LastVisit, LastTraining                    *time.Time
+	scores                                     []schooldirectory.SSAScore
+	gate                                       visitgate.Gate
 }
 
 // supportRuleOn is support_responsibility.visibility_enabled(reader).
@@ -228,7 +228,7 @@ func (s *Service) listSchools(ctx context.Context, clusterID string) ([]listedSc
 	at := map[string]int{}
 	err := each(ctx, s.db, "the cluster's schools", `
 SELECT s.id, COALESCE(s.school_id, ''), COALESCE(s.name, ''), COALESCE(s.school_type, ''),
-  s.district_id IS NOT NULL, COALESCE(d.name, ''),
+  s.district_id IS NOT NULL, COALESCE(s.district_id, ''), COALESCE(d.name, ''),
   COALESCE(s.shipping_address, ''), COALESCE(s.primary_contact_name, ''),
   COALESCE(NULLIF(s.primary_contact_phone, ''), NULLIF(s.school_phone, ''), ''),
   COALESCE(s.account_owner_id, ''), COALESCE(s.account_owner_name_raw, ''), COALESCE(s.enrollment, 0)
@@ -237,7 +237,7 @@ WHERE s.cluster_id = $1 AND s.deleted_at IS NULL AND s.operational_status = ANY(
   AND NOT (s.school_type = ANY($3) AND s.school_type IS NOT NULL)
 ORDER BY s.name`, func(rows pgx.Rows) error {
 		var r listedSchool
-		if err := rows.Scan(&r.ID, &r.Code, &r.Name, &r.Type, &r.HasDistrict, &r.District, &r.Shipping, &r.Contact,
+		if err := rows.Scan(&r.ID, &r.Code, &r.Name, &r.Type, &r.HasDistrict, &r.DistrictID, &r.District, &r.Shipping, &r.Contact,
 			&r.Phone, &r.OwnerID, &r.OwnerRaw, &r.Enrolment); err != nil {
 			return err
 		}
@@ -455,8 +455,8 @@ func schoolFacts(c clusterRef, sc listedSchool, next map[string]schoolplanning.N
 	if sc.HasDistrict {
 		district = dash(sc.District)
 	}
-	fact := func(label, value, tone string) *screensv1.PageFact {
-		return &screensv1.PageFact{Label: label, Value: collapse(value), Tone: tone}
+	fact := func(label, value, href, tone string) *screensv1.PageFact {
+		return &screensv1.PageFact{Label: label, Value: collapse(value), Href: href, Tone: tone}
 	}
 	day := func(at *time.Time) (string, string) {
 		if at == nil {
@@ -466,25 +466,37 @@ func schoolFacts(c clusterRef, sc listedSchool, next map[string]schoolplanning.N
 	}
 	visit, visitTone := day(sc.LastVisit)
 	training, trainingTone := day(sc.LastTraining)
+	districtHref := ""
+	if sc.HasDistrict && sc.DistrictID != "" && district != "—" {
+		districtHref = "/districts/" + sc.DistrictID
+	}
+	clusterHref := ""
+	if c.id != "" && c.name != "" {
+		clusterHref = "/clusters/" + c.id
+	}
+	staffHref := ""
+	if sc.OwnerID != "" {
+		staffHref = "/staff/" + sc.OwnerID
+	}
 	facts := []*screensv1.PageFact{
-		fact("District", district, ""),
-		fact("Shipping Address", dash(sc.Shipping), ""),
-		fact("School Type", schoolprofile.SchoolTypeLabel(sc.Type), ""),
-		fact("Cluster", c.name, ""),
-		fact("Enrollment", strconv.Itoa(sc.Enrolment), ""),
-		fact("Primary Contact", dash(sc.Contact), ""),
-		fact("Phone", dash(sc.Phone), ""),
-		fact("Staff Name", staff, ""),
-		fact("SSA", ssa, ssaTone),
-		fact("Last Visit", visit, visitTone),
-		fact("Last Training", training, trainingTone),
+		fact("District", district, districtHref, ""),
+		fact("Shipping Address", dash(sc.Shipping), "", ""),
+		fact("School Type", schoolprofile.SchoolTypeLabel(sc.Type), "", ""),
+		fact("Cluster", c.name, clusterHref, ""),
+		fact("Enrollment", strconv.Itoa(sc.Enrolment), "", ""),
+		fact("Primary Contact", dash(sc.Contact), "", ""),
+		fact("Phone", dash(sc.Phone), "", ""),
+		fact("Staff Name", staff, staffHref, ""),
+		fact("SSA", ssa, "", ssaTone),
+		fact("Last Visit", visit, "", visitTone),
+		fact("Last Training", training, "", trainingTone),
 	}
 	if support {
 		value := "—"
 		if n, ok := next[sc.ID]; ok {
 			value = fmt.Sprintf("%s · %d %s", n.Label, n.Day.Day(), n.Day.Format("Jan"))
 		}
-		facts = append(facts, fact("Next Activity", value, ""))
+		facts = append(facts, fact("Next Activity", value, "", ""))
 	}
 	return facts
 }

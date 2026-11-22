@@ -231,11 +231,15 @@ func row(s school, d Doors, support bool, fy string) *screensv1.PageRow {
 		}
 		return "caution"
 	}
+	clusterHref := ""
+	if s.ClusterID != "" && clusterName != "Not assigned" && clusterName != "Cluster missing" {
+		clusterHref = "/clusters/" + s.ClusterID
+	}
 	r.Details = []*screensv1.PageFact{
 		fact("District", district, districtHref, ""),
 		fact("Shipping Address", orDash(s.Shipping), "", ""),
 		fact("School Type", schoolprofile.SchoolTypeLabel(s.Type), "", ""),
-		fact("Cluster", clusterName, "", ""),
+		fact("Cluster", clusterName, clusterHref, ""),
 		fact("Enrollment", enrolment, "", ""),
 		fact("Phone", orDefault(s.Phone, "No phone"), "", ""),
 		fact("Primary Contact", orDash(s.Contact), "", ""),

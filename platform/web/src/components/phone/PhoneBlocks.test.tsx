@@ -108,9 +108,10 @@ describe('a page on a phone', () => {
     expect(html).toContain('<h2 data-ph="table-title">Returned — Needs Correction</h2>');
     expect(html).toContain('aria-label="1 listed"');
     expect(html).not.toContain('data-ph="rows"');
-    expect(html).toContain('<tr data-row-tone="overdue">');
+    expect(html).toContain('<tr data-row-tone="overdue" class="cursor-pointer">');
     expect(html).toContain('<input type="checkbox" data-pick="41" aria-label="Select Kimenyedde Primary"/>');
-    expect(html).toContain('aria-label="Show the details of Kimenyedde Primary"');
+    expect(html).toContain('aria-label="Show details for Kimenyedde Primary"');
+    expect(html).not.toContain('data-ph="expander"');
     expect(html).toContain('<th scope="col" data-numeric="true">Visits</th>');
     // The pager after the table is drawn once, inside the table's card.
     expect(html.match(/data-ph="pager"/g)).toHaveLength(1);
@@ -213,10 +214,11 @@ describe('a page on a phone', () => {
       true,
     );
     expect(html).toContain('<input type="checkbox" data-pick="9" aria-label="Select Nakifuma Primary"/>');
-    expect(html).toContain('aria-label="Show details for Nakifuma Primary">Nakifuma Primary</button>');
+    expect(html).toContain('aria-label="Show details for Nakifuma Primary"');
+    expect(html).toContain('<a data-ph="record-title" href="/schools/9/" class="inline">Nakifuma Primary</a>');
     expect(html).toContain('<span data-ph="record-badge" data-ph-tone="info">Core</span>');
     expect(html).toContain('<span data-ph="details-fact" data-ph-tone="caution" data-plain="true">Visits: <b>0/4</b></span>');
-    expect(html).toContain('Show details');
+    expect(html).not.toContain('data-ph="record-toggle"');
   });
 
   it('draws a chart as cut-out bars: the shortest value inside, a legend and the data list', () => {

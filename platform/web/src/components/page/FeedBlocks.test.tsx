@@ -70,7 +70,7 @@ describe('Planning blocks', () => {
   });
 
   it('draws a group heading row across the table', () => {
-    expect(html).toMatch(/<tr class="edify-group-head" data-heading="true"><th colSpan="6" scope="colgroup"><span class="edify-group-head__label">Program Lead 1 · Paul N. 75 schools<\/span><\/th>/);
+    expect(html).toMatch(/<tr class="edify-group-head" data-heading="true"><th colSpan="5" scope="colgroup"><span class="edify-group-head__label">Program Lead 1 · Paul N. 75 schools<\/span><\/th>/);
   });
 
   it('links every school name to its profile and gives the row a tick box', () => {
