@@ -126,8 +126,8 @@ export function PageHeroHeader({
         />
       </svg>
 
-      <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0 space-y-2">
+      <div className="relative flex flex-col gap-3 md:!flex-row md:items-center md:justify-between">
+        <div className="min-w-0 max-w-2xl space-y-2">
           <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-[12px] font-medium text-[var(--edify-text-muted)]">
             <Link
               href="/home"

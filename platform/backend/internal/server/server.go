@@ -196,6 +196,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		existingApp = feed.NewClient(cfg.ExistingAppURL, logger)
 	}
 	clusterOversightSvc := clusteroversight.NewService(pool, time.Now)
+	countryMapSvc := oversightportfolio.NewCountryMap(oversightportfolio.NewService(pool, time.Now))
 	screenService := screens.NewService(existingApp).TrustProxyHeaders(cfg.Loans.TrustProxyHeaders).
 		WithStrictReads(cfg.StrictReads).
 		WithDirectory(schooldirectory.NewService(pool, time.Now), logger).
@@ -277,7 +278,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			mypd.NewService(pool, time.Now, cfg.PageWrites.MyProfessionalDevelopment),
 			planningoversight.NewService(pool, time.Now),
 			oversightportfolio.NewService(pool, time.Now),
-			oversightportfolio.NewCountryMap(oversightportfolio.NewService(pool, time.Now)),
+			countryMapSvc,
 			weeklyrequest.NewService(pool, time.Now),
 			adminusers.NewService(pool),
 			personaltimeoff.NewService(pool, time.Now),
@@ -365,6 +366,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	mux.Handle(screensv1connect.NewExportServiceHandler(screenService, options...))
 	exportsMgr.RegisterHTTP(mux, authenticator)
 	clusterOversightSvc.RegisterHTTP(mux, authenticator)
+	countryMapSvc.RegisterMapHTTP(mux, authenticator)
 	fieldOpsSvc.RegisterHTTP(mux, authenticator)
 	financeOpsSvc.RegisterHTTP(mux, authenticator)
 	workforceOpsSvc.RegisterHTTP(mux, authenticator)
