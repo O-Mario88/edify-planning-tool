@@ -6,12 +6,54 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myplan"
 )
+
+const secondaryViewTTL = 15 * time.Second
+
+type cachedView struct {
+	resp      *screensv1.GetPageResponse
+	expiresAt time.Time
+}
+
+type viewCache struct {
+	mu      sync.RWMutex
+	entries map[string]cachedView
+}
+
+func newViewCache() *viewCache {
+	return &viewCache{entries: map[string]cachedView{}}
+}
+
+func (c *viewCache) get(key string, now time.Time) (*screensv1.GetPageResponse, bool) {
+	if c == nil {
+		return nil, false
+	}
+	c.mu.RLock()
+	e, ok := c.entries[key]
+	c.mu.RUnlock()
+	if !ok || now.After(e.expiresAt) {
+		return nil, false
+	}
+	return e.resp, true
+}
+
+func (c *viewCache) set(key string, resp *screensv1.GetPageResponse, now time.Time) {
+	if c == nil || resp == nil {
+		return
+	}
+	c.mu.Lock()
+	if len(c.entries) >= 500 {
+		clear(c.entries)
+	}
+	c.entries[key] = cachedView{resp: resp, expiresAt: now.Add(secondaryViewTTL)}
+	c.mu.Unlock()
+}
 
 // Native Go builders for the remaining Programme Lead dashboard views
 // (Priorities, Team, Coaching, Programmes, Collaboration) and the CCEO
@@ -57,6 +99,10 @@ func leadViewsFor(fy, activeView string) *screensv1.PageBlock {
 func (s *Service) buildLeadSecondaryView(
 	ctx context.Context, p auth.Principal, view, fy string, options []string, now time.Time,
 ) (*screensv1.GetPageResponse, bool, error) {
+	cacheKey := p.UserID + "|" + p.ActiveRole + "|" + view + "|" + fy
+	if hit, ok := s.cache.get(cacheKey, now); ok {
+		return hit, true, nil
+	}
 	local := now.In(kampala)
 	today := time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC)
 
@@ -102,12 +148,14 @@ func (s *Service) buildLeadSecondaryView(
 		return nil, true, err
 	}
 	blocks = append(blocks, extra...)
-	return &screensv1.GetPageResponse{
+	resp := &screensv1.GetPageResponse{
 		Header:    leadHeader(cards, fy),
 		Blocks:    blocks,
 		WebPath:   Path,
 		Selection: myplan.ActivityBar(),
-	}, true, nil
+	}
+	s.cache.set(cacheKey, resp, now)
+	return resp, true, nil
 }
 
 func (s *Service) buildLeadPriorities(
@@ -212,19 +260,67 @@ func (s *Service) buildLeadTeamView(
 		},
 	}
 	day := today.Format(time.DateOnly)
+	staffIDs := make([]string, 0, len(supervised))
+	ownerToStaff := make(map[string]string, len(supervised)*2)
+	allOwnerIDs := make([]string, 0, len(supervised)*2)
 	for _, o := range supervised {
-		ids := o.ids()
-		var schools, planned, completed, overdue int
-		_ = s.db.QueryRow(ctx, `SELECT count(*) FROM school WHERE deleted_at IS NULL AND operational_status = ANY($1) AND account_owner_id = $2`,
-			rules.Lead.OperatingStatuses, o.staffID).Scan(&schools)
-		_ = s.db.QueryRow(ctx, `
-SELECT
+		staffIDs = append(staffIDs, o.staffID)
+		for _, id := range o.ids() {
+			ownerToStaff[id] = o.staffID
+			allOwnerIDs = append(allOwnerIDs, id)
+		}
+	}
+
+	schoolCounts := map[string]int{}
+	if len(staffIDs) > 0 {
+		if sRows, err := s.db.Query(ctx, `
+SELECT account_owner_id, count(*)
+FROM school
+WHERE deleted_at IS NULL AND operational_status = ANY($1) AND account_owner_id = ANY($2)
+GROUP BY account_owner_id`, rules.Lead.OperatingStatuses, staffIDs); err == nil {
+			for sRows.Next() {
+				var owner string
+				var cnt int
+				if sRows.Scan(&owner, &cnt) == nil {
+					schoolCounts[owner] = cnt
+				}
+			}
+			sRows.Close()
+		}
+	}
+
+	type actStats struct{ planned, completed, overdue int }
+	actByStaff := map[string]actStats{}
+	if len(allOwnerIDs) > 0 {
+		if aRows, err := s.db.Query(ctx, `
+SELECT responsible_staff_id,
   count(*) FILTER (WHERE NOT COALESCE(status = ANY($2), false)),
   count(*) FILTER (WHERE status = ANY($3)),
   count(*) FILTER (WHERE planned_date < $4 AND NOT COALESCE(status = ANY($3), false) AND NOT COALESCE(status = ANY($2), false))
 FROM activity
-WHERE deleted_at IS NULL AND fy = $5 AND responsible_staff_id = ANY($1)`,
-			ids, rules.Lead.NotInPlanStatuses, rules.Lead.CompletedStatuses, day, fy).Scan(&planned, &completed, &overdue)
+WHERE deleted_at IS NULL AND fy = $5 AND responsible_staff_id = ANY($1)
+GROUP BY responsible_staff_id`,
+			allOwnerIDs, rules.Lead.NotInPlanStatuses, rules.Lead.CompletedStatuses, day, fy); err == nil {
+			for aRows.Next() {
+				var owner string
+				var st actStats
+				if aRows.Scan(&owner, &st.planned, &st.completed, &st.overdue) == nil {
+					sid := ownerToStaff[owner]
+					cur := actByStaff[sid]
+					cur.planned += st.planned
+					cur.completed += st.completed
+					cur.overdue += st.overdue
+					actByStaff[sid] = cur
+				}
+			}
+			aRows.Close()
+		}
+	}
+
+	for _, o := range supervised {
+		schools := schoolCounts[o.staffID]
+		st := actByStaff[o.staffID]
+		planned, completed, overdue := st.planned, st.completed, st.overdue
 		pct := "0%"
 		if planned > 0 {
 			pct = fmt.Sprintf("%d%%", (completed*100)/planned)

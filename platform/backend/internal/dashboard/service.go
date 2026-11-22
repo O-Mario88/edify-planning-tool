@@ -104,13 +104,14 @@ var kampala = time.FixedZone("EAT", 3*60*60)
 
 // Service builds the page.
 type Service struct {
-	db  schooldirectory.Querier
-	now func() time.Time
+	db    schooldirectory.Querier
+	now   func() time.Time
+	cache *viewCache
 }
 
 // NewService is the page over db.
 func NewService(db schooldirectory.Querier, now func() time.Time) *Service {
-	return &Service{db: db, now: now}
+	return &Service{db: db, now: now, cache: newViewCache()}
 }
 
 // served is whether Go draws the page this query asks for: This Week (the

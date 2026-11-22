@@ -20,6 +20,7 @@ import (
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/realtime"
 )
 
 func withRW(ctx context.Context, pool *pgxpool.Pool, fn func(pgx.Tx) error) error {
@@ -41,12 +42,40 @@ var (
 )
 
 type Service struct {
-	pool *pgxpool.Pool
-	now  func() time.Time
+	pool     *pgxpool.Pool
+	now      func() time.Time
+	realtime *realtime.Broker
 }
 
 func NewService(pool *pgxpool.Pool) *Service {
 	return &Service{pool: pool, now: time.Now}
+}
+
+// WithRealtime attaches the SSE broker for post-commit field-ops events.
+func (s *Service) WithRealtime(b *realtime.Broker) *Service {
+	if s != nil {
+		s.realtime = b
+	}
+	return s
+}
+
+func (s *Service) publishEvent(p auth.Principal, evType, entityType, entityID, summary string) {
+	if s == nil || s.realtime == nil {
+		return
+	}
+	cc := ""
+	if p.Country != nil {
+		cc = p.Country.Code
+	}
+	s.realtime.Publish(realtime.Event{
+		Type:        evType,
+		EntityType:  entityType,
+		EntityID:    entityID,
+		CountryCode: cc,
+		TargetRoles: []string{"Admin", "CountryDirector", "Program Lead", "ImpactAssessment", "CCEO"},
+		ActorUserID: p.UserID,
+		Summary:     summary,
+	})
 }
 
 // WithClock overrides the clock used for audit timestamps (useful in tests).
@@ -98,6 +127,10 @@ func (s *Service) RecordUpload(ctx context.Context, p auth.Principal, u Evidence
 			u.ActivityID, kind, strings.TrimSpace(u.URI), u.OriginalName, u.MimeType, u.Extension,
 			u.FileSize, u.Provider, p.UserID, p.ActiveRole, u.Notes).Scan(&id)
 	})
+	if err == nil {
+		s.publishEvent(p, "evidence.uploaded", "evidence_record", id,
+			fmt.Sprintf("Evidence uploaded for activity %s", u.ActivityID))
+	}
 	return id, err
 }
 
@@ -173,6 +206,10 @@ func (s *Service) IADecideActivity(ctx context.Context, p auth.Principal, activi
 		}, s.clock())
 		return err
 	})
+	if err == nil {
+		s.publishEvent(p, "ia.activity."+decision, "activity", activityID,
+			fmt.Sprintf("IA %s activity %s → %s", decision, activityID, newStatus))
+	}
 	return newStatus, err
 }
 
@@ -221,6 +258,10 @@ func (s *Service) EnterSSA(ctx context.Context, p auth.Principal, req SSAEntryRe
 			req.SchoolID, req.FY, quarter, req.Date.UTC(), req.NewEnrollment, avg,
 			string(payload), req.CollectorType, p.UserID, req.ActivityID).Scan(&id)
 	})
+	if err == nil {
+		s.publishEvent(p, "ssa.entered", "ssa_record", id,
+			fmt.Sprintf("SSA assessment recorded for school %s (FY %s)", req.SchoolID, req.FY))
+	}
 	return id, err
 }
 
@@ -236,6 +277,10 @@ func (s *Service) DecideSSA(ctx context.Context, p auth.Principal, ssaID, decisi
 		return tx.QueryRow(ctx, `SELECT gateway_field_ops.decide_ssa($1,$2,$3,$4)`,
 			ssaID, decision, p.UserID, strings.TrimSpace(reason)).Scan(&out)
 	})
+	if err == nil {
+		s.publishEvent(p, "ssa."+decision, "ssa_record", ssaID,
+			fmt.Sprintf("SSA record %s → %s", ssaID, out))
+	}
 	return out, err
 }
 
@@ -335,6 +380,10 @@ func (s *Service) HandOverToPartner(ctx context.Context, p auth.Principal, partn
 			`SELECT gateway_field_ops.create_partner_assignment($1,$2,$3,$4,$5,$6,$7)`,
 			partnerID, schoolID, staffID, purpose, intervention, activityType, notes).Scan(&id)
 	})
+	if err == nil {
+		s.publishEvent(p, "partner.assignment.created", "partner_assignment", id,
+			fmt.Sprintf("School %s handed over to partner %s", schoolID, partnerID))
+	}
 	return id, err
 }
 
@@ -348,6 +397,10 @@ func (s *Service) DatePartnerAssignment(ctx context.Context, p auth.Principal, a
 			`SELECT gateway_field_ops.update_partner_assignment($1,'date',$2::date,$3,'')`,
 			assignmentID, date.Format("2006-01-02"), p.UserID).Scan(&status)
 	})
+	if err == nil {
+		s.publishEvent(p, "partner.assignment.dated", "partner_assignment", assignmentID,
+			fmt.Sprintf("Partner assignment %s scheduled for %s", assignmentID, date.Format("2006-01-02")))
+	}
 	return status, err
 }
 
@@ -361,5 +414,9 @@ func (s *Service) ReturnPartnerAssignment(ctx context.Context, p auth.Principal,
 			`SELECT gateway_field_ops.update_partner_assignment($1,'return',NULL,$2,$3)`,
 			assignmentID, p.UserID, strings.TrimSpace(reason)).Scan(&status)
 	})
+	if err == nil {
+		s.publishEvent(p, "partner.assignment.returned", "partner_assignment", assignmentID,
+			fmt.Sprintf("Partner assignment %s returned", assignmentID))
+	}
 	return status, err
 }

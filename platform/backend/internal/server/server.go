@@ -360,8 +360,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		}
 	}
 	uploadsSvc := uploads.NewService(pool, time.Now).WithRealtime(realtimeBroker)
-	fieldOpsSvc := fieldops.NewService(pool)
-	financeOpsSvc := financeops.NewService(pool)
+	fieldOpsSvc := fieldops.NewService(pool).WithRealtime(realtimeBroker)
+	financeOpsSvc := financeops.NewService(pool).WithRealtime(realtimeBroker)
 	workforceOpsSvc := workforceops.NewService(pool).WithRealtime(realtimeBroker)
 	screenService.WithExports(exportsMgr).
 		WithOpsSaves(fieldOpsSvc, financeOpsSvc, workforceOpsSvc)

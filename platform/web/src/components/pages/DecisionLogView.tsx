@@ -238,12 +238,18 @@ export function DecisionLogView({
         }
         icon={<FileText className="h-5 w-5" />}
         actions={
-          <>
+          <div className="flex flex-wrap items-center gap-2">
             <button type="button" onClick={handleExportCsv} className={EDIFY_BTN_OUTLINE}>
               <Download className="h-3.5 w-3.5" aria-hidden="true" />
               <span>Export Report</span>
             </button>
-          </>
+            <a href="/exports/decision_log?format=xlsx" download className={EDIFY_BTN_OUTLINE}>
+              <span>Excel</span>
+            </a>
+            <a href="/exports/decision_log?format=pdf" download className={EDIFY_BTN_OUTLINE}>
+              <span>PDF</span>
+            </a>
+          </div>
         }
       />
 

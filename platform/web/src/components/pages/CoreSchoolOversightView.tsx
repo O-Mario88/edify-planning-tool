@@ -260,6 +260,12 @@ export function CoreSchoolOversightView({
               <Download className="h-3.5 w-3.5" aria-hidden="true" />
               <span>Export</span>
             </button>
+            <a href="/exports/core_schools?format=xlsx" download className={EDIFY_BTN_OUTLINE}>
+              <span>Excel</span>
+            </a>
+            <a href="/exports/core_schools?format=pdf" download className={EDIFY_BTN_OUTLINE}>
+              <span>PDF</span>
+            </a>
             {primaryHeaderAction ? (
               <a
                 href={resolveActionHref(primaryHeaderAction, pagePath, drawerHref)}

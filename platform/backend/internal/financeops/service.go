@@ -16,6 +16,7 @@ import (
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/realtime"
 )
 
 func withRW(ctx context.Context, pool *pgxpool.Pool, fn func(pgx.Tx) error) error {
@@ -36,12 +37,40 @@ var (
 )
 
 type Service struct {
-	pool *pgxpool.Pool
-	now  func() time.Time
+	pool     *pgxpool.Pool
+	now      func() time.Time
+	realtime *realtime.Broker
 }
 
 func NewService(pool *pgxpool.Pool) *Service {
 	return &Service{pool: pool, now: time.Now}
+}
+
+// WithRealtime attaches the SSE broker for post-commit finance event publishing.
+func (s *Service) WithRealtime(b *realtime.Broker) *Service {
+	if s != nil {
+		s.realtime = b
+	}
+	return s
+}
+
+func (s *Service) publishEvent(p auth.Principal, evType, entityType, entityID, summary string) {
+	if s == nil || s.realtime == nil {
+		return
+	}
+	cc := ""
+	if p.Country != nil {
+		cc = p.Country.Code
+	}
+	s.realtime.Publish(realtime.Event{
+		Type:        evType,
+		EntityType:  entityType,
+		EntityID:    entityID,
+		CountryCode: cc,
+		TargetRoles: []string{"Admin", "CountryDirector", "Program Lead", "Accountant"},
+		ActorUserID: p.UserID,
+		Summary:     summary,
+	})
 }
 
 // WithClock overrides the clock used for audit timestamps (useful in tests).
@@ -114,6 +143,10 @@ func (s *Service) SubmitWeeklyRequest(ctx context.Context, p auth.Principal, req
 		}, s.clock())
 		return err
 	})
+	if err == nil {
+		s.publishEvent(p, "finance.weekly_request.submitted", "weekly_fund_request", id,
+			fmt.Sprintf("Weekly fund request submitted (%d UGX)", req.TotalAmount))
+	}
 	return id, err
 }
 
@@ -166,6 +199,10 @@ func (s *Service) TransitionWeeklyRequest(
 		}, s.clock())
 		return err
 	})
+	if err == nil && out.Applied {
+		s.publishEvent(p, "finance.weekly_request."+action, "weekly_fund_request", requestID,
+			fmt.Sprintf("Weekly fund request %s → %s", action, out.Status))
+	}
 	return out, err
 }
 
@@ -220,6 +257,10 @@ func (s *Service) DecideMonthlyBudget(ctx context.Context, p auth.Principal, bud
 		}, s.clock())
 		return err
 	})
+	if err == nil {
+		s.publishEvent(p, "finance.monthly_budget.decided", "monthly_work_plan_budget", budgetID,
+			fmt.Sprintf("Monthly work-plan budget status → %s", out))
+	}
 	return out, err
 }
 
@@ -278,5 +319,9 @@ func (s *Service) TransitionAdvance(
 		}, s.clock())
 		return err
 	})
+	if err == nil && out.Applied {
+		s.publishEvent(p, "finance.advance."+action, "advance_request", advanceID,
+			fmt.Sprintf("Advance %s → %s", action, out.Status))
+	}
 	return out, err
 }
