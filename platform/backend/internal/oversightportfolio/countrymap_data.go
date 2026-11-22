@@ -8,10 +8,38 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
+
+const mapDataCacheTTL = 30 * time.Second
+
+type cachedMapEntry struct {
+	data      *MapDataResponse
+	expiresAt time.Time
+}
+
+type mapDataCache struct {
+	mu      sync.RWMutex
+	entries map[string]cachedMapEntry
+}
+
+func newMapDataCache() *mapDataCache {
+	return &mapDataCache{entries: map[string]cachedMapEntry{}}
+}
+
+// InvalidateMapCache clears cached FY map snapshots after school/SSA writes.
+func (c *CountryMap) InvalidateMapCache() {
+	if c == nil || c.cache == nil {
+		return
+	}
+	c.cache.mu.Lock()
+	clear(c.cache.entries)
+	c.cache.mu.Unlock()
+}
 
 // MapAuthenticator authenticates a Bearer Authorization header for HTTP endpoints.
 type MapAuthenticator interface {
@@ -114,6 +142,15 @@ func (c *CountryMap) MapData(ctx context.Context, fy string) (*MapDataResponse, 
 	fy = strings.TrimSpace(fy)
 	if fy == "" || !slices.Contains(options, fy) {
 		fy = schooldirectory.OperationalFY(now)
+	}
+
+	if c.cache != nil {
+		c.cache.mu.RLock()
+		if entry, ok := c.cache.entries[fy]; ok && now.Before(entry.expiresAt) {
+			c.cache.mu.RUnlock()
+			return entry.data, nil
+		}
+		c.cache.mu.RUnlock()
 	}
 
 	resp := &MapDataResponse{
@@ -285,6 +322,12 @@ LIMIT 1500`, rules.OperatingStatuses)
 	}
 	if err := pRows.Err(); err != nil {
 		return nil, err
+	}
+
+	if c.cache != nil {
+		c.cache.mu.Lock()
+		c.cache.entries[fy] = cachedMapEntry{data: resp, expiresAt: now.Add(mapDataCacheTTL)}
+		c.cache.mu.Unlock()
 	}
 
 	return resp, nil

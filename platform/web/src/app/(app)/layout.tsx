@@ -8,6 +8,7 @@ import { Sidebar } from '@/components/shell/Sidebar';
 import { BottomNav } from '@/components/shell/BottomNav';
 import { TopBar } from '@/components/shell/TopBar';
 import { PhoneMenu } from '@/components/shell/TopBarControls';
+import { RealtimeBridge } from '@/components/shell/RealtimeBridge';
 import { ViewportSync } from '@/components/shell/ViewportSync';
 import { asReader, currentPath } from '@/lib/auth';
 import { environment } from '@/lib/environment';
@@ -82,6 +83,7 @@ export default async function ShellLayout({ children }: { children: ReactNode })
         </main>
         <BottomNav items={navigation.bottom} path={path} more={<PhoneMenu asTab />} />
         <ViewportSync served={view} />
+        <RealtimeBridge />
       </div>
     </div>
   );

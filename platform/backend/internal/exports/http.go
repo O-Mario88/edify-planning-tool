@@ -32,14 +32,15 @@ func (m *Manager) RegisterHTTP(mux *http.ServeMux, auther Authenticator) {
 			return
 		}
 		var req struct {
-			Kind string `json:"kind"`
+			Kind    string            `json:"kind"`
+			Filters map[string]string `json:"filters,omitempty"`
 		}
 		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<14)).Decode(&req); err != nil {
 			writeExportJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid JSON body."})
 			return
 		}
 		kind := strings.TrimSpace(req.Kind)
-		job, err := m.CreateAndRun(r.Context(), p, kind)
+		job, err := m.CreateAndRunFiltered(r.Context(), p, kind, req.Filters)
 		if err != nil {
 			switch {
 			case errors.Is(err, ErrUnknownKind):

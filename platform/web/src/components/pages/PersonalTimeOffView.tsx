@@ -232,10 +232,15 @@ export function PersonalTimeOffView({
         }
         icon={<Calendar className="h-5 w-5" />}
         actions={
-          <button type="button" onClick={() => setShowRequestForm((v) => !v)} className={EDIFY_BTN_PRIMARY}>
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            <span>{requestAction?.label || 'Request Leave'}</span>
-          </button>
+          <>
+            <a href="/exports/leave_requests" download className={EDIFY_BTN_OUTLINE}>
+              <span>Export CSV</span>
+            </a>
+            <button type="button" onClick={() => setShowRequestForm((v) => !v)} className={EDIFY_BTN_PRIMARY}>
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              <span>{requestAction?.label || 'Request Leave'}</span>
+            </button>
+          </>
         }
       />
 

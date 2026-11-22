@@ -121,6 +121,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/projectplanning"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/projectspage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/qualityflags"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/realtime"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/reports"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/rolesmatrix"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/routeplan"
@@ -345,9 +346,10 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		screenService.WithPLReviewSave(plreview.NewReviewService(pool, time.Now), logger)
 	}
 	exportsMgr := exports.NewManager(pool, time.Now)
+	realtimeBroker := realtime.NewBroker(time.Now)
 	fieldOpsSvc := fieldops.NewService(pool)
 	financeOpsSvc := financeops.NewService(pool)
-	workforceOpsSvc := workforceops.NewService(pool)
+	workforceOpsSvc := workforceops.NewService(pool).WithRealtime(realtimeBroker)
 	screenService.WithExports(exportsMgr).
 		WithOpsSaves(fieldOpsSvc, financeOpsSvc, workforceOpsSvc)
 	if cfg.GoSaves.SchoolActions {
@@ -367,6 +369,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	exportsMgr.RegisterHTTP(mux, authenticator)
 	clusterOversightSvc.RegisterHTTP(mux, authenticator)
 	countryMapSvc.RegisterMapHTTP(mux, authenticator)
+	realtimeBroker.RegisterHTTP(mux, authenticator)
 	fieldOpsSvc.RegisterHTTP(mux, authenticator)
 	financeOpsSvc.RegisterHTTP(mux, authenticator)
 	workforceOpsSvc.RegisterHTTP(mux, authenticator)

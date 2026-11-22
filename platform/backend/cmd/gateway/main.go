@@ -34,7 +34,8 @@ import (
 )
 
 const (
-	maxDBConnections  = 8
+	defaultMaxDBConns = 32
+	hardMaxDBConns    = 200
 	startupTimeout    = 10 * time.Second
 	shutdownTimeout   = 15 * time.Second
 	readHeaderTimeout = 5 * time.Second
@@ -151,14 +152,14 @@ func run(logger *slog.Logger) error {
 func configuredMaxDBConns() int32 {
 	raw := strings.TrimSpace(os.Getenv("EDIFY_DB_MAX_CONNS"))
 	if raw == "" {
-		return maxDBConnections
+		return defaultMaxDBConns
 	}
 	n, err := strconv.Atoi(raw)
 	if err != nil || n < 2 {
-		return maxDBConnections
+		return defaultMaxDBConns
 	}
-	if n > 64 {
-		return 64
+	if n > hardMaxDBConns {
+		return hardMaxDBConns
 	}
 	return int32(n)
 }

@@ -236,6 +236,11 @@ export function EscalationsView({
         title={headerTitle}
         description={headerDesc}
         icon={<AlertTriangle className="h-5 w-5" />}
+        actions={
+          <a href="/exports/escalations" download className={EDIFY_BTN_OUTLINE}>
+            <span>Export CSV</span>
+          </a>
+        }
       />
 
       {/* Hero Escalate Callout Banner */}

@@ -1,8 +1,9 @@
-// Package exports implements native Go asynchronous report export generation
-// and authorized download (Batch 13 — replacing Django export forwarding).
+// Package exports implements native Go report export generation and authorized
+// download (replacing Django export forwarding).
 //
 // Authorization is enforced BOTH at export creation and at download time,
-// scoping rows to the requester's role and country boundary.
+// scoping rows to the requester's role, country boundary, and active filters.
+// Every school-list export includes the authoritative Edify School ID.
 package exports
 
 import (
@@ -13,6 +14,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -21,6 +23,12 @@ import (
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
+)
+
+const (
+	maxExportRows   = 50000
+	maxRetainedJobs = 250
+	jobRetentionTTL = 30 * time.Minute
 )
 
 var (
@@ -43,6 +51,7 @@ type Job struct {
 	OwnerUserID string
 	OwnerRole   string
 	CountryID   string
+	Filters     map[string]string
 	Status      JobStatus
 	RowCount    int
 	SHA256      string
@@ -67,16 +76,28 @@ func NewManager(pool *pgxpool.Pool, now func() time.Time) *Manager {
 }
 
 var allowedRoles = map[string]map[string]bool{
-	"completed_visits": {"Admin": true, "CountryDirector": true, "Program Lead": true, "ImpactAssessment": true, "CCEO": true},
+	"completed_visits": {"Admin": true, "CountryDirector": true, "Program Lead": true, "ImpactAssessment": true, "CCEO": true, "RegionalProgramLead": true, "RegionalVicePresident": true},
 	"finance_weekly":   {"Admin": true, "CountryDirector": true, "Program Lead": true, "Accountant": true},
-	"ssa_records":      {"Admin": true, "CountryDirector": true, "Program Lead": true, "ImpactAssessment": true},
-	"school_directory": {"Admin": true, "CountryDirector": true, "Program Lead": true, "ImpactAssessment": true, "CCEO": true, "ProjectCoordinator": true},
+	"ssa_records":      {"Admin": true, "CountryDirector": true, "Program Lead": true, "ImpactAssessment": true, "RegionalProgramLead": true, "RegionalVicePresident": true},
+	"school_directory": {"Admin": true, "CountryDirector": true, "Program Lead": true, "ImpactAssessment": true, "CCEO": true, "ProjectCoordinator": true, "RegionalProgramLead": true, "RegionalVicePresident": true},
+	"core_schools":     {"Admin": true, "CountryDirector": true, "Program Lead": true, "ImpactAssessment": true, "CCEO": true, "RegionalProgramLead": true, "RegionalVicePresident": true},
+	"clusters":         {"Admin": true, "CountryDirector": true, "Program Lead": true, "ImpactAssessment": true, "CCEO": true, "RegionalProgramLead": true, "RegionalVicePresident": true},
+	"cluster_schools":  {"Admin": true, "CountryDirector": true, "Program Lead": true, "ImpactAssessment": true, "CCEO": true, "RegionalProgramLead": true, "RegionalVicePresident": true},
+	"escalations":      {"Admin": true, "CountryDirector": true, "Program Lead": true, "ImpactAssessment": true, "CCEO": true, "RegionalProgramLead": true, "RegionalVicePresident": true, "HumanResources": true},
+	"leave_requests":   {"Admin": true, "CountryDirector": true, "Program Lead": true, "HumanResources": true, "CCEO": true, "ImpactAssessment": true, "Accountant": true},
+	"debriefs":         {"Admin": true, "CountryDirector": true, "Program Lead": true, "ImpactAssessment": true, "CCEO": true, "RegionalProgramLead": true},
+	"decision_log":     {"Admin": true, "CountryDirector": true, "Program Lead": true, "ImpactAssessment": true, "RegionalProgramLead": true, "RegionalVicePresident": true},
 }
 
 // CreateAndRun validates authorization at creation time, generates the CSV
 // payload directly from PostgreSQL scoped to the caller's country, and stores
 // the immutable result with SHA-256 checksum.
 func (m *Manager) CreateAndRun(ctx context.Context, p auth.Principal, kind string) (*Job, error) {
+	return m.CreateAndRunFiltered(ctx, p, kind, nil)
+}
+
+// CreateAndRunFiltered generates a filtered CSV export authorized for p.
+func (m *Manager) CreateAndRunFiltered(ctx context.Context, p auth.Principal, kind string, filters map[string]string) (*Job, error) {
 	roles, ok := allowedRoles[kind]
 	if !ok {
 		return nil, fmt.Errorf("%w: %s", ErrUnknownKind, kind)
@@ -88,6 +109,14 @@ func (m *Manager) CreateAndRun(ctx context.Context, p auth.Principal, kind strin
 	if p.Country != nil {
 		countryID = p.Country.ID
 	}
+	cleanFilters := make(map[string]string, len(filters))
+	for k, v := range filters {
+		k = strings.ToLower(strings.TrimSpace(k))
+		v = strings.TrimSpace(v)
+		if k != "" && v != "" && !strings.EqualFold(v, "all") {
+			cleanFilters[k] = v
+		}
+	}
 	ts := m.now().UTC()
 	sum := sha256.Sum256([]byte(fmt.Sprintf("%s:%s:%s:%d", kind, p.UserID, countryID, ts.UnixNano())))
 	job := &Job{
@@ -96,14 +125,16 @@ func (m *Manager) CreateAndRun(ctx context.Context, p auth.Principal, kind strin
 		OwnerUserID: p.UserID,
 		OwnerRole:   p.ActiveRole,
 		CountryID:   countryID,
+		Filters:     cleanFilters,
 		Status:      StatusPending,
 		CreatedAt:   ts,
 	}
 	m.mu.Lock()
+	m.evictLocked(ts)
 	m.jobs[job.ID] = job
 	m.mu.Unlock()
 
-	payload, count, err := m.generate(ctx, p, kind, countryID)
+	payload, count, err := m.generate(ctx, p, kind, countryID, cleanFilters)
 	doneAt := m.now().UTC()
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -120,6 +151,31 @@ func (m *Manager) CreateAndRun(ctx context.Context, p auth.Principal, kind strin
 	job.Status = StatusCompleted
 	job.CompletedAt = &doneAt
 	return job, nil
+}
+
+// evictLocked bounds memory usage under high export concurrency (export storms).
+func (m *Manager) evictLocked(now time.Time) {
+	for id, j := range m.jobs {
+		if now.Sub(j.CreatedAt) > jobRetentionTTL {
+			delete(m.jobs, id)
+		}
+	}
+	if len(m.jobs) < maxRetainedJobs {
+		return
+	}
+	type pair struct {
+		id string
+		at time.Time
+	}
+	all := make([]pair, 0, len(m.jobs))
+	for id, j := range m.jobs {
+		all = append(all, pair{id: id, at: j.CreatedAt})
+	}
+	sort.Slice(all, func(i, j int) bool { return all[i].at.Before(all[j].at) })
+	toDrop := len(all) - maxRetainedJobs + 1
+	for i := 0; i < toDrop && i < len(all); i++ {
+		delete(m.jobs, all[i].id)
+	}
 }
 
 // AuthorizeDownload re-verifies authorization and country boundary at download
@@ -147,114 +203,216 @@ func (m *Manager) AuthorizeDownload(p auth.Principal, jobID string) (*Job, error
 	return job, nil
 }
 
-func (m *Manager) generate(ctx context.Context, p auth.Principal, kind, countryID string) ([]byte, int, error) {
+func (m *Manager) generate(ctx context.Context, p auth.Principal, kind, countryID string, filters map[string]string) ([]byte, int, error) {
 	if m.pool == nil {
-		return []byte("id\n"), 0, nil
+		return []byte("edify_school_id,id\n"), 0, nil
 	}
 	var buf bytes.Buffer
 	w := csv.NewWriter(&buf)
 	switch kind {
+	case "school_directory":
+		_ = w.Write([]string{"edify_school_id", "record_id", "school_name", "district", "sub_region", "cluster", "school_type", "operational_status", "enrollment"})
+		q := `SELECT COALESCE(s.school_id, ''), s.id, s.name, COALESCE(d.name, ''), COALESCE(sr.name, ''), COALESCE(c.name, ''), COALESCE(s.school_type, ''), COALESCE(s.operational_status, ''), COALESCE(s.enrollment::text, '')
+FROM school s
+LEFT JOIN district d ON d.id = s.district_id
+LEFT JOIN sub_region sr ON sr.id = COALESCE(s.sub_region_id, d.sub_region_id)
+LEFT JOIN cluster c ON c.id = s.cluster_id AND c.deleted_at IS NULL
+WHERE s.deleted_at IS NULL`
+		var args []any
+		addArg := func(v any) string {
+			args = append(args, v)
+			return fmt.Sprintf("$%d", len(args))
+		}
+		if strings.TrimSpace(countryID) != "" {
+			q += ` AND ` + country.SchoolIn("s", addArg([]string{strings.TrimSpace(countryID)}))
+		}
+		if v := filters["district"]; v != "" {
+			q += ` AND lower(COALESCE(d.name, '')) = lower(` + addArg(v) + `)`
+		}
+		if v := filters["school_type"]; v != "" {
+			q += ` AND lower(COALESCE(s.school_type, '')) = lower(` + addArg(v) + `)`
+		}
+		if v := filters["q"]; v != "" {
+			pat := "%" + v + "%"
+			ph := addArg(pat)
+			q += ` AND (s.name ILIKE ` + ph + ` OR COALESCE(s.school_id, '') ILIKE ` + ph + ` OR COALESCE(d.name, '') ILIKE ` + ph + `)`
+		}
+		q += fmt.Sprintf(` ORDER BY s.name ASC LIMIT %d`, maxExportRows)
+		return scanCSV(ctx, m.pool, w, &buf, q, args, 9)
+
+	case "core_schools":
+		_ = w.Write([]string{"edify_school_id", "record_id", "school_name", "district", "sub_region", "cluster", "school_type", "latest_ssa_score", "fy"})
+		fy := filters["fy"]
+		var args []any
+		addArg := func(v any) string {
+			args = append(args, v)
+			return fmt.Sprintf("$%d", len(args))
+		}
+		ssaJoin := `LEFT JOIN LATERAL (
+  SELECT r.average_score, r.fy FROM ssa_record r
+  WHERE r.school_id = s.id AND r.deleted_at IS NULL AND r.verification_status = 'confirmed'`
+		if fy != "" {
+			ssaJoin += ` AND r.fy = ` + addArg(fy)
+		}
+		ssaJoin += ` ORDER BY r.date_of_ssa DESC LIMIT 1) ssa ON true`
+		q := `SELECT COALESCE(s.school_id, ''), s.id, s.name, COALESCE(d.name, ''), COALESCE(sr.name, ''), COALESCE(c.name, ''), COALESCE(s.school_type, ''), COALESCE(round(ssa.average_score::numeric, 2)::text, ''), COALESCE(ssa.fy, '')
+FROM school s
+LEFT JOIN district d ON d.id = s.district_id
+LEFT JOIN sub_region sr ON sr.id = COALESCE(s.sub_region_id, d.sub_region_id)
+LEFT JOIN cluster c ON c.id = s.cluster_id AND c.deleted_at IS NULL
+` + ssaJoin + `
+WHERE s.deleted_at IS NULL AND s.operational_status IN ('active','reopened')
+  AND lower(COALESCE(s.school_type, '')) IN ('core','core_trained','core_graduate','champion')`
+		if strings.TrimSpace(countryID) != "" {
+			q += ` AND ` + country.SchoolIn("s", addArg([]string{strings.TrimSpace(countryID)}))
+		}
+		if v := filters["district"]; v != "" {
+			q += ` AND lower(COALESCE(d.name, '')) = lower(` + addArg(v) + `)`
+		}
+		q += fmt.Sprintf(` ORDER BY s.name ASC LIMIT %d`, maxExportRows)
+		return scanCSV(ctx, m.pool, w, &buf, q, args, 9)
+
+	case "clusters":
+		_ = w.Write([]string{"cluster_id", "cluster_name", "district", "sub_region", "school_count"})
+		q := `SELECT c.id, COALESCE(c.name, ''), COALESCE(d.name, ''), COALESCE(sr.name, ''), count(s.id)::text
+FROM cluster c
+LEFT JOIN district d ON d.id = c.district_id
+LEFT JOIN sub_region sr ON sr.id = d.sub_region_id
+LEFT JOIN school s ON s.cluster_id = c.id AND s.deleted_at IS NULL AND s.operational_status IN ('active','reopened')
+WHERE c.deleted_at IS NULL
+GROUP BY c.id, c.name, d.name, sr.name
+ORDER BY c.name ASC LIMIT ` + fmt.Sprint(maxExportRows)
+		return scanCSV(ctx, m.pool, w, &buf, q, nil, 5)
+
+	case "cluster_schools":
+		_ = w.Write([]string{"cluster_id", "cluster_name", "edify_school_id", "school_name", "district", "school_type"})
+		var args []any
+		q := `SELECT c.id, COALESCE(c.name, ''), COALESCE(s.school_id, ''), s.name, COALESCE(d.name, ''), COALESCE(s.school_type, '')
+FROM school s
+JOIN cluster c ON c.id = s.cluster_id AND c.deleted_at IS NULL
+LEFT JOIN district d ON d.id = s.district_id
+WHERE s.deleted_at IS NULL AND s.operational_status IN ('active','reopened')`
+		if cid := filters["cluster_id"]; cid != "" {
+			args = append(args, cid)
+			q += fmt.Sprintf(` AND c.id = $%d`, len(args))
+		}
+		q += fmt.Sprintf(` ORDER BY c.name ASC, s.name ASC LIMIT %d`, maxExportRows)
+		return scanCSV(ctx, m.pool, w, &buf, q, args, 6)
+
 	case "completed_visits":
-		_ = w.Write([]string{"activity_id", "school_code", "school_name", "status", "fy"})
-		q := `SELECT a.id, COALESCE(s.school_id, ''), COALESCE(s.name, ''), a.status, COALESCE(a.fy, '')
-FROM activity a LEFT JOIN school s ON s.id = a.school_id
+		_ = w.Write([]string{"activity_id", "edify_school_id", "school_name", "district", "activity_type", "status", "fy", "planned_date"})
+		q := `SELECT a.id, COALESCE(s.school_id, ''), COALESCE(s.name, ''), COALESCE(d.name, ''), COALESCE(a.activity_type, ''), a.status, COALESCE(a.fy, ''), COALESCE(a.planned_date::text, '')
+FROM activity a
+LEFT JOIN school s ON s.id = a.school_id
+LEFT JOIN district d ON d.id = s.district_id
 WHERE a.deleted_at IS NULL AND a.status IN ('completed','submitted','pl_approved','ia_verified','confirmed','closed')`
 		var args []any
+		addArg := func(v any) string {
+			args = append(args, v)
+			return fmt.Sprintf("$%d", len(args))
+		}
 		if countryID != "" {
-			q += ` AND ` + country.SchoolIn("s", "$1")
-			args = append(args, []string{countryID})
+			q += ` AND ` + country.SchoolIn("s", addArg([]string{countryID}))
 		}
-		q += ` ORDER BY a.updated_at DESC LIMIT 500`
-		rows, err := m.pool.Query(ctx, q, args...)
-		if err != nil {
-			return nil, 0, err
+		if fy := filters["fy"]; fy != "" {
+			q += ` AND a.fy = ` + addArg(fy)
 		}
-		defer rows.Close()
-		count := 0
-		for rows.Next() {
-			var id, code, name, status, fy string
-			if err := rows.Scan(&id, &code, &name, &status, &fy); err != nil {
-				return nil, 0, err
-			}
-			_ = w.Write([]string{id, code, name, status, fy})
-			count++
-		}
-		w.Flush()
-		return buf.Bytes(), count, rows.Err()
-	case "finance_weekly":
-		_ = w.Write([]string{"request_id", "fy", "week_start", "total_amount", "status"})
-		rows, err := m.pool.Query(ctx, `
-SELECT id, fy, week_start_date::text, total_amount::text, status
-FROM weekly_fund_request ORDER BY week_start_date DESC LIMIT 500`)
-		if err != nil {
-			return nil, 0, err
-		}
-		defer rows.Close()
-		count := 0
-		for rows.Next() {
-			var id, fy, wk, amt, st string
-			if err := rows.Scan(&id, &fy, &wk, &amt, &st); err != nil {
-				return nil, 0, err
-			}
-			_ = w.Write([]string{id, fy, wk, amt, st})
-			count++
-		}
-		w.Flush()
-		return buf.Bytes(), count, rows.Err()
+		q += fmt.Sprintf(` ORDER BY a.updated_at DESC LIMIT %d`, maxExportRows)
+		return scanCSV(ctx, m.pool, w, &buf, q, args, 8)
+
 	case "ssa_records":
-		_ = w.Write([]string{"ssa_id", "school_code", "fy", "average_score", "verification_status"})
-		q := `SELECT r.id, COALESCE(s.school_id, ''), r.fy, COALESCE(r.average_score::text, ''), r.verification_status
-FROM ssa_record r JOIN school s ON s.id = r.school_id
+		_ = w.Write([]string{"ssa_id", "edify_school_id", "school_name", "district", "fy", "average_score", "verification_status"})
+		q := `SELECT r.id, COALESCE(s.school_id, ''), COALESCE(s.name, ''), COALESCE(d.name, ''), r.fy, COALESCE(r.average_score::text, ''), r.verification_status
+FROM ssa_record r
+JOIN school s ON s.id = r.school_id
+LEFT JOIN district d ON d.id = s.district_id
 WHERE r.deleted_at IS NULL`
 		var args []any
+		addArg := func(v any) string {
+			args = append(args, v)
+			return fmt.Sprintf("$%d", len(args))
+		}
 		if countryID != "" {
-			q += ` AND ` + country.SchoolIn("s", "$1")
-			args = append(args, []string{countryID})
+			q += ` AND ` + country.SchoolIn("s", addArg([]string{countryID}))
 		}
-		q += ` ORDER BY r.date_of_ssa DESC LIMIT 500`
-		rows, err := m.pool.Query(ctx, q, args...)
-		if err != nil {
-			return nil, 0, err
+		if fy := filters["fy"]; fy != "" {
+			q += ` AND r.fy = ` + addArg(fy)
 		}
-		defer rows.Close()
-		count := 0
-		for rows.Next() {
-			var id, code, fy, score, st string
-			if err := rows.Scan(&id, &code, &fy, &score, &st); err != nil {
-				return nil, 0, err
-			}
-			_ = w.Write([]string{id, code, fy, score, st})
-			count++
-		}
-		w.Flush()
-		return buf.Bytes(), count, rows.Err()
-	case "school_directory":
-		_ = w.Write([]string{"school_id", "school_code", "name", "school_type", "operational_status"})
-		q := `SELECT s.id, COALESCE(s.school_id, ''), s.name, COALESCE(s.school_type, ''), COALESCE(s.operational_status, '')
-FROM school s WHERE s.deleted_at IS NULL`
+		q += fmt.Sprintf(` ORDER BY r.date_of_ssa DESC LIMIT %d`, maxExportRows)
+		return scanCSV(ctx, m.pool, w, &buf, q, args, 7)
+
+	case "finance_weekly":
+		_ = w.Write([]string{"advance_id", "fy", "planned_date", "requested_amount_ugx", "disbursed_amount_ugx", "accounted_amount_ugx", "returned_amount_ugx", "status"})
 		var args []any
-		if strings.TrimSpace(countryID) != "" {
-			q += ` AND ` + country.SchoolIn("s", "$1")
-			args = append(args, []string{strings.TrimSpace(countryID)})
+		q := `SELECT id, COALESCE(fy, ''), COALESCE(planned_date::text, ''), COALESCE(amount::text, '0'), COALESCE(disbursed_amount::text, '0'), COALESCE(accounted_amount::text, '0'), COALESCE(returned_amount::text, '0'), COALESCE(status, '')
+FROM advance_request WHERE 1=1`
+		if fy := filters["fy"]; fy != "" {
+			args = append(args, fy)
+			q += fmt.Sprintf(` AND fy = $%d`, len(args))
 		}
-		q += ` ORDER BY s.name ASC LIMIT 500`
-		rows, err := m.pool.Query(ctx, q, args...)
-		if err != nil {
-			return nil, 0, err
+		q += fmt.Sprintf(` ORDER BY planned_date DESC NULLS LAST LIMIT %d`, maxExportRows)
+		return scanCSV(ctx, m.pool, w, &buf, q, args, 8)
+
+	case "escalations":
+		_ = w.Write([]string{"escalation_id", "category", "severity", "subject", "addressed_role", "status", "created_at"})
+		var args []any
+		q := `SELECT id, COALESCE(category, ''), COALESCE(severity, ''), COALESCE(subject, ''), COALESCE(addressed_role, ''), COALESCE(status, ''), created_at::text
+FROM leadership_escalation WHERE 1=1`
+		if p.ActiveRole == "CCEO" {
+			args = append(args, p.UserID)
+			q += fmt.Sprintf(` AND raised_by_user_id = $%d`, len(args))
 		}
-		defer rows.Close()
-		count := 0
-		for rows.Next() {
-			var id, code, name, stype, status string
-			if err := rows.Scan(&id, &code, &name, &stype, &status); err != nil {
-				return nil, 0, err
-			}
-			_ = w.Write([]string{id, code, name, stype, status})
-			count++
+		q += fmt.Sprintf(` ORDER BY created_at DESC LIMIT %d`, maxExportRows)
+		return scanCSV(ctx, m.pool, w, &buf, q, args, 7)
+
+	case "leave_requests":
+		_ = w.Write([]string{"leave_id", "leave_type", "start_date", "end_date", "days", "status"})
+		var args []any
+		q := `SELECT id, COALESCE(type, ''), COALESCE(start_date::text, ''), COALESCE(end_date::text, ''), COALESCE(days::text, '0'), COALESCE(status, '')
+FROM leave WHERE 1=1`
+		if p.ActiveRole == "CCEO" || p.ActiveRole == "ImpactAssessment" || p.ActiveRole == "Accountant" {
+			args = append(args, p.StaffProfileID)
+			q += fmt.Sprintf(` AND staff_id = $%d`, len(args))
 		}
-		w.Flush()
-		return buf.Bytes(), count, rows.Err()
+		q += fmt.Sprintf(` ORDER BY start_date DESC LIMIT %d`, maxExportRows)
+		return scanCSV(ctx, m.pool, w, &buf, q, args, 6)
+
+	case "debriefs":
+		_ = w.Write([]string{"debrief_id", "debrief_date", "status", "risk_level", "title", "summary"})
+		q := fmt.Sprintf(`SELECT id, COALESCE(date::text, ''), COALESCE(status, ''), COALESCE(risk_level, ''), COALESCE(title, ''), COALESCE(summary, '')
+FROM daily_debrief WHERE deleted_at IS NULL ORDER BY date DESC NULLS LAST LIMIT %d`, maxExportRows)
+		return scanCSV(ctx, m.pool, w, &buf, q, nil, 6)
+
+	case "decision_log":
+		_ = w.Write([]string{"decision_id", "created_at", "action", "actor_role", "subject_kind", "subject_id"})
+		q := fmt.Sprintf(`SELECT id, created_at::text, COALESCE(action, ''), COALESCE(actor_role, ''), COALESCE(subject_kind, ''), COALESCE(subject_id, '')
+FROM audit_log ORDER BY created_at DESC LIMIT %d`, maxExportRows)
+		return scanCSV(ctx, m.pool, w, &buf, q, nil, 6)
+
 	default:
 		return nil, 0, ErrUnknownKind
 	}
+}
+
+func scanCSV(ctx context.Context, pool *pgxpool.Pool, w *csv.Writer, buf *bytes.Buffer, q string, args []any, cols int) ([]byte, int, error) {
+	rows, err := pool.Query(ctx, q, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+	count := 0
+	vals := make([]string, cols)
+	ptrs := make([]any, cols)
+	for i := range vals {
+		ptrs[i] = &vals[i]
+	}
+	for rows.Next() {
+		if err := rows.Scan(ptrs...); err != nil {
+			return nil, 0, err
+		}
+		_ = w.Write(vals)
+		count++
+	}
+	w.Flush()
+	return buf.Bytes(), count, rows.Err()
 }

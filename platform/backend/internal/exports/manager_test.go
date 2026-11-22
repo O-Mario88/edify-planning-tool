@@ -48,3 +48,34 @@ func TestExportAuthorizationAtCreationAndDownload(t *testing.T) {
 		t.Fatalf("admin download refused: %v", err)
 	}
 }
+
+func TestExportExpandedKindsAndBoundedRetention(t *testing.T) {
+	mgr := NewManager(nil, nil)
+	admin := auth.Principal{Account: auth.Account{UserID: "u-admin", ActiveRole: "Admin"}}
+	partner := auth.Principal{Account: auth.Account{UserID: "u-p", ActiveRole: "PartnerFieldOfficer"}}
+
+	kinds := []string{
+		"school_directory", "core_schools", "clusters", "cluster_schools",
+		"completed_visits", "ssa_records", "finance_weekly",
+		"escalations", "leave_requests", "debriefs", "decision_log",
+	}
+	for _, k := range kinds {
+		if _, err := mgr.CreateAndRunFiltered(context.Background(), admin, k, map[string]string{"fy": "2027", "district": "Mukono"}); err != nil {
+			t.Errorf("admin export %q failed: %v", k, err)
+		}
+		if _, err := mgr.CreateAndRun(context.Background(), partner, k); !errors.Is(err, ErrForbidden) {
+			t.Errorf("partner export %q should be ErrForbidden, got %v", k, err)
+		}
+	}
+
+	// Verify bounded retention never grows beyond maxRetainedJobs under export storms.
+	for i := 0; i < maxRetainedJobs+30; i++ {
+		_, _ = mgr.CreateAndRun(context.Background(), admin, "school_directory")
+	}
+	mgr.mu.RLock()
+	kept := len(mgr.jobs)
+	mgr.mu.RUnlock()
+	if kept > maxRetainedJobs {
+		t.Fatalf("expected <= %d retained jobs, got %d", maxRetainedJobs, kept)
+	}
+}

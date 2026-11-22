@@ -4,12 +4,27 @@ import { NextResponse } from 'next/server';
 import { environment } from '@/lib/environment';
 import { ACCESS_COOKIE } from '@/lib/session';
 
-const ALLOWED_KINDS = new Set(['school_directory', 'completed_visits', 'finance_weekly', 'ssa_records']);
+const ALLOWED_KINDS = new Set([
+  'school_directory',
+  'core_schools',
+  'clusters',
+  'cluster_schools',
+  'completed_visits',
+  'finance_weekly',
+  'ssa_records',
+  'escalations',
+  'leave_requests',
+  'debriefs',
+  'decision_log',
+]);
+
+const ALLOWED_FILTER_KEYS = new Set(['fy', 'district', 'school_type', 'status', 'q', 'cluster_id']);
 
 /**
- * Streams a native Go CSV export directly to the browser without calling Django.
+ * Streams a native Go CSV export directly to the browser without calling Django,
+ * preserving authorized query filters (FY, district, type, search, cluster).
  */
-export async function GET(_request: Request, context: { params: Promise<{ kind: string }> }) {
+export async function GET(request: Request, context: { params: Promise<{ kind: string }> }) {
   const { kind } = await context.params;
   if (!ALLOWED_KINDS.has(kind)) {
     return NextResponse.json({ error: 'Unsupported export kind.' }, { status: 400 });
@@ -18,6 +33,14 @@ export async function GET(_request: Request, context: { params: Promise<{ kind: 
   if (!token) {
     return NextResponse.json({ error: 'Sign in first.' }, { status: 401 });
   }
+  const url = new URL(request.url);
+  const filters: Record<string, string> = {};
+  for (const [k, v] of url.searchParams.entries()) {
+    if (ALLOWED_FILTER_KEYS.has(k.toLowerCase()) && v.trim()) {
+      filters[k.toLowerCase()] = v.trim();
+    }
+  }
+
   const gatewayUrl = environment().gatewayUrl;
   const createRes = await fetch(`${gatewayUrl}/api/v1/exports`, {
     method: 'POST',
@@ -25,7 +48,7 @@ export async function GET(_request: Request, context: { params: Promise<{ kind: 
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ kind }),
+    body: JSON.stringify({ kind, filters }),
     cache: 'no-store',
   });
   if (!createRes.ok) {

@@ -1,36 +1,35 @@
-# Production Readiness Assessment & Release Gates
+# Production Readiness Assessment & Final Release Gates
 
 **Audit Date:** 2026-11-22  
-**Branch Evaluated:** `feature/edify-go-rn-migration` (non-production audit environment only)  
+**Branch Evaluated:** `feature/edify-go-rn-migration` (isolated non-production worktree `qa/c3-20261122`)  
 **Overall Verdict:** **CONDITIONAL GO FOR STAGING UAT — NOT YET APPROVED FOR UNATTENDED PRODUCTION CUTOVER**
 
-> Per Section 18 of the Audit Directive, this platform is **not** prematurely labeled production-ready while specific staging-scale, data-hygiene, and fixture-blocked gates remain open.
+> Per Section 25 of the Master Directive, the platform is **not** declared production-ready until the remaining staging-scale and sanitized-snapshot gates below are explicitly executed and signed off.
 
 ---
 
-## 1. Mandatory Release Gate Scorecard
+## 1. Final Release Gate Scorecard
 
-| Release Gate | Status | Evidence |
-|---|---|---|
-| **Zero production database mutations** | **PASS** | 100% of queries & tests ran against local `127.0.0.1` `edify_gorn_test`; Go production-protection guard verified active |
-| **Zero unresolved P0 Critical security/data defects** | **PASS** | All auth, cookie, RBAC, SoD, SQLi, XSS, and privilege-escalation checks passed |
-| **Zero unresolved P1 High code defects** | **PASS** | `DEF-001` (`coreoversight`), `DEF-002` (`financeops`), `DEF-003` (`workforceops`), `DEF-004` (`insights.py`) fixed with regression tests |
-| **Exact financial variance reconciliation (`UGX 0`)** | **PASS** | `ReconcileVariance` exact `int64` arithmetic; 280 advances reconciled with `0` negative rows, `0` duplicate disbursement refs, `UGX 0` unexplained variance |
-| **KPI & Map-to-Database reconciliation** | **PASS** | All 700 schools, 306 FY27 SSAs (`5.91`, `44%`), 700 FY26 SSAs (`4.96`, `100%`), 683 verified GPS pins, 355,575 enrollment reconciled with `0` variance |
-| **Python analytics independent accuracy & isolation** | **PASS** | 30/30 pytest pass; zero DB driver imports; refuses startup with DB env vars; `0.00` variance vs independent PostgreSQL queries |
-| **Desktop / Tablet / Mobile UI & interactive quality** | **PASS** | 25 desktop routes + 10 tablet/mobile checks with `0px` overflow, `0` console/page errors; 358 Web Vitest + 277 Expo Jest tests pass |
-| **Multi-country isolation (`UG` active; `KE`/`RW`/`ET` draft)** | **PASS** | Zero cross-country school or membership leakage; draft countries cleanly isolated |
-| **Production SSA `average_score` data hygiene check (`DATA-002`)** | **BLOCKED (Prod Read-Only Check Needed)** | In `edify_gorn_test`, 733/1,006 seeded `ssa_record.average_score` rows differed from `AVG(ssa_score.score)` by up to `0.94`. Must run a read-only check on a sanitized production snapshot before cutover |
-| **End-to-end live DB journeys for Loans, Evidence, Partner Payments & Bulk Uploads** | **BLOCKED (Staging Fixtures Needed)** | Unit tests pass, but `edify_gorn_test` had `0` rows in `evidence_record`, `partner_payment`, `school_loans.application`, and `cluster_leadership.leader_assignment`; must execute full E2E runs on a seeded staging clone |
-| **50,000-school / 500-concurrent-user load test** | **BLOCKED (Staging Scale Env Needed)** | Local 20-worker / 200-req benchmark passed strongly (`326.7 req/sec`, `P95 169ms`), but full 50k-school / 500-VU verification requires staging PostgreSQL + Redis |
-| **Dependency security updates (2 moderate GitHub alerts)** | **OPEN (P2)** | Upgrade 2 moderate transitive advisories flagged by GitHub Dependabot before production release |
+| Category | Gate | Status | Evidence |
+|---|---|---|---|
+| **Safety** | Zero production database mutations | **PASS** | 100% isolated to local `127.0.0.1` `edify_gorn_test`; Go `dbguard` verified active |
+| **Defects** | Zero unresolved P0 or P1 code defects | **PASS** | All 10 discovered code defects (`DEF-001`–`DEF-006`, `ECO-001`–`ECO-004`) fixed with regression tests |
+| **Exports** | Exports restored, filter-consistent, School IDs included, round-trip verified | **PASS (CSV)** | 12/12 live CSV round-trips reconciled (incl. full `700` schools, `103` filtered core, `142` core schools, `15` clusters, `90` cluster schools, `220` FY26 visits, `306` FY27 SSAs, `280` advances, `17,662` audit rows); 100-export storm passed (`0` errors, `P95 244.9ms`) |
+| **Real-Time** | Scoped SSE event propagation & reconnect recovery | **PASS (Single-Node)** | `250/250` live concurrent SSE streams connected in `281ms`, `0` drops; strict country/role/user isolation + `Last-Event-ID` replay verified |
+| **Concurrency** | 1,000 simultaneously active users | **PASS (Burst) / BLOCKED (60m Soak + 50k Rows)** | Burst ramp 50→1,000 users reached **`1,413.1 req/sec`, `P95 581.1ms`, `Max 702.7ms`**; 60-min sustained soak on 50,000 schools requires staging hardware |
+| **Financial & Data Integrity** | Exact UGX reconciliation (`UGX 0`), KPI & Map accuracy | **PASS** | `UGX 0` variance on 280 advances; Map & KPIs match SQL to `0` variance; Python analytics match SQL to `0.00` variance |
+| **Security & Multi-Country** | Server-side RBAC, SoD, `HttpOnly` cookies, country isolation | **PASS** | All 9 live negative API security tests (`401`/`403`) passed; `UG` isolated from draft `KE`/`RW`/`ET` |
+| **UI & Cross-Device** | Desktop, Tablet, Mobile (`0px` overflow, `0` console/page errors) | **PASS** | 25 desktop routes + 10 tablet/mobile checks + 358 Web Vitest + 277 Expo Jest tests pass |
+| **Data Hygiene Gate (`DATA-002`)** | Verify production `ssa_record.average_score` vs `AVG(ssa_score.score)` | **BLOCKED (Staging Snapshot Needed)** | 733/1,006 seeded rows in `edify_gorn_test` had independent `average_score` vs 8-intervention mean; run read-only check on sanitized prod clone |
+| **Staging E2E Fixtures** | Live DB E2E for Loans, Partner Evidence/Payments, Bulk Upload CSV re-import, XLSX/PDF exports | **BLOCKED (Staging Fixtures Needed)** | Unit tests pass; `edify_gorn_test` has `0` rows in `evidence_record`, `partner_payment`, `school_loans.application`, `cluster_leadership.leader_assignment` |
+| **Multi-Replica SSE & Dependency Advisories** | Bridge `realtime.Broker` over Redis Pub/Sub / PG `LISTEN` for multi-replica prod + fix 2 moderate GitHub Dependabot alerts | **OPEN (P2)** | Required before multi-replica horizontal production deployment |
 
 ---
 
-## 2. Recommended Pre-Cutover Sequence (Zero Production Risk)
+## 2. Sign-Off Sequence for Production Cutover
 
-1. Provision a sanitized staging clone of the production Uganda database (read-only verification first for `DATA-001` `school.sub_region_id`, `DATA-002` `ssa_record.average_score`, and `DATA-003` Sunday/missing-FY activities).
-2. Run live E2E journeys for Bulk Upload Center, Partner Evidence → IA Verification → Partner Payment, School Loans, and Cluster Leader Mobile workflows against the staging clone.
-3. Execute a 50,000-school / 500-VU staging load test with Redis caching enabled for `GET /api/v1/country-map/data` and `EXPLAIN ANALYZE` on `GetSchoolDirectory`.
-4. Resolve the 2 moderate Dependabot dependency advisories.
-5. Obtain explicit stakeholder authorization prior to any production deployment or backend cutover.
+1. Clone a sanitized Uganda production snapshot to staging and run read-only hygiene queries for `school.sub_region_id`, `ssa_record.average_score`, and activity `fy`/Sunday dates.
+2. Execute the full 30-step multi-role journey (including Loans, Partner Payments, Evidence Uploads, and Bulk Upload Center CSV re-import) on the seeded staging clone.
+3. Run the 60-minute sustained 1,000-user soak test on staging with 50,000 schools, PgBouncer, and Redis Pub/Sub enabled.
+4. Patch the 2 moderate transitive dependency advisories flagged by GitHub Dependabot.
+5. Obtain explicit leadership sign-off before any production deployment or cutover.

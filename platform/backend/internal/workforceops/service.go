@@ -16,6 +16,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/cuid"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/realtime"
 )
 
 func withRW(ctx context.Context, pool *pgxpool.Pool, fn func(pgx.Tx) error) error {
@@ -36,12 +37,34 @@ var (
 )
 
 type Service struct {
-	pool *pgxpool.Pool
-	now  func() time.Time
+	pool   *pgxpool.Pool
+	now    func() time.Time
+	broker *realtime.Broker
 }
 
 func NewService(pool *pgxpool.Pool) *Service {
 	return &Service{pool: pool, now: time.Now}
+}
+
+// WithRealtime attaches the post-commit SSE broker for live workflow updates.
+func (s *Service) WithRealtime(b *realtime.Broker) *Service {
+	if s != nil {
+		s.broker = b
+	}
+	return s
+}
+
+func countryOf(p auth.Principal) string {
+	if p.Country != nil && strings.TrimSpace(p.Country.Code) != "" {
+		return strings.ToUpper(strings.TrimSpace(p.Country.Code))
+	}
+	return "UG"
+}
+
+func (s *Service) publish(ev realtime.Event) {
+	if s != nil && s.broker != nil {
+		s.broker.Publish(ev)
+	}
 }
 
 // WithClock overrides the clock used for audit timestamps (useful in tests).
@@ -99,6 +122,17 @@ func (s *Service) DecideLeave(ctx context.Context, p auth.Principal, leaveID, de
 		}, s.clock())
 		return err
 	})
+	if err == nil {
+		s.publish(realtime.Event{
+			Type:        "leave.decided",
+			EntityType:  "leave",
+			EntityID:    leaveID,
+			CountryCode: countryOf(p),
+			TargetRoles: []string{"Program Lead", "CountryDirector", "HumanResources", "Admin"},
+			ActorUserID: p.UserID,
+			Summary:     "Leave " + decision,
+		})
+	}
 	return out, err
 }
 
@@ -130,6 +164,17 @@ func (s *Service) DecideEscalation(ctx context.Context, p auth.Principal, escala
 		}, s.clock())
 		return err
 	})
+	if err == nil {
+		s.publish(realtime.Event{
+			Type:        "escalation.resolved",
+			EntityType:  "leadership_escalation",
+			EntityID:    escalationID,
+			CountryCode: countryOf(p),
+			TargetRoles: []string{"Program Lead", "CountryDirector", "RegionalVicePresident", "Admin"},
+			ActorUserID: p.UserID,
+			Summary:     "Escalation " + strings.TrimSpace(decision),
+		})
+	}
 	return out, err
 }
 
@@ -257,6 +302,17 @@ func (s *Service) RaiseEscalation(ctx context.Context, p auth.Principal, categor
 		}, now)
 		return err
 	})
+	if err == nil {
+		s.publish(realtime.Event{
+			Type:        "escalation.raised",
+			EntityType:  "leadership_escalation",
+			EntityID:    out,
+			CountryCode: countryID,
+			TargetRoles: []string{"Program Lead", "CountryDirector", "RegionalVicePresident", "Admin"},
+			ActorUserID: p.UserID,
+			Summary:     subject,
+		})
+	}
 	return out, err
 }
 
@@ -312,5 +368,16 @@ func (s *Service) RequestLeave(ctx context.Context, p auth.Principal, leaveType,
 		}, now)
 		return err
 	})
+	if err == nil {
+		s.publish(realtime.Event{
+			Type:        "leave.requested",
+			EntityType:  "leave",
+			EntityID:    out,
+			CountryCode: countryOf(p),
+			TargetRoles: []string{"Program Lead", "CountryDirector", "HumanResources", "Admin"},
+			ActorUserID: p.UserID,
+			Summary:     fmt.Sprintf("%s (%d days)", leaveType, days),
+		})
+	}
 	return out, err
 }

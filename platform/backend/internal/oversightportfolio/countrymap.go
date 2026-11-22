@@ -44,11 +44,14 @@ var distributionColumns = []struct {
 	{"Meetings planned", true}, {"Meetings achieved", true}, {"Trainings planned", true}, {"Trainings achieved", true}, {"Partner", true},
 }
 
-// CountryMap builds /country-map/.
-type CountryMap struct{ s *Service }
+// CountryMap builds /country-map/ and serves the cached country map data API.
+type CountryMap struct {
+	s     *Service
+	cache *mapDataCache
+}
 
 // NewCountryMap is the Country Map over the portfolio service.
-func NewCountryMap(s *Service) *CountryMap { return &CountryMap{s: s} }
+func NewCountryMap(s *Service) *CountryMap { return &CountryMap{s: s, cache: newMapDataCache()} }
 
 // mapTotals is subregion_performance's totals line: the districts filed under
 // a sub-region, the sub-regions they name, and the operating schools in them.

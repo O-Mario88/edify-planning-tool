@@ -210,6 +210,9 @@ export function FieldDebriefView({
         icon={<ClipboardList className="h-5 w-5" />}
         actions={
           <>
+            <a href="/exports/debriefs" download className={EDIFY_BTN_OUTLINE}>
+              <span>Export CSV</span>
+            </a>
             <Link
               href={weeklyAct ? resolveActionHref(weeklyAct, pagePath, drawerHref) : '/debriefs/weekly-report'}
               className={EDIFY_BTN_OUTLINE}

@@ -47,6 +47,13 @@ func (r *statusRecorder) Unwrap() http.ResponseWriter {
 	return r.ResponseWriter
 }
 
+// Flush forwards SSE / streaming flushes to the underlying ResponseWriter.
+func (r *statusRecorder) Flush() {
+	if f, ok := r.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
 // redactLogPath strips shared secrets embedded in webhook paths (such as
 // /sms/delivery-report/{secret}) before they reach structured access logs.
 func redactLogPath(path string) string {
