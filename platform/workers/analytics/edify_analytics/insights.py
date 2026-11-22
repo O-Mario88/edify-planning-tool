@@ -6,9 +6,14 @@ has already been scoped and authorised by the Go gateway before arrival.
 
 from __future__ import annotations
 
+import math
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
+
+
+def _valid_score(v: float | None) -> bool:
+    return v is not None and math.isfinite(v) and 0.0 <= v <= 10.0
 
 
 @dataclass(frozen=True)
@@ -58,7 +63,8 @@ def analyze_ssa(records: Iterable[SsaRecord]) -> SsaAnalysis:
     by_iv: dict[str, list[float]] = defaultdict(list)
 
     for r in rows:
-        if r.current_score is not None:
+        if _valid_score(r.current_score):
+            assert r.current_score is not None
             scores.append(r.current_score)
             if r.current_score >= 7.5:
                 on_track += 1
@@ -66,7 +72,8 @@ def analyze_ssa(records: Iterable[SsaRecord]) -> SsaAnalysis:
                 watch += 1
             else:
                 critical += 1
-            if r.previous_score is not None:
+            if _valid_score(r.previous_score):
+                assert r.previous_score is not None
                 d = r.current_score - r.previous_score
                 deltas.append(d)
                 if d > 0.05:
@@ -74,7 +81,8 @@ def analyze_ssa(records: Iterable[SsaRecord]) -> SsaAnalysis:
                 elif d < -0.05:
                     declined += 1
         for name, val in r.interventions.items():
-            by_iv[name].append(val)
+            if _valid_score(val):
+                by_iv[name].append(val)
 
     iv_stats: list[InterventionStat] = []
     for name in sorted(by_iv.keys()):
@@ -287,12 +295,13 @@ def compute_predictive_insights(schools: Iterable[RiskInput]) -> PredictiveInsig
             score += 25.0
             drivers.append(f"SSA declined ({s.ssa_delta:+.1f} pts)")
 
-        if s.days_since_last_visit >= 120:
+        days_since = max(0, s.days_since_last_visit)
+        if days_since >= 120:
             score += 20.0
-            drivers.append(f"No visit in {s.days_since_last_visit} days")
-        elif s.days_since_last_visit >= 60:
+            drivers.append(f"No visit in {days_since} days")
+        elif days_since >= 60:
             score += 10.0
-            drivers.append(f"Visit aging ({s.days_since_last_visit} days)")
+            drivers.append(f"Visit aging ({days_since} days)")
 
         if not s.has_cluster:
             score += 10.0
@@ -391,8 +400,9 @@ def generate_global_report(
         tot_assessed += assessed
         tot_visited += visited
         tot_enrollment += max(0, c.total_enrollment)
-        if assessed > 0 and c.average_ssa > 0:
-            weighted_ssa_num += c.average_ssa * assessed
+        safe_ssa = c.average_ssa if _valid_score(c.average_ssa) else 0.0
+        if assessed > 0:
+            weighted_ssa_num += safe_ssa * assessed
 
         out.append(
             CountryRollup(
@@ -400,7 +410,7 @@ def generate_global_report(
                 school_count=0 if suppressed else n,
                 ssa_coverage_pct=0.0 if suppressed else _pct(assessed, n),
                 visit_coverage_pct=0.0 if suppressed else _pct(visited, n),
-                average_ssa=0.0 if suppressed else round(c.average_ssa, 2),
+                average_ssa=0.0 if suppressed else round(safe_ssa, 2),
                 total_enrollment=0 if suppressed else max(0, c.total_enrollment),
                 suppressed=suppressed,
             )

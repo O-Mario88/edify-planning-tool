@@ -134,7 +134,7 @@ WHERE sp.deleted_at IS NULL AND u.is_active = true
 		return nil, fmt.Errorf("oversightportfolio: counting active CCEOs: %w", err)
 	}
 
-	// Sub-region rollup with operating schools and FY activity coverage.
+	// Sub-region rollup with operating schools, FY activity coverage, and confirmed FY SSA averages.
 	srRows, err := c.s.db.Query(ctx, `
 WITH active_schools AS (
   SELECT s.id, s.district_id, COALESCE(s.school_type, '') AS school_type, s.account_owner_id, s.cluster_id
@@ -149,6 +149,13 @@ fy_act AS (
   WHERE a.deleted_at IS NULL AND a.fy = $2 AND NOT (a.status = ANY($4))
     AND a.school_id IS NOT NULL
   GROUP BY a.school_id
+),
+fy_ssa AS (
+  SELECT r.school_id, avg(r.average_score) AS avg_score
+  FROM ssa_record r
+  WHERE r.deleted_at IS NULL AND r.fy = $2 AND r.verification_status = 'confirmed'
+    AND r.average_score IS NOT NULL
+  GROUP BY r.school_id
 )
 SELECT sr.name,
        count(DISTINCT d.id) AS districts,
@@ -160,11 +167,13 @@ SELECT sr.name,
        count(DISTINCT sc.id) FILTER (WHERE lower(sc.school_type) = 'core_graduate') AS core_graduates,
        COALESCE(sum(fa.planned), 0)::int AS planned_act,
        COALESCE(sum(fa.completed), 0)::int AS completed_act,
-       count(DISTINCT sc.id) FILTER (WHERE COALESCE(fa.planned, 0) > 0 OR sc.cluster_id IS NOT NULL) AS covered_schools
+       count(DISTINCT sc.id) FILTER (WHERE COALESCE(fa.planned, 0) > 0 OR fs.school_id IS NOT NULL) AS covered_schools,
+       COALESCE(round(avg(fs.avg_score)::numeric, 2), 0)::double precision AS avg_ssa
 FROM sub_region sr
 LEFT JOIN district d ON d.sub_region_id = sr.id
 LEFT JOIN active_schools sc ON sc.district_id = d.id
 LEFT JOIN fy_act fa ON fa.school_id = sc.id
+LEFT JOIN fy_ssa fs ON fs.school_id = sc.id
 GROUP BY sr.id, sr.name
 ORDER BY schools DESC, districts DESC, sr.name ASC`,
 		rules.OperatingStatuses, fy, completedActivityStatuses, rules.DeadStatuses)
@@ -178,7 +187,7 @@ ORDER BY schools DESC, districts DESC, sr.name ASC`,
 		if err := srRows.Scan(
 			&r.Name, &r.Districts, &r.Schools, &r.Clients, &r.Core,
 			&r.Champions, &r.CoreTrained, &r.CoreGraduates,
-			&r.ActivitiesPlanned, &r.ActivitiesCompleted, &r.CoveredSchools,
+			&r.ActivitiesPlanned, &r.ActivitiesCompleted, &r.CoveredSchools, &r.AvgSSA,
 		); err != nil {
 			return nil, fmt.Errorf("oversightportfolio: scanning sub-region row: %w", err)
 		}

@@ -76,7 +76,19 @@ type WeeklySubmitRequest struct {
 	FundingSource string
 }
 
+func isNonStaffFinanceRole(role string) bool {
+	switch role {
+	case "", "ClusterLeader", "PartnerAdmin", "PartnerFieldOfficer", "MfiLoanOfficer", "MfiPartnerAdmin":
+		return true
+	default:
+		return false
+	}
+}
+
 func (s *Service) SubmitWeeklyRequest(ctx context.Context, p auth.Principal, req WeeklySubmitRequest) (string, error) {
+	if p.UserID == "" || isNonStaffFinanceRole(p.ActiveRole) {
+		return "", ErrForbidden
+	}
 	if req.TotalAmount < 0 || strings.TrimSpace(req.FY) == "" || req.WeekStart.IsZero() {
 		return "", fmt.Errorf("%w: fy, week_start, and non-negative total_amount are required", ErrInvalidInput)
 	}
@@ -215,8 +227,26 @@ func (s *Service) TransitionAdvance(
 	ctx context.Context, p auth.Principal, advanceID, action string,
 	amount, returned int64, method, reference string,
 ) (TransitionResult, error) {
-	if (action == "disburse" || action == "verify_return") && p.ActiveRole != "Accountant" && p.ActiveRole != "Admin" {
+	if p.UserID == "" || isNonStaffFinanceRole(p.ActiveRole) {
 		return TransitionResult{}, ErrForbidden
+	}
+	switch action {
+	case "disburse", "verify_return", "reimburse":
+		if p.ActiveRole != "Accountant" && p.ActiveRole != "Admin" {
+			return TransitionResult{}, ErrForbidden
+		}
+	case "approve_pl":
+		if p.ActiveRole != "Program Lead" && p.ActiveRole != "Admin" {
+			return TransitionResult{}, ErrForbidden
+		}
+	case "approve_cd":
+		if p.ActiveRole != "CountryDirector" && p.ActiveRole != "Admin" {
+			return TransitionResult{}, ErrForbidden
+		}
+	case "confirm_receipt", "submit_accountability", "return":
+		// Permitted for authorized staff/owner; DB enforces row ownership.
+	default:
+		return TransitionResult{}, fmt.Errorf("%w: unknown advance action %q", ErrInvalidInput, action)
 	}
 	if amount < 0 || returned < 0 {
 		return TransitionResult{}, fmt.Errorf("%w: negative monetary amount refused", ErrInvalidInput)

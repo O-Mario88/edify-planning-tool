@@ -156,6 +156,8 @@ describe('CountryMapView', () => {
     expect(html).toContain('Country Map');
     expect(html).toContain('Country Portfolio');
     expect(html).toContain('Schools &amp; Coverage');
+    expect(html).toContain('/cluster-oversight');
+    expect(html).not.toContain('/clusters/oversight');
     expect(html).toContain('Core Trained');
     expect(html).toContain('Core Graduates');
   });

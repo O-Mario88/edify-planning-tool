@@ -193,10 +193,19 @@ func (s *Service) TransitionTeamAction(ctx context.Context, p auth.Principal, ac
 	return state, err
 }
 
+func isExternalOrNonStaffRole(role string) bool {
+	switch role {
+	case "", "ClusterLeader", "PartnerAdmin", "PartnerFieldOfficer", "MfiLoanOfficer", "MfiPartnerAdmin":
+		return true
+	default:
+		return false
+	}
+}
+
 // RaiseEscalation creates a leadership_escalation row natively in Go and
 // appends a canonical SHA-256 audit row in the same transaction.
 func (s *Service) RaiseEscalation(ctx context.Context, p auth.Principal, category, severity, subject, detail, requestedDecision, dueDate string) (string, error) {
-	if p.UserID == "" || p.ActiveRole == "ClusterLeader" {
+	if p.UserID == "" || p.ActiveRole == "ClusterLeader" || p.ActiveRole == "MfiLoanOfficer" || p.ActiveRole == "MfiPartnerAdmin" {
 		return "", ErrForbidden
 	}
 	subject = strings.TrimSpace(subject)
@@ -254,8 +263,12 @@ func (s *Service) RaiseEscalation(ctx context.Context, p auth.Principal, categor
 // RequestLeave creates a pending leave request row natively in Go and appends
 // a canonical SHA-256 audit row in the same transaction.
 func (s *Service) RequestLeave(ctx context.Context, p auth.Principal, leaveType, startDate, endDate, reason, handover string) (string, error) {
-	if p.UserID == "" || p.ActiveRole == "ClusterLeader" {
+	if p.UserID == "" || isExternalOrNonStaffRole(p.ActiveRole) {
 		return "", ErrForbidden
+	}
+	leaveType = strings.TrimSpace(leaveType)
+	if leaveType == "" {
+		return "", fmt.Errorf("%w: leave_type is required", ErrInvalidInput)
 	}
 	startDate = strings.TrimSpace(startDate)
 	endDate = strings.TrimSpace(endDate)

@@ -130,7 +130,7 @@ export function buildCountryMapTabs(fy: string): readonly MapNavTab[] {
       href: `/team-planning-oversight/?view=coverage${fy ? `&fy=${encodeURIComponent(fy)}` : ''}`,
       icon: 'chart',
     },
-    { id: 'clusters', label: 'Cluster Oversight', href: `/clusters/oversight/${qs}`, icon: 'team' },
+    { id: 'clusters', label: 'Cluster Oversight', href: `/cluster-oversight/${qs}`, icon: 'team' },
     { id: 'schools', label: 'School Directory', href: '/schools', icon: 'schools' },
   ];
 }

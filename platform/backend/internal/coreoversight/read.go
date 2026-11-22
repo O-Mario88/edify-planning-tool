@@ -109,7 +109,7 @@ func read(ctx context.Context, q schooldirectory.Querier, s schooldirectory.Scop
 		return nil, err
 	}
 	if err := each(ctx, q, "the Core schools", `
-SELECT s.id, s.school_id, s.name, s.school_type, d.name, s.cluster_id, s.account_owner_id, s.sub_region_id
+SELECT s.id, s.school_id, s.name, s.school_type, d.name, s.cluster_id, s.account_owner_id, COALESCE(s.sub_region_id, d.sub_region_id)
 FROM school s LEFT OUTER JOIN district d ON s.district_id = d.id
 WHERE s.deleted_at IS NULL AND s.operational_status = ANY($1) AND s.school_type = ANY($2) AND `+where+`
 ORDER BY s.created_at DESC`, func(rows pgx.Rows) error {
