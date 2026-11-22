@@ -48,8 +48,8 @@ func main() {
 }
 
 func run(args []string) error {
-	if len(args) == 0 || (args[0] != "seed-legacy" && args[0] != "reconcile-geography") {
-		return errors.New("usage: countryctl seed-legacy --confirm-database=NAME | countryctl reconcile-geography --confirm-database=NAME")
+	if len(args) == 0 || (args[0] != "seed-legacy" && args[0] != "seed-templates" && args[0] != "reconcile-geography") {
+		return errors.New("usage: countryctl seed-legacy|seed-templates|reconcile-geography --confirm-database=NAME")
 	}
 	flags := flag.NewFlagSet(args[0], flag.ContinueOnError)
 	confirm := flags.String("confirm-database", "", "the database name the run is meant for")
@@ -94,6 +94,17 @@ func run(args []string) error {
 		return err
 	}
 	defer func() { _ = tx.Rollback(context.Background()) }()
+	if args[0] == "seed-templates" {
+		tpls, err := country.SeedExpansionTemplates(ctx, tx, seededBy)
+		if err != nil {
+			return err
+		}
+		if err := tx.Commit(ctx); err != nil {
+			return err
+		}
+		fmt.Printf("seeded expansion templates on %s: %d country configs, %d admin levels\n", *confirm, tpls.Configs, tpls.Levels)
+		return nil
+	}
 	seeded, err := country.SeedLegacy(ctx, tx, seededBy)
 	if err != nil {
 		return err
