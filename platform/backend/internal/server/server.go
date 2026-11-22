@@ -407,7 +407,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		func(ctx context.Context) error { return countryschema.Spec.Ready(ctx, pool) }, logger), options...))
 	routePlanSvc := routeplan.NewService(pool,
 		routeplan.RouterFor(cfg.Routing.Provider, cfg.Routing.OSRMURL, cfg.Routing.GoogleKey, cfg.Routing.DailyLimit, time.Now),
-		time.Now, logger).WithVerification(pool, routesSchemaReady(pool))
+		time.Now, logger).WithVerification(pool, routesSchemaReady(pool)).WithLocationInvalidator(countryMapSvc.InvalidateMapCache)
 	mux.Handle(routesv1connect.NewRoutePlannerServiceHandler(routePlanSvc, options...))
 	routePlanSvc.RegisterHTTP(mux, authenticator, realtimeBroker)
 	mux.Handle(messagingv1connect.NewMessagingServiceHandler(messaging.NewService(pool, time.Now, logger), options...))

@@ -59,7 +59,7 @@ func (s *Service) GetSchoolLocation(ctx context.Context, req *connect.Request[ro
 		out.PendingReport, out.AccessNote = pending, f.accessNote
 		out.CanReport = MayOpenProfile(p.ActiveRole) && pending == nil
 		out.CanReview = MayReview(p.ActiveRole)
-		out.CanCapture = MayCapture(p.ActiveRole)
+		out.CanCapture = MayCaptureGPS(p.ActiveRole)
 		out.Version, out.VerifiedAt, out.VerifiedByName = sc.pin.GetLocationVersion(), f.verifiedAt, f.verifiedByName
 		out.LastConfirmedAt, out.Entrance, out.Policy = f.lastConfirmedAt, sc.pin.GetEntrance(), policyOf(DefaultPolicy)
 	}

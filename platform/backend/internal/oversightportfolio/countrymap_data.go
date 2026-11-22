@@ -284,18 +284,26 @@ ORDER BY schools DESC, d.name ASC`, rules.OperatingStatuses)
 	}
 
 	// Geo-located operating school pins inside Uganda bounding box (excluding 0,0).
+	// Reads verified field_routes.school_location / verified_location / school_geo_point
+	// ahead of raw directory coordinates so GPS captures synchronize immediately.
 	pRows, err := c.s.db.Query(ctx, `
 SELECT s.id, COALESCE(s.school_id, ''), s.name, COALESCE(d.name, ''), COALESCE(sr.name, ''),
-       lower(COALESCE(s.school_type, 'client')), s.latitude, s.longitude
+       lower(COALESCE(s.school_type, 'client')),
+       COALESCE(sl.lat, vl.lat, gp.latitude, s.latitude) AS eff_lat,
+       COALESCE(sl.lng, vl.lng, gp.longitude, s.longitude) AS eff_lng
 FROM school s
 JOIN district d ON d.id = s.district_id
 JOIN sub_region sr ON sr.id = d.sub_region_id
+LEFT JOIN school_geo_point gp ON gp.school_id = s.id
+LEFT JOIN field_routes.verified_location vl ON vl.school_id = s.id
+LEFT JOIN field_routes.school_location sl ON sl.school_id = s.id AND sl.target = 'school'
 WHERE s.deleted_at IS NULL
   AND s.operational_status = ANY($1)
-  AND s.latitude IS NOT NULL AND s.longitude IS NOT NULL
-  AND NOT (s.latitude = 0 AND s.longitude = 0)
-  AND s.latitude BETWEEN -1.6 AND 4.3
-  AND s.longitude BETWEEN 29.4 AND 35.1
+  AND COALESCE(sl.lat, vl.lat, gp.latitude, s.latitude) IS NOT NULL
+  AND COALESCE(sl.lng, vl.lng, gp.longitude, s.longitude) IS NOT NULL
+  AND NOT (COALESCE(sl.lat, vl.lat, gp.latitude, s.latitude) = 0 AND COALESCE(sl.lng, vl.lng, gp.longitude, s.longitude) = 0)
+  AND COALESCE(sl.lat, vl.lat, gp.latitude, s.latitude) BETWEEN -1.6 AND 4.3
+  AND COALESCE(sl.lng, vl.lng, gp.longitude, s.longitude) BETWEEN 29.4 AND 35.1
 ORDER BY
   CASE lower(COALESCE(s.school_type, ''))
     WHEN 'champion' THEN 1

@@ -204,7 +204,7 @@ SELECT s.id, COALESCE(s.school_id, ''), COALESCE(s.name, ''), COALESCE(s.school_
   COALESCE(s.operational_status, ''), COALESCE(s.planning_readiness, ''), COALESCE(r.name, ''),
   COALESCE(s.district_id, ''), COALESCE(d.name, ''), d.id IS NOT NULL,
   COALESCE(s.sub_county_id, ''), COALESCE(sc.name, ''), sc.id IS NOT NULL, COALESCE(pa.name, ''),
-  s.enrollment, s.latitude, s.longitude, s.core_cohort_year, s.core_cohort_number,
+  s.enrollment, COALESCE(sl.lat, vl.lat, gp.latitude, s.latitude), COALESCE(sl.lng, vl.lng, gp.longitude, s.longitude), s.core_cohort_year, s.core_cohort_number,
   COALESCE(s.account_owner_id, ''), COALESCE(s.account_owner_name_raw, ''),
   COALESCE(s.school_phone, ''), COALESCE(s.primary_contact_name, ''), COALESCE(s.director_name, ''),
   COALESCE(s.headteacher_name, ''), s.last_enrollment_date, COALESCE(s.shipping_address, ''),
@@ -214,6 +214,9 @@ LEFT JOIN region r ON r.id = s.region_id
 LEFT JOIN district d ON d.id = s.district_id
 LEFT JOIN sub_county sc ON sc.id = s.sub_county_id
 LEFT JOIN parish pa ON pa.id = s.parish_id
+LEFT JOIN school_geo_point gp ON gp.school_id = s.id
+LEFT JOIN field_routes.verified_location vl ON vl.school_id = s.id
+LEFT JOIN field_routes.school_location sl ON sl.school_id = s.id AND sl.target = 'school'
 WHERE s.id = $1`, id).Scan(&sc.ID, &sc.SchoolID, &sc.Name, &sc.Type, &sc.Status, &sc.Readiness, &sc.RegionName,
 		&sc.DistrictID, &sc.DistrictName, &sc.HasDistrict, &sc.SubCountyID, &sc.SubCountyName, &sc.HasSubCounty, &sc.ParishName,
 		&enrollment, &sc.Latitude, &sc.Longitude, &cohortYear, &cohortNumber, &sc.OwnerID, &sc.OwnerNameRaw,

@@ -19,9 +19,92 @@ import (
 // (owner, 2026-11-14).
 var ReviewerRoles = []string{"Program Lead", "CountryDirector", "Admin"}
 
-// CaptureRoles may capture by GPS, and only their first locations are
-// accepted without review. Cluster Leaders and Partners: not yet (owner).
+// CaptureRoles are legacy offline-pack roles whose first captures auto-accept.
 var CaptureRoles = []string{"CCEO", "Program Lead"}
+
+// GPSCaptureRoles may use the interactive mobile/web GPS Coordinate Capture &
+// Update flow for schools within their authorized scope (schoolByRef strictly
+// enforces per-user & partner reach).
+var GPSCaptureRoles = []string{
+	"CCEO",
+	"Program Lead",
+	"CountryDirector",
+	"Admin",
+	"ProjectCoordinator",
+	"PartnerFieldOfficer",
+	"PartnerAdmin",
+}
+
+// MayCaptureGPS reports whether role may use the mobile/web GPS capture flow.
+func MayCaptureGPS(role string) bool { return slices.Contains(GPSCaptureRoles, role) }
+
+// DirectCaptureRoles are Edify staff roles whose normal, accurate, fresh GPS
+// updates apply directly (while large/suspicious moves or poor accuracy still
+// queue for supervisor verification).
+var DirectCaptureRoles = []string{"CCEO", "Program Lead", "CountryDirector", "Admin", "ProjectCoordinator"}
+
+// DecideGPSCapture evaluates a device GPS capture/update from POST /api/schools/{id}/gps-location:
+// - Normal authorized captures & updates (accuracy <= 50m, displacement <= 1000m,
+//   within district tolerance, no version conflict) apply directly & immediately.
+// - Large moves (> 1000m), far-from-district coordinates (> 60km), poor accuracy (> 50m),
+//   or partner updates without direct-save rights are stored as pending verification
+//   so coordinates are never silently overwritten on suspicious readings.
+func DecideGPSCapture(in CaptureInput, st SchoolState, role string, now time.Time, policy Policy) Decision {
+	var flags []string
+	add := func(f string) {
+		if !slices.Contains(flags, f) {
+			flags = append(flags, f)
+		}
+	}
+	d := Decision{}
+	if in.BaseVersion >= 0 && in.BaseVersion != st.Version {
+		add("version_conflict")
+	}
+	if !slices.Contains(DirectCaptureRoles, role) {
+		add("partner_review_required")
+	}
+	if in.AccuracyM > policy.ConfirmM {
+		add("accuracy_poor")
+	} else if in.AccuracyM > policy.GoodM {
+		add("accuracy_fair")
+	}
+	if in.SpreadM > policy.ConfirmM {
+		add("unstable")
+	}
+	if now.Sub(in.CapturedAt) > policy.MaxAge {
+		add("stale_capture")
+	}
+	if in.CapturedAt.Sub(now) > policy.ClockSkew {
+		add("clock_skew")
+	}
+	if in.Point != nil {
+		if st.Placed {
+			m := float64(StraightMeters(st.At, *in.Point))
+			d.DisplacementM = &m
+			if m > policy.LargeMoveM {
+				add("large_move")
+			}
+		}
+		if st.DistrictCentre != nil && float64(StraightMeters(*st.DistrictCentre, *in.Point)) > policy.FarFromDistrictM {
+			add("far_from_district")
+		}
+	}
+	d.Flags = flags
+	blocking := []string{"version_conflict", "partner_review_required", "accuracy_poor", "large_move", "far_from_district", "stale_capture", "clock_skew"}
+	hasBlocking := false
+	for _, f := range flags {
+		if slices.Contains(blocking, f) {
+			hasBlocking = true
+			break
+		}
+	}
+	if !hasBlocking && in.Source == "device" {
+		d.Status = CaptureAccepted
+	} else {
+		d.Status = CapturePending
+	}
+	return d
+}
 
 // MayReview is whether the role decides location reports.
 func MayReview(role string) bool { return slices.Contains(ReviewerRoles, role) }

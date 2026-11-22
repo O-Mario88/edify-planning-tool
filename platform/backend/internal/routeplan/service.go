@@ -22,6 +22,15 @@ type Service struct {
 	logger *slog.Logger
 	// verify is the hold on field_routes (location reports); nil when off.
 	verify *verification
+	// onLocationUpdated notifies downstream caches (e.g. Country Map) on GPS save.
+	onLocationUpdated func()
+}
+
+// WithLocationInvalidator registers a callback invoked whenever authoritative school
+// GPS coordinates change, keeping map & dashboard caches immediately synchronized.
+func (s *Service) WithLocationInvalidator(fn func()) *Service {
+	s.onLocationUpdated = fn
+	return s
 }
 
 // RouterFor is the provider the configuration names, guarded. Every

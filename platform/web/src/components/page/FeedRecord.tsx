@@ -10,6 +10,7 @@
  */
 import { fromJson } from '@bufbuild/protobuf';
 import type { JsonValue } from '@bufbuild/protobuf';
+import { LocateFixed } from 'lucide-react';
 import Link from 'next/link';
 import { useId, useState } from 'react';
 
@@ -22,6 +23,7 @@ import { isPagePart, pagePartUrl } from '@/lib/pagePart';
 import { Badge } from '../blocks/Badge';
 import { RowActions } from '../blocks/RowActions';
 import { recordFactTone } from '../blocks/tones';
+import { GpsCaptureModal } from '../route/GpsCaptureModal';
 import { FeedFacts } from './FeedFacts';
 import { FeedPanel } from './FeedPanel';
 import { FeedTable } from './FeedTable';
@@ -72,10 +74,16 @@ function LoadedPart({ answer, drawerHref, scopeId }: { answer: GetPageResponse; 
 export function FeedRecord({ record, pagePath, drawerHref }: FeedRecordProps) {
   const [open, setOpen] = useState(false);
   const [part, setPart] = useState<Part>({ state: 'idle' });
+  const [gpsOpen, setGpsOpen] = useState(false);
+  const [gpsNotice, setGpsNotice] = useState('');
   const reactId = useId();
   const resolve = (href: string) => resolveHref(pagePath, href);
   const hrefOf = (action: PageAction) => actionHref(action, pagePath, drawerHref);
   const href = resolve(record.href);
+  const schoolFact = record.facts.find((f) => resolve(f.href).startsWith('/schools/'));
+  const schoolRefHref = href.startsWith('/schools/') ? href : schoolFact ? resolve(schoolFact.href) : '';
+  const schoolRefId = schoolRefHref.startsWith('/schools/') ? decodeURIComponent(schoolRefHref.slice('/schools/'.length).split(/[?#]/)[0] || '') : '';
+  const schoolRefName = href.startsWith('/schools/') ? record.title : schoolFact?.value || record.title;
   const loads = isPagePart(record.detailsPath);
   const opens = record.details.length > 0 || loads;
   const stableSlug = (record.pickId || record.href || record.detailsPath || record.title).replace(/[^A-Za-z0-9_-]/g, '-');
@@ -204,12 +212,44 @@ export function FeedRecord({ record, pagePath, drawerHref }: FeedRecordProps) {
           data-record-open=""
           onClick={(event) => event.stopPropagation()}
         >
-          {href ? (
-            <div>
-              <Link href={href} className="inline text-[13px] font-bold text-[var(--edify-text)] hover:underline">
-                {profileLinkLabel(record.title, href)}
-              </Link>
+          {href || schoolRefId ? (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              {href ? (
+                <Link href={href} className="inline text-[13px] font-bold text-[var(--edify-text)] hover:underline">
+                  {profileLinkLabel(record.title, href)}
+                </Link>
+              ) : (
+                <span />
+              )}
+              {schoolRefId ? (
+                <button
+                  type="button"
+                  data-action="record-add-gps"
+                  onClick={() => setGpsOpen(true)}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-[8px] border border-[var(--brand-primary)] bg-white px-2.5 text-[12px] font-semibold text-[var(--brand-primary)] hover:bg-blue-50"
+                >
+                  <LocateFixed className="h-3.5 w-3.5" aria-hidden="true" />
+                  Add School GPS
+                </button>
+              ) : null}
             </div>
+          ) : null}
+          {gpsNotice ? (
+            <p role="status" className="rounded-[8px] border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[12px] font-medium text-emerald-900">
+              {gpsNotice}
+            </p>
+          ) : null}
+          {gpsOpen && schoolRefId ? (
+            <GpsCaptureModal
+              schoolId={schoolRefId}
+              schoolCode={schoolRefId}
+              schoolName={schoolRefName}
+              onClose={() => setGpsOpen(false)}
+              onSaved={(res) => {
+                setGpsOpen(false);
+                setGpsNotice(res.message);
+              }}
+            />
           ) : null}
           {record.details.map((block, index) => {
             if (block.kind.case === 'facts') {

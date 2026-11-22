@@ -22,6 +22,7 @@ import {
   CheckCircle2,
   Clock,
   Flag,
+  LocateFixed,
   Lock,
   MapPin,
   Navigation,
@@ -70,6 +71,7 @@ import type {
   SmartStopData,
 } from '@/lib/routePlanner';
 
+import { GpsCaptureModal } from './GpsCaptureModal';
 import { InAppNavigationPanel } from './InAppNavigationPanel';
 import { RouteIcon } from './RouteIcons';
 import { RouteMap } from './RouteMap';
@@ -223,6 +225,13 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
   const [allNearby, setAllNearby] = useState(Boolean(day.focus));
   const [showReportModal, setShowReportModal] = useState(false);
   const [mobileSheetExpanded, setMobileSheetExpanded] = useState(false);
+  const [gpsModalTarget, setGpsModalTarget] = useState<{
+    schoolId: string;
+    schoolCode: string;
+    schoolName: string;
+    existingPoint?: { lat: number; lng: number } | null;
+    baseVersion?: number;
+  } | null>(null);
 
   const lastSelected = useRef<SchoolPin | null>(null);
   const viewTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1065,6 +1074,16 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
                 void openInAppDirections([selectedPin.schoolId]);
                 setSelectedPin(null);
               }}
+              onCaptureGps={() => {
+                setGpsModalTarget({
+                  schoolId: selectedPin.schoolId,
+                  schoolCode: selectedPin.code,
+                  schoolName: selectedPin.name,
+                  existingPoint: selectedPin.point ? { lat: selectedPin.point.lat, lng: selectedPin.point.lng } : null,
+                  baseVersion: selectedPin.locationVersion || 0,
+                });
+                setSelectedPin(null);
+              }}
             />
           ) : null}
 
@@ -1323,11 +1342,31 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
                   <div className="space-y-1.5 rounded-[12px] border border-amber-200 bg-amber-50/70 p-3 text-[12px] text-amber-950">
                     <p className="font-bold">Excluded Schools ({smartResult.excluded.length})</p>
                     {smartResult.excluded.map((ex) => (
-                      <div key={ex.school_id} className="rounded-[8px] bg-white/85 px-2.5 py-1.5">
-                        <p className="font-semibold">
-                          {ex.school_name} <span className="font-normal text-slate-500">ID {ex.school_code}</span>
-                        </p>
-                        <p className="text-[11px] text-amber-900">{ex.reason}</p>
+                      <div key={ex.school_id} className="flex flex-wrap items-center justify-between gap-2 rounded-[8px] bg-white/85 px-2.5 py-1.5">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold">
+                            {ex.school_name} <span className="font-normal text-slate-500">ID {ex.school_code}</span>
+                          </p>
+                          <p className="text-[11px] text-amber-900">{ex.reason}</p>
+                        </div>
+                        {ex.reason_code === 'missing_gps' || ex.reason_code === 'invalid_gps' ? (
+                          <button
+                            type="button"
+                            data-action="add-school-gps"
+                            onClick={() =>
+                              setGpsModalTarget({
+                                schoolId: ex.school_id,
+                                schoolCode: ex.school_code,
+                                schoolName: ex.school_name,
+                                existingPoint: null,
+                                baseVersion: 0,
+                              })
+                            }
+                            className="inline-flex h-7 shrink-0 items-center gap-1 rounded-[7px] bg-[var(--brand-primary)] px-2.5 text-[11px] font-bold text-white hover:bg-[var(--brand-primary-hover)]"
+                          >
+                            <LocateFixed className="h-3 w-3" aria-hidden="true" /> Add School GPS
+                          </button>
+                        ) : null}
                       </div>
                     ))}
                   </div>
@@ -1394,6 +1433,27 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
           }}
         />
       ) : null}
+
+      {/* Mobile-First School GPS Coordinate Capture Modal (Sections 1–8) */}
+      {gpsModalTarget ? (
+        <GpsCaptureModal
+          schoolId={gpsModalTarget.schoolId}
+          schoolCode={gpsModalTarget.schoolCode}
+          schoolName={gpsModalTarget.schoolName}
+          existingPoint={gpsModalTarget.existingPoint}
+          baseVersion={gpsModalTarget.baseVersion}
+          capturedByName={ownerMeta.name || 'Authenticated Staff'}
+          onClose={() => setGpsModalTarget(null)}
+          onSaved={(res) => {
+            setGpsModalTarget(null);
+            setMessage(res.message);
+            if (res.outcome === 'saved') {
+              void runOptimize();
+              router.refresh();
+            }
+          }}
+        />
+      ) : null}
     </div>
   );
 }
@@ -1404,6 +1464,7 @@ function SchoolPopupCard({
   onClose,
   onSelectForRoute,
   onInAppDirections,
+  onCaptureGps,
   inRoute,
   addHref,
 }: {
@@ -1412,6 +1473,7 @@ function SchoolPopupCard({
   onClose: () => void;
   onSelectForRoute: () => void;
   onInAppDirections: () => void;
+  onCaptureGps: () => void;
   inRoute: boolean;
   addHref: string;
 }) {
@@ -1454,11 +1516,20 @@ function SchoolPopupCard({
             Add to Plan
           </Link>
         ) : null}
+        <button
+          type="button"
+          data-action="popup-gps-capture"
+          onClick={onCaptureGps}
+          className="flex h-9 items-center justify-center gap-1 rounded-[8px] border border-slate-300 text-slate-700 hover:bg-slate-50"
+        >
+          <LocateFixed className="h-3.5 w-3.5" aria-hidden="true" />
+          {pin.point ? 'Update GPS' : 'Add School GPS'}
+        </button>
         {pin.point ? (
           <button
             type="button"
             onClick={onInAppDirections}
-            className="flex h-9 items-center justify-center gap-1 rounded-[8px] bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-hover)]"
+            className="col-span-2 flex h-9 items-center justify-center gap-1 rounded-[8px] bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-hover)]"
           >
             <Navigation className="h-3.5 w-3.5" aria-hidden="true" /> Get Directions
           </button>

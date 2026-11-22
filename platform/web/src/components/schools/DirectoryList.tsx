@@ -14,6 +14,7 @@
  *   - Expanded details show record metadata + the 3-column SSA intervention
  *     breakdown preserving real zero scores and empty states.
  */
+import { LocateFixed } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useTransition } from 'react';
 
@@ -24,6 +25,7 @@ import { Badge } from '../blocks/Badge';
 import { RowActions } from '../blocks/RowActions';
 import { SsaDetailPanel, ssaModelFromDirectory } from '../blocks/SsaDetailPanel';
 import { textTone } from '../blocks/tones';
+import { GpsCaptureModal } from '../route/GpsCaptureModal';
 
 export interface DirectoryListProps {
   readonly schools: readonly DirectorySchool[];
@@ -94,6 +96,7 @@ function Row({
   onToggle,
   picked,
   onPick,
+  onOpenGps,
 }: {
   school: DirectorySchool;
   props: DirectoryListProps;
@@ -101,6 +104,7 @@ function Row({
   onToggle: () => void;
   picked: boolean;
   onPick: (checked: boolean) => void;
+  onOpenGps: (school: DirectorySchool) => void;
 }) {
   const detailsId = `school-directory-details-${school.id}`;
   const schoolHref = props.mayOpenProfile && school.schoolId ? `/schools/${encodeURIComponent(school.schoolId)}` : '';
@@ -242,11 +246,26 @@ function Row({
           onClick={(event) => event.stopPropagation()}
           className="space-y-3 border-t border-[var(--edify-table-divider)] bg-[var(--edify-card-surface)] px-4 py-3"
         >
-          {schoolHref ? (
-            <div>
-              <Link href={schoolHref} className="inline text-[13px] font-bold text-[var(--edify-text)] hover:underline">
-                Open {school.name} school profile
-              </Link>
+          {schoolHref || !props.readOnly ? (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              {schoolHref ? (
+                <Link href={schoolHref} className="inline text-[13px] font-bold text-[var(--edify-text)] hover:underline">
+                  Open {school.name} school profile
+                </Link>
+              ) : (
+                <span />
+              )}
+              {!props.readOnly ? (
+                <button
+                  type="button"
+                  data-action="directory-add-gps"
+                  onClick={() => onOpenGps(school)}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-[8px] border border-[var(--brand-primary)] bg-white px-2.5 text-[12px] font-semibold text-[var(--brand-primary)] hover:bg-blue-50"
+                >
+                  <LocateFixed className="h-3.5 w-3.5" aria-hidden="true" />
+                  Add / Update School GPS
+                </button>
+              ) : null}
             </div>
           ) : null}
 
@@ -308,6 +327,7 @@ export function DirectoryList(props: DirectoryListProps) {
   const [bulkMode, setBulkMode] = useState<'cluster' | 'project' | null>(null);
   const [bulkTarget, setBulkTarget] = useState('');
   const [bulkMsg, setBulkMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [gpsSchool, setGpsSchool] = useState<DirectorySchool | null>(null);
   const [pending, startTransition] = useTransition();
   const allPicked = props.schools.length > 0 && picked.length === props.schools.length;
 
@@ -464,6 +484,7 @@ export function DirectoryList(props: DirectoryListProps) {
                 onToggle={() => setOpenId(openId === school.id ? null : school.id)}
                 picked={picked.includes(school.id)}
                 onPick={(checked) => setPicked(checked ? [...picked, school.id] : picked.filter((id) => id !== school.id))}
+                onOpenGps={(s) => setGpsSchool(s)}
               />
             ))}
           </ul>
@@ -473,6 +494,18 @@ export function DirectoryList(props: DirectoryListProps) {
           {props.emptyMessage}
         </p>
       )}
+      {gpsSchool ? (
+        <GpsCaptureModal
+          schoolId={gpsSchool.id}
+          schoolCode={gpsSchool.schoolId}
+          schoolName={gpsSchool.name}
+          onClose={() => setGpsSchool(null)}
+          onSaved={(res) => {
+            setGpsSchool(null);
+            setBulkMsg({ ok: true, text: res.message });
+          }}
+        />
+      ) : null}
     </div>
   );
 }

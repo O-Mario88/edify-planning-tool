@@ -5,11 +5,13 @@
  * buttons, short words, the accuracy in plain sight, easy retry, and never
  * a word suggesting the server has the change when only the phone does.
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Check, Crosshair, MapPin, RefreshCw, X } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { RouteMapView } from '../screens/route/RouteMapView';
+import type { MapScene } from '../screens/route/routeMapHtml';
 import { fonts, radius, spacing, useTheme } from '../theme';
 import { captureGps, prepareGps, PROBLEM_TEXT } from './gps';
 import type { GpsCapture, GpsProblem } from './gps';
@@ -54,6 +56,7 @@ export function CaptureFlow({ school, target, onClose }: CaptureFlowProps) {
   const [reason, setReason] = useState('');
   const [other, setOther] = useState('');
   const [access, setAccess] = useState(target === 'school' ? '' : school.accessNote);
+  const [confirmedAtSchool, setConfirmedAtSchool] = useState(false);
   const [error, setError] = useState('');
   const gps = useRef<GpsCapture | null>(null);
 
@@ -90,6 +93,10 @@ export function CaptureFlow({ school, target, onClose }: CaptureFlowProps) {
   };
 
   const save = async (fix: GpsFix) => {
+    if (!confirmedAtSchool) {
+      setError('Please confirm that you are physically at the school premises.');
+      return;
+    }
     const why = reason === 'Other' ? other.trim() : reason;
     if (kind === 'correction' && !why) {
       setError('Choose why the location is being corrected.');
@@ -119,7 +126,7 @@ export function CaptureFlow({ school, target, onClose }: CaptureFlowProps) {
     }
   };
 
-  const title = target === 'entrance' ? 'School entrance' : kind === 'new' ? 'Capture School Location' : 'Replace Location';
+  const title = target === 'entrance' ? 'School entrance' : kind === 'new' ? 'Add School GPS' : 'Update School GPS';
   const previous = target === 'entrance' ? (school.entranceLat !== null ? { lat: school.entranceLat, lng: school.entranceLng! } : null) : school.lat !== null ? { lat: school.lat, lng: school.lng! } : null;
 
   return (
@@ -174,6 +181,7 @@ export function CaptureFlow({ school, target, onClose }: CaptureFlowProps) {
           ) : null}
           {step.name === 'result' || step.name === 'saving' ? (
             <Result
+              school={school}
               fix={step.name === 'result' ? step.fix : null}
               previous={previous}
               policy={policy}
@@ -182,12 +190,17 @@ export function CaptureFlow({ school, target, onClose }: CaptureFlowProps) {
               reason={reason}
               other={other}
               access={access}
+              confirmedAtSchool={confirmedAtSchool}
               error={error}
               isSaving={step.name === 'saving'}
               onReason={setReason}
               onOther={setOther}
               onAccess={setAccess}
-              onRetry={() => void start()}
+              onConfirmAtSchool={setConfirmedAtSchool}
+              onRetry={() => {
+                setConfirmedAtSchool(false);
+                void start();
+              }}
               onSave={(fix) => void save(fix)}
             />
           ) : null}
@@ -199,6 +212,7 @@ export function CaptureFlow({ school, target, onClose }: CaptureFlowProps) {
 }
 
 interface ResultProps {
+  readonly school: CachedSchool;
   readonly fix: GpsFix | null;
   readonly previous: { lat: number; lng: number } | null;
   readonly policy: { goodM: number; confirmM: number };
@@ -207,26 +221,63 @@ interface ResultProps {
   readonly reason: string;
   readonly other: string;
   readonly access: string;
+  readonly confirmedAtSchool: boolean;
   readonly error: string;
   readonly isSaving: boolean;
   onReason(next: string): void;
   onOther(next: string): void;
   onAccess(next: string): void;
+  onConfirmAtSchool(next: boolean): void;
   onRetry(): void;
   onSave(fix: GpsFix): void;
 }
 
-function Result({ fix, previous, policy, kind, target, reason, other, access, error, isSaving, onReason, onOther, onAccess, onRetry, onSave }: ResultProps) {
+function Result({
+  school,
+  fix,
+  previous,
+  policy,
+  kind,
+  target,
+  reason,
+  other,
+  access,
+  confirmedAtSchool,
+  error,
+  isSaving,
+  onReason,
+  onOther,
+  onAccess,
+  onConfirmAtSchool,
+  onRetry,
+  onSave,
+}: ResultProps) {
   const { colors } = useTheme();
   // Kept across the Saving moment.
   const last = useRef<GpsFix | null>(fix);
   if (fix) last.current = fix;
   const shown = last.current;
+  const previewScene = useMemo<MapScene>(() => {
+    if (!shown) return { pins: [], path: [], legend: [], join: false };
+    const pins: MapScene['pins'] = [
+      { id: 'proposed-new', order: 'NEW', name: 'Proposed New GPS', detail: `${shown.lat.toFixed(6)}, ${shown.lng.toFixed(6)}`, lat: shown.lat, lng: shown.lng, tone: '#16a34a' },
+    ];
+    const legend: MapScene['legend'] = [{ label: 'Proposed New GPS', tone: '#16a34a' }];
+    if (previous) {
+      pins.push({ id: 'previous-old', order: 'OLD', name: 'Existing Stored GPS', detail: `${previous.lat.toFixed(6)}, ${previous.lng.toFixed(6)}`, lat: previous.lat, lng: previous.lng, tone: '#64748b' });
+      legend.push({ label: 'Existing Stored GPS', tone: '#64748b' });
+    }
+    return { pins, path: [], legend, join: false, primaryId: 'proposed-new' };
+  }, [shown, previous]);
   if (!shown) return null;
   const band = bandOf(shown.accuracy, policy);
   const moved = previous ? metersBetween(previous, shown) : null;
+  const largeMove = moved !== null && moved > 1000;
   return (
     <>
+      <View style={[styles.previewMap, { borderColor: colors.border }]}>
+        <RouteMapView scene={previewScene} onSelect={() => undefined} />
+      </View>
       <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.card }]}>
         <View style={styles.row}>
           <MapPin size={20} color={BLUE} />
@@ -235,17 +286,39 @@ function Result({ fix, previous, policy, kind, target, reason, other, access, er
           </Text>
         </View>
         <Text style={[styles.band, { color: BAND_COLOR[band] }]}>
-          Accuracy {Math.round(shown.accuracy)} m · {BAND_TEXT[band]}
+          GPS accuracy ±{Math.round(shown.accuracy)} m · {BAND_TEXT[band]}
         </Text>
         <Text style={[styles.hint, { color: colors.textMuted }]}>
-          {shown.sampleCount} readings, {Math.round(shown.spread)} m apart. The accuracy is what the phone reports.
+          School: {school.name} (ID {school.code || '—'})
+        </Text>
+        <Text style={[styles.hint, { color: colors.textMuted }]}>
+          Captured: {new Date(shown.at).toLocaleString()} · Source: Device location services
+        </Text>
+        <Text style={[styles.hint, { color: colors.textMuted }]}>
+          {shown.sampleCount} readings, {Math.round(shown.spread)} m spread.
         </Text>
         {moved !== null ? (
-          <Text style={[styles.hint, { color: colors.text }]}>
-            {moved < 1000 ? `${Math.round(moved)} m` : `${(moved / 1000).toFixed(1)} km`} from the point on record (straight line)
+          <Text style={[styles.hint, { color: largeMove ? '#b91c1c' : colors.text }]}>
+            {largeMove ? 'Warning — large move (>1 km): ' : ''}
+            {moved < 1000 ? `${Math.round(moved)} m` : `${(moved / 1000).toFixed(2)} km`} from stored coordinates
+            {largeMove ? ' (will be held for supervisor review)' : ''}
           </Text>
         ) : null}
       </View>
+      <Pressable
+        onPress={() => onConfirmAtSchool(!confirmedAtSchool)}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: confirmedAtSchool }}
+        style={[
+          styles.confirmRow,
+          { borderColor: confirmedAtSchool ? BLUE : colors.border, backgroundColor: confirmedAtSchool ? '#e8f1fd' : colors.card },
+        ]}
+      >
+        <View style={[styles.checkbox, { borderColor: confirmedAtSchool ? BLUE : colors.border, backgroundColor: confirmedAtSchool ? BLUE : 'transparent' }]}>
+          {confirmedAtSchool ? <Check size={14} color="#fff" /> : null}
+        </View>
+        <Text style={[styles.confirmText, { color: colors.text }]}>I confirm I am physically at {school.name}.</Text>
+      </Pressable>
       {kind === 'correction' ? (
         <View style={styles.group}>
           <Text style={[styles.label, { color: colors.text }]}>Why is it being corrected?</Text>
@@ -296,21 +369,21 @@ function Result({ fix, previous, policy, kind, target, reason, other, access, er
       ) : null}
       {band === 'recapture' ? (
         <>
-          <BigButton label="Capture again" icon={<RefreshCw size={20} color="#fff" />} onPress={onRetry} isDisabled={isSaving} />
-          <Pressable onPress={() => onSave(shown)} disabled={isSaving} accessibilityRole="button" style={styles.plain}>
-            <Text style={[styles.plainText, { color: colors.textMuted }]}>Save anyway (a reviewer will check it)</Text>
+          <BigButton label="Retake GPS Reading" icon={<RefreshCw size={20} color="#fff" />} onPress={onRetry} isDisabled={isSaving} />
+          <Pressable onPress={() => onSave(shown)} disabled={isSaving || !confirmedAtSchool} accessibilityRole="button" style={[styles.plain, !confirmedAtSchool && styles.dim]}>
+            <Text style={[styles.plainText, { color: colors.textMuted }]}>Save School Location for Review</Text>
           </Pressable>
         </>
       ) : (
         <>
           <BigButton
-            label={isSaving ? 'Saving…' : band === 'confirm' ? 'Confirm and save' : 'Save location'}
+            label={isSaving ? 'Saving…' : 'Save School Location'}
             icon={<Check size={22} color="#fff" />}
             onPress={() => onSave(shown)}
-            isDisabled={isSaving}
+            isDisabled={isSaving || !confirmedAtSchool}
           />
           <Pressable onPress={onRetry} disabled={isSaving} accessibilityRole="button" style={styles.plain}>
-            <Text style={[styles.plainText, { color: BLUE }]}>Capture again</Text>
+            <Text style={[styles.plainText, { color: BLUE }]}>Retake GPS Reading</Text>
           </Pressable>
         </>
       )}
@@ -327,13 +400,13 @@ function Saved({ capture, isSignedIn, onDone }: { readonly capture: QueuedCaptur
         <Check size={34} color={local ? '#b45309' : BLUE} />
       </View>
       <Text style={[styles.lead, { color: colors.text }]} accessibilityLiveRegion="polite">
-        {local ? 'Saved on this phone' : STATUS_TEXT[capture.status]}
+        {local ? 'Pending Sync (Saved Offline)' : STATUS_TEXT[capture.status]}
       </Text>
       <Text style={[styles.hint, { color: colors.textMuted, textAlign: 'center' }]}>
         {local
           ? isSignedIn
-            ? 'Edify could not be reached. It will sync on its own when there is a connection.'
-            : 'You are offline. It will sync on its own when you are back online.'
+            ? 'Not saved to PostgreSQL yet. Edify will sync automatically once internet connectivity returns.'
+            : 'You are offline. Marked Pending Sync — will upload automatically when back online.'
           : capture.note}
       </Text>
       <BigButton label="Done" onPress={onDone} />
@@ -363,6 +436,10 @@ const styles = StyleSheet.create({
   center: { alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xl },
   problem: { fontFamily: fonts.medium, fontSize: 15, borderRadius: radius.sm, padding: spacing.md, lineHeight: 21 },
   card: { borderWidth: 1, borderRadius: radius.md, padding: spacing.md, gap: 6 },
+  previewMap: { height: 180, borderRadius: radius.md, borderWidth: 1, overflow: 'hidden' },
+  confirmRow: { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1.5, borderRadius: radius.md, padding: spacing.md },
+  checkbox: { width: 22, height: 22, borderRadius: 5, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  confirmText: { flex: 1, fontFamily: fonts.semibold, fontSize: 14 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   coords: { fontFamily: fonts.semibold, fontSize: 18 },
   band: { fontFamily: fonts.semibold, fontSize: 16 },

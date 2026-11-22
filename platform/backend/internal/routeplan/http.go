@@ -54,6 +54,7 @@ func (s *Service) RegisterHTTP(mux *http.ServeMux, authn Authenticator, broker *
 		s.httpVerifyRoadCondition(w, r, p, broker)
 	})
 	handle("GET /api/v1/scheduling/calendar-rules", s.httpCalendarRules)
+	s.registerGPSHTTP(mux, authn, broker)
 }
 
 func writeJSON(w http.ResponseWriter, status int, payload any) {

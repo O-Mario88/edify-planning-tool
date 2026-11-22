@@ -11,7 +11,7 @@ import { create } from '@bufbuild/protobuf';
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Crosshair, DoorOpen, MapPin, Navigation } from 'lucide-react-native';
+import { Crosshair, DoorOpen, MapPin, MapPinOff, Navigation } from 'lucide-react-native';
 
 import { SchoolPinSchema } from '../gen/edify/routes/v1/routes_pb';
 import { fonts, radius, spacing, useTheme } from '../theme';
@@ -94,12 +94,27 @@ export function LocationPanel({ school, verifiedByName = '', footer, onCaptured,
   };
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]} accessibilityLabel="Location and directions">
-      <View style={styles.title}>
-        <MapPin size={20} color={BLUE} />
-        <Text style={[styles.titleText, { color: colors.text }]} accessibilityRole="header">
-          Location &amp; Directions
-        </Text>
+    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]} accessibilityLabel="School location and directions">
+      <View style={styles.titleRow}>
+        <View style={styles.title}>
+          <MapPin size={20} color={BLUE} />
+          <Text style={[styles.titleText, { color: colors.text }]} accessibilityRole="header">
+            School Location
+          </Text>
+        </View>
+        {waiting ? (
+          <View style={[styles.badge, styles.badgePending]}>
+            <Text style={styles.badgePendingText}>Pending Sync</Text>
+          </View>
+        ) : hasPoint ? (
+          <View style={[styles.badge, styles.badgeRecorded]}>
+            <Text style={styles.badgeRecordedText}>GPS Recorded</Text>
+          </View>
+        ) : (
+          <View style={[styles.badge, styles.badgeMissing]}>
+            <Text style={styles.badgeMissingText}>GPS Missing</Text>
+          </View>
+        )}
       </View>
       {scene.pins.length ? (
         <View style={[styles.map, { borderColor: colors.border }]}>
@@ -108,12 +123,13 @@ export function LocationPanel({ school, verifiedByName = '', footer, onCaptured,
       ) : null}
       {hasPoint ? (
         <>
-          <Fact label="Current location" value={`${school.lat!.toFixed(6)}, ${school.lng!.toFixed(6)}`} />
+          <Fact label="Latitude / Longitude" value={`${school.lat!.toFixed(6)}, ${school.lng!.toFixed(6)}`} />
           <Fact label="Location status" value={`${STATUS[school.locationStatus] ?? school.locationStatus}${school.version > 0 ? ` · version ${school.version}` : ''}`} />
           <Fact
-            label="Date last verified"
+            label="Verification date"
             value={school.verifiedAt ? `${dayOf(school.verifiedAt)}${verifiedByName ? ` by ${verifiedByName}` : ''}` : 'Not yet verified in the field'}
           />
+          <Fact label="Source" value={school.locationStatus === 'verified' ? 'Device location services' : 'School Directory'} />
           {school.lastConfirmedAt ? <Fact label="Last checked on a visit" value={dayOf(school.lastConfirmedAt)} /> : null}
           {school.entranceLat !== null ? <Fact label="Entrance" value={`${school.entranceLat.toFixed(6)}, ${school.entranceLng!.toFixed(6)}`} /> : null}
           {school.accessNote ? <Fact label="Directions" value={school.accessNote} /> : null}
@@ -121,7 +137,7 @@ export function LocationPanel({ school, verifiedByName = '', footer, onCaptured,
             {canCapture ? (
               <Pressable onPress={() => setCapturing('school')} style={styles.primary} accessibilityRole="button">
                 <Crosshair size={18} color="#fff" />
-                <Text style={styles.primaryText}>Verify / Replace Location</Text>
+                <Text style={styles.primaryText}>Update GPS Coordinates</Text>
               </Pressable>
             ) : null}
             <Pressable onPress={directions} style={styles.outline} accessibilityRole="button">
@@ -138,12 +154,15 @@ export function LocationPanel({ school, verifiedByName = '', footer, onCaptured,
         </>
       ) : (
         <View style={styles.none}>
-          <Text style={styles.noneTitle}>GPS Location Not Captured</Text>
-          <Text style={styles.noneText}>The school still appears in every list and plan. Directions and route planning need a location.</Text>
+          <View style={styles.noneHeader}>
+            <MapPinOff size={22} color="#92400e" />
+            <Text style={styles.noneTitle}>No verified GPS location has been recorded for this school.</Text>
+          </View>
+          <Text style={styles.noneText}>Capture the school&apos;s location while physically at the premises.</Text>
           {canCapture ? (
             <Pressable onPress={() => setCapturing('school')} style={[styles.primary, styles.wide]} accessibilityRole="button">
               <Crosshair size={20} color="#fff" />
-              <Text style={styles.primaryText}>Capture School Location</Text>
+              <Text style={styles.primaryText}>Tap to Add GPS Coordinates</Text>
             </Pressable>
           ) : null}
         </View>
@@ -177,8 +196,16 @@ function Fact({ label, value }: { readonly label: string; readonly value: string
 
 const styles = StyleSheet.create({
   card: { borderWidth: 1, borderRadius: radius.md, padding: spacing.md, gap: 6, marginTop: spacing.md },
-  title: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: spacing.sm },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: spacing.sm },
+  title: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   titleText: { fontFamily: fonts.semibold, fontSize: 16 },
+  badge: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
+  badgeRecorded: { backgroundColor: '#dcfce7' },
+  badgeRecordedText: { fontFamily: fonts.semibold, fontSize: 12, color: '#166534' },
+  badgeMissing: { backgroundColor: '#fef3c7' },
+  badgeMissingText: { fontFamily: fonts.semibold, fontSize: 12, color: '#92400e' },
+  badgePending: { backgroundColor: '#ffedd5' },
+  badgePendingText: { fontFamily: fonts.semibold, fontSize: 12, color: '#9a3412' },
   map: { height: 220, borderRadius: radius.sm, borderWidth: 1, overflow: 'hidden', marginBottom: spacing.sm },
   label: { fontFamily: fonts.regular, fontSize: 13, marginTop: spacing.xs },
   value: { fontFamily: fonts.medium, fontSize: 14 },
@@ -191,7 +218,8 @@ const styles = StyleSheet.create({
   link: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44 },
   linkText: { fontFamily: fonts.semibold, fontSize: 15, color: BLUE },
   none: { backgroundColor: '#fffbeb', borderRadius: radius.sm, padding: spacing.md, gap: 6 },
-  noneTitle: { fontFamily: fonts.semibold, fontSize: 16, color: '#92400e' },
+  noneHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  noneTitle: { flex: 1, fontFamily: fonts.semibold, fontSize: 15, color: '#92400e' },
   noneText: { fontFamily: fonts.regular, fontSize: 14, color: '#92400e' },
   queue: { backgroundColor: '#fff7ed', borderRadius: radius.sm, padding: spacing.sm, gap: 4, marginTop: spacing.sm },
   queueText: { fontFamily: fonts.medium, fontSize: 14 },

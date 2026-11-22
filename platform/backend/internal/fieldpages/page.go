@@ -140,8 +140,12 @@ func (s *Service) schoolMap(ctx context.Context, p auth.Principal) (*screensv1.G
 	where := schooldirectory.ReadScope(scope, arg)
 	var total, located int64
 	if err := s.db.QueryRow(ctx, `SELECT COUNT(*),
-  COUNT(*) FILTER (WHERE COALESCE(g.latitude, s.latitude) IS NOT NULL AND COALESCE(g.longitude, s.longitude) IS NOT NULL)
-FROM school s LEFT JOIN LATERAL (SELECT latitude, longitude FROM school_geo_point gp WHERE gp.school_id = s.id LIMIT 1) g ON true
+  COUNT(*) FILTER (WHERE COALESCE(sl.lat, vl.lat, g.latitude, s.latitude) IS NOT NULL AND COALESCE(sl.lng, vl.lng, g.longitude, s.longitude) IS NOT NULL
+    AND NOT (COALESCE(sl.lat, vl.lat, g.latitude, s.latitude) = 0 AND COALESCE(sl.lng, vl.lng, g.longitude, s.longitude) = 0))
+FROM school s
+LEFT JOIN LATERAL (SELECT latitude, longitude FROM school_geo_point gp WHERE gp.school_id = s.id LIMIT 1) g ON true
+LEFT JOIN field_routes.verified_location vl ON vl.school_id = s.id
+LEFT JOIN field_routes.school_location sl ON sl.school_id = s.id AND sl.target = 'school'
 WHERE `+where, args...).Scan(&total, &located); err != nil {
 		return nil, fmt.Errorf("fieldpages: counting the schools with coordinates: %w", err)
 	}

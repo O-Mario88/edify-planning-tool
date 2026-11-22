@@ -169,6 +169,14 @@ func (g *Guarded) Name() string { return g.inner.Name() }
 // Stats is the running count.
 func (g *Guarded) Stats() *Stats { return &g.stats }
 
+// ClearCache invalidates all cached road matrices and polylines immediately
+// (e.g., after an authorized school GPS coordinate capture or update).
+func (g *Guarded) ClearCache() {
+	g.mu.Lock()
+	g.cache = map[string]cached{}
+	g.mu.Unlock()
+}
+
 // Quota returns current rate/quota counters safely.
 func (g *Guarded) Quota() QuotaSnapshot {
 	g.mu.Lock()

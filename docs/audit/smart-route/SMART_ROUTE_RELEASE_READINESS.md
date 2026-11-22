@@ -11,11 +11,12 @@
 
 | Suite / Gate | Scope | Result |
 |---|---|---|
-| **Go Backend (`go test -race`)** | `internal/routeplan`, `internal/routeplan/schema`, `internal/dbguard`, `internal/ssadecision`, `internal/server`, `internal/activities` | **PASS (0 races, 0 failures, migration 0007 lint PASS, `dbguard` PASS)** |
-| **Web Frontend (TypeScript + Vitest + Next.js Build)** | `tsc --noEmit`, `56/56` Vitest files (`351` tests), `44/44` production routes | **PASS (0 errors)** |
+| **Go Backend (`go test -race`)** | `internal/routeplan`, `internal/routeplan/schema`, `internal/oversightportfolio`, `internal/schoolprofile`, `internal/dbguard`, `internal/server` | **PASS (0 races, 0 failures, migration 0007 lint PASS, `dbguard` PASS)** |
+| **Web Frontend (TypeScript + Vitest + Next.js Build)** | `tsc --noEmit`, `57/57` Vitest files (`353` tests), `45/45` production routes (incl. `/api/schools/[schoolId]/gps-location`) | **PASS (0 errors)** |
 | **Mobile App (TypeScript + Jest)** | `tsc --noEmit`, `35/35` Jest suites (`277` tests) | **PASS (0 errors)** |
 | **Live OSRM Road Routing & 5-Mode Optimization (Tests A–G)** | Real Mukono schools, 1.70× road-vs-straight, 5 modes saving 8.3–9.6 km, closure verification, missing GPS exclusion, DB persistence | **PASS** |
 | **Real Chromium Playwright UI (Tests H, I, J, L)** | 3-panel desktop, road-following polyline, in-app turn-by-turn directions (`0` external links, `0` popups), 5-zone full-field date click (`0` chevrons, `0` native date inputs), mobile `0px` overflow, `0` runtime errors | **PASS** |
+| **School GPS Capture & Update Acceptance Suite (12/12 Tests)** | Real Chromium geolocation, live Add → Update button transition, audit history preservation, instant OSRM route + Country Map (`689 -> 691` pins) cache invalidation, permission denied, accuracy/stale/RBAC/`409 Conflict` guards, honest offline `Pending Sync` → online sync, >1 km safety hold | **PASS (12/12)** |
 | **1,000-User Concurrent Load Benchmark (Test K)** | `1,000` requests, `100` concurrency, `0` errors, `1,206 req/s`, `P95 232.6 ms`, `0` duplicate route rows | **PASS** |
 
 ## 2. Section-18 Non-Negotiable Acceptance Checklist (Honest Status)
