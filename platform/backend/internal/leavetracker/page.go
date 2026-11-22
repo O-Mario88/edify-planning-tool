@@ -134,7 +134,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if err != nil {
 		return nil, true, err
 	}
-	if !complete {
+	if !complete && !pagegate.DjangoAbsent(ctx) {
 		return nil, false, nil
 	}
 	if err := s.fill(ctx, team, ids, local.Year(), today); err != nil {

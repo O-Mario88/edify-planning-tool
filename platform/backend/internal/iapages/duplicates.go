@@ -58,6 +58,9 @@ func text(t string) *screensv1.PagePanelItem {
 // Build answers path for p. served is false for a path this package does not
 // answer.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if path == LearningPath || path == "/ia/learning" {
+		return s.learning(ctx, p, query)
+	}
 	if path != DuplicatesPath && path != ReturnedPath && path != HistoryPath && path != PartnerEvidencePath && path != SamplesPath && path != AnalyticsPath && path != StoriesPath && path != ComparePath && path != ReportsPath && path != LendingPath && path != VerificationPath && path != DashboardPath && path != NotificationsPath && path != UnmatchedPath && path != UploadHistoryPath && path != ManualPath && path != UploadCenterPath {
 		return nil, false, nil
 	}

@@ -97,7 +97,7 @@ VALUES ('gtad-annual-1', now(), now(), '2099', 'Uganda', 0, 0, 0, 0, 0, 0, 0, 0,
 	if err != nil {
 		t.Fatalf("with a policy waiting on HR: %v", err)
 	}
-	if !strings.Contains(got, "Publish ") || !strings.Contains(got, "HR polic") || !strings.Contains(got, "/hr/policies") {
+	if !strings.Contains(got, "Publish ") || !strings.Contains(got, "HR polic") || !strings.Contains(got, "/policy-compliance") {
 		t.Fatalf("with a policy waiting on HR: expected native Go HR policy todo, got: %s", got)
 	}
 }

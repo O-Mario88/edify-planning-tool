@@ -44,8 +44,9 @@ func (s *Service) GetPage(
 	}
 	// When no existing application is configured (Django-absent cutover),
 	// Go renders pages natively for desktop browsers too instead of handing
-	// desktop readings off to an absent upstream.
+	// desktop readings or lazy-seed edge cases off to an absent upstream.
 	ctx = pagegate.WithDesktop(ctx, message.GetDesktop() && s.existingApp != nil)
+	ctx = pagegate.WithDjangoAbsent(ctx, s.existingApp == nil)
 	if principal, ok := auth.PrincipalFrom(ctx); ok {
 		effective := principal
 		if principal.InActingAppointment {

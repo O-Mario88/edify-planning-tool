@@ -146,8 +146,12 @@ func served(query url.Values) bool {
 	return true
 }
 
-// Build answers /dashboard for a field officer or a Programme Lead.
+// Build answers /dashboard for a field officer or a Programme Lead, and
+// /analytics/country-director/drilldown for Country Director oversight.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if path == CDDrilldownPath {
+		return s.buildCDDrilldown(ctx, p, query)
+	}
 	// The desktop page differs from the phone's (its own header and the
 	// parts marked mobile-home-hide), which Go does not build yet: a desktop
 	// reading is the existing page's (pagegate.Desktop).

@@ -439,7 +439,7 @@ ORDER BY due_date ASC NULLS LAST, assigned_at ASC LIMIT 15`, r.p.UserID)
 			Category: "Planning", Priority: prio,
 			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "warning",
 			Linked: schoolName, ActionLabel: "Open Planning Oversight",
-			ActionURL: "/planning/oversight", Shape: "/planning/oversight",
+			ActionURL: "/team-planning-oversight/", Shape: "/team-planning-oversight/",
 			Actionable: true, Due: due,
 		}
 		return withDue(t, r.today), nil
@@ -675,7 +675,7 @@ func iaQueueTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "warning",
 			DueLabel: "—", DueTone: "neutral",
 			Linked: plural(unmatched, "row"), ActionLabel: "Open Unmatched",
-			ActionURL: "/ia/unmatched", Shape: "/ia/unmatched",
+			ActionURL: "/ssa/unmatched", Shape: "/ssa/unmatched",
 			Actionable: true, Due: &r.today,
 		})
 	}
@@ -686,7 +686,7 @@ func iaQueueTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "warning",
 			DueLabel: "—", DueTone: "neutral",
 			Linked: plural(duplicates, "duplicate"), ActionLabel: "Open Duplicates",
-			ActionURL: "/ia/duplicates", Shape: "/ia/duplicates",
+			ActionURL: "/ia/duplicates/", Shape: "/ia/duplicates/",
 			Actionable: true, Due: &r.today,
 		})
 	}
@@ -697,7 +697,7 @@ func iaQueueTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info",
 			DueLabel: "—", DueTone: "neutral",
 			Linked: plural(samples, "sample"), ActionLabel: "Open Samples",
-			ActionURL: "/ia/samples", Shape: "/ia/samples",
+			ActionURL: "/ia/samples/", Shape: "/ia/samples/",
 			Actionable: true, Due: &r.today,
 		})
 	}
@@ -747,7 +747,7 @@ func learningReviewTodos(ctx context.Context, s *Service, r *reader) ([]todo, er
 			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "warning",
 			DueLabel: "—", DueTone: "neutral",
 			Linked: plural(conclusions, "conclusion"), ActionLabel: "Open Lending Impact",
-			ActionURL: "/ia/lending", Shape: "/ia/lending",
+			ActionURL: "/ia/lending-evidence/", Shape: "/ia/lending-evidence/",
 			Actionable: true, Due: &r.today,
 		})
 	}
@@ -757,8 +757,8 @@ func learningReviewTodos(ctx context.Context, s *Service, r *reader) ([]todo, er
 			Category: rules.IA.Category, Priority: "medium",
 			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info",
 			DueLabel: "—", DueTone: "neutral",
-			Linked: plural(findings, "finding"), ActionLabel: "Open Impact Reports",
-			ActionURL: "/ia/reports", Shape: "/ia/reports",
+			Linked: plural(findings, "finding"), ActionLabel: "Open Impact Learning",
+			ActionURL: "/ia/learning/", Shape: "/ia/learning/",
 			Actionable: true, Due: &r.today,
 		})
 	}
@@ -782,7 +782,7 @@ WHERE status NOT IN ('published', 'archived', 'released')`).Scan(&n); err != nil
 		StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info",
 		DueLabel: "—", DueTone: "neutral",
 		Linked: plural(n, "report"), ActionLabel: "Open Impact Reports",
-		ActionURL: "/ia/reports", Shape: "/ia/reports",
+		ActionURL: "/ia/impact-reports/", Shape: "/ia/impact-reports/",
 		Actionable: true, Due: &r.today,
 	}}, nil
 }
@@ -804,7 +804,7 @@ WHERE audience = 'donor' AND status = 'pending_approval'`).Scan(&n); err != nil 
 		StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "warning",
 		DueLabel: "—", DueTone: "neutral",
 		Linked: plural(n, "release"), ActionLabel: "Open Impact Reports",
-		ActionURL: "/ia/reports", Shape: "/ia/reports",
+		ActionURL: "/ia/impact-reports/", Shape: "/ia/impact-reports/",
 		Actionable: true, Due: &r.today,
 	}}, nil
 }
@@ -826,7 +826,7 @@ func loanTodosIA(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "warning",
 			DueLabel: "—", DueTone: "neutral",
 			Linked: plural(loans, "loan"), ActionLabel: "Open Lending",
-			ActionURL: "/ia/lending", Shape: "/ia/lending",
+			ActionURL: "/ia/lending-evidence/", Shape: "/ia/lending-evidence/",
 			Actionable: true, Due: &r.today,
 		})
 	}
@@ -837,7 +837,7 @@ func loanTodosIA(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "warning",
 			DueLabel: "—", DueTone: "neutral",
 			Linked: plural(reqs, "verification"), ActionLabel: "Open Lending",
-			ActionURL: "/ia/lending", Shape: "/ia/lending",
+			ActionURL: "/ia/lending-evidence/", Shape: "/ia/lending-evidence/",
 			Actionable: true, Due: &r.today,
 		})
 	}
@@ -848,7 +848,7 @@ func loanTodosIA(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info",
 			DueLabel: "—", DueTone: "neutral",
 			Linked: plural(snapshots, "snapshot"), ActionLabel: "Open Lending",
-			ActionURL: "/ia/lending", Shape: "/ia/lending",
+			ActionURL: "/ia/lending-evidence/", Shape: "/ia/lending-evidence/",
 			Actionable: true, Due: &r.today,
 		})
 	}
@@ -880,7 +880,7 @@ func evidenceTodosIA(ctx context.Context, s *Service, r *reader) ([]todo, error)
 			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "warning",
 			DueLabel: "—", DueTone: "neutral",
 			Linked: plural(pendingEvidence, "record"), ActionLabel: "Open Stories & Evidence",
-			ActionURL: "/ia/stories", Shape: "/ia/stories",
+			ActionURL: "/ia/stories/", Shape: "/ia/stories/",
 			Actionable: true, Due: &r.today,
 		})
 	}
@@ -891,7 +891,7 @@ func evidenceTodosIA(ctx context.Context, s *Service, r *reader) ([]todo, error)
 			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info",
 			DueLabel: "—", DueTone: "neutral",
 			Linked: plural(stories, "story"), ActionLabel: "Open Stories",
-			ActionURL: "/ia/stories", Shape: "/ia/stories",
+			ActionURL: "/ia/stories/", Shape: "/ia/stories/",
 			Actionable: true, Due: &r.today,
 		})
 	}

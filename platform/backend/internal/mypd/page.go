@@ -74,7 +74,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 			return nil, false, nil
 		}
 	}
-	if !s.writes {
+	if !s.writes && !pagegate.DjangoAbsent(ctx) {
 		return nil, false, nil
 	}
 	now := s.now()
@@ -90,13 +90,24 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		return nil, true, err
 	}
 	if !ok {
+		if pagegate.DjangoAbsent(ctx) {
+			return &screensv1.GetPageResponse{
+				Header:  &screensv1.PageHeader{Eyebrow: "Growth", Title: "My Professional Development", Description: "No staff profile is linked to this account yet."},
+				WebPath: PagePath,
+				Blocks: []*screensv1.PageBlock{{Kind: &screensv1.PageBlock_Empty{
+					Empty: "A staff profile is required before requesting professional development funding.",
+				}}},
+			}, true, nil
+		}
 		// No staff profile: the page says why, and writes no allocation
 		// (not built here).
 		return nil, false, nil
 	}
 	today := dateOf(now.In(zone))
-	if err := s.write(ctx, sp, fy, today); err != nil {
-		return nil, true, err
+	if s.writes {
+		if err := s.write(ctx, sp, fy, today); err != nil {
+			return nil, true, err
+		}
 	}
 	v, err := s.read(ctx, p, sp, fy, today)
 	if err != nil {
@@ -227,6 +238,11 @@ func (s *Service) read(ctx context.Context, p auth.Principal, sp staff, fy strin
 		uploaded: map[string]time.Time{}, senderNames: map[string]string{}}
 	err := s.db.QueryRow(ctx, `SELECT annual_allocation, currency FROM pd_allocation WHERE staff_id = $1 AND fy = $2`,
 		sp.id, fy).Scan(&v.allocation, &v.currency)
+	if errors.Is(err, pgx.ErrNoRows) && pagegate.DjangoAbsent(ctx) {
+		v.allocation = 0
+		v.currency = allocationCcy
+		err = nil
+	}
 	if err != nil {
 		return nil, fmt.Errorf("mypd: reading the allocation: %w", err)
 	}

@@ -57,6 +57,9 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		if key == teamKey {
 			return s.buildTeamPlan(ctx, p, query)
 		}
+		if key == countryKey && pagegate.DjangoAbsent(ctx) {
+			return s.buildCountryOversight(ctx, p, query)
+		}
 		return nil, false, nil
 	}
 	return nil, true, pagegate.ErrNotAvailable

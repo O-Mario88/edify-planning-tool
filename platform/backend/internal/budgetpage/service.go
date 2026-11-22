@@ -141,6 +141,9 @@ func (a *ask) settle() {
 // Build answers /budget and the Consolidated Fund Allocation; every other
 // path is not its own.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if path == CountryBudgetPath || path == CountryBudgetPath+"/" {
+		return s.countryBudget(ctx, p, query)
+	}
 	if path == FundAllocationPath || path == FundAllocationPath+"/" {
 		if !in(rules.FundAllocationRoles, p.ActiveRole) {
 			return nil, true, pagegate.ErrNotAvailable

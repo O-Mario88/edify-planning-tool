@@ -84,8 +84,11 @@ func NewService(db schooldirectory.Querier, now func() time.Time) *Service {
 	return &Service{db: db, now: now}
 }
 
-// Build answers /target-distribution; every other path is not its own.
+// Build answers /target-distribution and /target-distribution/team; every other path is not its own.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if path == TeamPath {
+		return s.buildTeam(ctx, p, query)
+	}
 	if path != Path {
 		return nil, false, nil
 	}

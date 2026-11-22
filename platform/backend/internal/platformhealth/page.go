@@ -94,9 +94,14 @@ const (
 	bad  = "danger"
 )
 
-// Build answers /platform-health; every other path is not its own.
+// SystemHealthPath is the legacy navigation path that maps to Platform Health
+// when Django is absent.
+const SystemHealthPath = "/system-health"
+
+// Build answers /platform-health (and /system-health when Django is absent);
+// every other path is not its own.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, _ url.Values) (*screensv1.GetPageResponse, bool, error) {
-	if path != Path {
+	if path != Path && !(path == SystemHealthPath && pagegate.DjangoAbsent(ctx)) {
 		return nil, false, nil
 	}
 	if !slices.Contains(rules.PageRoles, p.ActiveRole) {

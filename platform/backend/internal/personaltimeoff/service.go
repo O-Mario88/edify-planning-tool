@@ -200,7 +200,7 @@ func (s *Service) build(ctx context.Context, p auth.Principal, r role) (*screens
 	if err != nil {
 		return nil, err
 	}
-	if conflicts > 0 {
+	if conflicts > 0 && !pagegate.DjangoAbsent(ctx) {
 		return nil, errPassOn
 	}
 	if v.heat, err = leavetracker.Heatmap(ctx, s.db, p, false, 10, 4, now.In(kampala)); err != nil {
@@ -243,7 +243,13 @@ func (s *Service) readBalances(ctx context.Context, v *view, staffID string) err
 		return fmt.Errorf("personaltimeoff: reading the policies: %w", err)
 	}
 	if len(policies) == 0 {
-		return errPassOn // the existing page seeds them
+		if !pagegate.DjangoAbsent(ctx) {
+			return errPassOn // the existing page seeds them
+		}
+		policies = [][2]string{
+			{"personal_time_off", "Personal Time Off"},
+			{"sick_leave", "Sick Leave"},
+		}
 	}
 	for _, p := range policies {
 		v.labels[p[0]] = p[1]
@@ -259,12 +265,20 @@ FROM leave_balance b WHERE b.staff_id = $1 AND b.year = $2`, staffID, year, fmt.
 	if err != nil {
 		return fmt.Errorf("personaltimeoff: reading the balances: %w", err)
 	}
+	absent := pagegate.DjangoAbsent(ctx)
 	list, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (balance, error) {
 		var b balance
 		var approved, pending int
 		err := row.Scan(&b.kind, &b.entitlement, &b.used, &b.pending, &b.approved, &b.remaining, &approved, &pending)
 		if err == nil && (b.approved != approved || b.used != approved || b.pending != pending || b.remaining != b.entitlement-approved-pending) {
-			err = errPassOn
+			if absent {
+				b.approved = approved
+				b.used = approved
+				b.pending = pending
+				b.remaining = b.entitlement - approved - pending
+			} else {
+				err = errPassOn
+			}
 		}
 		return b, err
 	})
@@ -275,7 +289,32 @@ FROM leave_balance b WHERE b.staff_id = $1 AND b.year = $2`, staffID, year, fmt.
 		return fmt.Errorf("personaltimeoff: reading the balances: %w", err)
 	}
 	if len(list) == 0 {
-		return errPassOn // the existing page creates them
+		if !absent {
+			return errPassOn // the existing page creates them
+		}
+		defaults := map[string]int{"personal_time_off": 21, "sick_leave": 10}
+		for _, p := range policies {
+			ent := defaults[p[0]]
+			if ent == 0 {
+				ent = 10
+			}
+			var approved, pending int
+			_ = s.db.QueryRow(ctx, `
+SELECT
+  COALESCE(SUM(CASE WHEN status = 'approved' THEN COALESCE(days_charged, days) ELSE 0 END), 0)::int,
+  COALESCE(SUM(CASE WHEN status = 'pending' THEN COALESCE(days_charged, days) ELSE 0 END), 0)::int
+FROM leave WHERE staff_id = $1 AND type = $2 AND start_date LIKE $3`,
+				staffID, p[0], fmt.Sprintf("%d%%", year)).Scan(&approved, &pending)
+			list = append(list, balance{
+				kind:        p[0],
+				label:       p[1],
+				entitlement: ent,
+				used:        approved,
+				approved:    approved,
+				pending:     pending,
+				remaining:   ent - approved - pending,
+			})
+		}
 	}
 	v.ptoRemaining, v.ptoEntitlement = 21, 21
 	for i := range list {

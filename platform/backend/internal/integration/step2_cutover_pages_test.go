@@ -129,4 +129,46 @@ func TestStep2DjangoAbsentDesktopTodosAndStrategicPriorities(t *testing.T) {
 			t.Fatalf("cceo /strategic-priorities: err=%v, want CodeNotFound", err)
 		}
 	})
+
+	t.Run("all_bucket1_2_3_pages_native_without_django", func(t *testing.T) {
+		cases := []struct {
+			email string
+			path  string
+		}{
+			{"cceo@edify.org", "/core-schools"},
+			{"cceo@edify.org", "/personal-time-off/"},
+			{"cceo@edify.org", "/my-professional-development"},
+			{"cceo@edify.org", "/actions/mine"},
+			{"cceo@edify.org", "/my-targets"},
+			{"pl1@edify.org", "/leave/tracker"},
+			{"pl1@edify.org", "/target-distribution/team"},
+			{"pl1@edify.org", "/priorities/guidance"},
+			{"cd@edify.org", "/country-planning-oversight/"},
+			{"cd@edify.org", "/country-budget"},
+			{"cd@edify.org", "/country-budget/"},
+			{"cd@edify.org", "/analytics/country-director/drilldown"},
+			{"ia@edify.org", "/ia/learning/"},
+			{"ia@edify.org", "/ssa/unmatched"},
+			{"ia@edify.org", "/ia/impact-reports/"},
+			{"ia@edify.org", "/ia/lending-evidence/"},
+			{"admin@edify.org", "/system-health"},
+			{"admin@edify.org", "/platform-health"},
+		}
+		toks := map[string]string{}
+		for _, tc := range cases {
+			tok, ok := toks[tc.email]
+			if !ok {
+				borrowAccount(t, tc.email)
+				tok = sessionOf(t, tc.email, seededPassword).GetAccessToken()
+				toks[tc.email] = tok
+			}
+			page, err := getPage(tok, tc.path, true)
+			if err != nil {
+				t.Fatalf("%s %s: %v", tc.email, tc.path, err)
+			}
+			if page.GetHeader().GetTitle() == "" {
+				t.Fatalf("%s %s: empty page header title", tc.email, tc.path)
+			}
+		}
+	})
 }

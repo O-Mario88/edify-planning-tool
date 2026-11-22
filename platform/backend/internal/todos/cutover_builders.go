@@ -18,7 +18,7 @@ func schoolActionTodos(ctx context.Context, s *Service, r *reader) ([]todo, erro
 		return nil, nil
 	}
 	rows, err := s.db.Query(ctx, `
-SELECT a.id, COALESCE(a.requested_action, ''), COALESCE(a.workflow_route, '/my-actions'),
+SELECT a.id, COALESCE(a.requested_action, ''), COALESCE(a.workflow_route, '/actions/mine'),
        COALESCE(a.priority, 'medium'), a.due_date, a.state,
        COALESCE(sc.name, 'School'), COALESCE(u.name, '')
 FROM team_action a
@@ -55,7 +55,7 @@ LIMIT 25`, r.p.UserID, rules.TeamActionActiveStates)
 			reqAction = "Resolve school action"
 		}
 		if route == "" {
-			route = "/my-actions"
+			route = "/actions/mine"
 		}
 		desc := schoolName
 		if senderName != "" {
@@ -65,7 +65,7 @@ LIMIT 25`, r.p.UserID, rules.TeamActionActiveStates)
 			ID: "team-action-" + id, Title: reqAction, Description: desc, Described: true,
 			Category: "Execution", Priority: prio,
 			StatusKey: statusKey, StatusLabel: statusLabel, StatusTone: statusTone,
-			Linked: schoolName, ActionLabel: "Open", ActionURL: route, Shape: "/my-actions",
+			Linked: schoolName, ActionLabel: "Open", ActionURL: route, Shape: "/actions/mine",
 			Actionable: true, Due: due,
 		}
 		return withDue(t, r.today), nil
@@ -453,7 +453,7 @@ WHERE staff_id = $1 AND review_type = $2 AND NOT (stage = ANY($3))`,
 		StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info",
 		DueLabel: "—", DueTone: "neutral",
 		Linked: "My Target", ActionLabel: "Open",
-		ActionURL: "/my-target", Shape: "/my-target", Actionable: true,
+		ActionURL: "/my-targets", Shape: "/my-targets", Actionable: true,
 	}}, nil
 }
 
@@ -486,7 +486,7 @@ func hrExceptionTodos(ctx context.Context, s *Service, r *reader) ([]todo, error
 			StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "info",
 			DueLabel: "—", DueTone: "neutral",
 			Linked: "Policies & Documents", ActionLabel: "Open",
-			ActionURL: "/hr/policies", Shape: "/hr/policies", Actionable: true,
+			ActionURL: "/policy-compliance", Shape: "/policy-compliance", Actionable: true,
 		})
 	}
 	return out, nil

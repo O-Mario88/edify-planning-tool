@@ -167,7 +167,7 @@ func (s *Service) build(ctx context.Context, p auth.Principal, d door, query url
 	if err != nil {
 		return nil, err
 	}
-	if pending {
+	if pending && !pagegate.DjangoAbsent(ctx) {
 		return nil, fmt.Errorf("the packages would be healed: %w", errPassOn)
 	}
 	if pg.all, err = coreSchools(ctx, s.db, pg.scope, pg.oversight, pg.f); err != nil {
