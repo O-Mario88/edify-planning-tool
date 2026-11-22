@@ -28,7 +28,7 @@ func TestSSATemplateAndRoundTripParser(t *testing.T) {
 func TestParseSSACSVRejectsOutOfRangeAndDuplicates(t *testing.T) {
 	now := time.Date(2026, 11, 22, 12, 0, 0, 0, time.UTC)
 	csvData := strings.Join([]string{
-		"School ID,Assessment Date,SSA Year,School Leadership (0-10),Teaching & Learning (0-10)",
+		"School ID,Assessment Date,SSA Year,Leadership (0-10),Financial Health (0-10)",
 		"UG-001,2026-10-15,current,8.0,6.0",
 		"UG-001,2026-10-15,current,7.0,7.0",
 		"UG-002,2026-10-15,last,12.5,5.0",

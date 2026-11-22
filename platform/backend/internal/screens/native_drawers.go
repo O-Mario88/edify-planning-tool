@@ -83,18 +83,19 @@ SELECT id, COALESCE(school_id, ''), name
 
 	var trainings []*screensv1.PlanningTraining
 	if tRows, terr := s.db.Query(ctx, `
-SELECT id, name, COALESCE(code, '')
-  FROM training_course
- WHERE deleted_at IS NULL
- ORDER BY name ASC LIMIT 100`); terr == nil {
+SELECT id, display_name, COALESCE(stable_code, ''), staff_delivery_allowed
+  FROM activity_catalogue_item
+ WHERE status = 'active'
+ ORDER BY display_name ASC LIMIT 100`); terr == nil {
 		for tRows.Next() {
 			var id, name, code string
-			if scanErr := tRows.Scan(&id, &name, &code); scanErr == nil {
+			var staffAllowed bool
+			if scanErr := tRows.Scan(&id, &name, &code, &staffAllowed); scanErr == nil {
 				trainings = append(trainings, &screensv1.PlanningTraining{
 					Id:                   id,
 					Label:                name,
 					StableCode:           code,
-					StaffDeliveryAllowed: true,
+					StaffDeliveryAllowed: staffAllowed,
 				})
 			}
 		}

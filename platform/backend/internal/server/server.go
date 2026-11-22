@@ -123,6 +123,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/qualityflags"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/realtime"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/reports"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/ssadecision"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/uploads"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/rolesmatrix"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/routeplan"
@@ -381,6 +382,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	mux.Handle(screensv1connect.NewExportServiceHandler(screenService, options...))
 	exportsMgr.RegisterHTTP(mux, authenticator)
 	uploadsSvc.RegisterHTTP(mux, authenticator)
+	ssadecision.NewService(pool, time.Now).RegisterHTTP(mux, authenticator)
 	clusterOversightSvc.RegisterHTTP(mux, authenticator)
 	countryMapSvc.RegisterMapHTTP(mux, authenticator)
 	realtimeBroker.RegisterHTTP(mux, authenticator)

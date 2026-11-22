@@ -101,16 +101,18 @@ type MapSchoolPin struct {
 
 // MapDataResponse is the canonical country-wide dataset for the interactive Uganda map.
 type MapDataResponse struct {
-	FY             string            `json:"fy"`
-	FYOptions      []string          `json:"fy_options"`
-	ScopeLabel     string            `json:"scope_label"`
-	CCEOs          int               `json:"cceos"`
-	DistrictCount  int               `json:"district_count"`
-	SubRegionCount int               `json:"sub_region_count"`
-	Totals         MapSchoolTotals   `json:"totals"`
-	SubRegions     []MapSubRegionRow `json:"sub_regions"`
-	Districts      []MapDistrictRow  `json:"districts"`
-	Pins           []MapSchoolPin    `json:"pins"`
+	FY                      string            `json:"fy"`
+	FYOptions               []string          `json:"fy_options"`
+	ScopeLabel              string            `json:"scope_label"`
+	CCEOs                   int               `json:"cceos"`
+	DistrictCount           int               `json:"district_count"`
+	SubRegionCount          int               `json:"sub_region_count"`
+	WithCoordinatesCount    int               `json:"with_coordinates_count"`
+	MissingCoordinatesCount int               `json:"missing_coordinates_count"`
+	Totals                  MapSchoolTotals   `json:"totals"`
+	SubRegions              []MapSubRegionRow `json:"sub_regions"`
+	Districts               []MapDistrictRow  `json:"districts"`
+	Pins                    []MapSchoolPin    `json:"pins"`
 }
 
 var completedActivityStatuses = []string{
@@ -322,6 +324,10 @@ LIMIT 1500`, rules.OperatingStatuses)
 	}
 	if err := pRows.Err(); err != nil {
 		return nil, err
+	}
+	resp.WithCoordinatesCount = len(resp.Pins)
+	if resp.Totals.Schools > len(resp.Pins) {
+		resp.MissingCoordinatesCount = resp.Totals.Schools - len(resp.Pins)
 	}
 
 	if c.cache != nil {

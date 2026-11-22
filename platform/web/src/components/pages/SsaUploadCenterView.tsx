@@ -25,14 +25,14 @@ const SSA_COLUMNS: ReadonlyArray<readonly [string, string, string]> = [
   ['School ID', 'Must match an authoritative Edify School ID in your country', 'UG-0001'],
   ['Assessment Date', 'Date of the SSA assessment (YYYY-MM-DD)', '2026-11-22'],
   ['SSA Year', 'Operational FY ("last", "current", or 4-digit FY such as 2027)', '2027'],
-  ['Christ-Centered Education (0-10)', 'SSA score from 0 to 10', '7.5'],
-  ['School Leadership (0-10)', 'SSA score from 0 to 10', '7.5'],
-  ['Teaching & Learning (0-10)', 'SSA score from 0 to 10', '7.5'],
-  ['Financial Sustainability (0-10)', 'SSA score from 0 to 10', '7.5'],
-  ['Education Technology (0-10)', 'SSA score from 0 to 10', '7.5'],
+  ['Christlike Behaviour (0-10)', 'SSA score from 0 to 10', '7.5'],
+  ['Exposure to the Word of God (0-10)', 'SSA score from 0 to 10', '7.5'],
+  ['Financial Health (0-10)', 'SSA score from 0 to 10', '7.5'],
+  ['Leadership (0-10)', 'SSA score from 0 to 10', '7.5'],
+  ['Government Requirements (0-10)', 'SSA score from 0 to 10', '7.5'],
+  ['Learning Environment (0-10)', 'SSA score from 0 to 10', '7.5'],
+  ["Teacher's Environment (0-10)", 'SSA score from 0 to 10', '7.5'],
   ['Enrolment (0-10)', 'SSA performance score (0–10; headcount belongs on School Profile)', '7.5'],
-  ['Community Engagement (0-10)', 'SSA score from 0 to 10', '7.5'],
-  ['Safeguarding (0-10)', 'SSA score from 0 to 10', '7.5'],
 ];
 
 const ACTIVITY_COLUMNS: ReadonlyArray<readonly [string, string, string]> = [

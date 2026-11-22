@@ -18,6 +18,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
@@ -49,16 +50,17 @@ var (
 	}
 )
 
-// ssaInterventions matches the 8 official Edify SSA intervention codes and labels.
+// ssaInterventions matches the 8 canonical Edify Uganda SSA intervention codes
+// stored in PostgreSQL ssa_score.intervention and defined in Section 10.
 var ssaInterventions = [][2]string{
-	{"christ_centered_education", "Christ-Centered Education"},
-	{"school_leadership", "School Leadership"},
-	{"teaching_and_learning", "Teaching & Learning"},
-	{"financial_sustainability", "Financial Sustainability"},
-	{"education_technology", "Education Technology"},
+	{"christlike_behaviour", "Christlike Behaviour"},
+	{"exposure_to_word_of_god", "Exposure to the Word of God"},
+	{"financial_health", "Financial Health"},
+	{"leadership", "Leadership"},
+	{"government_requirement", "Government Requirements"},
+	{"learning_environment", "Learning Environment"},
+	{"teaching_environment", "Teacher's Environment"},
 	{"enrolment", "Enrolment"},
-	{"community_engagement", "Community Engagement"},
-	{"safeguarding", "Safeguarding"},
 }
 
 // Service owns native Go bulk CSV template downloads and validated imports.
@@ -253,7 +255,7 @@ func (s *Service) ImportSSACSV(ctx context.Context, p auth.Principal, r io.Reade
 		countryCode = strings.ToUpper(strings.TrimSpace(p.Country.Code))
 	}
 
-	tx, err := s.pool.Begin(ctx)
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
 	if err != nil {
 		return nil, err
 	}
@@ -275,10 +277,10 @@ func (s *Service) ImportSSACSV(ctx context.Context, p auth.Principal, r io.Reade
 			continue
 		}
 		var existing int
-		_ = tx.QueryRow(ctx, `SELECT count(*) FROM ssa_record WHERE school_id = $1 AND date_of_ssa::date = $2::date AND deleted_at IS NULL`,
-			schoolUUID, row.assessDate.Format("2006-01-02")).Scan(&existing)
+		_ = tx.QueryRow(ctx, `SELECT count(*) FROM ssa_record WHERE school_id = $1 AND fy = $2 AND deleted_at IS NULL AND verification_status IN ('pending','confirmed')`,
+			schoolUUID, row.fy).Scan(&existing)
 		if existing > 0 {
-			res.Errors = append(res.Errors, RowError{Row: row.rowNum, Message: fmt.Sprintf("SSA record already exists for %s on %s", row.schoolCode, row.assessDate.Format("2006-01-02"))})
+			res.Errors = append(res.Errors, RowError{Row: row.rowNum, Message: fmt.Sprintf("SSA record already exists for %s in FY %s", row.schoolCode, row.fy)})
 			res.SkippedCount++
 			continue
 		}
@@ -477,7 +479,7 @@ func (s *Service) importPlannedActivities(ctx context.Context, p auth.Principal,
 	}
 
 	allowedTargets := map[string]bool{"completed": true, "submitted_to_pl": true, "cancelled": true}
-	tx, err := s.pool.Begin(ctx)
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
 	if err != nil {
 		return nil, err
 	}

@@ -162,7 +162,7 @@ BEGIN
         ) VALUES (
             v_sid, v_id, v_item->>'intervention', (v_item->>'score')::double precision, NOW(), NOW()
         )
-        ON CONFLICT (id) DO UPDATE
+        ON CONFLICT (ssa_record_id, intervention) DO UPDATE
         SET score = EXCLUDED.score, updated_at = NOW();
     END LOOP;
     RETURN v_id;

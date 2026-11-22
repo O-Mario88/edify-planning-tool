@@ -22,9 +22,13 @@ func startMockRedisPubSub(t *testing.T) string {
 	}
 	t.Cleanup(func() { _ = ln.Close() })
 
+	type lockedWriter struct {
+		mu sync.Mutex
+		w  *bufio.Writer
+	}
 	var (
 		mu   sync.Mutex
-		subs = map[string][]*bufio.Writer{}
+		subs = map[string][]*lockedWriter{}
 	)
 
 	go func() {
@@ -36,14 +40,14 @@ func startMockRedisPubSub(t *testing.T) string {
 			go func(c net.Conn) {
 				defer func() { _ = c.Close() }()
 				br := bufio.NewReader(c)
-				bw := bufio.NewWriter(c)
+				lw := &lockedWriter{w: bufio.NewWriter(c)}
 				var subChannel string
 				defer func() {
 					if subChannel != "" {
 						mu.Lock()
 						list := subs[subChannel]
 						for i, w := range list {
-							if w == bw {
+							if w == lw {
 								subs[subChannel] = append(list[:i], list[i+1:]...)
 								break
 							}
@@ -69,10 +73,12 @@ func startMockRedisPubSub(t *testing.T) string {
 						ch := fmt.Sprint(args[1])
 						subChannel = ch
 						mu.Lock()
-						subs[ch] = append(subs[ch], bw)
+						subs[ch] = append(subs[ch], lw)
 						mu.Unlock()
-						_ = writeRESP(bw, "subscribe", ch, "1")
-						_ = bw.Flush()
+						lw.mu.Lock()
+						_ = writeRESP(lw.w, "subscribe", ch, "1")
+						_ = lw.w.Flush()
+						lw.mu.Unlock()
 					case "PUBLISH":
 						if len(args) < 3 {
 							continue
@@ -80,17 +86,23 @@ func startMockRedisPubSub(t *testing.T) string {
 						ch := fmt.Sprint(args[1])
 						msg := fmt.Sprint(args[2])
 						mu.Lock()
-						targets := append([]*bufio.Writer(nil), subs[ch]...)
+						targets := append([]*lockedWriter(nil), subs[ch]...)
 						mu.Unlock()
 						for _, tw := range targets {
-							_ = writeRESP(tw, "message", ch, msg)
-							_ = tw.Flush()
+							tw.mu.Lock()
+							_ = writeRESP(tw.w, "message", ch, msg)
+							_ = tw.w.Flush()
+							tw.mu.Unlock()
 						}
-						_, _ = fmt.Fprintf(bw, ":%d\r\n", len(targets))
-						_ = bw.Flush()
+						lw.mu.Lock()
+						_, _ = fmt.Fprintf(lw.w, ":%d\r\n", len(targets))
+						_ = lw.w.Flush()
+						lw.mu.Unlock()
 					default:
-						_, _ = fmt.Fprintf(bw, "+OK\r\n")
-						_ = bw.Flush()
+						lw.mu.Lock()
+						_, _ = fmt.Fprintf(lw.w, "+OK\r\n")
+						_ = lw.w.Flush()
+						lw.mu.Unlock()
 					}
 				}
 			}(conn)
