@@ -55,7 +55,13 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	}
 	if !refused(p.ActiveRole, key) {
 		if key == teamKey {
-			return s.buildTeamPlan(ctx, p, query)
+			if resp, served, err := s.buildTeamPlan(ctx, p, query); served || err != nil {
+				return resp, served, err
+			}
+			if pagegate.DjangoAbsent(ctx) {
+				return s.buildCountryOversight(ctx, p, query)
+			}
+			return nil, false, nil
 		}
 		if key == countryKey && pagegate.DjangoAbsent(ctx) {
 			return s.buildCountryOversight(ctx, p, query)

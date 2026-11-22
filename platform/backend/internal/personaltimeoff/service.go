@@ -175,6 +175,9 @@ func (s *Service) build(ctx context.Context, p auth.Principal, r role) (*screens
 	var staffID, country string
 	err := s.db.QueryRow(ctx, `SELECT id, COALESCE(country, '') FROM staff_profile WHERE user_id = $1 ORDER BY id LIMIT 1`, p.UserID).Scan(&staffID, &country)
 	if errors.Is(err, pgx.ErrNoRows) {
+		if pagegate.DjangoAbsent(ctx) {
+			return page(v), nil
+		}
 		return nil, errPassOn // the existing page creates the profile
 	}
 	if err != nil {

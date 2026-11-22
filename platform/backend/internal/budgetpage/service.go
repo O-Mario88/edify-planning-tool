@@ -164,7 +164,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if !ok || !r.Page {
 		return nil, true, pagegate.ErrNotAvailable
 	}
-	if r.Strip {
+	if r.Strip && !pagegate.DjangoAbsent(ctx) {
 		return nil, false, nil
 	}
 	resp, err := s.build(ctx, p, r, query)
@@ -199,7 +199,12 @@ func (s *Service) build(ctx context.Context, p auth.Principal, r role, query url
 			a.countryIDs = []string{p.Country.ID}
 		}
 	case r.Country || scope.CountryScope:
-		return nil, errPassOn
+		if !pagegate.DjangoAbsent(ctx) {
+			return nil, errPassOn
+		}
+		if owners, err = s.owners(ctx, p, scope, a.budgetScope == "team"); err != nil {
+			return nil, err
+		}
 	default:
 		if owners, err = s.owners(ctx, p, scope, a.budgetScope == "team"); err != nil {
 			return nil, err

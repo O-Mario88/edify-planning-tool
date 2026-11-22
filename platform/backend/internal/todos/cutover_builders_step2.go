@@ -282,7 +282,7 @@ func regionalEngagementTodos(ctx context.Context, s *Service, r *reader) ([]todo
 	}
 	if r.role == rvpRole {
 		rows, err := s.db.Query(ctx, `
-SELECT id, COALESCE(period, ''), COALESCE(fy, '')
+SELECT id, COALESCE(period::text, ''), COALESCE(fy::text, '')
 FROM cce_regional_report
 WHERE status = 'submitted'
 ORDER BY submitted_at ASC NULLS LAST, created_at ASC LIMIT 10`)

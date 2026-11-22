@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -25,7 +26,7 @@ var (
 // person's name, period, type code or stage code holds the search, by due
 // day and name. HR and Admin also see the manager's rating.
 func performanceReviews(ctx context.Context, in input) (register, error) {
-	if in.principal.ActiveRole == "Program Lead" {
+	if in.principal.ActiveRole == "Program Lead" && !pagegate.DjangoAbsent(ctx) {
 		return register{}, errPassOn
 	}
 	hr := in.principal.ActiveRole == "HumanResources" || in.principal.ActiveRole == "Admin"

@@ -12,6 +12,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/hrregister"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myteam"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -41,8 +42,16 @@ func (s *scope) recipient(user string) string {
 
 // readScope is FieldDebriefService.scoped_queryset's role scope.
 func readScope(ctx context.Context, db schooldirectory.Querier, p auth.Principal, now time.Time) (*scope, error) {
-	if slices.Contains(rules.PartnerRoles, p.ActiveRole) || p.InActingAppointment {
+	if p.InActingAppointment {
 		return nil, errHandOn
+	}
+	if slices.Contains(rules.PartnerRoles, p.ActiveRole) {
+		if !pagegate.DjangoAbsent(ctx) {
+			return nil, errHandOn
+		}
+		s := &scope{}
+		s.where = "(d.submitted_by_user_id = " + s.arg(p.UserID) + " OR " + s.recipient(p.UserID) + ")"
+		return s, nil
 	}
 	s := &scope{}
 	var profile, country *string

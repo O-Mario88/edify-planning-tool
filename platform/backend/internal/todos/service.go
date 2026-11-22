@@ -243,6 +243,9 @@ func collect(ctx context.Context, s *Service, r *reader, names []string) ([]todo
 		got, err := Handled[name](ctx, s, r)
 		switch {
 		case errors.Is(err, errPassOn):
+			if pagegate.DjangoAbsent(ctx) {
+				continue
+			}
 			return nil, false, nil
 		case err != nil && ctx.Err() != nil:
 			return nil, true, fmt.Errorf("todos: %s: %w", name, err)
