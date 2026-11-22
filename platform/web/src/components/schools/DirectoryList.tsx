@@ -169,7 +169,7 @@ function Row({
           </h2>
         </div>
 
-        <div className="hidden min-w-0 xl:block" data-fact="district">
+        <div className="max-xl:hidden min-w-0" data-fact="district">
           {districtHref ? (
             <Link
               href={districtHref}
@@ -182,7 +182,7 @@ function Row({
           )}
         </div>
 
-        <div className="hidden min-w-0 xl:block" data-fact="cluster">
+        <div className="max-xl:hidden min-w-0" data-fact="cluster">
           {clusterHref ? (
             <Link
               href={clusterHref}
@@ -195,7 +195,7 @@ function Row({
           )}
         </div>
 
-        <div className="hidden min-w-0 xl:block" data-fact="visit">
+        <div className="max-xl:hidden min-w-0" data-fact="visit">
           <Badge tone={school.visitStatusTone}>{school.visitStatusLabel}</Badge>
         </div>
 
@@ -403,13 +403,13 @@ export function DirectoryList(props: DirectoryListProps) {
             <div role="columnheader" className="min-w-0 truncate">
               School Name
             </div>
-            <div role="columnheader" className="hidden min-w-0 truncate xl:block">
+            <div role="columnheader" className="max-xl:hidden min-w-0 truncate">
               District
             </div>
-            <div role="columnheader" className="hidden min-w-0 truncate xl:block">
+            <div role="columnheader" className="max-xl:hidden min-w-0 truncate">
               Cluster
             </div>
-            <div role="columnheader" className="hidden min-w-0 truncate xl:block">
+            <div role="columnheader" className="max-xl:hidden min-w-0 truncate">
               Visit Status
             </div>
             {!props.readOnly ? (
