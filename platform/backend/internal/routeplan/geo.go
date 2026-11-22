@@ -61,6 +61,52 @@ func StraightMeters(a, b LatLng) int64 {
 	return int64(math.Round(2 * earthKm * math.Asin(math.Sqrt(h)) * 1000))
 }
 
+// Bounds is a geographic bounding box (degrees).
+type Bounds struct{ MinLat, MaxLat, MinLng, MaxLng float64 }
+
+// CountryBounds holds the geographic envelopes for Edify Global's four
+// registered countries (UG, KE, RW, ET) with a small border margin.
+var CountryBounds = map[string]Bounds{
+	"UG": {MinLat: -1.6, MaxLat: 4.4, MinLng: 29.4, MaxLng: 35.2},
+	"KE": {MinLat: -4.8, MaxLat: 5.2, MinLng: 33.8, MaxLng: 42.0},
+	"RW": {MinLat: -2.9, MaxLat: -1.0, MinLng: 28.8, MaxLng: 31.0},
+	"ET": {MinLat: 3.3, MaxLat: 15.0, MinLng: 32.9, MaxLng: 48.1},
+}
+
+// CheckForCountry validates a point against countryCode's bounding box (falling
+// back to Uganda if countryCode is empty or unknown).
+func CheckForCountry(countryCode string, lat, lng float64, status string) (LatLng, string) {
+	b, ok := CountryBounds[countryCode]
+	if !ok {
+		b = CountryBounds["UG"]
+	}
+	if math.IsNaN(lat) || math.IsNaN(lng) || (lat == 0 && lng == 0) ||
+		lat < b.MinLat || lat > b.MaxLat || lng < b.MinLng || lng > b.MaxLng {
+		return LatLng{}, LocationInvalid
+	}
+	return LatLng{lat, lng}, status
+}
+
+// SearchBox computes a tight lat/lng bounding box around center for fast
+// index-backed radius queries before exact Haversine filtering.
+func SearchBox(center LatLng, radiusKm float64) Bounds {
+	if radiusKm <= 0 {
+		return Bounds{center.Lat, center.Lat, center.Lng, center.Lng}
+	}
+	dLat := (radiusKm / earthKm) * (180 / math.Pi)
+	cosLat := math.Cos(center.Lat * math.Pi / 180)
+	if math.Abs(cosLat) < 0.01 {
+		cosLat = 0.01
+	}
+	dLng := dLat / cosLat
+	return Bounds{
+		MinLat: center.Lat - dLat,
+		MaxLat: center.Lat + dLat,
+		MinLng: center.Lng - dLng,
+		MaxLng: center.Lng + dLng,
+	}
+}
+
 // EstimateSeconds is travel_minutes_for_km: the engine's planning estimate
 // over a straight line, in whole minutes.
 func EstimateSeconds(meters int64) int64 {

@@ -105,6 +105,13 @@ type Config struct {
 	// PageWrites names the pages whose read writes that Go builds
 	// (EDIFY_GO_PAGE_WRITES); all off by default.
 	PageWrites PageWrites
+
+	// RedisURL enables shared Redis caching and distributed rate limiting
+	// (EDIFY_REDIS_URL). Empty uses the in-memory single-node fallback.
+	RedisURL string
+
+	// ObjectStorage configures S3-compatible or local evidence/report storage.
+	ObjectStorage ObjectStorage
 }
 
 // LoadGuard reads only what the production-protection guard needs, for a
@@ -183,6 +190,9 @@ func Load(getenv func(string) string) (Config, error) {
 		return Config{}, err
 	}
 	if cfg.PageWrites, err = loadPageWrites(env, getenv); err != nil {
+		return Config{}, err
+	}
+	if cfg.RedisURL, cfg.ObjectStorage, err = loadInfra(env, getenv); err != nil {
 		return Config{}, err
 	}
 	return cfg, nil

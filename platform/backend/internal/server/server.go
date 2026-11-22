@@ -35,6 +35,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/batchpayments"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/btpages"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/budgetpage"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/cache"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/calendarpage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/catalogue"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/ccelead"
@@ -487,7 +488,12 @@ func signInHandler(cfg config.Config, pool *pgxpool.Pool, logger *slog.Logger) *
 	} else if direct := signin.NewDirectRelay(pool, notificationcenter.NewWriter(pool, time.Now)); direct != nil {
 		deps.Relay = direct.WithEnv(string(cfg.Env))
 	}
-	return signin.NewHandler(signin.NewService(deps), loans.NewLimiter(time.Now), cfg.Loans.TrustProxyHeaders, logger)
+	limiter, err := cache.NewFromURL(cfg.RedisURL, logger)
+	if err != nil {
+		logger.Warn("cache: invalid redis configuration, falling back to memory", slog.String("error", err.Error()))
+		limiter = cache.NewMemory(time.Now)
+	}
+	return signin.NewHandler(signin.NewService(deps), limiter, cfg.Loans.TrustProxyHeaders, logger)
 }
 
 // accountsService assembles accounts: the existing records and rules, the

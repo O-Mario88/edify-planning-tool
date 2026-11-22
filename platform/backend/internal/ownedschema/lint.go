@@ -47,7 +47,7 @@ func (s Spec) linter() linter {
 	return linter{
 		allowed: []*regexp.Regexp{
 			regexp.MustCompile(`^create table (if not exists )?` + qualified + ` \(`),
-			regexp.MustCompile(`^create (unique )?index (if not exists )?[a-z_][a-z0-9_]* on (only )?` + qualified + ` \(`),
+			regexp.MustCompile(`^create (unique )?index (if not exists )?[a-z_][a-z0-9_]* on (only )?` + qualified + ` (using (btree|gist|spgist|brin) )?\(`),
 			regexp.MustCompile(`^alter table (if exists )?(only )?` + qualified + ` `),
 			regexp.MustCompile(`^comment on (table ` + qualified + `|column ` + qualified + `\.[a-z_][a-z0-9_]*) is ''$`),
 			regexp.MustCompile(`^grant (select|insert|update)(, (select|insert|update))* on (table )?` +
