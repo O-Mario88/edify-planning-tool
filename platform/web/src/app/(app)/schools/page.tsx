@@ -54,13 +54,35 @@ export default async function SchoolDirectoryPage({ searchParams }: { searchPara
   if (query.school_type) exportParams.set('school_type', query.school_type);
   if (query.q) exportParams.set('q', query.q);
   const exportHref = exportParams.toString() ? `/exports/school_directory?${exportParams.toString()}` : '/exports/school_directory';
+  const xlsxParams = new URLSearchParams(exportParams);
+  xlsxParams.set('format', 'xlsx');
+  const pdfParams = new URLSearchParams(exportParams);
+  pdfParams.set('format', 'pdf');
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-4 px-4 pb-5 pt-5 sm:px-6">
-      <PageHeader
-        header={directoryHeader(answer)}
-        hrefOf={(action) => (action.key === 'export' ? exportHref : DIRECTORY_PATH)}
-      />
+      <div className="space-y-2">
+        <PageHeader
+          header={directoryHeader(answer)}
+          hrefOf={(action) => (action.key === 'export' ? exportHref : DIRECTORY_PATH)}
+        />
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <a
+            href={`/exports/school_directory?${xlsxParams.toString()}`}
+            download
+            className="inline-flex items-center rounded-[9px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] px-3 py-1.5 text-[12px] font-semibold text-[var(--edify-text)] hover:border-[var(--brand-primary-border)] hover:text-[var(--brand-primary-text)]"
+          >
+            Export Excel (.xlsx)
+          </a>
+          <a
+            href={`/exports/school_directory?${pdfParams.toString()}`}
+            download
+            className="inline-flex items-center rounded-[9px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] px-3 py-1.5 text-[12px] font-semibold text-[var(--edify-text)] hover:border-[var(--brand-primary-border)] hover:text-[var(--brand-primary-text)]"
+          >
+            Export PDF
+          </a>
+        </div>
+      </div>
       <FilterBar
         action={DIRECTORY_PATH}
         label="Directory filters"

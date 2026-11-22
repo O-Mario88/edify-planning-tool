@@ -7,9 +7,7 @@ package uploads
 import (
 	"bytes"
 	"context"
-	"crypto/rand"
 	"encoding/csv"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -22,6 +20,8 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/realtime"
@@ -283,21 +283,24 @@ func (s *Service) ImportSSACSV(ctx context.Context, p auth.Principal, r io.Reade
 			continue
 		}
 
-		recID := newID("ssa_")
-		_, err := tx.Exec(ctx, `
-INSERT INTO ssa_record (
-  id, created_at, date_of_ssa, fy, average_score, verification_status,
-  collector_type, collected_by_user_id, uploaded_by, school_id, return_reason
-) VALUES ($1, $2, $3, $4, $5, 'pending', 'bulk_upload', $6, $7, $8, '')`,
-			recID, now, row.assessDate, row.fy, row.avg, p.UserID, p.UserID, schoolUUID)
-		if err != nil {
-			return nil, fmt.Errorf("uploads: insert ssa_record: %w", err)
+		type scoreItem struct {
+			Intervention string  `json:"intervention"`
+			Score        float64 `json:"score"`
 		}
+		scoreList := make([]scoreItem, 0, len(row.scores))
 		for iv, score := range row.scores {
-			if _, err := tx.Exec(ctx, `INSERT INTO ssa_score (id, ssa_record_id, intervention, score) VALUES ($1, $2, $3, $4)`,
-				newID("ssas_"), recID, iv, score); err != nil {
-				return nil, fmt.Errorf("uploads: insert ssa_score: %w", err)
-			}
+			scoreList = append(scoreList, scoreItem{Intervention: iv, Score: score})
+		}
+		scoreJSON, merr := json.Marshal(scoreList)
+		if merr != nil {
+			return nil, merr
+		}
+		var recID string
+		if err := tx.QueryRow(ctx,
+			`SELECT gateway_field_ops.enter_ssa($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10)`,
+			schoolUUID, row.fy, quarterOf(row.assessDate), row.assessDate, 0, row.avg,
+			string(scoreJSON), "bulk_upload", p.UserID, "").Scan(&recID); err != nil {
+			return nil, fmt.Errorf("uploads: enter_ssa: %w", err)
 		}
 		res.ImportedCount++
 		res.RecordIDs = append(res.RecordIDs, recID)
@@ -305,11 +308,18 @@ INSERT INTO ssa_record (
 	res.SkippedCount = len(res.Errors)
 
 	if res.ImportedCount > 0 {
-		_, _ = tx.Exec(ctx, `
-INSERT INTO audit_log (id, created_at, actor_user_id, actor_role, action, subject_kind, subject_id, metadata)
-VALUES ($1, $2, $3, $4, 'ssa.bulk_uploaded', 'ssa_record', $5, $6)`,
-			newID("aud_"), now, p.UserID, p.ActiveRole, res.RecordIDs[0],
-			fmt.Sprintf(`{"imported_count":%d,"skipped_count":%d}`, res.ImportedCount, res.SkippedCount))
+		_, _ = audit.Append(ctx, tx, audit.Entry{
+			Action:      "ssa.bulk_uploaded",
+			SubjectKind: audit.Text("ssa_record"),
+			SubjectID:   audit.Text(res.RecordIDs[0]),
+			ActorID:     audit.Text(p.UserID),
+			ActorRole:   audit.Text(p.ActiveRole),
+			Success:     true,
+			Payload: map[string]any{
+				"imported_count": res.ImportedCount,
+				"skipped_count":  res.SkippedCount,
+			},
+		}, now)
 	}
 
 	if err := tx.Commit(ctx); err != nil {
@@ -495,17 +505,11 @@ func (s *Service) importPlannedActivities(ctx context.Context, p auth.Principal,
 			continue
 		}
 		notes := cell(rec, colNotes)
-		q := `UPDATE activity SET status = $1, updated_at = $2, completion_notes = CASE WHEN $3 <> '' THEN $3 ELSE completion_notes END WHERE id = $4 AND deleted_at IS NULL`
-		args := []any{target, now, notes, actID}
-		if p.ActiveRole == "CCEO" && p.StaffProfileID != "" {
-			args = append(args, p.StaffProfileID)
-			q += ` AND responsible_staff_id = $5`
-		}
-		tag, err := tx.Exec(ctx, q, args...)
+		updated, err := activities.ApplyBulkPlannedStatus(ctx, tx, p, actID, target, notes, now)
 		if err != nil {
 			return nil, fmt.Errorf("uploads: update activity: %w", err)
 		}
-		if tag.RowsAffected() == 0 {
+		if !updated {
 			res.Errors = append(res.Errors, RowError{Row: rowNum, Message: fmt.Sprintf("activity %q not found or not owned by you", actID)})
 			continue
 		}
@@ -513,6 +517,20 @@ func (s *Service) importPlannedActivities(ctx context.Context, p auth.Principal,
 		res.RecordIDs = append(res.RecordIDs, actID)
 	}
 	res.SkippedCount = len(res.Errors)
+	if res.ImportedCount > 0 {
+		_, _ = audit.Append(ctx, tx, audit.Entry{
+			Action:      "activities.bulk_updated",
+			SubjectKind: audit.Text("activity"),
+			SubjectID:   audit.Text(res.RecordIDs[0]),
+			ActorID:     audit.Text(p.UserID),
+			ActorRole:   audit.Text(p.ActiveRole),
+			Success:     true,
+			Payload: map[string]any{
+				"imported_count": res.ImportedCount,
+				"skipped_count":  res.SkippedCount,
+			},
+		}, now)
+	}
 
 	if err := tx.Commit(ctx); err != nil {
 		return nil, err
@@ -611,10 +629,17 @@ func resolveFY(raw string, curFY int) (string, error) {
 	}
 }
 
-func newID(prefix string) string {
-	var b [8]byte
-	_, _ = rand.Read(b[:])
-	return prefix + hex.EncodeToString(b[:])
+func quarterOf(t time.Time) string {
+	switch t.Month() {
+	case time.October, time.November, time.December:
+		return "Q1"
+	case time.January, time.February, time.March:
+		return "Q2"
+	case time.April, time.May, time.June:
+		return "Q3"
+	default:
+		return "Q4"
+	}
 }
 
 func writeJSON(w http.ResponseWriter, status int, body any) {

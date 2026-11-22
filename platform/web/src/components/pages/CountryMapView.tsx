@@ -1363,6 +1363,25 @@ export function CountryMapView({
                 </span>
                 <ChevronRight className="h-4 w-4 text-[var(--edify-text-muted)]" aria-hidden="true" />
               </button>
+
+              <div className="grid grid-cols-2 gap-2 pt-0.5">
+                <a
+                  href={`/exports/school_directory?format=xlsx&fy=${encodeURIComponent(data.fy)}`}
+                  download
+                  className="flex items-center justify-center gap-1.5 rounded-[10px] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-3 py-2 text-[12px] font-semibold text-[var(--edify-navy-950,#001d39)] transition-colors hover:border-[var(--brand-primary-border)] hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary-text)] dark:text-[var(--edify-text)]"
+                >
+                  <Download className="h-3.5 w-3.5 text-[var(--brand-primary)]" aria-hidden="true" />
+                  <span>Excel (.xlsx)</span>
+                </a>
+                <a
+                  href={`/exports/school_directory?format=pdf&fy=${encodeURIComponent(data.fy)}`}
+                  download
+                  className="flex items-center justify-center gap-1.5 rounded-[10px] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-3 py-2 text-[12px] font-semibold text-[var(--edify-navy-950,#001d39)] transition-colors hover:border-[var(--brand-primary-border)] hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary-text)] dark:text-[var(--edify-text)]"
+                >
+                  <Download className="h-3.5 w-3.5 text-[var(--brand-primary)]" aria-hidden="true" />
+                  <span>PDF Report</span>
+                </a>
+              </div>
             </div>
           </div>
         </section>
