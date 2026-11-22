@@ -52,13 +52,32 @@ async function maybeShot(page: Page, filename: string, fullPage = false) {
 
 /**
  * Clicks real trailing whitespace immediately to the right of an inline link
- * inside a row/summary so we verify the row background toggles without navigating.
+ * inside its own cell/container so we verify unused space after an entity name
+ * toggles row expansion without navigating (never jumping into an adjacent link).
  */
 async function clickTrailingWhitespace(page: Page, link: Locator, container: Locator) {
   const linkBox = await link.boundingBox();
   const box = await container.boundingBox();
   expect(linkBox).not.toBeNull();
   expect(box).not.toBeNull();
+  const cellBox = await link.locator('..').boundingBox();
+  if (cellBox && cellBox.x + cellBox.width - (linkBox!.x + linkBox!.width) >= 12) {
+    const x = Math.min(linkBox!.x + linkBox!.width + 12, cellBox.x + cellBox.width - 4);
+    const y = linkBox!.y + linkBox!.height / 2;
+    await page.mouse.click(x, y);
+    return;
+  }
+  // If the school name fills its entire column width to ellipsis, test trailing
+  // whitespace immediately after the inline District link inside its cell.
+  const districtLink = container.locator('[data-fact="district"] a').first();
+  if (await districtLink.count()) {
+    const dLink = await districtLink.boundingBox();
+    const dCell = await container.locator('[data-fact="district"]').boundingBox();
+    if (dLink && dCell && dCell.x + dCell.width - (dLink.x + dLink.width) >= 12) {
+      await page.mouse.click(Math.min(dLink.x + dLink.width + 12, dCell.x + dCell.width - 4), dLink.y + dLink.height / 2);
+      return;
+    }
+  }
   const x = Math.min(linkBox!.x + linkBox!.width + 24, box!.x + box!.width - 140);
   const y = linkBox!.y + linkBox!.height / 2;
   expect(x).toBeGreaterThan(linkBox!.x + linkBox!.width + 4);
@@ -85,11 +104,15 @@ test.describe('List interactions, navigation, My Actions, and Cluster Oversight 
     await expect(headerRow.getByRole('columnheader', { name: 'Actions' })).toBeVisible();
     if (!isPhone) {
       await expect(headerRow.getByRole('columnheader', { name: 'District' })).toBeVisible();
+      await expect(headerRow.getByRole('columnheader', { name: 'Type' })).toBeVisible();
       await expect(headerRow.getByRole('columnheader', { name: 'Cluster' })).toBeVisible();
+      await expect(headerRow.getByRole('columnheader', { name: 'SSA' })).toBeVisible();
       await expect(headerRow.getByRole('columnheader', { name: 'Visit Status' })).toBeVisible();
     } else {
       await expect(headerRow.getByRole('columnheader', { name: 'District' })).toBeHidden();
+      await expect(headerRow.getByRole('columnheader', { name: 'Type' })).toBeHidden();
       await expect(headerRow.getByRole('columnheader', { name: 'Cluster' })).toBeHidden();
+      await expect(headerRow.getByRole('columnheader', { name: 'SSA' })).toBeHidden();
       await expect(headerRow.getByRole('columnheader', { name: 'Visit Status' })).toBeHidden();
     }
 

@@ -81,9 +81,10 @@ describe('DirectoryList headers, inline links and disclosure', () => {
         fy="2027"
       />,
     );
+    expect(html).toContain('Select page');
     expect(html).toContain('data-directory-header=""');
     const header = html.slice(html.indexOf('data-directory-header=""'), html.indexOf('<ul role="list"'));
-    for (const label of ['Select page', 'School ID', 'School Name', 'District', 'Cluster', 'Visit Status', 'Actions']) {
+    for (const label of ['School ID', 'School Name', 'District', 'Type', 'Cluster', 'SSA', 'Visit Status', 'Actions']) {
       expect(header).toContain(label);
     }
     // No visible disclosure chevron in rows.

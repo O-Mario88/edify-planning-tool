@@ -45,8 +45,20 @@ function isInteractive(target: EventTarget | null): boolean {
 /** Shared grid definition so headings and data cells stay aligned across viewports, zoom, and read-only mode. */
 function rowGridClass(readOnly: boolean): string {
   return readOnly
-    ? 'grid items-center gap-x-3 px-4 grid-cols-[76px_minmax(0,1fr)] xl:grid-cols-[84px_minmax(0,1.8fr)_minmax(0,1fr)_minmax(0,1fr)_140px]'
-    : 'grid items-center gap-x-3 px-4 grid-cols-[20px_76px_minmax(0,1fr)_auto] xl:grid-cols-[20px_84px_minmax(0,1.8fr)_minmax(0,1fr)_minmax(0,1fr)_140px_92px]';
+    ? 'grid items-center gap-x-2.5 px-4 grid-cols-[78px_minmax(0,1fr)] xl:grid-cols-[78px_minmax(0,2.4fr)_minmax(0,0.75fr)_60px_minmax(0,1.15fr)_130px_168px]'
+    : 'grid items-center gap-x-2.5 px-4 grid-cols-[18px_78px_minmax(0,1fr)_auto] xl:grid-cols-[18px_78px_minmax(0,2.4fr)_minmax(0,0.75fr)_60px_minmax(0,1.15fr)_130px_168px_84px]';
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as const;
+
+function shortDate(iso: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso.trim());
+  if (!match) return iso;
+  const monthIdx = Number(match[2]) - 1;
+  const day = Number(match[3]);
+  const month = MONTHS[monthIdx];
+  if (!month || !day) return iso;
+  return `${day} ${month} ${match[1]}`;
 }
 
 function districtHrefOf(school: DirectorySchool): string {
@@ -113,8 +125,8 @@ function Row({
     >
       <div
         data-directory-summary=""
-        className={`${rowGridClass(props.readOnly)} min-h-[40px] cursor-pointer py-2 transition-colors hover:bg-[color-mix(in_oklab,var(--edify-surface-muted)_55%,transparent)] focus-within:bg-[color-mix(in_oklab,var(--edify-surface-muted)_40%,transparent)] ${
-          open ? 'bg-[color-mix(in_oklab,var(--edify-surface-muted)_45%,transparent)]' : ''
+        className={`${rowGridClass(props.readOnly)} min-h-[38px] cursor-pointer py-1.5 transition-colors hover:bg-[#edf5ff] focus-within:bg-[#edf5ff]/75 dark:hover:bg-[color-mix(in_oklab,var(--edify-surface-muted)_60%,transparent)] ${
+          open ? 'bg-[#edf5ff]/80 dark:bg-[color-mix(in_oklab,var(--edify-surface-muted)_50%,transparent)]' : ''
         }`}
         onClick={(event) => {
           if (isInteractive(event.target)) return;
@@ -144,7 +156,7 @@ function Row({
           </span>
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-hidden">
           <button
             type="button"
             onClick={onToggle}
@@ -155,9 +167,10 @@ function Row({
           >
             {open ? 'Hide details' : 'Show details'}
           </button>
-          <h2
+          <div
             data-directory-name=""
-            className="break-words text-[length:var(--edify-text-label-size)] font-semibold leading-[1.3] text-[var(--edify-text)]"
+            title={school.name}
+            className="max-w-full overflow-hidden text-ellipsis text-[12.5px] font-semibold leading-[1.3] text-[var(--edify-text)] xl:whitespace-nowrap"
           >
             {schoolHref ? (
               <Link href={schoolHref} className="inline text-[var(--edify-text)] hover:underline">
@@ -166,37 +179,53 @@ function Row({
             ) : (
               <span>{school.name}</span>
             )}
-          </h2>
+          </div>
         </div>
 
-        <div className="max-xl:hidden min-w-0" data-fact="district">
+        <div className="max-xl:hidden min-w-0 truncate text-[12px]" data-fact="district" title={school.district}>
           {districtHref ? (
             <Link
               href={districtHref}
-              className="inline break-words text-[length:var(--edify-text-label-size)] font-medium text-[var(--brand-primary-text)] hover:underline dark:text-[var(--edify-accent-text)]"
+              className="inline font-medium text-[var(--edify-text)] hover:text-[var(--brand-primary-text)] hover:underline dark:hover:text-[var(--edify-accent-text)]"
             >
               {school.district}
             </Link>
           ) : (
-            <span className="text-[length:var(--edify-text-label-size)] text-[var(--edify-text)]">{school.district}</span>
+            <span className="text-[var(--edify-text-muted)]">{school.district || '—'}</span>
           )}
         </div>
 
-        <div className="max-xl:hidden min-w-0" data-fact="cluster">
+        <div className="max-xl:hidden min-w-0 truncate text-[12px] text-[var(--edify-text)]" data-fact="type" title={school.schoolType}>
+          {school.schoolType || '—'}
+        </div>
+
+        <div className="max-xl:hidden min-w-0 truncate text-[12px]" data-fact="cluster" title={school.clusterName}>
           {clusterHref ? (
             <Link
               href={clusterHref}
-              className="inline break-words text-[length:var(--edify-text-label-size)] font-medium text-[var(--brand-primary-text)] hover:underline dark:text-[var(--edify-accent-text)]"
+              className="inline font-medium text-[var(--edify-text)] hover:text-[var(--brand-primary-text)] hover:underline dark:hover:text-[var(--edify-accent-text)]"
             >
               {school.clusterName}
             </Link>
           ) : (
-            <span className="text-[length:var(--edify-text-label-size)] text-[var(--edify-text-muted)]">{school.clusterName}</span>
+            <span className="text-[var(--edify-text-muted)]">{school.clusterName || 'Not assigned'}</span>
           )}
         </div>
 
-        <div className="max-xl:hidden min-w-0" data-fact="visit">
+        <div className="max-xl:hidden min-w-0 truncate text-[12px]" data-fact="ssa">
+          <span className="text-[var(--edify-text-muted)]">SSA: </span>
+          <span className={`font-semibold tabular-nums ${school.ssaAverage !== undefined ? textTone(school.ssaTone) : 'text-[var(--edify-text-muted)]'}`}>
+            {ssaText(school)}
+          </span>
+        </div>
+
+        <div className="max-xl:hidden flex min-w-0 items-center gap-1.5 overflow-hidden" data-fact="visit">
           <Badge tone={school.visitStatusTone}>{school.visitStatusLabel}</Badge>
+          {school.nextVisitDate ? (
+            <span className="min-w-0 truncate text-[11.5px] font-medium tabular-nums text-[var(--edify-text-muted)]">
+              {shortDate(school.nextVisitDate)}
+            </span>
+          ) : null}
         </div>
 
         {!props.readOnly ? (
@@ -305,7 +334,18 @@ export function DirectoryList(props: DirectoryListProps) {
 
   return (
     <div data-block="table">
-      <div className="flex min-h-[48px] flex-wrap items-center gap-3 bg-[color-mix(in_oklab,var(--edify-surface-muted)_64%,transparent)] px-4 py-2">
+      <div className="flex min-h-[42px] flex-wrap items-center gap-3 bg-[color-mix(in_oklab,var(--edify-surface-muted)_64%,transparent)] px-4 py-1.5">
+        {!props.readOnly ? (
+          <label className="inline-flex cursor-pointer items-center gap-2 text-[12.5px] font-medium text-[var(--edify-text)]">
+            <input
+              type="checkbox"
+              checked={allPicked}
+              onChange={(event) => toggleAll(event.target.checked)}
+              className="h-4 w-4 accent-[var(--brand-primary)]"
+            />
+            <span>Select page</span>
+          </label>
+        ) : null}
         {!props.readOnly && picked.length > 0 ? (
           <>
             <span aria-live="polite" className="font-semibold">
@@ -381,21 +421,10 @@ export function DirectoryList(props: DirectoryListProps) {
             data-directory-header=""
             role="row"
             aria-label="School Directory columns"
-            className={`${rowGridClass(props.readOnly)} border-y border-[var(--edify-table-divider)] bg-[color-mix(in_oklab,var(--edify-surface-muted)_42%,transparent)] py-2 text-[11px] font-bold uppercase tracking-[0.04em] text-[var(--edify-text-muted)]`}
+            className={`${rowGridClass(props.readOnly)} border-y border-[var(--edify-table-divider)] bg-[color-mix(in_oklab,var(--edify-surface-muted)_42%,transparent)] py-1.5 text-[11px] font-bold uppercase tracking-[0.04em] text-[var(--edify-text-muted)]`}
           >
             {!props.readOnly ? (
-              <div role="columnheader" className="flex items-center justify-center">
-                <label className="flex items-center justify-center">
-                  <input
-                    type="checkbox"
-                    checked={allPicked}
-                    aria-label="Select page"
-                    onChange={(event) => toggleAll(event.target.checked)}
-                    className="h-4 w-4 accent-[var(--brand-primary)]"
-                  />
-                  <span className="sr-only">Select page</span>
-                </label>
-              </div>
+              <div role="columnheader" aria-label="Select" className="flex items-center justify-center" />
             ) : null}
             <div role="columnheader" className="min-w-0 truncate">
               School ID
@@ -407,7 +436,13 @@ export function DirectoryList(props: DirectoryListProps) {
               District
             </div>
             <div role="columnheader" className="max-xl:hidden min-w-0 truncate">
+              Type
+            </div>
+            <div role="columnheader" className="max-xl:hidden min-w-0 truncate">
               Cluster
+            </div>
+            <div role="columnheader" className="max-xl:hidden min-w-0 truncate">
+              SSA
             </div>
             <div role="columnheader" className="max-xl:hidden min-w-0 truncate">
               Visit Status
