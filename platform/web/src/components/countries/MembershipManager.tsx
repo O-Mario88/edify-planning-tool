@@ -11,6 +11,7 @@
  */
 import { fromJson } from '@bufbuild/protobuf';
 import { useState } from 'react';
+import { EdifyDatePicker } from '@/components/ui/EdifyDatePicker';
 
 import { GrantMembershipResponseSchema, ListMembershipsResponseSchema } from '@/gen/edify/countries/v1/countries_pb';
 import type { AssignableRole, Membership, Region } from '@/gen/edify/countries/v1/countries_pb';
@@ -358,16 +359,16 @@ function GrantForm({ account, countries, today, onGranted }: GrantProps) {
           </select>
           {chosen && chosen.state !== 'active' ? <span className={HINT}>{chosen.name} is not Active: this grant gives no access yet.</span> : null}
         </label>
-        <label className={LABEL}>
+        <div className={LABEL}>
           Starts
-          <input className={FIELD} type="date" name="effectiveFrom" min={today} value={from} onChange={(e) => setFrom(e.target.value)} />
+          <EdifyDatePicker name="effectiveFrom" label="Starts" min={today} value={from} onChange={setFrom} size="sm" policy={{ mode: 'free' }} />
           <span className={HINT}>Leave empty for today.</span>
-        </label>
-        <label className={LABEL}>
+        </div>
+        <div className={LABEL}>
           Ends
-          <input className={FIELD} type="date" name="effectiveUntil" min={from || today} value={until} onChange={(e) => setUntil(e.target.value)} />
+          <EdifyDatePicker name="effectiveUntil" label="Ends" min={from || today} value={until} onChange={setUntil} size="sm" policy={{ mode: 'free' }} />
           <span className={HINT}>The first day it no longer applies. Leave empty for no end.</span>
-        </label>
+        </div>
         <label className={`${LABEL} sm:col-span-2 lg:col-span-4`}>
           Reason
           <textarea className={FIELD} name="reason" rows={2} maxLength={MAX_REASON} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why this account works in this country" />

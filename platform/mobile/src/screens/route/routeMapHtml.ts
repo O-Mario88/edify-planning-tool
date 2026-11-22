@@ -102,9 +102,10 @@ function fit() {
 }
 function line() {
   if (!scene) return { type: 'FeatureCollection', features: [] };
+  // Never draw straight lines between school markers as a drivable road route.
   const road = scene.path.length > 1;
-  const coords = road ? scene.path : scene.join === false ? [] : scene.pins.map((p) => [p.lng, p.lat]);
-  return { type: 'FeatureCollection', features: coords.length < 2 ? [] : [{ type: 'Feature', properties: { road }, geometry: { type: 'LineString', coordinates: coords } }] };
+  if (!road) return { type: 'FeatureCollection', features: [] };
+  return { type: 'FeatureCollection', features: [{ type: 'Feature', properties: { road: true }, geometry: { type: 'LineString', coordinates: scene.path } }] };
 }
 function layers() {
   if (!map.getSource('route')) {

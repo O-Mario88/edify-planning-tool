@@ -1,65 +1,118 @@
 'use client';
 
 /*
- * The Smart Route Planner (owner design, 2026-11-14): the day's planned
- * schools on a map by their stored coordinates, the recommended order with
- * each leg, the field day's totals, and the eligible schools near the route.
- * Reordering, selecting and optimising only change this view; the official
- * plan changes through the existing Schedule visit drawer (Add to Plan).
- * Save Plan keeps the reader's order for the day on the server, so the
- * planner opens on it on any device; Start Field Day records the day's start,
- * each stop's arrival and departure, and its end (2026-11-16). Neither
- * schedules, moves or completes an activity.
+ * Enterprise Smart Route Planner & In-App Navigation Workspace (Sections 1–14):
+ * - 3-panel collapsible desktop layout (Left: Configuration, Center: Dominant
+ *   Road Map, Right: Recommended Itinerary & In-App Turn-by-Turn Navigation).
+ * - Map-first mobile layout with accessible bottom-sheet summary.
+ * - Real road-based routing & 5-mode optimization (Balanced, Fastest, Shortest,
+ *   Maximum Schools, Priority Schools) with verified SSA priority integration.
+ * - 100% in-app Get Directions (ZERO external Google Maps / Apple Maps / Waze
+ *   redirects anywhere).
+ * - Chevron-free, full-field clickable EdifyDatePicker with Uganda FY2027 &
+ *   backend-enforced Sunday/holiday/leave scheduling policies.
+ * - Staff road-condition reporting with explicit unverified vs verified labeling.
  */
-import { create, fromJson, toJson } from '@bufbuild/protobuf';
+import { create, fromJson } from '@bufbuild/protobuf';
 import type { JsonValue } from '@bufbuild/protobuf';
+import {
+  AlertTriangle,
+  ArrowDown,
+  ArrowUp,
+  CheckCircle2,
+  Clock,
+  Flag,
+  Lock,
+  MapPin,
+  Navigation,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PanelRightClose,
+  PanelRightOpen,
+  RotateCcw,
+  Save,
+  ShieldAlert,
+  SlidersHorizontal,
+  Sparkles,
+  Unlock,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { EdifyDatePicker } from '@/components/ui/EdifyDatePicker';
 import {
   GetFieldDayResponseSchema,
   GetSchoolDistanceResponseSchema,
-  ListLocationChangesResponseSchema,
   GetSchoolPinsResponseSchema,
-  PlanRouteRequestSchema,
-  PlanRouteResponseSchema,
+  ItineraryStopSchema,
+  ListLocationChangesResponseSchema,
   RecordFieldDayResponseSchema,
   SaveFieldDayResponseSchema,
+  SchoolPinSchema,
 } from '@/gen/edify/routes/v1/routes_pb';
-import type { GetSchoolDistanceResponse, Itinerary, SavedFieldDay, SchoolPin, Suggestion } from '@/gen/edify/routes/v1/routes_pb';
-import { dayClock, directionsUrl, fieldDayState, hoursMinutes, kampalaToday, km, legFigures, placedStops, totalFigures } from '@/lib/routePlanner';
+import type { GetSchoolDistanceResponse, Itinerary, ItineraryStop, SavedFieldDay, SchoolPin, Suggestion } from '@/gen/edify/routes/v1/routes_pb';
+import {
+  dayClock,
+  fieldDayState,
+  hoursMinutes,
+  kampalaToday,
+  km,
+  legFigures,
+} from '@/lib/routePlanner';
+import type {
+  CalendarRulesData,
+  InAppDirectionsData,
+  LatLngPoint,
+  RoadConditionReportData,
+  SmartOptimizationMode,
+  SmartRouteResultData,
+  SmartStopData,
+} from '@/lib/routePlanner';
 
-import { RouteMap } from './RouteMap';
-import { DayVerdict, KpiRow, NearbyCard, RouteList, RouteSummary, UnplacedNote } from './RouteParts';
+import { InAppNavigationPanel } from './InAppNavigationPanel';
 import { RouteIcon } from './RouteIcons';
+import { RouteMap } from './RouteMap';
+import { NearbyCard } from './RouteParts';
 
 const card = 'rounded-[16px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] shadow-[0_1px_2px_rgba(15,23,42,0.04)]';
 
-const post = (op: string, request: JsonValue) =>
+const MODES: ReadonlyArray<{ id: SmartOptimizationMode; label: string; short: string; desc: string }> = [
+  { id: 'balanced', label: 'Balanced Route — Recommended', short: 'Balanced', desc: 'Balances SSA priority, feasible coverage & travel time' },
+  { id: 'fastest', label: 'Fastest Route', short: 'Fastest', desc: 'Minimizes estimated road driving time' },
+  { id: 'shortest', label: 'Shortest Route', short: 'Shortest', desc: 'Minimizes total road kilometres' },
+  { id: 'max_schools', label: 'Maximum Schools', short: 'Max Schools', desc: 'Highest feasible schools within working hours' },
+  { id: 'priority_schools', label: 'Priority Schools', short: 'Priority SSA', desc: 'Urgent verified SSA & Core obligations first' },
+];
+
+const START_PRESETS: Record<string, { label: string; point: LatLngPoint | null }> = {
+  first_school: { label: 'Start at First School', point: null },
+  kampala_office: { label: 'Edify Uganda Office (Kampala)', point: { lat: 0.3136, lng: 32.5811 } },
+  current_gps: { label: 'My Current GPS Location', point: null },
+};
+
+const postLegacy = (op: string, request: JsonValue) =>
   fetch('/route-planner', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ op, request }) });
 
-/**
- * Renews an expired session (/auth/refresh sets the new cookies and sends
- * the reader back); false when the reader has to sign in again.
- */
-async function renewSession(): Promise<boolean> {
-  const answer = await fetch(`/auth/refresh?next=${encodeURIComponent(window.location.pathname)}`, { credentials: 'same-origin' });
-  return answer.ok && !new URL(answer.url).pathname.startsWith('/login');
-}
-
-async function ask(op: 'plan' | 'pins' | 'distance' | 'changes' | 'save' | 'record', request: JsonValue): Promise<JsonValue> {
-  let res = await post(op, request);
-  if (res.status === 401) {
-    if (!(await renewSession())) throw new Error('Your session has ended. Sign in again to carry on.');
-    res = await post(op, request);
-  }
+async function askLegacy(op: 'pins' | 'distance' | 'changes' | 'save' | 'record', request: JsonValue): Promise<JsonValue> {
+  const res = await postLegacy(op, request);
   const body = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(typeof body?.error === 'string' && body.error.length > 3 ? body.error : 'The route could not be worked out.');
+  if (!res.ok) throw new Error(typeof body?.error === 'string' ? body.error : 'Request failed.');
   return body;
 }
 
-/** How often an open planner checks for location changes. */
+async function smartApi<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`/api/${path}`, {
+    ...init,
+    headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(typeof data?.error === 'string' ? data.error : 'Smart Route request failed.');
+  }
+  return data as T;
+}
+
 const LOCATION_CHANGES_EVERY_MS = 60_000;
 
 export interface RoutePlannerProps {
@@ -67,34 +120,157 @@ export interface RoutePlannerProps {
   existingWebUrl: string;
   district: string;
   cluster: string;
-  /** Find Nearby Schools: the school the suggestions are around. */
   near?: string;
+  /** Optional comma-separated school IDs to launch In-App Navigation immediately (from School Profile Get Directions). */
+  navigate?: string;
 }
 
-export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, district, cluster, near = '' }: RoutePlannerProps) {
+function smartStopToItineraryStop(st: SmartStopData): ItineraryStop {
+  return create(ItineraryStopSchema, {
+    order: st.order,
+    kind: st.kind,
+    arrival: st.arrival,
+    departure: st.departure,
+    visitMinutes: st.visit_minutes,
+    locked: st.locked,
+    conflict: st.conflict ?? '',
+    school: create(SchoolPinSchema, {
+      schoolId: st.school_id,
+      code: st.school_code,
+      name: st.school_name,
+      district: st.district,
+      cluster: st.cluster,
+      category: st.category,
+      status: st.status,
+      activityId: st.planned_activity_id ?? '',
+      locationStatus: st.location_status,
+      locationVersion: st.location_version,
+      canOpenProfile: true,
+      ...(st.point ? { point: { lat: st.point.lat, lng: st.point.lng } } : {}),
+      ...(st.entrance ? { entrance: { lat: st.entrance.lat, lng: st.entrance.lng } } : {}),
+    }),
+  });
+}
+
+function priorityBadgeStyle(band: string): { label: string; cls: string } {
+  switch (band) {
+    case 'critical':
+      return { label: 'Critical SSA', cls: 'bg-red-50 text-red-700 border-red-200' };
+    case 'high':
+      return { label: 'High SSA Need', cls: 'bg-amber-50 text-amber-800 border-amber-200' };
+    case 'missing_ssa':
+      return { label: 'SSA Needed', cls: 'bg-violet-50 text-violet-700 border-violet-200' };
+    case 'core':
+      return { label: 'Core School', cls: 'bg-blue-50 text-blue-800 border-blue-200' };
+    default:
+      return { label: 'Routine', cls: 'bg-slate-100 text-slate-600 border-slate-200' };
+  }
+}
+
+export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, district, cluster, near = '', navigate = '' }: RoutePlannerProps) {
   void _existingWebUrl;
   const router = useRouter();
   const day = useMemo(() => fromJson(GetFieldDayResponseSchema, dayJson), [dayJson]);
-  const [itinerary, setItinerary] = useState<Itinerary | undefined>(day.recommended);
+
+  // Collapsible 3-panel desktop layout
+  const [leftOpen, setLeftOpen] = useState(true);
+  const [rightOpen, setRightOpen] = useState(true);
+  const [rightTab, setRightTab] = useState<'itinerary' | 'directions'>(navigate ? 'directions' : 'itinerary');
+
+  // Smart Route configuration state
+  const [mode, setMode] = useState<SmartOptimizationMode>('balanced');
+  const [transportMode, setTransportMode] = useState<'DRIVE' | 'TWO_WHEELER'>('DRIVE');
+  const [workStart, setWorkStart] = useState('08:00');
+  const [workEnd, setWorkEnd] = useState('17:00');
+  const [visitMinutes, setVisitMinutes] = useState(60);
+  const [startChoice, setStartChoice] = useState<'first_school' | 'kampala_office' | 'current_gps'>('first_school');
+  const [returnToStart, setReturnToStart] = useState(false);
+  const [gpsStart, setGpsStart] = useState<LatLngPoint | null>(null);
+  const [lockedIds, setLockedIds] = useState<Set<string>>(() => new Set());
+
+  // Live Smart Route backend data
+  const [smartResult, setSmartResult] = useState<SmartRouteResultData | null>(null);
+  const [originalOrder, setOriginalOrder] = useState<string[]>(() =>
+    (day.recommended?.stops ?? []).map((s) => s.school?.schoolId ?? '').filter(Boolean),
+  );
+  const [selectedSchoolIds, setSelectedSchoolIds] = useState<string[]>(() =>
+    (day.recommended?.stops ?? [])
+      .map((s) => s.school?.schoolId ?? '')
+      .concat((day.recommended?.unplaced ?? []).map((p) => p.schoolId))
+      .filter(Boolean),
+  );
+  const [ownerMeta, setOwnerMeta] = useState<{ name: string; role: string }>({ name: '', role: '' });
+  const [calendarRules, setCalendarRules] = useState<CalendarRulesData | null>(null);
+  const [roadConditions, setRoadConditions] = useState<RoadConditionReportData[]>([]);
+  const [syncWarnings, setSyncWarnings] = useState<string[]>([]);
+
+  // In-app Navigation state (100% inside Edify — zero external map launches)
+  const [directions, setDirections] = useState<InAppDirectionsData | null>(null);
+  const [dirLoading, setDirLoading] = useState(false);
+  const [dirError, setDirError] = useState<string | null>(null);
+  const [activeAltId, setActiveAltId] = useState<string | null>(null);
+  const [userGps, setUserGps] = useState<LatLngPoint | null>(null);
+
+  // Field day / legacy interactive states
   const [saved, setSaved] = useState<SavedFieldDay | undefined>(day.saved);
   const fieldDay = fieldDayState(saved, day.date, kampalaToday());
-  const [view, setView] = useState<'map' | 'list'>('map');
   const [show, setShow] = useState({ planned: true, suggested: true, nearby: false });
   const [nearbyPins, setNearbyPins] = useState<SchoolPin[]>([]);
-  const [selected, setSelected] = useState<SchoolPin | null>(null);
+  const [selectedPin, setSelectedPin] = useState<SchoolPin | null>(null);
   const [pair, setPair] = useState<GetSchoolDistanceResponse | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(day.provider?.message || null);
-  const focus = day.focus;
-  // Around one school, every nearby school is listed at once.
   const [allNearby, setAllNearby] = useState(Boolean(day.focus));
-  // On a phone the filters fold away under their heading; wider, they stay open.
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [mobileSheetExpanded, setMobileSheetExpanded] = useState(false);
+
   const lastSelected = useRef<SchoolPin | null>(null);
   const viewTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const focus = day.focus;
 
-  // A school's location accepted elsewhere (a capture in the field, a
-  // review) refreshes the day, so pins and distances use the new point.
+  // Hydrate Smart Route day state, calendar rules (holidays/leave/FY2027), and My Plan sync status from Go API.
+  useEffect(() => {
+    let active = true;
+    void smartApi<{
+      owner_name: string;
+      owner_role: string;
+      result: SmartRouteResultData;
+      road_conditions: RoadConditionReportData[];
+      calendar_rules: CalendarRulesData;
+    }>(`smart-route/day?date=${encodeURIComponent(day.date)}&mode=${encodeURIComponent(mode)}`)
+      .then((payload) => {
+        if (!active) return;
+        setOwnerMeta({ name: payload.owner_name, role: payload.owner_role });
+        setSmartResult(payload.result);
+        setRoadConditions(payload.road_conditions ?? []);
+        setCalendarRules(payload.calendar_rules ?? null);
+        const ids = [
+          ...payload.result.stops.map((s) => s.school_id),
+          ...payload.result.excluded.map((e) => e.school_id),
+        ];
+        if (ids.length > 0) {
+          setSelectedSchoolIds(ids);
+          setOriginalOrder((prev) => (prev.length === 0 ? ids : prev));
+        }
+      })
+      .catch(() => undefined);
+
+    void smartApi<{ stale: boolean; reasons: string[] }>('smart-route/validate', {
+      method: 'POST',
+      body: JSON.stringify({ date: day.date }),
+    })
+      .then((val) => {
+        if (active && val.stale) setSyncWarnings(val.reasons ?? []);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [day.date]);
+
+  // Poll for accepted GPS corrections so map & route synchronize automatically.
   useEffect(() => {
     const shown = new Set([
       ...day.planned.map((p) => p.schoolId),
@@ -104,12 +280,12 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
     let since = new Date().toISOString();
     const timer = setInterval(() => {
       if (document.visibilityState !== 'visible') return;
-      ask('changes', { since })
+      askLegacy('changes', { since })
         .then((json) => {
           const answer = fromJson(ListLocationChangesResponseSchema, json);
           if (answer.now) since = answer.now;
           if (answer.changes.some((c) => shown.has(c.schoolId))) {
-            setMessage('A school’s location was updated. The map now uses the new point.');
+            setMessage('A school location was verified and updated. Refreshing route coordinates.');
             router.refresh();
           }
         })
@@ -127,65 +303,175 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
     [router, day.date, district, cluster, near],
   );
 
-  const plan = useCallback(
-    async (ids: string[], mode: 'fastest' | 'as_given') => {
-      if (ids.length === 0) return;
+  const resolveStart = useCallback((): { point: LatLngPoint | null; label: string } => {
+    if (startChoice === 'kampala_office') return START_PRESETS.kampala_office!;
+    if (startChoice === 'current_gps' && gpsStart) return { point: gpsStart, label: 'Current GPS Location' };
+    return { point: null, label: '' };
+  }, [startChoice, gpsStart]);
+
+  const runOptimize = useCallback(
+    async (
+      idsOverride?: string[],
+      modeOverride?: SmartOptimizationMode,
+      locksOverride?: ReadonlySet<string>,
+    ) => {
+      const idsToPlan = idsOverride ?? selectedSchoolIds;
+      if (idsToPlan.length === 0) return;
+      const chosenMode = modeOverride ?? mode;
+      const locks = locksOverride ?? lockedIds;
+      const startCfg = resolveStart();
       setBusy(true);
+      setMessage(null);
+      setActiveAltId(null);
       try {
-        const answer = fromJson(
-          PlanRouteResponseSchema,
-          await ask('plan', toJson(PlanRouteRequestSchema, create(PlanRouteRequestSchema, { date: day.date, schoolIds: ids, mode }))),
-        );
-        setItinerary(answer.itinerary);
-        setMessage(answer.provider?.message || null);
-      } catch (error) {
-        setMessage(error instanceof Error ? error.message : 'The route could not be worked out.');
+        const res = await smartApi<{ result: SmartRouteResultData }>('smart-route/optimize', {
+          method: 'POST',
+          body: JSON.stringify({
+            date: day.date,
+            mode: chosenMode,
+            transport_mode: transportMode,
+            work_start: workStart,
+            work_end: workEnd,
+            visit_minutes: visitMinutes,
+            break_minutes: 30,
+            start: startCfg.point,
+            start_label: startCfg.label,
+            end: returnToStart ? startCfg.point : null,
+            end_label: returnToStart ? startCfg.label : '',
+            school_ids: idsToPlan,
+            locked_school_ids: [...locks],
+          }),
+        });
+        setSmartResult(res.result);
+        setSelectedSchoolIds([
+          ...res.result.stops.map((s) => s.school_id),
+          ...res.result.excluded.map((e) => e.school_id),
+        ]);
+        if (res.result.warnings.length > 0 && !res.result.path_is_road) {
+          setMessage(res.result.warnings[0] ?? null);
+        }
+      } catch (err) {
+        setMessage(err instanceof Error ? err.message : 'Route optimization failed.');
       } finally {
         setBusy(false);
       }
     },
-    [day.date],
+    [day.date, lockedIds, mode, resolveStart, returnToStart, selectedSchoolIds, transportMode, visitMinutes, workEnd, workStart],
   );
 
-  const ids = (it: Itinerary | undefined) => (it?.stops ?? []).map((s) => s.school!.schoolId).concat((it?.unplaced ?? []).map((p) => p.schoolId));
+  // Launch 100% In-App Turn-by-Turn Navigation inside Edify (Section 6).
+  const openInAppDirections = useCallback(
+    async (schoolIds: string[], explicitOrigin?: LatLngPoint) => {
+      if (schoolIds.length === 0) return;
+      setRightOpen(true);
+      setRightTab('directions');
+      setDirLoading(true);
+      setDirError(null);
+      setActiveAltId(null);
+      try {
+        const startCfg = resolveStart();
+        const origin = explicitOrigin ?? userGps ?? startCfg.point ?? undefined;
+        const originLabel = explicitOrigin ? 'Current GPS Location' : userGps ? 'Current GPS Location' : startCfg.label;
+        const data = await smartApi<InAppDirectionsData>('smart-route/directions', {
+          method: 'POST',
+          body: JSON.stringify({
+            origin,
+            origin_label: originLabel,
+            school_ids: schoolIds,
+            transport_mode: transportMode,
+          }),
+        });
+        setDirections(data);
+      } catch (err) {
+        setDirError(err instanceof Error ? err.message : 'Could not calculate in-app directions.');
+      } finally {
+        setDirLoading(false);
+      }
+    },
+    [resolveStart, transportMode, userGps],
+  );
 
-  // Save Plan: the order on screen, kept on the server for this day.
-  const save = async () => {
+  // If navigated directly from a School Profile's "Get Directions" button (?navigate=schoolId)
+  useEffect(() => {
+    if (!navigate) return;
+    const ids = navigate.split(',').map((s) => s.trim()).filter(Boolean);
+    if (ids.length > 0) {
+      void openInAppDirections(ids);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate]);
+
+  const saveRoute = async () => {
+    const stopsToSave = smartResult?.stops ?? [];
+    if (stopsToSave.length === 0) return;
     setBusy(true);
     try {
-      const answer = fromJson(SaveFieldDayResponseSchema, await ask('save', { date: day.date, schoolIds: ids(itinerary) }));
-      setSaved(answer.saved);
-      setMessage(`Plan saved at ${dayClock(answer.saved?.savedAt ?? '')}. It opens in this order on any device. Your official plan is unchanged; use Add to Plan to schedule a school.`);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'The plan could not be saved. Please try again.');
+      const startCfg = resolveStart();
+      const ans = await smartApi<{ route_id: string; route_version: number; saved_at: string }>('smart-route/save', {
+        method: 'POST',
+        body: JSON.stringify({
+          date: day.date,
+          optimization_mode: smartResult?.mode ?? mode,
+          transport_mode: transportMode,
+          start: startCfg.point,
+          start_label: startCfg.label,
+          end: returnToStart ? startCfg.point : null,
+          end_label: returnToStart ? startCfg.label : '',
+          estimated_meters: smartResult?.totals.road_meters ?? 0,
+          estimated_seconds: smartResult?.totals.road_seconds ?? 0,
+          visit_minutes: smartResult?.totals.visit_minutes ?? 0,
+          field_minutes: smartResult?.totals.field_minutes ?? 0,
+          input_hash: smartResult?.input_hash ?? '',
+          alternatives_count: smartResult?.alternatives.length ?? 0,
+          stops: stopsToSave,
+        }),
+      });
+      const legacySaved = fromJson(
+        SaveFieldDayResponseSchema,
+        await askLegacy('save', { date: day.date, schoolIds: stopsToSave.map((s) => s.school_id) }),
+      );
+      setSaved(legacySaved.saved);
+      setMessage(
+        `Route v${ans.route_version} saved at ${dayClock(ans.saved_at)}. Stops remain linked to their My Plan activity IDs; official schedules are unchanged.`,
+      );
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'The route could not be saved.');
     } finally {
       setBusy(false);
     }
   };
 
-  // Start Field Day, a stop's arrival or departure, and the day's end.
-  const record = async (event: 'start' | 'arrive' | 'leave' | 'end', schoolId = '') => {
+  const recordFieldDay = async (event: 'start' | 'arrive' | 'leave' | 'end', schoolId = '') => {
     setBusy(true);
     try {
-      const request = { date: day.date, event, schoolId, schoolIds: event === 'start' ? ids(itinerary) : [] };
-      const answer = fromJson(RecordFieldDayResponseSchema, await ask('record', request));
+      const stopIds = (smartResult?.stops ?? []).map((s) => s.school_id);
+      const answer = fromJson(
+        RecordFieldDayResponseSchema,
+        await askLegacy('record', { date: day.date, event, schoolId, schoolIds: event === 'start' ? stopIds : [] }),
+      );
       setSaved(answer.saved);
-      setMessage(event === 'start' ? `Field day started at ${dayClock(answer.saved?.startedAt ?? '')}. Mark each school as you arrive and leave.` : null);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'The field day could not be saved. Please try again.');
+      setMessage(
+        event === 'start'
+          ? `Field day started at ${dayClock(answer.saved?.startedAt ?? '')}. Mark arrivals and complete visits through My Plan.`
+          : event === 'end'
+            ? `Field day ended at ${dayClock(answer.saved?.endedAt ?? '')}.`
+            : null,
+      );
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Could not update field day status.');
     } finally {
       setBusy(false);
     }
   };
 
-  const onPick = async (pin: SchoolPin) => {
-    setSelected(pin);
+  const onPickPin = async (pin: SchoolPin) => {
+    setSelectedPin(pin);
     setPair(null);
     const previous = lastSelected.current;
     lastSelected.current = pin;
     if (previous && previous.schoolId !== pin.schoolId) {
       try {
-        const answer = fromJson(GetSchoolDistanceResponseSchema, await ask('distance', { fromSchoolId: previous.schoolId, toSchoolId: pin.schoolId }));
+        const answer = fromJson(GetSchoolDistanceResponseSchema, await askLegacy('distance', { fromSchoolId: previous.schoolId, toSchoolId: pin.schoolId }));
         setPair(answer);
       } catch {
         setPair(null);
@@ -194,14 +480,20 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
   };
 
   const onView = useCallback(
-    (sw: { lat: number; lng: number }, ne: { lat: number; lng: number }) => {
+    (sw: LatLngPoint, ne: LatLngPoint) => {
       if (!show.nearby) return;
       if (viewTimer.current) clearTimeout(viewTimer.current);
       viewTimer.current = setTimeout(async () => {
         try {
           const answer = fromJson(
             GetSchoolPinsResponseSchema,
-            await ask('pins', { southWest: sw, northEast: ne, date: day.date, districtId: district, clusterId: cluster }),
+            await askLegacy('pins', {
+              southWest: { lat: sw.lat, lng: sw.lng },
+              northEast: { lat: ne.lat, lng: ne.lng },
+              date: day.date,
+              districtId: district,
+              clusterId: cluster,
+            }),
           );
           setNearbyPins(answer.pins);
         } catch {
@@ -212,260 +504,906 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
     [show.nearby, day.date, district, cluster],
   );
 
-  const stops = useMemo(
-    () => (itinerary?.stops ?? []).filter((s) => (s.kind === 'recommended' ? show.suggested : show.planned)),
-    [itinerary, show.planned, show.suggested],
-  );
-  const path = useMemo(() => (itinerary?.stops[0]?.leg?.path ?? []).map((p) => ({ lat: p.lat, lng: p.lng })), [itinerary]);
-  const stopIds = new Set((itinerary?.stops ?? []).map((s) => s.school?.schoolId ?? ''));
-  const others = useMemo(() => {
-    const suggested = show.suggested ? day.suggestions.map((s) => s.school!).filter((p) => !stopIds.has(p.schoolId)) : [];
-    const near = show.nearby ? nearbyPins.filter((p) => !stopIds.has(p.schoolId)) : [];
-    const seen = new Set<string>();
-    return [...suggested, ...near].filter((p) => (seen.has(p.schoolId) ? false : (seen.add(p.schoolId), true)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [day.suggestions, nearbyPins, show.suggested, show.nearby, itinerary]);
+  // Derive stops & road geometry for the center interactive map (NEVER straight-line fake roads!).
+  const mapStops = useMemo<ItineraryStop[]>(() => {
+    if (smartResult && smartResult.stops.length > 0) {
+      return smartResult.stops
+        .filter((s) => (s.kind === 'recommended' ? show.suggested : show.planned))
+        .map(smartStopToItineraryStop);
+    }
+    return (day.recommended?.stops ?? []).filter((s) => (s.kind === 'recommended' ? show.suggested : show.planned));
+  }, [smartResult, day.recommended, show.planned, show.suggested]);
 
-  const total = totalFigures(itinerary?.totals);
-  const chip = itinerary?.stops.length ? `${km(total.meters)}  |  ${hoursMinutes(total.seconds)}` : null;
-  const directions = directionsUrl(placedStops(itinerary));
+  const activePath = useMemo<LatLngPoint[]>(() => {
+    if (rightTab === 'directions' && directions?.road_available && directions.path.length >= 2) {
+      return directions.path;
+    }
+    if (smartResult?.path_is_road && smartResult.path.length >= 2) {
+      return smartResult.path;
+    }
+    return [];
+  }, [rightTab, directions, smartResult]);
+
+  const activePathIsRoad = useMemo(() => {
+    if (rightTab === 'directions' && directions) return Boolean(directions.road_available && directions.path.length >= 2);
+    return Boolean(smartResult?.path_is_road && smartResult.path.length >= 2);
+  }, [rightTab, directions, smartResult]);
+
+  const activeAlternatives = useMemo(() => {
+    if (rightTab === 'directions' && directions?.alternatives?.length) return directions.alternatives;
+    return smartResult?.alternatives ?? [];
+  }, [rightTab, directions, smartResult]);
+
+  const stopIdSet = useMemo(() => new Set(mapStops.map((s) => s.school?.schoolId ?? '')), [mapStops]);
+
+  const others = useMemo(() => {
+    const suggested = show.suggested ? day.suggestions.map((s) => s.school!).filter((p) => !stopIdSet.has(p.schoolId)) : [];
+    const nearPins = show.nearby ? nearbyPins.filter((p) => !stopIdSet.has(p.schoolId)) : [];
+    const seen = new Set<string>();
+    return [...suggested, ...nearPins].filter((p) => (seen.has(p.schoolId) ? false : (seen.add(p.schoolId), true)));
+  }, [day.suggestions, nearbyPins, show.suggested, show.nearby, stopIdSet]);
+
+  const moveStop = (index: number, delta: number) => {
+    const currentIds = (smartResult?.stops ?? []).map((s) => s.school_id);
+    const to = index + delta;
+    if (to < 0 || to >= currentIds.length) return;
+    const copy = [...currentIds];
+    const item = copy[index]!;
+    copy[index] = copy[to]!;
+    copy[to] = item;
+    void runOptimize(copy, 'as_given');
+  };
+
+  const removeStop = (schoolId: string) => {
+    const next = selectedSchoolIds.filter((id) => id !== schoolId);
+    setSelectedSchoolIds(next);
+    if (next.length > 0) void runOptimize(next, mode);
+  };
+
+  const toggleLock = (schoolId: string) => {
+    const next = new Set(lockedIds);
+    if (next.has(schoolId)) next.delete(schoolId);
+    else next.add(schoolId);
+    setLockedIds(next);
+  };
+
   const addHref = (s: Suggestion | SchoolPin) => {
     const pin = s.$typeName === 'edify.routes.v1.Suggestion' ? s.school! : s;
     return `/schools/${encodeURIComponent(pin.code || pin.schoolId)}`;
   };
 
-  const move = (index: number, by: number) => {
-    const order = ids(itinerary);
-    const to = index + by;
-    if (to < 0 || to >= (itinerary?.stops.length ?? 0)) return;
-    const here = order[index]!;
-    order[index] = order[to]!;
-    order[to] = here;
-    void plan(order, 'as_given');
+  const requestCurrentGpsAsStart = () => {
+    setStartChoice('current_gps');
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setMessage('Device GPS is unavailable in this browser.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        const pt = { lat: coords.latitude, lng: coords.longitude };
+        setGpsStart(pt);
+        setUserGps(pt);
+        setMessage(`Starting point set to your current GPS (${pt.lat.toFixed(4)}, ${pt.lng.toFixed(4)}).`);
+      },
+      () => setMessage('Could not read device GPS. Choose Kampala Office or First School instead.'),
+      { enableHighAccuracy: true, timeout: 10_000 },
+    );
   };
 
+  const totals = smartResult?.totals;
+  const chip =
+    totals && totals.schools_included > 0
+      ? totals.road_complete
+        ? `${km(totals.road_meters)} by road  |  ${hoursMinutes(totals.road_seconds)}`
+        : `${totals.schools_included} stop${totals.schools_included === 1 ? '' : 's'} · Road verification needed`
+      : null;
+
+  const planningPolicy = useMemo(
+    () => ({
+      mode: 'planning' as const,
+      holidays: calendarRules?.holidays ?? [],
+      approvedLeaveDates: calendarRules?.approved_leave_dates ?? [],
+      blackoutDates: calendarRules?.blackout_dates ?? [],
+    }),
+    [calendarRules],
+  );
+
+  const checkIns = useMemo(() => new Map((saved?.stops ?? []).map((c) => [c.schoolId, c])), [saved]);
+  const nextMobileStop = smartResult?.stops[0];
+
+  // Dynamic 3-panel desktop layout key (panels collapsible to maximize map)
+  const layoutKey =
+    leftOpen && rightOpen
+      ? 'both'
+      : leftOpen && !rightOpen
+        ? 'left'
+        : !leftOpen && rightOpen
+          ? 'right'
+          : 'map-only';
+
   return (
-    <div className="mx-auto max-w-[1680px] px-4 pb-10 pt-4 sm:px-6" data-page="smart-route">
-      <nav className="flex items-center gap-3 text-[15px]" aria-label="Breadcrumb">
-        <Link href="/my-plan" className="text-[var(--edify-text-muted)] hover:underline">My Plan</Link>
-        <RouteIcon name="arrowRight" className="h-4 w-4 text-slate-400" />
+    <div className="mx-auto max-w-[1800px] px-3 pb-10 pt-3 sm:px-5" data-page="smart-route">
+      <style>{`
+        .sr-desktop-btn { display: none; }
+        .sr-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .sr-workspace { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+        .sr-panel-config { order: 2; }
+        .sr-panel-map { order: 1; min-height: 500px; }
+        .sr-panel-itinerary { order: 3; }
+        .sr-mobile-sheet { display: block; }
+        @media (min-width: 1024px) {
+          .sr-desktop-btn { display: inline-flex; }
+          .sr-kpis { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+          .sr-workspace[data-layout="both"] { grid-template-columns: 280px minmax(0, 1fr) 360px; }
+          .sr-workspace[data-layout="left"] { grid-template-columns: 280px minmax(0, 1fr); }
+          .sr-workspace[data-layout="right"] { grid-template-columns: minmax(0, 1fr) 360px; }
+          .sr-workspace[data-layout="map-only"] { grid-template-columns: minmax(0, 1fr); }
+          .sr-panel-config { order: 1; }
+          .sr-panel-map { order: 2; min-height: 680px; }
+          .sr-panel-itinerary { order: 3; }
+          .sr-mobile-sheet { display: none; }
+        }
+      `}</style>
+      {/* Top Enterprise Header & KPI Strip */}
+      <nav className="flex items-center gap-2 text-[13px]" aria-label="Breadcrumb">
+        <Link href="/my-plan" className="text-[var(--edify-text-muted)] hover:text-[var(--brand-primary)] hover:underline">
+          My Plan
+        </Link>
+        <RouteIcon name="arrowRight" className="h-3.5 w-3.5 text-slate-400" />
         <span className="font-semibold text-[var(--edify-text)]">Smart Route Planner</span>
+        {calendarRules ? (
+          <span className="ml-auto rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600">
+            {calendarRules.current_fy} ({calendarRules.fy_start} → {calendarRules.fy_end})
+          </span>
+        ) : null}
       </nav>
 
-      <header className="mt-5 flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <RouteIcon name="pin" className="mt-1 h-12 w-12 text-[var(--brand-primary)]" strokeWidth={0} fill="currentColor" />
+      <header className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-[16px] border border-[var(--edify-border)] bg-white px-4 py-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <div className="flex items-center gap-3">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[12px] bg-[#0f2942] text-white">
+            <MapPin className="h-6 w-6" aria-hidden="true" />
+          </span>
           <div>
-            <h1 className="text-[22px] font-bold leading-tight text-[var(--edify-text)] sm:text-[28px]">Smart Route Planner</h1>
-            <p className="mt-1 text-[16px] text-[var(--edify-text-muted)]">Optimise your field visits with the most efficient route</p>
+            <h1 className="text-[20px] font-bold leading-tight text-[#0f172a] sm:text-[22px]">Smart Route Planner</h1>
+            <p className="text-[13px] text-[var(--edify-text-muted)]">
+              Road-network optimization, SSA priority intelligence &amp; in-app turn-by-turn navigation
+            </p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="relative flex h-14 items-center gap-3 rounded-[12px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] px-5 text-[16px] font-medium">
-            <RouteIcon name="calendar" className="h-6 w-6" />
-            <span>{day.dateLabel}</span>
-            <RouteIcon name="chevronDown" className="h-5 w-5" />
-            <input
-              type="date"
-              value={day.date}
-              onChange={(e) => e.target.value && go({ date: e.target.value })}
-              className="absolute inset-0 cursor-pointer opacity-0"
-              aria-label="Field day date"
-            />
-          </label>
-          <FieldDayButtons fieldDay={fieldDay} saved={saved} busy={busy} hasStops={Boolean(itinerary?.stops.length)} onSave={save} onRecord={record} />
+
+        {/* Desktop Panel Collapse Toggles + Field Day Actions */}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setLeftOpen((v) => !v)}
+            className="sr-desktop-btn h-10 items-center gap-1.5 rounded-[10px] border border-[var(--edify-border)] bg-slate-50 px-3 text-[13px] font-semibold text-slate-700 hover:bg-slate-100"
+            aria-pressed={leftOpen}
+          >
+            {leftOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
+            Config
+          </button>
+          <button
+            type="button"
+            onClick={() => setRightOpen((v) => !v)}
+            className="sr-desktop-btn h-10 items-center gap-1.5 rounded-[10px] border border-[var(--edify-border)] bg-slate-50 px-3 text-[13px] font-semibold text-slate-700 hover:bg-slate-100"
+            aria-pressed={rightOpen}
+          >
+            {rightOpen ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
+            Itinerary
+          </button>
+          <button
+            type="button"
+            disabled={busy || !(smartResult?.stops.length)}
+            onClick={() => void saveRoute()}
+            className="inline-flex h-10 items-center gap-2 rounded-[10px] border border-[var(--brand-primary)] bg-white px-4 text-[13px] font-semibold text-[var(--brand-primary)] hover:bg-blue-50 disabled:opacity-45"
+          >
+            <Save className="h-4 w-4" aria-hidden="true" /> Save Route
+          </button>
+          {fieldDay.running ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void recordFieldDay('end')}
+              className="inline-flex h-10 items-center gap-2 rounded-[10px] bg-emerald-600 px-4 text-[13px] font-semibold text-white hover:bg-emerald-700"
+            >
+              <CheckCircle2 className="h-4 w-4" aria-hidden="true" /> End Field Day
+            </button>
+          ) : fieldDay.canStart ? (
+            <button
+              type="button"
+              disabled={busy || !(smartResult?.stops.length)}
+              onClick={() => void recordFieldDay('start')}
+              className="inline-flex h-10 items-center gap-2 rounded-[10px] bg-[var(--brand-primary)] px-4 text-[13px] font-semibold text-white hover:bg-[var(--brand-primary-hover)] disabled:opacity-45"
+            >
+              <Navigation className="h-4 w-4" aria-hidden="true" /> Start Field Day
+            </button>
+          ) : null}
         </div>
       </header>
 
-      {focus ? (
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-[var(--brand-primary)]/40 bg-blue-50 px-4 py-3" role="status">
-          <p className="text-[15px] text-slate-800">
-            <strong>Schools near {focus.name}</strong> (ID {focus.code}):{' '}
-            {focus.point
-              ? `the eligible schools around it, nearest first, on the map and below.`
-              : 'this school has no usable location, so nearby schools cannot be found. It still appears in every list and plan.'}
+      {/* Compact Enterprise KPI Summary Bar */}
+      <section className="sr-kpis mt-3" aria-label="Route metrics">
+        <div className={`${card} px-3.5 py-2.5`}>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--edify-text-muted)]">Feasible Schools</p>
+          <p className="mt-0.5 text-[19px] font-bold text-[#0f172a]">
+            {totals?.schools_included ?? mapStops.length}
+            {totals && totals.schools_excluded > 0 ? (
+              <span className="ml-1.5 text-[12px] font-semibold text-amber-700">({totals.schools_excluded} excluded)</span>
+            ) : null}
           </p>
-          <button type="button" onClick={() => go({ near: '' })} className="h-10 rounded-[8px] border border-[var(--brand-primary)] px-4 text-[14px] font-semibold text-[var(--brand-primary)]">
+        </div>
+        <div className={`${card} px-3.5 py-2.5`}>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--edify-text-muted)]">Road Distance</p>
+          <p className="mt-0.5 text-[19px] font-bold text-[#0f172a]">
+            {totals?.road_complete ? km(totals.road_meters) : 'Verification needed'}
+          </p>
+        </div>
+        <div className={`${card} px-3.5 py-2.5`}>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--edify-text-muted)]">Driving Time</p>
+          <p className="mt-0.5 text-[19px] font-bold text-[#0f172a]">
+            {totals?.road_complete ? hoursMinutes(totals.road_seconds) : '—'}
+          </p>
+        </div>
+        <div className={`${card} px-3.5 py-2.5`}>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--edify-text-muted)]">Total Field Day</p>
+          <p className="mt-0.5 text-[19px] font-bold text-[#0f172a]">
+            {totals ? hoursMinutes(totals.field_minutes * 60) : '—'}
+          </p>
+        </div>
+        <div className={`${card} px-3.5 py-2.5`}>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--edify-text-muted)]">Traffic &amp; Confidence</p>
+          <p className="mt-0.5 flex items-center gap-1.5 text-[13px] font-bold text-[#0f172a]">
+            <span
+              className={`inline-block h-2 w-2 rounded-full ${
+                totals?.traffic_state === 'traffic_jam'
+                  ? 'bg-red-500'
+                  : totals?.traffic_state === 'slow'
+                    ? 'bg-amber-500'
+                    : totals?.traffic_state === 'normal'
+                      ? 'bg-emerald-500'
+                      : 'bg-slate-400'
+              }`}
+            />
+            {totals?.traffic_state === 'traffic_jam'
+              ? 'Traffic jam'
+              : totals?.traffic_state === 'slow'
+                ? 'Slow traffic'
+                : totals?.traffic_state === 'normal'
+                  ? 'Normal traffic'
+                  : 'Traffic unavailable'}
+          </p>
+        </div>
+      </section>
+
+      {/* Banners: Focus, My Plan Sync Warning, Status Message */}
+      {focus ? (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-[var(--brand-primary)]/40 bg-blue-50 px-4 py-2.5 text-[13px]" role="status">
+          <span>
+            <strong>Schools near {focus.name}</strong> (ID {focus.code})
+          </span>
+          <button type="button" onClick={() => go({ near: '' })} className="rounded-[8px] border border-[var(--brand-primary)] bg-white px-3 py-1 font-semibold text-[var(--brand-primary)]">
             Show my day
           </button>
         </div>
       ) : null}
 
-      <div className="mt-6">
-        <KpiRow itinerary={itinerary} />
-      </div>
+      {syncWarnings.length > 0 ? (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-[12px] border border-amber-300 bg-amber-50 px-4 py-2.5 text-[13px] text-amber-950" role="status">
+          <div>
+            <p className="font-bold">My Plan synchronization notice</p>
+            <p>{syncWarnings.join(' ')}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => void runOptimize()}
+            className="rounded-[8px] bg-amber-700 px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-amber-800"
+          >
+            Re-optimize now
+          </button>
+        </div>
+      ) : null}
 
       {message ? (
-        <p className="mt-4 rounded-[12px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] px-4 py-3 text-[14px]" role="status">
+        <p className="mt-3 rounded-[12px] border border-[var(--edify-border)] bg-white px-4 py-2.5 text-[13px] text-slate-700" role="status">
           {message}
         </p>
       ) : null}
-      <div className="mt-4">
-        <UnplacedNote itinerary={itinerary} />
-      </div>
 
-      <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,460px)]">
-        <section className={`${card} grid min-h-[600px] grid-cols-1 overflow-hidden md:grid-cols-[230px_minmax(0,1fr)]`} aria-label="Route map">
-          <div className="flex flex-col gap-4 border-b border-[var(--edify-border)] p-4 md:border-b-0 md:border-r">
-            <div className="grid grid-cols-2 gap-2" role="tablist" aria-label="Map or list">
-              {(
-                [
-                  ['map', 'Map View', 'map'],
-                  ['list', 'List View', 'list'],
-                ] as const
-              ).map(([key, label, icon]) => (
-                <button
-                  key={key}
-                  type="button"
-                  role="tab"
-                  aria-selected={view === key}
-                  onClick={() => setView(key)}
-                  className={`flex h-12 items-center justify-center gap-2 rounded-[10px] text-[14px] font-semibold ${view === key ? 'bg-[var(--brand-primary)] text-white' : 'border border-[var(--edify-border)] text-[var(--edify-text)]'}`}
-                >
-                  <RouteIcon name={icon} className="h-5 w-5" /> {label}
-                </button>
-              ))}
-            </div>
-            <div className="rounded-[12px] border border-[var(--edify-border)] p-4">
-              <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => setFiltersOpen(!filtersOpen)}
-                  aria-expanded={filtersOpen}
-                  className="flex items-center gap-2 text-[16px] font-semibold md:pointer-events-none"
-                >
-                  <RouteIcon name="filter" className="h-5 w-5" /> Filters
-                  <RouteIcon name="chevronDown" className={`h-4 w-4 md:hidden ${filtersOpen ? 'rotate-180' : ''}`} />
-                </button>
-                <button type="button" onClick={() => { setShow({ planned: true, suggested: true, nearby: false }); go({ district: '', cluster: '' }); }} className="text-[14px] font-medium text-[var(--brand-primary)]">
-                  Clear All
-                </button>
-              </div>
-              <div className={`${filtersOpen ? 'block' : 'hidden'} md:block`}>
-              <label className="mt-4 block text-[14px] font-semibold">
-                District
-                <select value={district} onChange={(e) => go({ district: e.target.value })} className="mt-2 h-12 w-full card px-3 text-[14px] font-normal">
-                  <option value="">All Districts</option>
-                  {day.districts.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
-                </select>
-              </label>
-              <label className="mt-4 block text-[14px] font-semibold">
-                Cluster
-                <select value={cluster} onChange={(e) => go({ cluster: e.target.value })} className="mt-2 h-12 w-full card px-3 text-[14px] font-normal">
-                  <option value="">All Clusters</option>
-                  {day.clusters.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-                </select>
-              </label>
-              <fieldset className="mt-4">
-                <legend className="text-[14px] font-semibold">Status</legend>
-                {(
-                  [
-                    ['planned', 'Planned', 'accent-[var(--brand-primary)]'],
-                    ['suggested', 'Suggested', 'accent-sky-600'],
-                    ['nearby', 'Nearby', 'accent-slate-500'],
-                  ] as const
-                ).map(([key, label, accent]) => (
-                  <label key={key} className="mt-2.5 flex items-center gap-3 text-[15px]">
-                    <input type="checkbox" checked={show[key]} onChange={(e) => setShow({ ...show, [key]: e.target.checked })} className={`h-6 w-6 ${accent}`} />
-                    {label}
-                  </label>
-                ))}
-              </fieldset>
-              </div>
-            </div>
-          </div>
-          {view === 'map' ? (
-            <div className="relative min-h-[440px] md:min-h-[520px]">
-              <RouteMap
-                stops={stops}
-                path={show.planned ? path : []}
-                others={others}
-                chip={chip}
-                onSelect={onPick}
-                onView={onView}
-                className="absolute inset-0"
-                focus={focus}
-                fitOthers={Boolean(focus)}
-              />
-              {selected ? (
-                <SchoolPanel
-                  pin={selected}
-                  pair={pair}
-                  onClose={() => setSelected(null)}
-                  onSelectForRoute={() => {
-                    void plan([...ids(itinerary).filter((id) => id !== selected.schoolId), selected.schoolId], 'fastest');
-                    setSelected(null);
-                  }}
-                  inRoute={stopIds.has(selected.schoolId)}
-                  addHref={addHref(selected)}
-                />
-              ) : null}
-            </div>
-          ) : (
-            <ListView itinerary={itinerary} onMove={move} busy={busy} />
-          )}
-        </section>
-
-        <aside className="flex flex-col gap-5">
-          <section className={`${card} pb-5`} aria-labelledby="recommended-title">
-            <header className="flex items-center justify-between px-6 pt-5">
-              <h2 id="recommended-title" className="flex items-center gap-3 sm:whitespace-nowrap text-[20px] font-semibold text-[var(--edify-text)]">
-                <RouteIcon name="trophy" className="h-7 w-7 text-amber-500" /> {fieldDay.phase === 'unsaved' ? 'Recommended Route' : 'Your Saved Route'}
+      {/* ===================================================================== */}
+      {/* MAIN 3-PANEL DESKTOP WORKSPACE (Map-First on Mobile)                  */}
+      {/* ===================================================================== */}
+      <div className="sr-workspace mt-3" data-layout={layoutKey}>
+        {/* LEFT PANEL — Route Configuration */}
+        {leftOpen ? (
+          <aside className={`${card} sr-panel-config flex flex-col gap-4 p-4`} aria-label="Route configuration" data-panel="route-config">
+            <div className="flex items-center justify-between border-b border-[var(--edify-border)] pb-2.5">
+              <h2 className="flex items-center gap-2 text-[15px] font-bold text-[#0f172a]">
+                <SlidersHorizontal className="h-4 w-4 text-[var(--brand-primary)]" aria-hidden="true" />
+                Route Configuration
               </h2>
-              {itinerary?.stops.length ? (
-                <span className="flex items-center gap-2 rounded-full bg-green-50 px-3 py-1.5 text-[14px] font-semibold text-green-700">
-                  <RouteIcon name="check" className="h-4 w-4 rounded-full bg-green-600 p-0.5 text-white" strokeWidth={3} /> {fieldDay.phase === 'unsaved' ? 'Recommended' : 'Saved'}
+              {ownerMeta.name ? (
+                <span className="truncate rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-[var(--brand-primary)]">
+                  {ownerMeta.role || 'Staff'}
                 </span>
               ) : null}
-            </header>
-            <div className="mt-2">
-              <RouteList itinerary={itinerary} onFocus={onPick} fieldDay={fieldDay.running || fieldDay.phase === 'ended' ? saved : undefined} running={fieldDay.running} busy={busy} onRecord={record} />
             </div>
-            <RouteSummary itinerary={itinerary} />
-            <div className="mt-5 grid grid-cols-2 gap-3 px-6">
+
+            {/* Unified Chevron-Free Full-Field Date Picker (Sections 10 & 11) */}
+            <div className="space-y-1.5">
+              <label htmlFor="smart-route-date" className="block text-[12px] font-bold uppercase tracking-wide text-slate-600">
+                Planning Date
+              </label>
+              <EdifyDatePicker
+                id="smart-route-date"
+                label="Planning date"
+                value={day.date}
+                displayStyle="weekday"
+                policy={planningPolicy}
+                showFiscalYear
+                showQuickActions
+                size="md"
+                onChange={(nextIso) => {
+                  if (nextIso && nextIso !== day.date) go({ date: nextIso });
+                }}
+              />
+            </div>
+
+            {/* District & Cluster Scope Filters */}
+            <div className="grid grid-cols-2 gap-2">
+              <label className="text-[12px] font-semibold text-slate-600">
+                District
+                <select
+                  value={district}
+                  onChange={(e) => go({ district: e.target.value })}
+                  className="mt-1 h-9 w-full rounded-[8px] border border-[var(--edify-border)] bg-white px-2 text-[13px] font-medium text-slate-800"
+                >
+                  <option value="">All Districts</option>
+                  {day.districts.map((d) => (
+                    <option key={d.value} value={d.value}>
+                      {d.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-[12px] font-semibold text-slate-600">
+                Cluster
+                <select
+                  value={cluster}
+                  onChange={(e) => go({ cluster: e.target.value })}
+                  className="mt-1 h-9 w-full rounded-[8px] border border-[var(--edify-border)] bg-white px-2 text-[13px] font-medium text-slate-800"
+                >
+                  <option value="">All Clusters</option>
+                  {day.clusters.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            {/* Start / End Locations & Working Hours */}
+            <div className="space-y-2.5 rounded-[12px] border border-slate-100 bg-slate-50/70 p-3">
+              <label className="block text-[12px] font-semibold text-slate-700">
+                Start Location
+                <select
+                  value={startChoice}
+                  onChange={(e) => {
+                    const v = e.target.value as 'first_school' | 'kampala_office' | 'current_gps';
+                    if (v === 'current_gps') requestCurrentGpsAsStart();
+                    else setStartChoice(v);
+                  }}
+                  className="mt-1 h-9 w-full rounded-[8px] border border-[var(--edify-border)] bg-white px-2.5 text-[13px] font-medium"
+                >
+                  <option value="first_school">Start at First School</option>
+                  <option value="kampala_office">Edify Uganda Office (Kampala)</option>
+                  <option value="current_gps">Use My Current GPS</option>
+                </select>
+              </label>
+
+              {startChoice !== 'first_school' ? (
+                <label className="flex items-center gap-2 text-[12px] font-medium text-slate-700">
+                  <input type="checkbox" checked={returnToStart} onChange={(e) => setReturnToStart(e.target.checked)} className="h-4 w-4 accent-[var(--brand-primary)]" />
+                  Return to start location at end of day
+                </label>
+              ) : null}
+
+              <div className="grid grid-cols-2 gap-2">
+                <label className="text-[11px] font-semibold text-slate-600">
+                  Work Start
+                  <input
+                    type="time"
+                    value={workStart}
+                    onChange={(e) => setWorkStart(e.target.value)}
+                    className="mt-1 h-8 w-full rounded-[7px] border border-[var(--edify-border)] bg-white px-2 text-[12px]"
+                  />
+                </label>
+                <label className="text-[11px] font-semibold text-slate-600">
+                  Work End
+                  <input
+                    type="time"
+                    value={workEnd}
+                    onChange={(e) => setWorkEnd(e.target.value)}
+                    className="mt-1 h-8 w-full rounded-[7px] border border-[var(--edify-border)] bg-white px-2 text-[12px]"
+                  />
+                </label>
+              </div>
+              <label className="block text-[11px] font-semibold text-slate-600">
+                Visit Duration (minutes per school)
+                <input
+                  type="number"
+                  min={15}
+                  max={240}
+                  step={15}
+                  value={visitMinutes}
+                  onChange={(e) => setVisitMinutes(Number(e.target.value) || 60)}
+                  className="mt-1 h-8 w-full rounded-[7px] border border-[var(--edify-border)] bg-white px-2.5 text-[12px]"
+                />
+              </label>
+
+              <div className="flex items-center gap-1.5 pt-0.5">
+                {(
+                  [
+                    ['DRIVE', 'Vehicle'],
+                    ['TWO_WHEELER', 'Motorcycle'],
+                  ] as const
+                ).map(([tm, lbl]) => (
+                  <button
+                    key={tm}
+                    type="button"
+                    onClick={() => setTransportMode(tm)}
+                    className={`flex-1 rounded-[7px] py-1 text-[12px] font-semibold ${
+                      transportMode === tm ? 'bg-[#0f2942] text-white' : 'border border-[var(--edify-border)] bg-white text-slate-600'
+                    }`}
+                  >
+                    {lbl}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 5 Optimization Modes Selector (Section 5.1) */}
+            <fieldset className="space-y-1.5">
+              <legend className="text-[12px] font-bold uppercase tracking-wide text-slate-600">Optimization Mode</legend>
+              <div className="space-y-1.5">
+                {MODES.map((m) => {
+                  const active = mode === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setMode(m.id)}
+                      data-opt-mode={m.id}
+                      aria-pressed={active}
+                      className={`w-full rounded-[10px] border px-3 py-2 text-left transition-colors ${
+                        active
+                          ? 'border-[var(--brand-primary)] bg-blue-50/75 ring-1 ring-[var(--brand-primary)]/30'
+                          : 'border-[var(--edify-border)] bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      <p className={`text-[13px] font-bold ${active ? 'text-[var(--brand-primary)]' : 'text-slate-800'}`}>{m.label}</p>
+                      <p className="text-[11px] text-slate-500">{m.desc}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
+
+            {/* Primary Optimize Route Action */}
+            <button
+              type="button"
+              disabled={busy || selectedSchoolIds.length === 0}
+              onClick={() => void runOptimize()}
+              data-action="optimize-route"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-[12px] bg-[var(--brand-primary)] text-[14px] font-bold text-white shadow-sm hover:bg-[var(--brand-primary-hover)] disabled:opacity-50"
+            >
+              <Sparkles className="h-4 w-4" aria-hidden="true" />
+              {busy ? 'Optimizing Road Route…' : 'Optimize Route'}
+            </button>
+
+            {/* Map Layers & Staff Road Condition Report */}
+            <div className="space-y-2 border-t border-[var(--edify-border)] pt-3">
+              <div className="flex flex-wrap gap-3 text-[12px] font-medium text-slate-700">
+                {(
+                  [
+                    ['planned', 'Planned'],
+                    ['suggested', 'Suggested'],
+                    ['nearby', 'Nearby'],
+                  ] as const
+                ).map(([k, lbl]) => (
+                  <label key={k} className="flex items-center gap-1.5">
+                    <input type="checkbox" checked={show[k]} onChange={(e) => setShow({ ...show, [k]: e.target.checked })} className="h-4 w-4 accent-[var(--brand-primary)]" />
+                    {lbl}
+                  </label>
+                ))}
+              </div>
               <button
                 type="button"
-                disabled={busy || !itinerary?.stops.length || !fieldDay.canSave}
-                onClick={() => plan(ids(itinerary), 'fastest')}
-                className="flex h-14 items-center justify-center gap-3 rounded-[12px] border-2 border-[var(--brand-primary)] text-[16px] font-semibold text-[var(--brand-primary)] hover:bg-blue-50 disabled:opacity-50"
+                onClick={() => setShowReportModal(true)}
+                className="flex h-9 w-full items-center justify-center gap-1.5 rounded-[9px] border border-amber-300 bg-amber-50 text-[12px] font-semibold text-amber-900 hover:bg-amber-100"
               >
-                <RouteIcon name="optimize" className="h-6 w-6" /> {busy ? 'Working…' : 'Optimize Route'}
+                <Flag className="h-3.5 w-3.5" aria-hidden="true" /> Report Road Condition ({roadConditions.length})
               </button>
-              <a
-                href={directions ?? undefined}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-disabled={!directions}
-                className={`flex h-14 items-center justify-center gap-3 rounded-[12px] bg-[var(--brand-primary)] text-[16px] font-semibold text-white hover:bg-[var(--brand-primary-hover)] ${directions ? '' : 'pointer-events-none opacity-50'}`}
-              >
-                <RouteIcon name="navigate" className="h-6 w-6" /> Get Directions
-              </a>
             </div>
-          </section>
-        </aside>
+          </aside>
+        ) : null}
 
+        {/* CENTER PANEL — Dominant Interactive Road Map */}
+        <section className={`${card} sr-panel-map relative overflow-hidden`} aria-label="Interactive road map">
+          <RouteMap
+            stops={mapStops}
+            path={show.planned ? activePath : []}
+            pathIsRoad={activePathIsRoad}
+            alternatives={activeAlternatives}
+            activeAlternativeId={activeAltId}
+            onSelectAlternative={setActiveAltId}
+            roadAlerts={smartResult?.road_alerts ?? roadConditions}
+            userLocation={userGps}
+            others={others}
+            chip={chip}
+            onSelect={onPickPin}
+            onView={onView}
+            className="absolute inset-0"
+            focus={focus}
+            fitOthers={Boolean(focus)}
+          />
+
+          {selectedPin ? (
+            <SchoolPopupCard
+              pin={selectedPin}
+              pair={pair}
+              inRoute={stopIdSet.has(selectedPin.schoolId)}
+              addHref={addHref(selectedPin)}
+              onClose={() => setSelectedPin(null)}
+              onSelectForRoute={() => {
+                const next = [...selectedSchoolIds.filter((id) => id !== selectedPin.schoolId), selectedPin.schoolId];
+                setSelectedSchoolIds(next);
+                void runOptimize(next, mode);
+                setSelectedPin(null);
+              }}
+              onInAppDirections={() => {
+                void openInAppDirections([selectedPin.schoolId]);
+                setSelectedPin(null);
+              }}
+            />
+          ) : null}
+
+          {/* Mobile Map-First Bottom Sheet Summary (< 1024px) */}
+          {nextMobileStop ? (
+            <div className="sr-mobile-sheet absolute inset-x-3 bottom-3 z-10 rounded-[14px] border border-slate-200 bg-white/95 p-3 shadow-xl backdrop-blur" data-block="mobile-bottom-sheet">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--brand-primary)]">
+                    Next Stop · Arr. {nextMobileStop.arrival}
+                  </p>
+                  <p className="truncate text-[15px] font-bold text-slate-900">{nextMobileStop.school_name}</p>
+                  <p className="text-[12px] text-slate-600">
+                    {totals?.road_complete
+                      ? `${km(totals.road_meters)} · ${hoursMinutes(totals.road_seconds)}`
+                      : 'Road access requires verification'}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => void openInAppDirections((smartResult?.stops ?? []).map((s) => s.school_id))}
+                    className="inline-flex h-11 items-center gap-1.5 rounded-[10px] bg-[var(--brand-primary)] px-3.5 text-[13px] font-bold text-white"
+                  >
+                    <Navigation className="h-4 w-4" aria-hidden="true" /> Start Navigation
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMobileSheetExpanded((v) => !v)}
+                    className="h-11 rounded-[10px] border border-slate-300 px-3 text-[12px] font-semibold text-slate-700"
+                  >
+                    {mobileSheetExpanded ? 'Hide' : 'Stops'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </section>
+
+        {/* RIGHT PANEL — Recommended Itinerary & In-App Directions */}
+        {rightOpen ? (
+          <aside className={`${card} sr-panel-itinerary flex flex-col gap-3.5 p-4`} aria-label="Recommended itinerary and navigation" data-panel="route-itinerary">
+            {/* Switch between Itinerary & In-App Directions */}
+            <div className="grid grid-cols-2 gap-1.5 rounded-[10px] bg-slate-100 p-1" role="tablist">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={rightTab === 'itinerary'}
+                onClick={() => setRightTab('itinerary')}
+                className={`h-9 rounded-[8px] text-[13px] font-bold transition-colors ${
+                  rightTab === 'itinerary' ? 'bg-white text-[#0f172a] shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Itinerary ({smartResult?.stops.length ?? mapStops.length})
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={rightTab === 'directions'}
+                onClick={() => {
+                  setRightTab('directions');
+                  if (!directions && (smartResult?.stops.length ?? 0) > 0) {
+                    void openInAppDirections(smartResult!.stops.map((s) => s.school_id));
+                  }
+                }}
+                className={`flex h-9 items-center justify-center gap-1.5 rounded-[8px] text-[13px] font-bold transition-colors ${
+                  rightTab === 'directions' ? 'bg-[var(--brand-primary)] text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Navigation className="h-3.5 w-3.5" aria-hidden="true" /> Directions
+              </button>
+            </div>
+
+            {rightTab === 'directions' ? (
+              <InAppNavigationPanel
+                directions={directions}
+                loading={dirLoading}
+                error={dirError}
+                activeAlternativeId={activeAltId}
+                onSelectAlternative={setActiveAltId}
+                onRecalculateFromGps={(origin) => {
+                  const targetIds = directions?.stops.map((s) => s.school_id) ?? (smartResult?.stops ?? []).map((s) => s.school_id);
+                  if (targetIds.length > 0) void openInAppDirections(targetIds, origin);
+                }}
+                onUserLocationChange={setUserGps}
+                onClose={() => setRightTab('itinerary')}
+              />
+            ) : (
+              <>
+                {/* Route Recommendation & Comparison Summary (Section 5.3) */}
+                {smartResult ? (
+                  <div className="rounded-[12px] border border-slate-200 bg-slate-50/75 p-3 text-[12px]">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-bold text-[#0f172a]">{smartResult.objective_label}</p>
+                        <p className="mt-0.5 text-slate-600">{smartResult.recommendation_note}</p>
+                      </div>
+                      {smartResult.is_recommended ? (
+                        <span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800">
+                          Recommended
+                        </span>
+                      ) : null}
+                    </div>
+                    {(smartResult.distance_saved_meters > 0 || smartResult.time_saved_seconds > 0) ? (
+                      <p className="mt-2 rounded-[8px] bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-800">
+                        Optimization saved {km(smartResult.distance_saved_meters)} and {hoursMinutes(smartResult.time_saved_seconds)} vs. initial order.
+                      </p>
+                    ) : null}
+                    <div className="mt-2 flex flex-wrap items-center justify-between gap-1 text-[11px] text-slate-500">
+                      <span>Confidence: <strong className="uppercase">{smartResult.confidence}</strong> · {smartResult.provider.toUpperCase()}</span>
+                      <span>Calculated {dayClock(smartResult.calculated_at)}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-slate-500">{smartResult.confidence_note}</p>
+                  </div>
+                ) : null}
+
+                {/* Road Condition Alerts */}
+                {smartResult && smartResult.road_alerts.length > 0 ? (
+                  <div className="space-y-1.5 rounded-[12px] border border-amber-300 bg-amber-50 p-3 text-[12px] text-amber-950">
+                    <p className="flex items-center gap-1.5 font-bold">
+                      <ShieldAlert className="h-4 w-4 text-amber-700" aria-hidden="true" /> Active Road Warnings ({smartResult.road_alerts.length})
+                    </p>
+                    {smartResult.road_alerts.map((al) => (
+                      <p key={al.id} className="text-[11px]">
+                        <strong>{al.road_name}</strong> ({al.category.replaceAll('_', ' ')}, {al.verification_status}): {al.applicability_note}
+                      </p>
+                    ))}
+                  </div>
+                ) : null}
+
+                {/* Ordered Stop Sequence */}
+                {smartResult && smartResult.stops.length > 0 ? (
+                  <ol className="max-h-[420px] space-y-2.5 overflow-y-auto pr-1" aria-label="Optimized school stop sequence">
+                    {smartResult.stops.map((st, idx) => {
+                      const badge = priorityBadgeStyle(st.priority.band);
+                      const ci = checkIns.get(st.school_id);
+                      const isLocked = lockedIds.has(st.school_id);
+                      return (
+                        <li key={st.school_id} className="rounded-[12px] border border-[var(--edify-border)] bg-white p-3">
+                          <div className="flex items-start gap-2.5">
+                            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--brand-primary)] text-[12px] font-bold text-white">
+                              {st.order}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span className="text-[14px] font-bold text-[#0f172a]">{st.school_name}</span>
+                                <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${badge.cls}`}>{badge.label}</span>
+                              </div>
+                              <p className="mt-0.5 text-[12px] text-slate-500">
+                                ID {st.school_code} · {st.district} · Visit {st.visit_minutes}m
+                                {st.planned_activity_id ? ` · Plan #${st.planned_activity_id.slice(0, 8)}` : ''}
+                              </p>
+                              <p className="mt-1 flex items-center gap-1.5 text-[12px] font-medium text-slate-700">
+                                <Clock className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
+                                Arr {st.arrival} – Dep {st.departure}
+                                {idx > 0 || smartResult.start ? (
+                                  <span className="text-slate-500">
+                                    · {st.road_available ? `${km(st.road_meters)} (${hoursMinutes(st.road_seconds)})` : st.road_status || 'Road access requires verification'}
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-500">· First stop</span>
+                                )}
+                              </p>
+                              {st.conflict ? (
+                                <p className="mt-1 flex items-center gap-1 text-[12px] font-semibold text-red-700">
+                                  <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" /> {st.conflict}
+                                </p>
+                              ) : null}
+                            </div>
+                          </div>
+
+                          {/* Stop Actions: Reorder, Lock, In-App Directions, My Plan link, Check-in */}
+                          <div className="mt-2.5 flex flex-wrap items-center justify-between gap-1.5 border-t border-slate-100 pt-2">
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                disabled={busy || idx === 0}
+                                onClick={() => moveStop(idx, -1)}
+                                aria-label={`Move ${st.school_name} earlier`}
+                                className="grid h-7 w-7 place-items-center rounded-[6px] border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-35"
+                              >
+                                <ArrowUp className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={busy || idx === smartResult.stops.length - 1}
+                                onClick={() => moveStop(idx, 1)}
+                                aria-label={`Move ${st.school_name} later`}
+                                className="grid h-7 w-7 place-items-center rounded-[6px] border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-35"
+                              >
+                                <ArrowDown className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => toggleLock(st.school_id)}
+                                aria-label={isLocked ? `Unlock ${st.school_name}` : `Lock ${st.school_name} position`}
+                                className={`grid h-7 w-7 place-items-center rounded-[6px] border ${
+                                  isLocked ? 'border-[var(--brand-primary)] bg-blue-50 text-[var(--brand-primary)]' : 'border-slate-200 text-slate-500'
+                                }`}
+                              >
+                                {isLocked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
+                              </button>
+                              {smartResult.stops.length > 1 ? (
+                                <button
+                                  type="button"
+                                  onClick={() => removeStop(st.school_id)}
+                                  className="h-7 rounded-[6px] px-2 text-[11px] font-semibold text-slate-500 hover:bg-red-50 hover:text-red-700"
+                                >
+                                  Remove
+                                </button>
+                              ) : null}
+                            </div>
+
+                            <div className="flex items-center gap-1.5">
+                              {fieldDay.running && !ci?.arrivedAt ? (
+                                <button
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={() => void recordFieldDay('arrive', st.school_id)}
+                                  className="h-7 rounded-[7px] border border-emerald-600 px-2 text-[11px] font-bold text-emerald-700 hover:bg-emerald-50"
+                                >
+                                  Arrived
+                                </button>
+                              ) : null}
+                              {fieldDay.running && ci?.arrivedAt && !ci.leftAt ? (
+                                <button
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={() => void recordFieldDay('leave', st.school_id)}
+                                  className="h-7 rounded-[7px] border border-emerald-600 px-2 text-[11px] font-bold text-emerald-700 hover:bg-emerald-50"
+                                >
+                                  Leaving
+                                </button>
+                              ) : null}
+                              <button
+                                type="button"
+                                onClick={() => void openInAppDirections([st.school_id])}
+                                className="inline-flex h-7 items-center gap-1 rounded-[7px] bg-blue-50 px-2 text-[11px] font-bold text-[var(--brand-primary)] hover:bg-blue-100"
+                              >
+                                <Navigation className="h-3 w-3" aria-hidden="true" /> Navigate
+                              </button>
+                            </div>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                ) : (
+                  <p className="rounded-[12px] border border-dashed border-slate-200 py-8 text-center text-[13px] text-[var(--edify-text-muted)]">
+                    No school visits scheduled on this date. Pick another date above or add a nearby eligible school below.
+                  </p>
+                )}
+
+                {/* Excluded Schools (Missing GPS / Unroutable / Exceeds Working Hours) */}
+                {smartResult && smartResult.excluded.length > 0 ? (
+                  <div className="space-y-1.5 rounded-[12px] border border-amber-200 bg-amber-50/70 p-3 text-[12px] text-amber-950">
+                    <p className="font-bold">Excluded Schools ({smartResult.excluded.length})</p>
+                    {smartResult.excluded.map((ex) => (
+                      <div key={ex.school_id} className="rounded-[8px] bg-white/85 px-2.5 py-1.5">
+                        <p className="font-semibold">
+                          {ex.school_name} <span className="font-normal text-slate-500">ID {ex.school_code}</span>
+                        </p>
+                        <p className="text-[11px] text-amber-900">{ex.reason}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+
+                {/* Primary Right-Panel Action Bar: 100% In-App Get Directions + Re-optimize / Revert */}
+                <div className="mt-auto space-y-2 border-t border-[var(--edify-border)] pt-3">
+                  <button
+                    type="button"
+                    disabled={busy || !(smartResult?.stops.length)}
+                    data-action="get-directions-in-app"
+                    onClick={() => void openInAppDirections((smartResult?.stops ?? []).map((s) => s.school_id))}
+                    className="flex h-12 w-full items-center justify-center gap-2 rounded-[12px] bg-[var(--brand-primary)] text-[14px] font-bold text-white shadow-sm hover:bg-[var(--brand-primary-hover)] disabled:opacity-45"
+                  >
+                    <Navigation className="h-4 w-4" aria-hidden="true" /> Get Directions (In-App)
+                  </button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      disabled={busy || selectedSchoolIds.length === 0}
+                      onClick={() => void runOptimize()}
+                      className="flex h-10 items-center justify-center gap-1.5 rounded-[10px] border border-[var(--brand-primary)] text-[13px] font-semibold text-[var(--brand-primary)] hover:bg-blue-50 disabled:opacity-45"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> Re-optimize
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy || originalOrder.length === 0}
+                      onClick={() => void runOptimize(originalOrder, 'as_given')}
+                      className="flex h-10 items-center justify-center gap-1.5 rounded-[10px] border border-[var(--edify-border)] text-[13px] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-45"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" /> Revert Original
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </aside>
+        ) : null}
+      </div>
+
+      {/* Schools Near Your Route */}
+      <div className="mt-5">
         <NearbyCard
           suggestions={day.suggestions}
           onAdd={addHref}
-          onFocus={onPick}
+          onFocus={onPickPin}
           around={focus}
           onViewAll={() => setAllNearby(!allNearby)}
           showAll={allNearby}
-          inRoute={stopIds}
+          inRoute={stopIdSet}
         />
-        <div className="self-start">
-          <DayVerdict itinerary={itinerary} />
-        </div>
       </div>
+
+      {/* Staff Road Condition Report Modal (Section 7) */}
+      {showReportModal ? (
+        <RoadConditionModal
+          defaultPoint={smartResult?.stops[0]?.point ?? { lat: 0.3476, lng: 32.5825 }}
+          onClose={() => setShowReportModal(false)}
+          onCreated={(rep) => {
+            setRoadConditions((prev) => [rep, ...prev]);
+            setShowReportModal(false);
+            setMessage(`Road condition report recorded for "${rep.road_name}" (status: unverified staff report).`);
+          }}
+        />
+      ) : null}
     </div>
   );
 }
 
-function SchoolPanel({
+function SchoolPopupCard({
   pin,
   pair,
   onClose,
   onSelectForRoute,
+  onInAppDirections,
   inRoute,
   addHref,
 }: {
@@ -473,166 +1411,182 @@ function SchoolPanel({
   pair: GetSchoolDistanceResponse | null;
   onClose: () => void;
   onSelectForRoute: () => void;
+  onInAppDirections: () => void;
   inRoute: boolean;
   addHref: string;
 }) {
-  const directions = directionsUrl([pin]);
   const leg = legFigures(pair?.leg);
   return (
-    <div className="absolute left-3 top-3 z-10 w-[min(360px,calc(100%-24px))] rounded-[14px] bg-white p-4 shadow-xl" role="dialog" aria-label={pin.name}>
+    <div className="absolute left-3 top-3 z-20 w-[min(340px,calc(100%-24px))] rounded-[14px] border border-slate-200 bg-white p-4 shadow-xl" role="dialog" aria-label={pin.name}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[16px] font-semibold leading-snug text-slate-900">{pin.name}</p>
-          <p className="mt-0.5 text-[14px] text-slate-500">
+          <p className="text-[15px] font-bold leading-snug text-slate-900">{pin.name}</p>
+          <p className="mt-0.5 text-[12px] text-slate-500">
             ID {pin.code} · {pin.district || 'District not set'}
             {pin.cluster ? ` · ${pin.cluster}` : ''}
           </p>
-          <p className="mt-1 text-[13px] text-slate-500">
-            {pin.category} · {pin.status === 'other' ? 'Not planned' : pin.status.charAt(0).toUpperCase() + pin.status.slice(1)} ·{' '}
-            {pin.locationStatus === 'verified' ? 'Verified location' : 'Directory location (not verified)'}
+          <p className="mt-1 text-[12px] text-slate-500">
+            {pin.category} · {pin.locationStatus === 'verified' ? 'Verified GPS' : 'Directory GPS (unverified)'}
           </p>
         </div>
-        <button type="button" onClick={onClose} className="text-slate-500" aria-label="Close">
+        <button type="button" onClick={onClose} className="text-slate-500 hover:text-slate-800" aria-label="Close">
           ✕
         </button>
       </div>
       {pair && leg ? (
-        <p className="mt-3 rounded-[10px] bg-slate-50 px-3 py-2 text-[14px] text-slate-700">
-          From {pair.from?.name}: {pair.leg?.roadAvailable ? `${km(leg.meters)} by road • ${hoursMinutes(leg.seconds)}` : `${km(leg.meters)} straight line (road distance unavailable)`}
+        <p className="mt-2.5 rounded-[8px] bg-slate-50 px-2.5 py-1.5 text-[12px] text-slate-700">
+          From {pair.from?.name}: {pair.leg?.roadAvailable ? `${km(leg.meters)} by road · ${hoursMinutes(leg.seconds)}` : 'Road access requires verification'}
         </p>
       ) : null}
-      <div className="mt-3 grid grid-cols-2 gap-2 text-[14px] font-semibold">
+      <div className="mt-3 grid grid-cols-2 gap-2 text-[13px] font-semibold">
         {pin.canOpenProfile ? (
-          <a href={`/schools/${encodeURIComponent(pin.schoolId)}`} className="flex h-11 items-center justify-center rounded-[10px] border border-slate-300">
+          <Link href={`/schools/${encodeURIComponent(pin.schoolId)}`} className="flex h-9 items-center justify-center rounded-[8px] border border-slate-300 text-slate-700 hover:bg-slate-50">
             View School
-          </a>
+          </Link>
         ) : null}
         {!inRoute ? (
-          <button type="button" onClick={onSelectForRoute} className="h-11 rounded-[10px] border border-[var(--brand-primary)] text-[var(--brand-primary)]">
-            Select for Route
+          <button type="button" onClick={onSelectForRoute} className="h-9 rounded-[8px] border border-[var(--brand-primary)] text-[var(--brand-primary)] hover:bg-blue-50">
+            Add to Route
           </button>
         ) : null}
         {pin.status !== 'planned' && pin.status !== 'completed' ? (
-          <a href={addHref} className="flex h-11 items-center justify-center rounded-[10px] border border-[var(--brand-primary)] text-[var(--brand-primary)]">
+          <Link href={addHref} className="flex h-9 items-center justify-center rounded-[8px] border border-[var(--brand-primary)] text-[var(--brand-primary)] hover:bg-blue-50">
             Add to Plan
-          </a>
+          </Link>
         ) : null}
-        {directions ? (
-          <a href={directions} target="_blank" rel="noopener noreferrer" className="flex h-11 items-center justify-center rounded-[10px] bg-[var(--brand-primary)] text-white">
-            Get Directions
-          </a>
+        {pin.point ? (
+          <button
+            type="button"
+            onClick={onInAppDirections}
+            className="flex h-9 items-center justify-center gap-1 rounded-[8px] bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-hover)]"
+          >
+            <Navigation className="h-3.5 w-3.5" aria-hidden="true" /> Get Directions
+          </button>
         ) : null}
       </div>
     </div>
   );
 }
 
-function ListView({ itinerary, onMove, busy }: { itinerary: Itinerary | undefined; onMove: (index: number, by: number) => void; busy: boolean }) {
-  const stops = itinerary?.stops ?? [];
-  return (
-    <div className="overflow-x-auto p-4">
-      <table className="w-full text-left text-[14px]">
-        <caption className="sr-only">The day&apos;s visits in order</caption>
-        <thead className="text-[13px] uppercase tracking-wide text-[var(--edify-text-muted)]">
-          <tr>
-            <th className="py-2 pr-3">#</th>
-            <th className="py-2 pr-3">School</th>
-            <th className="py-2 pr-3">From previous</th>
-            <th className="py-2 pr-3">Arrive</th>
-            <th className="py-2 pr-3">Leave</th>
-            <th className="py-2">Order</th>
-          </tr>
-        </thead>
-        <tbody>
-          {stops.map((s, i) => {
-            const f = legFigures(s.leg);
-            return (
-              <tr key={s.school?.schoolId} className="border-t border-[var(--edify-border)]">
-                <td className="py-3 pr-3 font-semibold">{s.order}</td>
-                <td className="py-3 pr-3">
-                  <span className="font-semibold">{s.school?.name}</span>
-                  <span className="block text-[13px] text-[var(--edify-text-muted)]">
-                    ID {s.school?.code} · {s.kind === 'recommended' ? 'Suggested' : 'Planned'} · {s.visitMinutes} min visit
-                  </span>
-                  {s.conflict ? <span className="block text-[13px] text-[var(--edify-danger-text)]">{s.conflict}</span> : null}
-                </td>
-                <td className="py-3 pr-3">{f ? `${km(f.meters)} • ${hoursMinutes(f.seconds)}${f.measure === 'road' ? '' : ' (straight line)'}` : 'First stop'}</td>
-                <td className="py-3 pr-3">{s.arrival}</td>
-                <td className="py-3 pr-3">{s.departure}</td>
-                <td className="py-3">
-                  <span className="flex gap-1">
-                    <button type="button" disabled={busy || i === 0} onClick={() => onMove(i, -1)} className="h-9 w-9 rounded-[8px] border border-[var(--edify-border)] disabled:opacity-40" aria-label={`Move ${s.school?.name} earlier`}>
-                      ↑
-                    </button>
-                    <button type="button" disabled={busy || i === stops.length - 1} onClick={() => onMove(i, 1)} className="h-9 w-9 rounded-[8px] border border-[var(--edify-border)] disabled:opacity-40" aria-label={`Move ${s.school?.name} later`}>
-                      ↓
-                    </button>
-                  </span>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-      {stops.length === 0 ? <p className="py-6 text-center text-[var(--edify-text-muted)]">No school visits are planned on this day.</p> : null}
-      <p className="mt-3 text-[13px] text-[var(--edify-text-muted)]">Moving a visit changes this route only; the official plan changes through the Schedule visit drawer.</p>
-    </div>
-  );
-}
-
-
-/** Save Plan, Start Field Day and End Field Day, with when each happened. */
-function FieldDayButtons({
-  fieldDay,
-  saved,
-  busy,
-  hasStops,
-  onSave,
-  onRecord,
+function RoadConditionModal({
+  defaultPoint,
+  onClose,
+  onCreated,
 }: {
-  fieldDay: ReturnType<typeof fieldDayState>;
-  saved: SavedFieldDay | undefined;
-  busy: boolean;
-  hasStops: boolean;
-  onSave: () => void;
-  onRecord: (event: 'start' | 'end') => void;
+  defaultPoint: LatLngPoint;
+  onClose: () => void;
+  onCreated: (report: RoadConditionReportData) => void;
 }) {
-  const quiet = 'flex h-14 items-center gap-3 rounded-[12px] border-2 border-[var(--brand-primary)] px-5 text-[16px] font-semibold text-[var(--brand-primary)] hover:bg-blue-50 disabled:opacity-50';
-  const solid = 'flex h-14 items-center gap-3 rounded-[12px] bg-[var(--brand-primary)] px-6 text-[16px] font-semibold text-white hover:bg-[var(--brand-primary-hover)] disabled:opacity-50';
-  if (fieldDay.phase === 'ended') {
-    return (
-      <span className="flex h-14 items-center gap-2 rounded-[12px] bg-green-50 px-5 text-[15px] font-semibold text-green-700" role="status">
-        <RouteIcon name="check" className="h-5 w-5" /> Field day ended {dayClock(saved?.endedAt ?? '')}
-      </span>
-    );
-  }
-  if (fieldDay.running) {
-    return (
-      <>
-        <span className="flex h-14 items-center gap-2 rounded-[12px] bg-green-50 px-5 text-[15px] font-semibold text-green-700" role="status">
-          <span className="h-2.5 w-2.5 rounded-full bg-green-600" aria-hidden="true" /> Field day started {dayClock(saved?.startedAt ?? '')}
-        </span>
-        <button type="button" disabled={busy} onClick={() => onRecord('end')} className={solid}>
-          <RouteIcon name="check" className="h-6 w-6" /> End Field Day
-        </button>
-      </>
-    );
-  }
+  const [roadName, setRoadName] = useState('');
+  const [category, setCategory] = useState('road_closed');
+  const [impact, setImpact] = useState('impassable');
+  const [notes, setNotes] = useState('');
+  const [lat, setLat] = useState(defaultPoint.lat.toFixed(5));
+  const [lng, setLng] = useState(defaultPoint.lng.toFixed(5));
+  const [submitting, setSubmitting] = useState(false);
+  const [err, setErr] = useState('');
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setErr('');
+    try {
+      const res = await smartApi<{ report: RoadConditionReportData }>('smart-route/road-conditions', {
+        method: 'POST',
+        body: JSON.stringify({
+          road_name: roadName,
+          category,
+          impact_level: impact,
+          notes,
+          lat: Number(lat),
+          lng: Number(lng),
+          radius_meters: 1500,
+          expires_hours: 72,
+        }),
+      });
+      onCreated(res.report);
+    } catch (error) {
+      setErr(error instanceof Error ? error.message : 'Could not save road condition report.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
-    <>
-      {fieldDay.phase === 'saved' ? (
-        <span className="text-[14px] font-medium text-[var(--edify-text-muted)]" role="status">
-          Saved {dayClock(saved?.savedAt ?? '')}
-        </span>
-      ) : null}
-      <button type="button" disabled={busy || !hasStops} onClick={onSave} className={fieldDay.canStart ? quiet : solid}>
-        <RouteIcon name="save" className="h-6 w-6" /> Save Plan
-      </button>
-      {fieldDay.canStart ? (
-        <button type="button" disabled={busy || !hasStops} onClick={() => onRecord('start')} className={solid}>
-          <RouteIcon name="navigate" className="h-6 w-6" /> Start Field Day
-        </button>
-      ) : null}
-    </>
+    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/50 p-4" role="dialog" aria-modal="true" aria-label="Report road condition">
+      <form onSubmit={submit} className="w-full max-w-md space-y-3.5 rounded-[16px] bg-white p-5 shadow-2xl">
+        <div className="flex items-center justify-between">
+          <h2 className="text-[17px] font-bold text-[#0f172a]">Report Road Condition</h2>
+          <button type="button" onClick={onClose} className="text-slate-500 hover:text-slate-800" aria-label="Close modal">
+            ✕
+          </button>
+        </div>
+        <p className="text-[12px] text-slate-600">
+          Staff reports are recorded as <strong>Unverified</strong> until reviewed by an authorized supervisor and warn field staff near this road segment.
+        </p>
+        <label className="block text-[12px] font-semibold text-slate-700">
+          Road / Bridge / Segment Name *
+          <input
+            type="text"
+            required
+            value={roadName}
+            onChange={(e) => setRoadName(e.target.value)}
+            placeholder="e.g., Sezibwa Bridge, Mukono–Kayunga Rd"
+            className="mt-1 h-9 w-full rounded-[8px] border border-[var(--edify-border)] px-3 text-[13px]"
+          />
+        </label>
+        <div className="grid grid-cols-2 gap-2.5">
+          <label className="block text-[12px] font-semibold text-slate-700">
+            Condition Category
+            <select value={category} onChange={(e) => setCategory(e.target.value)} className="mt-1 h-9 w-full rounded-[8px] border border-[var(--edify-border)] px-2 text-[13px]">
+              <option value="road_closed">Road closed</option>
+              <option value="road_flooded">Road flooded</option>
+              <option value="bridge_damaged">Bridge damaged</option>
+              <option value="under_construction">Under construction</option>
+              <option value="poor_condition">Poor road condition</option>
+              <option value="severe_congestion">Severe congestion</option>
+              <option value="road_reopened">Road reopened</option>
+            </select>
+          </label>
+          <label className="block text-[12px] font-semibold text-slate-700">
+            Travel Impact
+            <select value={impact} onChange={(e) => setImpact(e.target.value)} className="mt-1 h-9 w-full rounded-[8px] border border-[var(--edify-border)] px-2 text-[13px]">
+              <option value="impassable">Impassable</option>
+              <option value="delay">Major delay</option>
+              <option value="advisory">Advisory</option>
+            </select>
+          </label>
+        </div>
+        <div className="grid grid-cols-2 gap-2.5">
+          <label className="block text-[12px] font-semibold text-slate-700">
+            Latitude
+            <input type="text" value={lat} onChange={(e) => setLat(e.target.value)} className="mt-1 h-9 w-full rounded-[8px] border border-[var(--edify-border)] px-3 text-[13px]" />
+          </label>
+          <label className="block text-[12px] font-semibold text-slate-700">
+            Longitude
+            <input type="text" value={lng} onChange={(e) => setLng(e.target.value)} className="mt-1 h-9 w-full rounded-[8px] border border-[var(--edify-border)] px-3 text-[13px]" />
+          </label>
+        </div>
+        <label className="block text-[12px] font-semibold text-slate-700">
+          Field Notes
+          <textarea
+            rows={2}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Describe detour or safety guidance…"
+            className="mt-1 w-full rounded-[8px] border border-[var(--edify-border)] p-2.5 text-[13px]"
+          />
+        </label>
+        {err ? <p className="text-[12px] font-semibold text-red-700">{err}</p> : null}
+        <div className="flex justify-end gap-2 pt-1">
+          <button type="button" onClick={onClose} className="h-9 rounded-[8px] border border-[var(--edify-border)] px-4 text-[13px] font-semibold text-slate-700">
+            Cancel
+          </button>
+          <button type="submit" disabled={submitting} className="h-9 rounded-[8px] bg-[var(--brand-primary)] px-4 text-[13px] font-semibold text-white">
+            {submitting ? 'Submitting…' : 'Submit Report'}
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }

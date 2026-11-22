@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
+import { EdifyDatePicker } from '@/components/ui/EdifyDatePicker';
 import {
   Baby,
   BarChart3,
@@ -301,24 +302,26 @@ export function PersonalTimeOffView({
                 <option value="bereavement">Bereavement Leave</option>
               </select>
             </label>
-            <label className="space-y-1">
+            <div className="space-y-1">
               <span className="block text-[12px] font-semibold text-[var(--edify-text)]">Start Date *</span>
-              <input
-                type="date"
+              <EdifyDatePicker
                 name="start_date"
+                label="Start Date"
                 required
-                className="h-9 w-full rounded-[8px] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-3 text-[13px] text-[var(--edify-text)]"
+                size="sm"
+                policy={{ mode: 'free' }}
               />
-            </label>
-            <label className="space-y-1">
+            </div>
+            <div className="space-y-1">
               <span className="block text-[12px] font-semibold text-[var(--edify-text)]">End Date *</span>
-              <input
-                type="date"
+              <EdifyDatePicker
                 name="end_date"
+                label="End Date"
                 required
-                className="h-9 w-full rounded-[8px] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-3 text-[13px] text-[var(--edify-text)]"
+                size="sm"
+                policy={{ mode: 'free' }}
               />
-            </label>
+            </div>
             <label className="space-y-1 sm:col-span-2">
               <span className="block text-[12px] font-semibold text-[var(--edify-text)]">Reason</span>
               <input

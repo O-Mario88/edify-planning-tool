@@ -8,6 +8,7 @@
  */
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { EdifyDatePicker } from '@/components/ui/EdifyDatePicker';
 
 import { postCountryAdmin } from '@/lib/countryAdminClient';
 import { DATE_FORMATS, MAX_REASON, MONTH_CHOICES, TIME_ZONES, dateExample, languageList, settingsRequest } from '@/lib/countryAdmin';
@@ -136,11 +137,11 @@ export function SettingsRecorder({ countryCode, countryName, initial, today, lat
             <input type="checkbox" name="ethiopian" checked={form.ethiopian} onChange={(e) => set('ethiopian', e.target.checked)} /> Ethiopian shown beside it
           </label>
         </fieldset>
-        <label className={LABEL}>
+        <div className={LABEL}>
           Starts
-          <input className={FIELD} type="date" name="effectiveFrom" min={today} value={form.from} onChange={(e) => set('from', e.target.value)} />
+          <EdifyDatePicker name="effectiveFrom" label="Starts" min={today} value={form.from} onChange={(v) => set('from', v)} size="sm" policy={{ mode: 'free' }} />
           <span className={HINT}>Leave empty for today.</span>
-        </label>
+        </div>
         <label className={`${LABEL} sm:col-span-2 lg:col-span-3`}>
           Reason
           <textarea className={FIELD} name="changeReason" rows={2} maxLength={MAX_REASON} value={form.reason} onChange={(e) => set('reason', e.target.value)} placeholder="What these settings are for" />

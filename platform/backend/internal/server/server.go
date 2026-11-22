@@ -405,9 +405,11 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	// (docs/migration/80 §8), from the Go-owned country_registry.
 	mux.Handle(countriesv1connect.NewCountryServiceHandler(countryconfig.NewService(pool,
 		func(ctx context.Context) error { return countryschema.Spec.Ready(ctx, pool) }, logger), options...))
-	mux.Handle(routesv1connect.NewRoutePlannerServiceHandler(routeplan.NewService(pool,
+	routePlanSvc := routeplan.NewService(pool,
 		routeplan.RouterFor(cfg.Routing.Provider, cfg.Routing.OSRMURL, cfg.Routing.GoogleKey, cfg.Routing.DailyLimit, time.Now),
-		time.Now, logger).WithVerification(pool, routesSchemaReady(pool)), options...))
+		time.Now, logger).WithVerification(pool, routesSchemaReady(pool))
+	mux.Handle(routesv1connect.NewRoutePlannerServiceHandler(routePlanSvc, options...))
+	routePlanSvc.RegisterHTTP(mux, authenticator, realtimeBroker)
 	mux.Handle(messagingv1connect.NewMessagingServiceHandler(messaging.NewService(pool, time.Now, logger), options...))
 	mailer := loans.NewMailer(cfg.Loans)
 	clusterStore := clusterlead.NewStore(pool)

@@ -24,6 +24,7 @@ export default async function SmartRoutePage({ searchParams }: { searchParams: S
   const district = one(q.district);
   const cluster = one(q.cluster);
   const near = one(q.near).slice(0, 64);
+  const navigate = one(q.navigate).slice(0, 256);
   let answer;
   let refused = '';
   try {
@@ -50,6 +51,7 @@ export default async function SmartRoutePage({ searchParams }: { searchParams: S
       district={district}
       cluster={cluster}
       near={near}
+      navigate={navigate}
     />
   );
 }

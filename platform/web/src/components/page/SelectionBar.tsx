@@ -6,6 +6,7 @@
  * activity bulk reschedule & cancel (Step 3D — zero Django handoff).
  */
 import { useEffect, useState } from 'react';
+import { EdifyDatePicker } from '@/components/ui/EdifyDatePicker';
 
 import {
   confirmBulkActivitiesAction,
@@ -245,15 +246,17 @@ export function SelectionBar({ selection, pageHref, scopeId }: { selection: Page
                     <label htmlFor="bulk-date" className="block text-[12px] font-bold text-[var(--edify-text)]">
                       New Date
                     </label>
-                    <input
+                    <EdifyDatePicker
                       id="bulk-date"
-                      type="date"
+                      label="New Date"
                       value={date}
-                      onChange={(e) => {
-                        setDate(e.target.value);
+                      policy={{ mode: 'planning' }}
+                      showFiscalYear
+                      size="sm"
+                      onChange={(next) => {
+                        setDate(next);
                         setPreview(null);
                       }}
-                      className="h-9 w-full rounded-[var(--radius-control)] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-3 text-[13px]"
                     />
                   </div>
                 ) : null}

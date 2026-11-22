@@ -75,31 +75,245 @@ export function fieldSeconds(itinerary: Itinerary | undefined): number {
   return Number(itinerary?.totals?.fieldMinutes ?? 0) * 60;
 }
 
-const coord = (p: { lat: number; lng: number }) => `${p.lat.toFixed(6)},${p.lng.toFixed(6)}`;
-
 /** The placed stops in order. */
 export function placedStops(itinerary: Itinerary | undefined): SchoolPin[] {
   return (itinerary?.stops ?? []).map((s) => s.school).filter((s): s is SchoolPin => Boolean(s?.point));
 }
 
-export type MapsApp = 'google' | 'apple' | 'waze';
+/**
+ * In-app navigation URL inside Edify (Section 6 — zero external map redirects).
+ * Opens Edify's embedded Smart Route Planner turn-by-turn navigation panel for
+ * the selected school(s) without ever leaving Edify for Google Maps, Apple Maps,
+ * or Waze.
+ */
+export function inAppDirectionsPath(stops: readonly SchoolPin[], date?: string): string | null {
+  const placed = stops.filter((s) => Boolean(s.point));
+  if (placed.length === 0) return null;
+  const q = new URLSearchParams();
+  if (date) q.set('date', date);
+  q.set('navigate', placed.map((s) => s.schoolId).join(','));
+  return `${ROUTE_PLANNER_PATH}?${q.toString()}`;
+}
 
 /**
- * Directions in the staff member's own maps app, keyless: Google Maps takes
- * the whole route (the next stops as waypoints); Apple Maps and Waze take the
- * next stop. No key, no Edify account: the app uses the person's own sign-in.
+ * Legacy helper retained for type compatibility: strictly returns Edify's
+ * internal navigation path (never an external Google/Apple Maps/Waze URL).
  */
-export function directionsUrl(stops: readonly SchoolPin[], app: MapsApp = 'google'): string | null {
-  const points = stops.map((s) => s.point).filter((p): p is NonNullable<SchoolPin['point']> => Boolean(p));
-  const next = points[0];
-  const last = points[points.length - 1];
-  if (!next || !last) return null;
-  if (app === 'apple') return `https://maps.apple.com/?daddr=${coord(next)}&dirflg=d`;
-  if (app === 'waze') return `https://waze.com/ul?ll=${coord(next)}&navigate=yes`;
-  const waypoints = points.slice(0, -1).slice(0, 9).map(coord).join('|');
-  const q = new URLSearchParams({ api: '1', destination: coord(last), travelmode: 'driving' });
-  if (waypoints) q.set('waypoints', waypoints);
-  return `https://www.google.com/maps/dir/?${q.toString()}`;
+export function directionsUrl(stops: readonly SchoolPin[]): string | null {
+  return inAppDirectionsPath(stops);
+}
+
+export type SmartOptimizationMode = 'balanced' | 'fastest' | 'shortest' | 'max_schools' | 'priority_schools' | 'as_given';
+
+export interface LatLngPoint {
+  lat: number;
+  lng: number;
+}
+
+export interface RouteStep {
+  instruction: string;
+  road_name?: string;
+  maneuver?: string;
+  distance_meters: number;
+  duration_seconds: number;
+  start: LatLngPoint;
+  end: LatLngPoint;
+}
+
+export interface TrafficInterval {
+  start_index: number;
+  end_index: number;
+  speed: 'NORMAL' | 'SLOW' | 'TRAFFIC_JAM' | string;
+}
+
+export interface AlternativeRouteData {
+  id: string;
+  summary: string;
+  meters: number;
+  seconds: number;
+  static_seconds?: number;
+  traffic_state: 'normal' | 'slow' | 'traffic_jam' | 'unavailable' | string;
+  traffic_delay_seconds: number;
+  path: LatLngPoint[];
+  leg_steps?: RouteStep[][];
+  traffic_intervals?: TrafficInterval[];
+  warnings?: string[];
+}
+
+export interface SchoolPriorityInfo {
+  school_id: string;
+  band: 'critical' | 'high' | 'core' | 'routine' | 'missing_ssa' | string;
+  score: number;
+  ssa_average?: number;
+  has_confirmed_ssa: boolean;
+  is_core: boolean;
+  reason: string;
+}
+
+export interface RoadConditionReportData {
+  id: string;
+  road_name: string;
+  lat: number;
+  lng: number;
+  radius_meters: number;
+  category: string;
+  source: string;
+  verification_status: 'unverified' | 'verified' | 'expired' | 'resolved' | string;
+  impact_level: 'advisory' | 'delay' | 'impassable' | string;
+  notes?: string;
+  reported_by_name?: string;
+  reported_at: string;
+  expires_at: string;
+  distance_to_route_meters?: number;
+  applicability_note?: string;
+}
+
+export interface SmartStopData {
+  order: number;
+  school_id: string;
+  school_code: string;
+  school_name: string;
+  district: string;
+  cluster: string;
+  category: string;
+  planned_activity_id?: string;
+  status: string;
+  kind: 'planned' | 'recommended' | string;
+  point?: LatLngPoint;
+  entrance?: LatLngPoint;
+  location_status: string;
+  location_version: number;
+  arrival: string;
+  departure: string;
+  visit_minutes: number;
+  locked: boolean;
+  from_label: string;
+  road_available: boolean;
+  road_status?: string;
+  road_meters: number;
+  road_seconds: number;
+  straight_line_meters: number;
+  steps?: RouteStep[];
+  priority: SchoolPriorityInfo;
+  inclusion_reason: string;
+  conflict?: string;
+  warnings?: string[];
+}
+
+export interface ExcludedSchoolData {
+  school_id: string;
+  school_code: string;
+  school_name: string;
+  district: string;
+  planned_activity_id?: string;
+  location_status: string;
+  reason_code: string;
+  reason: string;
+  priority: SchoolPriorityInfo;
+}
+
+export interface SmartRouteMetrics {
+  schools_included: number;
+  schools_excluded: number;
+  road_complete: boolean;
+  road_meters: number;
+  road_seconds: number;
+  straight_line_meters: number;
+  visit_minutes: number;
+  break_minutes: number;
+  field_minutes: number;
+  traffic_state: string;
+  traffic_delay_seconds: number;
+}
+
+export interface SmartRouteResultData {
+  date: string;
+  mode: SmartOptimizationMode;
+  objective_label: string;
+  is_recommended: boolean;
+  recommendation_note: string;
+  transport_mode: string;
+  start?: LatLngPoint;
+  start_label?: string;
+  end?: LatLngPoint;
+  end_label?: string;
+  work_start: string;
+  work_end: string;
+  stops: SmartStopData[];
+  excluded: ExcludedSchoolData[];
+  path: LatLngPoint[];
+  path_is_road: boolean;
+  return_leg_meters?: number;
+  return_leg_seconds?: number;
+  totals: SmartRouteMetrics;
+  baseline: SmartRouteMetrics;
+  distance_saved_meters: number;
+  time_saved_seconds: number;
+  alternatives: AlternativeRouteData[];
+  traffic_intervals?: TrafficInterval[];
+  road_alerts: RoadConditionReportData[];
+  warnings: string[];
+  provider: string;
+  provider_configured: boolean;
+  confidence: 'high' | 'medium' | 'limited' | string;
+  confidence_note: string;
+  input_hash: string;
+  calculated_at: string;
+}
+
+export interface InAppDirectionsData {
+  in_app: boolean;
+  road_available: boolean;
+  needs_origin?: boolean;
+  road_status?: string;
+  message?: string;
+  provider: string;
+  provider_source?: string;
+  summary?: string;
+  total_meters?: number;
+  total_seconds?: number;
+  static_seconds?: number;
+  traffic_state: string;
+  traffic_delay_seconds?: number;
+  eta_final?: string;
+  path: LatLngPoint[];
+  stops: Array<{
+    school_id: string;
+    school_code: string;
+    school_name: string;
+    district: string;
+    point: LatLngPoint;
+    entrance?: LatLngPoint;
+    using_entrance: boolean;
+    location_status: string;
+  }>;
+  legs: Array<{
+    index: number;
+    from_label: string;
+    to_label: string;
+    distance_meters: number;
+    duration_seconds: number;
+    eta: string;
+    steps?: RouteStep[];
+  }>;
+  alternatives: AlternativeRouteData[];
+  road_alerts: RoadConditionReportData[];
+  warnings?: string[];
+  calculated_at: string;
+}
+
+export interface CalendarRulesData {
+  country_code: string;
+  timezone: string;
+  today: string;
+  current_fy: string;
+  fy_start: string;
+  fy_end: string;
+  sundays_disabled: boolean;
+  saturdays_enabled: boolean;
+  holidays: Array<{ date: string; name: string }>;
+  approved_leave_dates: string[];
+  blackout_dates: string[];
 }
 
 /** The pin's colour key, as the design's legend has them. */

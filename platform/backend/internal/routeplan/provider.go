@@ -20,11 +20,69 @@ type Leg struct {
 	OK bool
 }
 
-// Route is a road route through points in order: one leg per hop and the
-// line to draw.
+// Step is one turn-by-turn road navigation maneuver returned by the routing provider.
+type Step struct {
+	Instruction     string `json:"instruction"`
+	RoadName        string `json:"road_name,omitempty"`
+	Maneuver        string `json:"maneuver,omitempty"`
+	DistanceMeters  int64  `json:"distance_meters"`
+	DurationSeconds int64  `json:"duration_seconds"`
+	Start           LatLng `json:"start"`
+	End             LatLng `json:"end"`
+}
+
+// TrafficInterval marks a speed band over a polyline coordinate range when
+// returned by Google Routes API TRAFFIC_ON_POLYLINE.
+type TrafficInterval struct {
+	StartIndex int    `json:"start_index"`
+	EndIndex   int    `json:"end_index"`
+	Speed      string `json:"speed"` // NORMAL | SLOW | TRAFFIC_JAM
+}
+
+// AlternativeRoute is a provider-returned alternative road path.
+type AlternativeRoute struct {
+	ID               string            `json:"id"`
+	Summary          string            `json:"summary"`
+	Meters           int64             `json:"meters"`
+	Seconds          int64             `json:"seconds"`
+	StaticSeconds    int64             `json:"static_seconds,omitempty"`
+	TrafficState     string            `json:"traffic_state"` // normal | slow | traffic_jam | unavailable
+	TrafficDelaySec  int64             `json:"traffic_delay_seconds"`
+	Path             []LatLng          `json:"path"`
+	Legs             []Leg             `json:"legs"`
+	LegSteps         [][]Step          `json:"leg_steps,omitempty"`
+	TrafficIntervals []TrafficInterval `json:"traffic_intervals,omitempty"`
+	Warnings         []string          `json:"warnings,omitempty"`
+}
+
+// RouteOptions configures detailed road routing (traffic preference, alternatives,
+// turn-by-turn steps, transport mode).
+type RouteOptions struct {
+	// IncludeSteps requests turn-by-turn road maneuvers.
+	IncludeSteps bool
+	// IncludeAlternatives requests alternative routes where the provider supports them.
+	IncludeAlternatives bool
+	// TrafficOptimal uses TRAFFIC_AWARE_OPTIMAL on Google Routes API (never
+	// combined with optimizeWaypointOrder in the same API request).
+	TrafficOptimal bool
+	// TransportMode is DRIVE (default), TWO_WHEELER, or WALK.
+	TransportMode string
+}
+
+// Route is a road route through points in order: one leg per hop, the road
+// polyline, and optional detailed turn-by-turn steps, traffic state, and alternatives.
 type Route struct {
-	Legs []Leg
-	Path []LatLng
+	Legs             []Leg
+	Path             []LatLng
+	Summary          string
+	StaticSeconds    int64
+	TrafficState     string // normal | slow | traffic_jam | unavailable
+	TrafficDelaySec  int64
+	TrafficIntervals []TrafficInterval
+	LegSteps         [][]Step
+	Alternatives     []AlternativeRoute
+	Warnings         []string
+	ProviderSource   string
 }
 
 // Router measures roads. Every implementation answers from a real provider
@@ -35,6 +93,13 @@ type Router interface {
 	Matrix(ctx context.Context, points []LatLng) ([][]Leg, error)
 	// Route is the road route through the points in order.
 	Route(ctx context.Context, points []LatLng) (Route, error)
+}
+
+// DetailedRouter is an optional extension implemented by Google and OSRM to
+// return turn-by-turn maneuvers, traffic intervals, and alternative routes.
+type DetailedRouter interface {
+	Router
+	RouteDetailed(ctx context.Context, points []LatLng, opts RouteOptions) (Route, error)
 }
 
 // ErrUnavailable is returned when no road figure can be had: no provider is
@@ -80,6 +145,18 @@ type Stats struct {
 	Requests, CacheHits, Shared, Failures, Refused atomic.Int64
 }
 
+// QuotaSnapshot exposes current daily quota utilization for diagnostics and UI.
+type QuotaSnapshot struct {
+	Provider   string `json:"provider"`
+	DailyLimit int64  `json:"daily_limit"`
+	UsedToday  int64  `json:"used_today"`
+	Requests   int64  `json:"requests"`
+	CacheHits  int64  `json:"cache_hits"`
+	Shared     int64  `json:"shared_inflight"`
+	Failures   int64  `json:"failures"`
+	Refused    int64  `json:"refused"`
+}
+
 // Guard wraps inner. limit is the day's request cap.
 func Guard(inner Router, limit int, now func() time.Time) *Guarded {
 	return &Guarded{inner: inner, ttl: 6 * time.Hour, timeout: 8 * time.Second, limit: int64(limit), perSec: 20,
@@ -91,6 +168,24 @@ func (g *Guarded) Name() string { return g.inner.Name() }
 
 // Stats is the running count.
 func (g *Guarded) Stats() *Stats { return &g.stats }
+
+// Quota returns current rate/quota counters safely.
+func (g *Guarded) Quota() QuotaSnapshot {
+	g.mu.Lock()
+	used := g.used
+	limit := g.limit
+	g.mu.Unlock()
+	return QuotaSnapshot{
+		Provider:   g.inner.Name(),
+		DailyLimit: limit,
+		UsedToday:  used,
+		Requests:   g.stats.Requests.Load(),
+		CacheHits:  g.stats.CacheHits.Load(),
+		Shared:     g.stats.Shared.Load(),
+		Failures:   g.stats.Failures.Load(),
+		Refused:    g.stats.Refused.Load(),
+	}
+}
 
 func key(kind string, points []LatLng) string {
 	var b strings.Builder
@@ -104,7 +199,7 @@ func key(kind string, points []LatLng) string {
 
 // Matrix is the guarded matrix.
 func (g *Guarded) Matrix(ctx context.Context, points []LatLng) ([][]Leg, error) {
-	v, err := g.ask(ctx, key("m", points), func(ctx context.Context) (any, error) { return g.inner.Matrix(ctx, points) })
+	v, err := g.ask(ctx, key("m", points), g.ttl, func(ctx context.Context) (any, error) { return g.inner.Matrix(ctx, points) })
 	if err != nil {
 		return nil, err
 	}
@@ -113,14 +208,40 @@ func (g *Guarded) Matrix(ctx context.Context, points []LatLng) ([][]Leg, error) 
 
 // Route is the guarded route.
 func (g *Guarded) Route(ctx context.Context, points []LatLng) (Route, error) {
-	v, err := g.ask(ctx, key("r", points), func(ctx context.Context) (any, error) { return g.inner.Route(ctx, points) })
+	v, err := g.ask(ctx, key("r", points), g.ttl, func(ctx context.Context) (any, error) { return g.inner.Route(ctx, points) })
 	if err != nil {
 		return Route{}, err
 	}
 	return v.(Route), nil
 }
 
-func (g *Guarded) ask(ctx context.Context, k string, call func(context.Context) (any, error)) (any, error) {
+// RouteDetailed requests full turn-by-turn steps, traffic state, and alternatives.
+// Traffic-aware calls use a shorter cache TTL (5 min) to keep traffic fresh while
+// protecting provider quotas and preventing duplicate requests.
+func (g *Guarded) RouteDetailed(ctx context.Context, points []LatLng, opts RouteOptions) (Route, error) {
+	dr, ok := g.inner.(DetailedRouter)
+	if !ok {
+		return g.Route(ctx, points)
+	}
+	mode := opts.TransportMode
+	if mode == "" {
+		mode = "DRIVE"
+	}
+	kind := fmt.Sprintf("rd:%t:%t:%t:%s", opts.IncludeSteps, opts.IncludeAlternatives, opts.TrafficOptimal, mode)
+	ttl := g.ttl
+	if opts.TrafficOptimal {
+		ttl = 5 * time.Minute
+	}
+	v, err := g.ask(ctx, key(kind, points), ttl, func(ctx context.Context) (any, error) {
+		return dr.RouteDetailed(ctx, points, opts)
+	})
+	if err != nil {
+		return Route{}, err
+	}
+	return v.(Route), nil
+}
+
+func (g *Guarded) ask(ctx context.Context, k string, ttl time.Duration, call func(context.Context) (any, error)) (any, error) {
 	if _, none := g.inner.(None); none {
 		return nil, ErrUnavailable
 	}
@@ -146,7 +267,7 @@ func (g *Guarded) ask(ctx context.Context, k string, call func(context.Context) 
 			return nil, fmt.Errorf("%w: %s: %v", ErrUnavailable, g.inner.Name(), err)
 		}
 		g.mu.Lock()
-		g.cache[k] = cached{value: v, until: now.Add(g.ttl)}
+		g.cache[k] = cached{value: v, until: now.Add(ttl)}
 		g.mu.Unlock()
 		return v, nil
 	})
@@ -175,3 +296,36 @@ func (g *Guarded) admit(now time.Time) bool {
 }
 
 func seconds(s float64) int64 { return int64(math.Round(s)) }
+
+// classifyTrafficState translates live vs static duration and speed intervals
+// into the mandated traffic states (normal | slow | traffic_jam | unavailable).
+// It never fabricates traffic when the provider supplied no live traffic data.
+func classifyTrafficState(liveSec, staticSec int64, intervals []TrafficInterval) (string, int64) {
+	for _, iv := range intervals {
+		if strings.EqualFold(iv.Speed, "TRAFFIC_JAM") {
+			delay := max(int64(0), liveSec-staticSec)
+			return "traffic_jam", delay
+		}
+	}
+	if staticSec > 0 && liveSec > 0 {
+		delay := max(int64(0), liveSec-staticSec)
+		ratio := float64(liveSec) / float64(staticSec)
+		switch {
+		case ratio >= 1.35 || delay >= 900:
+			return "traffic_jam", delay
+		case ratio >= 1.12 || delay >= 300:
+			return "slow", delay
+		default:
+			return "normal", delay
+		}
+	}
+	for _, iv := range intervals {
+		if strings.EqualFold(iv.Speed, "SLOW") {
+			return "slow", 0
+		}
+		if strings.EqualFold(iv.Speed, "NORMAL") {
+			return "normal", 0
+		}
+	}
+	return "unavailable", 0
+}

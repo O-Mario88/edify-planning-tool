@@ -32,11 +32,17 @@ describe('the route planner in the app', () => {
     expect(totalFigures(create(RouteTotalsSchema, { roadComplete: false, roadMeters: 1n, straightLineMeters: 9000n })).road).toBe(false);
   });
 
-  it('hands directions to the person’s own maps app without a key', () => {
-    const stops = [create(SchoolPinSchema, { point: { lat: 0.3, lng: 32.7 } }), create(SchoolPinSchema, { point: { lat: 0.4, lng: 32.8 } })];
-    expect(directionsUrl(stops, 'google')).toContain('waypoints=0.300000%2C32.700000');
-    expect(directionsUrl(stops, 'apple')).toBe('https://maps.apple.com/?daddr=0.300000,32.700000&dirflg=d');
-    expect(directionsUrl([], 'waze')).toBeNull();
+  it('keeps Get Directions 100% inside Edify with zero external maps redirects', () => {
+    const stops = [
+      create(SchoolPinSchema, { schoolId: 's1', point: { lat: 0.3, lng: 32.7 } }),
+      create(SchoolPinSchema, { schoolId: 's2', point: { lat: 0.4, lng: 32.8 } }),
+    ];
+    const target = directionsUrl(stops, 'in_app');
+    expect(target).toBe('route:navigate?schools=s1,s2');
+    expect(target).not.toContain('google.com/maps');
+    expect(target).not.toContain('maps.apple.com');
+    expect(target).not.toContain('waze.com');
+    expect(directionsUrl([], 'in_app')).toBeNull();
   });
 });
 

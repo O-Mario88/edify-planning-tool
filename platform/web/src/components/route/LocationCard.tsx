@@ -96,9 +96,9 @@ export function LocationCard({ answer: json }: { answer: JsonValue }) {
             </div>
             <div className="flex flex-wrap gap-2 pt-1">
               {directions ? (
-                <a href={directions} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-2 rounded-[8px] bg-[var(--brand-primary)] px-4 font-semibold text-white">
+                <Link href={directions} className="inline-flex h-10 items-center gap-2 rounded-[8px] bg-[var(--brand-primary)] px-4 font-semibold text-white hover:bg-[var(--brand-primary-hover)]">
                   <RouteIcon name="navigate" className="h-4 w-4" /> Get Directions
-                </a>
+                </Link>
               ) : null}
               {answer.canPlan ? (
                 <Link href={`/my-plan/smart-route?near=${encodeURIComponent(school.schoolId)}`} className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[var(--brand-primary)] px-4 font-semibold text-[var(--brand-primary)]">

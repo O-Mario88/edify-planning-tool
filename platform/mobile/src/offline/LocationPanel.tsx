@@ -15,7 +15,7 @@ import { Crosshair, DoorOpen, MapPin, Navigation } from 'lucide-react-native';
 
 import { SchoolPinSchema } from '../gen/edify/routes/v1/routes_pb';
 import { fonts, radius, spacing, useTheme } from '../theme';
-import { chooseDirections } from '../screens/route/directions';
+import { InAppNavigationModal } from '../screens/route/InAppNavigationModal';
 import { PIN_TONES, shortName } from '../screens/route/routeData';
 import { RouteMapView } from '../screens/route/RouteMapView';
 import type { MapScene } from '../screens/route/routeMapHtml';
@@ -85,10 +85,12 @@ export function LocationPanel({ school, verifiedByName = '', footer, onCaptured,
 
   const setCapturing = (target: CaptureTarget) => openCapture({ school, target, onDone: (saved) => saved && onCaptured?.() });
 
-  // Directions go to the entrance when there is one.
+  const [navStops, setNavStops] = useState<readonly ReturnType<typeof create<typeof SchoolPinSchema>>[]>([]);
+
+  // In-app directions inside Edify (Section 6 — never opens external maps).
   const directions = () => {
     const at = school.entranceLat !== null ? { lat: school.entranceLat, lng: school.entranceLng! } : { lat: school.lat!, lng: school.lng! };
-    chooseDirections([create(SchoolPinSchema, { schoolId: school.schoolId, name: school.name, code: school.code, point: at, locationStatus: 'verified' })]);
+    setNavStops([create(SchoolPinSchema, { schoolId: school.schoolId, name: school.name, code: school.code, point: at, locationStatus: 'verified' })]);
   };
 
   return (
@@ -158,6 +160,7 @@ export function LocationPanel({ school, verifiedByName = '', footer, onCaptured,
         </View>
       ) : null}
       {footer}
+      {navStops.length > 0 ? <InAppNavigationModal stops={navStops} onClose={() => setNavStops([])} /> : null}
     </View>
   );
 }

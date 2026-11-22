@@ -69,10 +69,10 @@ export function DateField({ value, onChange, label, min = '', max = '', isRequir
           },
         ]}
       >
+        <CalendarDays size={16} color={colors.primary} />
         <Text style={[styles.value, { color: picked ? colors.text : colors.textSubtle }]} numberOfLines={1}>
           {picked ? shortLabel(picked) : placeholder || 'Select a date'}
         </Text>
-        <CalendarDays size={16} color={colors.textMuted} />
       </Pressable>
       {isOpen ? (
         <View

@@ -3,7 +3,10 @@ package routeplan
 import "math"
 
 // LatLng is a point on the map.
-type LatLng struct{ Lat, Lng float64 }
+type LatLng struct {
+	Lat float64 `json:"lat"`
+	Lng float64 `json:"lng"`
+}
 
 // Uganda's extent with a margin: a stored point outside it, or at 0,0, is
 // taken as a data-entry error and the school is flagged, never placed.

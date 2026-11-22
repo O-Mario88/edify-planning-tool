@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState, useTransition } from 'react';
+import { EdifyDatePicker } from '@/components/ui/EdifyDatePicker';
 import {
   AlertTriangle,
   Calendar,
@@ -357,9 +358,19 @@ export function EscalationsView({
                         placeholder={f.placeholder || f.help}
                         className="w-full rounded-[8px] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-3 py-2 text-[13px] text-[var(--edify-text)]"
                       />
+                    ) : f.kind === 'date' ? (
+                      <EdifyDatePicker
+                        name={f.name}
+                        label={f.label}
+                        defaultValue={f.value}
+                        required={f.required}
+                        placeholder={f.placeholder || f.help || 'Select date'}
+                        size="sm"
+                        policy={{ mode: 'free' }}
+                      />
                     ) : (
                       <input
-                        type={f.kind === 'date' ? 'date' : 'text'}
+                        type="text"
                         name={f.name}
                         defaultValue={f.value}
                         required={f.required}

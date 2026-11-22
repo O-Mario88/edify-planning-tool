@@ -17,7 +17,7 @@ import { RoutePlannerService } from '../../gen/edify/routes/v1/routes_pb';
 import type { GetFieldDayResponse, Itinerary, SavedFieldDay, SchoolPin } from '../../gen/edify/routes/v1/routes_pb';
 import { fonts, spacing, useTheme } from '../../theme';
 import { PlanningDrawer } from '../../ui/planning/PlanningDrawer';
-import { chooseDirections } from './directions';
+import { InAppNavigationModal } from './InAppNavigationModal';
 import { PIN_TONES, ROUTE_DETAILS_URL, ROUTE_URL, dateOf, dayClock, fieldDayState, legText, nearOf, placedStops, routeUrl, shortName } from './routeData';
 import type { MapScene } from './routeMapHtml';
 import { RouteDetailsScreen, RoutePlannerScreen } from './RouteScreens';
@@ -173,7 +173,8 @@ export function RouteFlow({ url, onOpen, onOpenSchool }: RouteFlowProps) {
   const scene = useMemo(() => (day?.focus ? nearScene(day) : sceneOf(itinerary)), [day, itinerary]);
   const areaLabel = district ? (day?.districts.find((d) => d.value === district)?.label ?? '') : day?.areaLabel ?? '';
 
-  const directions = chooseDirections;
+  const [navStops, setNavStops] = useState<readonly SchoolPin[]>([]);
+  const directions = (targets: readonly SchoolPin[]) => setNavStops(targets.filter((s) => Boolean(s.point)));
 
   if (error) {
     return (
@@ -252,6 +253,7 @@ export function RouteFlow({ url, onOpen, onOpenSchool }: RouteFlowProps) {
           onOpenWeb={() => setScheduling(null)}
         />
       ) : null}
+      {navStops.length > 0 ? <InAppNavigationModal stops={navStops} onClose={() => setNavStops([])} /> : null}
     </View>
   );
 }

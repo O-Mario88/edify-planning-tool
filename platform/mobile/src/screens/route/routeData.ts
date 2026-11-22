@@ -126,25 +126,18 @@ export function legText(leg: RouteLeg | undefined): string {
   return `${km(f.meters)} • ${hrMin(f.seconds)}${f.road ? '' : ' (straight line)'}`;
 }
 
-export type MapsApp = 'google' | 'apple' | 'waze';
-
-const coord = (p: { lat: number; lng: number }) => `${p.lat.toFixed(6)},${p.lng.toFixed(6)}`;
+export type MapsApp = 'in_app';
 
 /**
- * Directions in the person's own maps app, keyless: Google Maps takes the
- * route (later stops as waypoints); Apple Maps and Waze take the next stop.
+ * In-app navigation target inside Edify (Section 6 — zero external Google Maps,
+ * Apple Maps, or Waze launches). Returns an internal route URI for placed stops.
  */
-export function directionsUrl(stops: readonly SchoolPin[], app: MapsApp): string | null {
-  const points = stops.map((s) => s.point).filter((p): p is NonNullable<SchoolPin['point']> => Boolean(p));
-  const next = points[0];
-  const last = points[points.length - 1];
-  if (!next || !last) return null;
-  if (app === 'apple') return `https://maps.apple.com/?daddr=${coord(next)}&dirflg=d`;
-  if (app === 'waze') return `https://waze.com/ul?ll=${coord(next)}&navigate=yes`;
-  const q = new URLSearchParams({ api: '1', destination: coord(last), travelmode: 'driving' });
-  const waypoints = points.slice(0, -1).slice(0, 9).map(coord).join('|');
-  if (waypoints) q.set('waypoints', waypoints);
-  return `https://www.google.com/maps/dir/?${q.toString()}`;
+export function directionsUrl(stops: readonly SchoolPin[], _app: MapsApp = 'in_app'): string | null {
+  void _app;
+  const placed = stops.filter((s) => Boolean(s.point));
+  if (placed.length === 0) return null;
+  const ids = placed.map((s) => encodeURIComponent(s.schoolId || `${s.point!.lat.toFixed(5)},${s.point!.lng.toFixed(5)}`)).join(',');
+  return `route:navigate?schools=${ids}`;
 }
 
 /** The placed stops in order, for directions. */
