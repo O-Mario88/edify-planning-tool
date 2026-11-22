@@ -64,3 +64,18 @@ func TestTheMasterRunnersAreSentOnAndOtherAsksHandedOn(t *testing.T) {
 		t.Errorf("an unread key: %v, want handed on", err)
 	}
 }
+
+// /strategic-priorities enforces the same role gate as Django can_open_url.
+func TestStrategicPrioritiesRoleGate(t *testing.T) {
+	s := NewService(nil, time.Now)
+	resp, served, err := s.Build(context.Background(), auth.Principal{Account: auth.Account{ActiveRole: "CCEO"}}, StrategicPath, nil)
+	if !served || resp != nil || err == nil {
+		t.Fatalf("CCEO on /strategic-priorities: resp=%v served=%v err=%v, want ErrNotAvailable", resp, served, err)
+	}
+	if !strategicRoles["Program Lead"] || !strategicRoles["CountryDirector"] || !strategicRoles["Admin"] {
+		t.Fatal("expected PL, CD, and Admin to be allowed on /strategic-priorities")
+	}
+	if strategicRoles["CCEO"] || strategicRoles["PartnerAdmin"] {
+		t.Fatal("unexpected field/partner role allowed on /strategic-priorities")
+	}
+}

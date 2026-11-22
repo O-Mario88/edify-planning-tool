@@ -33,12 +33,12 @@ func init() {
 		"_core_school_todos":                                coreSchoolTodos,
 		"_pd_todos":                                         pdTodos,
 		"_field_debrief_todos":                              fieldDebriefTodos,
-		"_business_transformation_todos":                    byRole(loanVerificationTodos, loanGuardIA),
+		"_business_transformation_todos":                    byRole(loanVerificationTodos, loanTodosIA),
 		"apps.staff_activity.todos:follow_up_todos":         followUpTodos,
 		"apps.cce_leadership.todos:coaching_todos":          coachingTodos,
 		"apps.cce_leadership.guidance_todos:guidance_todos": guidanceTodos,
 		"apps.ssa.collection_todos:collection_todos":        byRole(cdOr(directorSSATodos, returnedSSATodos), collectionIA),
-		"apps.impact.evidence_todos:evidence_todos":         byRole(cdOr(evidenceGuardIA, evidenceTodos), evidenceGuardIA),
+		"apps.impact.evidence_todos:evidence_todos":         byRole(cdOr(evidenceTodosIA, evidenceTodos), evidenceTodosIA),
 		"apps.planning.fy_todos:fy_planning_todos":          fyPlanningTodos,
 		"apps.clusters.followups:attendance_todos":          attendanceTodos,
 		"_rvp_todos":                                        rvpTodos,
@@ -465,18 +465,19 @@ ORDER BY pa.returned_at DESC LIMIT 10`, rules.ReturnedToStaffStatus, r.owners)
 	})
 }
 
-// fundRequestTodos is _fund_request_todos: the reader's own weekly requests
-// to confirm or fix, returned monthly plans, and disbursed funds to confirm.
-// An approver (a Programme Lead, the Country Director) with any request or
-// accountability at their step is passed on.
+// fundRequestTodos is _fund_request_todos: approver queues for Programme Leads
+// and Country Directors plus the reader's own weekly requests to confirm or
+// fix, returned monthly plans, and disbursed funds to confirm.
 func fundRequestTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
+	var out []todo
 	if status, approves := rules.WeeklyApproverStatus[r.role]; approves {
-		if _, err := passOnIf(leadApprovalsGuard(ctx, s, status)); err != nil {
+		approvals, err := leadApprovalsTodos(ctx, s, r, status)
+		if err != nil {
 			return nil, err
 		}
+		out = append(out, approvals...)
 	}
 	uid := r.p.UserID
-	var out []todo
 	rows, err := s.db.Query(ctx, `SELECT id, status, week_start_date FROM weekly_fund_request
 WHERE responsible_user = $1 AND status = ANY($2) ORDER BY week_start_date DESC LIMIT 10`,
 		uid, append([]string{rules.WeeklyConfirmStatus}, rules.WeeklyReturnedStatuses...))
@@ -778,7 +779,7 @@ LIMIT 8`, r.p.UserID, r.p.StaffProfileID)
 // slot of each kind, twelve rows at most.
 func coreSchoolTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 	if r.role == leadRole {
-		return leadCoreGuard(ctx, s, r)
+		return leadCoreTodos(ctx, s, r)
 	}
 	if r.role != "CCEO" {
 		return nil, errPassOn
@@ -927,7 +928,10 @@ func loanVerificationTodos(ctx context.Context, s *Service, r *reader) ([]todo, 
 		return mfiTodos(ctx, s, r)
 	}
 	if r.role == leadRole {
-		return passOnIf(len(r.scope.OwnSchoolIDs) > 0, nil)
+		if len(r.scope.OwnSchoolIDs) == 0 {
+			return nil, nil
+		}
+		return btVerificationTodos(ctx, s, r, r.scope.OwnSchoolIDs)
 	}
 	if r.role == adminRole && contains(rules.Admin.BTVerificationSchedulingRoles, r.role) {
 		// The Admin's only desk of this builder; the Country Director's has
@@ -969,23 +973,30 @@ ORDER BY r.due_date ASC LIMIT 30`, r.scope.SchoolIDs, rules.LoanFieldVerificatio
 	})
 }
 
-// returnedSSATodos is collection_todos for a field officer: SSA records a
-// verifier returned to them, as one row due a week after the oldest return.
+// returnedSSATodos is collection_todos for field officers, Programme Leads,
+// and Admins: pending/blocked SSA items plus records returned to the reader.
 func returnedSSATodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
+	var out []todo
 	if r.role == leadRole {
-		if _, err := passOnIf(leadSSAConfirmGuard(ctx, s, r)); err != nil {
+		confirm, err := leadSSAConfirmTodos(ctx, s, r)
+		if err != nil {
 			return nil, err
 		}
+		out = append(out, confirm...)
 	} else if r.role == adminRole {
-		// _blocked_rows: SSA rows the reader's uploads could not import.
-		// Any upload of theirs passes them on.
-		if _, err := passOnIf(s.exists(ctx, `SELECT 1 FROM ssa_import_batch WHERE uploaded_by = $1`, r.p.UserID)); err != nil {
+		blocked, err := collectionBlockedRows(ctx, s, r)
+		if err != nil {
 			return nil, err
 		}
+		out = append(out, blocked...)
 	} else if !contains(rules.SSAKeyingRoles, r.role) {
 		return nil, errPassOn
 	}
-	return returnedSSARows(ctx, s, r)
+	returned, err := returnedSSARows(ctx, s, r)
+	if err != nil {
+		return nil, err
+	}
+	return append(out, returned...), nil
 }
 
 // returnedSSARows is collection_todos._returned_rows, for every role that
@@ -1019,22 +1030,37 @@ WHERE deleted_at IS NULL AND verification_status = 'returned' AND collected_by_u
 	return []todo{t}, nil
 }
 
-// evidenceTodos is evidence_todos for a field officer: evidence returned to
-// them passes the reader on; delivered OneTest visits with no results
-// recorded are a row each (ten).
+// evidenceTodos is evidence_todos for a field officer: returned school
+// evidence to correct plus delivered OneTest visits with no results recorded.
 func evidenceTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 	if !contains(rules.PCBT.EvidenceFieldRoles, r.role) {
 		return nil, errPassOn
 	}
+	var out []todo
 	var parts []string
 	for _, table := range rules.EvidenceTables {
-		parts = append(parts, `SELECT 1 FROM `+pgx.Identifier{table}.Sanitize()+` WHERE verification_status = $1 AND recorded_by_user_id = $2`)
+		parts = append(parts, `SELECT COUNT(*) AS n FROM `+pgx.Identifier{table}.Sanitize()+` WHERE verification_status = $1 AND recorded_by_user_id = $2`)
 	}
-	if found, err := s.exists(ctx, strings.Join(parts, " UNION ALL "), rules.EvidenceReturned, r.p.UserID); err != nil || found {
-		return passOnIf(found, err)
+	if len(parts) > 0 {
+		var returnedCount int
+		if err := s.db.QueryRow(ctx, `SELECT COALESCE(SUM(n), 0) FROM (`+strings.Join(parts, " UNION ALL ")+`) t`,
+			rules.EvidenceReturned, r.p.UserID).Scan(&returnedCount); err != nil {
+			return nil, err
+		}
+		if returnedCount > 0 {
+			out = append(out, todo{
+				ID: "evidence-returned-mine", Title: "Correct " + plural(returnedCount, "returned evidence record"),
+				Category: "Evidence", Priority: "high",
+				StatusKey: "returned", StatusLabel: "Returned", StatusTone: "danger",
+				DueLabel: "—", DueTone: "neutral",
+				Linked: plural(returnedCount, "record"), ActionLabel: "Open My Plan",
+				ActionURL: "/my-plan", Shape: "/my-plan",
+				Actionable: true, Due: &r.today,
+			})
+		}
 	}
 	if len(r.owners) == 0 {
-		return nil, nil
+		return out, nil
 	}
 	rows, err := s.db.Query(ctx, `
 SELECT a.id, s.name, a.actual_delivery_date, a.planned_date
@@ -1047,7 +1073,7 @@ ORDER BY a.actual_delivery_date ASC, a.planned_date ASC, a.id ASC LIMIT 10`, r.o
 	if err != nil {
 		return nil, err
 	}
-	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (todo, error) {
+	onetest, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (todo, error) {
 		var id string
 		var name *string
 		var delivered, planned *time.Time
@@ -1069,6 +1095,10 @@ ORDER BY a.actual_delivery_date ASC, a.planned_date ASC, a.id ASC LIMIT 10`, r.o
 		}
 		return t, err
 	})
+	if err != nil {
+		return nil, err
+	}
+	return append(out, onetest...), nil
 }
 
 // fyPlanningTodos is fy_planning_todos: for a planner, the nearest future

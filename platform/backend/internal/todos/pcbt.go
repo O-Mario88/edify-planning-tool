@@ -142,21 +142,28 @@ func (s *Service) btLoanSchools(ctx context.Context, r *reader) ([]string, error
 const btLoanScope = `SELECT id FROM bt_mfi_loan WHERE deleted_at IS NULL AND school_id = ANY($1)`
 
 // btOfficerTodos is _business_transformation_todos for a Business
-// Transformation officer: pending Salesforce confirmations and loan-use
-// verification visits to schedule, and the geographic financing gap.
-// Repayment risk, loan-use concerns and new loan purposes pass the reader on.
+// Transformation officer: pending Salesforce confirmations, loan-use
+// verification visits to schedule, repayment risks, loan-use concerns,
+// loan purpose proposals, and the geographic financing gap.
 func btOfficerTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 	schools, err := s.btLoanSchools(ctx, r)
 	if err != nil {
 		return nil, err
 	}
-	if found, err := btOfficerGuard(ctx, s, schools); err != nil || found {
-		return passOnIf(found, err)
-	}
-	out, err := btSalesforceTodos(ctx, s, r, schools)
+	out, err := btRiskTodos(ctx, s, r, schools)
 	if err != nil {
 		return nil, err
 	}
+	proposals, err := btPurposeProposalTodos(ctx, s, r)
+	if err != nil {
+		return nil, err
+	}
+	out = append(out, proposals...)
+	sf, err := btSalesforceTodos(ctx, s, r, schools)
+	if err != nil {
+		return nil, err
+	}
+	out = append(out, sf...)
 	more, err := btVerificationTodos(ctx, s, r, schools)
 	if err != nil {
 		return nil, err
@@ -186,20 +193,22 @@ UNION ALL SELECT 1 FROM bt_loan_use_result u INNER JOIN bt_loan_verification_req
 }
 
 // btDirectorTodos is _business_transformation_todos for the Country
-// Director: loan-use verification visits to schedule and the geographic
-// financing gap. Repayment risks and loan-use concerns pass the reader on.
+// Director: repayment risks, loan-use concerns, loan-use verification visits
+// to schedule, and the geographic financing gap.
 func btDirectorTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 	schools, err := s.btLoanSchools(ctx, r)
 	if err != nil {
 		return nil, err
 	}
-	if found, err := btRiskGuard(ctx, s, schools); err != nil || found {
-		return passOnIf(found, err)
-	}
-	out, err := btVerificationTodos(ctx, s, r, schools)
+	out, err := btRiskTodos(ctx, s, r, schools)
 	if err != nil {
 		return nil, err
 	}
+	more, err := btVerificationTodos(ctx, s, r, schools)
+	if err != nil {
+		return nil, err
+	}
+	out = append(out, more...)
 	gap, err := btGeographyGap(ctx, s, r)
 	return append(out, gap...), err
 }

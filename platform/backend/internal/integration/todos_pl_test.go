@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
@@ -84,7 +83,11 @@ SELECT 'gtpl-coach-1', now(), now(), 'someone-else', $1::varchar, o.user_id, 'on
 	if _, err := admin.Exec(ctx, `UPDATE cce_cceo_coaching SET author_id = $1 WHERE id = 'gtpl-coach-1'`, leadID); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := ask(); connect.CodeOf(err) != connect.CodeUnavailable {
-		t.Fatalf("with coaching the lead wrote: %v, want it passed to the existing application", err)
+	got, err = ask()
+	if err != nil {
+		t.Fatalf("with coaching the lead wrote: %v, want native Go draft coaching row", err)
+	}
+	if !strings.Contains(got, "Share Draft Coaching Note") {
+		t.Fatalf("expected native draft coaching row for authored unshared coaching, got: %.600s", got)
 	}
 }

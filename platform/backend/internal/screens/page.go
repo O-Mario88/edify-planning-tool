@@ -42,7 +42,10 @@ func (s *Service) GetPage(
 	if query.Has("path") {
 		return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This page cannot be opened.")
 	}
-	ctx = pagegate.WithDesktop(ctx, message.GetDesktop())
+	// When no existing application is configured (Django-absent cutover),
+	// Go renders pages natively for desktop browsers too instead of handing
+	// desktop readings off to an absent upstream.
+	ctx = pagegate.WithDesktop(ctx, message.GetDesktop() && s.existingApp != nil)
 	if principal, ok := auth.PrincipalFrom(ctx); ok {
 		effective := principal
 		if principal.InActingAppointment {

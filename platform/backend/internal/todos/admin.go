@@ -259,8 +259,7 @@ ORDER BY created_at ASC LIMIT 4`, pending)
 // first.
 func loanVerificationsToSchedule(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 	if r.scope.Country != "" {
-		// A country-bound lens reads school_in_country_q, not ported here.
-		return nil, errPassOn
+		return loanVerificationsForCountry(ctx, s, r)
 	}
 	rows, err := s.db.Query(ctx, `
 SELECT r.id, r.due_date, s.name, s.school_id, m.name

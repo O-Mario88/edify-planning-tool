@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"connectrpc.com/connect"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
@@ -107,8 +106,12 @@ VALUES ('gtbt-purpose-1', now(), now(), 'gtbt', '[Go parity check]', false, '', 
 		if err != nil {
 			t.Fatal(err)
 		}
-		if _, err := ask(t, token); connect.CodeOf(err) != connect.CodeUnavailable {
-			t.Fatalf("with a loan purpose to review: %v, want it passed to the existing application", err)
+		got, err = ask(t, token)
+		if err != nil {
+			t.Fatalf("with a loan purpose to review: %v, want native Go proposal row", err)
+		}
+		if !strings.Contains(got, "Review loan purpose proposal") || !strings.Contains(got, "[Go parity check]") {
+			t.Fatalf("expected native loan purpose proposal row, got: %.600s", got)
 		}
 	})
 }

@@ -6,10 +6,11 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // todosIAGoldenEnv names a file of the existing feed's To-Do answers for
@@ -69,7 +70,15 @@ WHERE deleted_at IS NULL AND verification_status <> 'pending' ORDER BY id LIMIT 
 			t.Errorf("restoring the SSA record: %v", err)
 		}
 	})
-	if _, err := pageOf(token, "/todos", nil); connect.CodeOf(err) != connect.CodeUnavailable {
-		t.Fatalf("with a pending SSA record: %v, want it passed to the existing application", err)
+	page, err := pageOf(token, "/todos", nil)
+	if err != nil {
+		t.Fatalf("with a pending SSA record: %v, want native Go IA queue row", err)
+	}
+	raw, err := protojson.Marshal(page)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if body := string(raw); !strings.Contains(body, "SSA record") || !strings.Contains(body, "/ia/verification/") {
+		t.Fatalf("with a pending SSA record: expected native SSA verification row, got: %.600s", body)
 	}
 }

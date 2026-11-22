@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
 	"github.com/jackc/pgx/v5"
 	"google.golang.org/protobuf/encoding/protojson"
 )
@@ -110,11 +109,14 @@ func TestTodosPassAReaderOnWhenAGuardedRecordIsTheirs(t *testing.T) {
 	if body := string(raw); !strings.Contains(body, "[Go parity check] Visit") || !strings.Contains(body, "/schools/"+school) {
 		t.Fatalf("with a school action: expected native Go school action row, got: %s", body)
 	}
-	// pl1 is still passed on when an unported Programme Lead guard finds a
-	// record in this database (docs/migration/55-todos-pl.md).
+	// pl1 is answered natively in Go (all Programme Lead builders are now ported).
 	borrowAccount(t, "pl1@edify.org")
 	leadToken := sessionOf(t, "pl1@edify.org", seededPassword).GetAccessToken()
-	if _, err := pageOf(leadToken, "/todos", nil); connect.CodeOf(err) != connect.CodeUnavailable {
-		t.Fatalf("the Programme Lead: %v, want it passed to the existing application", err)
+	leadPage, err := pageOf(leadToken, "/todos", nil)
+	if err != nil {
+		t.Fatalf("the Programme Lead: %v, want native Go /todos page", err)
+	}
+	if leadPage.GetWebPath() != "/todos" {
+		t.Fatalf("the Programme Lead web_path = %q, want /todos", leadPage.GetWebPath())
 	}
 }

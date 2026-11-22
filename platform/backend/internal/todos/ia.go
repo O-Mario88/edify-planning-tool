@@ -91,15 +91,12 @@ func onlyIA(ia builder) builder {
 
 func init() {
 	for name, build := range map[string]builder{
-		// The Admin reaches it too: plReviewGuard stands for it (admin.go).
-		"_ia_todos": byRole(onlyRole(adminRole, plReviewGuard), iaVerificationTodos),
-		"apps.activities.ia_todos:ia_queue_todos":     onlyIA(iaQueueGuard),
-		"apps.impact.framework_todos:framework_todos": byRole(onlyRole(cdRole, frameworkReviewGuard), frameworkTodos),
-		// A Business Transformation officer's conclusions are built (pcbt.go).
-		"apps.impact.learning_todos:learning_todos": byRole(cdOr(learningGuard, learningTodos), learningGuard),
-		"apps.impact.report_todos:report_todos":     byRole(cdOr(reportGuard, onlyRole(rvpRole, donorReleaseGuard)), reportGuard),
-		// A Programme Lead's portfolio passes them on (lead.go).
-		"apps.planning.coverage_todos:missing_training_todos": byRole(portfolioGuard, missingTrainingTodos),
+		"_ia_todos": byRole(onlyRole(adminRole, plReviewTodos), iaVerificationTodos),
+		"apps.activities.ia_todos:ia_queue_todos":             onlyIA(iaQueueTodos),
+		"apps.impact.framework_todos:framework_todos":         byRole(onlyRole(cdRole, frameworkReviewTodos), frameworkTodos),
+		"apps.impact.learning_todos:learning_todos":           byRole(cdOr(learningReviewTodos, learningTodos), learningReviewTodos),
+		"apps.impact.report_todos:report_todos":               byRole(cdOr(reportTodos, onlyRole(rvpRole, donorReleaseTodos)), reportTodos),
+		"apps.planning.coverage_todos:missing_training_todos": missingTrainingTodos,
 	} {
 		register(name, build)
 	}
@@ -250,10 +247,11 @@ UNION ALL SELECT 1 FROM impact_indicator_definition WHERE status = ANY($3)`,
 }
 
 // frameworkTodos is framework_todos for IA: rules or definitions awaiting a
-// reviewer, or returned to their author, pass the reader on; otherwise the
-// one row is the school-outcome catalogue items with no live primary rule.
+// reviewer, or returned to their author, plus school-outcome catalogue items
+// with no live primary rule.
 func frameworkTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
-	if _, err := frameworkReviewGuard(ctx, s, r); err != nil {
+	out, err := frameworkReviewTodos(ctx, s, r)
+	if err != nil {
 		return nil, err
 	}
 	var unmapped int
@@ -263,18 +261,18 @@ WHERE ci.status = 'active' AND (ci.requires_school OR ci.cluster_delivery_allowe
 		return nil, err
 	}
 	if unmapped == 0 {
-		return nil, nil
+		return out, nil
 	}
 	word := "activities"
 	if unmapped == 1 {
 		word = "activity"
 	}
-	return []todo{{ID: "ia-framework-unmapped", Title: "Set measurement rules for " + strconv.Itoa(unmapped) + " " + word,
+	return append(out, todo{ID: "ia-framework-unmapped", Title: "Set measurement rules for " + strconv.Itoa(unmapped) + " " + word,
 		Category: rules.IA.FrameworkCategory, Priority: "medium", StatusKey: "waiting_me", Actionable: true,
 		StatusLabel: "Waiting on Me", StatusTone: "warning", DueLabel: "—", DueTone: "neutral",
 		Linked: strconv.Itoa(unmapped) + " waiting", ActionLabel: "Open Measurement Rules",
 		ActionURL: "/ia/framework/?tab=rules&status=required", Shape: "/ia/framework/?tab=rules&status=required",
-		Due: &r.today}}, nil
+		Due: &r.today}), nil
 }
 
 // localFY is get_operational_fy(today) for the local day.

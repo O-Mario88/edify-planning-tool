@@ -53,14 +53,14 @@ func init() {
 		"_partner_invoice_todos": partnerInvoiceTodos,
 		"_leave_todos":           leaveTodos,
 		"_cd_flag_todos":         cdFlagTodos,
-		"_pl_analytics_todos":    plAnalyticsGuard,
-		"_team_target_todos":     teamTargetGuard,
-		"_cce_leadership_todos":  regionalEngagementGuard,
+		"_pl_analytics_todos":    plAnalyticsTodos,
+		"_team_target_todos":     teamTargetTodos,
+		"_cce_leadership_todos":  regionalEngagementTodos,
 		"apps.flags.escalation_todos:pl_escalation_todos":         escalationTodos,
 		"apps.hr.review_todos:reviewer_todos":                     reviewerTodos,
-		"apps.hr.distribution_todos:distribution_todos":           distributionGuard,
-		"apps.partners.engagement_todos:partner_engagement_todos": partnerEngagementGuard,
-		"apps.planning.country_oversight.todos:followup_todos":    planningFollowUpGuard,
+		"apps.hr.distribution_todos:distribution_todos":           distributionTodos,
+		"apps.partners.engagement_todos:partner_engagement_todos": partnerEngagementTodos,
+		"apps.planning.country_oversight.todos:followup_todos":    planningFollowUpTodos,
 	} {
 		register(name, build)
 	}
@@ -396,10 +396,10 @@ UNION ALL SELECT 1 FROM monthly_personal_target WHERE user_id = ANY($1) AND targ
 }
 
 // guidanceTodos is guidance_todos: for an officer, guidance to acknowledge is
-// built directly; for a lead, guidance they issued passes them on.
+// built directly; for a lead, draft or due-for-review guidance is built natively.
 func guidanceTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 	if r.role == leadRole {
-		return passOnIf(s.exists(ctx, `SELECT 1 FROM cce_team_guidance WHERE author_id = $1`, r.p.UserID))
+		return leadGuidanceTodos(ctx, s, r)
 	}
 	if r.role != "CCEO" {
 		return nil, nil
@@ -408,10 +408,8 @@ func guidanceTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 }
 
 // coachingTodos is coaching_todos. An officer's coaching to acknowledge is
-// built directly. For a lead, the month's one-to-ones still to hold are
-// built (cce_leadership.todos._lead_todos, coaching.monthly_one_to_ones);
-// coaching the lead wrote (drafts to share, follow-ups due) and Regional
-// Lead coaching pass the lead on.
+// built directly. For a lead, authored coaching drafts/follow-ups and the
+// month's one-to-ones still to hold are built natively.
 func coachingTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 	if r.role == "CCEO" {
 		return officerCoachingTodos(ctx, s, r)
@@ -419,13 +417,13 @@ func coachingTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 	if r.role != leadRole {
 		return nil, nil
 	}
-	if found, err := s.exists(ctx, `SELECT 1 FROM cce_cceo_coaching WHERE author_id = $1
-UNION ALL SELECT 1 FROM cce_regional_engagement`, r.p.UserID); err != nil || found {
-		return passOnIf(found, err)
+	authored, err := leadAuthoredCoachingTodos(ctx, s, r)
+	if err != nil {
+		return nil, err
 	}
 	members, err := trainingsummary.TeamMembers(ctx, s.db, r.p.StaffProfileID, r.now)
 	if err != nil || len(members) == 0 {
-		return nil, err
+		return authored, err
 	}
 	ids := make([]string, len(members))
 	for i, m := range members {
@@ -446,7 +444,7 @@ WHERE kind = $1 AND cceo_staff_id = ANY($2) AND held_on >= $3 AND held_on < $4`,
 		return nil, err
 	}
 	if r.today.Before(dueFrom) {
-		return nil, nil
+		return authored, nil
 	}
 	priority := "medium"
 	if r.today.Day() >= 20 {
@@ -456,9 +454,10 @@ WHERE kind = $1 AND cceo_staff_id = ANY($2) AND held_on >= $3 AND held_on < $4`,
 	if monthEnd.Equal(r.today) {
 		status = "due_today"
 	}
-	var out []todo
+	out := append([]todo(nil), authored...)
+	oneToOnes := 0
 	for _, m := range members {
-		if contains(held, m.StaffID) || len(out) == rules.Lead.CoachingRowLimit {
+		if contains(held, m.StaffID) || oneToOnes == rules.Lead.CoachingRowLimit {
 			continue
 		}
 		name := m.Name
@@ -474,6 +473,7 @@ WHERE kind = $1 AND cceo_staff_id = ANY($2) AND held_on >= $3 AND held_on < $4`,
 		t = derivedWords(t, &due, r.today)
 		t.StatusKey = status
 		out = append(out, t)
+		oneToOnes++
 	}
 	return out, nil
 }

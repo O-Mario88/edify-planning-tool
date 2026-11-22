@@ -1246,3 +1246,10 @@ GRANT SELECT (id, debrief_id, action, issue, owner_user_id, status, due_date) ON
 GRANT SELECT (id, assignee_id, created_by_id, note, status, due_date) ON staff_usage_follow_up TO edify_gateway_ro;
 -- Evidence metadata read (uri is restricted to SECURITY DEFINER gateway_field_ops.read_evidence_uri).
 GRANT SELECT (id, activity_id, quarantined, status, kind, original_name, mime_type) ON evidence_record TO edify_gateway_ro;
+-- Native Go To-Do builders closing remaining passOnIf guards (Step 2).
+GRANT SELECT (id, note, month_of_fy, created_at) ON target_catchup_plan TO edify_gateway_ro;
+GRANT SELECT (status) ON impact_finding TO edify_gateway_ro;
+GRANT SELECT (id, proposed_label, created_at) ON bt_loan_purpose_proposal TO edify_gateway_ro;
+GRANT SELECT (id, school_name, instruction, priority, due_date, status, assigned_at) ON planning_oversight_follow_up TO edify_gateway_ro;
+GRANT SELECT (fy) ON cce_regional_report TO edify_gateway_ro;
+GRANT SELECT (created_at) ON cce_team_guidance TO edify_gateway_ro;
