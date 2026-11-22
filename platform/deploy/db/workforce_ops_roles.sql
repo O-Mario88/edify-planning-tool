@@ -214,11 +214,74 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION gateway_workforce_ops.raise_escalation(
+    p_id text, p_user_id text, p_user_name text, p_country_id text, p_addressed_role text,
+    p_category text, p_severity text, p_subject text, p_detail text, p_requested_decision text,
+    p_due_date date, p_now timestamptz
+) RETURNS text
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $$
+DECLARE
+    v_assignee text;
+BEGIN
+    SELECT sup.user_id INTO v_assignee
+    FROM public.staff_profile me
+    JOIN public.staff_supervisor_assignment sa ON sa.supervisee_id = me.id
+    JOIN public.staff_profile sup ON sup.id = sa.supervisor_id
+    WHERE me.user_id = p_user_id AND sup.user_id IS NOT NULL
+    ORDER BY sa.created_at ASC
+    LIMIT 1;
+
+    INSERT INTO public.leadership_escalation (
+        id, raised_by_user_id, raised_by_name, assigned_to_user_id, country_id,
+        category, subject, detail, requested_decision, severity,
+        due_date, status, addressed_role, created_at, updated_at
+    ) VALUES (
+        p_id, p_user_id, COALESCE(NULLIF(trim(p_user_name), ''), 'Staff'), v_assignee,
+        COALESCE(NULLIF(trim(p_country_id), ''), 'UG'),
+        COALESCE(NULLIF(trim(p_category), ''), 'other'),
+        trim(p_subject), trim(p_detail), NULLIF(trim(p_requested_decision), ''),
+        COALESCE(NULLIF(trim(p_severity), ''), 'normal'),
+        p_due_date, 'open', p_addressed_role, p_now, p_now
+    );
+    -- Callers append the canonical SHA-256 audit_log entry in Go via audit.Append.
+    RETURN p_id;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION gateway_workforce_ops.request_leave(
+    p_id text, p_user_id text, p_type text, p_start_date text, p_end_date text,
+    p_days integer, p_reason text, p_handover text, p_now timestamptz
+) RETURNS text
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $$
+DECLARE
+    v_staff_id text;
+BEGIN
+    SELECT id INTO v_staff_id FROM public.staff_profile WHERE user_id = p_user_id LIMIT 1;
+    IF v_staff_id IS NULL THEN
+        RAISE EXCEPTION 'workforceops: forbidden: no staff profile found for this account';
+    END IF;
+
+    INSERT INTO public.leave (
+        id, staff_id, type, start_date, end_date, days, status, reason,
+        handover_notes, coverage_status, created_at, updated_at
+    ) VALUES (
+        p_id, v_staff_id, COALESCE(NULLIF(trim(p_type), ''), 'annual'),
+        p_start_date, p_end_date, GREATEST(1, p_days), 'pending',
+        NULLIF(trim(p_reason), ''), NULLIF(trim(p_handover), ''),
+        'not_required', p_now, p_now
+    );
+    -- Callers append the canonical SHA-256 audit_log entry in Go via audit.Append.
+    RETURN p_id;
+END;
+$$;
+
 ALTER FUNCTION gateway_workforce_ops.update_own_profile(text, text, text) OWNER TO edify_workforce_ops_owner;
 ALTER FUNCTION gateway_workforce_ops.decide_leave(text, text, text, text, text) OWNER TO edify_workforce_ops_owner;
 ALTER FUNCTION gateway_workforce_ops.decide_escalation(text, text, text, text, text) OWNER TO edify_workforce_ops_owner;
 ALTER FUNCTION gateway_workforce_ops.record_help_feedback(text, text, text, boolean, text, text, text) OWNER TO edify_workforce_ops_owner;
 ALTER FUNCTION gateway_workforce_ops.transition_team_action(text, text, text, text, text, timestamptz) OWNER TO edify_workforce_ops_owner;
+ALTER FUNCTION gateway_workforce_ops.raise_escalation(text, text, text, text, text, text, text, text, text, text, date, timestamptz) OWNER TO edify_workforce_ops_owner;
+ALTER FUNCTION gateway_workforce_ops.request_leave(text, text, text, text, text, integer, text, text, timestamptz) OWNER TO edify_workforce_ops_owner;
 
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA gateway_workforce_ops FROM PUBLIC;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA gateway_workforce_ops TO edify_gateway;

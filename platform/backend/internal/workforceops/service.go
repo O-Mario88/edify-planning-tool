@@ -15,6 +15,7 @@ import (
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/cuid"
 )
 
 func withRW(ctx context.Context, pool *pgxpool.Pool, fn func(pgx.Tx) error) error {
@@ -190,4 +191,113 @@ func (s *Service) TransitionTeamAction(ctx context.Context, p auth.Principal, ac
 		return err
 	})
 	return state, err
+}
+
+// RaiseEscalation creates a leadership_escalation row natively in Go and
+// appends a canonical SHA-256 audit row in the same transaction.
+func (s *Service) RaiseEscalation(ctx context.Context, p auth.Principal, category, severity, subject, detail, requestedDecision, dueDate string) (string, error) {
+	if p.UserID == "" || p.ActiveRole == "ClusterLeader" {
+		return "", ErrForbidden
+	}
+	subject = strings.TrimSpace(subject)
+	detail = strings.TrimSpace(detail)
+	if subject == "" || detail == "" {
+		return "", fmt.Errorf("%w: subject and detail are required", ErrInvalidInput)
+	}
+	addressed := "PL"
+	switch p.ActiveRole {
+	case "Program Lead", "RegionalProgramLead":
+		addressed = "CD"
+	case "CountryDirector":
+		addressed = "RVP"
+	}
+	var due *time.Time
+	if raw := strings.TrimSpace(dueDate); raw != "" {
+		parsed, err := time.Parse(time.DateOnly, raw)
+		if err != nil {
+			return "", fmt.Errorf("%w: due_date must be YYYY-MM-DD", ErrInvalidInput)
+		}
+		due = &parsed
+	}
+	countryID := "UG"
+	if p.Country != nil && strings.TrimSpace(p.Country.Code) != "" {
+		countryID = p.Country.Code
+	}
+	now := s.clock()
+	id := cuid.New()
+	var out string
+	err := withRW(ctx, s.pool, func(tx pgx.Tx) error {
+		if err := tx.QueryRow(ctx,
+			`SELECT gateway_workforce_ops.raise_escalation($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+			id, p.UserID, p.Name, countryID, addressed, category, severity, subject, detail, requestedDecision, due, now).Scan(&out); err != nil {
+			return err
+		}
+		_, err := audit.Append(ctx, tx, audit.Entry{
+			Action:      "escalation.raised",
+			SubjectKind: audit.Text("leadership_escalation"),
+			SubjectID:   audit.Text(out),
+			ActorID:     audit.Text(p.UserID),
+			ActorRole:   audit.Text(p.ActiveRole),
+			Success:     true,
+			Payload: map[string]any{
+				"category":       strings.TrimSpace(category),
+				"severity":       strings.TrimSpace(severity),
+				"addressed_role": addressed,
+				"subject":        subject,
+			},
+		}, now)
+		return err
+	})
+	return out, err
+}
+
+// RequestLeave creates a pending leave request row natively in Go and appends
+// a canonical SHA-256 audit row in the same transaction.
+func (s *Service) RequestLeave(ctx context.Context, p auth.Principal, leaveType, startDate, endDate, reason, handover string) (string, error) {
+	if p.UserID == "" || p.ActiveRole == "ClusterLeader" {
+		return "", ErrForbidden
+	}
+	startDate = strings.TrimSpace(startDate)
+	endDate = strings.TrimSpace(endDate)
+	sParsed, err := time.Parse(time.DateOnly, startDate)
+	if err != nil {
+		return "", fmt.Errorf("%w: start_date must be YYYY-MM-DD", ErrInvalidInput)
+	}
+	eParsed, err := time.Parse(time.DateOnly, endDate)
+	if err != nil || eParsed.Before(sParsed) {
+		return "", fmt.Errorf("%w: end_date must be on or after start_date", ErrInvalidInput)
+	}
+	days := int(eParsed.Sub(sParsed).Hours()/24) + 1
+	if days > 365 {
+		return "", fmt.Errorf("%w: leave duration cannot exceed 365 days", ErrInvalidInput)
+	}
+	now := s.clock()
+	id := cuid.New()
+	var out string
+	err = withRW(ctx, s.pool, func(tx pgx.Tx) error {
+		if err := tx.QueryRow(ctx,
+			`SELECT gateway_workforce_ops.request_leave($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+			id, p.UserID, leaveType, startDate, endDate, days, reason, handover, now).Scan(&out); err != nil {
+			if strings.Contains(err.Error(), "workforceops: forbidden:") {
+				return fmt.Errorf("%w: no staff profile found for this account", ErrForbidden)
+			}
+			return err
+		}
+		_, err := audit.Append(ctx, tx, audit.Entry{
+			Action:      "leave.requested",
+			SubjectKind: audit.Text("leave"),
+			SubjectID:   audit.Text(out),
+			ActorID:     audit.Text(p.UserID),
+			ActorRole:   audit.Text(p.ActiveRole),
+			Success:     true,
+			Payload: map[string]any{
+				"type":       strings.TrimSpace(leaveType),
+				"start_date": startDate,
+				"end_date":   endDate,
+				"days":       days,
+			},
+		}, now)
+		return err
+	})
+	return out, err
 }

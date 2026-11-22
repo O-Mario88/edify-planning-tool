@@ -27,7 +27,9 @@ var (
 	reBudgetDecide         = regexp.MustCompile(`^/finance/monthly-budgets/([A-Za-z0-9_-]+)/decide/?$`)
 	reAdvanceTransition    = regexp.MustCompile(`^/finance/advances/([A-Za-z0-9_-]+)/(disburse|confirm_receipt|submit_accountability|verify_return)/?$`)
 	reLeaveDecide          = regexp.MustCompile(`^/(?:leave|hr/leave-approvals)/([A-Za-z0-9_-]+)/decide/?$`)
+	reLeaveRequest         = regexp.MustCompile(`^/(?:personal-time-off|leave)/request/?$`)
 	reEscalationDecide     = regexp.MustCompile(`^/escalations/([A-Za-z0-9_-]+)/decide/?$`)
+	reEscalationRaise      = regexp.MustCompile(`^/escalations(?:/raise)?/?$`)
 	reProfileEdit          = regexp.MustCompile(`^/profile/edit/?$`)
 	reHelpFeedback         = regexp.MustCompile(`^/help/([A-Za-z0-9_-]+)/feedback/?$`)
 	reTeamActionTransition = regexp.MustCompile(`^/actions/([A-Za-z0-9_-]+)/(acknowledge|start|block|return|cancel|escalate|resolve)/?$`)
@@ -101,9 +103,17 @@ func (s *Service) opsInGo(ctx context.Context, req *screensv1.SaveDrawerRequest)
 			status, err := s.workforceOps.DecideLeave(ctx, p, m[1], vals["decision"], vals["note"])
 			return opsDrawerResult(ctx, status, "Leave request updated.", err)
 		}
+		if reLeaveRequest.MatchString(rawPath) {
+			_, err := s.workforceOps.RequestLeave(ctx, p, vals["leave_type"], vals["start_date"], vals["end_date"], vals["reason"], vals["handover_notes"])
+			return opsDrawerResult(ctx, "pending", "Leave request submitted.", err)
+		}
 		if m := reEscalationDecide.FindStringSubmatch(rawPath); m != nil {
 			status, err := s.workforceOps.DecideEscalation(ctx, p, m[1], vals["decision"], vals["note"])
 			return opsDrawerResult(ctx, status, "Escalation updated.", err)
+		}
+		if reEscalationRaise.MatchString(rawPath) && (req.GetForm() == "raise" || strings.HasSuffix(strings.TrimSuffix(rawPath, "/"), "/raise")) {
+			_, err := s.workforceOps.RaiseEscalation(ctx, p, vals["category"], vals["severity"], vals["subject"], vals["detail"], vals["requested_decision"], vals["due_date"])
+			return opsDrawerResult(ctx, "open", "Escalation sent.", err)
 		}
 		if reProfileEdit.MatchString(rawPath) {
 			err := s.workforceOps.UpdateOwnProfile(ctx, p, vals["name"], vals["phone"])

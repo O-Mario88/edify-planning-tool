@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useState, useTransition } from 'react';
 import {
   Baby,
   BarChart3,
@@ -17,8 +18,10 @@ import {
   ShieldCheck,
   User,
   Users,
+  X,
 } from 'lucide-react';
 
+import { submitLeaveRequestAction } from '@/app/(app)/personal-time-off/actions';
 import type { GetPageResponse } from '@/gen/edify/screens/v1/page_screen_pb';
 import type { PageBlock, PageTable } from '@/gen/edify/screens/v1/page_pb';
 
@@ -26,6 +29,7 @@ import { Badge } from '../blocks/Badge';
 import { FeedBlocks } from '../page/FeedBlocks';
 import {
   DonutChart,
+  EDIFY_BTN_OUTLINE,
   EDIFY_BTN_PRIMARY,
   EmptyStatePanel,
   KpiStatCard,
@@ -36,7 +40,6 @@ import {
   findAllSegments,
   findAllStrips,
   parseLeadingNumber,
-  resolveActionHref,
   resolveSafeHref,
 } from './EdifyDashboardChrome';
 
@@ -178,8 +181,30 @@ export function PersonalTimeOffView({
     return '/leave/policies';
   })();
 
+  const router = useRouter();
+  const [showRequestForm, setShowRequestForm] = useState(false);
+  const [requestNotice, setRequestNotice] = useState<{ ok: boolean; text: string } | null>(null);
+  const [isPending, startTransition] = useTransition();
+
   const requestAction = answer.header?.actions.find((a) => a.primary) ?? answer.header?.actions[0];
-  const requestHref = requestAction ? resolveActionHref(requestAction, pagePath, drawerHref) : drawerHref;
+
+  function handleLeaveSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const fd = new FormData(event.currentTarget);
+    const values: Record<string, string> = {};
+    for (const [k, v] of fd.entries()) {
+      if (typeof v === 'string') values[k] = v;
+    }
+    setRequestNotice(null);
+    startTransition(async () => {
+      const res = await submitLeaveRequestAction(values);
+      setRequestNotice({ ok: res.ok, text: res.message });
+      if (res.ok) {
+        setShowRequestForm(false);
+        router.refresh();
+      }
+    });
+  }
 
   const nonMyLeaveBlocks = (() => {
     const idx = answer.blocks.findIndex((b) => b.kind.case === 'linkTabs');
@@ -207,12 +232,112 @@ export function PersonalTimeOffView({
         }
         icon={<Calendar className="h-5 w-5" />}
         actions={
-          <a href={requestHref} className={EDIFY_BTN_PRIMARY}>
+          <button type="button" onClick={() => setShowRequestForm((v) => !v)} className={EDIFY_BTN_PRIMARY}>
             <Plus className="h-4 w-4" aria-hidden="true" />
             <span>{requestAction?.label || 'Request Leave'}</span>
-          </a>
+          </button>
         }
       />
+
+      {requestNotice ? (
+        <p
+          role="status"
+          className={`rounded-[10px] border px-4 py-2.5 text-[13px] font-semibold ${
+            requestNotice.ok
+              ? 'border-[var(--edify-success-border)] bg-[var(--edify-success-light)] text-[var(--edify-success-text)]'
+              : 'border-[var(--edify-danger-border)] bg-[var(--edify-danger-light)] text-[var(--edify-danger-text)]'
+          }`}
+        >
+          {requestNotice.text}
+        </p>
+      ) : null}
+
+      {showRequestForm ? (
+        <form
+          onSubmit={handleLeaveSubmit}
+          className="rounded-[16px] border border-[var(--brand-primary-border)] bg-[var(--edify-card-surface)] p-5 shadow-sm"
+        >
+          <div className="mb-3 flex items-center justify-between border-b border-[var(--edify-table-divider)] pb-2.5">
+            <div>
+              <h2 className="text-[15px] font-extrabold text-[var(--edify-navy-950,#001d39)] dark:text-[var(--edify-text)]">
+                Request Personal Time Off
+              </h2>
+              <p className="text-[12px] text-[var(--edify-text-muted)]">
+                Submitted directly to the Go gateway and recorded in the tamper-evident audit chain.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowRequestForm(false)}
+              aria-label="Close leave request form"
+              className="rounded-lg p-1.5 text-[var(--edify-text-muted)] hover:bg-[var(--edify-surface-muted)]"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <label className="space-y-1">
+              <span className="block text-[12px] font-semibold text-[var(--edify-text)]">Leave Type</span>
+              <select
+                name="leave_type"
+                defaultValue="annual"
+                className="h-9 w-full rounded-[8px] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-3 text-[13px] text-[var(--edify-text)]"
+              >
+                <option value="annual">Personal Time Off</option>
+                <option value="sick">Sick Leave</option>
+                <option value="maternity">Maternity Leave</option>
+                <option value="paternity">Paternity Leave</option>
+                <option value="bereavement">Bereavement Leave</option>
+              </select>
+            </label>
+            <label className="space-y-1">
+              <span className="block text-[12px] font-semibold text-[var(--edify-text)]">Start Date *</span>
+              <input
+                type="date"
+                name="start_date"
+                required
+                className="h-9 w-full rounded-[8px] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-3 text-[13px] text-[var(--edify-text)]"
+              />
+            </label>
+            <label className="space-y-1">
+              <span className="block text-[12px] font-semibold text-[var(--edify-text)]">End Date *</span>
+              <input
+                type="date"
+                name="end_date"
+                required
+                className="h-9 w-full rounded-[8px] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-3 text-[13px] text-[var(--edify-text)]"
+              />
+            </label>
+            <label className="space-y-1 sm:col-span-2">
+              <span className="block text-[12px] font-semibold text-[var(--edify-text)]">Reason</span>
+              <input
+                type="text"
+                name="reason"
+                placeholder="Brief reason for your leave request"
+                className="h-9 w-full rounded-[8px] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-3 text-[13px] text-[var(--edify-text)]"
+              />
+            </label>
+            <label className="space-y-1">
+              <span className="block text-[12px] font-semibold text-[var(--edify-text)]">Handover Notes</span>
+              <input
+                type="text"
+                name="handover_notes"
+                placeholder="Who covers your clusters/schools"
+                className="h-9 w-full rounded-[8px] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-3 text-[13px] text-[var(--edify-text)]"
+              />
+            </label>
+          </div>
+          <div className="mt-4 flex justify-end gap-2">
+            <button type="button" onClick={() => setShowRequestForm(false)} className={EDIFY_BTN_OUTLINE}>
+              Cancel
+            </button>
+            <button type="submit" disabled={isPending} className={EDIFY_BTN_PRIMARY}>
+              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>{isPending ? 'Submitting…' : 'Submit Leave Request'}</span>
+            </button>
+          </div>
+        </form>
+      ) : null}
 
       {/* Top Navigation Tabs (My Leave | Coverage | Holidays & Blackouts) */}
       {mainTabs && mainTabs.tabs.length > 0 ? (
@@ -548,13 +673,14 @@ export function PersonalTimeOffView({
                   'When you submit a request, its approval and coverage status will appear here.'
                 }
                 action={
-                  <a
-                    href={requestHref}
+                  <button
+                    type="button"
+                    onClick={() => setShowRequestForm(true)}
                     className="inline-flex items-center gap-2 rounded-[10px] border border-[var(--brand-primary)] bg-[var(--edify-card-surface)] px-4 py-2 text-[13px] font-semibold text-[var(--brand-primary-text)] transition-colors hover:bg-[var(--brand-primary-soft)] dark:text-[var(--edify-sky-400)]"
                   >
                     <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                     <span>Request Leave</span>
-                  </a>
+                  </button>
                 }
               />
             ) : null}

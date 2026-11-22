@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useMemo, useState, useTransition } from 'react';
 import {
   AlertTriangle,
   Calendar,
@@ -17,6 +18,7 @@ import {
   XCircle,
 } from 'lucide-react';
 
+import { raiseEscalationAction } from '@/app/(app)/escalations/actions';
 import type { GetPageResponse } from '@/gen/edify/screens/v1/page_screen_pb';
 import type { PageBlock, PageRow, PageTable } from '@/gen/edify/screens/v1/page_pb';
 
@@ -180,11 +182,32 @@ export function EscalationsView({
     ];
   }, [allRows, buckets, decidedBucket, raisedBucket, teamBuckets]);
 
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<string>('raised');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [showRaisePanel, setShowRaisePanel] = useState(false);
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
+  const [formNotice, setFormNotice] = useState<{ ok: boolean; text: string } | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  function handleRaiseSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const fd = new FormData(event.currentTarget);
+    const values: Record<string, string> = {};
+    for (const [k, v] of fd.entries()) {
+      if (typeof v === 'string') values[k] = v;
+    }
+    setFormNotice(null);
+    startTransition(async () => {
+      const res = await raiseEscalationAction(values);
+      setFormNotice({ ok: res.ok, text: res.message });
+      if (res.ok) {
+        setShowRaisePanel(false);
+        router.refresh();
+      }
+    });
+  }
 
   const currentTab = tabs.find((t) => t.id === activeTab) ?? tabs[0]!;
   const visibleRows = useMemo(() => {
@@ -255,13 +278,29 @@ export function EscalationsView({
         </div>
 
         {/* Inline Raise Escalation Drawer Panel when toggled */}
+        {formNotice ? (
+          <p
+            role="status"
+            className={`mt-3 rounded-[10px] border px-3.5 py-2 text-[12.5px] font-semibold ${
+              formNotice.ok
+                ? 'border-[var(--edify-success-border)] bg-[var(--edify-success-light)] text-[var(--edify-success-text)]'
+                : 'border-[var(--edify-danger-border)] bg-[var(--edify-danger-light)] text-[var(--edify-danger-text)]'
+            }`}
+          >
+            {formNotice.text}
+          </p>
+        ) : null}
+
         {showRaisePanel && form ? (
-          <div className="mt-4 rounded-[12px] border border-[var(--brand-primary-border)] bg-[var(--edify-card-surface)] p-4 shadow-sm">
+          <form
+            onSubmit={handleRaiseSubmit}
+            className="mt-4 rounded-[12px] border border-[var(--brand-primary-border)] bg-[var(--edify-card-surface)] p-4 shadow-sm"
+          >
             <div className="mb-3 flex items-center justify-between gap-2 border-b border-[var(--edify-border)] pb-2.5">
               <div>
                 <h3 className="text-[14px] font-bold text-[var(--edify-text)]">{form.title}</h3>
                 <p className="text-[12px] text-[var(--edify-text-muted)]">
-                  Complete the fields below or open the full escalation drawer to attach school and cluster context.
+                  Submit directly to the Go gateway — your escalation is recorded in the audit chain and routed to your lead.
                 </p>
               </div>
               <button
@@ -287,6 +326,7 @@ export function EscalationsView({
                       <select
                         name={f.name}
                         defaultValue={f.value}
+                        required={f.required}
                         className="w-full rounded-[8px] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-3 py-2 text-[13px] text-[var(--edify-text)]"
                       >
                         {f.options.map((opt) => (
@@ -300,14 +340,16 @@ export function EscalationsView({
                         name={f.name}
                         rows={3}
                         defaultValue={f.value}
+                        required={f.required}
                         placeholder={f.placeholder || f.help}
                         className="w-full rounded-[8px] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-3 py-2 text-[13px] text-[var(--edify-text)]"
                       />
                     ) : (
                       <input
-                        type="text"
+                        type={f.kind === 'date' ? 'date' : 'text'}
                         name={f.name}
                         defaultValue={f.value}
+                        required={f.required}
                         placeholder={f.placeholder || f.help}
                         className="w-full rounded-[8px] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-3 py-2 text-[13px] text-[var(--edify-text)]"
                       />
@@ -321,12 +363,12 @@ export function EscalationsView({
               <button type="button" onClick={() => setShowRaisePanel(false)} className={EDIFY_BTN_OUTLINE}>
                 Cancel
               </button>
-              <a href={drawerHref} className={EDIFY_BTN_PRIMARY}>
+              <button type="submit" disabled={isPending} className={EDIFY_BTN_PRIMARY}>
                 <Send className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>{raiseCta}</span>
-              </a>
+                <span>{isPending ? 'Sending…' : raiseCta}</span>
+              </button>
             </div>
-          </div>
+          </form>
         ) : null}
       </section>
 
