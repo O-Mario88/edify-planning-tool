@@ -12,6 +12,7 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/feeddom"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 )
 
 // AgreementPath is the Policy Agreement Center
@@ -121,18 +122,22 @@ func (s *Service) agreement(ctx context.Context, p auth.Principal) (*screensv1.G
 		Scan(&r.country); err != nil {
 		return nil, true, fmt.Errorf("uploadcenter: reading the reader's country: %w", err)
 	}
-	if assign, err := s.wouldAssign(ctx, r, today); err != nil || assign {
-		return nil, err != nil, err
+	if !pagegate.DjangoAbsent(ctx) {
+		if assign, err := s.wouldAssign(ctx, r, today); err != nil || assign {
+			return nil, err != nil, err
+		}
 	}
 	pending, err := readAcks(ctx, s, `a.user_id = $1 AND a.state = 'pending' AND d.status = ANY($2)`, "a.due_date, a.created_at",
 		p.UserID, readableStatuses)
 	if err != nil {
 		return nil, true, err
 	}
-	for _, x := range pending {
-		for _, first := range firstAgreements {
-			if x.slug == first {
-				return nil, false, nil // the view opens that document instead
+	if !pagegate.DjangoAbsent(ctx) {
+		for _, x := range pending {
+			for _, first := range firstAgreements {
+				if x.slug == first {
+					return nil, false, nil // the view opens that document instead
+				}
 			}
 		}
 	}

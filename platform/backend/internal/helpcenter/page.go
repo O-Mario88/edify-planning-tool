@@ -110,6 +110,16 @@ func route(path string) (page, bool) {
 // other path or for a reading it hands on.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
 	at, ok := route(path)
+	if !ok && pagegate.DjangoAbsent(ctx) {
+		if strings.HasPrefix(path, "/help/articles/") && strings.HasSuffix(path, "/print") {
+			slug := strings.TrimSuffix(strings.TrimPrefix(path, "/help/articles/"), "/print")
+			if slugPart.MatchString(slug) {
+				at, ok = page{kind: "article", slug: slug}, true
+			}
+		} else if path == "/help/export/complete" {
+			at, ok = page{kind: "home"}, true
+		}
+	}
 	if !ok {
 		return nil, false, nil
 	}

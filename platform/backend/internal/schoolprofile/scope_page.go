@@ -48,7 +48,7 @@ func (sp *ScopePages) country(ctx context.Context, p auth.Principal, query url.V
 	if !contains(rules.Engine.Scope.SectionsOf["country"], tab) {
 		tab = "overview"
 	}
-	if tab == "overview" && d.Decisions {
+	if tab == "overview" && d.Decisions && !pagegate.DjangoAbsent(ctx) {
 		return nil, false, nil
 	}
 	s := sp.s
@@ -144,6 +144,18 @@ FROM sub_region sr LEFT JOIN region r ON r.id = sr.region_id WHERE sr.id = $1`, 
 // Build draws /districts/<id> (extended_views.district_detail_view) and
 // /sub-regions/<id> (profile_views.sub_region_profile_view).
 func (sp *ScopePages) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if strings.HasPrefix(path, clusterPrefix) {
+		return sp.clusterProfile(ctx, p, strings.TrimPrefix(path, clusterPrefix), query)
+	}
+	if strings.HasPrefix(path, regionPrefix) {
+		return sp.region(ctx, p, strings.TrimPrefix(path, regionPrefix), query)
+	}
+	if strings.HasPrefix(path, staffPrefix) {
+		return sp.staffProfile(ctx, p, staffPrefix, strings.TrimPrefix(path, staffPrefix), query)
+	}
+	if strings.HasPrefix(path, userPrefix) {
+		return sp.staffProfile(ctx, p, userPrefix, strings.TrimPrefix(path, userPrefix), query)
+	}
 	if strings.HasPrefix(path, subRegionPrefix) {
 		return sp.subRegion(ctx, p, strings.TrimPrefix(path, subRegionPrefix), query)
 	}
@@ -153,7 +165,7 @@ func (sp *ScopePages) Build(ctx context.Context, p auth.Principal, path string, 
 	if path == districtsPath {
 		return sp.directory(ctx, p, query)
 	}
-	if path == fyOverviewPath {
+	if path == fyOverviewPath || path == "/fy-overview" {
 		return sp.fyOverview(ctx, p)
 	}
 	if !strings.HasPrefix(path, districtPrefix) {

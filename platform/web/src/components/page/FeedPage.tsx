@@ -16,9 +16,11 @@ import { environment } from '@/lib/environment';
 import { actionHref, drawerPageHref } from '@/lib/feedPage';
 import { gatewayClient, isNotFound, isUnavailable } from '@/lib/gateway';
 import { firstAnswer, type SpellingAnswer } from '@/lib/pageSpellings';
+import { profileTabs } from '@/lib/schoolProfile';
 import { requestView } from '@/lib/requestView';
 
 import { PageHeader } from '../blocks/PageHeader';
+import { TabRail } from '../blocks/TabRail';
 import { PhonePage } from '../phone/PhonePage';
 import { FeedBlocks } from './FeedBlocks';
 import { NotMovedYet } from './NotMovedYet';
@@ -72,13 +74,15 @@ export async function FeedPage({ path, query, alsoAs = [] }: { path: string; que
   if (!answer) return <NotMovedYet href={existingHref} />;
   const pagePath = answer.webPath || path;
   const drawerHref = drawerPageHref(existingWebUrl, pagePath, query);
-  if (phone) return <PhonePage answer={answer} pagePath={pagePath} drawerHref={drawerHref} />;
+  const tabsRail = answer.tabs.length ? profileTabs(answer.tabs, pagePath, query.fy || '') : null;
+  if (phone) return <PhonePage answer={answer} pagePath={pagePath} drawerHref={drawerHref} tabLinks={tabsRail?.tabs} />;
   const hrefOf = (action: PageAction) => actionHref(action, pagePath, drawerHref);
   return (
     // The existing page's own frame (its padding and width; a dashboard's
     // container, which its stylesheet's container queries read), else ours.
     <div className={answer.pageClass || 'mx-auto max-w-[1500px] space-y-3 px-4 pb-24 pt-4 sm:px-6 lg:pb-8'} data-page={pagePath}>
       {answer.header ? <PageHeader header={answer.header} hrefOf={hrefOf} /> : null}
+      {tabsRail ? <TabRail rail={tabsRail} /> : null}
       <FeedBlocks blocks={answer.blocks} pagePath={pagePath} drawerHref={drawerHref} selectable={Boolean(answer.selection?.actions.length)} />
       {answer.selection?.actions.length ? <SelectionBar selection={answer.selection} pageHref={drawerHref} /> : null}
     </div>

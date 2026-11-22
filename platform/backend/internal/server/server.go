@@ -58,6 +58,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dataquality"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/debriefs"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/decisionlog"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/detailpages"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/disbursements"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/escalations"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/exports"
@@ -200,6 +201,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	}
 	clusterOversightSvc := clusteroversight.NewService(pool, time.Now)
 	countryMapSvc := oversightportfolio.NewCountryMap(oversightportfolio.NewService(pool, time.Now))
+	detailPagesSvc := detailpages.NewService(pool, time.Now)
 	screenService := screens.NewService(existingApp).TrustProxyHeaders(cfg.Loans.TrustProxyHeaders).
 		WithStrictReads(cfg.StrictReads).
 		WithDirectory(schooldirectory.NewService(pool, time.Now), logger).
@@ -308,6 +310,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			adminpanel.NewService(pool, time.Now),
 			profilepage.NewService(pool),
 			helpcontext.NewService(pool),
+			detailPagesSvc,
 		)
 	effectiveSaves := cfg.GoSaves
 	// In pure-Go Django-absent mode (EDIFY_EXISTING_APP_URL == ""), every native
@@ -385,6 +388,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	ssadecision.NewService(pool, time.Now).RegisterHTTP(mux, authenticator)
 	clusterOversightSvc.RegisterHTTP(mux, authenticator)
 	countryMapSvc.RegisterMapHTTP(mux, authenticator)
+	detailPagesSvc.RegisterHTTP(mux, authenticator)
 	realtimeBroker.RegisterHTTP(mux, authenticator)
 	fieldOpsSvc.RegisterHTTP(mux, authenticator)
 	financeOpsSvc.RegisterHTTP(mux, authenticator)

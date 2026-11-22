@@ -38,6 +38,18 @@ export function proxy(request: NextRequest) {
       return NextResponse.rewrite(target, { request: { headers: forwarded } });
     }
   }
+  if (
+    request.method === 'GET' &&
+    /^\/(ia\/analytics\/export|my-professional-development\/export|my-targets\/export|projects\/export|projects\/[^/]+\/export|staff-activity\/export|schools\/upload\/template)\/?$/.test(
+      pathname,
+    )
+  ) {
+    const clean = pathname.replace(/\/$/, '');
+    const target = new URL('/api/quick-export', request.url);
+    target.searchParams.set('target', clean);
+    request.nextUrl.searchParams.forEach((v, k) => target.searchParams.set(k, v));
+    return NextResponse.rewrite(target, { request: { headers: forwarded } });
+  }
   return NextResponse.next({ request: { headers: forwarded } });
 }
 

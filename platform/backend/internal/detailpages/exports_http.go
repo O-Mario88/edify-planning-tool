@@ -1,0 +1,221 @@
+package detailpages
+
+import (
+	"context"
+	"encoding/csv"
+	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
+)
+
+// HTTPAuth validates Bearer tokens on HTTP endpoints.
+type HTTPAuth interface {
+	Authenticate(ctx context.Context, header string) (auth.Principal, error)
+}
+
+// RegisterHTTP mounts authenticated real-PostgreSQL CSV export downloads for
+// legacy /.../export and template links so none fall into a 404 or NotMovedYet.
+func (s *Service) RegisterHTTP(mux *http.ServeMux, authn HTTPAuth) {
+	mux.HandleFunc("GET /api/v1/quick-export", func(w http.ResponseWriter, r *http.Request) {
+		p, err := authn.Authenticate(r.Context(), r.Header.Get("Authorization"))
+		if err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		target := strings.TrimSuffix(strings.TrimSpace(r.URL.Query().Get("target")), "/")
+		fy := strings.TrimSpace(r.URL.Query().Get("fy"))
+		if fy == "" {
+			fy = schooldirectory.OperationalFY(s.now())
+		}
+		switch {
+		case target == "/schools/upload/template":
+			s.writeSchoolUploadTemplate(w)
+		case target == "/projects/export":
+			s.exportProjectsCSV(r.Context(), w, fy, "")
+		case strings.HasPrefix(target, "/projects/") && strings.HasSuffix(target, "/export"):
+			projID := strings.TrimSuffix(strings.TrimPrefix(target, "/projects/"), "/export")
+			s.exportProjectsCSV(r.Context(), w, fy, projID)
+		case target == "/staff-activity/export":
+			s.exportStaffActivityCSV(r.Context(), w, fy)
+		case target == "/my-targets/export":
+			s.exportMyTargetsCSV(r.Context(), w, p, fy)
+		case target == "/my-professional-development/export":
+			s.exportMyPDCSV(r.Context(), w, p, fy)
+		case target == "/ia/analytics/export":
+			s.exportIAAnalyticsCSV(r.Context(), w, fy)
+		default:
+			http.Error(w, "Unknown export target", http.StatusNotFound)
+		}
+	})
+}
+
+func startCSV(w http.ResponseWriter, filename string) *csv.Writer {
+	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+	w.Header().Set("Cache-Control", "no-store")
+	return csv.NewWriter(w)
+}
+
+func (s *Service) writeSchoolUploadTemplate(w http.ResponseWriter) {
+	cw := startCSV(w, "edify-schools-upload-template.csv")
+	_ = cw.Write([]string{
+		"school_id", "school_name", "district", "sub_county", "parish",
+		"school_type", "enrollment", "primary_contact_name", "primary_contact_phone",
+		"school_phone", "shipping_address", "latitude", "longitude",
+	})
+	_ = cw.Write([]string{
+		"1001", "Example Primary School", "Mukono", "Goma", "Nantabulirwa",
+		"Client", "420", "Jane Doe", "+256700000000",
+		"+256700000001", "Kampala-Jinja Highway", "", "",
+	})
+	cw.Flush()
+}
+
+func (s *Service) exportProjectsCSV(ctx context.Context, w http.ResponseWriter, fy, projectID string) {
+	rows, err := s.db.Query(ctx, `
+SELECT COALESCE(pr.code, ''), pr.name, COALESCE(pr.category, ''), COALESCE(pr.status, ''),
+       COALESCE(pr.budget_ceiling_ugx, 0),
+       (SELECT count(*) FROM project_school_assignment psa WHERE psa.project_id = pr.id),
+       (SELECT count(*) FROM activity a WHERE a.project_id = pr.id AND a.deleted_at IS NULL AND a.fy = $1),
+       (SELECT count(*) FROM activity a WHERE a.project_id = pr.id AND a.deleted_at IS NULL AND a.fy = $1
+         AND a.status IN ('completed', 'verified', 'approved', 'submitted'))
+FROM project pr
+WHERE pr.deleted_at IS NULL AND ($2 = '' OR pr.id = $2)
+ORDER BY pr.name`, fy, projectID)
+	if err != nil {
+		http.Error(w, "Export query failed", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+	name := fmt.Sprintf("edify-projects-fy%s.csv", fy)
+	if projectID != "" {
+		name = fmt.Sprintf("edify-project-%s-fy%s.csv", projectID, fy)
+	}
+	cw := startCSV(w, name)
+	_ = cw.Write([]string{"Project Code", "Project Name", "Category", "Status", "Budget Ceiling (UGX)", "Assigned Schools", "Total Activities", "Completed Activities"})
+	for rows.Next() {
+		var code, pname, cat, status string
+		var ceiling, schools, acts, done int64
+		if err := rows.Scan(&code, &pname, &cat, &status, &ceiling, &schools, &acts, &done); err == nil {
+			_ = cw.Write([]string{code, pname, cat, status, strconv.FormatInt(ceiling, 10), strconv.FormatInt(schools, 10), strconv.FormatInt(acts, 10), strconv.FormatInt(done, 10)})
+		}
+	}
+	cw.Flush()
+}
+
+func (s *Service) exportStaffActivityCSV(ctx context.Context, w http.ResponseWriter, fy string) {
+	rows, err := s.db.Query(ctx, `
+SELECT COALESCE(u.name, ''), COALESCE(u.email, ''), COALESCE(a.activity_type, ''), COALESCE(a.status, ''),
+       COALESCE(a.planned_date, a.scheduled_date), COALESCE(sc.name, '')
+FROM activity a
+LEFT JOIN "user" u ON u.id = a.responsible_staff_id
+LEFT JOIN school sc ON sc.id = a.school_id
+WHERE a.deleted_at IS NULL AND a.fy = $1
+ORDER BY COALESCE(a.planned_date, a.scheduled_date) DESC NULLS LAST LIMIT 2000`, fy)
+	if err != nil {
+		http.Error(w, "Export query failed", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+	cw := startCSV(w, fmt.Sprintf("edify-staff-activity-fy%s.csv", fy))
+	_ = cw.Write([]string{"Staff Name", "Email", "Activity Type", "Status", "Planned Date", "School"})
+	for rows.Next() {
+		var uname, email, atype, status, sname string
+		var dt *time.Time
+		if err := rows.Scan(&uname, &email, &atype, &status, &dt, &sname); err == nil {
+			d := ""
+			if dt != nil {
+				d = dt.Format("2006-01-02")
+			}
+			_ = cw.Write([]string{uname, email, atype, status, d, sname})
+		}
+	}
+	cw.Flush()
+}
+
+func (s *Service) exportMyTargetsCSV(ctx context.Context, w http.ResponseWriter, p auth.Principal, fy string) {
+	owners := []string{p.UserID}
+	if p.StaffProfileID != "" && p.StaffProfileID != p.UserID {
+		owners = append(owners, p.StaffProfileID)
+	}
+	rows, err := s.db.Query(ctx, `
+SELECT COALESCE(a.quarter, ''), COALESCE(a.activity_type, ''), count(*),
+       count(*) FILTER (WHERE a.status IN ('completed', 'verified', 'approved', 'submitted'))
+FROM activity a
+WHERE a.deleted_at IS NULL AND a.fy = $1 AND a.responsible_staff_id = ANY($2)
+GROUP BY 1, 2 ORDER BY 1, 2`, fy, owners)
+	if err != nil {
+		http.Error(w, "Export query failed", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+	cw := startCSV(w, fmt.Sprintf("edify-my-targets-fy%s.csv", fy))
+	_ = cw.Write([]string{"FY", "Quarter", "Activity Type", "Planned", "Completed"})
+	for rows.Next() {
+		var q, atype string
+		var total, done int64
+		if err := rows.Scan(&q, &atype, &total, &done); err == nil {
+			_ = cw.Write([]string{fy, q, atype, strconv.FormatInt(total, 10), strconv.FormatInt(done, 10)})
+		}
+	}
+	cw.Flush()
+}
+
+func (s *Service) exportMyPDCSV(ctx context.Context, w http.ResponseWriter, p auth.Principal, fy string) {
+	rows, err := s.db.Query(ctx, `
+SELECT COALESCE(a.activity_type, ''), COALESCE(a.status, ''), COALESCE(a.planned_date, a.scheduled_date),
+       COALESCE(a.activity_name_snapshot, a.purpose_intervention, '')
+FROM activity a
+WHERE a.deleted_at IS NULL AND a.fy = $1 AND a.responsible_staff_id = $2
+ORDER BY COALESCE(a.planned_date, a.scheduled_date) DESC NULLS LAST LIMIT 500`, fy, p.UserID)
+	if err != nil {
+		http.Error(w, "Export query failed", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+	cw := startCSV(w, fmt.Sprintf("edify-my-pd-fy%s.csv", fy))
+	_ = cw.Write([]string{"FY", "Activity Type", "Status", "Date", "Title"})
+	for rows.Next() {
+		var atype, status, title string
+		var dt *time.Time
+		if err := rows.Scan(&atype, &status, &dt, &title); err == nil {
+			d := ""
+			if dt != nil {
+				d = dt.Format("2006-01-02")
+			}
+			_ = cw.Write([]string{fy, atype, status, d, title})
+		}
+	}
+	cw.Flush()
+}
+
+func (s *Service) exportIAAnalyticsCSV(ctx context.Context, w http.ResponseWriter, fy string) {
+	rows, err := s.db.Query(ctx, `
+SELECT COALESCE(sc.school_id, ''), sc.name, COALESCE(d.name, ''), sr.fy,
+       COALESCE(sr.average_score, 0), COALESCE(sr.verification_status, '')
+FROM ssa_record sr
+JOIN school sc ON sc.id = sr.school_id
+LEFT JOIN district d ON d.id = sc.district_id
+WHERE sr.deleted_at IS NULL AND ($1 = '' OR sr.fy = $1)
+ORDER BY sr.created_at DESC LIMIT 2000`, fy)
+	if err != nil {
+		http.Error(w, "Export query failed", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+	cw := startCSV(w, fmt.Sprintf("edify-ia-analytics-fy%s.csv", fy))
+	_ = cw.Write([]string{"School ID", "School Name", "District", "FY", "Overall SSA Score", "Verification Status"})
+	for rows.Next() {
+		var scode, sname, dist, rfy, status string
+		var score float64
+		if err := rows.Scan(&scode, &sname, &dist, &rfy, &score, &status); err == nil {
+			_ = cw.Write([]string{scode, sname, dist, rfy, fmt.Sprintf("%.2f", score), status})
+		}
+	}
+	cw.Flush()
+}

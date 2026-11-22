@@ -60,7 +60,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		// Every signed-in reader (restricted_view asks only that).
 		return s.restricted(ctx, p)
 	}
-	if path == AgreementPath {
+	if path == AgreementPath || path == "/documents/agreements" {
 		// Every signed-in reader (agreement_center_view asks only that).
 		return s.agreement(ctx, p)
 	}
