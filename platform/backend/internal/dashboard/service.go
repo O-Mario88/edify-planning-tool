@@ -128,7 +128,7 @@ func served(query url.Values) bool {
 			// says; the week is resolved below.
 		case "view":
 			switch strings.ToLower(value) {
-			case "operations", "map":
+			case "map":
 				return false
 			}
 		case "who":
@@ -166,6 +166,11 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	}
 	now := s.now()
 	owners := myplan.OwnerIDs(p)
+	local := now.In(kampala)
+	today := time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC)
+	if strings.EqualFold(strings.TrimSpace(query.Get("view")), "operations") {
+		return s.buildOfficerOperationsView(ctx, p, owners, today)
+	}
 	past, err := myplan.ReadPastDue(ctx, s.db, owners, now)
 	if err != nil {
 		return nil, true, err
@@ -173,8 +178,6 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if past.Paged {
 		return nil, false, nil
 	}
-	local := now.In(kampala)
-	today := time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC)
 	start := myplan.ResolveWeek(query.Get("week"), today)
 	week, err := myplan.ReadWeek(ctx, s.db, owners, p.StaffProfileID, start, now, operationalFY(now.UTC()), past.Total())
 	if err != nil {

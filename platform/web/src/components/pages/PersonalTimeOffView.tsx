@@ -236,6 +236,12 @@ export function PersonalTimeOffView({
             <a href="/exports/leave_requests" download className={EDIFY_BTN_OUTLINE}>
               <span>Export CSV</span>
             </a>
+            <a href="/exports/leave_requests?format=xlsx" download className={EDIFY_BTN_OUTLINE}>
+              <span>Excel</span>
+            </a>
+            <a href="/exports/leave_requests?format=pdf" download className={EDIFY_BTN_OUTLINE}>
+              <span>PDF</span>
+            </a>
             <button type="button" onClick={() => setShowRequestForm((v) => !v)} className={EDIFY_BTN_PRIMARY}>
               <Plus className="h-4 w-4" aria-hidden="true" />
               <span>{requestAction?.label || 'Request Leave'}</span>

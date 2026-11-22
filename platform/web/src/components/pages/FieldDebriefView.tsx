@@ -213,6 +213,12 @@ export function FieldDebriefView({
             <a href="/exports/debriefs" download className={EDIFY_BTN_OUTLINE}>
               <span>Export CSV</span>
             </a>
+            <a href="/exports/debriefs?format=xlsx" download className={EDIFY_BTN_OUTLINE}>
+              <span>Excel</span>
+            </a>
+            <a href="/exports/debriefs?format=pdf" download className={EDIFY_BTN_OUTLINE}>
+              <span>PDF</span>
+            </a>
             <Link
               href={weeklyAct ? resolveActionHref(weeklyAct, pagePath, drawerHref) : '/debriefs/weekly-report'}
               className={EDIFY_BTN_OUTLINE}

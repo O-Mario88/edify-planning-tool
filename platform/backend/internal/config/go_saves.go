@@ -94,6 +94,26 @@ const (
 var knownGoSaves = []string{SaveScheduleVisit, SaveRescheduleVisit, SaveCancelVisit, SaveEditVisit, SaveScheduleTrainingPair,
 	SaveGroupReschedule, SaveGroupCancel, SaveScheduleGroupTraining, SaveScheduleClusterMeeting, SaveCompleteVisit, SavePLReview, SaveSchoolActions}
 
+// AllGoSaves returns a GoSaves with every native Go writer enabled.
+// Used when EDIFY_GO_SAVES=all or when the gateway runs in pure-Go
+// Django-absent mode (EDIFY_EXISTING_APP_URL == "").
+func AllGoSaves() GoSaves {
+	return GoSaves{
+		ScheduleVisit:          true,
+		RescheduleVisit:        true,
+		CancelVisit:            true,
+		EditVisit:              true,
+		ScheduleTrainingPair:   true,
+		GroupReschedule:        true,
+		GroupCancel:            true,
+		ScheduleGroupTraining:  true,
+		ScheduleClusterMeeting: true,
+		CompleteVisit:          true,
+		PLReview:               true,
+		SchoolActions:          true,
+	}
+}
+
 // loadGoSaves reads EDIFY_GO_SAVES. When EDIFY_EXISTING_APP_URL is unset
 // (Django-absent mode), server.go wires NativePricing and direct writers;
 // when EDIFY_EXISTING_APP_URL is set, hybrid relay mode is used.
@@ -107,6 +127,10 @@ func loadGoSaves(env Environment, getenv func(string) string, existingApp, inter
 	}
 	var out GoSaves
 	for _, name := range names {
+		if strings.EqualFold(name, "all") {
+			out = AllGoSaves()
+			continue
+		}
 		if !slices.Contains(knownGoSaves, name) {
 			return GoSaves{}, fmt.Errorf("config: %s names %q; the saves Go can make are %s",
 				envGoSaves, name, strings.Join(knownGoSaves, ", "))

@@ -67,15 +67,19 @@ type subscriber struct {
 }
 
 // Broker fans out committed operational events to scoped SSE subscribers.
+// When configured with a Redis URL via WithRedisPubSub, events also bridge
+// across gateway replicas via Redis Pub/Sub without echoing back to origin.
 type Broker struct {
 	now      func() time.Time
 	ringSize int
+	nodeID   string
 
 	mu       sync.RWMutex
 	seq      uint64
 	nextSub  uint64
 	ring     []Event
 	subs     map[uint64]*subscriber
+	pubsub   *redisPubSub
 
 	published atomic.Uint64
 	delivered atomic.Uint64
@@ -90,17 +94,33 @@ func NewBroker(now func() time.Time) *Broker {
 	return &Broker{
 		now:      now,
 		ringSize: defaultRingSize,
+		nodeID:   fmt.Sprintf("node-%d", time.Now().UnixNano()),
 		ring:     make([]Event, 0, defaultRingSize),
 		subs:     make(map[uint64]*subscriber),
 	}
 }
 
-// Publish records an event into the replay ring and fans it out non-blockingly
-// to all matching authorized subscribers.
+// Publish records an event into the replay ring, fans it out non-blockingly
+// to matching local authorized subscribers, and bridges it to peer replicas
+// if Redis Pub/Sub is configured.
 func (b *Broker) Publish(ev Event) Event {
 	if b == nil {
 		return ev
 	}
+	ev = b.publishLocal(ev)
+	b.mu.RLock()
+	ps := b.pubsub
+	nodeID := b.nodeID
+	b.mu.RUnlock()
+	if ps != nil {
+		go ps.publish(nodeID, ev)
+	}
+	return ev
+}
+
+// publishLocal appends ev to the local replay ring and fans it out to matching
+// local SSE subscribers without re-publishing to Redis.
+func (b *Broker) publishLocal(ev Event) Event {
 	ts := b.now().UTC()
 	b.mu.Lock()
 	b.seq++

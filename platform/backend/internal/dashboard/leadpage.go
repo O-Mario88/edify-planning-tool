@@ -21,10 +21,9 @@ import (
 // views' rail, then This Week carrying the Planning Monitor, the team's
 // week, what needs the lead now and the Staff Activity Log.
 
-// leadServed is whether Go draws the lead's page this query asks for: This
-// Week (named, or a view the page does not know), the team's tabs, no
-// figure pressed, no table paged and no section opened on a link's own
-// filters. The week's own Me and Partners tabs are handed on by leadWeek.
+// leadServed is whether Go draws the lead's page this query asks for:
+// This Week plus Priorities, Team (and alias operations), Coaching, Programmes,
+// and Collaboration. Map is served natively by Next.js CountryMapView.
 func leadServed(query url.Values) bool {
 	for key, values := range query {
 		value := ""
@@ -35,13 +34,12 @@ func leadServed(query url.Values) bool {
 		case "fy", "week", "who", "show", "plans":
 		case "view":
 			if alias, ok := rules.Lead.ViewAliases[value]; ok {
-				// "today" was the lead's own day, now the week's Me tab.
 				if value == "today" {
 					return false
 				}
 				value = alias
 			}
-			if slices.Contains(rules.Lead.Views, value) && value != rules.Lead.DefaultView {
+			if value == "map" {
 				return false
 			}
 		default:
@@ -91,6 +89,10 @@ func (s *Service) buildLead(ctx context.Context, p auth.Principal, query url.Val
 	}
 	now := s.now()
 	fy, options := leadFY(query, now)
+	activeView := normalizeLeadView(query.Get("view"))
+	if activeView != rules.Lead.DefaultView {
+		return s.buildLeadSecondaryView(ctx, p, activeView, fy, options, now)
+	}
 	week, served, err := leadWeek(ctx, s.db, p, query, fy, now)
 	if err != nil || !served {
 		return nil, served, err

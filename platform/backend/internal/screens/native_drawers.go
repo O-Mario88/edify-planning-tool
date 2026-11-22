@@ -103,9 +103,16 @@ SELECT id, name, COALESCE(code, '')
 
 	title := fmt.Sprintf("Schedule visit for %s", sName)
 	submitLabel := "Schedule visit"
-	if kind == "assign" {
+	switch kind {
+	case "assign":
 		title = fmt.Sprintf("Assign %s to Partner", sName)
 		submitLabel = "Assign to partner"
+	case "group-training":
+		title = fmt.Sprintf("Schedule Group Training (%s)", sName)
+		submitLabel = "Schedule group training"
+	case "cluster-meeting":
+		title = fmt.Sprintf("Schedule Cluster Meeting (%s)", sName)
+		submitLabel = "Schedule cluster meeting"
 	}
 
 	return &screensv1.GetPlanningDrawerResponse{

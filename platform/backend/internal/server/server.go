@@ -123,6 +123,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/qualityflags"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/realtime"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/reports"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/uploads"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/rolesmatrix"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/routeplan"
 	routeschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/routeplan/schema"
@@ -307,52 +308,64 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			profilepage.NewService(pool),
 			helpcontext.NewService(pool),
 		)
-	if cfg.GoSaves.ScheduleVisit || cfg.GoSaves.RescheduleVisit || cfg.GoSaves.CancelVisit || cfg.GoSaves.EditVisit ||
-		cfg.GoSaves.ScheduleTrainingPair || cfg.GoSaves.GroupReschedule || cfg.GoSaves.GroupCancel ||
-		cfg.GoSaves.ScheduleGroupTraining || cfg.GoSaves.ScheduleClusterMeeting || cfg.GoSaves.CompleteVisit {
+	effectiveSaves := cfg.GoSaves
+	// In pure-Go Django-absent mode (EDIFY_EXISTING_APP_URL == ""), every native
+	// Go writer is wired automatically so zero save paths depend on Django.
+	if cfg.ExistingAppURL == "" {
+		effectiveSaves = config.AllGoSaves()
+	}
+	if effectiveSaves.ScheduleVisit || effectiveSaves.RescheduleVisit || effectiveSaves.CancelVisit || effectiveSaves.EditVisit ||
+		effectiveSaves.ScheduleTrainingPair || effectiveSaves.GroupReschedule || effectiveSaves.GroupCancel ||
+		effectiveSaves.ScheduleGroupTraining || effectiveSaves.ScheduleClusterMeeting || effectiveSaves.CompleteVisit {
 		save := visitSave(cfg, pool, logger)
-		if cfg.GoSaves.ScheduleVisit {
+		if effectiveSaves.ScheduleVisit {
 			screenService.WithVisitSave(save, logger)
 		}
-		if cfg.GoSaves.RescheduleVisit {
+		if effectiveSaves.RescheduleVisit {
 			screenService.WithMoveSave(save, logger)
 		}
-		if cfg.GoSaves.CancelVisit {
+		if effectiveSaves.CancelVisit {
 			screenService.WithCancelSave(save, logger)
 		}
-		if cfg.GoSaves.EditVisit {
+		if effectiveSaves.EditVisit {
 			screenService.WithEditSave(save, logger)
 		}
-		if cfg.GoSaves.ScheduleTrainingPair {
+		if effectiveSaves.ScheduleTrainingPair {
 			screenService.WithTrainingPairSave(save, logger)
 		}
-		if cfg.GoSaves.GroupReschedule {
+		if effectiveSaves.GroupReschedule {
 			screenService.WithGroupMoveSave(save, logger)
 		}
-		if cfg.GoSaves.GroupCancel {
+		if effectiveSaves.GroupCancel {
 			screenService.WithGroupCancelSave(save, logger)
 		}
-		if cfg.GoSaves.ScheduleGroupTraining {
+		if effectiveSaves.ScheduleGroupTraining {
 			screenService.WithGroupTrainingSave(save, logger)
 		}
-		if cfg.GoSaves.ScheduleClusterMeeting {
+		if effectiveSaves.ScheduleClusterMeeting {
 			screenService.WithClusterMeetingSave(save, logger)
 		}
-		if cfg.GoSaves.CompleteVisit {
+		if effectiveSaves.CompleteVisit {
 			screenService.WithCompleteSave(save, logger)
 		}
 	}
-	if cfg.GoSaves.PLReview {
+	if effectiveSaves.PLReview {
 		screenService.WithPLReviewSave(plreview.NewReviewService(pool, time.Now), logger)
 	}
 	exportsMgr := exports.NewManager(pool, time.Now)
 	realtimeBroker := realtime.NewBroker(time.Now)
+	if cfg.RedisURL != "" {
+		if err := realtimeBroker.WithRedisPubSub(context.Background(), cfg.RedisURL, logger); err != nil {
+			logger.Warn("realtime: invalid redis pubsub configuration, staying single-node", slog.String("error", err.Error()))
+		}
+	}
+	uploadsSvc := uploads.NewService(pool, time.Now).WithRealtime(realtimeBroker)
 	fieldOpsSvc := fieldops.NewService(pool)
 	financeOpsSvc := financeops.NewService(pool)
 	workforceOpsSvc := workforceops.NewService(pool).WithRealtime(realtimeBroker)
 	screenService.WithExports(exportsMgr).
 		WithOpsSaves(fieldOpsSvc, financeOpsSvc, workforceOpsSvc)
-	if cfg.GoSaves.SchoolActions {
+	if effectiveSaves.SchoolActions {
 		screenService.WithSchoolDB(pool, time.Now)
 	}
 	mux.Handle(screensv1connect.NewHomeScreenServiceHandler(screenService, options...))
@@ -367,6 +380,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	mux.Handle(screensv1connect.NewPageDrawerServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewExportServiceHandler(screenService, options...))
 	exportsMgr.RegisterHTTP(mux, authenticator)
+	uploadsSvc.RegisterHTTP(mux, authenticator)
 	clusterOversightSvc.RegisterHTTP(mux, authenticator)
 	countryMapSvc.RegisterMapHTTP(mux, authenticator)
 	realtimeBroker.RegisterHTTP(mux, authenticator)

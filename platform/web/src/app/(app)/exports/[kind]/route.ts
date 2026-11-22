@@ -19,10 +19,12 @@ const ALLOWED_KINDS = new Set([
 ]);
 
 const ALLOWED_FILTER_KEYS = new Set(['fy', 'district', 'school_type', 'status', 'q', 'cluster_id']);
+const ALLOWED_FORMATS = new Set(['csv', 'xlsx', 'pdf']);
 
 /**
- * Streams a native Go CSV export directly to the browser without calling Django,
- * preserving authorized query filters (FY, district, type, search, cluster).
+ * Streams a native Go CSV, XLSX, or PDF export directly to the browser without
+ * calling Django, preserving authorized query filters (FY, district, type,
+ * search, cluster) and requested output format (?format=csv|xlsx|pdf).
  */
 export async function GET(request: Request, context: { params: Promise<{ kind: string }> }) {
   const { kind } = await context.params;
@@ -34,6 +36,11 @@ export async function GET(request: Request, context: { params: Promise<{ kind: s
     return NextResponse.json({ error: 'Sign in first.' }, { status: 401 });
   }
   const url = new URL(request.url);
+  const rawFormat = (url.searchParams.get('format') || 'csv').trim().toLowerCase();
+  const format = rawFormat === 'excel' ? 'xlsx' : rawFormat;
+  if (!ALLOWED_FORMATS.has(format)) {
+    return NextResponse.json({ error: 'Unsupported export format. Use csv, xlsx, or pdf.' }, { status: 400 });
+  }
   const filters: Record<string, string> = {};
   for (const [k, v] of url.searchParams.entries()) {
     if (ALLOWED_FILTER_KEYS.has(k.toLowerCase()) && v.trim()) {
@@ -48,7 +55,7 @@ export async function GET(request: Request, context: { params: Promise<{ kind: s
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ kind, filters }),
+    body: JSON.stringify({ kind, format, filters }),
     cache: 'no-store',
   });
   if (!createRes.ok) {
@@ -58,7 +65,12 @@ export async function GET(request: Request, context: { params: Promise<{ kind: s
       headers: { 'Content-Type': createRes.headers.get('Content-Type') ?? 'application/json' },
     });
   }
-  const created = (await createRes.json()) as { id: string; filename?: string; download_url?: string };
+  const created = (await createRes.json()) as {
+    id: string;
+    filename?: string;
+    content_type?: string;
+    download_url?: string;
+  };
   const downloadPath = created.download_url || `/api/v1/exports/${created.id}/download`;
   const downloadRes = await fetch(`${gatewayUrl}${downloadPath}`, {
     method: 'GET',
@@ -69,12 +81,20 @@ export async function GET(request: Request, context: { params: Promise<{ kind: s
     const body = await downloadRes.text();
     return new NextResponse(body || 'Could not download export.', { status: downloadRes.status });
   }
-  const csv = await downloadRes.arrayBuffer();
-  const filename = created.filename || `${kind}.csv`;
-  return new NextResponse(csv, {
+  const payload = await downloadRes.arrayBuffer();
+  const filename = created.filename || `${kind}.${format}`;
+  const contentType =
+    downloadRes.headers.get('Content-Type') ||
+    created.content_type ||
+    (format === 'xlsx'
+      ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      : format === 'pdf'
+        ? 'application/pdf'
+        : 'text/csv; charset=utf-8');
+  return new NextResponse(payload, {
     status: 200,
     headers: {
-      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Type': contentType,
       'Content-Disposition': `attachment; filename="${filename}"`,
       'Cache-Control': 'no-store',
     },

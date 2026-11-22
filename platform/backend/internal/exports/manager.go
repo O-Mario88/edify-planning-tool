@@ -32,9 +32,10 @@ const (
 )
 
 var (
-	ErrForbidden   = errors.New("exports: reader is not authorized for this export")
-	ErrNotFound    = errors.New("exports: export job not found")
-	ErrUnknownKind = errors.New("exports: unsupported export kind")
+	ErrForbidden     = errors.New("exports: reader is not authorized for this export")
+	ErrNotFound      = errors.New("exports: export job not found")
+	ErrUnknownKind   = errors.New("exports: unsupported export kind")
+	ErrUnknownFormat = errors.New("exports: unsupported export format")
 )
 
 type JobStatus string
@@ -48,6 +49,7 @@ const (
 type Job struct {
 	ID          string
 	Kind        string
+	Format      Format
 	OwnerUserID string
 	OwnerRole   string
 	CountryID   string
@@ -98,12 +100,22 @@ func (m *Manager) CreateAndRun(ctx context.Context, p auth.Principal, kind strin
 
 // CreateAndRunFiltered generates a filtered CSV export authorized for p.
 func (m *Manager) CreateAndRunFiltered(ctx context.Context, p auth.Principal, kind string, filters map[string]string) (*Job, error) {
+	return m.CreateAndRunFormatted(ctx, p, kind, FormatCSV, filters)
+}
+
+// CreateAndRunFormatted generates a filtered export authorized for p in the
+// requested format (csv, xlsx, or pdf).
+func (m *Manager) CreateAndRunFormatted(ctx context.Context, p auth.Principal, kind string, format Format, filters map[string]string) (*Job, error) {
 	roles, ok := allowedRoles[kind]
 	if !ok {
 		return nil, fmt.Errorf("%w: %s", ErrUnknownKind, kind)
 	}
 	if !roles[p.ActiveRole] {
 		return nil, ErrForbidden
+	}
+	parsedFormat, ferr := ParseFormat(string(format))
+	if ferr != nil {
+		return nil, fmt.Errorf("%w: %s", ErrUnknownFormat, format)
 	}
 	countryID := ""
 	if p.Country != nil {
@@ -118,10 +130,11 @@ func (m *Manager) CreateAndRunFiltered(ctx context.Context, p auth.Principal, ki
 		}
 	}
 	ts := m.now().UTC()
-	sum := sha256.Sum256([]byte(fmt.Sprintf("%s:%s:%s:%d", kind, p.UserID, countryID, ts.UnixNano())))
+	sum := sha256.Sum256([]byte(fmt.Sprintf("%s:%s:%s:%s:%d", kind, parsedFormat, p.UserID, countryID, ts.UnixNano())))
 	job := &Job{
 		ID:          "exp_" + hex.EncodeToString(sum[:10]),
 		Kind:        kind,
+		Format:      parsedFormat,
 		OwnerUserID: p.UserID,
 		OwnerRole:   p.ActiveRole,
 		CountryID:   countryID,
@@ -134,7 +147,11 @@ func (m *Manager) CreateAndRunFiltered(ctx context.Context, p auth.Principal, ki
 	m.jobs[job.ID] = job
 	m.mu.Unlock()
 
-	payload, count, err := m.generate(ctx, p, kind, countryID, cleanFilters)
+	csvPayload, count, err := m.generate(ctx, p, kind, countryID, cleanFilters)
+	var payload []byte
+	if err == nil {
+		payload, err = convertCSVPayload(kind, parsedFormat, ts, csvPayload)
+	}
 	doneAt := m.now().UTC()
 	m.mu.Lock()
 	defer m.mu.Unlock()

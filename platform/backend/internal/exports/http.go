@@ -16,12 +16,13 @@ type Authenticator interface {
 	Authenticate(ctx context.Context, header string) (auth.Principal, error)
 }
 
-// Filename returns a clean CSV filename for a completed export job.
+// Filename returns a clean filename matching the job's format (csv, xlsx, pdf).
 func (j *Job) Filename() string {
-	return fmt.Sprintf("%s-%s.csv", j.Kind, j.CreatedAt.UTC().Format("2006-01-02"))
+	ext := j.Format.Extension()
+	return fmt.Sprintf("%s-%s.%s", j.Kind, j.CreatedAt.UTC().Format("2006-01-02"), ext)
 }
 
-// RegisterHTTP mounts native Go CSV export endpoints:
+// RegisterHTTP mounts native Go CSV/XLSX/PDF export endpoints:
 //   - POST /api/v1/exports
 //   - GET  /api/v1/exports/{id}/download
 func (m *Manager) RegisterHTTP(mux *http.ServeMux, auther Authenticator) {
@@ -33,6 +34,7 @@ func (m *Manager) RegisterHTTP(mux *http.ServeMux, auther Authenticator) {
 		}
 		var req struct {
 			Kind    string            `json:"kind"`
+			Format  string            `json:"format,omitempty"`
 			Filters map[string]string `json:"filters,omitempty"`
 		}
 		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<14)).Decode(&req); err != nil {
@@ -40,10 +42,15 @@ func (m *Manager) RegisterHTTP(mux *http.ServeMux, auther Authenticator) {
 			return
 		}
 		kind := strings.TrimSpace(req.Kind)
-		job, err := m.CreateAndRunFiltered(r.Context(), p, kind, req.Filters)
+		format, ferr := ParseFormat(req.Format)
+		if ferr != nil {
+			writeExportJSON(w, http.StatusBadRequest, map[string]string{"error": ferr.Error()})
+			return
+		}
+		job, err := m.CreateAndRunFormatted(r.Context(), p, kind, format, req.Filters)
 		if err != nil {
 			switch {
-			case errors.Is(err, ErrUnknownKind):
+			case errors.Is(err, ErrUnknownKind), errors.Is(err, ErrUnknownFormat):
 				writeExportJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 			case errors.Is(err, ErrForbidden):
 				writeExportJSON(w, http.StatusForbidden, map[string]string{"error": "Your role cannot run this export."})
@@ -55,6 +62,8 @@ func (m *Manager) RegisterHTTP(mux *http.ServeMux, auther Authenticator) {
 		writeExportJSON(w, http.StatusCreated, map[string]any{
 			"id":           job.ID,
 			"kind":         job.Kind,
+			"format":       string(job.Format),
+			"content_type": job.Format.ContentType(),
 			"status":       "ready",
 			"filename":     job.Filename(),
 			"row_count":    job.RowCount,
@@ -82,7 +91,7 @@ func (m *Manager) RegisterHTTP(mux *http.ServeMux, auther Authenticator) {
 			}
 			return
 		}
-		w.Header().Set("Content-Type", "text/csv; charset=utf-8")
+		w.Header().Set("Content-Type", job.Format.ContentType())
 		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, job.Filename()))
 		w.Header().Set("X-Content-SHA256", job.SHA256)
 		w.Header().Set("Cache-Control", "no-store")

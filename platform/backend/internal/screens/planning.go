@@ -8,6 +8,7 @@ import (
 	"connectrpc.com/connect"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 )
@@ -19,9 +20,14 @@ import (
 const pathTrainingCapacity = "/api/mobile/v1/planning/training-capacity"
 
 var (
-	planningKinds = map[string]bool{"schedule": true, "assign": true}
-	isoDate       = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
-	recordID      = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)
+	planningKinds = map[string]bool{
+		"schedule":        true,
+		"assign":          true,
+		"group-training":  true,
+		"cluster-meeting": true,
+	}
+	isoDate  = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
+	recordID = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)
 )
 
 func requirePlanningDrawer(ctx context.Context, schoolID, kind string) error {
@@ -66,6 +72,30 @@ func (s *Service) SavePlanningDrawer(
 	for name := range message.GetValues() {
 		if !fieldName.MatchString(name) {
 			return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This drawer has no such field.")
+		}
+	}
+	if message.GetKind() == "group-training" {
+		form := url.Values{}
+		for name, val := range message.GetValues() {
+			form.Add(name, val)
+		}
+		if answer, served, err := s.ScheduleGroupTrainingInGo(ctx, form, activities.Origin{}); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(answer), nil
+		}
+	}
+	if message.GetKind() == "cluster-meeting" {
+		form := url.Values{}
+		for name, val := range message.GetValues() {
+			form.Add(name, val)
+		}
+		if answer, served, err := s.ScheduleClusterMeetingInGo(ctx, form, activities.Origin{}); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(answer), nil
 		}
 	}
 	if answer, served, err := s.scheduleInGo(ctx, message); served {

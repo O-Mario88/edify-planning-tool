@@ -237,9 +237,17 @@ export function EscalationsView({
         description={headerDesc}
         icon={<AlertTriangle className="h-5 w-5" />}
         actions={
-          <a href="/exports/escalations" download className={EDIFY_BTN_OUTLINE}>
-            <span>Export CSV</span>
-          </a>
+          <div className="flex flex-wrap items-center gap-2">
+            <a href="/exports/escalations" download className={EDIFY_BTN_OUTLINE}>
+              <span>Export CSV</span>
+            </a>
+            <a href="/exports/escalations?format=xlsx" download className={EDIFY_BTN_OUTLINE}>
+              <span>Excel</span>
+            </a>
+            <a href="/exports/escalations?format=pdf" download className={EDIFY_BTN_OUTLINE}>
+              <span>PDF</span>
+            </a>
+          </div>
         }
       />
 
