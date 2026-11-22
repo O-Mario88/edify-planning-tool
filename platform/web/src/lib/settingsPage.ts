@@ -1,12 +1,7 @@
 /**
  * The Settings page's answer (SettingsScreenService, read by Go:
  * docs/migration/176) laid out as the page's lines. Every fact comes from
- * the gateway; the words are the template's own
- * (templates/pages/settings/index.html).
- *
- * Turning two-step verification on or off, or moving it to another channel,
- * is a save the existing web app still makes, so the page shows the choice
- * and opens the existing page to change it.
+ * the gateway and updates are saved natively in Go.
  */
 import type { TwoStepVerification } from '@/gen/edify/screens/v1/settings_pb';
 
@@ -18,31 +13,25 @@ export interface ChannelLine {
   readonly note: string;
   readonly chosen: boolean;
   readonly available: boolean;
-  /** The authenticator app's set-up link, in the existing web app. */
-  readonly link?: { readonly label: string; readonly href: string };
 }
 
 /** The three channels as the page lists them: app, email, text message. */
-export function channelLines(two: TwoStepVerification, existingWebUrl: string): ChannelLine[] {
-  const setUp = `${existingWebUrl}${SETTINGS_PATH}/two-step/app`;
+export function channelLines(two: TwoStepVerification, _existingWebUrl = ''): ChannelLine[] {
+  void _existingWebUrl;
   return [
     {
       key: 'app',
       label: 'Authenticator app',
       note: two.appAvailable
         ? 'Set up on your phone.'
-        : 'Google Authenticator, Microsoft Authenticator or Authy on your phone — works with no email or text message.',
+        : 'Not enrolled yet. Choose Email or Text message until an authenticator app is enrolled.',
       chosen: two.channel === 'app',
-      available: true,
-      link: { label: two.appAvailable ? 'Set up again' : 'Set it up', href: setUp },
+      available: two.appAvailable,
     },
     {
       key: 'email',
       label: 'Email',
       note: two.emailHint,
-      // The template marks Email for every channel but a text message, so
-      // an app user saw both App and Email marked and the browser kept the
-      // later, Email; here only the channel in use is marked.
       chosen: two.channel !== 'sms' && two.channel !== 'app',
       available: true,
     },

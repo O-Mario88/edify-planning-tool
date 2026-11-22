@@ -70,6 +70,26 @@ func TestScreensWithoutTheExistingApplicationAreUnavailable(t *testing.T) {
 	}
 }
 
+func TestStrictReadsRefusesHandOnEvenWhenExistingAppIsConfigured(t *testing.T) {
+	fetcher := &recordingFetcher{}
+	service := NewService(fetcher).WithStrictReads(true)
+
+	_, err := service.GetHome(context.Background(), connect.NewRequest(&screensv1.GetHomeRequest{}))
+	if connect.CodeOf(err) != connect.CodeUnavailable || apierr.Reason(err) != apierr.ReasonScreenUnavailable {
+		t.Fatalf("got %v", err)
+	}
+	if len(fetcher.paths) != 0 {
+		t.Fatalf("strict reads called existing app: %v", fetcher.paths)
+	}
+	// Saves still forward through existingApp.
+	if _, err := service.AddToCluster(context.Background(), connect.NewRequest(&screensv1.AddToClusterRequest{SchoolId: "s1"})); err != nil {
+		t.Fatalf("save failed under strict reads: %v", err)
+	}
+	if len(fetcher.paths) != 1 || fetcher.paths[0] != "POST /api/mobile/v1/schools/s1/add-to-cluster" {
+		t.Fatalf("save paths = %v", fetcher.paths)
+	}
+}
+
 func TestActionsGoToTheirSchoolsPathWithTheIDEscaped(t *testing.T) {
 	fetcher := &recordingFetcher{}
 	service := NewService(fetcher)

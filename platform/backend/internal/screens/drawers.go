@@ -10,6 +10,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 )
 
 // The profile's drawers, read and saved by the existing application's own
@@ -37,7 +38,7 @@ func requireDrawer(ctx context.Context, schoolID, kind string) error {
 	return nil
 }
 
-// GetSchoolDrawer returns one of a school's drawers as the web draws it.
+// GetSchoolDrawer returns one of a school's drawers natively from Go.
 func (s *Service) GetSchoolDrawer(
 	ctx context.Context, request *connect.Request[screensv1.GetSchoolDrawerRequest],
 ) (*connect.Response[screensv1.GetSchoolDrawerResponse], error) {
@@ -45,16 +46,32 @@ func (s *Service) GetSchoolDrawer(
 	if err := requireDrawer(ctx, message.GetSchoolId(), message.GetKind()); err != nil {
 		return nil, err
 	}
+	if p, ok := auth.PrincipalFrom(ctx); ok {
+		if resp, served, err := s.getSchoolDrawerInGo(ctx, p, message.GetSchoolId(), message.GetKind()); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(resp), nil
+		}
+	}
 	return fetch[screensv1.GetSchoolDrawerResponse](ctx, s, schoolPath(message.GetSchoolId(), "drawers/"+message.GetKind()))
 }
 
-// SaveSchoolDrawer saves a drawer through the web view that saves it.
+// SaveSchoolDrawer saves a school drawer natively in Go.
 func (s *Service) SaveSchoolDrawer(
 	ctx context.Context, request *connect.Request[screensv1.SaveSchoolDrawerRequest],
 ) (*connect.Response[screensv1.SaveSchoolDrawerResponse], error) {
 	message := request.Msg
 	if err := requireDrawer(ctx, message.GetSchoolId(), message.GetKind()); err != nil {
 		return nil, err
+	}
+	if p, ok := auth.PrincipalFrom(ctx); ok {
+		if resp, served, err := s.saveSchoolDrawerInGo(ctx, p, message); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(resp), nil
+		}
 	}
 	return send[screensv1.SaveSchoolDrawerResponse](ctx, s, schoolPath(message.GetSchoolId(), "drawers/"+message.GetKind()), message)
 }
@@ -67,6 +84,12 @@ func (s *Service) GetDrawerOptions(
 	if !optionSource.MatchString(message.GetSource()) || !fieldName.MatchString(message.GetName()) ||
 		message.GetName() == "source" || len(message.GetValue()) > maxSchoolIDLength {
 		return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "These choices do not exist.")
+	}
+	if resp, served, err := s.getDrawerOptionsInGo(ctx, message.GetSource(), message.GetName(), message.GetValue()); served {
+		if err != nil {
+			return nil, err
+		}
+		return connect.NewResponse(resp), nil
 	}
 	query := url.Values{"source": {message.GetSource()}, message.GetName(): {message.GetValue()}}
 	return fetch[screensv1.GetDrawerOptionsResponse](ctx, s, pathDrawerOptions+"?"+query.Encode())
@@ -103,13 +126,21 @@ func drawerPath(ctx context.Context, raw string) (string, error) {
 	return parsed.Path + "?" + query.Encode(), nil
 }
 
-// GetDrawer returns a drawer as the web draws it for the reader.
+// GetDrawer returns a drawer natively from Go when handled, else legacy feed.
 func (s *Service) GetDrawer(
 	ctx context.Context, request *connect.Request[screensv1.GetDrawerRequest],
 ) (*connect.Response[screensv1.GetDrawerResponse], error) {
 	path, err := drawerPath(ctx, request.Msg.GetPath())
 	if err != nil {
 		return nil, err
+	}
+	if p, ok := auth.PrincipalFrom(ctx); ok {
+		if resp, served, err := s.getPageDrawerInGo(ctx, p, path); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(resp), nil
+		}
 	}
 	return fetch[screensv1.GetDrawerResponse](ctx, s, pathPageDrawer+"?"+url.Values{"path": {path}}.Encode())
 }
@@ -159,6 +190,18 @@ func (s *Service) SaveDrawer(
 			return connect.NewResponse(answer), nil
 		}
 		if answer, served, err := s.completeInGo(ctx, forwarded); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(answer), nil
+		}
+		if answer, served, err := s.plReviewInGo(ctx, forwarded); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(answer), nil
+		}
+		if answer, served, err := s.opsInGo(ctx, forwarded); served {
 			if err != nil {
 				return nil, err
 			}

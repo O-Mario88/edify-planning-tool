@@ -71,7 +71,7 @@ type planRow struct {
 
 // PlanTablesResult is what the tables of a served page hold.
 type PlanTablesResult struct {
-	visits, meetings, core []*planRow
+	visits, meetings, core, coreTrainings []*planRow
 	// trainings are the Trainings table (each session once a school it
 	// reached), group the Group Trainings table (each session once).
 	trainings, group []*planRow
@@ -331,25 +331,47 @@ func ReadPlanTables(ctx context.Context, db schooldirectory.Querier, place *regi
 			res.programme[kind] = reorder(rows)
 		}
 	}
-	for _, rows := range [][]*planRow{res.visits, res.meetings, res.core, res.trainings, res.group} {
-		if len(rows) > planTablePageSize {
-			return res, false, nil
-		}
+	for _, rows := range [][]*planRow{res.visits, res.meetings, res.core, res.coreTrainings, res.trainings, res.group} {
 		for _, r := range rows {
 			r.settle(pg.today)
 		}
 	}
-	for _, card := range [][]*planRow{res.dayOff, res.returned, res.waiting, res.finance} {
-		if len(card) > planTablePageSize {
-			return res, false, nil
-		}
+	if len(res.visits) > planTablePageSize {
+		res.visits = res.visits[:planTablePageSize]
 	}
-	for _, rows := range res.programme {
+	if len(res.meetings) > planTablePageSize {
+		res.meetings = res.meetings[:planTablePageSize]
+	}
+	if len(res.core) > planTablePageSize {
+		res.core = res.core[:planTablePageSize]
+	}
+	if len(res.coreTrainings) > planTablePageSize {
+		res.coreTrainings = res.coreTrainings[:planTablePageSize]
+	}
+	if len(res.trainings) > planTablePageSize {
+		res.trainings = res.trainings[:planTablePageSize]
+	}
+	if len(res.group) > planTablePageSize {
+		res.group = res.group[:planTablePageSize]
+	}
+	if len(res.dayOff) > planTablePageSize {
+		res.dayOff = res.dayOff[:planTablePageSize]
+	}
+	if len(res.returned) > planTablePageSize {
+		res.returned = res.returned[:planTablePageSize]
+	}
+	if len(res.waiting) > planTablePageSize {
+		res.waiting = res.waiting[:planTablePageSize]
+	}
+	if len(res.finance) > planTablePageSize {
+		res.finance = res.finance[:planTablePageSize]
+	}
+	for kind, rows := range res.programme {
+		for _, r := range rows {
+			r.settle(pg.today)
+		}
 		if len(rows) > programmePageSize {
-			return res, false, nil
-		}
-		for _, r := range rows {
-			r.settle(pg.today)
+			res.programme[kind] = rows[:programmePageSize]
 		}
 	}
 	return res, true, nil
@@ -558,7 +580,8 @@ func expandTrainings(ctx context.Context, db schooldirectory.Querier, pg *page, 
 				}
 				res.programme[x.school.schoolType] = append(res.programme[x.school.schoolType], c)
 			case x.school.schoolType == "core":
-				return nil, false, nil
+				c.table = tableCoreVisits
+				res.coreTrainings = append(res.coreTrainings, c)
 			default:
 				rebuilt = append(rebuilt, c)
 			}

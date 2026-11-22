@@ -16,8 +16,7 @@ GRANT USAGE ON SCHEMA public TO edify_finance_owner;
 GRANT SELECT, INSERT, UPDATE ON
     weekly_fund_request,
     advance_request,
-    monthly_work_plan_budget,
-    audit_log
+    monthly_work_plan_budget
 TO edify_finance_owner;
 
 CREATE SCHEMA IF NOT EXISTS gateway_finance AUTHORIZATION edify_finance_owner;
@@ -70,13 +69,7 @@ BEGIN
         );
     END IF;
 
-    INSERT INTO public.audit_log (
-        id, action, subject_kind, subject_id, actor_id, actor_role, success, payload, created_at
-    ) VALUES (
-        'aud_' || substr(md5(v_id || ':submit:' || clock_timestamp()::text), 1, 22),
-        'finance.weekly_request.submit', 'weekly_fund_request', v_id, p_owner_id, p_actor_role, true,
-        jsonb_build_object('total_amount', p_total_amount, 'week_start', p_week_start), NOW()
-    );
+    -- Callers append the canonical SHA-256 audit_log entry in Go via audit.Append.
     RETURN v_id;
 END;
 $$;
@@ -166,19 +159,12 @@ BEGIN
             RAISE EXCEPTION 'finance: unknown weekly request action %', p_action;
     END CASE;
 
-    INSERT INTO public.audit_log (
-        id, action, subject_kind, subject_id, actor_id, actor_role, success, payload, created_at
-    ) VALUES (
-        'aud_' || substr(md5(p_request_id || ':' || p_action || ':' || clock_timestamp()::text), 1, 22),
-        'finance.weekly_request.' || p_action, 'weekly_fund_request', p_request_id, p_actor_id, p_actor_role, true,
-        jsonb_build_object('previous_status', v_row.status, 'new_status', v_st, 'amount', p_amount, 'returned', p_returned_amount, 'ref', COALESCE(p_reference, '')),
-        NOW()
-    );
+    -- Callers append the canonical SHA-256 audit_log entry in Go via audit.Append.
     RETURN QUERY SELECT v_st, true;
 END;
 $$;
 
--- Monthly work-plan budget status transition with row locking & audit log.
+-- Monthly work-plan budget status transition with row locking (audited in Go).
 CREATE OR REPLACE FUNCTION gateway_finance.decide_monthly_budget(
     p_budget_id  text,
     p_new_status text,
@@ -198,14 +184,7 @@ BEGIN
     SET status = p_new_status, updated_at = NOW()
     WHERE id = p_budget_id;
 
-    INSERT INTO public.audit_log (
-        id, action, subject_kind, subject_id, actor_id, actor_role, success, payload, created_at
-    ) VALUES (
-        'aud_' || substr(md5(p_budget_id || ':' || p_new_status || ':' || clock_timestamp()::text), 1, 22),
-        'finance.monthly_budget.' || p_new_status, 'monthly_work_plan_budget', p_budget_id, p_actor_id, p_actor_role, true,
-        jsonb_build_object('previous_status', v_prev, 'new_status', p_new_status, 'note', COALESCE(p_note, '')),
-        NOW()
-    );
+    -- Callers append the canonical SHA-256 audit_log entry in Go via audit.Append.
     RETURN p_new_status;
 END;
 $$;
@@ -274,14 +253,7 @@ BEGIN
             RAISE EXCEPTION 'finance: unknown advance action %', p_action;
     END CASE;
 
-    INSERT INTO public.audit_log (
-        id, action, subject_kind, subject_id, actor_id, actor_role, success, payload, created_at
-    ) VALUES (
-        'aud_' || substr(md5(p_advance_id || ':' || p_action || ':' || clock_timestamp()::text), 1, 22),
-        'finance.advance.' || p_action, 'advance_request', p_advance_id, p_actor_id, p_actor_role, true,
-        jsonb_build_object('previous_status', v_row.status, 'new_status', v_st, 'amount', p_amount, 'returned', p_returned_amount, 'ref', COALESCE(p_reference, '')),
-        NOW()
-    );
+    -- Callers append the canonical SHA-256 audit_log entry in Go via audit.Append.
     RETURN QUERY SELECT v_st, true;
 END;
 $$;

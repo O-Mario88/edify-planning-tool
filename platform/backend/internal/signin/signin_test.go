@@ -199,6 +199,16 @@ func TestAnEncryptedAuthenticatorSecretOpensWithTheExistingKey(t *testing.T) {
 	if _, err := ParseFieldKey("too-short"); err == nil {
 		t.Fatal("a short key was accepted")
 	}
+	if _, err := FieldKey(nil).Seal("JBSWY3DPEHPK3PXP"); err == nil {
+		t.Fatal("Seal accepted an empty key and would have stored plaintext")
+	}
+	sealed, err := key.Seal("JBSWY3DPEHPK3PXP")
+	if err != nil || !strings.HasPrefix(sealed, "v1:") {
+		t.Fatalf("Seal failed: %q %v", sealed, err)
+	}
+	if roundTrip, err := key.Open(sealed); err != nil || roundTrip != "JBSWY3DPEHPK3PXP" {
+		t.Fatalf("Open(Seal) = %q %v", roundTrip, err)
+	}
 }
 
 func TestWhereACodeWentIsMaskedAsTheExistingHint(t *testing.T) {

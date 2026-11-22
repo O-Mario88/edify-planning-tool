@@ -18,6 +18,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 )
 
@@ -41,10 +42,26 @@ var (
 
 type Service struct {
 	pool *pgxpool.Pool
+	now  func() time.Time
 }
 
 func NewService(pool *pgxpool.Pool) *Service {
-	return &Service{pool: pool}
+	return &Service{pool: pool, now: time.Now}
+}
+
+// WithClock overrides the clock used for audit timestamps (useful in tests).
+func (s *Service) WithClock(fn func() time.Time) *Service {
+	if s != nil && fn != nil {
+		s.now = fn
+	}
+	return s
+}
+
+func (s *Service) clock() time.Time {
+	if s != nil && s.now != nil {
+		return s.now().UTC()
+	}
+	return time.Now().UTC()
 }
 
 // ── M8: Evidence upload & authorized download ───────────────────────────────
@@ -137,9 +154,24 @@ func (s *Service) IADecideActivity(ctx context.Context, p auth.Principal, activi
 	}
 	var newStatus string
 	err := withRW(ctx, s.pool, func(tx pgx.Tx) error {
-		return tx.QueryRow(ctx,
+		if err := tx.QueryRow(ctx,
 			`SELECT gateway_field_ops.ia_decide_activity($1,$2,$3,$4,$5)`,
-			activityID, decision, p.UserID, p.ActiveRole, strings.TrimSpace(note)).Scan(&newStatus)
+			activityID, decision, p.UserID, p.ActiveRole, strings.TrimSpace(note)).Scan(&newStatus); err != nil {
+			return err
+		}
+		_, err := audit.Append(ctx, tx, audit.Entry{
+			Action:      "ia.activity." + decision,
+			SubjectKind: audit.Text("activity"),
+			SubjectID:   audit.Text(activityID),
+			ActorID:     audit.Text(p.UserID),
+			ActorRole:   audit.Text(p.ActiveRole),
+			Success:     true,
+			Payload: map[string]any{
+				"new_status": newStatus,
+				"note":       strings.TrimSpace(note),
+			},
+		}, s.clock())
+		return err
 	})
 	return newStatus, err
 }

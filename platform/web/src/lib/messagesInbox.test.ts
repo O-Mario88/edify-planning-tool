@@ -81,7 +81,7 @@ describe('inboxPager', () => {
 });
 
 describe('conversationHref', () => {
-  it('opens the conversation in the existing web app, which marks it read', () => {
-    expect(conversationHref('https://existing.test', 'a b')).toBe('https://existing.test/messages?thread=a%20b');
+  it('opens the conversation natively inside the Next.js web app', () => {
+    expect(conversationHref('https://existing.test', 'a b')).toBe('/messages?thread=a%20b');
   });
 });

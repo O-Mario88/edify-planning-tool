@@ -179,6 +179,34 @@ func TestTheClusterMeetingSaveIsOffUnlessNamed(t *testing.T) {
 	}
 }
 
+func TestSchoolActionsSaveIsOffUnlessNamed(t *testing.T) {
+	const key = "0123456789abcdef0123456789abcdef"
+	app := "http://localhost:8010"
+	for _, c := range []struct {
+		env, saves, app string
+		on              bool
+		wantErr         string
+	}{
+		{env: "development", app: app},
+		{env: "development", saves: "schedule_visit", app: app},
+		{env: "development", saves: "school_actions", app: app, on: true},
+		{env: "staging", saves: "school_actions", on: true},
+		{env: "test", saves: "school_actions", app: app, wantErr: "refused in test"},
+		{env: "production", saves: "school_actions", app: app, wantErr: "refused in production"},
+	} {
+		saves, err := loadGoSaves(Environment(c.env), env(map[string]string{"EDIFY_GO_SAVES": c.saves}), c.app, key)
+		if c.wantErr != "" {
+			if err == nil || !strings.Contains(err.Error(), c.wantErr) {
+				t.Errorf("%s %q: want %q, got %v", c.env, c.saves, c.wantErr, err)
+			}
+			continue
+		}
+		if err != nil || saves.SchoolActions != c.on {
+			t.Errorf("%s %q: %+v, %v", c.env, c.saves, saves, err)
+		}
+	}
+}
+
 func TestPagesThatWriteAreOffUnlessNamedAndOnlyInDevelopmentOrStaging(t *testing.T) {
 	for _, c := range []struct {
 		env, names string

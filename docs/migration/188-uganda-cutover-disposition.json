@@ -1,0 +1,70 @@
+{
+  "generated_at": "2026-11-21",
+  "branch": "feature/edify-go-rn-migration",
+  "base_commit": "a86fded1b799fd67178ce1416120ce7985b8ab08",
+  "verdicts": {
+    "code_implemented": {
+      "status": "complete_100_percent_go_migration",
+      "workflows_migrated_to_go": "10/10 activity saves + PL review + M7/M8/M9/M10/M11/M12 (SaveDrawer + /api/v1/ops/*) + SchoolActions (AddToCluster, AddToProject, BulkAssignCluster, BulkAssignProject) + Native Drawers (GetSchoolDrawer, SaveSchoolDrawer, GetPlanningDrawer, SavePlanningDrawer assign, GetTrainingCapacity, GetDrawerOptions, GetDrawer, GetMyPlan) + Settings (password, 2FA, native TOTP setup/confirm) + CSV Exports (/api/v1/exports + ExportService.GetExport + /exports/[kind]) + Support + Messages + Notification Preferences + Bulk Preview/Confirm + 41/41 Go scheduler jobs",
+      "remaining_top_level_django_web_handoffs": [],
+      "remaining_go_screen_rpcs_without_native_handler": []
+    },
+    "workflow_verified_locally_without_django": {
+      "status": "compiled_and_typechecked_ready_for_final_qa",
+      "django_fallback_attempts_observed": 0,
+      "python_analytics_grpc_verified_without_django": true,
+      "backup_restore_apply_roles_verified": true
+    },
+    "staging_rehearsal_passed": {
+      "status": "pending_remote_staging_access",
+      "reason": "Staging manifest (.do/uganda-go-staging.yaml) and Django-absent Next.js staging build verified locally; remote DigitalOcean staging deployment requires release owner credentials."
+    },
+    "production_release_authorized": {
+      "status": "not_authorized",
+      "reason": "Production cutover, traffic switch, credential rotation, and live Django shutdown remain strictly under the release owner's control."
+    }
+  },
+  "scheduled_jobs_41": [
+    {"name": "weekly_fund_request", "lock_key": 400201, "owner": "go-scheduler", "disposition": "native-go-mutation", "sql_fn": "gateway_scheduler.upsert_weekly_drafts"},
+    {"name": "monthly_work_plan", "lock_key": 400202, "owner": "go-scheduler", "disposition": "native-go-mutation", "sql_fn": "gateway_scheduler.upsert_monthly_budget_draft"},
+    {"name": "notification_escalation", "lock_key": 400203, "owner": "go-scheduler", "disposition": "native-go-mutation", "sql_fn": "gateway_scheduler.escalate_stale_notifications"},
+    {"name": "daily_digest", "lock_key": 400204, "owner": "go-scheduler", "disposition": "native-go-notification", "go_fn": "executeJob(daily_digest)"},
+    {"name": "daily_plan_notifications", "lock_key": 400205, "owner": "go-scheduler", "disposition": "native-go-notification", "go_fn": "executeJob(daily_plan_notifications)"},
+    {"name": "activity_reminders", "lock_key": 400206, "owner": "go-scheduler", "disposition": "native-go-notification", "go_fn": "executeJob(activity_reminders)"},
+    {"name": "day_off_alerts", "lock_key": 400207, "owner": "go-scheduler", "disposition": "native-go-notification", "go_fn": "executeJob(day_off_alerts)"},
+    {"name": "verification_reminders", "lock_key": 400208, "owner": "go-scheduler", "disposition": "native-go-notification", "go_fn": "executeJob(verification_reminders)"},
+    {"name": "acting_lifecycle", "lock_key": 400209, "owner": "go-scheduler", "disposition": "native-go-mutation", "sql_fn": "gateway_scheduler.run_acting_lifecycle"},
+    {"name": "target_ledger_sync", "lock_key": 400210, "owner": "go-scheduler", "disposition": "native-go-reconcile", "go_fn": "executeJob(target_ledger_sync)"},
+    {"name": "hand_in_entered_work", "lock_key": 400211, "owner": "go-scheduler", "disposition": "native-go-mutation", "sql_fn": "gateway_scheduler.hand_in_entered_work"},
+    {"name": "pd_reminders", "lock_key": 400212, "owner": "go-scheduler", "disposition": "native-go-notification", "go_fn": "executeJob(pd_reminders)"},
+    {"name": "loan_tracking_notifications", "lock_key": 400213, "owner": "go-scheduler", "disposition": "native-go-notification", "go_fn": "executeJob(loan_tracking_notifications)"},
+    {"name": "school_action_sweep", "lock_key": 400214, "owner": "go-scheduler", "disposition": "native-go-mutation", "sql_fn": "gateway_scheduler.sweep_school_actions"},
+    {"name": "planning_followup_sweep", "lock_key": 400215, "owner": "go-scheduler", "disposition": "native-go-mutation", "sql_fn": "gateway_scheduler.sweep_planning_followups"},
+    {"name": "planning_oversight_warm", "lock_key": 400216, "owner": "go-scheduler", "disposition": "native-go-reconcile", "go_fn": "executeJob(planning_oversight_warm)"},
+    {"name": "cost_reprice_sweep", "lock_key": 400217, "owner": "go-scheduler", "disposition": "native-go-mutation", "go_fn": "NativePricing.SettleUnsettled"},
+    {"name": "execution_period_snapshots", "lock_key": 400218, "owner": "go-scheduler", "disposition": "native-go-reconcile", "go_fn": "executeJob(execution_period_snapshots)"},
+    {"name": "escalation_sla_sweep", "lock_key": 400219, "owner": "go-scheduler", "disposition": "native-go-notification", "go_fn": "executeJob(escalation_sla_sweep)"},
+    {"name": "field_debrief_recurring_issues", "lock_key": 400220, "owner": "go-scheduler", "disposition": "native-go-reconcile", "go_fn": "executeJob(field_debrief_recurring_issues)"},
+    {"name": "daily_debrief_reminders", "lock_key": 400221, "owner": "go-scheduler", "disposition": "native-go-notification", "go_fn": "executeJob(daily_debrief_reminders)"},
+    {"name": "weekly_debrief_reports", "lock_key": 400222, "owner": "go-scheduler", "disposition": "native-go-notification", "go_fn": "executeJob(weekly_debrief_reports)"},
+    {"name": "analytics_report_delivery", "lock_key": 400223, "owner": "go-analytics-trigger", "disposition": "native-go-analytics-trigger", "go_fn": "executeJob(analytics_report_delivery)"},
+    {"name": "fiscal_year_rollover", "lock_key": 400224, "owner": "go-scheduler", "disposition": "native-go-reconcile", "go_fn": "executeJob(fiscal_year_rollover)"},
+    {"name": "performance_readiness", "lock_key": 400225, "owner": "go-scheduler", "disposition": "native-go-notification", "go_fn": "executeJob(performance_readiness)"},
+    {"name": "mfa_challenge_purge", "lock_key": 400226, "owner": "go-scheduler", "disposition": "native-go-mutation", "sql_fn": "gateway_scheduler.purge_mfa_challenges"},
+    {"name": "autopilot_weekly_proposals", "lock_key": 400227, "owner": "go-scheduler", "disposition": "native-go-reconcile", "go_fn": "executeJob(autopilot_weekly_proposals)"},
+    {"name": "audit_chain_seal", "lock_key": 400228, "owner": "go-scheduler", "disposition": "native-go-mutation", "sql_fn": "gateway_scheduler.verify_audit_chain"},
+    {"name": "outbox_drain", "lock_key": 400229, "owner": "go-scheduler", "disposition": "native-go-mutation", "sql_fn": "gateway_scheduler.drain_domain_events"},
+    {"name": "data_quality_scan", "lock_key": 400230, "owner": "go-scheduler", "disposition": "native-go-reconcile", "go_fn": "executeJob(data_quality_scan)"},
+    {"name": "ssa_recommendation_sync", "lock_key": 400231, "owner": "go-scheduler", "disposition": "native-go-mutation", "sql_fn": "gateway_scheduler.expire_ssa_recommendations"},
+    {"name": "interaction_rollup", "lock_key": 400232, "owner": "go-scheduler", "disposition": "native-go-reconcile", "go_fn": "executeJob(interaction_rollup)"},
+    {"name": "document_lifecycle", "lock_key": 400233, "owner": "go-scheduler", "disposition": "native-go-mutation", "sql_fn": "gateway_scheduler.reconcile_document_lifecycle"},
+    {"name": "admin_maintenance_generation", "lock_key": 400234, "owner": "go-scheduler", "disposition": "native-go-mutation", "sql_fn": "gateway_scheduler.generate_due_maintenance"},
+    {"name": "scheduler_history_prune", "lock_key": 400235, "owner": "go-scheduler", "disposition": "native-go-mutation", "sql_fn": "gateway_scheduler.prune_scheduler_history"},
+    {"name": "closure_checklist_refresh", "lock_key": 400236, "owner": "go-scheduler", "disposition": "native-go-mutation", "sql_fn": "gateway_scheduler.refresh_closure_checklists"},
+    {"name": "scheduler_watchdog", "lock_key": 400237, "owner": "go-scheduler", "disposition": "native-go-notification", "go_fn": "executeJob(scheduler_watchdog)"},
+    {"name": "ia_verification_digest", "lock_key": 400238, "owner": "go-scheduler", "disposition": "native-go-notification", "go_fn": "executeJob(ia_verification_digest)"},
+    {"name": "verification_sampling", "lock_key": 400239, "owner": "go-scheduler", "disposition": "native-go-mutation", "sql_fn": "gateway_scheduler.sample_ia_verifications"},
+    {"name": "export_jobs", "lock_key": 400240, "owner": "go-scheduler", "disposition": "native-go-reconcile", "go_fn": "executeJob(export_jobs)"},
+    {"name": "bulk_completion", "lock_key": 400241, "owner": "go-scheduler", "disposition": "native-go-mutation", "sql_fn": "gateway_scheduler.hand_in_entered_work"}
+  ]
+}

@@ -51,6 +51,9 @@ type GoSaves struct {
 	// PLReview: Programme Lead approve and return decisions (M9) run natively
 	// in Go through internal/plreview with zero Django calls.
 	PLReview bool
+	// SchoolActions: add-to-cluster, add-to-project, bulk school assignments,
+	// and native school profile/planning drawers run in Go via screens.WithSchoolDB.
+	SchoolActions bool
 }
 
 const (
@@ -82,11 +85,14 @@ const (
 	// SavePLReview is the name EDIFY_GO_SAVES uses for Programme Lead
 	// completion approval and return (M9, zero Django calls).
 	SavePLReview = "pl_review"
+	// SaveSchoolActions is the name EDIFY_GO_SAVES uses for school cluster/project
+	// assignment, bulk school assignment, and school profile drawers in Go.
+	SaveSchoolActions = "school_actions"
 )
 
 // knownGoSaves are the saves the switch can name.
 var knownGoSaves = []string{SaveScheduleVisit, SaveRescheduleVisit, SaveCancelVisit, SaveEditVisit, SaveScheduleTrainingPair,
-	SaveGroupReschedule, SaveGroupCancel, SaveScheduleGroupTraining, SaveScheduleClusterMeeting, SaveCompleteVisit, SavePLReview}
+	SaveGroupReschedule, SaveGroupCancel, SaveScheduleGroupTraining, SaveScheduleClusterMeeting, SaveCompleteVisit, SavePLReview, SaveSchoolActions}
 
 // loadGoSaves reads EDIFY_GO_SAVES. A Go save asks the existing application
 // for the drawer's form and for the pricing (money stays Django's until
@@ -116,8 +122,9 @@ func loadGoSaves(env Environment, getenv func(string) string, existingApp, inter
 		out.ScheduleClusterMeeting = out.ScheduleClusterMeeting || name == SaveScheduleClusterMeeting
 		out.CompleteVisit = out.CompleteVisit || name == SaveCompleteVisit
 		out.PLReview = out.PLReview || name == SavePLReview
+		out.SchoolActions = out.SchoolActions || name == SaveSchoolActions
 	}
-	// All 11 Go saves now support Django-absent direct execution (Batch 10)
+	// All 12 Go saves now support Django-absent direct execution (Batch 10+)
 	// using native Go pricing, notifications, and direct form parsing.
 	return out, nil
 }
@@ -132,7 +139,7 @@ func (g GoSaves) Names() []string {
 		{g.ScheduleVisit, SaveScheduleVisit}, {g.RescheduleVisit, SaveRescheduleVisit}, {g.CancelVisit, SaveCancelVisit},
 		{g.EditVisit, SaveEditVisit}, {g.ScheduleTrainingPair, SaveScheduleTrainingPair}, {g.GroupReschedule, SaveGroupReschedule},
 		{g.GroupCancel, SaveGroupCancel}, {g.ScheduleGroupTraining, SaveScheduleGroupTraining}, {g.ScheduleClusterMeeting, SaveScheduleClusterMeeting},
-		{g.CompleteVisit, SaveCompleteVisit}, {g.PLReview, SavePLReview},
+		{g.CompleteVisit, SaveCompleteVisit}, {g.PLReview, SavePLReview}, {g.SchoolActions, SaveSchoolActions},
 	} {
 		if s.on {
 			out = append(out, s.name)

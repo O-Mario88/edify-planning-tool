@@ -7,10 +7,12 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 )
 
@@ -33,10 +35,26 @@ var (
 
 type Service struct {
 	pool *pgxpool.Pool
+	now  func() time.Time
 }
 
 func NewService(pool *pgxpool.Pool) *Service {
-	return &Service{pool: pool}
+	return &Service{pool: pool, now: time.Now}
+}
+
+// WithClock overrides the clock used for audit timestamps (useful in tests).
+func (s *Service) WithClock(fn func() time.Time) *Service {
+	if s != nil && fn != nil {
+		s.now = fn
+	}
+	return s
+}
+
+func (s *Service) clock() time.Time {
+	if s != nil && s.now != nil {
+		return s.now().UTC()
+	}
+	return time.Now().UTC()
 }
 
 func (s *Service) UpdateOwnProfile(ctx context.Context, p auth.Principal, name, phone string) error {
@@ -60,9 +78,24 @@ func (s *Service) DecideLeave(ctx context.Context, p auth.Principal, leaveID, de
 	}
 	var out string
 	err := withRW(ctx, s.pool, func(tx pgx.Tx) error {
-		return tx.QueryRow(ctx,
+		if err := tx.QueryRow(ctx,
 			`SELECT gateway_workforce_ops.decide_leave($1,$2,$3,$4,$5)`,
-			leaveID, decision, p.UserID, p.ActiveRole, strings.TrimSpace(note)).Scan(&out)
+			leaveID, decision, p.UserID, p.ActiveRole, strings.TrimSpace(note)).Scan(&out); err != nil {
+			return err
+		}
+		_, err := audit.Append(ctx, tx, audit.Entry{
+			Action:      "leave." + decision,
+			SubjectKind: audit.Text("leave"),
+			SubjectID:   audit.Text(leaveID),
+			ActorID:     audit.Text(p.UserID),
+			ActorRole:   audit.Text(p.ActiveRole),
+			Success:     true,
+			Payload: map[string]any{
+				"new_status": out,
+				"note":       strings.TrimSpace(note),
+			},
+		}, s.clock())
+		return err
 	})
 	return out, err
 }
@@ -76,9 +109,24 @@ func (s *Service) DecideEscalation(ctx context.Context, p auth.Principal, escala
 	}
 	var out string
 	err := withRW(ctx, s.pool, func(tx pgx.Tx) error {
-		return tx.QueryRow(ctx,
+		if err := tx.QueryRow(ctx,
 			`SELECT gateway_workforce_ops.decide_escalation($1,$2,$3,$4,$5)`,
-			escalationID, strings.TrimSpace(decision), strings.TrimSpace(note), p.UserID, p.ActiveRole).Scan(&out)
+			escalationID, strings.TrimSpace(decision), strings.TrimSpace(note), p.UserID, p.ActiveRole).Scan(&out); err != nil {
+			return err
+		}
+		_, err := audit.Append(ctx, tx, audit.Entry{
+			Action:      "escalation.resolved",
+			SubjectKind: audit.Text("leadership_escalation"),
+			SubjectID:   audit.Text(escalationID),
+			ActorID:     audit.Text(p.UserID),
+			ActorRole:   audit.Text(p.ActiveRole),
+			Success:     true,
+			Payload: map[string]any{
+				"decision": strings.TrimSpace(decision),
+				"note":     strings.TrimSpace(note),
+			},
+		}, s.clock())
+		return err
 	})
 	return out, err
 }

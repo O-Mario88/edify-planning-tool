@@ -13,15 +13,20 @@ import (
 	"log/slog"
 	"net/url"
 	"strconv"
+	"time"
 
 	"connectrpc.com/connect"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/protobuf/proto"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/fieldops"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/financeops"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/workforceops"
 )
 
 const (
@@ -85,6 +90,7 @@ type Service struct {
 	cancels         CancelSaver   // nil unless EDIFY_GO_SAVES names cancel_visit
 	edits           EditSaver     // nil unless EDIFY_GO_SAVES names edit_visit
 	completions     CompleteSaver // nil unless EDIFY_GO_SAVES names complete_visit (183)
+	plReviews       PLReviewer    // nil unless EDIFY_GO_SAVES names pl_review (M9)
 	// groupMoves and groupCancels: nil unless EDIFY_GO_SAVES names
 	// group_reschedule or group_cancel (docs/migration/33).
 	groupMoves   GroupMoveSaver
@@ -98,6 +104,15 @@ type Service struct {
 	strictReads bool
 	// fallbacks counts every attempted call to the existing application.
 	fallbacks *FallbackTracker
+	// exports serves ExportService.GetExport natively from Go.
+	exports ExportStore
+	// Native Go operational domain writers wired into SaveDrawer (Batch 21).
+	fieldOps     *fieldops.Service
+	financeOps   *financeops.Service
+	workforceOps *workforceops.Service
+	// Direct PostgreSQL pool + clock for native Go school actions & drawers (Batches 22-23).
+	db  *pgxpool.Pool
+	now func() time.Time
 }
 
 // NewService wires the service. existingApp may be nil.
@@ -366,6 +381,14 @@ func (s *Service) GetAddToCluster(
 	if err := requireSchool(ctx, request.Msg.GetSchoolId()); err != nil {
 		return nil, err
 	}
+	if p, ok := auth.PrincipalFrom(ctx); ok {
+		if resp, served, err := s.getAddToClusterInGo(ctx, p, request.Msg.GetSchoolId()); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(resp), nil
+		}
+	}
 	return fetch[screensv1.GetAddToClusterResponse](ctx, s, schoolPath(request.Msg.GetSchoolId(), "add-to-cluster"))
 }
 
@@ -375,6 +398,14 @@ func (s *Service) AddToCluster(
 ) (*connect.Response[screensv1.AddToClusterResponse], error) {
 	if err := requireSchool(ctx, request.Msg.GetSchoolId()); err != nil {
 		return nil, err
+	}
+	if p, ok := auth.PrincipalFrom(ctx); ok {
+		if resp, served, err := s.addToClusterInGo(ctx, p, request.Msg); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(resp), nil
+		}
 	}
 	return send[screensv1.AddToClusterResponse](ctx, s, schoolPath(request.Msg.GetSchoolId(), "add-to-cluster"), request.Msg)
 }
@@ -386,6 +417,14 @@ func (s *Service) GetAddToProject(
 	if err := requireSchool(ctx, request.Msg.GetSchoolId()); err != nil {
 		return nil, err
 	}
+	if p, ok := auth.PrincipalFrom(ctx); ok {
+		if resp, served, err := s.getAddToProjectInGo(ctx, p, request.Msg.GetSchoolId()); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(resp), nil
+		}
+	}
 	return fetch[screensv1.GetAddToProjectResponse](ctx, s, schoolPath(request.Msg.GetSchoolId(), "add-to-project"))
 }
 
@@ -395,6 +434,14 @@ func (s *Service) AddToProject(
 ) (*connect.Response[screensv1.AddToProjectResponse], error) {
 	if err := requireSchool(ctx, request.Msg.GetSchoolId()); err != nil {
 		return nil, err
+	}
+	if p, ok := auth.PrincipalFrom(ctx); ok {
+		if resp, served, err := s.addToProjectInGo(ctx, p, request.Msg); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(resp), nil
+		}
 	}
 	return send[screensv1.AddToProjectResponse](ctx, s, schoolPath(request.Msg.GetSchoolId(), "add-to-project"), request.Msg)
 }
@@ -417,6 +464,14 @@ func (s *Service) BulkAssignCluster(
 	if err := requireTicked(ctx, request.Msg.GetSchoolIds()); err != nil {
 		return nil, err
 	}
+	if p, ok := auth.PrincipalFrom(ctx); ok {
+		if resp, served, err := s.bulkAssignClusterInGo(ctx, p, request.Msg); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(resp), nil
+		}
+	}
 	return send[screensv1.BulkAssignClusterResponse](ctx, s, "/api/mobile/v1/schools/bulk-assign-cluster", request.Msg)
 }
 
@@ -426,6 +481,14 @@ func (s *Service) BulkAssignProject(
 ) (*connect.Response[screensv1.BulkAssignProjectResponse], error) {
 	if err := requireTicked(ctx, request.Msg.GetSchoolIds()); err != nil {
 		return nil, err
+	}
+	if p, ok := auth.PrincipalFrom(ctx); ok {
+		if resp, served, err := s.bulkAssignProjectInGo(ctx, p, request.Msg); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(resp), nil
+		}
 	}
 	return send[screensv1.BulkAssignProjectResponse](ctx, s, "/api/mobile/v1/schools/bulk-assign-project", request.Msg)
 }

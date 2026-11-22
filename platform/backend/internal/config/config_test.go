@@ -6,7 +6,10 @@ import (
 	"testing"
 )
 
-const strongSecret = "9f2c7a1e5b8d4c3f6a0e1d2b7c8f9a4e5d6c7b8a"
+const (
+	strongSecret   = "9f2c7a1e5b8d4c3f6a0e1d2b7c8f9a4e5d6c7b8a"
+	strongFieldKey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+)
 
 func env(values map[string]string) func(string) string {
 	return func(key string) string { return values[key] }
@@ -64,10 +67,19 @@ func TestLoadValidation(t *testing.T) {
 			wantErr: "placeholder",
 		},
 		{
-			name: "valid staging",
+			name: "staging refuses missing field encryption key",
 			overrides: map[string]string{
 				"EDIFY_ENV":              "staging",
-				"EDIFY_DB_ALLOWED_HOSTS": " Staging-DB.internal , ",
+				"EDIFY_DB_ALLOWED_HOSTS": "staging-db.internal",
+			},
+			wantErr: "EDIFY_FIELD_ENCRYPTION_KEY",
+		},
+		{
+			name: "valid staging",
+			overrides: map[string]string{
+				"EDIFY_ENV":                  "staging",
+				"EDIFY_DB_ALLOWED_HOSTS":     " Staging-DB.internal , ",
+				"EDIFY_FIELD_ENCRYPTION_KEY": strongFieldKey,
 			},
 		},
 	}
@@ -99,10 +111,11 @@ func TestLoadValidation(t *testing.T) {
 
 func TestAllowedHostsAreNormalised(t *testing.T) {
 	cfg, err := Load(env(map[string]string{
-		"EDIFY_ENV":              "staging",
-		"EDIFY_DATABASE_URL":     "postgresql://staging-db.internal/edify",
-		"EDIFY_JWT_SECRET":       strongSecret,
-		"EDIFY_DB_ALLOWED_HOSTS": " Staging-DB.internal , ,other.internal",
+		"EDIFY_ENV":                  "staging",
+		"EDIFY_DATABASE_URL":         "postgresql://staging-db.internal/edify",
+		"EDIFY_JWT_SECRET":           strongSecret,
+		"EDIFY_DB_ALLOWED_HOSTS":     " Staging-DB.internal , ,other.internal",
+		"EDIFY_FIELD_ENCRYPTION_KEY": strongFieldKey,
 	}))
 	if err != nil {
 		t.Fatal(err)
@@ -114,10 +127,11 @@ func TestAllowedHostsAreNormalised(t *testing.T) {
 
 func TestCORSOrigins(t *testing.T) {
 	base := map[string]string{
-		"EDIFY_ENV":              "development",
-		"EDIFY_DATABASE_URL":     "postgresql://localhost/edify_dev",
-		"EDIFY_JWT_SECRET":       strongSecret,
-		"EDIFY_DB_ALLOWED_HOSTS": "staging-db.internal",
+		"EDIFY_ENV":                  "development",
+		"EDIFY_DATABASE_URL":         "postgresql://localhost/edify_dev",
+		"EDIFY_JWT_SECRET":           strongSecret,
+		"EDIFY_DB_ALLOWED_HOSTS":     "staging-db.internal",
+		"EDIFY_FIELD_ENCRYPTION_KEY": strongFieldKey,
 	}
 	tests := []struct {
 		name, env, origins, wantErr string
@@ -165,11 +179,12 @@ func TestExistingAppURL(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			cfg, err := Load(env(map[string]string{
-				"EDIFY_ENV":              test.env,
-				"EDIFY_DATABASE_URL":     "postgresql://localhost/edify_dev",
-				"EDIFY_JWT_SECRET":       strongSecret,
-				"EDIFY_DB_ALLOWED_HOSTS": "staging-db.internal",
-				"EDIFY_EXISTING_APP_URL": test.value,
+				"EDIFY_ENV":                  test.env,
+				"EDIFY_DATABASE_URL":         "postgresql://localhost/edify_dev",
+				"EDIFY_JWT_SECRET":           strongSecret,
+				"EDIFY_DB_ALLOWED_HOSTS":     "staging-db.internal",
+				"EDIFY_FIELD_ENCRYPTION_KEY": strongFieldKey,
+				"EDIFY_EXISTING_APP_URL":     test.value,
 			}))
 			if test.wantErr == "" {
 				if err != nil {
@@ -236,6 +251,7 @@ func TestLoanPortalSettingsRefuseProductionAndUnsafeMail(t *testing.T) {
 	base["EDIFY_ENV"] = "staging"
 	base["EDIFY_DB_ALLOWED_HOSTS"] = "staging-db.internal"
 	base["EDIFY_DATABASE_URL"] = "postgresql://staging-db.internal:5432/edify_staging"
+	base["EDIFY_FIELD_ENCRYPTION_KEY"] = strongFieldKey
 	if err := load(nil); err != nil {
 		t.Fatalf("the staging baseline must load, or the refusals below prove nothing: %v", err)
 	}

@@ -79,20 +79,34 @@ const (
 	advanceWithdrawRolesFile = "../../../deploy/db/advance_withdraw_roles.sql"
 	// Completing a staff school visit: the narrow function that hands it in.
 	completionRolesFile = "../../../deploy/db/completion_roles.sql"
-	// Native Go notification read-state transitions (M11).
-	notificationRolesFile = "../../../deploy/db/notification_roles.sql"
-	// Programme Lead approval and return through two narrow functions (M9).
+	// Programme Lead approval and return: two narrow functions (M9).
 	plReviewRolesFile = "../../../deploy/db/pl_review_roles.sql"
-	// Native Go loan ledger writer with idempotency-key deduplication (Batch 10).
+	// Native Go notification delivery and read-state transitions (M11).
+	notificationRolesFile = "../../../deploy/db/notification_roles.sql"
+	// Native Go day-pool costing settlement (Step 1).
+	costingSettleRolesFile = "../../../deploy/db/costing_settle_roles.sql"
+	// Native Go security/account relay side effects (Step 2).
+	relayOpsRolesFile = "../../../deploy/db/relay_ops_roles.sql"
+	// Native Go cluster leader account onboarding (Batch 10).
+	clusterOnboardRolesFile = "../../../deploy/db/cluster_onboard_roles.sql"
+	// Native Go loan ledger writer (Batch 10).
 	loansLedgerRolesFile = "../../../deploy/db/loans_ledger_roles.sql"
 	// Native Go field ops writers: evidence, IA verification, SSA, partners (Batch 11).
 	fieldOpsRolesFile = "../../../deploy/db/field_ops_roles.sql"
-	// Native Go finance & money writers: weekly requests, advances, monthly budgets (Batch 12).
+	// Native Go finance & money writers (Batch 12).
 	financeRolesFile = "../../../deploy/db/finance_roles.sql"
-	// Native Go workforce ops writers: profile, leave, escalations, help feedback (Batch 13).
+	// Native Go workforce ops writers (Batch 13).
 	workforceOpsRolesFile = "../../../deploy/db/workforce_ops_roles.sql"
+	// Native Go support ticket workflow (Step 3A).
+	supportRolesFile = "../../../deploy/db/support_roles.sql"
 	// Native Go messaging read-thread, reply, compose, star, archive (Step 3C).
 	messagingRolesFile = "../../../deploy/db/messaging_roles.sql"
+	// Native Go standalone scheduler operational jobs (Step 4).
+	schedulerJobsRolesFile = "../../../deploy/db/scheduler_jobs_roles.sql"
+	// Native Go Settings two-step verification update (Batch 19).
+	settingsRolesFile = "../../../deploy/db/settings_roles.sql"
+	// Native Go School Actions & School Profile Drawer writers (Batches 22-23).
+	schoolActionsRolesFile = "../../../deploy/db/school_actions_roles.sql"
 	// Snoozing a To-Do from Today: one table's insert and three updated columns.
 	todoRolesFile = "../../../deploy/db/todo_roles.sql"
 	// Undoing a snooze: the narrow function that removes that one row.
@@ -308,6 +322,13 @@ func prepareGatewayRole(ctx context.Context) (string, error) {
 	if _, err := conn.Conn().PgConn().Exec(ctx, string(completionRoles)).ReadAll(); err != nil {
 		return "", err
 	}
+	plReviewRoles, err := os.ReadFile(filepath.FromSlash(plReviewRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(plReviewRoles)).ReadAll(); err != nil {
+		return "", err
+	}
 	notificationRoles, err := os.ReadFile(filepath.FromSlash(notificationRolesFile))
 	if err != nil {
 		return "", err
@@ -315,11 +336,25 @@ func prepareGatewayRole(ctx context.Context) (string, error) {
 	if _, err := conn.Conn().PgConn().Exec(ctx, string(notificationRoles)).ReadAll(); err != nil {
 		return "", err
 	}
-	plReviewRoles, err := os.ReadFile(filepath.FromSlash(plReviewRolesFile))
+	costingSettleRoles, err := os.ReadFile(filepath.FromSlash(costingSettleRolesFile))
 	if err != nil {
 		return "", err
 	}
-	if _, err := conn.Conn().PgConn().Exec(ctx, string(plReviewRoles)).ReadAll(); err != nil {
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(costingSettleRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	relayOpsRoles, err := os.ReadFile(filepath.FromSlash(relayOpsRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(relayOpsRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	clusterOnboardRoles, err := os.ReadFile(filepath.FromSlash(clusterOnboardRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(clusterOnboardRoles)).ReadAll(); err != nil {
 		return "", err
 	}
 	loansLedgerRoles, err := os.ReadFile(filepath.FromSlash(loansLedgerRolesFile))
@@ -350,11 +385,39 @@ func prepareGatewayRole(ctx context.Context) (string, error) {
 	if _, err := conn.Conn().PgConn().Exec(ctx, string(workforceOpsRoles)).ReadAll(); err != nil {
 		return "", err
 	}
+	supportRoles, err := os.ReadFile(filepath.FromSlash(supportRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(supportRoles)).ReadAll(); err != nil {
+		return "", err
+	}
 	messagingRoles, err := os.ReadFile(filepath.FromSlash(messagingRolesFile))
 	if err != nil {
 		return "", err
 	}
 	if _, err := conn.Conn().PgConn().Exec(ctx, string(messagingRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	schedulerJobsRoles, err := os.ReadFile(filepath.FromSlash(schedulerJobsRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(schedulerJobsRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	settingsRoles, err := os.ReadFile(filepath.FromSlash(settingsRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(settingsRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	schoolActionsRoles, err := os.ReadFile(filepath.FromSlash(schoolActionsRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(schoolActionsRoles)).ReadAll(); err != nil {
 		return "", err
 	}
 	todoRoles, err := os.ReadFile(filepath.FromSlash(todoRolesFile))

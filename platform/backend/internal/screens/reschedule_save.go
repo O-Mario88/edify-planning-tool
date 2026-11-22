@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"net/url"
 	"regexp"
+	"strings"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -51,23 +53,42 @@ func (s *Service) rescheduleInGo(
 ) (*screensv1.SaveDrawerResponse, bool, error) {
 	principal, ok := auth.PrincipalFrom(ctx)
 	drawer := rescheduleDrawer.FindStringSubmatch(message.GetPath())
-	if !ok || s.moves == nil || s.existingApp == nil || drawer == nil || principal.InActingAppointment {
+	if !ok || s.moves == nil || drawer == nil || principal.InActingAppointment {
 		return nil, false, nil
 	}
-	var answer structpb.Struct
-	if err := s.existingApp.Post(ctx, pathPageDrawer+"?form_only=1", message, &answer); err != nil {
-		// The drawer's own refusal: the same the forwarded save meets.
-		return nil, true, err
-	}
-	form, origin, ok := formOf(&answer)
-	save := rescheduleSave.FindStringSubmatch(answer.GetFields()["save"].GetStringValue())
-	if !ok || save == nil || save[1] != drawer[1] {
-		return nil, false, nil
+	var form url.Values
+	var origin activities.Origin
+	activityID := drawer[1]
+	if s.existingApp != nil {
+		var answer structpb.Struct
+		if err := s.existingApp.Post(ctx, pathPageDrawer+"?form_only=1", message, &answer); err != nil {
+			// The drawer's own refusal: the same the forwarded save meets.
+			return nil, true, err
+		}
+		var okForm bool
+		form, origin, okForm = formOf(&answer)
+		save := rescheduleSave.FindStringSubmatch(answer.GetFields()["save"].GetStringValue())
+		if !okForm || save == nil || save[1] != drawer[1] {
+			return nil, false, nil
+		}
+		activityID = save[1]
+	} else {
+		form = directDrawerForm(message)
 	}
 	moved, err := s.moves.Reschedule(ctx, principal, activities.MoveRequest{
-		ActivityID: save[1], Date: form.Get("scheduled_date"), Reason: form.Get("reason"),
+		ActivityID: activityID, Date: strings.TrimSpace(form.Get("scheduled_date")), Reason: strings.TrimSpace(form.Get("reason")),
 	}, origin)
 	return moveOutcomeOf(ctx, s.logger, moved, err)
+}
+
+func directDrawerForm(message *screensv1.SaveDrawerRequest) url.Values {
+	form := url.Values{}
+	for name, val := range message.GetValues() {
+		if n := strings.TrimSpace(name); n != "" {
+			form.Add(n, val)
+		}
+	}
+	return form
 }
 
 // moveOutcomeOf is the existing feed's answer for Go's move: saved_in_place's

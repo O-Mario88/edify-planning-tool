@@ -64,7 +64,7 @@ func (s *Service) groupInGo(
 ) (*screensv1.SaveDrawerResponse, bool, error) {
 	principal, ok := auth.PrincipalFrom(ctx)
 	opened, err := url.Parse(message.GetPath())
-	if !ok || err != nil || s.existingApp == nil || principal.InActingAppointment {
+	if !ok || err != nil || principal.InActingAppointment {
 		return nil, false, nil
 	}
 	cancel := opened.Path == groupCancelPath
@@ -74,14 +74,21 @@ func (s *Service) groupInGo(
 	default:
 		return nil, false, nil
 	}
-	var answer structpb.Struct
-	if err := s.existingApp.Post(ctx, pathPageDrawer+"?form_only=1", message, &answer); err != nil {
-		// The drawer's own refusal: the same the forwarded save meets.
-		return nil, true, err
-	}
-	form, origin, ok := groupFormOf(&answer)
-	if !ok || answer.GetFields()["save"].GetStringValue() != opened.Path {
-		return nil, false, nil
+	var form url.Values
+	var origin activities.Origin
+	if s.existingApp != nil {
+		var answer structpb.Struct
+		if err := s.existingApp.Post(ctx, pathPageDrawer+"?form_only=1", message, &answer); err != nil {
+			// The drawer's own refusal: the same the forwarded save meets.
+			return nil, true, err
+		}
+		var okForm bool
+		form, origin, okForm = groupFormOf(&answer)
+		if !okForm || answer.GetFields()["save"].GetStringValue() != opened.Path {
+			return nil, false, nil
+		}
+	} else {
+		form = directDrawerForm(message)
 	}
 	req := activities.GroupRequest{ActivityIDs: form["activity_ids"], Date: first(form["scheduled_date"]),
 		Reason: first(form["reason"])}

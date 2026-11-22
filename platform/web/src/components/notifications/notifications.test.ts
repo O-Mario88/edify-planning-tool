@@ -33,6 +33,11 @@ describe('NotificationList', () => {
     expect(text(html)).toContain('Open Record Mark read Archive');
   });
 
+  it('keeps relative target routes inside Next.js when no existing application URL is configured', () => {
+    const html = renderToStaticMarkup(createElement(NotificationList, { items: [unread], existingWebUrl: '' }));
+    expect(html).toContain('href="/activities/1?a=1&amp;b=2"');
+  });
+
   it('gives an archived notification neither Mark read nor Archive, and no record button without a record', () => {
     const html = renderToStaticMarkup(createElement(NotificationList, { items: [archived], existingWebUrl: WEB }));
     expect(text(html)).not.toMatch(/Mark read|Archive|Open Record|Action Required|From /);

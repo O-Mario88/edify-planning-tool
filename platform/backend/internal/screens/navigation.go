@@ -16,10 +16,9 @@ type Navigation interface {
 	Build(ctx context.Context, p auth.Principal) (*screensv1.GetNavigationResponse, bool, error)
 }
 
-// WithNavigation answers the navigation in Go for anyone working in their
-// own role; someone in an acting appointment is still answered by the
-// existing application, which withholds the pages the appointment leaves
-// with the substantive leader.
+// WithNavigation answers the navigation in Go for every reader, including
+// staff working in an acting capacity (whose menu withholds the pages left
+// with the substantive leader).
 func (s *Service) WithNavigation(navigation Navigation) *Service {
 	s.navigation = navigation
 	return s
@@ -29,7 +28,7 @@ func (s *Service) WithNavigation(navigation Navigation) *Service {
 func (s *Service) GetNavigation(
 	ctx context.Context, _ *connect.Request[screensv1.GetNavigationRequest],
 ) (*connect.Response[screensv1.GetNavigationResponse], error) {
-	if principal, ok := auth.PrincipalFrom(ctx); ok && s.navigation != nil && !principal.InActingAppointment {
+	if principal, ok := auth.PrincipalFrom(ctx); ok && s.navigation != nil {
 		response, served, err := s.navigation.Build(ctx, principal)
 		if err != nil {
 			return nil, apierr.Internal(ctx, s.logger, err)

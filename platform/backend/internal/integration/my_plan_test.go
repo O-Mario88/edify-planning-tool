@@ -5,6 +5,7 @@ package integration
 import (
 	"context"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -56,8 +57,8 @@ func TestMyPlanIsRefusedToRolesWithoutIt(t *testing.T) {
 	}
 }
 
-// A training ceiling set for the reader puts My Training Summary on their
-// page, which is not Go's yet: the page is left to the existing application.
+// A training ceiling set for the reader renders My Training Summary natively
+// in Go (internal/trainingsummary OwnSummary wired via WithTrainingSummary).
 func TestMyPlanLeavesAPageWithATrainingCeilingToTheExistingApplication(t *testing.T) {
 	ctx := context.Background()
 	var staffID, trainingID string
@@ -83,8 +84,25 @@ VALUES (now(), now(), $1, '2027', 5, 'goparity', 'Admin', '', $2, $3)`, id, staf
 			t.Errorf("removing the ceiling: %v", err)
 		}
 	})
-	if _, err := pageOf(token, "/my-plan", nil); err == nil || connect.CodeOf(err) == connect.CodeNotFound {
-		t.Fatalf("the page was answered by Go (or refused): %v", err)
+	page, err := pageOf(token, "/my-plan", map[string]string{"fy": "2027"})
+	if err != nil {
+		t.Fatalf("a page with a training ceiling: %v", err)
+	}
+	var sawHeading, sawCeilingRow bool
+	for _, block := range page.GetBlocks() {
+		if panel := block.GetPanel(); panel != nil && panel.GetTitle() == "My training summary FY 2027" {
+			sawHeading = true
+		}
+		if table := block.GetTable(); table != nil && len(table.GetColumns()) >= 8 && table.GetColumns()[0].GetLabel() == "Training" && table.GetColumns()[1].GetLabel() == "Ceiling" {
+			for _, row := range table.GetRows() {
+				if len(row.GetCells()) >= 8 && row.GetCells()[1].GetText() == "5" && row.GetCells()[7].GetText() == "5" {
+					sawCeilingRow = true
+				}
+			}
+		}
+	}
+	if !sawHeading || !sawCeilingRow {
+		t.Fatalf("expected native Go My training summary with ceiling 5 (heading=%v row=%v): %v", sawHeading, sawCeilingRow, page.GetBlocks())
 	}
 }
 
@@ -225,8 +243,27 @@ VALUES (now(), now(), 'goparitymyplancap', $1, $2, 5, 'goparity', 'Admin') RETUR
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _, _ = admin.Exec(ctx, `DELETE FROM project_staff_capacity WHERE id = $1`, capacityID) })
-	if _, err := pageOf(token, "/my-plan", nil); err == nil {
-		t.Fatal("a planner with a project ceiling was drawn by Go")
+	page, err = pageOf(token, "/my-plan", nil)
+	if err != nil {
+		t.Fatalf("a planner with a project ceiling: %v", err)
+	}
+	var sawProjectCeiling bool
+	for _, block := range page.GetBlocks() {
+		table := block.GetTable()
+		if table == nil || !strings.HasPrefix(table.GetTitle(), "Planned and remaining · ") {
+			continue
+		}
+		if strings.Contains(table.GetFootnote(), "Your project ceilings add up to 5 schools") {
+			for _, row := range table.GetRows() {
+				if len(row.GetCells()) >= 4 && strings.HasPrefix(row.GetCells()[0].GetText(), "Schools assigned to a project") &&
+					row.GetCells()[2].GetText() == "5" && row.GetCells()[3].GetText() == "5" {
+					sawProjectCeiling = true
+				}
+			}
+		}
+	}
+	if !sawProjectCeiling {
+		t.Fatalf("expected native Go Planned and remaining with project ceiling 5: %v", page.GetBlocks())
 	}
 }
 

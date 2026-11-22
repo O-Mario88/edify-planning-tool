@@ -21,9 +21,10 @@ const Path = "/my-plan"
 
 // Service builds My Plan.
 type Service struct {
-	db      schooldirectory.Querier
-	now     func() time.Time
-	summary TrainingSummaryReader
+	db        schooldirectory.Querier
+	now       func() time.Time
+	summary   TrainingSummaryReader
+	readiness ReadinessReader
 }
 
 // NewService wires the service to the database it reads.
@@ -77,18 +78,29 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if !readable {
 		return nil, false, nil
 	}
-	held, trains, err := holdsAnything(ctx, s.db, p)
+	held, trains, err := holdsAnything(ctx, s.db, p, s.readiness != nil)
 	if err != nil || held || (trains && s.summary == nil) {
 		return nil, false, err
 	}
-	// A planner's Planned and remaining is Go's only while it reads no
-	// school and no project place (pieces 4a and 3b).
 	target := 0
+	var ownReadiness *OwnReadiness
 	if planner {
-		if held, err = plannerHoldsAnything(ctx, s.db, p); err != nil || held {
-			return nil, false, err
+		if s.readiness != nil {
+			var hasOwn bool
+			if ownReadiness, hasOwn, err = s.readiness(ctx, s.db, p, period.FY, now); err != nil {
+				return nil, false, err
+			}
+			if hasOwn && ownReadiness != nil {
+				target = ownReadiness.StaffVisits.Target
+			} else {
+				target = visitTarget(p)
+			}
+		} else {
+			if held, err = plannerHoldsAnything(ctx, s.db, p); err != nil || held {
+				return nil, false, err
+			}
+			target = visitTarget(p)
 		}
-		target = visitTarget(p)
 	}
 	request := NewQuery(query)
 	f := ReadFilters(request)
@@ -98,20 +110,23 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		return nil, false, err
 	}
 	// A visits line too long for the tile (its whole sentence becomes the
-	// note) is the existing application's; so is, beside a target, the
-	// outreach sentence of that note.
-	if target == 0 && utf8.RuneCountInString(visitsLine(plan.Counts)) > rules.Plan.HelperFigureChars {
-		return nil, false, nil
-	}
-	if target > 0 && plan.Outreach > 0 {
-		return nil, false, nil
+	// note) is the existing application's when no readiness reader is attached.
+	if s.readiness == nil {
+		if target == 0 && utf8.RuneCountInString(visitsLine(plan.Counts)) > rules.Plan.HelperFigureChars {
+			return nil, false, nil
+		}
+		if target > 0 && plan.Outreach > 0 {
+			return nil, false, nil
+		}
 	}
 	tables := PlanTablesResult{}
 	if plan.Listed > 0 {
-		for key := range query {
-			// The tables' pagers, the programme schools' sections' by type.
-			if strings.HasSuffix(key, "_page") || in(rules.Rows.ProgrammeSchoolTypes, key) {
-				return nil, false, nil
+		if s.readiness == nil {
+			for key := range query {
+				// The tables' pagers, the programme schools' sections' by type.
+				if strings.HasSuffix(key, "_page") || in(rules.Rows.ProgrammeSchoolTypes, key) {
+					return nil, false, nil
+				}
 			}
 		}
 		var ported bool
@@ -119,10 +134,8 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 			return nil, false, err
 		}
 	}
-	// The planner's own visits of the year, Planned and remaining's first
-	// line; past the target the page carries the ceiling notice.
 	planned := 0
-	if target > 0 {
+	if target > 0 && ownReadiness == nil {
 		if planned, err = yearVisits(ctx, s.db, owners, period.FY); err != nil || planned > target {
 			return nil, false, err
 		}
@@ -132,9 +145,17 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		if summary, err = s.summary(ctx, s.db, p.StaffProfileID, p.UserID, "", period.FY, now); err != nil {
 			return nil, false, err
 		}
-		// The summary pages by the table's page size (my_training_page).
-		if len(summary) > planTablePageSize {
+		if s.readiness == nil && len(summary) > planTablePageSize {
 			return nil, false, nil
+		}
+		if len(summary) > planTablePageSize {
+			summary = summary[:planTablePageSize]
+		}
+	}
+	var clusters []clusterPlanRow
+	if s.readiness != nil {
+		if clusters, err = readClusterPlanningStatus(ctx, s.db, owners, period.FY); err != nil {
+			return nil, false, err
 		}
 	}
 	choices, err := s.choices(ctx)
@@ -142,7 +163,8 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		return nil, true, err
 	}
 	return planPage(pageParts{period: period, years: schooldirectory.FYOptions(now), choices: choices, request: request,
-		plan: plan, filters: f, target: target, planned: planned, tables: tables, summary: summary}), true, nil
+		plan: plan, filters: f, target: target, planned: planned, readiness: ownReadiness,
+		tables: tables, summary: summary, clusters: clusters}), true, nil
 }
 
 // choices are the District and Staff member selects' options: every

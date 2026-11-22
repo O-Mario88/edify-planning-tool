@@ -196,11 +196,15 @@ type pageParts struct {
 	plan    Plan
 	filters Filters
 	// target is the reader's visit target (0 for none); planned their
-	// counted visits of the year.
+	// counted visits of the year. readiness is populated when OwnReadiness
+	// is wired in.
 	target, planned int
+	readiness       *OwnReadiness
 	tables          PlanTablesResult
 	// summary is the reader's own My Training Summary.
 	summary []TrainingSummaryRow
+	// clusters is Cluster Planning Status (apps.clusters.planning_status).
+	clusters []clusterPlanRow
 }
 
 // emptyPage is My Plan for a reader with no target whose tables list
@@ -244,7 +248,12 @@ func planPage(parts pageParts) *screensv1.GetPageResponse {
 	}
 	// A planner's own Planned and remaining, loaded once the page is open
 	// (readiness_panel.html), and the schools behind a figure when asked.
-	if parts.target > 0 {
+	if parts.readiness != nil {
+		blocks = append(blocks, fullReadinessTable(parts.readiness, p.FY, request))
+		if key := readinessList(request); key != "" {
+			blocks = append(blocks, emptyReadinessList(key))
+		}
+	} else if parts.target > 0 {
 		blocks = append(blocks, readinessTable(parts.target, parts.planned, p.FY, request))
 		if key := readinessList(request); key != "" {
 			blocks = append(blocks, emptyReadinessList(key))
@@ -253,7 +262,7 @@ func planPage(parts pageParts) *screensv1.GetPageResponse {
 	if len(parts.summary) > 0 {
 		blocks = append(blocks, summaryBlocks(parts.summary, p.FY)...)
 	}
-	blocks = append(blocks, planTablesBlocks(parts.tables, p)...)
+	blocks = append(blocks, planTablesBlocks(parts.tables, p, parts.clusters)...)
 	blocks = append(blocks, breakdown(parts.plan.Counts))
 	return &screensv1.GetPageResponse{Header: header(request), Blocks: blocks, Selection: activityBar(), WebPath: Path}
 }

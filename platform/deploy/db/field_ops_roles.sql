@@ -18,8 +18,7 @@ GRANT SELECT, INSERT, UPDATE ON
     ssa_score,
     partner_assignment,
     activity,
-    activity_completion_verification,
-    audit_log
+    activity_completion_verification
 TO edify_field_ops_owner;
 GRANT SELECT ON school, staff_profile TO edify_field_ops_owner;
 
@@ -80,10 +79,9 @@ CREATE OR REPLACE FUNCTION gateway_field_ops.ia_decide_activity(
 ) RETURNS text
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $$
 DECLARE
-    v_status  text;
-    v_new_st  text;
-    v_ia_st   text;
-    v_aud_id  text;
+    v_status text;
+    v_new_st text;
+    v_ia_st  text;
 BEGIN
     SELECT status INTO v_status FROM public.activity
     WHERE id = p_activity_id AND deleted_at IS NULL FOR UPDATE;
@@ -107,16 +105,7 @@ BEGIN
         updated_at = NOW()
     WHERE id = p_activity_id;
 
-    v_aud_id := 'aud_' || substr(md5(p_activity_id || ':ia:' || p_decision || ':' || clock_timestamp()::text), 1, 22);
-    INSERT INTO public.audit_log (
-        id, action, subject_kind, subject_id, actor_id, actor_role,
-        success, payload, created_at
-    ) VALUES (
-        v_aud_id, 'ia.activity.' || p_decision, 'activity', p_activity_id,
-        p_actor_id, p_actor_role, true,
-        jsonb_build_object('previous_status', v_status, 'new_status', v_new_st, 'note', COALESCE(p_note, '')),
-        NOW()
-    );
+    -- Callers append the canonical SHA-256 audit_log entry in Go via audit.Append.
     RETURN v_new_st;
 END;
 $$;

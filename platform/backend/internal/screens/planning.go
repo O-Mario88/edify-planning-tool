@@ -9,6 +9,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 )
 
 // The profile's planning drawers (Schedule visit, Assign to Partner), read
@@ -42,12 +43,19 @@ func (s *Service) GetPlanningDrawer(
 	if err := requirePlanningDrawer(ctx, message.GetSchoolId(), message.GetKind()); err != nil {
 		return nil, err
 	}
+	if p, ok := auth.PrincipalFrom(ctx); ok {
+		if resp, served, err := s.getPlanningDrawerInGo(ctx, p, message.GetSchoolId(), message.GetKind()); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(resp), nil
+		}
+	}
 	return fetch[screensv1.GetPlanningDrawerResponse](ctx, s, schoolPath(message.GetSchoolId(), "planning/"+message.GetKind()))
 }
 
-// SavePlanningDrawer saves a planning drawer through the web view its form
-// posts to, or, with the Go visit save switched on, a Schedule save Go takes
-// (planning_save.go).
+// SavePlanningDrawer saves a planning drawer natively in Go (Schedule visit
+// and Assign to Partner).
 func (s *Service) SavePlanningDrawer(
 	ctx context.Context, request *connect.Request[screensv1.SavePlanningDrawerRequest],
 ) (*connect.Response[screensv1.SavePlanningDrawerResponse], error) {
@@ -66,6 +74,14 @@ func (s *Service) SavePlanningDrawer(
 		}
 		return connect.NewResponse(answer), nil
 	}
+	if p, ok := auth.PrincipalFrom(ctx); ok {
+		if answer, served, err := s.saveAssignPlanningInGo(ctx, p, message); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(answer), nil
+		}
+	}
 	return send[screensv1.SavePlanningDrawerResponse](ctx, s, schoolPath(message.GetSchoolId(), "planning/"+message.GetKind()), message)
 }
 
@@ -78,6 +94,14 @@ func (s *Service) GetTrainingCapacity(
 		(message.GetDate() != "" && !isoDate.MatchString(message.GetDate())) ||
 		(message.GetSchool() != "" && !recordID.MatchString(message.GetSchool())) {
 		return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This training ceiling cannot be read.")
+	}
+	if p, ok := auth.PrincipalFrom(ctx); ok {
+		if resp, served, err := s.getTrainingCapacityInGo(ctx, p, message); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(resp), nil
+		}
 	}
 	query := url.Values{
 		"training": {message.GetTraining()},

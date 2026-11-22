@@ -9,6 +9,7 @@ import (
 	"connectrpc.com/connect"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/acting"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/origin"
@@ -42,12 +43,30 @@ func (s *Service) GetPage(
 		return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This page cannot be opened.")
 	}
 	ctx = pagegate.WithDesktop(ctx, message.GetDesktop())
-	if principal, ok := auth.PrincipalFrom(ctx); ok && !principal.InActingAppointment {
+	if principal, ok := auth.PrincipalFrom(ctx); ok {
+		effective := principal
+		if principal.InActingAppointment {
+			if principal.Acting == nil {
+				return nil, apierr.New(ctx, connect.CodePermissionDenied, apierr.ReasonPermissionDenied,
+					"This page is not available to you.")
+			}
+			if acting.WithheldPage(principal.Acting.RoleKey, message.GetPath()) {
+				return nil, apierr.New(ctx, connect.CodePermissionDenied, apierr.ReasonPermissionDenied,
+					"This page is withheld while acting in this capacity.")
+			}
+			if principal.Acting.ActingRole != "" {
+				effective.ActiveRole = principal.Acting.ActingRole
+			}
+			if principal.Acting.ScopeType == acting.ScopePLTeam && principal.Acting.SeatStaffID != "" {
+				effective.StaffProfileID = principal.Acting.SeatStaffID
+			}
+			effective.InActingAppointment = false
+		}
 		// A page whose reading is itself audited records who read it from
 		// where (Employee Relations).
 		ctx = origin.With(ctx, origin.Read(request.Peer().Addr, request.Header(), s.trustProxy, trace.FromContext(ctx).RequestID))
 		for _, pages := range s.pages {
-			response, served, err := pages.Build(ctx, principal, message.GetPath(), query)
+			response, served, err := pages.Build(ctx, effective, message.GetPath(), query)
 			switch {
 			case errors.Is(err, pagegate.ErrNotAvailable):
 				return nil, apierr.New(ctx, connect.CodeNotFound, apierr.ReasonNotFound,

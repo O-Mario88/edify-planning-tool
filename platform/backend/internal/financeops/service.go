@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 )
 
@@ -36,10 +37,26 @@ var (
 
 type Service struct {
 	pool *pgxpool.Pool
+	now  func() time.Time
 }
 
 func NewService(pool *pgxpool.Pool) *Service {
-	return &Service{pool: pool}
+	return &Service{pool: pool, now: time.Now}
+}
+
+// WithClock overrides the clock used for audit timestamps (useful in tests).
+func (s *Service) WithClock(fn func() time.Time) *Service {
+	if s != nil && fn != nil {
+		s.now = fn
+	}
+	return s
+}
+
+func (s *Service) clock() time.Time {
+	if s != nil && s.now != nil {
+		return s.now().UTC()
+	}
+	return time.Now().UTC()
 }
 
 // ReconcileVariance returns the exact integer variance (disbursed - accounted - returned)
@@ -65,10 +82,25 @@ func (s *Service) SubmitWeeklyRequest(ctx context.Context, p auth.Principal, req
 	}
 	var id string
 	err := withRW(ctx, s.pool, func(tx pgx.Tx) error {
-		return tx.QueryRow(ctx,
+		if err := tx.QueryRow(ctx,
 			`SELECT gateway_finance.submit_weekly_request($1,$2::date,$3::date,$4,$5,$6,$7)`,
 			req.FY, req.WeekStart.Format("2006-01-02"), req.WeekEnd.Format("2006-01-02"),
-			p.UserID, req.TotalAmount, req.FundingSource, p.ActiveRole).Scan(&id)
+			p.UserID, req.TotalAmount, req.FundingSource, p.ActiveRole).Scan(&id); err != nil {
+			return err
+		}
+		_, err := audit.Append(ctx, tx, audit.Entry{
+			Action:      "finance.weekly_request.submit",
+			SubjectKind: audit.Text("weekly_fund_request"),
+			SubjectID:   audit.Text(id),
+			ActorID:     audit.Text(p.UserID),
+			ActorRole:   audit.Text(p.ActiveRole),
+			Success:     true,
+			Payload: map[string]any{
+				"total_amount": req.TotalAmount,
+				"week_start":   req.WeekStart.Format("2006-01-02"),
+			},
+		}, s.clock())
+		return err
 	})
 	return id, err
 }
@@ -96,11 +128,31 @@ func (s *Service) TransitionWeeklyRequest(
 	}
 	var out TransitionResult
 	err := withRW(ctx, s.pool, func(tx pgx.Tx) error {
-		return tx.QueryRow(ctx,
+		if err := tx.QueryRow(ctx,
 			`SELECT new_status, applied FROM gateway_finance.transition_weekly_request($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
 			requestID, action, p.UserID, p.ActiveRole, amount, returned,
 			strings.TrimSpace(method), strings.TrimSpace(reference), strings.TrimSpace(reason)).
-			Scan(&out.Status, &out.Applied)
+			Scan(&out.Status, &out.Applied); err != nil {
+			return err
+		}
+		if !out.Applied {
+			return nil
+		}
+		_, err := audit.Append(ctx, tx, audit.Entry{
+			Action:      "finance.weekly_request." + action,
+			SubjectKind: audit.Text("weekly_fund_request"),
+			SubjectID:   audit.Text(requestID),
+			ActorID:     audit.Text(p.UserID),
+			ActorRole:   audit.Text(p.ActiveRole),
+			Success:     true,
+			Payload: map[string]any{
+				"new_status": out.Status,
+				"amount":     amount,
+				"returned":   returned,
+				"ref":        strings.TrimSpace(reference),
+			},
+		}, s.clock())
+		return err
 	})
 	return out, err
 }
@@ -137,9 +189,24 @@ func (s *Service) DecideMonthlyBudget(ctx context.Context, p auth.Principal, bud
 	}
 	var out string
 	err := withRW(ctx, s.pool, func(tx pgx.Tx) error {
-		return tx.QueryRow(ctx,
+		if err := tx.QueryRow(ctx,
 			`SELECT gateway_finance.decide_monthly_budget($1,$2,$3,$4,$5)`,
-			budgetID, strings.TrimSpace(newStatus), p.UserID, p.ActiveRole, strings.TrimSpace(note)).Scan(&out)
+			budgetID, strings.TrimSpace(newStatus), p.UserID, p.ActiveRole, strings.TrimSpace(note)).Scan(&out); err != nil {
+			return err
+		}
+		_, err := audit.Append(ctx, tx, audit.Entry{
+			Action:      "finance.monthly_budget." + out,
+			SubjectKind: audit.Text("monthly_work_plan_budget"),
+			SubjectID:   audit.Text(budgetID),
+			ActorID:     audit.Text(p.UserID),
+			ActorRole:   audit.Text(p.ActiveRole),
+			Success:     true,
+			Payload: map[string]any{
+				"new_status": out,
+				"note":       strings.TrimSpace(note),
+			},
+		}, s.clock())
+		return err
 	})
 	return out, err
 }
@@ -156,10 +223,30 @@ func (s *Service) TransitionAdvance(
 	}
 	var out TransitionResult
 	err := withRW(ctx, s.pool, func(tx pgx.Tx) error {
-		return tx.QueryRow(ctx,
+		if err := tx.QueryRow(ctx,
 			`SELECT new_status, applied FROM gateway_finance.transition_advance($1,$2,$3,$4,$5,$6,$7,$8)`,
 			advanceID, action, p.UserID, p.ActiveRole, amount, returned,
-			strings.TrimSpace(method), strings.TrimSpace(reference)).Scan(&out.Status, &out.Applied)
+			strings.TrimSpace(method), strings.TrimSpace(reference)).Scan(&out.Status, &out.Applied); err != nil {
+			return err
+		}
+		if !out.Applied {
+			return nil
+		}
+		_, err := audit.Append(ctx, tx, audit.Entry{
+			Action:      "finance.advance." + action,
+			SubjectKind: audit.Text("advance_request"),
+			SubjectID:   audit.Text(advanceID),
+			ActorID:     audit.Text(p.UserID),
+			ActorRole:   audit.Text(p.ActiveRole),
+			Success:     true,
+			Payload: map[string]any{
+				"new_status": out.Status,
+				"amount":     amount,
+				"returned":   returned,
+				"ref":        strings.TrimSpace(reference),
+			},
+		}, s.clock())
+		return err
 	})
 	return out, err
 }

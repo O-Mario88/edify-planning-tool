@@ -18,8 +18,7 @@ GRANT SELECT, INSERT, UPDATE ON
     leave,
     leadership_escalation,
     cce_team_guidance_receipt,
-    help_center_helparticlefeedback,
-    audit_log
+    help_center_helparticlefeedback
 TO edify_workforce_ops_owner;
 
 CREATE SCHEMA IF NOT EXISTS gateway_workforce_ops AUTHORIZATION edify_workforce_ops_owner;
@@ -51,13 +50,7 @@ BEGIN
         RAISE EXCEPTION 'workforceops: leave % not found', p_leave_id;
     END IF;
     UPDATE public.leave SET status = p_new_status, updated_at = NOW() WHERE id = p_leave_id;
-    INSERT INTO public.audit_log (
-        id, action, subject_kind, subject_id, actor_id, actor_role, success, payload, created_at
-    ) VALUES (
-        'aud_' || substr(md5(p_leave_id || ':' || p_new_status || ':' || clock_timestamp()::text), 1, 22),
-        'leave.' || p_new_status, 'leave', p_leave_id, p_actor_id, p_actor_role, true,
-        jsonb_build_object('previous_status', v_prev, 'new_status', p_new_status, 'note', COALESCE(p_note, '')), NOW()
-    );
+    -- Callers append the canonical SHA-256 audit_log entry in Go via audit.Append.
     RETURN p_new_status;
 END;
 $$;
@@ -75,13 +68,7 @@ BEGIN
         updated_at = NOW()
     WHERE id = p_escalation_id;
 
-    INSERT INTO public.audit_log (
-        id, action, subject_kind, subject_id, actor_id, actor_role, success, payload, created_at
-    ) VALUES (
-        'aud_' || substr(md5(p_escalation_id || ':resolve:' || clock_timestamp()::text), 1, 22),
-        'escalation.resolved', 'leadership_escalation', p_escalation_id, p_actor_id, p_actor_role, true,
-        jsonb_build_object('decision', p_decision, 'note', COALESCE(p_note, '')), NOW()
-    );
+    -- Callers append the canonical SHA-256 audit_log entry in Go via audit.Append.
     RETURN 'resolved';
 END;
 $$;

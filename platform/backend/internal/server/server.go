@@ -59,14 +59,18 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/decisionlog"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/disbursements"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/escalations"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/exports"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/extrawork"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/feed"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/fieldops"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/fieldpages"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/financedesks"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/financeops"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/fundapprovals"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/fyplanning"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/health"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/helpcenter"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/helpcontext"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/home"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/hrregister"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/hrtoday"
@@ -107,6 +111,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/plreview"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/policycompliance"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/prioritiesmaster"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/profilepage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/programmerollout"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/programmeschools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/projectcapacity"
@@ -130,6 +135,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/staffactivity"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/stafflogs"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/staffsetup"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/support"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/targetdistribution"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/teamperformance"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/teams"
@@ -139,6 +145,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/uploadcenter"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/visitrequests"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/weeklyrequest"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/workforceops"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/workplan"
 )
 
@@ -244,7 +251,9 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			}, time.Now),
 			myactions.NewService(pool, time.Now),
 			coreoversight.NewService(pool, time.Now),
-			myplan.NewService(pool, time.Now).WithTrainingSummary(trainingsummary.OwnSummary),
+			myplan.NewService(pool, time.Now).
+				WithTrainingSummary(trainingsummary.OwnSummary).
+				WithReadiness(planningmonitor.OwnReadiness),
 			calendarpage.NewService(pool, time.Now),
 			todos.NewService(pool, time.Now),
 			workplan.NewService(pool, time.Now),
@@ -291,6 +300,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			financedesks.NewService(pool, time.Now),
 			fieldpages.NewService(pool, time.Now),
 			adminpanel.NewService(pool, time.Now),
+			profilepage.NewService(pool),
+			helpcontext.NewService(pool),
 		)
 	if cfg.GoSaves.ScheduleVisit || cfg.GoSaves.RescheduleVisit || cfg.GoSaves.CancelVisit || cfg.GoSaves.EditVisit ||
 		cfg.GoSaves.ScheduleTrainingPair || cfg.GoSaves.GroupReschedule || cfg.GoSaves.GroupCancel ||
@@ -327,6 +338,18 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			screenService.WithCompleteSave(save, logger)
 		}
 	}
+	if cfg.GoSaves.PLReview {
+		screenService.WithPLReviewSave(plreview.NewReviewService(pool, time.Now), logger)
+	}
+	exportsMgr := exports.NewManager(pool, time.Now)
+	fieldOpsSvc := fieldops.NewService(pool)
+	financeOpsSvc := financeops.NewService(pool)
+	workforceOpsSvc := workforceops.NewService(pool)
+	screenService.WithExports(exportsMgr).
+		WithOpsSaves(fieldOpsSvc, financeOpsSvc, workforceOpsSvc)
+	if cfg.GoSaves.SchoolActions {
+		screenService.WithSchoolDB(pool, time.Now)
+	}
 	mux.Handle(screensv1connect.NewHomeScreenServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewNavigationServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewSchoolDirectoryScreenServiceHandler(screenService, options...))
@@ -338,11 +361,22 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	mux.Handle(screensv1connect.NewPageScreenServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewPageDrawerServiceHandler(screenService, options...))
 	mux.Handle(screensv1connect.NewExportServiceHandler(screenService, options...))
+	exportsMgr.RegisterHTTP(mux, authenticator)
+	fieldOpsSvc.RegisterHTTP(mux, authenticator)
+	financeOpsSvc.RegisterHTTP(mux, authenticator)
+	workforceOpsSvc.RegisterHTTP(mux, authenticator)
 	mux.Handle(screensv1connect.NewNotificationCenterServiceHandler(notificationcenter.NewHandler(notificationcenter.NewService(pool, notificationcenter.EmailConfigured(nil)), logger), options...))
+	notificationcenter.RegisterPreferencesHTTP(mux, authenticator, pool, time.Now)
+	support.NewService(pool, notificationcenter.NewWriter(pool, time.Now), time.Now).Register(mux, authenticator)
+	messaging.NewNativeStore(pool, notificationcenter.NewWriter(pool, time.Now), time.Now).RegisterHTTP(mux, authenticator)
+	activities.NewBulkHTTPHandler(visitSave(cfg, pool, logger)).Register(mux, authenticator)
 	// Settings (/settings): the reader's own account, read through the
 	// sign-in grant, with the same two-step policy sign-in applies.
-	mux.Handle(screensv1connect.NewSettingsScreenServiceHandler(settingspage.NewHandler(settingspage.NewService(pool,
-		settingspage.Policy{RequiredForAll: cfg.SignIn.MFARequiredForAll, RequiredRoles: cfg.SignIn.MFARequiredRoles}, nil), logger), options...))
+	settingsFieldKey, _ := signin.ParseFieldKey(cfg.SignIn.FieldEncryptionKey)
+	settingsSvc := settingspage.NewService(pool,
+		settingspage.Policy{RequiredForAll: cfg.SignIn.MFARequiredForAll, RequiredRoles: cfg.SignIn.MFARequiredRoles}, nil)
+	mux.Handle(screensv1connect.NewSettingsScreenServiceHandler(settingspage.NewHandler(settingsSvc, logger), options...))
+	settingspage.RegisterHTTP(mux, authenticator, pool, settingsSvc, settingsFieldKey, time.Now)
 	// Edify Global's countries and their versioned settings
 	// (docs/migration/80 §8), from the Go-owned country_registry.
 	mux.Handle(countriesv1connect.NewCountryServiceHandler(countryconfig.NewService(pool,
@@ -351,9 +385,22 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		routeplan.RouterFor(cfg.Routing.Provider, cfg.Routing.OSRMURL, cfg.Routing.GoogleKey, cfg.Routing.DailyLimit, time.Now),
 		time.Now, logger).WithVerification(pool, routesSchemaReady(pool)), options...))
 	mux.Handle(messagingv1connect.NewMessagingServiceHandler(messaging.NewService(pool, time.Now, logger), options...))
+	mailer := loans.NewMailer(cfg.Loans)
 	clusterStore := clusterlead.NewStore(pool)
+	onboardBaseURL := cfg.ExistingAppURL
+	if onboardBaseURL == "" {
+		onboardBaseURL = cfg.SignIn.AppBaseURL
+	}
+	var onboarder clusterlead.Onboarder = clusterlead.NewHTTPOnboarder(cfg.ExistingAppURL)
+	if cfg.ExistingAppURL == "" {
+		directOnboard := clusterlead.NewDirectOnboarder(pool)
+		if mailer != nil {
+			directOnboard = directOnboard.WithMailer(mailAdapter{mailer}, onboardBaseURL)
+		}
+		onboarder = directOnboard
+	}
 	leadership := clusterlead.NewService(clusterStore, time.Now, clusterSchemaReady(pool), logger).
-		WithOnboarder(clusterlead.NewHTTPOnboarder(cfg.ExistingAppURL), cfg.ExistingAppURL)
+		WithOnboarder(onboarder, onboardBaseURL)
 	mux.Handle(clustersv1connect.NewClusterLeadershipServiceHandler(leadership, options...))
 	operations := clusterlead.NewOperations(leadership, clusterStore)
 	mux.Handle(clustersv1connect.NewClusterMobilizationServiceHandler(operations, options...))
@@ -371,19 +418,22 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		panic(err)
 	}
 	public.Register(mux)
-	mailer := loans.NewMailer(cfg.Loans)
 	public.RegisterLender(mux, mailer)
 	mux.Handle(loansv1connect.NewLoanReferralServiceHandler(
 		loans.NewService(loanStore, cfg.Loans, mailer, LoansSchemaReady(pool), logger, time.Now), options...,
 	))
-	// Loan origination and servicing. Money is posted to the existing loan
-	// ledger as the signed-in person; nothing here writes a balance.
-	lending := loans.NewLending(loanStore, loans.NewLedgerClient(cfg.ExistingAppURL), loanKeys, cfg.Loans, mailer,
+	// Loan origination and servicing: native Go ledger when Django is absent,
+	// or HTTP ledger relay when co-deployed with Django.
+	var loanLedger loans.Ledger = loans.NewLedgerClient(cfg.ExistingAppURL)
+	if cfg.ExistingAppURL == "" {
+		loanLedger = loans.NewNativeLedger(pool)
+	}
+	lending := loans.NewLending(loanStore, loanLedger, loanKeys, cfg.Loans, mailer,
 		loans.NewSMSProvider(cfg.Loans), LoansSchemaReady(pool), logger, time.Now)
 	public.RegisterSchool(mux, lending)
 	public.RegisterShare(mux)
 	mux.Handle(loansv1connect.NewLoanShareServiceHandler(loans.NewShareService(loanStore,
-		loans.NewLedgerClient(cfg.ExistingAppURL), cfg.Loans.PublicBaseURL, LoansSchemaReady(pool), logger, time.Now), options...))
+		loanLedger, cfg.Loans.PublicBaseURL, LoansSchemaReady(pool), logger, time.Now), options...))
 	mux.Handle(loansv1connect.NewLendingServiceHandler(loans.NewLendingService(lending), options...))
 	mux.Handle(loansv1connect.NewLoanFollowUpServiceHandler(loans.NewFollowUpService(lending), options...))
 	mux.Handle("POST /sms/delivery-report/{secret}", loanStore.DeliveryReports(cfg.Loans.SMSCallbackSecret, logger))
@@ -391,10 +441,15 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 }
 
 // visitSave is the Go visit save (docs/migration/27 §27.10), switched on by
-// EDIFY_GO_SAVES=schedule_visit only (development or staging, config.Load).
-// Its pricing is asked of, and settled by, the existing application.
+// EDIFY_GO_SAVES in development or staging. Uses native Go pricing and
+// notifications when Django is absent.
 func visitSave(cfg config.Config, pool *pgxpool.Pool, logger *slog.Logger) *activities.Service {
-	pricing := activities.NewHTTPPricing(cfg.ExistingAppURL, cfg.ClusterActions.InternalKey, nil)
+	var pricing activities.Pricing
+	if cfg.ExistingAppURL == "" {
+		pricing = activities.NewNativePricing(pool, notificationcenter.NewWriter(pool, time.Now))
+	} else {
+		pricing = activities.NewHTTPPricing(cfg.ExistingAppURL, cfg.ClusterActions.InternalKey, nil)
+	}
 	service, err := activities.NewService(pool, pricing, logger, time.Now)
 	if err != nil {
 		// Only a machine without the time zone database fails here: the
@@ -427,14 +482,15 @@ func signInHandler(cfg config.Config, pool *pgxpool.Pool, logger *slog.Logger) *
 	}
 	if relay := signin.NewHTTPRelay(cfg.ExistingAppURL, cfg.ClusterActions.InternalKey); relay != nil {
 		deps.Relay = relay
+	} else if direct := signin.NewDirectRelay(pool, notificationcenter.NewWriter(pool, time.Now)); direct != nil {
+		deps.Relay = direct.WithEnv(string(cfg.Env))
 	}
 	return signin.NewHandler(signin.NewService(deps), loans.NewLimiter(time.Now), cfg.Loans.TrustProxyHeaders, logger)
 }
 
 // accountsService assembles accounts: the existing records and rules, the
-// portal's mail provider, and the relay for what the existing application
-// still follows up (re-pricing after a role change, releasing a removed
-// organisation login).
+// portal's mail provider, and either the Django HTTP relay or direct native Go
+// notifications and day-pool repricing when Django is absent.
 func accountsService(cfg config.Config, pool *pgxpool.Pool, logger *slog.Logger) *accounts.Service {
 	deps := accounts.Deps{
 		Store: accounts.NewStore(pool), JWTSecret: []byte(cfg.JWTSecret), AppBaseURL: cfg.SignIn.AppBaseURL,
@@ -445,6 +501,8 @@ func accountsService(cfg config.Config, pool *pgxpool.Pool, logger *slog.Logger)
 	}
 	if relay := accounts.NewHTTPRelay(cfg.ExistingAppURL, cfg.ClusterActions.InternalKey); relay != nil {
 		deps.Relay = relay
+	} else if direct := accounts.NewDirectRelay(pool, notificationcenter.NewWriter(pool, time.Now)); direct != nil {
+		deps.Relay = direct.WithCostSettler(activities.NewNativePricing(pool, notificationcenter.NewWriter(pool, time.Now)))
 	}
 	return accounts.NewService(deps)
 }
@@ -500,11 +558,17 @@ func clusterActionConfig(cfg config.Config) clusterlead.ActionConfig {
 }
 
 // ClusterActionFollowUp is the register's follow-up worker, for main to run.
+// When EDIFY_EXISTING_APP_URL is unset (Django absent), notices are delivered
+// directly to PostgreSQL through gateway_notifications.deliver (M11).
 func ClusterActionFollowUp(cfg config.Config, pool *pgxpool.Pool, logger *slog.Logger) (*clusterlead.ActionService, clusterlead.NoticeSender, func(context.Context) error) {
 	store := clusterlead.NewStore(pool)
 	lead := clusterlead.NewService(store, time.Now, nil, logger)
 	actions := clusterlead.NewActions(clusterlead.NewOperations(lead, store), store, clusterActionConfig(cfg))
-	return actions, clusterlead.NewHTTPNoticeSender(cfg.ExistingAppURL, cfg.ClusterActions.InternalKey), clusterSchemaReady(pool)
+	var sender clusterlead.NoticeSender = clusterlead.NewHTTPNoticeSender(cfg.ExistingAppURL, cfg.ClusterActions.InternalKey)
+	if sender == nil && cfg.ExistingAppURL == "" {
+		sender = clusterlead.NewDirectNoticeSender(pool)
+	}
+	return actions, sender, clusterSchemaReady(pool)
 }
 
 // poolStat is the pool's figures for Platform Health.

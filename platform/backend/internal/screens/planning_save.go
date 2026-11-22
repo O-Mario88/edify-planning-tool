@@ -62,19 +62,37 @@ func (s *Service) scheduleInGo(
 	ctx context.Context, message *screensv1.SavePlanningDrawerRequest,
 ) (*screensv1.SavePlanningDrawerResponse, bool, error) {
 	principal, ok := auth.PrincipalFrom(ctx)
-	if !ok || s.visits == nil || s.existingApp == nil || message.GetKind() != scheduleKind ||
+	if !ok || s.visits == nil || message.GetKind() != scheduleKind ||
 		principal.InActingAppointment {
 		return nil, false, nil
 	}
-	var answer structpb.Struct
-	path := schoolPath(message.GetSchoolId(), "planning/"+scheduleKind) + "?form_only=1"
-	if err := s.existingApp.Post(ctx, path, message, &answer); err != nil {
-		// The drawer's own refusal (_open): the same the forwarded save meets.
-		return nil, true, err
-	}
-	form, origin, ok := formOf(&answer)
-	if !ok {
-		return nil, false, nil
+	var form url.Values
+	var origin activities.Origin
+	if s.existingApp != nil {
+		var answer structpb.Struct
+		path := schoolPath(message.GetSchoolId(), "planning/"+scheduleKind) + "?form_only=1"
+		if err := s.existingApp.Post(ctx, path, message, &answer); err != nil {
+			// The drawer's own refusal (_open): the same the forwarded save meets.
+			return nil, true, err
+		}
+		var okForm bool
+		form, origin, okForm = formOf(&answer)
+		if !okForm {
+			return nil, false, nil
+		}
+	} else {
+		form = url.Values{}
+		if sid := strings.TrimSpace(message.GetSchoolId()); sid != "" {
+			form.Set("school_id", sid)
+		}
+		for name, val := range message.GetValues() {
+			if n := strings.TrimSpace(name); n != "" {
+				form.Add(n, val)
+			}
+		}
+		if form.Get("require_catalogue") == "" {
+			form.Set("require_catalogue", "yes")
+		}
 	}
 	req, taken := activities.RequestFromForm(form)
 	if !taken || !s.switchedOn(req) {

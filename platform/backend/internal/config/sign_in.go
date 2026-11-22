@@ -56,6 +56,9 @@ func loadSignIn(env Environment, getenv func(string) string, existingApp string)
 			out.MFARequiredRoles = append(out.MFARequiredRoles, role)
 		}
 	}
+	if env == Staging && out.FieldEncryptionKey == "" {
+		return SignIn{}, fmt.Errorf("config: %s is required in staging", envFieldKey)
+	}
 	if out.FieldEncryptionKey != "" && !isFieldKey(out.FieldEncryptionKey) {
 		return SignIn{}, fmt.Errorf("config: %s must be 32 bytes (64 hex characters or base64)", envFieldKey)
 	}

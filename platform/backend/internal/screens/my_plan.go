@@ -10,6 +10,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 )
 
 // My Plan, read by the existing application's own page (apps.mobile_feed
@@ -49,13 +50,21 @@ func isPlainIDList(value string) bool {
 	return true
 }
 
-// GetMyPlan returns My Plan as the web draws it for the reader.
+// GetMyPlan returns My Plan natively from Go's myplan page builder.
 func (s *Service) GetMyPlan(
 	ctx context.Context, request *connect.Request[screensv1.GetMyPlanRequest],
 ) (*connect.Response[screensv1.GetMyPlanResponse], error) {
 	query, err := pageQuery(ctx, request.Msg.GetQuery())
 	if err != nil {
 		return nil, err
+	}
+	if p, ok := auth.PrincipalFrom(ctx); ok {
+		if resp, served, err := s.getMyPlanInGo(ctx, p, query); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(resp), nil
+		}
 	}
 	path := pathMyPlan
 	if len(query) > 0 {

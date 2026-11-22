@@ -9,10 +9,12 @@ WORKDIR /src/backend
 COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 COPY backend/ ./
-RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/gateway ./cmd/gateway
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/gateway ./cmd/gateway \
+ && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/scheduler ./cmd/scheduler
 
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=build /out/gateway /gateway
+COPY --from=build /out/scheduler /scheduler
 USER nonroot:nonroot
 ENV EDIFY_HTTP_ADDR=0.0.0.0:8090
 EXPOSE 8090

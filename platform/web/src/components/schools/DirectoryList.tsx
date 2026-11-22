@@ -9,8 +9,9 @@
  * gateway's.
  */
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 
+import { bulkAssignClusterAction, bulkAssignProjectAction } from '@/app/(app)/schools/actions';
 import type { DirectorySchool } from '@/gen/edify/screens/v1/school_directory_pb';
 
 import { Badge } from '../blocks/Badge';
@@ -61,7 +62,7 @@ function Row({ school, props, open, onToggle, picked, onPick }: {
     label: action.label,
     enabled: action.enabled,
     reason: action.reason,
-    href: `${props.existingWebUrl}/schools?q=${encodeURIComponent(school.schoolId)}`,
+    href: `/schools/${encodeURIComponent(school.schoolId)}`,
   }));
   return (
     <li className="border-b border-[var(--edify-table-divider)] bg-[var(--edify-surface)] last:border-b-0" data-row={school.schoolId}>
@@ -148,7 +149,29 @@ function Row({ school, props, open, onToggle, picked, onPick }: {
 export function DirectoryList(props: DirectoryListProps) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [picked, setPicked] = useState<readonly string[]>([]);
+  const [bulkMode, setBulkMode] = useState<'cluster' | 'project' | null>(null);
+  const [bulkTarget, setBulkTarget] = useState('');
+  const [bulkMsg, setBulkMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [pending, startTransition] = useTransition();
   const allPicked = props.schools.length > 0 && picked.length === props.schools.length;
+
+  function applyBulk() {
+    if (!bulkMode || !picked.length || !bulkTarget.trim()) return;
+    setBulkMsg(null);
+    startTransition(async () => {
+      const res =
+        bulkMode === 'cluster'
+          ? await bulkAssignClusterAction({ schoolIds: picked, clusterId: bulkTarget })
+          : await bulkAssignProjectAction({ schoolIds: picked, projectId: bulkTarget });
+      setBulkMsg({ ok: res.ok, text: res.message });
+      if (res.ok) {
+        setBulkMode(null);
+        setBulkTarget('');
+        setPicked([]);
+      }
+    });
+  }
+
   return (
     <div data-block="table">
       <div className="flex min-h-[53px] flex-wrap items-center gap-3 bg-[color-mix(in_oklab,var(--edify-surface-muted)_64%,transparent)] px-4 py-2.5">
@@ -164,7 +187,66 @@ export function DirectoryList(props: DirectoryListProps) {
           </label>
         ) : null}
         {picked.length ? (
-          <span aria-live="polite" className="font-semibold">{picked.length} selected</span>
+          <>
+            <span aria-live="polite" className="font-semibold">{picked.length} selected</span>
+            <button
+              type="button"
+              onClick={() => {
+                setBulkMode('cluster');
+                setBulkMsg(null);
+              }}
+              className="inline-flex h-7 items-center rounded-[var(--radius-control)] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-2.5 text-[12px] font-semibold hover:bg-[var(--brand-primary-soft)]"
+            >
+              Assign to Cluster
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setBulkMode('project');
+                setBulkMsg(null);
+              }}
+              className="inline-flex h-7 items-center rounded-[var(--radius-control)] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-2.5 text-[12px] font-semibold hover:bg-[var(--brand-primary-soft)]"
+            >
+              Add to Project
+            </button>
+          </>
+        ) : null}
+        {bulkMode && picked.length ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="text"
+              value={bulkTarget}
+              onChange={(e) => setBulkTarget(e.target.value)}
+              placeholder={bulkMode === 'cluster' ? 'Cluster ID' : 'Project ID'}
+              className="h-7 rounded-[var(--radius-control)] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-2 text-[12px]"
+            />
+            <button
+              type="button"
+              disabled={pending}
+              onClick={applyBulk}
+              className="inline-flex h-7 items-center rounded-[var(--radius-control)] bg-[var(--brand-primary)] px-2.5 text-[12px] font-semibold text-white"
+            >
+              {pending ? 'Saving…' : 'Confirm'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setBulkMode(null);
+                setBulkTarget('');
+              }}
+              className="text-[12px] font-semibold text-[var(--edify-text-muted)]"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : null}
+        {bulkMsg ? (
+          <span
+            role="status"
+            className={`text-[12px] font-semibold ${bulkMsg.ok ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}
+          >
+            {bulkMsg.text}
+          </span>
         ) : null}
         <span className="ml-auto text-[length:var(--edify-text-micro-size)] font-semibold uppercase text-[var(--edify-text-muted)]">{props.listed}</span>
       </div>

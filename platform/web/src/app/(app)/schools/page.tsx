@@ -48,13 +48,12 @@ export default async function SchoolDirectoryPage({ searchParams }: { searchPara
   const disabled = disabledFilters(filters);
   const tabs = directoryTabs(answer, query);
   const pager = directoryPager(answer, query);
-  const exportQuery = new URLSearchParams({ ...(query as Record<string, string>), export: 'xlsx' }).toString();
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-4 px-4 pb-5 pt-5 sm:px-6">
       <PageHeader
         header={directoryHeader(answer)}
-        hrefOf={(action) => (action.key === 'export' ? `${existingWebUrl}${DIRECTORY_PATH}?${exportQuery}` : `${existingWebUrl}${DIRECTORY_PATH}`)}
+        hrefOf={(action) => (action.key === 'export' ? '/exports/school_directory' : DIRECTORY_PATH)}
       />
       <FilterBar
         action={DIRECTORY_PATH}

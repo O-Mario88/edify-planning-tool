@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
@@ -12,6 +13,36 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/visitgate"
 )
+
+// ReadinessLine is one row of Planned and remaining.
+type ReadinessLine struct {
+	Target, Planned, Remaining, Over, Percent int
+	Required                                  bool
+	Tone                                      string
+}
+
+// OwnReadiness is one planner's Readiness figures (planningmonitor.OwnReadiness).
+type OwnReadiness struct {
+	Score, SchoolsTotal                                      int
+	StaffVisits, StaffTrainings, PartnerVisits               ReadinessLine
+	PartnerTrainings, PartnerAssignment, ProjectAssignment   ReadinessLine
+	PartnerBeyondStaff, PartnerCoreSchools                   int
+	SchoolsStaffScheduled, SchoolsToRecruit, PortfolioVisits int
+	ClientStaffAndPartner, CoreVisitsOver                    int
+	ProjectCeiling, ProjectAdded, ProjectAssigned            int
+	PartnerVisitsAwaiting                                    int
+}
+
+// ReadinessReader reads a planner's own Readiness summary (wired via
+// planningmonitor.OwnReadiness in server.go).
+type ReadinessReader func(ctx context.Context, db schooldirectory.Querier, p auth.Principal, fy string, now time.Time) (*OwnReadiness, bool, error)
+
+// WithReadiness attaches the personal readiness reader so My Plan renders
+// Planned and remaining for planners who hold schools, clusters, or project places.
+func (s *Service) WithReadiness(read ReadinessReader) *Service {
+	s.readiness = read
+	return s
+}
 
 // ReadinessRules are what Planned and remaining's lists are named by
 // (planning_monitor.GAP_LABELS: the schools behind each figure).
@@ -136,6 +167,106 @@ func readinessTable(target, planned int, fy string, request Query) *screensv1.Pa
 			{Label: "Remaining", Numeric: true}, {Label: "Share", Numeric: true},
 		},
 		Rows: rows, Footnote: footnote,
+	}}}
+}
+
+// fullReadinessTable renders Planned and remaining (partials/my_plan/readiness.html)
+// from a planner's real OwnReadiness figures.
+func fullReadinessTable(r *OwnReadiness, fy string, request Query) *screensv1.PageBlock {
+	lineRow := func(label, note string, l ReadinessLine, plannedKey, targetKey, leftKey, targetHref, leftHref string) *screensv1.PageRow {
+		title := label
+		if note != "" {
+			title += " (" + note + ")"
+		}
+		plannedCell := readinessCell(l.Planned, plannedKey, "", request)
+		if l.Over > 0 {
+			plannedCell.Text += " (" + comma(l.Over) + " over)"
+		}
+		var targetCell *screensv1.PageCell
+		if l.Required {
+			if targetHref != "" {
+				targetCell = &screensv1.PageCell{Text: comma(l.Target), Href: targetHref}
+			} else {
+				targetCell = readinessCell(l.Target, targetKey, "", request)
+			}
+		} else {
+			targetCell = &screensv1.PageCell{Text: "None required"}
+		}
+		var remCell *screensv1.PageCell
+		if leftHref != "" && l.Remaining > 0 {
+			remCell = &screensv1.PageCell{Text: comma(l.Remaining), Href: leftHref, Tone: "warning"}
+		} else {
+			remCell = readinessCell(l.Remaining, leftKey, "warning", request)
+		}
+		return &screensv1.PageRow{Cells: []*screensv1.PageCell{
+			{Text: title}, plannedCell, targetCell, remCell,
+			{Text: fmt.Sprintf("%d%%", l.Percent), Tone: l.Tone},
+		}}
+	}
+	rows := []*screensv1.PageRow{
+		lineRow("Your visits", "", r.StaffVisits, "staff_scheduled", "staff_queue", "staff_visits_left", "", ""),
+		lineRow("Schools in training", "in-school and group trainings", r.StaffTrainings, "training", "training_due", "no_training", "", ""),
+		lineRow("Partner visits", "dated by Partners", r.PartnerVisits, "partner_dated", "partner_queue", "partner_visits_left", "", ""),
+		lineRow("Core partner trainings", "", r.PartnerTrainings, "core_partner_trainings", "core", "core_partner_trainings_left", "", ""),
+		lineRow("Schools assigned to a Partner", "", r.PartnerAssignment, "with_partner", "partner_queue", "partner_left", "", ""),
+		lineRow("Schools assigned to a project", "those you added, of your project ceilings put together",
+			r.ProjectAssignment, "project_added", "", "", "/projects/monitoring#my-allocations-title", "/projects/monitoring#my-allocations-title"),
+	}
+	var b strings.Builder
+	t := comma(r.StaffVisits.Target)
+	b.WriteString("Your target is " + t + " visit" + pluralS(r.StaffVisits.Target) + " a year")
+	if r.PartnerBeyondStaff > 0 {
+		verb := "are"
+		if r.PartnerBeyondStaff == 1 {
+			verb = "is"
+		}
+		b.WriteString("; once you have planned them, " + comma(r.PartnerBeyondStaff) + " of your Client, Core Trained and Core Graduate schools " + verb + " the Partner's to visit")
+	}
+	if r.PartnerCoreSchools > 0 {
+		b.WriteString("; the Partner also takes two visits and two trainings at each of your " + comma(r.PartnerCoreSchools) + " Core school" + pluralS(r.PartnerCoreSchools))
+	}
+	b.WriteString(". You have scheduled visits at " + comma(r.SchoolsStaffScheduled) + " of your schools yourself. ")
+	if r.SchoolsToRecruit > 0 {
+		b.WriteString("Your schools take " + comma(r.PortfolioVisits) + " of those " + t + " visits: recruit " + comma(r.SchoolsToRecruit) + " more school" + pluralS(r.SchoolsToRecruit) + " to meet your target. ")
+	}
+	if r.ProjectAssignment.Required {
+		remVerb := ""
+		if r.ProjectAssignment.Remaining == 1 {
+			remVerb = "s"
+		}
+		b.WriteString("Your project ceilings add up to " + comma(r.ProjectCeiling) + " school" + pluralS(r.ProjectCeiling) +
+			"; you have added " + comma(r.ProjectAdded) + ", so " + comma(r.ProjectAssignment.Remaining) + " remain" + remVerb + " to reach them")
+		if r.ProjectAssigned > 0 {
+			isAre, itThem := "are", "them"
+			if r.ProjectAssigned == 1 {
+				isAre, itThem = "is", "it"
+			}
+			b.WriteString(" (" + comma(r.ProjectAssigned) + " of the schools you hold " + isAre + " in a project, whoever added " + itThem + ")")
+		}
+		b.WriteString(". ")
+	} else {
+		b.WriteString("No project ceiling is set for you, so no project target is asked of you")
+		if r.ProjectAdded > 0 {
+			b.WriteString("; you have added " + comma(r.ProjectAdded) + " school" + pluralS(r.ProjectAdded) + " to projects")
+		}
+		b.WriteString(". ")
+	}
+	b.WriteString("Readiness is the average of your visits, schools in training, schools with a Partner and schools added to projects.")
+	if r.PartnerVisitsAwaiting > 0 {
+		isAre := "are"
+		if r.PartnerVisitsAwaiting == 1 {
+			isAre = "is"
+		}
+		b.WriteString(" " + comma(r.PartnerVisitsAwaiting) + " school" + pluralS(r.PartnerVisitsAwaiting) + " handed over " + isAre + " awaiting the Partner's date.")
+	}
+	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{
+		Title:    closedschools.PyCollapse("Planned and remaining · FY " + fy),
+		Subtitle: fmt.Sprintf("Readiness %d%% · %s schools held", r.Score, comma(r.SchoolsTotal)),
+		Columns: []*screensv1.PageColumn{
+			{Label: "Part of the plan"}, {Label: "Planned", Numeric: true}, {Label: "Target", Numeric: true},
+			{Label: "Remaining", Numeric: true}, {Label: "Share", Numeric: true},
+		},
+		Rows: rows, Footnote: b.String(),
 	}}}
 }
 

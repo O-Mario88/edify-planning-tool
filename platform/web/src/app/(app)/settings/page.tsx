@@ -4,11 +4,11 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { SettingsScreenService } from '@/gen/edify/screens/v1/settings_pb';
-import type { GetSettingsResponse, TwoStepVerification } from '@/gen/edify/screens/v1/settings_pb';
-import { Badge } from '@/components/blocks/Badge';
+import type { GetSettingsResponse } from '@/gen/edify/screens/v1/settings_pb';
 import { Card } from '@/components/blocks/Card';
 import { NotMovedYet } from '@/components/page/NotMovedYet';
 import { AppearanceChoice } from '@/components/settings/AppearanceChoice';
+import { ChangePasswordForm, TwoStepForm } from '@/components/settings/SecurityForms';
 import { asReader } from '@/lib/auth';
 import { environment } from '@/lib/environment';
 import { gatewayClient, isNotFound, isUnavailable } from '@/lib/gateway';
@@ -18,8 +18,6 @@ export const metadata: Metadata = { title: 'Settings · Edify' };
 
 const BUTTON =
   'inline-flex h-8 items-center rounded-[var(--radius-control)] border border-[var(--edify-border)] px-3 text-[length:var(--edify-text-label-size)] font-semibold text-[var(--edify-text)] hover:bg-[var(--edify-surface-muted)]';
-const PRIMARY =
-  'inline-flex h-8 items-center rounded-[var(--radius-control)] bg-[var(--brand-primary)] px-3 text-[length:var(--edify-text-label-size)] font-semibold text-white';
 const LINK = 'font-bold text-[var(--brand-primary-text)] hover:underline';
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -37,70 +35,9 @@ function Muted({ children }: { children: ReactNode }) {
   return <p className="text-[var(--edify-text-muted)]">{children}</p>;
 }
 
-function TwoStep({ two, existingWebUrl }: { two: TwoStepVerification; existingWebUrl: string }) {
-  return (
-    <Card label="Two-step verification">
-      <div className="space-y-3">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-[length:var(--edify-text-heading-size)] font-semibold">Two-step verification</h2>
-            <p className="mt-1 text-[var(--edify-text-muted)]">
-              After your password, we send a single-use code to confirm it is you. It means a stolen password on its own is not enough to reach your
-              workspace.
-            </p>
-          </div>
-          <Badge tone={two.inForce ? 'success' : 'neutral'}>{two.inForce ? 'On' : 'Off'}</Badge>
-        </div>
-        {two.requiredByPolicy ? (
-          <p className="text-[length:var(--edify-text-label-size)] text-[var(--edify-text-muted)]">
-            Your organisation requires two-step verification, so this cannot be turned off. You can still choose where the code is sent.
-          </p>
-        ) : null}
-        {two.inForce ? (
-          <div>
-            <p className="text-[length:var(--edify-text-label-size)] font-semibold">Get my code from</p>
-            <ul className="mt-2 space-y-2">
-              {channelLines(two, existingWebUrl).map((line) => (
-                <li key={line.key} className={`flex items-start gap-2.5 ${line.available ? '' : 'opacity-60'}`} data-channel={line.key}>
-                  <span
-                    aria-hidden
-                    className={`mt-1 h-3.5 w-3.5 shrink-0 rounded-full border ${line.chosen ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]' : 'border-[var(--edify-border-strong)]'}`}
-                  />
-                  <span>
-                    <span className="font-semibold">{line.label}</span>
-                    {line.chosen ? <span className="sr-only"> (in use)</span> : null}
-                    <span className="block text-[length:var(--edify-text-label-size)] text-[var(--edify-text-muted)]">
-                      {line.note}
-                      {line.link ? (
-                        <>
-                          {' '}
-                          <a href={line.link.href} className="underline">
-                            {line.link.label}
-                          </a>
-                        </>
-                      ) : null}
-                    </span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-        <p className="text-[length:var(--edify-text-label-size)] text-[var(--edify-text-muted)]">
-          Changing two-step verification has not moved to the new web app yet; it opens in the existing web app.
-        </p>
-        <a href={`${existingWebUrl}${SETTINGS_PATH}`} className={PRIMARY}>
-          Change two-step verification
-        </a>
-      </div>
-    </Card>
-  );
-}
-
 /*
- * Settings, drawn from the gateway's answer, which Go reads
- * (SettingsScreenService): account security, programme master data,
- * two-step verification, appearance, notifications and the session.
+ * Settings, drawn from the gateway's answer (SettingsScreenService) and saved
+ * directly through Go AccountService.SetNewPassword and POST /api/v1/settings/two-step.
  */
 export default async function SettingsPage() {
   const existingWebUrl = environment().existingWebUrl;
@@ -114,6 +51,10 @@ export default async function SettingsPage() {
     }
   });
   if (answer === null) return <NotMovedYet href={`${existingWebUrl}${SETTINGS_PATH}`} />;
+
+  const two = answer.twoStep;
+  const initialChannel: 'email' | 'sms' | 'app' =
+    two?.channel === 'sms' ? 'sms' : two?.channel === 'app' ? 'app' : 'email';
 
   return (
     <div className="mx-auto max-w-[900px] space-y-5 px-4 pb-24 pt-5 sm:px-6 lg:pb-8" data-page={SETTINGS_PATH}>
@@ -136,12 +77,8 @@ export default async function SettingsPage() {
           <Link href="/profile" className={BUTTON}>
             View profile
           </Link>
-          {answer.mustChangePassword ? (
-            <a href={`${existingWebUrl}/change-password`} className={PRIMARY}>
-              Change password
-            </a>
-          ) : null}
         </div>
+        {answer.mustChangePassword ? <ChangePasswordForm mustChange={answer.mustChangePassword} /> : null}
       </Section>
 
       <Section title="Programme master data">
@@ -151,7 +88,14 @@ export default async function SettingsPage() {
         </Link>
       </Section>
 
-      {answer.twoStep ? <TwoStep two={answer.twoStep} existingWebUrl={existingWebUrl} /> : null}
+      {two ? (
+        <TwoStepForm
+          initialInForce={two.inForce}
+          requiredByPolicy={two.requiredByPolicy}
+          initialChannel={initialChannel}
+          channels={channelLines(two)}
+        />
+      ) : null}
 
       <Section title="Appearance">
         <Muted>Choose the workspace that best suits your environment. Your preference is stored on this device.</Muted>

@@ -38,14 +38,15 @@ export function messagesRequest(query: MessagesQuery): MessageInitShape<typeof L
   return { tab: query.tab ?? '', q: query.q ?? '', sort: query.sort ?? '', page: query.page ?? '', thread: query.thread ?? '' };
 }
 
-/** The header as the answer words it, with the template's two controls. */
-export function messagesHeader(answer: ListThreadsResponse, existingWebUrl: string): PageHeader {
+/** The header as the answer words it, with native Next.js controls (Step 3C). */
+export function messagesHeader(answer: ListThreadsResponse, _existingWebUrl = ''): PageHeader {
+  void _existingWebUrl;
   return create(PageHeaderSchema, {
     eyebrow: answer.eyebrow,
     title: answer.title,
     description: answer.description,
     actions: [
-      { key: 'compose', label: 'New Message', primary: true, enabled: true, href: `${existingWebUrl}${MESSAGES_PATH}/new` },
+      { key: 'compose', label: 'New Message', primary: true, enabled: true, href: `${MESSAGES_PATH}?compose=1` },
       { key: 'settings', label: 'Message settings', enabled: true, href: '/settings' },
     ],
   });
@@ -108,7 +109,8 @@ export function contextTone(tone: string): string {
   }
 }
 
-/** Where the open conversation is read and answered: the existing web app, which marks it read. */
-export function conversationHref(existingWebUrl: string, threadId: string): string {
-  return `${existingWebUrl}${MESSAGES_PATH}?thread=${encodeURIComponent(threadId)}`;
+/** Conversations open natively in the Next.js web app (Step 3C). */
+export function conversationHref(_existingWebUrl: string, threadId: string): string {
+  void _existingWebUrl;
+  return `${MESSAGES_PATH}?thread=${encodeURIComponent(threadId)}`;
 }

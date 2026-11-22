@@ -163,10 +163,10 @@ func VerifyTOTP(secret, submitted string, now time.Time) bool {
 }
 
 // Seal encrypts plain in the same "v1:<iv>:<tag>:<ciphertext>" AES-256-GCM
-// format Open decrypts. When no FieldKey is configured it returns plain as-is.
+// format Open decrypts. Refuses to write plaintext when no FieldKey is set.
 func (k FieldKey) Seal(plain string) (string, error) {
 	if len(k) == 0 {
-		return plain, nil
+		return "", errNoFieldKey
 	}
 	block, err := aes.NewCipher(k)
 	if err != nil {

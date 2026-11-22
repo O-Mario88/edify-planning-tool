@@ -66,7 +66,7 @@ services:
         scope: RUN_TIME
         value: ${APP_URL}
       - key: EDIFY_GO_SAVES
-        value: schedule_visit,reschedule_visit,cancel_visit,edit_visit,schedule_training_pair,group_reschedule,group_cancel,schedule_group_training,schedule_cluster_meeting,complete_visit,pl_review
+        value: schedule_visit,reschedule_visit,cancel_visit,edit_visit,schedule_training_pair,group_reschedule,group_cancel,schedule_group_training,schedule_cluster_meeting,complete_visit,pl_review,school_actions
       - key: EDIFY_DATABASE_URL
         scope: RUN_TIME
         type: SECRET

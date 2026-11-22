@@ -21,8 +21,20 @@ const ICON_TONE: Readonly<Record<string, string>> = {
   neutral: 'border-[var(--edify-border)] bg-[var(--edify-surface-muted)] text-[var(--edify-text-muted)]',
 };
 
+function resolveTargetHref(targetRoute: string, existingWebUrl: string): string {
+  if (!targetRoute) return '';
+  if (targetRoute.startsWith('http://') || targetRoute.startsWith('https://')) return targetRoute;
+  // When Django is absent (cutover/staging), stay inside the Next.js web app.
+  // When existingWebUrl is configured (hybrid mode), open notification targets
+  // on the existing application so unported pages (e.g. /strategic-priorities,
+  // /hr/performance-cycle) remain reachable.
+  if (!existingWebUrl) return targetRoute;
+  return `${existingWebUrl}${targetRoute}`;
+}
+
 function Row({ item, existingWebUrl }: { item: NotificationItem; existingWebUrl: string }) {
   const tone = priorityTone(item.priority);
+  const href = resolveTargetHref(item.targetRoute, existingWebUrl);
   return (
     <li
       data-notification={item.id}
@@ -54,9 +66,9 @@ function Row({ item, existingWebUrl }: { item: NotificationItem; existingWebUrl:
         </div>
       </div>
       <div className="flex w-full shrink-0 flex-row-reverse flex-wrap items-center justify-between gap-2.5 pl-[3.25rem] sm:w-auto sm:flex-col sm:flex-nowrap sm:items-end sm:justify-start sm:pl-0">
-        {item.targetRoute ? (
+        {href ? (
           <a
-            href={`${existingWebUrl}${item.targetRoute}`}
+            href={href}
             className="flex h-8 items-center justify-center whitespace-nowrap rounded-[var(--radius-control)] bg-[var(--brand-primary)] px-4 text-[12px] font-bold uppercase tracking-wider text-white shadow-sm"
           >
             {item.actionLabel}

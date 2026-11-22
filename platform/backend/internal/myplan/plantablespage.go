@@ -231,7 +231,7 @@ func groupTableCells(r *planRow) []*screensv1.PageCell {
 
 // planTablesBlocks are the four always-drawn tables, then the Core tables
 // when there is Core work, in the page's order.
-func planTablesBlocks(t PlanTablesResult, p Period) []*screensv1.PageBlock {
+func planTablesBlocks(t PlanTablesResult, p Period, clusters []clusterPlanRow) []*screensv1.PageBlock {
 	words := p.Words()
 	visitColumns := []string{"School ID", "School Name", "District", "District Type", "Activity", "Planned Date",
 		"Completed Date", "Executor", "Purpose of Visit", "Focus Intervention", "Cost", "Budget status",
@@ -285,7 +285,10 @@ func planTablesBlocks(t PlanTablesResult, p Period) []*screensv1.PageBlock {
 			"Planned Date", "Completed Date", "Executor", "Purpose (Meeting Topic)", "SSA Intervention",
 			"Participants", "Cost", "Budget status", "Verification", "Salesforce ID", "Status", "Actions"}, rows))
 	}
-	if len(t.core) > 0 {
+	if cb := clusterPlanningBlock(clusters); cb != nil {
+		blocks = append(blocks, cb)
+	}
+	if len(t.core) > 0 || len(t.coreTrainings) > 0 {
 		blocks = append(blocks, coreBlocks(t, words, visitColumns)...)
 	}
 	return append(blocks, programmeBlocks(t)...)
@@ -339,8 +342,7 @@ func programmeBlocks(t PlanTablesResult) []*screensv1.PageBlock {
 	return blocks
 }
 
-// coreBlocks are the Core School Visits and (empty) Core School Trainings
-// tables.
+// coreBlocks are the Core School Visits and Core School Trainings tables.
 func coreBlocks(t PlanTablesResult, words string, visitColumns []string) []*screensv1.PageBlock {
 	var rows []*screensv1.PageRow
 	done := 0
@@ -352,16 +354,34 @@ func coreBlocks(t PlanTablesResult, words string, visitColumns []string) []*scre
 	}
 	coreColumns := append([]string{}, visitColumns...)
 	coreColumns[9] = "SSA Intervention"
+	trainingsBlock := &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{
+		Title: "Core School Trainings Planned for " + words, Subtitle: "0 0 completed",
+		EmptyMessage: "No core school trainings planned for this period.",
+		EmptyAction:  &screensv1.PageAction{Key: "empty", Label: "Open Core Schools", Enabled: true, Href: "/core-schools"},
+	}}}
+	if len(t.coreTrainings) > 0 {
+		var tRows []*screensv1.PageRow
+		tDone := 0
+		for _, r := range t.coreTrainings {
+			if in(rules.Plan.CompletedWorkStatuses, r.a.status) {
+				tDone++
+			}
+			tRows = append(tRows, pageRow(r, r.clusterName, append(trainingTableCells(r), tailCells(r)...)))
+		}
+		trainingsBlock = &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{
+			Title: "Core School Trainings Planned for " + words, Subtitle: fmt.Sprintf("%d %d completed", len(tRows), tDone),
+			Columns: columns("School ID", "School / Cluster", "District", "District Type", "Cluster Planned From",
+				"Executor", "Training Name", "Planned Date", "Completed Date", "SSA Intervention", "Participants",
+				"Mode of Delivery", "Cost", "Budget status", "Verification", "Salesforce ID", "Status", "Actions"),
+			Rows: tRows,
+		}}}
+	}
 	return []*screensv1.PageBlock{
 		&screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{
 			Title: "Core School Visits Planned for " + words, Subtitle: fmt.Sprintf("%d %d completed", len(rows), done),
 			Columns: columns(coreColumns...), Rows: rows,
 		}}},
-		&screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{
-			Title: "Core School Trainings Planned for " + words, Subtitle: "0 0 completed",
-			EmptyMessage: "No core school trainings planned for this period.",
-			EmptyAction:  &screensv1.PageAction{Key: "empty", Label: "Open Core Schools", Enabled: true, Href: "/core-schools"},
-		}}},
+		trainingsBlock,
 	}
 }
 

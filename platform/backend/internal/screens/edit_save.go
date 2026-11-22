@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"net/url"
 	"regexp"
 
 	"connectrpc.com/connect"
@@ -47,20 +48,29 @@ func (s *Service) editInGo(
 ) (*screensv1.SaveDrawerResponse, bool, error) {
 	principal, ok := auth.PrincipalFrom(ctx)
 	drawer := editDrawer.FindStringSubmatch(message.GetPath())
-	if !ok || s.edits == nil || s.existingApp == nil || drawer == nil || principal.InActingAppointment {
+	if !ok || s.edits == nil || drawer == nil || principal.InActingAppointment {
 		return nil, false, nil
 	}
-	var answer structpb.Struct
-	if err := s.existingApp.Post(ctx, pathPageDrawer+"?form_only=1", message, &answer); err != nil {
-		// The drawer's own refusal: the same the forwarded save meets.
-		return nil, true, err
+	var form url.Values
+	var origin activities.Origin
+	activityID := drawer[1]
+	if s.existingApp != nil {
+		var answer structpb.Struct
+		if err := s.existingApp.Post(ctx, pathPageDrawer+"?form_only=1", message, &answer); err != nil {
+			// The drawer's own refusal: the same the forwarded save meets.
+			return nil, true, err
+		}
+		var okForm bool
+		form, origin, okForm = formOf(&answer)
+		save := editSave.FindStringSubmatch(answer.GetFields()["save"].GetStringValue())
+		if !okForm || save == nil || save[1] != drawer[1] {
+			return nil, false, nil
+		}
+		activityID = save[1]
+	} else {
+		form = directDrawerForm(message)
 	}
-	form, origin, ok := formOf(&answer)
-	save := editSave.FindStringSubmatch(answer.GetFields()["save"].GetStringValue())
-	if !ok || save == nil || save[1] != drawer[1] {
-		return nil, false, nil
-	}
-	req, taken := activities.EditRequestFromForm(save[1], form)
+	req, taken := activities.EditRequestFromForm(activityID, form)
 	if !taken {
 		return nil, false, nil
 	}
