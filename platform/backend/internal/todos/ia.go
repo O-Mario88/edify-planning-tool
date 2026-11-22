@@ -318,7 +318,11 @@ WHERE `+reach+` AND s.operational_status = ANY(`+ops+`) AND s.school_type = ANY(
 	if missing == 0 {
 		return nil, nil
 	}
-	return []todo{{ID: "coverage-missing-training-" + fy, Title: "Review Schools with No Cluster Training or Meeting Planned", Category: "School Progress",
+	category := "School Progress"
+	if r.role == leadRole {
+		category = "Programme Implementation"
+	}
+	return []todo{{ID: "coverage-missing-training-" + fy, Title: "Review Schools with No Cluster Training or Meeting Planned", Category: category,
 		Priority: "high", StatusKey: "waiting_me", Actionable: true, StatusLabel: "Waiting on Me", StatusTone: "warning", DueLabel: "—", DueTone: "neutral", Linked: plural(missing, "school"),
 		ActionLabel: "Open Schools & Coverage", ActionURL: rules.IA.CoverageURL, Shape: rules.IA.CoverageURL,
 		Due: &r.today}}, nil

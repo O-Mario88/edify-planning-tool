@@ -67,6 +67,24 @@ func TestStep2DjangoAbsentDesktopTodosAndStrategicPriorities(t *testing.T) {
 				if page.GetHeader().GetTitle() != "Action queue" {
 					t.Fatalf("%s /todos (desktop=%v): title=%q, want Action queue", email, desktop, page.GetHeader().GetTitle())
 				}
+				if email == "pl1@edify.org" && !desktop {
+					raw, err := protojson.Marshal(page)
+					if err != nil {
+						t.Fatal(err)
+					}
+					body := string(raw)
+					for _, want := range []string{
+						"14 open",
+						"Follow up SSA collection with CCEOs",
+						"Follow up support for Cluster A",
+						"Follow up support for Cluster H",
+						"Review Schools with No Cluster Training or Meeting Planned",
+					} {
+						if !strings.Contains(body, want) {
+							t.Fatalf("pl1@edify.org /todos missing %q: %.600s", want, body)
+						}
+					}
+				}
 			}
 		})
 	}

@@ -94,9 +94,9 @@ const (
 var knownGoSaves = []string{SaveScheduleVisit, SaveRescheduleVisit, SaveCancelVisit, SaveEditVisit, SaveScheduleTrainingPair,
 	SaveGroupReschedule, SaveGroupCancel, SaveScheduleGroupTraining, SaveScheduleClusterMeeting, SaveCompleteVisit, SavePLReview, SaveSchoolActions}
 
-// loadGoSaves reads EDIFY_GO_SAVES. A Go save asks the existing application
-// for the drawer's form and for the pricing (money stays Django's until
-// M12), so it needs that application's address and internal key.
+// loadGoSaves reads EDIFY_GO_SAVES. When EDIFY_EXISTING_APP_URL is unset
+// (Django-absent mode), server.go wires NativePricing and direct writers;
+// when EDIFY_EXISTING_APP_URL is set, hybrid relay mode is used.
 func loadGoSaves(env Environment, getenv func(string) string, existingApp, internalKey string) (GoSaves, error) {
 	names := splitList(getenv(envGoSaves))
 	if len(names) == 0 {

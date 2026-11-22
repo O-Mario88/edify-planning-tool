@@ -2,6 +2,9 @@ package todos
 
 import (
 	"context"
+	"fmt"
+	"math"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -16,55 +19,190 @@ import (
 // Transformation Officer, Admin, and CCEO) so /todos runs with zero fallbacks
 // when Django is offline.
 
-// plAnalyticsTodos replaces plAnalyticsGuard (_pl_analytics_todos).
+// plAnalyticsTodos replaces plAnalyticsGuard (_pl_analytics_todos / PLAnalyticsService.pl_todos):
+// emits team SSA collection follow-up, up to 3 weak clusters (avg latest confirmed SSA < 5.0),
+// and up to 3 officers with high activity backlog, matching Django's IDs, titles,
+// categories, priorities, and URLs.
 func plAnalyticsTodos(ctx context.Context, s *Service, r *reader) ([]todo, error) {
 	if r.role != leadRole {
 		return nil, nil
 	}
 	var out []todo
-	if len(r.scope.SchoolIDs) > 0 {
-		var missingSSA int
+
+	// 1. Supervised officers' schools missing verified SSA this FY (team_school_ids).
+	if len(r.scope.SupervisedStaffIDs) > 0 {
+		var noSSA int
 		if err := s.db.QueryRow(ctx, `
-SELECT COUNT(*) FROM school s
-WHERE s.deleted_at IS NULL AND s.id = ANY($1)
-  AND s.operational_status = ANY($2)
-  AND s.current_fy_ssa_status = 'not_done'`, r.scope.SchoolIDs, rules.OperatingStatuses).Scan(&missingSSA); err != nil {
+SELECT COUNT(DISTINCT s.id)
+FROM school s
+JOIN staff_school_assignment ssa ON ssa.school_id = s.id
+WHERE s.deleted_at IS NULL
+  AND ssa.staff_id = ANY($1)
+  AND COALESCE(s.current_fy_ssa_status, '') <> 'done'`, r.scope.SupervisedStaffIDs).Scan(&noSSA); err != nil {
 			return nil, err
 		}
-		if missingSSA > 0 {
+		if noSSA > 0 {
+			verb := "have"
+			if noSSA == 1 {
+				verb = "has"
+			}
 			out = append(out, todo{
-				ID: "pl-analytics-ssa", Title: "Follow up " + plural(missingSSA, "school") + " missing this year's SSA",
-				Category: "Team Oversight", Priority: "medium",
-				StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "warning",
-				DueLabel: "—", DueTone: "neutral",
-				Linked: plural(missingSSA, "school"), ActionLabel: "Open Team Performance",
-				ActionURL: "/team-performance", Shape: "/team-performance",
-				Actionable: true, Due: &r.today,
+				ID:          "pl-analytics-ssa",
+				Title:       "Follow up SSA collection with CCEOs",
+				Description: fmt.Sprintf("%d %s in your officers' portfolios %s no verified SSA this year.", noSSA, schoolWord(noSSA), verb),
+				Described:   true,
+				Category:    "Programme Implementation",
+				Priority:    "high",
+				StatusKey:   "waiting_me",
+				StatusLabel: "Waiting on Me",
+				StatusTone:  "info",
+				DueLabel:    "—",
+				DueTone:     "neutral",
+				Linked:      "My Profile",
+				ActionLabel: "Review",
+				ActionURL:   "/programme-rollout?view=ssa",
+				Shape:       "/programme-rollout?view=ssa",
+				Actionable:  true,
+				Due:         &r.today,
 			})
 		}
 	}
-	if len(r.scope.SupervisedStaffIDs) > 0 {
-		var behind int
+
+	// 2. Weak clusters (avg latest confirmed SSA < 5.0 across the lead's portfolio).
+	if len(r.scope.SchoolIDs) > 0 {
+		var latestFY *string
 		if err := s.db.QueryRow(ctx, `
-SELECT COUNT(*) FROM (
-  SELECT sp.id FROM staff_profile sp
-  JOIN activity a ON a.responsible_staff_id = sp.id OR a.responsible_staff_id = sp.user_id
-  WHERE sp.id = ANY($1) AND a.deleted_at IS NULL AND a.fy = ANY($2) AND a.status = ANY($3)
-  GROUP BY sp.id HAVING COUNT(DISTINCT a.id) >= $4
-) q`, r.scope.SupervisedStaffIDs, r.fys(), rules.Lead.CCEOBacklogStatuses, analyticsBacklogHighRisk).Scan(&behind); err != nil {
+SELECT MAX(fy)
+FROM ssa_record
+WHERE deleted_at IS NULL
+  AND school_id = ANY($1)
+  AND verification_status = 'confirmed'
+  AND fy <= $2`, r.scope.SchoolIDs, r.fy).Scan(&latestFY); err != nil {
 			return nil, err
 		}
-		if behind > 0 {
-			out = append(out, todo{
-				ID: "pl-analytics-backlog", Title: "Review backlog for " + plural(behind, "team officer"),
-				Category: "Team Oversight", Priority: "high",
-				StatusKey: "waiting_me", StatusLabel: "Waiting on Me", StatusTone: "warning",
-				DueLabel: "—", DueTone: "neutral",
-				Linked: plural(behind, "officer"), ActionLabel: "Open Team Performance",
-				ActionURL: "/team-performance", Shape: "/team-performance",
-				Actionable: true, Due: &r.today,
+		if latestFY != nil && *latestFY != "" {
+			rows, err := s.db.Query(ctx, `
+SELECT c.id, COALESCE(c.name, 'Cluster'), AVG(sr.average_score)::float8
+FROM school s
+JOIN cluster c ON c.id = s.cluster_id
+JOIN ssa_record sr ON sr.school_id = s.id
+WHERE s.deleted_at IS NULL
+  AND s.id = ANY($1)
+  AND s.cluster_id IS NOT NULL AND s.cluster_id <> ''
+  AND sr.deleted_at IS NULL
+  AND sr.verification_status = 'confirmed'
+  AND sr.fy = $2
+  AND sr.average_score IS NOT NULL
+GROUP BY c.id, c.name
+ORDER BY c.id ASC`, r.scope.SchoolIDs, *latestFY)
+			if err != nil {
+				return nil, err
+			}
+			type clusterAvg struct {
+				id, name string
+				avg      float64
+			}
+			var clusters []clusterAvg
+			for rows.Next() {
+				var c clusterAvg
+				var raw float64
+				if err := rows.Scan(&c.id, &c.name, &raw); err != nil {
+					rows.Close()
+					return nil, err
+				}
+				// Match PLAnalyticsService._ssa_score: round(round(score, 6), 1).
+				r6 := math.RoundToEven(raw*1e6) / 1e6
+				c.avg = math.RoundToEven(r6*10) / 10
+				clusters = append(clusters, c)
+			}
+			rows.Close()
+			if err := rows.Err(); err != nil {
+				return nil, err
+			}
+			// Match cluster_performance ordering: descending avg_ssa, preserving cluster_id ASC ties.
+			sort.SliceStable(clusters, func(i, j int) bool {
+				return clusters[i].avg > clusters[j].avg
 			})
+			weakCount := 0
+			for _, c := range clusters {
+				if c.avg >= 5.0 {
+					continue
+				}
+				out = append(out, todo{
+					ID:          "pl-analytics-cluster-" + c.id,
+					Title:       "Follow up support for " + c.name,
+					Description: fmt.Sprintf("%s averages %.1f/10 on its latest verified SSA, below 5.0. Agree the cluster's support plan with the officer who holds it.", c.name, c.avg),
+					Described:   true,
+					Category:    "Programme Implementation",
+					Priority:    "high",
+					StatusKey:   "waiting_me",
+					StatusLabel: "Waiting on Me",
+					StatusTone:  "info",
+					DueLabel:    "—",
+					DueTone:     "neutral",
+					Linked:      "My Profile",
+					ActionLabel: "Review",
+					ActionURL:   "/programme-rollout?view=ssa",
+					Shape:       "/programme-rollout?view=ssa",
+					Actionable:  true,
+					Due:         &r.today,
+				})
+				weakCount++
+				if weakCount == 3 {
+					break
+				}
+			}
 		}
+	}
+
+	// 3. Supervised officers with high overdue backlog (matching cceo_performance risk threshold).
+	if len(r.scope.SupervisedStaffIDs) > 0 {
+		rows, err := s.db.Query(ctx, `
+SELECT sp.id, COALESCE(u.name, 'Officer')
+FROM staff_profile sp
+LEFT JOIN "user" u ON u.id = sp.user_id
+JOIN activity a ON a.responsible_staff_id = sp.id OR a.responsible_staff_id = sp.user_id
+WHERE sp.id = ANY($1) AND a.deleted_at IS NULL AND a.fy = ANY($2) AND a.status = ANY($3)
+GROUP BY sp.id, u.name
+HAVING COUNT(DISTINCT a.id) >= $4
+ORDER BY COUNT(DISTINCT a.id) DESC, sp.id ASC
+LIMIT 3`, r.scope.SupervisedStaffIDs, r.fys(), rules.Lead.CCEOBacklogStatuses, analyticsBacklogHighRisk)
+		if err != nil {
+			return nil, err
+		}
+		behind, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (todo, error) {
+			var staffID, name string
+			if err := row.Scan(&staffID, &name); err != nil {
+				return todo{}, err
+			}
+			return todo{
+				ID:          "pl-analytics-cceo-" + staffID,
+				Title:       "Follow up " + name + "'s delivery",
+				Description: name + " is behind target (High risk).",
+				Described:   true,
+				Category:    "Programme Implementation",
+				Priority:    "medium",
+				StatusKey:   "waiting_me",
+				StatusLabel: "Waiting on Me",
+				StatusTone:  "info",
+				DueLabel:    "—",
+				DueTone:     "neutral",
+				Linked:      "My Profile",
+				ActionLabel: "Open plan",
+				ActionURL:   "/team-planning-oversight/?owner=" + staffID,
+				Shape:       "/team-planning-oversight/?owner={id}",
+				Actionable:  true,
+				Due:         &r.today,
+			}, nil
+		})
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, behind...)
+	}
+
+	if len(out) > 8 {
+		out = out[:8]
 	}
 	return out, nil
 }

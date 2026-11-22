@@ -198,6 +198,10 @@ LINK_SHAPES = {
     "/ia/verification/": "/ia/verification/",
     "/ia/framework/": "/ia/framework/",
     "/loans": "/loans",
+    "/programme-rollout?view=ssa": "/programme-rollout?view=ssa",
+    "/team-planning-oversight/?owner={id}": (
+        "/team-planning-oversight/?owner=cmw0000000000000000000001"
+    ),
 }
 
 #: The categories the row template draws an icon for; any other category is
