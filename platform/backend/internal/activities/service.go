@@ -50,6 +50,8 @@ type Request struct {
 	DeviationReason, CatalogueItemID, RecReason string
 	// Focus is the intervention the planner named; blank leaves it to the SSA.
 	Focus string
+	// SourceActivityID is the session a Training Follow Up follows.
+	SourceActivityID string
 }
 
 // Answer is the saved visit and the confirmation the web shows.
@@ -301,7 +303,7 @@ func (s *Service) create(ctx context.Context, p auth.Principal, req Request, ori
 		return nil, handOn("no staff profile")
 	}
 	// A Training Follow Up names the training it follows (2822–2832).
-	if purpose == "training_follow_up" || activityType == "training_follow_up_visit" {
+	if req.SourceActivityID == "" && (purpose == followUpPurpose || activityType == followUpActivityType) {
 		needs, err := followUpNeedsTraining(ctx, s.db, p.Country, fy)
 		if err != nil {
 			return nil, err
@@ -310,15 +312,32 @@ func (s *Service) create(ctx context.Context, p auth.Principal, req Request, ori
 			return nil, refuse("Select the completed training this visit follows up.")
 		}
 	}
+	followed, err := s.followedSessionFor(ctx, req, sc, purpose, activityType, fy)
+	if err != nil {
+		return nil, err
+	}
 	need, err := schoolNeedOf(ctx, pgNeed{s.db}, sc.ID, sc.ClusterID, now)
 	if err != nil {
 		return nil, err
 	}
+	if followed != nil && need.Record == nil && followed.SSAID != "" {
+		// apply_catalogue_snapshot would borrow the session's own SSA.
+		return nil, handOn("the follow-up takes its SSA from the session")
+	}
 	focus, focusSource := plannedFocus(req.Focus, activityType, it.Modes, need, collects)
+	if followed != nil {
+		// The session, not the form, owns the intervention and its lineage.
+		focus, focusSource = followed.inherited(), sourceFocus
+	}
 	if it.RequiresCluster {
 		return nil, refuse("This Catalogue Activity requires a Cluster.")
 	}
 	reason, source := standardSupport(recReason, focus, it.ID, need.Record)
+	followUpOf := ""
+	var secondary []string
+	if followed != nil {
+		source, followUpOf, secondary = followed.inheritInto(source), followed.ID, followed.Secondary
+	}
 	version, ok, err := latestVersion(ctx, s.db, it.ID)
 	if err != nil {
 		return nil, err
@@ -336,6 +355,7 @@ func (s *Service) create(ctx context.Context, p auth.Principal, req Request, ori
 		purpose: purpose, school: sc, responsible: responsible, item: *it, version: version,
 		goal: req.Goal, outcome: req.Outcome, deviation: req.DeviationReason, collects: collects,
 		focus: focus, reason: reason, source: source, need: need, evidence: ev,
+		followUpOf: followUpOf, secondary: secondary,
 	})
 	ownerUID, err := fundingOwner(ctx, s.db, responsible, p.UserID)
 	if err != nil {

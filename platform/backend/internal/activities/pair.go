@@ -180,7 +180,7 @@ func (s *Service) preparePair(ctx context.Context, p auth.Principal, req Request
 	purpose := strings.TrimSpace(req.Purpose)
 	date := strings.TrimSpace(req.Date)
 	if in(rules.Doors.Requesters, p.ActiveRole) || p.InActingAppointment || p.StaffProfileID == "" ||
-		!IsPairPurpose(purpose) || (date != "" && !isoDate.MatchString(date)) {
+		!IsPairPurpose(purpose) || (date != "" && !isoDate.MatchString(date)) || req.SourceActivityID != "" {
 		// A posted focus needs no case: schedule_in_school_training_pair
 		// replaces it with the course's own intervention.
 		return nil, handOn("not the owner's own In-school Training")

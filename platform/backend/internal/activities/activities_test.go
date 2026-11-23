@@ -266,7 +266,7 @@ func TestTheDrawerFormIsTakenOnlyForTheCase(t *testing.T) {
 		t.Fatalf("taken %v %+v", ok, req)
 	}
 	for field, value := range map[string]string{
-		"assigned_partner_id": "p1", "project_id": "x", "source_activity_id": "a", "cluster_id": "c",
+		"assigned_partner_id": "p1", "project_id": "x", "cluster_id": "c",
 		"ssa_collection_expected": "yes", "delivery_type": "partner",
 		"executor_type": "partner", "require_catalogue": "no",
 	} {

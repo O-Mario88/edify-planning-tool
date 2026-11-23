@@ -46,6 +46,9 @@ type activityRow struct {
 	group                       *groupColumns
 	// A cluster meeting's kind (docs/migration/49); blank for other work.
 	meetingKind string
+	// A Training Follow Up's session and its supporting interventions.
+	followUpOf string
+	secondary  []string
 }
 
 // groupColumns are the cluster session's own columns (_create 3371–3442).
@@ -124,6 +127,10 @@ type rowInput struct {
 	source                             map[string]any
 	need                               schoolNeed
 	evidence                           evidence
+	// A Training Follow Up's session, and the supporting interventions it
+	// carries over.
+	followUpOf string
+	secondary  []string
 }
 
 func newRow(in rowInput) activityRow {
@@ -135,6 +142,7 @@ func newRow(in rowInput) activityRow {
 		deviation: truncateRunes(strings.TrimSpace(in.deviation), 2000), collects: in.collects,
 		focus: in.focus, item: in.item, version: in.version, reason: in.reason,
 		alignment: in.evidence.Alignment, sourceSSA: in.need.Record,
+		followUpOf: in.followUpOf, secondary: in.secondary,
 	}
 	// The snapshot's SSA score for the focus (apply_catalogue_snapshot).
 	if r.sourceSSA != nil && r.focus != "" {
@@ -366,7 +374,7 @@ func insertActivity(ctx context.Context, tx pgx.Tx, r activityRow) error {
 		{"responsible_staff_id", r.responsible}, {"scheduled_date", r.scheduled},
 		{"planned_date", r.plannedDate.Format(time.DateOnly)}, {"planned_month", r.plannedMonth},
 		{"planned_week", r.plannedWeek}, {"purpose_type", r.purpose}, {"purpose_intervention", optString(r.focus)},
-		{"focus_intervention", optString(r.focus)}, {"secondary_focus_interventions", []string{}},
+		{"focus_intervention", optString(r.focus)}, {"secondary_focus_interventions", append([]string{}, r.secondary...)},
 		{"activity_purpose_text", r.goal}, {"expected_outcome", r.outcome},
 		{"ssa_collection_expected", r.collects}, {"attended_school_ids", []string{}},
 		{"salesforce_activity_type", r.salesforceType()}, {"catalogue_item_id", r.item.ID},
@@ -389,6 +397,12 @@ func insertActivity(ctx context.Context, tx pgx.Tx, r activityRow) error {
 	}
 	columns = append(columns, r.groupFields()...)
 	columns = append(columns, r.onlineFields()...)
+	if r.followUpOf != "" {
+		columns = append(columns, struct {
+			name  string
+			value any
+		}{"follow_up_of_activity_id", r.followUpOf})
+	}
 	names := make([]string, len(columns))
 	marks := make([]string, len(columns))
 	values := make([]any, len(columns))

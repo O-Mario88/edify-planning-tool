@@ -67,6 +67,10 @@ GRANT INSERT (
   primary_driver_type, primary_driver_id, driver_reason, delivery_contact_name, approval_owner_id,
   owner_decision_note, visit_justification, partner_date_set_by, meeting_kind, daily_visit_batch_id
 ) ON activity TO edify_activities_rw;
+-- A Training Follow Up names the session it follows, and that session's SSA
+-- decides whether Go may take the save.
+GRANT INSERT (follow_up_of_activity_id) ON activity TO edify_activities_rw;
+GRANT SELECT (source_ssa_id) ON activity TO edify_activities_rw;
 
 -- The day the visit joins: made with its defaults when the owner has none
 -- that day (the pricing that follows fills its figures, in Django). The
