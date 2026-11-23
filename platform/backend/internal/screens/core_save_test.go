@@ -1,0 +1,84 @@
+package screens
+
+import (
+	"context"
+	"testing"
+
+	"connectrpc.com/connect"
+
+	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+)
+
+type fakeCoreSaver struct {
+	got    []activities.CoreVisitRequest
+	answer activities.Answer
+	err    error
+}
+
+func (f *fakeCoreSaver) ScheduleCoreVisit(_ context.Context, _ auth.Principal, req activities.CoreVisitRequest, _ activities.Origin) (activities.Answer, error) {
+	f.got = append(f.got, req)
+	return f.answer, f.err
+}
+
+func saveCoreVisit(service *Service) (*screensv1.SaveDrawerResponse, error) {
+	answer, err := service.SaveDrawer(personSaving(), connect.NewRequest(&screensv1.SaveDrawerRequest{
+		Path: "/core-schools/schedule-visit?school_id=1045",
+		Values: map[string]string{"purpose_of_visit": "training_follow_up", "scheduled_date": "2026-12-01",
+			"visit_number": "2", "focus_intervention": "leadership"},
+	}))
+	if err != nil {
+		return nil, err
+	}
+	return answer.Msg, nil
+}
+
+func TestTheCoreVisitFormSavesInGoWithoutDjango(t *testing.T) {
+	saver := &fakeCoreSaver{answer: activities.Answer{Message: "Core Visit V2 (Training Follow Up) scheduled successfully."}}
+	service := NewService(nil).WithCoreVisitSave(saver, nil)
+
+	answer, err := saveCoreVisit(service)
+
+	if err != nil || !answer.GetSaved() || answer.GetMessage() != "Core Visit V2 (Training Follow Up) scheduled successfully." {
+		t.Fatalf("answer = %v, %v", answer, err)
+	}
+	if len(saver.got) != 1 || saver.got[0].SchoolCode != "1045" || saver.got[0].VisitNumber != "2" {
+		t.Fatalf("request = %+v", saver.got)
+	}
+}
+
+func TestTheCoreVisitFormAnswersARefusalInItsWords(t *testing.T) {
+	saver := &fakeCoreSaver{err: &activities.Refusal{Message: "That date has passed."}}
+	service := NewService(nil).WithCoreVisitSave(saver, nil)
+
+	answer, err := saveCoreVisit(service)
+
+	if err != nil || answer.GetSaved() || answer.GetError() != "That date has passed." {
+		t.Fatalf("answer = %v, %v", answer, err)
+	}
+}
+
+func TestTheCoreVisitFormStaysWithDjangoWhileDjangoIsThere(t *testing.T) {
+	saver := &fakeCoreSaver{}
+	fetcher := &formFetcher{}
+	service := NewService(fetcher).WithCoreVisitSave(saver, nil)
+
+	if _, err := saveCoreVisit(service); err != nil {
+		t.Fatal(err)
+	}
+	if len(saver.got) != 0 || len(fetcher.paths) != 1 {
+		t.Fatalf("Go saved %d, Django was asked %v", len(saver.got), fetcher.paths)
+	}
+}
+
+func TestAnotherDrawerNeverReachesTheCoreVisitSave(t *testing.T) {
+	saver := &fakeCoreSaver{}
+	service := NewService(&formFetcher{}).WithCoreVisitSave(saver, nil)
+	_, _ = service.SaveDrawer(personSaving(), connect.NewRequest(&screensv1.SaveDrawerRequest{
+		Path: "/core-schools/assign-partner?school_id=1045",
+	}))
+	if len(saver.got) != 0 {
+		t.Fatalf("got %+v", saver.got)
+	}
+}

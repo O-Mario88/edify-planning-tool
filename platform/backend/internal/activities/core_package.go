@@ -60,12 +60,17 @@ func coreRouteFor(purpose string) coreRoute {
 }
 
 // coreSlot is one of a package's slots.
-type coreSlot struct{ ID, Status string }
+type coreSlot struct {
+	ID, Status string
+	Sequence   int
+}
 
 // coreBooking is the package a save counts against.
 type coreBooking struct {
 	planID string
 	route  coreRoute
+	// preferred is the slot the planner chose; slotNumber the one it took.
+	preferred, slotNumber int
 }
 
 // coreVisit is the Core School follow-up item.
@@ -128,14 +133,14 @@ func readCorePlan(ctx context.Context, q Querier, code, fy string) (string, erro
 }
 
 func readCoreSlots(ctx context.Context, q Querier, planID, kind, lock string) ([]coreSlot, error) {
-	rows, err := q.Query(ctx, `SELECT id, COALESCE(status, '') FROM core_activity_slot
+	rows, err := q.Query(ctx, `SELECT id, COALESCE(status, ''), sequence_number FROM core_activity_slot
 WHERE core_plan_id = $1 AND activity_type = $2 ORDER BY sequence_number`+lock, planID, kind)
 	if err != nil {
 		return nil, fmt.Errorf("activities: reading the package's slots: %w", err)
 	}
 	slots, err := pgx.CollectRows(rows, func(r pgx.CollectableRow) (coreSlot, error) {
 		var slot coreSlot
-		return slot, r.Scan(&slot.ID, &slot.Status)
+		return slot, r.Scan(&slot.ID, &slot.Status, &slot.Sequence)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("activities: reading a package slot: %w", err)

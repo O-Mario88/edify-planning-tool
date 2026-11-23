@@ -112,15 +112,17 @@ type plan struct {
 	core *coreBooking
 	// interventionRefusal is met inside the save, after the duplicate test.
 	interventionRefusal string
-	need                schoolNeed
-	focus               string
-	evidence            evidence
-	row                 activityRow
-	ownerUID            string
-	home                staffHome
-	verdict             DayVerdict
-	origin              Origin
-	now                 time.Time
+	// doorAudit is the audit row of the form the save came through, if any.
+	doorAudit string
+	need      schoolNeed
+	focus     string
+	evidence  evidence
+	row       activityRow
+	ownerUID  string
+	home      staffHome
+	verdict   DayVerdict
+	origin    Origin
+	now       time.Time
 }
 
 // Schedule makes the save, or refuses it in the existing words, or hands it

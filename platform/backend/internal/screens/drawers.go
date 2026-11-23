@@ -9,6 +9,7 @@ import (
 	"connectrpc.com/connect"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/origin"
@@ -183,6 +184,15 @@ func (s *Service) SaveDrawer(
 		}
 	}
 	if form == "" {
+		from := origin.Read(request.Peer().Addr, request.Header(), s.trustProxy, trace.FromContext(ctx).RequestID)
+		if answer, served, err := s.coreVisitInGo(ctx, forwarded, activities.Origin{
+			IP: from.IP, UserAgent: from.UserAgent, CorrelationID: from.CorrelationID,
+		}); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(answer), nil
+		}
 		if answer, served, err := s.rescheduleInGo(ctx, forwarded); served {
 			if err != nil {
 				return nil, err

@@ -78,10 +78,11 @@ type Service struct {
 	profile     Profile
 	home        Home // nil unless Home is built in Go (internal/home)
 	pages       []Pages
-	navigation  Navigation // nil unless the navigation is built in Go (internal/navigation)
-	visits      VisitSaver // nil unless EDIFY_GO_SAVES names schedule_visit or schedule_training_pair
-	visitsInGo  bool       // schedule_visit: 27.3's visits
-	pairsInGo   bool       // schedule_training_pair: 32's In-school Training
+	navigation  Navigation     // nil unless the navigation is built in Go (internal/navigation)
+	visits      VisitSaver     // nil unless EDIFY_GO_SAVES names schedule_visit or schedule_training_pair
+	visitsInGo  bool           // schedule_visit: 27.3's visits
+	coreVisits  CoreVisitSaver // the Core Schools visit form, with Django absent
+	pairsInGo   bool           // schedule_training_pair: 32's In-school Training
 	// groupTrainings is nil unless EDIFY_GO_SAVES names schedule_group_training (38).
 	groupTrainings GroupTrainingSaver
 	// clusterMeetings is nil unless EDIFY_GO_SAVES names schedule_cluster_meeting (49).

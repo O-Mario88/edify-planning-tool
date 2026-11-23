@@ -561,10 +561,16 @@ func (s *Service) afterCommit(ctx context.Context, pl *plan, rowID int64) {
 		if err := s.tellRequestOwner(ctx, pl); err != nil {
 			s.logger.Warn("activities: the owner was not asked about the visit", "activity", pl.row.id, "err", err)
 		}
+		if err := s.auditCoreDoor(ctx, pl); err != nil {
+			s.logger.Warn("activities: the form's audit row was not written", "activity", pl.row.id, "err", err)
+		}
 		return
 	}
 	if err := s.tellScheduledOwner(ctx, pl); err != nil {
 		s.logger.Warn("activities: the owner was not told of the visit", "activity", pl.row.id, "err", err)
+	}
+	if err := s.auditCoreDoor(ctx, pl); err != nil {
+		s.logger.Warn("activities: the form's audit row was not written", "activity", pl.row.id, "err", err)
 	}
 	if err := s.pricing.Settle(ctx, []int64{rowID}, pl.row.id); err != nil {
 		s.logger.Warn("activities: the costs to follow were not settled; the sweep takes them",
@@ -584,10 +590,11 @@ func takeCoreSlot(ctx context.Context, tx pgx.Tx, pl *plan) error {
 	if err != nil {
 		return err
 	}
-	open := openCoreSlot(slots, coreSlotTaken)
+	open := openCoreSlotAt(slots, pl.core.preferred, coreSlotTaken)
 	if open == nil {
 		return handOn("the Core package has no open visit slot")
 	}
+	pl.core.slotNumber = open.Sequence
 	return bookCoreSlot(ctx, tx, open.ID, "Scheduled", pl)
 }
 

@@ -138,6 +138,9 @@ type pairPlan struct {
 	message         string
 	// corePlanID is the Core package the two are credited to, if any.
 	corePlanID string
+	// trainingSlotAsked is the training slot a Core form chose: the training
+	// then takes it inside the save. trainingSlotNumber is the one it took.
+	trainingSlotAsked, trainingSlotNumber int
 }
 
 // IsPairPurpose is whether the drawer's purpose plans the pair.
@@ -557,6 +560,20 @@ func (s *Service) writePair(ctx context.Context, pp *pairPlan) (int64, error) {
 			return 0, err
 		}
 	}
+	if pp.trainingSlotAsked > 0 {
+		slots, err := readCoreSlots(ctx, tx, pp.corePlanID, coreSlotTraining, " FOR UPDATE")
+		if err != nil {
+			return 0, err
+		}
+		open := openCoreSlotAt(slots, pp.trainingSlotAsked, coreSlotTaken)
+		if open == nil {
+			return 0, handOn("the Core package has no open slot for the training")
+		}
+		pp.trainingSlotNumber = open.Sequence
+		if err := bookCoreSlot(ctx, tx, open.ID, "Scheduled", t); err != nil {
+			return 0, err
+		}
+	}
 	var rowID int64
 	if !isRequest {
 		if rowID, err = keepCosts(ctx, tx, v); err != nil {
@@ -599,14 +616,19 @@ func (s *Service) afterPair(ctx context.Context, pp *pairPlan, rowID int64) {
 	if err := s.tellScheduledOwner(ctx, pp.visit); err != nil {
 		s.logger.Warn("activities: the owner was not told of the visit", "activity", pp.visit.row.id, "err", err)
 	}
+	if err := s.auditCoreDoor(ctx, pp.training); err != nil {
+		s.logger.Warn("activities: the form's audit row was not written", "activity", pp.training.row.id, "err", err)
+	}
 	if err := s.pricing.Settle(ctx, []int64{rowID}, pp.visit.row.id); err != nil {
 		s.logger.Warn("activities: the costs to follow were not settled; the sweep takes them",
 			"activity", pp.visit.row.id, "row", rowID, "err", err)
 	}
 	if pp.corePlanID != "" {
 		// schedule_package_credit, once each commits.
-		if err := s.creditCoreSlot(ctx, pp.training, pp.corePlanID, coreSlotTraining); err != nil {
-			s.logger.Warn("activities: the Core package was not credited", "activity", pp.training.row.id, "err", err)
+		if pp.trainingSlotAsked == 0 {
+			if err := s.creditCoreSlot(ctx, pp.training, pp.corePlanID, coreSlotTraining); err != nil {
+				s.logger.Warn("activities: the Core package was not credited", "activity", pp.training.row.id, "err", err)
+			}
 		}
 		if err := s.creditCoreSlot(ctx, pp.visit, pp.corePlanID, coreSlotVisit); err != nil {
 			s.logger.Warn("activities: the Core package was not credited", "activity", pp.visit.row.id, "err", err)
