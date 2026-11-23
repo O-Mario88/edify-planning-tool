@@ -35,6 +35,7 @@ var fieldFormPages = map[string][]string{
 	"core_schools":                {rbac.CCEO, rbac.ProgramLead, roleIA, roleCD, roleAccountant, rbac.Admin},
 	"my_professional_development": {rbac.CCEO, rbac.ProgramLead, roleCD, roleRVP, roleIA, roleAccountant, roleHR, rolePC, rbac.Admin},
 	"partner_detail":              everyStaffAndPartnerRole,
+	"partners":                    everyStaffAndPartnerRole,
 	"projects":                    {rbac.Admin, rbac.CCEO, roleCD, roleIA, rbac.ProgramLead, rolePC},
 	"extra_work":                  {rbac.Admin, rbac.CCEO, roleCD, rbac.ProgramLead, roleIA},
 	"pl_review_queue":             {rbac.Admin, rbac.ProgramLead, roleIA},
@@ -83,6 +84,9 @@ var fieldForms = []fieldForm{
 	{path: "/projects/capacity/set", page: "project_capacity", build: capacitySetForm},
 	{path: "/projects/capacity/withdraw", page: "project_monitoring", build: capacityWithdrawForm},
 	{path: "/projects/monitoring/school", page: "project_monitoring", build: monitoringSchoolForm},
+	{path: "/partners/create", page: "partners", withheldFromTeamMembers: true, permission: "partnerOrganisation.create",
+		permissionRefusal: "Only an Admin, Country Director or Impact Assessment can add partner organisations.",
+		build:             partnerCreateForm},
 }
 
 func fieldFormFor(path string) (fieldForm, bool) {
