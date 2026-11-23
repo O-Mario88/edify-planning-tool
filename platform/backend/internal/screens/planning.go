@@ -74,6 +74,7 @@ func (s *Service) SavePlanningDrawer(
 			return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This drawer has no such field.")
 		}
 	}
+	s.stampSave(ctx, schoolPath(message.GetSchoolId(), "planning/"+message.GetKind()))
 	if message.GetKind() == "group-training" {
 		form := url.Values{}
 		for name, val := range message.GetValues() {

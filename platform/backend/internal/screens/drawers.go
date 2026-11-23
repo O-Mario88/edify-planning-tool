@@ -165,6 +165,7 @@ func (s *Service) SaveDrawer(
 	if form != "" && (!formKey.MatchString(form) || strings.Contains(form, "..")) {
 		return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This form cannot be saved.")
 	}
+	s.stampSave(ctx, pathPageDrawer)
 	forwarded := &screensv1.SaveDrawerRequest{Path: path, Values: message.GetValues(), Form: form}
 	if m := schoolEditDrawer.FindStringSubmatch(strings.SplitN(path, "?", 2)[0]); m != nil && form == "" && s.nativeForms() {
 		if p, ok := auth.PrincipalFrom(ctx); ok {

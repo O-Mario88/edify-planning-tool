@@ -43,10 +43,12 @@ answered, and Go stamps what that request would have stamped:
   the drawer `?form_only=1` to the existing feed with the person's bearer
   (`internal/screens/*_save.go`), and that POST is stamped by the middleware
   exactly as the forwarded save would be (`last_seen_at`, `online_since`).
-  Go adds no stamp of its own, which would stamp twice. When the form_only
-  read moves to Go, `presence.Stamper.Stamp(ctx, user, Request{Method:
-  "POST", Path: <the feed path>, Bearer: true})` is the stamp to make
-  (covered by the integration test).
+  Go adds no stamp of its own, which would stamp twice. With Django absent
+  there is no form_only post, so `screens.stampSave` makes
+  `presence.Stamper.Stamp(ctx, user, Request{Method: "POST", Path: <the feed
+  path>, Bearer: true})` once for each `SavePlanningDrawer` or `SaveDrawer`
+  request that passes validation, whatever its outcome (2026-11-23). Other
+  Go write endpoints with Django absent are not stamped yet.
 - **Web saves Go makes for a session's post** (Today's Snooze and Undo,
   `/today/snooze`, `/today/unsnooze`, docs 50/63): Go stamps the whole beat,
   credit included, after the outcome (a refusal included; a handed-on post

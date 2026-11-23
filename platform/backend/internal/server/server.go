@@ -113,6 +113,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/platformhealth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/plreview"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/policycompliance"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/presence"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/prioritiesmaster"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/profilepage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/programmerollout"
@@ -319,6 +320,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	// Go writer is wired automatically so zero save paths depend on Django.
 	if cfg.ExistingAppURL == "" {
 		effectiveSaves = config.AllGoSaves()
+		screenService.WithPresence(presence.NewStamper(pool), logger)
 	}
 	if effectiveSaves.ScheduleVisit || effectiveSaves.RescheduleVisit || effectiveSaves.CancelVisit || effectiveSaves.EditVisit ||
 		effectiveSaves.ScheduleTrainingPair || effectiveSaves.GroupReschedule || effectiveSaves.GroupCancel ||

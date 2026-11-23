@@ -96,6 +96,8 @@ type Service struct {
 	groupMoves   GroupMoveSaver
 	groupCancels GroupCancelSaver
 	logger       *slog.Logger
+	// presence stamps a save when no existing application is there to do it.
+	presence PresenceStamper
 	// trustProxy reads a page reader's address from X-Forwarded-For, for an
 	// audited read behind the platform's load balancer.
 	trustProxy bool
