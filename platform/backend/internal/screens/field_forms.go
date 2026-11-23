@@ -35,6 +35,7 @@ var fieldFormPages = map[string][]string{
 	"core_schools":                {rbac.CCEO, rbac.ProgramLead, roleIA, roleCD, roleAccountant, rbac.Admin},
 	"my_professional_development": {rbac.CCEO, rbac.ProgramLead, roleCD, roleRVP, roleIA, roleAccountant, roleHR, rolePC, rbac.Admin},
 	"partner_detail":              everyStaffAndPartnerRole,
+	"projects":                    {rbac.Admin, rbac.CCEO, roleCD, roleIA, rbac.ProgramLead, rolePC},
 }
 
 // fieldFormRequest is what a form is opened with: the record in its address
@@ -50,7 +51,9 @@ type fieldForm struct {
 	path                    string
 	address                 *regexp.Regexp
 	page                    string
-	withheldFromTeamMembers bool // MEMBER_WITHHELD_PAGES holds the page
+	withheldFromTeamMembers bool   // MEMBER_WITHHELD_PAGES holds the page
+	permission              string // a grant the view asks for after the page
+	permissionRefusal       string // and its words when the role lacks it
 	build                   func(context.Context, *Service, auth.Principal, fieldFormRequest) (*screensv1.PageDrawer, error)
 }
 
@@ -63,6 +66,9 @@ var fieldForms = []fieldForm{
 		build: allocationHistoryDrawer},
 	{address: regexp.MustCompile(`^/partners/([^/]+)/members/drawer$`), page: "partner_detail",
 		withheldFromTeamMembers: true, build: partnerMemberForm},
+	{path: "/projects/create", page: "projects", permission: "project.configurePriorities",
+		permissionRefusal: "Only a Special Project Coordinator, Impact Assessment, the Country Director, or Admin may create Projects.",
+		build:             projectCreateForm},
 }
 
 func fieldFormFor(path string) (fieldForm, bool) {
@@ -93,10 +99,13 @@ func (f fieldForm) refusal(p auth.Principal) string {
 	if p.InActingAppointment {
 		return "This form is not available while you are acting in another role."
 	}
-	if slices.Contains(fieldFormPages[f.page], p.ActiveRole) {
-		return ""
+	if !slices.Contains(fieldFormPages[f.page], p.ActiveRole) {
+		return f.pageDenied()
 	}
-	return f.pageDenied()
+	if f.permission != "" && !rbac.Grants(p.ActiveRole, f.permission) {
+		return f.permissionRefusal
+	}
+	return ""
 }
 
 func (f fieldForm) pageDenied() string {

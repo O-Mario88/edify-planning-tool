@@ -111,6 +111,76 @@ func TestPartnerMemberFormFields(t *testing.T) {
 	}
 }
 
+func TestProjectCreateFormRefusals(t *testing.T) {
+	const onlyConfigurers = "Only a Special Project Coordinator, Impact Assessment, the Country Director, or Admin may create Projects."
+	const noPage = "Access Denied: Your active role does not have permission to view Projects."
+	tests := []struct{ role, want string }{
+		{"CountryDirector", ""},
+		{"ImpactAssessment", ""},
+		{"ProjectCoordinator", ""},
+		{"Admin", ""},
+		{"CCEO", onlyConfigurers},
+		{"Program Lead", onlyConfigurers},
+		{"Accountant", noPage},
+		{"PartnerAdmin", noPage},
+		{"ClusterLeader", noPage},
+	}
+	form, ok := fieldFormFor("/projects/create/")
+	if !ok {
+		t.Fatal("not a field form")
+	}
+	for _, tc := range tests {
+		t.Run(tc.role, func(t *testing.T) {
+			if got := form.refusal(fieldPrincipal(tc.role)); got != tc.want {
+				t.Fatalf("refusal = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestProjectCreateFormFields(t *testing.T) {
+	drawer := projectCreateDrawer(
+		[]projectCatalogueChoice{{id: "c1", name: "Biblical Integration", code: "BIBLICAL_INTEGRATION", delivery: "cluster_training"}},
+		[]fieldChoice{{id: "p1", name: "Build Africa"}},
+	)
+	if drawer.GetTitle() != "Create special project" || drawer.GetSubmitLabel() != "Create proposed project" || !drawer.GetCanSubmit() {
+		t.Fatalf("drawer = %q / %q", drawer.GetTitle(), drawer.GetSubmitLabel())
+	}
+	want := "name,code,category,schoolFocus,budgetCeilingUgx,measurementStartFy,measurementEndFy,targetInterventions,catalogueItemIds,partnerIds"
+	if got := strings.Join(fieldNames(drawer), ","); got != want {
+		t.Fatalf("fields = %s", got)
+	}
+	items := drawer.GetItems()
+	if f := items[0].GetField(); !f.GetRequired() || f.GetMaxLength() != 255 {
+		t.Fatalf("name = %+v", f)
+	}
+	if f := items[2].GetField(); len(f.GetOptions()) != 4 || f.GetOptions()[0].GetLabel() != "Choose…" {
+		t.Fatalf("category = %+v", f)
+	}
+	if f := items[3].GetField(); f.GetValue() != "all" || f.GetOptions()[0].GetLabel() != "Client and Core Schools" {
+		t.Fatalf("focus = %+v", f)
+	}
+	if f := items[4].GetField(); f.Min == nil || f.GetMin() != 0 || f.GetStep() != 1 {
+		t.Fatalf("budget = %+v", f)
+	}
+	if f := items[7].GetField(); len(f.GetOptions()) != 9 || f.GetOptions()[8].GetValue() != "general" {
+		t.Fatalf("interventions = %+v", f)
+	}
+	if o := items[8].GetField().GetOptions()[0]; o.GetDetail() != "BIBLICAL_INTEGRATION · Cluster Training" {
+		t.Fatalf("catalogue = %+v", o)
+	}
+	if o := items[9].GetField().GetOptions()[0]; o.GetValue() != "p1" || o.GetLabel() != "Build Africa" {
+		t.Fatalf("partner = %+v", o)
+	}
+}
+
+func TestPartnerChoicesSortIgnoringCase(t *testing.T) {
+	got := sortedFieldChoices([]fieldChoice{{id: "1", name: "World Reader"}, {id: "2", name: "alpha"}, {id: "3", name: "Build Africa"}})
+	if got[0].id != "2" || got[1].id != "3" || got[2].id != "1" {
+		t.Fatalf("order = %+v", got)
+	}
+}
+
 func TestStrategyPlaybookReadsAsTheExistingForm(t *testing.T) {
 	drawer := strategyPlaybookDrawer()
 	if drawer.GetTitle() != "Core strategy playbook" || !drawer.GetHasRequired() || drawer.GetCancelLabel() != "Cancel" {

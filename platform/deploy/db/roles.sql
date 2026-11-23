@@ -209,6 +209,11 @@ GRANT SELECT (ssa_alignment) ON activity TO edify_gateway_ro;
 -- (apps.partners.member_scope): the login's roster entries and whether the
 -- partner's own login is theirs.
 GRANT SELECT (id, user_id, partner_id, active, role, name) ON partner_member TO edify_gateway_ro;
+-- A partner on hold is not offered new work (assignable_partners).
+GRANT SELECT (partner_id, lifted_at) ON partner_hold TO edify_gateway_ro;
+GRANT SELECT (active_status, partner_role) ON partner TO edify_gateway_ro;
+GRANT SELECT (display_name, stable_code, delivery_method, status, effective_from, effective_to, project_delivery_allowed)
+  ON activity_catalogue_item TO edify_gateway_ro;
 GRANT SELECT (user_id) ON partner TO edify_gateway_ro;
 -- Escalations: the upward decision channel's rows, and which supervisor link
 -- comes first when a raiser has more than one.
