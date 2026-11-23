@@ -160,13 +160,8 @@ func (s *Service) routeCoreVisit(ctx context.Context, target visitTarget, purpos
 	if err != nil || planID == "" {
 		return nil, err
 	}
-	slots, err := readCoreSlots(ctx, s.db, planID, coreSlotVisit, "")
-	if err != nil {
-		return nil, err
-	}
-	if openCoreSlot(slots, coreSlotTaken) == nil {
-		return nil, handOn("the Core package has no open visit slot")
-	}
+	// The half's limit is the refusal people see, so it is asked before
+	// whether the package would need a new slot.
 	if route == corePackageVisit {
 		sc := target.school
 		split, err := visitgate.SplitOf(ctx, s.db, schoolprofile.GateRules(),
@@ -178,18 +173,30 @@ func (s *Service) routeCoreVisit(ctx context.Context, target visitTarget, purpos
 			return nil, refuse("%s", coreStaffSideRefusal(sc.Name, split.StaffVisits))
 		}
 	}
+	slots, err := readCoreSlots(ctx, s.db, planID, coreSlotVisit, "")
+	if err != nil {
+		return nil, err
+	}
+	if openCoreSlot(slots, coreSlotTaken) == nil {
+		return nil, handOn("the Core package has no open visit slot")
+	}
 	return &coreBooking{planID: planID, route: route}, nil
 }
 
 // routeCorePair is what an In-school Training at a Core school asks of its
 // package: the plan its training and visit are credited to, "" when none is.
 // A universal training is on top of the package and takes no slot.
-func (s *Service) routeCorePair(ctx context.Context, sc school, c course, day time.Time) (string, error) {
+func (s *Service) routeCorePair(ctx context.Context, sc school, c course, day, now time.Time) (string, error) {
 	if !in(rules.Gate.CoreRuleTypes, sc.Type) || c.Universal {
 		return "", nil
 	}
-	planID, err := readCorePlan(ctx, s.db, sc.Code, schooldirectory.OperationalFY(day.UTC()))
+	fy := schooldirectory.OperationalFY(day.UTC())
+	planID, err := readCorePlan(ctx, s.db, sc.Code, fy)
 	if err != nil || planID == "" {
+		return "", err
+	}
+	// The half's limit first, as for a visit.
+	if err := coreTrainingSideOpen(ctx, s.db, sc, c, fy, now); err != nil {
 		return "", err
 	}
 	for _, kind := range []string{coreSlotTraining, coreSlotVisit} {

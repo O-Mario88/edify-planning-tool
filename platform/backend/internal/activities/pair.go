@@ -252,7 +252,7 @@ func (s *Service) preparePair(ctx context.Context, p auth.Principal, req Request
 	// A request holds no package slot until its owner approves it.
 	corePlanID := ""
 	if approvalOwner == "" {
-		if corePlanID, err = s.routeCorePair(ctx, *sc, *c, day); err != nil {
+		if corePlanID, err = s.routeCorePair(ctx, *sc, *c, day, now); err != nil {
 			return nil, err
 		}
 	}
