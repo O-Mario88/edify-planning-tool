@@ -315,6 +315,12 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			helpcontext.NewService(pool),
 			detailPagesSvc,
 		)
+	realtimeBroker := realtime.NewBroker(time.Now)
+	if cfg.RedisURL != "" {
+		if err := realtimeBroker.WithRedisPubSub(context.Background(), cfg.RedisURL, logger); err != nil {
+			logger.Warn("realtime: invalid redis pubsub configuration, staying single-node", slog.String("error", err.Error()))
+		}
+	}
 	effectiveSaves := cfg.GoSaves
 	// In pure-Go Django-absent mode (EDIFY_EXISTING_APP_URL == ""), every native
 	// Go writer is wired automatically so zero save paths depend on Django.
@@ -325,7 +331,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	if effectiveSaves.ScheduleVisit || effectiveSaves.RescheduleVisit || effectiveSaves.CancelVisit || effectiveSaves.EditVisit ||
 		effectiveSaves.ScheduleTrainingPair || effectiveSaves.GroupReschedule || effectiveSaves.GroupCancel ||
 		effectiveSaves.ScheduleGroupTraining || effectiveSaves.ScheduleClusterMeeting || effectiveSaves.CompleteVisit {
-		save := visitSave(cfg, pool, logger)
+		save := visitSave(cfg, pool, logger, realtimeBroker)
 		if effectiveSaves.ScheduleVisit {
 			screenService.WithVisitSave(save, logger)
 		}
@@ -358,12 +364,6 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		}
 	}
 	exportsMgr := exports.NewManager(pool, time.Now)
-	realtimeBroker := realtime.NewBroker(time.Now)
-	if cfg.RedisURL != "" {
-		if err := realtimeBroker.WithRedisPubSub(context.Background(), cfg.RedisURL, logger); err != nil {
-			logger.Warn("realtime: invalid redis pubsub configuration, staying single-node", slog.String("error", err.Error()))
-		}
-	}
 	if effectiveSaves.PLReview {
 		screenService.WithPLReviewSave(plreview.NewReviewService(pool, time.Now).
 			WithRealtime(realtimeBroker).WithSalesforceSync(cfg.SalesforceSync).
@@ -408,7 +408,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	notificationcenter.RegisterPreferencesHTTP(mux, authenticator, pool, time.Now)
 	support.NewService(pool, notificationcenter.NewWriter(pool, time.Now), time.Now).Register(mux, authenticator)
 	messaging.NewNativeStore(pool, notificationcenter.NewWriter(pool, time.Now), time.Now).RegisterHTTP(mux, authenticator)
-	activities.NewBulkHTTPHandler(visitSave(cfg, pool, logger)).Register(mux, authenticator)
+	activities.NewBulkHTTPHandler(visitSave(cfg, pool, logger, realtimeBroker)).Register(mux, authenticator)
 	// Settings (/settings): the reader's own account, read through the
 	// sign-in grant, with the same two-step policy sign-in applies.
 	settingsFieldKey, _ := signin.ParseFieldKey(cfg.SignIn.FieldEncryptionKey)
@@ -484,7 +484,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 // visitSave is the Go visit save (docs/migration/27 §27.10), switched on by
 // EDIFY_GO_SAVES in development or staging. Uses native Go pricing and
 // notifications when Django is absent.
-func visitSave(cfg config.Config, pool *pgxpool.Pool, logger *slog.Logger) *activities.Service {
+func visitSave(cfg config.Config, pool *pgxpool.Pool, logger *slog.Logger, live activities.NoticePublisher) *activities.Service {
 	var pricing activities.Pricing
 	if cfg.ExistingAppURL == "" {
 		pricing = activities.NewNativePricing(pool, notificationcenter.NewWriter(pool, time.Now))
@@ -497,7 +497,7 @@ func visitSave(cfg config.Config, pool *pgxpool.Pool, logger *slog.Logger) *acti
 		// gateway refuses to start rather than run with the switch quietly off.
 		panic(err)
 	}
-	return service
+	return service.WithOwnerNotices(plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, live)
 }
 
 // signInHandler assembles sign-in: the existing accounts, the existing

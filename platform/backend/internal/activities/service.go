@@ -75,6 +75,9 @@ type Service struct {
 	logger  *slog.Logger
 	now     func() time.Time
 	kampala *time.Location
+	// The owner's notice for a visit someone else put on their plan.
+	noticePush NoticePush
+	live       NoticePublisher
 }
 
 // NewService builds the save over the gateway's pool.
@@ -204,29 +207,36 @@ func (s *Service) prepare(ctx context.Context, p auth.Principal, req Request, or
 			itemID, recReason = resolved.ID, ""
 		}
 	}
-	sc, err := s.visitSchool(ctx, p, req.SchoolID, now)
+	sc, responsible, err := s.visitSchool(ctx, p, req.SchoolID, now)
 	if err != nil {
 		return nil, err
 	}
-	return s.create(ctx, p, req, origin, now, today, day, *sc, itemID, recReason, purpose, activityType)
+	return s.create(ctx, p, req, origin, now, today, day, *sc, responsible, itemID, recReason, purpose, activityType)
 }
 
-// visitSchool is the view's school (2318–2338) for a plain visit. The roles
-// that reach it may visit any school, and visit_owner_for files a visit
-// outside their portfolio against the person going. Inside it, a school
-// someone else holds would be delegation: handed on.
-func (s *Service) visitSchool(ctx context.Context, p auth.Principal, schoolID string, now time.Time) (*school, error) {
+// visitSchool is the view's school (2318–2338) and visit_owner_for: whose
+// visit this is. Outside the person's portfolio it is the person going; inside
+// it, the school's owner, who may be a colleague.
+func (s *Service) visitSchool(ctx context.Context, p auth.Principal, schoolID string, now time.Time) (*school, string, error) {
 	sc, mine, err := s.targetSchool(ctx, p, schoolID, now)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	if sc.closed() {
-		return nil, &Refusal{Message: rules.ClosedSchoolMessage, Forbidden: true}
+		return nil, "", &Refusal{Message: rules.ClosedSchoolMessage, Forbidden: true}
 	}
 	if !mine {
-		return sc, nil
+		return sc, p.StaffProfileID, nil
 	}
-	return s.heldByPerson(ctx, p, sc)
+	owner, err := schoolOwner(ctx, s.db, sc.ID)
+	if err != nil {
+		return nil, "", err
+	}
+	if owner == "" {
+		// resolve_monitoring_staff's fallbacks past the assignment.
+		return nil, "", handOn("the school has no assigned owner")
+	}
+	return sc, owner, nil
 }
 
 // targetSchool resolves the school again on POST (2318–2338) and says whether
@@ -247,25 +257,13 @@ func (s *Service) targetSchool(ctx context.Context, p auth.Principal, schoolID s
 	return sc, slices.Contains(scope.OwnSchoolIDs, sc.ID), nil
 }
 
-// heldByPerson hands on a school in the portfolio that someone else holds.
-func (s *Service) heldByPerson(ctx context.Context, p auth.Principal, sc *school) (*school, error) {
-	owner, err := schoolOwner(ctx, s.db, sc.ID)
-	if err != nil {
-		return nil, err
-	}
-	if owner != p.StaffProfileID {
-		return nil, handOn("the school's owner is someone else")
-	}
-	return sc, nil
-}
-
 func dateOnly(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 }
 
 // create is `_create` (2203) for this case, to its transaction.
 func (s *Service) create(ctx context.Context, p auth.Principal, req Request, origin Origin, now, today, day time.Time,
-	sc school, itemID, recReason, purpose, activityType string) (*plan, error) {
+	sc school, responsible, itemID, recReason, purpose, activityType string) (*plan, error) {
 	it, err := selectableItem(ctx, s.db, itemID, day)
 	if err != nil {
 		return nil, err
@@ -294,7 +292,6 @@ func (s *Service) create(ctx context.Context, p auth.Principal, req Request, ori
 	if err := entitlement(ctx, s.db, sc, activityType, purpose, fy, now); err != nil {
 		return nil, err
 	}
-	responsible := p.StaffProfileID
 	home, err := staffHomeOf(ctx, s.db, responsible)
 	if err != nil {
 		return nil, err
@@ -479,6 +476,20 @@ func entitlement(ctx context.Context, q Querier, sc school, activityType, purpos
 func (s *Service) answer(ctx context.Context, pl *plan) (Answer, error) {
 	day := pl.row.plannedDate
 	fy := schooldirectory.OperationalFY(time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.UTC))
+	if owner := pl.row.responsible; owner != pl.p.StaffProfileID && owner != pl.p.UserID {
+		name, err := staffName(ctx, s.db, owner)
+		if err != nil {
+			// The visit is saved; only the name in the sentence is missing.
+			s.logger.WarnContext(ctx, "activities: the owner's name was not read", "activity", pl.row.id, "err", err)
+			name = "the school's CCEO"
+		}
+		message, planURL, label := colleagueConfirmation(name, day)
+		return Answer{
+			ActivityID: pl.row.id, Status: "scheduled", ActivityType: pl.row.activityType,
+			PlannedDate: day.Format(time.DateOnly), FY: pl.row.fy, Message: message,
+			PlanURL: planURL, PlanLinkLabel: label,
+		}, nil
+	}
 	notice := ""
 	planned, ceiling, err := planningpage.VisitCeiling(ctx, s.db, pl.p, fy)
 	if err == nil && ceiling > 0 && planned > ceiling {

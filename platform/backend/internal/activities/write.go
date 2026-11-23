@@ -489,6 +489,9 @@ func (s *Service) afterCommit(ctx context.Context, pl *plan, rowID int64) {
 	if err := s.auditMeetingAdded(ctx, pl); err != nil {
 		s.logger.Warn("activities: the meeting's audit row was not written", "activity", pl.row.id, "err", err)
 	}
+	if err := s.tellScheduledOwner(ctx, pl); err != nil {
+		s.logger.Warn("activities: the owner was not told of the visit", "activity", pl.row.id, "err", err)
+	}
 	if err := s.pricing.Settle(ctx, []int64{rowID}, pl.row.id); err != nil {
 		s.logger.Warn("activities: the costs to follow were not settled; the sweep takes them",
 			"activity", pl.row.id, "row", rowID, "err", err)

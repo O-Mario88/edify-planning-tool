@@ -111,7 +111,7 @@ def message(html: str) -> str:
     """What the answer said, as text: the toast, error or panel words."""
     text = re.sub(r"<script.*?</script>|<style.*?</style>", " ", html, flags=re.S)
     text = re.sub(r"<[^>]+>", " ", text)
-    return " ".join(text.split())[:400]
+    return " ".join(text.split())[:1000]
 
 
 def script_values(html: str, wanted: dict) -> dict:

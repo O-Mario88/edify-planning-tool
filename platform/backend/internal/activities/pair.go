@@ -211,9 +211,12 @@ func (s *Service) preparePair(ctx context.Context, p auth.Principal, req Request
 	if !taken || c.conflicts() {
 		return nil, handOn("a course Go does not take (its intervention mapping or kind)")
 	}
-	sc, err := s.visitSchool(ctx, p, req.SchoolID, now)
+	sc, responsible, err := s.visitSchool(ctx, p, req.SchoolID, now)
 	if err != nil {
 		return nil, err
+	}
+	if responsible != p.StaffProfileID {
+		return nil, handOn("a training at a school a colleague holds")
 	}
 	// schedule_in_school_training_pair (689–719): the course offered on the
 	// day (get_selectable_item then finds it too), and both profiles.

@@ -94,7 +94,13 @@ func usableFirebaseAccount(raw string) bool {
 // row and a durable event per device. It runs in a savepoint of its own, so a
 // phone copy never undoes the notice.
 func (s *ReviewService) queuePush(ctx context.Context, tx pgx.Tx, notificationID, recipient string, now time.Time) error {
-	if s.push == (PushReadiness{}) {
+	return s.push.QueueCopy(ctx, tx, notificationID, recipient, now)
+}
+
+// QueueCopy queues a notice's phone copy for each of the recipient's devices
+// this deployment can reach.
+func (r PushReadiness) QueueCopy(ctx context.Context, tx pgx.Tx, notificationID, recipient string, now time.Time) error {
+	if r == (PushReadiness{}) {
 		return nil
 	}
 	savepoint, err := tx.Begin(ctx)
@@ -117,7 +123,7 @@ func (s *ReviewService) queuePush(ctx context.Context, tx pgx.Tx, notificationID
 		return fmt.Errorf("reading a device: %w", err)
 	}
 	for _, d := range devices {
-		if !s.push.reaches(d.kind, d.endpoint) {
+		if !r.reaches(d.kind, d.endpoint) {
 			continue
 		}
 		if _, err := savepoint.Exec(ctx, `SELECT gateway_notifications.queue_push_copy($1, $2, $3, $4, $5)`,
