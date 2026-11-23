@@ -22,6 +22,13 @@ Each was compared with Django for all 16 roles on private copies: same fields, o
 | `/partners/<id>/members/drawer` | 48 | 30 identical, 3 same refusal, 15 same not found |
 | `/projects/create` | 16 | 4 identical, 12 same refusal |
 | `/work-plan/add` | 32 | 14 identical, 18 same refusal |
+| `/extra-work/assign-drawer` | 32 | 10 identical, 22 same refusal |
+
+Found while porting, to fix before these saves are used without Django:
+
+- `plreview.checkReviewable` does not match Django's `_check_reviewable`. Go lets a Country Director review, and always refuses a lead's own work, which Django allows under `lead_clears_own_work`. Its refusal wording also differs.
+- `getAddToProjectInGo` offers every open project and all staff as coordinators. Django offers only projects the school may join (`projects_open_for_enrolment`, with capacity) and only Project Coordinators.
+- `/core-schools/schedule-activity` and `/core-schools/schedule-training` create the school's yearly package when opened (`ensure_core_plan`). Go must not write on a read, so these need the package worked out in memory.
 
 Limits of this proof: the development data has no PD requests and no partner team-member logins, so those paths are covered by unit tests or the existing Go helper only. The partner-on-hold rule was checked in a rolled-back transaction. An acting leader is refused by these Go forms until the acting page policy is ported.
 
