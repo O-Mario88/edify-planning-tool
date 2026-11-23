@@ -169,6 +169,10 @@ SELECT
      AND s.school_type = 'core' ORDER BY s.school_id LIMIT 1)`, cceo.StaffProfileID).Scan(&client, &core); err != nil {
 		t.Fatal(err)
 	}
+	var course string
+	if err := admin.QueryRow(ctx, `SELECT id FROM activity_catalogue_item WHERE stable_code = 'EDTECH_FOUNDATIONS'`).Scan(&course); err != nil {
+		t.Fatal(err)
+	}
 	visit := func(school, purpose, day string) activities.Request {
 		return activities.Request{SchoolID: school, Purpose: purpose, Date: day}
 	}
@@ -201,6 +205,9 @@ SELECT
 		{"another CCEO at this officer's school", principal("cceo1@edify.org"), visit(client, "donor_visit", "2026-11-10"),
 			"10 November 2026 has passed. Schedule work from 12 November 2026 onwards.", false},
 		{"the Country Director at this officer's school", principal("cd@edify.org"), visit(client, "donor_visit", "2026-11-10"),
+			"10 November 2026 has passed. Schedule work from 12 November 2026 onwards.", false},
+		{"another CCEO's training at this officer's school", principal("cceo1@edify.org"),
+			activities.Request{SchoolID: client, Purpose: "in_school_training", Date: "2026-11-10", CatalogueItemID: course, Focus: "leadership"},
 			"10 November 2026 has passed. Schedule work from 12 November 2026 onwards.", false},
 	}
 	for _, tt := range tests {

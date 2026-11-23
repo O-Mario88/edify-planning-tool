@@ -227,23 +227,6 @@ func (s *Service) visitSchool(ctx context.Context, p auth.Principal, schoolID st
 	return s.heldByPerson(ctx, p, sc)
 }
 
-// ownSchool is the school of a training pair: the person's own school by its
-// code, not a Core school, still operating, and owned by them. Anything else
-// is handed on.
-func (s *Service) ownSchool(ctx context.Context, p auth.Principal, schoolID string, now time.Time) (*school, error) {
-	sc, mine, err := s.targetSchool(ctx, p, schoolID, now)
-	if err != nil {
-		return nil, err
-	}
-	if !mine {
-		return nil, handOn("outside the person's own portfolio")
-	}
-	if sc.closed() {
-		return nil, &Refusal{Message: rules.ClosedSchoolMessage, Forbidden: true}
-	}
-	return s.heldByPerson(ctx, p, sc)
-}
-
 // targetSchool resolves the school again on POST (2318–2338) and says whether
 // it is in the person's own portfolio. A Core school takes the package route
 // and is handed on.

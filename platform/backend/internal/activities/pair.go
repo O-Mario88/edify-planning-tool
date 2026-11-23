@@ -180,8 +180,9 @@ func (s *Service) preparePair(ctx context.Context, p auth.Principal, req Request
 	purpose := strings.TrimSpace(req.Purpose)
 	date := strings.TrimSpace(req.Date)
 	if in(rules.Doors.Requesters, p.ActiveRole) || p.InActingAppointment || p.StaffProfileID == "" ||
-		!IsPairPurpose(purpose) || (date != "" && !isoDate.MatchString(date)) || req.Focus != "" {
-		// A posted focus is a course left to the planner: not ported here.
+		!IsPairPurpose(purpose) || (date != "" && !isoDate.MatchString(date)) {
+		// A posted focus needs no case: schedule_in_school_training_pair
+		// replaces it with the course's own intervention.
 		return nil, handOn("not the owner's own In-school Training")
 	}
 	// split_training_purpose (2030): the SSA purpose is the pair, its visit
@@ -210,7 +211,7 @@ func (s *Service) preparePair(ctx context.Context, p auth.Principal, req Request
 	if !taken || c.conflicts() {
 		return nil, handOn("a course Go does not take (its intervention mapping or kind)")
 	}
-	sc, err := s.ownSchool(ctx, p, req.SchoolID, now)
+	sc, err := s.visitSchool(ctx, p, req.SchoolID, now)
 	if err != nil {
 		return nil, err
 	}

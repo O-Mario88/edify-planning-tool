@@ -323,12 +323,15 @@ func TestOnlyACanonicalInterventionCanBeNamed(t *testing.T) {
 	}
 }
 
-func TestATrainingWithANamedFocusIsHandedOn(t *testing.T) {
+// The pair takes its intervention from the course, so a focus the form posted
+// changes nothing and no longer sends the save elsewhere.
+func TestATrainingWithAPostedFocusStaysInGo(t *testing.T) {
 	s := &Service{now: func() time.Time { return time.Date(2026, 11, 23, 9, 0, 0, 0, time.UTC) }, kampala: time.UTC}
 	p := auth.Principal{Account: auth.Account{UserID: "u1", ActiveRole: "CCEO", StaffProfileID: "s1"}}
-	_, err := s.preparePair(context.Background(), p, Request{Purpose: rules.Pair.TrainingPurpose, Date: "2026-11-24", CatalogueItemID: "c1", Focus: "leadership"}, Origin{})
-	if !errors.Is(err, ErrHandOn) {
-		t.Fatalf("err = %v", err)
+	_, err := s.preparePair(context.Background(), p, Request{Purpose: rules.Pair.TrainingPurpose, Date: "2026-11-24", Focus: "leadership"}, Origin{})
+	var refused *Refusal
+	if !errors.As(err, &refused) || refused.Message != noCourse {
+		t.Fatalf("err = %v, want the missing-course refusal", err)
 	}
 }
 
