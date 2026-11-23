@@ -213,7 +213,7 @@ ON CONFLICT (user_id, day) DO UPDATE SET school_ids = EXCLUDED.school_ids, saved
 	}
 	for id, st := range d.stops {
 		if _, err := tx.Exec(ctx, `INSERT INTO field_routes.field_day_stop (user_id, day, school_id, arrived_at, left_at, country_code)
-VALUES ($1, $2, $3, $4, $5, (SELECT fd.country_code FROM field_routes.field_day fd WHERE fd.user_id = $1 AND fd.day = $2::date))
+VALUES ($1::varchar, $2::date, $3, $4, $5, (SELECT fd.country_code FROM field_routes.field_day fd WHERE fd.user_id = $1::varchar AND fd.day = $2::date))
 ON CONFLICT (user_id, day, school_id) DO UPDATE SET left_at = EXCLUDED.left_at`, user, date, id, st.arrived, st.left); err != nil {
 			return fmt.Errorf("routeplan: saving a stop: %w", err)
 		}
