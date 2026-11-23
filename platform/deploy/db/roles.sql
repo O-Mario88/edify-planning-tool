@@ -211,13 +211,12 @@ GRANT SELECT (ssa_alignment) ON activity TO edify_gateway_ro;
 GRANT SELECT (id, user_id, partner_id, active, role, name) ON partner_member TO edify_gateway_ro;
 -- The Verify form shows why the plan did or did not follow the SSA.
 GRANT SELECT (recommendation_reason, recommendation_source) ON activity TO edify_gateway_ro;
--- A review decision reads what follows it, and hands on what Go does not make yet.
-GRANT SELECT (ia_confirmed_at) ON activity TO edify_gateway_ro;
-GRANT SELECT (planned_activity_id, state) ON ssa_recommendation TO edify_gateway_ro;
-GRANT SELECT (user_id, revoked_at) ON notification_push_subscription TO edify_gateway_ro;
-GRANT SELECT (catalogue_version) ON activity TO edify_gateway_ro;
-GRANT SELECT (weight, school_level) ON hr_milestone_activity_rule TO edify_gateway_ro;
-GRANT SELECT (milestone_id) ON hr_milestone_period_target TO edify_gateway_ro;
+-- What a review decision reads of the credits, targets and devices it moves.
+GRANT SELECT (ia_confirmed_at, catalogue_version) ON activity TO edify_gateway_ro;
+GRANT SELECT (id, kind, endpoint, user_id, revoked_at) ON notification_push_subscription TO edify_gateway_ro;
+GRANT SELECT (weight, school_level, created_at) ON hr_milestone_activity_rule TO edify_gateway_ro;
+GRANT SELECT (id, created_at) ON hr_milestone_progress_credit TO edify_gateway_ro;
+GRANT SELECT (id, milestone_id, scope, employee_id, team_id) ON hr_milestone_period_target TO edify_gateway_ro;
 -- A partner on hold is not offered new work (assignable_partners).
 GRANT SELECT (partner_id, lifted_at) ON partner_hold TO edify_gateway_ro;
 GRANT SELECT (active_status, partner_role) ON partner TO edify_gateway_ro;

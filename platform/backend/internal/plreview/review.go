@@ -27,8 +27,6 @@ const (
 	needsReason    = "Say what needs correcting before returning a completion."
 	noLongerWaits  = "This completion is no longer waiting for Programme Lead review."
 	noSalesforceID = "This completion has no Salesforce ID. Return it to the officer to enter the ID; it cannot be verified without one."
-
-	loanVerificationItem = "BT_UG_LOAN_USE_VERIFICATION"
 )
 
 // ReviewRefusal is a business-rule refusal on PL approve/return.
@@ -53,13 +51,13 @@ type Publisher interface {
 }
 
 // ReviewService performs Programme Lead completion approvals and returns
-// natively in Go via gateway_pl_review.* without calling Django. A decision
-// with a consequence Go does not make yet answers ErrHandOn before it writes.
+// natively in Go via gateway_pl_review.* without calling Django.
 type ReviewService struct {
 	pool           *pgxpool.Pool
 	now            func() time.Time
 	live           Publisher
 	salesforceSync bool
+	push           PushReadiness
 	logger         *slog.Logger
 }
 
@@ -81,6 +79,12 @@ func (s *ReviewService) WithRealtime(live Publisher) *ReviewService {
 // (SALESFORCE_SYNC_ENABLED, the existing application's switch).
 func (s *ReviewService) WithSalesforceSync(on bool) *ReviewService {
 	s.salesforceSync = on
+	return s
+}
+
+// WithPush names the push services this deployment can send through.
+func (s *ReviewService) WithPush(ready PushReadiness) *ReviewService {
+	s.push = ready
 	return s
 }
 
@@ -115,47 +119,17 @@ func (s *ReviewService) checkReviewable(ctx context.Context, tx pgx.Tx, p auth.P
 	return review, nil
 }
 
-// needsExisting is whether this decision has a consequence only the existing
-// application makes yet: a phone to tell, or a loan-use visit to link; and for
-// an approval, the visit's SSA to confirm, a milestone's period targets to
-// refresh, a reversed credit to revive, or the SSA recommendations it answered
-// to settle.
-func needsExisting(ctx context.Context, q schooldirectory.Querier, r Review, approving bool) (bool, error) {
-	var needed bool
-	err := q.QueryRow(ctx, `
-SELECT EXISTS (SELECT 1 FROM activity_catalogue_item c WHERE c.id = $2 AND c.stable_code = $3 AND $4 <> '')
-    OR EXISTS (SELECT 1 FROM notification_push_subscription d WHERE d.revoked_at IS NULL
-                AND d.user_id IN (SELECT $1::varchar UNION SELECT user_id FROM staff_profile WHERE id = $1))`,
-		r.Owner, r.CatalogueItemID, loanVerificationItem, r.SchoolID).Scan(&needed)
-	if err != nil {
-		return false, fmt.Errorf("plreview: reading what follows the decision: %w", err)
-	}
-	if needed || !approving {
-		return needed, nil
-	}
-	err = q.QueryRow(ctx, `
-SELECT ($3 <> 'partner' AND EXISTS (SELECT 1 FROM ssa_record x WHERE x.source_activity_id = $1 AND x.deleted_at IS NULL
-          AND x.verification_status = 'pending' AND x.collector_type IS DISTINCT FROM 'partner'))
-    OR EXISTS (SELECT 1 FROM hr_milestone_activity_rule m JOIN hr_milestone_period_target t ON t.milestone_id = m.milestone_id
-                WHERE m.active AND m.catalogue_item_id = $2)
-    OR EXISTS (SELECT 1 FROM hr_milestone_progress_credit c WHERE c.activity_id = $1 AND c.reversed_at IS NOT NULL)
-    OR EXISTS (SELECT 1 FROM ssa_recommendation n WHERE n.planned_activity_id = $1 AND n.state = 'planned')`,
-		r.ID, r.CatalogueItemID, r.DeliveryType).Scan(&needed)
-	if err != nil {
-		return false, fmt.Errorf("plreview: reading what follows the approval: %w", err)
-	}
-	return needed, nil
-}
-
 // reviewNotice is what the officer is told.
 type reviewNotice struct {
 	event, title, body, label, priority string
 }
 
-// Approve is apps.pl_review.services.confirm and the view around it: the
-// approval, its audit row, the notices it closes and the events it raises in
-// one transaction; then, as the existing order has it, the officer's notice,
-// the view's audit row and the ledger's mark, none of which can undo it.
+// Approve is apps.pl_review.services.confirm and the view around it. In one
+// transaction: the approval, the recommendations it settles, a loan-use visit's
+// link, the visit's SSA, the notices it closes, the events it raises and its
+// audit row. Then, as the existing order has it, milestone progress, the
+// officer's notice, the view's audit row and the ledger's marks, none of which
+// can undo it.
 func (s *ReviewService) Approve(ctx context.Context, p auth.Principal, activityID string) (ReviewResult, error) {
 	if strings.TrimSpace(activityID) == "" {
 		return ReviewResult{}, &ReviewRefusal{Message: "Activity is required."}
@@ -171,19 +145,9 @@ func (s *ReviewService) Approve(ctx context.Context, p auth.Principal, activityI
 	if err != nil {
 		return ReviewResult{}, err
 	}
-	handOn, err := needsExisting(ctx, tx, target, true)
+	progress, err := planProgress(ctx, tx, target)
 	if err != nil {
 		return ReviewResult{}, err
-	}
-	if handOn {
-		return ReviewResult{}, ErrHandOn
-	}
-	progress, handOn, err := planProgress(ctx, tx, target)
-	if err != nil {
-		return ReviewResult{}, err
-	}
-	if handOn {
-		return ReviewResult{}, ErrHandOn
 	}
 	var verdict string
 	if err := tx.QueryRow(ctx, `SELECT gateway_pl_review.approve_completion($1, $2, $3)`,
@@ -198,6 +162,16 @@ func (s *ReviewService) Approve(ctx context.Context, p auth.Principal, activityI
 		return ReviewResult{}, &ReviewRefusal{Message: noLongerWaits}
 	default:
 		return ReviewResult{}, fmt.Errorf("plreview: unexpected approve verdict %q", verdict)
+	}
+	if err := settleRecommendations(ctx, tx, target, now); err != nil {
+		return ReviewResult{}, err
+	}
+	if err := linkLoanVisit(ctx, tx, activityID, now); err != nil {
+		return ReviewResult{}, err
+	}
+	ssaMarks, err := confirmVisitSSA(ctx, tx, target, p.UserID, now)
+	if err != nil {
+		return ReviewResult{}, err
 	}
 	if err := closeNotice(ctx, tx, eventAwaitingLead, "Activity", activityID, now); err != nil {
 		return ReviewResult{}, err
@@ -223,7 +197,7 @@ func (s *ReviewService) Approve(ctx context.Context, p auth.Principal, activityI
 		event: eventVerifiedByPL, title: "Your completion was approved and verified",
 		body:  "Your Program Lead approved and verified your activity completion and evidence.",
 		label: "Open Activity", priority: "normal",
-	}, "pl_approve_completion", nil, now)
+	}, "pl_approve_completion", nil, ssaMarks, now)
 	return ReviewResult{ActivityID: activityID, Status: statusVerified}, nil
 }
 
@@ -249,13 +223,6 @@ func (s *ReviewService) Return(ctx context.Context, p auth.Principal, activityID
 	if err != nil {
 		return ReviewResult{}, err
 	}
-	handOn, err := needsExisting(ctx, tx, target, false)
-	if err != nil {
-		return ReviewResult{}, err
-	}
-	if handOn {
-		return ReviewResult{}, ErrHandOn
-	}
 	var verdict string
 	if err := tx.QueryRow(ctx, `SELECT gateway_pl_review.return_completion($1, $2, $3, $4)`,
 		activityID, p.UserID, note, now).Scan(&verdict); err != nil {
@@ -269,6 +236,9 @@ func (s *ReviewService) Return(ctx context.Context, p auth.Principal, activityID
 		return ReviewResult{}, &ReviewRefusal{Message: noLongerWaits}
 	default:
 		return ReviewResult{}, fmt.Errorf("plreview: unexpected return verdict %q", verdict)
+	}
+	if err := linkLoanVisit(ctx, tx, activityID, now); err != nil {
+		return ReviewResult{}, err
 	}
 	if err := closeNotice(ctx, tx, eventAwaitingLead, "Activity", activityID, now); err != nil {
 		return ReviewResult{}, err
@@ -285,7 +255,7 @@ func (s *ReviewService) Return(ctx context.Context, p auth.Principal, activityID
 	s.afterDecision(ctx, p, target, reviewNotice{
 		event: eventReturnedByPL, title: "Your completion was returned", body: note,
 		label: "Fix and Resubmit", priority: "high",
-	}, "pl_return_completion", map[string]any{"reason": returnAuditReason(reasons, written)}, now)
+	}, "pl_return_completion", map[string]any{"reason": returnAuditReason(reasons, written)}, nil, now)
 	return ReviewResult{ActivityID: activityID, Status: statusReturnedByPL, Reason: note}, nil
 }
 
@@ -348,7 +318,7 @@ func decisionAudit(ctx context.Context, p auth.Principal, action string, r Revie
 
 // afterDecision is what follows the commit. The decision stands whatever
 // happens here, so a failure is reported and goes no further.
-func (s *ReviewService) afterDecision(ctx context.Context, p auth.Principal, r Review, notice reviewNotice, viewAction string, viewPayload any, now time.Time) {
+func (s *ReviewService) afterDecision(ctx context.Context, p auth.Principal, r Review, notice reviewNotice, viewAction string, viewPayload any, marks []ledgerMark, now time.Time) {
 	if err := s.tellOfficer(ctx, r, notice, p, now); err != nil {
 		s.logger.WarnContext(ctx, "plreview: the officer was not told", "activity", r.ID, "err", err)
 	}
@@ -359,7 +329,7 @@ func (s *ReviewService) afterDecision(ctx context.Context, p auth.Principal, r R
 	if err := s.inTransaction(ctx, func(tx pgx.Tx) error { return appendAudit(ctx, tx, entry, now) }); err != nil {
 		s.logger.WarnContext(ctx, "plreview: the decision's audit row was not written", "activity", r.ID, "err", err)
 	}
-	if err := s.markLedger(ctx, r, now); err != nil {
+	if err := s.markLedger(ctx, r, marks, now); err != nil {
 		s.logger.WarnContext(ctx, "plreview: the target ledger was not marked", "activity", r.ID, "err", err)
 	}
 }
@@ -396,6 +366,9 @@ SELECT out_notification_id, out_recipient_id
 		if err != nil {
 			return fmt.Errorf("delivering the notice: %w", err)
 		}
+		if err := s.queuePush(ctx, tx, notificationID, recipient, now); err != nil {
+			s.logger.WarnContext(ctx, "plreview: the phone copy was not queued", "activity", r.ID, "err", err)
+		}
 		return appendAudit(ctx, tx, stamped(ctx, audit.Entry{
 			Action: "notification." + notice.event, SubjectKind: audit.Text("Activity"), SubjectID: audit.Text(r.ID),
 			Payload: map[string]any{
@@ -416,16 +389,26 @@ SELECT out_notification_id, out_recipient_id
 	return nil
 }
 
-// markLedger marks the owner's year for the targets ledger to rebuild, for
-// the kinds of work a target area counts.
-func (s *ReviewService) markLedger(ctx context.Context, r Review, now time.Time) error {
-	if r.ResponsibleStaffID == "" || r.Planned == nil || !slices.Contains(rules.LedgerCreditedTypes, r.ActivityType) {
+// markLedger marks the years the targets ledger must rebuild: the work's
+// owner, for the kinds of work a target area counts, and each confirmed SSA's
+// collector.
+func (s *ReviewService) markLedger(ctx context.Context, r Review, marks []ledgerMark, now time.Time) error {
+	if r.ResponsibleStaffID != "" && r.Planned != nil && slices.Contains(rules.LedgerCreditedTypes, r.ActivityType) {
+		day := r.Planned.UTC()
+		marks = append(slices.Clone(marks), ledgerMark{
+			owner: r.ResponsibleStaffID,
+			fy:    schooldirectory.OperationalFY(time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.UTC)),
+		})
+	}
+	if len(marks) == 0 {
 		return nil
 	}
-	day := r.Planned.UTC()
-	fy := schooldirectory.OperationalFY(time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.UTC))
 	return s.inTransaction(ctx, func(tx pgx.Tx) error {
-		_, err := tx.Exec(ctx, `SELECT gateway_pl_review.mark_ledger($1, $2, $3)`, r.ResponsibleStaffID, fy, now)
-		return err
+		for _, mark := range marks {
+			if _, err := tx.Exec(ctx, `SELECT gateway_pl_review.mark_ledger($1, $2, $3)`, mark.owner, mark.fy, now); err != nil {
+				return err
+			}
+		}
+		return nil
 	})
 }

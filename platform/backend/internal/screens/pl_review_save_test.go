@@ -82,15 +82,6 @@ func TestTheReviewFormsSaveWhereTheyOpen(t *testing.T) {
 	}
 }
 
-func TestADecisionGoDoesNotMakeIsHandedOn(t *testing.T) {
-	svc := NewService(nil).WithPLReviewSave(&fakePLReviewer{err: plreview.ErrHandOn}, nil)
-	ctx := auth.WithPrincipal(context.Background(), auth.Principal{Account: auth.Account{UserID: "pl1", ActiveRole: "Program Lead"}})
-	answer, served, err := svc.plReviewInGo(ctx, &screensv1.SaveDrawerRequest{Path: "/pl/review-queue/act123/drawer"})
-	if served || answer != nil || err != nil {
-		t.Fatalf("handed on: answer=%v served=%v err=%v", answer, served, err)
-	}
-}
-
 func TestAMissingCompletionIsNotFound(t *testing.T) {
 	svc := NewService(nil).WithPLReviewSave(&fakePLReviewer{
 		err: &plreview.ReviewRefusal{Message: "Activity not found.", NotFound: true},

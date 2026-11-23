@@ -87,9 +87,6 @@ func (s *Service) plReviewInGo(
 		}
 		res, err = s.plReviews.Return(ctx, principal, activityID, plreview.TickedReasons(values["reasons"]), written)
 	}
-	if errors.Is(err, plreview.ErrHandOn) {
-		return nil, false, nil
-	}
 	var refusal *plreview.ReviewRefusal
 	switch {
 	case errors.As(err, &refusal) && refusal.NotFound:

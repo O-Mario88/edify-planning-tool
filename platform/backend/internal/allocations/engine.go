@@ -625,18 +625,7 @@ func activityScope(countryID string, countryScope bool, owners []string, fy stri
  OR (a.delivery_type = 'partner' AND a.monitored_by_staff_id = ANY(%[1]s)))`, ids)
 	}
 	if countryID != "" {
-		c := arg(countryID)
-		clause += fmt.Sprintf(` AND (
-  EXISTS (SELECT 1 FROM school s JOIN region r ON r.id = s.region_id WHERE s.id = a.school_id AND r.country = %[1]s)
-  OR EXISTS (SELECT 1 FROM school s WHERE s.id = a.school_id AND s.region_id IS NULL AND (
-       s.account_owner_id IN (SELECT id FROM staff_profile WHERE country = %[1]s AND deleted_at IS NULL)
-       OR s.account_owner_id IS NULL OR s.account_owner_id = ''
-       OR s.account_owner_id IN (SELECT id FROM staff_profile WHERE (country IS NULL OR country = '') AND deleted_at IS NULL)))
-  OR (a.school_id IS NULL AND EXISTS (SELECT 1 FROM cluster cl JOIN district d ON d.id = cl.district_id JOIN region r ON r.id = d.region_id
-                                       WHERE cl.id = a.cluster_id AND r.country = %[1]s))
-  OR (a.school_id IS NULL AND a.cluster_id IS NULL AND (
-       a.responsible_staff_id IN (SELECT id FROM staff_profile WHERE country = %[1]s UNION SELECT user_id FROM staff_profile WHERE country = %[1]s AND user_id IS NOT NULL)
-       OR a.monitored_by_staff_id IN (SELECT id FROM staff_profile WHERE country = %[1]s UNION SELECT user_id FROM staff_profile WHERE country = %[1]s AND user_id IS NOT NULL))))`, c)
+		clause += " AND " + CountryActivityClause(arg(countryID))
 	}
 	return clause, args
 }

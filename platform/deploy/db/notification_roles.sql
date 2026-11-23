@@ -33,6 +33,16 @@ GRANT SELECT (resolved_at, created_at, reminder_count) ON notification TO edify_
 GRANT UPDATE (title, body, target_route, action_label, priority, action_required, reminder_count,
               last_reminded_at)
   ON notification TO edify_notification_owner;
+-- queue_push_copy: one delivery row per device and round, and its durable event.
+GRANT SELECT (priority) ON notification TO edify_notification_owner;
+GRANT SELECT (notification_id, channel, round, target),
+      INSERT (id, created_at, updated_at, notification_id, recipient_id, channel, round, target, status,
+              attempts, provider_message_id, last_error)
+  ON notification_delivery TO edify_notification_owner;
+GRANT SELECT (idempotency_key),
+      INSERT (id, created_at, updated_at, event_type, payload, idempotency_key, status, attempts,
+              max_attempts, next_attempt_at, locked_by, last_error)
+  ON outbox_event TO edify_notification_owner;
 
 CREATE SCHEMA IF NOT EXISTS gateway_notifications AUTHORIZATION edify_notification_owner;
 REVOKE ALL ON SCHEMA gateway_notifications FROM PUBLIC;
@@ -224,6 +234,45 @@ BEGIN
 END
 $fn$;
 
+-- push.enqueue for one device: a copy the recipient turned off is recorded as
+-- suppressed and not queued; a deactivated account is sent nothing.
+CREATE OR REPLACE FUNCTION gateway_notifications.queue_push_copy(
+  delivery_id varchar, event_id varchar, notice_id varchar, device varchar, at timestamptz
+) RETURNS boolean
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  notice record;
+  turned_off boolean;
+  this_round integer;
+BEGIN
+  SELECT n.recipient_id, n.priority, COALESCE(n.reminder_count, 0) AS reminders INTO notice
+    FROM public.notification n
+    JOIN public."user" u ON u.id = n.recipient_id AND u.is_active AND u.deleted_at IS NULL
+   WHERE n.id = notice_id;
+  IF NOT FOUND THEN
+    RETURN false;
+  END IF;
+  this_round := notice.reminders;
+  turned_off := notice.priority <> 'urgent' AND EXISTS (
+    SELECT 1 FROM public.notification_preference p WHERE p.user_id = notice.recipient_id AND p.push_enabled = false);
+  INSERT INTO public.notification_delivery (id, created_at, updated_at, notification_id, recipient_id, channel, round,
+                                            target, status, attempts, provider_message_id, last_error)
+  VALUES (delivery_id, at, at, notice_id, notice.recipient_id, 'push', this_round, device,
+          CASE WHEN turned_off THEN 'suppressed' ELSE 'queued' END, 0, '', '')
+  ON CONFLICT (notification_id, channel, round, target) DO NOTHING;
+  IF NOT FOUND OR turned_off THEN
+    RETURN false;
+  END IF;
+  INSERT INTO public.outbox_event (id, created_at, updated_at, event_type, payload, idempotency_key, status, attempts,
+                                   max_attempts, next_attempt_at, locked_by, last_error)
+  VALUES (event_id, at, at, 'notification.push',
+          jsonb_build_object('notificationId', notice_id, 'subscriptionId', device, 'round', this_round),
+          'push:' || notice_id || ':' || this_round || ':' || device, 'pending', 0, 8, at, '', '')
+  ON CONFLICT (idempotency_key) DO NOTHING;
+  RETURN true;
+END
+$fn$;
+
 -- Upserts caller's notification delivery preferences (Step 3B).
 CREATE OR REPLACE FUNCTION gateway_notifications.update_preferences(
   owner_id varchar,
@@ -264,6 +313,7 @@ REVOKE ALL ON FUNCTION gateway_notifications.resolve_context(varchar, varchar, v
 REVOKE ALL ON FUNCTION gateway_notifications.update_preferences(varchar, boolean, boolean, jsonb, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_notifications.resolve_condition(varchar, varchar, varchar, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_notifications.notify_workflow(varchar, varchar, varchar, text, varchar, varchar, varchar, varchar, varchar, varchar, varchar, timestamptz) FROM PUBLIC;
+REVOKE ALL ON FUNCTION gateway_notifications.queue_push_copy(varchar, varchar, varchar, varchar, timestamptz) FROM PUBLIC;
 RESET ROLE;
 
 GRANT USAGE ON SCHEMA gateway_notifications TO edify_gateway;
@@ -275,3 +325,4 @@ GRANT EXECUTE ON FUNCTION gateway_notifications.resolve_context(varchar, varchar
 GRANT EXECUTE ON FUNCTION gateway_notifications.update_preferences(varchar, boolean, boolean, jsonb, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_notifications.resolve_condition(varchar, varchar, varchar, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_notifications.notify_workflow(varchar, varchar, varchar, text, varchar, varchar, varchar, varchar, varchar, varchar, varchar, timestamptz) TO edify_gateway;
+GRANT EXECUTE ON FUNCTION gateway_notifications.queue_push_copy(varchar, varchar, varchar, varchar, timestamptz) TO edify_gateway;

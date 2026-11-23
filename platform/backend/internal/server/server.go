@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -363,7 +364,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	}
 	if effectiveSaves.PLReview {
 		screenService.WithPLReviewSave(plreview.NewReviewService(pool, time.Now).
-			WithRealtime(realtimeBroker).WithSalesforceSync(cfg.SalesforceSync).WithLogger(logger), logger)
+			WithRealtime(realtimeBroker).WithSalesforceSync(cfg.SalesforceSync).
+			WithPush(plreview.PushReadinessFrom(os.Getenv, os.ReadFile)).WithLogger(logger), logger)
 	}
 	uploadsSvc := uploads.NewService(pool, time.Now).WithRealtime(realtimeBroker)
 	fieldOpsSvc := fieldops.NewService(pool).WithRealtime(realtimeBroker)

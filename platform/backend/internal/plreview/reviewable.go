@@ -75,8 +75,8 @@ type Review struct {
 	ID, Status, ActivityType, SchoolID, ResponsibleStaffID string
 	Officer, Activity, Where, Delivered                    string
 	// What a decision on it reads.
-	Owner, DeliveryType, ProjectID, CatalogueItemID string
-	Planned, IAConfirmedAt                          *time.Time
+	Owner, DeliveryType, ProjectID, CatalogueItemID, Intervention string
+	Planned, IAConfirmedAt                                        *time.Time
 }
 
 // readWork is the completion and whether a lead verifies its owner's work.
@@ -163,12 +163,12 @@ SELECT COALESCE(a.status, ''), COALESCE(a.delivery_type, ''),
   COALESCE(a.activity_name_snapshot, ''),
   COALESCE(CASE WHEN a.school_id IS NOT NULL THEN s.name WHEN a.cluster_id IS NOT NULL THEN cl.name ELSE a.venue END, ''),
   COALESCE(a.actual_delivery_date, a.planned_date),
-  COALESCE(a.project_id, ''), COALESCE(a.catalogue_item_id, ''), a.planned_date
+  COALESCE(a.project_id, ''), COALESCE(a.catalogue_item_id, ''), COALESCE(a.focus_intervention, ''), a.planned_date
 FROM activity a LEFT JOIN school s ON s.id = a.school_id LEFT JOIN cluster cl ON cl.id = a.cluster_id
 WHERE a.id = $1 AND a.deleted_at IS NULL`, activityID).Scan(
 		&work.status, &work.deliveryType, &work.owner, &review.ResponsibleStaffID, &review.SchoolID,
 		&review.ActivityType, &name, &review.Where, &delivered,
-		&review.ProjectID, &review.CatalogueItemID, &review.Planned)
+		&review.ProjectID, &review.CatalogueItemID, &review.Intervention, &review.Planned)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return review, reviewCase{}, nil
 	}

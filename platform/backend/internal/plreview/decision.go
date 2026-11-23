@@ -1,7 +1,6 @@
 package plreview
 
 import (
-	"errors"
 	"strings"
 	"time"
 	"unicode"
@@ -22,10 +21,6 @@ const (
 	isoMicroseconds      = "2006-01-02T15:04:05.000000"
 	isoUTCOffset         = "+00:00"
 )
-
-// ErrHandOn is a decision with a consequence Go does not make yet: the
-// existing application makes the whole of it, so none is made by halves.
-var ErrHandOn = errors.New("plreview: this decision stays with the existing application")
 
 // ReturnReasonValue is a reason as a checklist sends it. A checklist's value
 // is its ticks joined by commas, so a reason's own commas are left out.
