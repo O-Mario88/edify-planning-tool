@@ -44,11 +44,11 @@ func MayCaptureGPS(role string) bool { return slices.Contains(GPSCaptureRoles, r
 var DirectCaptureRoles = []string{"CCEO", "Program Lead", "CountryDirector", "Admin", "ProjectCoordinator"}
 
 // DecideGPSCapture evaluates a device GPS capture/update from POST /api/schools/{id}/gps-location:
-// - Normal authorized captures & updates (accuracy <= 50m, displacement <= 1000m,
-//   within district tolerance, no version conflict) apply directly & immediately.
-// - Large moves (> 1000m), far-from-district coordinates (> 60km), poor accuracy (> 50m),
-//   or partner updates without direct-save rights are stored as pending verification
-//   so coordinates are never silently overwritten on suspicious readings.
+//   - Normal authorized captures & updates (accuracy <= 50m, displacement <= 1000m,
+//     within district tolerance, no version conflict) apply directly & immediately.
+//   - Large moves (> 1000m), far-from-district coordinates (> 60km), poor accuracy (> 50m),
+//     or partner updates without direct-save rights are stored as pending verification
+//     so coordinates are never silently overwritten on suspicious readings.
 func DecideGPSCapture(in CaptureInput, st SchoolState, role string, now time.Time, policy Policy) Decision {
 	var flags []string
 	add := func(f string) {

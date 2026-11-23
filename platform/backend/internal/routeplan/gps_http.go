@@ -51,25 +51,25 @@ type GPSAuditEntry struct {
 
 // GPSLocationState is the authoritative school coordinate state returned by GET/POST.
 type GPSLocationState struct {
-	SchoolID           string          `json:"school_id"`
-	SchoolCode         string          `json:"school_code"`
-	SchoolName         string          `json:"school_name"`
-	District           string          `json:"district"`
-	HasCoordinates     bool            `json:"has_coordinates"`
-	Latitude           *float64        `json:"latitude,omitempty"`
-	Longitude          *float64        `json:"longitude,omitempty"`
-	WGS84PointWKT      string          `json:"wgs84_point_wkt,omitempty"` // POINT(lng lat) EPSG:4326
-	AccuracyMeters     *float64        `json:"accuracy_meters,omitempty"`
-	LocationStatus     string          `json:"location_status"` // verified | recorded | missing | invalid
-	Source             string          `json:"source"`
-	Version            int32           `json:"version"`
-	VerifiedAt         string          `json:"verified_at,omitempty"`
-	VerifiedByName     string          `json:"verified_by_name,omitempty"`
-	EntranceLat        *float64        `json:"entrance_latitude,omitempty"`
-	EntranceLng        *float64        `json:"entrance_longitude,omitempty"`
-	AccessNote         string          `json:"access_note,omitempty"`
-	CanCapture         bool            `json:"can_capture"`
-	History            []GPSAuditEntry `json:"history,omitempty"`
+	SchoolID       string          `json:"school_id"`
+	SchoolCode     string          `json:"school_code"`
+	SchoolName     string          `json:"school_name"`
+	District       string          `json:"district"`
+	HasCoordinates bool            `json:"has_coordinates"`
+	Latitude       *float64        `json:"latitude,omitempty"`
+	Longitude      *float64        `json:"longitude,omitempty"`
+	WGS84PointWKT  string          `json:"wgs84_point_wkt,omitempty"` // POINT(lng lat) EPSG:4326
+	AccuracyMeters *float64        `json:"accuracy_meters,omitempty"`
+	LocationStatus string          `json:"location_status"` // verified | recorded | missing | invalid
+	Source         string          `json:"source"`
+	Version        int32           `json:"version"`
+	VerifiedAt     string          `json:"verified_at,omitempty"`
+	VerifiedByName string          `json:"verified_by_name,omitempty"`
+	EntranceLat    *float64        `json:"entrance_latitude,omitempty"`
+	EntranceLng    *float64        `json:"entrance_longitude,omitempty"`
+	AccessNote     string          `json:"access_note,omitempty"`
+	CanCapture     bool            `json:"can_capture"`
+	History        []GPSAuditEntry `json:"history,omitempty"`
 }
 
 func (s *Service) registerGPSHTTP(mux *http.ServeMux, authn Authenticator, broker *realtime.Broker) {
@@ -460,14 +460,19 @@ INSERT INTO field_routes.location_capture (
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"capture_id":           captureID,
-		"outcome":              outcome,
-		"message":              msg,
-		"flags":                flags,
-		"displacement_meters":  d.DisplacementM,
-		"previous_point":       func() *LatLng { if st.Placed { return &st.At }; return nil }(),
-		"version":              resultVersion,
-		"saved_at":             now.Format(time.RFC3339),
-		"location":             updatedState,
+		"capture_id":          captureID,
+		"outcome":             outcome,
+		"message":             msg,
+		"flags":               flags,
+		"displacement_meters": d.DisplacementM,
+		"previous_point": func() *LatLng {
+			if st.Placed {
+				return &st.At
+			}
+			return nil
+		}(),
+		"version":  resultVersion,
+		"saved_at": now.Format(time.RFC3339),
+		"location": updatedState,
 	})
 }

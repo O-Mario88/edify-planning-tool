@@ -123,47 +123,47 @@ type SchoolDecisionInput struct {
 // Recommendation is a fully explainable programmatic recommendation answering
 // all 7 mandatory Section 10 explainability questions.
 type Recommendation struct {
-	Priority                  string   `json:"priority"` // critical, high, medium, info
-	Category                  string   `json:"category"` // ssa_assessment, intervention_support, core_package
-	RecommendedIntervention   string   `json:"recommended_intervention"`
-	InterventionLabel         string   `json:"intervention_label"`
-	RecommendedActivity       string   `json:"recommended_activity"`
-	CatalogueItemID           string   `json:"catalogue_item_id,omitempty"`
-	CatalogueStableCode       string   `json:"catalogue_stable_code,omitempty"`
-	DeliverySuggestion        string   `json:"delivery_suggestion"`
-	PriorityReason            string   `json:"priority_reason"`
-	VerifiedEvidence          string   `json:"verified_evidence"`
-	RelevanceReason           string   `json:"relevance_reason"`
-	OutcomeToMonitor          string   `json:"outcome_to_monitor"`
-	ConfidenceAndLimitations  string   `json:"confidence_and_limitations"`
-	MissingEvidence           []string `json:"missing_evidence,omitempty"`
-	SuppressedReason          string   `json:"suppressed_reason,omitempty"`
-	Suppressed                bool     `json:"suppressed"`
+	Priority                 string   `json:"priority"` // critical, high, medium, info
+	Category                 string   `json:"category"` // ssa_assessment, intervention_support, core_package
+	RecommendedIntervention  string   `json:"recommended_intervention"`
+	InterventionLabel        string   `json:"intervention_label"`
+	RecommendedActivity      string   `json:"recommended_activity"`
+	CatalogueItemID          string   `json:"catalogue_item_id,omitempty"`
+	CatalogueStableCode      string   `json:"catalogue_stable_code,omitempty"`
+	DeliverySuggestion       string   `json:"delivery_suggestion"`
+	PriorityReason           string   `json:"priority_reason"`
+	VerifiedEvidence         string   `json:"verified_evidence"`
+	RelevanceReason          string   `json:"relevance_reason"`
+	OutcomeToMonitor         string   `json:"outcome_to_monitor"`
+	ConfidenceAndLimitations string   `json:"confidence_and_limitations"`
+	MissingEvidence          []string `json:"missing_evidence,omitempty"`
+	SuppressedReason         string   `json:"suppressed_reason,omitempty"`
+	Suppressed               bool     `json:"suppressed"`
 }
 
 // DecisionReport is the structured JSON output returned by the API.
 type DecisionReport struct {
-	SchoolID                string                  `json:"school_id"`
-	EdifySchoolID           string                  `json:"edify_school_id"`
-	SchoolName              string                  `json:"school_name"`
-	District                string                  `json:"district"`
-	SchoolType              string                  `json:"school_type"`
-	FY                      string                  `json:"fy"`
-	HasCurrentConfirmedSSA  bool                    `json:"has_current_confirmed_ssa"`
-	CurrentSSADate          string                  `json:"current_ssa_date,omitempty"`
-	CurrentSSAAverage       *float64                `json:"current_ssa_average,omitempty"`
-	PreviousSSAFY           string                  `json:"previous_ssa_fy,omitempty"`
-	PreviousSSAAverage      *float64                `json:"previous_ssa_average,omitempty"`
-	OverallDelta            *float64                `json:"overall_delta,omitempty"`
-	PendingSSACount         int                     `json:"pending_ssa_count"`
-	RiskPriority            string                  `json:"risk_priority"` // critical, high, moderate, low, unassessed
-	StrongestIntervention   *InterventionDiagnosis  `json:"strongest_intervention,omitempty"`
-	WeakestIntervention     *InterventionDiagnosis  `json:"weakest_intervention,omitempty"`
-	Interventions           []InterventionDiagnosis `json:"interventions"`
-	Recommendations         []Recommendation        `json:"recommendations"`
-	SuppressedItems         []Recommendation        `json:"suppressed_items,omitempty"`
-	MissingEvidenceSummary  []string                `json:"missing_evidence_summary,omitempty"`
-	CorePackageCompleted    bool                    `json:"core_package_completed"`
+	SchoolID               string                  `json:"school_id"`
+	EdifySchoolID          string                  `json:"edify_school_id"`
+	SchoolName             string                  `json:"school_name"`
+	District               string                  `json:"district"`
+	SchoolType             string                  `json:"school_type"`
+	FY                     string                  `json:"fy"`
+	HasCurrentConfirmedSSA bool                    `json:"has_current_confirmed_ssa"`
+	CurrentSSADate         string                  `json:"current_ssa_date,omitempty"`
+	CurrentSSAAverage      *float64                `json:"current_ssa_average,omitempty"`
+	PreviousSSAFY          string                  `json:"previous_ssa_fy,omitempty"`
+	PreviousSSAAverage     *float64                `json:"previous_ssa_average,omitempty"`
+	OverallDelta           *float64                `json:"overall_delta,omitempty"`
+	PendingSSACount        int                     `json:"pending_ssa_count"`
+	RiskPriority           string                  `json:"risk_priority"` // critical, high, moderate, low, unassessed
+	StrongestIntervention  *InterventionDiagnosis  `json:"strongest_intervention,omitempty"`
+	WeakestIntervention    *InterventionDiagnosis  `json:"weakest_intervention,omitempty"`
+	Interventions          []InterventionDiagnosis `json:"interventions"`
+	Recommendations        []Recommendation        `json:"recommendations"`
+	SuppressedItems        []Recommendation        `json:"suppressed_items,omitempty"`
+	MissingEvidenceSummary []string                `json:"missing_evidence_summary,omitempty"`
+	CorePackageCompleted   bool                    `json:"core_package_completed"`
 }
 
 func severityOf(score float64) string {

@@ -414,18 +414,18 @@ func (s *Service) httpDirections(w http.ResponseWriter, r *http.Request, p auth.
 	if len(pts) < 2 {
 		// Single school without GPS origin: return school profile & prompt for origin without fabricating a route.
 		writeJSON(w, http.StatusOK, map[string]any{
-			"in_app":             true,
-			"road_available":     false,
-			"needs_origin":       true,
-			"message":            "Allow device location or select a starting point to compute turn-by-turn road directions.",
-			"stops":              stopsMeta,
-			"path":               []LatLng{},
-			"legs":               []any{},
-			"alternatives":       []AlternativeRoute{},
-			"road_alerts":        matchRoadConditions(nil, pts, s.loadActiveRoadConditions(r.Context())),
-			"provider":           s.name,
-			"traffic_state":      "unavailable",
-			"calculated_at":      s.now().UTC().Format(time.RFC3339),
+			"in_app":         true,
+			"road_available": false,
+			"needs_origin":   true,
+			"message":        "Allow device location or select a starting point to compute turn-by-turn road directions.",
+			"stops":          stopsMeta,
+			"path":           []LatLng{},
+			"legs":           []any{},
+			"alternatives":   []AlternativeRoute{},
+			"road_alerts":    matchRoadConditions(nil, pts, s.loadActiveRoadConditions(r.Context())),
+			"provider":       s.name,
+			"traffic_state":  "unavailable",
+			"calculated_at":  s.now().UTC().Format(time.RFC3339),
 		})
 		return
 	}
@@ -515,20 +515,20 @@ func (s *Service) httpDirections(w http.ResponseWriter, r *http.Request, p auth.
 }
 
 type saveRouteHTTPRequest struct {
-	Date             string             `json:"date"`
-	Mode             string             `json:"optimization_mode"`
-	TransportMode    string             `json:"transport_mode"`
-	Start            *LatLng            `json:"start"`
-	StartLabel       string             `json:"start_label"`
-	End              *LatLng            `json:"end"`
-	EndLabel         string             `json:"end_label"`
-	EstimatedMeters  int64              `json:"estimated_meters"`
-	EstimatedSeconds int64              `json:"estimated_seconds"`
-	VisitMinutes     int                `json:"visit_minutes"`
-	FieldMinutes     int                `json:"field_minutes"`
-	InputHash        string             `json:"input_hash"`
-	AlternativesCnt  int                `json:"alternatives_count"`
-	Stops            []SmartStopOutput  `json:"stops"`
+	Date             string            `json:"date"`
+	Mode             string            `json:"optimization_mode"`
+	TransportMode    string            `json:"transport_mode"`
+	Start            *LatLng           `json:"start"`
+	StartLabel       string            `json:"start_label"`
+	End              *LatLng           `json:"end"`
+	EndLabel         string            `json:"end_label"`
+	EstimatedMeters  int64             `json:"estimated_meters"`
+	EstimatedSeconds int64             `json:"estimated_seconds"`
+	VisitMinutes     int               `json:"visit_minutes"`
+	FieldMinutes     int               `json:"field_minutes"`
+	InputHash        string            `json:"input_hash"`
+	AlternativesCnt  int               `json:"alternatives_count"`
+	Stops            []SmartStopOutput `json:"stops"`
 }
 
 // httpSaveRoute persists Route Plan, Route Stops (with planned_activity_id),
@@ -785,12 +785,12 @@ func (s *Service) httpValidateRoute(w http.ResponseWriter, r *http.Request, p au
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"date":           iso,
-		"stale":          len(reasons) > 0,
-		"reasons":        reasons,
-		"planned_count":  len(planned),
-		"saved_plan":     savedPlan,
-		"checked_at":     s.now().UTC().Format(time.RFC3339),
+		"date":          iso,
+		"stale":         len(reasons) > 0,
+		"reasons":       reasons,
+		"planned_count": len(planned),
+		"saved_plan":    savedPlan,
+		"checked_at":    s.now().UTC().Format(time.RFC3339),
 	})
 }
 
@@ -978,17 +978,17 @@ WHERE id::text = $1`, id, req.Status, p.UserID, now)
 // CalendarRulesPayload gives the shared EdifyDatePicker authoritative Uganda FY
 // boundaries, public holidays, approved leave, and Sunday/Saturday policy (Section 11).
 type CalendarRulesPayload struct {
-	CountryCode        string            `json:"country_code"`
-	Timezone           string            `json:"timezone"`
-	Today              string            `json:"today"`
-	CurrentFY          string            `json:"current_fy"`
-	FYStart            string            `json:"fy_start"`
-	FYEnd              string            `json:"fy_end"`
-	SundaysDisabled    bool              `json:"sundays_disabled"`
-	SaturdaysEnabled   bool              `json:"saturdays_enabled"`
-	Holidays           []HolidayItem     `json:"holidays"`
-	ApprovedLeaveDates []string          `json:"approved_leave_dates"`
-	BlackoutDates      []string          `json:"blackout_dates"`
+	CountryCode        string        `json:"country_code"`
+	Timezone           string        `json:"timezone"`
+	Today              string        `json:"today"`
+	CurrentFY          string        `json:"current_fy"`
+	FYStart            string        `json:"fy_start"`
+	FYEnd              string        `json:"fy_end"`
+	SundaysDisabled    bool          `json:"sundays_disabled"`
+	SaturdaysEnabled   bool          `json:"saturdays_enabled"`
+	Holidays           []HolidayItem `json:"holidays"`
+	ApprovedLeaveDates []string      `json:"approved_leave_dates"`
+	BlackoutDates      []string      `json:"blackout_dates"`
 }
 
 // HolidayItem is one configured public holiday.

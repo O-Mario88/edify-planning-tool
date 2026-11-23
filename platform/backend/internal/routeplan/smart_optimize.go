@@ -26,13 +26,13 @@ const (
 
 // SchoolPriority is the verified SSA + Core School priority profile for a school.
 type SchoolPriority struct {
-	SchoolID         string  `json:"school_id"`
-	Band             string  `json:"band"` // critical | high | core | routine | missing_ssa
-	Score            float64 `json:"score"`
-	SSAAverage       *float64 `json:"ssa_average,omitempty"`
-	HasConfirmedSSA  bool    `json:"has_confirmed_ssa"`
-	IsCore           bool    `json:"is_core"`
-	Reason           string  `json:"reason"`
+	SchoolID        string   `json:"school_id"`
+	Band            string   `json:"band"` // critical | high | core | routine | missing_ssa
+	Score           float64  `json:"score"`
+	SSAAverage      *float64 `json:"ssa_average,omitempty"`
+	HasConfirmedSSA bool     `json:"has_confirmed_ssa"`
+	IsCore          bool     `json:"is_core"`
+	Reason          string   `json:"reason"`
 }
 
 // RoadConditionAlert is an active road hazard or notice matched against a route.
@@ -56,62 +56,62 @@ type RoadConditionAlert struct {
 
 // SmartStopInput is one candidate school passed into OptimizeSmart.
 type SmartStopInput struct {
-	School           school
+	School            school
 	PlannedActivityID string
-	VisitMinutes     int
-	AppointmentMin   int // -1 if none
-	Locked           bool
-	Mandatory        bool
-	Priority         SchoolPriority
+	VisitMinutes      int
+	AppointmentMin    int // -1 if none
+	Locked            bool
+	Mandatory         bool
+	Priority          SchoolPriority
 }
 
 // SmartOptimizeInput holds all constraints and objectives for Section 5.
 type SmartOptimizeInput struct {
-	Date            string
-	Mode            string
-	TransportMode   string // DRIVE | TWO_WHEELER | WALK
-	WorkStart       string // HH:MM, default 08:00
-	WorkEnd         string // HH:MM, default 17:00
-	BreakMinutes    int    // default 30
-	Start           *LatLng
-	StartLabel      string
-	End             *LatLng
-	EndLabel        string
-	Stops           []SmartStopInput
-	RoadConditions  []RoadConditionAlert
+	Date           string
+	Mode           string
+	TransportMode  string // DRIVE | TWO_WHEELER | WALK
+	WorkStart      string // HH:MM, default 08:00
+	WorkEnd        string // HH:MM, default 17:00
+	BreakMinutes   int    // default 30
+	Start          *LatLng
+	StartLabel     string
+	End            *LatLng
+	EndLabel       string
+	Stops          []SmartStopInput
+	RoadConditions []RoadConditionAlert
 }
 
 // SmartStopOutput is one ordered stop in the optimized itinerary.
 type SmartStopOutput struct {
-	Order             int                  `json:"order"`
-	SchoolID          string               `json:"school_id"`
-	SchoolCode        string               `json:"school_code"`
-	SchoolName        string               `json:"school_name"`
-	District          string               `json:"district"`
-	Cluster           string               `json:"cluster"`
-	Category          string               `json:"category"`
-	PlannedActivityID string               `json:"planned_activity_id,omitempty"`
-	Status            string               `json:"status"`
-	Kind              string               `json:"kind"` // planned | recommended
-	Point             *LatLng              `json:"point,omitempty"`
-	Entrance          *LatLng              `json:"entrance,omitempty"`
-	LocationStatus    string               `json:"location_status"`
-	LocationVersion   int32                `json:"location_version"`
-	Arrival           string               `json:"arrival"`
-	Departure         string               `json:"departure"`
-	VisitMinutes      int                  `json:"visit_minutes"`
-	Locked            bool                 `json:"locked"`
-	FromLabel         string               `json:"from_label"`
-	RoadAvailable     bool                 `json:"road_available"`
-	RoadStatus        string               `json:"road_status,omitempty"`
-	RoadMeters        int64                `json:"road_meters"`
-	RoadSeconds       int64                `json:"road_seconds"`
-	StraightMeters    int64                `json:"straight_line_meters"`
-	Steps             []Step               `json:"steps,omitempty"`
-	Priority          SchoolPriority       `json:"priority"`
-	InclusionReason   string               `json:"inclusion_reason"`
-	Conflict          string               `json:"conflict,omitempty"`
-	Warnings          []string             `json:"warnings,omitempty"`
+	Order             int            `json:"order"`
+	SchoolID          string         `json:"school_id"`
+	SchoolCode        string         `json:"school_code"`
+	SchoolName        string         `json:"school_name"`
+	District          string         `json:"district"`
+	Cluster           string         `json:"cluster"`
+	Category          string         `json:"category"`
+	PlannedActivityID string         `json:"planned_activity_id,omitempty"`
+	Status            string         `json:"status"`
+	Kind              string         `json:"kind"` // planned | recommended
+	Point             *LatLng        `json:"point,omitempty"`
+	Entrance          *LatLng        `json:"entrance,omitempty"`
+	LocationStatus    string         `json:"location_status"`
+	LocationVersion   int32          `json:"location_version"`
+	Arrival           string         `json:"arrival"`
+	Departure         string         `json:"departure"`
+	VisitMinutes      int            `json:"visit_minutes"`
+	Locked            bool           `json:"locked"`
+	FromLabel         string         `json:"from_label"`
+	RoadAvailable     bool           `json:"road_available"`
+	RoadStatus        string         `json:"road_status,omitempty"`
+	RoadMeters        int64          `json:"road_meters"`
+	RoadSeconds       int64          `json:"road_seconds"`
+	StraightMeters    int64          `json:"straight_line_meters"`
+	Steps             []Step         `json:"steps,omitempty"`
+	Priority          SchoolPriority `json:"priority"`
+	InclusionReason   string         `json:"inclusion_reason"`
+	Conflict          string         `json:"conflict,omitempty"`
+	Warnings          []string       `json:"warnings,omitempty"`
 }
 
 // ExcludedSchool explains honestly why a candidate school was not routed.

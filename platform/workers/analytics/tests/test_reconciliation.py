@@ -6,7 +6,6 @@ import math
 
 from edify_analytics.insights import (
     CountryMetric,
-    CoverageRecord,
     FieldDayFact,
     RiskInput,
     SsaRecord,
@@ -16,7 +15,7 @@ from edify_analytics.insights import (
     compute_predictive_insights,
     generate_global_report,
 )
-from edify_analytics.portfolio import SchoolFact, summarize
+from edify_analytics.portfolio import summarize
 
 
 def test_analyze_ssa_preserves_real_zero_and_ignores_nan_or_out_of_range():

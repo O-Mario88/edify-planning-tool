@@ -63,8 +63,7 @@ def analyze_ssa(records: Iterable[SsaRecord]) -> SsaAnalysis:
     by_iv: dict[str, list[float]] = defaultdict(list)
 
     for r in rows:
-        if _valid_score(r.current_score):
-            assert r.current_score is not None
+        if r.current_score is not None and _valid_score(r.current_score):
             scores.append(r.current_score)
             if r.current_score >= 7.5:
                 on_track += 1
@@ -72,8 +71,7 @@ def analyze_ssa(records: Iterable[SsaRecord]) -> SsaAnalysis:
                 watch += 1
             else:
                 critical += 1
-            if _valid_score(r.previous_score):
-                assert r.previous_score is not None
+            if r.previous_score is not None and _valid_score(r.previous_score):
                 d = r.current_score - r.previous_score
                 deltas.append(d)
                 if d > 0.05:

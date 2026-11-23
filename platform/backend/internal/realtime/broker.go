@@ -74,12 +74,12 @@ type Broker struct {
 	ringSize int
 	nodeID   string
 
-	mu       sync.RWMutex
-	seq      uint64
-	nextSub  uint64
-	ring     []Event
-	subs     map[uint64]*subscriber
-	pubsub   *redisPubSub
+	mu      sync.RWMutex
+	seq     uint64
+	nextSub uint64
+	ring    []Event
+	subs    map[uint64]*subscriber
+	pubsub  *redisPubSub
 
 	published atomic.Uint64
 	delivered atomic.Uint64

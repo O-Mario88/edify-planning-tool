@@ -7,13 +7,13 @@ import (
 )
 
 const (
-	envRedisURL        = "EDIFY_REDIS_URL"
-	envObjEndpoint     = "EDIFY_OBJECT_STORAGE_ENDPOINT"
-	envObjBucket       = "EDIFY_OBJECT_STORAGE_BUCKET"
-	envObjRegion       = "EDIFY_OBJECT_STORAGE_REGION"
-	envObjAccessKey    = "EDIFY_OBJECT_STORAGE_ACCESS_KEY"
-	envObjSecretKey    = "EDIFY_OBJECT_STORAGE_SECRET_KEY"
-	envEvidenceDir     = "EDIFY_EVIDENCE_STORAGE_DIR"
+	envRedisURL     = "EDIFY_REDIS_URL"
+	envObjEndpoint  = "EDIFY_OBJECT_STORAGE_ENDPOINT"
+	envObjBucket    = "EDIFY_OBJECT_STORAGE_BUCKET"
+	envObjRegion    = "EDIFY_OBJECT_STORAGE_REGION"
+	envObjAccessKey = "EDIFY_OBJECT_STORAGE_ACCESS_KEY"
+	envObjSecretKey = "EDIFY_OBJECT_STORAGE_SECRET_KEY"
+	envEvidenceDir  = "EDIFY_EVIDENCE_STORAGE_DIR"
 )
 
 // ObjectStorage configures S3-compatible object storage (S3, Spaces, R2, MinIO)
