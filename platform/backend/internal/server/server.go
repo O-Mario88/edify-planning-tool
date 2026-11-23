@@ -390,9 +390,14 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	countryMapSvc.RegisterMapHTTP(mux, authenticator)
 	detailPagesSvc.RegisterHTTP(mux, authenticator)
 	realtimeBroker.RegisterHTTP(mux, authenticator)
-	fieldOpsSvc.RegisterHTTP(mux, authenticator)
-	financeOpsSvc.RegisterHTTP(mux, authenticator)
-	workforceOpsSvc.RegisterHTTP(mux, authenticator)
+	// The operational writers' direct endpoints exist only with the existing
+	// application absent: beside it they would be a second writer of the same
+	// records, past its rules.
+	if cfg.ExistingAppURL == "" {
+		fieldOpsSvc.RegisterHTTP(mux, authenticator)
+		financeOpsSvc.RegisterHTTP(mux, authenticator)
+		workforceOpsSvc.RegisterHTTP(mux, authenticator)
+	}
 	mux.Handle(screensv1connect.NewNotificationCenterServiceHandler(notificationcenter.NewHandler(notificationcenter.NewService(pool, notificationcenter.EmailConfigured(nil)), logger), options...))
 	notificationcenter.RegisterPreferencesHTTP(mux, authenticator, pool, time.Now)
 	support.NewService(pool, notificationcenter.NewWriter(pool, time.Now), time.Now).Register(mux, authenticator)

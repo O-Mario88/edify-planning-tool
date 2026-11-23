@@ -554,6 +554,26 @@ INSERT INTO partner (
 	_ = admin.QueryRow(ctx, `SELECT id FROM bt_loan_purpose LIMIT 1`).Scan(&purposeID)
 	_ = admin.QueryRow(ctx, `SELECT id FROM bt_funding_facility LIMIT 1`).Scan(&facilityID)
 	_ = admin.QueryRow(ctx, `SELECT id FROM school WHERE deleted_at IS NULL LIMIT 1`).Scan(&loanSchoolID)
+	if facilityID == "" && mfiID != "" {
+		// A disbursement draws on a facility allocation; the demo seed has no
+		// facility, so the test files a draft one of its own.
+		facilityID = "fac_" + cuid.New()[len(cuid.New())-18:]
+		if _, err := admin.Exec(ctx, `
+INSERT INTO bt_funding_facility (
+  created_at, updated_at, id, external_reference, name, country_code, currency, commitment_amount,
+  revolving, starts_on, status, agreement_reference, created_by, mfi_id, facility_type, funding_source,
+  geographic_restrictions, interest_structure, permitted_purpose_codes, reporting_conditions,
+  school_eligibility_restrictions
+) VALUES (NOW(), NOW(), $1, $1, 'Integration test facility', 'UG', 'UGX', 100000000,
+  false, CURRENT_DATE, 'draft', $1, 'integration-test', $2, 'term', 'test',
+  '{}', '{}', '[]', '{}', '{}')`, facilityID, mfiID); err != nil {
+			t.Fatalf("inserting temp bt_funding_facility: %v", err)
+		}
+		madeFacility := facilityID
+		t.Cleanup(func() {
+			_, _ = admin.Exec(context.Background(), `DELETE FROM bt_funding_facility WHERE id = $1`, madeFacility)
+		})
+	}
 	if mfiID != "" && purposeID != "" && loanSchoolID != "" {
 		caseID := "cas_" + cuid.New()[len(cuid.New())-18:]
 		if _, err := admin.Exec(ctx, `

@@ -73,16 +73,24 @@ func TestStep2DjangoAbsentDesktopTodosAndStrategicPriorities(t *testing.T) {
 						t.Fatal(err)
 					}
 					body := string(raw)
-					for _, want := range []string{
-						"14 open",
-						"Follow up SSA collection with CCEOs",
-						"Follow up support for Cluster A",
-						"Follow up support for Cluster H",
-						"Review Schools with No Cluster Training or Meeting Planned",
-					} {
-						if !strings.Contains(body, want) {
-							t.Fatalf("pl1@edify.org /todos missing %q: %.600s", want, body)
+					// The queue's size depends on the seed and the day, so the
+					// header's count is held to the Do next band's.
+					var headerOpen, bandOpen string
+					for _, badge := range page.GetHeader().GetBadges() {
+						if strings.HasSuffix(badge.GetText(), " open") {
+							headerOpen = badge.GetText()
 						}
+					}
+					for _, block := range page.GetBlocks() {
+						if list := block.GetList(); list != nil && list.GetTitle() == "Do next" {
+							bandOpen = list.GetCount()
+						}
+					}
+					if headerOpen == "" || headerOpen == "0 open" || headerOpen != bandOpen {
+						t.Fatalf("pl1@edify.org /todos counts differ: header %q, Do next %q", headerOpen, bandOpen)
+					}
+					if want := "Follow up SSA collection with CCEOs"; !strings.Contains(body, want) {
+						t.Fatalf("pl1@edify.org /todos missing %q: %.600s", want, body)
 					}
 				}
 			}

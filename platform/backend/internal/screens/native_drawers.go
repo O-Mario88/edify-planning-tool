@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -17,6 +18,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/fieldops"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
 // ── Native GetMyPlan (delegates to registered Go /my-plan page builder) ──────
@@ -42,7 +44,7 @@ func (s *Service) getMyPlanInGo(ctx context.Context, p auth.Principal, query url
 // ── Native PlanningDrawer GET, Assign SAVE, and GetTrainingCapacity ──────────
 
 func (s *Service) getPlanningDrawerInGo(ctx context.Context, p auth.Principal, schoolID, kind string) (*screensv1.GetPlanningDrawerResponse, bool, error) {
-	if s.db == nil {
+	if !s.nativeForms() {
 		return nil, false, nil
 	}
 	var sID, sCode, sName string
@@ -172,7 +174,7 @@ func (s *Service) saveAssignPlanningInGo(ctx context.Context, p auth.Principal, 
 }
 
 func (s *Service) getTrainingCapacityInGo(ctx context.Context, p auth.Principal, req *screensv1.GetTrainingCapacityRequest) (*screensv1.GetTrainingCapacityResponse, bool, error) {
-	if s.db == nil {
+	if !s.nativeForms() {
 		return nil, false, nil
 	}
 	now := s.clock()
@@ -224,7 +226,7 @@ SELECT EXISTS(
 // ── Native GetDrawerOptions ──────────────────────────────────────────────────
 
 func (s *Service) getDrawerOptionsInGo(ctx context.Context, source, name, value string) (*screensv1.GetDrawerOptionsResponse, bool, error) {
-	if s.db == nil {
+	if !s.nativeForms() {
 		return nil, false, nil
 	}
 	var opts []*screensv1.DrawerOption
@@ -277,7 +279,7 @@ SELECT id, name FROM training_course
 // ── Native School Drawers (GetSchoolDrawer & SaveSchoolDrawer) ───────────────
 
 func (s *Service) getSchoolDrawerInGo(ctx context.Context, p auth.Principal, schoolID, kind string) (*screensv1.GetSchoolDrawerResponse, bool, error) {
-	if s.db == nil {
+	if !s.nativeForms() {
 		return nil, false, nil
 	}
 	var sID, sCode, name, phone, contact, contactPhone, addr, head, dir string
@@ -297,7 +299,23 @@ SELECT id, COALESCE(school_id, ''), name, COALESCE(school_phone, ''),
 		return nil, true, apierr.Internal(ctx, s.logger, err)
 	}
 
+	if inReach, err := s.schoolsInReach(ctx, p, sID); err != nil {
+		return nil, true, apierr.Internal(ctx, s.logger, err)
+	} else if !inReach {
+		return nil, true, apierr.New(ctx, connect.CodeNotFound, apierr.ReasonNotFound, "School not found.")
+	}
+
 	if kind == "ssa" {
+		year := fieldItem("fy", "Fiscal Year", "text", schooldirectory.OperationalFY(s.clock()), true)
+		year.GetField().ReadOnly = true
+		items := []*screensv1.DrawerItem{
+			year,
+			fieldItem("quarter", "Quarter", "select", "Q1", true, "Q1", "Q2", "Q3", "Q4"),
+			fieldItem("new_enrollment", "Current Enrollment", "number", strconv.Itoa(enrollment), false),
+		}
+		for _, iv := range fieldops.SSAInterventions {
+			items = append(items, fieldItem("score_"+iv.Key, iv.Label+" (0–10)", "number", "", true))
+		}
 		return &screensv1.GetSchoolDrawerResponse{
 			Drawer: &screensv1.PageDrawer{
 				Title:       "Record SSA Scores",
@@ -306,13 +324,7 @@ SELECT id, COALESCE(school_id, ''), name, COALESCE(school_phone, ''),
 				SubmitLabel: "Save SSA",
 				CancelLabel: "Cancel",
 				CanSubmit:   true,
-				Items: []*screensv1.DrawerItem{
-					fieldItem("fy", "Fiscal Year", "text", fmt.Sprintf("FY%d", s.clock().Year()), true),
-					fieldItem("quarter", "Quarter", "select", "Q1", true, "Q1", "Q2", "Q3", "Q4"),
-					fieldItem("new_enrollment", "Current Enrollment", "number", strconv.Itoa(enrollment), false),
-					fieldItem("score_leadership", "Leadership Score (0–5)", "number", "3", true),
-					fieldItem("score_teaching", "Teaching Score (0–5)", "number", "3", true),
-				},
+				Items:       items,
 			},
 		}, true, nil
 	}
@@ -340,8 +352,13 @@ SELECT id, COALESCE(school_id, ''), name, COALESCE(school_phone, ''),
 }
 
 func (s *Service) saveSchoolDrawerInGo(ctx context.Context, p auth.Principal, req *screensv1.SaveSchoolDrawerRequest) (*screensv1.SaveSchoolDrawerResponse, bool, error) {
-	if s.db == nil {
+	if !s.nativeForms() {
 		return nil, false, nil
+	}
+	if inReach, err := s.schoolsInReach(ctx, p, req.GetSchoolId()); err != nil {
+		return nil, true, apierr.Internal(ctx, s.logger, err)
+	} else if !inReach {
+		return &screensv1.SaveSchoolDrawerResponse{Saved: false, Error: "This school is outside your portfolio."}, true, nil
 	}
 	vals := req.GetValues()
 	if req.GetKind() == "ssa" && s.fieldOps != nil {
@@ -359,7 +376,7 @@ func (s *Service) saveSchoolDrawerInGo(ctx context.Context, p auth.Principal, re
 		enr, _ := strconv.Atoi(strings.TrimSpace(vals["new_enrollment"]))
 		fy := strings.TrimSpace(vals["fy"])
 		if fy == "" {
-			fy = fmt.Sprintf("FY%d", s.clock().Year())
+			fy = schooldirectory.OperationalFY(s.clock())
 		}
 		_, err := s.fieldOps.EnterSSA(ctx, p, fieldops.SSAEntryRequest{
 			SchoolID:      req.GetSchoolId(),
@@ -370,8 +387,11 @@ func (s *Service) saveSchoolDrawerInGo(ctx context.Context, p auth.Principal, re
 			Scores:        scores,
 			CollectorType: "staff",
 		})
+		if errors.Is(err, fieldops.ErrInvalidInput) {
+			return &screensv1.SaveSchoolDrawerResponse{Saved: false, Error: "Enter a score from 0 to 10 for all eight interventions."}, true, nil
+		}
 		if err != nil {
-			return &screensv1.SaveSchoolDrawerResponse{Saved: false, Error: err.Error()}, true, nil
+			return nil, true, apierr.Internal(ctx, s.logger, err)
 		}
 		return &screensv1.SaveSchoolDrawerResponse{Saved: true, Message: "SSA scores saved."}, true, nil
 	}
@@ -399,7 +419,7 @@ func (s *Service) saveSchoolDrawerInGo(ctx context.Context, p auth.Principal, re
 		vals["headteacher_name"], vals["director_name"],
 		p.UserID, p.ActiveRole, now,
 	).Scan(&ok); err != nil {
-		return &screensv1.SaveSchoolDrawerResponse{Saved: false, Error: err.Error()}, true, nil
+		return nil, true, apierr.Internal(ctx, s.logger, err)
 	}
 	if !ok {
 		return &screensv1.SaveSchoolDrawerResponse{Saved: false, Error: "School not found."}, true, nil
@@ -427,7 +447,7 @@ func (s *Service) saveSchoolDrawerInGo(ctx context.Context, p auth.Principal, re
 // ── Native Page Drawer GET (GetDrawer) ───────────────────────────────────────
 
 func (s *Service) getPageDrawerInGo(ctx context.Context, p auth.Principal, rawPath string) (*screensv1.GetDrawerResponse, bool, error) {
-	if s.db == nil {
+	if !s.nativeForms() {
 		return nil, false, nil
 	}
 	pathOnly := rawPath
@@ -435,8 +455,16 @@ func (s *Service) getPageDrawerInGo(ctx context.Context, p auth.Principal, rawPa
 		pathOnly = pathOnly[:i]
 	}
 
+	if m := schoolEditDrawer.FindStringSubmatch(pathOnly); m != nil {
+		answer, served, err := s.getSchoolDrawerInGo(ctx, p, m[1], "edit")
+		if err != nil || !served {
+			return nil, served, err
+		}
+		return &screensv1.GetDrawerResponse{Drawer: answer.GetDrawer()}, true, nil
+	}
+
 	switch {
-	case strings.HasSuffix(pathOnly, "/reschedule-drawer"):
+	case planDrawer(pathOnly, "reschedule"):
 		return &screensv1.GetDrawerResponse{
 			Drawer: &screensv1.PageDrawer{
 				Title:       "Reschedule Activity",
@@ -451,7 +479,7 @@ func (s *Service) getPageDrawerInGo(ctx context.Context, p auth.Principal, rawPa
 			},
 		}, true, nil
 
-	case strings.HasSuffix(pathOnly, "/cancel-drawer"):
+	case planDrawer(pathOnly, "cancel"):
 		return &screensv1.GetDrawerResponse{
 			Drawer: &screensv1.PageDrawer{
 				Title:       "Cancel Activity",
@@ -465,7 +493,7 @@ func (s *Service) getPageDrawerInGo(ctx context.Context, p auth.Principal, rawPa
 			},
 		}, true, nil
 
-	case strings.HasSuffix(pathOnly, "/complete-drawer"):
+	case planDrawer(pathOnly, "complete"):
 		return &screensv1.GetDrawerResponse{
 			Drawer: &screensv1.PageDrawer{
 				Title:       "Complete Visit",
@@ -475,6 +503,7 @@ func (s *Service) getPageDrawerInGo(ctx context.Context, p auth.Principal, rawPa
 				CanSubmit:   true,
 				Items: []*screensv1.DrawerItem{
 					fieldItem("actual_delivery_date", "Actual Date", "date", s.clock().Format(time.DateOnly), true),
+					fieldItem("salesforce_id", "Salesforce ID", "text", "", true),
 					fieldItem("teachers_attended", "Teachers Attended", "number", "0", false),
 					fieldItem("leaders_attended", "Leaders Attended", "number", "0", false),
 					fieldItem("actual_observations", "Observations", "textarea", "", true),
@@ -483,7 +512,7 @@ func (s *Service) getPageDrawerInGo(ctx context.Context, p auth.Principal, rawPa
 			},
 		}, true, nil
 
-	case strings.HasSuffix(pathOnly, "/edit-drawer"):
+	case planDrawer(pathOnly, "edit"):
 		return &screensv1.GetDrawerResponse{
 			Drawer: &screensv1.PageDrawer{
 				Title:       "Edit Activity",
@@ -652,6 +681,19 @@ func (s *Service) getPageDrawerInGo(ctx context.Context, p auth.Principal, rawPa
 
 	return nil, false, nil
 }
+
+// planDrawer is whether path is the named drawer of an activity on My Plan.
+// Other records have drawers of the same name (a school's, a cluster's, a
+// partner's edit-drawer) with other forms.
+func planDrawer(path, kind string) bool {
+	m := planDrawerPath.FindStringSubmatch(path)
+	return m != nil && m[1] == kind
+}
+
+var (
+	planDrawerPath   = regexp.MustCompile(`^/my-plan/[A-Za-z0-9]{1,30}/(reschedule|cancel|complete|edit)-drawer/?$`)
+	schoolEditDrawer = regexp.MustCompile(`^/schools/([A-Za-z0-9_-]{1,64})/edit-drawer/?$`)
+)
 
 func fieldItem(name, label, kind, value string, required bool, choices ...string) *screensv1.DrawerItem {
 	var opts []*screensv1.DrawerOption

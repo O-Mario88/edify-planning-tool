@@ -164,6 +164,21 @@ func (s *Service) SaveDrawer(
 		return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This form cannot be saved.")
 	}
 	forwarded := &screensv1.SaveDrawerRequest{Path: path, Values: message.GetValues(), Form: form}
+	if m := schoolEditDrawer.FindStringSubmatch(strings.SplitN(path, "?", 2)[0]); m != nil && form == "" && s.nativeForms() {
+		if p, ok := auth.PrincipalFrom(ctx); ok {
+			saved, served, err := s.saveSchoolDrawerInGo(ctx, p, &screensv1.SaveSchoolDrawerRequest{
+				SchoolId: m[1], Kind: "edit", Values: message.GetValues(),
+			})
+			if err != nil {
+				return nil, err
+			}
+			if served {
+				return connect.NewResponse(&screensv1.SaveDrawerResponse{
+					Saved: saved.GetSaved(), Message: saved.GetMessage(), Error: saved.GetError(),
+				}), nil
+			}
+		}
+	}
 	if form == "" {
 		if answer, served, err := s.rescheduleInGo(ctx, forwarded); served {
 			if err != nil {

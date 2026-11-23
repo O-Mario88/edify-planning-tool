@@ -101,10 +101,7 @@ ORDER BY a.created_at DESC LIMIT 1`).Scan(&actID, &schoolPK); err2 != nil {
 	// 2. M7 SSA entry & confirmation.
 	ssaID, err := fops.EnterSSA(ctx, cceoP, fieldops.SSAEntryRequest{
 		SchoolID: schoolPK, FY: "2099", Quarter: "Q1", Date: time.Now().UTC(), NewEnrollment: 412,
-		Scores: []fieldops.SSAScoreInput{
-			{Intervention: "christian_transformation", Score: 3.5},
-			{Intervention: "school_leadership", Score: 4.5},
-		},
+		Scores: allEightSSAScores(4.5),
 		CollectorType: "staff", ActivityID: actID,
 	})
 	if err != nil {
@@ -189,4 +186,13 @@ ORDER BY a.created_at DESC LIMIT 1`).Scan(&actID, &schoolPK); err2 != nil {
 	}
 	t.Logf("Phase C verified (zero Django): ev=%s ssa=%s wfr=%s export=%s rows=%d sha=%s",
 		evID1, ssaID, wfrID, job.ID, job.RowCount, job.SHA256[:12])
+}
+
+// allEightSSAScores is a whole SSA: every intervention, each at score.
+func allEightSSAScores(score float64) []fieldops.SSAScoreInput {
+	out := make([]fieldops.SSAScoreInput, 0, len(fieldops.SSAInterventions))
+	for _, iv := range fieldops.SSAInterventions {
+		out = append(out, fieldops.SSAScoreInput{Intervention: iv.Key, Score: score})
+	}
+	return out
 }

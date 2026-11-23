@@ -15,6 +15,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
 // WithSchoolDB attaches the PostgreSQL pool so SchoolActionService,
@@ -37,6 +38,38 @@ func (s *Service) clock() time.Time {
 	return time.Now().UTC()
 }
 
+// nativeForms is whether Go's own drawers and school writes answer. While the
+// existing application is configured its forms stay the authority: they carry
+// the full field set and rules, and two writers for one record is what the
+// cutover plan forbids. Go's answer in that mode would also replace them for
+// every client, the app included.
+func (s *Service) nativeForms() bool { return s.db != nil && s.existingApp == nil }
+
+// schoolsInReach is whether every school is in the reader's own scope: a role
+// that may edit schools may edit only those it can see.
+func (s *Service) schoolsInReach(ctx context.Context, p auth.Principal, ids ...string) (bool, error) {
+	scope, err := schooldirectory.ResolveScope(ctx, s.db, p, s.clock())
+	if err != nil {
+		return false, err
+	}
+	for _, id := range ids {
+		// The forms carry a record id or a School ID.
+		var recordID string
+		err := s.db.QueryRow(ctx, `SELECT id FROM school WHERE (id = $1 OR school_id = $1) AND deleted_at IS NULL LIMIT 1`, id).Scan(&recordID)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+		if err != nil {
+			return false, err
+		}
+		ok, err := schooldirectory.InReach(ctx, s.db, scope, recordID)
+		if err != nil || !ok {
+			return false, err
+		}
+	}
+	return true, nil
+}
+
 func canMutateSchoolAssignment(role string) bool {
 	switch role {
 	case "CCEO", "Program Lead", "CountryDirector", "ProjectCoordinator", "Admin":
@@ -47,12 +80,19 @@ func canMutateSchoolAssignment(role string) bool {
 }
 
 func (s *Service) getAddToClusterInGo(ctx context.Context, p auth.Principal, schoolID string) (*screensv1.GetAddToClusterResponse, bool, error) {
-	if s.db == nil {
+	if !s.nativeForms() {
 		return nil, false, nil
 	}
 	if !canMutateSchoolAssignment(p.ActiveRole) {
 		return &screensv1.GetAddToClusterResponse{
 			Form: &screensv1.AddToClusterForm{Refused: "Your role does not have permission to assign schools to clusters."},
+		}, true, nil
+	}
+	if inReach, err := s.schoolsInReach(ctx, p, schoolID); err != nil {
+		return nil, true, apierr.Internal(ctx, s.logger, err)
+	} else if !inReach {
+		return &screensv1.GetAddToClusterResponse{
+			Form: &screensv1.AddToClusterForm{Refused: "This school is outside your portfolio."},
 		}, true, nil
 	}
 	var sID, sName, districtID, curClusterID, curClusterName string
@@ -123,12 +163,19 @@ SELECT id, name, COALESCE(district_id, '')
 }
 
 func (s *Service) addToClusterInGo(ctx context.Context, p auth.Principal, req *screensv1.AddToClusterRequest) (*screensv1.AddToClusterResponse, bool, error) {
-	if s.db == nil {
+	if !s.nativeForms() {
 		return nil, false, nil
 	}
 	if !canMutateSchoolAssignment(p.ActiveRole) {
 		return &screensv1.AddToClusterResponse{
 			Result: &screensv1.SchoolActionResult{Refused: "Your role cannot assign schools to clusters."},
+		}, true, nil
+	}
+	if inReach, err := s.schoolsInReach(ctx, p, req.GetSchoolId()); err != nil {
+		return nil, true, apierr.Internal(ctx, s.logger, err)
+	} else if !inReach {
+		return &screensv1.AddToClusterResponse{
+			Result: &screensv1.SchoolActionResult{Refused: "This school is outside your portfolio."},
 		}, true, nil
 	}
 	cid := strings.TrimSpace(req.GetClusterId())
@@ -180,12 +227,19 @@ func (s *Service) addToClusterInGo(ctx context.Context, p auth.Principal, req *s
 }
 
 func (s *Service) getAddToProjectInGo(ctx context.Context, p auth.Principal, schoolID string) (*screensv1.GetAddToProjectResponse, bool, error) {
-	if s.db == nil {
+	if !s.nativeForms() {
 		return nil, false, nil
 	}
 	if !canMutateSchoolAssignment(p.ActiveRole) {
 		return &screensv1.GetAddToProjectResponse{
 			Form: &screensv1.AddToProjectForm{Refused: "Your role does not have permission to enroll schools in projects."},
+		}, true, nil
+	}
+	if inReach, err := s.schoolsInReach(ctx, p, schoolID); err != nil {
+		return nil, true, apierr.Internal(ctx, s.logger, err)
+	} else if !inReach {
+		return &screensv1.GetAddToProjectResponse{
+			Form: &screensv1.AddToProjectForm{Refused: "This school is outside your portfolio."},
 		}, true, nil
 	}
 	var sID, sName string
@@ -267,12 +321,19 @@ SELECT sp.id, COALESCE(u.name, sp.id)
 }
 
 func (s *Service) addToProjectInGo(ctx context.Context, p auth.Principal, req *screensv1.AddToProjectRequest) (*screensv1.AddToProjectResponse, bool, error) {
-	if s.db == nil {
+	if !s.nativeForms() {
 		return nil, false, nil
 	}
 	if !canMutateSchoolAssignment(p.ActiveRole) {
 		return &screensv1.AddToProjectResponse{
 			Result: &screensv1.SchoolActionResult{Refused: "Your role cannot enroll schools in projects."},
+		}, true, nil
+	}
+	if inReach, err := s.schoolsInReach(ctx, p, req.GetSchoolId()); err != nil {
+		return nil, true, apierr.Internal(ctx, s.logger, err)
+	} else if !inReach {
+		return &screensv1.AddToProjectResponse{
+			Result: &screensv1.SchoolActionResult{Refused: "This school is outside your portfolio."},
 		}, true, nil
 	}
 	if strings.TrimSpace(req.GetProjectId()) == "" {
@@ -329,12 +390,19 @@ func (s *Service) addToProjectInGo(ctx context.Context, p auth.Principal, req *s
 }
 
 func (s *Service) bulkAssignClusterInGo(ctx context.Context, p auth.Principal, req *screensv1.BulkAssignClusterRequest) (*screensv1.BulkAssignClusterResponse, bool, error) {
-	if s.db == nil {
+	if !s.nativeForms() {
 		return nil, false, nil
 	}
 	if !canMutateSchoolAssignment(p.ActiveRole) {
 		return &screensv1.BulkAssignClusterResponse{
 			Result: &screensv1.BulkActionResult{Error: "Your role cannot bulk-assign schools to clusters."},
+		}, true, nil
+	}
+	if inReach, err := s.schoolsInReach(ctx, p, req.GetSchoolIds()...); err != nil {
+		return nil, true, apierr.Internal(ctx, s.logger, err)
+	} else if !inReach {
+		return &screensv1.BulkAssignClusterResponse{
+			Result: &screensv1.BulkActionResult{Error: "This school is outside your portfolio."},
 		}, true, nil
 	}
 	if strings.TrimSpace(req.GetClusterId()) == "" || len(req.GetSchoolIds()) == 0 {
@@ -390,12 +458,19 @@ func (s *Service) bulkAssignClusterInGo(ctx context.Context, p auth.Principal, r
 }
 
 func (s *Service) bulkAssignProjectInGo(ctx context.Context, p auth.Principal, req *screensv1.BulkAssignProjectRequest) (*screensv1.BulkAssignProjectResponse, bool, error) {
-	if s.db == nil {
+	if !s.nativeForms() {
 		return nil, false, nil
 	}
 	if !canMutateSchoolAssignment(p.ActiveRole) {
 		return &screensv1.BulkAssignProjectResponse{
 			Result: &screensv1.BulkActionResult{Error: "Your role cannot bulk-enroll schools in projects."},
+		}, true, nil
+	}
+	if inReach, err := s.schoolsInReach(ctx, p, req.GetSchoolIds()...); err != nil {
+		return nil, true, apierr.Internal(ctx, s.logger, err)
+	} else if !inReach {
+		return &screensv1.BulkAssignProjectResponse{
+			Result: &screensv1.BulkActionResult{Error: "This school is outside your portfolio."},
 		}, true, nil
 	}
 	if strings.TrimSpace(req.GetProjectId()) == "" || len(req.GetSchoolIds()) == 0 {

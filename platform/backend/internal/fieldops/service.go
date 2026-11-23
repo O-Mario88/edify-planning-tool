@@ -231,15 +231,53 @@ type SSAEntryRequest struct {
 	ActivityID    string
 }
 
+// SSAIntervention is one of the eight SSA interventions.
+type SSAIntervention struct{ Key, Label string }
+
+// SSAInterventions are apps.core.enums.SsaIntervention, in their canonical
+// order. An SSA is all eight, each scored out of 10.
+var SSAInterventions = []SSAIntervention{
+	{"christlike_behaviour", "Christlike Behaviour"},
+	{"exposure_to_word_of_god", "Exposure to the Word of God"},
+	{"financial_health", "Financial Health"},
+	{"leadership", "Leadership"},
+	{"government_requirement", "Government Requirements"},
+	{"learning_environment", "Learning Environment"},
+	{"teaching_environment", "Teacher's Environment"},
+	{"enrolment", "Enrolment"},
+}
+
+const ssaMaxScore = 10
+
+// checkSSAScores refuses anything but one score from 0 to 10 for each of the
+// eight interventions.
+func checkSSAScores(scores []SSAScoreInput) error {
+	known := make(map[string]bool, len(SSAInterventions))
+	for _, iv := range SSAInterventions {
+		known[iv.Key] = true
+	}
+	seen := make(map[string]bool, len(scores))
+	for _, sc := range scores {
+		if !known[sc.Intervention] || seen[sc.Intervention] || sc.Score < 0 || sc.Score > ssaMaxScore || math.IsNaN(sc.Score) {
+			return fmt.Errorf("%w: invalid SSA score %+v", ErrInvalidInput, sc)
+		}
+		seen[sc.Intervention] = true
+	}
+	if len(seen) != len(SSAInterventions) {
+		return fmt.Errorf("%w: an SSA scores all %d interventions, got %d", ErrInvalidInput, len(SSAInterventions), len(seen))
+	}
+	return nil
+}
+
 func (s *Service) EnterSSA(ctx context.Context, p auth.Principal, req SSAEntryRequest) (string, error) {
-	if strings.TrimSpace(req.SchoolID) == "" || strings.TrimSpace(req.FY) == "" || len(req.Scores) == 0 {
-		return "", fmt.Errorf("%w: school_id, fy, and at least one score are required", ErrInvalidInput)
+	if strings.TrimSpace(req.SchoolID) == "" || strings.TrimSpace(req.FY) == "" {
+		return "", fmt.Errorf("%w: school_id and fy are required", ErrInvalidInput)
+	}
+	if err := checkSSAScores(req.Scores); err != nil {
+		return "", err
 	}
 	sum := 0.0
 	for _, sc := range req.Scores {
-		if strings.TrimSpace(sc.Intervention) == "" || sc.Score < 0 || sc.Score > 5 {
-			return "", fmt.Errorf("%w: invalid SSA score %+v (must be 0..5)", ErrInvalidInput, sc)
-		}
 		sum += sc.Score
 	}
 	avg := math.Round((sum/float64(len(req.Scores)))*100) / 100

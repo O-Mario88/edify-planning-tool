@@ -50,6 +50,9 @@ func (s *Service) opsInGo(ctx context.Context, req *screensv1.SaveDrawerRequest)
 	if !ok {
 		return nil, false, nil
 	}
+	if !s.nativeForms() {
+		return nil, false, nil
+	}
 	rawPath := req.GetPath()
 	if i := strings.IndexByte(rawPath, '?'); i >= 0 {
 		rawPath = rawPath[:i]
