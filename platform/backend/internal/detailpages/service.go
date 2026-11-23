@@ -808,7 +808,7 @@ func (s *Service) incidentDetail(ctx context.Context, p auth.Principal, id strin
 	err := s.db.QueryRow(ctx, `
 SELECT COALESCE(i.reference, ''), i.title, COALESCE(i.category, ''), COALESCE(i.severity, ''),
        COALESCE(i.status, ''), COALESCE(i.affected_route, ''), COALESCE(i.affected_component, ''),
-       COALESCE(i.detail, ''), COALESCE(i.owner_id, ''), COALESCE(u.name, ''),
+       COALESCE(NULLIF(i.detail #>> '{}', '{}'), ''), COALESCE(i.owner_id, ''), COALESCE(u.name, ''),
        COALESCE(i.occurrence_count, 0), COALESCE(i.reopened_count, 0),
        i.first_detected_at, i.last_detected_at, i.acknowledged_at, i.resolved_at
 FROM admin_system_incident i
