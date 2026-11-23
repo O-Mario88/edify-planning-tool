@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/rbac"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -28,6 +29,10 @@ func (s *Service) RegisterHTTP(mux *http.ServeMux, authn HTTPAuth) {
 			return
 		}
 		target := strings.TrimSuffix(strings.TrimSpace(r.URL.Query().Get("target")), "/")
+		if organisationWideExport(target) && !(p.ActiveRole == rbac.Admin && rbac.Grants(p.ActiveRole, exportPermission)) {
+			http.Error(w, "Your role cannot download this export.", http.StatusForbidden)
+			return
+		}
 		fy := strings.TrimSpace(r.URL.Query().Get("fy"))
 		if fy == "" {
 			fy = schooldirectory.OperationalFY(s.now())
@@ -52,6 +57,19 @@ func (s *Service) RegisterHTTP(mux *http.ServeMux, authn HTTPAuth) {
 			http.Error(w, "Unknown export target", http.StatusNotFound)
 		}
 	})
+}
+
+// exportPermission is the matrix's data.export.
+const exportPermission = "data.export"
+
+// organisationWideExport is an export that reads every school's, person's or
+// project's records, with no limit to the reader's scope yet.
+func organisationWideExport(target string) bool {
+	switch target {
+	case "/projects/export", "/staff-activity/export", "/ia/analytics/export":
+		return true
+	}
+	return strings.HasPrefix(target, "/projects/") && strings.HasSuffix(target, "/export")
 }
 
 func startCSV(w http.ResponseWriter, filename string) *csv.Writer {

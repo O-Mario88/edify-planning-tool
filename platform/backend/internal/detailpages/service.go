@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -17,6 +18,7 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/rbac"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -37,29 +39,27 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, rawPath string, q
 	if path == "" {
 		path = "/"
 	}
+	// These pages read records with no check of the reader's schools, team or
+	// country yet. Until each has its scope, only Admin (who may read every
+	// record) is served; everyone else is handed on to the existing rules.
+	if needsRecordScope(ctx, path) && p.ActiveRole != rbac.Admin {
+		return nil, true, pagegate.ErrNotAvailable
+	}
+	if id, ok := recordID(path, "/projects/"); ok {
+		return s.projectDetail(ctx, p, id, query)
+	}
+	if id, ok := recordID(path, "/partners/"); ok {
+		return s.partnerDetail(ctx, p, id, query)
+	}
+	if id, ok := recordID(path, "/activities/"); ok {
+		return s.activityDetail(ctx, p, id, "/activities/"+id)
+	}
+	if id, ok := recordID(path, "/my-plan/"); ok {
+		return s.activityDetail(ctx, p, id, "/my-plan/"+id)
+	}
 	switch {
 	case path == "/projects/analytics":
 		return s.projectAnalytics(ctx, p, query)
-	case strings.HasPrefix(path, "/projects/") && !isKnownProjectSubroute(path):
-		id := strings.TrimPrefix(path, "/projects/")
-		if id != "" && !strings.Contains(id, "/") {
-			return s.projectDetail(ctx, p, id, query)
-		}
-	case strings.HasPrefix(path, "/partners/"):
-		id := strings.TrimPrefix(path, "/partners/")
-		if id != "" && !strings.Contains(id, "/") {
-			return s.partnerDetail(ctx, p, id, query)
-		}
-	case strings.HasPrefix(path, "/activities/"):
-		id := strings.TrimPrefix(path, "/activities/")
-		if id != "" && !strings.Contains(id, "/") {
-			return s.activityDetail(ctx, p, id, "/activities/"+id)
-		}
-	case strings.HasPrefix(path, "/my-plan/"):
-		id := strings.TrimPrefix(path, "/my-plan/")
-		if id != "" && id != "smart-route" && !strings.Contains(id, "/") {
-			return s.activityDetail(ctx, p, id, "/my-plan/"+id)
-		}
 	case strings.HasPrefix(path, "/admin-ops/incidents/"):
 		id := strings.TrimPrefix(path, "/admin-ops/incidents/")
 		if id != "" && !strings.Contains(id, "/") {
@@ -89,10 +89,40 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, rawPath string, q
 	return nil, false, nil
 }
 
-func isKnownProjectSubroute(path string) bool {
+// fixedRoutes are the pages that share a prefix with a record's address, so
+// "/projects/capacity" is never read as a project whose id is "capacity".
+var fixedRoutes = map[string][]string{
+	"/projects/":   {"analytics", "capacity", "create", "export", "filter", "filters-drawer", "monitoring", "my-plan", "planning"},
+	"/partners/":   {"create"},
+	"/activities/": {"closure"},
+	"/my-plan/":    {"day-package", "export-drawer", "readiness", "smart-route"},
+}
+
+// recordID is the id in a one-record address under prefix.
+func recordID(path, prefix string) (string, bool) {
+	id, found := strings.CutPrefix(path, prefix)
+	if !found || id == "" || strings.Contains(id, "/") || slices.Contains(fixedRoutes[prefix], id) {
+		return "", false
+	}
+	return id, true
+}
+
+// needsRecordScope is whether path is a page that does not yet limit what it
+// reads to the reader's own scope.
+func needsRecordScope(ctx context.Context, path string) bool {
 	switch path {
-	case "/projects/planning", "/projects/my-plan", "/projects/monitoring", "/projects/analytics", "/projects/export":
+	case "/projects/analytics", "/accounts/monthly-request", "/country-planning-oversight/table/projects":
 		return true
+	case "/dashboard":
+		return pagegate.DjangoAbsent(ctx)
+	}
+	for prefix := range fixedRoutes {
+		if _, ok := recordID(path, prefix); ok {
+			return true
+		}
+	}
+	if slug, found := strings.CutPrefix(path, "/documents/"); found {
+		return slug != "" && !strings.Contains(slug, "/") && !slices.Contains([]string{"new", "agreements", "restricted"}, slug)
 	}
 	return false
 }
@@ -464,9 +494,9 @@ ORDER BY pr.name`, fy, projectFilter)
 func (s *Service) partnerDetail(ctx context.Context, _ auth.Principal, id string, _ url.Values) (*screensv1.GetPageResponse, bool, error) {
 	var name, regionName, trainsOn, contact, email, phone, contractStatus, certStatus, activeStatus, partnerRole, notes string
 	err := s.db.QueryRow(ctx, `
-SELECT name, COALESCE(region_name, ''), COALESCE(trains_on, ''), COALESCE(contact_person, ''),
+SELECT name, COALESCE(region_name, ''), COALESCE(array_to_string(trains_on, ', '), ''), COALESCE(contact_person, ''),
        COALESCE(email, ''), COALESCE(phone, ''), COALESCE(contract_status, ''), COALESCE(certification_status, ''),
-       COALESCE(active_status, 'active'), COALESCE(partner_role, ''), COALESCE(notes, '')
+       CASE WHEN active_status IS FALSE THEN 'inactive' ELSE 'active' END, COALESCE(partner_role, ''), COALESCE(notes, '')
 FROM partner WHERE id = $1 AND deleted_at IS NULL`, id).Scan(
 		&name, &regionName, &trainsOn, &contact, &email, &phone, &contractStatus, &certStatus, &activeStatus, &partnerRole, &notes)
 	if errors.Is(err, pgx.ErrNoRows) {

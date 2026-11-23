@@ -1253,3 +1253,19 @@ GRANT SELECT (id, proposed_label, created_at) ON bt_loan_purpose_proposal TO edi
 GRANT SELECT (id, school_name, instruction, priority, due_date, status, assigned_at) ON planning_oversight_follow_up TO edify_gateway_ro;
 GRANT SELECT (fy) ON cce_regional_report TO edify_gateway_ro;
 GRANT SELECT (created_at) ON cce_team_guidance TO edify_gateway_ro;
+
+-- internal/detailpages, read only, after the page checks its reader (Admin
+-- until each page has its record scope), and two columns the staff profile
+-- and message threads already select.
+GRANT SELECT (actual_observations, actual_outcome, expected_outcome, follow_up_note) ON activity TO edify_gateway_ro;
+GRANT SELECT (acknowledged_at, category, detail, first_detected_at, owner_id, reopened_count, resolved_at)
+  ON admin_system_incident TO edify_gateway_ro;
+GRANT SELECT (confidentiality) ON document_asset TO edify_gateway_ro;
+GRANT SELECT (change_summary, original_filename) ON document_version TO edify_gateway_ro;
+GRANT SELECT (amount, fy, month, staff_id, status) ON monthly_fund_request TO edify_gateway_ro;
+GRANT SELECT (certification_status, contract_status, notes) ON partner TO edify_gateway_ro;
+GRANT SELECT (updated_at) ON document_acknowledgement TO edify_gateway_ro;
+GRANT SELECT (measurement_end_fy, measurement_start_fy) ON project TO edify_gateway_ro;
+GRANT SELECT (baseline_band) ON project_school_assignment TO edify_gateway_ro;
+GRANT SELECT (staff_number) ON staff_profile TO edify_gateway_ro;
+GRANT SELECT (created_at) ON messaging_messageparticipant TO edify_gateway_ro;
