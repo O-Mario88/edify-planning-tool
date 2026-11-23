@@ -45,7 +45,14 @@ Three things differ from the Django page on purpose. The Assign form asks for th
 - `/activities/<id>/evidence` needs a new capability. No client drawer has a file field and Go has no upload, page-joining or stored-file path. An upload form must not be drawn until those exist.
 - `GetPlanningDrawer`'s `assign`, `group-training` and `cluster-meeting` kinds are still placeholders in `getPlanningDrawerInGo`. They offer invented purposes and focus areas and every partner, including held and loan partners. They must be rebuilt as `schedule` now is.
 
-The four Core forms open from Go, but their saves are not ported. With Django absent, submitting one answers "This action is not available here yet" and writes nothing.
+The Core Schools visit, training and partner hand-over forms now save in Go when Django is absent. While Django is present it keeps these saves, because the forms have no form-only door.
+
+- **Against Django (Go's writes, Django's pricing):** the visit form matched on 25 saves, the training form on 17 (13 made by Go) and the hand-over on 29 (21 made by Go). Every changed business table matched.
+- **With Django stopped:** 69 saves across the three forms were replayed on a Go-only gateway, using Go's own pricing. All 59 answered saves matched, 33 of them writing rows; 4 refusals are still handed on, and 6 steps never reached a form. `activity`, `partner_assignment`, `core_activity_slot`, `core_plan`, `daily_visit_batch` and `activity_schedule_cost_line` are identical, and the planned cost is the same (UGX 620,000).
+- **Costing bugs that replay found, now fixed:** Go's Django-off day settlement counted every activity as a visit in the day's School Visit allocation, stamped every budget line `day_pool` instead of `transport`, `lunch` and so on, left package slots at the wrong status, and wrote a differently shaped cost audit row.
+- **Still handed on:** a second partner at a school, a facilitated training, a loan or held partner, a partner purpose the form does not offer, and everything the Schedule Visit list below names.
+
+**Blocks switching Django off: a Go-only save creates no money follow-up.** Django's costing write goes on to make the advance request, fund request, weekly fund request and transport payment. In the replay Django made 21 advance requests and Go made none. Go also does not yet write the route recommendation rows, the snapshot's `calculation_inputs`, `warnings` and reference cost (Cost Review reads the inputs), or the facilitator's partner on a fee line.
 
 **Schedule Visit.** Its staged cases were a used visit in one or both open years, a universal training, a partner holding the school, two partners, partner plans, no verified SSA, an all-Strong SSA, a stale SSA, existing plans, a completed training, a closed school, Core, Champion and a missing school. Opening it writes nothing. One difference is deliberate: the Programme Accountant opens the form with its approval request, as on Django's web page. Django's mobile feed refuses that role at its `school_profile` gate.
 

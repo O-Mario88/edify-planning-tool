@@ -707,12 +707,20 @@ SELECT visit_date
 		perSchool = poolTotal / int64(count)
 	}
 	rateSnapshotJSON, _ := json.Marshal(pool.Amounts())
+	weights, err := readWorkloadWeights(ctx, tx)
+	if err != nil {
+		return err
+	}
+	dayTypes := make([]string, 0, count)
+	for _, m := range members {
+		dayTypes = append(dayTypes, m.activityType)
+	}
+	mission := daypool.AllocateMission(dayTypes, poolTotal, weights)
 	workloadJSON, _ := json.Marshal(map[string]any{
-		"total_units": count,
-		"visit_units": count,
-		"visit_count": count,
-		"day_mark":    dayMark,
-		"return_day":  returnDay,
+		"total_units":  mission.TotalUnits,
+		"visit_units":  mission.VisitUnits,
+		"visit_count":  mission.VisitCount,
+		"weights_used": mission.WeightsUsed,
 	})
 
 	var updated bool
@@ -722,7 +730,7 @@ SELECT gateway_costing.update_batch(
 )`,
 		batchID, pricingType, card.ID, card.Version, string(rateSnapshotJSON),
 		poolTotal, count, perSchool, card.RequiredTarget,
-		poolTotal, perSchool, string(workloadJSON), now,
+		mission.Allocation, mission.PerSchool, string(workloadJSON), now,
 	).Scan(&updated); err != nil {
 		return fmt.Errorf("activities: updating daily_visit_batch %s: %w", batchID, err)
 	}
@@ -747,6 +755,8 @@ SELECT gateway_costing.update_batch(
 				Unit            int64          `json:"unit"`
 				Qty             int64          `json:"qty"`
 				Amount          int64          `json:"amount"`
+				Missing         bool           `json:"missing"`
+				LineItemType    string         `json:"lineItemType"`
 				DailyAllocation map[string]any `json:"dailyAllocation,omitempty"`
 			}
 			lines := make([]lineJSON, 0, len(pool)+4)
@@ -754,11 +764,12 @@ SELECT gateway_costing.update_batch(
 			for _, r := range pool {
 				share := alloc[r.Key]
 				lines = append(lines, lineJSON{
-					Key:    r.Key,
-					Label:  dayLineLabel(r.Key, dayMark),
-					Unit:   share,
-					Qty:    1,
-					Amount: share,
+					Key:          r.Key,
+					Label:        dayLineLabel(r.Key, dayMark),
+					Unit:         share,
+					Qty:          1,
+					Amount:       share,
+					LineItemType: costing.LineItemType(r.Key),
 					DailyAllocation: map[string]any{
 						"policy": "staff-day-v2",
 						"count":  count,
@@ -795,11 +806,12 @@ SELECT gateway_costing.update_batch(
 					unit = *ol.Unit
 				}
 				lines = append(lines, lineJSON{
-					Key:    ol.Key,
-					Label:  ol.Label,
-					Unit:   unit,
-					Qty:    ol.Qty,
-					Amount: ol.Amount,
+					Key:          ol.Key,
+					Label:        ol.Label,
+					Unit:         unit,
+					Qty:          ol.Qty,
+					Amount:       ol.Amount,
+					LineItemType: costing.LineItemType(ol.Key),
 				})
 				total += ol.Amount
 			}
@@ -820,6 +832,7 @@ SELECT gateway_costing.update_batch(
 				missingBytes = []byte(`[]`)
 			}
 
+			snapshotID := cuid.New()
 			var seq int
 			if err := tx.QueryRow(ctx, `
 SELECT gateway_costing.apply_activity_cost(
@@ -831,11 +844,16 @@ SELECT gateway_costing.apply_activity_cost(
 				periods.month, periods.fy, periods.quarter,
 				card.ID, card.Version, card.Currency,
 				ownerUID, respRole, calcBy,
-				cuid.New(), string(calcInputsJSON), string(linesBytes),
+				snapshotID, string(calcInputsJSON), string(linesBytes),
 				string(missingBytes), string(linesBytes),
 				cuid.New(), cuid.New(), now,
 			).Scan(&seq); err != nil {
 				return fmt.Errorf("activities: applying settled cost for activity %s: %w", member.id, err)
+			}
+			// Activity.save's mirror: the package slot this work fills.
+			if _, err := tx.Exec(ctx, `UPDATE core_activity_slot SET status = $2, updated_at = $3
+WHERE activity_id = $1 AND status IS DISTINCT FROM $2`, member.id, coreSlotStatus(member.status), now); err != nil {
+				return fmt.Errorf("activities: mirroring activity %s to its package slot: %w", member.id, err)
 			}
 			auditActor := calcBy
 			if auditActor == "" {
@@ -843,18 +861,17 @@ SELECT gateway_costing.apply_activity_cost(
 			}
 			if _, err := audit.Append(ctx, tx, audit.Entry{
 				Action:      "activity.cost.calculated",
-				SubjectKind: audit.Text("Activity"),
-				SubjectID:   audit.Text(member.id),
+				SubjectKind: audit.Text("ActivityCostSnapshot"),
+				SubjectID:   audit.Text(snapshotID),
 				ActorID:     audit.Text(auditActor),
-				ActorRole:   audit.Text(respRole),
 				Success:     true,
-				Reason:      audit.Text("day_pool_settlement"),
 				Payload: map[string]any{
 					"activityId":                 member.id,
 					"sequence":                   seq,
 					"operationalCost":            total,
 					"operationalRateCardVersion": card.Version,
-					"costMissing":                len(missingItems) > 0,
+					"referenceConfigured":        false,
+					"referenceRateCardVersion":   nil,
 				},
 			}, now); err != nil {
 				return fmt.Errorf("activities: appending cost audit row for activity %s: %w", member.id, err)
@@ -900,6 +917,30 @@ SELECT b.id
 	}
 
 	return nil
+}
+
+// readWorkloadWeights is workload.live_weights: the highest active version of
+// each configured type, over the spec's defaults.
+func readWorkloadWeights(ctx context.Context, q Querier) (map[string]int, error) {
+	weights := daypool.DefaultWorkloadWeights()
+	rows, err := q.Query(ctx, `SELECT activity_type, weight_hundredths FROM activity_workload_weight
+WHERE active ORDER BY activity_type, version`)
+	if err != nil {
+		return nil, fmt.Errorf("activities: reading the workload weights: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var activityType string
+		var hundredths int
+		if err := rows.Scan(&activityType, &hundredths); err != nil {
+			return nil, fmt.Errorf("activities: reading a workload weight: %w", err)
+		}
+		weights[activityType] = hundredths
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("activities: reading the workload weights: %w", err)
+	}
+	return weights, nil
 }
 
 // MoveCheck checks whether the target activity exists, whether its old/new days

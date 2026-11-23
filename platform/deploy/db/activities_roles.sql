@@ -167,6 +167,7 @@ GRANT UPDATE (status, activity_id, scheduled_for, scheduled_month, scheduled_wee
 -- The Core Schools form hands a package slot to a partner: its assignment row,
 -- the slot's partner, and what decides whether the partner may take it.
 GRANT UPDATE (assigned_partner_id, assigned_partner_name) ON core_activity_slot TO edify_activities_rw;
+GRANT SELECT (activity_type, weight_hundredths, version, active) ON activity_workload_weight TO edify_activities_rw;
 GRANT INSERT (id, created_at, updated_at, assigning_staff_id, focus_intervention, expected_activity_type, status, notes,
               partner_id, school_id, support_type, training_number, visit_number, purpose_of_visit, assignment_mode,
               catalogue_item_id, catalogue_snapshot, override_reason, recommendation_reason, source_ssa_id,

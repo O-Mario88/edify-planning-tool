@@ -186,10 +186,18 @@ DECLARE
   v_amount    bigint;
   v_line_id   text;
   v_keys      text[] := ARRAY[]::text[];
+  v_tag       text;
+  v_type      text;
+  v_described text;
 BEGIN
   SELECT a.catalogue_item_id, a.catalogue_version, a.costing_profile_snapshot,
-         a.school_id, a.cluster_id, a.project_id, a.assigned_partner_id, a.planned_date
-    INTO v_cat_item, v_cat_ver, v_profile, v_school, v_cluster, v_project, v_partner, v_planned
+         a.school_id, a.cluster_id, a.project_id, a.assigned_partner_id, a.planned_date,
+         -- costing_service tags a Core activity's budget lines.
+         CASE WHEN a.activity_type = 'core_visit' AND a.delivery_type = 'partner' THEN 'Core Partner Activity'
+              WHEN a.activity_type = 'core_training' AND a.delivery_type = 'partner' THEN 'Core Partner Activity'
+              WHEN a.activity_type = 'core_visit' THEN 'Core Visit'
+              WHEN a.activity_type = 'core_training' THEN 'Core Training' END
+    INTO v_cat_item, v_cat_ver, v_profile, v_school, v_cluster, v_project, v_partner, v_planned, v_tag
     FROM public.activity a
    WHERE a.id = p_activity_id AND a.deleted_at IS NULL
      FOR UPDATE;
@@ -250,6 +258,8 @@ BEGIN
     v_unit   := COALESCE((v_line->>'unit')::bigint, 0);
     v_qty    := GREATEST(1, COALESCE((v_line->>'qty')::integer, 1));
     v_amount := COALESCE((v_line->>'amount')::bigint, 0);
+    v_type   := COALESCE(NULLIF(v_line->>'lineItemType', ''), 'other');
+    v_described := CASE WHEN v_tag IS NULL THEN v_label ELSE '[' || v_tag || '] ' || v_label END;
     IF v_key = '' THEN
       CONTINUE;
     END IF;
@@ -263,7 +273,8 @@ BEGIN
     IF v_line_id IS NOT NULL THEN
       UPDATE public.activity_schedule_cost_line
          SET label                      = left(v_label, 255),
-             description                = left(v_label, 255),
+             description                = left(v_described, 255),
+             line_item_type             = v_type,
              unit_cost                  = v_unit,
              quantity                   = v_qty,
              amount                     = v_amount,
@@ -279,7 +290,7 @@ BEGIN
              week_start_date            = p_week_start,
              week_end_date              = p_week_end,
              responsible_user           = NULLIF(p_responsible_user, ''),
-             responsible_role           = NULLIF(p_responsible_role, ''),
+             responsible_role           = NULL,
              school_id                  = v_school,
              cluster_id                 = v_cluster,
              project_id                 = v_project,
@@ -300,12 +311,12 @@ BEGIN
         week_start_date, week_end_date, activity_catalogue_item_id,
         activity_catalogue_version, costing_profile, vendor_paid
       ) VALUES (
-        p_at, p_at, v_line_id, left(v_key, 128), left(v_label, 255), left(v_label, 255),
+        p_at, p_at, v_line_id, left(v_key, 128), left(v_label, 255), left(v_described, 255),
         v_unit, v_qty, v_amount, v_amount, COALESCE(p_catalogue_version, 1),
         p_activity_id, NULLIF(p_catalogue_id, ''), p_catalogue_version,
-        COALESCE(NULLIF(p_currency, ''), 'UGX'), 'day_pool',
+        COALESCE(NULLIF(p_currency, ''), 'UGX'), v_type,
         v_cluster, p_fy, p_month, v_partner, v_planned, v_project,
-        p_quarter, NULLIF(p_responsible_role, ''), NULLIF(p_responsible_user, ''), v_school,
+        p_quarter, NULL, NULLIF(p_responsible_user, ''), v_school,
         p_week_start, p_week_end, v_cat_item, v_cat_ver, v_profile, false
       );
     END IF;

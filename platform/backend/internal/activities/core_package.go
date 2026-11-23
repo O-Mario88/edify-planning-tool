@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -117,6 +118,16 @@ func coreStaffTrainingRefusal(school string, used int) string {
 
 func coreSlotTaken(status string) bool {
 	return schoolprofile.GateRules().Core.SlotTaken(status)
+}
+
+// coreSlotStatus is core_slot_status: the status a slot takes from the
+// activity that fills it. A slot's "Planned" means open, so work still
+// "planned" must not be copied across as it is.
+func coreSlotStatus(activityStatus string) string {
+	if strings.EqualFold(strings.TrimSpace(activityStatus), "planned") {
+		return "Scheduled"
+	}
+	return activityStatus
 }
 
 // readCorePlan is core_plan_for_visit without its write: the year's package,
