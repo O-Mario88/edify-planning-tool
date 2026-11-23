@@ -13,27 +13,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { loadDrawer, loadDrawerOptions, submitDrawer } from '@/app/(app)/actions/drawer';
 import { EdifyDatePicker } from '@/components/ui/EdifyDatePicker';
-import { choicesFor, clearedBy, initialValues, isShown, missingField, ticked, valuesToSend, withTicked } from '@/lib/drawerLogic';
+import { choicesFor, clearedBy, initialValues, isShown, missingField, planningDrawerOf, ticked, valuesToSend, withTicked } from '@/lib/drawerLogic';
 import type { DrawerFieldJson, DrawerItemJson, DrawerJson, Reloaded, Values } from '@/lib/drawerLogic';
 import { drawerFromHash } from '@/lib/feedPage';
 
-const CONTROL =
-  'w-full rounded-[var(--radius-control)] border border-[var(--edify-border-strong)] bg-[var(--edify-surface-raised)] px-3 py-2 text-[length:var(--edify-text-body-size)] text-[var(--edify-text)] outline-none focus:border-[var(--edify-accent)] focus:ring-2 focus:ring-[var(--edify-accent-soft,transparent)] disabled:opacity-60';
-
-const NOTE_TONES: Readonly<Record<string, string>> = {
-  danger: 'border-[var(--edify-danger-border,var(--edify-border))] bg-[var(--edify-danger-soft,var(--edify-surface-muted))] text-[var(--edify-danger-text,var(--edify-text))]',
-  warning: 'border-[var(--edify-warning-border,var(--edify-border))] bg-[var(--edify-warning-soft,var(--edify-surface-muted))] text-[var(--edify-warning-text,var(--edify-text))]',
-  success: 'border-[var(--edify-success-border,var(--edify-border))] bg-[var(--edify-success-soft,var(--edify-surface-muted))] text-[var(--edify-success-text,var(--edify-text))]',
-  info: 'border-[var(--edify-border)] bg-[var(--edify-surface-muted)] text-[var(--edify-text)]',
-};
-
-function Note({ tone = 'info', text }: { tone?: string; text: string }) {
-  return (
-    <p role={tone === 'danger' ? 'alert' : undefined} className={`rounded-[var(--radius-control)] border px-3 py-2 text-[length:var(--edify-text-label-size)] ${NOTE_TONES[tone] ?? NOTE_TONES.info}`}>
-      {text}
-    </p>
-  );
-}
+import { CONTROL, Note } from './drawerParts';
+import { PlanningDrawerForm } from './PlanningDrawerForm';
 
 function Facts({ facts }: { facts: readonly { label?: string; value?: string }[] }) {
   return (
@@ -184,7 +169,9 @@ export function DrawerHost() {
       setError('');
       setDrawer(null);
       setOpen(target);
-      dialog.current?.showModal();
+      if (!dialog.current?.open) dialog.current?.showModal();
+      // A planning drawer's form loads itself.
+      if (planningDrawerOf(target.path)) return;
       loadDrawer(target.path)
         .then((answer) => {
           if (answer.drawer) {
@@ -245,6 +232,22 @@ export function DrawerHost() {
     }
   };
 
+  const planning = open ? planningDrawerOf(open.path) : null;
+  const markDirty = useCallback(() => setDirty(true), []);
+  const planningNotHere = useCallback(() => {
+    if (open?.fallback) window.location.assign(open.fallback);
+    else {
+      close();
+      setSaved('This action is not available here yet.');
+    }
+  }, [close, open]);
+  const planningSaved = (message: string, redirect: string) => {
+    close();
+    setSaved(message);
+    if (redirect) router.push(redirect);
+    else router.refresh();
+  };
+
   return (
     <>
       <dialog
@@ -259,6 +262,17 @@ export function DrawerHost() {
         }}
         className="edify-action-drawer m-auto w-[min(36rem,calc(100vw-1.5rem))] max-h-[min(88dvh,48rem)] overflow-hidden rounded-[var(--edify-drawer-radius,12px)] border border-[var(--edify-border)] bg-[var(--edify-surface-raised)] p-0 text-[var(--edify-text)] shadow-[var(--edify-shadow-lg)] backdrop:bg-[var(--drawer-backdrop-color,rgba(15,23,42,.45))] max-sm:mb-0 max-sm:w-full max-sm:max-w-full max-sm:rounded-b-none"
       >
+        {planning ? (
+          <PlanningDrawerForm
+            key={open?.path}
+            school={planning.school}
+            kind={planning.kind}
+            onRequestClose={requestClose}
+            onDirty={markDirty}
+            onSaved={planningSaved}
+            onNotHere={planningNotHere}
+          />
+        ) : (
         <form
           method="dialog"
           className="flex max-h-[min(88dvh,48rem)] flex-col"
@@ -290,6 +304,7 @@ export function DrawerHost() {
             ) : null}
           </footer>
         </form>
+        )}
       </dialog>
       <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-20 z-50 flex justify-center px-4 lg:bottom-6">
         {saved ? (

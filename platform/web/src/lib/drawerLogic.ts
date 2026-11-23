@@ -166,3 +166,74 @@ export function schoolDrawerOf(path: string): { schoolId: string; kind: string }
   const kind = match ? SCHOOL_DRAWERS[match[2] ?? ''] : undefined;
   return match && kind ? { schoolId: match[1] ?? '', kind } : null;
 }
+
+/** A planning drawer's school (its School ID or record id) and kind, from the path a Schedule or Assign button opens. */
+export function planningDrawerOf(path: string): { school: string; kind: 'schedule' | 'assign' } | null {
+  const [route, query = ''] = path.split('?');
+  const kind = route === '/planning/schedule-modal' ? 'schedule' : route === '/planning/assign-partner-modal' ? 'assign' : null;
+  const school = new URLSearchParams(query).get('school_id') ?? '';
+  return kind && school ? { school, kind } : null;
+}
+
+/** The school an Add to Project button opens the drawer for. */
+export function addToProjectOf(path: string): string | null {
+  return /^\/schools\/([A-Za-z0-9_-]{1,64})\/assign-to-project\/?$/.exec(path.split('?')[0] ?? '')?.[1] ?? null;
+}
+
+export interface ActionChoiceJson {
+  readonly value?: string;
+  readonly label?: string;
+  readonly disabled?: boolean;
+  readonly reason?: string;
+}
+
+export interface AddToProjectFormJson {
+  readonly refused?: string;
+  readonly title?: string;
+  readonly projects?: readonly ActionChoiceJson[];
+  readonly supportTypes?: readonly ActionChoiceJson[];
+  readonly coordinators?: readonly ActionChoiceJson[];
+  readonly focusAreas?: readonly ActionChoiceJson[];
+  readonly emptyNotice?: string;
+  readonly error?: string;
+}
+
+/** A select's list: its empty first line, then the choices; one that cannot be taken stays, greyed with its reason. */
+function actionOptions(placeholder: string, choices: readonly ActionChoiceJson[] = []): DrawerOptionJson[] {
+  return [
+    { value: '', label: placeholder },
+    ...choices.map((choice) => ({
+      value: choice.value ?? '',
+      label: choice.reason ? `${choice.label ?? ''} (${choice.reason})` : (choice.label ?? ''),
+      disabled: Boolean(choice.disabled || choice.reason),
+    })),
+  ];
+}
+
+/** Add to Project's form, in the drawer host's shape, with the fields and words of the existing drawer. */
+export function addToProjectDrawer(form: AddToProjectFormJson): DrawerJson {
+  const select = (name: string, label: string, placeholder: string, choices?: readonly ActionChoiceJson[], required = false): DrawerItemJson => ({
+    field: { name, label, kind: 'select', value: '', required, options: actionOptions(placeholder, choices) },
+  });
+  const notes: DrawerItemJson[] = [
+    ...(form.emptyNotice ? [{ note: { text: form.emptyNotice, tone: 'info' } }] : []),
+    ...(form.error ? [{ note: { text: form.error, tone: 'danger' } }] : []),
+  ];
+  return {
+    title: form.title ?? 'Add to project',
+    hasRequired: true,
+    submitLabel: 'Assign to project',
+    cancelLabel: 'Cancel',
+    canSubmit: (form.projects ?? []).some((project) => !project.disabled && !project.reason),
+    items: [
+      ...notes,
+      select('project_id', 'Project', 'Select a project', form.projects, true),
+      { field: { name: 'project_type', label: 'Project type', kind: 'text', value: '', placeholder: 'e.g. Curriculum support' } },
+      select('participation_type', 'Expected support type', 'Select a support type', form.supportTypes),
+      select('coordinator_id', 'Project coordinator', 'Project default', form.coordinators),
+      select('support_area', 'Focus area', 'Select a focus area', form.focusAreas),
+      { field: { name: 'start_date', label: 'Start date', kind: 'date', value: '' } },
+      { field: { name: 'notes', label: 'Notes', kind: 'textarea', value: '' } },
+    ],
+  };
+}

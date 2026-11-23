@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  addToProjectDrawer,
+  addToProjectOf,
   choicesFor,
   clearedBy,
   initialValues,
   isDrawerPath,
   isShown,
   missingField,
+  planningDrawerOf,
   safeRedirect,
   schoolDrawerOf,
   ticked,
@@ -14,6 +17,65 @@ import {
   withTicked,
 } from './drawerLogic';
 import type { DrawerJson } from './drawerLogic';
+
+describe('planningDrawerOf', () => {
+  it('reads the school and the kind from a planning drawer path', () => {
+    expect(planningDrawerOf('/planning/schedule-modal?school_id=1000')).toEqual({ school: '1000', kind: 'schedule' });
+    expect(planningDrawerOf('/planning/assign-partner-modal?school_id=1546')).toEqual({ school: '1546', kind: 'assign' });
+  });
+
+  it('is nothing for any other path, or one with no school', () => {
+    expect(planningDrawerOf('/planning/schedule-modal')).toBeNull();
+    expect(planningDrawerOf('/core-schools/assign-partner?school_id=1546')).toBeNull();
+  });
+});
+
+describe('addToProjectOf', () => {
+  it('reads the school from an Add to Project path', () => {
+    expect(addToProjectOf('/schools/cmw9/assign-to-project')).toBe('cmw9');
+  });
+
+  it('is nothing for another school action', () => {
+    expect(addToProjectOf('/schools/cmw9/edit-drawer')).toBeNull();
+    expect(addToProjectOf('/schools/cmw9/assign-to-project/extra')).toBeNull();
+  });
+});
+
+describe('addToProjectDrawer', () => {
+  const form = {
+    title: 'Assign Hill Primary to project',
+    projects: [
+      { value: 'p1', label: 'Alumni' },
+      { value: 'p2', label: 'Full Project', reason: 'This project has no places left.' },
+    ],
+    supportTypes: [{ value: 'staff', label: 'Staff-led support' }],
+    coordinators: [{ value: 'u1', label: 'A Coordinator' }],
+    focusAreas: [{ value: 'leadership', label: 'Leadership' }],
+  };
+
+  it('asks for a project and offers the form the gateway answered', () => {
+    const out = addToProjectDrawer(form);
+    expect(out.title).toBe('Assign Hill Primary to project');
+    expect(out.submitLabel).toBe('Assign to project');
+    expect(out.canSubmit).toBe(true);
+    const names = (out.items ?? []).flatMap((item) => (item.field?.name ? [item.field.name] : []));
+    expect(names).toEqual(['project_id', 'project_type', 'participation_type', 'coordinator_id', 'support_area', 'start_date', 'notes']);
+    expect(out.items?.find((item) => item.field?.name === 'project_id')?.field?.required).toBe(true);
+  });
+
+  it('keeps a full project on the list, greyed with its reason', () => {
+    const project = addToProjectDrawer(form).items?.find((item) => item.field?.name === 'project_id')?.field;
+    const full = project?.options?.find((option) => option.value === 'p2');
+    expect(full?.disabled).toBe(true);
+    expect(full?.label).toContain('This project has no places left.');
+  });
+
+  it('cannot be submitted when no project can be chosen, and says why', () => {
+    const out = addToProjectDrawer({ ...form, projects: [], emptyNotice: 'No project is open for enrolment.' });
+    expect(out.canSubmit).toBe(false);
+    expect(out.items?.[0]?.note?.text).toBe('No project is open for enrolment.');
+  });
+});
 
 const drawer: DrawerJson = {
   items: [

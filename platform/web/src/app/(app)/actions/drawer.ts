@@ -9,9 +9,10 @@ import {
   PageDrawerSchema,
   SchoolDrawerService,
 } from '@/gen/edify/screens/v1/drawer_pb';
+import { AddToProjectFormSchema, SchoolActionService } from '@/gen/edify/screens/v1/school_actions_pb';
 import { asReader } from '@/lib/auth';
-import { isDrawerPath, safeRedirect, schoolDrawerOf } from '@/lib/drawerLogic';
-import type { DrawerJson, DrawerOptionJson } from '@/lib/drawerLogic';
+import { addToProjectDrawer, addToProjectOf, isDrawerPath, safeRedirect, schoolDrawerOf } from '@/lib/drawerLogic';
+import type { AddToProjectFormJson, DrawerJson, DrawerOptionJson } from '@/lib/drawerLogic';
 import { gatewayClient, isNotFound, isUnavailable, messageOf } from '@/lib/gateway';
 
 export interface DrawerLoad {
@@ -34,8 +35,15 @@ export interface DrawerSaved {
 export async function loadDrawer(path: string): Promise<DrawerLoad> {
   if (!isDrawerPath(path)) return { refusal: 'This action cannot be opened here.' };
   const school = schoolDrawerOf(path);
+  const projectSchool = addToProjectOf(path);
   return asReader(async (token) => {
     try {
+      if (projectSchool) {
+        const { form } = await gatewayClient(SchoolActionService, token).getAddToProject({ schoolId: projectSchool });
+        if (!form) return { notHere: true };
+        if (form.refused) return { refusal: form.refused };
+        return { drawer: addToProjectDrawer(toJson(AddToProjectFormSchema, form) as AddToProjectFormJson) };
+      }
       if (school) {
         const answer = await gatewayClient(SchoolDrawerService, token).getSchoolDrawer(school);
         return answer.drawer ? { drawer: toJson(PageDrawerSchema, answer.drawer) as DrawerJson } : { notHere: true };
@@ -56,8 +64,23 @@ export async function loadDrawer(path: string): Promise<DrawerLoad> {
 export async function submitDrawer(path: string, values: Readonly<Record<string, string>>): Promise<DrawerSaved> {
   if (!isDrawerPath(path)) return { saved: false, message: '', redirect: '', error: 'This action cannot be saved here.' };
   const school = schoolDrawerOf(path);
+  const projectSchool = addToProjectOf(path);
   return asReader(async (token) => {
     try {
+      if (projectSchool) {
+        const { result } = await gatewayClient(SchoolActionService, token).addToProject({
+          schoolId: projectSchool,
+          projectId: values.project_id ?? '',
+          projectType: (values.project_type ?? '').trim(),
+          participationType: values.participation_type ?? '',
+          startDate: values.start_date ?? '',
+          supportArea: values.support_area ?? '',
+          coordinatorId: values.coordinator_id ?? '',
+          notes: (values.notes ?? '').trim(),
+        });
+        const saved = Boolean(result?.saved);
+        return { saved, message: result?.message ?? '', redirect: '', error: saved ? '' : result?.refused || result?.error || 'This could not be saved.' };
+      }
       const answer = school
         ? await gatewayClient(SchoolDrawerService, token).saveSchoolDrawer({ ...school, values: { ...values } })
         : await gatewayClient(PageDrawerService, token).saveDrawer({ path, values: { ...values } });
