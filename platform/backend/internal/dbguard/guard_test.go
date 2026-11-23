@@ -201,6 +201,8 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 			"activity_schedule_change", "cluster_activity_attendance", "activity_cost_snapshot",
 			// An item's version 1, written the first time it is scheduled.
 			"activity_catalogue_version",
+			// A Core school's visit takes one of its package's slots.
+			"core_activity_slot", "core_plan",
 		},
 		// Snoozing a To-Do from Today (docs/migration/50;
 		// deploy/db/todo_roles.sql): the person's snooze row.

@@ -157,6 +157,13 @@ GRANT SELECT (catalogue_item_id, version) ON activity_catalogue_version TO edify
 GRANT SELECT (target_audience, support_objective) ON activity_catalogue_item TO edify_activities_rw;
 GRANT INSERT (id, created_at, updated_at, catalogue_item_id, version, snapshot, change_reason, created_by)
   ON activity_catalogue_version TO edify_activities_rw;
+-- A Core school's visit takes one of its package's slots, and the package's
+-- completed counts are kept from them.
+GRANT SELECT (id, school_id, fy, status, visits_completed, trainings_completed) ON core_plan TO edify_activities_rw;
+GRANT UPDATE (visits_completed, trainings_completed, updated_at) ON core_plan TO edify_activities_rw;
+GRANT SELECT (id, core_plan_id, activity_type, sequence_number, status, activity_id) ON core_activity_slot TO edify_activities_rw;
+GRANT UPDATE (status, activity_id, scheduled_for, scheduled_month, scheduled_week, assigned_staff_id, owner, updated_at)
+  ON core_activity_slot TO edify_activities_rw;
 GRANT SELECT (id, school_id, fy, date_of_ssa, created_at, average_score, verification_status, deleted_at)
   ON ssa_record TO edify_activities_rw;
 GRANT SELECT (id, ssa_record_id, intervention, score) ON ssa_score TO edify_activities_rw;

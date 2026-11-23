@@ -108,15 +108,19 @@ type plan struct {
 	version int
 	// firstVersion: the save writes the item's version 1.
 	firstVersion bool
-	need         schoolNeed
-	focus        string
-	evidence     evidence
-	row          activityRow
-	ownerUID     string
-	home         staffHome
-	verdict      DayVerdict
-	origin       Origin
-	now          time.Time
+	// core is the Core package this save counts against, if any.
+	core *coreBooking
+	// interventionRefusal is met inside the save, after the duplicate test.
+	interventionRefusal string
+	need                schoolNeed
+	focus               string
+	evidence            evidence
+	row                 activityRow
+	ownerUID            string
+	home                staffHome
+	verdict             DayVerdict
+	origin              Origin
+	now                 time.Time
 }
 
 // Schedule makes the save, or refuses it in the existing words, or hands it
@@ -232,6 +236,22 @@ func (s *Service) prepare(ctx context.Context, p auth.Principal, req Request, or
 		}
 		target = &visitTarget{school: *sc, responsible: responsible}
 	}
+	booking, err := s.routeCoreVisit(ctx, *target, purpose, day, now)
+	if err != nil {
+		return nil, err
+	}
+	target.core = booking
+	if booking != nil && booking.route == corePackageVisit {
+		// schedule_as_core_visit: the package's own item prices it.
+		coreItem, err := resolveForKind(ctx, s.db, coreVisitKind, day)
+		if err != nil {
+			return nil, err
+		}
+		if coreItem == nil {
+			return nil, refuse(noCoreVisitCosting)
+		}
+		itemID, activityType = coreItem.ID, coreVisitKind
+	}
 	return s.create(ctx, p, req, origin, now, today, day, *target, itemID, recReason, purpose, activityType)
 }
 
@@ -260,22 +280,17 @@ func (s *Service) visitSchool(ctx context.Context, p auth.Principal, schoolID, p
 	return sc, owner, nil
 }
 
-// coreOutreachPurposes are package_credit.OUTREACH_VISIT_PURPOSES: visits at a
-// Core school that take no slot and are booked as themselves.
-var coreOutreachPurposes = []string{"donor_visit", "story_gathering", "school_invitation", "social_visit"}
-
 // targetSchool resolves the school again on POST (2318–2338) and says whether
-// it is in the person's own portfolio. A Core school's package work takes the
-// package route and is handed on.
+// it is in the person's own portfolio.
 func (s *Service) targetSchool(ctx context.Context, p auth.Principal, schoolID, purpose string, now time.Time) (*school, bool, error) {
 	sc, err := schoolByIDOrCode(ctx, s.db, strings.TrimSpace(schoolID))
 	if err != nil {
 		return nil, false, err
 	}
 	if sc == nil || sc.Code != strings.TrimSpace(schoolID) ||
-		(in(rules.Gate.CoreRuleTypes, sc.Type) && !in(coreOutreachPurposes, purpose)) {
-		// A Core school's package visit takes one of the package's slots.
-		return nil, false, handOn("not a school code, or a Core school's package work")
+		(in(rules.Gate.CoreRuleTypes, sc.Type) && !in(inScopePurposes, purpose)) {
+		// A Core school's training pair is the package's own workflow.
+		return nil, false, handOn("not a school code, or a Core school's training")
 	}
 	scope, err := schooldirectory.ResolveScope(ctx, s.db, p, now)
 	if err != nil {
@@ -302,7 +317,7 @@ func (s *Service) create(ctx context.Context, p auth.Principal, req Request, ori
 	standard := it.StandardSupport && !it.IsTrainingCourse && !it.CountsTowardClientVisit &&
 		(it.ParticipantMode == "" || it.ParticipantMode == "none") &&
 		len(it.Modes) > 0 && it.Modes[0] == "any_ssa_intervention"
-	governed := s.governed != nil && it.governedVisit()
+	governed := s.governed != nil && (it.governedVisit() || it.coreVisit())
 	if (!standard && !governed) || it.WorkflowKind != activityType || rules.CalendarBlocksRefuse {
 		// A per-participant item, an item that counts toward the client visit
 		// through its eligibility rule, another governed mapping, or a
@@ -364,11 +379,17 @@ func (s *Service) create(ctx context.Context, p auth.Principal, req Request, ori
 	if it.RequiresCluster {
 		return nil, refuse("This Catalogue Activity requires a Cluster.")
 	}
+	// A follow-up item inherits: with no session and no named need it has no
+	// intervention, and the snapshot refuses it inside the save.
+	interventionRefusal := ""
+	if it.coreVisit() && followed == nil && focus == "" {
+		interventionRefusal = followUpNeedsTarget
+	}
 	var reason string
 	var source map[string]any
 	if governed {
 		// resolve_activity_intervention: the plan's own, else the item's.
-		if focus == "" {
+		if focus == "" && it.governedVisit() {
 			if focus, err = primaryIntervention(ctx, s.db, it.ID); err != nil {
 				return nil, err
 			}
@@ -431,7 +452,7 @@ func (s *Service) create(ctx context.Context, p auth.Principal, req Request, ori
 		}
 	}
 	return &plan{p: p, school: sc, item: *it, version: version, firstVersion: firstVersion, need: need, focus: focus,
-		evidence: ev, row: row, ownerUID: ownerUID, home: home, verdict: verdict, origin: origin, now: now}, nil
+		core: target.core, interventionRefusal: interventionRefusal, evidence: ev, row: row, ownerUID: ownerUID, home: home, verdict: verdict, origin: origin, now: now}, nil
 }
 
 // plannedFocus is _create's target: the intervention the planner named, else

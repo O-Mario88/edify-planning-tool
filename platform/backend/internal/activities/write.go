@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -77,6 +78,9 @@ type groupColumns struct {
 
 func (r activityRow) planning() (string, string) {
 	if r.planningSource == "" {
+		if in(corePlanningTypes, r.activityType) {
+			return "core_planning", "school"
+		}
 		return "school_planning", "school"
 	}
 	return r.planningSource, r.contextType
@@ -255,6 +259,9 @@ func (s *Service) write(ctx context.Context, pl *plan) (int64, error) {
 	if !canonicalFocus(pl.row.focus) {
 		return 0, refuse("Choose a valid canonical SSA intervention.")
 	}
+	if pl.interventionRefusal != "" {
+		return 0, refuse("%s", pl.interventionRefusal)
+	}
 	// The day's refusal is met once the visit joins it (attach, then
 	// _assert_days_can_follow).
 	if pl.verdict.Refusal != "" {
@@ -282,6 +289,11 @@ func (s *Service) write(ctx context.Context, pl *plan) (int64, error) {
 	}
 	if len(recIDs) > 0 {
 		if err := markPlanned(ctx, tx, pl, recIDs); err != nil {
+			return 0, err
+		}
+	}
+	if pl.core != nil && pl.core.route == corePackageVisit {
+		if err := takeCoreSlot(ctx, tx, pl); err != nil {
 			return 0, err
 		}
 	}
@@ -558,6 +570,75 @@ func (s *Service) afterCommit(ctx context.Context, pl *plan, rowID int64) {
 		s.logger.Warn("activities: the costs to follow were not settled; the sweep takes them",
 			"activity", pl.row.id, "row", rowID, "err", err)
 	}
+	if pl.core != nil && pl.core.route == coreCreditedVisit {
+		if err := s.creditCoreSlot(ctx, pl); err != nil {
+			s.logger.Warn("activities: the Core package was not credited", "activity", pl.row.id, "err", err)
+		}
+	}
+}
+
+// takeCoreSlot is assert_can_schedule's lock and commit_schedule: the
+// package's next open visit, inside the save.
+func takeCoreSlot(ctx context.Context, tx pgx.Tx, pl *plan) error {
+	slots, err := readCoreVisitSlots(ctx, tx, pl.core.planID, " FOR UPDATE")
+	if err != nil {
+		return err
+	}
+	open := openCoreSlot(slots, coreSlotTaken)
+	if open == nil {
+		return handOn("the Core package has no open visit slot")
+	}
+	return bookCoreSlot(ctx, tx, open.ID, "Scheduled", pl)
+}
+
+// creditCoreSlot is credit_school_activity for staff SSA Support: after the
+// save, the visit takes the package's next open slot unless it holds one.
+func (s *Service) creditCoreSlot(ctx context.Context, pl *plan) error {
+	tx, err := s.db.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	slots, err := readCoreVisitSlots(ctx, tx, pl.core.planID, " FOR UPDATE")
+	if err != nil {
+		return err
+	}
+	var linked bool
+	if err := tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM core_activity_slot WHERE activity_id = $1)`, pl.row.id).Scan(&linked); err != nil {
+		return err
+	}
+	if linked {
+		return nil
+	}
+	open := openCoreSlot(slots, coreSlotTaken)
+	if open == nil {
+		return errors.New("the package has no open visit slot")
+	}
+	if err := bookCoreSlot(ctx, tx, open.ID, pl.row.status(), pl); err != nil {
+		return err
+	}
+	// resync_plan_completion: recomputed from the slots, written if it moved.
+	if _, err := tx.Exec(ctx, `UPDATE core_plan p SET visits_completed = c.visits, trainings_completed = c.trainings, updated_at = $3
+FROM (SELECT count(*) FILTER (WHERE activity_type = 'visit' AND status = ANY($2)) AS visits,
+             count(*) FILTER (WHERE activity_type = 'training' AND status = ANY($2)) AS trainings
+      FROM core_activity_slot WHERE core_plan_id = $1) c
+WHERE p.id = $1 AND (p.visits_completed IS DISTINCT FROM c.visits OR p.trainings_completed IS DISTINCT FROM c.trainings)`,
+		pl.core.planID, coreDoneStatuses, s.now()); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}
+
+// bookCoreSlot writes the visit onto its slot.
+func bookCoreSlot(ctx context.Context, tx pgx.Tx, slotID, status string, pl *plan) error {
+	r := pl.row
+	_, err := tx.Exec(ctx, `UPDATE core_activity_slot SET status = $2, activity_id = $3, scheduled_for = $4,
+  scheduled_month = $5, scheduled_week = $6, assigned_staff_id = $7, owner = 'staff', updated_at = $8 WHERE id = $1`,
+		slotID, status, r.id, r.plannedDate.Format(time.DateOnly), strconv.Itoa(r.plannedMonth), r.plannedWeek, r.responsible, pl.now)
+	if err != nil {
+		return fmt.Errorf("activities: writing the package slot: %w", err)
+	}
+	return nil
 }
 
 // markLedger is ledger_sync's mark for the responsible person and the

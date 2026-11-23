@@ -41,6 +41,8 @@ func (s *Service) WithVisitRequests(requests VisitRequests) *Service {
 type visitTarget struct {
 	school                     school
 	responsible, approvalOwner string
+	// core is the Core package the visit counts against, if any.
+	core *coreBooking
 }
 
 // requestTarget is the view's school for a requester. A school nobody owns
