@@ -196,6 +196,12 @@ SELECT
 			"Select the Training to deliver.", false},
 		{"a pinned item nobody knows", cceo, activities.Request{SchoolID: client, Purpose: "donor_visit",
 			Date: "2026-11-20", CatalogueItemID: "no-such-item"}, "", true},
+		// visit_owner_for: anybody else's school is the visit of whoever is
+		// going, so Go reaches the rules past the portfolio.
+		{"another CCEO at this officer's school", principal("cceo1@edify.org"), visit(client, "donor_visit", "2026-11-10"),
+			"10 November 2026 has passed. Schedule work from 12 November 2026 onwards.", false},
+		{"the Country Director at this officer's school", principal("cd@edify.org"), visit(client, "donor_visit", "2026-11-10"),
+			"10 November 2026 has passed. Schedule work from 12 November 2026 onwards.", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

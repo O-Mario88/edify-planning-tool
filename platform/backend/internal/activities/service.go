@@ -202,37 +202,68 @@ func (s *Service) prepare(ctx context.Context, p auth.Principal, req Request, or
 			itemID, recReason = resolved.ID, ""
 		}
 	}
-	sc, err := s.ownSchool(ctx, p, req.SchoolID, now)
+	sc, err := s.visitSchool(ctx, p, req.SchoolID, now)
 	if err != nil {
 		return nil, err
 	}
 	return s.create(ctx, p, req, origin, now, today, day, *sc, itemID, recReason, purpose, activityType)
 }
 
-// ownSchool is the view's school (2318–2338) for the cases Go takes: the
-// person's own school by its code, not a Core school, still operating, and
-// owned by them. Anything else is handed on.
-func (s *Service) ownSchool(ctx context.Context, p auth.Principal, schoolID string, now time.Time) (*school, error) {
-	// The school, resolved again on POST (2318–2338).
-	sc, err := schoolByIDOrCode(ctx, s.db, strings.TrimSpace(schoolID))
+// visitSchool is the view's school (2318–2338) for a plain visit. The roles
+// that reach it may visit any school, and visit_owner_for files a visit
+// outside their portfolio against the person going. Inside it, a school
+// someone else holds would be delegation: handed on.
+func (s *Service) visitSchool(ctx context.Context, p auth.Principal, schoolID string, now time.Time) (*school, error) {
+	sc, mine, err := s.targetSchool(ctx, p, schoolID, now)
 	if err != nil {
 		return nil, err
 	}
-	if sc == nil || sc.Code != strings.TrimSpace(schoolID) || in(rules.Gate.CoreRuleTypes, sc.Type) {
-		// Not the owner's school by its code, or a Core school (the package
-		// route): handed on.
-		return nil, handOn("not a school code, or a Core school")
+	if sc.closed() {
+		return nil, &Refusal{Message: rules.ClosedSchoolMessage, Forbidden: true}
 	}
-	scope, err := schooldirectory.ResolveScope(ctx, s.db, p, now)
+	if !mine {
+		return sc, nil
+	}
+	return s.heldByPerson(ctx, p, sc)
+}
+
+// ownSchool is the school of a training pair: the person's own school by its
+// code, not a Core school, still operating, and owned by them. Anything else
+// is handed on.
+func (s *Service) ownSchool(ctx context.Context, p auth.Principal, schoolID string, now time.Time) (*school, error) {
+	sc, mine, err := s.targetSchool(ctx, p, schoolID, now)
 	if err != nil {
-		return nil, handOn("no scope: " + err.Error())
+		return nil, err
 	}
-	if !slices.Contains(scope.OwnSchoolIDs, sc.ID) {
+	if !mine {
 		return nil, handOn("outside the person's own portfolio")
 	}
 	if sc.closed() {
 		return nil, &Refusal{Message: rules.ClosedSchoolMessage, Forbidden: true}
 	}
+	return s.heldByPerson(ctx, p, sc)
+}
+
+// targetSchool resolves the school again on POST (2318–2338) and says whether
+// it is in the person's own portfolio. A Core school takes the package route
+// and is handed on.
+func (s *Service) targetSchool(ctx context.Context, p auth.Principal, schoolID string, now time.Time) (*school, bool, error) {
+	sc, err := schoolByIDOrCode(ctx, s.db, strings.TrimSpace(schoolID))
+	if err != nil {
+		return nil, false, err
+	}
+	if sc == nil || sc.Code != strings.TrimSpace(schoolID) || in(rules.Gate.CoreRuleTypes, sc.Type) {
+		return nil, false, handOn("not a school code, or a Core school")
+	}
+	scope, err := schooldirectory.ResolveScope(ctx, s.db, p, now)
+	if err != nil {
+		return nil, false, handOn("no scope: " + err.Error())
+	}
+	return sc, slices.Contains(scope.OwnSchoolIDs, sc.ID), nil
+}
+
+// heldByPerson hands on a school in the portfolio that someone else holds.
+func (s *Service) heldByPerson(ctx context.Context, p auth.Principal, sc *school) (*school, error) {
 	owner, err := schoolOwner(ctx, s.db, sc.ID)
 	if err != nil {
 		return nil, err
