@@ -279,7 +279,9 @@ SELECT id, name FROM training_course
 // ── Native School Drawers (GetSchoolDrawer & SaveSchoolDrawer) ───────────────
 
 func (s *Service) getSchoolDrawerInGo(ctx context.Context, p auth.Principal, schoolID, kind string) (*screensv1.GetSchoolDrawerResponse, bool, error) {
-	if !s.nativeForms() {
+	// Only the drawers Go has a form for: Close School is not one, and must
+	// not open the edit form.
+	if !s.nativeForms() || !nativeSchoolDrawer(kind) {
 		return nil, false, nil
 	}
 	var sID, sCode, name, phone, contact, contactPhone, addr, head, dir string
@@ -305,7 +307,7 @@ SELECT id, COALESCE(school_id, ''), name, COALESCE(school_phone, ''),
 		return nil, true, apierr.New(ctx, connect.CodeNotFound, apierr.ReasonNotFound, "School not found.")
 	}
 
-	if kind == "ssa" {
+	if isSSADrawer(kind) {
 		year := fieldItem("fy", "Fiscal Year", "text", schooldirectory.OperationalFY(s.clock()), true)
 		year.GetField().ReadOnly = true
 		items := []*screensv1.DrawerItem{
@@ -352,7 +354,7 @@ SELECT id, COALESCE(school_id, ''), name, COALESCE(school_phone, ''),
 }
 
 func (s *Service) saveSchoolDrawerInGo(ctx context.Context, p auth.Principal, req *screensv1.SaveSchoolDrawerRequest) (*screensv1.SaveSchoolDrawerResponse, bool, error) {
-	if !s.nativeForms() {
+	if !s.nativeForms() || !nativeSchoolDrawer(req.GetKind()) {
 		return nil, false, nil
 	}
 	if inReach, err := s.schoolsInReach(ctx, p, req.GetSchoolId()); err != nil {
@@ -361,7 +363,7 @@ func (s *Service) saveSchoolDrawerInGo(ctx context.Context, p auth.Principal, re
 		return &screensv1.SaveSchoolDrawerResponse{Saved: false, Error: "This school is outside your portfolio."}, true, nil
 	}
 	vals := req.GetValues()
-	if req.GetKind() == "ssa" && s.fieldOps != nil {
+	if isSSADrawer(req.GetKind()) && s.fieldOps != nil {
 		var scores []fieldops.SSAScoreInput
 		for k, v := range vals {
 			if strings.HasPrefix(k, "score_") {
@@ -681,6 +683,12 @@ func (s *Service) getPageDrawerInGo(ctx context.Context, p auth.Principal, rawPa
 
 	return nil, false, nil
 }
+
+// isSSADrawer names the SSA entry drawer: the clients ask for "ssa-entry".
+func isSSADrawer(kind string) bool { return kind == "ssa" || kind == "ssa-entry" }
+
+// nativeSchoolDrawer is whether Go has its own form for this school drawer.
+func nativeSchoolDrawer(kind string) bool { return kind == "edit" || isSSADrawer(kind) }
 
 // planDrawer is whether path is the named drawer of an activity on My Plan.
 // Other records have drawers of the same name (a school's, a cluster's, a

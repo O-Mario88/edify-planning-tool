@@ -54,3 +54,12 @@ func TestPlanDrawerMatchesOnlyAnActivityOnMyPlan(t *testing.T) {
 		}
 	}
 }
+
+// Close School must never open the edit form, nor an unknown drawer a form.
+func TestOnlyDrawersWithAGoFormAnswerInGo(t *testing.T) {
+	for kind, want := range map[string]bool{"edit": true, "ssa-entry": true, "ssa": true, "close": false, "": false} {
+		if got := nativeSchoolDrawer(kind); got != want {
+			t.Errorf("nativeSchoolDrawer(%q) = %v, want %v", kind, got, want)
+		}
+	}
+}

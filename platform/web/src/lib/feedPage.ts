@@ -56,8 +56,32 @@ export function drawerPageHref(existingWebUrl: string, webPath: string, query: R
 
 /** An action's link: its own page here, or the existing web's page for a drawer. */
 export function actionHref(action: PageAction, pagePath: string, drawerHref: string): string {
-  if (action.drawer) return drawerHref;
+  if (action.drawer) return withDrawer(drawerHref, resolveHref(pagePath, action.href));
   return resolveHref(pagePath, action.href) || drawerHref;
+}
+
+/**
+ * A drawer action's link: the page it falls back to, carrying the drawer's
+ * own path for the drawer host (components/drawer/DrawerHost).
+ */
+export function withDrawer(pageHref: string, drawerPath: string): string {
+  if (!drawerPath.startsWith('/')) return pageHref;
+  return `${pageHref.split('#')[0]}#drawer=${encodeURIComponent(drawerPath)}`;
+}
+
+/** The drawer a link names, and the existing web's page to fall back to, if that is where the link leads. */
+export function drawerFromHash(href: string): { path: string; fallback: string } | null {
+  const at = href.indexOf('#drawer=');
+  if (at < 0) return null;
+  let path = '';
+  try {
+    path = decodeURIComponent(href.slice(at + '#drawer='.length));
+  } catch {
+    return null;
+  }
+  if (!path.startsWith('/') || path.startsWith('//')) return null;
+  const page = href.slice(0, at);
+  return { path, fallback: /^https?:\/\//.test(page) ? page : '' };
 }
 
 /**

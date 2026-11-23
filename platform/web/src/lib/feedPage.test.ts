@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest';
 
 import { PageActionSchema, PageColumnSchema, PageRowSchema } from '@/gen/edify/screens/v1/page_pb';
 
-import { actionHref, drawerPageHref, isHeadingRow, pageQuery, queryString, resolveHref, splitActions } from './feedPage';
+import { actionHref,
+  drawerFromHash, drawerPageHref, isHeadingRow, pageQuery, queryString, resolveHref, splitActions } from './feedPage';
 
 describe('pageQuery', () => {
   it('keeps the first value of each key and drops empty values and path', () => {
@@ -44,7 +45,11 @@ describe('links to the existing web', () => {
   it('sends a drawer action there and a plain link to its page here', () => {
     const drawer = create(PageActionSchema, { label: 'Schedule', href: '/planning/schedule-modal?school_id=1650', drawer: true, enabled: true });
     const link = create(PageActionSchema, { label: 'Open Calendar', href: '/calendar', enabled: true });
-    expect(actionHref(drawer, '/planning', 'http://x/planning')).toBe('http://x/planning');
+    const href = actionHref(drawer, '/planning', 'http://x/planning');
+    expect(href).toBe('http://x/planning#drawer=%2Fplanning%2Fschedule-modal%3Fschool_id%3D1650');
+    expect(drawerFromHash(href)).toEqual({ path: '/planning/schedule-modal?school_id=1650', fallback: 'http://x/planning' });
+    expect(drawerFromHash('/planning#drawer=%2Fplanning%2Fx')).toEqual({ path: '/planning/x', fallback: '' });
+    expect(drawerFromHash('/planning#drawer=https%3A%2F%2Fevil.test')).toBeNull();
     expect(actionHref(link, '/my-plan', 'http://x/my-plan')).toBe('/calendar');
   });
 });

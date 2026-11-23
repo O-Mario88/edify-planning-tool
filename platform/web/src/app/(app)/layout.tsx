@@ -5,6 +5,7 @@ import { MessagingService } from '@/gen/edify/messaging/v1/messaging_pb';
 import { NotificationCenterService } from '@/gen/edify/screens/v1/notification_center_pb';
 import { NavigationService } from '@/gen/edify/screens/v1/navigation_pb';
 import { Sidebar } from '@/components/shell/Sidebar';
+import { DrawerHost } from '@/components/drawer/DrawerHost';
 import { BottomNav } from '@/components/shell/BottomNav';
 import { TopBar } from '@/components/shell/TopBar';
 import { PhoneMenu } from '@/components/shell/TopBarControls';
@@ -84,6 +85,7 @@ export default async function ShellLayout({ children }: { children: ReactNode })
         <BottomNav items={navigation.bottom} path={path} more={<PhoneMenu asTab />} />
         <ViewportSync served={view} />
         <RealtimeBridge />
+        <DrawerHost />
       </div>
     </div>
   );
