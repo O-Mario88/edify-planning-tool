@@ -422,3 +422,8 @@ html:not(.theme-dark) [data-page='smart-route'] { background: linear-gradient(18
 @media (min-width: 1024px) and (max-width: 1799.98px) {
   [data-page='smart-route'] .sr-panel-config input[type='time'] { padding: 0 5px !important; font-size: 12px !important; }
 }
+
+/* Every number and warning keeps readable contrast on its colour. */
+.sr-stop__conflict { color: var(--edify-danger-text, #b91c1c) !important; }
+.sr-stop[data-kind='start'] .sr-stop__num { background: #15803d; color: #ffffff; }
+.sr-stop[data-kind='end'] .sr-stop__num { color: var(--brand-primary); }

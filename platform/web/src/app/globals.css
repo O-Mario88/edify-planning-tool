@@ -97,7 +97,8 @@ select.edify-select {
   box-shadow: 0 2px 6px rgb(15 23 42 / 0.35);
 }
 .edify-route-pin[data-priority] .edify-route-pin__drop { background: #f59e0b !important; }
-.edify-route-pin[data-start] .edify-route-pin__drop { background: #16a34a !important; }
+.edify-route-pin[data-start] .edify-route-pin__drop { background: #15803d !important; }
+.edify-route-pin[data-priority]:not([data-start]) .edify-route-pin__number { color: #1f1300; }
 .edify-route-pin__number {
   /* The number stays upright inside the turned drop. */
   transform: rotate(45deg);
