@@ -60,6 +60,7 @@ func (r *Refusal) Error() string { return r.Message }
 // School is what the forms read of a school.
 type School struct {
 	ID, Code, Name, Type, AccountOwner, ClusterID string
+	ssaStatus                                     string
 	closed                                        bool
 }
 
@@ -101,12 +102,22 @@ func mayPlanSchool(role string, scope schooldirectory.Scope, schoolID string) bo
 }
 
 func (s *Service) school(ctx context.Context, code string) (School, error) {
+	return s.readSchool(ctx, "school_id = $1", code)
+}
+
+// schoolByKey is the Schedule drawer's lookup: a record id or a School ID.
+func (s *Service) schoolByKey(ctx context.Context, key string) (School, error) {
+	return s.readSchool(ctx, "(id = $1 OR school_id = $1)", key)
+}
+
+func (s *Service) readSchool(ctx context.Context, where, key string) (School, error) {
 	var sc School
 	var status string
 	err := s.db.QueryRow(ctx, `SELECT id, COALESCE(school_id, ''), name, COALESCE(school_type, ''),
-  COALESCE(account_owner_id, ''), COALESCE(cluster_id, ''), COALESCE(operational_status, '')
-FROM school WHERE school_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1`, code).Scan(
-		&sc.ID, &sc.Code, &sc.Name, &sc.Type, &sc.AccountOwner, &sc.ClusterID, &status)
+  COALESCE(account_owner_id, ''), COALESCE(cluster_id, ''), COALESCE(operational_status, ''),
+  COALESCE(current_fy_ssa_status, '')
+FROM school WHERE `+where+` AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1`, key).Scan(
+		&sc.ID, &sc.Code, &sc.Name, &sc.Type, &sc.AccountOwner, &sc.ClusterID, &status, &sc.ssaStatus)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return School{}, ErrNotFound
 	}
@@ -131,26 +142,34 @@ func (s *Service) VisitTarget(ctx context.Context, p auth.Principal, code string
 	if err != nil {
 		return School{}, err
 	}
+	if err := s.mayVisit(ctx, p, sc); err != nil {
+		return School{}, err
+	}
+	return sc, nil
+}
+
+// mayVisit is the second half of get_visit_target_school_or_404.
+func (s *Service) mayVisit(ctx context.Context, p auth.Principal, sc School) error {
 	if !slices.Contains(schoolVisitRoles, p.ActiveRole) {
 		scope, err := schooldirectory.ResolveScope(ctx, s.db, p, s.now())
 		if err != nil {
-			return School{}, fmt.Errorf("coreforms: resolving the scope: %w", err)
+			return fmt.Errorf("coreforms: resolving the scope: %w", err)
 		}
 		visible, err := s.recordVisible(ctx, p, scope, sc.ID)
 		if err != nil {
-			return School{}, err
+			return err
 		}
 		if !visible {
-			return School{}, &Refusal{Message: recordDenied}
+			return &Refusal{Message: recordDenied}
 		}
 		if !mayPlanSchool(p.ActiveRole, scope, sc.ID) && p.ActiveRole != roleAccountant {
-			return School{}, &Refusal{Message: oversightOnly}
+			return &Refusal{Message: oversightOnly}
 		}
 	}
 	if sc.closed {
-		return School{}, &Refusal{Message: schoolClosed}
+		return &Refusal{Message: schoolClosed}
 	}
-	return sc, nil
+	return nil
 }
 
 // Operational is get_operational_school_or_404.

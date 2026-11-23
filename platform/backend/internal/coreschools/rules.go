@@ -98,3 +98,12 @@ func schoolTypeLabel(value string) string {
 	}
 	return value
 }
+
+// ActivityStatusLabel is Activity.get_status_display, for a form that names
+// past work (internal/coreforms).
+func ActivityStatusLabel(status string) string {
+	if label, ok := rules.ActivityStatusLabels[status]; ok {
+		return label
+	}
+	return status
+}

@@ -47,6 +47,9 @@ func (s *Service) getPlanningDrawerInGo(ctx context.Context, p auth.Principal, s
 	if !s.nativeForms() {
 		return nil, false, nil
 	}
+	if kind == "schedule" {
+		return s.getScheduleDrawerInGo(ctx, p, schoolID)
+	}
 	var sID, sCode, sName string
 	err := s.db.QueryRow(ctx, `
 SELECT id, COALESCE(school_id, ''), name

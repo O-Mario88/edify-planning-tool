@@ -188,6 +188,8 @@ GRANT SELECT (cluster_id, sub_county_id) ON cluster_sub_county TO edify_gateway_
 -- A cluster's schools list: whether a catalogue item counts as training (the
 -- planning badges) and the planning calendar (the planning horizon).
 GRANT SELECT (counts_toward_client_training) ON activity_catalogue_item TO edify_gateway_ro;
+-- The school scheduling forms: whether a training may go to a certified agency.
+GRANT SELECT (certified_agency_delivery_allowed) ON activity_catalogue_item TO edify_gateway_ro;
 GRANT SELECT (country, fy, planning_open_at) ON fiscal_year_planning_policy TO edify_gateway_ro;
 -- The Closed Schools page: each closure's type, the owner it was recorded
 -- against, whether it has been reopened, and what it gave back.

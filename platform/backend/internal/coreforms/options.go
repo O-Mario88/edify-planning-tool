@@ -55,8 +55,10 @@ func recommended(ranked []Need) []Need {
 // Course is one training the in-school picker offers.
 type Course struct {
 	ID, Label, Code, Category, Indicator string
-	InterventionLabel                    string
+	Intervention, InterventionLabel      string
 	PlannerChooses, PartnerAllowed       bool
+	Universal, CertifiedAllowed          bool
+	PriorityTitles                       []string
 	standard                             bool
 }
 
@@ -80,6 +82,7 @@ func (c *Course) applyMappings(mappings []courseMapping, names map[string]string
 		}
 	}
 	if primary.intervention != "" {
+		c.Intervention = primary.intervention
 		c.InterventionLabel = names[primary.intervention]
 		return
 	}
@@ -104,7 +107,10 @@ func sortCourses(courses []Course) []Course {
 // courses is in_school_training_course_options on the local day.
 func (s *Service) courses(ctx context.Context, interventions map[string]string, day time.Time) ([]Course, error) {
 	rows, err := s.db.Query(ctx, `SELECT id, display_name, stable_code, COALESCE(training_category, ''),
-  COALESCE(ssa_indicator_label, ''), standard_support, partner_delivery_allowed
+  COALESCE(ssa_indicator_label, ''), standard_support, partner_delivery_allowed, universal_training,
+  partner_delivery_allowed AND certified_agency_delivery_allowed,
+  ARRAY(SELECT DISTINCT m.title FROM hr_milestone_activity_rule r JOIN hr_priority_milestone m ON m.id = r.milestone_id
+        WHERE r.active AND r.catalogue_item_id = activity_catalogue_item.id ORDER BY m.title)
 FROM activity_catalogue_item
 WHERE status = 'active' AND (effective_from IS NULL OR effective_from <= $1)
   AND (effective_to IS NULL OR effective_to >= $1) AND is_training_course AND staff_delivery_allowed
@@ -114,7 +120,7 @@ ORDER BY display_name, stable_code`, day.Format(time.DateOnly))
 	}
 	courses, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (Course, error) {
 		var c Course
-		err := row.Scan(&c.ID, &c.Label, &c.Code, &c.Category, &c.Indicator, &c.standard, &c.PartnerAllowed)
+		err := row.Scan(&c.ID, &c.Label, &c.Code, &c.Category, &c.Indicator, &c.standard, &c.PartnerAllowed, &c.Universal, &c.CertifiedAllowed, &c.PriorityTitles)
 		return c, err
 	})
 	if err != nil {

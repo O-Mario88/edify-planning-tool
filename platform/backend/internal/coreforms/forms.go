@@ -149,17 +149,17 @@ func (s *Service) MenuFor(ctx context.Context, p auth.Principal, code string) (M
 
 // need reads the recommendations and the first-ranked focus.
 func (s *Service) need(ctx context.Context, school School) ([]Need, string, error) {
-	ranked, priorities, err := activities.SchoolNeed(ctx, s.db, school.ID, school.ClusterID, s.now())
+	summary, err := activities.SchoolNeed(ctx, s.db, school.ID, school.ClusterID, s.now())
 	if err != nil {
 		return nil, "", fmt.Errorf("coreforms: reading the school's need: %w", err)
 	}
-	rows := make([]Need, len(ranked))
-	for i, row := range ranked {
+	rows := make([]Need, len(summary.Ranked))
+	for i, row := range summary.Ranked {
 		rows[i] = Need{Code: row.Intervention, Label: row.Label, Score: row.Score}
 	}
 	focus := ""
-	if len(priorities) > 0 {
-		focus = priorities[0]
+	if len(summary.Priorities) > 0 {
+		focus = summary.Priorities[0]
 	}
 	return recommended(rows), focus, nil
 }

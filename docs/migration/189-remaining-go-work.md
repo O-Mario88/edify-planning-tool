@@ -30,6 +30,7 @@ Each was compared with Django for all 16 roles on private copies: same fields, o
 | `/schools/<id>/assign-to-project` | 119 (17 accounts, 7 staged cases) | All same. Core, client, held elsewhere, unheld, enrolled and missing schools, with full, managed and team allocations. A 403's wording differs on purpose: Django's feed says only "Something went wrong" |
 | `/partners/create` | 16 | 3 same form, 13 same refusal. Its tick lists are compared with Django's catalogue groups, not its phone reader |
 | `/core-schools/schedule-activity`, `/schedule-visit`, `/schedule-training`, `/assign-partner` | 884 (17 accounts, 13 staged schools) | 209 same form, 652 same refusal, 23 same not found. Compared with the data Django gives its templates, because the feed's reader drops their conditional fields and buttons |
+| `/planning/schedule-modal` (Schedule Visit, through `GetPlanningDrawer`) | 476 (17 accounts, 14 staged schools, two planning-year setups) | 168 same form, 294 same refusal, 14 same not found. Compared field for field with the drawer Django's reader produces |
 
 The 2 deliberate differences on the Verify form are one fact seen by two roles: Go keeps the line break in a multi-line Observations value, which the mobile feed's reader runs together.
 
@@ -41,10 +42,16 @@ Three things differ from the Django page on purpose. The Assign form asks for th
 
 ### Field forms still to port
 
-- `/planning/schedule-modal` is served to the clients by Go's `getPlanningDrawerInGo`, and **that form is not correct**. It offers invented purposes and focus areas (`school_visit`, `teaching`, `finance`), every partner including held and loan partners, and no visit rules. The Core menu's "Schedule other activity" leads to it. It must be rebuilt from `schedule_modal_view`. `GetPlanningDrawer` also serves the assign, group-training and cluster-meeting kinds, which need the same check.
 - `/activities/<id>/evidence` needs a new capability. No client drawer has a file field and Go has no upload, page-joining or stored-file path. An upload form must not be drawn until those exist.
+- `GetPlanningDrawer`'s `assign`, `group-training` and `cluster-meeting` kinds are still placeholders in `getPlanningDrawerInGo`. They offer invented purposes and focus areas and every partner, including held and loan partners. They must be rebuilt as `schedule` now is.
 
 The four Core forms open from Go, but their saves are not ported. With Django absent, submitting one answers "This action is not available here yet" and writes nothing.
+
+**Schedule Visit.** Its staged cases were a used visit in one or both open years, a universal training, a partner holding the school, two partners, partner plans, no verified SSA, an all-Strong SSA, a stale SSA, existing plans, a completed training, a closed school, Core, Champion and a missing school. Opening it writes nothing. One difference is deliberate: the Programme Accountant opens the form with its approval request, as on Django's web page. Django's mobile feed refuses that role at its `school_profile` gate.
+
+The Schedule Visit save is only partly in Go. It takes a CCEO's SSA Support at their own non-Core school, and refuses with Django's words where the rule does. A visit carrying the prefilled focus intervention, every other owner or role case, and Core schools are still handed on, so with Django absent they answer "not available" and write nothing. The client always sends the prefilled focus for most purposes, so this is the next save to port.
+
+**Before deploying this code, run `apply-roles.sh`.** The Core and Schedule Visit forms read `activity_catalogue_item.certified_agency_delivery_allowed`, which needs the new grant in `roles.sql`.
 
 The review rule (`plreview.Reviewable`) now matches `_check_reviewable` and serves both forms and Go's approve and return saves. Seven disallowed saves were tried against the Go-only gateway (Country Director, Impact Assessment, partner work, another team's work) and all were refused with no record changed.
 
