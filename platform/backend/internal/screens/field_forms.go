@@ -2,13 +2,21 @@ package screens
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/url"
+	"regexp"
 	"slices"
 	"strings"
 
+	"connectrpc.com/connect"
+	"github.com/jackc/pgx/v5"
+
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/mypd"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partnerassigned"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/rbac"
 )
 
@@ -18,35 +26,64 @@ import (
 
 const roleHR = "HumanResources"
 
+// everyStaffAndPartnerRole is ALL_ROLES. A Cluster Leader is not one of them.
+var everyStaffAndPartnerRole = []string{rbac.Admin, rbac.CCEO, rbac.ProgramLead, roleCD, roleIA, roleRVP, roleRPL, roleHR,
+	roleAccountant, "PartnerAdmin", "PartnerFieldOfficer", rolePC, "BusinessTransformationOfficer", "MfiPartnerAdmin", "MfiLoanOfficer"}
+
 // fieldFormPages is PAGE_PERMISSIONS for the pages these forms belong to.
 var fieldFormPages = map[string][]string{
 	"core_schools":                {rbac.CCEO, rbac.ProgramLead, roleIA, roleCD, roleAccountant, rbac.Admin},
 	"my_professional_development": {rbac.CCEO, rbac.ProgramLead, roleCD, roleRVP, roleIA, roleAccountant, roleHR, rolePC, rbac.Admin},
+	"partner_detail":              everyStaffAndPartnerRole,
 }
 
-// fieldForm is one form: the page that gates it and how it is drawn.
+// fieldFormRequest is what a form is opened with: the record in its address
+// and the page's query.
+type fieldFormRequest struct {
+	id    string
+	query url.Values
+}
+
+// fieldForm is one form: its address (fixed, or a pattern capturing the
+// record's id), the page that gates it and how it is drawn.
 type fieldForm struct {
-	path, page string
-	build      func(context.Context, *Service, auth.Principal) (*screensv1.PageDrawer, error)
+	path                    string
+	address                 *regexp.Regexp
+	page                    string
+	withheldFromTeamMembers bool // MEMBER_WITHHELD_PAGES holds the page
+	build                   func(context.Context, *Service, auth.Principal, fieldFormRequest) (*screensv1.PageDrawer, error)
 }
 
 var fieldForms = []fieldForm{
 	{path: "/core-schools/strategy-playbook", page: "core_schools",
-		build: func(context.Context, *Service, auth.Principal) (*screensv1.PageDrawer, error) {
+		build: func(context.Context, *Service, auth.Principal, fieldFormRequest) (*screensv1.PageDrawer, error) {
 			return strategyPlaybookDrawer(), nil
 		}},
 	{path: "/my-professional-development/allocation-history", page: "my_professional_development",
 		build: allocationHistoryDrawer},
+	{address: regexp.MustCompile(`^/partners/([^/]+)/members/drawer$`), page: "partner_detail",
+		withheldFromTeamMembers: true, build: partnerMemberForm},
 }
 
 func fieldFormFor(path string) (fieldForm, bool) {
 	path = strings.TrimSuffix(path, "/")
 	for _, form := range fieldForms {
-		if form.path == path {
+		if form.path == path || (form.address != nil && form.address.MatchString(path)) {
 			return form, true
 		}
 	}
 	return fieldForm{}, false
+}
+
+// recordID is the record named in the form's address, if it has one.
+func (f fieldForm) recordID(path string) string {
+	if f.address == nil {
+		return ""
+	}
+	if m := f.address.FindStringSubmatch(strings.TrimSuffix(path, "/")); m != nil {
+		return m[1]
+	}
+	return ""
 }
 
 // refusal is require_page_permission's check and words. An acting
@@ -59,6 +96,10 @@ func (f fieldForm) refusal(p auth.Principal) string {
 	if slices.Contains(fieldFormPages[f.page], p.ActiveRole) {
 		return ""
 	}
+	return f.pageDenied()
+}
+
+func (f fieldForm) pageDenied() string {
 	return "Access Denied: Your active role does not have permission to view " + pageTitle(f.page) + "."
 }
 
@@ -74,17 +115,30 @@ func pageTitle(page string) string {
 }
 
 // fieldFormInGo answers a field form's path; served is false for any other.
-func (s *Service) fieldFormInGo(ctx context.Context, p auth.Principal, path string) (*screensv1.GetDrawerResponse, bool, error) {
-	form, ok := fieldFormFor(path)
+func (s *Service) fieldFormInGo(ctx context.Context, p auth.Principal, rawPath string) (*screensv1.GetDrawerResponse, bool, error) {
+	parsed, err := url.Parse(rawPath)
+	if err != nil {
+		return nil, false, nil
+	}
+	form, ok := fieldFormFor(parsed.Path)
 	if !ok {
 		return nil, false, nil
 	}
 	if why := form.refusal(p); why != "" {
 		return &screensv1.GetDrawerResponse{Refusal: why}, true, nil
 	}
-	drawer, err := form.build(ctx, s, p)
+	if form.withheldFromTeamMembers {
+		member, err := partnerassigned.IsTeamMember(ctx, s.db, p)
+		if err != nil {
+			return nil, true, err
+		}
+		if member {
+			return &screensv1.GetDrawerResponse{Refusal: form.pageDenied()}, true, nil
+		}
+	}
+	drawer, err := form.build(ctx, s, p, fieldFormRequest{id: form.recordID(parsed.Path), query: parsed.Query()})
 	if err != nil {
-		return nil, true, fmt.Errorf("screens: drawing %s: %w", form.path, err)
+		return nil, true, err
 	}
 	return &screensv1.GetDrawerResponse{Drawer: drawer}, true, nil
 }
@@ -116,11 +170,52 @@ func strategyPlaybookDrawer() *screensv1.PageDrawer {
 	})
 }
 
+// partnerMemberForm is partner_member_drawer: a partner that is gone is not found.
+func partnerMemberForm(ctx context.Context, s *Service, _ auth.Principal, req fieldFormRequest) (*screensv1.PageDrawer, error) {
+	var name string
+	err := s.db.QueryRow(ctx, `SELECT name FROM partner WHERE id = $1 AND deleted_at IS NULL`, req.id).Scan(&name)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, apierr.New(ctx, connect.CodeNotFound, apierr.ReasonNotFound, "This was not found, or it is not yours to view.")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("screens: reading the partner: %w", err)
+	}
+	return partnerMemberDrawer(name, req.query.Get("name")), nil
+}
+
+// partnerMemberDrawer is member_drawer.html. The name arrives filled in when
+// the press came from a person already named on the partner's deliveries.
+func partnerMemberDrawer(partner, name string) *screensv1.PageDrawer {
+	return &screensv1.PageDrawer{
+		Title:       "Add to the " + partner + " roster",
+		HasRequired: true,
+		SubmitLabel: "Add to roster",
+		CancelLabel: "Cancel",
+		CanSubmit:   true,
+		Items: []*screensv1.DrawerItem{
+			hintedField("name", "Name", "text", name, "e.g. Grace Nakato", true),
+			{Kind: &screensv1.DrawerItem_Field{Field: &screensv1.DrawerField{
+				Name: "role", Label: "Role", Kind: "select", Value: "staff",
+				Options: []*screensv1.DrawerOption{{Value: "staff", Label: "Staff"}, {Value: "volunteer", Label: "Volunteer"}},
+			}}},
+			hintedField("title", "Title", "text", "", "e.g. Literacy trainer", false),
+			hintedField("phone", "Phone", "text", "", "+256 700 000 000", false),
+			hintedField("email", "Email", "email", "", "name@partner.org", false),
+		},
+	}
+}
+
+func hintedField(name, label, kind, value, placeholder string, required bool) *screensv1.DrawerItem {
+	return &screensv1.DrawerItem{Kind: &screensv1.DrawerItem_Field{Field: &screensv1.DrawerField{
+		Name: name, Label: label, Kind: kind, Value: value, Placeholder: placeholder, Required: required,
+	}}}
+}
+
 const noAllocationHistory = "Your Professional Development allocation history will appear here once your first financial year's allocation is set."
 
 // allocationHistoryDrawer is allocation_history_drawer.html over the person's
 // own years.
-func allocationHistoryDrawer(ctx context.Context, s *Service, p auth.Principal) (*screensv1.PageDrawer, error) {
+func allocationHistoryDrawer(ctx context.Context, s *Service, p auth.Principal, _ fieldFormRequest) (*screensv1.PageDrawer, error) {
 	years, err := mypd.AllocationHistory(ctx, s.db, p.UserID)
 	if err != nil {
 		return nil, err
