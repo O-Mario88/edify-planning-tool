@@ -101,7 +101,11 @@ func (s *Service) tellScheduledOwner(ctx context.Context, pl *plan) error {
 // deliverNotice is WorkflowNotificationService.trigger for one recipient: the
 // notice, its phone copy, its audit row, and a word to their open pages.
 func (s *Service) deliverNotice(ctx context.Context, pl *plan, notice scheduledNotice) error {
-	r := pl.row
+	return s.sendNotice(ctx, pl.row.id, pl.p.UserID, pl.origin, notice)
+}
+
+// sendNotice is one notice about contextID, from actorID's save.
+func (s *Service) sendNotice(ctx context.Context, contextID, actorID string, origin Origin, notice scheduledNotice) error {
 	now := s.now()
 	tx, err := s.db.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
 	if err != nil {
@@ -111,7 +115,7 @@ func (s *Service) deliverNotice(ctx context.Context, pl *plan, notice scheduledN
 	var notificationID, recipient string
 	err = tx.QueryRow(ctx, `SELECT out_notification_id, out_recipient_id
   FROM gateway_notifications.notify_workflow($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-		cuid.New(), notice.recipient, notice.title, notice.body, notice.category, notice.contextType, r.id,
+		cuid.New(), notice.recipient, notice.title, notice.body, notice.category, notice.contextType, contextID,
 		notice.route, notice.label, normalPriority, notice.event, now).Scan(&notificationID, &recipient)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil
@@ -121,13 +125,13 @@ func (s *Service) deliverNotice(ctx context.Context, pl *plan, notice scheduledN
 	}
 	if s.noticePush != nil {
 		if err := s.noticePush(ctx, tx, notificationID, recipient, now); err != nil {
-			s.logger.WarnContext(ctx, "activities: the phone copy was not queued", "activity", r.id, "err", err)
+			s.logger.WarnContext(ctx, "activities: the phone copy was not queued", "context", contextID, "err", err)
 		}
 	}
 	if _, err := audit.Append(ctx, tx, audit.Entry{
-		Action: "notification." + notice.event, SubjectKind: audit.Text(notice.contextType), SubjectID: audit.Text(r.id),
-		Success: true, IPAddress: nilIfEmpty(pl.origin.IP), UserAgent: nilIfEmpty(pl.origin.UserAgent),
-		CorrelationID: nilIfEmpty(pl.origin.CorrelationID),
+		Action: "notification." + notice.event, SubjectKind: audit.Text(notice.contextType), SubjectID: audit.Text(contextID),
+		Success: true, IPAddress: nilIfEmpty(origin.IP), UserAgent: nilIfEmpty(origin.UserAgent),
+		CorrelationID: nilIfEmpty(origin.CorrelationID),
 		Payload: map[string]any{
 			"category": notice.category, "priority": normalPriority,
 			"recipient_ids": []any{recipient}, "notification_ids": []any{notificationID},
@@ -140,8 +144,8 @@ func (s *Service) deliverNotice(ctx context.Context, pl *plan, notice scheduledN
 	}
 	if s.live != nil {
 		s.live.Publish(realtime.Event{
-			Type: "notification." + notice.event, EntityType: notice.contextType, EntityID: r.id,
-			TargetUserID: recipient, ActorUserID: pl.p.UserID,
+			Type: "notification." + notice.event, EntityType: notice.contextType, EntityID: contextID,
+			TargetUserID: recipient, ActorUserID: actorID,
 		})
 	}
 	return nil

@@ -164,6 +164,22 @@ GRANT UPDATE (visits_completed, trainings_completed, updated_at) ON core_plan TO
 GRANT SELECT (id, core_plan_id, activity_type, sequence_number, status, activity_id) ON core_activity_slot TO edify_activities_rw;
 GRANT UPDATE (status, activity_id, scheduled_for, scheduled_month, scheduled_week, assigned_staff_id, owner, updated_at)
   ON core_activity_slot TO edify_activities_rw;
+-- The Core Schools form hands a package slot to a partner: its assignment row,
+-- the slot's partner, and what decides whether the partner may take it.
+GRANT UPDATE (assigned_partner_id, assigned_partner_name) ON core_activity_slot TO edify_activities_rw;
+GRANT INSERT (id, created_at, updated_at, assigning_staff_id, focus_intervention, expected_activity_type, status, notes,
+              partner_id, school_id, support_type, training_number, visit_number, purpose_of_visit, assignment_mode,
+              catalogue_item_id, catalogue_snapshot, override_reason, recommendation_reason, source_ssa_id,
+              source_activity_id, reassignment_sequence, training_course_id, resolution, resolution_note, outside_ssa)
+  ON partner_assignment TO edify_activities_rw;
+GRANT SELECT (id, school_id, partner_id, status, outside_ssa, purpose_of_visit, support_type, visit_number, training_number)
+  ON partner_assignment TO edify_activities_rw;
+GRANT SELECT (id, name, user_id, activity_codes, deleted_at, active_status, partner_role) ON partner TO edify_activities_rw;
+GRANT SELECT (partner_id, lifted_at) ON partner_hold TO edify_activities_rw;
+GRANT SELECT (catalogue_item_id, milestone_id, active) ON hr_milestone_activity_rule TO edify_activities_rw;
+GRANT SELECT (id, title) ON hr_priority_milestone TO edify_activities_rw;
+GRANT SELECT (school_id, field_name, status) ON data_quality_issue TO edify_activities_rw;
+GRANT SELECT (partner_delivery_allowed) ON activity_catalogue_item TO edify_activities_rw;
 GRANT SELECT (id, school_id, fy, date_of_ssa, created_at, average_score, verification_status, deleted_at)
   ON ssa_record TO edify_activities_rw;
 GRANT SELECT (id, ssa_record_id, intervention, score) ON ssa_score TO edify_activities_rw;

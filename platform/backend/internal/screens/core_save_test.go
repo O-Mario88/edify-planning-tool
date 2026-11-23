@@ -14,6 +14,7 @@ import (
 type fakeCoreSaver struct {
 	got       []activities.CoreVisitRequest
 	trainings []activities.CoreTrainingRequest
+	assigned  []activities.CoreAssignRequest
 	answer    activities.Answer
 	err       error
 }
@@ -26,6 +27,42 @@ func (f *fakeCoreSaver) ScheduleCoreVisit(_ context.Context, _ auth.Principal, r
 func (f *fakeCoreSaver) ScheduleCoreTraining(_ context.Context, _ auth.Principal, req activities.CoreTrainingRequest, _ activities.Origin) (activities.Answer, error) {
 	f.trainings = append(f.trainings, req)
 	return f.answer, f.err
+}
+
+func (f *fakeCoreSaver) AssignCorePartner(_ context.Context, _ auth.Principal, req activities.CoreAssignRequest, _ activities.Origin) (activities.Answer, error) {
+	f.assigned = append(f.assigned, req)
+	return f.answer, f.err
+}
+
+func TestTheCoreAssignFormSavesInGoWithoutDjango(t *testing.T) {
+	saver := &fakeCoreSaver{answer: activities.Answer{Message: "Core support assigned to Build Africa successfully."}}
+	service := NewService(nil).WithCoreVisitSave(saver, nil)
+
+	answer, err := service.SaveDrawer(personSaving(), connect.NewRequest(&screensv1.SaveDrawerRequest{
+		Path:   "/core-schools/assign-partner?school_id=1045",
+		Values: map[string]string{"partner_id": "p1", "purpose_of_visit": "ssa_support"},
+	}))
+
+	if err != nil || !answer.Msg.GetSaved() || len(saver.assigned) != 1 || saver.assigned[0].PartnerID != "p1" ||
+		saver.assigned[0].SchoolCode != "1045" {
+		t.Fatalf("answer %v, %v, got %+v", answer, err, saver.assigned)
+	}
+}
+
+func TestTheCoreAssignFormStaysWithDjangoWhileDjangoIsThere(t *testing.T) {
+	saver := &fakeCoreSaver{}
+	fetcher := &formFetcher{}
+	service := NewService(fetcher).WithCoreVisitSave(saver, nil)
+
+	if _, err := service.SaveDrawer(personSaving(), connect.NewRequest(&screensv1.SaveDrawerRequest{
+		Path:   "/core-schools/assign-partner?school_id=1045",
+		Values: map[string]string{"partner_id": "p1", "purpose_of_visit": "ssa_support"},
+	})); err != nil {
+		t.Fatal(err)
+	}
+	if len(saver.assigned) != 0 || len(fetcher.paths) != 1 {
+		t.Fatalf("Go saved %d, Django was asked %v", len(saver.assigned), fetcher.paths)
+	}
 }
 
 func TestTheCoreTrainingFormSavesInGoWithoutDjango(t *testing.T) {

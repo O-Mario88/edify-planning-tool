@@ -203,6 +203,8 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 			"activity_catalogue_version",
 			// A Core school's visit takes one of its package's slots.
 			"core_activity_slot", "core_plan",
+			// The Core Schools form's hand-over to a partner.
+			"partner_assignment",
 		},
 		// Snoozing a To-Do from Today (docs/migration/50;
 		// deploy/db/todo_roles.sql): the person's snooze row.

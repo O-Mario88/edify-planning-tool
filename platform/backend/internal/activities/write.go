@@ -333,11 +333,8 @@ func (s *Service) write(ctx context.Context, pl *plan) (int64, error) {
 	return rowID, nil
 }
 
-// establishVersion is _latest_version for an item with none: version 1, a
-// snapshot of the item as it stands. A concurrent save may have written it.
-func establishVersion(ctx context.Context, tx pgx.Tx, itemID string, now time.Time) error {
-	_, err := tx.Exec(ctx, `INSERT INTO activity_catalogue_version (id, created_at, updated_at, catalogue_item_id, version, snapshot, change_reason, created_by)
-SELECT $1, $2, $2, i.id, 1, jsonb_build_object(
+// catalogueSnapshotSQL is ActivityCatalogueItem.snapshot() for the row `i`.
+const catalogueSnapshotSQL = `jsonb_build_object(
     'stableCode', i.stable_code, 'displayName', i.display_name, 'sourceName', i.source_name,
     'activityType', i.activity_type, 'deliveryMethod', i.delivery_method, 'workflowKind', i.workflow_kind,
     'targetAudience', i.target_audience, 'salesforceRecordType', i.salesforce_record_type,
@@ -350,7 +347,13 @@ SELECT $1, $2, $2, i.id, 1, jsonb_build_object(
        FROM activity_intervention_mapping m WHERE m.catalogue_item_id = i.id AND m.active), '[]'::jsonb),
     'interventions', COALESCE((SELECT jsonb_agg(m.intervention ORDER BY m.is_primary DESC, m.priority, m.id)
        FROM activity_intervention_mapping m WHERE m.catalogue_item_id = i.id AND m.active
-        AND m.intervention IS NOT NULL), '[]'::jsonb)),
+        AND m.intervention IS NOT NULL), '[]'::jsonb))`
+
+// establishVersion is _latest_version for an item with none: version 1, a
+// snapshot of the item as it stands. A concurrent save may have written it.
+func establishVersion(ctx context.Context, tx pgx.Tx, itemID string, now time.Time) error {
+	_, err := tx.Exec(ctx, `INSERT INTO activity_catalogue_version (id, created_at, updated_at, catalogue_item_id, version, snapshot, change_reason, created_by)
+SELECT $1, $2, $2, i.id, 1, `+catalogueSnapshotSQL+`,
   'Version established when first scheduled.', 'system'
 FROM activity_catalogue_item i WHERE i.id = $3
 ON CONFLICT (catalogue_item_id, version) DO NOTHING`, cuid.New(), now, itemID)

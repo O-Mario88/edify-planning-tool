@@ -18,6 +18,7 @@ import (
 const (
 	coreVisitDrawerPath    = "/core-schools/schedule-visit"
 	coreTrainingDrawerPath = "/core-schools/schedule-training"
+	coreAssignDrawerPath   = "/core-schools/assign-partner"
 )
 
 // CoreVisitSaver is the Go save of the Core Schools visit form
@@ -25,6 +26,7 @@ const (
 type CoreVisitSaver interface {
 	ScheduleCoreVisit(ctx context.Context, p auth.Principal, req activities.CoreVisitRequest, origin activities.Origin) (activities.Answer, error)
 	ScheduleCoreTraining(ctx context.Context, p auth.Principal, req activities.CoreTrainingRequest, origin activities.Origin) (activities.Answer, error)
+	AssignCorePartner(ctx context.Context, p auth.Principal, req activities.CoreAssignRequest, origin activities.Origin) (activities.Answer, error)
 }
 
 // WithCoreVisitSave makes the Core visit form's saves Go's where Go takes
@@ -47,27 +49,13 @@ func (s *Service) coreVisitInGo(ctx context.Context, message *screensv1.SaveDraw
 		return nil, false, nil
 	}
 	path, rawQuery, _ := strings.Cut(message.GetPath(), "?")
-	if path != coreVisitDrawerPath && path != coreTrainingDrawerPath {
-		return nil, false, nil
-	}
 	query, err := url.ParseQuery(rawQuery)
 	if err != nil {
 		return nil, false, nil
 	}
-	var saved activities.Answer
-	form := directDrawerForm(message)
-	if path == coreVisitDrawerPath {
-		req, taken := activities.CoreVisitRequestFromForm(query.Get("school_id"), form)
-		if !taken {
-			return nil, false, nil
-		}
-		saved, err = s.coreVisits.ScheduleCoreVisit(ctx, principal, req, from)
-	} else {
-		req, taken := activities.CoreTrainingRequestFromForm(query.Get("school_id"), form)
-		if !taken {
-			return nil, false, nil
-		}
-		saved, err = s.coreVisits.ScheduleCoreTraining(ctx, principal, req, from)
+	saved, taken, err := s.saveCoreForm(ctx, principal, path, query.Get("school_id"), directDrawerForm(message), from)
+	if !taken {
+		return nil, false, nil
 	}
 	var refusal *activities.Refusal
 	switch {
@@ -86,4 +74,34 @@ func (s *Service) coreVisitInGo(ctx context.Context, message *screensv1.SaveDraw
 		words += " " + notice
 	}
 	return &screensv1.SaveDrawerResponse{Saved: true, Message: words}, true, nil
+}
+
+// saveCoreForm makes the save of the Core form at path; taken is false for
+// another drawer, or a post this form's save does not take.
+func (s *Service) saveCoreForm(ctx context.Context, p auth.Principal, path, school string, form url.Values, from activities.Origin) (
+	saved activities.Answer, taken bool, err error,
+) {
+	switch path {
+	case coreVisitDrawerPath:
+		req, ok := activities.CoreVisitRequestFromForm(school, form)
+		if !ok {
+			return saved, false, nil
+		}
+		saved, err = s.coreVisits.ScheduleCoreVisit(ctx, p, req, from)
+	case coreTrainingDrawerPath:
+		req, ok := activities.CoreTrainingRequestFromForm(school, form)
+		if !ok {
+			return saved, false, nil
+		}
+		saved, err = s.coreVisits.ScheduleCoreTraining(ctx, p, req, from)
+	case coreAssignDrawerPath:
+		req, ok := activities.CoreAssignRequestFromForm(school, form)
+		if !ok {
+			return saved, false, nil
+		}
+		saved, err = s.coreVisits.AssignCorePartner(ctx, p, req, from)
+	default:
+		return saved, false, nil
+	}
+	return saved, true, err
 }
