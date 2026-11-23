@@ -85,6 +85,8 @@ type Recommendation struct {
 	First    *Suggestion
 	Priority rankedSSA
 	Unmet    *UnmetNeed
+	// All is every suggestion in rank order, primary answers first.
+	All []Suggestion
 }
 
 type recommendInput struct {
@@ -147,7 +149,7 @@ func recommendFrom(in recommendInput) Recommendation {
 		}
 	}
 	sort.SliceStable(suggestions, func(i, j int) bool { return suggestionBefore(suggestions[i], suggestions[j]) })
-	out := Recommendation{HasSSA: true, Priority: in.ranked[0]}
+	out := Recommendation{HasSSA: true, Priority: in.ranked[0], All: suggestions}
 	if len(suggestions) > 0 {
 		out.First = &suggestions[0]
 	}
@@ -158,13 +160,16 @@ func recommendFrom(in recommendInput) Recommendation {
 }
 
 func noSSARecommendation(in recommendInput) Recommendation {
+	var all []Suggestion
 	for _, item := range in.items {
 		if item.eligible() && hasMode(in.mappings[item.id], modePrerequisite) {
-			first := suggestionOf(item, "", "No applicable verified SSA exists. Complete the SSA before intervention support is recommended.", 0)
-			return Recommendation{First: &first}
+			all = append(all, suggestionOf(item, "", "No applicable verified SSA exists. Complete the SSA before intervention support is recommended.", 0))
 		}
 	}
-	return Recommendation{}
+	if len(all) == 0 {
+		return Recommendation{}
+	}
+	return Recommendation{First: &all[0], All: all}
 }
 
 func answersARankedNeed(mappings []itemMapping, rank map[string]int) bool {

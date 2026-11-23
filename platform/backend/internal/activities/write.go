@@ -272,6 +272,11 @@ func (s *Service) write(ctx context.Context, pl *plan) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+	if pl.firstVersion {
+		if err := establishVersion(ctx, tx, pl.item.ID, pl.now); err != nil {
+			return 0, err
+		}
+	}
 	if err := insertActivity(ctx, tx, pl.row); err != nil {
 		return 0, err
 	}
@@ -290,6 +295,33 @@ func (s *Service) write(ctx context.Context, pl *plan) (int64, error) {
 		return 0, fmt.Errorf("activities: committing the save: %w", err)
 	}
 	return rowID, nil
+}
+
+// establishVersion is _latest_version for an item with none: version 1, a
+// snapshot of the item as it stands. A concurrent save may have written it.
+func establishVersion(ctx context.Context, tx pgx.Tx, itemID string, now time.Time) error {
+	_, err := tx.Exec(ctx, `INSERT INTO activity_catalogue_version (id, created_at, updated_at, catalogue_item_id, version, snapshot, change_reason, created_by)
+SELECT $1, $2, $2, i.id, 1, jsonb_build_object(
+    'stableCode', i.stable_code, 'displayName', i.display_name, 'sourceName', i.source_name,
+    'activityType', i.activity_type, 'deliveryMethod', i.delivery_method, 'workflowKind', i.workflow_kind,
+    'targetAudience', i.target_audience, 'salesforceRecordType', i.salesforce_record_type,
+    'salesforceExpectedPrefix', i.salesforce_expected_prefix, 'evidenceProfile', i.evidence_profile,
+    'costingProfile', i.costing_profile, 'supportObjective', i.support_objective,
+    'standardSupport', i.standard_support, 'isTrainingCourse', i.is_training_course,
+    'trainingCategory', i.training_category, 'ssaIndicatorLabel', i.ssa_indicator_label,
+    'participantMode', i.participant_mode, 'certifiedAgencyDeliveryAllowed', i.certified_agency_delivery_allowed,
+    'mappingModes', COALESCE((SELECT jsonb_agg(m.mapping_mode ORDER BY m.is_primary DESC, m.priority, m.id)
+       FROM activity_intervention_mapping m WHERE m.catalogue_item_id = i.id AND m.active), '[]'::jsonb),
+    'interventions', COALESCE((SELECT jsonb_agg(m.intervention ORDER BY m.is_primary DESC, m.priority, m.id)
+       FROM activity_intervention_mapping m WHERE m.catalogue_item_id = i.id AND m.active
+        AND m.intervention IS NOT NULL), '[]'::jsonb)),
+  'Version established when first scheduled.', 'system'
+FROM activity_catalogue_item i WHERE i.id = $3
+ON CONFLICT (catalogue_item_id, version) DO NOTHING`, cuid.New(), now, itemID)
+	if err != nil {
+		return fmt.Errorf("activities: establishing the item's first version: %w", err)
+	}
+	return nil
 }
 
 // duplicates are _create's two same-day tests (3296–3330).

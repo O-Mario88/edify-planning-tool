@@ -82,6 +82,8 @@ type Service struct {
 	live       NoticePublisher
 	// requests answers an Accountant's visit; nil hands those on.
 	requests VisitRequests
+	// governed answers for a pinned governed visit; nil hands those on.
+	governed GovernedSupport
 }
 
 // NewService builds the save over the gateway's pool.
@@ -100,19 +102,21 @@ var isoDate = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
 
 // plan is everything decided before the transaction.
 type plan struct {
-	p        auth.Principal
-	school   school
-	item     item
-	version  int
-	need     schoolNeed
-	focus    string
-	evidence evidence
-	row      activityRow
-	ownerUID string
-	home     staffHome
-	verdict  DayVerdict
-	origin   Origin
-	now      time.Time
+	p       auth.Principal
+	school  school
+	item    item
+	version int
+	// firstVersion: the save writes the item's version 1.
+	firstVersion bool
+	need         schoolNeed
+	focus        string
+	evidence     evidence
+	row          activityRow
+	ownerUID     string
+	home         staffHome
+	verdict      DayVerdict
+	origin       Origin
+	now          time.Time
 }
 
 // Schedule makes the save, or refuses it in the existing words, or hands it
@@ -198,18 +202,21 @@ func (s *Service) prepare(ctx context.Context, p auth.Principal, req Request, or
 				}
 			}
 			if !in(rules.Purposes.InterventionFree, purpose) && (otherPurpose == "" || otherPurpose == purpose) {
-				// The pin stands, and with it the SSA recommendation's
-				// governed costing: not 27.3's case.
-				return nil, handOn("the SSA recommendation's pinned item stands")
+				// The pin stands, and `_create` takes the type from the item.
+				if s.governed == nil || pinned.WorkflowKind != governedVisitKind {
+					return nil, handOn("the SSA recommendation's pinned item stands")
+				}
+				activityType = pinned.WorkflowKind
+			} else {
+				resolved, err := resolveForKind(ctx, s.db, activityType, today)
+				if err != nil {
+					return nil, err
+				}
+				if resolved == nil {
+					return nil, noCosting
+				}
+				itemID, recReason = resolved.ID, ""
 			}
-			resolved, err := resolveForKind(ctx, s.db, activityType, today)
-			if err != nil {
-				return nil, err
-			}
-			if resolved == nil {
-				return nil, noCosting
-			}
-			itemID, recReason = resolved.ID, ""
 		}
 	}
 	var target *visitTarget
@@ -286,13 +293,15 @@ func (s *Service) create(ctx context.Context, p auth.Principal, req Request, ori
 	if it == nil {
 		return nil, refuse("The selected Activity Catalogue item is inactive, retired, outside its effective dates, or does not exist.")
 	}
-	if !it.StandardSupport || it.WorkflowKind != activityType || it.IsTrainingCourse ||
-		it.CountsTowardClientVisit || (it.ParticipantMode != "" && it.ParticipantMode != "none") ||
-		len(it.Modes) == 0 || it.Modes[0] != "any_ssa_intervention" || rules.CalendarBlocksRefuse {
-		// A governed or per-participant item, an item that counts toward the
-		// client visit through its eligibility rule, a mapping other than
-		// any intervention, or a calendar that refuses: not ported.
-		return nil, handOn("the catalogue item is not standard support for the purpose")
+	standard := it.StandardSupport && !it.IsTrainingCourse && !it.CountsTowardClientVisit &&
+		(it.ParticipantMode == "" || it.ParticipantMode == "none") &&
+		len(it.Modes) > 0 && it.Modes[0] == "any_ssa_intervention"
+	governed := s.governed != nil && it.governedVisit()
+	if (!standard && !governed) || it.WorkflowKind != activityType || rules.CalendarBlocksRefuse {
+		// A per-participant item, an item that counts toward the client visit
+		// through its eligibility rule, another governed mapping, or a
+		// calendar that refuses: not ported.
+		return nil, handOn("the catalogue item is not one Go saves for the purpose")
 	}
 	scheduledUTC := day.UTC()
 	fy := schooldirectory.OperationalFY(scheduledUTC)
@@ -349,7 +358,23 @@ func (s *Service) create(ctx context.Context, p auth.Principal, req Request, ori
 	if it.RequiresCluster {
 		return nil, refuse("This Catalogue Activity requires a Cluster.")
 	}
-	reason, source := standardSupport(recReason, focus, it.ID, need.Record)
+	var reason string
+	var source map[string]any
+	if governed {
+		// resolve_activity_intervention: the plan's own, else the item's.
+		if focus == "" {
+			if focus, err = primaryIntervention(ctx, s.db, it.ID); err != nil {
+				return nil, err
+			}
+		}
+		word, recommended, err := s.governed.GovernedWord(ctx, sc.Code, it.ID)
+		if err != nil {
+			return nil, fmt.Errorf("activities: reading the recommendation: %w", err)
+		}
+		reason, source = word, governedSource(it.ID, need, recommended)
+	} else {
+		reason, source = standardSupport(recReason, focus, it.ID, need.Record)
+	}
 	followUpOf := ""
 	var secondary []string
 	if followed != nil {
@@ -359,9 +384,10 @@ func (s *Service) create(ctx context.Context, p auth.Principal, req Request, ori
 	if err != nil {
 		return nil, err
 	}
-	if !ok {
-		// _latest_version would write the item's first version: not ported.
-		return nil, handOn("the item has no version yet")
+	// _latest_version writes an unversioned item's version 1 inside the save.
+	firstVersion := !ok
+	if firstVersion {
+		version = 1
 	}
 	if focusSource == "" && focus != "" {
 		focusSource = "catalogue"
@@ -398,8 +424,8 @@ func (s *Service) create(ctx context.Context, p auth.Principal, req Request, ori
 			return nil, handOn("the day does not pool the visit")
 		}
 	}
-	return &plan{p: p, school: sc, item: *it, version: version, need: need, focus: focus, evidence: ev,
-		row: row, ownerUID: ownerUID, home: home, verdict: verdict, origin: origin, now: now}, nil
+	return &plan{p: p, school: sc, item: *it, version: version, firstVersion: firstVersion, need: need, focus: focus,
+		evidence: ev, row: row, ownerUID: ownerUID, home: home, verdict: verdict, origin: origin, now: now}, nil
 }
 
 // plannedFocus is _create's target: the intervention the planner named, else

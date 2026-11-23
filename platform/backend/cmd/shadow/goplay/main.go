@@ -132,7 +132,8 @@ func run(dsn, scenarioPath, aOut, out, django, key, runner, repo string) error {
 	if err != nil {
 		return err
 	}
-	svc.WithVisitRequests(coreforms.NewService(pool, time.Now))
+	forms := coreforms.NewService(pool, time.Now)
+	svc.WithVisitRequests(forms).WithGovernedSupport(forms)
 	accounts := identity.NewStore(pool)
 
 	result := outcomes{Database: cfg.ConnConfig.Database, From: time.Now().UTC().Format(time.RFC3339Nano)}

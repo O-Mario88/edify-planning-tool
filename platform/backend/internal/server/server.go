@@ -498,8 +498,9 @@ func visitSave(cfg config.Config, pool *pgxpool.Pool, logger *slog.Logger, live 
 		// gateway refuses to start rather than run with the switch quietly off.
 		panic(err)
 	}
+	forms := coreforms.NewService(pool, time.Now)
 	return service.WithOwnerNotices(plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, live).
-		WithVisitRequests(coreforms.NewService(pool, time.Now))
+		WithVisitRequests(forms).WithGovernedSupport(forms)
 }
 
 // signInHandler assembles sign-in: the existing accounts, the existing

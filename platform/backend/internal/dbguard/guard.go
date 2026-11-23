@@ -53,6 +53,8 @@ var protectedAccountColumns = []string{
 var undeletableTables = []string{
 	"activity", "daily_visit_batch", "daily_visit_costs_to_follow", "audit_log", "domain_event_log",
 	"activity_schedule_change",
+	// A catalogue item's version 1, written the first time it is scheduled.
+	"activity_catalogue_version",
 	// The third save (cancelling, docs/migration/30) withdraws a visit's
 	// unmoved advances only through gateway_money.withdraw_unmoved_advances;
 	// a role that can delete advances itself is refused.

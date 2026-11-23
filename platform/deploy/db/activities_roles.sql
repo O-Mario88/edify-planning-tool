@@ -152,6 +152,11 @@ GRANT SELECT (id, stable_code, workflow_kind, display_name, activity_type, deliv
   ON activity_catalogue_item TO edify_activities_rw;
 GRANT SELECT (id, catalogue_item_id, mapping_mode, is_primary, priority, active) ON activity_intervention_mapping TO edify_activities_rw;
 GRANT SELECT (catalogue_item_id, version) ON activity_catalogue_version TO edify_activities_rw;
+-- An item scheduled for the first time gets its version 1 (_latest_version),
+-- a snapshot of the item as it stood. Versions are only ever added.
+GRANT SELECT (target_audience, support_objective) ON activity_catalogue_item TO edify_activities_rw;
+GRANT INSERT (id, created_at, updated_at, catalogue_item_id, version, snapshot, change_reason, created_by)
+  ON activity_catalogue_version TO edify_activities_rw;
 GRANT SELECT (id, school_id, fy, date_of_ssa, created_at, average_score, verification_status, deleted_at)
   ON ssa_record TO edify_activities_rw;
 GRANT SELECT (id, ssa_record_id, intervention, score) ON ssa_score TO edify_activities_rw;

@@ -199,6 +199,8 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		filepath.Join(root, "internal", "activities") + sep: {
 			"activity", "daily_visit_batch", "daily_visit_costs_to_follow", "target_ledger_dirty", "ssa_recommendation",
 			"activity_schedule_change", "cluster_activity_attendance", "activity_cost_snapshot",
+			// An item's version 1, written the first time it is scheduled.
+			"activity_catalogue_version",
 		},
 		// Snoozing a To-Do from Today (docs/migration/50;
 		// deploy/db/todo_roles.sql): the person's snooze row.
