@@ -1161,7 +1161,7 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
               </button>
             </div>
 
-            <div className="sr-sheet-body">
+            <div className="sr-sheet-body" tabIndex={0} role="region" aria-label="Route details list">
 
             {rightTab === 'directions' ? (
               <InAppNavigationPanel
@@ -1185,7 +1185,7 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
                 {smartResult ? (
                   <details data-sr-summary className="sr-summary">
                     <summary>
-                      <span>{smartResult.objective_label}</span>
+                      <span title={smartResult.objective_label}>{smartResult.objective_label}</span>
                       {smartResult.is_recommended ? <em>Recommended</em> : null}
                     </summary>
                     <p>{routeNote(smartResult)}</p>
@@ -1235,7 +1235,7 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
                         <li key={st.school_id} className="sr-stop" data-priority={(st.priority?.band ?? 'routine') !== 'routine' || undefined}>
                           <span className="sr-stop__num">{smartResult.start_label ? st.order + 1 : st.order}</span>
                           <div className="sr-stop__text">
-                            <p className="sr-stop__name" title={badge.label}>{st.school_name}<span className="sr-only"> ({badge.label})</span></p>
+                            <p className="sr-stop__name" title={`${st.school_name} (${badge.label})`}>{st.school_name}<span className="sr-only"> ({badge.label})</span></p>
                             <p className="sr-stop__meta">{leg}</p>
                             {st.conflict ? (
                               <p className="sr-stop__conflict"><AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" /> {st.conflict}</p>

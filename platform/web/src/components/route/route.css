@@ -353,3 +353,6 @@
   .sr-bottom { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .sr-bottom > :first-child { grid-column: 1 / -1; }
 }
+
+/* A nearby school's name wraps to a second line rather than being cut. */
+[data-page='smart-route'] p[data-sr-near-name] { overflow: visible !important; text-overflow: clip !important; white-space: normal !important; -webkit-line-clamp: unset !important; }

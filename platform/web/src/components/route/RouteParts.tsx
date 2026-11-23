@@ -253,7 +253,7 @@ export function NearbyCard({
                 <RouteIcon name="school" className="h-10 w-10" />
               </button>
               <div className="min-w-0 flex-1">
-                <p className="flex flex-wrap items-center gap-2 text-[16px] font-semibold text-[var(--edify-text)]">
+                <p data-sr-near-name="" className="flex flex-wrap items-center gap-2 text-[16px] font-semibold text-[var(--edify-text)]">
                   {s.school?.name}
                   <span className="text-[13px] font-normal text-[var(--edify-text-muted)]">ID {s.school?.code}</span>
                   <span className={`rounded-full px-3 py-0.5 text-[13px] font-semibold ${s.label === 'High Priority' ? 'bg-violet-50 text-violet-700' : 'bg-green-50 text-green-700'}`}>

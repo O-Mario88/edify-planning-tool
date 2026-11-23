@@ -17,7 +17,7 @@ interface QuickSelectProps {
 export function QuickSelect({ label, value, allWords, options, onChange }: QuickSelectProps) {
   const shown = options.find((option) => option.value === value)?.label ?? allWords;
   return (
-    <span className="sr-quick-select">
+    <span className="sr-quick-select" title={shown}>
       <span aria-hidden="true">{shown}</span>
       <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
       <select aria-label={label} value={value} onChange={(event) => onChange(event.target.value)}>
