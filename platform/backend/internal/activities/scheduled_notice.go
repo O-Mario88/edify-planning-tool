@@ -72,13 +72,13 @@ func colleagueConfirmation(owner string, day time.Time) (message, planURL, label
 }
 
 // staffName is the name of the person a staff profile belongs to, or the
-// view's stand-in when there is none.
-func staffName(ctx context.Context, q Querier, staffID string) (string, error) {
+// stand-in the caller's sentence uses when there is none.
+func staffName(ctx context.Context, q Querier, staffID, standIn string) (string, error) {
 	var name *string
 	err := q.QueryRow(ctx, `SELECT u.name FROM staff_profile sp JOIN "user" u ON u.id = sp.user_id WHERE sp.id = $1`,
 		staffID).Scan(&name)
 	if errors.Is(err, pgx.ErrNoRows) || (err == nil && (name == nil || *name == "")) {
-		return "the school's CCEO", nil
+		return standIn, nil
 	}
 	if err != nil {
 		return "", fmt.Errorf("activities: reading the owner's name: %w", err)

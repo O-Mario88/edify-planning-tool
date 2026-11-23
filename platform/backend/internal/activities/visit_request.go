@@ -22,6 +22,8 @@ const (
 	decideRequestLabel    = "Decide on Visit Request"
 	activityCategory      = "activity"
 	activitySubject       = "Activity"
+	schoolOwnerStandIn    = "the school's owner"
+	schoolCCEOStandIn     = "the school's CCEO"
 )
 
 // VisitRequests answers whose approval a requester's visit needs: the

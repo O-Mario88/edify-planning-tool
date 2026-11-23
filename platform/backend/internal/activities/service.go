@@ -553,10 +553,10 @@ func (s *Service) answer(ctx context.Context, pl *plan) (Answer, error) {
 	day := pl.row.plannedDate
 	fy := schooldirectory.OperationalFY(time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.UTC))
 	if pl.row.isRequest() {
-		name, err := staffName(ctx, s.db, pl.row.approvalOwner)
+		name, err := staffName(ctx, s.db, pl.row.approvalOwner, schoolOwnerStandIn)
 		if err != nil {
 			s.logger.WarnContext(ctx, "activities: the owner's name was not read", "activity", pl.row.id, "err", err)
-			name = "the school's owner"
+			name = schoolOwnerStandIn
 		}
 		return Answer{
 			ActivityID: pl.row.id, Status: awaitingOwnerApproval, ActivityType: pl.row.activityType,
@@ -565,11 +565,11 @@ func (s *Service) answer(ctx context.Context, pl *plan) (Answer, error) {
 		}, nil
 	}
 	if owner := pl.row.responsible; owner != pl.p.StaffProfileID && owner != pl.p.UserID {
-		name, err := staffName(ctx, s.db, owner)
+		name, err := staffName(ctx, s.db, owner, schoolCCEOStandIn)
 		if err != nil {
 			// The visit is saved; only the name in the sentence is missing.
 			s.logger.WarnContext(ctx, "activities: the owner's name was not read", "activity", pl.row.id, "err", err)
-			name = "the school's CCEO"
+			name = schoolCCEOStandIn
 		}
 		message, planURL, label := colleagueConfirmation(name, day)
 		return Answer{

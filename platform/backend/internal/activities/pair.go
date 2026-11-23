@@ -181,7 +181,8 @@ func (s *Service) preparePair(ctx context.Context, p auth.Principal, req Request
 	}
 	purpose := strings.TrimSpace(req.Purpose)
 	date := strings.TrimSpace(req.Date)
-	if in(rules.Doors.Requesters, p.ActiveRole) || p.InActingAppointment || p.StaffProfileID == "" ||
+	requester := in(rules.Doors.Requesters, p.ActiveRole)
+	if (requester && s.requests == nil) || p.InActingAppointment || p.StaffProfileID == "" ||
 		!IsPairPurpose(purpose) || (date != "" && !isoDate.MatchString(date)) || req.SourceActivityID != "" {
 		// A posted focus needs no case: schedule_in_school_training_pair
 		// replaces it with the course's own intervention.
@@ -213,10 +214,21 @@ func (s *Service) preparePair(ctx context.Context, p auth.Principal, req Request
 	if !taken || c.conflicts() {
 		return nil, handOn("a course Go does not take (its intervention mapping or kind)")
 	}
-	sc, responsible, err := s.visitSchool(ctx, p, req.SchoolID, purpose, now)
-	if err != nil {
-		return nil, err
+	var target visitTarget
+	if requester {
+		asked, err := s.requestTarget(ctx, p, req.SchoolID, purpose, now)
+		if err != nil {
+			return nil, err
+		}
+		target = *asked
+	} else {
+		visited, owner, err := s.visitSchool(ctx, p, req.SchoolID, purpose, now)
+		if err != nil {
+			return nil, err
+		}
+		target = visitTarget{school: *visited, responsible: owner}
 	}
+	sc, responsible, approvalOwner := &target.school, target.responsible, target.approvalOwner
 	// schedule_in_school_training_pair (689–719): the course offered on the
 	// day (get_selectable_item then finds it too), and both profiles.
 	onDay, err := offeredCourse(ctx, s.db, courseID, day)
@@ -237,15 +249,18 @@ func (s *Service) preparePair(ctx context.Context, p auth.Principal, req Request
 	if trainingProfile == nil || visitProfile == nil {
 		return nil, refuse(profilesInactive)
 	}
-	corePlanID, err := s.routeCorePair(ctx, *sc, *c, day)
+	// A request holds no package slot until its owner approves it.
+	corePlanID := ""
+	if approvalOwner == "" {
+		if corePlanID, err = s.routeCorePair(ctx, *sc, *c, day); err != nil {
+			return nil, err
+		}
+	}
+	training, err := s.pairTraining(ctx, p, req, origin, now, today, day, *sc, responsible, approvalOwner, *c, focus, trainingProfile.ID)
 	if err != nil {
 		return nil, err
 	}
-	training, err := s.pairTraining(ctx, p, req, origin, now, today, day, *sc, responsible, *c, focus, trainingProfile.ID)
-	if err != nil {
-		return nil, err
-	}
-	visit, err := s.pairVisit(ctx, p, req, origin, now, today, day, *sc, responsible, *c, focus, collects, visitProfile.ID, training)
+	visit, err := s.pairVisit(ctx, p, req, origin, now, today, day, *sc, responsible, approvalOwner, *c, focus, collects, visitProfile.ID, training)
 	if err != nil {
 		return nil, err
 	}
@@ -253,14 +268,23 @@ func (s *Service) preparePair(ctx context.Context, p auth.Principal, req Request
 	if collects {
 		noun = pairWithSSANoun
 	}
-	owner := ""
-	if responsible != p.StaffProfileID && responsible != p.UserID {
-		if owner, err = staffName(ctx, s.db, responsible); err != nil {
+	var message string
+	if approvalOwner != "" {
+		who, err := staffName(ctx, s.db, approvalOwner, schoolOwnerStandIn)
+		if err != nil {
 			return nil, err
 		}
+		message = requestedMessage(who)
+	} else {
+		owner := ""
+		if responsible != p.StaffProfileID && responsible != p.UserID {
+			if owner, err = staffName(ctx, s.db, responsible, schoolCCEOStandIn); err != nil {
+				return nil, err
+			}
+		}
+		message = pairConfirmation(noun, owner)
 	}
-	return &pairPlan{training: training, visit: visit, course: *c, message: pairConfirmation(noun, owner),
-		corePlanID: corePlanID}, nil
+	return &pairPlan{training: training, visit: visit, course: *c, message: message, corePlanID: corePlanID}, nil
 }
 
 // pairConfirmation is the view's sentence: on the person's own plan, or on
@@ -298,7 +322,7 @@ func standardItem(ctx context.Context, q Querier, id, kind string, day time.Time
 // skip_cost_snapshot=True)): the profile prices nothing, the course names
 // it and decides its intervention.
 func (s *Service) pairTraining(ctx context.Context, p auth.Principal, req Request, origin Origin, now, today, day time.Time,
-	sc school, responsible string, c course, focus, profileID string) (*plan, error) {
+	sc school, responsible, approvalOwner string, c course, focus, profileID string) (*plan, error) {
 	kind := rules.Pair.TrainingKind
 	it, err := standardItem(ctx, s.db, profileID, kind, day)
 	if err != nil {
@@ -309,11 +333,17 @@ func (s *Service) pairTraining(ctx context.Context, p auth.Principal, req Reques
 	if day.Before(today) {
 		return nil, refuse("%s has passed. Schedule work from %s onwards.", longDate(day), longDate(today))
 	}
-	if err := trainingEntitlement(ctx, s.db, sc, c, fy, now); err != nil {
-		return nil, err
-	}
-	if err := coreTrainingSideOpen(ctx, s.db, sc, c, fy, now); err != nil {
-		return nil, err
+	if approvalOwner != "" {
+		if err := requestEntitlement(sc, kind); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := trainingEntitlement(ctx, s.db, sc, c, fy, now); err != nil {
+			return nil, err
+		}
+		if err := coreTrainingSideOpen(ctx, s.db, sc, c, fy, now); err != nil {
+			return nil, err
+		}
 	}
 	home, err := staffHomeOf(ctx, s.db, responsible)
 	if err != nil {
@@ -355,6 +385,10 @@ func (s *Service) pairTraining(ctx context.Context, p auth.Principal, req Reques
 		focus: focus, reason: reason, source: source, need: need, evidence: ev,
 	})
 	row.trainingCourseID, row.nameSnapshot = c.ID, c.Name
+	row.approvalOwner, row.justification = approvalOwner, req.Justification
+	if approvalOwner != "" && req.Justification == "" {
+		return nil, refuse(justificationRequired)
+	}
 	return &plan{p: p, school: sc, item: *it, version: version, need: need, focus: focus, evidence: ev,
 		row: row, home: home, origin: origin, now: now}, nil
 }
@@ -363,14 +397,18 @@ func (s *Service) pairTraining(ctx context.Context, p auth.Principal, req Reques
 // the companion purpose, the course's intervention, the default words, the
 // day's join and its costs.
 func (s *Service) pairVisit(ctx context.Context, p auth.Principal, req Request, origin Origin, now, today, day time.Time,
-	sc school, responsible string, c course, focus string, collects bool, profileID string, training *plan) (*plan, error) {
+	sc school, responsible, approvalOwner string, c course, focus string, collects bool, profileID string, training *plan) (*plan, error) {
 	kind := rules.Pair.VisitKind
 	it, err := standardItem(ctx, s.db, profileID, kind, day)
 	if err != nil {
 		return nil, err
 	}
 	fy := training.row.fy
-	if err := entitlement(ctx, s.db, sc, kind, rules.Gate.CompanionPurpose, fy, now); err != nil {
+	if approvalOwner != "" {
+		if err := requestEntitlement(sc, kind); err != nil {
+			return nil, err
+		}
+	} else if err := entitlement(ctx, s.db, sc, kind, rules.Gate.CompanionPurpose, fy, now); err != nil {
 		return nil, err
 	}
 	version, ok, err := latestVersion(ctx, s.db, it.ID)
@@ -404,16 +442,21 @@ func (s *Service) pairVisit(ctx context.Context, p auth.Principal, req Request, 
 	ssa["pairedWithActivityId"] = training.row.id
 	row.source["ssa"] = ssa
 	row.alignment = training.row.alignment
+	row.approvalOwner, row.justification = approvalOwner, req.Justification
 	ownerUID, err := fundingOwner(ctx, s.db, responsible, p.UserID)
 	if err != nil {
 		return nil, err
 	}
-	verdict, err := s.pricing.DayCheck(ctx, row.probe())
-	if err != nil {
-		return nil, err
-	}
-	if !verdict.Pooled && verdict.Refusal == "" {
-		return nil, handOn("the day does not pool the visit")
+	// A request draws no money and joins no day until it is approved.
+	var verdict DayVerdict
+	if approvalOwner == "" {
+		verdict, err = s.pricing.DayCheck(ctx, row.probe())
+		if err != nil {
+			return nil, err
+		}
+		if !verdict.Pooled && verdict.Refusal == "" {
+			return nil, handOn("the day does not pool the visit")
+		}
 	}
 	return &plan{p: p, school: sc, item: *it, version: version, need: need, focus: focus, evidence: ev,
 		row: row, ownerUID: ownerUID, home: training.home, verdict: verdict, origin: origin, now: now}, nil
@@ -451,11 +494,18 @@ func (s *Service) writePair(ctx context.Context, pp *pairPlan) (int64, error) {
 		return 0, fmt.Errorf("activities: locking the school: %w", err)
 	}
 	// The training's create (3207–3343).
-	if err := trainingEntitlement(ctx, tx, t.school, pp.course, t.row.fy, t.now); err != nil {
-		return 0, err
-	}
-	if err := coreTrainingSideOpen(ctx, tx, t.school, pp.course, t.row.fy, t.now); err != nil {
-		return 0, err
+	isRequest := t.row.isRequest()
+	if isRequest {
+		if err := requestEntitlement(t.school, t.row.activityType); err != nil {
+			return 0, err
+		}
+	} else {
+		if err := trainingEntitlement(ctx, tx, t.school, pp.course, t.row.fy, t.now); err != nil {
+			return 0, err
+		}
+		if err := coreTrainingSideOpen(ctx, tx, t.school, pp.course, t.row.fy, t.now); err != nil {
+			return 0, err
+		}
 	}
 	if set, err := ceilingSet(ctx, tx, t.row.responsible, pp.course.ID, t.row.fy); err != nil || set {
 		if err != nil {
@@ -471,7 +521,11 @@ func (s *Service) writePair(ctx context.Context, pp *pairPlan) (int64, error) {
 	if v.verdict.Refusal != "" && v.verdict.Stage == "preview" {
 		return 0, &Refusal{Message: v.verdict.Refusal}
 	}
-	if err := entitlement(ctx, tx, v.school, v.row.activityType, v.row.purpose, v.row.fy, v.now); err != nil {
+	if isRequest {
+		if err := requestEntitlement(v.school, v.row.activityType); err != nil {
+			return 0, err
+		}
+	} else if err := entitlement(ctx, tx, v.school, v.row.activityType, v.row.purpose, v.row.fy, v.now); err != nil {
 		return 0, err
 	}
 	if err := duplicates(ctx, tx, v); err != nil {
@@ -480,11 +534,13 @@ func (s *Service) writePair(ctx context.Context, pp *pairPlan) (int64, error) {
 	if v.verdict.Refusal != "" {
 		return 0, &Refusal{Message: v.verdict.Refusal}
 	}
-	batchID, _, err := s.joinDay(ctx, tx, v)
-	if err != nil {
-		return 0, err
+	if !isRequest {
+		batchID, _, err := s.joinDay(ctx, tx, v)
+		if err != nil {
+			return 0, err
+		}
+		v.row.batchID = batchID
 	}
-	v.row.batchID = batchID
 	recIDs, err := planRecommendations(ctx, tx, t)
 	if err != nil {
 		return 0, err
@@ -501,9 +557,11 @@ func (s *Service) writePair(ctx context.Context, pp *pairPlan) (int64, error) {
 			return 0, err
 		}
 	}
-	rowID, err := keepCosts(ctx, tx, v)
-	if err != nil {
-		return 0, err
+	var rowID int64
+	if !isRequest {
+		if rowID, err = keepCosts(ctx, tx, v); err != nil {
+			return 0, err
+		}
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return 0, fmt.Errorf("activities: committing the save: %w", err)
@@ -527,6 +585,15 @@ func (s *Service) afterPair(ctx context.Context, pp *pairPlan, rowID int64) {
 		if err := s.auditScheduled(ctx, pl); err != nil {
 			s.logger.Warn("activities: the scheduled audit row was not written", "activity", pl.row.id, "err", err)
 		}
+		// notify_requested follows each row's own audit.
+		if pl.row.isRequest() {
+			if err := s.tellRequestOwner(ctx, pl); err != nil {
+				s.logger.Warn("activities: the owner was not asked about the visit", "activity", pl.row.id, "err", err)
+			}
+		}
+	}
+	if pp.training.row.isRequest() {
+		return
 	}
 	// Of the two, only the visit is news to its owner (_notify_scheduled_owner).
 	if err := s.tellScheduledOwner(ctx, pp.visit); err != nil {

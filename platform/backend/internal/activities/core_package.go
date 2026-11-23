@@ -151,8 +151,9 @@ func (s *Service) routeCoreVisit(ctx context.Context, target visitTarget, purpos
 	if route == coreOutsidePackage || !in(rules.Gate.CoreRuleTypes, target.school.Type) {
 		return nil, nil
 	}
-	if target.approvalOwner != "" {
-		return nil, handOn("a request for a Core school's package visit")
+	if target.approvalOwner != "" && route == coreCreditedVisit {
+		// A request holds no slot until its owner approves it.
+		return nil, nil
 	}
 	fy := schooldirectory.OperationalFY(day.UTC())
 	planID, err := readCorePlan(ctx, s.db, target.school.Code, fy)
