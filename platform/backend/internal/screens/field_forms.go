@@ -36,6 +36,7 @@ var fieldFormPages = map[string][]string{
 	"my_professional_development": {rbac.CCEO, rbac.ProgramLead, roleCD, roleRVP, roleIA, roleAccountant, roleHR, rolePC, rbac.Admin},
 	"partner_detail":              everyStaffAndPartnerRole,
 	"projects":                    {rbac.Admin, rbac.CCEO, roleCD, roleIA, rbac.ProgramLead, rolePC},
+	"extra_work":                  {rbac.Admin, rbac.CCEO, roleCD, rbac.ProgramLead, roleIA},
 }
 
 // fieldFormRequest is what a form is opened with: the record in its address
@@ -72,6 +73,7 @@ var fieldForms = []fieldForm{
 	{path: "/work-plan/add", permission: "planning.manualActivity.create",
 		permissionRefusal: "You do not have permission to add non-school programme activities.",
 		build:             workPlanAddForm},
+	{path: "/extra-work/assign-drawer", page: "extra_work", build: extraWorkAssignForm},
 }
 
 func fieldFormFor(path string) (fieldForm, bool) {

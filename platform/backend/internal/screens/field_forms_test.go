@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 )
 
@@ -247,6 +248,68 @@ func TestWorkPlanDatePrefill(t *testing.T) {
 		if got := workPlanDatePrefill(raw); got != want {
 			t.Fatalf("%q = %q, want %q", raw, got, want)
 		}
+	}
+}
+
+func TestExtraWorkFormAccess(t *testing.T) {
+	form, ok := fieldFormFor("/extra-work/assign-drawer")
+	if !ok {
+		t.Fatal("not a field form")
+	}
+	for _, role := range []string{"Admin", "CCEO", "CountryDirector", "Program Lead", "ImpactAssessment"} {
+		if got := form.refusal(fieldPrincipal(role)); got != "" {
+			t.Fatalf("%s: %q", role, got)
+		}
+	}
+	const noPage = "Access Denied: Your active role does not have permission to view Extra Work."
+	for _, role := range []string{"Accountant", "HumanResources", "ProjectCoordinator", "PartnerAdmin", "ClusterLeader"} {
+		if got := form.refusal(fieldPrincipal(role)); got != noPage {
+			t.Fatalf("%s: %q", role, got)
+		}
+	}
+}
+
+func TestOnlyTheCDOrAProgramLeadAssignsExtraWork(t *testing.T) {
+	drawer := extraWorkNoticeDrawer()
+	if drawer.GetTitle() != "Extra work" || drawer.GetCancelLabel() != "Close" || drawer.GetCanSubmit() {
+		t.Fatalf("drawer = %q / %q", drawer.GetTitle(), drawer.GetCancelLabel())
+	}
+	note := drawer.GetItems()[0].GetNote()
+	if note.GetText() != "Only the CD or a Program Lead assigns extra work." || note.GetTone() != "info" {
+		t.Fatalf("note = %+v", note)
+	}
+}
+
+func TestExtraWorkFormFields(t *testing.T) {
+	long := strings.Repeat("m", 80)
+	drawer := extraWorkDrawer(
+		[]extraWorkAssignee{{id: "u1", name: "Alex M.", role: "CCEO"}},
+		[]fieldChoice{{id: "m1", name: long}},
+	)
+	if drawer.GetTitle() != "Assign extra work" || drawer.GetSubmitLabel() != "Assign work" || !drawer.GetCanSubmit() {
+		t.Fatalf("drawer = %q / %q", drawer.GetTitle(), drawer.GetSubmitLabel())
+	}
+	items := drawer.GetItems()
+	if !strings.HasPrefix(items[0].GetText(), "Verified independently") {
+		t.Fatalf("intro = %q", items[0].GetText())
+	}
+	if got := strings.Join(fieldNames(&screensv1.PageDrawer{Items: items[1:]}), ","); got != "assignee_id,due_date,title,instruction,category,complexity,urgency,linked_milestone_id,expected_output,evidence_required,reason" {
+		t.Fatalf("fields = %s", got)
+	}
+	if o := items[1].GetField().GetOptions()[1]; o.GetValue() != "u1" || o.GetLabel() != "Alex M. — CCEO" {
+		t.Fatalf("assignee = %+v", o)
+	}
+	if f := items[5].GetField(); f.GetValue() != "priority_linked" || len(f.GetOptions()) != 8 {
+		t.Fatalf("category = %+v", f)
+	}
+	if items[6].GetField().GetValue() != "medium" || items[7].GetField().GetValue() != "normal" {
+		t.Fatal("complexity opens on medium, urgency on normal")
+	}
+	if o := items[8].GetField().GetOptions()[1]; len([]rune(o.GetLabel())) != 70 || !strings.HasSuffix(o.GetLabel(), "…") {
+		t.Fatalf("milestone = %q", o.GetLabel())
+	}
+	if f := items[10].GetField(); f.GetKind() != "checkbox" || f.GetValue() != "on" {
+		t.Fatalf("evidence = %+v", f)
 	}
 }
 
