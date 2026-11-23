@@ -9,8 +9,11 @@
  */
 import { toJson } from '@bufbuild/protobuf';
 import { cookies } from 'next/headers';
-import { notFound } from 'next/navigation';
+import { notFound, unstable_rethrow } from 'next/navigation';
 
+import { SchoolCoreTab } from '@/components/profile/SchoolCoreTab';
+import { SchoolHero } from '@/components/profile/SchoolHero';
+import { SchoolOverview } from '@/components/profile/SchoolOverview';
 import { LocationCard } from '@/components/route/LocationCard';
 import { GetSchoolLocationResponseSchema, RoutePlannerService } from '@/gen/edify/routes/v1/routes_pb';
 import type { PageAction, PageBlock } from '@/gen/edify/screens/v1/page_pb';
@@ -23,10 +26,10 @@ import { gatewayClient, isNotFound, isUnavailable } from '@/lib/gateway';
 import { ACCESS_COOKIE } from '@/lib/session';
 import { requestView } from '@/lib/requestView';
 import { profileAsk, profileTabs, profileYear, splitRail, trailingPanels } from '@/lib/schoolProfile';
+import { honestSsa, schoolIdentity, trendPoints } from '@/lib/schoolProfileView';
 
-import { PageHeader } from '../blocks/PageHeader';
 import { TabRail } from '../blocks/TabRail';
-import { PhonePage } from '../phone/PhonePage';
+import { PhoneBlocks } from '../phone/PhoneBlocks';
 import { FeedBlocks } from './FeedBlocks';
 import { NotMovedYet } from './NotMovedYet';
 import { SelectionBar } from './SelectionBar';
@@ -42,6 +45,19 @@ async function ask(schoolId: string, tab: string, fy: string, period: string): P
     }
   });
 }
+
+/** A second tab's answer the page only draws part of: when it cannot be read, the page still opens without that part. */
+async function askAlso(schoolId: string, tab: string, fy: string, period: string): Promise<GetSchoolProfileResponse | null> {
+  try {
+    return await ask(schoolId, tab, fy, period);
+  } catch (error) {
+    unstable_rethrow(error);
+    return null;
+  }
+}
+
+/** The header draws the school's facts and year, so the tabs do not repeat them. */
+const underHero = (blocks: readonly PageBlock[]) => blocks.filter((block) => block.kind.case !== 'facts' && block.kind.case !== 'scopeLine');
 
 interface BlocksProps {
   readonly blocks: readonly PageBlock[];
@@ -70,43 +86,65 @@ export async function ProfilePage({ schoolId, query }: { schoolId: string; query
   const ownPath = `/schools/${encodeURIComponent(schoolId)}`;
   // A list a figure opens (`what=…`) is not part of the profile request: the existing web draws it.
   if (asked.elsewhere) return <NotMovedYet href={drawerPageHref(existingWebUrl, ownPath, query)} />;
-  const answer = await ask(schoolId, asked.tab, asked.fy, asked.period);
+  // The Core School and Details tabs carry no school facts, so the header reads them from the Overview;
+  // the Overview's trend is the SSA tab's yearly chart.
+  const needsFacts = asked.tab === 'core' || asked.tab === 'details';
+  const needsTrend = asked.tab === '' || asked.tab === 'overview';
+  const [answer, factsAnswer, ssaAnswer] = await Promise.all([
+    ask(schoolId, asked.tab, asked.fy, asked.period),
+    needsFacts ? askAlso(schoolId, 'overview', asked.fy, asked.period) : null,
+    needsTrend ? askAlso(schoolId, 'ssa', asked.fy, asked.period) : null,
+  ]);
   if (!answer) return <NotMovedYet href={drawerPageHref(existingWebUrl, ownPath, query)} />;
   const pagePath = answer.webPath || ownPath;
   const drawerHref = drawerPageHref(existingWebUrl, pagePath, query);
   const hrefOf = (action: PageAction) => actionHref(action, pagePath, drawerHref);
   const selectable = Boolean(answer.selection?.actions.length);
   const activeTab = answer.tabs.find((tab) => tab.active)?.key ?? '';
-  if ((await requestView()) === 'phone') {
-    const year = profileYear(answer.blocks, asked.fy);
-    return (
-      <PhonePage answer={answer} pagePath={pagePath} drawerHref={drawerHref} tabLinks={profileTabs(answer.tabs, pagePath, year).tabs}>
-        {activeTab === 'overview' || activeTab === '' ? <SchoolLocation schoolId={schoolId} /> : null}
-      </PhonePage>
-    );
-  }
-  const { frame, main, rail } = splitRail(answer.blocks);
+  const isPhone = (await requestView()) === 'phone';
+  const identity = schoolIdentity(answer.header, factsAnswer?.blocks ?? answer.blocks);
+  const yearLabel = identity.people.find((fact) => fact.label === 'Fiscal Year')?.value ?? '';
+  const blocks = underHero(answer.blocks);
+  const { frame, main, rail } = splitRail(blocks);
   const props = { pagePath, drawerHref, selectable, clearFilters: false };
+  const isOverview = activeTab === 'overview' || activeTab === '';
+  const otherTab = isPhone ? (
+    <div data-ph="page">
+      <PhoneBlocks blocks={blocks} pagePath={pagePath} drawerHref={drawerHref} selectable={selectable} />
+    </div>
+  ) : rail.length ? (
+    <>
+      <FeedBlocks blocks={frame} {...props} />
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_19rem]">
+        <div className="min-w-0 space-y-4">
+          <FeedBlocks blocks={main} {...props} />
+        </div>
+        <div className="space-y-4 lg:sticky lg:top-4">
+          <FeedBlocks blocks={rail} {...props} />
+        </div>
+      </div>
+    </>
+  ) : (
+    <Body blocks={blocks} {...props} sideBySide={activeTab === 'ssa'} />
+  );
   return (
-    <div className="mx-auto max-w-[1500px] space-y-3 px-4 pb-24 pt-4 sm:px-6 lg:pb-8" data-page={pagePath} data-tab={activeTab}>
-      {answer.header ? <PageHeader header={answer.header} hrefOf={hrefOf} /> : null}
+    <div className="mx-auto max-w-[1600px] space-y-3 px-4 pb-24 pt-4 sm:px-6 lg:pb-8" data-page={pagePath} data-tab={activeTab}>
+      {answer.header ? <SchoolHero header={answer.header} identity={identity} hrefOf={hrefOf} /> : null}
       {answer.tabs.length ? <TabRail rail={profileTabs(answer.tabs, pagePath, profileYear(answer.blocks, asked.fy))} /> : null}
-      {rail.length ? (
-        <>
-          <FeedBlocks blocks={frame} {...props} />
-          <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_19rem]">
-            <div className="min-w-0 space-y-4">
-              <FeedBlocks blocks={main} {...props} />
-            </div>
-            <div className="space-y-4 lg:sticky lg:top-4">
-              <FeedBlocks blocks={rail} {...props} />
-            </div>
-          </div>
-        </>
+      {isOverview ? (
+        <SchoolOverview
+          blocks={honestSsa(answer.blocks)}
+          trend={trendPoints(ssaAnswer?.blocks ?? [])}
+          year={yearLabel}
+          pagePath={pagePath}
+          drawerHref={drawerHref}
+          location={<SchoolLocation schoolId={schoolId} />}
+        />
+      ) : activeTab === 'core' ? (
+        <SchoolCoreTab blocks={answer.blocks} year={yearLabel} pagePath={pagePath} drawerHref={drawerHref} />
       ) : (
-        <Body blocks={answer.blocks} {...props} sideBySide={activeTab === 'ssa'} />
+        otherTab
       )}
-      {activeTab === 'overview' || activeTab === '' ? <SchoolLocation schoolId={schoolId} /> : null}
       {answer.selection?.actions.length ? <SelectionBar selection={answer.selection} pageHref={drawerHref} /> : null}
     </div>
   );
@@ -117,10 +155,14 @@ async function SchoolLocation({ schoolId }: { schoolId: string }) {
   const token = (await cookies()).get(ACCESS_COOKIE)?.value;
   if (!token) return null;
   let json = null;
+  let revision = '';
   try {
-    json = toJson(GetSchoolLocationResponseSchema, await gatewayClient(RoutePlannerService, token).getSchoolLocation({ schoolId }));
+    const location = await gatewayClient(RoutePlannerService, token).getSchoolLocation({ schoolId });
+    json = toJson(GetSchoolLocationResponseSchema, location);
+    // A new reading on the server redraws the card from it (a refresh after another reader's capture).
+    revision = `${location.version}:${location.school?.locationStatus ?? ''}:${location.verifiedAt}`;
   } catch {
     return null; // the profile is drawn without its location card
   }
-  return <LocationCard answer={json} />;
+  return <LocationCard key={revision} answer={json} variant="rail" />;
 }

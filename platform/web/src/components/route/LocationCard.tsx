@@ -14,7 +14,7 @@
  */
 import { create, fromJson } from '@bufbuild/protobuf';
 import type { JsonValue } from '@bufbuild/protobuf';
-import { CloudOff, LocateFixed, MapPin, MapPinOff, RefreshCw } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, CloudOff, LocateFixed, MapPin, MapPinOff, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -38,7 +38,61 @@ const STATUS: Record<string, string> = {
   invalid: 'Recorded location looks invalid',
 };
 
-export function LocationCard({ answer: json }: { answer: JsonValue }) {
+interface RailFactsProps {
+  readonly point: { readonly lat: number; readonly lng: number };
+  readonly status: string;
+  readonly accuracy: number | null;
+  readonly verifiedAt: string;
+  readonly verifiedBy: string;
+  readonly source: string;
+  readonly nearby: string;
+}
+
+/** The narrow card's record: the coordinates with their state, then one labelled row per fact. */
+function RailFacts({ point, status, accuracy, verifiedAt, verifiedBy, source, nearby }: RailFactsProps) {
+  const verified = status === 'verified';
+  const rows: readonly (readonly [string, string])[] = [
+    ['Accuracy', accuracy ? `±${Math.round(accuracy)} m` : 'Not recorded'],
+    ['Last Verified', verifiedAt ? dayText(verifiedAt) : 'Not verified'],
+    ['Source', source || 'Not recorded'],
+    ['Verified By', verifiedBy || 'Not verified'],
+    ['Nearby Schools', nearby],
+  ];
+  return (
+    <div>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-[12px] font-medium text-[var(--edify-text-muted)]">GPS Coordinates</p>
+          <p className="text-[15px] font-bold tabular-nums text-[var(--edify-text)]" data-stored-coords="true">
+            {point.lat.toFixed(6)}, {point.lng.toFixed(6)}
+          </p>
+        </div>
+        <span
+          data-badge={verified ? 'gps-verified' : 'gps-unverified'}
+          className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[12px] font-bold ${
+            verified
+              ? 'border-[var(--edify-success-border)] bg-[var(--edify-success-light)] text-[var(--edify-success-text)]'
+              : 'border-[var(--edify-warning-border)] bg-[var(--edify-warning-light)] text-[var(--edify-warning-text)]'
+          }`}
+        >
+          {verified ? <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> : <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />}
+          {verified ? 'Verified' : 'Unverified'}
+        </span>
+      </div>
+      <dl className="mt-2 divide-y divide-[var(--edify-border)] text-[13px]">
+        {rows.map(([label, value]) => (
+          <div key={label} className="flex items-baseline justify-between gap-3 py-1.5">
+            <dt className="shrink-0 text-[var(--edify-text-muted)]">{label}</dt>
+            <dd className="min-w-0 text-right font-semibold text-[var(--edify-text)]">{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
+export function LocationCard({ answer: json, variant = 'wide' }: { answer: JsonValue; variant?: 'wide' | 'rail' }) {
+  const isRail = variant === 'rail';
   const answer = useMemo(() => fromJson(GetSchoolLocationResponseSchema, json), [json]);
   const router = useRouter();
   const baseSchool = answer.school;
@@ -49,11 +103,12 @@ export function LocationCard({ answer: json }: { answer: JsonValue }) {
   );
   const [liveStatus, setLiveStatus] = useState<string>(baseSchool?.locationStatus ?? 'missing');
   const [liveVersion, setLiveVersion] = useState<number>(answer.version || 0);
-  const [liveAccuracy, setLiveAccuracy] = useState<number | null>(null);
+  const [liveAccuracy, setLiveAccuracy] = useState<number | null>(answer.accuracyMeters ?? null);
   const [liveVerifiedAt, setLiveVerifiedAt] = useState<string>(answer.verifiedAt || '');
   const [liveVerifiedBy, setLiveVerifiedBy] = useState<string>(answer.verifiedByName || '');
+  // The gateway names the source; an older gateway does not, so its status still decides.
   const [liveSource, setLiveSource] = useState<string>(
-    baseSchool?.locationStatus === 'verified' ? 'Device location services' : 'School Directory',
+    answer.locationSource || (baseSchool?.locationStatus === 'verified' ? 'Device location services' : 'School Directory'),
   );
 
   const [pending, setPending] = useState<LocationReport | undefined>(answer.pendingReport);
@@ -86,7 +141,7 @@ export function LocationCard({ answer: json }: { answer: JsonValue }) {
         setLiveAccuracy(res.location.accuracy_meters ?? null);
         setLiveVerifiedAt(res.location.verified_at || new Date().toISOString());
         setLiveVerifiedBy(res.location.verified_by_name || '');
-        setLiveSource('Device location services');
+        setLiveSource('Device GPS (Field)');
         setNotice('Offline GPS capture synchronized and saved to PostgreSQL.');
         router.refresh();
       }
@@ -129,7 +184,7 @@ export function LocationCard({ answer: json }: { answer: JsonValue }) {
       setLiveAccuracy(res.location.accuracy_meters ?? null);
       setLiveVerifiedAt(res.location.verified_at || new Date().toISOString());
       setLiveVerifiedBy(res.location.verified_by_name || '');
-      setLiveSource('Device location services');
+      setLiveSource('Device GPS (Field)');
       setNotice('Offline GPS capture synchronized and saved to PostgreSQL.');
       router.refresh();
     } else {
@@ -147,7 +202,7 @@ export function LocationCard({ answer: json }: { answer: JsonValue }) {
       {/* Header Row with Conditional GPS Missing / GPS Recorded Badge */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="location-title" className="flex items-center gap-2 text-[17px] font-bold text-[var(--edify-text)]">
-          <MapPin className="h-5 w-5 text-[var(--brand-primary)]" aria-hidden="true" /> School Location
+          <MapPin className="h-5 w-5 text-[var(--brand-primary)]" aria-hidden="true" /> {isRail ? 'Location & GPS' : 'School Location'}
         </h2>
         <div className="flex items-center gap-2">
           {offlineQueued ? (
@@ -156,9 +211,11 @@ export function LocationCard({ answer: json }: { answer: JsonValue }) {
             </span>
           ) : null}
           {livePoint ? (
-            <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[12px] font-bold text-emerald-700" data-badge="gps-recorded">
-              GPS Recorded
-            </span>
+            isRail ? null : (
+              <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[12px] font-bold text-emerald-700" data-badge="gps-recorded">
+                GPS Recorded
+              </span>
+            )
           ) : (
             <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-[12px] font-bold text-amber-800" data-badge="gps-missing">
               GPS Missing
@@ -187,11 +244,22 @@ export function LocationCard({ answer: json }: { answer: JsonValue }) {
 
       {/* STATE B — School WITH Existing Coordinates */}
       {livePoint ? (
-        <div className="mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
-          <div className="relative h-[260px] overflow-hidden rounded-[12px] border border-[var(--edify-border)]">
-            <RouteMap stops={stops} path={[]} pathIsRoad={false} others={[]} chip={null} onSelect={() => undefined} className="absolute inset-0" showLegend={false} showControls={false} />
+        <div className={isRail ? 'mt-3 space-y-3' : 'mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]'}>
+          <div className={`relative ${isRail ? 'h-[200px]' : 'h-[260px]'} overflow-hidden rounded-[12px] border border-[var(--edify-border)]`}>
+            <RouteMap stops={stops} path={[]} pathIsRoad={false} others={[]} chip={null} onSelect={() => undefined} className="absolute inset-0" showLegend={false} showControls={false} compact={isRail} />
           </div>
           <div className="flex flex-col justify-between gap-3">
+            {isRail ? (
+              <RailFacts
+                point={livePoint}
+                status={liveStatus}
+                accuracy={liveAccuracy}
+                verifiedAt={liveVerifiedAt}
+                verifiedBy={liveVerifiedBy}
+                source={liveSource}
+                nearby={`${answer.nearbySchools} within ${answer.nearbyRadiusKm} km`}
+              />
+            ) : (
             <dl className="space-y-2.5 text-[14px]">
               <div>
                 <dt className="text-[12px] font-semibold uppercase tracking-wide text-[var(--edify-text-muted)]">Stored Coordinates (WGS84)</dt>
@@ -230,6 +298,7 @@ export function LocationCard({ answer: json }: { answer: JsonValue }) {
                 </dd>
               </div>
             </dl>
+            )}
 
             <div className="space-y-2 pt-1">
               {answer.canCapture || answer.canReport ? (
@@ -240,7 +309,11 @@ export function LocationCard({ answer: json }: { answer: JsonValue }) {
                     setIsCapturing(true);
                   }}
                   data-action="update-gps"
-                  className="flex h-11 w-full items-center justify-center gap-2 rounded-[10px] border-2 border-[var(--brand-primary)] bg-white text-[14px] font-bold text-[var(--brand-primary)] hover:bg-blue-50"
+                  className={
+                    isRail
+                      ? 'flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-[var(--brand-primary)] text-[14px] font-bold text-white hover:bg-[var(--brand-primary-hover)]'
+                      : 'flex h-11 w-full items-center justify-center gap-2 rounded-[10px] border-2 border-[var(--brand-primary)] bg-white text-[14px] font-bold text-[var(--brand-primary)] hover:bg-blue-50'
+                  }
                 >
                   <RefreshCw className="h-4 w-4" aria-hidden="true" /> Update GPS Coordinates
                 </button>
@@ -249,7 +322,11 @@ export function LocationCard({ answer: json }: { answer: JsonValue }) {
                 {directions ? (
                   <Link
                     href={directions}
-                    className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[8px] bg-[var(--brand-primary)] px-3 text-[13px] font-semibold text-white hover:bg-[var(--brand-primary-hover)]"
+                    className={
+                      isRail
+                        ? 'inline-flex h-10 items-center justify-center gap-1.5 rounded-[8px] border border-[var(--brand-primary)] px-2 text-[13px] font-semibold text-[var(--brand-primary)] hover:bg-[var(--edify-surface-muted)]'
+                        : 'inline-flex h-10 items-center justify-center gap-1.5 rounded-[8px] bg-[var(--brand-primary)] px-3 text-[13px] font-semibold text-white hover:bg-[var(--brand-primary-hover)]'
+                    }
                   >
                     <RouteIcon name="navigate" className="h-4 w-4" /> Get Directions
                   </Link>
@@ -391,7 +468,7 @@ export function LocationCard({ answer: json }: { answer: JsonValue }) {
               setLiveAccuracy(res.location.accuracy_meters ?? null);
               setLiveVerifiedAt(res.location.verified_at || new Date().toISOString());
               setLiveVerifiedBy(res.location.verified_by_name || '');
-              setLiveSource('Device location services');
+              setLiveSource('Device GPS (Field)');
               router.refresh();
             } else if (res.outcome === 'pending_review') {
               router.refresh();

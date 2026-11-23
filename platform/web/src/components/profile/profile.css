@@ -1,0 +1,144 @@
+/*
+ * The profile pages' layout. Written on data-pf attributes, as phone.css is on
+ * data-ph: the existing site's stylesheet loads after Tailwind, so its own
+ * responsive grid and display utilities would otherwise win over ours.
+ */
+
+/* ── The school header ─────────────────────────────────────────────── */
+[data-pf='hero'] {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+[data-pf='hero-place'] { display: flex; flex-wrap: wrap; align-items: center; column-gap: 6px; }
+[data-pf='hero-facts'] { display: none; }
+[data-pf='hero-people'] { grid-column: 1 / -1; display: grid; gap: 4px; }
+[data-pf='hero-actions'] {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+/* Three to a row on the narrowest phones, one row from 375px; fewer buttons share the width. */
+[data-pf='hero-actions'] > * { flex: 1 1 30%; min-width: 0; }
+
+@media (min-width: 375px) {
+  [data-pf='hero-actions'] { flex-wrap: nowrap; }
+  [data-pf='hero-actions'] > * { flex: 1 1 0; }
+}
+@media (min-width: 420px) {
+  [data-pf='hero-people'] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 640px) {
+  [data-pf='hero'] { grid-template-columns: 11rem minmax(0, 1fr); gap: 12px 16px; }
+  [data-pf='hero-actions'] { flex-wrap: wrap; gap: 8px; }
+  [data-pf='hero-actions'] > * { flex: 0 0 auto; }
+}
+@media (min-width: 1280px) {
+  [data-pf='hero'] { grid-template-columns: 13.5rem minmax(0, 1fr); gap: 12px 20px; }
+  [data-pf='hero-photo'] { grid-row: span 2; }
+  [data-pf='hero-identity'] { display: flex; gap: 24px; }
+  [data-pf='hero-main'] { flex: 1; min-width: 0; }
+  [data-pf='hero-place'], [data-pf='hero-people'] { display: none; }
+  [data-pf='hero-facts'] {
+    display: grid;
+    flex-shrink: 0;
+    grid-template-columns: auto auto;
+    align-content: start;
+    gap: 8px 32px;
+    padding-left: 24px;
+    border-left: 1px solid var(--edify-border);
+  }
+  [data-pf='hero-actions'] { grid-column: 2; }
+}
+
+/* ── The Overview's cards ──────────────────────────────────────────── */
+[data-pf='overview'] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+[data-pf='overview-main'] { display: contents; }
+[data-pf-card='performance'] { order: 1; }
+[data-pf-card='trend'] { order: 2; }
+[data-pf-card='location'] { order: 3; min-width: 0; }
+[data-pf-card='operations'] { order: 4; }
+[data-pf-card='finance'] { order: 5; }
+[data-pf-card='interventions'] { order: 6; }
+[data-pf-card='attention'] { order: 7; }
+[data-pf-card='insights'] { order: 8; }
+
+@media (min-width: 1024px) {
+  [data-pf='overview'] { grid-template-columns: repeat(12, minmax(0, 1fr)); align-items: stretch; }
+  [data-pf-card='performance'], [data-pf-card='interventions'] { grid-column: span 12; }
+  [data-pf-card='trend'] { grid-column: span 5; }
+  [data-pf-card='location'] { grid-column: span 7; }
+  [data-pf-card='operations'], [data-pf-card='finance'] { grid-column: span 6; }
+  [data-pf-card='operations'][data-alone] { grid-column: span 12; }
+  [data-pf-card='attention'] { grid-column: span 7; }
+  [data-pf-card='insights'] { grid-column: span 5; }
+}
+@media (min-width: 1280px) {
+  [data-pf='overview'] { grid-template-columns: minmax(0, 1fr) 21rem; align-items: start; }
+  [data-pf='overview-main'] {
+    display: grid;
+    grid-column: 1;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 16px;
+    align-items: stretch;
+    min-width: 0;
+  }
+  [data-pf-card] { order: 0; }
+  [data-pf-card='performance'] { grid-column: span 7; }
+  [data-pf-card='location'] { grid-column: 2; position: sticky; top: 16px; }
+  [data-pf-card='interventions'] { grid-column: span 7; }
+  [data-pf-card='insights'] { grid-row: span 2; }
+}
+
+/* ── Figure tiles ──────────────────────────────────────────────────── */
+[data-pf='tiles'] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+[data-pf='tile-rows'] { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+[data-pf='more'] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; row-gap: 4px; }
+[data-pf='tile'] { display: block; min-width: 0; }
+[data-pf='tile-text'] { display: block; min-width: 0; margin-top: 8px; }
+[data-pf='tile-chevron'] { display: none; }
+[data-pf='tile'][data-row] { display: flex; align-items: center; gap: 12px; }
+[data-pf='tile'][data-row] [data-pf='tile-text'] { display: flex; flex: 1; align-items: baseline; gap: 8px; margin-top: 0; }
+[data-pf='tile'][data-row] [data-pf='tile-chevron'] { display: block; }
+
+@media (min-width: 640px) {
+  [data-pf='tiles'], [data-pf='more'] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  [data-pf='tile-rows'] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  [data-pf='tile'][data-row] { display: block; }
+  [data-pf='tile'][data-row] [data-pf='tile-text'] { display: block; margin-top: 8px; }
+  [data-pf='tile'][data-row] [data-pf='tile-chevron'] { display: none; }
+}
+/* On the narrowest desktop, four tiles beside the trend and the GPS card would clip their words. */
+@media (min-width: 1280px) and (max-width: 1439.98px) {
+  [data-pf='tiles'] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* Beside the trend and the GPS card the small figures need two columns until the page is wide. */
+@media (min-width: 1280px) and (max-width: 1535.98px) {
+  [data-pf='more'] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1536px) {
+  [data-pf='tile-rows'] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+[data-pf='chosen'] { display: none; }
+@media (min-width: 1536px) {
+  [data-pf='chosen'] { display: table-cell; }
+}
+
+/* ── The Core School tab ───────────────────────────────────────────── */
+[data-pf='core-figures'] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+[data-pf='core-cards'] { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (min-width: 1024px) {
+  [data-pf='core-figures'] { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  [data-pf='core-cards'] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1280px) {
+  [data-pf='core-cards'] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}

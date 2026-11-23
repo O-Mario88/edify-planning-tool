@@ -80,6 +80,8 @@ export interface RouteMapProps {
   fitOthers?: boolean;
   /** Optional map controls bar (satellite/traffic/fullscreen). Defaults to true when legend is shown. */
   showControls?: boolean;
+  /** A small card's map: three small buttons in the corner and a one-line credit. */
+  compact?: boolean;
 }
 
 function pinElement(stop: ItineraryStop): HTMLElement {
@@ -286,6 +288,7 @@ export function RouteMap({
   focus,
   fitOthers = false,
   showControls = showLegend,
+  compact = false,
 }: RouteMapProps) {
   const googleMapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
   const box = useRef<HTMLDivElement>(null);
@@ -615,29 +618,31 @@ export function RouteMap({
         </div>
       ) : null}
 
-      {/* Bottom-right Zoom & Location Controls */}
-      <div data-map-overlay className="absolute bottom-24 right-3 flex flex-col overflow-hidden rounded-[10px] bg-white shadow-md">
-        <button type="button" onClick={() => zoom(1)} className="grid h-10 w-10 place-items-center text-slate-800 hover:bg-slate-50" aria-label="Zoom in">
+      {/* Zoom & Location Controls: bottom-right, or the corner of a small card's map */}
+      <div data-map-overlay className={`absolute flex flex-col overflow-hidden rounded-[10px] bg-white shadow-md ${compact ? 'right-2 top-2' : 'bottom-24 right-3'}`}>
+        <button type="button" onClick={() => zoom(1)} className={`grid place-items-center text-slate-800 hover:bg-slate-50 ${compact ? 'h-8 w-8' : 'h-10 w-10'}`} aria-label="Zoom in">
           <Plus className="h-4 w-4" />
         </button>
         <span className="h-px bg-slate-200" />
-        <button type="button" onClick={() => zoom(-1)} className="grid h-10 w-10 place-items-center text-slate-800 hover:bg-slate-50" aria-label="Zoom out">
+        <button type="button" onClick={() => zoom(-1)} className={`grid place-items-center text-slate-800 hover:bg-slate-50 ${compact ? 'h-8 w-8' : 'h-10 w-10'}`} aria-label="Zoom out">
           <Minus className="h-4 w-4" />
         </button>
         <span className="h-px bg-slate-200" />
-        <button type="button" onClick={recenter} className="grid h-10 w-10 place-items-center text-slate-800 hover:bg-slate-50" aria-label="Fit entire route">
+        <button type="button" onClick={recenter} className={`grid place-items-center text-slate-800 hover:bg-slate-50 ${compact ? 'h-8 w-8' : 'h-10 w-10'}`} aria-label={compact ? 'Recentre on the school' : 'Fit entire route'}>
           <LocateFixed className="h-4 w-4" />
         </button>
       </div>
-      <button
-        type="button"
-        onClick={locate}
-        data-map-overlay
-        className="absolute bottom-10 right-3 grid h-10 w-10 place-items-center rounded-[10px] bg-white text-slate-800 shadow-md hover:bg-slate-50"
-        aria-label="Show my location"
-      >
-        <RouteIcon name="locate" className="h-4 w-4" />
-      </button>
+      {compact ? null : (
+        <button
+          type="button"
+          onClick={locate}
+          data-map-overlay
+          className="absolute bottom-10 right-3 grid h-10 w-10 place-items-center rounded-[10px] bg-white text-slate-800 shadow-md hover:bg-slate-50"
+          aria-label="Show my location"
+        >
+          <RouteIcon name="locate" className="h-4 w-4" />
+        </button>
+      )}
 
       {/* Bottom-left Route Distance Chip & Alternative Switcher */}
       <div data-map-overlay className="absolute bottom-5 left-3 flex flex-col gap-2">
@@ -679,9 +684,11 @@ export function RouteMap({
         ) : null}
       </div>
 
-      <p data-map-overlay className="absolute bottom-1 right-16 rounded-[6px] bg-white/85 px-1.5 py-0.5 text-[10px] text-slate-600">
+      <p data-map-overlay className={`absolute rounded-[6px] bg-white/85 px-1.5 py-0.5 text-[10px] text-slate-600 ${compact ? 'bottom-1 right-1 leading-tight' : 'bottom-1 right-16'}`}>
         {baseLayer === 'satellite' ? (
           <span>Tiles © Esri</span>
+        ) : compact ? (
+          <span>© OpenFreeMap · © OpenStreetMap</span>
         ) : (
           <>
             © <a href="https://openfreemap.org" target="_blank" rel="noopener noreferrer">OpenFreeMap</a> · ©{' '}
