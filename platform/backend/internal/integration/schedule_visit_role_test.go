@@ -16,6 +16,7 @@ import (
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/coreforms"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/identity"
 )
 
@@ -151,6 +152,7 @@ func TestTheVisitSaveRefusesAndHandsOnInTheExistingWords(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	svc.WithVisitRequests(coreforms.NewService(gateway, func() time.Time { return time.Date(2026, 11, 12, 9, 0, 0, 0, time.UTC) }))
 	principal := func(email string) auth.Principal {
 		account, err := identity.NewStore(gateway).LoadAccount(ctx, borrowAccount(t, email))
 		if err != nil {
@@ -206,6 +208,8 @@ SELECT
 			"10 November 2026 has passed. Schedule work from 12 November 2026 onwards.", false},
 		{"the Country Director at this officer's school", principal("cd@edify.org"), visit(client, "donor_visit", "2026-11-10"),
 			"10 November 2026 has passed. Schedule work from 12 November 2026 onwards.", false},
+		{"the Accountant asks without saying why", principal("accountant@edify.org"), visit(client, "donor_visit", "2026-11-20"),
+			"Explain why you need to visit this school.", false},
 		{"another CCEO's training at this officer's school", principal("cceo1@edify.org"),
 			activities.Request{SchoolID: client, Purpose: "in_school_training", Date: "2026-11-10", CatalogueItemID: course, Focus: "leadership"},
 			"10 November 2026 has passed. Schedule work from 12 November 2026 onwards.", false},

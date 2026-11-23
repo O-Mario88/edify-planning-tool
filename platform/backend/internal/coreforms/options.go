@@ -2,6 +2,7 @@ package coreforms
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"sort"
@@ -9,6 +10,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 )
 
 const (
@@ -290,26 +293,49 @@ func (s *Service) choices(ctx context.Context, sql string) ([]Choice, error) {
 // approvalOwner is visit_requests.approval_owner_for and staff_name: the name
 // of the person whose approval an Accountant's visit needs, "" when none.
 func (s *Service) approvalOwner(ctx context.Context, school School, userID, staffID string) (string, error) {
+	_, name, err := s.approvalProfile(ctx, school, userID, staffID)
+	return name, err
+}
+
+// approvalProfile is approval_owner_for: the staff profile whose approval the
+// visit needs and that person's name, both "" when nobody's is needed.
+func (s *Service) approvalProfile(ctx context.Context, school School, userID, staffID string) (string, string, error) {
 	owners, err := s.ownerIDs(ctx, school)
 	if err != nil || len(owners) == 0 {
-		return "", err
+		return "", "", err
 	}
 	if slices.Contains(owners, userID) || (staffID != "" && slices.Contains(owners, staffID)) {
-		return "", nil
+		return "", "", nil
 	}
+	var id string
 	var name *string
-	err = s.db.QueryRow(ctx, `SELECT u.name FROM staff_profile sp LEFT JOIN "user" u ON u.id = sp.user_id
-WHERE sp.deleted_at IS NULL AND (sp.id = ANY($1) OR sp.user_id = ANY($1)) ORDER BY sp.id LIMIT 1`, owners).Scan(&name)
+	err = s.db.QueryRow(ctx, `SELECT sp.id, u.name FROM staff_profile sp LEFT JOIN "user" u ON u.id = sp.user_id
+WHERE sp.deleted_at IS NULL AND (sp.id = ANY($1) OR sp.user_id = ANY($1)) ORDER BY sp.id LIMIT 1`, owners).Scan(&id, &name)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return "", nil
+			return "", "", nil
 		}
-		return "", fmt.Errorf("coreforms: reading the school's owner: %w", err)
+		return "", "", fmt.Errorf("coreforms: reading the school's owner: %w", err)
 	}
 	if name == nil || *name == "" {
-		return "the school's owner", nil
+		return id, "the school's owner", nil
 	}
-	return *name, nil
+	return id, *name, nil
+}
+
+// VisitRequestOwner answers the save of an Accountant's visit: the profile
+// that must approve it, or the sentence refusing the school.
+func (s *Service) VisitRequestOwner(ctx context.Context, p auth.Principal, code string) (string, string, error) {
+	school, err := s.VisitTarget(ctx, p, code)
+	if err != nil {
+		var refusal *Refusal
+		if errors.As(err, &refusal) {
+			return "", refusal.Message, nil
+		}
+		return "", "", err
+	}
+	owner, _, err := s.approvalProfile(ctx, school, p.UserID, p.StaffProfileID)
+	return owner, "", err
 }
 
 // ownerIDs is school_owner_ids: the owner column, else a single assignment,

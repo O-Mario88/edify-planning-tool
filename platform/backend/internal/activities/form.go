@@ -16,7 +16,7 @@ var formFields = map[string]bool{
 	"activity_goal": true, "activity_purpose_text": true, "expected_outcome": true,
 	"ssa_deviation_reason": true, "catalogue_item_id": true, "recommendation_reason": true,
 	"require_catalogue": true, "activity_type": true, "delivery_type": true, "executor_type": true,
-	"focus_intervention": true, "source_activity_id": true,
+	"focus_intervention": true, "source_activity_id": true, "visit_justification": true,
 }
 
 // RequestFromForm reads the drawer's form; false when Go does not take it.
@@ -50,5 +50,6 @@ func RequestFromForm(form url.Values) (Request, bool) {
 		CatalogueItemID: one("catalogue_item_id"), RecReason: one("recommendation_reason"),
 		Focus:            strings.TrimSpace(one("focus_intervention")),
 		SourceActivityID: strings.TrimSpace(one("source_activity_id")),
+		Justification:    strings.TrimSpace(one("visit_justification")),
 	}, true
 }

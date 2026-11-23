@@ -45,7 +45,9 @@ func (s *Service) WithOwnerNotices(push NoticePush, live NoticePublisher) *Servi
 	return s
 }
 
-type scheduledNotice struct{ title, body, event string }
+type scheduledNotice struct {
+	title, body, event, category, contextType, route, label, recipient string
+}
 
 // ownerNotice is _notify_scheduled_owner's decision for a school visit:
 // nobody is told about their own scheduling.
@@ -56,7 +58,8 @@ func ownerNotice(activityType, owner, actorUser, actorStaff, where string, day t
 	return scheduledNotice{
 		title: scheduledVisitTitle,
 		body:  fmt.Sprintf("%s on %s.", where, day.Format("2 Jan 2006")),
-		event: scheduledVisitEvent,
+		event: scheduledVisitEvent, category: planningCategory, contextType: activityContext,
+		label: planNoticeLabel, recipient: owner,
 	}, true
 }
 
@@ -91,6 +94,14 @@ func (s *Service) tellScheduledOwner(ctx context.Context, pl *plan) error {
 	if !ok {
 		return nil
 	}
+	notice.route = "/my-plan/" + r.id
+	return s.deliverNotice(ctx, pl, notice)
+}
+
+// deliverNotice is WorkflowNotificationService.trigger for one recipient: the
+// notice, its phone copy, its audit row, and a word to their open pages.
+func (s *Service) deliverNotice(ctx context.Context, pl *plan, notice scheduledNotice) error {
+	r := pl.row
 	now := s.now()
 	tx, err := s.db.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
 	if err != nil {
@@ -100,8 +111,8 @@ func (s *Service) tellScheduledOwner(ctx context.Context, pl *plan) error {
 	var notificationID, recipient string
 	err = tx.QueryRow(ctx, `SELECT out_notification_id, out_recipient_id
   FROM gateway_notifications.notify_workflow($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-		cuid.New(), r.responsible, notice.title, notice.body, planningCategory, activityContext, r.id,
-		"/my-plan/"+r.id, planNoticeLabel, normalPriority, notice.event, now).Scan(&notificationID, &recipient)
+		cuid.New(), notice.recipient, notice.title, notice.body, notice.category, notice.contextType, r.id,
+		notice.route, notice.label, normalPriority, notice.event, now).Scan(&notificationID, &recipient)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil
 	}
@@ -114,11 +125,11 @@ func (s *Service) tellScheduledOwner(ctx context.Context, pl *plan) error {
 		}
 	}
 	if _, err := audit.Append(ctx, tx, audit.Entry{
-		Action: "notification." + notice.event, SubjectKind: audit.Text(activityContext), SubjectID: audit.Text(r.id),
+		Action: "notification." + notice.event, SubjectKind: audit.Text(notice.contextType), SubjectID: audit.Text(r.id),
 		Success: true, IPAddress: nilIfEmpty(pl.origin.IP), UserAgent: nilIfEmpty(pl.origin.UserAgent),
 		CorrelationID: nilIfEmpty(pl.origin.CorrelationID),
 		Payload: map[string]any{
-			"category": planningCategory, "priority": normalPriority,
+			"category": notice.category, "priority": normalPriority,
 			"recipient_ids": []any{recipient}, "notification_ids": []any{notificationID},
 		},
 	}, now); err != nil {
@@ -129,7 +140,7 @@ func (s *Service) tellScheduledOwner(ctx context.Context, pl *plan) error {
 	}
 	if s.live != nil {
 		s.live.Publish(realtime.Event{
-			Type: "notification." + notice.event, EntityType: activityContext, EntityID: r.id,
+			Type: "notification." + notice.event, EntityType: notice.contextType, EntityID: r.id,
 			TargetUserID: recipient, ActorUserID: pl.p.UserID,
 		})
 	}

@@ -49,6 +49,19 @@ type activityRow struct {
 	// A Training Follow Up's session and its supporting interventions.
 	followUpOf string
 	secondary  []string
+	// A visit request: who decides it, and why the requester needs to go.
+	approvalOwner, justification string
+}
+
+// isRequest is whether the row waits for the school owner's decision.
+func (r activityRow) isRequest() bool { return r.approvalOwner != "" }
+
+// status is the row's first status.
+func (r activityRow) status() string {
+	if r.isRequest() {
+		return awaitingOwnerApproval
+	}
+	return "scheduled"
 }
 
 // groupColumns are the cluster session's own columns (_create 3371–3442).
@@ -131,6 +144,8 @@ type rowInput struct {
 	// carries over.
 	followUpOf string
 	secondary  []string
+	// A visit request: who decides it, and why the requester needs to go.
+	approvalOwner, justification string
 }
 
 func newRow(in rowInput) activityRow {
@@ -143,6 +158,7 @@ func newRow(in rowInput) activityRow {
 		focus: in.focus, item: in.item, version: in.version, reason: in.reason,
 		alignment: in.evidence.Alignment, sourceSSA: in.need.Record,
 		followUpOf: in.followUpOf, secondary: in.secondary,
+		approvalOwner: in.approvalOwner, justification: in.justification,
 	}
 	// The snapshot's SSA score for the focus (apply_catalogue_snapshot).
 	if r.sourceSSA != nil && r.focus != "" {
@@ -224,7 +240,11 @@ func (s *Service) write(ctx context.Context, pl *plan) (int64, error) {
 	if _, err := tx.Exec(ctx, `SELECT gateway_lock.lock_school($1)`, pl.school.ID); err != nil {
 		return 0, fmt.Errorf("activities: locking the school: %w", err)
 	}
-	if err := entitlement(ctx, tx, pl.school, pl.row.activityType, pl.row.purpose, pl.row.fy, pl.now); err != nil {
+	if pl.row.isRequest() {
+		if err := requestEntitlement(pl.school, pl.row.activityType); err != nil {
+			return 0, err
+		}
+	} else if err := entitlement(ctx, tx, pl.school, pl.row.activityType, pl.row.purpose, pl.row.fy, pl.now); err != nil {
 		return 0, err
 	}
 	if err := duplicates(ctx, tx, pl); err != nil {
@@ -240,11 +260,14 @@ func (s *Service) write(ctx context.Context, pl *plan) (int64, error) {
 	if pl.verdict.Refusal != "" {
 		return 0, &Refusal{Message: pl.verdict.Refusal}
 	}
-	batchID, made, err := s.joinDay(ctx, tx, pl)
-	if err != nil {
-		return 0, err
+	// A request joins no day and keeps no cost until it is approved.
+	if !pl.row.isRequest() {
+		batchID, _, err := s.joinDay(ctx, tx, pl)
+		if err != nil {
+			return 0, err
+		}
+		pl.row.batchID = batchID
 	}
-	pl.row.batchID = batchID
 	recIDs, err := planRecommendations(ctx, tx, pl)
 	if err != nil {
 		return 0, err
@@ -257,10 +280,11 @@ func (s *Service) write(ctx context.Context, pl *plan) (int64, error) {
 			return 0, err
 		}
 	}
-	_ = made
-	rowID, err := keepCosts(ctx, tx, pl)
-	if err != nil {
-		return 0, err
+	var rowID int64
+	if !pl.row.isRequest() {
+		if rowID, err = keepCosts(ctx, tx, pl); err != nil {
+			return 0, err
+		}
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return 0, fmt.Errorf("activities: committing the save: %w", err)
@@ -368,7 +392,7 @@ func insertActivity(ctx context.Context, tx pgx.Tx, r activityRow) error {
 	}{
 		{"id", r.id}, {"created_at", r.now}, {"updated_at", r.now}, {"activity_type", r.activityType},
 		{"fy", r.fy}, {"quarter", r.quarter}, {"delivery_type", "staff"}, {"executor_type", "staff"},
-		{"status", "scheduled"}, {"evidence_status", "none"}, {"ia_verification_status", "pending"},
+		{"status", r.status()}, {"evidence_status", "none"}, {"ia_verification_status", "pending"},
 		{"payment_status", "none"}, {"reschedule_count", 0}, {"est_cost_cents", 0}, {"cost_missing", false},
 		{"environment", "production"}, {"source", "manual_upload"}, {"school_id", optString(r.schoolID)},
 		{"responsible_staff_id", r.responsible}, {"scheduled_date", r.scheduled},
@@ -390,8 +414,8 @@ func insertActivity(ctx context.Context, tx pgx.Tx, r activityRow) error {
 		{"ssa_deviation_reason", r.deviation}, {"planning_source", planningSource},
 		{"activity_context_type", contextType}, {"support_rationale", ""}, {"venue", ""},
 		{"primary_driver_type", ""}, {"primary_driver_id", ""}, {"driver_reason", ""},
-		{"delivery_contact_name", ""}, {"approval_owner_id", ""}, {"owner_decision_note", ""},
-		{"visit_justification", ""}, {"partner_date_set_by", ""}, {"meeting_kind", r.meetingKind},
+		{"delivery_contact_name", ""}, {"approval_owner_id", r.approvalOwner}, {"owner_decision_note", ""},
+		{"visit_justification", r.justification}, {"partner_date_set_by", ""}, {"meeting_kind", r.meetingKind},
 		{"daily_visit_batch_id", optString(r.batchID)},
 		{"training_course_id", optString(r.trainingCourseID)}, {"paired_school_visit_id", optString(r.pairedVisitID)},
 	}
@@ -488,6 +512,12 @@ func (s *Service) afterCommit(ctx context.Context, pl *plan, rowID int64) {
 	}
 	if err := s.auditMeetingAdded(ctx, pl); err != nil {
 		s.logger.Warn("activities: the meeting's audit row was not written", "activity", pl.row.id, "err", err)
+	}
+	if pl.row.isRequest() {
+		if err := s.tellRequestOwner(ctx, pl); err != nil {
+			s.logger.Warn("activities: the owner was not asked about the visit", "activity", pl.row.id, "err", err)
+		}
+		return
 	}
 	if err := s.tellScheduledOwner(ctx, pl); err != nil {
 		s.logger.Warn("activities: the owner was not told of the visit", "activity", pl.row.id, "err", err)

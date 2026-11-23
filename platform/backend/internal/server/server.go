@@ -48,6 +48,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusteroversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterpage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/config"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/coreforms"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/coreoversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/coreschools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/costsettings"
@@ -497,7 +498,8 @@ func visitSave(cfg config.Config, pool *pgxpool.Pool, logger *slog.Logger, live 
 		// gateway refuses to start rather than run with the switch quietly off.
 		panic(err)
 	}
-	return service.WithOwnerNotices(plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, live)
+	return service.WithOwnerNotices(plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, live).
+		WithVisitRequests(coreforms.NewService(pool, time.Now))
 }
 
 // signInHandler assembles sign-in: the existing accounts, the existing

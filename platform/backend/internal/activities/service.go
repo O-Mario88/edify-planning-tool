@@ -52,6 +52,8 @@ type Request struct {
 	Focus string
 	// SourceActivityID is the session a Training Follow Up follows.
 	SourceActivityID string
+	// Justification is why a requester needs to visit; only a request reads it.
+	Justification string
 }
 
 // Answer is the saved visit and the confirmation the web shows.
@@ -78,6 +80,8 @@ type Service struct {
 	// The owner's notice for a visit someone else put on their plan.
 	noticePush NoticePush
 	live       NoticePublisher
+	// requests answers an Accountant's visit; nil hands those on.
+	requests VisitRequests
 }
 
 // NewService builds the save over the gateway's pool.
@@ -146,7 +150,8 @@ func (s *Service) prepare(ctx context.Context, p auth.Principal, req Request, or
 	// staff profile, a purpose outside the six, a date in another form.
 	purpose := strings.TrimSpace(req.Purpose)
 	date := strings.TrimSpace(req.Date)
-	if in(rules.Doors.Requesters, p.ActiveRole) || p.InActingAppointment || p.StaffProfileID == "" ||
+	requester := in(rules.Doors.Requesters, p.ActiveRole)
+	if (requester && s.requests == nil) || p.InActingAppointment || p.StaffProfileID == "" ||
 		!in(inScopePurposes, purpose) || (date != "" && !isoDate.MatchString(date)) {
 		return nil, handOn("not the owner's own visit for one of the six purposes")
 	}
@@ -207,11 +212,20 @@ func (s *Service) prepare(ctx context.Context, p auth.Principal, req Request, or
 			itemID, recReason = resolved.ID, ""
 		}
 	}
-	sc, responsible, err := s.visitSchool(ctx, p, req.SchoolID, now)
-	if err != nil {
-		return nil, err
+	var target *visitTarget
+	if requester {
+		target, err = s.requestTarget(ctx, p, req.SchoolID, now)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		sc, responsible, err := s.visitSchool(ctx, p, req.SchoolID, now)
+		if err != nil {
+			return nil, err
+		}
+		target = &visitTarget{school: *sc, responsible: responsible}
 	}
-	return s.create(ctx, p, req, origin, now, today, day, *sc, responsible, itemID, recReason, purpose, activityType)
+	return s.create(ctx, p, req, origin, now, today, day, *target, itemID, recReason, purpose, activityType)
 }
 
 // visitSchool is the view's school (2318–2338) and visit_owner_for: whose
@@ -263,7 +277,8 @@ func dateOnly(t time.Time) time.Time {
 
 // create is `_create` (2203) for this case, to its transaction.
 func (s *Service) create(ctx context.Context, p auth.Principal, req Request, origin Origin, now, today, day time.Time,
-	sc school, responsible, itemID, recReason, purpose, activityType string) (*plan, error) {
+	target visitTarget, itemID, recReason, purpose, activityType string) (*plan, error) {
+	sc, responsible, isRequest := target.school, target.responsible, target.approvalOwner != ""
 	it, err := selectableItem(ctx, s.db, itemID, day)
 	if err != nil {
 		return nil, err
@@ -288,8 +303,13 @@ func (s *Service) create(ctx context.Context, p auth.Principal, req Request, ori
 	collects := in(ssaCollectionTypes, activityType)
 	// assert_operating and the drawer's own closed-school door are above.
 	// The entitlement (_assert_schedule_entitlement 1322), asked once here
-	// and again under the school's lock.
-	if err := entitlement(ctx, s.db, sc, activityType, purpose, fy, now); err != nil {
+	// and again under the school's lock. A request waits for the owner, and
+	// the rule is applied when they approve it.
+	if isRequest {
+		if err := requestEntitlement(sc, activityType); err != nil {
+			return nil, err
+		}
+	} else if err := entitlement(ctx, s.db, sc, activityType, purpose, fy, now); err != nil {
 		return nil, err
 	}
 	home, err := staffHomeOf(ctx, s.db, responsible)
@@ -353,22 +373,30 @@ func (s *Service) create(ctx context.Context, p auth.Principal, req Request, ori
 		goal: req.Goal, outcome: req.Outcome, deviation: req.DeviationReason, collects: collects,
 		focus: focus, reason: reason, source: source, need: need, evidence: ev,
 		followUpOf: followUpOf, secondary: secondary,
+		approvalOwner: target.approvalOwner, justification: req.Justification,
 	})
+	if isRequest && req.Justification == "" {
+		return nil, refuse(justificationRequired)
+	}
 	ownerUID, err := fundingOwner(ctx, s.db, responsible, p.UserID)
 	if err != nil {
 		return nil, err
 	}
-	verdict, err := s.pricing.DayCheck(ctx, row.probe())
-	if err != nil {
-		return nil, err
-	}
-	if verdict.Refusal != "" && verdict.Stage == "preview" {
-		return nil, &Refusal{Message: verdict.Refusal}
-	}
-	if !verdict.Pooled && verdict.Refusal == "" {
-		// The day does not pool it: the existing save prices it inside the
-		// save. Not ported.
-		return nil, handOn("the day does not pool the visit")
+	// A request draws no money and joins no day until it is approved.
+	var verdict DayVerdict
+	if !isRequest {
+		verdict, err = s.pricing.DayCheck(ctx, row.probe())
+		if err != nil {
+			return nil, err
+		}
+		if verdict.Refusal != "" && verdict.Stage == "preview" {
+			return nil, &Refusal{Message: verdict.Refusal}
+		}
+		if !verdict.Pooled && verdict.Refusal == "" {
+			// The day does not pool it: the existing save prices it inside
+			// the save. Not ported.
+			return nil, handOn("the day does not pool the visit")
+		}
 	}
 	return &plan{p: p, school: sc, item: *it, version: version, need: need, focus: focus, evidence: ev,
 		row: row, ownerUID: ownerUID, home: home, verdict: verdict, origin: origin, now: now}, nil
@@ -442,12 +470,8 @@ func fundingOwner(ctx context.Context, q Querier, staffID, fallback string) (str
 // entitlement is _assert_schedule_entitlement for a client-rule school's
 // staff visit (Core schools are handed on before it).
 func entitlement(ctx context.Context, q Querier, sc school, activityType, purpose, fy string, now time.Time) error {
-	if in(rules.Gate.OutreachOnlyTypes, sc.Type) && !in(rules.Gate.OutreachActivityTypes, activityType) {
-		label, ok := rules.Gate.SchoolTypeLabels[sc.Type]
-		if !ok {
-			label = "Programme"
-		}
-		return refuse("%s is a %s school: it receives no training or assessment, and is planned only for a Donor Visit or a Content/Story Collection visit.", sc.Name, label)
+	if err := requestEntitlement(sc, activityType); err != nil {
+		return err
 	}
 	if !in(rules.Gate.ClientRuleTypes, sc.Type) {
 		return nil
@@ -476,6 +500,18 @@ func entitlement(ctx context.Context, q Querier, sc school, activityType, purpos
 func (s *Service) answer(ctx context.Context, pl *plan) (Answer, error) {
 	day := pl.row.plannedDate
 	fy := schooldirectory.OperationalFY(time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.UTC))
+	if pl.row.isRequest() {
+		name, err := staffName(ctx, s.db, pl.row.approvalOwner)
+		if err != nil {
+			s.logger.WarnContext(ctx, "activities: the owner's name was not read", "activity", pl.row.id, "err", err)
+			name = "the school's owner"
+		}
+		return Answer{
+			ActivityID: pl.row.id, Status: awaitingOwnerApproval, ActivityType: pl.row.activityType,
+			PlannedDate: day.Format(time.DateOnly), FY: pl.row.fy, Message: requestedMessage(name),
+			PlanURL: visitRequestQueue, PlanLinkLabel: requestQueueLabel,
+		}, nil
+	}
 	if owner := pl.row.responsible; owner != pl.p.StaffProfileID && owner != pl.p.UserID {
 		name, err := staffName(ctx, s.db, owner)
 		if err != nil {
