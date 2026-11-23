@@ -195,7 +195,9 @@ SELECT
 		{"a day that has passed", cceo, visit(client, "donor_visit", "2026-11-10"),
 			"10 November 2026 has passed. Schedule work from 12 November 2026 onwards.", false},
 		{"no day", cceo, visit(client, "donor_visit", ""), "Pick the date this is planned for before scheduling it.", false},
-		{"a Core school", cceo, visit(core, "donor_visit", "2026-11-20"), "", true},
+		{"a Core school's package visit", cceo, visit(core, "training_follow_up", "2026-11-20"), "", true},
+		{"a Core school's donor visit is outside the package", cceo, visit(core, "donor_visit", "2026-11-10"),
+			"10 November 2026 has passed. Schedule work from 12 November 2026 onwards.", false},
 		// The pair is Go's since docs/migration/32: with no course it is
 		// refused in the view's words before anything is read.
 		{"In-school Training with no course", cceo, visit(client, "in_school_training", "2026-11-20"),

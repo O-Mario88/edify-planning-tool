@@ -211,7 +211,7 @@ func (s *Service) preparePair(ctx context.Context, p auth.Principal, req Request
 	if !taken || c.conflicts() {
 		return nil, handOn("a course Go does not take (its intervention mapping or kind)")
 	}
-	sc, responsible, err := s.visitSchool(ctx, p, req.SchoolID, now)
+	sc, responsible, err := s.visitSchool(ctx, p, req.SchoolID, purpose, now)
 	if err != nil {
 		return nil, err
 	}

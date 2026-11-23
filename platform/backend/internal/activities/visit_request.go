@@ -45,8 +45,8 @@ type visitTarget struct {
 
 // requestTarget is the view's school for a requester. A school nobody owns
 // has nobody to ask, so the visit would be scheduled outright: handed on.
-func (s *Service) requestTarget(ctx context.Context, p auth.Principal, schoolID string, now time.Time) (*visitTarget, error) {
-	sc, _, err := s.targetSchool(ctx, p, schoolID, now)
+func (s *Service) requestTarget(ctx context.Context, p auth.Principal, schoolID, purpose string, now time.Time) (*visitTarget, error) {
+	sc, _, err := s.targetSchool(ctx, p, schoolID, purpose, now)
 	if err != nil {
 		return nil, err
 	}

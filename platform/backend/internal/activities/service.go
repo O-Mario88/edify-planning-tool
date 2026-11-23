@@ -221,12 +221,12 @@ func (s *Service) prepare(ctx context.Context, p auth.Principal, req Request, or
 	}
 	var target *visitTarget
 	if requester {
-		target, err = s.requestTarget(ctx, p, req.SchoolID, now)
+		target, err = s.requestTarget(ctx, p, req.SchoolID, purpose, now)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		sc, responsible, err := s.visitSchool(ctx, p, req.SchoolID, now)
+		sc, responsible, err := s.visitSchool(ctx, p, req.SchoolID, purpose, now)
 		if err != nil {
 			return nil, err
 		}
@@ -238,8 +238,8 @@ func (s *Service) prepare(ctx context.Context, p auth.Principal, req Request, or
 // visitSchool is the view's school (2318–2338) and visit_owner_for: whose
 // visit this is. Outside the person's portfolio it is the person going; inside
 // it, the school's owner, who may be a colleague.
-func (s *Service) visitSchool(ctx context.Context, p auth.Principal, schoolID string, now time.Time) (*school, string, error) {
-	sc, mine, err := s.targetSchool(ctx, p, schoolID, now)
+func (s *Service) visitSchool(ctx context.Context, p auth.Principal, schoolID, purpose string, now time.Time) (*school, string, error) {
+	sc, mine, err := s.targetSchool(ctx, p, schoolID, purpose, now)
 	if err != nil {
 		return nil, "", err
 	}
@@ -260,16 +260,22 @@ func (s *Service) visitSchool(ctx context.Context, p auth.Principal, schoolID st
 	return sc, owner, nil
 }
 
+// coreOutreachPurposes are package_credit.OUTREACH_VISIT_PURPOSES: visits at a
+// Core school that take no slot and are booked as themselves.
+var coreOutreachPurposes = []string{"donor_visit", "story_gathering", "school_invitation", "social_visit"}
+
 // targetSchool resolves the school again on POST (2318–2338) and says whether
-// it is in the person's own portfolio. A Core school takes the package route
-// and is handed on.
-func (s *Service) targetSchool(ctx context.Context, p auth.Principal, schoolID string, now time.Time) (*school, bool, error) {
+// it is in the person's own portfolio. A Core school's package work takes the
+// package route and is handed on.
+func (s *Service) targetSchool(ctx context.Context, p auth.Principal, schoolID, purpose string, now time.Time) (*school, bool, error) {
 	sc, err := schoolByIDOrCode(ctx, s.db, strings.TrimSpace(schoolID))
 	if err != nil {
 		return nil, false, err
 	}
-	if sc == nil || sc.Code != strings.TrimSpace(schoolID) || in(rules.Gate.CoreRuleTypes, sc.Type) {
-		return nil, false, handOn("not a school code, or a Core school")
+	if sc == nil || sc.Code != strings.TrimSpace(schoolID) ||
+		(in(rules.Gate.CoreRuleTypes, sc.Type) && !in(coreOutreachPurposes, purpose)) {
+		// A Core school's package visit takes one of the package's slots.
+		return nil, false, handOn("not a school code, or a Core school's package work")
 	}
 	scope, err := schooldirectory.ResolveScope(ctx, s.db, p, now)
 	if err != nil {
