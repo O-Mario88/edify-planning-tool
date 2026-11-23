@@ -65,6 +65,53 @@ func TestRefusalForIsTheExistingReviewRule(t *testing.T) {
 	}
 }
 
+func TestSalesforceKindIsReadFromTheRecordTypeFirst(t *testing.T) {
+	cases := []struct{ recordType, activityType, want string }{
+		{"NONE", "training", ""},
+		{"none", "school_visit", ""},
+		{"TRAINING", "school_visit", "training"},
+		{"VISIT", "training", "visit"},
+		{"SSA_DATA_GATHERING", "training", "visit"},
+		{"", "cluster_meeting", "training"},
+		{"", "school_visit", "visit"},
+		{"SOMETHING_ELSE", "core_training", "training"},
+	}
+	for _, tc := range cases {
+		if got := salesforceKind(tc.recordType, tc.activityType); got != tc.want {
+			t.Errorf("%q / %q: got %q, want %q", tc.recordType, tc.activityType, got, tc.want)
+		}
+	}
+}
+
+func TestUploadedFormIsNamedFromTheProfileThenTheType(t *testing.T) {
+	cases := []struct{ profile, activityType, want string }{
+		{"TRAINING_ATTENDANCE", "school_visit", "Training Attendance"},
+		{"SCHOOL_VISIT_FORM", "training", "Visit Form"},
+		{"", "school_visit", "Visit Form"},
+		{"", "cluster_meeting", "Training Attendance"},
+		{"ADMIN_NONE", "cluster_training", "Training Attendance"},
+		{"ADMIN_NONE", "school_visit", "Visit Form"},
+		{"", "some_new_type", "Visit Form"},
+	}
+	for _, tc := range cases {
+		if got := uploadedFormName(tc.profile, tc.activityType); got != tc.want {
+			t.Errorf("%q / %q: got %q, want %q", tc.profile, tc.activityType, got, tc.want)
+		}
+	}
+}
+
+func TestSSABasisNamesTheVerdictAndItsReason(t *testing.T) {
+	if got := ssaBasis("", "ignored"); got != "" {
+		t.Errorf("no verdict: %q", got)
+	}
+	if got := ssaBasis("off_priority", "The SSA prioritises Leadership."); got != "Targets an intervention the SSA does not prioritise. The SSA prioritises Leadership." {
+		t.Errorf("verdict: %q", got)
+	}
+	if got := ssaBasis("a_new_verdict", ""); got != "a_new_verdict." {
+		t.Errorf("unknown verdict with no reason: %q", got)
+	}
+}
+
 func TestOnlyALeadOrTheAdminDecidesACompletion(t *testing.T) {
 	for _, allowed := range []string{"Program Lead", "Admin"} {
 		if !canReviewRole(allowed) {

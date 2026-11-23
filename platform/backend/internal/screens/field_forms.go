@@ -76,6 +76,7 @@ var fieldForms = []fieldForm{
 		build:             workPlanAddForm},
 	{path: "/extra-work/assign-drawer", page: "extra_work", build: extraWorkAssignForm},
 	{address: regexp.MustCompile(`^/pl/review-queue/([^/]+)/return-drawer$`), page: "pl_review_queue", build: plReturnForm},
+	{address: regexp.MustCompile(`^/pl/review-queue/([^/]+)/drawer$`), page: "pl_review_queue", build: plReviewForm},
 }
 
 func fieldFormFor(path string) (fieldForm, bool) {

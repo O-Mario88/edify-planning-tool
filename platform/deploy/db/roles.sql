@@ -209,6 +209,8 @@ GRANT SELECT (ssa_alignment) ON activity TO edify_gateway_ro;
 -- (apps.partners.member_scope): the login's roster entries and whether the
 -- partner's own login is theirs.
 GRANT SELECT (id, user_id, partner_id, active, role, name) ON partner_member TO edify_gateway_ro;
+-- The Verify form shows why the plan did or did not follow the SSA.
+GRANT SELECT (recommendation_reason, recommendation_source) ON activity TO edify_gateway_ro;
 -- A partner on hold is not offered new work (assignable_partners).
 GRANT SELECT (partner_id, lifted_at) ON partner_hold TO edify_gateway_ro;
 GRANT SELECT (active_status, partner_role) ON partner TO edify_gateway_ro;

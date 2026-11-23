@@ -54,6 +54,60 @@ func TestReturnDrawerAsksForTheReason(t *testing.T) {
 	}
 }
 
+func TestVerifyDrawerStandsOnTheSalesforceID(t *testing.T) {
+	review := plreview.Review{Officer: "Paul N.", Activity: "School Visit", Where: "Goma Primary", Delivered: "3 Apr 2026"}
+	const decisionNote = "Verified confirms the completion against Salesforce and marks it complete. Return sends it back to the officer with your reason — for example, participants not entered in Salesforce."
+
+	withID := plReviewDrawer(review, plreview.ReviewDetail{SalesforceKind: "training", SalesforceID: "TR-1"}, "")
+	if !withID.GetCanSubmit() || withID.GetSubmitLabel() != "Verified" {
+		t.Fatalf("an ID lets the lead verify: %v", withID)
+	}
+	if got := withID.GetItems()[1].GetHeading(); got != "Training ID" {
+		t.Fatalf("heading %q", got)
+	}
+	if got := withID.GetItems()[2].GetText(); got != "TR-1" {
+		t.Fatalf("id %q", got)
+	}
+	if got := withID.GetItems()[len(withID.GetItems())-1].GetNote().GetText(); got != decisionNote {
+		t.Fatalf("decision note %q", got)
+	}
+
+	missing := plReviewDrawer(review, plreview.ReviewDetail{SalesforceKind: "visit"}, "")
+	if missing.GetCanSubmit() || missing.GetSubmitLabel() != "" {
+		t.Fatalf("no ID, nothing to confirm: %v", missing)
+	}
+	if got := missing.GetItems()[2].GetNote(); got.GetTone() != "warning" ||
+		got.GetText() != "No visit ID was entered with this completion. Return it to the officer with the reason." {
+		t.Fatalf("missing id note: %v", got)
+	}
+
+	noRecord := plReviewDrawer(review, plreview.ReviewDetail{}, "")
+	if !noRecord.GetCanSubmit() || noRecord.GetItems()[1].GetHeading() != "Salesforce ID" ||
+		noRecord.GetItems()[2].GetText() != "This activity has no Salesforce record, so it carries no ID." {
+		t.Fatalf("no Salesforce record: %v", noRecord)
+	}
+
+	partner := plReviewDrawer(review, plreview.ReviewDetail{SalesforceKind: "training", SalesforceID: "TR-1"}, "partner-trainings")
+	if partner.GetSubmitLabel() != "Confirm Verification" {
+		t.Fatalf("partner trainings wording: %q", partner.GetSubmitLabel())
+	}
+}
+
+func TestVerifyDrawerFactsKeepTheirOrder(t *testing.T) {
+	drawer := plReviewDrawer(plreview.Review{Officer: "Paul N."}, plreview.ReviewDetail{
+		SSABasis: "Off priority. Reason.", SSADeparture: "Asked for first.",
+	}, "")
+	want := []string{"Officer", "Activity", "School or cluster", "Delivered", "Intervention", "SSA basis",
+		"Why it departs from the SSA", "Attendance", "Purpose", "Outcome", "Observations", "Follow-up"}
+	got := []string{}
+	for _, fact := range drawer.GetItems()[0].GetFacts().GetFacts() {
+		got = append(got, fact.GetLabel())
+	}
+	if !slices.Equal(got, want) {
+		t.Fatalf("facts: %v", got)
+	}
+}
+
 func TestReviewFormSaysWhyItIsNotWaiting(t *testing.T) {
 	drawer := reviewNoticeDrawer("Return completion", "Activity is not awaiting PL review.")
 	if drawer.GetSubtitle() != "Not waiting on you" || drawer.GetCanSubmit() {

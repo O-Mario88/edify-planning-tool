@@ -48,6 +48,15 @@ var rules = func() (r struct {
 	ActivityTypes             map[string]string `json:"activity_types"`
 	InterventionAbbreviations map[string]string `json:"intervention_abbreviations"`
 	PageSize                  int               `json:"page_size"`
+	ReturnReasons             []string          `json:"return_reasons"`
+	InterventionLabels        map[string]string `json:"intervention_labels"`
+	SSAAlignmentLabels        map[string]string `json:"ssa_alignment_labels"`
+	NoSalesforceRecordTypes   []string          `json:"no_salesforce_record_types"`
+	SalesforceTrainingKinds   []string          `json:"salesforce_training_kinds"`
+	AttendanceTypes           []string          `json:"attendance_types"`
+	FormNames                 map[string]string `json:"form_names"`
+	ProfileForms              map[string]string `json:"profile_forms"`
+	TypeForms                 map[string]string `json:"type_forms"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.PageRoles) == 0 || r.LeadRole == "" || len(r.LeadVerifiedRoles) == 0 || r.PageSize == 0 {
 		panic(fmt.Sprintf("plreview: the embedded rules are unreadable: %v", err))

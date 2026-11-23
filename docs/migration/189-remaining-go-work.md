@@ -23,14 +23,21 @@ Each was compared with Django for all 16 roles on private copies: same fields, o
 | `/projects/create` | 16 | 4 identical, 12 same refusal |
 | `/work-plan/add` | 32 | 14 identical, 18 same refusal |
 | `/extra-work/assign-drawer` | 32 | 10 identical, 22 same refusal |
+| `/pl/review-queue/<id>/return-drawer` | 256, over 16 staged rule cases | 48 identical, 208 same refusal |
+| `/pl/review-queue/<id>/drawer` | 272, over the same cases, a missing record and an uploaded form | 49 identical, 221 same refusal, 2 deliberate |
+
+The 2 deliberate differences are one fact seen by two roles: Go keeps the line break in a multi-line Observations value, which the mobile feed's reader runs together.
+
+The review rule (`plreview.Reviewable`) now matches `_check_reviewable` and serves both forms and Go's approve and return saves. Seven disallowed saves were tried against the Go-only gateway (Country Director, Impact Assessment, partner work, another team's work) and all were refused with no record changed.
 
 Found while porting, to fix before these saves are used without Django:
 
-- `plreview.checkReviewable` does not match Django's `_check_reviewable`. Go lets a Country Director review, and always refuses a lead's own work, which Django allows under `lead_clears_own_work`. Its refusal wording also differs.
+- **Go's approve and return save is incomplete, and `.do/uganda-go-staging.yaml` turns it on (`pl_review`).** Django's approval also confirms the visit's SSA scores, records milestone progress, queues the Salesforce sync, closes the review notice and tells the officer. Go does none of these. Go also refuses to approve work Salesforce does not record, which Django allows, and its Return drops the ticked reasons and keeps only the written one.
+- The Verify form names an uploaded form but cannot open it, because the feed's reader drops the button and `/api/evidence/activity/<id>/form` is still Django.
 - `getAddToProjectInGo` offers every open project and all staff as coordinators. Django offers only projects the school may join (`projects_open_for_enrolment`, with capacity) and only Project Coordinators.
 - `/core-schools/schedule-activity` and `/core-schools/schedule-training` create the school's yearly package when opened (`ensure_core_plan`). Go must not write on a read, so these need the package worked out in memory.
 
-Limits of this proof: the development data has no PD requests and no partner team-member logins, so those paths are covered by unit tests or the existing Go helper only. The partner-on-hold rule was checked in a rolled-back transaction. An acting leader is refused by these Go forms until the acting page policy is ported.
+Limits of this proof: the development data has no PD requests and no partner team-member logins, so those paths are covered by unit tests or the existing Go helper only. The partner-on-hold rule was checked in a rolled-back transaction. The review cases were staged on the private copies and put back afterwards. An acting leader is refused by these Go forms until the acting page policy is ported.
 
 Only 7 of the 18 field forms are listed in the mobile feed (`DRAWER_VIEWS`). The other 11 are compared by rendering the Django view directly and reading it with the feed's own form reader.
 

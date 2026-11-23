@@ -31,16 +31,44 @@ PAGE_PATH = "/pl/review-queue"
 PAGE_PERMISSION = "pl_review_queue"
 
 
+def _governed_form(kinds) -> str:
+    """The first of `kinds` that is one of the two governed forms, as
+    apps.evidence.form_document.form_kind reads them; "" when none is."""
+    from apps.evidence.form_document import FORM_KINDS
+
+    return next((str(kind) for kind in kinds if kind in FORM_KINDS), "")
+
+
 def rules() -> dict:
+    from apps.activities.completion_columns import _ATTENDANCE_TYPES
     from apps.activities.models import ActivityType
-    from apps.core.interventions import INTERVENTION_ABBREVIATIONS
+    from apps.activities.return_notes import COMMON_REASONS
+    from apps.activities.salesforce import NO_SALESFORCE_RECORD_TYPES
+    from apps.activities.services import SALESFORCE_TRAINING_KINDS
+    from apps.core.enums import SsaAlignment
+    from apps.core.interventions import INTERVENTION_ABBREVIATIONS, INTERVENTION_LABELS
     from apps.core.pagination import TABLE_PAGE_SIZE
     from apps.core.permissions import RolePermissionService, can_open_url
     from apps.core.rbac import EdifyRole
+    from apps.evidence.form_document import FORM_NAMES
+    from apps.evidence.requirements import PROFILE_REQUIRED_EVIDENCE, REQUIRED_EVIDENCE
     from apps.frontend.views.dashboard_embed import PROGRAM_LEAD
     from apps.pl_review.services import LEAD_VERIFIED_ROLES
 
     return {
+        # The Verify and Return forms (my_plan_views.pl_review_drawer,
+        # pl_return_drawer).
+        "return_reasons": list(COMMON_REASONS),
+        "intervention_labels": {str(k): str(v) for k, v in INTERVENTION_LABELS.items()},
+        "ssa_alignment_labels": {str(k): str(v) for k, v in SsaAlignment.choices},
+        "no_salesforce_record_types": sorted(NO_SALESFORCE_RECORD_TYPES),
+        "salesforce_training_kinds": sorted(SALESFORCE_TRAINING_KINDS),
+        "attendance_types": sorted(str(t) for t in _ATTENDANCE_TYPES),
+        "form_names": {str(k): str(v) for k, v in FORM_NAMES.items()},
+        "profile_forms": {
+            str(k): _governed_form(v) for k, v in PROFILE_REQUIRED_EVIDENCE.items()
+        },
+        "type_forms": {str(k): _governed_form(v) for k, v in REQUIRED_EVIDENCE.items()},
         "page_roles": sorted(
             role.value
             for role in EdifyRole
