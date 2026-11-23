@@ -190,9 +190,7 @@ func (s *Service) queue(ctx context.Context, p auth.Principal) ([]completion, er
 	rows, err := s.db.Query(ctx, `
 WITH lead_verified AS (
   SELECT DISTINCT sp.id, sp.user_id FROM staff_profile sp LEFT JOIN "user" u ON u.id = sp.user_id
-  WHERE sp.deleted_at IS NULL AND (u.roles && $1::varchar[] OR EXISTS (
-    SELECT 1 FROM staff_supervisor_assignment l JOIN staff_profile sv ON sv.id = l.supervisor_id JOIN "user" su ON su.id = sv.user_id
-    WHERE l.supervisee_id = sp.id AND sv.deleted_at IS NULL AND su.roles @> ARRAY[$2::varchar])))
+  WHERE `+leadVerifiedStaff+`)
 SELECT a.id, COALESCE(a.responsible_staff_id, a.monitored_by_staff_id, ''), a.activity_type, COALESCE(a.activity_name_snapshot, ''),
   COALESCE(a.venue, ''), COALESCE(a.salesforce_activity_id, ''), COALESCE(a.focus_intervention, ''),
   s.name, s.school_id, cl.name, a.actual_delivery_date, a.planned_date, a.scheduled_date,
@@ -218,11 +216,15 @@ ORDER BY a.created_at DESC`, args...)
 // people is _people: the name and People record of everyone filed under
 // either id space.
 func (s *Service) people(ctx context.Context, ids []string) (map[string]string, map[string]string, error) {
+	return readPeople(ctx, s.db, ids)
+}
+
+func readPeople(ctx context.Context, q schooldirectory.Querier, ids []string) (map[string]string, map[string]string, error) {
 	names, profileOf := map[string]string{}, map[string]string{}
 	if len(ids) == 0 {
 		return names, profileOf, nil
 	}
-	rows, err := s.db.Query(ctx, `SELECT sp.id, COALESCE(sp.user_id, ''), COALESCE(u.name, '') FROM staff_profile sp
+	rows, err := q.Query(ctx, `SELECT sp.id, COALESCE(sp.user_id, ''), COALESCE(u.name, '') FROM staff_profile sp
 LEFT JOIN "user" u ON u.id = sp.user_id WHERE sp.deleted_at IS NULL AND (sp.id = ANY($1) OR sp.user_id = ANY($1))`, ids)
 	if err != nil {
 		return nil, nil, fmt.Errorf("plreview: reading the officers' names: %w", err)

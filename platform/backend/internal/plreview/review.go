@@ -2,7 +2,6 @@ package plreview
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -44,8 +43,11 @@ func NewReviewService(pool *pgxpool.Pool, now func() time.Time) *ReviewService {
 	return &ReviewService{pool: pool, now: now}
 }
 
+// canReviewRole is who may decide at all: the page holds Admin, Impact
+// Assessment and the lead, and can_review_activity then refuses Impact
+// Assessment, which verifies partner work elsewhere.
 func canReviewRole(role string) bool {
-	return role == "Program Lead" || role == "CountryDirector" || role == "Admin"
+	return role == rules.LeadRole || role == rules.AdminRole
 }
 
 type reviewTarget struct {
@@ -55,46 +57,20 @@ type reviewTarget struct {
 func (s *ReviewService) checkReviewable(ctx context.Context, tx pgx.Tx, p auth.Principal, activityID string) (reviewTarget, error) {
 	if !canReviewRole(p.ActiveRole) {
 		return reviewTarget{}, &ReviewRefusal{
-			Message:   "Only a Programme Lead, Country Director, or Admin may review completions.",
+			Message:   "Access Denied: You do not supervise the owner of this activity.",
 			Forbidden: true,
 		}
 	}
-	var t reviewTarget
-	err := tx.QueryRow(ctx, `
-SELECT COALESCE(school_id, ''), COALESCE(activity_type, ''), COALESCE(responsible_staff_id, ''), COALESCE(status, '')
-FROM activity
-WHERE id = $1 AND deleted_at IS NULL`, activityID).Scan(&t.schoolID, &t.activityType, &t.responsibleStaffID, &t.status)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return reviewTarget{}, &ReviewRefusal{Message: "Activity not found."}
-	}
+	review, err := Reviewable(ctx, tx, p, activityID, s.now())
 	if err != nil {
-		return reviewTarget{}, fmt.Errorf("plreview: reading activity: %w", err)
+		return reviewTarget{}, err
 	}
-	if p.ActiveRole == "Program Lead" {
-		if t.responsibleStaffID == p.UserID || (p.StaffProfileID != "" && t.responsibleStaffID == p.StaffProfileID) {
-			return reviewTarget{}, &ReviewRefusal{
-				Message:   "You cannot review your own activity completion.",
-				Forbidden: true,
-			}
-		}
-		var supervises bool
-		if err := tx.QueryRow(ctx, `
-SELECT EXISTS (
-  SELECT 1 FROM staff_supervisor_assignment ssa
-  LEFT JOIN staff_profile sp ON sp.id = ssa.supervisee_id
-  WHERE ssa.supervisor_id IN ($1, $2)
-    AND ($3 = ssa.supervisee_id OR $3 = sp.user_id)
-)`, p.StaffProfileID, p.UserID, t.responsibleStaffID).Scan(&supervises); err != nil {
-			return reviewTarget{}, fmt.Errorf("plreview: checking supervision: %w", err)
-		}
-		if !supervises {
-			return reviewTarget{}, &ReviewRefusal{
-				Message:   "This activity is outside your supervised team.",
-				Forbidden: true,
-			}
-		}
-	}
-	return t, nil
+	return reviewTarget{
+		schoolID:           review.SchoolID,
+		activityType:       review.ActivityType,
+		responsibleStaffID: review.ResponsibleStaffID,
+		status:             review.Status,
+	}, nil
 }
 
 // Approve confirms a submitted completion as ia_verified (apps.pl_review.services.confirm).

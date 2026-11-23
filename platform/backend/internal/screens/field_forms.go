@@ -37,6 +37,7 @@ var fieldFormPages = map[string][]string{
 	"partner_detail":              everyStaffAndPartnerRole,
 	"projects":                    {rbac.Admin, rbac.CCEO, roleCD, roleIA, rbac.ProgramLead, rolePC},
 	"extra_work":                  {rbac.Admin, rbac.CCEO, roleCD, rbac.ProgramLead, roleIA},
+	"pl_review_queue":             {rbac.Admin, rbac.ProgramLead, roleIA},
 }
 
 // fieldFormRequest is what a form is opened with: the record in its address
@@ -74,6 +75,7 @@ var fieldForms = []fieldForm{
 		permissionRefusal: "You do not have permission to add non-school programme activities.",
 		build:             workPlanAddForm},
 	{path: "/extra-work/assign-drawer", page: "extra_work", build: extraWorkAssignForm},
+	{address: regexp.MustCompile(`^/pl/review-queue/([^/]+)/return-drawer$`), page: "pl_review_queue", build: plReturnForm},
 }
 
 func fieldFormFor(path string) (fieldForm, bool) {
