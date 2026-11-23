@@ -316,7 +316,7 @@ export function EdifyDatePicker({
                       disabled={avail.disabled}
                       title={avail.reason || formatDisplayDate(cell.iso, 'weekday')}
                       aria-label={`${formatDisplayDate(cell.iso, 'weekday')}${avail.reason ? ` — ${avail.reason}` : ''}`}
-                      aria-selected={isSelected}
+                      aria-pressed={isSelected}
                       data-date-cell={cell.iso}
                       data-in-month={cell.inMonth ? 'true' : 'false'}
                       data-badge={avail.badge ?? ''}
@@ -448,10 +448,14 @@ export function EdifyDateRangePicker({
   const [draftEnd, setDraftEnd] = useState(endDate);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  // A new range from the parent replaces the draft, during render so the
+  // calendar never paints one frame of the old selection.
+  const [shownRange, setShownRange] = useState({ startDate, endDate });
+  if (shownRange.startDate !== startDate || shownRange.endDate !== endDate) {
+    setShownRange({ startDate, endDate });
     setDraftStart(startDate);
     setDraftEnd(endDate);
-  }, [startDate, endDate]);
+  }
 
   useEffect(() => {
     if (!open) return undefined;

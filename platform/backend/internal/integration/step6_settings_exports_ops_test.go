@@ -175,7 +175,7 @@ SELECT COUNT(*) FROM audit_log
 		}
 		csvBytes, _ := io.ReadAll(dlRes.Body)
 		dlRes.Body.Close()
-		if dlRes.StatusCode != http.StatusOK || !strings.HasPrefix(string(csvBytes), "school_id,school_code,name") {
+		if dlRes.StatusCode != http.StatusOK || !strings.HasPrefix(string(csvBytes), "edify_school_id,record_id,school_name,district,sub_region,cluster,school_type,operational_status,enrollment") {
 			t.Fatalf("unexpected download status=%d body=%q", dlRes.StatusCode, string(csvBytes[:min(len(csvBytes), 80)]))
 		}
 

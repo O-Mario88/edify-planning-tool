@@ -279,8 +279,12 @@ export function GpsCaptureModal({
   }, [stopWatch]);
 
   useEffect(() => {
-    beginCapture();
-    return stopWatch;
+    // After the first paint, so the dialog shows before the permission prompt.
+    const start = window.setTimeout(beginCapture, 0);
+    return () => {
+      window.clearTimeout(start);
+      stopWatch();
+    };
   }, [beginCapture, stopWatch]);
 
   const spreadMeters = useMemo(() => {

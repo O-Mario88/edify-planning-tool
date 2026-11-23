@@ -3,6 +3,7 @@ package planningoversight
 import (
 	"context"
 	"net/url"
+	"strings"
 	"time"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
@@ -55,15 +56,15 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	}
 	if !refused(p.ActiveRole, key) {
 		if key == teamKey {
-			if resp, served, err := s.buildTeamPlan(ctx, p, query); served || err != nil {
-				return resp, served, err
-			}
-			if pagegate.DjangoAbsent(ctx) {
-				return s.buildCountryOversight(ctx, p, query)
-			}
-			return nil, false, nil
+			// A team lens Go does not draw is handed on. It is never
+			// answered with the country summary: that is another page,
+			// with country-wide figures, under the team's address.
+			return s.buildTeamPlan(ctx, p, query)
 		}
-		if key == countryKey && pagegate.DjangoAbsent(ctx) {
+		// The country summary stands in only with the existing application
+		// absent, and never for the portfolio view, which
+		// internal/oversightportfolio draws in full.
+		if key == countryKey && pagegate.DjangoAbsent(ctx) && !asksForPortfolio(query) {
 			return s.buildCountryOversight(ctx, p, query)
 		}
 		return nil, false, nil
@@ -80,4 +81,10 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 func refused(role, key string) bool {
 	door, ok := rules.Doors[role][key]
 	return !ok || !door.Open
+}
+
+// asksForPortfolio is whether the query names the portfolio view, as the
+// existing page reads it (stripped, any case).
+func asksForPortfolio(query url.Values) bool {
+	return strings.EqualFold(strings.TrimSpace(query.Get("view")), "portfolio")
 }

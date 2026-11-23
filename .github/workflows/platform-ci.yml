@@ -192,6 +192,13 @@ jobs:
           python manage.py migrate --noinput
           python manage.py seed --demo
 
+      # The Go -> Python analytics test starts the real worker from its venv.
+      - name: Analytics worker for the integration tests
+        working-directory: platform/workers/analytics
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install -r requirements.txt
+
       - name: Integration tests
         working-directory: platform/backend
         env:
@@ -220,6 +227,8 @@ jobs:
           (cd platform/backend && \
             EDIFY_MIGRATE_DATABASE_URL="$ADMIN_URL" go run ./cmd/schemactl migrate \
               --schema=country_registry --confirm-database=edify_ci_test && \
+            EDIFY_MIGRATE_DATABASE_URL="$ADMIN_URL" go run ./cmd/schemactl migrate \
+              --schema=field_routes --confirm-database=edify_ci_test && \
             EDIFY_MIGRATE_DATABASE_URL="$ADMIN_URL" go run ./cmd/countryctl seed-legacy \
               --confirm-database=edify_ci_test)
           (cd platform/backend && go build -o /tmp/gateway ./cmd/gateway)
@@ -440,6 +449,8 @@ jobs:
           (cd platform/backend && \
             EDIFY_MIGRATE_DATABASE_URL="$ADMIN_URL" go run ./cmd/schemactl migrate \
               --schema=country_registry --confirm-database=edify_ci_test && \
+            EDIFY_MIGRATE_DATABASE_URL="$ADMIN_URL" go run ./cmd/schemactl migrate \
+              --schema=field_routes --confirm-database=edify_ci_test && \
             EDIFY_MIGRATE_DATABASE_URL="$ADMIN_URL" go run ./cmd/countryctl seed-legacy \
               --confirm-database=edify_ci_test)
           (cd platform/backend && go build -o /tmp/gateway ./cmd/gateway)

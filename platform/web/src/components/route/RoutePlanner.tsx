@@ -52,7 +52,7 @@ import {
   SaveFieldDayResponseSchema,
   SchoolPinSchema,
 } from '@/gen/edify/routes/v1/routes_pb';
-import type { GetSchoolDistanceResponse, Itinerary, ItineraryStop, SavedFieldDay, SchoolPin, Suggestion } from '@/gen/edify/routes/v1/routes_pb';
+import type { GetSchoolDistanceResponse, ItineraryStop, SavedFieldDay, SchoolPin, Suggestion } from '@/gen/edify/routes/v1/routes_pb';
 import {
   dayClock,
   fieldDayState,
@@ -404,9 +404,9 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
   useEffect(() => {
     if (!navigate) return;
     const ids = navigate.split(',').map((s) => s.trim()).filter(Boolean);
-    if (ids.length > 0) {
-      void openInAppDirections(ids);
-    }
+    if (ids.length === 0) return;
+    const open = window.setTimeout(() => void openInAppDirections(ids), 0);
+    return () => window.clearTimeout(open);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
