@@ -222,6 +222,11 @@ func (s *Service) write(ctx context.Context, pl *plan) (int64, error) {
 	if err := duplicates(ctx, tx, pl); err != nil {
 		return 0, err
 	}
+	// apply_catalogue_snapshot refuses a named focus once the row is made,
+	// and the save's transaction takes the row back.
+	if !canonicalFocus(pl.row.focus) {
+		return 0, refuse("Choose a valid canonical SSA intervention.")
+	}
 	// The day's refusal is met once the visit joins it (attach, then
 	// _assert_days_can_follow).
 	if pl.verdict.Refusal != "" {

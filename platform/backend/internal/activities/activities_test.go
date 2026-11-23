@@ -1,11 +1,15 @@
 package activities
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"math"
 	"net/url"
 	"testing"
 	"time"
+
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 )
 
 // Each expectation below is the existing code's answer, read from Python
@@ -263,7 +267,7 @@ func TestTheDrawerFormIsTakenOnlyForTheCase(t *testing.T) {
 	}
 	for field, value := range map[string]string{
 		"assigned_partner_id": "p1", "project_id": "x", "source_activity_id": "a", "cluster_id": "c",
-		"focus_intervention": "leadership", "ssa_collection_expected": "yes", "delivery_type": "partner",
+		"ssa_collection_expected": "yes", "delivery_type": "partner",
 		"executor_type": "partner", "require_catalogue": "no",
 	} {
 		form := url.Values{}
@@ -274,6 +278,57 @@ func TestTheDrawerFormIsTakenOnlyForTheCase(t *testing.T) {
 		if _, ok := RequestFromForm(form); ok {
 			t.Fatalf("%s=%s must be handed on", field, value)
 		}
+	}
+	named := url.Values{}
+	for k, v := range base {
+		named[k] = v
+	}
+	named.Set("focus_intervention", " leadership ")
+	if req, ok := RequestFromForm(named); !ok || req.Focus != "leadership" {
+		t.Fatalf("a named focus: taken %v %+v", ok, req)
+	}
+}
+
+func TestTheFocusThePlannerNamedIsTheOneSaved(t *testing.T) {
+	need := schoolNeed{Record: &ssaRecord{ID: "r1"}, Priorities: []string{"enrolment"},
+		Ranked: []rankedNeed{{Intervention: "enrolment", Label: "Enrolment", Band: "Critical", Score: 3}}}
+	modes := []string{"any_ssa_intervention"}
+	focus, source := plannedFocus("leadership", "training_follow_up_visit", modes, need, false)
+	if focus != "leadership" || source != "planner" {
+		t.Fatalf("named: %q %q", focus, source)
+	}
+	focus, source = plannedFocus("", "training_follow_up_visit", modes, need, false)
+	if focus != "enrolment" || source != "ssa_default" {
+		t.Fatalf("left open: %q %q", focus, source)
+	}
+	focus, source = plannedFocus("", "donor_visit", modes, schoolNeed{}, false)
+	if focus != "" || source != "" {
+		t.Fatalf("nothing to default from: %q %q", focus, source)
+	}
+	if e := assess("training_follow_up_visit", "leadership", "planner", modes, need, false, time.Date(2026, 11, 23, 0, 0, 0, 0, time.UTC)); e.Alignment != "off_priority" || e.Data["focusSource"] != "planner" {
+		t.Fatalf("verdict: %+v", e)
+	}
+}
+
+func TestOnlyACanonicalInterventionCanBeNamed(t *testing.T) {
+	for _, focus := range []string{"", "leadership", "enrolment", "exposure_to_word_of_god"} {
+		if !canonicalFocus(focus) {
+			t.Fatalf("%q was refused", focus)
+		}
+	}
+	for _, focus := range []string{"teaching", "general", "Leadership"} {
+		if canonicalFocus(focus) {
+			t.Fatalf("%q was accepted", focus)
+		}
+	}
+}
+
+func TestATrainingWithANamedFocusIsHandedOn(t *testing.T) {
+	s := &Service{now: func() time.Time { return time.Date(2026, 11, 23, 9, 0, 0, 0, time.UTC) }, kampala: time.UTC}
+	p := auth.Principal{Account: auth.Account{UserID: "u1", ActiveRole: "CCEO", StaffProfileID: "s1"}}
+	_, err := s.preparePair(context.Background(), p, Request{Purpose: rules.Pair.TrainingPurpose, Date: "2026-11-24", CatalogueItemID: "c1", Focus: "leadership"}, Origin{})
+	if !errors.Is(err, ErrHandOn) {
+		t.Fatalf("err = %v", err)
 	}
 }
 

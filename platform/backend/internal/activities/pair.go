@@ -180,7 +180,8 @@ func (s *Service) preparePair(ctx context.Context, p auth.Principal, req Request
 	purpose := strings.TrimSpace(req.Purpose)
 	date := strings.TrimSpace(req.Date)
 	if in(rules.Doors.Requesters, p.ActiveRole) || p.InActingAppointment || p.StaffProfileID == "" ||
-		!IsPairPurpose(purpose) || (date != "" && !isoDate.MatchString(date)) {
+		!IsPairPurpose(purpose) || (date != "" && !isoDate.MatchString(date)) || req.Focus != "" {
+		// A posted focus is a course left to the planner: not ported here.
 		return nil, handOn("not the owner's own In-school Training")
 	}
 	// split_training_purpose (2030): the SSA purpose is the pair, its visit

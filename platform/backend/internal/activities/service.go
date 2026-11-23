@@ -48,6 +48,8 @@ func refuse(format string, args ...any) error {
 type Request struct {
 	SchoolID, Purpose, Date, Goal, Outcome      string
 	DeviationReason, CatalogueItemID, RecReason string
+	// Focus is the intervention the planner named; blank leaves it to the SSA.
+	Focus string
 }
 
 // Answer is the saved visit and the confirmation the web shows.
@@ -298,11 +300,7 @@ func (s *Service) create(ctx context.Context, p auth.Principal, req Request, ori
 	if err != nil {
 		return nil, err
 	}
-	focus := defaultFocus(activityType, it.Modes, need, collects)
-	focusSource := ""
-	if focus != "" {
-		focusSource = "ssa_default"
-	}
+	focus, focusSource := plannedFocus(req.Focus, activityType, it.Modes, need, collects)
 	if it.RequiresCluster {
 		return nil, refuse("This Catalogue Activity requires a Cluster.")
 	}
@@ -343,6 +341,29 @@ func (s *Service) create(ctx context.Context, p auth.Principal, req Request, ori
 	}
 	return &plan{p: p, school: sc, item: *it, version: version, need: need, focus: focus, evidence: ev,
 		row: row, ownerUID: ownerUID, home: home, verdict: verdict, origin: origin, now: now}, nil
+}
+
+// plannedFocus is _create's target: the intervention the planner named, else
+// the SSA's default for support the planner left open.
+func plannedFocus(named, activityType string, modes []string, need schoolNeed, collects bool) (string, string) {
+	if named != "" {
+		return named, "planner"
+	}
+	focus := defaultFocus(activityType, modes, need, collects)
+	if focus == "" {
+		return "", ""
+	}
+	return focus, "ssa_default"
+}
+
+// canonicalFocus is resolve_activity_intervention's test for standard
+// support: blank, or one of the eight SSA interventions.
+func canonicalFocus(focus string) bool {
+	if focus == "" {
+		return true
+	}
+	_, ok := rules.labels[focus]
+	return ok
 }
 
 func focusOrPlanner(source string) string {

@@ -1,0 +1,322 @@
+[
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7grv003oz8ekher8",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "donor_visit",
+   "scheduled_date": "2026-12-01",
+   "activity_purpose_text": "[shadow-f] donor with the prefilled focus",
+   "expected_outcome": "[shadow-f] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType",
+   "focus_intervention": "focusIntervention"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7gsp00l8hvekheln",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "story_gathering",
+   "scheduled_date": "2026-12-01",
+   "activity_purpose_text": "[shadow-f] story with the prefilled focus",
+   "expected_outcome": "[shadow-f] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType",
+   "focus_intervention": "focusIntervention"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7gtf0049wvekhelr",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "school_invitation",
+   "scheduled_date": "2026-12-02",
+   "activity_purpose_text": "[shadow-f] invitation with the prefilled focus",
+   "expected_outcome": "[shadow-f] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType",
+   "focus_intervention": "focusIntervention"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7gu5009kemekhe02",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "social_visit",
+   "scheduled_date": "2026-12-02",
+   "activity_purpose_text": "[shadow-f] social with the prefilled focus",
+   "expected_outcome": "[shadow-f] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType",
+   "focus_intervention": "focusIntervention"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7gvl00tihdekhezr",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "training_follow_up",
+   "scheduled_date": "2026-12-03",
+   "activity_purpose_text": "[shadow-f] follow-up on the SSA priority",
+   "expected_outcome": "[shadow-f] outcome",
+   "catalogue_item_id": ""
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType",
+   "focus_intervention": "focusIntervention"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7gyq0032ltekhejj",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "training_follow_up",
+   "scheduled_date": "2026-12-03",
+   "activity_purpose_text": "[shadow-f] follow-up off priority",
+   "expected_outcome": "[shadow-f] outcome",
+   "catalogue_item_id": "",
+   "focus_intervention": "christlike_behaviour"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType",
+   "focus_intervention": "focusIntervention"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7h9i00do5nekhe5k",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "ssa_support",
+   "scheduled_date": "2026-12-04",
+   "activity_purpose_text": "[shadow-f] SSA support with a named focus",
+   "expected_outcome": "[shadow-f] outcome",
+   "focus_intervention": "leadership"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType",
+   "focus_intervention": "focusIntervention"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7hoh00d3l0ekhefj",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "donor_visit",
+   "scheduled_date": "2026-12-04",
+   "activity_purpose_text": "[shadow-f] a focus that is not an intervention",
+   "expected_outcome": "[shadow-f] outcome",
+   "focus_intervention": "teaching"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType",
+   "focus_intervention": "focusIntervention"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7grv003oz8ekher8",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "donor_visit",
+   "scheduled_date": "2026-12-01",
+   "activity_purpose_text": "[shadow-f] the same donor visit again",
+   "expected_outcome": "[shadow-f] outcome",
+   "focus_intervention": "enrolment"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType",
+   "focus_intervention": "focusIntervention"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7hpd005paaekhemq",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "donor_visit",
+   "scheduled_date": "2026-12-01",
+   "activity_purpose_text": "[shadow-f] joins a day already made",
+   "expected_outcome": "[shadow-f] outcome",
+   "focus_intervention": "enrolment"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType",
+   "focus_intervention": "focusIntervention"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7hsd00ua90ekhecw",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "training_follow_up",
+   "scheduled_date": "2026-12-07",
+   "activity_purpose_text": "[shadow-f] follow-up with the pinned recommendation",
+   "expected_outcome": "[shadow-f] outcome"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType",
+   "focus_intervention": "focusIntervention"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7hu000ge7tekheyb",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "in_school_training",
+   "scheduled_date": "2026-12-07",
+   "activity_purpose_text": "[shadow-f] training carrying a focus",
+   "expected_outcome": "[shadow-f] outcome",
+   "catalogue_item_id": "cmw9p6zgi004j9reihgs5",
+   "focus_intervention": "leadership"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType",
+   "focus_intervention": "focusIntervention"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7h5400yeiqekhe9t",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "donor_visit",
+   "scheduled_date": "2026-12-08",
+   "activity_purpose_text": "[shadow-f] Champion donor with a focus",
+   "expected_outcome": "[shadow-f] outcome",
+   "focus_intervention": "leadership"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType",
+   "focus_intervention": "focusIntervention"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7h5400yeiqekhe9t",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "ssa_support",
+   "scheduled_date": "2026-12-09",
+   "activity_purpose_text": "[shadow-f] Champion SSA support",
+   "expected_outcome": "[shadow-f] outcome",
+   "focus_intervention": "leadership"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType",
+   "focus_intervention": "focusIntervention"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7hv4001y85ekhecu",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "donor_visit",
+   "scheduled_date": "2026-12-09",
+   "activity_purpose_text": "[shadow-f] donor with the focus cleared",
+   "expected_outcome": "[shadow-f] outcome",
+   "focus_intervention": ""
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType",
+   "focus_intervention": "focusIntervention"
+  }
+ },
+ {
+  "who": "cceo@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7hw800y8hjekheuq",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "donor_visit",
+   "scheduled_date": "2026-11-02",
+   "activity_purpose_text": "[shadow-f] a past date with a focus",
+   "expected_outcome": "[shadow-f] outcome",
+   "focus_intervention": "leadership"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType",
+   "focus_intervention": "focusIntervention"
+  }
+ },
+ {
+  "who": "cceo1@edify.org",
+  "open": "/planning/schedule-modal?school_id=cmw9p7i1d00rnznekhek8",
+  "form": "/planning/schedule-action",
+  "set": {
+   "purpose_of_visit": "donor_visit",
+   "scheduled_date": "2026-12-10",
+   "activity_purpose_text": "[shadow-f] another officer at this school",
+   "expected_outcome": "[shadow-f] outcome",
+   "focus_intervention": "leadership"
+  },
+  "from_script": {
+   "catalogue_item_id": "defaultCatalogueItemId",
+   "activity_type": "activityType",
+   "delivery_type": "delivery",
+   "executor_type": "executorType",
+   "focus_intervention": "focusIntervention"
+  }
+ }
+]

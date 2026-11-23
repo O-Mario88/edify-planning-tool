@@ -9,13 +9,14 @@ import (
 // /planning/schedule-action. formFields are the fields 27.3's case posts:
 // the contract's, and the drawer's own constants. Any other field carrying a
 // value names a case Go does not take (a partner, a project, a source
-// activity, a cluster, a training, an SSA collection flag, a named focus),
-// and the request is handed on whole.
+// activity, a cluster, a training, an SSA collection flag), and the request
+// is handed on whole.
 var formFields = map[string]bool{
 	"csrfmiddlewaretoken": true, "school_id": true, "purpose_of_visit": true, "scheduled_date": true,
 	"activity_goal": true, "activity_purpose_text": true, "expected_outcome": true,
 	"ssa_deviation_reason": true, "catalogue_item_id": true, "recommendation_reason": true,
 	"require_catalogue": true, "activity_type": true, "delivery_type": true, "executor_type": true,
+	"focus_intervention": true,
 }
 
 // RequestFromForm reads the drawer's form; false when Go does not take it.
@@ -47,5 +48,6 @@ func RequestFromForm(form url.Values) (Request, bool) {
 		SchoolID: one("school_id"), Purpose: one("purpose_of_visit"), Date: one("scheduled_date"),
 		Goal: goal, Outcome: one("expected_outcome"), DeviationReason: one("ssa_deviation_reason"),
 		CatalogueItemID: one("catalogue_item_id"), RecReason: one("recommendation_reason"),
+		Focus: strings.TrimSpace(one("focus_intervention")),
 	}, true
 }
