@@ -25,8 +25,20 @@ Each was compared with Django for all 16 roles on private copies: same fields, o
 | `/extra-work/assign-drawer` | 32 | 10 identical, 22 same refusal |
 | `/pl/review-queue/<id>/return-drawer` | 256, over 16 staged rule cases | 48 identical, 208 same refusal |
 | `/pl/review-queue/<id>/drawer` | 272, over the same cases, a missing record and an uploaded form | 49 identical, 221 same refusal, 2 deliberate |
+| `/projects/capacity/set`, `/projects/capacity/withdraw` | 224, then 176 over staged block, holder and allocated cases | 36 identical, 158 same refusal, 30 same not found; then 36, 113, 27 |
+| `/projects/monitoring/school` | 224 | 48 identical, 140 same refusal, 36 same not found. Only a school with nothing planned: a project with work answers "not available here yet" |
+| `/schools/<id>/assign-to-project` | 119 (17 accounts, 7 staged cases) | All same. Core, client, held elsewhere, unheld, enrolled and missing schools, with full, managed and team allocations. A 403's wording differs on purpose: Django's feed says only "Something went wrong" |
+| `/partners/create` | 16 | 3 same form, 13 same refusal. Its tick lists are compared with Django's catalogue groups, not its phone reader |
 
-The 2 deliberate differences are one fact seen by two roles: Go keeps the line break in a multi-line Observations value, which the mobile feed's reader runs together.
+The 2 deliberate differences on the Verify form are one fact seen by two roles: Go keeps the line break in a multi-line Observations value, which the mobile feed's reader runs together.
+
+`/partners/create` differs on purpose in one way. The feed's reader loses every intervention's name and repeats one field name per group, so Go draws one labelled intervention list and one activity list, each activity naming its interventions.
+
+### Field forms still to port
+
+- `/core-schools/schedule-activity`, `/core-schools/schedule-training`, `/core-schools/assign-partner` and the linked `/core-schools/schedule-visit` are one piece of work. The menu's choices lead to the other forms, the web drawer does not draw link blocks yet, and opening them creates the year's package in Django (`ensure_core_plan`), which Go must work out in memory.
+- `/activities/<id>/evidence` needs a new capability. No client drawer has a file field and Go has no upload, page-joining or stored-file path. An upload form must not be drawn until those exist.
+- `/planning/schedule-modal` is already served to the clients by Go's `GetPlanningDrawer`, not the generic drawer. Its parity with Django has not been compared.
 
 The review rule (`plreview.Reviewable`) now matches `_check_reviewable` and serves both forms and Go's approve and return saves. Seven disallowed saves were tried against the Go-only gateway (Country Director, Impact Assessment, partner work, another team's work) and all were refused with no record changed.
 
@@ -38,8 +50,7 @@ Found while porting, to fix before these saves are used without Django:
 - **Small known differences.** Django also advances the cached analytics revision after each save. Go does not, so cached analytics can lag by up to five minutes. When two rules on one milestone both match, Go takes the oldest; Django's query names no order.
 - **Before deploying this code, run `apply-roles.sh`.** It adds the functions and grants the save needs. Without them the save fails and writes nothing.
 - The Verify form names an uploaded form but cannot open it, because the feed's reader drops the button and `/api/evidence/activity/<id>/form` is still Django.
-- `getAddToProjectInGo` offers every open project and all staff as coordinators. Django offers only projects the school may join (`projects_open_for_enrolment`, with capacity) and only Project Coordinators.
-- `/core-schools/schedule-activity` and `/core-schools/schedule-training` create the school's yearly package when opened (`ensure_core_plan`). Go must not write on a read, so these need the package worked out in memory.
+- **`addToProjectInGo`, the save behind Add to Project, is not aligned with its form.** It does not check the project's status, focus, country or the person's allocation, and it returns a raw database error to the client. It is reachable only with Django absent, and must be fixed before that mode is used.
 
 Limits of this proof: the development data has no PD requests and no partner team-member logins, so those paths are covered by unit tests or the existing Go helper only. The partner-on-hold rule was checked in a rolled-back transaction. The review cases were staged on the private copies and put back afterwards. An acting leader is refused by these Go forms until the acting page policy is ported.
 
