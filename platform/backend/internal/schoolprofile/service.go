@@ -37,6 +37,9 @@ type Service struct {
 	// many schools; nil leaves their Clusters tab to the existing
 	// application.
 	clusterCards ClusterCards
+	// clusterWorkspace is who may read a cluster and its school roster; nil
+	// leaves the Cluster Profile to the existing application.
+	clusterWorkspace ClusterWorkspace
 }
 
 // NewService reads db; now is the clock (time.Now).

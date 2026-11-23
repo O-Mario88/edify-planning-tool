@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"net/url"
 	"strconv"
 	"strings"
@@ -20,21 +19,53 @@ import (
 
 const clusterPrefix = "/clusters/"
 
+// clusterTabDefs are the Cluster Profile's tabs, in the page's order.
+var clusterTabDefs = [][2]string{
+	{"overview", "Overview"},
+	{"schools", "Schools"},
+	{"ssa", "SSA Performance"},
+	{"activities", "Cluster Activities"},
+	{"attendance", "Meeting Attendance"},
+	{"member_activities", "Member School Activities"},
+	{"analytics", "Cluster Analytics"},
+}
+
+// ClusterAccess is what one reader may do on one cluster's profile.
+type ClusterAccess struct {
+	// Readable is scoping.cluster_in_scope: outside it the cluster does not
+	// exist for this reader.
+	Readable bool
+	// Plan schedules the cluster's group trainings and meetings.
+	Plan bool
+	// AddSchools opens the bulk add drawer.
+	AddSchools bool
+	// Edit is may_edit_cluster_profile.
+	Edit bool
+	// DeleteBlock is why the cluster cannot be deleted, when it cannot.
+	DeleteBlock string
+}
+
+// ClusterWorkspace lends the profile what the Clusters page owns: who may
+// read a cluster and its school roster (clusterpage reads this package, so
+// it cannot be imported here).
+type ClusterWorkspace interface {
+	ProfileAccess(ctx context.Context, p auth.Principal, clusterID string) (ClusterAccess, error)
+	Roster(ctx context.Context, p auth.Principal, clusterID, fy string) (*screensv1.GetPageResponse, error)
+}
+
+// WithClusterWorkspace gives the profiles the Cluster Profile page; without
+// it the page stays the existing application's.
+func (sp *ScopePages) WithClusterWorkspace(w ClusterWorkspace) *ScopePages {
+	sp.s.clusterWorkspace = w
+	return sp
+}
+
 type clusterDetail struct {
 	id, name, subCounty, clusterType, status string
 	districtID, districtName, regionName     string
 	staffID, staffName                       string
 	leaderName, leaderPhone                  string
 	partnerID, partnerName                   string
-}
-
-type clusterSchoolRow struct {
-	id, code, name, schoolType string
-	ssaStatus, readiness       string
-	hasGPS                     bool
-	gpsVerified                bool
-	ssaAvg                     *float64
-	visitsPlanned, visitsDone  int
 }
 
 type clusterActivityRow struct {
@@ -47,8 +78,9 @@ type clusterActivityRow struct {
 	attendanceRows                  int
 }
 
-// clusterProfile draws /clusters/<id> and /clusters/<id>/profile with real
-// PostgreSQL data across Overview, Schools, Attendance, Activities, and SSA tabs.
+// clusterProfile draws /clusters/<id> and /clusters/<id>/profile: every
+// figure from the profile engine over the cluster's operating schools, for a
+// reader whose scope holds the cluster.
 func (sp *ScopePages) clusterProfile(ctx context.Context, p auth.Principal, rawRest string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
 	rest := strings.TrimSuffix(strings.TrimSuffix(rawRest, "/"), "/profile")
 	if rest == "" || strings.Contains(rest, "/") {
@@ -58,113 +90,196 @@ func (sp *ScopePages) clusterProfile(ctx context.Context, p auth.Principal, rawR
 	if !d.OpenCluster && !d.OpenDistrict && !d.Profile {
 		return nil, true, pagegate.ErrNotAvailable
 	}
-
 	s := sp.s
+	if s.clusterWorkspace == nil || s.clusterCards == nil {
+		return nil, false, nil
+	}
+	access, err := s.clusterWorkspace.ProfileAccess(ctx, p, rest)
+	if err != nil {
+		return nil, true, err
+	}
+	if !access.Readable {
+		return nil, true, ErrNotFound
+	}
+	cl, err := s.readClusterDetail(ctx, rest)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, true, ErrNotFound
+	}
+	if err != nil {
+		return nil, true, err
+	}
+
+	now := s.now()
+	running := schooldirectory.OperationalFY(now)
+	fy := strings.TrimSpace(query.Get("fy"))
+	if !contains(fyChoices(running), fy) {
+		fy = running
+	}
+	base := clusterPrefix + cl.id
+	scope := scopeOf{kind: "cluster", key: cl.id, name: cl.name, covers: "Cluster schools", where: "s.cluster_id = $2", args: []any{cl.id}}
+	factsOf := func(pr *scopeProfile) []*screensv1.PageFact { return clusterFacts(cl, pr, d.OpenStaff) }
+
+	tab := strings.ToLower(strings.TrimSpace(query.Get("tab")))
+	if !isClusterTab(tab) {
+		tab = "overview"
+	}
+	header := clusterHeader(cl, access, base, fy)
+
+	// The records behind a figure and the Schools tab's Show lists are the
+	// engine's own pages, under this page's header and tabs.
+	show := strings.TrimSpace(query.Get("show"))
+	if query.Get("what") != "" || (tab == "schools" && show != "" && show != "all") {
+		page := scopePage{scope: scope, base: base, back: [2]string{"Back to Clusters", "/clusters"}, facts: factsOf}
+		answer, handled, err := s.scopePage(ctx, p, page, query)
+		if err != nil || !handled {
+			return answer, handled, err
+		}
+		answer.Header, answer.Tabs, answer.WebPath = header, clusterTabs(tab), base
+		return answer, true, nil
+	}
+
+	today := kampalaDay(now)
+	l := lens{tab: "overview", fy: fy, running: running, window: periodWindow(fy, ""), base: base, query: query}
+	reader, err := schooldirectory.ResolveScope(ctx, s.db, p, now)
+	if err != nil {
+		return nil, true, err
+	}
+	pr, err := s.readScopeProfile(ctx, btReader{p: p, scope: reader, doors: d}, scope, l, now)
+	if err != nil {
+		return nil, true, err
+	}
+	ex, err := s.scopeExecutionFigures(ctx, pr, l, today)
+	if err != nil {
+		return nil, true, err
+	}
+	cards, err := s.clusterCards.Cards(ctx, []string{cl.id}, fy, today.Format("2006-01-02"))
+	if err != nil {
+		return nil, true, err
+	}
+	card := cards[cl.id]
+	attention := pr.attentionLinks(l, d.Profile)
+	ids := idsOf(pr.schools)
+
+	blocks := []*screensv1.PageBlock{
+		{Kind: &screensv1.PageBlock_Facts{Facts: &screensv1.PageFacts{Facts: factsOf(pr)}}},
+		clusterYearFilter(running, fy, tab),
+		clusterSummaryStrip(pr, ex, len(attention), base, fy),
+	}
+	var selection *screensv1.PageSelection
+	switch tab {
+	case "overview", "schools":
+		members, picked, err := s.clusterMembers(ctx, p, cl, pr, fy)
+		if err != nil {
+			return nil, true, err
+		}
+		selection = picked
+		if tab == "overview" {
+			history, err := s.clusterYearHistory(ctx, cl.id, ids, running)
+			if err != nil {
+				return nil, true, err
+			}
+			blocks = append(blocks, clusterSSARail(pr, l), history.chart(chartSSATrend), history.chart(chartVisitCoverage),
+				history.chart(chartTrainingCoverage), history.chart(chartActionClosure), clusterReadiness(pr, d.Profile),
+				clusterActivityStrip(ex, base, fy), clusterAttendanceStrip(ex, card, base, fy),
+				clusterInsights(attention), clusterRecommended(cl, pr, ex, access, base, fy))
+		}
+		blocks = append(blocks, members)
+	case "ssa":
+		atTarget := 0
+		for _, x := range pr.schools {
+			if c := pr.scores[x.id].current; c != nil && *c >= rules.Engine.SSATarget {
+				atTarget++
+			}
+		}
+		progress, err := s.progressByYear(ctx, ids)
+		if err != nil {
+			return nil, true, err
+		}
+		blocks = append(blocks, clusterSSARail(pr, l))
+		blocks = append(blocks, ssaSection(pr.cmp, pr.overall, atTarget, l, progress)...)
+	case "activities", "member_activities", "attendance":
+		activities, err := s.clusterActivities(ctx, cl.id, fy, ids)
+		if err != nil {
+			return nil, true, err
+		}
+		switch tab {
+		case "activities":
+			blocks = append(blocks, clusterActivityStrip(ex, base, fy), executionTable(ex, l),
+				clusterActivitiesTable("Cluster Activities", sessionsOf(activities, true),
+					"No cluster-wide activities are recorded for "+fyLabel(fy)+"."))
+		case "member_activities":
+			blocks = append(blocks, clusterActivitiesTable("Member School Activities", sessionsOf(activities, false),
+				"No member school has an activity recorded for "+fyLabel(fy)+"."))
+		default:
+			participation, err := s.clusterParticipation(ctx, cl.id, fy, pr, s.clusterCards.AlertAfter())
+			if err != nil {
+				return nil, true, err
+			}
+			showMissing := strings.EqualFold(show, "missing")
+			blocks = append(blocks, clusterAttendanceStrip(ex, card, base, fy), participation)
+			blocks = append(blocks, clusterAttendanceBlocks(activities, showMissing, base, fy)...)
+		}
+	case "analytics":
+		history, err := s.clusterYearHistory(ctx, cl.id, ids, running)
+		if err != nil {
+			return nil, true, err
+		}
+		blocks = append(blocks, history.chart(chartSSATrend), history.chart(chartSSACoverage), history.chart(chartVisitCoverage),
+			history.chart(chartTrainingCoverage), history.chart(chartActionClosure))
+	}
+	return &screensv1.GetPageResponse{
+		Header: header, Tabs: clusterTabs(tab), Blocks: blocks, Selection: selection, WebPath: base,
+	}, true, nil
+}
+
+func isClusterTab(tab string) bool {
+	for _, def := range clusterTabDefs {
+		if def[0] == tab {
+			return true
+		}
+	}
+	return false
+}
+
+func clusterTabs(active string) []*screensv1.PageTab {
+	tabs := make([]*screensv1.PageTab, 0, len(clusterTabDefs))
+	for _, def := range clusterTabDefs {
+		tabs = append(tabs, &screensv1.PageTab{Key: def[0], Label: def[1], Active: def[0] == active})
+	}
+	return tabs
+}
+
+func (s *Service) readClusterDetail(ctx context.Context, id string) (clusterDetail, error) {
 	var cl clusterDetail
 	err := s.db.QueryRow(ctx, `
-SELECT c.id, c.name, COALESCE(c.sub_county_name, ''), COALESCE(c.cluster_type, ''), COALESCE(c.status, 'active'),
+SELECT c.id, c.name, COALESCE(NULLIF(c.sub_county_name, ''), sc.name, ''), COALESCE(c.cluster_type, ''), COALESCE(c.status, 'active'),
        COALESCE(c.district_id, ''), COALESCE(d.name, ''), COALESCE(r.name, ''),
        COALESCE(c.responsible_staff_id, ''), COALESCE(u.name, ''),
        COALESCE(c.cluster_leader_name, ''), COALESCE(c.cluster_leader_phone, ''),
        COALESCE(c.facilitating_partner_id, ''), COALESCE(pt.name, '')
 FROM cluster c
+LEFT JOIN sub_county sc ON sc.id = c.sub_county_id
 LEFT JOIN district d ON d.id = c.district_id
 LEFT JOIN region r ON r.id = COALESCE(c.region_id, d.region_id)
 LEFT JOIN "user" u ON u.id = c.responsible_staff_id
 LEFT JOIN partner pt ON pt.id = c.facilitating_partner_id
-WHERE c.id = $1 AND c.deleted_at IS NULL`, rest).Scan(
+WHERE c.id = $1 AND c.deleted_at IS NULL`, id).Scan(
 		&cl.id, &cl.name, &cl.subCounty, &cl.clusterType, &cl.status,
 		&cl.districtID, &cl.districtName, &cl.regionName,
 		&cl.staffID, &cl.staffName,
 		&cl.leaderName, &cl.leaderPhone,
 		&cl.partnerID, &cl.partnerName,
 	)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, true, ErrNotFound
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return cl, fmt.Errorf("schoolprofile: reading cluster %s: %w", id, err)
 	}
-	if err != nil {
-		return nil, true, fmt.Errorf("schoolprofile: reading cluster %s: %w", rest, err)
-	}
+	return cl, err
+}
 
-	now := s.now()
-	running := schooldirectory.OperationalFY(now)
-	fy := strings.TrimSpace(query.Get("fy"))
-	knownFY := false
-	for _, y := range fyChoices(running) {
-		if y == fy {
-			knownFY = true
-		}
-	}
-	if !knownFY {
-		fy = running
-	}
-
-	// Read all member schools of this cluster (active membership or school.cluster_id).
-	sRows, err := s.db.Query(ctx, `
-SELECT DISTINCT s.id, COALESCE(s.school_id, ''), s.name, COALESCE(s.school_type, ''),
-       COALESCE(s.current_fy_ssa_status, ''), COALESCE(s.planning_readiness, ''),
-       (COALESCE(sl.lat, vl.lat, gp.latitude, s.latitude) IS NOT NULL
-        AND COALESCE(sl.lng, vl.lng, gp.longitude, s.longitude) IS NOT NULL) AS has_gps,
-       (sl.lat IS NOT NULL OR vl.lat IS NOT NULL) AS gps_verified,
-       (SELECT avg(sr.average_score) FROM ssa_record sr
-        WHERE sr.school_id = s.id AND sr.fy = $2 AND sr.deleted_at IS NULL) AS ssa_avg,
-       (SELECT count(*) FROM activity a
-        WHERE a.school_id = s.id AND a.fy = $2 AND a.deleted_at IS NULL
-          AND NOT (a.status = ANY($3))) AS planned_cnt,
-       (SELECT count(*) FROM activity a
-        WHERE a.school_id = s.id AND a.fy = $2 AND a.deleted_at IS NULL
-          AND a.status = ANY($4)) AS done_cnt
-FROM school s
-LEFT JOIN field_routes.school_location sl ON sl.school_id = s.id AND sl.target = 'school'
-LEFT JOIN field_routes.verified_location vl ON vl.school_id = s.id
-LEFT JOIN school_geo_point gp ON gp.school_id = s.id
-WHERE s.deleted_at IS NULL
-  AND (
-    s.cluster_id = $1
-    OR EXISTS (SELECT 1 FROM school_cluster_membership m WHERE m.school_id = s.id AND m.cluster_id = $1 AND m.ended_at IS NULL)
-    OR EXISTS (SELECT 1 FROM school_cluster_assignment sca WHERE sca.school_id = s.id AND sca.cluster_id = $1)
-  )
-ORDER BY s.name`, cl.id, fy, rules.Engine.NotInPlanStatuses, rules.Engine.CompletedWorkStatuses)
-	if err != nil {
-		return nil, true, fmt.Errorf("schoolprofile: reading cluster schools: %w", err)
-	}
-	defer sRows.Close()
-
-	var schools []clusterSchoolRow
-	schoolIDs := make([]string, 0)
-	var gpsCount, coreCount, ssaDoneCount, totalVisitsPlanned, totalVisitsDone int
-	var ssaSum float64
-	var ssaRated int
-	for sRows.Next() {
-		var r clusterSchoolRow
-		if err := sRows.Scan(&r.id, &r.code, &r.name, &r.schoolType, &r.ssaStatus, &r.readiness,
-			&r.hasGPS, &r.gpsVerified, &r.ssaAvg, &r.visitsPlanned, &r.visitsDone); err != nil {
-			return nil, true, fmt.Errorf("schoolprofile: scanning cluster school: %w", err)
-		}
-		schools = append(schools, r)
-		schoolIDs = append(schoolIDs, r.id)
-		if r.hasGPS {
-			gpsCount++
-		}
-		if strings.Contains(strings.ToLower(r.schoolType), "core") {
-			coreCount++
-		}
-		if r.ssaAvg != nil {
-			ssaDoneCount++
-			ssaSum += *r.ssaAvg
-			ssaRated++
-		} else if strings.EqualFold(r.ssaStatus, "done") || strings.EqualFold(r.ssaStatus, "completed") {
-			ssaDoneCount++
-		}
-		totalVisitsPlanned += r.visitsPlanned
-		totalVisitsDone += r.visitsDone
-	}
-	if err := sRows.Err(); err != nil {
-		return nil, true, err
-	}
-
-	// Read cluster activities & attendance records for this FY.
-	aRows, err := s.db.Query(ctx, `
+// clusterActivities are the year's work of the cluster and of its schools,
+// newest first.
+func (s *Service) clusterActivities(ctx context.Context, clusterID, fy string, schoolIDs []string) ([]clusterActivityRow, error) {
+	rows, err := s.db.Query(ctx, `
 SELECT a.id, COALESCE(a.activity_type, ''), COALESCE(a.status, ''),
        COALESCE(NULLIF(a.activity_name_snapshot, ''), NULLIF(a.purpose_intervention, ''), a.activity_type, 'Activity'),
        COALESCE(a.planned_date, a.scheduled_date),
@@ -179,154 +294,36 @@ LEFT JOIN school s ON s.id = a.school_id
 LEFT JOIN "user" u ON u.id = a.responsible_staff_id
 WHERE a.deleted_at IS NULL
   AND a.fy = $2
-  AND (a.cluster_id = $1 OR (cardinality($3::text[]) > 0 AND a.school_id = ANY($3::text[])))
+  AND (a.cluster_id = $1 OR a.school_id = ANY($3::text[]))
 ORDER BY COALESCE(a.planned_date, a.scheduled_date) DESC NULLS LAST, a.created_at DESC
-LIMIT 120`, cl.id, fy, schoolIDs)
+LIMIT 200`, clusterID, fy, schoolIDs)
 	if err != nil {
-		return nil, true, fmt.Errorf("schoolprofile: reading cluster activities: %w", err)
+		return nil, fmt.Errorf("schoolprofile: reading cluster activities: %w", err)
 	}
-	defer aRows.Close()
-
-	var activities []clusterActivityRow
-	var clusterSessions, sessionsDone, missingAttendance int
-	for aRows.Next() {
+	defer rows.Close()
+	out := []clusterActivityRow{}
+	for rows.Next() {
 		var r clusterActivityRow
-		if err := aRows.Scan(&r.id, &r.activityType, &r.status, &r.title, &r.plannedDate,
+		if err := rows.Scan(&r.id, &r.activityType, &r.status, &r.title, &r.plannedDate,
 			&r.schoolName, &r.schoolCode, &r.ownerName,
 			&r.invited, &r.attended, &r.teachers, &r.leaders, &r.other, &r.attendanceRows); err != nil {
-			return nil, true, fmt.Errorf("schoolprofile: scanning cluster activity: %w", err)
+			return nil, fmt.Errorf("schoolprofile: scanning cluster activity: %w", err)
 		}
-		activities = append(activities, r)
-		if r.schoolName == "" {
-			clusterSessions++
-			if contains(rules.Engine.CompletedWorkStatuses, r.status) {
-				sessionsDone++
-				if r.attendanceRows == 0 && r.teachers+r.leaders+r.other == 0 {
-					missingAttendance++
-				}
-			}
+		out = append(out, r)
+	}
+	return out, rows.Err()
+}
+
+// sessionsOf keeps the cluster-wide work (no school of its own) or the work
+// at member schools.
+func sessionsOf(all []clusterActivityRow, clusterWide bool) []clusterActivityRow {
+	out := make([]clusterActivityRow, 0, len(all))
+	for _, a := range all {
+		if (a.schoolName == "") == clusterWide {
+			out = append(out, a)
 		}
 	}
-	if err := aRows.Err(); err != nil {
-		return nil, true, err
-	}
-
-	tab := strings.ToLower(strings.TrimSpace(query.Get("tab")))
-	validTabs := []string{"overview", "schools", "attendance", "activities", "ssa"}
-	if !contains(validTabs, tab) {
-		tab = "overview"
-	}
-	base := clusterPrefix + cl.id
-	tabDefs := [][2]string{
-		{"overview", "Overview"},
-		{"schools", fmt.Sprintf("Schools (%d)", len(schools))},
-		{"attendance", "Attendance"},
-		{"activities", fmt.Sprintf("Activities (%d)", len(activities))},
-		{"ssa", "SSA & Outcomes"},
-	}
-	tabs := make([]*screensv1.PageTab, 0, len(tabDefs))
-	for _, td := range tabDefs {
-		tabs = append(tabs, &screensv1.PageTab{Key: td[0], Label: td[1], Active: td[0] == tab})
-	}
-
-	// Header & Action Links
-	descParts := []string{"Cluster Profile"}
-	if cl.districtName != "" {
-		descParts = append(descParts, cl.districtName+" District")
-	}
-	if cl.subCounty != "" {
-		descParts = append(descParts, cl.subCounty)
-	}
-	descParts = append(descParts, fyLabel(fy))
-	header := &screensv1.PageHeader{
-		Eyebrow:     "Clusters",
-		BackLabel:   "Back to Clusters",
-		BackHref:    "/clusters",
-		Title:       cl.name,
-		Description: strings.Join(descParts, " · "),
-		Badges: []*screensv1.PageBadge{
-			{Text: strings.ToUpper(cl.status), Tone: "positive"},
-		},
-		Actions: []*screensv1.PageAction{
-			{Key: "route", Label: "Plan Cluster Route", Enabled: true, Primary: true,
-				Href: "/my-plan/smart-route?cluster=" + url.QueryEscape(cl.id)},
-			{Key: "oversight", Label: "Cluster Oversight", Enabled: true, Href: "/cluster-oversight"},
-		},
-	}
-	if cl.clusterType != "" {
-		header.Badges = append(header.Badges, &screensv1.PageBadge{Text: cl.clusterType, Tone: "neutral"})
-	}
-
-	// Facts bar
-	facts := []*screensv1.PageFact{
-		{Label: "District", Value: orDash(cl.districtName), Href: hrefIf(cl.districtID != "", "/districts/"+cl.districtID)},
-		{Label: "Sub-county", Value: orDash(cl.subCounty)},
-		{Label: "Responsible Staff", Value: orDash(cl.staffName), Href: hrefIf(cl.staffID != "", "/staff/"+cl.staffID)},
-		{Label: "Cluster Leader", Value: formatLeader(cl.leaderName, cl.leaderPhone)},
-	}
-	if cl.partnerName != "" {
-		facts = append(facts, &screensv1.PageFact{Label: "Facilitating Partner", Value: cl.partnerName, Href: "/partners/" + cl.partnerID})
-	}
-	facts = append(facts, &screensv1.PageFact{Label: "Fiscal Year", Value: fyLabel(fy)})
-
-	// FY Filter
-	fyOpts := make([]*screensv1.PageFilterOption, 0)
-	for _, y := range fyChoices(running) {
-		fyOpts = append(fyOpts, &screensv1.PageFilterOption{Value: y, Label: fyLabel(y)})
-	}
-	filters := &screensv1.PageBlock{Kind: &screensv1.PageBlock_Filters{Filters: &screensv1.PageFilters{
-		Filters: []*screensv1.PageFilter{{Name: "fy", Label: "Fiscal Year", Value: fy, Options: fyOpts}},
-		Hidden:  map[string]string{"tab": tab},
-	}}}
-
-	// KPI Strip
-	gpsPct := 0
-	ssaPct := 0
-	if len(schools) > 0 {
-		gpsPct = int(math.Round(float64(gpsCount) * 100 / float64(len(schools))))
-		ssaPct = int(math.Round(float64(ssaDoneCount) * 100 / float64(len(schools))))
-	}
-	avgSSAStr := "—"
-	if ssaRated > 0 {
-		avgSSAStr = fmt.Sprintf("%.1f/10", ssaSum/float64(ssaRated))
-	}
-	strip := &screensv1.PageBlock{Kind: &screensv1.PageBlock_Strip{Strip: &screensv1.PageStrip{
-		Title: "Cluster Performance Snapshot",
-		Metrics: []*screensv1.PageMetric{
-			{Label: "Member Schools", Value: intcomma(len(schools)), Note: fmt.Sprintf("%d Core", coreCount), Href: base + "?tab=schools&fy=" + fy},
-			{Label: "GPS Coverage", Value: fmt.Sprintf("%d/%d", gpsCount, len(schools)), Note: fmt.Sprintf("%d%% geo-located", gpsPct), Href: base + "?tab=schools&fy=" + fy},
-			{Label: "SSA Coverage", Value: fmt.Sprintf("%d%%", ssaPct), Note: fmt.Sprintf("Avg %s", avgSSAStr), Href: base + "?tab=ssa&fy=" + fy},
-			{Label: "Cluster Sessions", Value: fmt.Sprintf("%d/%d", sessionsDone, clusterSessions), Note: "completed / planned", Href: base + "?tab=attendance&fy=" + fy},
-			{Label: "School Visits", Value: fmt.Sprintf("%d/%d", totalVisitsDone, totalVisitsPlanned), Note: "completed / planned", Href: base + "?tab=activities&fy=" + fy},
-		},
-	}}}
-
-	blocks := []*screensv1.PageBlock{
-		{Kind: &screensv1.PageBlock_Facts{Facts: &screensv1.PageFacts{Facts: facts}}},
-		filters,
-		strip,
-	}
-
-	switch tab {
-	case "overview":
-		blocks = append(blocks, clusterOverviewPanels(cl, schools, activities, missingAttendance, base, fy)...)
-	case "schools":
-		blocks = append(blocks, clusterSchoolsTable(schools))
-	case "attendance":
-		showMissing := strings.EqualFold(strings.TrimSpace(query.Get("show")), "missing")
-		blocks = append(blocks, clusterAttendanceBlocks(activities, showMissing, base, fy)...)
-	case "activities":
-		blocks = append(blocks, clusterActivitiesTable(activities))
-	case "ssa":
-		blocks = append(blocks, clusterSSATable(schools, fy))
-	}
-
-	return &screensv1.GetPageResponse{
-		Header:  header,
-		Tabs:    tabs,
-		Blocks:  blocks,
-		WebPath: base,
-	}, true, nil
+	return out
 }
 
 func makeCols(labels ...string) []*screensv1.PageColumn {
@@ -352,201 +349,6 @@ func hrefIf(cond bool, href string) string {
 		return href
 	}
 	return ""
-}
-
-func clusterOverviewPanels(cl clusterDetail, schools []clusterSchoolRow, activities []clusterActivityRow, missingAttendance int, base, fy string) []*screensv1.PageBlock {
-	var out []*screensv1.PageBlock
-	items := []*screensv1.PagePanelItem{
-		{Kind: &screensv1.PagePanelItem_Text{Text: fmt.Sprintf(
-			"%s currently brings together %d active school(s) in %s District.",
-			cl.name, len(schools), orDash(cl.districtName))}},
-	}
-	if missingAttendance > 0 {
-		items = append(items, &screensv1.PagePanelItem{
-			Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{
-				Links: []*screensv1.PageLink{{
-					Text: fmt.Sprintf("%d completed cluster session(s) missing attendance records — review now", missingAttendance),
-					Href: base + "?tab=attendance&show=missing&fy=" + fy,
-				}},
-			}},
-		})
-	}
-	out = append(out, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{
-		Title: "Cluster Summary",
-		Items: items,
-	}}})
-	// Show top schools & recent activities directly on overview
-	if len(schools) > 0 {
-		limit := min(10, len(schools))
-		out = append(out, clusterSchoolsTable(schools[:limit]))
-	}
-	if len(activities) > 0 {
-		limit := min(8, len(activities))
-		out = append(out, clusterActivitiesTable(activities[:limit]))
-	}
-	return out
-}
-
-func clusterSchoolsTable(schools []clusterSchoolRow) *screensv1.PageBlock {
-	rows := make([]*screensv1.PageRow, 0, len(schools))
-	for _, sc := range schools {
-		gpsLabel := "Missing GPS"
-		gpsTone := "attention"
-		if sc.gpsVerified {
-			gpsLabel = "Verified GPS"
-			gpsTone = "positive"
-		} else if sc.hasGPS {
-			gpsLabel = "Recorded GPS"
-			gpsTone = "info"
-		}
-		ssaTxt := "Not assessed"
-		if sc.ssaAvg != nil {
-			ssaTxt = fmt.Sprintf("%.1f/10", *sc.ssaAvg)
-		}
-		ref := sc.code
-		if ref == "" {
-			ref = sc.id
-		}
-		rows = append(rows, &screensv1.PageRow{
-			Cells: []*screensv1.PageCell{
-				{Text: orDash(sc.code)},
-				{Text: sc.name, Href: "/schools/" + url.PathEscape(ref)},
-				{Text: orDash(sc.schoolType)},
-				{Text: gpsLabel, Tone: gpsTone},
-				{Text: ssaTxt},
-				{Text: fmt.Sprintf("%d / %d", sc.visitsDone, sc.visitsPlanned)},
-			},
-		})
-	}
-	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{
-		Title:        "Cluster Member Schools",
-		Columns:      makeCols("School ID", "School Name", "Type", "GPS", "SSA Score", "Visits (Done/Planned)"),
-		Rows:         rows,
-		EmptyMessage: "No active schools are currently assigned to this cluster.",
-	}}}
-}
-
-func clusterAttendanceBlocks(activities []clusterActivityRow, showMissing bool, base, fy string) []*screensv1.PageBlock {
-	var rows []*screensv1.PageRow
-	for _, a := range activities {
-		if a.schoolName != "" {
-			continue // cluster-level sessions only
-		}
-		missing := a.attendanceRows == 0 && a.teachers+a.leaders+a.other == 0
-		if showMissing && !missing {
-			continue
-		}
-		dateStr := "—"
-		if a.plannedDate != nil {
-			dateStr = a.plannedDate.Format("02 Jan 2006")
-		}
-		attText := fmt.Sprintf("%d/%d schools · %d participants", a.attended, a.invited, a.teachers+a.leaders+a.other)
-		tone := "positive"
-		if missing {
-			attText = "Attendance missing"
-			tone = "attention"
-		}
-		rows = append(rows, &screensv1.PageRow{
-			Cells: []*screensv1.PageCell{
-				{Text: dateStr},
-				{Text: a.title, Href: "/activities/" + a.id},
-				{Text: a.activityType},
-				{Text: a.status},
-				{Text: attText, Tone: tone},
-				{Text: orDash(a.ownerName)},
-			},
-		})
-	}
-	caption := "Cluster Session Attendance"
-	if showMissing {
-		caption = "Cluster Sessions Missing Attendance"
-	}
-	filterLink := &screensv1.PageLink{Text: "Show sessions missing attendance", Href: base + "?tab=attendance&show=missing&fy=" + fy}
-	if showMissing {
-		filterLink = &screensv1.PageLink{Text: "Show all cluster sessions", Href: base + "?tab=attendance&fy=" + fy}
-	}
-	return []*screensv1.PageBlock{
-		{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{
-			Title: "Attendance Filter",
-			Items: []*screensv1.PagePanelItem{{Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{Links: []*screensv1.PageLink{filterLink}}}}},
-		}}},
-		{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{
-			Title:        caption,
-			Columns:      makeCols("Date", "Session", "Type", "Status", "Attendance", "Lead Staff"),
-			Rows:         rows,
-			EmptyMessage: "No cluster sessions match this attendance filter for " + fyLabel(fy) + ".",
-		}}},
-	}
-}
-
-func clusterActivitiesTable(activities []clusterActivityRow) *screensv1.PageBlock {
-	rows := make([]*screensv1.PageRow, 0, len(activities))
-	for _, a := range activities {
-		dateStr := "—"
-		if a.plannedDate != nil {
-			dateStr = a.plannedDate.Format("02 Jan 2006")
-		}
-		whereCell := &screensv1.PageCell{Text: "Cluster-wide"}
-		if a.schoolName != "" {
-			ref := a.schoolCode
-			if ref == "" {
-				ref = a.schoolName
-			}
-			whereCell = &screensv1.PageCell{Text: a.schoolName, Href: "/schools/" + url.PathEscape(ref)}
-		}
-		rows = append(rows, &screensv1.PageRow{
-			Cells: []*screensv1.PageCell{
-				{Text: dateStr},
-				{Text: a.title, Href: "/activities/" + a.id},
-				{Text: a.activityType},
-				whereCell,
-				{Text: a.status},
-				{Text: orDash(a.ownerName)},
-			},
-		})
-	}
-	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{
-		Title:        "Cluster & Member School Activities",
-		Columns:      makeCols("Date", "Activity", "Type", "Location", "Status", "Owner"),
-		Rows:         rows,
-		EmptyMessage: "No activities recorded for this cluster in the selected fiscal year.",
-	}}}
-}
-
-func clusterSSATable(schools []clusterSchoolRow, fy string) *screensv1.PageBlock {
-	rows := make([]*screensv1.PageRow, 0, len(schools))
-	for _, sc := range schools {
-		score := "Not assessed"
-		tone := "attention"
-		if sc.ssaAvg != nil {
-			score = fmt.Sprintf("%.1f / 10", *sc.ssaAvg)
-			if *sc.ssaAvg >= 7.0 {
-				tone = "positive"
-			} else if *sc.ssaAvg >= 5.0 {
-				tone = "info"
-			}
-		}
-		ref := sc.code
-		if ref == "" {
-			ref = sc.id
-		}
-		rows = append(rows, &screensv1.PageRow{
-			Cells: []*screensv1.PageCell{
-				{Text: orDash(sc.code)},
-				{Text: sc.name, Href: "/schools/" + url.PathEscape(ref)},
-				{Text: orDash(sc.schoolType)},
-				{Text: score, Tone: tone},
-				{Text: orDash(sc.ssaStatus)},
-				{Text: orDash(sc.readiness)},
-			},
-		})
-	}
-	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{
-		Title:        "School Self-Assessment (SSA) Coverage — " + fyLabel(fy),
-		Columns:      makeCols("School ID", "School Name", "Type", "Average SSA", "SSA Status", "Planning Readiness"),
-		Rows:         rows,
-		EmptyMessage: "No schools in this cluster yet.",
-	}}}
 }
 
 // region draws /regions/<id>: reuses the full multi-school ScopePages engine.

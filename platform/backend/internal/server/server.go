@@ -296,7 +296,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			planningmonitor.NewPage(pool, time.Now),
 			programmerollout.NewService(pool, time.Now),
 			partneroversight.NewService(pool, time.Now).WithTarget(planningmonitor.PartnerTargetReader(pool)),
-			schoolprofile.NewScopePages(pool, time.Now).WithClusterCards(clusterCards{clusteroversight.CardReader{DB: pool}}),
+			schoolprofile.NewScopePages(pool, time.Now).WithClusterCards(clusterCards{clusteroversight.CardReader{DB: pool}}).
+				WithClusterWorkspace(clusterpage.NewService(pool, time.Now)),
 			hrregister.NewService(pool, time.Now).WithAccessLog(pool, logger),
 			leavepolicies.NewService(pool, time.Now),
 			visitrequests.NewService(pool, time.Now),

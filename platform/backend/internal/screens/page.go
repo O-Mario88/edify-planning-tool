@@ -14,6 +14,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/origin"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/trace"
 )
 
@@ -72,7 +73,7 @@ func (s *Service) GetPage(
 		for _, pages := range s.pages {
 			response, served, err := pages.Build(ctx, effective, message.GetPath(), query)
 			switch {
-			case errors.Is(err, pagegate.ErrNotAvailable):
+			case errors.Is(err, pagegate.ErrNotAvailable), errors.Is(err, schoolprofile.ErrNotFound):
 				return nil, apierr.New(ctx, connect.CodeNotFound, apierr.ReasonNotFound,
 					"This was not found, or it is not yours to view.")
 			case errors.Is(err, pagegate.ErrForbidden):
