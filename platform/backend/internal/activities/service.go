@@ -114,15 +114,18 @@ type plan struct {
 	interventionRefusal string
 	// doorAudit is the audit row of the form the save came through, if any.
 	doorAudit string
-	need      schoolNeed
-	focus     string
-	evidence  evidence
-	row       activityRow
-	ownerUID  string
-	home      staffHome
-	verdict   DayVerdict
-	origin    Origin
-	now       time.Time
+	// ceilingCourse is the course whose training ceiling is asked again under
+	// the school's lock.
+	ceilingCourse string
+	need          schoolNeed
+	focus         string
+	evidence      evidence
+	row           activityRow
+	ownerUID      string
+	home          staffHome
+	verdict       DayVerdict
+	origin        Origin
+	now           time.Time
 }
 
 // Schedule makes the save, or refuses it in the existing words, or hands it

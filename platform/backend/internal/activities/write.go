@@ -52,6 +52,16 @@ type activityRow struct {
 	secondary  []string
 	// A visit request: who decides it, and why the requester needs to go.
 	approvalOwner, justification string
+	// noOutcomeField: the form that made it asks for no expected outcome.
+	noOutcomeField bool
+}
+
+// outcomeValue is the expected outcome, NULL for a form that has no such field.
+func (r activityRow) outcomeValue() any {
+	if r.noOutcomeField {
+		return nil
+	}
+	return r.outcome
 }
 
 // isRequest is whether the row waits for the school owner's decision.
@@ -251,6 +261,20 @@ func (s *Service) write(ctx context.Context, pl *plan) (int64, error) {
 	} else if err := entitlement(ctx, tx, pl.school, pl.row.activityType, pl.row.purpose, pl.row.fy, pl.now); err != nil {
 		return 0, err
 	}
+	if pl.core != nil && pl.core.route == corePackageTraining {
+		if err := coreTrainingSideOpen(ctx, tx, pl.school, *pl.core.course, pl.row.fy, pl.now); err != nil {
+			return 0, err
+		}
+	}
+	if pl.ceilingCourse != "" {
+		set, err := ceilingSet(ctx, tx, pl.row.responsible, pl.ceilingCourse, pl.row.fy)
+		if err != nil {
+			return 0, err
+		}
+		if set {
+			return 0, handOn("a training ceiling is set for the course")
+		}
+	}
 	if err := duplicates(ctx, tx, pl); err != nil {
 		return 0, err
 	}
@@ -292,7 +316,7 @@ func (s *Service) write(ctx context.Context, pl *plan) (int64, error) {
 			return 0, err
 		}
 	}
-	if pl.core != nil && pl.core.route == corePackageVisit {
+	if pl.core != nil && (pl.core.route == corePackageVisit || pl.core.route == corePackageTraining) {
 		if err := takeCoreSlot(ctx, tx, pl); err != nil {
 			return 0, err
 		}
@@ -443,7 +467,7 @@ func insertActivity(ctx context.Context, tx pgx.Tx, r activityRow) error {
 		{"planned_date", r.plannedDate.Format(time.DateOnly)}, {"planned_month", r.plannedMonth},
 		{"planned_week", r.plannedWeek}, {"purpose_type", r.purpose}, {"purpose_intervention", optString(r.focus)},
 		{"focus_intervention", optString(r.focus)}, {"secondary_focus_interventions", append([]string{}, r.secondary...)},
-		{"activity_purpose_text", r.goal}, {"expected_outcome", r.outcome},
+		{"activity_purpose_text", r.goal}, {"expected_outcome", r.outcomeValue()},
 		{"ssa_collection_expected", r.collects}, {"attended_school_ids", []string{}},
 		{"salesforce_activity_type", r.salesforceType()}, {"catalogue_item_id", r.item.ID},
 		{"catalogue_version", r.version}, {"activity_name_snapshot", r.name()},
@@ -586,16 +610,25 @@ func (s *Service) afterCommit(ctx context.Context, pl *plan, rowID int64) {
 // takeCoreSlot is assert_can_schedule's lock and commit_schedule: the
 // package's next open visit, inside the save.
 func takeCoreSlot(ctx context.Context, tx pgx.Tx, pl *plan) error {
-	slots, err := readCoreSlots(ctx, tx, pl.core.planID, coreSlotVisit, " FOR UPDATE")
+	slots, err := readCoreSlots(ctx, tx, pl.core.planID, pl.core.slotKind(), " FOR UPDATE")
 	if err != nil {
 		return err
 	}
 	open := openCoreSlotAt(slots, pl.core.preferred, coreSlotTaken)
 	if open == nil {
-		return handOn("the Core package has no open visit slot")
+		return handOn("the Core package has no open slot")
 	}
 	pl.core.slotNumber = open.Sequence
 	return bookCoreSlot(ctx, tx, open.ID, "Scheduled", pl)
+}
+
+// slotStaff is the slot's assigned staff: the training form names nobody, so
+// its commit_schedule writes none.
+func slotStaff(pl *plan) any {
+	if pl.core != nil && pl.core.route == corePackageTraining {
+		return nil
+	}
+	return pl.row.responsible
 }
 
 // creditCoreSlot is credit_school_activity for staff SSA Support: after the
@@ -641,7 +674,7 @@ func bookCoreSlot(ctx context.Context, tx pgx.Tx, slotID, status string, pl *pla
 	r := pl.row
 	_, err := tx.Exec(ctx, `UPDATE core_activity_slot SET status = $2, activity_id = $3, scheduled_for = $4,
   scheduled_month = $5, scheduled_week = $6, assigned_staff_id = $7, owner = 'staff', updated_at = $8 WHERE id = $1`,
-		slotID, status, r.id, r.plannedDate.Format(time.DateOnly), strconv.Itoa(r.plannedMonth), r.plannedWeek, r.responsible, pl.now)
+		slotID, status, r.id, r.plannedDate.Format(time.DateOnly), strconv.Itoa(r.plannedMonth), r.plannedWeek, slotStaff(pl), pl.now)
 	if err != nil {
 		return fmt.Errorf("activities: writing the package slot: %w", err)
 	}

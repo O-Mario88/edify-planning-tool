@@ -323,6 +323,21 @@ WHERE sp.deleted_at IS NULL AND (sp.id = ANY($1) OR sp.user_id = ANY($1)) ORDER 
 	return id, *name, nil
 }
 
+// OperationalRefusal answers a save through get_operational_school_or_404.
+func (s *Service) OperationalRefusal(ctx context.Context, p auth.Principal, code string) (string, bool, error) {
+	_, err := s.Operational(ctx, p, code)
+	var refusal *Refusal
+	switch {
+	case err == nil:
+		return "", true, nil
+	case errors.Is(err, ErrNotFound):
+		return "", false, nil
+	case errors.As(err, &refusal):
+		return refusal.Message, true, nil
+	}
+	return "", false, err
+}
+
 // VisitRequestOwner answers the save of an Accountant's visit: the profile
 // that must approve it, or the sentence refusing the school.
 func (s *Service) VisitRequestOwner(ctx context.Context, p auth.Principal, code string) (string, string, error) {

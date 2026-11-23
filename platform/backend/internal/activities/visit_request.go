@@ -30,6 +30,9 @@ const (
 // profile to ask, or the sentence refusing the school.
 type VisitRequests interface {
 	VisitRequestOwner(ctx context.Context, p auth.Principal, code string) (owner, refusal string, err error)
+	// OperationalRefusal is get_operational_school_or_404: the sentence
+	// refusing the school, and whether there is such a school.
+	OperationalRefusal(ctx context.Context, p auth.Principal, code string) (refusal string, found bool, err error)
 }
 
 // WithVisitRequests lets Go make the Accountant's visit requests.

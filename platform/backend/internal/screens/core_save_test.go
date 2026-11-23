@@ -12,14 +12,34 @@ import (
 )
 
 type fakeCoreSaver struct {
-	got    []activities.CoreVisitRequest
-	answer activities.Answer
-	err    error
+	got       []activities.CoreVisitRequest
+	trainings []activities.CoreTrainingRequest
+	answer    activities.Answer
+	err       error
 }
 
 func (f *fakeCoreSaver) ScheduleCoreVisit(_ context.Context, _ auth.Principal, req activities.CoreVisitRequest, _ activities.Origin) (activities.Answer, error) {
 	f.got = append(f.got, req)
 	return f.answer, f.err
+}
+
+func (f *fakeCoreSaver) ScheduleCoreTraining(_ context.Context, _ auth.Principal, req activities.CoreTrainingRequest, _ activities.Origin) (activities.Answer, error) {
+	f.trainings = append(f.trainings, req)
+	return f.answer, f.err
+}
+
+func TestTheCoreTrainingFormSavesInGoWithoutDjango(t *testing.T) {
+	saver := &fakeCoreSaver{answer: activities.Answer{Message: "Core Training T1 scheduled successfully."}}
+	service := NewService(nil).WithCoreVisitSave(saver, nil)
+
+	answer, err := service.SaveDrawer(personSaving(), connect.NewRequest(&screensv1.SaveDrawerRequest{
+		Path:   "/core-schools/schedule-training?school_id=1045",
+		Values: map[string]string{"catalogue_item_id": "c1", "scheduled_date": "2026-12-01"},
+	}))
+
+	if err != nil || !answer.Msg.GetSaved() || len(saver.trainings) != 1 || saver.trainings[0].CourseID != "c1" {
+		t.Fatalf("answer %v, %v, got %+v", answer, err, saver.trainings)
+	}
 }
 
 func saveCoreVisit(service *Service) (*screensv1.SaveDrawerResponse, error) {

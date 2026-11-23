@@ -47,6 +47,9 @@ const (
 	// coreCreditedVisit: staff SSA Support, saved as itself and credited to a
 	// slot once it commits.
 	coreCreditedVisit
+	// corePackageTraining: the Core training form's one priced training, in
+	// a locked slot.
+	corePackageTraining
 )
 
 func coreRouteFor(purpose string) coreRoute {
@@ -71,6 +74,16 @@ type coreBooking struct {
 	route  coreRoute
 	// preferred is the slot the planner chose; slotNumber the one it took.
 	preferred, slotNumber int
+	// course is the training a corePackageTraining delivers.
+	course *course
+}
+
+// slotKind is the kind of slot the booking takes inside the save.
+func (b coreBooking) slotKind() string {
+	if b.route == corePackageTraining {
+		return coreSlotTraining
+	}
+	return coreSlotVisit
 }
 
 // coreVisit is the Core School follow-up item.

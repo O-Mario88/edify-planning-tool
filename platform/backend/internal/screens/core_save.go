@@ -15,12 +15,16 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 )
 
-const coreVisitDrawerPath = "/core-schools/schedule-visit"
+const (
+	coreVisitDrawerPath    = "/core-schools/schedule-visit"
+	coreTrainingDrawerPath = "/core-schools/schedule-training"
+)
 
 // CoreVisitSaver is the Go save of the Core Schools visit form
 // (internal/activities.Service).
 type CoreVisitSaver interface {
 	ScheduleCoreVisit(ctx context.Context, p auth.Principal, req activities.CoreVisitRequest, origin activities.Origin) (activities.Answer, error)
+	ScheduleCoreTraining(ctx context.Context, p auth.Principal, req activities.CoreTrainingRequest, origin activities.Origin) (activities.Answer, error)
 }
 
 // WithCoreVisitSave makes the Core visit form's saves Go's where Go takes
@@ -43,18 +47,28 @@ func (s *Service) coreVisitInGo(ctx context.Context, message *screensv1.SaveDraw
 		return nil, false, nil
 	}
 	path, rawQuery, _ := strings.Cut(message.GetPath(), "?")
-	if path != coreVisitDrawerPath {
+	if path != coreVisitDrawerPath && path != coreTrainingDrawerPath {
 		return nil, false, nil
 	}
 	query, err := url.ParseQuery(rawQuery)
 	if err != nil {
 		return nil, false, nil
 	}
-	req, taken := activities.CoreVisitRequestFromForm(query.Get("school_id"), directDrawerForm(message))
-	if !taken {
-		return nil, false, nil
+	var saved activities.Answer
+	form := directDrawerForm(message)
+	if path == coreVisitDrawerPath {
+		req, taken := activities.CoreVisitRequestFromForm(query.Get("school_id"), form)
+		if !taken {
+			return nil, false, nil
+		}
+		saved, err = s.coreVisits.ScheduleCoreVisit(ctx, principal, req, from)
+	} else {
+		req, taken := activities.CoreTrainingRequestFromForm(query.Get("school_id"), form)
+		if !taken {
+			return nil, false, nil
+		}
+		saved, err = s.coreVisits.ScheduleCoreTraining(ctx, principal, req, from)
 	}
-	saved, err := s.coreVisits.ScheduleCoreVisit(ctx, principal, req, from)
 	var refusal *activities.Refusal
 	switch {
 	case errors.Is(err, activities.ErrHandOn):

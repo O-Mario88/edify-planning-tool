@@ -186,7 +186,7 @@ func play(ctx context.Context, svc *activities.Service, accounts *identity.Store
 	if m := editDrawer.FindStringSubmatch(s.Open); m != nil {
 		return playEdit(ctx, svc, accounts, pool, s, m[1], form)
 	}
-	if strings.HasPrefix(s.Open, "/core-schools/schedule-visit?") {
+	if strings.HasPrefix(s.Open, "/core-schools/schedule-visit?") || strings.HasPrefix(s.Open, "/core-schools/schedule-training?") {
 		return playCoreVisit(ctx, svc, accounts, pool, s, form)
 	}
 	if activities.IsGroupTrainingForm(form) {
@@ -235,8 +235,10 @@ func play(ctx context.Context, svc *activities.Service, accounts *identity.Store
 // playCoreVisit makes the Core Schools visit form's save through Go.
 func playCoreVisit(ctx context.Context, svc *activities.Service, accounts *identity.Store, pool *pgxpool.Pool,
 	s step, form url.Values) (outcome, error) {
-	req, taken := activities.CoreVisitRequestFromForm(form.Get("school_id"), form)
-	if !taken {
+	training := strings.HasPrefix(s.Open, "/core-schools/schedule-training?")
+	visitReq, visitTaken := activities.CoreVisitRequestFromForm(form.Get("school_id"), form)
+	trainingReq, trainingTaken := activities.CoreTrainingRequestFromForm(form.Get("school_id"), form)
+	if (training && !trainingTaken) || (!training && !visitTaken) {
 		return outcome{HandedOn: true}, nil
 	}
 	var userID string
@@ -248,8 +250,13 @@ func playCoreVisit(ctx context.Context, svc *activities.Service, accounts *ident
 		return outcome{}, err
 	}
 	account.InActingAppointment = account.Acting.WorkingIn(account.ActiveRole)
-	answer, err := svc.ScheduleCoreVisit(ctx, auth.Principal{Account: account}, req,
-		activities.Origin{IP: "127.0.0.1", CorrelationID: newCorrelation()})
+	principal, from := auth.Principal{Account: account}, activities.Origin{IP: "127.0.0.1", CorrelationID: newCorrelation()}
+	var answer activities.Answer
+	if training {
+		answer, err = svc.ScheduleCoreTraining(ctx, principal, trainingReq, from)
+	} else {
+		answer, err = svc.ScheduleCoreVisit(ctx, principal, visitReq, from)
+	}
 	var refusal *activities.Refusal
 	switch {
 	case errors.Is(err, activities.ErrHandOn):
