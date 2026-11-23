@@ -11,6 +11,8 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/origin"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/trace"
 )
 
 // The profile's drawers, read and saved by the existing application's own
@@ -210,7 +212,9 @@ func (s *Service) SaveDrawer(
 			}
 			return connect.NewResponse(answer), nil
 		}
-		if answer, served, err := s.plReviewInGo(ctx, forwarded); served {
+		// A decision's audit rows record where it was made from.
+		reviewCtx := origin.With(ctx, origin.Read(request.Peer().Addr, request.Header(), s.trustProxy, trace.FromContext(ctx).RequestID))
+		if answer, served, err := s.plReviewInGo(reviewCtx, forwarded); served {
 			if err != nil {
 				return nil, err
 			}

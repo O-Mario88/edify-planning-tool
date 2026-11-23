@@ -537,7 +537,9 @@ def form_values(form: Node, values: dict) -> dict[str, str | list[str]]:
     lists = checklists.group_names(form)
     return {
         **{
-            name: _ticked(value) if name in lists else str(value)
+            name: _ticked(value, checklists.written_values(form, name))
+            if name in lists
+            else str(value)
             for name, value in values.items()
             if name in names and name not in hidden
         },
@@ -563,9 +565,9 @@ def _hidden(form: Node) -> dict[str, str | list[str]]:
     }
 
 
-def _ticked(value) -> list[str]:
+def _ticked(value, written: dict[str, str]) -> list[str]:
     """A checklist's value as the boxes the web would send, one per tick."""
-    return [part for part in str(value).split(",") if part]
+    return [written.get(part, part) for part in str(value).split(",") if part]
 
 
 def options(html: str) -> list[dict]:

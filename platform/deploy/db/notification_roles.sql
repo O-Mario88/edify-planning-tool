@@ -27,6 +27,12 @@ GRANT INSERT (id, created_at, updated_at, recipient_id, recipient_role, sender_i
   ON notification TO edify_notification_owner;
 GRANT UPDATE (status, read_at, resolved_at, updated_at) ON notification TO edify_notification_owner;
 GRANT SELECT, INSERT, UPDATE ON notification_preference TO edify_notification_owner;
+-- notify_workflow: a recipient named by either id, and one live notice per condition.
+GRANT SELECT (id, user_id) ON staff_profile TO edify_notification_owner;
+GRANT SELECT (resolved_at, created_at, reminder_count) ON notification TO edify_notification_owner;
+GRANT UPDATE (title, body, target_route, action_label, priority, action_required, reminder_count,
+              last_reminded_at)
+  ON notification TO edify_notification_owner;
 
 CREATE SCHEMA IF NOT EXISTS gateway_notifications AUTHORIZATION edify_notification_owner;
 REVOKE ALL ON SCHEMA gateway_notifications FROM PUBLIC;
@@ -147,6 +153,77 @@ BEGIN
 END
 $fn$;
 
+-- apps.notifications.services.resolve_condition: every live notice of one
+-- event about one record is closed and leaves the person's list.
+CREATE OR REPLACE FUNCTION gateway_notifications.resolve_condition(
+  evt_type varchar, ctx_type varchar, ctx_id varchar, at timestamptz
+) RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  changed integer;
+BEGIN
+  UPDATE public.notification
+     SET resolved_at = at, status = 'archived', action_required = false, updated_at = at
+   WHERE source_event_type = evt_type
+     AND context_type = ctx_type
+     AND context_id = ctx_id
+     AND resolved_at IS NULL;
+  GET DIAGNOSTICS changed = ROW_COUNT;
+  RETURN changed;
+END
+$fn$;
+
+-- WorkflowNotificationService.trigger for one recipient, named by a user or a
+-- staff profile id: one live notice per condition, so a repeat brings the
+-- existing notice back as unread rather than stacking another.
+CREATE OR REPLACE FUNCTION gateway_notifications.notify_workflow(
+  new_id varchar, recipient_ref varchar, notif_title varchar, notif_body text, notif_category varchar,
+  ctx_type varchar, ctx_id varchar, route varchar, btn_label varchar, prio varchar, evt_type varchar,
+  at timestamptz
+) RETURNS TABLE (out_notification_id varchar, out_recipient_id varchar)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  person record;
+  live varchar;
+  urgent boolean := prio = ANY (ARRAY['high', 'urgent']::varchar[]);
+BEGIN
+  SELECT u.id, u.active_role INTO person FROM public."user" u WHERE u.id = recipient_ref;
+  IF NOT FOUND THEN
+    SELECT u.id, u.active_role INTO person
+      FROM public.staff_profile sp JOIN public."user" u ON u.id = sp.user_id
+     WHERE sp.id = recipient_ref;
+    IF NOT FOUND THEN
+      RETURN;
+    END IF;
+  END IF;
+  SELECT n.id INTO live FROM public.notification n
+   WHERE n.recipient_id = person.id AND n.source_event_type = evt_type
+     AND n.context_type = ctx_type AND n.context_id = ctx_id
+     AND n.resolved_at IS NULL AND n.status <> 'archived'
+   ORDER BY n.created_at DESC LIMIT 1 FOR UPDATE;
+  IF FOUND THEN
+    UPDATE public.notification n
+       SET title = notif_title, body = notif_body, target_route = route, action_label = btn_label,
+           priority = prio, action_required = urgent, reminder_count = COALESCE(n.reminder_count, 0) + 1,
+           last_reminded_at = at, status = 'unread', read_at = NULL, updated_at = at
+     WHERE n.id = live;
+    out_notification_id := live;
+  ELSE
+    INSERT INTO public.notification (
+      id, created_at, updated_at, recipient_id, recipient_role, title, body, category, context_type,
+      context_id, target_route, action_label, action_required, priority, status, source_event_type,
+      source_event_id, reminder_count
+    ) VALUES (
+      new_id, at, at, person.id, COALESCE(NULLIF(person.active_role, ''), 'Staff'), notif_title, notif_body,
+      notif_category, ctx_type, ctx_id, route, btn_label, urgent, prio, 'unread', evt_type, ctx_id, 0
+    );
+    out_notification_id := new_id;
+  END IF;
+  out_recipient_id := person.id;
+  RETURN NEXT;
+END
+$fn$;
+
 -- Upserts caller's notification delivery preferences (Step 3B).
 CREATE OR REPLACE FUNCTION gateway_notifications.update_preferences(
   owner_id varchar,
@@ -185,6 +262,8 @@ REVOKE ALL ON FUNCTION gateway_notifications.mark_read(varchar, varchar, timesta
 REVOKE ALL ON FUNCTION gateway_notifications.mark_all_read(varchar, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_notifications.resolve_context(varchar, varchar, varchar, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_notifications.update_preferences(varchar, boolean, boolean, jsonb, timestamptz) FROM PUBLIC;
+REVOKE ALL ON FUNCTION gateway_notifications.resolve_condition(varchar, varchar, varchar, timestamptz) FROM PUBLIC;
+REVOKE ALL ON FUNCTION gateway_notifications.notify_workflow(varchar, varchar, varchar, text, varchar, varchar, varchar, varchar, varchar, varchar, varchar, timestamptz) FROM PUBLIC;
 RESET ROLE;
 
 GRANT USAGE ON SCHEMA gateway_notifications TO edify_gateway;
@@ -194,3 +273,5 @@ GRANT EXECUTE ON FUNCTION gateway_notifications.mark_all_read(varchar, timestamp
 GRANT EXECUTE ON FUNCTION gateway_notifications.archive(varchar, varchar) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_notifications.resolve_context(varchar, varchar, varchar, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_notifications.update_preferences(varchar, boolean, boolean, jsonb, timestamptz) TO edify_gateway;
+GRANT EXECUTE ON FUNCTION gateway_notifications.resolve_condition(varchar, varchar, varchar, timestamptz) TO edify_gateway;
+GRANT EXECUTE ON FUNCTION gateway_notifications.notify_workflow(varchar, varchar, varchar, text, varchar, varchar, varchar, varchar, varchar, varchar, varchar, timestamptz) TO edify_gateway;

@@ -10,7 +10,7 @@ import (
 
 func TestReturnRejectsBlankReasonBeforeOpeningTransaction(t *testing.T) {
 	svc := NewReviewService(nil, nil)
-	_, err := svc.Return(context.Background(), auth.Principal{Account: auth.Account{ActiveRole: "Program Lead"}}, "act1", "   ")
+	_, err := svc.Return(context.Background(), auth.Principal{Account: auth.Account{ActiveRole: "Program Lead"}}, "act1", nil, "   ")
 	var refusal *ReviewRefusal
 	if !errors.As(err, &refusal) || refusal.Forbidden {
 		t.Fatalf("expected non-forbidden refusal, got %v", err)

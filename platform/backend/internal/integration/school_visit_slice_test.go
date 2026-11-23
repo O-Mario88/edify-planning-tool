@@ -312,11 +312,11 @@ LIMIT 1`, cceoPrincipal.StaffProfileID, cceoPrincipal.UserID).Scan(&schoolID)
 	adminPrincipal := principalOf(adminToken)
 
 	// 7b. Blank return reason is refused.
-	if _, err := reviewSvc.Return(ctx, adminPrincipal, scheduled.ActivityID, "   "); err == nil {
+	if _, err := reviewSvc.Return(ctx, adminPrincipal, scheduled.ActivityID, nil, "   "); err == nil {
 		t.Fatalf("step 7b: expected blank return reason refused")
 	}
 	// 7c. Valid Return moves visit to returned_by_pl with note and audit row.
-	returned, err := reviewSvc.Return(ctx, adminPrincipal, scheduled.ActivityID, "Clarify teacher count")
+	returned, err := reviewSvc.Return(ctx, adminPrincipal, scheduled.ActivityID, nil, "Clarify teacher count")
 	if err != nil || returned.Status != "returned_by_pl" {
 		t.Fatalf("step 7c (PL return): got %+v, err=%v", returned, err)
 	}
@@ -337,7 +337,9 @@ LIMIT 1`, cceoPrincipal.StaffProfileID, cceoPrincipal.UserID).Scan(&schoolID)
 	if err := admin.QueryRow(ctx, `SELECT status FROM activity_completion_verification WHERE activity_id = $1`, scheduled.ActivityID).Scan(&compVerifStatus); err != nil {
 		t.Fatalf("reading completion verification: %v", err)
 	}
-	if verifiedStatus != "ia_verified" || iaVerifStatus != "confirmed" || compVerifStatus != "confirmed" {
+	// The existing approval leaves the completion's verification row as it was
+	// (pl_review.services._approve; measured against it in docs/migration/189).
+	if verifiedStatus != "ia_verified" || iaVerifStatus != "confirmed" || compVerifStatus != "pending" {
 		t.Fatalf("step 7d mismatch: status=%q ia=%q compVerif=%q", verifiedStatus, iaVerifStatus, compVerifStatus)
 	}
 	// 7e. Native Go CSV export: permitted reviewer sees the verified visit &

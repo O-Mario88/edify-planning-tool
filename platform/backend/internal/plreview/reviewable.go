@@ -74,22 +74,61 @@ func refusalFor(work reviewCase, by reviewerReach) *ReviewRefusal {
 type Review struct {
 	ID, Status, ActivityType, SchoolID, ResponsibleStaffID string
 	Officer, Activity, Where, Delivered                    string
+	// What a decision on it reads.
+	Owner, DeliveryType, ProjectID, CatalogueItemID string
+	Planned, IAConfirmedAt                          *time.Time
 }
 
-// Reviewable is apps.pl_review.services.reviewable_activity. A completion this
-// reviewer may not decide answers a *ReviewRefusal in the existing words.
-func Reviewable(ctx context.Context, q schooldirectory.Querier, p auth.Principal, activityID string, now time.Time) (Review, error) {
+// readWork is the completion and whether a lead verifies its owner's work.
+func readWork(ctx context.Context, q schooldirectory.Querier, activityID string) (Review, reviewCase, error) {
 	review, work, err := readReview(ctx, q, activityID)
 	if err != nil {
-		return Review{}, err
+		return Review{}, reviewCase{}, err
 	}
 	if work.found && work.status == statusAwaitingIA && work.deliveryType != partnerDelivery && work.owner != "" {
 		err := q.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM staff_profile sp LEFT JOIN "user" u ON u.id = sp.user_id
 WHERE (sp.id = $3 OR sp.user_id = $3) AND `+leadVerifiedStaff+`)`,
 			rules.LeadVerifiedRoles, rules.LeadRole, work.owner).Scan(&work.ownerLeadVerified)
 		if err != nil {
-			return Review{}, fmt.Errorf("plreview: reading who verifies the owner's work: %w", err)
+			return Review{}, reviewCase{}, fmt.Errorf("plreview: reading who verifies the owner's work: %w", err)
 		}
+	}
+	return review, work, nil
+}
+
+// decidable is the decision views' order: the record exists, this reviewer
+// holds it (may_review, whatever its state), and only then whether it is
+// still waiting (_check_reviewable).
+func decidable(ctx context.Context, q schooldirectory.Querier, p auth.Principal, activityID string, now time.Time) (Review, error) {
+	review, work, err := readWork(ctx, q, activityID)
+	if err != nil {
+		return Review{}, err
+	}
+	if !work.found {
+		return Review{}, &ReviewRefusal{Message: "Activity not found.", NotFound: true}
+	}
+	reach, err := reachOf(ctx, q, p, now)
+	if err != nil {
+		return Review{}, err
+	}
+	if !mayDecide(work, reach) {
+		return Review{}, &ReviewRefusal{Message: notYourOfficer, Forbidden: true}
+	}
+	if refusal := refusalFor(work, reach); refusal != nil {
+		return Review{}, refusal
+	}
+	if err := q.QueryRow(ctx, `SELECT ia_confirmed_at FROM activity WHERE id = $1`, activityID).Scan(&review.IAConfirmedAt); err != nil {
+		return Review{}, fmt.Errorf("plreview: reading the earlier confirmation: %w", err)
+	}
+	return review, nil
+}
+
+// Reviewable is apps.pl_review.services.reviewable_activity. A completion this
+// reviewer may not decide answers a *ReviewRefusal in the existing words.
+func Reviewable(ctx context.Context, q schooldirectory.Querier, p auth.Principal, activityID string, now time.Time) (Review, error) {
+	review, work, err := readWork(ctx, q, activityID)
+	if err != nil {
+		return Review{}, err
 	}
 	// The record's own state refuses first, and needs no reading of the team.
 	if refusal := refusalFor(work, reviewerReach{admin: true}); refusal != nil {
@@ -123,18 +162,20 @@ SELECT COALESCE(a.status, ''), COALESCE(a.delivery_type, ''),
   COALESCE(a.responsible_staff_id, ''), COALESCE(a.school_id, ''), COALESCE(a.activity_type, ''),
   COALESCE(a.activity_name_snapshot, ''),
   COALESCE(CASE WHEN a.school_id IS NOT NULL THEN s.name WHEN a.cluster_id IS NOT NULL THEN cl.name ELSE a.venue END, ''),
-  COALESCE(a.actual_delivery_date, a.planned_date)
+  COALESCE(a.actual_delivery_date, a.planned_date),
+  COALESCE(a.project_id, ''), COALESCE(a.catalogue_item_id, ''), a.planned_date
 FROM activity a LEFT JOIN school s ON s.id = a.school_id LEFT JOIN cluster cl ON cl.id = a.cluster_id
 WHERE a.id = $1 AND a.deleted_at IS NULL`, activityID).Scan(
 		&work.status, &work.deliveryType, &work.owner, &review.ResponsibleStaffID, &review.SchoolID,
-		&review.ActivityType, &name, &review.Where, &delivered)
+		&review.ActivityType, &name, &review.Where, &delivered,
+		&review.ProjectID, &review.CatalogueItemID, &review.Planned)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return review, reviewCase{}, nil
 	}
 	if err != nil {
 		return review, work, fmt.Errorf("plreview: reading the completion: %w", err)
 	}
-	review.Status = work.status
+	review.Status, review.Owner, review.DeliveryType = work.status, work.owner, work.deliveryType
 	review.Activity = name
 	if review.Activity == "" {
 		review.Activity = activityTypeLabel(review.ActivityType)

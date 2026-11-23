@@ -69,6 +69,23 @@ def group_names(form: Node) -> set[str]:
     return {name for name, count in counts.items() if count >= 2}
 
 
+def sent_value(value: str) -> str:
+    """A box's value as a checklist can carry it. The ticks travel joined by
+    commas, so a value's own commas ("Wrong school, cluster or date") would
+    read back as two boxes that do not exist."""
+    return value.replace(",", "")
+
+
+def written_values(form: Node, name: str) -> dict[str, str]:
+    """The boxes of ``name`` whose value holds a comma, by what the app sends
+    for them: a save posts the value as the web wrote it."""
+    return {
+        sent_value(box.get("value")): box.get("value")
+        for box in form.find_all(is_box)
+        if box.get("name") == name and "," in (box.get("value") or "")
+    }
+
+
 def _is_radio(node: Node) -> bool:
     return (
         node.tag == "input"
@@ -138,7 +155,9 @@ def read(node: Node, controls: list[Node], root: Node) -> dict | None:
         "readOnly": False,
     }
     if template is None:
-        ticked = [box.get("value") for box in boxes if "checked" in box.attrs]
+        ticked = [
+            sent_value(box.get("value")) for box in boxes if "checked" in box.attrs
+        ]
         options = [_rendered_option(box, root) for box in boxes]
         return {**field, "options": options, "value": ",".join(ticked)}
     scripted = _scripted(template, boxes[0], root)
@@ -204,7 +223,7 @@ def _rendered_option(box: Node, root: Node) -> dict:
         label = root.find(lambda n: n.tag == "label" and n.get("for") == box.get("id"))
     pieces = _pieces(label) if label is not None else []
     return {
-        "value": box.get("value") or "on",
+        "value": sent_value(box.get("value") or "on"),
         "label": pieces[0] if pieces else "",
         "detail": " · ".join(pieces[1:]),
         "group": "",

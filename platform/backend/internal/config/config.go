@@ -106,6 +106,10 @@ type Config struct {
 	// (EDIFY_GO_PAGE_WRITES); all off by default.
 	PageWrites PageWrites
 
+	// SalesforceSync is the existing application's own switch for queueing
+	// approved work to Salesforce (SALESFORCE_SYNC_ENABLED=1).
+	SalesforceSync bool
+
 	// RedisURL enables shared Redis caching and distributed rate limiting
 	// (EDIFY_REDIS_URL). Empty uses the in-memory single-node fallback.
 	RedisURL string
@@ -155,6 +159,7 @@ func Load(getenv func(string) string) (Config, error) {
 		CORSAllowedOrigins:  splitList(getenv(envCORSOrigins)),
 		ExistingAppURL:      strings.TrimRight(strings.TrimSpace(getenv(envExistingAppURL)), "/"),
 		StrictReads:         isTruthy(getenv(envStrictReads)),
+		SalesforceSync:      getenv("SALESFORCE_SYNC_ENABLED") == "1",
 	}
 
 	if cfg.DatabaseURL == "" {

@@ -19,7 +19,7 @@ import (
 // in Go (internal/plreview.ReviewService) with zero Django calls.
 type PLReviewer interface {
 	Approve(ctx context.Context, p auth.Principal, activityID string) (plreview.ReviewResult, error)
-	Return(ctx context.Context, p auth.Principal, activityID, reason string) (plreview.ReviewResult, error)
+	Return(ctx context.Context, p auth.Principal, activityID string, reasons []string, written string) (plreview.ReviewResult, error)
 }
 
 // WithPLReviewSave enables native Go Programme Lead approve/return drawer saves
@@ -30,8 +30,9 @@ func (s *Service) WithPLReviewSave(reviewer PLReviewer, logger *slog.Logger) *Se
 }
 
 var (
-	plConfirmPath = regexp.MustCompile(`^/pl/review-queue/([A-Za-z0-9]{1,30})/confirm/?$`)
-	plReturnPath  = regexp.MustCompile(`^/pl/review-queue/([A-Za-z0-9]{1,30})/return/?$`)
+	// A form saves to the address it opened at, so each decision answers both.
+	plConfirmPath = regexp.MustCompile(`^/pl/review-queue/([A-Za-z0-9]{1,30})/(?:confirm|drawer)/?$`)
+	plReturnPath  = regexp.MustCompile(`^/pl/review-queue/([A-Za-z0-9]{1,30})/(?:return|return-drawer)/?$`)
 	plDrawerPath  = regexp.MustCompile(`^/my-plan/([A-Za-z0-9]{1,30})/pl-review/?$`)
 )
 
@@ -44,7 +45,7 @@ func (s *Service) plReviewInGo(
 	if !ok || s.plReviews == nil || principal.InActingAppointment {
 		return nil, false, nil
 	}
-	path := message.GetPath()
+	path, _, _ := strings.Cut(message.GetPath(), "?")
 	values := message.GetValues()
 
 	var activityID, action string
@@ -80,14 +81,19 @@ func (s *Service) plReviewInGo(
 	if action == "approve" {
 		res, err = s.plReviews.Approve(ctx, principal, activityID)
 	} else {
-		reason := strings.TrimSpace(values["reason"])
-		if reason == "" {
-			reason = strings.TrimSpace(values["comment"])
+		written := strings.TrimSpace(values["reason"])
+		if written == "" {
+			written = strings.TrimSpace(values["comment"])
 		}
-		res, err = s.plReviews.Return(ctx, principal, activityID, reason)
+		res, err = s.plReviews.Return(ctx, principal, activityID, plreview.TickedReasons(values["reasons"]), written)
+	}
+	if errors.Is(err, plreview.ErrHandOn) {
+		return nil, false, nil
 	}
 	var refusal *plreview.ReviewRefusal
 	switch {
+	case errors.As(err, &refusal) && refusal.NotFound:
+		return nil, true, apierr.New(ctx, connect.CodeNotFound, apierr.ReasonNotFound, "This was not found, or it is not yours to view.")
 	case errors.As(err, &refusal) && refusal.Forbidden:
 		return nil, true, apierr.New(ctx, connect.CodePermissionDenied, apierr.ReasonPermissionDenied, refusal.Message)
 	case errors.As(err, &refusal):
@@ -98,9 +104,9 @@ func (s *Service) plReviewInGo(
 		}
 		return nil, true, apierr.New(ctx, connect.CodeUnavailable, apierr.ReasonInternal, "This could not be saved.")
 	}
-	msg := "Completion approved and verified."
+	msg := "Completion verified and marked complete."
 	if res.Status == "returned_by_pl" {
-		msg = "Completion returned to the officer."
+		msg = "Activity returned to CCEO for corrections."
 	}
 	return &screensv1.SaveDrawerResponse{Saved: true, Message: msg}, true, nil
 }

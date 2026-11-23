@@ -13,6 +13,9 @@ from __future__ import annotations
 import re
 from datetime import date, timedelta
 
+from rest_framework.test import APIClient
+
+from apps.accounts.jwt import issue_access_token
 from apps.activities import return_notes
 from apps.activities.ia_models import IAVerification
 from apps.activities.ia_services import ActivityReturnService
@@ -38,6 +41,51 @@ def _row_menu(html: str, marker: str) -> list[str]:
     if "data-row-actions" not in row:
         return []
     return re.findall(r'role="menuitem"[^>]*>([^<]+)</', row)
+
+
+class TheAppDecidesThroughTheFeedTest(ReviewFixture):
+    """The app saves a form at the address it opened, so a decision Go hands
+    on reaches these views whole (docs/migration/189)."""
+
+    def _save(self, path, values):
+        token = issue_access_token(self.pl_user.id, self.pl_user.active_role)
+        return APIClient().post(
+            "/api/mobile/v1/drawer",
+            {"path": path, "values": values},
+            format="json",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+
+    def test_verified_from_the_form(self):
+        work = self._completion(self.james.id, salesforce_activity_id="SV-FEED-1")
+
+        response = self._save(f"{QUEUE_URL}/{work.id}/drawer", {})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["saved"], response.json())
+        work.refresh_from_db()
+        self.assertEqual(work.status, "ia_verified")
+
+    def test_a_ticked_reason_keeps_its_own_commas(self):
+        work = self._completion(self.james.id, salesforce_activity_id="SV-FEED-2")
+
+        response = self._save(
+            f"{QUEUE_URL}/{work.id}/return-drawer",
+            {
+                "reasons": "Participants not entered in Salesforce,"
+                "Wrong school cluster or activity date",
+                "reason": "Enter the 12 teachers.",
+            },
+        )
+
+        self.assertTrue(response.json()["saved"], response.json())
+        work.refresh_from_db()
+        self.assertEqual(work.status, "returned_by_pl")
+        self.assertEqual(
+            return_notes.note_for(work),
+            "Participants not entered in Salesforce; "
+            "Wrong school, cluster or activity date — Enter the 12 teachers.",
+        )
 
 
 class TheReasonIsRequiredTest(ReviewFixture):

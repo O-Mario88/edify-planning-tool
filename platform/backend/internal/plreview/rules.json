@@ -70,6 +70,31 @@
     "CCEO",
     "Program Lead"
   ],
+  "ledger_credited_types": [
+    "baseline_ssa_visit",
+    "cluster_meeting",
+    "cluster_meeting_ssa_review",
+    "cluster_training",
+    "cluster_training_ssa_collection",
+    "coaching_visit",
+    "core_assessment_visit",
+    "core_training",
+    "core_visit",
+    "donor_visit",
+    "follow_up_visit",
+    "in_school_coaching_visit",
+    "in_school_support",
+    "in_school_training",
+    "partner_ssa_collection",
+    "school_improvement_training",
+    "school_invitation",
+    "school_visit",
+    "school_visit_ssa_collection",
+    "social_visit",
+    "story_gathering_visit",
+    "training",
+    "training_follow_up_visit"
+  ],
   "no_salesforce_record_types": [
     "NONE"
   ],
@@ -103,6 +128,16 @@
     "ssa_activity",
     "training"
   ],
+  "school_type_families": {
+    "client": [
+      "client",
+      "core_trained"
+    ],
+    "core": [
+      "core",
+      "champion"
+    ]
+  },
   "ssa_alignment_labels": {
     "no_focus": "Names no SSA intervention",
     "no_ssa": "No verified SSA to inform it",

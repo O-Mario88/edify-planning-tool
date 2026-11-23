@@ -381,6 +381,47 @@ class ChecklistTest(SimpleTestCase):
         self.assertEqual(data, {"member_school_ids": []})
 
 
+COMMA_CHECKLIST = """
+<div data-edify-drawer><div class="drawer-body">
+<form method="post" action="/pl/review-queue/a1/return">
+<fieldset><legend>Why are you returning it?</legend>
+<label><input type="checkbox" name="reasons" value="Participants missing"> Participants missing</label>
+<label><input type="checkbox" name="reasons" value="Wrong school, cluster or date" checked> Wrong school, cluster or date</label>
+</fieldset>
+</form></div></div>
+"""
+
+
+class CommaInATickBoxTest(SimpleTestCase):
+    """A checklist travels as its ticks joined by commas, so a box whose own
+    value holds one would come back as two boxes that do not exist."""
+
+    def test_a_box_is_offered_without_its_commas(self):
+        items = drawer_blocks.read(COMMA_CHECKLIST)["items"]
+        fields = [item["field"] for item in items if "field" in item]
+        reasons = next(f for f in fields if f["name"] == "reasons")
+
+        self.assertEqual(
+            [(o["value"], o["label"]) for o in reasons["options"]],
+            [
+                ("Participants missing", "Participants missing"),
+                ("Wrong school cluster or date", "Wrong school, cluster or date"),
+            ],
+        )
+        self.assertEqual(reasons["value"], "Wrong school cluster or date")
+
+    def test_a_save_sends_the_box_as_the_web_writes_it(self):
+        data = drawer_blocks.form_data(
+            COMMA_CHECKLIST,
+            {"reasons": "Participants missing,Wrong school cluster or date"},
+        )
+
+        self.assertEqual(
+            data,
+            {"reasons": ["Participants missing", "Wrong school, cluster or date"]},
+        )
+
+
 class BoundValueTest(SimpleTestCase):
     def test_a_field_bound_to_the_drawers_data_opens_with_its_value(self):
         drawer = """

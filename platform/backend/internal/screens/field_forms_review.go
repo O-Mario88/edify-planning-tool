@@ -142,7 +142,7 @@ func reviewFact(label, value string) *screensv1.PageFact {
 func plReturnDrawer(review plreview.Review) *screensv1.PageDrawer {
 	reasons := make([]*screensv1.DrawerOption, 0, len(plreview.ReturnReasons()))
 	for _, reason := range plreview.ReturnReasons() {
-		reasons = append(reasons, &screensv1.DrawerOption{Value: reason, Label: reason})
+		reasons = append(reasons, &screensv1.DrawerOption{Value: plreview.ReturnReasonValue(reason), Label: reason})
 	}
 	return &screensv1.PageDrawer{
 		Title:       returnCompletionTitle,

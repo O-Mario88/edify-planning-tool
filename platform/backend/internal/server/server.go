@@ -354,15 +354,16 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			screenService.WithCompleteSave(save, logger)
 		}
 	}
-	if effectiveSaves.PLReview {
-		screenService.WithPLReviewSave(plreview.NewReviewService(pool, time.Now), logger)
-	}
 	exportsMgr := exports.NewManager(pool, time.Now)
 	realtimeBroker := realtime.NewBroker(time.Now)
 	if cfg.RedisURL != "" {
 		if err := realtimeBroker.WithRedisPubSub(context.Background(), cfg.RedisURL, logger); err != nil {
 			logger.Warn("realtime: invalid redis pubsub configuration, staying single-node", slog.String("error", err.Error()))
 		}
+	}
+	if effectiveSaves.PLReview {
+		screenService.WithPLReviewSave(plreview.NewReviewService(pool, time.Now).
+			WithRealtime(realtimeBroker).WithSalesforceSync(cfg.SalesforceSync).WithLogger(logger), logger)
 	}
 	uploadsSvc := uploads.NewService(pool, time.Now).WithRealtime(realtimeBroker)
 	fieldOpsSvc := fieldops.NewService(pool).WithRealtime(realtimeBroker)

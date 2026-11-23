@@ -53,7 +53,9 @@ def rules() -> dict:
     from apps.evidence.form_document import FORM_NAMES
     from apps.evidence.requirements import PROFILE_REQUIRED_EVIDENCE, REQUIRED_EVIDENCE
     from apps.frontend.views.dashboard_embed import PROGRAM_LEAD
+    from apps.hr.target_distribution import CLIENT_FAMILY, CORE_FAMILY
     from apps.pl_review.services import LEAD_VERIFIED_ROLES
+    from apps.targets.my_targets import AREA_SOURCES
 
     return {
         # The Verify and Return forms (my_plan_views.pl_review_drawer,
@@ -69,6 +71,22 @@ def rules() -> dict:
             str(k): _governed_form(v) for k, v in PROFILE_REQUIRED_EVIDENCE.items()
         },
         "type_forms": {str(k): _governed_form(v) for k, v in REQUIRED_EVIDENCE.items()},
+        # hr.target_distribution.school_type_family: a milestone rule's
+        # school-type condition.
+        "school_type_families": {
+            "core": list(CORE_FAMILY),
+            "client": list(CLIENT_FAMILY),
+        },
+        # targets.ledger_sync._credited_activity_type: a decision marks the
+        # owner's year only for work a target area counts.
+        "ledger_credited_types": sorted(
+            {
+                str(activity_type)
+                for source, types in AREA_SOURCES.values()
+                if source == "activity"
+                for activity_type in types or ()
+            }
+        ),
         "page_roles": sorted(
             role.value
             for role in EdifyRole

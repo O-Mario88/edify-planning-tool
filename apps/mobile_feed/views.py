@@ -1544,11 +1544,17 @@ DRAWER_VIEWS = frozenset(
         "project_withdraw_school",
         "pd_request",
         "pd_allocation_history",
+        # Completion Reviews: Verify and Return. Go makes the decisions it can
+        # and hands the rest here (docs/migration/189).
+        "pl_review_drawer",
+        "pl_return_drawer",
     }
 )
 #: The views a drawer's form may save to, by URL name.
 DRAWER_SAVES = frozenset(
     {
+        "pl_confirm",
+        "pl_return",
         "complete_activity",
         "reschedule_activity",
         "edit_activity",
