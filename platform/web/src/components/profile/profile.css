@@ -101,7 +101,7 @@
 [data-pf='tiles'] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 [data-pf='tile-rows'] { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 [data-pf='more'] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; row-gap: 4px; }
-[data-pf='tile'] { display: block; min-width: 0; }
+[data-pf='tile'] { display: block; min-width: 0; overflow-wrap: anywhere; }
 [data-pf='tile-text'] { display: block; min-width: 0; margin-top: 8px; }
 [data-pf='tile-chevron'] { display: none; }
 [data-pf='tile'][data-row] { display: flex; align-items: center; gap: 12px; }
@@ -141,4 +141,85 @@
 }
 @media (min-width: 1280px) {
   [data-pf='core-cards'] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* ── The Cluster Profile ───────────────────────────────────────────── */
+[data-pf='cluster-band'] {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--brand-primary) 78%, #06162e);
+  color: #ffffff;
+}
+[data-pf='cluster-band'] h1 { color: #ffffff !important; }
+[data-pf='cluster-band'] dt { color: rgb(255 255 255 / 0.78); }
+[data-pf='cluster-band'] dd, [data-pf='cluster-band'] dd a { color: #ffffff; }
+[data-pf='band-head'] { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+[data-pf='band-facts'] { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px 20px; }
+[data-pf='band-actions'] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+[data-pf='band-action'] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid rgb(255 255 255 / 0.5);
+  background: #ffffff;
+  color: var(--brand-primary) !important;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+}
+[data-pf='band-action'][data-tone='danger'] { color: #be123c !important; }
+[data-pf='band-action']:disabled { opacity: 0.6; cursor: not-allowed; }
+a[data-pf='band-action']:hover { background: color-mix(in srgb, var(--brand-primary) 8%, #ffffff); }
+
+[data-pf='cluster-kpis'] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+[data-pf='cluster-grid'] { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: stretch; }
+[data-pf='cluster-grid'] > * { min-width: 0; }
+[data-pf='member-tools'] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+[data-pf='member-tools'] > :first-child { grid-column: 1 / -1; }
+[data-pf='cluster-charts'] { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+[data-pf='ssa-split'] { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+[data-pf='ssa-split'] > :last-child { width: 100%; min-width: 0; }
+
+@media (min-width: 640px) {
+  [data-pf='cluster-kpis'] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  [data-pf='band-facts'] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  [data-pf='band-actions'] { display: flex; flex-wrap: wrap; }
+  [data-pf='band-action'] { min-height: 36px; white-space: nowrap; }
+  [data-pf='member-tools'] { display: flex; flex-wrap: wrap; align-items: center; }
+  [data-pf='member-tools'] > :first-child { flex: 1 1 14rem; }
+  [data-pf='cluster-charts'] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  [data-pf='ssa-split'] { flex-direction: row; align-items: flex-start; }
+  [data-pf='ssa-split'] > :first-child { flex: 0 0 8.5rem; }
+  [data-pf='ssa-split'] > :last-child { flex: 1; }
+}
+@media (min-width: 1024px) {
+  [data-pf='cluster-grid'] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  [data-pf-area='members'] { grid-column: 1 / -1; }
+  [data-pf='cluster-charts'] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 1280px) {
+  [data-pf='cluster-band'] { flex-direction: row; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; }
+  [data-pf='band-head'] { flex: 1 1 26rem; }
+  [data-pf='band-facts'] { flex: 1 1 26rem; }
+  [data-pf='band-actions'] { flex: 1 1 100%; }
+  [data-pf='cluster-kpis'] { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+}
+@media (min-width: 1440px) {
+  [data-pf='cluster-grid'] { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+  [data-pf-area='ssa'] { grid-column: span 5; }
+  [data-pf-area='chart'] { grid-column: span 4; }
+  [data-pf-area='readiness'] { grid-column: span 3; }
+  [data-pf-area='activity'] { grid-column: span 4; }
+  [data-pf-area='attendance'] { grid-column: span 5; }
+  [data-pf-area='insights'] { grid-column: span 3; }
+  [data-pf-area='members'] { grid-column: span 9; }
+  [data-pf-area='recommended'] { grid-column: span 3; }
 }
