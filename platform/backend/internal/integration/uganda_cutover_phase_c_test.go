@@ -101,7 +101,7 @@ ORDER BY a.created_at DESC LIMIT 1`).Scan(&actID, &schoolPK); err2 != nil {
 	// 2. M7 SSA entry & confirmation.
 	ssaID, err := fops.EnterSSA(ctx, cceoP, fieldops.SSAEntryRequest{
 		SchoolID: schoolPK, FY: "2099", Quarter: "Q1", Date: time.Now().UTC(), NewEnrollment: 412,
-		Scores: allEightSSAScores(4.5),
+		Scores:        allEightSSAScores(4.5),
 		CollectorType: "staff", ActivityID: actID,
 	})
 	if err != nil {
