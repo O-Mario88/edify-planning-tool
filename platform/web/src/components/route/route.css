@@ -1,0 +1,157 @@
+/* The Smart Route Planner's layout: a full workspace on desktop, map-first with a draggable sheet on a phone. */
+
+.sr-desktop-btn { display: none; }
+.sr-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; }
+.sr-header__actions { display: none; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+.sr-kpis {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(7.25rem, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+.sr-kpi {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--edify-border);
+  border-radius: 12px;
+  background: var(--edify-card-surface);
+}
+.sr-kpi__icon {
+  display: none;
+  flex-shrink: 0;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--brand-primary) 10%, transparent);
+  color: var(--brand-primary);
+}
+.sr-kpi[data-kpi='schools'] .sr-kpi__icon, .sr-kpi[data-kpi='coverage'] .sr-kpi__icon {
+  background: color-mix(in srgb, var(--edify-success) 14%, transparent);
+  color: var(--edify-success-text);
+}
+.sr-kpi[data-kpi='traffic'] .sr-kpi__icon {
+  background: color-mix(in srgb, var(--edify-warning) 16%, transparent);
+  color: var(--edify-warning-text);
+}
+.sr-kpi .sr-kpi__value { font-size: 15px !important; font-weight: 700 !important; line-height: 1.2; color: var(--edify-text); white-space: nowrap; }
+.sr-kpi .sr-kpi__label { font-size: 12px !important; line-height: 1.25; color: var(--edify-text-muted); }
+.sr-kpi .sr-kpi__note { font-size: 11px !important; line-height: 1.25; color: var(--edify-text-muted); }
+
+.sr-quick { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; margin-top: 10px; align-items: center; }
+.sr-viewswitch { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 8px; border-radius: 10px; background: var(--edify-surface-muted); }
+.sr-viewswitch button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 40px; font-size: 13px; font-weight: 600; color: var(--edify-text-muted); border-radius: 10px; }
+.sr-viewswitch button[aria-pressed='true'] { background: var(--edify-web-segment-active); color: #ffffff; font-weight: 700; }
+
+.sr-workspace { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 10px; }
+.sr-panel-map { order: 1; height: 62dvh; min-height: 420px; }
+.sr-panel-config { order: 2; display: none; }
+.sr-panel-config[data-open] {
+  display: flex;
+  position: fixed;
+  inset: 0 0 0 0;
+  z-index: 60;
+  overflow-y: auto;
+  border-radius: 0;
+  padding-bottom: 96px;
+}
+.sr-config-close { display: inline-flex; }
+.sr-panel-config [data-sr-geo] { display: none; }
+
+/* The itinerary is a sheet over the map on a phone, above the bottom bar. */
+.sr-panel-itinerary {
+  order: 3;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 64px);
+  z-index: 35;
+  height: var(--sr-sheet, 13rem);
+  overflow: hidden;
+  border-radius: 18px 18px 0 0 !important;
+  box-shadow: 0 -8px 24px rgb(15 23 42 / 0.18);
+  transition: height 180ms ease;
+}
+.sr-panel-itinerary[data-dragging] { transition: none; }
+.sr-sheet-body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+.sr-sheet-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  margin: -8px 0 0;
+  touch-action: none;
+  cursor: grab;
+  background: none;
+  border: 0;
+  width: 100%;
+}
+.sr-sheet-handle span { display: block; width: 44px; height: 4px; border-radius: 4px; background: var(--edify-border-strong, var(--edify-border)); }
+.sr-sheet-body [data-sr-summary] { order: 5; }
+.sr-panel-map [aria-label='Map legend'] { display: none; }
+.sr-sheet-mapback { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex-shrink: 0; min-height: 40px; border: 1px solid var(--brand-primary); border-radius: 10px; color: var(--brand-primary); font-size: 13px; font-weight: 700; }
+.sr-sheet-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; flex-shrink: 0; }
+
+.sr-card { padding: 14px; border: 1px solid var(--edify-border); border-radius: 14px; background: var(--edify-card-surface); min-width: 0; }
+.sr-bottom { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin-top: 12px; }
+.sr-options { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.sr-option { padding: 10px; text-align: left; border: 1px solid var(--edify-border); border-radius: 10px; background: var(--edify-surface); }
+.sr-option:hover { border-color: var(--brand-primary); }
+.sr-option[data-active] { border-color: var(--brand-primary); box-shadow: inset 0 0 0 1px var(--brand-primary); background: color-mix(in srgb, var(--brand-primary) 6%, var(--edify-surface)); }
+
+/* Room under the page so the sheet never covers its last card. */
+[data-page='smart-route'] { padding-bottom: calc(var(--sr-sheet, 13rem) + 88px) !important; }
+
+@media (min-width: 640px) {
+  .sr-options { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1024px) {
+  [data-page='smart-route'] { padding-bottom: 40px !important; }
+  .sr-desktop-btn { display: inline-flex; }
+  .sr-header__actions { display: flex; }
+  .sr-quick, .sr-viewswitch, .sr-sheet-handle, .sr-sheet-actions, .sr-config-close, .sr-sheet-mapback { display: none; }
+  .sr-kpis { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; }
+  .sr-kpi { padding: 10px 12px; gap: 10px; }
+  .sr-kpi__icon { display: grid; }
+  .sr-kpi .sr-kpi__value { font-size: 18px !important; }
+  .sr-kpi .sr-kpi__label { font-size: 13px !important; }
+  .sr-workspace[data-layout='both'] { grid-template-columns: 17.5rem minmax(0, 1fr) 21rem; }
+  .sr-workspace[data-layout='left'] { grid-template-columns: 17.5rem minmax(0, 1fr); }
+  .sr-workspace[data-layout='right'] { grid-template-columns: minmax(0, 1fr) 21rem; }
+  .sr-workspace[data-layout='map-only'] { grid-template-columns: minmax(0, 1fr); }
+  .sr-panel-config, .sr-panel-config[data-open] { order: 1; display: flex; position: static; overflow: visible; z-index: auto; padding-bottom: 16px; border-radius: 16px; }
+  .sr-panel-config [data-sr-geo] { display: block; }
+  .sr-panel-map { order: 2; height: auto; min-height: 680px; }
+  .sr-panel-itinerary {
+    order: 3;
+    position: static;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    border-radius: 16px !important;
+    box-shadow: none;
+    z-index: auto;
+    transition: none;
+  }
+  .sr-sheet-body { overflow: visible; }
+  .sr-sheet-body [data-sr-summary] { order: 0; }
+  .sr-panel-map [aria-label='Map legend'] { display: block; }
+  .sr-bottom { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 0.8fr); }
+}
+
+@media (min-width: 1440px) {
+  .sr-kpis { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sr-panel-itinerary { transition: none; }
+}

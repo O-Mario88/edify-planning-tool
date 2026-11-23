@@ -22,8 +22,10 @@ import {
   CheckCircle2,
   Clock,
   Flag,
+  List as ListIcon,
   LocateFixed,
   Lock,
+  Map as MapIcon,
   MapPin,
   Navigation,
   PanelLeftClose,
@@ -36,6 +38,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   Unlock,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -61,6 +64,8 @@ import {
   km,
   legFigures,
 } from '@/lib/routePlanner';
+import { optionOf } from '@/lib/routeView';
+import type { RouteOption } from '@/lib/routeView';
 import type {
   CalendarRulesData,
   InAppDirectionsData,
@@ -74,8 +79,10 @@ import type {
 import { GpsCaptureModal } from './GpsCaptureModal';
 import { InAppNavigationPanel } from './InAppNavigationPanel';
 import { RouteIcon } from './RouteIcons';
+import { RouteBottomRow, RouteKpiStrip, RouteSsaTab } from './RouteInsights';
 import { RouteMap } from './RouteMap';
 import { NearbyCard } from './RouteParts';
+import './route.css';
 
 const card = 'rounded-[16px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] shadow-[0_1px_2px_rgba(15,23,42,0.04)]';
 
@@ -116,6 +123,14 @@ async function smartApi<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 const LOCATION_CHANGES_EVERY_MS = 60_000;
+
+/** The phone's itinerary sheet: how far it rests when peeking, half open and open, in rem. */
+const SHEET_PEEK_REM = 13;
+const SHEET_HALF_REM = 26;
+const SHEET_FULL_REM = 40;
+const REM_PX = 16;
+/** The modes the Route Options card compares. */
+const COMPARED_MODES: readonly SmartOptimizationMode[] = ['balanced', 'fastest', 'shortest'];
 
 export interface RoutePlannerProps {
   day: JsonValue;
@@ -177,7 +192,15 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
   // Collapsible 3-panel desktop layout
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
-  const [rightTab, setRightTab] = useState<'itinerary' | 'directions'>(navigate ? 'directions' : 'itinerary');
+  const [rightTab, setRightTab] = useState<'itinerary' | 'directions' | 'coverage'>(navigate ? 'directions' : 'itinerary');
+  // On a phone: the map or the list, the configuration sheet, and how far the itinerary sheet is pulled up.
+  const [phoneView, setPhoneView] = useState<'map' | 'list'>('map');
+  const [configOpen, setConfigOpen] = useState(false);
+  const [sheetRem, setSheetRem] = useState(SHEET_PEEK_REM);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef<{ y: number; rem: number } | null>(null);
+  const [options, setOptions] = useState<RouteOption[]>([]);
+  const [comparing, setComparing] = useState(false);
 
   // Smart Route configuration state
   const [mode, setMode] = useState<SmartOptimizationMode>('balanced');
@@ -224,7 +247,6 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
   const [message, setMessage] = useState<string | null>(day.provider?.message || null);
   const [allNearby, setAllNearby] = useState(Boolean(day.focus));
   const [showReportModal, setShowReportModal] = useState(false);
-  const [mobileSheetExpanded, setMobileSheetExpanded] = useState(false);
   const [gpsModalTarget, setGpsModalTarget] = useState<{
     schoolId: string;
     schoolCode: string;
@@ -352,6 +374,7 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
           }),
         });
         setSmartResult(res.result);
+        setMode(chosenMode === 'as_given' ? mode : chosenMode);
         setSelectedSchoolIds([
           ...res.result.stops.map((s) => s.school_id),
           ...res.result.excluded.map((e) => e.school_id),
@@ -367,6 +390,46 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
     },
     [day.date, lockedIds, mode, resolveStart, returnToStart, selectedSchoolIds, transportMode, visitMinutes, workEnd, workStart],
   );
+
+  // Route Options: the same day's schools ordered each way, from real road figures. Each call is an
+  // audited calculation, so this runs when asked for, never on its own.
+  const compareRoutes = useCallback(async () => {
+    if (selectedSchoolIds.length === 0) return;
+    setComparing(true);
+    const startCfg = resolveStart();
+    try {
+      const answers = await Promise.all(
+        COMPARED_MODES.map((m) =>
+          smartApi<{ result: SmartRouteResultData }>('smart-route/optimize', {
+            method: 'POST',
+            body: JSON.stringify({
+              date: day.date,
+              mode: m,
+              transport_mode: transportMode,
+              work_start: workStart,
+              work_end: workEnd,
+              visit_minutes: visitMinutes,
+              break_minutes: 30,
+              start: startCfg.point,
+              start_label: startCfg.label,
+              end: returnToStart ? startCfg.point : null,
+              end_label: returnToStart ? startCfg.label : '',
+              school_ids: selectedSchoolIds,
+              locked_school_ids: [...lockedIds],
+            }),
+          }),
+        ),
+      );
+      setOptions(answers.map((answer, index) => {
+        const m = COMPARED_MODES[index]!;
+        return optionOf(m, MODES.find((item) => item.id === m)?.short ?? m, answer.result);
+      }));
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'The routes could not be compared.');
+    } finally {
+      setComparing(false);
+    }
+  }, [day.date, lockedIds, resolveStart, returnToStart, selectedSchoolIds, transportMode, visitMinutes, workEnd, workStart]);
 
   // Launch 100% In-App Turn-by-Turn Navigation inside Edify (Section 6).
   const openInAppDirections = useCallback(
@@ -618,7 +681,34 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
   );
 
   const checkIns = useMemo(() => new Map((saved?.stops ?? []).map((c) => [c.schoolId, c])), [saved]);
-  const nextMobileStop = smartResult?.stops[0];
+  const pickPhoneView = (view: 'map' | 'list') => {
+    setPhoneView(view);
+    setSheetRem(view === 'list' ? SHEET_FULL_REM : SHEET_PEEK_REM);
+  };
+  const startSheetDrag = (event: React.PointerEvent<HTMLButtonElement>) => {
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragStart.current = { y: event.clientY, rem: sheetRem };
+    setIsDragging(true);
+  };
+  const moveSheetDrag = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (!dragStart.current) return;
+    const moved = (dragStart.current.y - event.clientY) / REM_PX;
+    setSheetRem(Math.min(SHEET_FULL_REM, Math.max(SHEET_PEEK_REM, dragStart.current.rem + moved)));
+  };
+  const endSheetDrag = () => {
+    if (!dragStart.current) return;
+    dragStart.current = null;
+    setIsDragging(false);
+    // It rests at whichever stop is nearest.
+    const nearest = [SHEET_PEEK_REM, SHEET_HALF_REM, SHEET_FULL_REM].reduce((best, rem) => (Math.abs(rem - sheetRem) < Math.abs(best - sheetRem) ? rem : best));
+    setSheetRem(nearest);
+    setPhoneView(nearest === SHEET_FULL_REM ? 'list' : 'map');
+  };
+  const cycleSheet = () => {
+    const next = sheetRem < SHEET_HALF_REM ? SHEET_HALF_REM : sheetRem < SHEET_FULL_REM ? SHEET_FULL_REM : SHEET_PEEK_REM;
+    setSheetRem(next);
+    setPhoneView(next === SHEET_FULL_REM ? 'list' : 'map');
+  };
 
   // Dynamic 3-panel desktop layout key (panels collapsible to maximize map)
   const layoutKey =
@@ -632,60 +722,36 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
 
   return (
     <div className="mx-auto max-w-[1800px] px-3 pb-10 pt-3 sm:px-5" data-page="smart-route">
-      <style>{`
-        .sr-desktop-btn { display: none; }
-        .sr-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-        .sr-workspace { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-        .sr-panel-config { order: 2; }
-        .sr-panel-map { order: 1; min-height: 500px; }
-        .sr-panel-itinerary { order: 3; }
-        .sr-mobile-sheet { display: block; }
-        @media (min-width: 1024px) {
-          .sr-desktop-btn { display: inline-flex; }
-          .sr-kpis { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-          .sr-workspace[data-layout="both"] { grid-template-columns: 280px minmax(0, 1fr) 360px; }
-          .sr-workspace[data-layout="left"] { grid-template-columns: 280px minmax(0, 1fr); }
-          .sr-workspace[data-layout="right"] { grid-template-columns: minmax(0, 1fr) 360px; }
-          .sr-workspace[data-layout="map-only"] { grid-template-columns: minmax(0, 1fr); }
-          .sr-panel-config { order: 1; }
-          .sr-panel-map { order: 2; min-height: 680px; }
-          .sr-panel-itinerary { order: 3; }
-          .sr-mobile-sheet { display: none; }
-        }
-      `}</style>
-      {/* Top Enterprise Header & KPI Strip */}
+      {/* Breadcrumb, title and the day's actions */}
       <nav className="flex items-center gap-2 text-[13px]" aria-label="Breadcrumb">
         <Link href="/my-plan" className="text-[var(--edify-text-muted)] hover:text-[var(--brand-primary)] hover:underline">
           My Plan
         </Link>
-        <RouteIcon name="arrowRight" className="h-3.5 w-3.5 text-slate-400" />
+        <RouteIcon name="arrowRight" className="h-3.5 w-3.5 text-[var(--edify-text-muted)]" />
         <span className="font-semibold text-[var(--edify-text)]">Smart Route Planner</span>
         {calendarRules ? (
-          <span className="ml-auto rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600">
-            {calendarRules.current_fy} ({calendarRules.fy_start} → {calendarRules.fy_end})
+          <span className="ml-auto hidden rounded-full bg-[var(--edify-surface-muted)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--edify-text-muted)] sm:inline">
+            {calendarRules.current_fy}
           </span>
         ) : null}
       </nav>
 
-      <header className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-[16px] border border-[var(--edify-border)] bg-white px-4 py-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-        <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[12px] bg-[#0f2942] text-white">
+      <header className="sr-header">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[12px] bg-[var(--brand-primary)] text-white">
             <MapPin className="h-6 w-6" aria-hidden="true" />
           </span>
-          <div>
-            <h1 className="text-[20px] font-bold leading-tight text-[#0f172a] sm:text-[22px]">Smart Route Planner</h1>
-            <p className="text-[13px] text-[var(--edify-text-muted)]">
-              Road-network optimization, SSA priority intelligence &amp; in-app turn-by-turn navigation
-            </p>
+          <div className="min-w-0">
+            <h1 className="text-[20px] font-bold leading-tight text-[var(--edify-text)] sm:text-[24px]">Smart Route Planner</h1>
+            <p className="text-[13px] text-[var(--edify-text-muted)]">Road-network routing with SSA priority and field-day planning</p>
           </div>
         </div>
 
-        {/* Desktop Panel Collapse Toggles + Field Day Actions */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="sr-header__actions">
           <button
             type="button"
             onClick={() => setLeftOpen((v) => !v)}
-            className="sr-desktop-btn h-10 items-center gap-1.5 rounded-[10px] border border-[var(--edify-border)] bg-slate-50 px-3 text-[13px] font-semibold text-slate-700 hover:bg-slate-100"
+            className="sr-desktop-btn h-10 items-center gap-1.5 rounded-[10px] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-3 text-[13px] font-semibold text-[var(--edify-text)] hover:border-[var(--brand-primary)]"
             aria-pressed={leftOpen}
           >
             {leftOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
@@ -694,7 +760,7 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
           <button
             type="button"
             onClick={() => setRightOpen((v) => !v)}
-            className="sr-desktop-btn h-10 items-center gap-1.5 rounded-[10px] border border-[var(--edify-border)] bg-slate-50 px-3 text-[13px] font-semibold text-slate-700 hover:bg-slate-100"
+            className="sr-desktop-btn h-10 items-center gap-1.5 rounded-[10px] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-3 text-[13px] font-semibold text-[var(--edify-text)] hover:border-[var(--brand-primary)]"
             aria-pressed={rightOpen}
           >
             {rightOpen ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
@@ -704,7 +770,7 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
             type="button"
             disabled={busy || !(smartResult?.stops.length)}
             onClick={() => void saveRoute()}
-            className="inline-flex h-10 items-center gap-2 rounded-[10px] border border-[var(--brand-primary)] bg-white px-4 text-[13px] font-semibold text-[var(--brand-primary)] hover:bg-blue-50 disabled:opacity-45"
+            className="inline-flex h-10 items-center gap-2 rounded-[10px] border border-[var(--brand-primary)] bg-[var(--edify-surface)] px-4 text-[13px] font-semibold text-[var(--brand-primary)] disabled:opacity-45"
           >
             <Save className="h-4 w-4" aria-hidden="true" /> Save Route
           </button>
@@ -730,59 +796,42 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
         </div>
       </header>
 
-      {/* Compact Enterprise KPI Summary Bar */}
-      <section className="sr-kpis mt-3" aria-label="Route metrics">
-        <div className={`${card} px-3.5 py-2.5`}>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--edify-text-muted)]">Feasible Schools</p>
-          <p className="mt-0.5 text-[19px] font-bold text-[#0f172a]">
-            {totals?.schools_included ?? mapStops.length}
-            {totals && totals.schools_excluded > 0 ? (
-              <span className="ml-1.5 text-[12px] font-semibold text-amber-700">({totals.schools_excluded} excluded)</span>
-            ) : null}
-          </p>
-        </div>
-        <div className={`${card} px-3.5 py-2.5`}>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--edify-text-muted)]">Road Distance</p>
-          <p className="mt-0.5 text-[19px] font-bold text-[#0f172a]">
-            {totals?.road_complete ? km(totals.road_meters) : 'Verification needed'}
-          </p>
-        </div>
-        <div className={`${card} px-3.5 py-2.5`}>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--edify-text-muted)]">Driving Time</p>
-          <p className="mt-0.5 text-[19px] font-bold text-[#0f172a]">
-            {totals?.road_complete ? hoursMinutes(totals.road_seconds) : '—'}
-          </p>
-        </div>
-        <div className={`${card} px-3.5 py-2.5`}>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--edify-text-muted)]">Total Field Day</p>
-          <p className="mt-0.5 text-[19px] font-bold text-[#0f172a]">
-            {totals ? hoursMinutes(totals.field_minutes * 60) : '—'}
-          </p>
-        </div>
-        <div className={`${card} px-3.5 py-2.5`}>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--edify-text-muted)]">Traffic &amp; Confidence</p>
-          <p className="mt-0.5 flex items-center gap-1.5 text-[13px] font-bold text-[#0f172a]">
-            <span
-              className={`inline-block h-2 w-2 rounded-full ${
-                totals?.traffic_state === 'traffic_jam'
-                  ? 'bg-red-500'
-                  : totals?.traffic_state === 'slow'
-                    ? 'bg-amber-500'
-                    : totals?.traffic_state === 'normal'
-                      ? 'bg-emerald-500'
-                      : 'bg-slate-400'
-              }`}
-            />
-            {totals?.traffic_state === 'traffic_jam'
-              ? 'Traffic jam'
-              : totals?.traffic_state === 'slow'
-                ? 'Slow traffic'
-                : totals?.traffic_state === 'normal'
-                  ? 'Normal traffic'
-                  : 'Traffic unavailable'}
-          </p>
-        </div>
-      </section>
+      <RouteKpiStrip result={smartResult} plannedStops={mapStops.length} />
+
+      {/* The phone's date, place and settings, then Map or List */}
+      <div className="sr-quick">
+        <EdifyDatePicker
+          id="smart-route-date-phone"
+          label="Planning date"
+          value={day.date}
+          displayStyle="medium"
+          policy={planningPolicy}
+          showFiscalYear
+          size="md"
+          onChange={(nextIso) => {
+            if (nextIso && nextIso !== day.date) go({ date: nextIso });
+          }}
+        />
+        <select aria-label="District" value={district} onChange={(e) => go({ district: e.target.value })} className="h-10 w-full min-w-0 rounded-[8px] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-2 text-[13px] font-medium text-[var(--edify-text)]">
+          <option value="">All Districts</option>
+          {day.districts.map((d) => (
+            <option key={d.value} value={d.value}>{d.label}</option>
+          ))}
+        </select>
+        <select aria-label="Cluster" value={cluster} onChange={(e) => go({ cluster: e.target.value })} className="h-10 w-full min-w-0 rounded-[8px] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-2 text-[13px] font-medium text-[var(--edify-text)]">
+          <option value="">All Clusters</option>
+          {day.clusters.map((c) => (
+            <option key={c.value} value={c.value}>{c.label}</option>
+          ))}
+        </select>
+        <button type="button" onClick={() => setConfigOpen(true)} aria-label="Route settings" className="grid h-10 w-10 place-items-center rounded-[8px] border border-[var(--edify-border)] bg-[var(--edify-surface)] text-[var(--edify-text)]">
+          <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
+      <div className="sr-viewswitch" role="group" aria-label="Show the route as">
+        <button type="button" aria-pressed={phoneView === 'map'} onClick={() => pickPhoneView('map')}><MapIcon className="h-4 w-4" aria-hidden="true" /> Map View</button>
+        <button type="button" aria-pressed={phoneView === 'list'} onClick={() => pickPhoneView('list')}><ListIcon className="h-4 w-4" aria-hidden="true" /> List View</button>
+      </div>
 
       {/* Banners: Focus, My Plan Sync Warning, Status Message */}
       {focus ? (
@@ -824,7 +873,7 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
       <div className="sr-workspace mt-3" data-layout={layoutKey}>
         {/* LEFT PANEL — Route Configuration */}
         {leftOpen ? (
-          <aside className={`${card} sr-panel-config flex flex-col gap-4 p-4`} aria-label="Route configuration" data-panel="route-config">
+          <aside className={`${card} sr-panel-config flex-col gap-4 p-4`} aria-label="Route configuration" data-panel="route-config" data-open={configOpen || undefined}>
             <div className="flex items-center justify-between border-b border-[var(--edify-border)] pb-2.5">
               <h2 className="flex items-center gap-2 text-[15px] font-bold text-[#0f172a]">
                 <SlidersHorizontal className="h-4 w-4 text-[var(--brand-primary)]" aria-hidden="true" />
@@ -835,10 +884,13 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
                   {ownerMeta.role || 'Staff'}
                 </span>
               ) : null}
+              <button type="button" onClick={() => setConfigOpen(false)} aria-label="Close route settings" className="sr-config-close h-9 w-9 items-center justify-center rounded-full text-[var(--edify-text-muted)]">
+                <X className="h-5 w-5" aria-hidden="true" />
+              </button>
             </div>
 
             {/* Unified Chevron-Free Full-Field Date Picker (Sections 10 & 11) */}
-            <div className="space-y-1.5">
+            <div className="space-y-1.5" data-sr-geo>
               <label htmlFor="smart-route-date" className="block text-[12px] font-bold uppercase tracking-wide text-slate-600">
                 Planning Date
               </label>
@@ -858,7 +910,7 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
             </div>
 
             {/* District & Cluster Scope Filters */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2" data-sr-geo>
               <label className="text-[12px] font-semibold text-slate-600">
                 District
                 <select
@@ -1002,7 +1054,10 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
             <button
               type="button"
               disabled={busy || selectedSchoolIds.length === 0}
-              onClick={() => void runOptimize()}
+              onClick={() => {
+                setConfigOpen(false);
+                void runOptimize();
+              }}
               data-action="optimize-route"
               className="flex h-12 w-full items-center justify-center gap-2 rounded-[12px] bg-[var(--brand-primary)] text-[14px] font-bold text-white shadow-sm hover:bg-[var(--brand-primary-hover)] disabled:opacity-50"
             >
@@ -1087,54 +1142,45 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
             />
           ) : null}
 
-          {/* Mobile Map-First Bottom Sheet Summary (< 1024px) */}
-          {nextMobileStop ? (
-            <div className="sr-mobile-sheet absolute inset-x-3 bottom-3 z-10 rounded-[14px] border border-slate-200 bg-white/95 p-3 shadow-xl backdrop-blur" data-block="mobile-bottom-sheet">
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--brand-primary)]">
-                    Next Stop · Arr. {nextMobileStop.arrival}
-                  </p>
-                  <p className="truncate text-[15px] font-bold text-slate-900">{nextMobileStop.school_name}</p>
-                  <p className="text-[12px] text-slate-600">
-                    {totals?.road_complete
-                      ? `${km(totals.road_meters)} · ${hoursMinutes(totals.road_seconds)}`
-                      : 'Road access requires verification'}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => void openInAppDirections((smartResult?.stops ?? []).map((s) => s.school_id))}
-                    className="inline-flex h-11 items-center gap-1.5 rounded-[10px] bg-[var(--brand-primary)] px-3.5 text-[13px] font-bold text-white"
-                  >
-                    <Navigation className="h-4 w-4" aria-hidden="true" /> Start Navigation
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMobileSheetExpanded((v) => !v)}
-                    className="h-11 rounded-[10px] border border-slate-300 px-3 text-[12px] font-semibold text-slate-700"
-                  >
-                    {mobileSheetExpanded ? 'Hide' : 'Stops'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : null}
         </section>
 
         {/* RIGHT PANEL — Recommended Itinerary & In-App Directions */}
         {rightOpen ? (
-          <aside className={`${card} sr-panel-itinerary flex flex-col gap-3.5 p-4`} aria-label="Recommended itinerary and navigation" data-panel="route-itinerary">
-            {/* Switch between Itinerary & In-App Directions */}
-            <div className="grid grid-cols-2 gap-1.5 rounded-[10px] bg-slate-100 p-1" role="tablist">
+          <aside
+            className={`${card} sr-panel-itinerary flex flex-col gap-3 p-4`}
+            aria-label="Recommended itinerary and navigation"
+            data-panel="route-itinerary"
+            data-dragging={isDragging || undefined}
+            style={{ '--sr-sheet': `${sheetRem}rem` } as React.CSSProperties}
+          >
+            <button
+              type="button"
+              className="sr-sheet-handle"
+              aria-label="Resize the itinerary"
+              onPointerDown={startSheetDrag}
+              onPointerMove={moveSheetDrag}
+              onPointerUp={endSheetDrag}
+              onPointerCancel={endSheetDrag}
+              onClick={() => {
+                if (!isDragging) cycleSheet();
+              }}
+            >
+              <span />
+            </button>
+            {phoneView === 'list' ? (
+              <button type="button" className="sr-sheet-mapback" onClick={() => pickPhoneView('map')}>
+                <MapIcon className="h-4 w-4" aria-hidden="true" /> Back to Map
+              </button>
+            ) : null}
+            {/* Itinerary, In-App Directions, SSA & Coverage */}
+            <div className="grid shrink-0 grid-cols-3 gap-1 rounded-[10px] bg-[var(--edify-surface-muted)] p-1" role="tablist">
               <button
                 type="button"
                 role="tab"
                 aria-selected={rightTab === 'itinerary'}
                 onClick={() => setRightTab('itinerary')}
-                className={`h-9 rounded-[8px] text-[13px] font-bold transition-colors ${
-                  rightTab === 'itinerary' ? 'bg-white text-[#0f172a] shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                className={`min-h-9 rounded-[8px] px-1 text-[12px] font-bold leading-tight transition-colors ${
+                  rightTab === 'itinerary' ? 'bg-[var(--edify-web-segment-active)] text-white' : 'text-[var(--edify-text-muted)]'
                 }`}
               >
                 Itinerary ({smartResult?.stops.length ?? mapStops.length})
@@ -1149,13 +1195,26 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
                     void openInAppDirections(smartResult!.stops.map((s) => s.school_id));
                   }
                 }}
-                className={`flex h-9 items-center justify-center gap-1.5 rounded-[8px] text-[13px] font-bold transition-colors ${
-                  rightTab === 'directions' ? 'bg-[var(--brand-primary)] text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                className={`min-h-9 rounded-[8px] px-1 text-[12px] font-bold leading-tight transition-colors ${
+                  rightTab === 'directions' ? 'bg-[var(--edify-web-segment-active)] text-white' : 'text-[var(--edify-text-muted)]'
                 }`}
               >
-                <Navigation className="h-3.5 w-3.5" aria-hidden="true" /> Directions
+                Directions
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={rightTab === 'coverage'}
+                onClick={() => setRightTab('coverage')}
+                className={`min-h-9 rounded-[8px] px-1 text-[12px] font-bold leading-tight transition-colors ${
+                  rightTab === 'coverage' ? 'bg-[var(--edify-web-segment-active)] text-white' : 'text-[var(--edify-text-muted)]'
+                }`}
+              >
+                SSA &amp; Coverage
               </button>
             </div>
+
+            <div className="sr-sheet-body">
 
             {rightTab === 'directions' ? (
               <InAppNavigationPanel
@@ -1171,11 +1230,13 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
                 onUserLocationChange={setUserGps}
                 onClose={() => setRightTab('itinerary')}
               />
+            ) : rightTab === 'coverage' ? (
+              <RouteSsaTab result={smartResult} />
             ) : (
               <>
                 {/* Route Recommendation & Comparison Summary (Section 5.3) */}
                 {smartResult ? (
-                  <div className="rounded-[12px] border border-slate-200 bg-slate-50/75 p-3 text-[12px]">
+                  <div data-sr-summary className="rounded-[12px] border border-[var(--edify-border)] bg-[var(--edify-surface-muted)] p-3 text-[12px]">
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <p className="font-bold text-[#0f172a]">{smartResult.objective_label}</p>
@@ -1404,9 +1465,38 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
                 </div>
               </>
             )}
+            </div>
+            {/* The phone's two main actions stay within reach. */}
+            <div className="sr-sheet-actions">
+              <button type="button" disabled={busy || selectedSchoolIds.length === 0} onClick={() => void runOptimize()} className="inline-flex h-11 items-center justify-center gap-1.5 rounded-[10px] border border-[var(--brand-primary)] text-[13px] font-bold text-[var(--brand-primary)] disabled:opacity-45">
+                <Sparkles className="h-4 w-4" aria-hidden="true" /> Optimize Route
+              </button>
+              {fieldDay.running ? (
+                <button type="button" disabled={busy} onClick={() => void recordFieldDay('end')} className="inline-flex h-11 items-center justify-center gap-1.5 rounded-[10px] bg-emerald-600 text-[13px] font-bold text-white">
+                  <CheckCircle2 className="h-4 w-4" aria-hidden="true" /> End Field Day
+                </button>
+              ) : (
+                <button type="button" disabled={busy || !fieldDay.canStart || !(smartResult?.stops.length)} onClick={() => void recordFieldDay('start')} className="inline-flex h-11 items-center justify-center gap-1.5 rounded-[10px] bg-[var(--brand-primary)] text-[13px] font-bold text-white disabled:opacity-45">
+                  <Navigation className="h-4 w-4" aria-hidden="true" /> Start Field Day
+                </button>
+              )}
+            </div>
           </aside>
         ) : null}
       </div>
+
+      <RouteBottomRow
+        result={smartResult}
+        options={options}
+        comparing={comparing}
+        canCompare={selectedSchoolIds.length > 0 && !busy}
+        activeMode={mode}
+        onCompare={() => void compareRoutes()}
+        onUse={(chosen) => {
+          setMode(chosen);
+          void runOptimize(undefined, chosen);
+        }}
+      />
 
       {/* Schools Near Your Route */}
       <div className="mt-5">
