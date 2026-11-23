@@ -571,7 +571,7 @@ func (s *Service) afterCommit(ctx context.Context, pl *plan, rowID int64) {
 			"activity", pl.row.id, "row", rowID, "err", err)
 	}
 	if pl.core != nil && pl.core.route == coreCreditedVisit {
-		if err := s.creditCoreSlot(ctx, pl); err != nil {
+		if err := s.creditCoreSlot(ctx, pl, pl.core.planID, coreSlotVisit); err != nil {
 			s.logger.Warn("activities: the Core package was not credited", "activity", pl.row.id, "err", err)
 		}
 	}
@@ -580,7 +580,7 @@ func (s *Service) afterCommit(ctx context.Context, pl *plan, rowID int64) {
 // takeCoreSlot is assert_can_schedule's lock and commit_schedule: the
 // package's next open visit, inside the save.
 func takeCoreSlot(ctx context.Context, tx pgx.Tx, pl *plan) error {
-	slots, err := readCoreVisitSlots(ctx, tx, pl.core.planID, " FOR UPDATE")
+	slots, err := readCoreSlots(ctx, tx, pl.core.planID, coreSlotVisit, " FOR UPDATE")
 	if err != nil {
 		return err
 	}
@@ -593,13 +593,13 @@ func takeCoreSlot(ctx context.Context, tx pgx.Tx, pl *plan) error {
 
 // creditCoreSlot is credit_school_activity for staff SSA Support: after the
 // save, the visit takes the package's next open slot unless it holds one.
-func (s *Service) creditCoreSlot(ctx context.Context, pl *plan) error {
+func (s *Service) creditCoreSlot(ctx context.Context, pl *plan, planID, kind string) error {
 	tx, err := s.db.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
 	if err != nil {
 		return err
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
-	slots, err := readCoreVisitSlots(ctx, tx, pl.core.planID, " FOR UPDATE")
+	slots, err := readCoreSlots(ctx, tx, planID, kind, " FOR UPDATE")
 	if err != nil {
 		return err
 	}
@@ -612,7 +612,7 @@ func (s *Service) creditCoreSlot(ctx context.Context, pl *plan) error {
 	}
 	open := openCoreSlot(slots, coreSlotTaken)
 	if open == nil {
-		return errors.New("the package has no open visit slot")
+		return fmt.Errorf("the package has no open %s slot", kind)
 	}
 	if err := bookCoreSlot(ctx, tx, open.ID, pl.row.status(), pl); err != nil {
 		return err
@@ -623,7 +623,7 @@ FROM (SELECT count(*) FILTER (WHERE activity_type = 'visit' AND status = ANY($2)
              count(*) FILTER (WHERE activity_type = 'training' AND status = ANY($2)) AS trainings
       FROM core_activity_slot WHERE core_plan_id = $1) c
 WHERE p.id = $1 AND (p.visits_completed IS DISTINCT FROM c.visits OR p.trainings_completed IS DISTINCT FROM c.trainings)`,
-		pl.core.planID, coreDoneStatuses, s.now()); err != nil {
+		planID, coreDoneStatuses, s.now()); err != nil {
 		return err
 	}
 	return tx.Commit(ctx)

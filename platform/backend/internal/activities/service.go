@@ -288,9 +288,8 @@ func (s *Service) targetSchool(ctx context.Context, p auth.Principal, schoolID, 
 		return nil, false, err
 	}
 	if sc == nil || sc.Code != strings.TrimSpace(schoolID) ||
-		(in(rules.Gate.CoreRuleTypes, sc.Type) && !in(inScopePurposes, purpose)) {
-		// A Core school's training pair is the package's own workflow.
-		return nil, false, handOn("not a school code, or a Core school's training")
+		(in(rules.Gate.CoreRuleTypes, sc.Type) && !in(inScopePurposes, purpose) && !IsPairPurpose(purpose)) {
+		return nil, false, handOn("not a school code, or a purpose Go does not take at a Core school")
 	}
 	scope, err := schooldirectory.ResolveScope(ctx, s.db, p, now)
 	if err != nil {

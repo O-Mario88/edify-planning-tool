@@ -27,6 +27,12 @@ const (
 // corePlanningTypes are the work `_create` files under core planning.
 var corePlanningTypes = []string{coreVisitKind, "core_training", "core_assessment_visit"}
 
+// The package's slot kinds.
+const (
+	coreSlotVisit    = "visit"
+	coreSlotTraining = "training"
+)
+
 // coreDoneStatuses are CORE_SLOT_DONE_STATUSES.
 var coreDoneStatuses = []string{"completed", "closed", "ia_verified", "accountant_confirmed"}
 
@@ -85,6 +91,12 @@ func coreStaffSideRefusal(school string, used int) string {
 		school, coreSideCap, used, coreSideCap, coreSideCap, coreSideCap)
 }
 
+// coreStaffTrainingRefusal is PackageSplit.refusal for the staff half's trainings.
+func coreStaffTrainingRefusal(school string, used int) string {
+	return fmt.Sprintf("%s already has its %d staff core trainings (%d/%d). A Core package is %d staff and %d partner trainings, so the next training here is the partner's.",
+		school, coreSideCap, used, coreSideCap, coreSideCap, coreSideCap)
+}
+
 func coreSlotTaken(status string) bool {
 	return schoolprofile.GateRules().Core.SlotTaken(status)
 }
@@ -115,9 +127,9 @@ func readCorePlan(ctx context.Context, q Querier, code, fy string) (string, erro
 	return "", nil
 }
 
-func readCoreVisitSlots(ctx context.Context, q Querier, planID, lock string) ([]coreSlot, error) {
+func readCoreSlots(ctx context.Context, q Querier, planID, kind, lock string) ([]coreSlot, error) {
 	rows, err := q.Query(ctx, `SELECT id, COALESCE(status, '') FROM core_activity_slot
-WHERE core_plan_id = $1 AND activity_type = 'visit' ORDER BY sequence_number`+lock, planID)
+WHERE core_plan_id = $1 AND activity_type = $2 ORDER BY sequence_number`+lock, planID, kind)
 	if err != nil {
 		return nil, fmt.Errorf("activities: reading the package's slots: %w", err)
 	}
@@ -147,7 +159,7 @@ func (s *Service) routeCoreVisit(ctx context.Context, target visitTarget, purpos
 	if err != nil || planID == "" {
 		return nil, err
 	}
-	slots, err := readCoreVisitSlots(ctx, s.db, planID, "")
+	slots, err := readCoreSlots(ctx, s.db, planID, coreSlotVisit, "")
 	if err != nil {
 		return nil, err
 	}
@@ -166,4 +178,44 @@ func (s *Service) routeCoreVisit(ctx context.Context, target visitTarget, purpos
 		}
 	}
 	return &coreBooking{planID: planID, route: route}, nil
+}
+
+// routeCorePair is what an In-school Training at a Core school asks of its
+// package: the plan its training and visit are credited to, "" when none is.
+// A universal training is on top of the package and takes no slot.
+func (s *Service) routeCorePair(ctx context.Context, sc school, c course, day time.Time) (string, error) {
+	if !in(rules.Gate.CoreRuleTypes, sc.Type) || c.Universal {
+		return "", nil
+	}
+	planID, err := readCorePlan(ctx, s.db, sc.Code, schooldirectory.OperationalFY(day.UTC()))
+	if err != nil || planID == "" {
+		return "", err
+	}
+	for _, kind := range []string{coreSlotTraining, coreSlotVisit} {
+		slots, err := readCoreSlots(ctx, s.db, planID, kind, "")
+		if err != nil {
+			return "", err
+		}
+		if openCoreSlot(slots, coreSlotTaken) == nil {
+			return "", handOn("the Core package has no open slot for the training")
+		}
+	}
+	return planID, nil
+}
+
+// coreTrainingSideOpen is assert_side_open for a staff training: asked before
+// the save and again under the school's lock.
+func coreTrainingSideOpen(ctx context.Context, q Querier, sc school, c course, fy string, now time.Time) error {
+	if !in(rules.Gate.CoreRuleTypes, sc.Type) || c.Universal {
+		return nil
+	}
+	split, err := visitgate.SplitOf(ctx, q, schoolprofile.GateRules(),
+		visitgate.School{ID: sc.ID, Code: sc.Code, Name: sc.Name, Type: sc.Type}, fy, schooldirectory.OperationalFY(now))
+	if err != nil {
+		return fmt.Errorf("activities: reading the package's split: %w", err)
+	}
+	if split.HasPackage && split.StaffTrainings >= coreSideCap {
+		return refuse("%s", coreStaffTrainingRefusal(sc.Name, split.StaffTrainings))
+	}
+	return nil
 }

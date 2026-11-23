@@ -197,8 +197,9 @@ SELECT
 		{"no day", cceo, visit(client, "donor_visit", ""), "Pick the date this is planned for before scheduling it.", false},
 		{"a Core school's package visit meets the date rule", cceo, visit(core, "training_follow_up", "2026-11-10"),
 			"10 November 2026 has passed. Schedule work from 12 November 2026 onwards.", false},
-		{"a Core school's training stays with the package's workflow", cceo,
-			activities.Request{SchoolID: core, Purpose: "in_school_training", Date: "2026-11-20", CatalogueItemID: course}, "", true},
+		{"a Core school's training meets the date rule", cceo,
+			activities.Request{SchoolID: core, Purpose: "in_school_training", Date: "2026-11-10", CatalogueItemID: course},
+			"10 November 2026 has passed. Schedule work from 12 November 2026 onwards.", false},
 		{"a Core school's donor visit is outside the package", cceo, visit(core, "donor_visit", "2026-11-10"),
 			"10 November 2026 has passed. Schedule work from 12 November 2026 onwards.", false},
 		// The pair is Go's since docs/migration/32: with no course it is

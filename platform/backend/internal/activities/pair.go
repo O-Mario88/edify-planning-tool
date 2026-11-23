@@ -136,6 +136,8 @@ type pairPlan struct {
 	training, visit *plan
 	course          course
 	message         string
+	// corePlanID is the Core package the two are credited to, if any.
+	corePlanID string
 }
 
 // IsPairPurpose is whether the drawer's purpose plans the pair.
@@ -215,9 +217,6 @@ func (s *Service) preparePair(ctx context.Context, p auth.Principal, req Request
 	if err != nil {
 		return nil, err
 	}
-	if responsible != p.StaffProfileID {
-		return nil, handOn("a training at a school a colleague holds")
-	}
 	// schedule_in_school_training_pair (689–719): the course offered on the
 	// day (get_selectable_item then finds it too), and both profiles.
 	onDay, err := offeredCourse(ctx, s.db, courseID, day)
@@ -238,20 +237,39 @@ func (s *Service) preparePair(ctx context.Context, p auth.Principal, req Request
 	if trainingProfile == nil || visitProfile == nil {
 		return nil, refuse(profilesInactive)
 	}
-	training, err := s.pairTraining(ctx, p, req, origin, now, today, day, *sc, *c, focus, trainingProfile.ID)
+	corePlanID, err := s.routeCorePair(ctx, *sc, *c, day)
 	if err != nil {
 		return nil, err
 	}
-	visit, err := s.pairVisit(ctx, p, req, origin, now, today, day, *sc, *c, focus, collects, visitProfile.ID, training)
+	training, err := s.pairTraining(ctx, p, req, origin, now, today, day, *sc, responsible, *c, focus, trainingProfile.ID)
 	if err != nil {
 		return nil, err
 	}
-	message := pairNoun
+	visit, err := s.pairVisit(ctx, p, req, origin, now, today, day, *sc, responsible, *c, focus, collects, visitProfile.ID, training)
+	if err != nil {
+		return nil, err
+	}
+	noun := pairNoun
 	if collects {
-		message = pairWithSSANoun
+		noun = pairWithSSANoun
 	}
-	return &pairPlan{training: training, visit: visit, course: *c,
-		message: message + " scheduled. It is on your My Plan — keep planning."}, nil
+	owner := ""
+	if responsible != p.StaffProfileID && responsible != p.UserID {
+		if owner, err = staffName(ctx, s.db, responsible); err != nil {
+			return nil, err
+		}
+	}
+	return &pairPlan{training: training, visit: visit, course: *c, message: pairConfirmation(noun, owner),
+		corePlanID: corePlanID}, nil
+}
+
+// pairConfirmation is the view's sentence: on the person's own plan, or on
+// the plan of the owner it was filed against.
+func pairConfirmation(noun, owner string) string {
+	if owner == "" {
+		return noun + " scheduled. It is on your My Plan — keep planning."
+	}
+	return fmt.Sprintf("%s scheduled onto %s's My Plan, because the responsible staff member comes from the school's owner.", noun, owner)
 }
 
 // standardItem is get_selectable_item(profile) and the checks the first
@@ -280,7 +298,7 @@ func standardItem(ctx context.Context, q Querier, id, kind string, day time.Time
 // skip_cost_snapshot=True)): the profile prices nothing, the course names
 // it and decides its intervention.
 func (s *Service) pairTraining(ctx context.Context, p auth.Principal, req Request, origin Origin, now, today, day time.Time,
-	sc school, c course, focus, profileID string) (*plan, error) {
+	sc school, responsible string, c course, focus, profileID string) (*plan, error) {
 	kind := rules.Pair.TrainingKind
 	it, err := standardItem(ctx, s.db, profileID, kind, day)
 	if err != nil {
@@ -294,14 +312,17 @@ func (s *Service) pairTraining(ctx context.Context, p auth.Principal, req Reques
 	if err := trainingEntitlement(ctx, s.db, sc, c, fy, now); err != nil {
 		return nil, err
 	}
-	home, err := staffHomeOf(ctx, s.db, p.StaffProfileID)
+	if err := coreTrainingSideOpen(ctx, s.db, sc, c, fy, now); err != nil {
+		return nil, err
+	}
+	home, err := staffHomeOf(ctx, s.db, responsible)
 	if err != nil {
 		return nil, err
 	}
 	if !home.Found {
 		return nil, handOn("no staff profile")
 	}
-	if set, err := ceilingSet(ctx, s.db, p.StaffProfileID, c.ID, fy); err != nil || set {
+	if set, err := ceilingSet(ctx, s.db, responsible, c.ID, fy); err != nil || set {
 		if err != nil {
 			return nil, err
 		}
@@ -329,7 +350,7 @@ func (s *Service) pairTraining(ctx context.Context, p auth.Principal, req Reques
 	ev := assess(kind, focus, focusSource, c.modes(), need, false, today)
 	row := newRow(rowInput{
 		now: now, day: day, fy: fy, quarter: quarterOf(scheduledUTC), activityType: kind,
-		purpose: rules.Pair.TrainingPurpose, school: sc, responsible: p.StaffProfileID, item: *it, version: version,
+		purpose: rules.Pair.TrainingPurpose, school: sc, responsible: responsible, item: *it, version: version,
 		goal: req.Goal, outcome: req.Outcome, deviation: req.DeviationReason, collects: false,
 		focus: focus, reason: reason, source: source, need: need, evidence: ev,
 	})
@@ -342,7 +363,7 @@ func (s *Service) pairTraining(ctx context.Context, p auth.Principal, req Reques
 // the companion purpose, the course's intervention, the default words, the
 // day's join and its costs.
 func (s *Service) pairVisit(ctx context.Context, p auth.Principal, req Request, origin Origin, now, today, day time.Time,
-	sc school, c course, focus string, collects bool, profileID string, training *plan) (*plan, error) {
+	sc school, responsible string, c course, focus string, collects bool, profileID string, training *plan) (*plan, error) {
 	kind := rules.Pair.VisitKind
 	it, err := standardItem(ctx, s.db, profileID, kind, day)
 	if err != nil {
@@ -368,7 +389,7 @@ func (s *Service) pairVisit(ctx context.Context, p auth.Principal, req Request, 
 	ev := assess(kind, focus, "planner", it.Modes, need, collects, today)
 	row := newRow(rowInput{
 		now: now, day: day, fy: fy, quarter: training.row.quarter, activityType: kind,
-		purpose: rules.Gate.CompanionPurpose, school: sc, responsible: p.StaffProfileID, item: *it, version: version,
+		purpose: rules.Gate.CompanionPurpose, school: sc, responsible: responsible, item: *it, version: version,
 		goal: "School visit accompanying " + c.Name, outcome: outcome, deviation: req.DeviationReason,
 		collects: collects, focus: focus, reason: reason, source: source, need: need, evidence: ev,
 	})
@@ -383,7 +404,7 @@ func (s *Service) pairVisit(ctx context.Context, p auth.Principal, req Request, 
 	ssa["pairedWithActivityId"] = training.row.id
 	row.source["ssa"] = ssa
 	row.alignment = training.row.alignment
-	ownerUID, err := fundingOwner(ctx, s.db, p.StaffProfileID, p.UserID)
+	ownerUID, err := fundingOwner(ctx, s.db, responsible, p.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -431,6 +452,9 @@ func (s *Service) writePair(ctx context.Context, pp *pairPlan) (int64, error) {
 	}
 	// The training's create (3207–3343).
 	if err := trainingEntitlement(ctx, tx, t.school, pp.course, t.row.fy, t.now); err != nil {
+		return 0, err
+	}
+	if err := coreTrainingSideOpen(ctx, tx, t.school, pp.course, t.row.fy, t.now); err != nil {
 		return 0, err
 	}
 	if set, err := ceilingSet(ctx, tx, t.row.responsible, pp.course.ID, t.row.fy); err != nil || set {
@@ -504,8 +528,21 @@ func (s *Service) afterPair(ctx context.Context, pp *pairPlan, rowID int64) {
 			s.logger.Warn("activities: the scheduled audit row was not written", "activity", pl.row.id, "err", err)
 		}
 	}
+	// Of the two, only the visit is news to its owner (_notify_scheduled_owner).
+	if err := s.tellScheduledOwner(ctx, pp.visit); err != nil {
+		s.logger.Warn("activities: the owner was not told of the visit", "activity", pp.visit.row.id, "err", err)
+	}
 	if err := s.pricing.Settle(ctx, []int64{rowID}, pp.visit.row.id); err != nil {
 		s.logger.Warn("activities: the costs to follow were not settled; the sweep takes them",
 			"activity", pp.visit.row.id, "row", rowID, "err", err)
+	}
+	if pp.corePlanID != "" {
+		// schedule_package_credit, once each commits.
+		if err := s.creditCoreSlot(ctx, pp.training, pp.corePlanID, coreSlotTraining); err != nil {
+			s.logger.Warn("activities: the Core package was not credited", "activity", pp.training.row.id, "err", err)
+		}
+		if err := s.creditCoreSlot(ctx, pp.visit, pp.corePlanID, coreSlotVisit); err != nil {
+			s.logger.Warn("activities: the Core package was not credited", "activity", pp.visit.row.id, "err", err)
+		}
 	}
 }

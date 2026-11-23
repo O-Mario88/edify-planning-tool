@@ -35,6 +35,13 @@ func TestAFullStaffHalfSaysWhoseVisitIsNext(t *testing.T) {
 	}
 }
 
+func TestAFullStaffTrainingHalfSaysWhoseTrainingIsNext(t *testing.T) {
+	want := "Mpatta already has its 2 staff core trainings (2/2). A Core package is 2 staff and 2 partner trainings, so the next training here is the partner's."
+	if got := coreStaffTrainingRefusal("Mpatta", 2); got != want {
+		t.Fatalf("got %q", got)
+	}
+}
+
 func TestOnlyTheCoreFollowUpItemIsACoreVisit(t *testing.T) {
 	core := item{WorkflowKind: coreVisitKind, Modes: []string{inheritMappingMode}}
 	if !core.coreVisit() {
@@ -72,5 +79,15 @@ func TestAPackageVisitIsCorePlanning(t *testing.T) {
 	r = newRow(rowInput{activityType: "donor_visit"})
 	if source, context := r.planning(); source != "school_planning" || context != "school" {
 		t.Fatalf("planning = %q %q", source, context)
+	}
+}
+
+func TestAPairOnAColleaguesPlanSaysWhose(t *testing.T) {
+	if got, want := pairConfirmation(pairNoun, ""), "In-school training and school visit scheduled. It is on your My Plan — keep planning."; got != want {
+		t.Fatalf("own = %q", got)
+	}
+	want := "In-school training and school visit with SSA collection scheduled onto Paul N.'s My Plan, because the responsible staff member comes from the school's owner."
+	if got := pairConfirmation(pairWithSSANoun, "Paul N."); got != want {
+		t.Fatalf("colleague = %q", got)
 	}
 }
