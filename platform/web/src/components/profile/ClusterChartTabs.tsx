@@ -10,14 +10,6 @@ import { chartPoints } from '@/lib/clusterProfileView';
 import { ProfileCard } from './parts';
 import { SsaTrendChart } from './SsaTrendChart';
 
-/** The tabs' short words, so all four fit the card's width. */
-const TAB_WORDS: Readonly<Record<string, string>> = {
-  'SSA Trend': 'SSA',
-  'Visit Coverage': 'Visits',
-  'Training Coverage': 'Trainings',
-  'Action Closure': 'Actions',
-};
-
 export function ClusterChartTabs({ charts }: { charts: readonly PageChart[] }) {
   const [active, setActive] = useState(0);
   const chart = charts[active] ?? charts[0];
@@ -32,11 +24,10 @@ export function ClusterChartTabs({ charts }: { charts: readonly PageChart[] }) {
             type="button"
             role="tab"
             aria-selected={index === active}
-            aria-label={item.title}
             onClick={() => setActive(index)}
-            className={`h-8 shrink-0 whitespace-nowrap px-3 text-[12px] first:rounded-l-[8px] last:rounded-r-[8px] ${index === active ? 'bg-[var(--edify-web-segment-active)] font-bold text-white' : 'font-semibold text-[var(--edify-text-muted)]'}`}
+            className={`h-7 shrink-0 flex-1 whitespace-nowrap px-2 text-[12px] first:rounded-l-[8px] last:rounded-r-[8px] ${index === active ? 'bg-[var(--edify-web-segment-active)] font-bold text-white' : 'font-semibold text-[var(--edify-text-muted)]'}`}
           >
-            {TAB_WORDS[item.title] ?? item.title}
+            {item.title}
           </button>
         ))}
       </div>
@@ -47,7 +38,7 @@ export function ClusterChartTabs({ charts }: { charts: readonly PageChart[] }) {
         label={chart.title}
         empty={`No ${chart.title.toLowerCase()} recorded yet.`}
       />
-      <p className="mt-1 text-[12px] text-[var(--edify-text-muted)]">{chart.subtitle}</p>
+      <p className="sr-only">{chart.subtitle}</p>
     </ProfileCard>
   );
 }

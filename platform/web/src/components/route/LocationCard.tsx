@@ -56,7 +56,6 @@ function RailFacts({ point, status, accuracy, verifiedAt, verifiedBy, source, ne
     ['Last Verified', verifiedAt ? dayText(verifiedAt) : 'Not verified'],
     ['Source', source || 'Not recorded'],
     ['Verified By', verifiedBy || 'Not verified'],
-    ['Nearby Schools', nearby],
   ];
   return (
     <div>
@@ -79,11 +78,11 @@ function RailFacts({ point, status, accuracy, verifiedAt, verifiedBy, source, ne
           {verified ? 'Verified' : 'Unverified'}
         </span>
       </div>
-      <dl className="mt-2 divide-y divide-[var(--edify-border)] text-[13px]">
+      <dl className="mt-2 divide-y divide-[var(--edify-border)] text-[14px]" title={nearby}>
         {rows.map(([label, value]) => (
-          <div key={label} className="flex items-baseline justify-between gap-3 py-1.5">
-            <dt className="shrink-0 text-[var(--edify-text-muted)]">{label}</dt>
-            <dd className="min-w-0 text-right font-semibold text-[var(--edify-text)]">{value}</dd>
+          <div key={label} className="grid grid-cols-[8.5rem_minmax(0,1fr)] items-baseline gap-2 py-2">
+            <dt className="text-[var(--edify-text)]">{label}</dt>
+            <dd className="min-w-0 font-medium text-[var(--edify-text)]">{value}</dd>
           </div>
         ))}
       </dl>
@@ -300,7 +299,7 @@ export function LocationCard({ answer: json, variant = 'wide' }: { answer: JsonV
             </dl>
             )}
 
-            <div className="space-y-2 pt-1">
+            <div className={isRail ? 'grid grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] gap-2 pt-1' : 'space-y-2 pt-1'}>
               {answer.canCapture || answer.canReport ? (
                 <button
                   type="button"
@@ -315,10 +314,10 @@ export function LocationCard({ answer: json, variant = 'wide' }: { answer: JsonV
                       : 'flex h-11 w-full items-center justify-center gap-2 rounded-[10px] border-2 border-[var(--brand-primary)] bg-white text-[14px] font-bold text-[var(--brand-primary)] hover:bg-blue-50'
                   }
                 >
-                  <RefreshCw className="h-4 w-4" aria-hidden="true" /> Update GPS Coordinates
+                  <RefreshCw className="h-4 w-4" aria-hidden="true" /> {isRail ? <span>Update GPS<span data-pf="rail-long"> Coordinates</span></span> : 'Update GPS Coordinates'}
                 </button>
               ) : null}
-              <div className="grid grid-cols-2 gap-2">
+              <div className={isRail ? 'contents' : 'grid grid-cols-2 gap-2'}>
                 {directions ? (
                   <Link
                     href={directions}
@@ -328,10 +327,10 @@ export function LocationCard({ answer: json, variant = 'wide' }: { answer: JsonV
                         : 'inline-flex h-10 items-center justify-center gap-1.5 rounded-[8px] bg-[var(--brand-primary)] px-3 text-[13px] font-semibold text-white hover:bg-[var(--brand-primary-hover)]'
                     }
                   >
-                    <RouteIcon name="navigate" className="h-4 w-4" /> Get Directions
+                    <RouteIcon name="navigate" className="h-4 w-4" /> {isRail ? <span><span data-pf="rail-long">Get </span>Directions</span> : 'Get Directions'}
                   </Link>
                 ) : null}
-                {answer.canPlan ? (
+                {answer.canPlan && !isRail ? (
                   <Link
                     href={`/my-plan/smart-route?near=${encodeURIComponent(effectiveSchool.schoolId)}`}
                     className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[8px] border border-[var(--edify-border)] px-3 text-[13px] font-semibold text-[var(--edify-text)] hover:bg-slate-50"
@@ -416,8 +415,13 @@ export function LocationCard({ answer: json, variant = 'wide' }: { answer: JsonV
           className="inline-flex h-9 items-center gap-1.5 font-semibold text-[var(--brand-primary)] hover:underline"
           onClick={() => setIsHistoryOpen((open) => !open)}
         >
-          <RouteIcon name="clock" className="h-4 w-4" /> {isHistoryOpen ? 'Hide location history' : 'Location audit history'}
+          <RouteIcon name="clock" className="h-4 w-4" /> <span data-pf="rail-word">{isHistoryOpen ? 'Hide history' : isRail ? 'History' : 'Location audit history'}</span>
         </button>
+        {isRail && answer.canPlan ? (
+          <Link href={`/my-plan/smart-route?near=${encodeURIComponent(effectiveSchool.schoolId)}`} className="inline-flex h-9 items-center gap-1.5 font-semibold text-[var(--brand-primary)] hover:underline">
+            <RouteIcon name="route" className="h-4 w-4" /> <span data-pf="rail-word">Nearby ({answer.nearbySchools})</span>
+          </Link>
+        ) : null}
         {!pending && answer.canReport && !isReporting ? (
           <button
             type="button"
@@ -427,7 +431,7 @@ export function LocationCard({ answer: json, variant = 'wide' }: { answer: JsonV
               setIsReporting(true);
             }}
           >
-            <RouteIcon name="alert" className="h-4 w-4" /> Flag coordinate issue
+            <RouteIcon name="alert" className="h-4 w-4" /> <span data-pf="rail-word">{isRail ? 'Flag issue' : 'Flag coordinate issue'}</span>
           </button>
         ) : null}
       </div>

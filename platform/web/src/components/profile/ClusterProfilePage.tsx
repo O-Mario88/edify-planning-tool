@@ -15,14 +15,14 @@ import { chartPoints, clusterFactsOf, clusterView } from '@/lib/clusterProfileVi
 import { environment } from '@/lib/environment';
 import { actionHref, drawerPageHref } from '@/lib/feedPage';
 import { requestView } from '@/lib/requestView';
-import { profileTabs } from '@/lib/schoolProfile';
 
-import { TabRail } from '../blocks/TabRail';
 import { BarChart3, CalendarCheck, CheckCircle2, Clock, Flag, History, School } from './clusterIcons';
 import type { IconFor } from './clusterIcons';
 import { ClusterHero } from './ClusterHero';
 import { ClusterMembers } from './ClusterMembers';
 import { ClusterOverview } from './ClusterOverview';
+import { CardFilters } from './CardFilters';
+import { ProfileTabs } from './ProfileTabs';
 import { MetricTile, ProfileCard } from './parts';
 import type { Accent } from './parts';
 import { SsaTrendChart } from './SsaTrendChart';
@@ -65,13 +65,14 @@ export async function ClusterProfilePage({ clusterId, query }: { clusterId: stri
   const isOverview = activeTab === 'overview' && Boolean(view.summary);
   // What a tab holds beyond the cards this page draws itself.
   const rest = isOverview ? [] : [...view.others];
+  const filters = view.filters.flatMap((block) => (block.kind.case === 'filters' ? block.kind.value.filters : []));
   return (
-    <div className="mx-auto max-w-[1600px] space-y-3 px-4 pb-24 pt-4 sm:px-6 lg:pb-8" data-page={pagePath} data-tab={activeTab}>
+    <div data-pf-page="" className="space-y-3 px-3 pb-24 pt-3 sm:px-6 lg:pb-8" data-page={pagePath} data-tab={activeTab}>
       {answer.header ? <ClusterHero header={answer.header} place={place} people={people} hrefOf={hrefOf} /> : null}
-      {answer.tabs.length ? <TabRail rail={profileTabs(answer.tabs, pagePath, query.fy || '')} /> : null}
-      {view.filters.length ? <FeedBlocks blocks={view.filters} {...feed} /> : null}
+      {answer.tabs.length ? <ProfileTabs tabs={answer.tabs} pagePath={pagePath} year={query.fy || ''} label="Cluster sections" /> : null}
+      {!isOverview && filters.length ? <div data-pf="tab-filters"><CardFilters filters={filters} /></div> : null}
       {view.summary ? <SummaryTiles metrics={view.summary.metrics} pagePath={pagePath} /> : null}
-      {isOverview ? <ClusterOverview view={view} pagePath={pagePath} drawerHref={drawerHref} selectable={selectable} /> : null}
+      {isOverview ? <ClusterOverview view={view} filters={filters} pagePath={pagePath} drawerHref={drawerHref} selectable={selectable} /> : null}
       {!isOverview && view.members ? <ClusterMembers table={view.members} pagePath={pagePath} drawerHref={drawerHref} selectable={selectable} /> : null}
       {!isOverview && view.charts.length ? (
         <div data-pf="cluster-charts">

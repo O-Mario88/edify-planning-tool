@@ -3,7 +3,7 @@
  * Readiness in Go's words, the tab's figures, then its cards. No percentage
  * or status is worked out here; a card Go does not send is not drawn.
  */
-import { Activity, BarChart3, Crown, LifeBuoy, Package, ShieldCheck, TrendingUp, Users } from 'lucide-react';
+import { Activity, BarChart3, Crown, LifeBuoy, Package, ShieldCheck, Target, TrendingUp, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 import type { PageBlock, PagePanel } from '@/gen/edify/screens/v1/page_pb';
@@ -33,12 +33,11 @@ interface SchoolCoreTabProps {
 
 export function SchoolCoreTab({ blocks, year, pagePath, drawerHref }: SchoolCoreTabProps) {
   const view = coreSchoolView(blocks);
+  const linkPanels = view.others.flatMap((block) => (block.kind.case === 'panel' ? [block.kind.value] : []));
+  const rest = view.others.filter((block) => block.kind.case !== 'panel');
   return (
     <div className="space-y-4" data-layout="school-core">
-      <section
-        aria-label="Core School Programme"
-        className="flex flex-col gap-3 rounded-[12px] bg-[color-mix(in_srgb,var(--brand-primary)_78%,#06162e)] px-5 py-4 text-white sm:flex-row sm:items-center sm:justify-between"
-      >
+      <section aria-label="Core School Programme" data-pf="core-band">
         <div className="flex min-w-0 items-center gap-3">
           <Crown className="h-8 w-8 shrink-0" style={{ color: '#fcd34d' }} aria-hidden="true" />
           <div className="min-w-0">
@@ -49,7 +48,7 @@ export function SchoolCoreTab({ blocks, year, pagePath, drawerHref }: SchoolCore
         {view.readiness ? (
           <div className="shrink-0">
             <p className="text-[12px] font-medium" style={{ color: 'rgb(255 255 255 / 0.85)' }}>Champion Readiness</p>
-            <p className="mt-0.5 inline-flex rounded-full bg-white px-3 py-1 text-[13px] font-bold text-[var(--brand-primary)]">{view.readiness}</p>
+            <p data-pf="core-band-pill">{view.readiness}</p>
           </div>
         ) : null}
       </section>
@@ -65,10 +64,15 @@ export function SchoolCoreTab({ blocks, year, pagePath, drawerHref }: SchoolCore
         <CoreCard panel={view.package} title="Package & Support" icon={Package} pagePath={pagePath} />
         <CoreCard panel={view.participation} icon={Users} pagePath={pagePath} />
         <CoreCard panel={view.champion} icon={ShieldCheck} pagePath={pagePath} />
+        {linkPanels.length ? (
+          <ProfileCard title="Interventions & Implementation" icon={Target} aside={year} block="core-card">
+            {linkPanels.map((panel, index) => <PanelLines key={panel.title || index} panel={panel} pagePath={pagePath} />)}
+          </ProfileCard>
+        ) : null}
         <CoreCard panel={view.outcomes} icon={BarChart3} pagePath={pagePath} />
         <CoreCard panel={view.support} icon={LifeBuoy} pagePath={pagePath} />
       </div>
-      {view.others.length ? <FeedBlocks blocks={view.others} pagePath={pagePath} drawerHref={drawerHref} selectable={false} clearFilters={false} /> : null}
+      {rest.length ? <FeedBlocks blocks={rest} pagePath={pagePath} drawerHref={drawerHref} selectable={false} clearFilters={false} /> : null}
     </div>
   );
 }

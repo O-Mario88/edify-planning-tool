@@ -19,14 +19,18 @@ import {
   AlertTriangle,
   ArrowDown,
   ArrowUp,
+  Bike,
+  Car,
   CheckCircle2,
-  Clock,
+  ChevronRight,
+  Crown,
   Flag,
   List as ListIcon,
   LocateFixed,
   Lock,
   Map as MapIcon,
   MapPin,
+  MoreVertical,
   Navigation,
   PanelLeftClose,
   PanelLeftOpen,
@@ -64,7 +68,7 @@ import {
   km,
   legFigures,
 } from '@/lib/routePlanner';
-import { optionOf } from '@/lib/routeView';
+import { optionOf, hasNoRoadLeg, routeNote } from '@/lib/routeView';
 import type { RouteOption } from '@/lib/routeView';
 import type {
   CalendarRulesData,
@@ -79,6 +83,7 @@ import type {
 import { GpsCaptureModal } from './GpsCaptureModal';
 import { InAppNavigationPanel } from './InAppNavigationPanel';
 import { RouteIcon } from './RouteIcons';
+import { QuickSelect } from './QuickSelect';
 import { RouteBottomRow, RouteKpiStrip, RouteSsaTab } from './RouteInsights';
 import { RouteMap } from './RouteMap';
 import { NearbyCard } from './RouteParts';
@@ -125,7 +130,7 @@ async function smartApi<T>(path: string, init?: RequestInit): Promise<T> {
 const LOCATION_CHANGES_EVERY_MS = 60_000;
 
 /** The phone's itinerary sheet: how far it rests when peeking, half open and open, in rem. */
-const SHEET_PEEK_REM = 13;
+const SHEET_PEEK_REM = 15.5;
 const SHEET_HALF_REM = 26;
 const SHEET_FULL_REM = 40;
 const REM_PX = 16;
@@ -247,6 +252,7 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
   const [message, setMessage] = useState<string | null>(day.provider?.message || null);
   const [allNearby, setAllNearby] = useState(Boolean(day.focus));
   const [showReportModal, setShowReportModal] = useState(false);
+  const [openStop, setOpenStop] = useState('');
   const [gpsModalTarget, setGpsModalTarget] = useState<{
     schoolId: string;
     schoolCode: string;
@@ -586,6 +592,11 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
     return (day.recommended?.stops ?? []).filter((s) => (s.kind === 'recommended' ? show.suggested : show.planned));
   }, [smartResult, day.recommended, show.planned, show.suggested]);
 
+  const prioritySchoolIds = useMemo(
+    () => new Set((smartResult?.stops ?? []).filter((st) => (st.priority?.band ?? 'routine') !== 'routine').map((st) => st.school_id)),
+    [smartResult],
+  );
+
   const activePath = useMemo<LatLngPoint[]>(() => {
     if (rightTab === 'directions' && directions?.road_available && directions.path.length >= 2) {
       return directions.path;
@@ -743,7 +754,10 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
           </span>
           <div className="min-w-0">
             <h1 className="text-[20px] font-bold leading-tight text-[var(--edify-text)] sm:text-[24px]">Smart Route Planner</h1>
-            <p className="text-[13px] text-[var(--edify-text-muted)]">Road-network routing with SSA priority and field-day planning</p>
+            <p className="text-[13px] text-[var(--edify-text-muted)]">
+              <span className="sr-long">Intelligent, road-network routing with SSA, coverage, traffic and field-day optimization.</span>
+              <span className="sr-short">Intelligent, road-network routing for your school visits.</span>
+            </p>
           </div>
         </div>
 
@@ -792,7 +806,11 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
             >
               <Navigation className="h-4 w-4" aria-hidden="true" /> Start Field Day
             </button>
-          ) : null}
+          ) : (
+            <button type="button" disabled title="Not available for this day" className="inline-flex h-10 items-center gap-2 rounded-[10px] bg-[var(--brand-primary)] px-4 text-[13px] font-semibold text-white opacity-45">
+              <Navigation className="h-4 w-4" aria-hidden="true" /> Start Field Day
+            </button>
+          )}
         </div>
       </header>
 
@@ -812,18 +830,8 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
             if (nextIso && nextIso !== day.date) go({ date: nextIso });
           }}
         />
-        <select aria-label="District" value={district} onChange={(e) => go({ district: e.target.value })} className="h-10 w-full min-w-0 rounded-[8px] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-2 text-[13px] font-medium text-[var(--edify-text)]">
-          <option value="">All Districts</option>
-          {day.districts.map((d) => (
-            <option key={d.value} value={d.value}>{d.label}</option>
-          ))}
-        </select>
-        <select aria-label="Cluster" value={cluster} onChange={(e) => go({ cluster: e.target.value })} className="h-10 w-full min-w-0 rounded-[8px] border border-[var(--edify-border)] bg-[var(--edify-surface)] px-2 text-[13px] font-medium text-[var(--edify-text)]">
-          <option value="">All Clusters</option>
-          {day.clusters.map((c) => (
-            <option key={c.value} value={c.value}>{c.label}</option>
-          ))}
-        </select>
+        <QuickSelect label="District" value={district} allWords="All Districts" options={day.districts} onChange={(value) => go({ district: value })} />
+        <QuickSelect label="Cluster" value={cluster} allWords="All Clusters" options={day.clusters} onChange={(value) => go({ cluster: value })} />
         <button type="button" onClick={() => setConfigOpen(true)} aria-label="Route settings" className="grid h-10 w-10 place-items-center rounded-[8px] border border-[var(--edify-border)] bg-[var(--edify-surface)] text-[var(--edify-text)]">
           <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -873,27 +881,20 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
       <div className="sr-workspace mt-3" data-layout={layoutKey}>
         {/* LEFT PANEL — Route Configuration */}
         {leftOpen ? (
-          <aside className={`${card} sr-panel-config flex-col gap-4 p-4`} aria-label="Route configuration" data-panel="route-config" data-open={configOpen || undefined}>
-            <div className="flex items-center justify-between border-b border-[var(--edify-border)] pb-2.5">
-              <h2 className="flex items-center gap-2 text-[15px] font-bold text-[#0f172a]">
-                <SlidersHorizontal className="h-4 w-4 text-[var(--brand-primary)]" aria-hidden="true" />
+          <aside className={`${card} sr-panel-config flex-col p-4`} aria-label="Route configuration" data-panel="route-config" data-open={configOpen || undefined}>
+            <div className="sr-config-head">
+              <h2>
+                <SlidersHorizontal className="h-[18px] w-[18px] shrink-0 text-[var(--brand-primary)]" aria-hidden="true" />
                 Route Configuration
               </h2>
-              {ownerMeta.name ? (
-                <span className="truncate rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-[var(--brand-primary)]">
-                  {ownerMeta.role || 'Staff'}
-                </span>
-              ) : null}
+              {ownerMeta.name ? <span className="sr-role-chip">{ownerMeta.role || 'Staff'}</span> : null}
               <button type="button" onClick={() => setConfigOpen(false)} aria-label="Close route settings" className="sr-config-close h-9 w-9 items-center justify-center rounded-full text-[var(--edify-text-muted)]">
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
 
-            {/* Unified Chevron-Free Full-Field Date Picker (Sections 10 & 11) */}
-            <div className="space-y-1.5" data-sr-geo>
-              <label htmlFor="smart-route-date" className="block text-[12px] font-bold uppercase tracking-wide text-slate-600">
-                Planning Date
-              </label>
+            <div className="sr-field" data-sr-geo>
+              <label htmlFor="smart-route-date">Planning Date</label>
               <EdifyDatePicker
                 id="smart-route-date"
                 label="Planning date"
@@ -909,44 +910,24 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
               />
             </div>
 
-            {/* District & Cluster Scope Filters */}
-            <div className="grid grid-cols-2 gap-2" data-sr-geo>
-              <label className="text-[12px] font-semibold text-slate-600">
-                District
-                <select
-                  value={district}
-                  onChange={(e) => go({ district: e.target.value })}
-                  className="mt-1 h-9 w-full rounded-[8px] border border-[var(--edify-border)] bg-white px-2 text-[13px] font-medium text-slate-800"
-                >
-                  <option value="">All Districts</option>
-                  {day.districts.map((d) => (
-                    <option key={d.value} value={d.value}>
-                      {d.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-[12px] font-semibold text-slate-600">
-                Cluster
-                <select
-                  value={cluster}
-                  onChange={(e) => go({ cluster: e.target.value })}
-                  className="mt-1 h-9 w-full rounded-[8px] border border-[var(--edify-border)] bg-white px-2 text-[13px] font-medium text-slate-800"
-                >
-                  <option value="">All Clusters</option>
-                  {day.clusters.map((c) => (
-                    <option key={c.value} value={c.value}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+            <div className="sr-field" data-sr-geo>
+              <span className="sr-field__title">Geographic Scope</span>
+              <div className="sr-two">
+                <div className="sr-boxed">
+                  <span>District</span>
+                  <QuickSelect label="District" value={district} allWords="All Districts" options={day.districts} onChange={(value) => go({ district: value })} />
+                </div>
+                <div className="sr-boxed">
+                  <span>Cluster</span>
+                  <QuickSelect label="Cluster" value={cluster} allWords="All Clusters" options={day.clusters} onChange={(value) => go({ cluster: value })} />
+                </div>
+              </div>
             </div>
 
-            {/* Start / End Locations & Working Hours */}
-            <div className="space-y-2.5 rounded-[12px] border border-slate-100 bg-slate-50/70 p-3">
-              <label className="block text-[12px] font-semibold text-slate-700">
-                Start Location
+            <label className="sr-field">
+              <span className="sr-field__title">Start Location</span>
+              <span className="sr-icon-field">
+                <MapPin className="h-4 w-4" aria-hidden="true" />
                 <select
                   value={startChoice}
                   onChange={(e) => {
@@ -954,103 +935,76 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
                     if (v === 'current_gps') requestCurrentGpsAsStart();
                     else setStartChoice(v);
                   }}
-                  className="mt-1 h-9 w-full rounded-[8px] border border-[var(--edify-border)] bg-white px-2.5 text-[13px] font-medium"
                 >
                   <option value="first_school">Start at First School</option>
                   <option value="kampala_office">Edify Uganda Office (Kampala)</option>
                   <option value="current_gps">Use My Current GPS</option>
                 </select>
+              </span>
+            </label>
+
+            <div className="sr-field">
+              <span className="sr-field__title">End Location <small>(optional)</small></span>
+              <label className="sr-check-row" title={startChoice === 'first_school' ? 'Choose a start location to return to' : undefined}>
+                <Flag className="h-4 w-4" aria-hidden="true" />
+                <span>Return to Start</span>
+                <input type="checkbox" disabled={startChoice === 'first_school'} checked={returnToStart && startChoice !== 'first_school'} onChange={(e) => setReturnToStart(e.target.checked)} />
               </label>
+            </div>
 
-              {startChoice !== 'first_school' ? (
-                <label className="flex items-center gap-2 text-[12px] font-medium text-slate-700">
-                  <input type="checkbox" checked={returnToStart} onChange={(e) => setReturnToStart(e.target.checked)} className="h-4 w-4 accent-[var(--brand-primary)]" />
-                  Return to start location at end of day
-                </label>
-              ) : null}
-
-              <div className="grid grid-cols-2 gap-2">
-                <label className="text-[11px] font-semibold text-slate-600">
-                  Work Start
-                  <input
-                    type="time"
-                    value={workStart}
-                    onChange={(e) => setWorkStart(e.target.value)}
-                    className="mt-1 h-8 w-full rounded-[7px] border border-[var(--edify-border)] bg-white px-2 text-[12px]"
-                  />
-                </label>
-                <label className="text-[11px] font-semibold text-slate-600">
-                  Work End
-                  <input
-                    type="time"
-                    value={workEnd}
-                    onChange={(e) => setWorkEnd(e.target.value)}
-                    className="mt-1 h-8 w-full rounded-[7px] border border-[var(--edify-border)] bg-white px-2 text-[12px]"
-                  />
-                </label>
-              </div>
-              <label className="block text-[11px] font-semibold text-slate-600">
-                Visit Duration (minutes per school)
-                <input
-                  type="number"
-                  min={15}
-                  max={240}
-                  step={15}
-                  value={visitMinutes}
-                  onChange={(e) => setVisitMinutes(Number(e.target.value) || 60)}
-                  className="mt-1 h-8 w-full rounded-[7px] border border-[var(--edify-border)] bg-white px-2.5 text-[12px]"
-                />
+            <div className="sr-two">
+              <label className="sr-field">
+                <span className="sr-field__title">Work Start</span>
+                <input type="time" value={workStart} onChange={(e) => setWorkStart(e.target.value)} />
               </label>
+              <label className="sr-field">
+                <span className="sr-field__title">Work End</span>
+                <input type="time" value={workEnd} onChange={(e) => setWorkEnd(e.target.value)} />
+              </label>
+            </div>
 
-              <div className="flex items-center gap-1.5 pt-0.5">
+            <label className="sr-field">
+              <span className="sr-field__title">Visit Duration <small>(minutes per school)</small></span>
+              <input type="number" min={15} max={240} step={15} value={visitMinutes} onChange={(e) => setVisitMinutes(Number(e.target.value) || 60)} />
+            </label>
+
+            <div className="sr-field">
+              <span className="sr-field__title"><Car className="h-4 w-4" aria-hidden="true" /> Vehicle Type</span>
+              <div className="sr-two">
                 {(
                   [
-                    ['DRIVE', 'Vehicle'],
-                    ['TWO_WHEELER', 'Motorcycle'],
+                    ['DRIVE', 'Vehicle', Car],
+                    ['TWO_WHEELER', 'Motorcycle', Bike],
                   ] as const
-                ).map(([tm, lbl]) => (
-                  <button
-                    key={tm}
-                    type="button"
-                    onClick={() => setTransportMode(tm)}
-                    className={`flex-1 rounded-[7px] py-1 text-[12px] font-semibold ${
-                      transportMode === tm ? 'bg-[#0f2942] text-white' : 'border border-[var(--edify-border)] bg-white text-slate-600'
-                    }`}
-                  >
-                    {lbl}
+                ).map(([tm, lbl, VehicleIcon]) => (
+                  <button key={tm} type="button" onClick={() => setTransportMode(tm)} aria-pressed={transportMode === tm} className="sr-pill">
+                    <VehicleIcon className="h-4 w-4" aria-hidden="true" /> {lbl}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* 5 Optimization Modes Selector (Section 5.1) */}
-            <fieldset className="space-y-1.5">
-              <legend className="text-[12px] font-bold uppercase tracking-wide text-slate-600">Optimization Mode</legend>
-              <div className="space-y-1.5">
-                {MODES.map((m) => {
-                  const active = mode === m.id;
-                  return (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() => setMode(m.id)}
-                      data-opt-mode={m.id}
-                      aria-pressed={active}
-                      className={`w-full rounded-[10px] border px-3 py-2 text-left transition-colors ${
-                        active
-                          ? 'border-[var(--brand-primary)] bg-blue-50/75 ring-1 ring-[var(--brand-primary)]/30'
-                          : 'border-[var(--edify-border)] bg-white hover:bg-slate-50'
-                      }`}
-                    >
-                      <p className={`text-[13px] font-bold ${active ? 'text-[var(--brand-primary)]' : 'text-slate-800'}`}>{m.label}</p>
-                      <p className="text-[11px] text-slate-500">{m.desc}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            </fieldset>
+            <label className="sr-field">
+              <span className="sr-field__title">Optimization Mode</span>
+              <select value={mode} onChange={(e) => setMode(e.target.value as SmartOptimizationMode)} title={MODES.find((m) => m.id === mode)?.desc}>
+                {MODES.map((m) => (
+                  <option key={m.id} value={m.id}>{m.label}</option>
+                ))}
+              </select>
+            </label>
 
-            {/* Primary Optimize Route Action */}
+            <button
+              type="button"
+              role="switch"
+              aria-checked={mode === 'priority_schools'}
+              onClick={() => setMode(mode === 'priority_schools' ? 'balanced' : 'priority_schools')}
+              className="sr-switch-row"
+            >
+              <Sparkles className="h-4 w-4 shrink-0 text-[var(--brand-primary)]" aria-hidden="true" />
+              <span>Include SSA Priority Schools</span>
+              <i aria-hidden="true" />
+            </button>
+
             <button
               type="button"
               disabled={busy || selectedSchoolIds.length === 0}
@@ -1059,36 +1013,11 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
                 void runOptimize();
               }}
               data-action="optimize-route"
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-[12px] bg-[var(--brand-primary)] text-[14px] font-bold text-white shadow-sm hover:bg-[var(--brand-primary-hover)] disabled:opacity-50"
+              className="sr-optimize flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-[var(--brand-primary)] text-[14px] font-bold text-white shadow-sm hover:bg-[var(--brand-primary-hover)] disabled:opacity-50"
             >
               <Sparkles className="h-4 w-4" aria-hidden="true" />
               {busy ? 'Optimizing Road Route…' : 'Optimize Route'}
             </button>
-
-            {/* Map Layers & Staff Road Condition Report */}
-            <div className="space-y-2 border-t border-[var(--edify-border)] pt-3">
-              <div className="flex flex-wrap gap-3 text-[12px] font-medium text-slate-700">
-                {(
-                  [
-                    ['planned', 'Planned'],
-                    ['suggested', 'Suggested'],
-                    ['nearby', 'Nearby'],
-                  ] as const
-                ).map(([k, lbl]) => (
-                  <label key={k} className="flex items-center gap-1.5">
-                    <input type="checkbox" checked={show[k]} onChange={(e) => setShow({ ...show, [k]: e.target.checked })} className="h-4 w-4 accent-[var(--brand-primary)]" />
-                    {lbl}
-                  </label>
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowReportModal(true)}
-                className="flex h-9 w-full items-center justify-center gap-1.5 rounded-[9px] border border-amber-300 bg-amber-50 text-[12px] font-semibold text-amber-900 hover:bg-amber-100"
-              >
-                <Flag className="h-3.5 w-3.5" aria-hidden="true" /> Report Road Condition ({roadConditions.length})
-              </button>
-            </div>
           </aside>
         ) : null}
 
@@ -1102,6 +1031,23 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
             activeAlternativeId={activeAltId}
             onSelectAlternative={setActiveAltId}
             roadAlerts={smartResult?.road_alerts ?? roadConditions}
+            prioritySchoolIds={prioritySchoolIds}
+            layers={
+              <div className="sr-layer-list">
+                {(
+                  [
+                    ['planned', 'Planned'],
+                    ['suggested', 'Suggested'],
+                    ['nearby', 'Nearby'],
+                  ] as const
+                ).map(([k, lbl]) => (
+                  <label key={k}>
+                    <input type="checkbox" checked={show[k]} onChange={(e) => setShow({ ...show, [k]: e.target.checked })} />
+                    {lbl}
+                  </label>
+                ))}
+              </div>
+            }
             userLocation={userGps}
             others={others}
             chip={chip}
@@ -1111,6 +1057,16 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
             focus={focus}
             fitOthers={Boolean(focus)}
           />
+          {smartResult?.stops.length ? (
+            <button type="button" className="sr-rec-card" onClick={() => pickPhoneView('list')}>
+              <Crown className="h-5 w-5 shrink-0 text-[var(--brand-primary)]" aria-hidden="true" />
+              <span className="min-w-0 flex-1">
+                <strong>{smartResult.is_recommended ? 'Recommended Route' : MODES.find((m) => m.id === smartResult.mode)?.short ?? 'Route'}</strong>
+                <span>{totals?.road_complete && totals.road_meters > 0 ? `${km(totals.road_meters)} • ${hoursMinutes(totals.road_seconds)}` : `${smartResult.stops.length} school${smartResult.stops.length === 1 ? '' : 's'}`}</span>
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+            </button>
+          ) : null}
 
           {selectedPin ? (
             <SchoolPopupCard
@@ -1173,15 +1129,12 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
               </button>
             ) : null}
             {/* Itinerary, In-App Directions, SSA & Coverage */}
-            <div className="grid shrink-0 grid-cols-3 gap-1 rounded-[10px] bg-[var(--edify-surface-muted)] p-1" role="tablist">
+            <div className="sr-tabs" role="tablist" aria-label="Route details">
               <button
                 type="button"
                 role="tab"
                 aria-selected={rightTab === 'itinerary'}
                 onClick={() => setRightTab('itinerary')}
-                className={`min-h-9 rounded-[8px] px-1 text-[12px] font-bold leading-tight transition-colors ${
-                  rightTab === 'itinerary' ? 'bg-[var(--edify-web-segment-active)] text-white' : 'text-[var(--edify-text-muted)]'
-                }`}
               >
                 Itinerary ({smartResult?.stops.length ?? mapStops.length})
               </button>
@@ -1195,9 +1148,6 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
                     void openInAppDirections(smartResult!.stops.map((s) => s.school_id));
                   }
                 }}
-                className={`min-h-9 rounded-[8px] px-1 text-[12px] font-bold leading-tight transition-colors ${
-                  rightTab === 'directions' ? 'bg-[var(--edify-web-segment-active)] text-white' : 'text-[var(--edify-text-muted)]'
-                }`}
               >
                 Directions
               </button>
@@ -1206,9 +1156,6 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
                 role="tab"
                 aria-selected={rightTab === 'coverage'}
                 onClick={() => setRightTab('coverage')}
-                className={`min-h-9 rounded-[8px] px-1 text-[12px] font-bold leading-tight transition-colors ${
-                  rightTab === 'coverage' ? 'bg-[var(--edify-web-segment-active)] text-white' : 'text-[var(--edify-text-muted)]'
-                }`}
               >
                 SSA &amp; Coverage
               </button>
@@ -1236,29 +1183,20 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
               <>
                 {/* Route Recommendation & Comparison Summary (Section 5.3) */}
                 {smartResult ? (
-                  <div data-sr-summary className="rounded-[12px] border border-[var(--edify-border)] bg-[var(--edify-surface-muted)] p-3 text-[12px]">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-bold text-[#0f172a]">{smartResult.objective_label}</p>
-                        <p className="mt-0.5 text-slate-600">{smartResult.recommendation_note}</p>
-                      </div>
-                      {smartResult.is_recommended ? (
-                        <span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800">
-                          Recommended
-                        </span>
-                      ) : null}
-                    </div>
+                  <details data-sr-summary className="sr-summary">
+                    <summary>
+                      <span>{smartResult.objective_label}</span>
+                      {smartResult.is_recommended ? <em>Recommended</em> : null}
+                    </summary>
+                    <p>{routeNote(smartResult)}</p>
                     {(smartResult.distance_saved_meters > 0 || smartResult.time_saved_seconds > 0) ? (
-                      <p className="mt-2 rounded-[8px] bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-800">
+                      <p className="font-semibold text-[var(--edify-success-text)]">
                         Optimization saved {km(smartResult.distance_saved_meters)} and {hoursMinutes(smartResult.time_saved_seconds)} vs. initial order.
                       </p>
                     ) : null}
-                    <div className="mt-2 flex flex-wrap items-center justify-between gap-1 text-[11px] text-slate-500">
-                      <span>Confidence: <strong className="uppercase">{smartResult.confidence}</strong> · {smartResult.provider.toUpperCase()}</span>
-                      <span>Calculated {dayClock(smartResult.calculated_at)}</span>
-                    </div>
-                    <p className="mt-1 text-[11px] text-slate-500">{smartResult.confidence_note}</p>
-                  </div>
+                    <p>Confidence: <strong className="uppercase">{smartResult.confidence}</strong> · {smartResult.provider.toUpperCase()} · Calculated {dayClock(smartResult.calculated_at)}</p>
+                    {hasNoRoadLeg(smartResult) ? null : <p>{smartResult.confidence_note}</p>}
+                  </details>
                 ) : null}
 
                 {/* Road Condition Alerts */}
@@ -1277,120 +1215,70 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
 
                 {/* Ordered Stop Sequence */}
                 {smartResult && smartResult.stops.length > 0 ? (
-                  <ol className="max-h-[420px] space-y-2.5 overflow-y-auto pr-1" aria-label="Optimized school stop sequence">
+                  <ol className="sr-stops" aria-label="Optimized school stop sequence">
+                    {smartResult.start_label ? (
+                      <li className="sr-stop" data-kind="start">
+                        <span className="sr-stop__num">1</span>
+                        <div className="sr-stop__text"><p className="sr-stop__name">{smartResult.start_label} (Start)</p></div>
+                        <span className="sr-stop__time">{smartResult.work_start}</span>
+                      </li>
+                    ) : null}
                     {smartResult.stops.map((st, idx) => {
                       const badge = priorityBadgeStyle(st.priority.band);
                       const ci = checkIns.get(st.school_id);
                       const isLocked = lockedIds.has(st.school_id);
+                      const isOpen = openStop === st.school_id;
+                      const leg = idx > 0 || smartResult.start
+                        ? st.road_available ? `${km(st.road_meters)} • ${hoursMinutes(st.road_seconds)}` : st.road_status || 'Road access requires verification'
+                        : 'First stop';
                       return (
-                        <li key={st.school_id} className="rounded-[12px] border border-[var(--edify-border)] bg-white p-3">
-                          <div className="flex items-start gap-2.5">
-                            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--brand-primary)] text-[12px] font-bold text-white">
-                              {st.order}
-                            </span>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center gap-1.5">
-                                <span className="text-[14px] font-bold text-[#0f172a]">{st.school_name}</span>
-                                <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${badge.cls}`}>{badge.label}</span>
-                              </div>
-                              <p className="mt-0.5 text-[12px] text-slate-500">
+                        <li key={st.school_id} className="sr-stop" data-priority={(st.priority?.band ?? 'routine') !== 'routine' || undefined}>
+                          <span className="sr-stop__num">{smartResult.start_label ? st.order + 1 : st.order}</span>
+                          <div className="sr-stop__text">
+                            <p className="sr-stop__name" title={badge.label}>{st.school_name}<span className="sr-only"> ({badge.label})</span></p>
+                            <p className="sr-stop__meta">{leg}</p>
+                            {st.conflict ? (
+                              <p className="sr-stop__conflict"><AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" /> {st.conflict}</p>
+                            ) : null}
+                          </div>
+                          <span className="sr-stop__time">{st.arrival} – {st.departure}</span>
+                          <span className="sr-stop__tools">
+                            {fieldDay.running && !ci?.arrivedAt ? (
+                              <button type="button" disabled={busy} onClick={() => void recordFieldDay('arrive', st.school_id)} className="sr-stop__check">Arrived</button>
+                            ) : null}
+                            {fieldDay.running && ci?.arrivedAt && !ci.leftAt ? (
+                              <button type="button" disabled={busy} onClick={() => void recordFieldDay('leave', st.school_id)} className="sr-stop__check">Leaving</button>
+                            ) : null}
+                            <button type="button" aria-expanded={isOpen} aria-label={`Actions for ${st.school_name}`} onClick={() => setOpenStop(isOpen ? '' : st.school_id)} className="sr-stop__more">
+                              <MoreVertical className="h-4 w-4" aria-hidden="true" />
+                            </button>
+                          </span>
+                          {isOpen ? (
+                            <div className="sr-stop__actions">
+                              <span className="text-[11px] text-[var(--edify-text-muted)]">
                                 ID {st.school_code} · {st.district} · Visit {st.visit_minutes}m
-                                {st.planned_activity_id ? ` · Plan #${st.planned_activity_id.slice(0, 8)}` : ''}
-                              </p>
-                              <p className="mt-1 flex items-center gap-1.5 text-[12px] font-medium text-slate-700">
-                                <Clock className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
-                                Arr {st.arrival} – Dep {st.departure}
-                                {idx > 0 || smartResult.start ? (
-                                  <span className="text-slate-500">
-                                    · {st.road_available ? `${km(st.road_meters)} (${hoursMinutes(st.road_seconds)})` : st.road_status || 'Road access requires verification'}
-                                  </span>
-                                ) : (
-                                  <span className="text-slate-500">· First stop</span>
-                                )}
-                              </p>
-                              {st.conflict ? (
-                                <p className="mt-1 flex items-center gap-1 text-[12px] font-semibold text-red-700">
-                                  <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" /> {st.conflict}
-                                </p>
-                              ) : null}
+                              </span>
+                              <button type="button" disabled={busy || idx === 0} onClick={() => moveStop(idx, -1)} aria-label={`Move ${st.school_name} earlier`}><ArrowUp className="h-3.5 w-3.5" aria-hidden="true" /></button>
+                              <button type="button" disabled={busy || idx === smartResult.stops.length - 1} onClick={() => moveStop(idx, 1)} aria-label={`Move ${st.school_name} later`}><ArrowDown className="h-3.5 w-3.5" aria-hidden="true" /></button>
+                              <button type="button" onClick={() => toggleLock(st.school_id)} aria-pressed={isLocked} aria-label={isLocked ? `Unlock ${st.school_name}` : `Lock ${st.school_name} position`}>
+                                {isLocked ? <Lock className="h-3.5 w-3.5" aria-hidden="true" /> : <Unlock className="h-3.5 w-3.5" aria-hidden="true" />}
+                              </button>
+                              {smartResult.stops.length > 1 ? <button type="button" onClick={() => removeStop(st.school_id)}>Remove</button> : null}
+                              <button type="button" onClick={() => void openInAppDirections([st.school_id])}><Navigation className="h-3 w-3" aria-hidden="true" /> Navigate</button>
                             </div>
-                          </div>
-
-                          {/* Stop Actions: Reorder, Lock, In-App Directions, My Plan link, Check-in */}
-                          <div className="mt-2.5 flex flex-wrap items-center justify-between gap-1.5 border-t border-slate-100 pt-2">
-                            <div className="flex items-center gap-1">
-                              <button
-                                type="button"
-                                disabled={busy || idx === 0}
-                                onClick={() => moveStop(idx, -1)}
-                                aria-label={`Move ${st.school_name} earlier`}
-                                className="grid h-7 w-7 place-items-center rounded-[6px] border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-35"
-                              >
-                                <ArrowUp className="h-3.5 w-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                disabled={busy || idx === smartResult.stops.length - 1}
-                                onClick={() => moveStop(idx, 1)}
-                                aria-label={`Move ${st.school_name} later`}
-                                className="grid h-7 w-7 place-items-center rounded-[6px] border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-35"
-                              >
-                                <ArrowDown className="h-3.5 w-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => toggleLock(st.school_id)}
-                                aria-label={isLocked ? `Unlock ${st.school_name}` : `Lock ${st.school_name} position`}
-                                className={`grid h-7 w-7 place-items-center rounded-[6px] border ${
-                                  isLocked ? 'border-[var(--brand-primary)] bg-blue-50 text-[var(--brand-primary)]' : 'border-slate-200 text-slate-500'
-                                }`}
-                              >
-                                {isLocked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
-                              </button>
-                              {smartResult.stops.length > 1 ? (
-                                <button
-                                  type="button"
-                                  onClick={() => removeStop(st.school_id)}
-                                  className="h-7 rounded-[6px] px-2 text-[11px] font-semibold text-slate-500 hover:bg-red-50 hover:text-red-700"
-                                >
-                                  Remove
-                                </button>
-                              ) : null}
-                            </div>
-
-                            <div className="flex items-center gap-1.5">
-                              {fieldDay.running && !ci?.arrivedAt ? (
-                                <button
-                                  type="button"
-                                  disabled={busy}
-                                  onClick={() => void recordFieldDay('arrive', st.school_id)}
-                                  className="h-7 rounded-[7px] border border-emerald-600 px-2 text-[11px] font-bold text-emerald-700 hover:bg-emerald-50"
-                                >
-                                  Arrived
-                                </button>
-                              ) : null}
-                              {fieldDay.running && ci?.arrivedAt && !ci.leftAt ? (
-                                <button
-                                  type="button"
-                                  disabled={busy}
-                                  onClick={() => void recordFieldDay('leave', st.school_id)}
-                                  className="h-7 rounded-[7px] border border-emerald-600 px-2 text-[11px] font-bold text-emerald-700 hover:bg-emerald-50"
-                                >
-                                  Leaving
-                                </button>
-                              ) : null}
-                              <button
-                                type="button"
-                                onClick={() => void openInAppDirections([st.school_id])}
-                                className="inline-flex h-7 items-center gap-1 rounded-[7px] bg-blue-50 px-2 text-[11px] font-bold text-[var(--brand-primary)] hover:bg-blue-100"
-                              >
-                                <Navigation className="h-3 w-3" aria-hidden="true" /> Navigate
-                              </button>
-                            </div>
-                          </div>
+                          ) : null}
                         </li>
                       );
                     })}
+                    {smartResult.end_label ? (
+                      <li className="sr-stop" data-kind="end">
+                        <span className="sr-stop__num"><Flag className="h-3.5 w-3.5" aria-hidden="true" /></span>
+                        <div className="sr-stop__text">
+                          <p className="sr-stop__name">Return to {smartResult.end_label}</p>
+                          {smartResult.return_leg_meters ? <p className="sr-stop__meta">{km(smartResult.return_leg_meters)} • {hoursMinutes(smartResult.return_leg_seconds ?? 0)}</p> : null}
+                        </div>
+                      </li>
+                    ) : null}
                   </ol>
                 ) : (
                   <p className="rounded-[12px] border border-dashed border-slate-200 py-8 text-center text-[13px] text-[var(--edify-text-muted)]">
@@ -1434,34 +1322,16 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
                 ) : null}
 
                 {/* Primary Right-Panel Action Bar: 100% In-App Get Directions + Re-optimize / Revert */}
-                <div className="mt-auto space-y-2 border-t border-[var(--edify-border)] pt-3">
-                  <button
-                    type="button"
-                    disabled={busy || !(smartResult?.stops.length)}
-                    data-action="get-directions-in-app"
-                    onClick={() => void openInAppDirections((smartResult?.stops ?? []).map((s) => s.school_id))}
-                    className="flex h-12 w-full items-center justify-center gap-2 rounded-[12px] bg-[var(--brand-primary)] text-[14px] font-bold text-white shadow-sm hover:bg-[var(--brand-primary-hover)] disabled:opacity-45"
-                  >
-                    <Navigation className="h-4 w-4" aria-hidden="true" /> Get Directions (In-App)
+                <div className="sr-list-actions">
+                  <button type="button" disabled={busy || !(smartResult?.stops.length)} data-action="get-directions-in-app" onClick={() => void openInAppDirections((smartResult?.stops ?? []).map((s) => s.school_id))} data-lead="">
+                    <Navigation className="h-3.5 w-3.5" aria-hidden="true" /> Get Directions
                   </button>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      disabled={busy || selectedSchoolIds.length === 0}
-                      onClick={() => void runOptimize()}
-                      className="flex h-10 items-center justify-center gap-1.5 rounded-[10px] border border-[var(--brand-primary)] text-[13px] font-semibold text-[var(--brand-primary)] hover:bg-blue-50 disabled:opacity-45"
-                    >
-                      <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> Re-optimize
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busy || originalOrder.length === 0}
-                      onClick={() => void runOptimize(originalOrder, 'as_given')}
-                      className="flex h-10 items-center justify-center gap-1.5 rounded-[10px] border border-[var(--edify-border)] text-[13px] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-45"
-                    >
-                      <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" /> Revert Original
-                    </button>
-                  </div>
+                  <button type="button" disabled={busy || selectedSchoolIds.length === 0} onClick={() => void runOptimize()}>
+                    <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> Re-optimize
+                  </button>
+                  <button type="button" disabled={busy || originalOrder.length === 0} onClick={() => void runOptimize(originalOrder, 'as_given')}>
+                    <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" /> Revert
+                  </button>
                 </div>
               </>
             )}
@@ -1483,9 +1353,8 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
             </div>
           </aside>
         ) : null}
-      </div>
 
-      <RouteBottomRow
+        <RouteBottomRow
         result={smartResult}
         options={options}
         comparing={comparing}
@@ -1496,7 +1365,10 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
           setMode(chosen);
           void runOptimize(undefined, chosen);
         }}
-      />
+                reportCount={roadConditions.length}
+          onReport={() => setShowReportModal(true)}
+        />
+      </div>
 
       {/* Schools Near Your Route */}
       <div className="mt-5">

@@ -46,6 +46,7 @@ import type { TrendPoint } from '@/lib/schoolProfileView';
 
 import { Badge } from '../blocks/Badge';
 import { FeedBlocks } from '../page/FeedBlocks';
+import { CardFilters } from './CardFilters';
 import { MetricTile, MoreFigures, ProfileCard } from './parts';
 import type { Accent } from './parts';
 import { SsaTrendChart } from './SsaTrendChart';
@@ -90,7 +91,7 @@ function InterventionCard({ table, pagePath }: { table: PageTable; pagePath: str
     <ProfileCard title="Best Performing & Struggling Intervention" icon={Award} aside={table.subtitle} area="interventions" block="intervention-standing">
       {table.rows.length ? (
         <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Best performing and struggling intervention">
-          <table className="w-full min-w-[30rem] border-collapse text-[13px]">
+          <table className="w-full border-collapse text-[13px]">
             <thead className="bg-[var(--edify-surface-muted)]">
               <tr>
                 <th scope="col" className={head}>Standing</th>
@@ -110,9 +111,9 @@ function InterventionCard({ table, pagePath }: { table: PageTable; pagePath: str
                 return (
                   <tr key={index}>
                     <td className="whitespace-nowrap px-2 py-2"><Badge tone={cell(standing)?.tone ?? ''}>{cell(standing)?.text}</Badge></td>
-                    <td className="px-2 py-2">
+                    <td className="px-2 py-2" title={notes || undefined}>
                       {link ? <Link href={link} className="font-semibold text-[var(--edify-text)] hover:underline">{cell(intervention)?.text}</Link> : <span className="font-semibold">{cell(intervention)?.text}</span>}
-                      {notes ? <span className="block text-[12px] text-[var(--edify-text-muted)]">{notes}</span> : null}
+                      {notes ? <span className="sr-only"> {notes}</span> : null}
                     </td>
                     <td className="px-2 py-2 text-right tabular-nums">{cell(previous)?.text}</td>
                     <td className="px-2 py-2 text-right font-semibold tabular-nums">{cell(current)?.text}</td>
@@ -137,13 +138,7 @@ function InsightsCard({ rail, pagePath }: { rail: PageRail; pagePath: string }) 
   const extra = rail.parts.filter((part) => part.key !== 'ssa' && part.key !== 'attention');
   return (
     <ProfileCard title={rail.title || 'Profile Insights'} icon={Target} aside={rail.subtitle} area="insights" block="rail">
-      {ssa?.figure ? (
-        <p className="mb-2 flex flex-wrap items-baseline gap-x-2">
-          <span className="text-[21px] font-bold tabular-nums text-[var(--edify-text)]">{ssa.figure}</span>
-          {ssa.figureNote ? <span className="text-[12px] text-[var(--edify-text-muted)]">{ssa.figureNote}</span> : null}
-        </p>
-      ) : null}
-      {ssa?.note ? <p className="mb-2 text-[13px] text-[var(--edify-text-muted)]">{ssa.note}</p> : null}
+      {ssa?.note ? <p className="sr-only">{ssa.note}</p> : null}
       <ul className="space-y-1.5">
         {ssa?.meters.map((meter) => {
           const href = resolveHref(pagePath, meter.href);
@@ -220,41 +215,39 @@ export function SchoolOverview({ blocks, trend, year, pagePath, drawerHref, loca
   const perf = leadMetrics(performance, PERFORMANCE_LEAD);
   const ops = leadMetrics(operations, OPERATIONS_LEAD);
   const fin = leadMetrics(finance, FINANCE_LEAD);
-  const filters = blocks.filter((block) => block.kind.case === 'filters');
+  const filters = blocks.flatMap((block) => (block.kind.case === 'filters' ? block.kind.value.filters : []));
+  const yearFilter = filters.filter((filter) => filter.name !== 'period');
+  const otherFilters = filters.filter((filter) => filter.name === 'period');
   const placed = new Set<unknown>([performance, operations, finance, table]);
   const others = blocks.filter((block) => !PLACED_ELSEWHERE.has(block.kind.case ?? '') && !placed.has(block.kind.value));
   const trendRange = trend.length > 1 ? `${trend[0]!.label} – ${trend[trend.length - 1]!.label}` : trend[0]?.label ?? '';
   const feed = { pagePath, drawerHref, selectable: false, clearFilters: false };
   return (
     <div className="space-y-3">
-      {filters.length ? <FeedBlocks blocks={filters} {...feed} /> : null}
       <div data-pf="overview" data-layout="school-overview">
         <div data-pf="overview-main">
           {performance ? (
-            <ProfileCard title="Performance & Impact" icon={BarChart3} aside={year} area="performance" block="performance">
+            <ProfileCard title="Performance & Impact" icon={BarChart3} aside={<span data-pf="aside-row">{yearFilter.length ? <CardFilters filters={yearFilter} /> : year}<MoreFigures metrics={perf.more} pagePath={pagePath} extra={otherFilters.length ? <CardFilters filters={otherFilters} /> : undefined} /></span>} area="performance" block="performance">
               <div data-pf="tiles">
                 {perf.lead.map((metric, index) => <MetricTile key={metric.label} metric={metric} icon={PERFORMANCE_LOOK[index]![0]} accent={PERFORMANCE_LOOK[index]![1]} pagePath={pagePath} />)}
               </div>
-              <MoreFigures metrics={perf.more} pagePath={pagePath} />
             </ProfileCard>
           ) : null}
           <ProfileCard title="SSA Score Trend" icon={LineChart} aside={trendRange} area="trend" block="ssa-trend">
             <SsaTrendChart points={trend} />
           </ProfileCard>
           {operations ? (
-            <ProfileCard title="Operations" icon={Settings2} aside="In the plan" area="operations" alone={!finance} block="operations">
+            <ProfileCard title="Operations" icon={Settings2} aside={<span data-pf="aside-row">In the plan<MoreFigures metrics={ops.more} pagePath={pagePath} /></span>} area="operations" alone={!finance} block="operations">
               <div data-pf="tile-rows">
                 {ops.lead.map((metric, index) => <MetricTile key={metric.label} metric={metric} icon={OPERATIONS_LOOK[index]![0]} accent={OPERATIONS_LOOK[index]![1]} pagePath={pagePath} rowOnPhone />)}
               </div>
-              <MoreFigures metrics={ops.more} pagePath={pagePath} />
             </ProfileCard>
           ) : null}
           {finance ? (
-            <ProfileCard title="Loans & Business Transformation" icon={Landmark} area="finance" block="finance">
+            <ProfileCard title="Loans & Business Transformation" icon={Landmark} aside={fin.more.length ? <MoreFigures metrics={fin.more} pagePath={pagePath} /> : undefined} area="finance" block="finance">
               <div data-pf="tile-rows">
                 {fin.lead.map((metric, index) => <MetricTile key={metric.label} metric={metric} icon={FINANCE_LOOK[index]![0]} accent={FINANCE_LOOK[index]![1]} pagePath={pagePath} rowOnPhone />)}
               </div>
-              <MoreFigures metrics={fin.more} pagePath={pagePath} />
             </ProfileCard>
           ) : null}
           {table ? <InterventionCard table={table} pagePath={pagePath} /> : null}

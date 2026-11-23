@@ -37,7 +37,7 @@ interface ProfileCardProps {
   readonly title: string;
   readonly icon: LucideIcon;
   /** The small words beside the title ("FY 2026/27"). */
-  readonly aside?: string;
+  readonly aside?: ReactNode;
   readonly className?: string;
   readonly block?: string;
   /** Where the card sits in the page's layout (profile.css). */
@@ -55,7 +55,7 @@ export function ProfileCard({ title, icon: CardIcon, aside, className = '', bloc
           <CardIcon className="h-[18px] w-[18px] shrink-0 text-[var(--brand-primary)]" aria-hidden="true" />
           <span>{title}</span>
         </h2>
-        {aside ? <span className="shrink-0 text-[12px] font-medium text-[var(--edify-text-muted)]">{aside}</span> : null}
+        {aside ? <div data-pf="card-aside" className="shrink-0 text-[12px] font-medium text-[var(--edify-text-muted)]">{aside}</div> : null}
       </div>
       {children}
     </section>
@@ -99,11 +99,16 @@ export function MetricTile({ metric, icon: TileIcon, accent, pagePath, rowOnPhon
   );
 }
 
-/** The strip's other figures under its lead tiles, so none of them is lost. */
-export function MoreFigures({ metrics, pagePath }: { metrics: readonly PageMetric[]; pagePath: string }) {
-  if (!metrics.length) return null;
+/** The strip's other figures, opened from the card's header so the card keeps the design's height and none is lost. */
+export function MoreFigures({ metrics, pagePath, extra }: { metrics: readonly PageMetric[]; pagePath: string; extra?: ReactNode }) {
+  if (!metrics.length && !extra) return null;
+  const words = `${metrics.length} more figure${metrics.length === 1 ? '' : 's'}`;
   return (
-    <ul data-pf="more" className="mt-3 border-t border-[var(--edify-border)] pt-2">
+    <details data-pf="more-wrap">
+      <summary aria-label={words} title={words}>+{metrics.length}</summary>
+      <div data-pf="more-pop">
+      {extra}
+    <ul data-pf="more">
       {metrics.map((metric) => {
         const href = resolveHref(pagePath, metric.href);
         const content = (
@@ -120,6 +125,8 @@ export function MoreFigures({ metrics, pagePath }: { metrics: readonly PageMetri
         );
       })}
     </ul>
+      </div>
+    </details>
   );
 }
 

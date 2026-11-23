@@ -5,7 +5,7 @@
  * browser, opened row by row into each school's scores, and exported as the
  * reader sees it. The ticks, row actions and opened row are the shared table's.
  */
-import { Download, Search } from 'lucide-react';
+import { Download, Filter, School, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { CONTROL } from '@/components/drawer/drawerParts';
@@ -39,13 +39,20 @@ export function ClusterMembers({ table, pagePath, drawerHref, selectable }: Clus
 
   const select = `${CONTROL} sm:w-auto`;
   return (
-    <div className="space-y-2" data-block="cluster-members">
+    <section className="card min-w-0 p-3" aria-label="Member Schools" data-block="cluster-members">
       <div data-pf="member-tools">
-        <label className="relative block">
+        <h2 data-pf="member-title">
+          <School className="h-[18px] w-[18px] shrink-0 text-[var(--brand-primary)]" aria-hidden="true" />
+          Member Schools ({rows.length})
+        </h2>
+        <label className="relative block" data-pf="member-search">
           <span className="sr-only">Search schools by name or ID</span>
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--edify-text-muted)]" aria-hidden="true" />
           <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search schools…" className={`${CONTROL} pl-9`} />
         </label>
+        <details data-pf="member-filters">
+          <summary><Filter className="h-4 w-4" aria-hidden="true" /> Filters</summary>
+          <div data-pf="member-filter-pop">
         <select aria-label="Filter by school type" className={select} value={type} onChange={(event) => setType(event.target.value)}>
           <option value="">All types</option>
           {types.map((name) => <option key={name} value={name}>{name}</option>)}
@@ -61,11 +68,13 @@ export function ClusterMembers({ table, pagePath, drawerHref, selectable }: Clus
           <option value="ssa-high">Sort: SSA, highest first</option>
           <option value="visit">Sort: Longest since visit</option>
         </select>
-        <button type="button" onClick={exportRows} disabled={!rows.length} className="edify-action-button secondary h-10 px-3 disabled:opacity-50">
+          </div>
+        </details>
+        <button type="button" onClick={exportRows} disabled={!rows.length} data-pf="member-export" className="disabled:opacity-50">
           <Download className="h-4 w-4" aria-hidden="true" /> Export
         </button>
       </div>
-      <FeedTable table={{ ...table, rows }} pagePath={pagePath} drawerHref={drawerHref} selectable={selectable} />
-    </div>
+      <FeedTable table={{ ...table, title: '', rows }} pagePath={pagePath} drawerHref={drawerHref} selectable={selectable} />
+    </section>
   );
 }

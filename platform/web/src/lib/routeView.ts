@@ -143,13 +143,24 @@ export function roadSummary(alerts: readonly RoadConditionReportData[]): RoadSum
 export function routeInsights(result: SmartRouteResultData | null): string[] {
   if (!result) return [];
   const lines: string[] = [];
-  if (result.recommendation_note) lines.push(result.recommendation_note);
+  if (routeNote(result)) lines.push(routeNote(result));
   if (result.distance_saved_meters > 0 || result.time_saved_seconds > 0) {
     lines.push(`Saves ${km(result.distance_saved_meters)} and ${hoursMinutes(result.time_saved_seconds)} against the original order.`);
   }
   const left = result.totals.schools_excluded;
   if (left > 0) lines.push(`${left} school${left === 1 ? '' : 's'} could not be placed on this route.`);
   if (!result.path_is_road && result.stops.length > 1) lines.push('Road distances could not be confirmed for this route.');
-  if (result.confidence_note) lines.push(result.confidence_note);
+  if (result.confidence_note && !hasNoRoadLeg(result)) lines.push(result.confidence_note);
   return lines;
+}
+
+/** What a day with one school and no set start or end says: it has no road leg, so nothing is missing. */
+export const NO_ROAD_LEG_NOTE = 'One school on this day, so there is no road leg to calculate.';
+
+export function hasNoRoadLeg(result: SmartRouteResultData): boolean {
+  return result.stops.length === 1 && !result.start && !result.end;
+}
+
+export function routeNote(result: SmartRouteResultData): string {
+  return hasNoRoadLeg(result) ? NO_ROAD_LEG_NOTE : result.recommendation_note;
 }

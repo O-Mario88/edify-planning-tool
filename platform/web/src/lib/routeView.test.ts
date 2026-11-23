@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { RoadConditionReportData, SmartRouteResultData, SmartStopData } from './routePlanner';
-import { rankOptions, roadSummary, routeInsights, routeKpis, ssaCoverage, trafficWords } from './routeView';
+import { NO_ROAD_LEG_NOTE, hasNoRoadLeg, rankOptions, roadSummary, routeInsights, routeKpis, routeNote, ssaCoverage, trafficWords } from './routeView';
 import type { RouteOption } from './routeView';
 
 const stop = (id: string, band: string): SmartStopData =>
@@ -137,6 +137,24 @@ describe('roadSummary', () => {
 
   it('reports nothing when nothing was reported', () => {
     expect(roadSummary([])).toEqual({ closed: 0, delay: 0, advisory: 0, unverified: 0, total: 0 });
+  });
+});
+
+describe('routeNote', () => {
+  it('does not ask for routing to be configured on a day with one school', () => {
+    const day = result({ stops: [stop('a', 'routine')], recommendation_note: 'Road geometry unavailable: configure OSRM.' });
+    expect(hasNoRoadLeg(day)).toBe(true);
+    expect(routeNote(day)).toBe(NO_ROAD_LEG_NOTE);
+    expect(routeInsights(day).join(' ')).not.toContain('configure');
+  });
+
+  it('keeps the warning when one school has a set start, because that leg is real', () => {
+    const day = result({ stops: [stop('a', 'routine')], start: { lat: 0.3, lng: 32.5 }, recommendation_note: 'Road geometry unavailable.' });
+    expect(routeNote(day)).toBe('Road geometry unavailable.');
+  });
+
+  it('keeps the note on a day with several schools', () => {
+    expect(routeNote(result())).toBe('Balances SSA priority and travel time.');
   });
 });
 

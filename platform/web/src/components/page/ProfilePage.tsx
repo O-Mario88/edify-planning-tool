@@ -12,6 +12,7 @@ import { cookies } from 'next/headers';
 import { notFound, unstable_rethrow } from 'next/navigation';
 
 import { SchoolCoreTab } from '@/components/profile/SchoolCoreTab';
+import { ProfileTabs } from '@/components/profile/ProfileTabs';
 import { SchoolHero } from '@/components/profile/SchoolHero';
 import { SchoolOverview } from '@/components/profile/SchoolOverview';
 import { LocationCard } from '@/components/route/LocationCard';
@@ -25,10 +26,9 @@ import { actionHref, drawerPageHref } from '@/lib/feedPage';
 import { gatewayClient, isNotFound, isUnavailable } from '@/lib/gateway';
 import { ACCESS_COOKIE } from '@/lib/session';
 import { requestView } from '@/lib/requestView';
-import { profileAsk, profileTabs, profileYear, splitRail, trailingPanels } from '@/lib/schoolProfile';
+import { profileAsk, profileYear, splitRail, trailingPanels } from '@/lib/schoolProfile';
 import { honestSsa, schoolIdentity, trendPoints } from '@/lib/schoolProfileView';
 
-import { TabRail } from '../blocks/TabRail';
 import { PhoneBlocks } from '../phone/PhoneBlocks';
 import { FeedBlocks } from './FeedBlocks';
 import { NotMovedYet } from './NotMovedYet';
@@ -128,9 +128,9 @@ export async function ProfilePage({ schoolId, query }: { schoolId: string; query
     <Body blocks={blocks} {...props} sideBySide={activeTab === 'ssa'} />
   );
   return (
-    <div className="mx-auto max-w-[1600px] space-y-3 px-4 pb-24 pt-4 sm:px-6 lg:pb-8" data-page={pagePath} data-tab={activeTab}>
+    <div data-pf-page="" className="space-y-3 px-3 pb-24 pt-3 sm:px-6 lg:pb-8" data-page={pagePath} data-tab={activeTab}>
       {answer.header ? <SchoolHero header={answer.header} identity={identity} hrefOf={hrefOf} /> : null}
-      {answer.tabs.length ? <TabRail rail={profileTabs(answer.tabs, pagePath, profileYear(answer.blocks, asked.fy))} /> : null}
+      {answer.tabs.length ? <ProfileTabs tabs={answer.tabs} pagePath={pagePath} year={profileYear(answer.blocks, asked.fy)} label="Profile sections" /> : null}
       {isOverview ? (
         <SchoolOverview
           blocks={honestSsa(answer.blocks)}

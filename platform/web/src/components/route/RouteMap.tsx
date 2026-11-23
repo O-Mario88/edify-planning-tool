@@ -18,7 +18,10 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 
 import type { Feature, FeatureCollection, LineString } from 'geojson';
 import type { GeoJSONSource, Map as MapLibreMap, Marker as MapLibreMarker } from 'maplibre-gl';
-import { Expand, Layers, LocateFixed, Minimize, Minus, Plus, TrafficCone } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { Expand, Layers, LocateFixed, Minimize, Minus, Plus } from 'lucide-react';
+
+import './route.css';
 import { useEffect, useRef, useState } from 'react';
 
 import { create } from '@bufbuild/protobuf';
@@ -68,6 +71,10 @@ export interface RouteMapProps {
   onSelectAlternative?: (id: string | null) => void;
   /** Active road-condition reports to pin as warning markers on the map. */
   roadAlerts?: readonly RoadConditionReportData[];
+  /** The schools the SSA Priority switch marks on the map. */
+  prioritySchoolIds?: ReadonlySet<string>;
+  /** What the Layers button opens (which pin groups are drawn). */
+  layers?: ReactNode;
   /** Live user GPS coordinates during in-app navigation. */
   userLocation?: LatLngPoint | null;
   others: readonly SchoolPin[];
@@ -278,6 +285,8 @@ export function RouteMap({
   activeAlternativeId = null,
   onSelectAlternative,
   roadAlerts = [],
+  prioritySchoolIds,
+  layers,
   userLocation = null,
   others,
   chip,
@@ -301,6 +310,8 @@ export function RouteMap({
   const [failed, setFailed] = useState(false);
   const [baseLayer, setBaseLayer] = useState<'streets' | 'satellite'>('streets');
   const [showTraffic, setShowTraffic] = useState(false);
+  const [showAlerts, setShowAlerts] = useState(true);
+  const [showPriority, setShowPriority] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const select = useRef(onSelect);
   const view = useRef(onView);
@@ -334,7 +345,7 @@ export function RouteMap({
     let instance: MapLibreMap | null = null;
     let resizer: ResizeObserver | null = null;
     import('maplibre-gl')
-      .then(({ Map, setWorkerUrl }) => {
+      .then(({ Map, ScaleControl, setWorkerUrl }) => {
         if (cancelled || !box.current) return;
         setWorkerUrl(WORKER_URL);
         const created = new Map({
@@ -345,6 +356,7 @@ export function RouteMap({
           attributionControl: false,
         });
         instance = created;
+        if (!compact && showControls) created.addControl(new ScaleControl({ maxWidth: 110 }), 'bottom-right');
         map.current = created;
         resizer = new ResizeObserver(() => {
           created.resize();
@@ -442,6 +454,7 @@ export function RouteMap({
         const point = stop.school?.point;
         if (!point) continue;
         const el = pinElement(stop);
+        if (showPriority && prioritySchoolIds?.has(stop.school?.schoolId ?? '')) el.dataset.priority = '';
         el.addEventListener('click', (event) => {
           event.stopPropagation();
           select.current(stop.school!);
@@ -452,7 +465,7 @@ export function RouteMap({
       if (pathIsRoad) {
         for (const p of path) bounds.extend([p.lng, p.lat]);
       }
-      for (const al of roadAlerts) {
+      for (const al of showAlerts ? roadAlerts : []) {
         const el = hazardElement(al);
         alertMarkers.current.push(new Marker({ element: el, anchor: 'center' }).setLngLat([al.lng, al.lat]).addTo(instance));
       }
@@ -471,7 +484,7 @@ export function RouteMap({
     return () => {
       cancelled = true;
     };
-  }, [ready, stops, path, pathIsRoad, alternatives, activeAlternativeId, roadAlerts, focus, fitOthers, others]);
+  }, [ready, stops, path, pathIsRoad, alternatives, activeAlternativeId, roadAlerts, focus, fitOthers, others, showAlerts, showPriority, prioritySchoolIds]);
 
   useEffect(() => {
     const instance = map.current;
@@ -536,6 +549,29 @@ export function RouteMap({
     }
   };
 
+  const mapSwitches = (
+    <>
+      <div className="sr-map-seg" role="group" aria-label="Map type">
+        <button type="button" aria-pressed={baseLayer === 'streets'} onClick={() => baseLayer !== 'streets' && toggleBaseLayer()}>Map</button>
+        <button type="button" aria-pressed={baseLayer === 'satellite'} onClick={() => baseLayer !== 'satellite' && toggleBaseLayer()}>Satellite</button>
+      </div>
+      <div className="sr-map-toggles">
+        <button
+          type="button"
+          role="switch"
+          aria-checked={showTraffic}
+          onClick={() => setShowTraffic((on) => !on)}
+          title={googleMapsKey ? 'Live traffic layer' : 'Live traffic needs a Google Maps key'}
+          className="sr-map-switch"
+        >
+          Traffic<i aria-hidden="true" />
+        </button>
+        <label><input type="checkbox" checked={showAlerts} onChange={(event) => setShowAlerts(event.target.checked)} /> Road Conditions</label>
+        <label><input type="checkbox" checked={showPriority} onChange={(event) => setShowPriority(event.target.checked)} /> SSA Priority</label>
+      </div>
+    </>
+  );
+
   return (
     <div
       ref={frame}
@@ -554,72 +590,49 @@ export function RouteMap({
         </div>
       ) : null}
 
-      {/* Top-right Map Controls: Satellite / Traffic / Fullscreen */}
+      {/* The map's toolbar: type, traffic, road reports, SSA priority and layers */}
       {showControls ? (
-        <div data-map-overlay className="absolute right-3 top-3 flex flex-col items-end gap-2">
-          <div className="flex items-center gap-1.5 rounded-[10px] bg-white/95 p-1 shadow-md backdrop-blur">
-            <button
-              type="button"
-              onClick={toggleBaseLayer}
-              className={`flex h-8 items-center gap-1.5 rounded-[8px] px-2.5 text-[12px] font-semibold transition-colors ${
-                baseLayer === 'satellite' ? 'bg-[var(--brand-primary)] text-white' : 'text-slate-700 hover:bg-slate-100'
-              }`}
-              aria-pressed={baseLayer === 'satellite'}
-            >
-              <Layers className="h-3.5 w-3.5" aria-hidden="true" />
-              {baseLayer === 'satellite' ? 'Satellite' : 'Map'}
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowTraffic((t) => !t)}
-              title={
-                googleMapsKey
-                  ? 'Toggle Google Maps live traffic layer'
-                  : 'Live traffic overlay requires Google Maps API key configuration'
-              }
-              className={`flex h-8 items-center gap-1.5 rounded-[8px] px-2.5 text-[12px] font-semibold transition-colors ${
-                showTraffic ? 'bg-amber-600 text-white' : 'text-slate-700 hover:bg-slate-100'
-              }`}
-              aria-pressed={showTraffic}
-            >
-              <TrafficCone className="h-3.5 w-3.5" aria-hidden="true" />
-              Traffic
-            </button>
-            <button
-              type="button"
-              onClick={toggleFullscreen}
-              className="grid h-8 w-8 place-items-center rounded-[8px] text-slate-700 hover:bg-slate-100"
-              aria-label={isFullscreen ? 'Exit fullscreen map' : 'Fullscreen map'}
-            >
-              {isFullscreen ? <Minimize className="h-4 w-4" /> : <Expand className="h-4 w-4" />}
-            </button>
-          </div>
-          {showTraffic && !googleMapsKey ? (
-            <div className="max-w-[240px] rounded-[10px] border border-amber-200 bg-amber-50/95 px-2.5 py-1.5 text-[11px] font-medium text-amber-900 shadow">
-              Live Google traffic layer requires <code className="font-mono">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code>. Traffic is never fabricated.
+        <div data-map-overlay className="sr-map-bar">
+          <div className="sr-map-desk">{mapSwitches}</div>
+          <details className="sr-map-layers">
+            <summary aria-label="Map layers" title="Map layers"><Layers className="h-[18px] w-[18px]" aria-hidden="true" /></summary>
+            <div className="sr-map-layers__panel">
+              <div className="sr-map-phone">{mapSwitches}</div>
+              {layers}
             </div>
-          ) : null}
-          {showLegend ? (
-            <div className="pointer-events-none rounded-[10px] bg-white/95 px-3 py-2 text-[12px] shadow-md" aria-label="Map legend">
-              {(
-                [
-                  ['planned', 'Planned'],
-                  ['suggested', 'Suggested'],
-                  ['completed', 'Completed'],
-                ] as const
-              ).map(([tone, label]) => (
-                <div key={tone} className="flex items-center gap-2 py-0.5 text-slate-700">
-                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: TONES[tone] }} />
-                  {label}
-                </div>
-              ))}
-            </div>
-          ) : null}
+          </details>
+        </div>
+      ) : null}
+      {showControls && showTraffic && !googleMapsKey ? (
+        <div data-map-overlay className="sr-map-notice">
+          Live traffic needs a Google Maps key, so none is shown. Traffic is never made up.
+        </div>
+      ) : null}
+      {showLegend ? (
+        <div data-map-overlay className="sr-map-legend" aria-label="Map legend">
+          {(
+            [
+              ['planned', 'Planned'],
+              ['suggested', 'Suggested'],
+              ['completed', 'Completed'],
+            ] as const
+          ).map(([tone, label]) => (
+            <span key={tone}>
+              <i style={{ background: TONES[tone] }} aria-hidden="true" />
+              {label}
+            </span>
+          ))}
+          {prioritySchoolIds?.size ? <span><i style={{ background: '#f59e0b' }} aria-hidden="true" />SSA priority</span> : null}
         </div>
       ) : null}
 
-      {/* Zoom & Location Controls: bottom-right, or the corner of a small card's map */}
-      <div data-map-overlay className={`absolute flex flex-col overflow-hidden rounded-[10px] bg-white shadow-md ${compact ? 'right-2 top-2' : 'bottom-24 right-3'}`}>
+      {/* Fullscreen, zoom and recentre */}
+      <div data-map-overlay className={compact ? 'absolute right-2 top-2 flex flex-col overflow-hidden rounded-[10px] bg-white shadow-md' : 'sr-map-stack'}>
+        {compact ? null : (
+          <button type="button" onClick={toggleFullscreen} data-map-full="" className="grid h-10 w-10 place-items-center text-slate-800 hover:bg-slate-50" aria-label={isFullscreen ? 'Exit fullscreen map' : 'Fullscreen map'}>
+            {isFullscreen ? <Minimize className="h-4 w-4" /> : <Expand className="h-4 w-4" />}
+          </button>
+        )}
         <button type="button" onClick={() => zoom(1)} className={`grid place-items-center text-slate-800 hover:bg-slate-50 ${compact ? 'h-8 w-8' : 'h-10 w-10'}`} aria-label="Zoom in">
           <Plus className="h-4 w-4" />
         </button>
@@ -628,24 +641,18 @@ export function RouteMap({
           <Minus className="h-4 w-4" />
         </button>
         <span className="h-px bg-slate-200" />
-        <button type="button" onClick={recenter} className={`grid place-items-center text-slate-800 hover:bg-slate-50 ${compact ? 'h-8 w-8' : 'h-10 w-10'}`} aria-label={compact ? 'Recentre on the school' : 'Fit entire route'}>
+        <button type="button" onClick={recenter} data-map-fit="" className={`grid place-items-center text-slate-800 hover:bg-slate-50 ${compact ? 'h-8 w-8' : 'h-10 w-10'}`} aria-label={compact ? 'Recentre on the school' : 'Fit entire route'}>
           <LocateFixed className="h-4 w-4" />
         </button>
       </div>
       {compact ? null : (
-        <button
-          type="button"
-          onClick={locate}
-          data-map-overlay
-          className="absolute bottom-10 right-3 grid h-10 w-10 place-items-center rounded-[10px] bg-white text-slate-800 shadow-md hover:bg-slate-50"
-          aria-label="Show my location"
-        >
+        <button type="button" onClick={locate} data-map-overlay className="sr-map-locate" aria-label="Show my location">
           <RouteIcon name="locate" className="h-4 w-4" />
         </button>
       )}
 
       {/* Bottom-left Route Distance Chip & Alternative Switcher */}
-      <div data-map-overlay className="absolute bottom-5 left-3 flex flex-col gap-2">
+      <div data-map-overlay className="sr-map-chips absolute left-3 flex flex-col gap-2">
         {alternatives.length > 0 && onSelectAlternative ? (
           <div className="flex flex-wrap items-center gap-1.5 rounded-[10px] bg-white/95 p-1.5 shadow-md">
             <button

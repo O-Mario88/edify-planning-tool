@@ -223,3 +223,359 @@ a[data-pf='band-action']:hover { background: color-mix(in srgb, var(--brand-prim
   [data-pf-area='members'] { grid-column: span 9; }
   [data-pf-area='recommended'] { grid-column: span 3; }
 }
+
+/* ── The designs' look: the page, header, badges, tabs and tiles ──── */
+[data-pf-page] { background: color-mix(in srgb, var(--brand-primary) 4%, var(--edify-surface)); min-height: 100%; }
+[data-pf='school-head'] { position: relative; display: block; }
+[data-pf='back'] { display: inline-flex; align-items: center; gap: 4px; margin-bottom: 10px; font-size: 14px; font-weight: 600; color: var(--brand-primary) !important; }
+[data-pf='hero-menu'] { position: absolute; top: -6px; right: 0; z-index: 5; }
+[data-pf='hero-photo'] {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 14px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--brand-primary) 88%, #ffffff), color-mix(in srgb, var(--brand-primary) 72%, #04142b));
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgb(14 93 163 / 0.22);
+}
+[data-pf='hero-photo'] svg { width: 46%; height: 62%; }
+[data-pf='hero-badges'] { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+[data-pf='badge'] { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; line-height: 1.35; white-space: nowrap; }
+[data-pf='badge'][data-tone='brand'] { background: var(--brand-primary); color: #ffffff; }
+[data-pf='badge'][data-tone='good'] { background: var(--edify-success-light); color: var(--edify-success-text); }
+[data-pf='badge'][data-tone='plain'] { background: var(--edify-surface-muted); color: var(--edify-text); }
+[data-pf='dot'] { width: 8px; height: 8px; border-radius: 50%; background: var(--edify-warning); }
+[data-pf='dot'][data-on] { background: var(--edify-success); }
+[data-pf='hero-main'] h1 { margin-top: 6px; font-size: 19px !important; font-weight: 700 !important; line-height: 1.18 !important; color: var(--edify-text); }
+[data-pf='hero-id'] { margin-top: 3px; font-size: 13px; font-weight: 500; color: var(--edify-text); }
+[data-pf='hero-place'] span + span::before { content: '|'; margin-right: 6px; color: var(--edify-border-strong, var(--edify-border)); }
+[data-pf='hero-place'] { gap: 0 6px; font-size: 13px; }
+[data-pf='hero-people'] { display: none; }
+[data-pf='hero-fact'] { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 14px; }
+[data-pf='hero-fact'] dt { flex-shrink: 0; color: var(--edify-text); }
+[data-pf='hero-fact'] dd { min-width: 0; font-weight: 600; color: var(--edify-text); white-space: nowrap; }
+[data-pf='hero-action'] {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 58px;
+  padding: 5px 2px;
+  border: 1px solid var(--edify-border);
+  border-radius: 10px;
+  background: var(--edify-card-surface, var(--edify-surface));
+  color: var(--edify-text) !important;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+}
+[data-pf='hero-action'] svg { color: var(--brand-primary); }
+[data-pf='hero-action'][data-lead] { border-color: var(--brand-primary); background: var(--brand-primary); color: #ffffff !important; }
+[data-pf='hero-action'][data-lead] svg { color: #ffffff; }
+[data-pf='hero-action']:disabled { opacity: 0.55; cursor: not-allowed; }
+a[data-pf='hero-action']:hover { border-color: var(--brand-primary); }
+
+[data-pf='tabs'] { overflow-x: auto; scrollbar-width: none; }
+[data-pf='tabs-list'] { display: contents; }
+[data-pf='tabs-rail'] { display: inline-flex; min-width: max-content; border-radius: 10px; background: var(--edify-card-surface, var(--edify-surface)); box-shadow: 0 1px 2px rgb(15 23 42 / 0.06); }
+[data-pf='tab'] { position: relative; display: inline-flex; align-items: center; gap: 7px; height: 40px; padding: 0 16px; font-size: 13px; font-weight: 600; color: var(--edify-text) !important; white-space: nowrap; }
+[data-pf='tab']:first-child { border-radius: 10px 0 0 10px; }
+[data-pf='tab']:last-child { border-radius: 0 10px 10px 0; }
+[data-pf='tab'] + [data-pf='tab']:not([data-active])::before { content: ''; position: absolute; left: 0; top: 11px; bottom: 11px; width: 1px; background: var(--edify-border); }
+[data-pf='tab'][data-active] { background: var(--brand-primary); color: #ffffff !important; font-weight: 700; }
+[data-pf='tab'][data-active] + [data-pf='tab']::before { display: none; }
+
+[data-pf='tabs-more'] { display: none; position: relative; }
+[data-pf='tabs-more'] summary { display: inline-flex; align-items: center; gap: 3px; height: 36px; padding: 0 8px; font-size: 11.5px; font-weight: 600; color: var(--edify-text); cursor: pointer; list-style: none; white-space: nowrap; }
+[data-pf='tabs-more'] summary::-webkit-details-marker { display: none; }
+[data-pf='tabs-menu'] { position: absolute; top: calc(100% + 4px); right: 0; z-index: 40; width: 11.5rem; padding: 4px; border: 1px solid var(--edify-border); border-radius: 10px; background: var(--edify-card-surface, var(--edify-surface)); box-shadow: 0 10px 24px rgb(15 23 42 / 0.16); }
+[data-pf='tabs-menu'] a { display: flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 10px; border-radius: 7px; font-size: 13px; font-weight: 600; color: var(--edify-text) !important; }
+[data-pf='tabs-menu'] a:hover { background: var(--edify-surface-muted); }
+
+[data-pf='aside-row'] { display: inline-flex; align-items: center; gap: 6px; }
+[data-pf='card-filters'] { display: inline-flex; gap: 4px; }
+[data-pf='card-select'] { position: relative; display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 7px 0 9px; border: 1px solid var(--edify-border); border-radius: 7px; background: var(--edify-surface); color: var(--edify-text); font-size: 12px; font-weight: 500; white-space: nowrap; }
+[data-pf='card-select']:focus-within { outline: 2px solid var(--brand-primary); outline-offset: 1px; }
+[data-pf-page] [data-pf='card-select'] select { position: absolute; inset: 0; width: 100% !important; height: 100% !important; min-height: 0 !important; margin: 0; padding: 0 !important; border: 0; opacity: 0; font-size: 16px !important; cursor: pointer; }
+[data-pf='more-wrap'] { position: relative; display: inline-block; }
+[data-pf='more-wrap'] summary { display: inline-grid; place-items: center; min-width: 28px; height: 28px; padding: 0 6px; border: 1px solid var(--edify-border); border-radius: 7px; background: var(--edify-surface); color: var(--brand-primary); font-size: 12px; font-weight: 700; cursor: pointer; list-style: none; }
+[data-pf='more-wrap'] summary::-webkit-details-marker { display: none; }
+[data-pf='more-pop'] { position: absolute; top: calc(100% + 4px); right: 0; z-index: 30; width: 17rem; padding: 8px 12px; border: 1px solid var(--edify-border); border-radius: 10px; background: var(--edify-card-surface, var(--edify-surface)); box-shadow: 0 10px 24px rgb(15 23 42 / 0.16); }
+[data-pf='more-pop'] [data-pf='more'] { display: block; }
+[data-pf='more-pop'] [data-pf='card-filters'] { margin-bottom: 4px; }
+[data-chart-size='wide'] { display: block; }
+[data-chart-size='narrow'] { display: none; }
+
+/* The Core School tab's band and figures. */
+[data-pf='core-band'] { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 12px; background: linear-gradient(100deg, color-mix(in srgb, var(--brand-primary) 58%, #04142b), color-mix(in srgb, var(--brand-primary) 80%, #06162e)); color: #ffffff; }
+[data-pf='core-band'] > div:first-child { display: flex; align-items: center; gap: 12px; min-width: 0; }
+[data-pf='core-band'] h2 { color: #ffffff !important; font-size: 19px !important; font-weight: 700 !important; line-height: 1.2 !important; }
+[data-pf='core-band'] p { color: rgb(255 255 255 / 0.88) !important; }
+[data-pf='core-band'] [data-pf='core-band-pill'] { display: inline-flex; margin-top: 3px; padding: 4px 12px; border-radius: 999px; background: #ffffff; color: var(--brand-primary) !important; font-size: 13px; font-weight: 700; }
+[data-pf='core-figures'] { gap: 8px; }
+[data-pf='core-figures'] [data-pf='tile'] { display: flex; align-items: center; gap: 12px; padding: 12px !important; border-color: var(--edify-border) !important; background: var(--edify-card-surface, var(--edify-surface)) !important; }
+[data-pf='core-figures'] [data-pf='tile'] > span:first-child { width: 42px; height: 42px; border-radius: 50%; }
+[data-pf='core-figures'] [data-pf='tile'] > span:first-child svg { width: 22px; height: 22px; }
+[data-pf='core-figures'] [data-pf='tile-text'] { display: flex; flex-direction: column; flex: 1; margin-top: 0; }
+[data-pf='core-figures'] [data-pf='tile-text'] > div:first-child { font-size: 17px !important; line-height: 1.2 !important; }
+[data-pf='core-figures'] [data-pf='tile-text'] > div:last-child { display: contents; }
+[data-pf='core-figures'] [data-pf='tile-text'] > div:last-child > div:first-child { order: -1; font-size: 12.5px !important; font-weight: 500 !important; }
+
+/* The School Profile on a phone: four figures across, trend beside GPS, Operations beside Loans. */
+@media (max-width: 639.98px) {
+  [data-pf='hero'] { grid-template-columns: 35% minmax(0, 1fr); gap: 8px 10px; }
+  [data-pf='hero-badges'] { gap: 3px; }
+  [data-pf='badge'] { gap: 3px; padding: 2px 6px; font-size: 10px; }
+  [data-pf='ssa-year'], [data-pf='hero-readiness'] { display: none; }
+  [data-pf='hero-main'] h1 { margin-top: 4px; font-size: 15px !important; }
+  [data-pf='hero-id'] { margin-top: 2px; font-size: 12px; }
+  [data-pf='hero-place'] { margin-top: 2px; font-size: 11px; column-gap: 3px; }
+  [data-pf='hero-place'] svg { width: 13px; height: 13px; }
+  [data-pf='hero-menu'] .row-menu__trigger { min-height: 30px; }
+  [data-pf='hero-action'] { min-width: 0; min-height: 56px; padding: 4px 1px; font-size: 10px !important; line-height: 1.15 !important; white-space: normal !important; overflow-wrap: anywhere; }
+  [data-pf='tabs'] { overflow: visible; }
+  [data-pf='tabs-rail'] { display: flex; width: 100%; min-width: 0; }
+  [data-pf='tab'] { flex: 1 1 auto; justify-content: center; gap: 4px; height: 36px; padding: 0 5px; font-size: 11.5px; }
+  [data-pf='tab'][data-phone-more] { display: none; }
+  [data-pf='tabs-more'] { display: block; flex-shrink: 0; }
+  [data-chart-size='wide'] { display: block; }
+  [data-pf-card='trend'] [data-chart-size='wide'] { display: none; }
+  [data-pf-card='trend'] [data-chart-size='narrow'] { display: block; }
+  [data-pf='overview'] { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  [data-pf-card='performance'], [data-pf-card='interventions'], [data-pf-card='attention'], [data-pf-card='insights'] { grid-column: 1 / -1; }
+  [data-pf-card='trend'], [data-pf-card='location'], [data-pf-card='operations'], [data-pf-card='finance'] { grid-column: span 1; }
+  [data-pf-page] section[data-pf-card], [data-pf-card='location'] [data-block='school-location'] { padding: 10px !important; }
+  [data-pf-page] section[data-pf-card] h2, [data-pf-card='location'] h2 { font-size: 13px !important; white-space: normal; }
+  [data-pf-card='performance'] [data-pf='tiles'] { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+  [data-pf-card='performance'] [data-pf='tile'] { padding: 6px 5px !important; }
+  [data-pf-card='performance'] [data-pf='tile'] > span:first-child { width: 22px; height: 22px; }
+  [data-pf-card='performance'] [data-pf='tile'] svg { width: 13px; height: 13px; }
+  [data-pf-card='performance'] [data-pf='tile-text'] { margin-top: 3px; }
+  [data-pf-card='performance'] [data-pf='tile-text'] > div:first-child { font-size: 15px !important; }
+  [data-pf-card='performance'] [data-pf='tile-text'] div div { font-size: 10px !important; line-height: 1.2 !important; }
+  [data-pf-card='location'] [data-block='school-location'] .h-\[200px\] { height: 86px; }
+  [data-pf-card='trend'] [data-pf='card-aside'] { width: 100%; font-size: 10px; }
+  [data-pf-card='location'] dl { display: none; }
+  [data-pf-card='location'] div[data-map-overlay] { display: none; }
+  [data-pf-card='location'] [data-stored-coords] { font-size: 10.5px !important; }
+  [data-pf-card='location'] [data-badge] { padding: 1px 5px; font-size: 9.5px; }
+  [data-pf-card='location'] p.text-\[12px\] { display: none; }
+  [data-pf-card='location'] [data-action='update-gps'], [data-pf-card='location'] a.h-10 { height: 32px; padding: 0 3px; gap: 3px; font-size: 10px; border-radius: 7px; }
+  [data-pf-card='location'] [data-pf='rail-long'] { display: none; }
+  [data-pf-card='location'] [data-pf='rail-word'] { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  [data-pf-card='location'] [data-block='school-location'] > div:last-of-type { gap: 12px; margin-top: 4px; padding-top: 2px; }
+  [data-pf-card='operations'] [data-pf='tile'], [data-pf-card='finance'] [data-pf='tile'] { gap: 5px; padding: 3px 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; }
+  [data-pf-card='operations'] [data-pf='tile'] > span:first-child, [data-pf-card='finance'] [data-pf='tile'] > span:first-child { width: 22px; height: 22px; }
+  [data-pf-card='operations'] [data-pf='tile'] svg, [data-pf-card='finance'] [data-pf='tile'] svg { width: 13px; height: 13px; }
+  [data-pf-card='operations'] [data-pf='tile-text'], [data-pf-card='finance'] [data-pf='tile-text'] { gap: 4px; }
+  [data-pf-card='operations'] [data-pf='tile-text'] > div:first-child, [data-pf-card='finance'] [data-pf='tile-text'] > div:first-child { font-size: 12.5px !important; }
+  [data-pf-card='operations'] [data-pf='tile-text'] div div, [data-pf-card='finance'] [data-pf='tile-text'] div div { font-size: 10px !important; line-height: 1.2 !important; }
+}
+@media (min-width: 640px) {
+  [data-pf='hero-main'] h1 { font-size: 24px !important; }
+  [data-pf='hero-action'] { flex-direction: row; gap: 7px; min-height: 40px; padding: 0 14px; font-size: 13px; white-space: nowrap; }
+  [data-pf='core-band'] { flex-direction: row; align-items: center; justify-content: space-between; }
+  [data-pf='tile-rows'] [data-pf='tile'] { padding: 8px 10px !important; }
+}
+@media (min-width: 1280px) {
+  [data-pf='hero'] { grid-template-columns: minmax(13.5rem, 19.5rem) minmax(0, 1fr); gap: 12px 26px; }
+  [data-pf='hero-menu'] { top: 34px; }
+  [data-pf='hero-main'] h1 { font-size: 30px !important; max-width: 26rem; }
+  [data-pf='hero-id'] { font-size: 15px; }
+  [data-pf='hero-identity'] { padding-right: 7rem; align-items: flex-start; }
+  [data-pf='hero-facts'] { margin-top: 20px; gap: 12px 40px; padding: 4px 0 4px 28px; }
+  [data-pf='overview'] { grid-template-columns: minmax(0, 1fr) minmax(20rem, 27.2%); gap: 12px; }
+  [data-pf='overview-main'] { grid-template-columns: repeat(20, minmax(0, 1fr)); gap: 12px; }
+  [data-pf-card='performance'], [data-pf-card='interventions'], [data-pf-card='attention'] { grid-column: span 12; }
+  [data-pf-card='trend'], [data-pf-card='insights'] { grid-column: span 8; }
+  [data-pf-card='operations'] { grid-column: span 11; }
+  [data-pf-card='operations'][data-alone] { grid-column: span 20; }
+  [data-pf-card='finance'] { grid-column: span 9; }
+  [data-pf-page] section[data-pf-card] { padding: 12px 14px !important; }
+  [data-pf-page] section[data-pf-card] > div:first-child { margin-bottom: 8px; }
+  [data-pf-card='performance'] [data-pf='tile'] { padding: 10px 12px !important; }
+  [data-pf-card='location'] [data-block='school-location'] { padding: 14px !important; }
+  [data-pf='core-figures'] [data-pf='tile'] { padding: 14px 16px !important; }
+  [data-pf='core-cards'] { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1.25fr) minmax(0, 1fr); gap: 12px; align-items: stretch; }
+}
+@media (min-width: 1536px) {
+  [data-pf='tile-rows'] [data-pf='tile'] { border-width: 0 !important; border-radius: 0 !important; background: none !important; padding: 2px 10px !important; }
+  [data-pf='tile-rows'] [data-pf='tile'] + [data-pf='tile'] { border-left: 1px solid var(--edify-border) !important; }
+  [data-pf='tile-rows'] [data-pf='tile-text'] { margin-top: 5px !important; }
+  [data-pf='tile-rows'] [data-pf='tile-text'] > div:first-child { font-size: 18px !important; }
+  [data-pf='tile-rows'] [data-pf='tile-text'] div div { font-size: 12px !important; line-height: 1.25 !important; }
+  [data-pf='tile-rows'] [data-pf='tile-text'] div div + div { font-size: 11px !important; }
+}
+
+/* The map credit stays, in the small type the designs leave room for. */
+[data-pf-card='location'] p[data-map-overlay], [data-pf-card='location'] p[data-map-overlay] span { font-size: 9px !important; line-height: 1.3 !important; }
+[data-block='intervention-standing'] th, [data-block='intervention-standing'] td { padding: 5px 6px !important; font-size: 12px !important; }
+[data-block='intervention-standing'] td [class*='badge'], [data-block='intervention-standing'] td > span { font-size: 11px !important; }
+
+/* ── The Cluster Profile as its design sets it ─────────────────────── */
+[data-pf='cluster-band'] { position: relative; padding: 12px 14px; background: linear-gradient(95deg, color-mix(in srgb, var(--brand-primary) 62%, #04142b), color-mix(in srgb, var(--brand-primary) 88%, #06162e)); }
+[data-pf='band-art'] { position: absolute; inset: 0; overflow: hidden; border-radius: 12px; pointer-events: none; }
+[data-pf='band-art'] svg { position: absolute; right: 0; bottom: 0; width: 70%; height: 100%; }
+[data-pf='band-head'], [data-pf='band-actions'] { position: relative; }
+[data-pf='cluster-band'] h1 { font-size: 20px !important; line-height: 1.15 !important; }
+[data-pf='band-line'] { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+[data-pf='band-line'] p { color: rgb(255 255 255 / 0.9) !important; font-size: 13px; }
+[data-pf='band-info'] { position: relative; }
+[data-pf='band-info'] summary { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; color: #ffffff; cursor: pointer; list-style: none; }
+[data-pf='band-info'] summary::-webkit-details-marker { display: none; }
+[data-pf='band-info'] summary:hover { background: rgb(255 255 255 / 0.15); }
+[data-pf='band-info'] [data-pf='band-facts'] { position: absolute; top: calc(100% + 4px); left: -40px; z-index: 40; display: grid; grid-template-columns: minmax(0, 1fr); width: min(19rem, calc(100vw - 48px)); gap: 4px; padding: 10px 12px; border: 1px solid var(--edify-border); border-radius: 10px; background: var(--edify-card-surface, var(--edify-surface)); box-shadow: 0 10px 24px rgb(15 23 42 / 0.2); }
+[data-pf='cluster-band'] [data-pf='band-info'] dt { color: var(--edify-text-muted); }
+[data-pf='cluster-band'] [data-pf='band-info'] dd, [data-pf='cluster-band'] [data-pf='band-info'] dd a { color: var(--edify-text); }
+[data-pf='band-actions'] .row-menu__trigger { min-height: 36px; border-color: rgb(255 255 255 / 0.5); background: #ffffff; color: var(--brand-primary); }
+[data-pf='band-actions'] [data-pf='band-action'], [data-pf='band-actions'] [data-row-actions] { min-width: 0; }
+
+[data-pf='cluster-kpis'] [data-pf='tile'] { display: flex; align-items: center; gap: 10px; padding: 10px 12px !important; border-color: var(--edify-border) !important; background: var(--edify-card-surface, var(--edify-surface)) !important; }
+[data-pf='cluster-kpis'] [data-pf='tile'] > span:first-child { width: 40px; height: 40px; border-radius: 50%; }
+[data-pf='cluster-kpis'] [data-pf='tile'] > span:first-child svg { width: 21px; height: 21px; }
+[data-pf='cluster-kpis'] [data-pf='tile-text'] { flex: 1; margin-top: 0; }
+[data-pf='cluster-kpis'] [data-pf='tile-text'] > div:first-child { font-size: 19px !important; line-height: 1.15 !important; }
+[data-pf='cluster-kpis'] [data-pf='tile-text'] div div { font-size: 12.5px !important; line-height: 1.25 !important; }
+[data-pf='cluster-kpis'] [data-pf='tile-text'] div div + div { font-size: 11.5px !important; }
+
+[data-pf='ring'] { position: relative; flex-shrink: 0; width: 8.5rem; height: 8.5rem; margin: 0 auto; }
+[data-pf='ring'][data-small] { width: 4.25rem; height: 4.25rem; margin: 0; }
+[data-pf='domain-table'] { width: 100%; border-collapse: collapse; }
+[data-pf='domain-table'] th, [data-pf='domain-table'] td { padding: 2.5px 5px !important; border: 0 !important; background: none !important; font-size: 12px !important; line-height: 1.3 !important; text-align: left; color: var(--edify-text); white-space: nowrap; }
+[data-pf='domain-table'] th { font-weight: 600 !important; border-bottom: 1px solid var(--edify-border) !important; text-transform: none !important; letter-spacing: 0 !important; }
+[data-pf='domain-table'] [data-num] { text-align: right; }
+[data-pf='status-chip'] { display: inline-block; padding: 1px 7px; border-radius: 5px; font-size: 11px; font-weight: 600; }
+[data-pf='status-chip'][data-state='none'] { background: var(--edify-danger-light); color: var(--edify-danger-text, var(--edify-text)); }
+[data-pf='status-chip'][data-state='done'] { background: var(--edify-success-light); color: var(--edify-success-text); }
+[data-pf='readiness-list'] { display: grid; max-height: 12.5rem; gap: 8px; padding-right: 4px; overflow-y: auto; }
+[data-pf='readiness-list'] li { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) 5.9rem; align-items: center; gap: 8px; font-size: 12px; }
+[data-pf='readiness-list'] [data-missing] { color: var(--edify-danger-text, var(--edify-text)); font-size: 11px; white-space: nowrap; }
+[data-pf='readiness-list'] a, [data-pf='readiness-list'] li > span:first-child { overflow: hidden; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+[data-pf='link-list'] { max-height: 10.5rem; overflow-y: auto; font-size: 12.5px; }
+[data-pf='legend'] { display: flex; justify-content: center; gap: 18px; margin-top: 10px; font-size: 12px; color: var(--edify-text); }
+[data-pf='legend'] span { display: inline-flex; align-items: center; gap: 5px; }
+[data-pf='legend'] i { width: 9px; height: 9px; border-radius: 50%; background: var(--edify-success); }
+[data-pf='legend'] i[data-state='none'] { background: var(--edify-danger); }
+[data-pf='view-all'] { display: inline-flex; align-items: center; gap: 4px; color: var(--brand-primary) !important; font-size: 12px; font-weight: 600; white-space: nowrap; }
+[data-pf='tiles'][data-compact] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+[data-pf='tiles'][data-compact] [data-pf='tile'] { display: flex; align-items: center; gap: 8px; padding: 8px 10px !important; }
+[data-pf='tiles'][data-compact] [data-pf='tile-text'] { margin-top: 0; }
+[data-pf='tiles'][data-compact] [data-pf='tile-text'] > div:first-child { font-size: 17px !important; }
+[data-pf='tiles'][data-compact] [data-pf='tile-text'] div div { font-size: 12px !important; }
+[data-pf='attendance-row'] { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+[data-pf='attendance-words'] { display: flex; flex: 1 1 8rem; flex-direction: column; min-width: 0; font-size: 12px; color: var(--edify-text-muted); }
+[data-pf='attendance-words'] strong { font-size: 13px; color: var(--edify-text); }
+[data-pf='attendance-stat'] { display: flex; flex: 0 1 auto; flex-direction: column; min-width: 4.5rem; padding-left: 12px; border-left: 1px solid var(--edify-border); font-size: 11.5px; color: var(--edify-text-muted); }
+[data-pf='attendance-stat'] strong { font-size: 17px; line-height: 1.2; color: var(--edify-text); }
+[data-pf='tab-filters'] { display: flex; justify-content: flex-end; }
+[data-pf='member-title'] { display: inline-flex; align-items: center; gap: 8px; margin-right: auto; font-size: 15px !important; font-weight: 700 !important; color: var(--edify-text); white-space: nowrap; }
+[data-pf='member-tools'] { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
+[data-pf='member-tools'] > :first-child { grid-column: auto; }
+[data-pf='member-search'] { flex: 1 1 11rem; max-width: 19rem; }
+[data-pf='member-search'] input { height: 34px !important; min-height: 0 !important; padding-left: 34px !important; font-size: 13px !important; }
+[data-pf='member-filters'] { position: relative; }
+[data-pf='member-filters'] summary, [data-pf='member-export'] { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border: 1px solid var(--edify-border); border-radius: 7px; background: var(--edify-surface); color: var(--edify-text); font-size: 13px; font-weight: 600; cursor: pointer; list-style: none; white-space: nowrap; }
+[data-pf='member-filters'] summary::-webkit-details-marker { display: none; }
+[data-pf='member-filter-pop'] { position: absolute; top: calc(100% + 4px); right: 0; z-index: 30; display: grid; gap: 6px; width: 15rem; padding: 10px; border: 1px solid var(--edify-border); border-radius: 10px; background: var(--edify-card-surface, var(--edify-surface)); box-shadow: 0 10px 24px rgb(15 23 42 / 0.16); }
+[data-pf='member-filter-pop'] select { width: 100% !important; }
+
+@media (max-width: 639.98px) {
+  [data-pf='band-actions'] { display: flex; flex-wrap: wrap; }
+  [data-pf='band-actions'] [data-pf='band-action'] { flex: 1 1 auto; min-height: 36px; font-size: 12px; }
+  [data-pf='cluster-kpis'] [data-pf='tile'] { gap: 7px; padding: 8px !important; }
+  [data-pf='cluster-kpis'] [data-pf='tile'] > span:first-child { width: 30px; height: 30px; }
+  [data-pf='cluster-kpis'] [data-pf='tile'] > span:first-child svg { width: 16px; height: 16px; }
+  [data-pf='cluster-kpis'] [data-pf='tile-text'] > div:first-child { font-size: 16px !important; }
+  [data-pf='cluster-kpis'] [data-pf='tile-text'] div div + div { font-size: 10.5px !important; }
+  [data-pf='readiness-list'] li { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) 4.6rem; }
+  [data-pf='member-search'] { flex-basis: 100%; max-width: none; order: 3; }
+}
+@media (min-width: 1024px) {
+  [data-pf='cluster-grid'] { gap: 12px; }
+}
+@media (min-width: 1280px) {
+  [data-pf='cluster-band'] { flex-direction: row; flex-wrap: nowrap; align-items: center; justify-content: space-between; padding: 12px 18px; }
+  [data-pf='cluster-band'] h1 { font-size: 24px !important; }
+  [data-pf='band-head'] { flex: 1 1 auto; }
+  [data-pf='band-actions'] { flex: 0 0 auto; display: flex; flex-wrap: nowrap; align-items: center; }
+}
+@media (min-width: 1440px) {
+  [data-pf='cluster-grid'] { grid-template-columns: repeat(24, minmax(0, 1fr)); }
+  [data-pf-area='ssa'] { grid-column: span 9; }
+  [data-pf-area='chart'] { grid-column: span 8; }
+  [data-pf-area='readiness'] { grid-column: span 7; }
+  [data-pf-area='activity'] { grid-column: span 9; }
+  [data-pf-area='attendance'] { grid-column: span 10; }
+  [data-pf-area='insights'] { grid-column: span 5; }
+  [data-pf-area='members'] { grid-column: span 19; }
+  [data-pf-area='recommended'] { grid-column: span 5; }
+  [data-pf='tiles'][data-compact] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  [data-pf='cluster-grid'] section[data-block] { padding: 12px 14px !important; }
+}
+
+/* Written to outrank the existing site's heading, button and text rules. */
+[data-pf-page] [data-pf='hero-main'] h1 { font-size: 19px !important; font-weight: 700 !important; line-height: 1.18 !important; }
+[data-pf-page] button[data-pf='hero-action'], [data-pf-page] a[data-pf='hero-action'] { font-size: 11px !important; line-height: 1.2 !important; }
+@media (max-width: 639.98px) {
+  [data-pf-page] [data-pf='hero-main'] h1 { font-size: 15px !important; }
+  [data-pf-page] p[data-pf='hero-id'] { font-size: 11.5px !important; line-height: 1.3 !important; }
+  [data-pf-page] p[data-pf='hero-place'] { font-size: 10.5px !important; line-height: 1.3 !important; flex-wrap: nowrap; white-space: nowrap; }
+  [data-pf-page] button[data-pf='hero-action'], [data-pf-page] a[data-pf='hero-action'] { font-size: 10px !important; line-height: 1.15 !important; }
+  [data-pf-page] [data-pf-card='trend'] [data-pf='card-aside'] { font-size: 9.5px !important; line-height: 1.2 !important; white-space: nowrap; }
+  [data-pf-page] section[data-pf-card] h2, [data-pf-page] [data-pf-card='location'] h2 { font-size: 13px !important; line-height: 1.2 !important; white-space: nowrap; }
+  [data-pf-page] [data-pf-card='location'] p[data-map-overlay], [data-pf-page] [data-pf-card='location'] p[data-map-overlay] span { font-size: 7.5px !important; line-height: 1.2 !important; }
+  [data-pf-page] [data-pf-card='location'] p[data-stored-coords] { font-size: 10.5px !important; line-height: 1.2 !important; }
+  [data-pf-page] [data-pf-card='location'] [data-badge] { font-size: 9px !important; }
+  [data-pf-page] [data-pf-card='location'] [data-action='update-gps'], [data-pf-page] [data-pf-card='location'] a.h-10 { font-size: 10px !important; }
+  [data-pf-page] [data-pf-card='performance'] [data-pf='tile-text'] div div { font-size: 10px !important; line-height: 1.2 !important; }
+}
+@media (min-width: 640px) {
+  [data-pf-page] [data-pf='hero-main'] h1 { font-size: 24px !important; }
+  [data-pf-page] button[data-pf='hero-action'], [data-pf-page] a[data-pf='hero-action'] { font-size: 13px !important; }
+}
+@media (min-width: 1280px) {
+  [data-pf-page] [data-pf='hero-main'] h1 { font-size: 30px !important; }
+}
+
+/* The phone's small cards keep whole words and one-line headings. */
+@media (max-width: 639.98px) {
+  [data-pf='hero-place'] svg { flex-shrink: 0; }
+  [data-pf-page] [data-pf-card='location'] a.h-10 { padding: 0 1px; font-size: 9.5px !important; }
+  [data-pf-page] [data-pf-card='finance'] h2 { font-size: 12px !important; white-space: normal; }
+  [data-pf-page] [data-pf-card='operations'] [data-pf='card-aside'] { font-size: 9.5px !important; }
+  [data-pf-page] [data-pf-card='operations'] > div:first-child { flex-wrap: nowrap; align-items: center; }
+  [data-pf-page] [data-pf-card='operations'] [data-pf='more-wrap'] summary, [data-pf-page] [data-pf-card='finance'] [data-pf='more-wrap'] summary { min-width: 22px; height: 22px; padding: 0 3px; font-size: 10px; }
+  [data-pf-card='operations'] [data-pf='tile'], [data-pf-card='finance'] [data-pf='tile'] { overflow-wrap: normal; }
+  [data-pf-page] [data-pf-card='operations'] [data-pf='tile-text'] > div:first-child, [data-pf-page] [data-pf-card='finance'] [data-pf='tile-text'] > div:first-child { flex-shrink: 0; white-space: nowrap; }
+  [data-pf-page] [data-block='intervention-standing'] table th, [data-pf-page] [data-block='intervention-standing'] table td { padding: 4px 3px !important; font-size: 10.5px !important; line-height: 1.2 !important; }
+  [data-pf-page] [data-block='intervention-standing'] table td span, [data-pf-page] [data-block='intervention-standing'] table td a { font-size: 10px !important; }
+  [data-pf-page] [data-block='intervention-standing'] > div:first-child { flex-wrap: nowrap; }
+  [data-pf-page] [data-block='intervention-standing'] [data-pf='card-aside'] { display: none; }
+}
+@media (min-width: 640px) {
+  [data-pf-page] [data-block='intervention-standing'] table th, [data-pf-page] [data-block='intervention-standing'] table td { padding: 5px 6px !important; font-size: 12px !important; line-height: 1.25 !important; }
+}
+
+/* The narrowest phones give each small card the full width. */
+@media (max-width: 374.98px) {
+  [data-pf-card='trend'], [data-pf-card='location'], [data-pf-card='operations'], [data-pf-card='finance'] { grid-column: 1 / -1; }
+}
+/* The narrowest desktop: the name, facts and Actions button share one row. */
+@media (min-width: 1280px) and (max-width: 1535.98px) {
+  [data-pf-page] [data-pf='hero-main'] h1 { max-width: none; font-size: 21px !important; }
+  [data-pf='hero'] { grid-template-columns: 11.5rem minmax(0, 1fr); gap: 10px 16px; }
+  [data-pf='hero-identity'] { gap: 12px; padding-right: 5.5rem; }
+  [data-pf='hero-main'] { min-width: 12rem; }
+  [data-pf='hero-facts'] { margin-top: 8px; gap: 5px 14px; padding: 2px 0 2px 12px; }
+  [data-pf='hero-fact'] { gap: 5px; font-size: 12px; }
+  [data-pf='hero-fact'] svg { display: none; }
+  [data-pf-page] a[data-pf='hero-action'], [data-pf-page] button[data-pf='hero-action'] { gap: 5px; padding: 0 9px; font-size: 12px !important; }
+}
+
+@media (min-width: 1440px) {
+  [data-block='cluster-insights'] [data-pf='link-list'] { max-height: 6.6rem; }
+}

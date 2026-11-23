@@ -3,7 +3,7 @@
  * the SSA & Coverage tab, and the row under the map (route options, what the
  * optimizer found, what was reported on the road). Every figure is Go's.
  */
-import { BarChart3, CheckCircle2, Clock, Gauge, Info, MapPinned, Route, ShieldCheck, Sparkles, TrafficCone, TriangleAlert } from 'lucide-react';
+import { BarChart3, CheckCircle2, Clock, Flag, Gauge, Info, MapPinned, Route, ShieldCheck, Sparkles, TrafficCone, TriangleAlert } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -102,6 +102,9 @@ interface RouteBottomRowProps {
   readonly activeMode: SmartOptimizationMode;
   readonly onCompare: () => void;
   readonly onUse: (mode: SmartOptimizationMode) => void;
+  /** How many road reports are open, and the door to file one. */
+  readonly reportCount: number;
+  readonly onReport: () => void;
 }
 
 function BottomCard({ title, icon: CardIcon, children }: { title: string; icon: LucideIcon; children: ReactNode }) {
@@ -115,7 +118,7 @@ function BottomCard({ title, icon: CardIcon, children }: { title: string; icon: 
   );
 }
 
-export function RouteBottomRow({ result, options, comparing, canCompare, activeMode, onCompare, onUse }: RouteBottomRowProps) {
+export function RouteBottomRow({ result, options, comparing, canCompare, activeMode, onCompare, onUse, reportCount, onReport }: RouteBottomRowProps) {
   const ranked = rankOptions(options);
   const insights = routeInsights(result);
   const road = roadSummary(result?.road_alerts ?? []);
@@ -170,6 +173,9 @@ export function RouteBottomRow({ result, options, comparing, canCompare, activeM
         ) : (
           <p className="flex items-start gap-2 text-[13px] text-[var(--edify-text-muted)]"><Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /> No road condition has been reported on this route.</p>
         )}
+        <button type="button" onClick={onReport} className="mt-2 inline-flex h-8 items-center gap-1.5 rounded-[7px] border border-[var(--edify-border)] px-2.5 text-[12px] font-semibold text-[var(--edify-text)] hover:border-[var(--brand-primary)]">
+          <Flag className="h-3.5 w-3.5" aria-hidden="true" /> Report Road Condition ({reportCount})
+        </button>
       </BottomCard>
     </div>
   );
