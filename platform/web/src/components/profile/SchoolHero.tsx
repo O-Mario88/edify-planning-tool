@@ -118,7 +118,7 @@ export function SchoolHero({ header, identity, hrefOf }: SchoolHeroProps) {
               {identity.cluster?.value ? (
                 <>
                   {' · '}
-                  {identity.cluster.href ? <Link href={identity.cluster.href} className="font-semibold text-[var(--brand-primary)] hover:underline">{identity.cluster.value}</Link> : identity.cluster.value}
+                  {identity.cluster.href ? <Link href={identity.cluster.href} className="font-semibold text-[var(--brand-primary)] underline">{identity.cluster.value}</Link> : identity.cluster.value}
                 </>
               ) : null}
             </p>

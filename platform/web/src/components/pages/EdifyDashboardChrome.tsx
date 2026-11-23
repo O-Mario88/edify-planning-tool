@@ -227,6 +227,7 @@ export function KpiStatCard({
         {info ? (
           <span
             title={info}
+            role="img"
             aria-label={info}
             className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[var(--edify-text-muted)] opacity-70 hover:opacity-100"
           >

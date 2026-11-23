@@ -581,7 +581,7 @@ export function PersonalTimeOffView({
 
           {/* Upcoming / Past / All Leave Requests Table */}
           <section className="overflow-hidden rounded-[16px] border border-[var(--edify-border)] bg-[var(--edify-card-surface)] shadow-[var(--edify-shadow-xs)]">
-            <div className="flex flex-wrap items-center gap-1.5 border-b border-[var(--edify-table-divider)] px-4 py-3">
+            <div role="tablist" aria-label="Leave requests" className="flex flex-wrap items-center gap-1.5 border-b border-[var(--edify-table-divider)] px-4 py-3">
               {(leaveSegments.length > 0
                 ? leaveSegments
                 : [

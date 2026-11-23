@@ -439,36 +439,36 @@ export function DirectoryList(props: DirectoryListProps) {
         <>
           <div
             data-directory-header=""
-            role="row"
+            role="group"
             aria-label="School Directory columns"
             className={`${rowGridClass(props.readOnly)} border-y border-[var(--edify-table-divider)] bg-[color-mix(in_oklab,var(--edify-surface-muted)_42%,transparent)] py-1.5 text-[11px] font-bold uppercase tracking-[0.04em] text-[var(--edify-text-muted)]`}
           >
             {!props.readOnly ? (
-              <div role="columnheader" aria-label="Select" className="flex items-center justify-center" />
+              <div aria-hidden="true" className="flex items-center justify-center" />
             ) : null}
-            <div role="columnheader" className="min-w-0 truncate">
+            <div className="min-w-0 truncate">
               School ID
             </div>
-            <div role="columnheader" className="min-w-0 truncate">
+            <div className="min-w-0 truncate">
               School Name
             </div>
-            <div role="columnheader" className="max-xl:hidden min-w-0 truncate">
+            <div className="max-xl:hidden min-w-0 truncate">
               District
             </div>
-            <div role="columnheader" className="max-xl:hidden min-w-0 truncate">
+            <div className="max-xl:hidden min-w-0 truncate">
               Type
             </div>
-            <div role="columnheader" className="max-xl:hidden min-w-0 truncate">
+            <div className="max-xl:hidden min-w-0 truncate">
               Cluster
             </div>
-            <div role="columnheader" className="max-xl:hidden min-w-0 truncate">
+            <div className="max-xl:hidden min-w-0 truncate">
               SSA
             </div>
-            <div role="columnheader" className="max-xl:hidden min-w-0 truncate">
+            <div className="max-xl:hidden min-w-0 truncate">
               Visit Status
             </div>
             {!props.readOnly ? (
-              <div role="columnheader" className="text-right">
+              <div className="text-right">
                 Actions
               </div>
             ) : null}

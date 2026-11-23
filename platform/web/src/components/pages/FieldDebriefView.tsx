@@ -478,7 +478,7 @@ export function FieldDebriefView({
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Field debriefs, scrolls sideways">
           <table className="w-full border-collapse text-left text-[12.5px]">
             <thead>
               <tr className="border-b border-[var(--edify-table-divider)] bg-[color-mix(in_srgb,var(--brand-primary)_4%,var(--edify-surface))]">
