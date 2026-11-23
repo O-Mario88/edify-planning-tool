@@ -46,6 +46,19 @@ export function resolveHref(pagePath: string, href: string): string {
   return value;
 }
 
+/** The paths src/app answers with a route handler (a route.ts), not a page. */
+const ROUTE_HANDLER_PATH =
+  /^\/(?:api|apply|auth|country-admin|exports|loan-applications\/apply|maplibre-worker\.mjs|page-parts|route-planner|ssa\/upload\/template)(?:[/?#]|$)/;
+
+/**
+ * Whether a link leads to a route handler. It must be a plain <a>: Next's
+ * <Link> prefetches it, cannot use the answer (a form, a file) and never
+ * reads or cancels it, so the request stays open for as long as the page does.
+ */
+export function isRouteHandlerHref(href: string): boolean {
+  return ROUTE_HANDLER_PATH.test(href);
+}
+
 /**
  * Where a button that opens a drawer leads while drawers are the existing
  * web's: the same page there, with the same query, where the drawer opens.

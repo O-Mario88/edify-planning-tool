@@ -8,6 +8,7 @@ import { Fragment } from 'react';
 import type { ReactNode } from 'react';
 
 import type { PagePanel, PagePanelItem } from '@/gen/edify/screens/v1/page_pb';
+import { isRouteHandlerHref } from '@/lib/feedPage';
 import { isStepper } from '@/lib/presentBlocks';
 import { noteTone, sentenceParts } from '@/lib/sentence';
 
@@ -89,7 +90,7 @@ function Item({ item, resolve, drawerHref }: { item: PagePanelItem; resolve: (hr
             const href = link.drawer ? drawerHref : resolve(link.href);
             return (
               <li key={index} className="text-[13px]">
-                {href && link.drawer ? (
+                {href && (link.drawer || isRouteHandlerHref(href)) ? (
                   <a href={href} className="font-semibold text-[var(--brand-primary-text)] underline dark:text-[var(--edify-accent-text)]">{link.text}</a>
                 ) : href ? (
                   <Link href={href} className="font-semibold text-[var(--brand-primary-text)] underline dark:text-[var(--edify-accent-text)]">{link.text}</Link>
