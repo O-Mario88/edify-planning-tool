@@ -39,7 +39,8 @@ func (s *Service) GetSchoolLocation(ctx context.Context, req *connect.Request[ro
 		return nil, apierr.New(ctx, connect.CodeNotFound, apierr.ReasonSchoolNotFound, "school not found")
 	}
 	sc.pin.CanOpenProfile = MayOpenProfile(p.ActiveRole)
-	out := &routesv1.GetSchoolLocationResponse{School: sc.pin, NearbyRadiusKm: Rules.NearbyRadiusKm, CanPlan: MayPlan(p.ActiveRole)}
+	out := &routesv1.GetSchoolLocationResponse{School: sc.pin, NearbyRadiusKm: Rules.NearbyRadiusKm, CanPlan: MayPlan(p.ActiveRole),
+		LocationSource: locationSource("", false, sc.placed())}
 	if sc.placed() {
 		near, err := nearby(ctx, s.db, p, now, []LatLng{sc.at}, []string{sc.pin.SchoolId}, "", "")
 		if err != nil {
@@ -62,6 +63,7 @@ func (s *Service) GetSchoolLocation(ctx context.Context, req *connect.Request[ro
 		out.CanCapture = MayCaptureGPS(p.ActiveRole)
 		out.Version, out.VerifiedAt, out.VerifiedByName = sc.pin.GetLocationVersion(), f.verifiedAt, f.verifiedByName
 		out.LastConfirmedAt, out.Entrance, out.Policy = f.lastConfirmedAt, sc.pin.GetEntrance(), policyOf(DefaultPolicy)
+		out.AccuracyMeters, out.LocationSource = f.accuracy, locationSource(f.captureSource, f.reviewed, sc.placed())
 	}
 	return connect.NewResponse(out), nil
 }

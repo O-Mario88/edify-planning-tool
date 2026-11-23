@@ -31,6 +31,27 @@ const (
 type locationFacts struct {
 	verifiedAt, verifiedByName, accessNote, lastConfirmedAt string
 	hasPending                                              bool
+	// The stored reading's accuracy in metres (nil when none was recorded),
+	// how its capture got the point, and whether an approved report placed it.
+	accuracy      *float64
+	captureSource string
+	reviewed      bool
+}
+
+// locationSource names where the location on record came from: the capture
+// that set it, else an approved report, else the School Directory's point.
+func locationSource(capture string, reviewed, placed bool) string {
+	switch {
+	case capture == "device":
+		return "Device GPS (Field)"
+	case capture == "typed":
+		return "Entered by hand"
+	case reviewed:
+		return "Approved location report"
+	case placed:
+		return "School Directory"
+	}
+	return ""
 }
 
 func stamp(t *time.Time) string {
@@ -44,12 +65,15 @@ func stamp(t *time.Time) string {
 const factsCols = `COALESCE(sl.verified_at, vl.verified_at), COALESCE(slu.name, vlu.name, ''),
   COALESCE(NULLIF(sl.access_note, ''), vl.access_note, ''),
   (SELECT max(k.received_at) FROM field_routes.location_capture k WHERE k.school_id = s.id AND k.kind = 'confirm'),
-  EXISTS (SELECT 1 FROM field_routes.location_capture k WHERE k.school_id = s.id AND k.status = 'pending')`
+  EXISTS (SELECT 1 FROM field_routes.location_capture k WHERE k.school_id = s.id AND k.status = 'pending'),
+  sl.accuracy_m,
+  COALESCE((SELECT k.point_source FROM field_routes.location_capture k WHERE k.id = sl.capture_id), ''),
+  vl.school_id IS NOT NULL`
 
 const factsFrom = ` LEFT JOIN "user" slu ON slu.id = sl.verified_by LEFT JOIN "user" vlu ON vlu.id = vl.verified_by`
 
 func factsScan(f *locationFacts, verifiedAt, confirmedAt **time.Time) []any {
-	return []any{verifiedAt, &f.verifiedByName, &f.accessNote, confirmedAt, &f.hasPending}
+	return []any{verifiedAt, &f.verifiedByName, &f.accessNote, confirmedAt, &f.hasPending, &f.accuracy, &f.captureSource, &f.reviewed}
 }
 
 // facts is one school's location facts (field_routes must be ready).

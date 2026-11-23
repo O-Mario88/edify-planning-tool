@@ -331,6 +331,11 @@ message GetSchoolLocationResponse {
   bool can_capture = 14;
   // When someone last said the location on record is right (RFC 3339).
   string last_confirmed_at = 15;
+  // The stored reading's accuracy in metres; unset when none was recorded.
+  optional double accuracy_meters = 16;
+  // Where the location on record came from, in words ("Device GPS (Field)",
+  // "School Directory"); empty when the school has no location.
+  string location_source = 17;
 }
 
 // The thresholds a capture is judged by; the device shows the same.

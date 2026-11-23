@@ -1919,8 +1919,13 @@ type GetSchoolLocationResponse struct {
 	CanCapture bool `protobuf:"varint,14,opt,name=can_capture,json=canCapture,proto3" json:"can_capture,omitempty"`
 	// When someone last said the location on record is right (RFC 3339).
 	LastConfirmedAt string `protobuf:"bytes,15,opt,name=last_confirmed_at,json=lastConfirmedAt,proto3" json:"last_confirmed_at,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// The stored reading's accuracy in metres; unset when none was recorded.
+	AccuracyMeters *float64 `protobuf:"fixed64,16,opt,name=accuracy_meters,json=accuracyMeters,proto3,oneof" json:"accuracy_meters,omitempty"`
+	// Where the location on record came from, in words ("Device GPS (Field)",
+	// "School Directory"); empty when the school has no location.
+	LocationSource string `protobuf:"bytes,17,opt,name=location_source,json=locationSource,proto3" json:"location_source,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *GetSchoolLocationResponse) Reset() {
@@ -2054,6 +2059,20 @@ func (x *GetSchoolLocationResponse) GetCanCapture() bool {
 func (x *GetSchoolLocationResponse) GetLastConfirmedAt() string {
 	if x != nil {
 		return x.LastConfirmedAt
+	}
+	return ""
+}
+
+func (x *GetSchoolLocationResponse) GetAccuracyMeters() float64 {
+	if x != nil && x.AccuracyMeters != nil {
+		return *x.AccuracyMeters
+	}
+	return 0
+}
+
+func (x *GetSchoolLocationResponse) GetLocationSource() string {
+	if x != nil {
+		return x.LocationSource
 	}
 	return ""
 }
@@ -3675,7 +3694,7 @@ const file_edify_routes_v1_routes_proto_rawDesc = "" +
 	"\bprovider\x18\x04 \x01(\v2\x1f.edify.routes.v1.ProviderStatusR\bprovider\x12#\n" +
 	"\rcalculated_at\x18\x05 \x01(\tR\fcalculatedAt\"7\n" +
 	"\x18GetSchoolLocationRequest\x12\x1b\n" +
-	"\tschool_id\x18\x01 \x01(\tR\bschoolId\"\x80\x05\n" +
+	"\tschool_id\x18\x01 \x01(\tR\bschoolId\"\xeb\x05\n" +
 	"\x19GetSchoolLocationResponse\x122\n" +
 	"\x06school\x18\x01 \x01(\v2\x1a.edify.routes.v1.SchoolPinR\x06school\x12%\n" +
 	"\x0enearby_schools\x18\x02 \x01(\x05R\rnearbySchools\x12(\n" +
@@ -3697,7 +3716,10 @@ const file_edify_routes_v1_routes_proto_rawDesc = "" +
 	"\x06policy\x18\r \x01(\v2\x1e.edify.routes.v1.CapturePolicyR\x06policy\x12\x1f\n" +
 	"\vcan_capture\x18\x0e \x01(\bR\n" +
 	"canCapture\x12*\n" +
-	"\x11last_confirmed_at\x18\x0f \x01(\tR\x0flastConfirmedAt\"\x8a\x01\n" +
+	"\x11last_confirmed_at\x18\x0f \x01(\tR\x0flastConfirmedAt\x12,\n" +
+	"\x0faccuracy_meters\x18\x10 \x01(\x01H\x00R\x0eaccuracyMeters\x88\x01\x01\x12'\n" +
+	"\x0flocation_source\x18\x11 \x01(\tR\x0elocationSourceB\x12\n" +
+	"\x10_accuracy_meters\"\x8a\x01\n" +
 	"\rCapturePolicy\x12\x15\n" +
 	"\x06good_m\x18\x01 \x01(\x01R\x05goodM\x12\x1b\n" +
 	"\tconfirm_m\x18\x02 \x01(\x01R\bconfirmM\x12#\n" +
@@ -3998,6 +4020,7 @@ func file_edify_routes_v1_routes_proto_init() {
 	if File_edify_routes_v1_routes_proto != nil {
 		return
 	}
+	file_edify_routes_v1_routes_proto_msgTypes[24].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
