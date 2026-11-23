@@ -3,6 +3,9 @@
  * card each block is, and how the member table is searched, sorted and
  * exported in the browser. Every figure is the gateway's.
  */
+import { create } from '@bufbuild/protobuf';
+
+import { PageActionSchema, PageCellSchema, PageColumnSchema, PageFactSchema, PageRowSchema, PageTableSchema } from '@/gen/edify/screens/v1/page_pb';
 import type { PageBlock, PageChart, PageColumn, PageFact, PagePanel, PageRailPart, PageRow, PageStrip, PageTable } from '@/gen/edify/screens/v1/page_pb';
 
 import type { TrendPoint } from './schoolProfileView';
@@ -163,4 +166,48 @@ export function membersCsv(columns: readonly PageColumn[], rows: readonly PageRo
   const head = kept.map(({ column }) => csvCell(column.label)).join(',');
   const lines = rows.map((row) => kept.map(({ index }) => csvCell(row.cells[index]?.text ?? '')).join(','));
   return [head, ...lines].join('\r\n');
+}
+
+/** The member table's columns in the design's order, under their group headings. */
+const MEMBER_COLUMNS: readonly (readonly [string, string])[] = [
+  ['School ID', 'School ID'],
+  ['School Name', 'School Name'],
+  ['Type', 'Type'],
+  ['SSA Avg', 'Score (/10)'],
+  ['Visit Plan Status', 'Visit Plan Status'],
+  ['Training Plan Status', 'Training Plan Status'],
+  ['Visits', 'Visits'],
+  ['Trainings', 'Trainings'],
+  ['Open', 'Open'],
+  ['Last Visit', 'Last Visit'],
+  ['Last Training', 'Last Training'],
+  ['Actions', 'Actions'],
+];
+
+export const MEMBER_HEAD_GROUPS: readonly { readonly label: string; readonly span: number }[] = [
+  { label: '', span: 4 },
+  { label: 'SSA Performance', span: 1 },
+  { label: '', span: 2 },
+  { label: 'Activities (This FY)', span: 3 },
+  { label: '', span: 3 },
+];
+
+/** The roster drawn as the design sets it; a column it has no place for moves into the opened row. */
+export function memberTable(table: PageTable): PageTable {
+  const at = (label: string) => table.columns.findIndex((column) => column.label === label);
+  const placed = new Set(MEMBER_COLUMNS.map(([label]) => label));
+  const moved = table.columns.filter((column) => !placed.has(column.label)).map((column) => column.label);
+  const present = MEMBER_COLUMNS.filter(([label]) => at(label) >= 0);
+  const rows = table.rows.map((row, index) => {
+    const cells = present.map(([label]) => {
+      const cell = row.cells[at(label)] ?? create(PageCellSchema, {});
+      if (label !== 'Actions' || !row.detailsHref) return cell;
+      const open = create(PageActionSchema, { key: 'button', label: 'Open', enabled: true, href: row.detailsHref });
+      return create(PageCellSchema, { ...cell, actions: [open, ...cell.actions] });
+    });
+    const details = [...row.details, ...moved.map((label) => create(PageFactSchema, { label, value: row.cells[at(label)]?.text ?? '' }))];
+    return create(PageRowSchema, { ...row, details, cells: [create(PageCellSchema, { text: String(index + 1) }), ...cells] });
+  });
+  const columns = [create(PageColumnSchema, { label: '#' }), ...present.map(([label, shown]) => create(PageColumnSchema, { numeric: table.columns[at(label)]?.numeric ?? false, label: shown }))];
+  return create(PageTableSchema, { ...table, columns, rows });
 }

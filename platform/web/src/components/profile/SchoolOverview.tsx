@@ -90,7 +90,7 @@ function InterventionCard({ table, pagePath }: { table: PageTable; pagePath: str
   return (
     <ProfileCard title="Best Performing & Struggling Intervention" icon={Award} aside={table.subtitle} area="interventions" block="intervention-standing">
       {table.rows.length ? (
-        <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Best performing and struggling intervention">
+        <div id="school-intervention-table" className="overflow-x-auto" tabIndex={0} role="region" aria-label="Best performing and struggling intervention">
           <table className="w-full border-collapse text-[13px]">
             <thead className="bg-[var(--edify-surface-muted)]">
               <tr>
@@ -144,7 +144,7 @@ function InsightsCard({ rail, pagePath }: { rail: PageRail; pagePath: string }) 
           const href = resolveHref(pagePath, meter.href);
           const content = (
             <>
-              <span className="min-w-0 flex-1 truncate text-[13px] text-[var(--edify-text)]">{meter.label}</span>
+              <span title={meter.label} className="min-w-0 flex-1 truncate text-[13px] text-[var(--edify-text)]">{meter.label}</span>
               <span className="h-1.5 w-[32%] shrink-0 overflow-hidden rounded-full bg-[var(--edify-surface-muted)]">
                 <span className="block h-full rounded-full bg-[var(--brand-primary)]" style={{ width: `${Math.round(Math.min(Math.max(meter.fraction, 0), 1) * 100)}%` }} />
               </span>

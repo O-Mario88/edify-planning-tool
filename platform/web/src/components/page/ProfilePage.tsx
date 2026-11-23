@@ -27,7 +27,7 @@ import { gatewayClient, isNotFound, isUnavailable } from '@/lib/gateway';
 import { ACCESS_COOKIE } from '@/lib/session';
 import { requestView } from '@/lib/requestView';
 import { profileAsk, profileYear, splitRail, trailingPanels } from '@/lib/schoolProfile';
-import { honestSsa, schoolIdentity, trendPoints } from '@/lib/schoolProfileView';
+import { honestSsa, interventionRows, readinessWord, schoolIdentity, trendPoints } from '@/lib/schoolProfileView';
 
 import { PhoneBlocks } from '../phone/PhoneBlocks';
 import { FeedBlocks } from './FeedBlocks';
@@ -89,7 +89,8 @@ export async function ProfilePage({ schoolId, query }: { schoolId: string; query
   // The Core School and Details tabs carry no school facts, so the header reads them from the Overview;
   // the Overview's trend is the SSA tab's yearly chart.
   const needsFacts = asked.tab === 'core' || asked.tab === 'details';
-  const needsTrend = asked.tab === '' || asked.tab === 'overview';
+  // The Core School tab's intervention table is the SSA tab's matrix.
+  const needsTrend = asked.tab === '' || asked.tab === 'overview' || asked.tab === 'core';
   const [answer, factsAnswer, ssaAnswer] = await Promise.all([
     ask(schoolId, asked.tab, asked.fy, asked.period),
     needsFacts ? askAlso(schoolId, 'overview', asked.fy, asked.period) : null,
@@ -141,7 +142,14 @@ export async function ProfilePage({ schoolId, query }: { schoolId: string; query
           location={<SchoolLocation schoolId={schoolId} />}
         />
       ) : activeTab === 'core' ? (
-        <SchoolCoreTab blocks={answer.blocks} year={yearLabel} pagePath={pagePath} drawerHref={drawerHref} />
+        <SchoolCoreTab
+          blocks={answer.blocks}
+          interventions={interventionRows(ssaAnswer?.blocks ?? [])}
+          planningReadiness={readinessWord(answer.header?.badges.map((badge) => badge.text) ?? [])}
+          year={yearLabel}
+          pagePath={pagePath}
+          drawerHref={drawerHref}
+        />
       ) : (
         otherTab
       )}

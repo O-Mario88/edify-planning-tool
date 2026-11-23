@@ -25,14 +25,28 @@ const ICONS: Readonly<Record<string, LucideIcon>> = {
   analytics: LineChart,
 };
 
-/** How many tabs a phone keeps in the rail; the open tab always stays there. */
-const PHONE_RAIL = 3;
+/** How many letters of tab names fit a phone's rail beside More. */
+const PHONE_RAIL_LETTERS = 26;
 
+/** The first tabs that fit a phone's rail; the open tab always stays there. */
 function onPhoneRail(tabs: readonly PageTab[]): ReadonlySet<string> {
-  const first = tabs.slice(0, PHONE_RAIL).map((tab) => tab.key);
-  const open = tabs.find((tab) => tab.active)?.key;
-  if (!open || first.includes(open)) return new Set(first);
-  return new Set([...first.slice(0, PHONE_RAIL - 1), open]);
+  const first: PageTab[] = [];
+  let letters = 0;
+  for (const tab of tabs) {
+    if (first.length && letters + tab.label.length > PHONE_RAIL_LETTERS) break;
+    first.push(tab);
+    letters += tab.label.length;
+  }
+  const open = tabs.find((tab) => tab.active);
+  if (!open || first.includes(open)) return new Set(first.map((tab) => tab.key));
+  const kept: PageTab[] = [];
+  let room = PHONE_RAIL_LETTERS - open.label.length;
+  for (const tab of first) {
+    if (tab.label.length > room) break;
+    kept.push(tab);
+    room -= tab.label.length;
+  }
+  return new Set([...kept, open].map((tab) => tab.key));
 }
 
 interface ProfileTabsProps {

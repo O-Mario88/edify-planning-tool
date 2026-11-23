@@ -579,3 +579,140 @@ a[data-pf='hero-action']:hover { border-color: var(--brand-primary); }
 @media (min-width: 1440px) {
   [data-block='cluster-insights'] [data-pf='link-list'] { max-height: 6.6rem; }
 }
+
+
+/* ── The designs' surface: a near-white blue page, soft cards ───────── */
+[data-pf-page] { background: linear-gradient(180deg, color-mix(in srgb, var(--brand-primary) 6%, var(--edify-bg)), var(--edify-bg) 22rem); }
+[data-pf-page] .card {
+  border-color: color-mix(in srgb, var(--edify-border) 58%, transparent) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 1px 2px rgb(16 42 67 / 0.04), 0 6px 18px rgb(16 42 67 / 0.06) !important;
+}
+[data-pf-page] [data-pf='tile'] { border-color: color-mix(in srgb, var(--edify-border) 52%, transparent) !important; }
+[data-pf='tabs-rail'] { box-shadow: 0 1px 2px rgb(16 42 67 / 0.04), 0 4px 12px rgb(16 42 67 / 0.05); }
+
+
+/* ── The Core School tab as its design sets it ─────────────────────── */
+[data-pf='core-band-side'] { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 26px; flex-shrink: 0; }
+[data-pf='core-band'] [data-pf='core-band-label'] { font-size: 12px; font-weight: 500; }
+[data-pf='check-bar'] { display: grid; grid-template-columns: repeat(3, 2.9rem); gap: 3px; margin-top: 6px; }
+[data-pf='check-bar'] i { display: block; height: 8px; border-radius: 4px; background: rgb(255 255 255 / 0.28); }
+[data-pf='check-bar'] i[data-state='met'] { background: #22c55e; }
+[data-pf='core-band'] [data-pf='check-words'] { margin-top: 3px; font-size: 11.5px; }
+[data-pf='check-list'] { display: grid; font-size: 13px; }
+[data-pf='check-list'] li { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--edify-border); color: var(--edify-text); }
+[data-pf='check-list'] li:last-child { border-bottom: 0; }
+[data-pf='check-list'] svg { flex-shrink: 0; margin-top: 1px; }
+[data-pf='check-list'] svg[data-state='met'] { color: var(--edify-success); }
+[data-pf='check-list'] svg[data-state='not'] { color: var(--edify-danger); }
+[data-pf='check-list'] svg[data-state='none'] { color: var(--edify-text-muted); }
+[data-pf='core-note'] { margin-top: 6px; color: var(--edify-text-muted); font-size: 11.5px; line-height: 1.35; }
+[data-pf='intervention-scroll'] { max-height: 12.5rem; overflow: auto; }
+[data-pf-page] [data-pf='intervention-table'] { width: 100%; border-collapse: collapse; }
+[data-pf-page] [data-pf='intervention-table'] th, [data-pf-page] [data-pf='intervention-table'] td { padding: 4px 6px !important; border: 0 !important; background: none !important; color: var(--edify-text); font-size: 12px !important; line-height: 1.3 !important; text-align: right; white-space: nowrap; }
+[data-pf-page] [data-pf='intervention-table'] th { position: sticky; top: 0; background: var(--edify-surface-muted) !important; font-weight: 600 !important; text-transform: none !important; letter-spacing: 0 !important; }
+[data-pf-page] [data-pf='intervention-table'] th:first-child, [data-pf-page] [data-pf='intervention-table'] td:first-child { text-align: left; }
+[data-pf='support-box'] { display: flex; gap: 8px; padding: 10px; border-radius: 10px; background: color-mix(in srgb, var(--brand-primary) 7%, var(--edify-surface)); color: var(--edify-text); }
+[data-pf='support-box'] > svg { flex-shrink: 0; margin-top: 2px; color: var(--brand-primary); }
+[data-pf='support-action'] { display: flex; align-items: center; justify-content: center; gap: 7px; width: fit-content; min-height: 40px; margin: 10px auto 0; padding: 0 18px; border-radius: 9px; background: var(--brand-primary); color: #ffffff !important; font-size: 13px; font-weight: 700; }
+[data-pf='core-cards'] > section { display: flex; flex-direction: column; }
+@media (max-width: 639.98px) {
+  [data-pf='core-band-side'] { width: 100%; justify-content: space-between; }
+}
+
+/* ── The Cluster member table ──────────────────────────────────────── */
+[data-pf='domain-name'] { display: inline-flex; align-items: center; gap: 6px; }
+[data-block='cluster-activities'], [data-block='cluster-attendance'] { display: flex; flex-direction: column; }
+[data-block='cluster-activities'] [data-pf='tiles'], [data-block='cluster-attendance'] [data-pf='attendance-row'] { flex: 1; align-content: center; }
+[data-pf-page] [data-block='cluster-members'] table th, [data-pf-page] [data-block='cluster-members'] table td { padding: 6px 6px !important; font-size: 11.5px !important; line-height: 1.25 !important; }
+[data-pf-page] [data-block='cluster-members'] table td:nth-child(4) { min-width: 11.5rem; white-space: normal; }
+[data-pf-page] [data-block='cluster-members'] tr[data-head-groups] th { border-inline: 1px solid var(--edify-border); font-weight: 700 !important; }
+[data-pf-page] [data-block='cluster-members'] .row-menu__trigger { width: 26px; min-width: 26px; height: 24px; min-height: 0; padding: 0; justify-content: center; font-size: 0; }
+[data-pf-page] [data-block='cluster-members'] .row-menu__caret { width: 12px; height: 12px; margin: 0; }
+
+
+/* ── Final fit: the design's light page, whole words, nothing off-screen ── */
+html:not(.theme-dark) [data-pf-page] { background: linear-gradient(180deg, #edf4fb 0, #f6f9fc 24rem); }
+[data-pf-card='insights'] li > a, [data-pf-card='insights'] li > span { display: flex !important; width: 100%; }
+[data-pf-page][data-pf-page] [data-block='cluster-members'] table th, [data-pf-page][data-pf-page] [data-block='cluster-members'] table td { padding: 5px 4px !important; white-space: normal !important; }
+[data-pf-page][data-pf-page] [data-block='cluster-members'] table td:nth-child(4) { min-width: 9.5rem; }
+[data-pf-page][data-pf-page] [data-block='cluster-members'] table td:last-child { white-space: nowrap !important; }
+@media (max-width: 639.98px) {
+  [data-pf='overview'] { align-items: stretch; }
+  [data-pf-page] section[data-pf-card='finance'] h2 { font-size: 12px !important; white-space: normal !important; }
+  [data-pf-page][data-pf-page] [data-block='intervention-standing'][data-block='intervention-standing'] table th,
+  [data-pf-page][data-pf-page] [data-block='intervention-standing'][data-block='intervention-standing'] table td { padding: 4px 2px !important; font-size: 10px !important; line-height: 1.2 !important; white-space: normal !important; }
+  [data-pf-page][data-pf-page] [data-block='intervention-standing'] table td span, [data-pf-page][data-pf-page] [data-block='intervention-standing'] table td a { font-size: 9.5px !important; white-space: nowrap; }
+  [data-pf-page][data-pf-page] [data-pf='domain-table'] th, [data-pf-page][data-pf-page] [data-pf='domain-table'] td { padding: 3px 2px !important; font-size: 11px !important; white-space: normal !important; }
+  [data-pf-page] [data-pf='domain-table'] [data-pf='status-chip'] { padding: 1px 4px; font-size: 9.5px; white-space: nowrap; }
+  [data-pf='readiness-list'] li { grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.8fr) 5.2rem; gap: 6px; }
+  [data-block='cluster-analytics'] [role='tablist'] button { padding-inline: 4px; font-size: 10.5px !important; }
+  [data-pf='member-title'] { flex-basis: 100%; }
+}
+@media (max-width: 374.98px) {
+  [data-pf-page] p[data-pf='hero-place'] { flex-wrap: wrap; white-space: normal; }
+}
+
+
+/* ── Written by id: the existing site's table rules outrank class selectors ── */
+[data-pf-page] { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+#cluster-member-table table th, #cluster-member-table table td { padding: 5px 5px !important; font-size: 11.5px !important; line-height: 1.25 !important; white-space: normal !important; }
+#cluster-member-table table td span, #cluster-member-table table td a { font-size: 11.5px !important; }
+#cluster-member-table table td a[href^='/schools/'] { display: inline-block; min-width: 9rem; white-space: normal !important; }
+#cluster-member-table table td:last-child { white-space: nowrap !important; }
+#cluster-member-table table td:last-child a { display: inline-flex; min-width: 0; height: 24px; padding-inline: 8px; }
+#school-intervention-table table th, #school-intervention-table table td { padding: 5px 6px !important; font-size: 12px !important; line-height: 1.25 !important; }
+#core-intervention-table table th, #core-intervention-table table td { padding: 4px 6px !important; font-size: 12px !important; line-height: 1.3 !important; }
+@media (max-width: 639.98px) {
+  [data-pf='tab'][data-phone-more] { display: none !important; }
+  #school-intervention-table table th, #school-intervention-table table td { padding: 4px 2px !important; font-size: 10px !important; white-space: normal !important; }
+  #school-intervention-table table td span, #school-intervention-table table td a { font-size: 9.5px !important; white-space: nowrap; }
+  #core-intervention-table table th, #core-intervention-table table td { padding: 3px 2px !important; font-size: 10px !important; white-space: normal !important; }
+  [data-pf='core-figures'] [data-pf='tile'] { gap: 7px; padding: 8px !important; }
+  [data-pf='core-figures'] [data-pf='tile'] > span:first-child { width: 30px; height: 30px; }
+  [data-pf='core-figures'] [data-pf='tile'] > span:first-child svg { width: 16px; height: 16px; }
+  [data-pf='core-figures'] [data-pf='tile-text'] > div:first-child { font-size: 14px !important; }
+  [data-pf='core-figures'] [data-pf='tile-text'] > div:last-child > div { font-size: 10.5px !important; line-height: 1.2 !important; }
+  [data-pf='core-band'] h2 { font-size: 16px !important; }
+  [data-pf='core-band'] p { font-size: 11.5px !important; line-height: 1.3 !important; }
+}
+
+
+/* Tabs keep their width and scroll sideways on a tablet. */
+[data-pf='tabs-rail'] { width: max-content; }
+[data-pf='tabs-rail'] [data-pf='tab'] { flex: 0 0 auto; }
+@media (max-width: 639.98px) {
+  [data-pf='tabs-rail'] { width: 100%; }
+  [data-pf='tabs-rail'] [data-pf='tab'] { flex: 1 1 auto; }
+}
+#cluster-member-table table thead th { font-size: 11px !important; }
+#cluster-member-table .row-menu__trigger { width: 24px !important; min-width: 24px !important; height: 24px !important; min-height: 0 !important; padding: 0 !important; justify-content: center; font-size: 0 !important; }
+#cluster-member-table table td:last-child a { padding-inline: 6px !important; }
+#cluster-member-table table td:last-child > div { gap: 3px; }
+
+/* On a mid-size desktop the long school name keeps to two lines beside its facts. */
+@media (min-width: 1536px) and (max-width: 1799.98px) {
+  [data-pf-page] [data-pf='hero-main'] h1 { max-width: none; font-size: 24px !important; }
+  [data-pf='hero'] { grid-template-columns: 14rem minmax(0, 1fr); gap: 10px 20px; }
+  [data-pf='hero-identity'] { gap: 14px; padding-right: 5.5rem; }
+  [data-pf='hero-main'] { min-width: 19rem; }
+  [data-pf='hero-facts'] { gap: 8px 18px; padding-left: 14px; }
+  [data-pf='hero-fact'] { font-size: 13px; }
+}
+
+
+#school-intervention-table table td[data-pf='chosen'] { min-width: 7.5rem; white-space: normal !important; }
+#cluster-member-table table th, #cluster-member-table table td { padding-inline: 4px !important; }
+@media (max-width: 639.98px) {
+  [data-pf='band-info'] dd a { display: inline-flex; align-items: center; min-height: 32px; }
+}
+
+/* The existing site turns a tablist into a shrinking flex row; these tabs keep their own width. */
+@media (min-width: 640px) {
+  [data-pf-page] [data-pf='tabs-rail'] { width: max-content !important; min-width: max-content !important; }
+  [data-pf-page] [data-pf='tabs-list'] { display: flex !important; flex: 0 0 auto !important; width: max-content !important; overflow: visible !important; }
+  [data-pf-page] a[data-pf='tab'] { flex: 0 0 auto !important; padding-inline: 14px !important; }
+}
+@media (max-width: 639.98px) {
+  [data-pf-page] [data-pf='tabs-list'] { display: flex !important; flex: 1 1 auto !important; min-width: 0; overflow: visible !important; }
+}

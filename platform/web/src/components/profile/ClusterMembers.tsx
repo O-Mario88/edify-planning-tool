@@ -11,7 +11,7 @@ import { useMemo, useState } from 'react';
 import { CONTROL } from '@/components/drawer/drawerParts';
 import { FeedTable } from '@/components/page/FeedTable';
 import type { PageTable } from '@/gen/edify/screens/v1/page_pb';
-import { memberTypes, membersCsv, shownMembers } from '@/lib/clusterProfileView';
+import { MEMBER_HEAD_GROUPS, memberTable, memberTypes, membersCsv, shownMembers } from '@/lib/clusterProfileView';
 
 interface ClusterMembersProps {
   readonly table: PageTable;
@@ -28,6 +28,8 @@ export function ClusterMembers({ table, pagePath, drawerHref, selectable }: Clus
   const types = useMemo(() => memberTypes(table.rows, table.columns), [table]);
   const rows = useMemo(() => shownMembers(table.rows, table.columns, { search, type, ssa, sort }), [table, search, type, ssa, sort]);
 
+  const shown = useMemo(() => memberTable({ ...table, title: '', rows }), [table, rows]);
+
   const exportRows = () => {
     const url = URL.createObjectURL(new Blob([membersCsv(table.columns, rows)], { type: 'text/csv;charset=utf-8' }));
     const link = document.createElement('a');
@@ -39,7 +41,7 @@ export function ClusterMembers({ table, pagePath, drawerHref, selectable }: Clus
 
   const select = `${CONTROL} sm:w-auto`;
   return (
-    <section className="card min-w-0 p-3" aria-label="Member Schools" data-block="cluster-members">
+    <section id="cluster-member-table" className="card min-w-0 p-3" aria-label="Member Schools" data-block="cluster-members">
       <div data-pf="member-tools">
         <h2 data-pf="member-title">
           <School className="h-[18px] w-[18px] shrink-0 text-[var(--brand-primary)]" aria-hidden="true" />
@@ -74,7 +76,7 @@ export function ClusterMembers({ table, pagePath, drawerHref, selectable }: Clus
           <Download className="h-4 w-4" aria-hidden="true" /> Export
         </button>
       </div>
-      <FeedTable table={{ ...table, title: '', rows }} pagePath={pagePath} drawerHref={drawerHref} selectable={selectable} />
+      <FeedTable table={shown} pagePath={pagePath} drawerHref={drawerHref} selectable={selectable} headGroups={MEMBER_HEAD_GROUPS} compactMenus />
     </section>
   );
 }

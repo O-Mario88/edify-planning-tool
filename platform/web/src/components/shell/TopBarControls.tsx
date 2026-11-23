@@ -94,6 +94,20 @@ export function ThemeToggle() {
   );
 }
 
+/** The theme switch inside the account menu, for the phone header that has no room for its own. */
+function ThemeMenuItem() {
+  const dark = useSyncExternalStore(
+    subscribeTheme,
+    () => document.documentElement.classList.contains('theme-dark'),
+    () => false,
+  );
+  return (
+    <button type="button" role="menuitem" onClick={() => chooseTheme(dark ? 'light' : 'dark')} className="edify-phone-theme w-full px-4 py-2 text-left font-semibold edify-text">
+      {dark ? 'Turn off night black mode' : 'Turn on night black mode'}
+    </button>
+  );
+}
+
 /** Closes on a click outside or Escape; opens below its button. */
 function useDisclosure() {
   const [open, setOpen] = useState(false);
@@ -178,6 +192,7 @@ export function AccountMenu({ name, initials, email = '', activeRole, roles, pat
           <a href={`/support?route=${route}`} className="edify-mobile-account-link block px-4 py-2 edify-text">
             Report a problem
           </a>
+          <ThemeMenuItem />
           <Link href="/profile" className="block px-4 py-1.5 hover:bg-[var(--edify-surface-muted)] font-semibold edify-text">
             My Profile
           </Link>

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { RoadConditionReportData, SmartRouteResultData, SmartStopData } from './routePlanner';
-import { NO_ROAD_LEG_NOTE, hasNoRoadLeg, rankOptions, roadSummary, routeInsights, routeKpis, routeNote, ssaCoverage, trafficWords } from './routeView';
+import { NO_ROAD_LEG_NOTE, hasNoRoadLeg, optionOf, rankOptions, roadSummary, routeInsights, routeKpis, routeNote, ssaCoverage, trafficWords } from './routeView';
 import type { RouteOption } from './routeView';
 
 const stop = (id: string, band: string): SmartStopData =>
@@ -30,7 +30,7 @@ const result = (over: Partial<SmartRouteResultData> = {}): SmartRouteResultData 
   }) as SmartRouteResultData;
 
 const option = (mode: RouteOption['mode'], meters: number, seconds: number, included = 3): RouteOption => ({
-  mode, label: mode, meters, seconds, included, roadComplete: true, coverage: '2 of 2',
+  mode, label: mode, meters, seconds, included, roadComplete: true, coverage: '2 of 2', traffic: 'Unavailable', recommended: false,
 });
 
 describe('routeKpis', () => {
@@ -89,6 +89,20 @@ describe('ssaCoverage', () => {
     const coverage = ssaCoverage(result({ stops: [stop('a', 'routine')] }));
     expect(coverage.total).toBe(0);
     expect(coverage.percent).toBeNull();
+  });
+});
+
+describe('optionOf', () => {
+  it('carries the road traffic and recommendation Go gave that route', () => {
+    const base = result();
+    const option = optionOf('fastest', 'Fastest', result({ is_recommended: false, totals: { ...base.totals, traffic_state: 'slow' } }));
+    expect(option.traffic).toBe('Slow');
+    expect(option.recommended).toBe(false);
+    expect(optionOf('balanced', 'Balanced', result()).recommended).toBe(true);
+  });
+
+  it('never invents traffic the provider did not report', () => {
+    expect(optionOf('balanced', 'Balanced', result()).traffic).toBe('Unavailable');
   });
 });
 

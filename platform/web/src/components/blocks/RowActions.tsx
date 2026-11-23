@@ -17,7 +17,7 @@ export interface RowAction {
   readonly onSelect?: () => void;
 }
 
-export function RowActions({ subject, actions }: { subject: string; actions: readonly RowAction[] }) {
+export function RowActions({ subject, actions, compact = false }: { subject: string; actions: readonly RowAction[]; compact?: boolean }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -36,7 +36,7 @@ export function RowActions({ subject, actions }: { subject: string; actions: rea
   return (
     <div className="row-menu" data-row-actions="" ref={ref}>
       <button type="button" className="row-menu__trigger" aria-haspopup="menu" aria-expanded={open} aria-label={`Actions for ${subject}`} onClick={() => setOpen(!open)}>
-        Actions
+        {compact ? null : 'Actions'}
         <svg className={`row-menu__caret ${open ? 'is-open' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>

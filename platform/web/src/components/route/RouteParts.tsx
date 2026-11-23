@@ -226,18 +226,21 @@ export function NearbyCard({
 }) {
   const shown = showAll ? suggestions : suggestions.slice(0, 1);
   return (
-    <section className={`${card} p-5`} aria-labelledby="near-route-title">
-      <header className="flex items-center justify-between gap-3">
-        <h2 id="near-route-title" className="flex items-center gap-3 text-[19px] font-semibold text-[var(--edify-text)]">
-          <RouteIcon name="bulb" className="h-7 w-7 text-amber-400" />
+    <section className={`${card} sr-near`} aria-labelledby="near-route-title">
+      <details open={Boolean(around) || undefined}>
+      <summary>
+        <h2 id="near-route-title">
+          <RouteIcon name="bulb" className="h-5 w-5 text-amber-400" />
           {around ? `Schools Near ${around.name}` : 'Schools Near Your Route'}
+          <span>({suggestions.length})</span>
         </h2>
+        <RouteIcon name="arrowRight" className="sr-near__caret h-4 w-4" />
+      </summary>
         {suggestions.length > 1 ? (
-          <button type="button" onClick={onViewAll} className="flex items-center gap-2 text-[15px] font-semibold text-[var(--brand-primary)]">
-            {showAll ? 'Show fewer' : 'View All'} <RouteIcon name="arrowRight" className="h-5 w-5" />
+          <button type="button" onClick={onViewAll} className="mt-2 flex items-center gap-2 text-[13px] font-semibold text-[var(--brand-primary)]">
+            {showAll ? 'Show fewer' : 'View All'} <RouteIcon name="arrowRight" className="h-4 w-4" />
           </button>
         ) : null}
-      </header>
       {shown.length === 0 ? (
         <p className="mt-4 text-[var(--edify-text-muted)]">{around ? 'No eligible schools near this school.' : 'No eligible schools near this route.'}</p>
       ) : (
@@ -283,6 +286,7 @@ export function NearbyCard({
           ))}
         </ul>
       )}
+      </details>
     </section>
   );
 }

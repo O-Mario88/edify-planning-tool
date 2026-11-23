@@ -1,0 +1,37 @@
+/*
+ * The phone's top bar as the designs draw it: the Edify mark, then search,
+ * messages, notifications and the account. The date stays on wider screens
+ * and the theme switch moves into the account menu.
+ */
+.edify-topbar__phone-brand { display: none; }
+.edify-phone-theme { display: none !important; }
+
+/* The sidebar's deep navy, in the light theme. */
+html:not(.theme-dark) .edify-shell .app-sidebar {
+  background-color: #06305f !important;
+  background-image: linear-gradient(180deg, #052a55 0%, #06346b 58%, #0a3f7f 100%) !important;
+}
+
+@media (max-width: 639.98px) {
+  .edify-shell .edify-topbar { gap: 2px; padding-inline: 12px; }
+  .edify-shell .edify-topbar__lead { justify-content: flex-end; gap: 2px; }
+  .edify-shell .edify-topbar__phone-brand { display: inline-flex; flex-shrink: 0; align-items: center; gap: 7px; margin-right: auto; color: var(--edify-text); }
+  .edify-topbar__phone-logo {
+    display: block;
+    width: 68px;
+    height: 28px;
+    background: color-mix(in srgb, var(--brand-primary) 55%, #04142b);
+    -webkit-mask: url('/static/images/logo.png') left center / contain no-repeat;
+    mask: url('/static/images/logo.png') left center / contain no-repeat;
+  }
+  html.theme-dark .edify-topbar__phone-logo { background: #ffffff; }
+  .edify-topbar__phone-words { padding-left: 7px; border-left: 1px solid var(--edify-border); font-size: 10.5px; font-weight: 500; line-height: 1.15; white-space: nowrap; }
+  .edify-shell .edify-topbar__when, .edify-shell .edify-topbar__utility--theme { display: none !important; }
+  .edify-shell .edify-topbar__lead { flex: 1 1 auto !important; }
+  .edify-shell .edify-topbar__search { flex: 0 0 auto; width: auto !important; margin-left: auto !important; }
+  .edify-shell .edify-topbar__search .edify-search-submit { background: none !important; box-shadow: none !important; color: var(--edify-text) !important; }
+  .edify-phone-theme { display: block !important; }
+}
+@media (max-width: 359.98px) {
+  .edify-topbar__phone-words { display: none; }
+}

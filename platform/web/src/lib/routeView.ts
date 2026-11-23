@@ -73,6 +73,10 @@ export interface RouteOption {
   readonly included: number;
   readonly roadComplete: boolean;
   readonly coverage: string;
+  /** The provider's traffic for this route, in words. */
+  readonly traffic: string;
+  /** Go marked this order as its recommendation. */
+  readonly recommended: boolean;
 }
 
 export interface RankedOption extends RouteOption {
@@ -90,6 +94,8 @@ export function optionOf(mode: SmartOptimizationMode, label: string, result: Sma
     included: result.totals.schools_included,
     roadComplete: result.totals.road_complete,
     coverage: coverage.total ? `${coverage.reached} of ${coverage.total} priority` : 'No priority schools',
+    traffic: trafficWords(result.totals.traffic_state),
+    recommended: result.is_recommended,
   };
 }
 

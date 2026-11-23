@@ -97,7 +97,8 @@ function pinElement(stop: ItineraryStop): HTMLElement {
   const root = document.createElement('button');
   root.type = 'button';
   root.className = 'edify-route-pin';
-  root.setAttribute('aria-label', stop.order ? `Stop ${stop.order}: ${school.name}` : school.name);
+  // The number and name read as they are shown, so voice control can find the pin by its words.
+  root.setAttribute('aria-label', stop.order ? `Stop ${stop.order} ${school.name}` : school.name);
   const drop = document.createElement('span');
   drop.className = 'edify-route-pin__drop';
   drop.style.background = TONES[tone];
@@ -108,7 +109,8 @@ function pinElement(stop: ItineraryStop): HTMLElement {
   const label = document.createElement('span');
   label.className = 'edify-route-pin__label';
   label.textContent = school.name;
-  root.append(drop, label);
+  // The space keeps the number and name as separate words for screen readers and voice control.
+  root.append(drop, ' ', label);
   return root;
 }
 
@@ -194,8 +196,10 @@ function fit(instance: MapLibreMap, extent: [[number, number], [number, number]]
   const { width, height } = instance.getContainer().getBoundingClientRect();
   if (width < 50 || height < 50) return;
   const pad = Math.min(80, Math.round(Math.min(width, height) / 6));
+  // A phone's planner map keeps its pins clear of the route card above and the legend below.
+  const onPhonePlanner = width < 640 && Boolean(instance.getContainer().closest('.sr-panel-map'));
   instance.fitBounds(extent, {
-    padding: { top: pad, bottom: pad, left: pad, right: Math.min(pad * 2, width / 3) },
+    padding: onPhonePlanner ? { top: 92, bottom: 52, left: 62, right: 34 } : { top: pad, bottom: pad, left: pad, right: Math.min(pad * 2, width / 3) },
     maxZoom: 14,
     duration: 0,
   });
@@ -455,6 +459,7 @@ export function RouteMap({
         if (!point) continue;
         const el = pinElement(stop);
         if (showPriority && prioritySchoolIds?.has(stop.school?.schoolId ?? '')) el.dataset.priority = '';
+        if (!compact && stops.length > 1 && stop === stops[0]) el.dataset.start = '';
         el.addEventListener('click', (event) => {
           event.stopPropagation();
           select.current(stop.school!);
@@ -484,7 +489,7 @@ export function RouteMap({
     return () => {
       cancelled = true;
     };
-  }, [ready, stops, path, pathIsRoad, alternatives, activeAlternativeId, roadAlerts, focus, fitOthers, others, showAlerts, showPriority, prioritySchoolIds]);
+  }, [ready, stops, path, pathIsRoad, alternatives, activeAlternativeId, roadAlerts, focus, fitOthers, others, showAlerts, showPriority, prioritySchoolIds, compact]);
 
   useEffect(() => {
     const instance = map.current;

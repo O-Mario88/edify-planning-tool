@@ -10,6 +10,8 @@ import {
   PageFactSchema,
   PageFactsSchema,
   PageHeaderSchema,
+  PageLinkSchema,
+  PageLinksSchema,
   PageMeterSchema,
   PageMetricSchema,
   PagePanelItemSchema,
@@ -23,7 +25,7 @@ import {
 } from '@/gen/edify/screens/v1/page_pb';
 import type { PageBlock } from '@/gen/edify/screens/v1/page_pb';
 
-import { coreSchoolView, honestSsa, leadMetrics, metricLine, panelLine, schoolIdentity, splitHeroActions, stripNamed, trendPoints } from './schoolProfileView';
+import { championChecks, coreFigures, coreSchoolView, honestSsa, interventionRows, readinessWord, leadMetrics, metricLine, panelLine, schoolIdentity, splitHeroActions, stripNamed, trendPoints } from './schoolProfileView';
 
 const action = (label: string) => create(PageActionSchema, { key: label, label, enabled: true, href: '/x' });
 const metric = (label: string, value = '1', helper = '', note = '') => create(PageMetricSchema, { label, value, helper, note });
@@ -225,5 +227,84 @@ describe('coreSchoolView', () => {
     const view = coreSchoolView([panel('Something New', ['A line'])]);
     expect(view.others.map((block) => (block.kind.case === 'panel' ? block.kind.value.title : ''))).toEqual(['Something New']);
     expect(view.readiness).toBe('');
+  });
+});
+
+describe('the Core School tab as the design draws it', () => {
+  const metric = (label: string, value: string, helper = '') => create(PageMetricSchema, { label, value, helper });
+  const coreStrip = (packageValue: string, packageHelper: string) =>
+    create(PageBlockSchema, {
+      kind: {
+        case: 'strip',
+        value: create(PageStripSchema, {
+          title: 'Performance overview',
+          metrics: [metric('SSA Trajectory', 'Improved'), metric('Package', packageValue, packageHelper), metric('Champion Readiness', 'Not Yet Ready', "Edify's Champion rule")],
+        }),
+      },
+    });
+  const handovers = 'Partner hand-overs: 2 not yet scheduled · 1 scheduled · 3 completed';
+  const matrix = (rows: readonly (readonly string[])[]) =>
+    create(PageBlockSchema, {
+      kind: {
+        case: 'table',
+        value: create(PageTableSchema, {
+          title: 'Intervention Matrix',
+          columns: ['Intervention', 'Previous (FY 2025/26)', 'Current (FY 2026/27)', 'Change', 'Status', 'Target', 'To Target'].map((label) => create(PageColumnSchema, { label })),
+          rows: rows.map((cells) => create(PageRowSchema, { cells: cells.map((text) => create(PageCellSchema, { text })) })),
+        }),
+      },
+    });
+  const links = (title: string, words: readonly string[]) =>
+    create(PagePanelSchema, {
+      title,
+      items: [create(PagePanelItemSchema, { kind: { case: 'links', value: create(PageLinksSchema, { links: words.map((text) => create(PageLinkSchema, { text })) }) } })],
+    });
+
+  it('reads the intervention rows, leaving out the all-interventions total', () => {
+    const rows = interventionRows([matrix([['Leadership', '2.20', '7.10', '+4.90', 'Improved', '10.0', '2.90'], ['All interventions', '3.0', '4.5', '+1.5', 'Improved', '10.0', '5.5']])]);
+    expect(rows.map((row) => row.name)).toEqual(['Leadership']);
+    expect(rows[0]).toMatchObject({ previous: '2.20', current: '7.10', change: '+4.90', status: 'Improved' });
+  });
+
+  it('gives the five figures from what Go answered', () => {
+    const view = coreSchoolView([coreStrip('25%', 'Visits 1/4 · Trainings 1/4'), panel('Package and Support', [handovers])]);
+    const rows = interventionRows([matrix([['Leadership', '2.20', '7.10', '+4.90', 'Improved', '10.0', '2.90'], ['Financial Health', '—', '—', '—', 'Not Compared', '10.0', '—']])]);
+    const figures = coreFigures(view, 'FY 2026/27', rows);
+    expect(figures.map((item) => item.label)).toEqual(['Programme Package', 'Interventions', 'Champion Readiness', 'Partner Hand-overs', 'Implementation Progress']);
+    expect(figures.map((item) => item.value)).toEqual(['4 visits · 4 trainings', '1', 'Not Yet Ready', '1 Scheduled', '25%']);
+    expect(figures[3]?.helper).toBe('3 Completed');
+    expect(figures[4]?.helper).toBe('Visits 1/4 · Trainings 1/4');
+  });
+
+  it('shows no progress figure for a school with no Core plan', () => {
+    const view = coreSchoolView([coreStrip('No package', 'No Core plan this year'), panel('Package and Support', ['No Core plan for FY 2026/27.', handovers])]);
+    const figures = coreFigures(view, 'FY 2026/27', []);
+    expect(figures[0]?.value).toBe('No Package');
+    expect(figures[0]?.helper).toBe('for FY 2026/27');
+    expect(figures[1]?.value).toBe('0');
+    expect(figures[4]?.value).toBe('—');
+  });
+
+  it('reads the Champion rule checks in their own words', () => {
+    const checks = championChecks(links('Champion Readiness: Not Yet Ready', ['Met: Latest SSA', 'Not met: No intervention below 7.0', 'Not judged: All package work']));
+    expect(checks.map((check) => check.state)).toEqual(['met', 'not', 'none']);
+    expect(checks[1]?.text).toBe('No intervention below 7.0');
+  });
+
+  it('takes the readiness from the header badge, without its label', () => {
+    expect(readinessWord(['SSA FY2027: 4.5', 'Readiness: Ready for Support Planning'])).toBe('Ready for Support Planning');
+    expect(readinessWord(['SSA FY2027: 4.5'])).toBe('');
+  });
+
+  it('finds the recommendation records that follow the section heading', () => {
+    const records = panel('', ['Leadership (4.0, Low)']);
+    const view = coreSchoolView([create(PageBlockSchema, { kind: { case: 'section', value: 'Recommended Support' } }), records]);
+    expect(view.support).toBe(records.kind.value);
+    expect(view.others).toEqual([]);
+  });
+
+  it('keeps the two page links apart from the cards', () => {
+    const view = coreSchoolView([panel('', ['A line'])]);
+    expect(view.others).toHaveLength(1);
   });
 });

@@ -1232,7 +1232,7 @@ export function RoutePlanner({ day: dayJson, existingWebUrl: _existingWebUrl, di
                         ? st.road_available ? `${km(st.road_meters)} • ${hoursMinutes(st.road_seconds)}` : st.road_status || 'Road access requires verification'
                         : 'First stop';
                       return (
-                        <li key={st.school_id} className="sr-stop" data-priority={(st.priority?.band ?? 'routine') !== 'routine' || undefined}>
+                        <li key={st.school_id} className="sr-stop" data-kind={idx === 0 && !smartResult.start_label ? 'start' : undefined} data-priority={(st.priority?.band ?? 'routine') !== 'routine' || undefined}>
                           <span className="sr-stop__num">{smartResult.start_label ? st.order + 1 : st.order}</span>
                           <div className="sr-stop__text">
                             <p className="sr-stop__name" title={`${st.school_name} (${badge.label})`}>{st.school_name}<span className="sr-only"> ({badge.label})</span></p>

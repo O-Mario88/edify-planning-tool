@@ -356,3 +356,69 @@
 
 /* A nearby school's name wraps to a second line rather than being cut. */
 [data-page='smart-route'] p[data-sr-near-name] { overflow: visible !important; text-overflow: clip !important; white-space: normal !important; -webkit-line-clamp: unset !important; }
+
+/* The designs' surface: a near-white blue page, soft cards. */
+[data-page='smart-route'] { background: linear-gradient(180deg, color-mix(in srgb, var(--brand-primary) 6%, var(--edify-bg)), var(--edify-bg) 22rem); min-height: 100%; }
+[data-page='smart-route'] .card, [data-page='smart-route'] .sr-card, [data-page='smart-route'] .sr-kpi {
+  border-color: color-mix(in srgb, var(--edify-border) 58%, transparent) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 1px 2px rgb(16 42 67 / 0.04), 0 6px 18px rgb(16 42 67 / 0.06) !important;
+}
+
+/* The first stop is the day's start, marked green and named on the map. */
+[data-page='smart-route'] .sr-panel-map .edify-route-pin[data-start] .edify-route-pin__label { display: block; }
+
+/* The configuration fills its column, with Optimize at the foot. */
+@media (min-width: 1024px) {
+  .sr-panel-config, .sr-panel-config[data-open] { justify-content: space-between; }
+  .sr-optimize { margin-top: 2px; }
+  .sr-stop { padding: 7px 0; }
+}
+[data-page='smart-route'] .sr-tabs { align-self: stretch; box-sizing: border-box; min-width: 100%; max-width: none !important; }
+
+/* Route option cards */
+.sr-option { display: flex; flex-direction: column; gap: 4px; }
+.sr-option__head { display: flex; align-items: center; gap: 6px; color: var(--brand-primary); font-size: 13px; line-height: 1.2; }
+.sr-option__head strong { color: var(--edify-text); font-weight: 700; }
+.sr-option[data-active] .sr-option__head strong { color: var(--brand-primary); }
+.sr-option__road { color: var(--edify-text); font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.sr-option__chips { display: flex; flex-wrap: wrap; gap: 3px; }
+.sr-option__chips > span { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; border-radius: 999px; font-size: 10.5px; font-weight: 600; line-height: 1.25; }
+.sr-option__chips > span[data-tone='good'] { background: var(--edify-success-light); color: var(--edify-success-text); }
+.sr-option__chips > span[data-tone='plain'] { background: var(--edify-surface-muted); color: var(--edify-text); }
+
+/* Schools near the route stay one tap away, closed by default. */
+.sr-near { margin-top: 12px; padding: 10px 14px; }
+.sr-near summary { display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; list-style: none; }
+.sr-near summary::-webkit-details-marker { display: none; }
+.sr-near summary h2 { display: inline-flex; align-items: center; gap: 7px; color: var(--edify-text); font-size: 14px !important; font-weight: 700 !important; }
+.sr-near summary h2 span { color: var(--edify-text-muted); font-weight: 500; }
+.sr-near__caret { transition: transform 150ms ease; }
+.sr-near details[open] .sr-near__caret { transform: rotate(90deg); }
+
+/* The phone's header stays on one line where it fits. */
+@media (min-width: 375px) and (max-width: 639.98px) {
+  [data-page='smart-route'] .sr-header p { font-size: 10.5px !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sr-near__caret { transition: none; }
+}
+
+html:not(.theme-dark) [data-page='smart-route'] { background: linear-gradient(180deg, #edf4fb 0, #f6f9fc 24rem); }
+.sr-option { white-space: normal; }
+.sr-option__head strong { min-width: 0; white-space: normal; }
+
+[data-page='smart-route'] { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+@media (max-width: 1023.98px) {
+  [data-page='smart-route'] .sr-panel-map .edify-route-pin[data-start] .edify-route-pin__label { display: none; }
+}
+
+/* The map's controls stay dark-on-white in the night theme too. */
+[data-page='smart-route'] .sr-map-toggles, [data-page='smart-route'] .sr-map-toggles label, [data-page='smart-route'] .sr-map-switch,
+[data-page='smart-route'] .sr-map-seg button:not([aria-pressed='true']), [data-page='smart-route'] .sr-map-layers__panel, [data-page='smart-route'] .sr-layer-list label,
+[data-page='smart-route'] .sr-map-layers summary, [data-page='smart-route'] .sr-map-locate, [data-page='smart-route'] .sr-map-stack button,
+[data-page='smart-route'] .sr-map-chips div, [data-page='smart-route'] .sr-map-chips span, [data-page='smart-route'] .sr-map-legend, [data-page='smart-route'] .sr-map-legend span { color: #1e293b !important; }
+[data-page='smart-route'] .sr-map-stack button, [data-page='smart-route'] .sr-map-locate, [data-page='smart-route'] .sr-map-chips > div { background-color: #ffffff !important; }
+@media (min-width: 1024px) and (max-width: 1799.98px) {
+  [data-page='smart-route'] .sr-panel-config input[type='time'] { padding: 0 5px !important; font-size: 12px !important; }
+}

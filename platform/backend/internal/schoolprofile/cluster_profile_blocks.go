@@ -448,7 +448,7 @@ func (h clusterHistoryData) chart(kind clusterChartKind) *screensv1.PageBlock {
 // ── The member schools ──────────────────────────────────────────────────
 
 var clusterMemberColumns = []string{"School ID", "School Name", "Type", "SSA Avg", "Last Visit", "Last Training",
-	"Visit Plan Status", "Training Plan Status", "Visit Lock", "Planning Readiness", "Responsible Staff", "Actions"}
+	"Visit Plan Status", "Training Plan Status", "Visits", "Trainings", "Open", "Visit Lock", "Planning Readiness", "Responsible Staff", "Actions"}
 
 func factValue(facts []*screensv1.PageFact, label string) *screensv1.PageFact {
 	for _, f := range facts {
@@ -514,6 +514,7 @@ func (s *Service) clusterMembers(ctx context.Context, p auth.Principal, cl clust
 		if who := cell(row, "Responsible").GetText(); who == "Partner" {
 			responsible = "Partner · " + responsible
 		}
+		work := memberWorkCells(pr.schoolWork[id])
 		built := &screensv1.PageRow{
 			PickId: row.GetPickId(), PickLabel: row.GetPickLabel(), Details: row.GetDetails(), DetailsHref: row.GetDetailsHref(),
 			DetailBlocks: row.GetDetailBlocks(),
@@ -523,7 +524,7 @@ func (s *Service) clusterMembers(ctx context.Context, p auth.Principal, cl clust
 				ssaCell,
 				{Text: factValue(row.GetDetails(), "Last Visit").GetValue(), Tone: toneWord(factValue(row.GetDetails(), "Last Visit").GetTone())},
 				{Text: factValue(row.GetDetails(), "Last Training").GetValue(), Tone: toneWord(factValue(row.GetDetails(), "Last Training").GetTone())},
-				cell(row, "Visit Plan Status"), cell(row, "Training Plan Status"), cell(row, "Visit Lock"),
+				cell(row, "Visit Plan Status"), cell(row, "Training Plan Status"), work[0], work[1], work[2], cell(row, "Visit Lock"),
 				{Text: orDash(label(rules.Readiness, readiness[id]))},
 				{Text: orDash(responsible)},
 				cell(row, "Actions"),
@@ -543,6 +544,20 @@ func (s *Service) clusterMembers(ctx context.Context, p auth.Principal, cl clust
 		table.Footnote = fmt.Sprintf("%s Champion school%s kept in the Champion list.", intcomma(kept), plural(kept))
 	}
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: table}}, roster.GetSelection(), nil
+}
+
+// memberWorkCells is a school's year of work on the member table: visits and
+// trainings as done of planned, and how many of them are still open.
+func memberWorkCells(work *placeWork) []*screensv1.PageCell {
+	if work == nil {
+		work = &placeWork{}
+	}
+	open := max(work.visits-work.visitsDone, 0) + max(work.trainings-work.trainingsDone, 0)
+	return []*screensv1.PageCell{
+		{Text: intcomma(work.visitsDone) + " / " + intcomma(work.visits)},
+		{Text: intcomma(work.trainingsDone) + " / " + intcomma(work.trainings)},
+		{Text: intcomma(open)},
+	}
 }
 
 // toneWord turns a fact's tone into a table cell's.

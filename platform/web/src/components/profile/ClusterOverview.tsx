@@ -3,7 +3,7 @@
  * histories, each school's readiness, the year's activities and attendance,
  * what needs attention and what to do next. All from Go's page answer.
  */
-import { AlertCircle, ArrowRight, BarChart3, CalendarCheck, CalendarDays, ChevronRight, CheckCircle2, Clock, Flag, Lightbulb, School, Users, Zap } from 'lucide-react';
+import { AlertCircle, ArrowRight, BarChart3, BookOpen, Building2, CalendarCheck, CalendarDays, ChevronRight, CheckCircle2, Clock, Coins, Cross, Flag, GraduationCap, HeartHandshake, Landmark, Lightbulb, School, Target, UserRoundCheck, Users, Zap } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 
@@ -38,6 +38,37 @@ function Ring({ fraction, figure, caption, small = false }: { fraction: number; 
   );
 }
 
+const DOMAIN_ICONS: Readonly<Record<string, LucideIcon>> = {
+  'Christlike Behaviour': HeartHandshake,
+  'Exposure to the Word of God': Cross,
+  'Financial Health': Coins,
+  Leadership: UserRoundCheck,
+  'Government Requirements': Landmark,
+  'Learning Environment': BookOpen,
+  "Teacher's Environment": GraduationCap,
+  Enrolment: Users,
+};
+
+function DomainName({ label, href }: { label: string; href: string }) {
+  const DomainIcon = DOMAIN_ICONS[label] ?? Building2;
+  const name = (
+    <>
+      <DomainIcon className="h-3.5 w-3.5 shrink-0 text-[var(--brand-primary)]" aria-hidden="true" />
+      {label}
+    </>
+  );
+  return href ? <Link href={href} data-pf="domain-name" className="hover:underline">{name}</Link> : <span data-pf="domain-name">{name}</span>;
+}
+
+/** The small picture beside a recommended action, chosen by what the action is. */
+function actionIcon(words: string): LucideIcon {
+  const lower = words.toLowerCase();
+  if (lower.includes('ssa')) return CalendarCheck;
+  if (lower.includes('meeting')) return Users;
+  if (lower.includes('training')) return GraduationCap;
+  return Target;
+}
+
 function SsaCard({ part, year, filters, pagePath }: { part: PageRailPart; year: string; filters: readonly PageFilter[]; pagePath: string }) {
   const score = Number.parseFloat(part.figure);
   const assessed = Number.isFinite(score);
@@ -64,7 +95,7 @@ function SsaCard({ part, year, filters, pagePath }: { part: PageRailPart; year: 
                 const missing = meter.value === NOT_ASSESSED;
                 return (
                   <tr key={meter.label}>
-                    <td>{href ? <Link href={href} className="hover:underline">{meter.label}</Link> : meter.label}</td>
+                    <td><DomainName label={meter.label} href={href} /></td>
                     <td data-num="" className="font-semibold tabular-nums">{missing ? '—' : meter.value}</td>
                     <td data-num=""><span data-pf="status-chip" data-state={missing ? 'none' : 'done'}>{missing ? NOT_ASSESSED : 'Assessed'}</span></td>
                   </tr>
@@ -90,7 +121,7 @@ function ReadinessCard({ panel, pagePath }: { panel: PagePanel; pagePath: string
           const missing = meter.value === NOT_ASSESSED;
           return (
             <li key={`${meter.label}-${meter.href}`}>
-              {href ? <Link href={href} className="min-w-0 font-medium text-[var(--edify-text)] hover:underline">{meter.label}</Link> : <span className="min-w-0 font-medium">{meter.label}</span>}
+              {href ? <Link href={href} title={meter.label} className="min-w-0 font-medium text-[var(--edify-text)] hover:underline">{meter.label}</Link> : <span title={meter.label} className="min-w-0 font-medium">{meter.label}</span>}
               <span className="block h-2 overflow-hidden rounded-full bg-[var(--edify-surface-muted)]">
                 <span className="block h-full rounded-full bg-[var(--brand-primary)]" style={{ width: `${Math.round(Math.min(Math.max(meter.fraction, 0), 1) * 100)}%` }} />
               </span>
@@ -166,7 +197,7 @@ function linkHref(link: PageLink, pagePath: string): string {
   return link.drawer ? withDrawer('', link.href) : resolveHref(pagePath, link.href);
 }
 
-function LinksCard({ panel, title, icon, pagePath, block }: { panel: PagePanel; title?: string; icon: LucideIcon; pagePath: string; block: string }) {
+function LinksCard({ panel, title, icon, pagePath, block, varied = false }: { panel: PagePanel; title?: string; icon: LucideIcon; pagePath: string; block: string; varied?: boolean }) {
   return (
     <ProfileCard title={title ?? panel.title} icon={icon} block={block} className="h-full">
       <div className="text-[13px]">
@@ -175,9 +206,10 @@ function LinksCard({ panel, title, icon, pagePath, block }: { panel: PagePanel; 
             <ul key={index} data-pf="link-list" tabIndex={0} aria-label={`${title ?? panel.title} list`} className="divide-y divide-[var(--edify-border)]">
               {item.kind.value.links.map((link) => {
                 const href = linkHref(link, pagePath);
+                const LineIcon = varied ? actionIcon(link.text) : AlertCircle;
                 const body = (
                   <>
-                    <AlertCircle className="h-4 w-4 shrink-0 text-[var(--edify-warning-text)]" aria-hidden="true" />
+                    <LineIcon className={`h-4 w-4 shrink-0 ${varied ? 'text-[var(--brand-primary)]' : 'text-[var(--edify-warning-text)]'}`} aria-hidden="true" />
                     <span className="min-w-0 flex-1">{link.text}</span>
                     {href ? <ChevronRight className="h-4 w-4 shrink-0 text-[var(--edify-text-muted)]" aria-hidden="true" /> : null}
                   </>
@@ -223,7 +255,7 @@ export function ClusterOverview({ view, filters, pagePath, drawerHref, selectabl
       {view.attendance ? <div data-pf-area="attendance"><AttendanceCard strip={view.attendance} pagePath={pagePath} yearQuery={yearQuery} /></div> : null}
       {view.insights ? <div data-pf-area="insights"><LinksCard panel={view.insights} title={view.ssaYear ? `Cluster Insights — ${view.ssaYear}` : undefined} icon={Lightbulb} pagePath={pagePath} block="cluster-insights" /></div> : null}
       {view.members ? <div data-pf-area="members"><ClusterMembers table={view.members} pagePath={pagePath} drawerHref={drawerHref} selectable={selectable} /></div> : null}
-      {view.recommended ? <div data-pf-area="recommended"><LinksCard panel={view.recommended} icon={Zap} pagePath={pagePath} block="cluster-recommended" /></div> : null}
+      {view.recommended ? <div data-pf-area="recommended"><LinksCard panel={view.recommended} icon={Zap} pagePath={pagePath} block="cluster-recommended" varied /></div> : null}
     </div>
   );
 }

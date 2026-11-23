@@ -37,6 +37,10 @@ export interface FeedTableProps {
   readonly selectable: boolean;
   /** The list's pager strip when it arrives as a block of its own after the table. */
   readonly footer?: ReactNode;
+  /** Headings over groups of columns, left to right; their spans add up to the columns. */
+  readonly headGroups?: readonly { readonly label: string; readonly span: number }[];
+  /** Row menus show only their arrow, for a table with little room. */
+  readonly compactMenus?: boolean;
 }
 
 const ROW_TONES: Readonly<Record<string, string>> = {
@@ -105,7 +109,7 @@ function CellText({ cell, resolve }: { cell: PageCell; resolve: (href: string) =
 
 const TEAM_ACTION_POST_RE = /^\/actions\/[A-Za-z0-9_-]+\/(acknowledge|start|block|return|cancel|escalate|resolve)$/;
 
-export function CellActions({ actions, subject, hrefOf }: { actions: readonly PageAction[]; subject: string; hrefOf: (action: PageAction) => string }) {
+export function CellActions({ actions, subject, hrefOf, compactMenu = false }: { actions: readonly PageAction[]; subject: string; hrefOf: (action: PageAction) => string; compactMenu?: boolean }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -130,6 +134,7 @@ export function CellActions({ actions, subject, hrefOf }: { actions: readonly Pa
       )}
       <RowActions
         subject={subject}
+        compact={compactMenu}
         actions={menu.map((action) => {
           const href = hrefOf(action);
           const isTeamPost = action.enabled && !action.drawer && TEAM_ACTION_POST_RE.test(href.split('?')[0] ?? '');
@@ -286,7 +291,7 @@ function AdminTable({ table, resolve }: { table: PageTable; resolve: (href: stri
   );
 }
 
-export function FeedTable({ table, pagePath, drawerHref, selectable, footer }: FeedTableProps) {
+export function FeedTable({ table, pagePath, drawerHref, selectable, footer, headGroups, compactMenus = false }: FeedTableProps) {
   const resolve = (href: string) => resolveHref(pagePath, href);
   const hrefOf = (action: PageAction) => actionHref(action, pagePath, drawerHref);
   const [openKey, setOpenKey] = useState<string | null>(null);
@@ -317,6 +322,18 @@ export function FeedTable({ table, pagePath, drawerHref, selectable, footer }: F
           <table className="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll" data-titled>
             {table.columns.length ? (
               <thead>
+                {headGroups?.length ? (
+                  <tr data-head-groups="">
+                    {ticks ? <td /> : null}
+                    {headGroups.map((group, index) =>
+                      group.label ? (
+                        <th key={group.label} scope="colgroup" colSpan={group.span} className="text-center">{group.label}</th>
+                      ) : (
+                        <td key={index} colSpan={group.span} />
+                      ),
+                    )}
+                  </tr>
+                ) : null}
                 <tr>
                   {ticks ? (
                     <th scope="col" className={`${CELL} w-8`}>
@@ -404,7 +421,7 @@ export function FeedTable({ table, pagePath, drawerHref, selectable, footer }: F
                               {isOpen ? 'Hide details' : 'Show details'}
                             </button>
                           ) : null}
-                          {isActionsCell(cell) ? <CellActions actions={cell.actions} subject={subject} hrefOf={hrefOf} /> : <CellText cell={cell} resolve={resolve} />}
+                          {isActionsCell(cell) ? <CellActions compactMenu={compactMenus} actions={cell.actions} subject={subject} hrefOf={hrefOf} /> : <CellText cell={cell} resolve={resolve} />}
                         </td>
                       ))}
                     </tr>

@@ -9,6 +9,8 @@ import Link from 'next/link';
 import { badgeCount, unreadName } from '@/lib/badgeCount';
 import { dateChip } from '@/lib/today';
 
+import './phone-header.css';
+
 import { AccountMenu, HistoryControls, PhoneMenu, ThemeToggle } from './TopBarControls';
 import type { AccountMenuProps } from './TopBarControls';
 
@@ -62,6 +64,14 @@ export function TopBar({
       <div className="edify-topbar__lead flex items-center gap-4 flex-1 min-w-0">
         <HistoryControls />
         <PhoneMenu />
+        <Link href="/home" className="edify-topbar__phone-brand" aria-label="Edify Planning and Monitoring, home">
+          <span className="edify-topbar__phone-logo" aria-hidden="true" />
+          <span className="edify-topbar__phone-words" aria-hidden="true">
+            Planning &amp;
+            <br />
+            Monitoring
+          </span>
+        </Link>
         <search className="edify-topbar__search max-w-md w-full min-w-0 relative block" data-edify-has-submit="">
           <form method="get" action={search.action}>
             {Object.entries(search.keep).map(([name, value]) => (

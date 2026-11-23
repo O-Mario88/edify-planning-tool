@@ -4,6 +4,9 @@
  * School card goes. Arrangement only: every figure, label, tone and
  * permission is the gateway's, and nothing here calculates one.
  */
+import { create } from '@bufbuild/protobuf';
+
+import { PageMetricSchema } from '@/gen/edify/screens/v1/page_pb';
 import type { PageAction, PageBlock, PageFact, PageHeader, PageMetric, PagePanel, PageRailPart, PageStrip, PageTable } from '@/gen/edify/screens/v1/page_pb';
 
 /** The header row's buttons, in the design's order; any other action opens from the Actions menu. */
@@ -184,6 +187,14 @@ export function panelLine(text: string): { label: string; value: string } {
   return { label: text.slice(0, colon), value: text.slice(colon + 2) };
 }
 
+const SUPPORT_TITLE = 'Recommended Support';
+const INTERVENTION_MATRIX = 'Intervention Matrix';
+const ALL_INTERVENTIONS = 'All interventions';
+const READINESS_PREFIX = 'Readiness: ';
+const PACKAGE_TARGETS = /Visits \d+\/(\d+) · Trainings \d+\/(\d+)/;
+const HANDOVERS = /Partner hand-overs: \d+ not yet scheduled · (\d+) scheduled · (\d+) completed/;
+const CHECK_WORDS: readonly (readonly [string, ChampionCheck['state']])[] = [['Met', 'met'], ['Not met', 'not'], ['Not judged', 'none']];
+
 export interface CoreSchoolView {
   /** Champion Readiness in Go's words; empty when the answer has none. */
   readonly readiness: string;
@@ -203,14 +214,17 @@ export function coreSchoolView(blocks: readonly PageBlock[]): CoreSchoolView {
   const panelOf = (block: PageBlock | undefined) => (block?.kind.case === 'panel' ? block.kind.value : undefined);
   const stripBlock = blocks.find((block) => block.kind.case === 'strip');
   const metrics = stripBlock?.kind.case === 'strip' ? stripBlock.kind.value.metrics : [];
+  // Open recommendations arrive as a section heading followed by an untitled panel.
+  const supportHeading = blocks.findIndex((block) => block.kind.case === 'section' && block.kind.value === SUPPORT_TITLE);
+  const supportRecords = supportHeading >= 0 && blocks[supportHeading + 1]?.kind.case === 'panel' ? blocks[supportHeading + 1] : undefined;
   const placed = {
     package: panelBlock((title) => title === 'Package and Support'),
     participation: panelBlock((title) => title === 'Participation'),
     outcomes: panelBlock((title) => title === 'Outcomes'),
-    support: panelBlock((title) => title === 'Recommended Support'),
+    support: supportRecords ?? panelBlock((title) => title === SUPPORT_TITLE),
     champion: panelBlock((title) => title.startsWith(CHAMPION_TITLE)),
   };
-  const used = new Set<PageBlock | undefined>([stripBlock, ...Object.values(placed)]);
+  const used = new Set<PageBlock | undefined>([stripBlock, ...Object.values(placed), supportHeading >= 0 ? blocks[supportHeading] : undefined]);
   const champion = panelOf(placed.champion);
   return {
     readiness: champion?.title.slice(CHAMPION_TITLE.length) || (metrics.find((metric) => metric.label === 'Champion Readiness')?.value ?? ''),
@@ -222,4 +236,78 @@ export function coreSchoolView(blocks: readonly PageBlock[]): CoreSchoolView {
     champion,
     others: blocks.filter((block) => !used.has(block)),
   };
+}
+
+export interface InterventionRow {
+  readonly name: string;
+  readonly href: string;
+  readonly previous: string;
+  readonly current: string;
+  readonly change: string;
+  readonly changeTone: string;
+  readonly status: string;
+}
+
+/** The SSA tab's intervention rows, without its all-interventions total. */
+export function interventionRows(blocks: readonly PageBlock[]): InterventionRow[] {
+  for (const block of blocks) {
+    if (block.kind.case !== 'table' || block.kind.value.title !== INTERVENTION_MATRIX) continue;
+    const { columns, rows } = block.kind.value;
+    const at = (start: string) => columns.findIndex((column) => column.label.startsWith(start));
+    const [previous, current, change, status] = [at('Previous'), at('Current'), at('Change'), at('Status')];
+    return rows
+      .filter((row) => row.cells[0]?.text !== ALL_INTERVENTIONS)
+      .map((row) => ({
+        name: row.cells[0]?.text ?? '',
+        href: row.cells[0]?.href ?? '',
+        previous: row.cells[previous]?.text ?? '',
+        current: row.cells[current]?.text ?? '',
+        change: row.cells[change]?.text ?? '',
+        changeTone: row.cells[change]?.tone ?? '',
+        status: row.cells[status]?.text ?? '',
+      }));
+  }
+  return [];
+}
+
+const panelTexts = (panel: PagePanel | undefined): string[] =>
+  (panel?.items ?? []).flatMap((item) => (item.kind.case === 'text' ? [item.kind.value] : []));
+
+/** The Core tab's five figures, each read from what Go answered. */
+export function coreFigures(view: CoreSchoolView, year: string, interventions: readonly InterventionRow[]): PageMetric[] {
+  const figure = (label: string, value: string, helper: string) => create(PageMetricSchema, { label, value, helper });
+  const pack = view.metrics.find((metric) => metric.label === 'Package');
+  const champion = view.metrics.find((metric) => metric.label === 'Champion Readiness');
+  const targets = PACKAGE_TARGETS.exec(pack?.helper ?? '');
+  const handovers = panelTexts(view.package).map((line) => HANDOVERS.exec(line)).find(Boolean);
+  const scored = interventions.filter((row) => Number.isFinite(Number.parseFloat(row.current))).length;
+  return [
+    figure('Programme Package', targets ? `${targets[1]} visits · ${targets[2]} trainings` : 'No Package', year ? `for ${year}` : ''),
+    figure('Interventions', String(scored), 'scored this year'),
+    champion ?? figure('Champion Readiness', view.readiness || '—', ''),
+    figure('Partner Hand-overs', handovers ? `${handovers[1]} Scheduled` : '—', handovers ? `${handovers[2]} Completed` : ''),
+    figure('Implementation Progress', targets ? (pack?.value ?? '—') : '—', targets ? (pack?.helper ?? '') : 'No Core plan this year'),
+  ];
+}
+
+export interface ChampionCheck {
+  readonly state: 'met' | 'not' | 'none';
+  readonly text: string;
+}
+
+/** The Champion rule's three checks, as Go worded them ("Met: …", "Not met: …", "Not judged: …"). */
+export function championChecks(panel: PagePanel | undefined): ChampionCheck[] {
+  const lines = (panel?.items ?? []).flatMap((item) => (item.kind.case === 'links' ? item.kind.value.links.filter((link) => !link.href).map((link) => link.text) : []));
+  return lines.flatMap((line): ChampionCheck[] => {
+    for (const [word, state] of CHECK_WORDS) {
+      if (line.startsWith(`${word}: `)) return [{ state, text: line.slice(word.length + 2) }];
+    }
+    return [];
+  });
+}
+
+/** The school's planning readiness from its header badge, without the badge's label. */
+export function readinessWord(badges: readonly string[]): string {
+  const badge = badges.find((text) => text.startsWith(READINESS_PREFIX));
+  return badge ? badge.slice(READINESS_PREFIX.length) : '';
 }

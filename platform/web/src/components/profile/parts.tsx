@@ -11,7 +11,7 @@ import type { ReactNode } from 'react';
 import './profile.css';
 
 import type { PageMetric, PagePanel } from '@/gen/edify/screens/v1/page_pb';
-import { resolveHref } from '@/lib/feedPage';
+import { resolveHref, withDrawer } from '@/lib/feedPage';
 import { metricLine, panelLine } from '@/lib/schoolProfileView';
 
 export type Accent = 'blue' | 'green' | 'violet' | 'amber';
@@ -148,14 +148,20 @@ export function PanelLines({ panel, pagePath }: { panel: PagePanel; pagePath: st
           return (
             <ul key={index} className="py-1">
               {item.kind.value.links.map((link) => {
-                const href = resolveHref(pagePath, link.href);
+                const href = link.drawer ? withDrawer('', link.href) : resolveHref(pagePath, link.href);
+                const shape = 'flex items-center justify-between gap-2 py-1.5 font-medium text-[var(--brand-primary)] hover:underline';
+                const words = (
+                  <>
+                    <span>{link.text}</span>
+                    <ChevronRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  </>
+                );
                 return (
                   <li key={link.text}>
-                    {href ? (
-                      <Link href={href} className="flex items-center justify-between gap-2 py-1.5 font-medium text-[var(--brand-primary)] hover:underline">
-                        <span>{link.text}</span>
-                        <ChevronRight className="h-4 w-4 shrink-0" aria-hidden="true" />
-                      </Link>
+                    {href && link.drawer ? (
+                      <a href={href} className={shape}>{words}</a>
+                    ) : href ? (
+                      <Link href={href} className={shape}>{words}</Link>
                     ) : (
                       <span className="block py-1.5 text-[var(--edify-text)]">{link.text}</span>
                     )}

@@ -5,7 +5,7 @@ import {
   PageBlockSchema,
   PageCellSchema,
   PageChartSchema,
-  PageColumnSchema,
+  PageActionSchema, PageColumnSchema,
   PageFactSchema,
   PageFactsSchema,
   PageMetricSchema,
@@ -19,7 +19,7 @@ import {
 } from '@/gen/edify/screens/v1/page_pb';
 import type { PageBlock, PageRow } from '@/gen/edify/screens/v1/page_pb';
 
-import { chartPoints, clusterFactsOf, clusterView, memberTypes, membersCsv, shownMembers } from './clusterProfileView';
+import { chartPoints, clusterFactsOf, clusterView, memberTypes, membersCsv, shownMembers, MEMBER_HEAD_GROUPS, memberTable } from './clusterProfileView';
 
 const strip = (title: string): PageBlock =>
   create(PageBlockSchema, { kind: { case: 'strip', value: create(PageStripSchema, { title, metrics: [create(PageMetricSchema, { label: 'A', value: '1' })] }) } });
@@ -137,5 +137,40 @@ describe('membersCsv', () => {
     expect(csv).toContain(`"'=HYPERLINK(""x"")"`);
     expect(csv).toContain(`"'+1"`);
     expect(csv).toContain(`"'@a"`);
+  });
+});
+
+describe('memberTable', () => {
+  const LABELS = ['School ID', 'School Name', 'Type', 'SSA Avg', 'Last Visit', 'Last Training', 'Visit Plan Status', 'Training Plan Status', 'Visits', 'Trainings', 'Open', 'Visit Lock', 'Planning Readiness', 'Responsible Staff', 'Actions'];
+  const row = create(PageRowSchema, {
+    pickId: 's1',
+    detailsHref: '/schools/s1',
+    cells: [...LABELS.slice(0, -1).map((text) => create(PageCellSchema, { text: `${text} value` })), create(PageCellSchema, { text: '', actions: [create(PageActionSchema, { key: 'menu', label: 'Schedule', enabled: true, href: '/x' })] })],
+  });
+  const table = create(PageTableSchema, { title: 'Member Schools', columns: LABELS.map((label) => create(PageColumnSchema, { label })), rows: [row] });
+
+  it('sets the columns in the design order, with a row number', () => {
+    const shown = memberTable(table);
+    expect(shown.columns.map((column) => column.label)).toEqual(['#', 'School ID', 'School Name', 'Type', 'Score (/10)', 'Visit Plan Status', 'Training Plan Status', 'Visits', 'Trainings', 'Open', 'Last Visit', 'Last Training', 'Actions']);
+    expect(shown.rows[0]?.cells[0]?.text).toBe('1');
+    expect(shown.rows[0]?.cells[4]?.text).toBe('SSA Avg value');
+    expect(MEMBER_HEAD_GROUPS.reduce((sum, group) => sum + group.span, 0)).toBe(shown.columns.length);
+  });
+
+  it('keeps every other column in the opened row, so nothing Go sends is lost', () => {
+    const facts = memberTable(table).rows[0]?.details ?? [];
+    expect(facts.map((fact) => fact.label)).toEqual(['Visit Lock', 'Planning Readiness', 'Responsible Staff']);
+    expect(facts[2]?.value).toBe('Responsible Staff value');
+  });
+
+  it('puts Open first on the row, leading to the school, and keeps its menu', () => {
+    const actions = memberTable(table).rows[0]?.cells.at(-1)?.actions ?? [];
+    expect(actions.map((action) => [action.key, action.label, action.href])).toEqual([['button', 'Open', '/schools/s1'], ['menu', 'Schedule', '/x']]);
+  });
+
+  it('leaves the table it was given unchanged', () => {
+    memberTable(table);
+    expect(table.columns).toHaveLength(LABELS.length);
+    expect(row.details).toHaveLength(0);
   });
 });

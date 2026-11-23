@@ -3,7 +3,7 @@
  * the SSA & Coverage tab, and the row under the map (route options, what the
  * optimizer found, what was reported on the road). Every figure is Go's.
  */
-import { BarChart3, CheckCircle2, Clock, Flag, Gauge, Info, MapPinned, Route, ShieldCheck, Sparkles, TrafficCone, TriangleAlert } from 'lucide-react';
+import { BarChart3, CheckCircle2, CircleX, Clock, Flag, Gauge, Hourglass, Info, MapPinned, Route, ShieldCheck, Sparkles, TrafficCone, TriangleAlert, Zap } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -31,7 +31,14 @@ export function RouteKpiStrip({ result, plannedStops }: { result: SmartRouteResu
             <span className="sr-kpi__icon"><KpiIcon className="h-5 w-5" aria-hidden="true" /></span>
             <div className="min-w-0">
               <p className="sr-kpi__value">{kpi.value}</p>
-              <p className="sr-kpi__label">{kpi.label}</p>
+              <p className="sr-kpi__label">
+                {kpi.label.includes(' Road ') ? (
+                  <>
+                    <span className="sr-long">{kpi.label}</span>
+                    <span className="sr-short">{kpi.label.replace(' Road ', ' ')}</span>
+                  </>
+                ) : kpi.label}
+              </p>
               {kpi.note ? <p className="sr-kpi__note">{kpi.note}</p> : null}
             </div>
           </div>
@@ -107,6 +114,8 @@ interface RouteBottomRowProps {
   readonly onReport: () => void;
 }
 
+const OPTION_ICONS: Partial<Record<SmartOptimizationMode, LucideIcon>> = { balanced: Sparkles, fastest: Zap, shortest: Route };
+
 function BottomCard({ title, icon: CardIcon, children }: { title: string; icon: LucideIcon; children: ReactNode }) {
   return (
     <section className="sr-card" aria-label={title}>
@@ -122,7 +131,7 @@ export function RouteBottomRow({ result, options, comparing, canCompare, activeM
   const ranked = rankOptions(options);
   const insights = routeInsights(result);
   const road = roadSummary(result?.road_alerts ?? []);
-  const rows: readonly (readonly [string, number])[] = [['Closed', road.closed], ['Delays', road.delay], ['Advisories', road.advisory]];
+  const rows: readonly (readonly [string, number, LucideIcon])[] = [['Closed', road.closed, CircleX], ['Delays', road.delay, Hourglass], ['Advisories', road.advisory, TriangleAlert]];
   return (
     <div className="sr-bottom">
       <BottomCard title="Route Options" icon={MapPinned}>
@@ -130,14 +139,22 @@ export function RouteBottomRow({ result, options, comparing, canCompare, activeM
           <div className="sr-options">
             {ranked.map((option) => {
               const isActive = option.mode === activeMode;
+              const OptionIcon = OPTION_ICONS[option.mode] ?? Route;
               return (
                 <button key={option.mode} type="button" onClick={() => onUse(option.mode)} aria-pressed={isActive} className="sr-option" data-active={isActive || undefined}>
-                  <span className="block text-[13px] font-bold text-[var(--edify-text)]">{option.label}</span>
-                  <span className="block text-[12px] text-[var(--edify-text-muted)]">
-                    {option.roadComplete ? `${km(option.meters)} · ${hoursMinutes(option.seconds)}` : 'Road figures unconfirmed'}
+                  <span className="sr-option__head">
+                    <OptionIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    <strong>{option.recommended ? `Recommended (${option.label})` : option.label}</strong>
+                    {isActive ? <CheckCircle2 className="ml-auto h-4 w-4 shrink-0" aria-hidden="true" /> : null}
                   </span>
-                  <span className="block text-[12px] text-[var(--edify-text-muted)]">{option.included} school{option.included === 1 ? '' : 's'} · {option.coverage}</span>
-                  {option.badges.length ? <span className="mt-1 inline-block rounded-full bg-[var(--edify-success-light)] px-2 py-0.5 text-[11px] font-bold text-[var(--edify-success-text)]">{option.badges.join(' · ')}</span> : null}
+                  <span className="sr-option__road">
+                    {option.roadComplete ? `${km(option.meters)} • ${hoursMinutes(option.seconds)}` : 'Road figures unconfirmed'}
+                  </span>
+                  <span className="sr-option__chips">
+                    <span data-tone="good"><ShieldCheck className="h-3 w-3" aria-hidden="true" /> {option.included} school{option.included === 1 ? '' : 's'} · {option.coverage}</span>
+                    <span data-tone="plain"><TrafficCone className="h-3 w-3" aria-hidden="true" /> Traffic: {option.traffic}</span>
+                    {option.badges.length ? <span data-tone="good">{option.badges.join(' · ')}</span> : null}
+                  </span>
                 </button>
               );
             })}
@@ -161,18 +178,17 @@ export function RouteBottomRow({ result, options, comparing, canCompare, activeM
         )}
       </BottomCard>
       <BottomCard title="Road Conditions" icon={TriangleAlert}>
-        {road.total ? (
-          <>
-            <dl className="divide-y divide-[var(--edify-border)] text-[13px]">
-              {rows.map(([label, count]) => (
-                <div key={label} className="flex justify-between py-1.5"><dt className="text-[var(--edify-text)]">{label}</dt><dd className="font-semibold tabular-nums">{count}</dd></div>
-              ))}
-            </dl>
-            {road.unverified ? <p className="mt-1 text-[12px] text-[var(--edify-text-muted)]">{road.unverified} unverified staff report{road.unverified === 1 ? '' : 's'}.</p> : null}
-          </>
-        ) : (
-          <p className="flex items-start gap-2 text-[13px] text-[var(--edify-text-muted)]"><Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /> No road condition has been reported on this route.</p>
-        )}
+        <dl className="divide-y divide-[var(--edify-border)] text-[13px]">
+          {rows.map(([label, count, RowIcon]) => (
+            <div key={label} className="flex items-center gap-2 py-1">
+              <RowIcon className="h-4 w-4 shrink-0 text-[var(--edify-text-muted)]" aria-hidden="true" />
+              <dt className="flex-1 text-[var(--edify-text)]">{label}</dt>
+              <dd className="font-semibold tabular-nums">{count} report{count === 1 ? '' : 's'}</dd>
+            </div>
+          ))}
+        </dl>
+        {road.unverified ? <p className="mt-1 text-[12px] text-[var(--edify-text-muted)]">{road.unverified} unverified staff report{road.unverified === 1 ? '' : 's'}.</p> : null}
+        {road.total ? null : <p className="mt-1 flex items-start gap-1.5 text-[11.5px] text-[var(--edify-text-muted)]"><Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" /> Distances by condition need a live road provider.</p>}
         <button type="button" onClick={onReport} className="mt-2 inline-flex h-8 items-center gap-1.5 rounded-[7px] border border-[var(--edify-border)] px-2.5 text-[12px] font-semibold text-[var(--edify-text)] hover:border-[var(--brand-primary)]">
           <Flag className="h-3.5 w-3.5" aria-hidden="true" /> Report Road Condition ({reportCount})
         </button>
