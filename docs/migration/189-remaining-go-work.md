@@ -5,11 +5,27 @@ Measured by comparing what each of the 16 roles can open with Django running and
 | Surface | Works without Django | Remaining |
 |---|---|---|
 | Default page views (role and page) | 903 of 915 (98.7%) | `/cpd-learning`, `/fund-requests/weekly`, `/loans`, `/team-planning-oversight` |
-| Forms reachable from those pages (role and form) | 2 of 202 | 58 distinct forms, listed below |
+| Forms linked from those pages (role and form Django really opens) | 25 of 63 (39.7%), measured before the field forms below | This samples 12 forms. The inventory has 58, listed below |
 | Detail pages with record ids, tabs and filters | Not measured yet | Next measurement |
 | Saves, one by one | Not measured yet | Each proved against Django before cutover |
 
 `188-uganda-cutover-disposition.json` records this migration as complete. These measurements do not support that, and it must not be used to switch Django off.
+
+### Forms that now open from Go
+
+Each was compared with Django for all 16 roles on private copies: same fields, options, wording and refusals. Opening a form is not its save. Every save below still goes to Django.
+
+| Form | Compared | Result |
+|---|---|---|
+| The five export option forms | 160 role and URL checks | 64 identical, 96 same refusal |
+| `/core-schools/strategy-playbook`, `/my-professional-development/allocation-history` | 32 | 15 identical, 17 same refusal |
+| `/partners/<id>/members/drawer` | 48 | 30 identical, 3 same refusal, 15 same not found |
+| `/projects/create` | 16 | 4 identical, 12 same refusal |
+| `/work-plan/add` | 32 | 14 identical, 18 same refusal |
+
+Limits of this proof: the development data has no PD requests and no partner team-member logins, so those paths are covered by unit tests or the existing Go helper only. The partner-on-hold rule was checked in a rolled-back transaction. An acting leader is refused by these Go forms until the acting page policy is ported.
+
+Only 7 of the 18 field forms are listed in the mobile feed (`DRAWER_VIEWS`). The other 11 are compared by rendering the Django view directly and reading it with the feed's own form reader.
 
 Detail pages in `internal/detailpages` serve Admin only until each has its record scope (12dbd14d1). Every other role is handed on to Django.
 
