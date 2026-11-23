@@ -108,7 +108,7 @@ func (s *Service) extraWorkMilestones(ctx context.Context, p auth.Principal, fy 
 		return nil, fmt.Errorf("screens: reading the assigner's country: %w", err)
 	}
 	if country = strings.TrimSpace(country); country != "" {
-		own, err := s.readMilestones(ctx, `p.level = 'country' AND p.country_id = $2`, cycle, country)
+		own, err := s.readMilestones(ctx, cycle, "country", country)
 		if err != nil {
 			return nil, err
 		}
@@ -116,7 +116,7 @@ func (s *Service) extraWorkMilestones(ctx context.Context, p auth.Principal, fy 
 			return own, nil
 		}
 	}
-	return s.readMilestones(ctx, `p.level = 'regional' AND p.country_id IS NULL`, cycle)
+	return s.readMilestones(ctx, cycle, "regional", "")
 }
 
 func (s *Service) milestoneCycle(ctx context.Context, fy string) (string, error) {
@@ -143,15 +143,16 @@ SELECT financial_year FROM hr_strategic_priority_cycle
 	return cycle, nil
 }
 
-// readMilestones reads one level of the cycle. where is a constant of this
-// file; only its values are parameters.
-func (s *Service) readMilestones(ctx context.Context, where string, args ...any) ([]fieldChoice, error) {
+// readMilestones reads one level of the cycle: a country's own priorities, or
+// the regional ones, which belong to no country.
+func (s *Service) readMilestones(ctx context.Context, cycle, level, country string) ([]fieldChoice, error) {
 	rows, err := s.db.Query(ctx, `
 SELECT m.id, m.title
   FROM hr_priority_milestone m JOIN hr_strategic_priority p ON p.id = m.priority_id
- WHERE p.status IS DISTINCT FROM 'archived' AND p.fy = $1 AND `+where+`
+ WHERE p.status IS DISTINCT FROM 'archived' AND p.fy = $1 AND p.level = $2
+   AND (($2 = 'country' AND p.country_id = $3) OR ($2 = 'regional' AND p.country_id IS NULL))
  ORDER BY p.sequence, m.source_order
- LIMIT `+fmt.Sprint(maxExtraWorkMilestones), args...)
+ LIMIT $4`, cycle, level, country, maxExtraWorkMilestones)
 	if err != nil {
 		return nil, fmt.Errorf("screens: reading the milestones: %w", err)
 	}
