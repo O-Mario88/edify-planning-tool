@@ -87,6 +87,10 @@ var fieldForms = []fieldForm{
 	{path: "/partners/create", page: "partners", withheldFromTeamMembers: true, permission: "partnerOrganisation.create",
 		permissionRefusal: "Only an Admin, Country Director or Impact Assessment can add partner organisations.",
 		build:             partnerCreateForm},
+	{path: "/core-schools/schedule-activity", page: "core_schools", build: coreMenuForm},
+	{path: "/core-schools/schedule-visit", page: "core_schools", build: coreVisitForm},
+	{path: "/core-schools/schedule-training", page: "core_schools", build: coreTrainingForm},
+	{path: "/core-schools/assign-partner", page: "core_schools", build: coreAssignForm},
 }
 
 func fieldFormFor(path string) (fieldForm, bool) {
@@ -164,6 +168,10 @@ func (s *Service) fieldFormInGo(ctx context.Context, p auth.Principal, rawPath s
 		}
 	}
 	drawer, err := form.build(ctx, s, p, fieldFormRequest{id: form.recordID(parsed.Path), query: parsed.Query()})
+	var refused *formRefused
+	if errors.As(err, &refused) {
+		return &screensv1.GetDrawerResponse{Refusal: refused.message}, true, nil
+	}
 	if err != nil {
 		return nil, true, err
 	}

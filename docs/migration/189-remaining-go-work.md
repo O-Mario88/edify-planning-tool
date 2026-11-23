@@ -29,16 +29,22 @@ Each was compared with Django for all 16 roles on private copies: same fields, o
 | `/projects/monitoring/school` | 224 | 48 identical, 140 same refusal, 36 same not found. Only a school with nothing planned: a project with work answers "not available here yet" |
 | `/schools/<id>/assign-to-project` | 119 (17 accounts, 7 staged cases) | All same. Core, client, held elsewhere, unheld, enrolled and missing schools, with full, managed and team allocations. A 403's wording differs on purpose: Django's feed says only "Something went wrong" |
 | `/partners/create` | 16 | 3 same form, 13 same refusal. Its tick lists are compared with Django's catalogue groups, not its phone reader |
+| `/core-schools/schedule-activity`, `/schedule-visit`, `/schedule-training`, `/assign-partner` | 884 (17 accounts, 13 staged schools) | 209 same form, 652 same refusal, 23 same not found. Compared with the data Django gives its templates, because the feed's reader drops their conditional fields and buttons |
 
 The 2 deliberate differences on the Verify form are one fact seen by two roles: Go keeps the line break in a multi-line Observations value, which the mobile feed's reader runs together.
 
 `/partners/create` differs on purpose in one way. The feed's reader loses every intervention's name and repeats one field name per group, so Go draws one labelled intervention list and one activity list, each activity naming its interventions.
 
+The Core forms' staged cases were a package not yet made for the year, taken and complete slots, a closed school, a school with no SSA this year, full staff and partner halves, a completed training, a project enrolment, a partner with recorded courses, client and Champion schools, and a missing school. Opening them wrote nothing: the staged data was restored to an identical fingerprint. The comparison found and fixed one fault in Go's shared visit rule: a Champion school's visit and SSA hand-overs were not refused with Django's sentence.
+
+Three things differ from the Django page on purpose. The Assign form asks for the partner before the training, because the list of trainings depends on the partner. The training ceiling counter is not drawn in these forms; the save must enforce the ceiling. A selected training's details are shown as text lines for that training.
+
 ### Field forms still to port
 
-- `/core-schools/schedule-activity`, `/core-schools/schedule-training`, `/core-schools/assign-partner` and the linked `/core-schools/schedule-visit` are one piece of work. The menu's choices lead to the other forms, the web drawer does not draw link blocks yet, and opening them creates the year's package in Django (`ensure_core_plan`), which Go must work out in memory.
+- `/planning/schedule-modal` is served to the clients by Go's `getPlanningDrawerInGo`, and **that form is not correct**. It offers invented purposes and focus areas (`school_visit`, `teaching`, `finance`), every partner including held and loan partners, and no visit rules. The Core menu's "Schedule other activity" leads to it. It must be rebuilt from `schedule_modal_view`. `GetPlanningDrawer` also serves the assign, group-training and cluster-meeting kinds, which need the same check.
 - `/activities/<id>/evidence` needs a new capability. No client drawer has a file field and Go has no upload, page-joining or stored-file path. An upload form must not be drawn until those exist.
-- `/planning/schedule-modal` is already served to the clients by Go's `GetPlanningDrawer`, not the generic drawer. Its parity with Django has not been compared.
+
+The four Core forms open from Go, but their saves are not ported. With Django absent, submitting one answers "This action is not available here yet" and writes nothing.
 
 The review rule (`plreview.Reviewable`) now matches `_check_reviewable` and serves both forms and Go's approve and return saves. Seven disallowed saves were tried against the Go-only gateway (Country Director, Impact Assessment, partner work, another team's work) and all were refused with no record changed.
 

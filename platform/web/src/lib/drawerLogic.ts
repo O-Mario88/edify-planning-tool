@@ -82,6 +82,39 @@ export function initialValues(drawer: DrawerJson): Record<string, string> {
   return Object.fromEntries(fieldsOf(drawer).map((field) => [field.name ?? '', field.value ?? '']));
 }
 
+/** The values once every field that is now hidden is back to how the form opened, as a drawer's script resets a part it hides. */
+export function withHiddenReset(drawer: DrawerJson, values: Values): Record<string, string> {
+  const next: Record<string, string> = { ...values };
+  const items = drawer.items ?? [];
+  for (let pass = 0; pass <= items.length; pass += 1) {
+    let changed = false;
+    for (const item of items) {
+      const field = item.field;
+      if (!field?.name || (isShown(item.showWhen, next) && isShown(field.showWhen, next))) continue;
+      const opened = field.value ?? '';
+      if ((next[field.name] ?? '') !== opened) {
+        next[field.name] = opened;
+        changed = true;
+      }
+    }
+    if (!changed) break;
+  }
+  return next;
+}
+
+export interface DrawerLinkJson {
+  readonly text?: string;
+  readonly href?: string;
+  readonly caption?: string;
+  readonly drawer?: boolean;
+}
+
+/** The links a drawer's item offers. One without an address is a choice that cannot be taken. */
+export function drawerLinksOf(item: DrawerItemJson): readonly DrawerLinkJson[] {
+  const block = item.block as { panel?: { items?: readonly { links?: { links?: readonly DrawerLinkJson[] } }[] } } | undefined;
+  return (block?.panel?.items ?? []).flatMap((part) => part.links?.links ?? []);
+}
+
 /** The choices a field offers now: reloaded ones first, and only those of the value it is grouped by. */
 export function choicesFor(field: DrawerFieldJson, values: Values, reloaded: Reloaded): readonly DrawerOptionJson[] {
   const choices = reloaded[field.name ?? ''] ?? field.options ?? [];

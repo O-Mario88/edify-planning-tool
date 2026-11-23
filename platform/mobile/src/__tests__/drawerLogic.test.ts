@@ -11,6 +11,7 @@ import {
   asDrawer,
   missingField,
   ticked,
+  withHiddenReset,
   withTicked,
   valuesToSend,
 } from '../ui/drawerLogic';
@@ -56,6 +57,30 @@ const DRAWER = create(PageDrawerSchema, {
   items: [TYPE, COHORT, DISTRICT, SUB_COUNTY, PARISH].map((field) =>
     create(DrawerItemSchema, { kind: { case: 'field', value: field } }),
   ),
+});
+
+describe('withHiddenReset', () => {
+  it('puts a hidden field back to how the form opened', () => {
+    const purpose = create(DrawerFieldSchema, { name: 'purpose', kind: 'select', value: '' });
+    const course = create(DrawerFieldSchema, { name: 'course', kind: 'select', value: '', showWhen: [when('purpose', 'training')] });
+    const focus = create(DrawerFieldSchema, { name: 'focus', kind: 'select', value: 'leadership', showWhen: [when('purpose', 'donor')] });
+    const topic = create(DrawerFieldSchema, { name: 'topic', kind: 'select', value: '', showWhen: [when('course', 'c1')] });
+    const drawer = create(PageDrawerSchema, {
+      items: [purpose, course, focus, topic].map((field) => create(DrawerItemSchema, { kind: { case: 'field', value: field } })),
+    });
+    expect(withHiddenReset(drawer, { purpose: 'donor', course: 'c1', focus: 'enrolment', topic: 'x' })).toEqual({
+      purpose: 'donor',
+      course: '',
+      focus: 'enrolment',
+      topic: '',
+    });
+    expect(withHiddenReset(drawer, { purpose: 'training', course: 'c1', focus: 'enrolment', topic: 'x' })).toEqual({
+      purpose: 'training',
+      course: 'c1',
+      focus: 'leadership',
+      topic: 'x',
+    });
+  });
 });
 
 describe('isShown', () => {

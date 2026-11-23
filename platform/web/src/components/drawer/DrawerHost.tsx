@@ -13,9 +13,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { loadDrawer, loadDrawerOptions, submitDrawer } from '@/app/(app)/actions/drawer';
 import { EdifyDatePicker } from '@/components/ui/EdifyDatePicker';
-import { choicesFor, clearedBy, initialValues, isShown, missingField, planningDrawerOf, ticked, valuesToSend, withTicked } from '@/lib/drawerLogic';
-import type { DrawerFieldJson, DrawerItemJson, DrawerJson, Reloaded, Values } from '@/lib/drawerLogic';
-import { drawerFromHash } from '@/lib/feedPage';
+import { choicesFor, clearedBy, drawerLinksOf, initialValues, isShown, missingField, planningDrawerOf, ticked, valuesToSend, withHiddenReset, withTicked } from '@/lib/drawerLogic';
+import type { DrawerFieldJson, DrawerItemJson, DrawerJson, DrawerLinkJson, Reloaded, Values } from '@/lib/drawerLogic';
+import { drawerFromHash, withDrawer } from '@/lib/feedPage';
 
 import { CONTROL, Note } from './drawerParts';
 import { PlanningDrawerForm } from './PlanningDrawerForm';
@@ -100,7 +100,35 @@ function FieldControl({ field, values, reloaded, onChange }: FieldProps) {
   }
 }
 
+/** A drawer's choices that lead to another drawer. One without an address is shown, and cannot be taken. */
+function DrawerLinks({ links }: { links: readonly DrawerLinkJson[] }) {
+  const words = (link: DrawerLinkJson) => (
+    <>
+      <span className="block text-[length:var(--edify-text-label-size)] font-semibold">{link.text}</span>
+      {link.caption ? <span className="mt-0.5 block text-[length:var(--edify-text-micro-size)] text-[var(--edify-text-muted)]">{link.caption}</span> : null}
+    </>
+  );
+  const box = 'block rounded-[var(--radius-control)] border border-[var(--edify-border)] p-3';
+  return (
+    <div className="grid gap-2">
+      {links.map((link) =>
+        link.href ? (
+          <a key={`${link.text}-${link.caption}`} href={withDrawer('', link.href)} className={`${box} text-[var(--edify-text)] hover:bg-[var(--edify-surface-muted)]`}>
+            {words(link)}
+          </a>
+        ) : (
+          <div key={`${link.text}-${link.caption}`} aria-disabled="true" className={`${box} text-[var(--edify-text-muted)]`}>
+            {words(link)}
+          </div>
+        ),
+      )}
+    </div>
+  );
+}
+
 function Item({ item, values, reloaded, onChange }: { item: DrawerItemJson } & Omit<FieldProps, 'field'>) {
+  const links = drawerLinksOf(item);
+  if (links.length > 0) return <DrawerLinks links={links} />;
   if (item.note) return <Note tone={item.note.tone} text={item.note.text ?? ''} />;
   if (item.heading) return <h3 className="pt-1 text-[length:var(--edify-text-label-size)] font-bold text-[var(--edify-text)]">{item.heading}</h3>;
   if (item.text) return <p className="text-[length:var(--edify-text-label-size)] text-[var(--edify-text-muted)]">{item.text}</p>;
@@ -193,7 +221,7 @@ export function DrawerHost() {
     if (!drawer) return;
     setDirty(true);
     const cleared = clearedBy(drawer, field.name ?? '');
-    setValues((current) => ({ ...current, [field.name ?? '']: value, ...Object.fromEntries(cleared.map((name) => [name, ''])) }));
+    setValues((current) => withHiddenReset(drawer, { ...current, [field.name ?? '']: value, ...Object.fromEntries(cleared.map((name) => [name, ''])) }));
     if (field.reloadsPath && field.reloadsTarget) {
       const target = field.reloadsTarget;
       loadDrawerOptions(field.reloadsPath, field.name ?? '', value)

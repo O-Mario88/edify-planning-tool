@@ -5,6 +5,7 @@ import {
   addToProjectOf,
   choicesFor,
   clearedBy,
+  drawerLinksOf,
   initialValues,
   isDrawerPath,
   isShown,
@@ -14,6 +15,7 @@ import {
   schoolDrawerOf,
   ticked,
   valuesToSend,
+  withHiddenReset,
   withTicked,
 } from './drawerLogic';
 import type { DrawerJson } from './drawerLogic';
@@ -101,6 +103,39 @@ describe('drawer logic', () => {
 
   it('empties what a change reloads, and what hangs from that', () => {
     expect(clearedBy(drawer, 'district')).toEqual(['sub_county', 'parish']);
+  });
+
+  it('puts a field back to how the form opened once it is hidden', () => {
+    const conditional: DrawerJson = {
+      items: [
+        { field: { name: 'purpose', kind: 'select', value: '' } },
+        { field: { name: 'course', kind: 'select', value: '', showWhen: [{ field: 'purpose', values: ['training'] }] } },
+        { field: { name: 'focus', kind: 'select', value: 'leadership', showWhen: [{ field: 'purpose', values: ['donor'] }] } },
+        { field: { name: 'topic', kind: 'select', value: '', showWhen: [{ field: 'course', values: ['c1'] }] } },
+      ],
+    };
+    expect(withHiddenReset(conditional, { purpose: 'donor', course: 'c1', focus: 'enrolment', topic: 'x' })).toEqual({
+      purpose: 'donor',
+      course: '',
+      focus: 'enrolment',
+      topic: '',
+    });
+    expect(withHiddenReset(conditional, { purpose: 'training', course: 'c1', focus: 'enrolment', topic: 'x' })).toEqual({
+      purpose: 'training',
+      course: 'c1',
+      focus: 'leadership',
+      topic: 'x',
+    });
+  });
+
+  it('reads the links a drawer offers, and a choice that cannot be taken', () => {
+    const links = drawerLinksOf({
+      block: { panel: { items: [{ links: { links: [{ text: 'Schedule', caption: 'Core visit', href: '/core-schools/schedule-visit?school_id=1', drawer: true }, { text: 'Schedule', caption: 'complete' }] } }] } },
+    });
+    expect(links).toHaveLength(2);
+    expect(links[0]?.href).toBe('/core-schools/schedule-visit?school_id=1');
+    expect(links[1]?.href).toBeUndefined();
+    expect(drawerLinksOf({ text: 'plain' })).toEqual([]);
   });
 
   it('does not send a hidden field', () => {

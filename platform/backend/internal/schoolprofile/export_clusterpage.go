@@ -9,6 +9,10 @@ import "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/visit
 // schools list and the Programme Schools page (internal/programmeschools).
 func GateRules() visitgate.Rules { return rules.Gate }
 
+// ActivityTypeLabels are ActivityType's choices, for a form naming past work
+// (internal/coreforms). The map is the caller's to read, never to change.
+func ActivityTypeLabels() map[string]string { return rules.Engine.Scope.ActivityTypeLabels }
+
 // SchoolTypeLabel is School.get_school_type_display: the choice's label, or
 // the stored value where it names no choice.
 func SchoolTypeLabel(value string) string {

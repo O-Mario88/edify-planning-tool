@@ -64,6 +64,32 @@ export function clearedBy(drawer: PageDrawer, name: string): string[] {
   return cleared;
 }
 
+/** The values once every field that is now hidden is back to how the form
+ * opened, as a drawer's script resets a part it hides. */
+export function withHiddenReset(drawer: PageDrawer, values: Values): Record<string, string> {
+  const next: Record<string, string> = { ...values };
+  for (let pass = 0; pass <= drawer.items.length; pass += 1) {
+    let isChanged = false;
+    for (const item of drawer.items) {
+      if (item.kind.case !== 'field') {
+        continue;
+      }
+      const field = item.kind.value;
+      if (isShown(item.showWhen, next) && isShown(field.showWhen, next)) {
+        continue;
+      }
+      if ((next[field.name] ?? '') !== field.value) {
+        next[field.name] = field.value;
+        isChanged = true;
+      }
+    }
+    if (!isChanged) {
+      break;
+    }
+  }
+  return next;
+}
+
 /** What a save sends: every shown field's value. A hidden field is not sent,
  * as a browser does not send a field its script has hidden and disabled. */
 export function valuesToSend(drawer: PageDrawer, values: Values): Record<string, string> {

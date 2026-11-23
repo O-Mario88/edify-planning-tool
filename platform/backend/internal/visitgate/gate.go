@@ -365,8 +365,9 @@ func (g *Gate) decide(r Rules) {
 		if !ok {
 			label = "Programme"
 		}
-		g.CanAssignPartner = false
-		g.AssignReason = fmt.Sprintf("%s is a %s school. Edify staff deliver its visits and trainings themselves; it is never assigned to a partner.",
+		refusal := fmt.Sprintf("%s is a %s school. Edify staff deliver its visits and trainings themselves; it is never assigned to a partner.",
 			name, label)
+		g.CanAssignPartner, g.CanAssignVisit, g.CanAssignSSA = false, false, false
+		g.AssignReason, g.AssignVisitReason, g.AssignSSAReason = refusal, refusal, refusal
 	}
 }

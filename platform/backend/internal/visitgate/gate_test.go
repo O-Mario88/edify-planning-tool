@@ -99,6 +99,15 @@ func TestAChampionIsNeverHandedToAPartner(t *testing.T) {
 	if g.CanAssignPartner || g.AssignReason != want {
 		t.Fatalf("champion: %v %q", g.CanAssignPartner, g.AssignReason)
 	}
+	withSSA := gateOf("champion")
+	withSSA.HasSSA = true
+	withSSA.decide(testRules)
+	if withSSA.CanAssignVisit || withSSA.AssignVisitReason != want {
+		t.Fatalf("champion visit: %v %q", withSSA.CanAssignVisit, withSSA.AssignVisitReason)
+	}
+	if withSSA.CanAssignSSA || withSSA.AssignSSAReason != want {
+		t.Fatalf("a Champion's refusal is not about its SSA: %v %q", withSSA.CanAssignSSA, withSSA.AssignSSAReason)
+	}
 }
 
 func TestRulesFollowTheSchoolType(t *testing.T) {

@@ -19,7 +19,7 @@ import { Drawer } from './Drawer';
 import { DiscardPrompt, DrawerButton, DrawerNote } from './drawerParts';
 import { DrawerItemView } from './drawerFields';
 import { ExportProgress } from './ExportProgress';
-import { clearedBy, initialValues, isShown, missingField, valuesToSend } from './drawerLogic';
+import { clearedBy, initialValues, isShown, missingField, valuesToSend, withHiddenReset } from './drawerLogic';
 import type { Reloaded } from './drawerLogic';
 import { savedWords } from './page/savedWords';
 
@@ -92,11 +92,13 @@ export function WebDrawer({ source, onClose, onSaved, onUnavailable }: WebDrawer
     }
     setIsDirty(true);
     const cleared = clearedBy(drawer, field.name);
-    setValues((current) => ({
-      ...current,
-      [field.name]: value,
-      ...Object.fromEntries(cleared.map((name) => [name, ''])),
-    }));
+    setValues((current) =>
+      withHiddenReset(drawer, {
+        ...current,
+        [field.name]: value,
+        ...Object.fromEntries(cleared.map((name) => [name, ''])),
+      }),
+    );
     if (field.reloadsPath && field.reloadsTarget) {
       const target = field.reloadsTarget;
       api
