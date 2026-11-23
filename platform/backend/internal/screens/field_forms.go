@@ -38,6 +38,8 @@ var fieldFormPages = map[string][]string{
 	"projects":                    {rbac.Admin, rbac.CCEO, roleCD, roleIA, rbac.ProgramLead, rolePC},
 	"extra_work":                  {rbac.Admin, rbac.CCEO, roleCD, rbac.ProgramLead, roleIA},
 	"pl_review_queue":             {rbac.Admin, rbac.ProgramLead, roleIA},
+	"project_capacity":            {rbac.Admin, rolePC, roleIA},
+	"project_monitoring":          {rbac.Admin, rbac.CCEO, roleCD, roleIA, rbac.ProgramLead, rolePC},
 }
 
 // fieldFormRequest is what a form is opened with: the record in its address
@@ -77,6 +79,8 @@ var fieldForms = []fieldForm{
 	{path: "/extra-work/assign-drawer", page: "extra_work", build: extraWorkAssignForm},
 	{address: regexp.MustCompile(`^/pl/review-queue/([^/]+)/return-drawer$`), page: "pl_review_queue", build: plReturnForm},
 	{address: regexp.MustCompile(`^/pl/review-queue/([^/]+)/drawer$`), page: "pl_review_queue", build: plReviewForm},
+	{path: "/projects/capacity/set", page: "project_capacity", build: capacitySetForm},
+	{path: "/projects/capacity/withdraw", page: "project_monitoring", build: capacityWithdrawForm},
 }
 
 func fieldFormFor(path string) (fieldForm, bool) {

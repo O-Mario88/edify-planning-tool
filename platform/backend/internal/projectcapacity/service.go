@@ -86,31 +86,12 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 // Assessment direct every project they read; a Project Coordinator, the
 // ones they run (scoped_projects again).
 func (s *Service) directed(ctx context.Context, p auth.Principal, scope schooldirectory.Scope) ([]project, error) {
-	args := []any{rules.LiveStatuses}
-	where := "p.deleted_at IS NULL AND p.status = ANY($1)"
-	switch {
-	case scope.CountryScope:
-		if scope.Country != "" {
-			// A country role reads the projects reaching its country by an
-			// enrolled school or the person running them, and the unplaced.
-			args = append(args, scope.Country)
-			where += ` AND (EXISTS (SELECT 1 FROM project_school_assignment a JOIN school sc ON sc.id = a.school_id
-    JOIN region r ON r.id = sc.region_id WHERE a.project_id = p.id AND r.country = $2)
-  OR p.manager_staff_id IN (SELECT id FROM staff_profile WHERE country = $2 AND deleted_at IS NULL)
-  OR (NOT EXISTS (SELECT 1 FROM project_school_assignment a WHERE a.project_id = p.id)
-      AND (p.manager_staff_id IS NULL OR p.manager_staff_id = '')))`
-		}
-	case p.ActiveRole == roleProjectCoordinator:
-		if scope.StaffID == "" {
-			return nil, nil
-		}
-		args = append(args, scope.StaffID)
-		where += ` AND (p.manager_staff_id = $2 OR EXISTS (
-  SELECT 1 FROM project_staff_assignment sa WHERE sa.project_id = p.id AND sa.staff_id = $2 AND sa.is_active))`
-	default:
-		// The page's other readers direct nothing (projects_directed_by).
+	clause, extra, reads := readableClause(p, scope, 2)
+	if !reads {
 		return nil, nil
 	}
+	args := append([]any{rules.LiveStatuses}, extra...)
+	where := "p.deleted_at IS NULL AND p.status = ANY($1)" + clause
 	rows, err := s.db.Query(ctx, `SELECT p.id, p.name, COALESCE(p.code, ''), p.status FROM project p WHERE `+where+` ORDER BY p.name`, args...)
 	if err != nil {
 		return nil, fmt.Errorf("projectcapacity: reading the projects: %w", err)
@@ -124,6 +105,34 @@ func (s *Service) directed(ctx context.Context, p auth.Principal, scope schooldi
 		return nil, fmt.Errorf("projectcapacity: reading the projects: %w", err)
 	}
 	return out, nil
+}
+
+// readableClause is scoped_projects for the roles that direct projects, as a
+// condition on project p with its arguments numbered from next. Reads is
+// false for a reader who directs nothing.
+func readableClause(p auth.Principal, scope schooldirectory.Scope, next int) (string, []any, bool) {
+	switch {
+	case scope.CountryScope:
+		if scope.Country == "" {
+			return "", nil, true
+		}
+		// A country role reads the projects reaching its country by an
+		// enrolled school or the person running them, and the unplaced.
+		return fmt.Sprintf(` AND (EXISTS (SELECT 1 FROM project_school_assignment a JOIN school sc ON sc.id = a.school_id
+    JOIN region r ON r.id = sc.region_id WHERE a.project_id = p.id AND r.country = $%[1]d)
+  OR p.manager_staff_id IN (SELECT id FROM staff_profile WHERE country = $%[1]d AND deleted_at IS NULL)
+  OR (NOT EXISTS (SELECT 1 FROM project_school_assignment a WHERE a.project_id = p.id)
+      AND (p.manager_staff_id IS NULL OR p.manager_staff_id = '')))`, next), []any{scope.Country}, true
+	case p.ActiveRole == roleProjectCoordinator:
+		if scope.StaffID == "" {
+			return "", nil, false
+		}
+		return fmt.Sprintf(` AND (p.manager_staff_id = $%[1]d OR EXISTS (
+  SELECT 1 FROM project_staff_assignment sa WHERE sa.project_id = p.id AND sa.staff_id = $%[1]d AND sa.is_active))`, next),
+			[]any{scope.StaffID}, true
+	}
+	// The page's other readers direct nothing (projects_directed_by).
+	return "", nil, false
 }
 
 // allocations is allocations_by_project for one project, by name

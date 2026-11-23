@@ -42,6 +42,8 @@ def rules() -> dict:
     from apps.core.permissions import RolePermissionService, can_open_url
     from apps.core.rbac import EdifyRole
     from apps.mobile_feed.views import NOT_PASSED
+    from apps.partners.models import PartnerAssignment
+    from apps.projects import capacity
     from apps.projects.capacity import NEAR_CAPACITY_SHARE
     from apps.projects.models import LIVE_PROJECT_STATUSES, OPEN_PROJECT_STATUSES
 
@@ -63,6 +65,21 @@ def rules() -> dict:
         "near_capacity_share": NEAR_CAPACITY_SHARE,
         "page_size": TABLE_PAGE_SIZE,
         "query_keys_not_passed": sorted(NOT_PASSED),
+        # The Set Capacity and Withdraw School forms.
+        "eligible_staff_roles": sorted(capacity.ELIGIBLE_STAFF_ROLES),
+        "withdrawal_reasons": [list(r) for r in capacity.WITHDRAWAL_REASONS],
+        "withdrawal_stage_order": list(capacity._STAGE_ORDER),
+        "withdrawal_statuses": {
+            "completed": sorted(capacity._COMPLETED),
+            "evidence": sorted(capacity._EVIDENCE),
+            "started": sorted(capacity._STARTED),
+            "not_work": sorted(capacity._NOT_WORK),
+        },
+        "withdrawal_blocks": {
+            key: {"code": b.code, "title": b.title, "message": b.message}
+            for key, b in capacity._BLOCKS.items()
+        },
+        "partner_returned_status": str(PartnerAssignment.STATUS_RETURNED_TO_STAFF),
     }
 
 

@@ -33,6 +33,13 @@ type Role struct {
 	StaffLinks bool `json:"staff_links"`
 }
 
+// Block is why a school may not leave a project now (capacity.WithdrawalBlock).
+type Block struct {
+	Code    string `json:"code"`
+	Title   string `json:"title"`
+	Message string `json:"message"`
+}
+
 var rules = func() (r struct {
 	Roles map[string]Role `json:"roles"`
 	// LiveStatuses are the projects the page lists; OpenStatuses the ones
@@ -42,6 +49,13 @@ var rules = func() (r struct {
 	NearCapacityShare  float64  `json:"near_capacity_share"`
 	PageSize           int      `json:"page_size"`
 	QueryKeysNotPassed []string `json:"query_keys_not_passed"`
+	// What the Set Capacity and Withdraw School forms read.
+	EligibleStaffRoles    []string            `json:"eligible_staff_roles"`
+	WithdrawalReasons     [][2]string         `json:"withdrawal_reasons"`
+	WithdrawalStageOrder  []string            `json:"withdrawal_stage_order"`
+	WithdrawalStatuses    map[string][]string `json:"withdrawal_statuses"`
+	WithdrawalBlocks      map[string]Block    `json:"withdrawal_blocks"`
+	PartnerReturnedStatus string              `json:"partner_returned_status"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.Roles) == 0 || len(r.LiveStatuses) == 0 || r.PageSize == 0 || r.NearCapacityShare == 0 {
 		panic(fmt.Sprintf("projectcapacity: the embedded rules are unreadable: %v", err))

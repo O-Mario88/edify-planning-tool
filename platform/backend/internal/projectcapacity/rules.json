@@ -1,4 +1,8 @@
 {
+  "eligible_staff_roles": [
+    "CCEO",
+    "Program Lead"
+  ],
   "live_statuses": [
     "active",
     "paused",
@@ -14,6 +18,7 @@
     "under_review"
   ],
   "page_size": 50,
+  "partner_returned_status": "returned_to_staff",
   "query_keys_not_passed": [
     "csv",
     "download",
@@ -118,5 +123,89 @@
       "staff_links": true,
       "strip": null
     }
+  },
+  "withdrawal_blocks": {
+    "completed": {
+      "code": "completed",
+      "message": "This project has already been completed for this school.",
+      "title": "Cannot withdraw"
+    },
+    "evidence": {
+      "code": "evidence",
+      "message": "Evidence has already been submitted for this project activity.",
+      "title": "Cannot withdraw"
+    },
+    "partner": {
+      "code": "partner",
+      "message": "This school's project work has been assigned to a partner. Withdraw or undo that partner assignment first.",
+      "title": "Cannot withdraw"
+    },
+    "planned": {
+      "code": "planned",
+      "message": "This school already has a planned project activity. Remove or resolve the planned activity before attempting to withdraw the school.",
+      "title": "Cannot withdraw"
+    },
+    "started": {
+      "code": "started",
+      "message": "This project activity has already started. The school cannot be withdrawn from the project.",
+      "title": "Cannot withdraw"
+    }
+  },
+  "withdrawal_reasons": [
+    [
+      "no_longer_eligible",
+      "School no longer eligible"
+    ],
+    [
+      "duplicate",
+      "Duplicate assignment"
+    ],
+    [
+      "reallocation",
+      "Staff capacity reallocation"
+    ],
+    [
+      "school_requested",
+      "School requested removal"
+    ],
+    [
+      "other",
+      "Other"
+    ]
+  ],
+  "withdrawal_stage_order": [
+    "none",
+    "planned",
+    "started",
+    "evidence",
+    "completed"
+  ],
+  "withdrawal_statuses": {
+    "completed": [
+      "accountant_confirmed",
+      "closed",
+      "completed",
+      "ia_verified"
+    ],
+    "evidence": [
+      "awaiting_ia_verification",
+      "evidence_accepted",
+      "evidence_uploaded",
+      "returned",
+      "returned_by_ia",
+      "returned_by_pl",
+      "salesforce_id_required",
+      "submitted_to_pl"
+    ],
+    "not_work": [
+      "cancelled",
+      "deferred",
+      "not_planned",
+      "rejected"
+    ],
+    "started": [
+      "completion_started",
+      "in_progress"
+    ]
   }
 }
