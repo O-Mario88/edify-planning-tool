@@ -181,6 +181,75 @@ func TestPartnerChoicesSortIgnoringCase(t *testing.T) {
 	}
 }
 
+func TestWorkPlanAddFormRefusals(t *testing.T) {
+	const noManualWork = "You do not have permission to add non-school programme activities."
+	form, ok := fieldFormFor("/work-plan/add")
+	if !ok {
+		t.Fatal("not a field form")
+	}
+	for _, role := range []string{"CCEO", "Program Lead", "CountryDirector", "ImpactAssessment", "HumanResources", "ProjectCoordinator", "Admin"} {
+		if got := form.refusal(fieldPrincipal(role)); got != "" {
+			t.Fatalf("%s: %q", role, got)
+		}
+	}
+	for _, role := range []string{"Accountant", "RegionalVicePresident", "RegionalProgramLead", "PartnerAdmin", "MfiLoanOfficer", "ClusterLeader"} {
+		if got := form.refusal(fieldPrincipal(role)); got != noManualWork {
+			t.Fatalf("%s: %q", role, got)
+		}
+	}
+}
+
+func TestWorkPlanAddFormFields(t *testing.T) {
+	drawer := workPlanAddDrawer(
+		[]programmeChoice{{code: "BOOT_CAMP", name: "Boot Camp", fieldEvent: true}, {code: "CC_SEL", name: "CC-SEL"}},
+		[]fieldChoice{{id: "d1", name: "Abim"}},
+		"2026-12-01",
+	)
+	if drawer.GetTitle() != "Plan field event" || drawer.GetSubmitLabel() != "Add to my plan" || !drawer.GetCanSubmit() {
+		t.Fatalf("drawer = %q / %q", drawer.GetTitle(), drawer.GetSubmitLabel())
+	}
+	items := drawer.GetItems()
+	if len(items) != 11 {
+		t.Fatalf("%d items", len(items))
+	}
+	activity := items[0].GetField()
+	if !activity.GetRequired() || len(activity.GetOptions()) != 3 || activity.GetOptions()[0].GetLabel() != "Select an approved activity" {
+		t.Fatalf("activity = %+v", activity)
+	}
+	if got := activity.GetOptions()[1]; got.GetValue() != "BOOT_CAMP" || got.GetGroup() != "true" {
+		t.Fatalf("field event = %+v", got)
+	}
+	if got := activity.GetOptions()[2]; got.GetGroup() != "false" {
+		t.Fatalf("other activity = %+v", got)
+	}
+	if got := items[1].GetField(); len(got.GetOptions()) != 9 || got.GetOptions()[0].GetLabel() != "Select the intervention being followed up" {
+		t.Fatalf("intervention = %+v", got)
+	}
+	if got := items[2].GetField(); got.GetValue() != "2026-12-01" || !got.GetRequired() || got.GetKind() != "date" {
+		t.Fatalf("start = %+v", got)
+	}
+	if got := items[4].GetField(); got.GetOptions()[0].GetLabel() != "My own district" || got.GetOptions()[1].GetValue() != "d1" {
+		t.Fatalf("district = %+v", got)
+	}
+	if got := items[6].GetField(); got.GetMin() != 1 || got.GetMax() != 10000 {
+		t.Fatalf("schools = %+v", got)
+	}
+	if got := items[7].GetField(); got.GetMin() != 1 || got.GetMax() != 100000 {
+		t.Fatalf("participants = %+v", got)
+	}
+	if items[8].GetText() != "Cost preview" || !strings.HasPrefix(items[10].GetText(), "It appears in My Plan") {
+		t.Fatalf("closing lines = %q / %q", items[8].GetText(), items[10].GetText())
+	}
+}
+
+func TestWorkPlanDatePrefill(t *testing.T) {
+	for raw, want := range map[string]string{"": "", " 2026-12-01 ": "2026-12-01", "2026-12-01T09:00": "2026-12-01"} {
+		if got := workPlanDatePrefill(raw); got != want {
+			t.Fatalf("%q = %q, want %q", raw, got, want)
+		}
+	}
+}
+
 func TestStrategyPlaybookReadsAsTheExistingForm(t *testing.T) {
 	drawer := strategyPlaybookDrawer()
 	if drawer.GetTitle() != "Core strategy playbook" || !drawer.GetHasRequired() || drawer.GetCancelLabel() != "Cancel" {

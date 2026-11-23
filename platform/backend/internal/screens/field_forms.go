@@ -69,6 +69,9 @@ var fieldForms = []fieldForm{
 	{path: "/projects/create", page: "projects", permission: "project.configurePriorities",
 		permissionRefusal: "Only a Special Project Coordinator, Impact Assessment, the Country Director, or Admin may create Projects.",
 		build:             projectCreateForm},
+	{path: "/work-plan/add", permission: "planning.manualActivity.create",
+		permissionRefusal: "You do not have permission to add non-school programme activities.",
+		build:             workPlanAddForm},
 }
 
 func fieldFormFor(path string) (fieldForm, bool) {
@@ -99,7 +102,7 @@ func (f fieldForm) refusal(p auth.Principal) string {
 	if p.InActingAppointment {
 		return "This form is not available while you are acting in another role."
 	}
-	if !slices.Contains(fieldFormPages[f.page], p.ActiveRole) {
+	if f.page != "" && !slices.Contains(fieldFormPages[f.page], p.ActiveRole) {
 		return f.pageDenied()
 	}
 	if f.permission != "" && !rbac.Grants(p.ActiveRole, f.permission) {
