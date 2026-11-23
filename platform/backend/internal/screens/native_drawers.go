@@ -460,6 +460,9 @@ func (s *Service) getPageDrawerInGo(ctx context.Context, p auth.Principal, rawPa
 	if answer, served, err := s.exportDrawerInGo(ctx, p, rawPath); served {
 		return answer, true, err
 	}
+	if answer, served, err := s.fieldFormInGo(ctx, p, pathOnly); served {
+		return answer, true, err
+	}
 
 	if m := schoolEditDrawer.FindStringSubmatch(pathOnly); m != nil {
 		answer, served, err := s.getSchoolDrawerInGo(ctx, p, m[1], "edit")
