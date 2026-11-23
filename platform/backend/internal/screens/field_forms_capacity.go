@@ -2,6 +2,7 @@ package screens
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"connectrpc.com/connect"
@@ -11,6 +12,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/projectcapacity"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/projectmonitoring"
 )
 
 const (
@@ -119,4 +121,54 @@ func withdrawSchoolDrawer(form projectcapacity.WithdrawForm) *screensv1.PageDraw
 				ShowWhen:  []*screensv1.DrawerCondition{{Field: "reason_code", Values: []string{"other"}}}}),
 		},
 	}
+}
+
+// monitoringSchoolForm is project_monitoring_school_view: one school through
+// the page's own lens. A project with work is not drawn here yet, so the form
+// says so rather than showing the school as untouched.
+func monitoringSchoolForm(ctx context.Context, s *Service, p auth.Principal, req fieldFormRequest) (*screensv1.PageDrawer, error) {
+	form, err := projectmonitoring.NewService(s.db, s.now).SchoolDrawer(ctx, p, strings.TrimSpace(req.query.Get("enrolment")))
+	if errors.Is(err, projectmonitoring.ErrWorkNotBuilt) {
+		return nil, apierr.New(ctx, connect.CodeUnavailable, apierr.ReasonScreenUnavailable,
+			"This screen is not available here yet. Use the Edify web app.")
+	}
+	if err != nil {
+		return nil, err
+	}
+	if form == nil {
+		return nil, apierr.New(ctx, connect.CodeNotFound, apierr.ReasonNotFound, "This was not found, or it is not yours to view.")
+	}
+	return monitoringSchoolDrawer(*form), nil
+}
+
+// monitoringSchoolDrawer is monitoring_school_drawer.html for a school with
+// nothing planned yet.
+func monitoringSchoolDrawer(form projectmonitoring.SchoolForm) *screensv1.PageDrawer {
+	items := []*screensv1.DrawerItem{
+		headingLine("Where it stands"),
+		{Kind: &screensv1.DrawerItem_Facts{Facts: &screensv1.PageFacts{Facts: []*screensv1.PageFact{
+			{Label: "Status", Value: form.Status},
+			{Label: "Activity date", Value: emptyFactMark},
+			{Label: "Added by", Value: form.AddedBy},
+			{Label: "Coordinator", Value: form.Coordinator},
+		}}}},
+		headingLine("Project work at this school"),
+		textLine("Nothing planned here yet — awaiting the Project Coordinator."),
+	}
+	if form.AddedFor != "" {
+		items = append(items, textLine(form.AddedFor))
+	}
+	items = append(items, headingLine("Focus SSA"), textLine(form.Impact))
+	for _, line := range form.Focus {
+		items = append(items, textLine(line))
+	}
+	if len(form.Focus) == 0 {
+		items = append(items, textLine("No focus intervention declared."))
+	}
+	if !form.Controls {
+		items = append(items, textLine("Read only. The Project Coordinator plans this school's work, assigns it to partners, and alone withdraws or reassigns it."))
+	}
+	drawer := readOnlyDrawer(form.School, items)
+	drawer.Subtitle = form.Subtitle
+	return drawer
 }

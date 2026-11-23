@@ -81,6 +81,7 @@ var fieldForms = []fieldForm{
 	{address: regexp.MustCompile(`^/pl/review-queue/([^/]+)/drawer$`), page: "pl_review_queue", build: plReviewForm},
 	{path: "/projects/capacity/set", page: "project_capacity", build: capacitySetForm},
 	{path: "/projects/capacity/withdraw", page: "project_monitoring", build: capacityWithdrawForm},
+	{path: "/projects/monitoring/school", page: "project_monitoring", build: monitoringSchoolForm},
 }
 
 func fieldFormFor(path string) (fieldForm, bool) {

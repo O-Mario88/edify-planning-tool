@@ -92,17 +92,7 @@ func (s *Service) build(ctx context.Context, p auth.Principal, doors Doors, quer
 			v.picks[f[0]] = value
 		}
 	}
-	v.l = lens{
-		whole:    in(rules.WholeProjectRoles, p.ActiveRole),
-		controls: p.ActiveRole == rules.CoordinatorRole,
-		role:     p.ActiveRole,
-		staffID:  p.StaffProfileID,
-	}
-	for _, id := range []string{p.UserID, p.StaffProfileID} {
-		if id != "" {
-			v.l.mine = append(v.l.mine, id)
-		}
-	}
+	v.l = lensFor(p)
 	op, _ := strconv.Atoi(operational)
 	years, err := schoolplanning.Horizon(ctx, s.db, p.Country, v.fy, op, options, now)
 	if err != nil {
@@ -136,6 +126,22 @@ func (s *Service) build(ctx context.Context, p auth.Principal, doors Doors, quer
 		}
 	}
 	return v.choose(strings.TrimSpace(query.Get("project")))
+}
+
+// lensFor is what this reader may see of a project.
+func lensFor(p auth.Principal) lens {
+	l := lens{
+		whole:    in(rules.WholeProjectRoles, p.ActiveRole),
+		controls: p.ActiveRole == rules.CoordinatorRole,
+		role:     p.ActiveRole,
+		staffID:  p.StaffProfileID,
+	}
+	for _, id := range []string{p.UserID, p.StaffProfileID} {
+		if id != "" {
+			l.mine = append(l.mine, id)
+		}
+	}
+	return l
 }
 
 // choose picks the open tab (the project asked for, else the first) and

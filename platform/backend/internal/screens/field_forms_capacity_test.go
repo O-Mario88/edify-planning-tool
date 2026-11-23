@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/projectcapacity"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/projectmonitoring"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/rbac"
 )
 
@@ -65,6 +66,36 @@ func TestSomeoneAlreadyAllocatedIsShownButNotChosen(t *testing.T) {
 	empty := capacitySetDrawer(projectcapacity.SetForm{Project: "p1"})
 	if got := empty.GetItems()[1].GetField().GetHelp(); got != "No active CCEO or Programme Lead works in this project's country." {
 		t.Fatalf("no one eligible: %q", got)
+	}
+}
+
+func TestTheMonitoringDrawerDrawsASchoolAwaitingTheCoordinator(t *testing.T) {
+	if _, ok := fieldFormFor("/projects/monitoring/school"); !ok {
+		t.Fatal("the monitoring school form is not served")
+	}
+	form := projectmonitoring.SchoolForm{
+		School: "Goma", Subtitle: "EdTech · 1699", Status: "Awaiting Project Coordinator Action", AddedBy: "— · 9 Nov 2026",
+		Coordinator: "Allan", AddedFor: "Added for Leadership.", Impact: "Awaiting delivery",
+		Focus: []string{"Leadership: 3.9 · no confirmed follow-up yet"},
+	}
+	drawer := monitoringSchoolDrawer(form)
+	if drawer.GetTitle() != "Goma" || drawer.GetSubtitle() != "EdTech · 1699" || drawer.GetCanSubmit() {
+		t.Fatalf("head: %v", drawer)
+	}
+	items := drawer.GetItems()
+	if items[0].GetHeading() != "Where it stands" || items[2].GetHeading() != "Project work at this school" || items[5].GetHeading() != "Focus SSA" {
+		t.Fatalf("sections: %v", items)
+	}
+	if got := items[1].GetFacts().GetFacts()[1].GetValue(); got != "—" {
+		t.Fatalf("no activity date: %q", got)
+	}
+	if got := items[len(items)-1].GetText(); got != "Read only. The Project Coordinator plans this school's work, assigns it to partners, and alone withdraws or reassigns it." {
+		t.Fatalf("read only line: %q", got)
+	}
+	form.Controls, form.Focus, form.AddedFor = true, nil, ""
+	coordinator := monitoringSchoolDrawer(form).GetItems()
+	if got := coordinator[len(coordinator)-1].GetText(); got != "No focus intervention declared." {
+		t.Fatalf("coordinator's last line: %q", got)
 	}
 }
 
