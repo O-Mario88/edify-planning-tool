@@ -51,6 +51,7 @@ var rules = func() (r struct {
 	QueryKeysNotPassed []string `json:"query_keys_not_passed"`
 	// What the Set Capacity and Withdraw School forms read.
 	EligibleStaffRoles    []string            `json:"eligible_staff_roles"`
+	CapacityExemptRoles   []string            `json:"capacity_exempt_roles"`
 	WithdrawalReasons     [][2]string         `json:"withdrawal_reasons"`
 	WithdrawalStageOrder  []string            `json:"withdrawal_stage_order"`
 	WithdrawalStatuses    map[string][]string `json:"withdrawal_statuses"`

@@ -39,6 +39,7 @@ var fieldFormPages = map[string][]string{
 	"extra_work":                  {rbac.Admin, rbac.CCEO, roleCD, rbac.ProgramLead, roleIA},
 	"pl_review_queue":             {rbac.Admin, rbac.ProgramLead, roleIA},
 	"project_capacity":            {rbac.Admin, rolePC, roleIA},
+	"school_directory":            {rbac.Admin, rbac.CCEO, roleCD, roleIA, rbac.ProgramLead, rolePC, roleRPL},
 	"project_monitoring":          {rbac.Admin, rbac.CCEO, roleCD, roleIA, rbac.ProgramLead, rolePC},
 }
 

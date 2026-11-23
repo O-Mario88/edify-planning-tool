@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -15,7 +16,10 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/projectcapacity"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/rbac"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 )
 
 // WithSchoolDB attaches the PostgreSQL pool so SchoolActionService,
@@ -226,98 +230,77 @@ func (s *Service) addToClusterInGo(ctx context.Context, p auth.Principal, req *s
 	}, true, nil
 }
 
+// getAddToProjectInGo is assign_to_project_flow opened, with the feed's form:
+// the projects this school may join, not every open project, and only Project
+// Coordinators.
 func (s *Service) getAddToProjectInGo(ctx context.Context, p auth.Principal, schoolID string) (*screensv1.GetAddToProjectResponse, bool, error) {
 	if !s.nativeForms() {
 		return nil, false, nil
 	}
-	if !canMutateSchoolAssignment(p.ActiveRole) {
-		return &screensv1.GetAddToProjectResponse{
-			Form: &screensv1.AddToProjectForm{Refused: "Your role does not have permission to enroll schools in projects."},
-		}, true, nil
+	refused := func(why string) (*screensv1.GetAddToProjectResponse, bool, error) {
+		return &screensv1.GetAddToProjectResponse{Form: &screensv1.AddToProjectForm{Refused: why}}, true, nil
 	}
-	if inReach, err := s.schoolsInReach(ctx, p, schoolID); err != nil {
-		return nil, true, apierr.Internal(ctx, s.logger, err)
-	} else if !inReach {
-		return &screensv1.GetAddToProjectResponse{
-			Form: &screensv1.AddToProjectForm{Refused: "This school is outside your portfolio."},
-		}, true, nil
+	if p.InActingAppointment {
+		return refused("This form is not available while you are acting in another role.")
 	}
-	var sID, sName string
-	err := s.db.QueryRow(ctx, `
-SELECT id, name FROM school WHERE (id = $1 OR school_id = $1) AND deleted_at IS NULL LIMIT 1`, schoolID).Scan(&sID, &sName)
+	if !slices.Contains(fieldFormPages["school_directory"], p.ActiveRole) {
+		return nil, true, apierr.New(ctx, connect.CodePermissionDenied, apierr.ReasonPermissionDenied,
+			"Your active role does not have permission to view this page.")
+	}
+	var name string
+	err := s.db.QueryRow(ctx, `SELECT name FROM school WHERE id = $1 AND deleted_at IS NULL`, schoolID).Scan(&name)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, true, apierr.New(ctx, connect.CodeNotFound, apierr.ReasonNotFound, "School not found.")
+		return refused("School not found.")
 	}
 	if err != nil {
 		return nil, true, apierr.Internal(ctx, s.logger, err)
 	}
-
-	rows, err := s.db.Query(ctx, `
-SELECT pr.id, pr.name,
-       EXISTS(SELECT 1 FROM project_school_assignment psa WHERE psa.project_id = pr.id AND psa.school_id = $1)
-  FROM project pr
- WHERE pr.deleted_at IS NULL AND pr.status IN ('active', 'open', 'in_progress')
- ORDER BY pr.name ASC
- LIMIT 150`, sID)
+	scope, err := schooldirectory.ResolveScope(ctx, s.db, p, s.clock())
 	if err != nil {
 		return nil, true, apierr.Internal(ctx, s.logger, err)
 	}
-	defer rows.Close()
-	var projects []*screensv1.ActionChoice
-	for rows.Next() {
-		var id, name string
-		var enrolled bool
-		if scanErr := rows.Scan(&id, &name, &enrolled); scanErr == nil {
-			projects = append(projects, &screensv1.ActionChoice{
-				Value:    id,
-				Label:    name,
-				Disabled: enrolled,
-				Reason:   ternaryStr(enrolled, "Already enrolled", ""),
-			})
-		}
+	visible, err := schooldirectory.RecordVisible(ctx, s.db, p, scope, schoolID, schoolprofile.MayTakeSchools(p.ActiveRole))
+	if err != nil {
+		return nil, true, apierr.Internal(ctx, s.logger, err)
 	}
+	if !visible {
+		return nil, true, apierr.New(ctx, connect.CodePermissionDenied, apierr.ReasonPermissionDenied,
+			"Access Denied: Your active role or assigned portfolio scope does not permit accessing this record.")
+	}
+	if !rbac.Grants(p.ActiveRole, "project.assignSchool") {
+		return refused("You do not have permission to assign projects.")
+	}
+	choices, err := projectcapacity.NewService(s.db, s.clock).EnrolmentChoices(ctx, p, schoolID)
+	if err != nil {
+		return nil, true, apierr.Internal(ctx, s.logger, err)
+	}
+	return &screensv1.GetAddToProjectResponse{Form: addToProjectForm(name, choices)}, true, nil
+}
 
-	coordRows, err := s.db.Query(ctx, `
-SELECT sp.id, COALESCE(u.name, sp.id)
-  FROM staff_profile sp
-  LEFT JOIN "user" u ON u.id = sp.user_id
- WHERE sp.deleted_at IS NULL
- ORDER BY u.name ASC
- LIMIT 150`)
-	var coords []*screensv1.ActionChoice
-	if err == nil {
-		for coordRows.Next() {
-			var id, name string
-			if scanErr := coordRows.Scan(&id, &name); scanErr == nil {
-				coords = append(coords, &screensv1.ActionChoice{Value: id, Label: name})
-			}
-		}
-		coordRows.Close()
-	}
+// projectSupportTypes is the feed's SUPPORT_TYPES.
+var projectSupportTypes = []string{"Staff-led support", "Partner-led support", "Coaching", "Training", "Assessment", "Monitoring"}
 
-	emptyNotice := ""
-	if len(projects) == 0 {
-		emptyNotice = "No projects are currently open for enrolment."
+// addToProjectForm is the feed's project_form.
+func addToProjectForm(school string, choices projectcapacity.EnrolmentForm) *screensv1.AddToProjectForm {
+	form := &screensv1.AddToProjectForm{Title: "Assign " + school + " to project"}
+	for _, project := range choices.Projects {
+		form.Projects = append(form.Projects, &screensv1.ActionChoice{
+			Value: project.Value, Label: project.Label, Disabled: project.Block != "", Reason: project.Block,
+		})
 	}
-	return &screensv1.GetAddToProjectResponse{
-		Form: &screensv1.AddToProjectForm{
-			Title:    fmt.Sprintf("Add %s to project", sName),
-			Projects: projects,
-			SupportTypes: []*screensv1.ActionChoice{
-				{Value: "direct", Label: "Direct support"},
-				{Value: "partner", Label: "Partner-led"},
-				{Value: "blended", Label: "Blended"},
-			},
-			Coordinators: coords,
-			FocusAreas: []*screensv1.ActionChoice{
-				{Value: "leadership", Label: "School Leadership"},
-				{Value: "teaching", Label: "Teaching & Learning"},
-				{Value: "edtech", Label: "Education Technology"},
-				{Value: "finance", Label: "Financial Sustainability"},
-			},
-			EmptyNotice: emptyNotice,
-		},
-	}, true, nil
+	for _, support := range projectSupportTypes {
+		form.SupportTypes = append(form.SupportTypes, &screensv1.ActionChoice{Value: support, Label: support})
+	}
+	for _, coordinator := range choices.Coordinators {
+		form.Coordinators = append(form.Coordinators, &screensv1.ActionChoice{Value: coordinator.Value, Label: coordinator.Label})
+	}
+	for _, area := range ssaInterventionChoices {
+		form.FocusAreas = append(form.FocusAreas, &screensv1.ActionChoice{Value: area[0], Label: area[1]})
+	}
+	if len(form.Projects) == 0 {
+		form.EmptyNotice = "No active projects available. Create a project before assigning schools."
+	}
+	return form
 }
 
 func (s *Service) addToProjectInGo(ctx context.Context, p auth.Principal, req *screensv1.AddToProjectRequest) (*screensv1.AddToProjectResponse, bool, error) {

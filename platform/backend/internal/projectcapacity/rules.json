@@ -1,4 +1,10 @@
 {
+  "capacity_exempt_roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "ProjectCoordinator"
+  ],
   "eligible_staff_roles": [
     "CCEO",
     "Program Lead"

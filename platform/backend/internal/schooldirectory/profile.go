@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
 
@@ -108,6 +109,40 @@ func Openable(ctx context.Context, q Querier, p auth.Principal, s Scope, key str
 		c = *country
 	}
 	return find(ctx, q, unheldBase(c), key)
+}
+
+// RecordVisible is RolePermissionService.can_view_record for a school: the
+// Admin, a country-wide reader, the scope's own schools, and a field officer
+// (mayTake) for a school nobody holds in their country.
+func RecordVisible(ctx context.Context, q Querier, p auth.Principal, s Scope, schoolID string, mayTake bool) (bool, error) {
+	switch {
+	case p.ActiveRole == roleAdmin:
+		return true, nil
+	case p.ActiveRole == roleCountryDirector && !rules.AllowCDOperational:
+		return false, nil
+	case p.ActiveRole == "RegionalVicePresident":
+		return false, nil
+	case s.CountryScope, slices.Contains(s.SchoolIDs, schoolID):
+		return true, nil
+	case !mayTake || p.StaffProfileID == "":
+		return false, nil
+	}
+	var country *string
+	err := q.QueryRow(ctx, `SELECT country FROM staff_profile WHERE user_id = $1 AND deleted_at IS NULL LIMIT 1`, p.UserID).Scan(&country)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return false, fmt.Errorf("schooldirectory: reading the officer's country: %w", err)
+	}
+	c := ""
+	if country != nil {
+		c = *country
+	}
+	b := unheldBase(c)
+	b.and("s.id = " + b.arg(schoolID))
+	var open bool
+	if err := q.QueryRow(ctx, "SELECT EXISTS (SELECT 1 FROM school s WHERE "+b.where()+")", b.args...).Scan(&open); err != nil {
+		return false, fmt.Errorf("schooldirectory: reading whether the school is held: %w", err)
+	}
+	return open, nil
 }
 
 // InReach is whether school_queryset(scope) holds the school: an operating

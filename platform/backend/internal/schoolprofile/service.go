@@ -267,3 +267,7 @@ func tabs(sc school, open string) []*screensv1.PageTab {
 	}
 	return out
 }
+
+// MayTakeSchools is data_gaps.may_take's role half: a field role may open and
+// complete a school nobody holds.
+func MayTakeSchools(role string) bool { return rules.Doors[role].Take }

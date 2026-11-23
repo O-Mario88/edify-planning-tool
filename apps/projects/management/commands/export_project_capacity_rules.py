@@ -67,6 +67,7 @@ def rules() -> dict:
         "query_keys_not_passed": sorted(NOT_PASSED),
         # The Set Capacity and Withdraw School forms.
         "eligible_staff_roles": sorted(capacity.ELIGIBLE_STAFF_ROLES),
+        "capacity_exempt_roles": sorted(capacity.CAPACITY_EXEMPT_ROLES),
         "withdrawal_reasons": [list(r) for r in capacity.WITHDRAWAL_REASONS],
         "withdrawal_stage_order": list(capacity._STAGE_ORDER),
         "withdrawal_statuses": {
