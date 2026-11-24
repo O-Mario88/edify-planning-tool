@@ -238,8 +238,8 @@ func TestATrainingIDOnAVisitIsTheViewsNotice(t *testing.T) {
 	}
 }
 
-// A School Visit + SSA Collection keeps why no SSA was taken; scores marked
-// collected are the SSA upload, handed on; a blank sheet is none.
+// A School Visit + SSA Collection keeps why no SSA was taken; a blank
+// sheet is none; scores marked collected are all eight or the view's notice.
 func TestTheSSANotCollectedIsReadAsTheViewReadsIt(t *testing.T) {
 	pl := &completionPlan{}
 	if err := readSSANotCollected(pl, url.Values{"ssa_collected": {"no"}, "ssa_not_collected_reason": {" Other "}}); err != nil || pl.ssaReason == nil || *pl.ssaReason != "Other" || !pl.ssaVisit {
@@ -249,7 +249,29 @@ func TestTheSSANotCollectedIsReadAsTheViewReadsIt(t *testing.T) {
 	if err := readSSANotCollected(pl, url.Values{"ssa_collected": {"yes"}, "score_leadership": {""}}); err != nil || pl.ssaReason != nil {
 		t.Fatalf("a blank sheet: %v %v", err, pl.ssaReason)
 	}
-	if err := readSSANotCollected(&completionPlan{}, url.Values{"ssa_collected": {"yes"}, "score_leadership": {"7"}}); !errors.Is(err, ErrHandOn) {
-		t.Fatalf("scores: %v, want a hand-on", err)
+	var refusal *Refusal
+	if err := readSSANotCollected(&completionPlan{}, url.Values{"ssa_collected": {"yes"}, "score_leadership": {"7"}}); !errors.As(err, &refusal) ||
+		!refusal.Notice || refusal.Message != "Missing score for Christlike Behaviour" {
+		t.Fatalf("a part-filled sheet: %v", err)
+	}
+	full := url.Values{"ssa_collected": {"yes"}}
+	for _, field := range ssaScoreFields {
+		full.Set(field, "7.5")
+	}
+	pl = &completionPlan{}
+	if err := readSSANotCollected(pl, full); err != nil || len(pl.ssaScores) != 8 || pl.ssaReason != nil {
+		t.Fatalf("all eight: %v %d", err, len(pl.ssaScores))
+	}
+	full.Set("score_exposure_to_word_of_god", "11")
+	if err := readSSANotCollected(&completionPlan{}, full); !errors.As(err, &refusal) || refusal.Message != "Score for Exposure To Word Of God must be between 0 and 10" {
+		t.Fatalf("out of range: %v", err)
+	}
+	full.Set("score_exposure_to_word_of_god", "seven")
+	if err := readSSANotCollected(&completionPlan{}, full); !errors.As(err, &refusal) || refusal.Message != "Score for Exposure To Word Of God must be numeric" {
+		t.Fatalf("not numeric: %v", err)
+	}
+	full.Set("score_exposure_to_word_of_god", "nan")
+	if err := readSSANotCollected(&completionPlan{}, full); !errors.Is(err, ErrHandOn) {
+		t.Fatalf("nan: %v, want a hand-on", err)
 	}
 }

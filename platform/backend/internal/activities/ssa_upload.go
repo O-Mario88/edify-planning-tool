@@ -200,51 +200,90 @@ func (s *Service) KeyVisitSSA(ctx context.Context, p auth.Principal, activityID 
 	return Answer{ActivityID: a.id, Message: rules.Move.SavedMessage}, nil
 }
 
+// ssaKey is one upload of a visit's scores, decided before its writes.
+type ssaKey struct {
+	day, assessed   time.Time
+	fy, operational string
+	average         float64
+	payload         string
+	byIntervention  map[string]any
+	record          string // the record written
+	created         bool   // a new record, not the visit's own re-keyed
+}
+
 // keyScores is apps.ssa.services.upload for the visit's scores.
 func (s *Service) keyScores(ctx context.Context, p auth.Principal, a *completedVisit, scores []visitScore, now time.Time, origin Origin) error {
-	if refusal := scoreRangeRefusal(scores); refusal != "" {
-		return refuse("%s", refusal)
-	}
 	v, err := readSSAVisit(ctx, s.db, a.id)
 	if err != nil {
 		return err
 	}
-	day := ssaVisitDay(v.delivered, v.started, a.plannedDate, s.kampala)
-	fy := schooldirectory.OperationalFY(day)
-	operational := schooldirectory.OperationalFY(now)
-	if fy == operational {
-		blocked, err := previousYearUnverified(ctx, s.db, a.schoolID, fy)
-		if err != nil {
-			return err
-		}
-		if blocked {
-			return refuse("%s", ssaSequenceRefusal(fy))
-		}
-	}
-	// The assessment is the day's local midnight (_parse_date, make_aware).
-	assessed := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, s.kampala)
-	average := ssaAverage(scores)
-	rows := make([]map[string]any, len(scores))
-	byIntervention := map[string]any{}
-	for i, sc := range scores {
-		rows[i] = map[string]any{"id": cuid.New(), "intervention": sc.intervention, "score": sc.score}
-		byIntervention[sc.intervention] = sc.score
-	}
-	payload, err := json.Marshal(rows)
+	k, err := s.prepareSSAKey(ctx, a, scores, ssaVisitDay(v.delivered, v.started, a.plannedDate, s.kampala), now)
 	if err != nil {
-		return fmt.Errorf("activities: encoding the scores: %w", err)
+		return err
 	}
 	tx, err := s.db.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite, IsoLevel: pgx.ReadCommitted})
 	if err != nil {
 		return fmt.Errorf("activities: opening the SSA: %w", err)
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
+	if err := s.keySSAInTx(ctx, tx, p, a, k, now); err != nil {
+		return err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("activities: committing the SSA: %w", err)
+	}
+	action, data := k.auditRow(a)
+	if err := s.auditSSARecord(ctx, p, action, k.record, data, origin); err != nil {
+		s.logger.Warn("activities: the SSA's audit row was not written", "record", k.record, "err", err)
+	}
+	// ledger_sync: a saved SSA marks its collector's ledger for its year.
+	if err := s.markOwnerYears(ctx, p.UserID, k.day); err != nil {
+		s.logger.Warn("activities: the target ledger was not marked", "record", k.record, "err", err)
+	}
+	return nil
+}
+
+// prepareSSAKey is upload's checks before its writes: the scores' range and
+// the previous year's rule, for scores collected on day.
+func (s *Service) prepareSSAKey(ctx context.Context, a *completedVisit, scores []visitScore, day, now time.Time) (*ssaKey, error) {
+	if refusal := scoreRangeRefusal(scores); refusal != "" {
+		return nil, refuse("%s", refusal)
+	}
+	k := &ssaKey{day: day, fy: schooldirectory.OperationalFY(day), operational: schooldirectory.OperationalFY(now)}
+	if k.fy == k.operational {
+		blocked, err := previousYearUnverified(ctx, s.db, a.schoolID, k.fy)
+		if err != nil {
+			return nil, err
+		}
+		if blocked {
+			return nil, refuse("%s", ssaSequenceRefusal(k.fy))
+		}
+	}
+	// The assessment is the day's local midnight (_parse_date, make_aware).
+	k.assessed = time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, s.kampala)
+	k.average = ssaAverage(scores)
+	rows := make([]map[string]any, len(scores))
+	k.byIntervention = map[string]any{}
+	for i, sc := range scores {
+		rows[i] = map[string]any{"id": cuid.New(), "intervention": sc.intervention, "score": sc.score}
+		k.byIntervention[sc.intervention] = sc.score
+	}
+	payload, err := json.Marshal(rows)
+	if err != nil {
+		return nil, fmt.Errorf("activities: encoding the scores: %w", err)
+	}
+	k.payload = string(payload)
+	return k, nil
+}
+
+// keySSAInTx is upload's writes in the transaction it is given.
+func (s *Service) keySSAInTx(ctx context.Context, tx pgx.Tx, p auth.Principal, a *completedVisit, k *ssaKey, now time.Time) error {
 	var answer string
-	err = tx.QueryRow(ctx, `SELECT gateway_ssa_entry.key_visit_ssa($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11)`,
-		a.schoolID, a.id, cuid.New(), assessed, fy, ssaQuarter(day), average, p.UserID, string(payload), now, operational).Scan(&answer)
+	err := tx.QueryRow(ctx, `SELECT gateway_ssa_entry.key_visit_ssa($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11)`,
+		a.schoolID, a.id, cuid.New(), k.assessed, k.fy, ssaQuarter(k.day), k.average, p.UserID, k.payload, now, k.operational).Scan(&answer)
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgErr.Code == uniqueViolation && pgErr.ConstraintName == ssaYearConstraint {
-		return refuse("%s", ssaDuplicateMessage(fy))
+		return refuse("%s", ssaDuplicateMessage(k.fy))
 	}
 	if err != nil {
 		return fmt.Errorf("activities: keying the SSA: %w", err)
@@ -259,29 +298,24 @@ func (s *Service) keyScores(ctx context.Context, p auth.Principal, a *completedV
 			case "confirmed":
 				return refuse("%s", ssaAlreadyKept)
 			case "year":
-				return refuse("%s", ssaDuplicateMessage(fy))
+				return refuse("%s", ssaDuplicateMessage(k.fy))
 			}
 			return handOn("the SSA met " + answer)
 		}
 	}
-	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("activities: committing the SSA: %w", err)
-	}
-	action, data := "ssa_rekeyed", map[string]any{"schoolId": a.schoolID, "sourceActivityId": a.id}
-	if wasCreated {
-		action, data = "ssa_create", map[string]any{
-			"schoolId": a.schoolID, "fy": fy, "dateOfSsa": day.Format(time.DateOnly), "averageScore": average,
-			"scores": byIntervention, "source": "staff_keyed", "channel": "", "sourceActivityId": a.id,
-		}
-	}
-	if err := s.auditSSARecord(ctx, p, action, record, data, origin); err != nil {
-		s.logger.Warn("activities: the SSA's audit row was not written", "record", record, "err", err)
-	}
-	// ledger_sync: a saved SSA marks its collector's ledger for its year.
-	if err := s.markOwnerYears(ctx, p.UserID, day); err != nil {
-		s.logger.Warn("activities: the target ledger was not marked", "record", record, "err", err)
-	}
+	k.record, k.created = record, wasCreated
 	return nil
+}
+
+// auditRow is upload's audit row for the record written.
+func (k *ssaKey) auditRow(a *completedVisit) (string, map[string]any) {
+	if !k.created {
+		return "ssa_rekeyed", map[string]any{"schoolId": a.schoolID, "sourceActivityId": a.id}
+	}
+	return "ssa_create", map[string]any{
+		"schoolId": a.schoolID, "fy": k.fy, "dateOfSsa": k.day.Format(time.DateOnly), "averageScore": k.average,
+		"scores": k.byIntervention, "source": "staff_keyed", "channel": "", "sourceActivityId": a.id,
+	}
 }
 
 // previousYearUnverified is upload's sequence rule: a previous year's record

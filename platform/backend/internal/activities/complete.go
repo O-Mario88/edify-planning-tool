@@ -16,6 +16,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"net/url"
 	"regexp"
 	"slices"
@@ -133,6 +134,8 @@ type completionPlan struct {
 	start                        bool     // the work is started in the completion's transaction
 	ssaVisit                     bool     // a School Visit + SSA Collection, keeping why no SSA was taken
 	ssaReason                    *string  // that reason, nil for none
+	ssaScores                    []visitScore
+	ssaKey                       *ssaKey  // the scores' upload, decided before the hand-in
 	sessions                     bool     // Django is absent: Go moves work done on another day
 	done                         *doneDay // the move to the day done, decided before the hand-in
 	payload                      map[string]any
@@ -195,7 +198,18 @@ func (s *Service) prepareCompletion(ctx context.Context, p auth.Principal, req C
 		return nil, handOn(why)
 	}
 	pl := &completionPlan{p: p, a: *a, origin: origin, now: now, start: a.status != startedStatus, sessions: req.Sessions}
-	if err := s.readCompletionForm(pl, req.Form); err != nil {
+	if err := s.readCompletionFields(pl, req.Form); err != nil {
+		return nil, err
+	}
+	if len(pl.ssaScores) > 0 {
+		// _record_completion_ssa's upload: its refusals are the view's notices.
+		k, err := s.prepareSSAKey(ctx, &pl.a, pl.ssaScores, pl.delivered, now)
+		if err != nil {
+			return nil, asNotice(err)
+		}
+		pl.ssaKey = k
+	}
+	if err := s.judgeSalesforceID(pl); err != nil {
 		return nil, err
 	}
 	if !sameDay(pl.delivered, pl.a.plannedDate) {
@@ -308,6 +322,15 @@ FROM activity a WHERE a.id = $1 AND a.deleted_at IS NULL`, id).Scan(
 // (_complete_with_purpose, _submit_accountability, _completion_payload,
 // completion_day, the reservation's format), in their order.
 func (s *Service) readCompletionForm(pl *completionPlan, form url.Values) error {
+	if err := s.readCompletionFields(pl, form); err != nil {
+		return err
+	}
+	return s.judgeSalesforceID(pl)
+}
+
+// readCompletionFields is readCompletionForm up to the Salesforce ID, which
+// complete() judges after the view has kept the SSA.
+func (s *Service) readCompletionFields(pl *completionPlan, form url.Values) error {
 	for _, field := range handedOnFields {
 		if form.Has(field) {
 			return handOn("the drawer posted " + field)
@@ -354,7 +377,8 @@ func (s *Service) readCompletionForm(pl *completionPlan, form url.Values) error 
 		posted(form, "follow_up_note")
 	pl.raw = pyStrip(form.Get("salesforce_id"))
 	pl.payload = completionPayload(pl, form)
-	return s.judgeSalesforceID(pl)
+	pl.payload["ssaCollected"] = len(pl.ssaScores) > 0
+	return nil
 }
 
 // completedOn is completion_day, or today when the drawer sent none. A day
@@ -480,6 +504,14 @@ func (s *Service) writeCompletion(ctx context.Context, pl *completionPlan) error
 		return fmt.Errorf("activities: opening the completion: %w", err)
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
+	if pl.ssaKey != nil {
+		if err := s.keySSAInTx(ctx, tx, pl.p, &pl.a, pl.ssaKey, pl.now); err != nil {
+			return asNotice(err)
+		}
+		if err := s.appendSSARow(ctx, tx, pl); err != nil {
+			return err
+		}
+	}
 	if pl.ssaVisit {
 		var noted bool
 		if err := tx.QueryRow(ctx, `SELECT gateway_completion.note_ssa_not_collected($1, $2, $3)`, pl.a.id, pl.ssaReason, pl.now).Scan(&noted); err != nil {
@@ -608,6 +640,12 @@ func (s *Service) afterCompletion(ctx context.Context, pl *completionPlan) {
 			s.logger.Warn("activities: the target ledger was not marked", "activity", pl.a.id, "err", err)
 		}
 	}
+	if pl.ssaKey != nil {
+		// ledger_sync: a saved SSA marks its collector's ledger for its year.
+		if err := s.markOwnerYears(ctx, pl.p.UserID, pl.ssaKey.day); err != nil {
+			s.logger.Warn("activities: the SSA's ledger was not marked", "activity", pl.a.id, "err", err)
+		}
+	}
 	s.settleDoneDay(ctx, pl.done)
 }
 
@@ -658,10 +696,18 @@ func (a *completedVisit) currentPurpose() string {
 // otherwise the reason none were taken is kept (blank is none).
 func readSSANotCollected(pl *completionPlan, form url.Values) error {
 	entered := slices.ContainsFunc(ssaScoreFields, func(field string) bool { return pyStrip(form.Get(field)) != "" })
-	if form.Get("ssa_collected") == "yes" && entered {
-		return handOn("SSA scores entered at completion: the SSA upload")
-	}
 	pl.ssaVisit = true
+	if form.Get("ssa_collected") == "yes" && entered {
+		scores, refusal, err := completionScoresOf(form)
+		if err != nil {
+			return err
+		}
+		if refusal != "" {
+			return &Refusal{Message: refusal, Notice: true}
+		}
+		pl.ssaScores = scores
+		return nil
+	}
 	if reason := pyStrip(form.Get("ssa_not_collected_reason")); reason != "" {
 		pl.ssaReason = &reason
 	}
@@ -683,4 +729,63 @@ func (pl *completionPlan) trainingIDOnAVisit(form url.Values) error {
 			" the visit's SV- or SVE- ID in Visit ID."
 	}
 	return &Refusal{Message: message, Notice: true}
+}
+
+// completionScoresOf is _record_completion_ssa's score loop: all eight in
+// the canonical order, or the first refusal in the view's words. A score Go
+// cannot read exactly as Python's float() does is handed on.
+func completionScoresOf(form url.Values) ([]visitScore, string, error) {
+	var scores []visitScore
+	for _, code := range rules.order {
+		label := pyTitle(strings.ReplaceAll(code, "_", " "))
+		raw := pyStrip(form.Get("score_" + code))
+		if raw == "" {
+			return nil, "Missing score for " + label, nil
+		}
+		if !pyFloatForm.MatchString(raw) {
+			lower := strings.ToLower(raw)
+			if strings.Contains(lower, "inf") || strings.Contains(lower, "nan") || strings.Contains(raw, "_") ||
+				strings.IndexFunc(raw, func(r rune) bool { return r > unicode.MaxASCII }) >= 0 {
+				return nil, "", handOn("a score in a form Go does not read as Python does")
+			}
+			return nil, "Score for " + label + " must be numeric", nil
+		}
+		value, err := strconv.ParseFloat(raw, 64)
+		if err != nil || math.IsInf(value, 0) || math.IsNaN(value) {
+			return nil, "", handOn("a score Go does not read as Python does")
+		}
+		if value < 0 || value > 10 {
+			return nil, "Score for " + label + " must be between 0 and 10", nil
+		}
+		scores = append(scores, visitScore{intervention: code, score: value})
+	}
+	return scores, "", nil
+}
+
+// asNotice is a refusal shown as the view's own notice.
+func asNotice(err error) error {
+	var refusal *Refusal
+	if errors.As(err, &refusal) {
+		return &Refusal{Message: refusal.Message, Notice: true}
+	}
+	return err
+}
+
+// appendSSARow is upload's audit row, inside the completion's transaction.
+func (s *Service) appendSSARow(ctx context.Context, tx pgx.Tx, pl *completionPlan) error {
+	cover, err := coverageStamp(ctx, tx, pl.p.UserID, s.now())
+	if err != nil {
+		return err
+	}
+	action, data := pl.ssaKey.auditRow(&pl.a)
+	if _, err := audit.Append(ctx, tx, audit.Entry{
+		Action: action, SubjectKind: audit.Text("SsaRecord"), SubjectID: audit.Text(pl.ssaKey.record),
+		ActorID: audit.Text(pl.p.UserID), ActorRole: audit.Text(pl.p.ActiveRole), Success: true,
+		Payload:   withStamps(data, cover),
+		IPAddress: nilIfEmpty(pl.origin.IP), UserAgent: nilIfEmpty(pl.origin.UserAgent),
+		CorrelationID: nilIfEmpty(pl.origin.CorrelationID),
+	}, s.now()); err != nil {
+		return fmt.Errorf("activities: writing the SSA's audit row: %w", err)
+	}
+	return nil
 }
