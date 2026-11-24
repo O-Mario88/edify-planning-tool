@@ -43,7 +43,29 @@ Three things differ from the Django page on purpose. The Assign form asks for th
 ### Field forms still to port
 
 - `/activities/<id>/evidence` needs a new capability. No client drawer has a file field and Go has no upload, page-joining or stored-file path. An upload form must not be drawn until those exist.
-- **Planning drawer placeholders removed (2026-11-24):** `getPlanningDrawerInGo` drew `assign`, `group-training` and `cluster-meeting` from invented purposes and focus areas with every partner, and `saveAssignPlanningInGo` saved Assign to Partner through Antigravity's `HandOverToPartner`, not the existing rules. Neither web nor phone ever asks for `group-training` or `cluster-meeting` (only `schedule` and `assign` exist in Django's feed), and Assign is now handed on, so with Django absent it is not available rather than wrong. The Assign to Partner drawer is now Go's (`coreforms.ClientAssignFor`, `screens/planning_assign.go`): the visit gate's refusal, the assignable partners and the courses each records, the partner courses, the purposes greyed by the gate with their sentences and the on-top training note, the follow-ups and the year's follow-up rule, the project hand-over routes, the last withdrawal, the assigned day and who monitors; compared field by field with the feed's `read_assign` on the same data (equal but for the copies' own enrolment ids). Still to build: its save, `assign_partner_action_view`.
+- **Planning drawer placeholders removed (2026-11-24):** `getPlanningDrawerInGo` drew `assign`, `group-training` and `cluster-meeting` from invented purposes and focus areas with every partner, and `saveAssignPlanningInGo` saved Assign to Partner through Antigravity's `HandOverToPartner`, not the existing rules. Neither web nor phone ever asks for `group-training` or `cluster-meeting` (only `schedule` and `assign` exist in Django's feed), and Assign is now handed on, so with Django absent it is not available rather than wrong. The Assign to Partner drawer is now Go's (`coreforms.ClientAssignFor`, `screens/planning_assign.go`): the visit gate's refusal, the assignable partners and the courses each records, the partner courses, the purposes greyed by the gate with their sentences and the on-top training note, the follow-ups and the year's follow-up rule, the project hand-over routes, the last withdrawal, the assigned day and who monitors; compared field by field with the feed's `read_assign` on the same data (equal but for the copies' own enrolment ids). Still to build: its save, `assign_partner_action_view`, in this order:
+  1. the role, a cluster refused, and the school through `get_operational_school_or_404`;
+  2. `normalise_visit_purpose(for_partner=True)`, which carries the retired and not-for-partners words;
+  3. the purpose branches:
+     - `in_school_training`: `_partner_training_handover` matches Core's `handOverTraining` and its messages;
+     - otherwise `resolve_assignment_item`: effective items with `partner_delivery_allowed`, `standard_support` and the purpose's `PURPOSE_ACTIVITY_TYPES` kind, first by `display_name, stable_code`, else "No approved Partner Activity is configured for this reason."; its reason is "{label} selected by the assigning staff member.";
+  4. `get_selectable_item` and `validate_context` (requires school or cluster);
+  5. the Training Follow Up source rules ("Select the completed training this assignment follows up.", "Choose a completed current-FY training this School did.", "A source session is only valid for Training Follow Up.");
+  6. `resolve_activity_intervention` (mapping modes: any, prerequisite or administrative, inherit-from-source, fixed);
+  7. the 15-second double-submit guard (same partner, school, assigning staff and type), which answers "{school} already has this work planned, so nothing was added.";
+  8. the partner allowance, a deliberate no-op;
+  9. the visit gate's `can_assign_partner`;
+  10. `create_assignment`'s doors:
+      - `assert_operating`;
+      - the loan partner;
+      - outreach-only schools (`programme_school_partner_refusal`);
+      - the project partner;
+      - `assert_delivers`;
+      - the room and open-duplicate checks (Core's `assertHandOverRoom` and `assertNoOpenHandOver`);
+      - the training ceiling (hand on when one is set, as Core does);
+  11. the write: Core's `writeHandOver` with no slot;
+  12. the signal: Core's `afterHandOver` first two parts only, `partner.assigned` and the `partner_scheduled_activity` notice;
+  13. the answer: "Assigned to {partner}. The partner schedules it from here.", with `_partner_work_link`.
 
 The Core Schools visit, training and partner hand-over forms now save in Go when Django is absent. While Django is present it keeps these saves, because the forms have no form-only door.
 
