@@ -178,6 +178,9 @@ GRANT UPDATE (assigned_staff_name) ON core_activity_slot TO edify_activities_rw;
 -- A monthly request carried along with a planner's change is told to its people.
 GRANT SELECT (id, total_amount, status, period_key, submitted_by_user_id, reviewed_by_user_id)
   ON fund_request TO edify_activities_rw;
+-- An owner's weekly request is routed by the role stamped on it
+-- (weekly_service._owner_role); gateway_day_money.send_week writes it.
+GRANT SELECT (responsible_role) ON weekly_fund_request TO edify_activities_rw;
 GRANT INSERT (id, created_at, updated_at, assigning_staff_id, focus_intervention, expected_activity_type, status, notes,
               partner_id, school_id, support_type, training_number, visit_number, purpose_of_visit, assignment_mode,
               catalogue_item_id, catalogue_snapshot, override_reason, recommendation_reason, source_ssa_id,

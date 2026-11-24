@@ -4,8 +4,8 @@
   "controls": 483,
   "controls_without_a_destination": 92,
   "go": {
-   "django": 189,
-   "proved": 15,
+   "django": 185,
+   "proved": 19,
    "unproved": 21
   },
   "size": {
@@ -22,7 +22,7 @@
    "8 finance and money": 22,
    "9 admin and the rest": 10
   },
-  "field_staff_left": 141
+  "field_staff_left": 137
  },
  "saves": [
   {
@@ -2230,8 +2230,8 @@
    ],
    "field_staff": true,
    "phase": "8 finance and money",
-   "go": "django",
-   "evidence": "",
+   "go": "proved",
+   "evidence": "owner sends their week (doc 189)",
    "templates": [
     "partials/fund_requests/weekly_request_workflow.html"
    ]
@@ -2256,8 +2256,8 @@
    ],
    "field_staff": true,
    "phase": "8 finance and money",
-   "go": "django",
-   "evidence": "",
+   "go": "proved",
+   "evidence": "owner's Fund Received (doc 189)",
    "templates": [
     "partials/fund_requests/weekly_request_workflow.html"
    ]
@@ -2282,8 +2282,8 @@
    ],
    "field_staff": true,
    "phase": "8 finance and money",
-   "go": "django",
-   "evidence": "",
+   "go": "proved",
+   "evidence": "owner's No Advance (doc 189)",
    "templates": [
     "partials/fund_requests/weekly_request_workflow.html"
    ]
@@ -2334,8 +2334,8 @@
    ],
    "field_staff": true,
    "phase": "8 finance and money",
-   "go": "django",
-   "evidence": "",
+   "go": "proved",
+   "evidence": "owner self-funds their week (doc 189)",
    "templates": [
     "partials/fund_requests/weekly_request_workflow.html"
    ]

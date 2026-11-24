@@ -460,6 +460,9 @@ func (s *Service) getPageDrawerInGo(ctx context.Context, p auth.Principal, rawPa
 		pathOnly = pathOnly[:i]
 	}
 
+	if answer, served := s.weekOwnerDrawer(pathOnly); served {
+		return answer, true, nil
+	}
 	if answer, served, err := s.exportDrawerInGo(ctx, p, rawPath); served {
 		return answer, true, err
 	}

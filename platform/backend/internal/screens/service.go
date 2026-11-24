@@ -85,7 +85,9 @@ type Service struct {
 	// visitDecisions is a school owner's decision on a visit request, with Django absent.
 	visitDecisions VisitDecider
 	// starter is Start activity, with Django absent.
-	starter   ActivityStarter
+	starter ActivityStarter
+	// weekOwner is the owner's weekly request buttons, with Django absent.
+	weekOwner WeekOwner
 	pairsInGo bool // schedule_training_pair: 32's In-school Training
 	// groupTrainings is nil unless EDIFY_GO_SAVES names schedule_group_training (38).
 	groupTrainings GroupTrainingSaver

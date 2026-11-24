@@ -596,6 +596,129 @@ CREATE OR REPLACE FUNCTION gateway_day_money.stale_days(p_owner varchar, p_start
    ORDER BY b.id
 $fn$;
 
+-- The owner's own decisions on their week (weekly_service.request_advance,
+-- self_funded, not_requested, confirm_receipt). Each locks the request, checks
+-- it as the existing service does and answers what it found: 'gone',
+-- 'not_owner', 'changed' (the role stamped on the request is not the one the
+-- caller routed by), 'status:<status>', 'paid', 'not_disbursed', 'already',
+-- 'no_bank', or the request's new status.
+
+-- weekly_service._sync_advances: each line's advance whose money has not
+-- moved follows the request; the row locks keep a payment committing in
+-- another channel from being rewritten.
+CREATE OR REPLACE FUNCTION gateway_day_money.sync_week_advances(
+  p_request varchar, p_status varchar, p_type varchar, p_now timestamptz) RETURNS void
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+BEGIN
+  PERFORM 1 FROM public.advance_request r
+    WHERE r.budget_line_id IN (SELECT wl.activity_budget_line_id FROM public.weekly_fund_request_line wl
+                                WHERE wl.weekly_fund_request_id = p_request)
+    FOR UPDATE;
+  UPDATE public.advance_request r
+     SET status = p_status, advance_type = p_type, confirmed_at = p_now, updated_at = p_now
+   WHERE r.budget_line_id IN (SELECT wl.activity_budget_line_id FROM public.weekly_fund_request_line wl
+                               WHERE wl.weekly_fund_request_id = p_request)
+     AND NOT (r.status = ANY (gateway_day_money.money_moved()));
+END
+$fn$;
+
+-- request_advance: p_role and p_status are the caller's routing for the role
+-- the request carried when it was read (p_stamped).
+CREATE OR REPLACE FUNCTION gateway_day_money.send_week(
+  p_request varchar, p_user varchar, p_stamped varchar, p_role varchar, p_status varchar,
+  p_funding varchar, p_now timestamptz) RETURNS varchar
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  v_owner varchar;
+  v_status varchar;
+  v_role varchar;
+BEGIN
+  SELECT w.responsible_user, w.status, COALESCE(w.responsible_role, '')
+    INTO v_owner, v_status, v_role
+    FROM public.weekly_fund_request w WHERE w.id = p_request FOR UPDATE;
+  IF NOT FOUND THEN
+    RETURN 'gone';
+  END IF;
+  IF v_owner IS DISTINCT FROM p_user THEN
+    RETURN 'not_owner';
+  END IF;
+  IF NOT (v_status = ANY (ARRAY['pending_responsible_confirmation', 'not_requested', 'returned_by_pl',
+                                'returned_by_cd', 'returned_by_accountant']::varchar[])) THEN
+    RETURN 'status:' || v_status;
+  END IF;
+  IF v_role <> COALESCE(p_stamped, '') THEN
+    RETURN 'changed';
+  END IF;
+  UPDATE public.weekly_fund_request
+     SET funding_source = p_funding, status = p_status, responsible_role = p_role,
+         confirmed_at = p_now, updated_at = p_now
+   WHERE id = p_request;
+  IF p_status = 'confirmed_for_advance' THEN
+    PERFORM gateway_day_money.sync_week_advances(p_request, 'confirmed_for_advance', 'advance', p_now);
+  ELSE
+    PERFORM gateway_day_money.sync_week_advances(p_request, 'pending_responsible_confirmation', 'advance', p_now);
+  END IF;
+  RETURN p_status;
+END
+$fn$;
+
+-- not_requested.
+CREATE OR REPLACE FUNCTION gateway_day_money.skip_week(p_request varchar, p_user varchar, p_now timestamptz)
+  RETURNS varchar
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  v_owner varchar;
+  v_status varchar;
+BEGIN
+  SELECT w.responsible_user, w.status INTO v_owner, v_status
+    FROM public.weekly_fund_request w WHERE w.id = p_request FOR UPDATE;
+  IF NOT FOUND THEN
+    RETURN 'gone';
+  END IF;
+  IF v_owner IS DISTINCT FROM p_user THEN
+    RETURN 'not_owner';
+  END IF;
+  IF v_status IN ('disbursed', 'accounted') THEN
+    RETURN 'paid';
+  END IF;
+  UPDATE public.weekly_fund_request SET status = 'not_requested', confirmed_at = p_now, updated_at = p_now
+   WHERE id = p_request;
+  PERFORM gateway_day_money.sync_week_advances(p_request, 'not_requested', 'not_requested', p_now);
+  RETURN 'not_requested';
+END
+$fn$;
+
+-- confirm_receipt: an owner's second confirmation changes nothing.
+CREATE OR REPLACE FUNCTION gateway_day_money.confirm_week_receipt(
+  p_request varchar, p_user varchar, p_bank boolean, p_now timestamptz) RETURNS varchar
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  v_owner varchar;
+  v_status varchar;
+  v_received timestamptz;
+BEGIN
+  SELECT w.responsible_user, w.status, w.receipt_confirmed_at INTO v_owner, v_status, v_received
+    FROM public.weekly_fund_request w WHERE w.id = p_request FOR UPDATE;
+  IF NOT FOUND THEN
+    RETURN 'gone';
+  END IF;
+  IF v_owner IS DISTINCT FROM p_user THEN
+    RETURN 'not_owner';
+  END IF;
+  IF v_status <> 'disbursed' THEN
+    RETURN 'not_disbursed';
+  END IF;
+  IF v_received IS NOT NULL THEN
+    RETURN 'already';
+  END IF;
+  IF p_bank IS NOT TRUE THEN
+    RETURN 'no_bank';
+  END IF;
+  UPDATE public.weekly_fund_request SET receipt_confirmed_at = p_now, updated_at = p_now WHERE id = p_request;
+  RETURN 'confirmed';
+END
+$fn$;
+
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA gateway_day_money FROM PUBLIC;
 RESET ROLE;
 
@@ -611,5 +734,8 @@ GRANT EXECUTE ON FUNCTION
   gateway_day_money.refile_month(varchar, varchar, integer, timestamptz),
   gateway_day_money.note_lines(varchar, text, timestamptz),
   gateway_day_money.take_back_weeks(varchar, varchar[], date[], timestamptz),
-  gateway_day_money.stale_days(varchar, date, date)
+  gateway_day_money.stale_days(varchar, date, date),
+  gateway_day_money.send_week(varchar, varchar, varchar, varchar, varchar, varchar, timestamptz),
+  gateway_day_money.skip_week(varchar, varchar, timestamptz),
+  gateway_day_money.confirm_week_receipt(varchar, varchar, boolean, timestamptz)
 TO edify_activities_rw;

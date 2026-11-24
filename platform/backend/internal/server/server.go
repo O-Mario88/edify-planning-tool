@@ -198,6 +198,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	mux.Handle(schoolsv1connect.NewSchoolServiceHandler(
 		schools.NewService(schools.NewStore(pool), summarizer, logger), options...,
 	))
+	weeklyPage := weeklyrequest.NewService(pool, time.Now)
 	var existingApp screens.Fetcher
 	if cfg.ExistingAppURL != "" {
 		existingApp = feed.NewClient(cfg.ExistingAppURL, logger)
@@ -287,7 +288,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			planningoversight.NewService(pool, time.Now),
 			oversightportfolio.NewService(pool, time.Now),
 			countryMapSvc,
-			weeklyrequest.NewService(pool, time.Now),
+			weeklyPage,
 			adminusers.NewService(pool),
 			personaltimeoff.NewService(pool, time.Now),
 			dashboard.NewService(pool, time.Now),
@@ -335,7 +336,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		save := visitSave(cfg, pool, logger, realtimeBroker)
 		if effectiveSaves.ScheduleVisit {
 			screenService.WithVisitSave(save, logger).WithCoreVisitSave(save, logger).WithVisitDecisions(save).
-				WithActivityLifecycle(save)
+				WithActivityLifecycle(save).WithWeekOwner(save)
+			weeklyPage.WithOwnerButtons(existingApp == nil)
 		}
 		if effectiveSaves.RescheduleVisit {
 			screenService.WithMoveSave(save, logger)

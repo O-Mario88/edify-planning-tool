@@ -41,6 +41,7 @@ type view struct {
 	districts, staffOptions        [][2]string
 	teamTabs                       [][3]string // id, name, active
 	showTeamFilters                bool
+	ownerButtons                   bool
 }
 
 // mission is _mission_status_for_cceo: how vendor-paid costs are handled.
@@ -193,7 +194,7 @@ func roundHalfUp(x float64) int64 {
 }
 
 func (s *Service) build(ctx context.Context, p auth.Principal, r role, a ask, now time.Time) (*screensv1.GetPageResponse, error) {
-	v := &view{p: p, r: r, a: a, fy: a.fy, today: day(now.In(kampala))}
+	v := &view{p: p, r: r, a: a, fy: a.fy, today: day(now.In(kampala)), ownerButtons: s.ownerButtons}
 	currentFY := strconv.Itoa(v.today.Year())
 	if v.today.Month() >= time.October {
 		currentFY = strconv.Itoa(v.today.Year() + 1)

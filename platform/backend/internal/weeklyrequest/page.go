@@ -263,7 +263,19 @@ func (v *view) card() []*screensv1.PageBlock {
 		work = append(work, links(&screensv1.PageLink{Text: "Disburse", Href: "/finance/actions/drawer?action=disburse_advance&request_id=" + w.id, Drawer: true},
 			returnLink, source))
 	case v.owner && (in(set4, w.status) || w.status == "not_requested"):
+		if v.ownerButtons {
+			buttons := []*screensv1.PageLink{ownerButton("Send for Approval", w.id, "confirm", actionQuery),
+				ownerButton("Self Fund", w.id, "self-funded", actionQuery)}
+			if w.status != "not_requested" {
+				buttons = append(buttons, ownerButton("No Advance This Week", w.id, "not-requested", actionQuery))
+			}
+			work = append(work, links(append(buttons, source)...))
+			break
+		}
 		work = append(work, links(source))
+	case v.ownerButtons && w.status == "disbursed" && !w.receiptConfirmed && w.owner == v.p.UserID:
+		work = append(work, links(ownerButton("Fund Received", w.id, "confirm-receipt", actionQuery), source),
+			text("Only click Fund Received after receiving the bank message and verifying the funds arrived."))
 	case returned:
 		work = append(work, text("Awaiting the requester's corrected weekly plan and resubmission."), links(source))
 	case w.status == "submitted_to_pl":
@@ -279,6 +291,11 @@ func (v *view) card() []*screensv1.PageBlock {
 	}
 	out = append(out, panel("", "", work...), panel("", "", text(helpLine), links(link("Learn more", "/help"))))
 	return out
+}
+
+// ownerButton is one of the owner's buttons: a drawer at the save's own path.
+func ownerButton(label, requestID, save, query string) *screensv1.PageLink {
+	return &screensv1.PageLink{Text: label, Href: "/fund-requests/weekly/" + requestID + "/" + save + "?" + query, Drawer: true}
 }
 
 // ledgerBlocks is the request's submitted ledger: its grand total, then

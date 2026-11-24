@@ -93,6 +93,22 @@ GO_STATUS: dict[str, tuple[str, str]] = {
     ),
     "/activities/<str:activity_id>/start/action": (PROVED, "Start activity (doc 189)"),
     "/schools/<str:school_id>/take": (PROVED, "Take a school nobody holds (doc 189)"),
+    "/fund-requests/weekly/<str:request_id>/confirm": (
+        PROVED,
+        "owner sends their week (doc 189)",
+    ),
+    "/fund-requests/weekly/<str:request_id>/self-funded": (
+        PROVED,
+        "owner self-funds their week (doc 189)",
+    ),
+    "/fund-requests/weekly/<str:request_id>/not-requested": (
+        PROVED,
+        "owner's No Advance (doc 189)",
+    ),
+    "/fund-requests/weekly/<str:request_id>/confirm-receipt": (
+        PROVED,
+        "owner's Fund Received (doc 189)",
+    ),
     "/activities/<str:activity_id>/salesforce-id/action": (
         PROVED,
         "Salesforce ID hand-in (doc 189)",

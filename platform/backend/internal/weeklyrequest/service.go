@@ -25,6 +25,15 @@ var kampala = time.FixedZone("EAT", 3*60*60)
 type Service struct {
 	db  schooldirectory.Querier
 	now func() time.Time
+	// ownerButtons draws the owner's Send for Approval, Self Fund, No
+	// Advance and Fund Received, which only Go's drawers save (Django absent).
+	ownerButtons bool
+}
+
+// WithOwnerButtons draws the owner's buttons, as drawers at each save's path.
+func (s *Service) WithOwnerButtons(on bool) *Service {
+	s.ownerButtons = on
+	return s
 }
 
 // NewService is the page over db.

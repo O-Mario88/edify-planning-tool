@@ -6,8 +6,8 @@ hand in that script and changes only with evidence. *Proved* means compared with
 with Django stopped.
 
 - Saves: 225 destinations from 483 save controls.
-- Go: 15 proved, 21 with unproved Go code, 189 still Django's.
-- Field staff can reach 141 saves that are not yet proved in Go.
+- Go: 19 proved, 21 with unproved Go code, 185 still Django's.
+- Field staff can reach 137 saves that are not yet proved in Go.
 - 92 controls post to a destination the inventory cannot read (set by a variable or script); they are listed by template at the end and must be classified by hand.
 
 | Step | Saves |
@@ -236,6 +236,10 @@ with Django stopped.
 
 | Route | Go | Size | Roles | Labels |
 |---|---|---|---|---|
+| `/fund-requests/weekly/<str:request_id>/confirm` | proved | small | 7 roles | Send for Approval |
+| `/fund-requests/weekly/<str:request_id>/confirm-receipt` | proved | small | 7 roles | Fund Received |
+| `/fund-requests/weekly/<str:request_id>/not-requested` | proved | small | 7 roles | No Advance This Week |
+| `/fund-requests/weekly/<str:request_id>/self-funded` | proved | small | 7 roles | Self Fund |
 | `/accounts/activities/<str:activity_id>/netsuite-id` | django | small | Accountant, Admin, ImpactAssessment | Save & Reconcile ID |
 | `/accounts/monthly-request/action` | django | small | 6 roles | {{ fetch_label }}; {{ submit_label }}; {{ submit_rvp_label|default:"Send to RVP for Approval" }} |
 | `/accounts/partner-invoices/<str:invoice_id>/pay` | django | small | Accountant, Admin, ImpactAssessment | Pay Partner |
@@ -253,11 +257,7 @@ with Django stopped.
 | `/fund-requests/generate-request` | django | small | 7 roles | Take Action |
 | `/fund-requests/receipt-confirm` | django | small | 7 roles | Confirm Receipt |
 | `/fund-requests/weekly/<str:request_id>/approve` | django | small | 7 roles | Approve |
-| `/fund-requests/weekly/<str:request_id>/confirm` | django | small | 7 roles | Send for Approval |
-| `/fund-requests/weekly/<str:request_id>/confirm-receipt` | django | small | 7 roles | Fund Received |
-| `/fund-requests/weekly/<str:request_id>/not-requested` | django | small | 7 roles | No Advance This Week |
 | `/fund-requests/weekly/<str:request_id>/return` | django | small | 7 roles | Return request |
-| `/fund-requests/weekly/<str:request_id>/self-funded` | django | small | 7 roles | Self Fund |
 
 ## Step 9 admin and the rest
 
