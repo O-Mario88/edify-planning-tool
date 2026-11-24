@@ -6,8 +6,8 @@ hand in that script and changes only with evidence. *Proved* means compared with
 with Django stopped.
 
 - Saves: 225 destinations from 483 save controls.
-- Go: 22 proved, 21 with unproved Go code, 181 still Django's, 1 retired on purpose.
-- Field staff can reach 133 saves that are not yet proved in Go.
+- Go: 23 proved, 20 with unproved Go code, 181 still Django's, 1 retired on purpose.
+- Field staff can reach 132 saves that are not yet proved in Go.
 - 92 controls post to a destination the inventory cannot read (set by a variable or script); they are listed by template at the end and must be classified by hand.
 
 | Step | Saves |
@@ -30,6 +30,7 @@ with Django stopped.
 | `/core-schools/assign-partner/action` | proved | large | 6 roles | Assign to partner |
 | `/core-schools/schedule-training/action` | proved | large | 6 roles | Schedule training |
 | `/core-schools/schedule-visit/action` | proved | large | 6 roles | Schedule visit |
+| `/debriefs/submit` | proved | medium | 10 roles | Submit Daily Debrief |
 | `/my-plan/<str:activity_id>/accountability` | proved | large | 9 roles | Submit for finance review |
 | `/my-plan/<str:activity_id>/cancel` | proved | medium | 9 roles | Cancel activity |
 | `/my-plan/<str:activity_id>/complete` | proved | large | 9 roles | Submit training + visit Submit completion |
@@ -73,7 +74,6 @@ with Django stopped.
 | `/dashboard/pl-send-urgent-action` | django | medium | 15 roles | Send {{ row.school }} to {{ row.owner_name }} for action |
 | `/dashboard/pl-week-send/<str:activity_id>/` | django | small | 15 roles | Remind {{ row.owner }} to complete this by entering the Salesforce ID |
 | `/debriefs/action` | django | medium | 10 roles | + Create Action; Accept & Draft Activity; Ack |
-| `/debriefs/submit` | unproved | medium | 10 roles | Submit Daily Debrief |
 | `/exports/prepare` | django | small | 16 roles | Download Excel |
 | `/extra-work/<str:assignment_id>/<str:action>` | django | small | Admin, CCEO, CountryDirector, ImpactAssessment, Program Lead | Cancel; Return; Start |
 | `/extra-work/assign` | django | small | Admin, CCEO, CountryDirector, ImpactAssessment, Program Lead | Assign work |

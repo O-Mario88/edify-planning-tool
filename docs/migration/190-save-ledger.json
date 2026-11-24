@@ -5,8 +5,8 @@
   "controls_without_a_destination": 92,
   "go": {
    "django": 181,
-   "proved": 22,
-   "unproved": 21,
+   "proved": 23,
+   "unproved": 20,
    "retired": 1
   },
   "size": {
@@ -23,7 +23,7 @@
    "8 finance and money": 22,
    "9 admin and the rest": 10
   },
-  "field_staff_left": 133
+  "field_staff_left": 132
  },
  "saves": [
   {
@@ -1842,8 +1842,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "unproved",
-   "evidence": "Go names the path",
+   "go": "proved",
+   "evidence": "Daily Debrief submit, inline page form (doc 189)",
    "templates": [
     "pages/debriefs/submit.html"
    ]

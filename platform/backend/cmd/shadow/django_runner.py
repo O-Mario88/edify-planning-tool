@@ -107,11 +107,11 @@ class Forms(HTMLParser):
             self._form = None
 
 
-def message(html: str) -> str:
+def message(html: str, limit: int | None = 1000) -> str:
     """What the answer said, as text: the toast, error or panel words."""
     text = re.sub(r"<script.*?</script>|<style.*?</style>", " ", html, flags=re.S)
     text = re.sub(r"<[^>]+>", " ", text)
-    return " ".join(text.split())[:1000]
+    return " ".join(text.split())[:limit]
 
 
 def script_values(html: str, wanted: dict) -> dict:
@@ -170,7 +170,7 @@ def post_form(client: Client, step: dict) -> dict:
     fields (todo, choice, title) per choice, so the step names them in "data"
     and posts them to "post" with the page's htmx headers (docs/migration/50)."""
     headers = {"HTTP_HX_REQUEST": "true", "HTTP_HOST": "localhost"}
-    data = {k: [v] for k, v in step["data"].items()}
+    data = {k: (v if isinstance(v, list) else [v]) for k, v in step["data"].items()}
     # "follow": a view that answers with a redirect and a flash message is
     # read on the page it leads to, where the message is shown.
     answer = client.post(step["post"], data, follow=bool(step.get("follow")), **headers)
@@ -179,7 +179,11 @@ def post_form(client: Client, step: dict) -> dict:
         "status": answer.status_code,
         "action": step["post"],
         "retarget": answer.headers.get("HX-Retarget", ""),
-        "message": message(answer.content.decode()),
+        # A whole page's words, when it was followed: its message sits
+        # below the page's chrome.
+        "message": message(
+            answer.content.decode(), limit=None if step.get("follow") else 1000
+        ),
         "posted": data,
     }
 

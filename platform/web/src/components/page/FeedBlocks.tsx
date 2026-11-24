@@ -188,7 +188,7 @@ export function FeedBlocks({ blocks: given, pagePath, drawerHref, selectable, cl
           case 'chips':
             return <FeedChips key={index} chips={kind.value} />;
           case 'form':
-            return <FeedForm key={index} form={kind.value} drawerHref={drawerHref} />;
+            return <FeedForm key={index} form={kind.value} drawerHref={drawerHref} pagePath={pagePath} />;
           case 'empty':
             // An empty state is a quiet card with its mark, as on the phone, not loose text under the last card.
             return (

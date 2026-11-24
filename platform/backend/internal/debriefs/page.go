@@ -44,6 +44,8 @@ var zone = func() *time.Location {
 type Service struct {
 	db  schooldirectory.Querier
 	now func() time.Time
+	// saves is the Daily Debrief's save (save.go), set only when Go makes it.
+	saves *saver
 }
 
 // NewService returns the page's builder.

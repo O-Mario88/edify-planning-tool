@@ -92,7 +92,9 @@ type Service struct {
 	accountant Accountant
 	// reimburser is Confirm reimbursement receipt, with Django absent.
 	reimburser Reimburser
-	pairsInGo  bool // schedule_training_pair: 32's In-school Training
+	// dailyDebrief is the Daily Debrief's form, with Django absent.
+	dailyDebrief DailyDebriefer
+	pairsInGo    bool // schedule_training_pair: 32's In-school Training
 	// groupTrainings is nil unless EDIFY_GO_SAVES names schedule_group_training (38).
 	groupTrainings GroupTrainingSaver
 	// clusterMeetings is nil unless EDIFY_GO_SAVES names schedule_cluster_meeting (49).

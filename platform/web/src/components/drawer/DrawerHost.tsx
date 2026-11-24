@@ -197,6 +197,9 @@ function Item({ item, values, reloaded, onChange }: { item: DrawerItemJson } & O
   );
 }
 
+/** One drawer item as the drawer draws it, for a form a page shows itself (components/page/PageFormInline). */
+export const DrawerFormItem = Item;
+
 interface Open {
   readonly path: string;
   /** The page behind the action on the existing web, when there is one to fall back to. */

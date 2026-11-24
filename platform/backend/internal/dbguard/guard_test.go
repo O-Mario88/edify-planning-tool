@@ -209,6 +209,12 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		// Snoozing a To-Do from Today (docs/migration/50;
 		// deploy/db/todo_roles.sql): the person's snooze row.
 		filepath.Join(root, "internal", "todosnooze") + sep: {"command_center_todo_snooze"},
+		// The Daily Debrief (apps.debriefs.field_debrief_service
+		// DailyDebriefFlowService): the day's row, its work and who it is
+		// routed to.
+		filepath.Join(root, "internal", "debriefs") + sep: {
+			"daily_debrief", "daily_debrief_activity_link", "daily_debrief_recipient",
+		},
 		// My Professional Development's read writes what the existing read
 		// writes (owner, 2026-11-16: "Same writes"; docs/migration/68 §68.7;
 		// deploy/db/mypd_roles.sql): a course moved on by its dates and the

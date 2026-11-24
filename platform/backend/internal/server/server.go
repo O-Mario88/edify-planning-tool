@@ -201,6 +201,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		schools.NewService(schools.NewStore(pool), summarizer, logger), options...,
 	))
 	weeklyPage := weeklyrequest.NewService(pool, time.Now)
+	debriefPage := debriefs.NewService(pool, time.Now)
 	// Files people upload as evidence, kept where the existing application
 	// keeps them (local disk in development, private Spaces in production).
 	evidenceSvc := evidence.NewService(pool, privatestore.FromEnv(os.Getenv, privateUploadsDir(os.Getenv)),
@@ -283,7 +284,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			disbursements.NewService(pool, time.Now),
 			fundapprovals.NewService(pool, time.Now),
 			uploadcenter.NewService(pool, time.Now),
-			debriefs.NewService(pool, time.Now),
+			debriefPage,
 			cpdlearning.NewService(pool, time.Now),
 			approvalhistory.NewService(pool),
 			batchpayments.NewService(pool, time.Now),
@@ -344,6 +345,10 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			screenService.WithVisitSave(save, logger).WithCoreVisitSave(save, logger).WithVisitDecisions(save).
 				WithActivityLifecycle(save).WithWeekOwner(save).WithAccountability(save.WithEvidence(evidenceSvc)).WithReimbursement(save)
 			weeklyPage.WithOwnerButtons(existingApp == nil)
+			if existingApp == nil {
+				debriefPage.WithSaves(pool, plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, realtimeBroker, logger)
+				screenService.WithDailyDebrief(debriefPage)
+			}
 		}
 		if effectiveSaves.RescheduleVisit {
 			screenService.WithMoveSave(save, logger)

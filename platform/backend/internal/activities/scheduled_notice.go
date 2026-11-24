@@ -197,3 +197,27 @@ func (w workflowNotices) sendTo(ctx context.Context, now time.Time, contextID, a
 	}
 	return nil
 }
+
+// Notice is a workflow notification another package sends.
+type Notice struct {
+	Title, Body, Event, Category, ContextType, Priority string
+}
+
+// NoticeTo is one person told, with the link their role opens.
+type NoticeTo struct {
+	UserID, Route, Label string
+}
+
+// SendNotices is WorkflowNotificationService.trigger for another package's
+// save: a notice each, its phone copy, one audit row naming every notice,
+// and a word to each one's open pages.
+func SendNotices(ctx context.Context, db *pgxpool.Pool, push NoticePush, live NoticePublisher, logger *slog.Logger, now time.Time,
+	contextID, actorID string, origin Origin, n Notice, to []NoticeTo) error {
+	recipients := make([]noticeRecipient, 0, len(to))
+	for _, t := range to {
+		recipients = append(recipients, noticeRecipient{id: t.UserID, route: t.Route, label: t.Label})
+	}
+	return workflowNotices{db: db, push: push, live: live, logger: logger}.sendTo(ctx, now, contextID, actorID, origin,
+		scheduledNotice{title: n.Title, body: n.Body, event: n.Event, category: n.Category, contextType: n.ContextType,
+			priority: n.Priority}, recipients)
+}

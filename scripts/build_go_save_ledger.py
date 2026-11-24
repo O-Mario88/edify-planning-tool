@@ -133,7 +133,7 @@ GO_STATUS: dict[str, tuple[str, str]] = {
     "/admin-panel/staff-setup-queue": (UNPROVED, "Go names the path"),
     "/support": (UNPROVED, "internal/support"),
     "/cluster-oversight/scoring": (UNPROVED, "Go names the path"),
-    "/debriefs/submit": (UNPROVED, "Go names the path"),
+    "/debriefs/submit": (PROVED, "Daily Debrief submit, inline page form (doc 189)"),
     "/messages/new/": (UNPROVED, "Go names the path"),
     "/notifications": (UNPROVED, "notificationcenter"),
     "/planning/fiscal-years": (UNPROVED, "Go names the path"),

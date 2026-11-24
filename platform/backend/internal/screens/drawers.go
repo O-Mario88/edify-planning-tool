@@ -284,5 +284,16 @@ func (s *Service) SaveDrawer(
 			return connect.NewResponse(answer), nil
 		}
 	}
+	if form != "" {
+		from := origin.Read(request.Peer().Addr, request.Header(), s.trustProxy, trace.FromContext(ctx).RequestID)
+		if answer, served, err := s.dailyDebriefInGo(ctx, forwarded, activities.Origin{
+			IP: from.IP, UserAgent: from.UserAgent, CorrelationID: from.CorrelationID,
+		}); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(answer), nil
+		}
+	}
 	return send[screensv1.SaveDrawerResponse](ctx, s, pathPageDrawer, forwarded)
 }

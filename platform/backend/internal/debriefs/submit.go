@@ -70,6 +70,8 @@ func (s *Service) submit(ctx context.Context, p auth.Principal, query url.Values
 		block = &screensv1.PageBlock{Kind: &screensv1.PageBlock_Empty{Empty: "Daily Debrief is not available for your role."}}
 	default:
 		block = dailyForm(existing, work, focus, today)
+		// The web draws and saves the form itself when Go makes the save.
+		block.GetForm().CanSave = s.Saves()
 	}
 	return &screensv1.GetPageResponse{Header: h, Blocks: []*screensv1.PageBlock{block},
 		Tabs: []*screensv1.PageTab{}, Dialogs: []*screensv1.PageDialog{}, WebPath: SubmitPath}, true, nil

@@ -97,6 +97,24 @@ export async function submitDrawer(path: string, values: Readonly<Record<string,
   });
 }
 
+/** A page form's key: the gateway's own pattern (screens.formKey). */
+const PAGE_FORM_KEY = /^\/?[A-Za-z0-9][A-Za-z0-9_/.-]{0,127}$/;
+
+/** Saves a form a page shows itself (a PageForm the gateway marks it saves), by the page's path and the form's key. */
+export async function submitPageForm(path: string, form: string, values: Readonly<Record<string, string>>): Promise<DrawerSaved> {
+  if (!isDrawerPath(path) || !PAGE_FORM_KEY.test(form) || form.includes('..')) {
+    return { saved: false, message: '', redirect: '', error: 'This form cannot be saved here.' };
+  }
+  return asReader(async (token) => {
+    try {
+      const answer = await gatewayClient(PageDrawerService, token).saveDrawer({ path, form, values: { ...values } });
+      return { saved: answer.saved, message: answer.message, redirect: safeRedirect(answer.redirect), error: answer.error };
+    } catch (error) {
+      return { saved: false, message: '', redirect: '', error: messageOf(error, 'This could not be saved. Nothing was changed.') };
+    }
+  });
+}
+
 /** The choices a field reloads when another changes. */
 export async function loadDrawerOptions(source: string, name: string, value: string): Promise<readonly DrawerOptionJson[]> {
   return asReader(async (token) => {
