@@ -120,6 +120,13 @@ func (s *Service) DecideVisitRequest(ctx context.Context, p auth.Principal, d Vi
 	if err := tx.Commit(ctx); err != nil {
 		return Answer{}, fmt.Errorf("activities: committing the decision: %w", err)
 	}
+	// The visit's save marks its owner's year for the ledger rebuild
+	// (apps.targets.ledger_sync), approved or declined.
+	if v.planned != nil {
+		if err := s.markOwnerYears(ctx, v.responsible, *v.planned); err != nil {
+			s.logger.Warn("activities: the decision's ledger mark was not written", "activity", v.id, "err", err)
+		}
+	}
 	s.afterDecision(ctx, p, v, d.Decision, note, rowID, origin)
 	where := visitDecisionWhere(v.schoolName)
 	if d.Decision == "approve" {
