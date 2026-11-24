@@ -215,7 +215,10 @@ GO_STATUS: dict[str, tuple[str, str]] = {
     "/cluster-oversight/scoring": (UNPROVED, "Go names the path"),
     "/debriefs/submit": (PROVED, "Daily Debrief submit, inline page form (doc 189)"),
     "/messages/new/": (UNPROVED, "Go names the path"),
-    "/notifications": (UNPROVED, "notificationcenter"),
+    "/notifications": (
+        PROVED,
+        "the centre's Mark All Read, Archive and Archive All Read (doc 189)",
+    ),
     "/planning/fiscal-years": (UNPROVED, "Go names the path"),
     "/quality-checks": (UNPROVED, "Go names the path"),
     "/schools/upload": (UNPROVED, "Go names the path"),

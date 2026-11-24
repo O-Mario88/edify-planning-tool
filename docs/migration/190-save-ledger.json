@@ -6,8 +6,8 @@
   "go": {
    "django": 157,
    "go-owned": 9,
-   "proved": 37,
-   "unproved": 21,
+   "proved": 38,
+   "unproved": 20,
    "retired": 1
   },
   "size": {
@@ -24,7 +24,7 @@
    "8 finance and money": 22,
    "9 admin and the rest": 10
   },
-  "field_staff_left": 109
+  "field_staff_left": 108
  },
  "saves": [
   {
@@ -3397,8 +3397,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "unproved",
-   "evidence": "notificationcenter",
+   "go": "proved",
+   "evidence": "the centre's Mark All Read, Archive and Archive All Read (doc 189)",
    "templates": [
     "pages/notifications/index.html"
    ]

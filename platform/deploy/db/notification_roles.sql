@@ -101,8 +101,10 @@ CREATE OR REPLACE FUNCTION gateway_notifications.mark_read(
 DECLARE
   changed integer;
 BEGIN
+  -- push.open_destination: an unread notice becomes read; the save names
+  -- status and read_at only, so updated_at is left as it was.
   UPDATE public.notification
-     SET status = 'read', read_at = COALESCE(read_at, at), updated_at = at
+     SET status = 'read', read_at = at
    WHERE id = target_id AND recipient_id = owner_id AND status = 'unread';
   GET DIAGNOSTICS changed = ROW_COUNT;
   RETURN changed;
@@ -116,8 +118,10 @@ CREATE OR REPLACE FUNCTION gateway_notifications.mark_all_read(
 DECLARE
   changed integer;
 BEGIN
+  -- notifications_page_view's mark_all_read: a queryset update, which
+  -- leaves updated_at as it was.
   UPDATE public.notification
-     SET status = 'read', read_at = COALESCE(read_at, at), updated_at = at
+     SET status = 'read', read_at = at
    WHERE recipient_id = owner_id AND status = 'unread';
   GET DIAGNOSTICS changed = ROW_COUNT;
   RETURN changed;
@@ -131,7 +135,8 @@ RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, 
 DECLARE
   changed integer;
 BEGIN
-  UPDATE public.notification SET status = 'archived', updated_at = now()
+  -- archive_single and archive_all_read: queryset updates, updated_at left.
+  UPDATE public.notification SET status = 'archived'
    WHERE recipient_id = owner_id AND
          ((target_id <> '' AND id = target_id AND status <> 'archived') OR
           (target_id = '' AND status = 'read'));
