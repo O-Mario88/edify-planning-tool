@@ -189,15 +189,22 @@ DECLARE
   v_tag       text;
   v_type      text;
   v_described text;
+  v_delivered boolean;
+  v_fee_partner text;
+  v_line_partner text;
+  v_hotel_booked boolean;
+  v_accommodation text[] := ARRAY['secondary_accommodation_per_night', 'management_accommodation_per_night'];
 BEGIN
   SELECT a.catalogue_item_id, a.catalogue_version, a.costing_profile_snapshot,
          a.school_id, a.cluster_id, a.project_id, a.assigned_partner_id, a.planned_date,
+         a.delivery_type = 'partner', a.facilitating_partner_id,
          -- costing_service tags a Core activity's budget lines.
          CASE WHEN a.activity_type = 'core_visit' AND a.delivery_type = 'partner' THEN 'Core Partner Activity'
               WHEN a.activity_type = 'core_training' AND a.delivery_type = 'partner' THEN 'Core Partner Activity'
               WHEN a.activity_type = 'core_visit' THEN 'Core Visit'
               WHEN a.activity_type = 'core_training' THEN 'Core Training' END
-    INTO v_cat_item, v_cat_ver, v_profile, v_school, v_cluster, v_project, v_partner, v_planned, v_tag
+    INTO v_cat_item, v_cat_ver, v_profile, v_school, v_cluster, v_project, v_partner, v_planned,
+         v_delivered, v_fee_partner, v_tag
     FROM public.activity a
    WHERE a.id = p_activity_id AND a.deleted_at IS NULL
      FOR UPDATE;
@@ -250,6 +257,13 @@ BEGIN
     p_activity_id, NULLIF(p_catalogue_id, ''), NULL, v_prev_id
   );
 
+  -- Finance's hotel booking survives a re-price: the night is one booking
+  -- under either accommodation rate.
+  SELECT EXISTS (SELECT 1 FROM public.activity_schedule_cost_line l
+                  WHERE l.activity_id = p_activity_id AND l.vendor_paid
+                    AND split_part(l.cost_setting_key, '#', 1) = ANY (v_accommodation))
+    INTO v_hotel_booked;
+
   -- Upsert each cost line and remove stale unlocked lines not in the new set.
   FOR v_line IN SELECT value FROM jsonb_array_elements(COALESCE(p_lines, '[]'::jsonb))
   LOOP
@@ -260,6 +274,10 @@ BEGIN
     v_amount := COALESCE((v_line->>'amount')::bigint, 0);
     v_type   := COALESCE(NULLIF(v_line->>'lineItemType', ''), 'other');
     v_described := CASE WHEN v_tag IS NULL THEN v_label ELSE '[' || v_tag || '] ' || v_label END;
+    -- facilitation.line_partner_id: every line of partner-delivered work, and
+    -- only the fee of a facilitated training.
+    v_line_partner := CASE WHEN COALESCE(v_delivered, false) THEN v_partner
+                           WHEN v_type = 'facilitation' THEN v_fee_partner END;
     IF v_key = '' THEN
       CONTINUE;
     END IF;
@@ -294,7 +312,8 @@ BEGIN
              school_id                  = v_school,
              cluster_id                 = v_cluster,
              project_id                 = v_project,
-             partner_id                 = v_partner,
+             partner_id                 = v_line_partner,
+             vendor_paid                = vendor_paid OR (v_hotel_booked AND split_part(v_key, '#', 1) = ANY (v_accommodation)),
              activity_catalogue_item_id = v_cat_item,
              activity_catalogue_version = v_cat_ver,
              costing_profile            = v_profile,
@@ -315,9 +334,10 @@ BEGIN
         v_unit, v_qty, v_amount, v_amount, COALESCE(p_catalogue_version, 1),
         p_activity_id, NULLIF(p_catalogue_id, ''), p_catalogue_version,
         COALESCE(NULLIF(p_currency, ''), 'UGX'), v_type,
-        v_cluster, p_fy, p_month, v_partner, v_planned, v_project,
+        v_cluster, p_fy, p_month, v_line_partner, v_planned, v_project,
         p_quarter, NULL, NULLIF(p_responsible_user, ''), v_school,
-        p_week_start, p_week_end, v_cat_item, v_cat_ver, v_profile, false
+        p_week_start, p_week_end, v_cat_item, v_cat_ver, v_profile,
+        v_hotel_booked AND split_part(v_key, '#', 1) = ANY (v_accommodation)
       );
     END IF;
   END LOOP;

@@ -85,6 +85,8 @@ const (
 	notificationRolesFile = "../../../deploy/db/notification_roles.sql"
 	// Native Go day-pool costing settlement (Step 1).
 	costingSettleRolesFile = "../../../deploy/db/costing_settle_roles.sql"
+	// What follows a priced day: transport, advances, weekly and monthly requests.
+	dayMoneyRolesFile = "../../../deploy/db/day_money_roles.sql"
 	// Native Go security/account relay side effects (Step 2).
 	relayOpsRolesFile = "../../../deploy/db/relay_ops_roles.sql"
 	// Native Go cluster leader account onboarding (Batch 10).
@@ -341,6 +343,13 @@ func prepareGatewayRole(ctx context.Context) (string, error) {
 		return "", err
 	}
 	if _, err := conn.Conn().PgConn().Exec(ctx, string(costingSettleRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	dayMoneyRoles, err := os.ReadFile(filepath.FromSlash(dayMoneyRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(dayMoneyRoles)).ReadAll(); err != nil {
 		return "", err
 	}
 	relayOpsRoles, err := os.ReadFile(filepath.FromSlash(relayOpsRolesFile))

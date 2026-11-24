@@ -21,10 +21,8 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
-// rebuildableWeeklyStatuses matches apps/fund_requests/weekly_service.py REBUILDABLE_WEEKLY_STATUSES
-// plus 'draft' for Go-created draft requests.
+// rebuildableWeeklyStatuses matches apps/fund_requests/weekly_service.py REBUILDABLE_WEEKLY_STATUSES.
 var rebuildableWeeklyStatuses = []string{
-	"draft",
 	"pending_responsible_confirmation",
 	"returned_by_pl",
 	"returned_by_cd",
@@ -34,7 +32,9 @@ var rebuildableWeeklyStatuses = []string{
 // nonFundableStatuses matches apps/core/activity_types.py NON_FUNDABLE_ACTIVITY_STATUSES.
 var nonFundableStatuses = []string{
 	"cancelled",
+	"rejected",
 	"deferred",
+	"awaiting_owner_approval",
 }
 
 // plannedDayStatuses matches apps/daily_visit_batches/services.py _PLANNED_DAY_STATUSES.
@@ -378,14 +378,20 @@ SELECT EXISTS (
 				Pooled:  true,
 			}, nil
 		}
+		if err := n.handOnFiledMonth(ctx, ownerUID, plannedDay); err != nil {
+			return DayVerdict{}, err
+		}
 	}
 
 	return DayVerdict{Pooled: true}, nil
 }
 
 type costsFollowSteps struct {
-	Days     [][]string `json:"days"`
-	Together bool       `json:"together"`
+	Days     [][]string   `json:"days"`
+	Together bool         `json:"together"`
+	Weeks    [][]string   `json:"weeks"`
+	Months   [][]any      `json:"months"`
+	Notes    []followNote `json:"notes"`
 }
 
 // Settle computes and persists the day-pool cost split for every affected batch
@@ -452,23 +458,21 @@ func (n *NativePricing) Settle(ctx context.Context, rows []int64, activityID str
 		}
 		sort.Strings(batchIDs)
 
-		var rowErr error
+		money := newDayMoney()
+		rowErr := money.addSteps(steps)
 		for _, batchID := range batchIDs {
-			if err := n.settleBatch(ctx, batchID, ownerByBatch[batchID], r.askedBy, r.askedRole, true); err != nil {
-				rowErr = err
+			if rowErr != nil {
 				break
 			}
+			rowErr = n.settleBatch(ctx, batchID, ownerByBatch[batchID], r.askedBy, r.askedRole, true, money)
+		}
+		if rowErr == nil {
+			rowErr = n.completeFollowRow(ctx, r.id, money)
 		}
 		if rowErr != nil {
 			_ = n.recordFollowFailure(ctx, r.id, rowErr.Error())
 			if firstErr == nil {
 				firstErr = rowErr
-			}
-			continue
-		}
-		if err := n.completeFollowRow(ctx, r.id); err != nil {
-			if firstErr == nil {
-				firstErr = err
 			}
 		}
 	}
@@ -509,12 +513,18 @@ func (n *NativePricing) SettleUnsettled(ctx context.Context, limit int) (int, er
 	return len(ids), err
 }
 
-func (n *NativePricing) completeFollowRow(ctx context.Context, rowID int64) error {
+// completeFollowRow rebuilds the row's weekly requests and monthly drafts and
+// closes it in one transaction: a failure leaves the row to be tried again,
+// and trying it again ends in the same figures.
+func (n *NativePricing) completeFollowRow(ctx context.Context, rowID int64, money *dayMoney) error {
 	tx, err := n.pool.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
 	if err != nil {
 		return err
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
+	if err := refileDayMoney(ctx, tx, money, n.clock()); err != nil {
+		return err
+	}
 	var ok bool
 	if err := tx.QueryRow(ctx, `SELECT gateway_costing.complete_costs_to_follow($1)`, rowID).Scan(&ok); err != nil {
 		return err
@@ -557,6 +567,7 @@ func (n *NativePricing) settleBatch(
 	ctx context.Context,
 	batchID, ownerOverride, actorID, actorRole string,
 	settleNeighbours bool,
+	money *dayMoney,
 ) error {
 	now := n.clock()
 	tx, err := n.pool.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite, IsoLevel: pgx.ReadCommitted})
@@ -734,8 +745,18 @@ SELECT gateway_costing.update_batch(
 	).Scan(&updated); err != nil {
 		return fmt.Errorf("activities: updating daily_visit_batch %s: %w", batchID, err)
 	}
+	if err := ensureDayTransport(ctx, tx, batchID, pool.Amounts(), now); err != nil {
+		return err
+	}
 
 	if count > 0 {
+		memberIDs := make([]string, 0, count)
+		for _, m := range members {
+			memberIDs = append(memberIDs, m.id)
+		}
+		if err := clearDayMoney(ctx, tx, memberIDs, money); err != nil {
+			return err
+		}
 		allocations := daypool.AllocatePool(pool, count)
 		periods := periodsOf(visitDate)
 		calcBy := actorID
@@ -877,6 +898,9 @@ WHERE activity_id = $1 AND status IS DISTINCT FROM $2`, member.id, coreSlotStatu
 				return fmt.Errorf("activities: appending cost audit row for activity %s: %w", member.id, err)
 			}
 		}
+		if err := openDayMoney(ctx, tx, memberIDs, ownerUID, visitDate, now, money); err != nil {
+			return err
+		}
 	}
 
 	if err := tx.Commit(ctx); err != nil {
@@ -911,7 +935,7 @@ SELECT b.id
 			}
 			nRows.Close()
 			for _, nid := range neighbourIDs {
-				_ = n.settleBatch(ctx, nid, ownerUID, actorID, actorRole, false)
+				_ = n.settleBatch(ctx, nid, ownerUID, actorID, actorRole, false, money)
 			}
 		}
 	}
@@ -986,6 +1010,9 @@ SELECT COALESCE(a.status, ''), COALESCE(a.payment_status, 'none'),
 		if locked {
 			return MoveVerdict{LeftFrozen: true, Pooled: true}, nil
 		}
+		if err := n.handOnFiledMonth(ctx, ownerUID, *oldVisitDate); err != nil {
+			return MoveVerdict{}, err
+		}
 	}
 
 	// Check new day lock & rate card.
@@ -1000,6 +1027,9 @@ SELECT COALESCE(a.status, ''), COALESCE(a.payment_status, 'none'),
 				Stage:   "day",
 				Pooled:  true,
 			}, nil
+		}
+		if err := n.handOnFiledMonth(ctx, ownerUID, newDay); err != nil {
+			return MoveVerdict{}, err
 		}
 		var districtID, districtName string
 		if schoolID != "" {
@@ -1091,6 +1121,9 @@ SELECT EXISTS (
 				return CancelVerdict{}, err
 			}
 			verdict.LeftFrozen = locked
+			if err := n.handOnFiledMonth(ctx, owner, *visitDate); err != nil {
+				return CancelVerdict{}, err
+			}
 		}
 		if !verdict.LeftFrozen {
 			verdict.Days = [][]string{{*batchID, owner}}
