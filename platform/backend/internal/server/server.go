@@ -46,6 +46,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterfacilitation"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead/schema"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clustermembership"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusteroversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterpage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/config"
@@ -354,6 +355,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 				screenService.WithExtraWork(extraWorkPage)
 				screenService.WithClusterFacilitation(clusterfacilitation.New(pool, plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
 					realtimeBroker, logger, time.Now))
+				screenService.WithClusterMembership(clustermembership.New(pool, clusterpage.NewService(pool, time.Now),
+					plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, realtimeBroker, logger, time.Now))
 				screenService.WithEnroller(projectcapacity.NewService(pool, time.Now).
 					WithSaves(pool, plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, realtimeBroker, logger))
 			}

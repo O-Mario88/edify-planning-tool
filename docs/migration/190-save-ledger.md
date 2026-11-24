@@ -6,8 +6,8 @@ hand in that script and changes only with evidence. *Proved* means compared with
 with Django stopped.
 
 - Saves: 225 destinations from 483 save controls.
-- Go: 31 proved, 22 with unproved Go code, 162 still Django's, 1 retired on purpose, 9 made by Go's own services.
-- Field staff can reach 115 saves that are not yet proved in Go.
+- Go: 32 proved, 22 with unproved Go code, 161 still Django's, 1 retired on purpose, 9 made by Go's own services.
+- Field staff can reach 114 saves that are not yet proved in Go.
 - 92 controls post to a destination the inventory cannot read (set by a variable or script); they are listed by template at the end and must be classified by hand.
 
 | Step | Saves |
@@ -30,6 +30,7 @@ with Django stopped.
 | `/activities/<str:activity_id>/submit/action` | proved | small | 9 roles | Submit for review |
 | `/activity-selection/cancel` | proved | small | 9 roles | Cancel {{ ready|length }} activit{{ ready|length|pluralize:"y,ies" }} |
 | `/activity-selection/reschedule` | proved | small | 9 roles | Reschedule {{ ready|length }} activit{{ ready|length|pluralize:"y,ies" }} |
+| `/clusters/<str:cluster_id>/bulk-assign-drawer` | proved | medium | 7 roles | Save schools to cluster |
 | `/clusters/<str:cluster_id>/facilitator` | proved | small | 7 roles | Save |
 | `/core-schools/assign-partner/action` | proved | large | 6 roles | Assign to partner |
 | `/core-schools/schedule-training/action` | proved | large | 6 roles | Schedule training |
@@ -64,7 +65,6 @@ with Django stopped.
 | `/api/documents/attest/<str:acknowledgement_id>` | django | small | 16 roles | I reviewed this outside the viewer |
 | `/auth/switch-role` | go-owned | medium | 16 roles | {{ acting.label }} · {{ acting.period }}; {{ r.value }}; {{ role.value }} |
 | `/change-password` | go-owned | medium | 16 roles | Set new password and continue |
-| `/clusters/<str:cluster_id>/bulk-assign-drawer` | django | medium | 7 roles | Save schools to cluster |
 | `/clusters/<str:cluster_id>/bulk-schedule-drawer` | django | medium | Admin, CCEO, CountryDirector, ImpactAssessment, Program Lead | Schedule the day |
 | `/clusters/<str:cluster_id>/catchment-drawer` | django | medium | Admin, CCEO, CountryDirector, ImpactAssessment, Program Lead | Approve district |
 | `/clusters/<str:cluster_id>/catchment/<str:catchment_id>/end` | django | medium | Admin, CCEO, CountryDirector, ImpactAssessment, Program Lead | End approval |

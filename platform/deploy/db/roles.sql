@@ -185,6 +185,8 @@ GRANT SELECT (id, label) ON bt_compliance_requirement TO edify_gateway_ro;
 -- and the sub-counties it covers.
 GRANT SELECT (cluster_leader_name, cluster_leader_phone, facilitating_partner_id) ON cluster TO edify_gateway_ro;
 GRANT SELECT (cluster_id, sub_county_id) ON cluster_sub_county TO edify_gateway_ro;
+-- A cluster's Add Schools: the districts it serves today (its catchment).
+GRANT SELECT (cluster_id, district_id, active, effective_from, effective_to) ON cluster_service_district TO edify_gateway_ro;
 -- A cluster's schools list: whether a catalogue item counts as training (the
 -- planning badges) and the planning calendar (the planning horizon).
 GRANT SELECT (counts_toward_client_training) ON activity_catalogue_item TO edify_gateway_ro;

@@ -240,7 +240,9 @@ def play(client: Client, step: dict) -> dict:
     fields += [[k, v] for k, v in chosen.items()]
     data = {}
     for k, v in fields:
-        data.setdefault(k, []).append(v)
+        # A list in "set" ticks several boxes of one name (a checklist).
+        for item in v if isinstance(v, list) else [v]:
+            data.setdefault(k, []).append(item)
     answer = client.post(form["action"], data, **headers)
     # The pricing that follows a save runs in a thread of its own once the
     # save commits (apps.daily_visit_batches.costs_follow); let it finish

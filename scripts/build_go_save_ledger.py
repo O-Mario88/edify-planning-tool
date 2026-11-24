@@ -142,6 +142,10 @@ GO_STATUS: dict[str, tuple[str, str]] = {
         PROVED,
         "a cluster's Partner to Facilitate (doc 189)",
     ),
+    "/clusters/<str:cluster_id>/bulk-assign-drawer": (
+        PROVED,
+        "a cluster's Add Schools, through the one membership service (doc 189)",
+    ),
     "/planning/bulk-action": (
         UNPROVED,
         "its partner hand-over is proved from the tick bar (doc 189); export and the old schedule refusal are Django's",
