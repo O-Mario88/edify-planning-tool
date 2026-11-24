@@ -51,6 +51,15 @@ GRANT INSERT (id, created_at, updated_at, raw_value, normalized_value, activity_
 GRANT SELECT (activity_id) ON activity_completion_verification TO edify_completion_owner;
 GRANT INSERT (id, created_at, updated_at, salesforce_id, entered_by, entered_at, status, activity_id)
   ON activity_completion_verification TO edify_completion_owner;
+-- Submit for review (services.submit_for_review): the ID it is handed in
+-- with, a returned visit's reviews set pending again
+-- (_clear_returned_verification), and the completion verification's
+-- update_or_create.
+GRANT SELECT (salesforce_activity_id, ia_verification_status), UPDATE (ia_verification_status)
+  ON activity TO edify_completion_owner;
+GRANT SELECT (activity_id, status), UPDATE (status) ON ia_verification TO edify_completion_owner;
+GRANT SELECT (salesforce_id, entered_by, status), UPDATE (salesforce_id, entered_by, status, updated_at)
+  ON activity_completion_verification TO edify_completion_owner;
 
 CREATE SCHEMA IF NOT EXISTS gateway_completion AUTHORIZATION edify_completion_owner;
 REVOKE ALL ON SCHEMA gateway_completion FROM PUBLIC;
@@ -184,6 +193,54 @@ END
 $fn$;
 REVOKE ALL ON FUNCTION gateway_completion.hand_in_with_id(varchar, date, varchar, varchar, varchar, timestamptz,
   varchar, varchar) FROM PUBLIC;
+
+-- Submit for review for an officer's staff school visit outside a cluster:
+-- '' when it was handed in to the Programme Lead, 'not_ready' or 'no_id' for
+-- the service's own refusals, 'changed' when it is no longer that case.
+CREATE OR REPLACE FUNCTION gateway_completion.submit_for_review(
+  target varchar, entered_by varchar, at timestamptz, verification_id varchar
+) RETURNS text
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  visit record;
+  was_returned boolean;
+BEGIN
+  SELECT a.status, a.delivery_type, a.activity_type, a.cluster_id, a.deleted_at, a.salesforce_activity_id
+    INTO visit FROM public.activity a WHERE a.id = target FOR UPDATE;
+  IF NOT FOUND OR visit.delivery_type IS DISTINCT FROM 'staff'
+     OR NOT (visit.activity_type = ANY (ARRAY['school_visit', 'donor_visit', 'story_gathering_visit',
+                                              'school_invitation', 'social_visit']::varchar[]))
+     OR visit.cluster_id IS NOT NULL OR visit.deleted_at IS NOT NULL THEN
+    RETURN 'changed';
+  END IF;
+  IF NOT (visit.status = ANY (ARRAY['completion_started', 'in_progress', 'evidence_uploaded', 'evidence_accepted',
+                                    'salesforce_id_required', 'returned', 'returned_by_pl', 'returned_by_ia',
+                                    'completed']::varchar[])) THEN
+    RETURN 'not_ready';
+  END IF;
+  IF COALESCE(visit.salesforce_activity_id, '') = '' THEN
+    RETURN 'no_id';
+  END IF;
+  was_returned := visit.status IN ('returned', 'returned_by_pl', 'returned_by_ia');
+  UPDATE public.activity a SET status = 'submitted_to_pl',
+    ia_verification_status = CASE WHEN was_returned THEN 'pending' ELSE a.ia_verification_status END,
+    updated_at = at
+  WHERE a.id = target;
+  IF was_returned THEN
+    UPDATE public.ia_verification v SET status = 'pending' WHERE v.activity_id = target AND v.status = 'returned';
+  END IF;
+  UPDATE public.activity_completion_verification v SET salesforce_id = visit.salesforce_activity_id,
+    entered_by = submit_for_review.entered_by, status = 'pending', updated_at = at
+  WHERE v.activity_id = target;
+  IF NOT FOUND THEN
+    INSERT INTO public.activity_completion_verification (id, created_at, updated_at, salesforce_id, entered_by,
+      entered_at, status, activity_id)
+    VALUES (verification_id, at, at, visit.salesforce_activity_id, submit_for_review.entered_by, at, 'pending', target);
+  END IF;
+  RETURN '';
+END
+$fn$;
+REVOKE ALL ON FUNCTION gateway_completion.submit_for_review(varchar, varchar, timestamptz, varchar) FROM PUBLIC;
 RESET ROLE;
 
 GRANT USAGE ON SCHEMA gateway_completion TO edify_activities_rw;
@@ -192,3 +249,5 @@ GRANT EXECUTE ON FUNCTION gateway_completion.hand_in_school_visit(varchar, date,
 GRANT EXECUTE ON FUNCTION gateway_completion.hand_in_with_id(varchar, date, varchar, varchar, varchar, timestamptz,
   varchar, varchar) TO edify_activities_rw;
 GRANT EXECUTE ON FUNCTION gateway_completion.start_visit(varchar, timestamptz) TO edify_activities_rw;
+GRANT EXECUTE ON FUNCTION gateway_completion.submit_for_review(varchar, varchar, timestamptz, varchar)
+  TO edify_activities_rw;

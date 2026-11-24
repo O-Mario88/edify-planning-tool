@@ -233,6 +233,24 @@ func TestStartActivitySavesInGoWithoutDjango(t *testing.T) {
 	}
 }
 
+func (f *fakeStarter) SubmitForReview(_ context.Context, _ auth.Principal, id string, _ activities.Origin) (activities.Answer, error) {
+	f.got = append(f.got, id+"|submit")
+	return activities.Answer{Message: "Saved."}, f.err
+}
+
+func TestSubmitForReviewSavesInGoWithoutDjango(t *testing.T) {
+	starter := &fakeStarter{}
+	answer, err := decideVisit(NewService(nil).WithActivityLifecycle(starter), "/activities/a1/submit/action", nil)
+	if err != nil || !answer.GetSaved() || len(starter.got) != 1 || starter.got[0] != "a1|submit" {
+		t.Fatalf("answer %v, %v, got %v", answer, err, starter.got)
+	}
+	starter.err = &activities.Refusal{Message: "Activity is not ready to be submitted for review."}
+	answer, err = decideVisit(NewService(nil).WithActivityLifecycle(starter), "/activities/a1/submit/action", nil)
+	if err != nil || answer.GetSaved() || answer.GetError() != "Submission Error: Activity is not ready to be submitted for review." {
+		t.Fatalf("refusal %v, %v", answer, err)
+	}
+}
+
 func TestStartActivityStaysWithDjangoWhileDjangoIsThere(t *testing.T) {
 	starter := &fakeStarter{}
 	fetcher := &formFetcher{}

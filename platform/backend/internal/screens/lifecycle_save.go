@@ -21,12 +21,15 @@ var (
 	startActivityPath = regexp.MustCompile(`^/activities/([A-Za-z0-9]{1,30})/start/action/?$`)
 	// salesforceEntryPath is my_plan_views.salesforce_id_action's route.
 	salesforceEntryPath = regexp.MustCompile(`^/activities/([A-Za-z0-9]{1,30})/salesforce-id/action/?$`)
+	// submitReviewPath is my_plan_views.submit_for_review_action's route.
+	submitReviewPath = regexp.MustCompile(`^/activities/([A-Za-z0-9]{1,30})/submit/action/?$`)
 )
 
 // ActivityStarter is the Go save behind Start activity (internal/activities.Service).
 type ActivityStarter interface {
 	StartActivity(ctx context.Context, p auth.Principal, activityID, notes string, origin activities.Origin) (activities.Answer, error)
 	EnterSalesforceID(ctx context.Context, p auth.Principal, activityID string, form url.Values, origin activities.Origin) (activities.CompleteAnswer, error)
+	SubmitForReview(ctx context.Context, p auth.Principal, activityID string, origin activities.Origin) (activities.Answer, error)
 }
 
 // WithActivityLifecycle makes an activity's lifecycle buttons Go's where Go
@@ -45,7 +48,7 @@ func (s *Service) lifecycleInGo(ctx context.Context, message *screensv1.SaveDraw
 		return nil, false, nil
 	}
 	path, _, _ := strings.Cut(message.GetPath(), "?")
-	var said string
+	var said, refusedAs string
 	var err error
 	if m := startActivityPath.FindStringSubmatch(path); m != nil {
 		var saved activities.Answer
@@ -55,6 +58,11 @@ func (s *Service) lifecycleInGo(ctx context.Context, message *screensv1.SaveDraw
 		var saved activities.CompleteAnswer
 		saved, err = s.starter.EnterSalesforceID(ctx, principal, m[1], directDrawerForm(message), from)
 		said = saved.Message
+	} else if m := submitReviewPath.FindStringSubmatch(path); m != nil {
+		var saved activities.Answer
+		saved, err = s.starter.SubmitForReview(ctx, principal, m[1], from)
+		// error_fragment(exc, action="Submission Error").
+		said, refusedAs = saved.Message, completeErrorTitle
 	} else {
 		return nil, false, nil
 	}
@@ -63,7 +71,7 @@ func (s *Service) lifecycleInGo(ctx context.Context, message *screensv1.SaveDraw
 	case errors.Is(err, activities.ErrHandOn):
 		return nil, false, nil
 	case errors.As(err, &refusal):
-		return &screensv1.SaveDrawerResponse{Saved: false, Error: collapse(refusal.Message)}, true, nil
+		return &screensv1.SaveDrawerResponse{Saved: false, Error: collapse(refusedAs + refusal.Message)}, true, nil
 	case err != nil:
 		if s.logger != nil {
 			s.logger.ErrorContext(ctx, "the Go start failed before it was made", slog.String("error", err.Error()))
