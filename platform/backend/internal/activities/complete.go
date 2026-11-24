@@ -208,7 +208,7 @@ func (a *completedVisit) outOfCase(p auth.Principal) string {
 		return "not a staff school visit with a school and a day"
 	case a.other:
 		return "a visit in a cluster, a project, a pair or a partner's hands, or a OneTest visit"
-	case a.responsible != p.StaffProfileID:
+	case !ownsVisit(p, a.responsible):
 		return "someone else's visit"
 	case a.status != startedStatus:
 		return "a visit in status " + a.status + ", not started"

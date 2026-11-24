@@ -154,7 +154,7 @@ func (s *Service) prepareEdit(ctx context.Context, p auth.Principal, req EditReq
 	if err != nil {
 		return nil, err
 	}
-	if a == nil || a.responsible != p.StaffProfileID || !in(movableStatuses, a.status) ||
+	if a == nil || !ownsVisit(p, a.responsible) || !in(movableStatuses, a.status) ||
 		!in(inScopePurposes, a.purpose) || rules.Purposes.ActivityTypes[a.purpose] != a.activityType {
 		return nil, handOn("not a scheduled visit of the first save's kind, owned by the person")
 	}

@@ -120,7 +120,7 @@ func (s *Service) prepareMove(ctx context.Context, p auth.Principal, req MoveReq
 	if err != nil {
 		return nil, err
 	}
-	if a == nil || a.responsible != p.StaffProfileID || !in(movableStatuses, a.status) ||
+	if a == nil || !ownsVisit(p, a.responsible) || !in(movableStatuses, a.status) ||
 		!in(inScopePurposes, a.purpose) || rules.Purposes.ActivityTypes[a.purpose] != a.activityType ||
 		a.batchID == "" || a.nameSnapshot == "" {
 		return nil, handOn("not a scheduled visit of the first save's kind, owned by the person")

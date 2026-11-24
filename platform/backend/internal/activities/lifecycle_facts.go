@@ -37,7 +37,7 @@ func (s *Service) LifecycleFacts(ctx context.Context, p auth.Principal, activity
 		return LifecycleFacts{}, handOn("not a staff school visit with a school and a day")
 	case a.other:
 		return LifecycleFacts{}, handOn("a visit in a cluster, a project, a pair or a partner's hands")
-	case a.responsible != p.StaffProfileID:
+	case !ownsVisit(p, a.responsible):
 		return LifecycleFacts{}, handOn("someone else's visit")
 	}
 	if err := s.ownVisitSchool(ctx, p, a.schoolID, s.now()); err != nil {

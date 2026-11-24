@@ -128,7 +128,7 @@ func (s *Service) RecordAttendance(ctx context.Context, p auth.Principal, activi
 		return Answer{}, handOn("not staff work at one school")
 	case a.other:
 		return Answer{}, handOn("work in a cluster, a project or a partner's hands")
-	case a.responsible != p.StaffProfileID:
+	case !ownsVisit(p, a.responsible):
 		return Answer{}, handOn("someone else's work")
 	}
 	now := s.now()

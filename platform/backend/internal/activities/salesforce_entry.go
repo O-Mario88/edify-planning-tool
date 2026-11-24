@@ -50,7 +50,7 @@ func (s *Service) EnterSalesforceID(ctx context.Context, p auth.Principal, activ
 		return CompleteAnswer{}, handOn("not a staff school visit with a school and a day")
 	case a.other:
 		return CompleteAnswer{}, handOn("a visit in a cluster, a project, a pair or a partner's hands, or a OneTest visit")
-	case a.responsible != p.StaffProfileID:
+	case !ownsVisit(p, a.responsible):
 		return CompleteAnswer{}, handOn("someone else's visit")
 	case a.status != startedStatus && !in(handInStartable, a.status):
 		return CompleteAnswer{}, handOn("a visit in status " + a.status)

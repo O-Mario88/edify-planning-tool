@@ -362,7 +362,7 @@ func (s *Service) createGroup(ctx context.Context, p auth.Principal, req GroupTr
 	// The scope (2578): a cluster the person is responsible for. Any other
 	// reading of the portfolio (a cluster reached through one of their
 	// schools, or one nobody holds) is handed on.
-	if cl.Responsible != p.StaffProfileID {
+	if !ownsVisit(p, cl.Responsible) {
 		return nil, handOn("a cluster the person is not responsible for")
 	}
 	home, err := staffHomeOf(ctx, s.db, p.StaffProfileID)

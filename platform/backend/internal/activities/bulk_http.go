@@ -115,7 +115,7 @@ SELECT COALESCE(NULLIF(a.activity_name_snapshot, ''), a.activity_type),
 		}
 		item := BulkPreviewItem{ID: id, Title: title, Where: where, Day: dayStr}
 		switch {
-		case p.StaffProfileID == "" || responsible != p.StaffProfileID:
+		case p.StaffProfileID == "" || !ownsVisit(p, responsible):
 			item.Reason = "Owned by another staff member."
 			excluded = append(excluded, item)
 		case payment == "disbursed" || payment == "paid":

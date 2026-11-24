@@ -173,7 +173,7 @@ func (s *Service) KeyVisitSSA(ctx context.Context, p auth.Principal, activityID 
 		return Answer{}, handOn("not a staff school visit with a school and a day")
 	case a.other:
 		return Answer{}, handOn("a visit in a cluster, a project, a pair or a partner's hands")
-	case a.responsible != p.StaffProfileID:
+	case !ownsVisit(p, a.responsible):
 		return Answer{}, handOn("someone else's visit")
 	case slices.Contains(ssaApprovedStatuses, a.status):
 		return Answer{}, handOn("a visit its lead approved: the scores are confirmed as they are keyed")

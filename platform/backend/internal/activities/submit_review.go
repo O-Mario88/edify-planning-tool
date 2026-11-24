@@ -70,7 +70,7 @@ func (s *Service) SubmitForReview(ctx context.Context, p auth.Principal, activit
 		return Answer{}, handOn("not a staff school visit with a school and a day")
 	case a.other:
 		return Answer{}, handOn("a visit in a cluster, a project, a pair or a partner's hands, or a OneTest visit")
-	case a.responsible != p.StaffProfileID:
+	case !ownsVisit(p, a.responsible):
 		return Answer{}, handOn("someone else's visit")
 	}
 	now := s.now()

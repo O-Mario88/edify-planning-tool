@@ -35,7 +35,7 @@ func (s *Service) StartActivity(ctx context.Context, p auth.Principal, activityI
 		return Answer{}, handOn("not a staff school visit with a school and a day")
 	case a.other:
 		return Answer{}, handOn("a visit in a cluster, a project, a pair or a partner's hands")
-	case a.responsible != p.StaffProfileID:
+	case !ownsVisit(p, a.responsible):
 		return Answer{}, handOn("someone else's visit")
 	}
 	now := s.now()
@@ -59,6 +59,11 @@ func (s *Service) StartActivity(ctx context.Context, p auth.Principal, activityI
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return Answer{}, fmt.Errorf("activities: committing the start: %w", err)
+	}
+	// The activity's save marks its owner's year for the ledger rebuild
+	// (apps.targets.ledger_sync), as every activity save does.
+	if err := s.markOwnerYears(ctx, a.responsible, a.plannedDate); err != nil {
+		s.logger.Warn("activities: the start's ledger mark was not written", "activity", a.id, "err", err)
 	}
 	if err := s.auditStarted(ctx, p, a.id, strings.TrimSpace(notes), origin); err != nil {
 		s.logger.Warn("activities: the start's audit row was not written", "activity", a.id, "err", err)

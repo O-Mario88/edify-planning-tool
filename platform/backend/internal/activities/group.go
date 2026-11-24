@@ -288,7 +288,7 @@ func (s *Service) groupPicks(ctx context.Context, p auth.Principal, ids []string
 		if err != nil {
 			return nil, err
 		}
-		if a == nil || a.responsible != p.StaffProfileID || !in(statuses, a.status) ||
+		if a == nil || !ownsVisit(p, a.responsible) || !in(statuses, a.status) ||
 			!in(inScopePurposes, a.purpose) || rules.Purposes.ActivityTypes[a.purpose] != a.activityType ||
 			a.nameSnapshot == "" || (move && a.batchID == "") {
 			return nil, handOn("a ticked activity is not a visit of the first save's kind, owned by the person")

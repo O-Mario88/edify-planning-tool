@@ -16,6 +16,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
+
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 )
 
 //go:embed rules.json
@@ -158,6 +160,14 @@ func mustRules() Rules {
 }
 
 func in(list []string, value string) bool { return slices.Contains(list, value) }
+
+// ownsVisit is apps.core.scoping.owner_ids against an activity's
+// responsible_staff_id: work is filed under the officer's staff profile id
+// when written by the activity service, and under their user id when it came
+// from the seeder or an older path, and both are the officer's own.
+func ownsVisit(p auth.Principal, responsible string) bool {
+	return responsible != "" && (responsible == p.StaffProfileID || responsible == p.UserID)
+}
 
 // The in-scope purposes (27.3), and the literals of `_create` and the view.
 var (

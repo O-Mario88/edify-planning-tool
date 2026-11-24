@@ -120,7 +120,7 @@ func (s *Service) prepareCancel(ctx context.Context, p auth.Principal, req Cance
 	if err != nil {
 		return nil, err
 	}
-	if a == nil || a.responsible != p.StaffProfileID || !in(cancellableStatuses, a.status) ||
+	if a == nil || !ownsVisit(p, a.responsible) || !in(cancellableStatuses, a.status) ||
 		!in(inScopePurposes, a.purpose) || rules.Purposes.ActivityTypes[a.purpose] != a.activityType {
 		return nil, handOn("not a visit of the first save's kind, owned by the person")
 	}
