@@ -417,6 +417,12 @@ func (s *Service) GetAddToCluster(
 		return nil, err
 	}
 	if p, ok := auth.PrincipalFrom(ctx); ok {
+		if resp, served, err := s.schoolClusterFormInGo(ctx, p, request.Msg.GetSchoolId()); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(resp), nil
+		}
 		if resp, served, err := s.getAddToClusterInGo(ctx, p, request.Msg.GetSchoolId()); served {
 			if err != nil {
 				return nil, err
@@ -435,6 +441,12 @@ func (s *Service) AddToCluster(
 		return nil, err
 	}
 	if p, ok := auth.PrincipalFrom(ctx); ok {
+		if resp, served, err := s.schoolClusterSaveInGo(ctx, p, request); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(resp), nil
+		}
 		if resp, served, err := s.addToClusterInGo(ctx, p, request.Msg); served {
 			if err != nil {
 				return nil, err

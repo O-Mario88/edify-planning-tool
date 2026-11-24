@@ -359,8 +359,10 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 					realtimeBroker, logger, time.Now))
 				membership := clustermembership.New(pool, clusterpage.NewService(pool, time.Now),
 					plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, realtimeBroker, logger, time.Now)
+				creator := clustercreate.New(pool, membership, logger, time.Now)
+				membership.WithClusterMaker(creator)
 				screenService.WithClusterMembership(membership)
-				screenService.WithClusterCreate(clustercreate.New(pool, membership, logger, time.Now))
+				screenService.WithClusterCreate(creator)
 				enroller := projectcapacity.NewService(pool, time.Now).
 					WithSaves(pool, plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, realtimeBroker, logger)
 				screenService.WithEnroller(enroller)

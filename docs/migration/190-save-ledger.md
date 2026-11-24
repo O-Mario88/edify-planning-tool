@@ -6,8 +6,8 @@ hand in that script and changes only with evidence. *Proved* means compared with
 with Django stopped.
 
 - Saves: 225 destinations from 483 save controls.
-- Go: 34 proved, 22 with unproved Go code, 159 still Django's, 1 retired on purpose, 9 made by Go's own services.
-- Field staff can reach 112 saves that are not yet proved in Go.
+- Go: 35 proved, 22 with unproved Go code, 158 still Django's, 1 retired on purpose, 9 made by Go's own services.
+- Field staff can reach 111 saves that are not yet proved in Go.
 - 92 controls post to a destination the inventory cannot read (set by a variable or script); they are listed by template at the end and must be classified by hand.
 
 | Step | Saves |
@@ -47,6 +47,7 @@ with Django stopped.
 | `/planning/bulk-schedule` | proved | medium | 7 roles | Schedule {{ schools|length }} school{{ schools|length|pluralize }} |
 | `/planning/schedule-action` | proved | large | 7 roles | Confirm & Schedule Activity; Schedule meeting Schedule training |
 | `/planning/visit-requests/<str:activity_id>/<str:decision>` | proved | small | 7 roles | Approve visit; Decline |
+| `/schools/<str:school_id>/add-to-cluster` | proved | small | 7 roles | Change cluster Add to cluster |
 | `/schools/<str:school_id>/assign-to-project` | proved | small | 7 roles | Assign to project |
 | `/schools/<str:school_id>/take` | proved | small | 7 roles | Take {{ school.school_name }} as my school |
 | `/schools/bulk-assign-project` | proved | large | 7 roles | Add to project; Assign project |
@@ -113,7 +114,6 @@ with Django stopped.
 | `/projects/create/action` | django | small | 6 roles | Create proposed project |
 | `/projects/planning/bulk-partner` | unproved | large | 6 roles | Assign {{ assignments|length }} school{{ assignments|length|pluralize }} |
 | `/projects/planning/bulk-schedule` | django | medium | 6 roles | Schedule {{ assignments|length }} school{{ assignments|length|pluralize }} |
-| `/schools/<str:school_id>/add-to-cluster` | django | small | 7 roles | Change cluster Add to cluster |
 | `/schools/<str:school_id>/change-type` | django | small | 7 roles | Save |
 | `/schools/<str:school_id>/close` | django | small | 7 roles | Close school |
 | `/schools/<str:school_id>/edit-drawer` | django | large | 7 roles | Save school |

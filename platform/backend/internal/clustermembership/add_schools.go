@@ -198,7 +198,7 @@ func (s *Service) AddSchools(ctx context.Context, p auth.Principal, clusterID st
 			skipped = append(skipped, school.Name)
 			continue
 		}
-		refusal, err := s.assignSchool(ctx, p, scope, c, school, origin)
+		refusal, err := s.assignSchool(ctx, p, scope, c, school, "", origin)
 		if err != nil || refusal != "" {
 			return "", refusal, err
 		}
@@ -231,7 +231,7 @@ FROM school s WHERE `+where+` AND s.id = `+arg(id)+` ORDER BY s.created_at DESC 
 // reader plans in directly, then the membership service. A school with no
 // School ID is the ticked school itself: the existing lookup by an empty ID
 // matches any of the reader's schools without one (docs/migration/189).
-func (s *Service) assignSchool(ctx context.Context, p auth.Principal, scope schooldirectory.Scope, c *Cluster, t ticked, origin activities.Origin) (string, error) {
+func (s *Service) assignSchool(ctx context.Context, p auth.Principal, scope schooldirectory.Scope, c *Cluster, t ticked, reason string, origin activities.Origin) (string, error) {
 	var args []any
 	arg := numbered(&args)
 	school := t.School
@@ -260,6 +260,6 @@ ORDER BY s.created_at DESC LIMIT 1`, args...).Scan(&school.ID, &school.Name, &ow
 	if !writable {
 		return oversightOnly, nil
 	}
-	_, refusal, err := s.Join(ctx, p, school, c.ID, c.Name, "", origin)
+	_, refusal, err := s.Join(ctx, p, school, c.ID, c.Name, reason, origin)
 	return refusal, err
 }

@@ -177,7 +177,7 @@ func (s *Service) Create(ctx context.Context, p auth.Principal, values map[strin
 	}
 	refusal, err := s.check(ctx, p, &f, region)
 	if err != nil || refusal != "" {
-		return "", refusal, err
+		return "", prefixed(refusal), err
 	}
 	id := cuid.New()
 	if err := s.write(ctx, id, f); err != nil {
@@ -211,17 +211,48 @@ func (s *Service) defaultOwner(ctx context.Context, p auth.Principal) (string, e
 	return p.UserID, nil
 }
 
-// check is create_cluster's validation, in its order.
+func prefixed(reason string) string {
+	if reason == "" {
+		return ""
+	}
+	return failed + reason
+}
+
+// FromSchool is create_cluster as a school's Add to Cluster calls it: the
+// school's region, district and sub-county, filed under owner (or nobody).
+// It answers the new cluster's id, or the service's refusal in its own words.
+func (s *Service) FromSchool(ctx context.Context, p auth.Principal, name, region, district, subCounty, owner string) (string, string, error) {
+	f := Form{Name: strings.TrimSpace(name), Region: region, District: district, Type: "mixed", Owner: owner}
+	if subCounty != "" {
+		f.SubCounties = []string{subCounty}
+	}
+	var districtRegion *string
+	err := s.db.QueryRow(ctx, `SELECT region_id FROM district WHERE id = $1`, district).Scan(&districtRegion)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", "district does not belong to region", nil
+	}
+	if err != nil {
+		return "", "", fmt.Errorf("clustercreate: reading the district: %w", err)
+	}
+	refusal, err := s.check(ctx, p, &f, districtRegion)
+	if err != nil || refusal != "" {
+		return "", refusal, err
+	}
+	id := cuid.New()
+	return id, "", s.write(ctx, id, f)
+}
+
+// check is create_cluster's validation, in its order, in its words.
 func (s *Service) check(ctx context.Context, p auth.Principal, f *Form, region *string) (string, error) {
 	if region == nil || *region != f.Region {
-		return failed + "district does not belong to region", nil
+		return "district does not belong to region", nil
 	}
 	allowed, err := s.creationDistricts(ctx, p.StaffProfileID)
 	if err != nil {
 		return "", err
 	}
 	if !containsDistrict(allowed, f.District) {
-		return failed + "District outside your scope", nil
+		return "District outside your scope", nil
 	}
 	f.SubCounties = distinct(f.SubCounties)
 	rows, err := s.db.Query(ctx, `SELECT id, COALESCE(district_id, '') FROM sub_county WHERE id = ANY($1)`, f.SubCounties)
@@ -236,11 +267,11 @@ func (s *Service) check(ctx context.Context, p auth.Principal, f *Form, region *
 		return "", err
 	}
 	if len(found) != len(f.SubCounties) {
-		return failed + "Unknown sub-county", nil
+		return "Unknown sub-county", nil
 	}
 	for _, sc := range found {
 		if sc[1] != f.District {
-			return failed + "sub-county does not belong to district", nil
+			return "sub-county does not belong to district", nil
 		}
 	}
 	var taken bool
@@ -249,7 +280,7 @@ func (s *Service) check(ctx context.Context, p auth.Principal, f *Form, region *
 		return "", fmt.Errorf("clustercreate: reading the district's cluster names: %w", err)
 	}
 	if taken {
-		return failed + "A cluster with this name already exists in this district.", nil
+		return "A cluster with this name already exists in this district.", nil
 	}
 	return "", nil
 }

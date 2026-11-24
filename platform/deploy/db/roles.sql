@@ -191,6 +191,8 @@ GRANT SELECT (cluster_id, district_id, active, effective_from, effective_to) ON 
 -- hand-over that replaced another partner's.
 GRANT SELECT (id, started_by) ON school_cluster_membership TO edify_gateway_ro;
 GRANT SELECT (replaces_assignment_id) ON partner_assignment TO edify_gateway_ro;
+-- A school's Add to Cluster: each of the owner's clusters with its school count.
+GRANT SELECT (id, cluster_id, school_id) ON school_cluster_assignment TO edify_gateway_ro;
 -- A cluster's schools list: whether a catalogue item counts as training (the
 -- planning badges) and the planning calendar (the planning horizon).
 GRANT SELECT (counts_toward_client_training) ON activity_catalogue_item TO edify_gateway_ro;

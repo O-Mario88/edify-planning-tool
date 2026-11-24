@@ -48,7 +48,7 @@ WHERE `+schooldirectory.ReadScope(scope, arg)+` AND s.deleted_at IS NULL AND s.i
 	if err := s.db.QueryRow(ctx, `SELECT name FROM cluster WHERE id = $1 AND deleted_at IS NULL`, clusterID).Scan(&name); err != nil {
 		return "", "", fmt.Errorf("clustermembership: reading the new cluster: %w", err)
 	}
-	refusal, err := s.assignSchool(ctx, p, scope, &Cluster{ID: clusterID, Name: name}, t, origin)
+	refusal, err := s.assignSchool(ctx, p, scope, &Cluster{ID: clusterID, Name: name}, t, "", origin)
 	if err != nil || refusal != "" {
 		return "", refusal, err
 	}

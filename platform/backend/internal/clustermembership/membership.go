@@ -46,6 +46,7 @@ type ClusterAccess interface {
 type Service struct {
 	db      *pgxpool.Pool
 	access  ClusterAccess
+	maker   ClusterMaker
 	push    activities.NoticePush
 	live    activities.NoticePublisher
 	logger  *slog.Logger
