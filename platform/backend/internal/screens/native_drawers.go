@@ -392,6 +392,9 @@ func (s *Service) getPageDrawerInGo(ctx context.Context, p auth.Principal, rawPa
 	if answer, served, err := s.activityFacilitatorDrawerInGo(ctx, p, pathOnly); served {
 		return answer, true, err
 	}
+	if answer, served, err := s.completeDrawerInGo(ctx, p, pathOnly); served {
+		return answer, true, err
+	}
 	if answer, served, err := s.exportDrawerInGo(ctx, p, rawPath); served {
 		return answer, true, err
 	}

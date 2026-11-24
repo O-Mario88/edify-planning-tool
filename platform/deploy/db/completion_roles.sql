@@ -61,6 +61,17 @@ GRANT SELECT (activity_id, status), UPDATE (status) ON ia_verification TO edify_
 GRANT SELECT (salesforce_id, entered_by, status), UPDATE (salesforce_id, entered_by, status, updated_at)
   ON activity_completion_verification TO edify_completion_owner;
 
+-- A cluster meeting's completion (services.complete with the view's start,
+-- _cluster_member_school_ids and _sync_cluster_attendance): the per-school
+-- head counts a new register row borrows, the cluster's member schools, and
+-- the register itself, whose absent invitations completion removes.
+GRANT SELECT (teachers_per_school, leaders_per_school, other_per_school, attended_school_ids)
+  ON activity TO edify_completion_owner;
+GRANT SELECT (id, cluster_id, deleted_at) ON school TO edify_completion_owner;
+GRANT SELECT, INSERT, DELETE, UPDATE (attended, recorded_by, updated_at)
+  ON cluster_activity_attendance TO edify_completion_owner;
+GRANT USAGE ON SEQUENCE cluster_activity_attendance_id_seq TO edify_completion_owner;
+
 CREATE SCHEMA IF NOT EXISTS gateway_completion AUTHORIZATION edify_completion_owner;
 REVOKE ALL ON SCHEMA gateway_completion FROM PUBLIC;
 
@@ -275,6 +286,112 @@ BEGIN
 END
 $fn$;
 REVOKE ALL ON FUNCTION gateway_completion.record_attendance(varchar, integer, integer, timestamptz) FROM PUBLIC;
+-- A staff cluster meeting's completion (my_plan_views.complete_activity_action
+-- → services.start_completion and services.complete) with no visiting school
+-- on its register: started if it was not, its Training ID reserved, the
+-- register mirrored (_sync_cluster_attendance with release_absent: a ticked
+-- member attends, an unticked one no longer does, an invited one left
+-- unticked loses its invitation), and handed in to the Programme Lead.
+-- attended is the posted register, stripped and de-duplicated; only the
+-- cluster's member schools are kept (_cluster_member_school_ids). answer is
+-- '' when handed in, otherwise what hand_in_school_visit answers, or
+-- 'guests' when the register holds a visiting school; released is the
+-- schools whose invitations were removed, sorted.
+CREATE OR REPLACE FUNCTION gateway_completion.hand_in_cluster_meeting(
+  target varchar, delivered date, raw_value varchar, normalized varchar,
+  teachers integer, leaders integer, attended varchar[],
+  outcome text, observations text, follow_up text,
+  entered_by varchar, at timestamptz, reference_id varchar, verification_id varchar,
+  OUT answer text, OUT released varchar[]
+)
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  work record;
+  holder record;
+  members varchar[];
+  member varchar;
+BEGIN
+  released := '{}';
+  SELECT a.status, a.delivery_type, a.activity_type, a.cluster_id, a.deleted_at,
+         a.teachers_per_school, a.leaders_per_school, a.other_per_school
+    INTO work FROM public.activity a WHERE a.id = target FOR UPDATE;
+  IF NOT FOUND OR work.delivery_type IS DISTINCT FROM 'staff' OR work.activity_type IS DISTINCT FROM 'cluster_meeting'
+     OR work.cluster_id IS NULL OR work.deleted_at IS NOT NULL
+     OR NOT (work.status = ANY (ARRAY['completion_started', 'scheduled', 'in_progress', 'partner_scheduled',
+                                      'assigned_to_partner', 'rescheduled']::varchar[])) THEN
+    answer := 'changed';
+    RETURN;
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.activity_salesforce_reference r WHERE r.activity_id = target) THEN
+    answer := 'own_reference';
+    RETURN;
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.activity_completion_verification v WHERE v.activity_id = target) THEN
+    answer := 'verification';
+    RETURN;
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.cluster_activity_attendance x WHERE x.activity_id = target AND x.is_guest) THEN
+    answer := 'guests';
+    RETURN;
+  END IF;
+  SELECT h.id, h.status, h.deleted_at INTO holder
+    FROM public.activity_salesforce_reference r JOIN public.activity h ON h.id = r.activity_id
+   WHERE r.normalized_value = normalized;
+  IF FOUND THEN
+    IF holder.deleted_at IS NOT NULL OR holder.status IN ('cancelled', 'deferred') THEN
+      answer := 'called_off';
+      RETURN;
+    END IF;
+    answer := 'held:' || holder.id;
+    RETURN;
+  END IF;
+  INSERT INTO public.activity_salesforce_reference (id, created_at, updated_at, raw_value, normalized_value,
+    activity_type, expected_prefix, entry_source, entered_by, entered_at, activity_id)
+  VALUES (reference_id, at, at, raw_value, normalized, work.activity_type, 'TS-', 'staff_self_entry',
+    entered_by, at, target);
+  SELECT COALESCE(array_agg(t.id ORDER BY t.n), '{}') INTO members
+    FROM unnest(attended) WITH ORDINALITY AS t(id, n)
+   WHERE EXISTS (SELECT 1 FROM public.school s WHERE s.id = t.id AND s.cluster_id = work.cluster_id
+                 AND s.deleted_at IS NULL);
+  FOREACH member IN ARRAY members LOOP
+    UPDATE public.cluster_activity_attendance x SET attended = true, recorded_by = entered_by, updated_at = at
+     WHERE x.activity_id = target AND x.school_id = member AND NOT x.attended;
+    IF NOT EXISTS (SELECT 1 FROM public.cluster_activity_attendance x WHERE x.activity_id = target
+                   AND x.school_id = member) THEN
+      INSERT INTO public.cluster_activity_attendance (created_at, updated_at, invited, attended, is_guest, teachers,
+        leaders, other, recorded_by, activity_id, school_id)
+      VALUES (at, at, false, true, false, work.teachers_per_school, work.leaders_per_school, work.other_per_school,
+        entered_by, target, member);
+    END IF;
+  END LOOP;
+  UPDATE public.cluster_activity_attendance x SET attended = false
+   WHERE x.activity_id = target AND x.attended AND NOT (x.school_id = ANY (members));
+  SELECT COALESCE(array_agg(x.school_id ORDER BY x.school_id COLLATE "C"), '{}') INTO released
+    FROM public.cluster_activity_attendance x
+   WHERE x.activity_id = target AND x.invited AND NOT x.is_guest AND NOT (x.school_id = ANY (members));
+  DELETE FROM public.cluster_activity_attendance x
+   WHERE x.activity_id = target AND x.invited AND NOT x.is_guest AND NOT (x.school_id = ANY (members));
+  UPDATE public.activity a SET
+    execution_started_at = CASE WHEN work.status = 'completion_started' THEN a.execution_started_at
+                                ELSE COALESCE(a.execution_started_at, at) END,
+    salesforce_activity_id = normalized, salesforce_activity_type = 'training',
+    teachers_attended = teachers, leaders_attended = leaders, other_participants = 0,
+    attended_school_ids = members, actual_delivery_date = delivered,
+    actual_outcome = COALESCE(outcome, a.actual_outcome),
+    actual_observations = COALESCE(observations, a.actual_observations),
+    follow_up_note = COALESCE(follow_up, a.follow_up_note),
+    status = 'submitted_to_pl',
+    evidence_status = CASE WHEN a.evidence_status = 'none' THEN 'accepted' ELSE a.evidence_status END,
+    updated_at = at
+  WHERE a.id = target;
+  INSERT INTO public.activity_completion_verification (id, created_at, updated_at, salesforce_id, entered_by,
+    entered_at, status, activity_id)
+  VALUES (verification_id, at, at, normalized, entered_by, at, 'pending', target);
+  answer := '';
+END
+$fn$;
+REVOKE ALL ON FUNCTION gateway_completion.hand_in_cluster_meeting(varchar, date, varchar, varchar, integer,
+  integer, varchar[], text, text, text, varchar, timestamptz, varchar, varchar) FROM PUBLIC;
 RESET ROLE;
 
 GRANT USAGE ON SCHEMA gateway_completion TO edify_activities_rw;
@@ -287,3 +404,5 @@ GRANT EXECUTE ON FUNCTION gateway_completion.submit_for_review(varchar, varchar,
   TO edify_activities_rw;
 GRANT EXECUTE ON FUNCTION gateway_completion.record_attendance(varchar, integer, integer, timestamptz)
   TO edify_activities_rw;
+GRANT EXECUTE ON FUNCTION gateway_completion.hand_in_cluster_meeting(varchar, date, varchar, varchar, integer,
+  integer, varchar[], text, text, text, varchar, timestamptz, varchar, varchar) TO edify_activities_rw;

@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/url"
 	"regexp"
+	"strings"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -82,10 +83,15 @@ func (s *Service) completeInGo(
 		for k, v := range message.GetValues() {
 			form.Set(k, v)
 		}
+		// A checklist comes as one value, its ticks joined by commas; the web
+		// posts one value per tick (drawer_blocks._ticked).
+		if form.Has(registerField) {
+			form[registerField] = ticks(form.Get(registerField))
+		}
 		origin = activities.Origin{CorrelationID: trace.FromContext(ctx).RequestID}
 	}
 	completed, err := s.completions.Complete(ctx, principal, activities.CompleteRequest{
-		ActivityID: activityID, Form: form,
+		ActivityID: activityID, Form: form, Sessions: s.existingApp == nil,
 	}, origin)
 	var refusal *activities.Refusal
 	switch {
@@ -104,4 +110,18 @@ func (s *Service) completeInGo(
 		return nil, true, apierr.New(ctx, connect.CodeUnavailable, apierr.ReasonInternal, "This could not be saved.")
 	}
 	return &screensv1.SaveDrawerResponse{Saved: true, Message: collapse(completed.Message) + " " + toastClose}, true, nil
+}
+
+// registerField is a cluster session's register in the Complete drawer.
+const registerField = "attended_school_ids"
+
+// ticks is a checklist's value as the boxes the web would send, one per tick.
+func ticks(value string) []string {
+	out := []string{}
+	for _, part := range strings.Split(value, ",") {
+		if part != "" {
+			out = append(out, part)
+		}
+	}
+	return out
 }

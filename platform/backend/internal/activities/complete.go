@@ -88,6 +88,11 @@ var (
 type CompleteRequest struct {
 	ActivityID string
 	Form       url.Values
+	// Sessions is set when the existing application is absent: Go then
+	// completes an officer's own cluster meeting too, and starts work not yet
+	// started, as the view does inside the completion's transaction (the
+	// existing drawer starts it as it opens; Go's drawer writes nothing).
+	Sessions bool
 }
 
 // CompleteAnswer is the handed-in visit and the toast the web shows.
@@ -119,6 +124,8 @@ type completionPlan struct {
 	raw, normalized              string
 	teachers, leaders, others    int
 	outcome, observations, notes *string
+	posted, attended             []string // a meeting's register, as posted and once each
+	start                        bool     // the work is started in the completion's transaction
 	payload                      map[string]any
 	origin                       Origin
 	now                          time.Time
@@ -128,6 +135,15 @@ type completionPlan struct {
 // hands it on (ErrHandOn). A refusal and a hand-on write nothing, as the
 // existing completion's refusals roll its one transaction back.
 func (s *Service) Complete(ctx context.Context, p auth.Principal, req CompleteRequest, origin Origin) (CompleteAnswer, error) {
+	if req.Sessions {
+		m, err := s.meetingInCase(ctx, p, strings.TrimSpace(req.ActivityID))
+		if err != nil {
+			return CompleteAnswer{}, err
+		}
+		if m != nil {
+			return s.completeMeeting(ctx, p, m, req.Form, origin)
+		}
+	}
 	pl, err := s.prepareCompletion(ctx, p, req, origin)
 	if err != nil {
 		return CompleteAnswer{}, err
@@ -152,7 +168,7 @@ func (s *Service) prepareCompletion(ctx context.Context, p auth.Principal, req C
 	if err != nil {
 		return nil, err
 	}
-	if why := a.outOfCase(p); why != "" {
+	if why := a.outOfCase(p, req.Sessions); why != "" {
 		return nil, handOn(why)
 	}
 	if err := s.ownVisitSchool(ctx, p, a.schoolID, now); err != nil {
@@ -168,7 +184,7 @@ func (s *Service) prepareCompletion(ctx context.Context, p auth.Principal, req C
 		}
 		return nil, handOn(why)
 	}
-	pl := &completionPlan{p: p, a: *a, origin: origin, now: now}
+	pl := &completionPlan{p: p, a: *a, origin: origin, now: now, start: a.status != startedStatus}
 	if err := s.readCompletionForm(pl, req.Form); err != nil {
 		return nil, err
 	}
@@ -202,7 +218,8 @@ func (s *Service) ownVisitSchool(ctx context.Context, p auth.Principal, schoolID
 // outOfCase says why the visit is not 183.1's case ("" when it is): a
 // started staff school visit, owned by the person, holding no purpose the
 // drawer decides, collecting no SSA, not a OneTest visit, with no ID yet.
-func (a *completedVisit) outOfCase(p auth.Principal) string {
+// startable admits a visit not yet started, which the completion starts.
+func (a *completedVisit) outOfCase(p auth.Principal, startable bool) string {
 	switch {
 	case a == nil:
 		return "not a staff school visit with a school and a day"
@@ -210,7 +227,7 @@ func (a *completedVisit) outOfCase(p auth.Principal) string {
 		return "a visit in a cluster, a project, a pair or a partner's hands, or a OneTest visit"
 	case !ownsVisit(p, a.responsible):
 		return "someone else's visit"
-	case a.status != startedStatus:
+	case a.status != startedStatus && !(startable && in(startableStatuses, a.status)):
 		return "a visit in status " + a.status + ", not started"
 	case in(completionPurposes, a.purpose) || a.collectsSSA:
 		return "a visit whose purpose the drawer decides, or one collecting the SSA"
@@ -422,6 +439,15 @@ func (s *Service) writeCompletion(ctx context.Context, pl *completionPlan) error
 		return fmt.Errorf("activities: opening the completion: %w", err)
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
+	if pl.start {
+		var started bool
+		if err := tx.QueryRow(ctx, `SELECT gateway_completion.start_visit($1, $2)`, pl.a.id, pl.now).Scan(&started); err != nil {
+			return fmt.Errorf("activities: starting the visit: %w", err)
+		}
+		if !started {
+			return handOn("the visit could not be started")
+		}
+	}
 	var answer string
 	err = tx.QueryRow(ctx, `SELECT gateway_completion.hand_in_school_visit($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
   $11, $12, $13, $14)`,
