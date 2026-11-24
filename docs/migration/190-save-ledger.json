@@ -4,9 +4,9 @@
   "controls": 483,
   "controls_without_a_destination": 92,
   "go": {
-   "django": 163,
+   "django": 162,
    "go-owned": 9,
-   "proved": 30,
+   "proved": 31,
    "unproved": 22,
    "retired": 1
   },
@@ -24,7 +24,7 @@
    "8 finance and money": 22,
    "9 admin and the rest": 10
   },
-  "field_staff_left": 116
+  "field_staff_left": 115
  },
  "saves": [
   {
@@ -1097,8 +1097,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "django",
-   "evidence": "",
+   "go": "proved",
+   "evidence": "a cluster's Partner to Facilitate (doc 189)",
    "templates": [
     "partials/clusters/facilitator_drawer.html"
    ]

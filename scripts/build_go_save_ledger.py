@@ -138,6 +138,10 @@ GO_STATUS: dict[str, tuple[str, str]] = {
         "Go saves it; Django's own save always fails, so there is nothing to compare (doc 189)",
     ),
     "/schools/<str:school_id>/assign-to-project": (PROVED, "Add to Project (doc 189)"),
+    "/clusters/<str:cluster_id>/facilitator": (
+        PROVED,
+        "a cluster's Partner to Facilitate (doc 189)",
+    ),
     "/planning/bulk-action": (
         UNPROVED,
         "its partner hand-over is proved from the tick bar (doc 189); export and the old schedule refusal are Django's",

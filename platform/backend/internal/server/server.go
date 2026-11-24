@@ -43,6 +43,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closurepages"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closurequality"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterfacilitation"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterlead/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusteroversight"
@@ -351,6 +352,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 				screenService.WithDailyDebrief(debriefPage)
 				extraWorkPage.WithSaves(pool, plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, realtimeBroker, logger)
 				screenService.WithExtraWork(extraWorkPage)
+				screenService.WithClusterFacilitation(clusterfacilitation.New(pool, plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
+					realtimeBroker, logger, time.Now))
 				screenService.WithEnroller(projectcapacity.NewService(pool, time.Now).
 					WithSaves(pool, plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, realtimeBroker, logger))
 			}

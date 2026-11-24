@@ -104,7 +104,9 @@ type Service struct {
 	bulkSchedule BulkScheduler
 	// bulkAssign is a list's tick-bar Assign to partner, with Django absent.
 	bulkAssign BulkAssigner
-	pairsInGo  bool // schedule_training_pair: 32's In-school Training
+	// facilitation is a cluster's Partner to Facilitate, with Django absent.
+	facilitation ClusterFacilitator
+	pairsInGo    bool // schedule_training_pair: 32's In-school Training
 	// groupTrainings is nil unless EDIFY_GO_SAVES names schedule_group_training (38).
 	groupTrainings GroupTrainingSaver
 	// clusterMeetings is nil unless EDIFY_GO_SAVES names schedule_cluster_meeting (49).
