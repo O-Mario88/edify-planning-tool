@@ -91,6 +91,7 @@ GO_STATUS: dict[str, tuple[str, str]] = {
         PROVED,
         "owner's visit decision (doc 189)",
     ),
+    "/activities/<str:activity_id>/start/action": (PROVED, "Start activity (doc 189)"),
     # Go has code naming these paths, never compared with Django.
     "/admin-panel/staff-setup-queue": (UNPROVED, "Go names the path"),
     "/support": (UNPROVED, "internal/support"),
