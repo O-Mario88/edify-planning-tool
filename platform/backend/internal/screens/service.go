@@ -120,7 +120,9 @@ type Service struct {
 	rollout RolloutDrawer
 	// activityDetail draws an activity's detail drawer.
 	activityDetail ActivityDetail
-	pairsInGo      bool // schedule_training_pair: 32's In-school Training
+	// activityFacilitator draws and saves an activity's facilitator.
+	activityFacilitator ActivityFacilitator
+	pairsInGo           bool // schedule_training_pair: 32's In-school Training
 	// groupTrainings is nil unless EDIFY_GO_SAVES names schedule_group_training (38).
 	groupTrainings GroupTrainingSaver
 	// clusterMeetings is nil unless EDIFY_GO_SAVES names schedule_cluster_meeting (49).

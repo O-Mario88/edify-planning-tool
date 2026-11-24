@@ -99,6 +99,8 @@ const (
 	ssaEntryRolesFile = "../../../deploy/db/ssa_entry_roles.sql"
 	// The cluster facilitator saved through Go.
 	clusterFacilitationRolesFile = "../../../deploy/db/cluster_facilitation_roles.sql"
+	// Who facilitates a planned training or meeting, saved through Go.
+	activityFacilitatorRolesFile = "../../../deploy/db/activity_facilitator_roles.sql"
 	// A school joining a cluster, saved through Go.
 	clusterMembershipRolesFile = "../../../deploy/db/cluster_membership_roles.sql"
 	// A cluster created through Go.
@@ -410,6 +412,13 @@ func prepareGatewayRole(ctx context.Context) (string, error) {
 		return "", err
 	}
 	if _, err := conn.Conn().PgConn().Exec(ctx, string(clusterFacilitationRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	activityFacilitatorRoles, err := os.ReadFile(filepath.FromSlash(activityFacilitatorRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(activityFacilitatorRoles)).ReadAll(); err != nil {
 		return "", err
 	}
 	clusterMembershipRoles, err := os.ReadFile(filepath.FromSlash(clusterMembershipRolesFile))

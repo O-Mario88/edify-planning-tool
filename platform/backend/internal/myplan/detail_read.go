@@ -149,6 +149,12 @@ func mayCancel(ctx context.Context, db schooldirectory.Querier, p auth.Principal
 	if in(rules.Detail.UntickableStatuses, a.status) {
 		return false, nil
 	}
+	return mayRun(ctx, db, p, scope, a)
+}
+
+// mayRun is profile_activities._may_run: whether the reader may change the
+// activity at all.
+func mayRun(ctx context.Context, db schooldirectory.Querier, p auth.Principal, scope schooldirectory.Scope, a *detailActivity) (bool, error) {
 	return schoolprofile.MayRun(ctx, db, p, scope, schoolprofile.RunnableActivity{
 		StaffID: a.staffID, MonitorID: a.monitor, SchoolID: a.schoolID, SchoolOwner: a.schoolOwner,
 		HasSchool: a.hasSchool, ClusterID: a.clusterID, ClusterDistrict: a.clusterDistrict,

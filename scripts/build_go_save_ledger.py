@@ -154,6 +154,10 @@ GO_STATUS: dict[str, tuple[str, str]] = {
         PROVED,
         "My Targets' Submit MSCS (doc 189)",
     ),
+    "/activities/<str:activity_id>/facilitator": (
+        PROVED,
+        "an activity's Facilitated by: the drawer, refusals and a change re-priced on its day (doc 189)",
+    ),
     "/schools/bulk-assign-cluster": (
         PROVED,
         "the School Directory's bulk Assign cluster, through the membership service (doc 189)",

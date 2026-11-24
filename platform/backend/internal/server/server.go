@@ -349,7 +349,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		save := visitSave(cfg, pool, logger, realtimeBroker)
 		if effectiveSaves.ScheduleVisit {
 			screenService.WithVisitSave(save, logger).WithCoreVisitSave(save, logger).WithClientAssign(save).WithBulkSchedule(save).WithBulkAssign(save).WithVisitDecisions(save).
-				WithActivityLifecycle(save).WithWeekOwner(save).WithAccountability(save.WithEvidence(evidenceSvc)).WithReimbursement(save)
+				WithActivityLifecycle(save).WithWeekOwner(save).WithAccountability(save.WithEvidence(evidenceSvc)).WithReimbursement(save).
+				WithActivityFacilitator(save)
 			weeklyPage.WithOwnerButtons(existingApp == nil)
 			if existingApp == nil {
 				debriefPage.WithSaves(pool, plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, realtimeBroker, logger)

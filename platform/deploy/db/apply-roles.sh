@@ -94,6 +94,8 @@ psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/project_enrol_roles.sq
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/ssa_entry_roles.sql"
 # The partner a cluster is assigned to facilitate, saved through Go.
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/cluster_facilitation_roles.sql"
+# Who facilitates a planned training or meeting, saved through Go.
+psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/activity_facilitator_roles.sql"
 # A school joining a cluster (Add Schools), saved through Go.
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/cluster_membership_roles.sql"
 # A cluster created through Go: the cluster, its sub-counties and its primary catchment.

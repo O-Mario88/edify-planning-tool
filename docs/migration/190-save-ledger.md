@@ -6,8 +6,8 @@ hand in that script and changes only with evidence. *Proved* means compared with
 with Django stopped.
 
 - Saves: 225 destinations from 483 save controls.
-- Go: 39 proved, 19 with unproved Go code, 157 still Django's, 1 retired on purpose, 9 made by Go's own services.
-- Field staff can reach 107 saves that are not yet proved in Go.
+- Go: 40 proved, 19 with unproved Go code, 156 still Django's, 1 retired on purpose, 9 made by Go's own services.
+- Field staff can reach 106 saves that are not yet proved in Go.
 - 92 controls post to a destination the inventory cannot read (set by a variable or script); they are listed by template at the end and must be classified by hand.
 
 | Step | Saves |
@@ -24,6 +24,7 @@ with Django stopped.
 | Route | Go | Size | Roles | Labels |
 |---|---|---|---|---|
 | `/activities/<str:activity_id>/attendance/action` | proved | medium | 9 roles | Save attendance |
+| `/activities/<str:activity_id>/facilitator` | proved | small | 9 roles | Save |
 | `/activities/<str:activity_id>/salesforce-id/action` | proved | medium | 9 roles | Save Salesforce ID |
 | `/activities/<str:activity_id>/ssa-upload/action` | proved | medium | 9 roles | Save SSA scores |
 | `/activities/<str:activity_id>/start/action` | proved | small | 9 roles | Start activity |
@@ -63,7 +64,6 @@ with Django stopped.
 | `/actions/<str:action_id>/<str:transition>` | django | medium | 15 roles | Acknowledge {{ r.school }}; Escalate {{ r.school }} to your supervisor |
 | `/activities/<str:activity_id>/closure/close` | django | small | 7 roles | Close & Lock Activity Closing... |
 | `/activities/<str:activity_id>/evidence/action` | django | medium | 9 roles | Submit |
-| `/activities/<str:activity_id>/facilitator` | django | small | 9 roles | Save |
 | `/activities/<str:activity_id>/partner-ssa-complete/action` | django | medium | 9 roles | Save SSA and complete |
 | `/activities/<str:activity_id>/reopen` | django | small | 7 roles | Confirm Reopen Reopening... |
 | `/analytics/customize-dashboard` | django | medium | 10 roles | Save preferences |
