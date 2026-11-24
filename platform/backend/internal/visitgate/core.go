@@ -323,6 +323,7 @@ func (g *Gate) decideCore(r Rules) {
 			g.CanAssignVisit = false
 			g.AssignVisitReason = fmt.Sprintf("Partner core visits complete on this package (%d/%d). The other %d visits are staff's.",
 				s.PartnerHeldVisits(), caps.PartnerVisits, caps.StaffVisits)
+			g.AssignVisitCode = CodeCorePackageSideComplete
 		}
 		trainingsOpen := s.PartnerHeldTrainings() < caps.PartnerTrainings
 		if !g.CanAssignVisit && !trainingsOpen {
@@ -335,6 +336,7 @@ func (g *Gate) decideCore(r Rules) {
 		g.CanAssignSSA = false
 		g.AssignSSAReason = fmt.Sprintf("%s has completed its SSA for FY%s. SSA Support is assigned to a partner only where the year's SSA is still to be collected.",
 			g.School.Name, g.FY)
+		g.AssignSSACode = CodeCurrentFYSSAExists
 	}
 }
 

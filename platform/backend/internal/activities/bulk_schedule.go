@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
@@ -135,7 +136,10 @@ func tickedCodes(values []string) []string {
 }
 
 // TickedSchool is one school of the selection in the planner's portfolio.
-type TickedSchool struct{ ID, Code, Name, ClusterID string }
+type TickedSchool struct {
+	ID, Code, Name, ClusterID string
+	CreatedAt                 time.Time
+}
 
 // TickedSchools is _ticked_schools: the operating schools among the codes in
 // the person's own portfolio, by name, and how many codes were posted.
@@ -148,7 +152,7 @@ func (s *Service) TickedSchools(ctx context.Context, p auth.Principal, values []
 	if err != nil {
 		return nil, 0, handOn("no scope: " + err.Error())
 	}
-	rows, err := s.db.Query(ctx, `SELECT s.id, COALESCE(s.school_id, ''), s.name, COALESCE(s.cluster_id, '')
+	rows, err := s.db.Query(ctx, `SELECT s.id, COALESCE(s.school_id, ''), s.name, COALESCE(s.cluster_id, ''), s.created_at
   FROM school s WHERE s.deleted_at IS NULL AND (s.school_id = ANY($1) OR s.id = ANY($1)) AND s.id = ANY($2)
  ORDER BY s.name, s.id`, codes, scope.OwnSchoolIDs)
 	if err != nil {
@@ -158,7 +162,7 @@ func (s *Service) TickedSchools(ctx context.Context, p auth.Principal, values []
 	var schools []TickedSchool
 	for rows.Next() {
 		var t TickedSchool
-		if err := rows.Scan(&t.ID, &t.Code, &t.Name, &t.ClusterID); err != nil {
+		if err := rows.Scan(&t.ID, &t.Code, &t.Name, &t.ClusterID, &t.CreatedAt); err != nil {
 			return nil, 0, fmt.Errorf("activities: reading a ticked school: %w", err)
 		}
 		schools = append(schools, t)

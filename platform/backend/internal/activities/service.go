@@ -33,6 +33,9 @@ type Refusal struct {
 	Message string
 	// Forbidden is the view's 403 (the drawer's gate, a closed school).
 	Forbidden bool
+	// Label is visit_gate.refusal_label: the few words a bulk hand-over
+	// names a refused school with, for a hand-over door the gate shut.
+	Label string
 }
 
 func (r *Refusal) Error() string { return r.Message }

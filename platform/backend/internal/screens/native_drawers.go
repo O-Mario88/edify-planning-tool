@@ -359,6 +359,9 @@ func (s *Service) getPageDrawerInGo(ctx context.Context, p auth.Principal, rawPa
 	if answer, served, err := s.bulkScheduleDrawerInGo(ctx, p, rawPath); served {
 		return answer, true, err
 	}
+	if answer, served, err := s.bulkAssignDrawerInGo(ctx, p, rawPath); served {
+		return answer, true, err
+	}
 	if answer, served, err := s.exportDrawerInGo(ctx, p, rawPath); served {
 		return answer, true, err
 	}

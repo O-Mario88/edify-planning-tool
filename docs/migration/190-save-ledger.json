@@ -4,10 +4,10 @@
   "controls": 483,
   "controls_without_a_destination": 92,
   "go": {
-   "django": 164,
+   "django": 163,
    "go-owned": 9,
    "proved": 30,
-   "unproved": 21,
+   "unproved": 22,
    "retired": 1
   },
   "size": {
@@ -4233,8 +4233,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "django",
-   "evidence": "",
+   "go": "unproved",
+   "evidence": "its partner hand-over is proved from the tick bar (doc 189); export and the old schedule refusal are Django's",
    "templates": [
     "pages/planning/index.html",
     "partials/clusters/bulk_assign_partner_drawer.html"

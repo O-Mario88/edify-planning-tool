@@ -242,6 +242,11 @@ type Partner struct {
 	Codes    []string
 }
 
+// AssignablePartners is assignable_partners() for a drawer outside this package.
+func (s *Service) AssignablePartners(ctx context.Context) ([]Partner, error) {
+	return s.assignablePartners(ctx)
+}
+
 // assignablePartners is partners.services.assignable_partners.
 func (s *Service) assignablePartners(ctx context.Context) ([]Partner, error) {
 	rows, err := s.db.Query(ctx, `SELECT p.id, p.name, COALESCE(p.activity_codes, '{}')

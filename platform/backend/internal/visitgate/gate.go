@@ -63,6 +63,11 @@ type School struct {
 const (
 	codeStaffVisitScheduled  = "STAFF_VISIT_SCHEDULED"
 	codePartnerVisitAssigned = "PARTNER_VISIT_ASSIGNED"
+	// CodeCurrentFYSSAExists and the codes below are the rest of REASON_LABELS'
+	// keys a hand-over door is shut with.
+	CodeCurrentFYSSAExists      = "CURRENT_FY_SSA_EXISTS"
+	CodeCorePackageSideComplete = "CORE_PACKAGE_SIDE_COMPLETE"
+	CodeStaffDeliveredOnly      = "STAFF_DELIVERED_ONLY"
 
 	lockUnlocked         = "unlocked"
 	lockStaffScheduled   = "staff_visit_scheduled"
@@ -95,8 +100,11 @@ type Gate struct {
 	AssignVisitReason string
 	CanAssignSSA      bool
 	AssignSSAReason   string
-	CanAssignPartner  bool
-	AssignReason      string
+	// AssignVisitCode and AssignSSACode are assign_visit_code and
+	// assign_ssa_code: why each hand-over door is shut, as REASON_LABELS keys.
+	AssignVisitCode, AssignSSACode string
+	CanAssignPartner               bool
+	AssignReason                   string
 
 	// The Core package's split (package_split): what each side holds, and
 	// whether the school has a package for the year at all.
@@ -348,16 +356,19 @@ func (g *Gate) decide(r Rules) {
 		if g.StaffVisits > 0 {
 			g.CanAssignVisit = false
 			g.AssignVisitReason = fmt.Sprintf("%s already has its staff support visit for FY%s. It is not handed to a partner for another.", name, fy)
+			g.AssignVisitCode = codeStaffVisitScheduled
 		} else if g.partnerHolding() > 0 {
 			g.CanAssignVisit = false
 			g.AssignVisitReason = fmt.Sprintf("%s is already assigned to %s for its support visit in FY%s. A school is handed to a partner for one visit a year.",
 				name, g.holder(), fy)
+			g.AssignVisitCode = codePartnerVisitAssigned
 		}
 	}
 	// SSA Support handed to a partner (_decide_ssa_support).
 	if g.HasSSA {
 		g.CanAssignSSA = false
 		g.AssignSSAReason = fmt.Sprintf("%s has completed its SSA for FY%s. SSA Support is assigned to a partner only where the year's SSA is still to be collected.", name, fy)
+		g.AssignSSACode = CodeCurrentFYSSAExists
 	}
 	if !g.CanAssignVisit && !g.CanAssignSSA {
 		g.CanAssignPartner = false
@@ -373,5 +384,6 @@ func (g *Gate) decide(r Rules) {
 			name, label)
 		g.CanAssignPartner, g.CanAssignVisit, g.CanAssignSSA = false, false, false
 		g.AssignReason, g.AssignVisitReason, g.AssignSSAReason = refusal, refusal, refusal
+		g.AssignVisitCode, g.AssignSSACode = CodeStaffDeliveredOnly, CodeStaffDeliveredOnly
 	}
 }

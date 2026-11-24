@@ -457,7 +457,7 @@ func (s *Service) assertClientRoom(ctx context.Context, q Querier, c *clientHand
 			return err
 		}
 		if !gate.CanAssignSSA {
-			return refuse("%s", gate.AssignSSAReason)
+			return &Refusal{Message: gate.AssignSSAReason, Label: reasonLabels[gate.AssignSSACode]}
 		}
 	case handOverVisit:
 		if !in(oneCommitmentTypes, c.sc.Type) {
@@ -476,9 +476,18 @@ func (s *Service) assertClientRoom(ctx context.Context, q Querier, c *clientHand
 				return nil
 			}
 		}
-		return refuse("%s", first.AssignVisitReason)
+		return &Refusal{Message: first.AssignVisitReason, Label: reasonLabels[first.AssignVisitCode]}
 	}
 	return nil
+}
+
+// reasonLabels are visit_gate.REASON_LABELS, lower-cased as refusal_label
+// says them.
+var reasonLabels = map[string]string{
+	"STAFF_VISIT_SCHEDULED": "staff visit scheduled", "PARTNER_VISIT_ASSIGNED": "assigned to partner",
+	visitgate.CodeCurrentFYSSAExists: "ssa completed this year", "SSA_SUPPORT_ELIGIBLE": "no ssa this year",
+	visitgate.CodeCorePackageSideComplete: "package half complete", visitgate.CodeStaffDeliveredOnly: "staff delivered",
+	"SCHOOL_CLOSED": "school closed", "AVAILABLE": "available",
 }
 
 // writeClientHandOver is create_assignment's transaction: the school's lock
