@@ -408,69 +408,12 @@ func (s *Service) getPageDrawerInGo(ctx context.Context, p auth.Principal, rawPa
 	}
 
 	switch {
-	case planDrawer(pathOnly, "reschedule"):
-		return &screensv1.GetDrawerResponse{
-			Drawer: &screensv1.PageDrawer{
-				Title:       "Reschedule Activity",
-				HasRequired: true,
-				SubmitLabel: "Reschedule",
-				CancelLabel: "Cancel",
-				CanSubmit:   true,
-				Items: []*screensv1.DrawerItem{
-					fieldItem("planned_date", "New Date", "date", "", true),
-					fieldItem("reason", "Reason for rescheduling", "textarea", "", true),
-				},
-			},
-		}, true, nil
-
-	case planDrawer(pathOnly, "cancel"):
-		return &screensv1.GetDrawerResponse{
-			Drawer: &screensv1.PageDrawer{
-				Title:       "Cancel Activity",
-				HasRequired: true,
-				SubmitLabel: "Confirm Cancellation",
-				CancelLabel: "Keep Activity",
-				CanSubmit:   true,
-				Items: []*screensv1.DrawerItem{
-					fieldItem("reason", "Cancellation reason", "textarea", "", true),
-				},
-			},
-		}, true, nil
-
-	case planDrawer(pathOnly, "complete"):
-		return &screensv1.GetDrawerResponse{
-			Drawer: &screensv1.PageDrawer{
-				Title:       "Complete Visit",
-				HasRequired: true,
-				SubmitLabel: "Submit Completed Visit",
-				CancelLabel: "Cancel",
-				CanSubmit:   true,
-				Items: []*screensv1.DrawerItem{
-					fieldItem("actual_delivery_date", "Actual Date", "date", s.clock().Format(time.DateOnly), true),
-					fieldItem("salesforce_id", "Salesforce ID", "text", "", true),
-					fieldItem("teachers_attended", "Teachers Attended", "number", "0", false),
-					fieldItem("leaders_attended", "Leaders Attended", "number", "0", false),
-					fieldItem("actual_observations", "Observations", "textarea", "", true),
-					fieldItem("actual_outcome", "Outcome", "textarea", "", true),
-				},
-			},
-		}, true, nil
-
-	case planDrawer(pathOnly, "edit"):
-		return &screensv1.GetDrawerResponse{
-			Drawer: &screensv1.PageDrawer{
-				Title:       "Edit Activity",
-				HasRequired: true,
-				SubmitLabel: "Save Changes",
-				CancelLabel: "Cancel",
-				CanSubmit:   true,
-				Items: []*screensv1.DrawerItem{
-					fieldItem("planned_date", "Planned Date", "date", "", false),
-					fieldItem("activity_purpose_text", "Purpose", "textarea", "", false),
-					fieldItem("expected_outcome", "Expected Outcome", "textarea", "", false),
-				},
-			},
-		}, true, nil
+	case planDrawer(pathOnly, "reschedule"), planDrawer(pathOnly, "cancel"):
+		// A team member's work is read, not moved or called off
+		// (_team_read_only); the forms themselves are Go's only where its
+		// saves take them (fieldFormInGo above), and the existing view's
+		// otherwise.
+		return s.teamReadOnlyDrawer(ctx, p, pathOnly)
 
 	case strings.Contains(pathOnly, "/pl/review-queue/"):
 		return &screensv1.GetDrawerResponse{
