@@ -497,3 +497,6 @@ GRANT EXECUTE ON FUNCTION gateway_pl_review.update_period_target(varchar, numeri
 GRANT EXECUTE ON FUNCTION gateway_pl_review.confirm_visit_ssa(varchar, varchar, timestamptz, varchar) TO edify_activities_rw;
 GRANT EXECUTE ON FUNCTION gateway_pl_review.settle_recommendations(varchar, timestamptz) TO edify_activities_rw;
 GRANT EXECUTE ON FUNCTION gateway_pl_review.link_loan_visit(varchar, varchar, timestamptz) TO edify_activities_rw;
+-- School.save's reconcile of the school's data-quality issues, after a save
+-- that changes the school outside this schema (taking a school nobody holds).
+GRANT EXECUTE ON FUNCTION gateway_pl_review.reconcile_school_issues(varchar, timestamptz) TO edify_activities_rw;

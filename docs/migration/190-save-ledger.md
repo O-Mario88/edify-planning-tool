@@ -6,8 +6,8 @@ hand in that script and changes only with evidence. *Proved* means compared with
 with Django stopped.
 
 - Saves: 225 destinations from 483 save controls.
-- Go: 14 proved, 21 with unproved Go code, 190 still Django's.
-- Field staff can reach 142 saves that are not yet proved in Go.
+- Go: 15 proved, 21 with unproved Go code, 189 still Django's.
+- Field staff can reach 141 saves that are not yet proved in Go.
 - 92 controls post to a destination the inventory cannot read (set by a variable or script); they are listed by template at the end and must be classified by hand.
 
 | Step | Saves |
@@ -35,6 +35,7 @@ with Django stopped.
 | `/my-plan/<str:activity_id>/edit` | proved | medium | 9 roles | Save changes |
 | `/planning/schedule-action` | proved | large | 7 roles | Confirm & Schedule Activity; Schedule meeting Schedule training |
 | `/planning/visit-requests/<str:activity_id>/<str:decision>` | proved | small | 7 roles | Approve visit; Decline |
+| `/schools/<str:school_id>/take` | proved | small | 7 roles | Take {{ school.school_name }} as my school |
 | `/today/snooze` | proved | small | Admin, CCEO, ImpactAssessment, Program Lead, ProjectCoordinator | {{ label }} |
 | `/today/unsnooze` | proved | small | Admin, CCEO, ImpactAssessment, Program Lead, ProjectCoordinator | Undo |
 | `/acting-leadership/<str:assignment_id>/cancel` | django | small | 6 roles | Cancel appointment |
@@ -117,7 +118,6 @@ with Django stopped.
 | `/schools/<str:school_id>/edit-drawer` | django | large | 7 roles | Save school |
 | `/schools/<str:school_id>/reopen` | django | small | 7 roles | Reopen school |
 | `/schools/<str:school_id>/ssa-entry` | django | medium | 7 roles | Save SSA |
-| `/schools/<str:school_id>/take` | django | small | 7 roles | Take {{ school.school_name }} as my school |
 | `/schools/<str:school_id>/transfer-owner` | django | medium | 7 roles | Reassign owner |
 | `/schools/bulk-assign-cluster` | django | small | 7 roles | Assign cluster |
 | `/schools/bulk-assign-project` | django | large | 7 roles | Add to project; Assign project |

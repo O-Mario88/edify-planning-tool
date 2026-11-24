@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"slices"
 	"strings"
 	"time"
@@ -517,4 +518,71 @@ func ternaryStr(cond bool, a, b string) string {
 		return a
 	}
 	return b
+}
+
+// schoolTakePath is school_views.school_take_view's route.
+var schoolTakePath = regexp.MustCompile(`^/schools/([A-Za-z0-9_-]{1,64})/take/?$`)
+
+// takeSchoolRoles are data_gaps.FIELD_ROLES: the people who hold schools.
+var takeSchoolRoles = []string{"CCEO", "Program Lead"}
+
+// takeSchoolInGo is data_gaps.take through the existing view: a field
+// officer or Programme Lead takes an operating school nobody holds. Served
+// with Django absent only; the view posts straight to Django otherwise.
+func (s *Service) takeSchoolInGo(ctx context.Context, message *screensv1.SaveDrawerRequest) (*screensv1.SaveDrawerResponse, bool, error) {
+	p, ok := auth.PrincipalFrom(ctx)
+	if !ok || !s.nativeForms() || p.InActingAppointment {
+		return nil, false, nil
+	}
+	path, _, _ := strings.Cut(message.GetPath(), "?")
+	m := schoolTakePath.FindStringSubmatch(path)
+	if m == nil {
+		return nil, false, nil
+	}
+	refused := func(words string) (*screensv1.SaveDrawerResponse, bool, error) {
+		return &screensv1.SaveDrawerResponse{Saved: false, Error: words}, true, nil
+	}
+	var name string
+	switch err := s.db.QueryRow(ctx, `SELECT name FROM school WHERE id = $1 AND deleted_at IS NULL`, m[1]).Scan(&name); {
+	case errors.Is(err, pgx.ErrNoRows):
+		return refused("School not found.")
+	case err != nil:
+		return nil, true, apierr.Internal(ctx, s.logger, err)
+	}
+	if !slices.Contains(takeSchoolRoles, p.ActiveRole) || p.StaffProfileID == "" {
+		return refused("Only a field officer or a Programme Lead takes a school.")
+	}
+	tx, err := s.db.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
+	if err != nil {
+		return nil, true, apierr.Internal(ctx, s.logger, err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	now := s.clock()
+	var answer string
+	if err := tx.QueryRow(ctx, `SELECT gateway_school_actions.take_school($1, $2, $3, $4)`,
+		m[1], p.StaffProfileID, p.Name, now).Scan(&answer); err != nil {
+		return nil, true, apierr.Internal(ctx, s.logger, err)
+	}
+	switch answer {
+	case "gone":
+		return refused("School not found.")
+	case "held":
+		return refused("This school already has a responsible staff member. Ask Impact Assessment to transfer it.")
+	}
+	// School.save reconciles the school's data-quality issues.
+	if _, err := tx.Exec(ctx, `SELECT gateway_pl_review.reconcile_school_issues($1, $2)`, m[1], now); err != nil {
+		return nil, true, apierr.Internal(ctx, s.logger, err)
+	}
+	var code string
+	_ = tx.QueryRow(ctx, `SELECT COALESCE(school_id, '') FROM school WHERE id = $1`, m[1]).Scan(&code)
+	if _, err := audit.Append(ctx, tx, audit.Entry{
+		Action: "school.taken", SubjectKind: audit.Text("School"), SubjectID: audit.Text(m[1]), Success: true,
+		Payload: map[string]any{"staff_id": p.StaffProfileID, "school_id": code},
+	}, now); err != nil {
+		return nil, true, apierr.Internal(ctx, s.logger, err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, true, apierr.Internal(ctx, s.logger, err)
+	}
+	return &screensv1.SaveDrawerResponse{Saved: true, Message: name + " is now your school. Complete its details below."}, true, nil
 }

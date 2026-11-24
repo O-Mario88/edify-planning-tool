@@ -20,6 +20,9 @@ GRANT SELECT ON school, cluster, project, staff_profile TO edify_school_actions_
 GRANT UPDATE (cluster_id, cluster_status, name, school_phone, primary_contact_name, primary_contact_phone, enrollment, shipping_address, headteacher_name, director_name, updated_at)
   ON school TO edify_school_actions_owner;
 GRANT INSERT ON cluster TO edify_school_actions_owner;
+-- Taking a school nobody holds (data_gaps.take).
+GRANT UPDATE (account_owner_id, account_owner_name_raw, account_owner_status) ON school TO edify_school_actions_owner;
+GRANT SELECT, INSERT ON staff_school_assignment TO edify_school_actions_owner;
 GRANT SELECT, INSERT, UPDATE ON school_cluster_membership TO edify_school_actions_owner;
 GRANT SELECT, INSERT, UPDATE ON school_cluster_assignment TO edify_school_actions_owner;
 GRANT SELECT, INSERT, UPDATE ON project_school_assignment TO edify_school_actions_owner;
@@ -223,6 +226,38 @@ BEGIN
 
   -- Callers append the canonical SHA-256 audit_log entry in Go via audit.Append.
   RETURN true;
+END
+$fn$;
+
+-- data_gaps.take: a field officer or Programme Lead becomes the responsible
+-- staff member of an operating school nobody holds. Answers '' when taken,
+-- 'held' when someone already holds it, 'gone' when it is no school to take.
+CREATE OR REPLACE FUNCTION gateway_school_actions.take_school(
+  p_school varchar, p_staff varchar, p_name varchar, p_at timestamptz
+) RETURNS text
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  v_school record;
+BEGIN
+  SELECT s.id, s.account_owner_id, s.operational_status, s.deleted_at INTO v_school
+    FROM public.school s WHERE s.id = p_school FOR UPDATE;
+  IF NOT FOUND OR v_school.deleted_at IS NOT NULL THEN
+    RETURN 'gone';
+  END IF;
+  IF COALESCE(v_school.account_owner_id, '') <> ''
+     OR NOT (v_school.operational_status = ANY (ARRAY['active', 'reopened']::varchar[]))
+     OR EXISTS (SELECT 1 FROM public.staff_school_assignment a WHERE a.school_id = p_school) THEN
+    RETURN 'held';
+  END IF;
+  UPDATE public.school s
+     SET account_owner_id = p_staff,
+         account_owner_name_raw = COALESCE(NULLIF(p_name, ''), s.account_owner_name_raw),
+         account_owner_status = 'matched', updated_at = p_at
+   WHERE s.id = p_school;
+  INSERT INTO public.staff_school_assignment (id, created_at, updated_at, school_id, staff_id)
+  SELECT 'c' || left(replace(gen_random_uuid()::text, '-', ''), 24), p_at, p_at, p_school, p_staff
+   WHERE NOT EXISTS (SELECT 1 FROM public.staff_school_assignment a WHERE a.school_id = p_school AND a.staff_id = p_staff);
+  RETURN '';
 END
 $fn$;
 

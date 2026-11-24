@@ -92,6 +92,7 @@ GO_STATUS: dict[str, tuple[str, str]] = {
         "owner's visit decision (doc 189)",
     ),
     "/activities/<str:activity_id>/start/action": (PROVED, "Start activity (doc 189)"),
+    "/schools/<str:school_id>/take": (PROVED, "Take a school nobody holds (doc 189)"),
     "/activities/<str:activity_id>/salesforce-id/action": (
         PROVED,
         "Salesforce ID hand-in (doc 189)",
