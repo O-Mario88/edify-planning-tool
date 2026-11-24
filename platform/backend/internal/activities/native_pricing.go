@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"slices"
 	"sort"
 	"strings"
@@ -64,6 +65,19 @@ type NativePricing struct {
 	pool   *pgxpool.Pool
 	writer *notificationcenter.Writer
 	now    func() time.Time
+	push   NoticePush
+	live   NoticePublisher
+}
+
+// WithNotices sets how the settlement's workflow notices reach a phone and
+// open pages.
+func (n *NativePricing) WithNotices(push NoticePush, live NoticePublisher) *NativePricing {
+	n.push, n.live = push, live
+	return n
+}
+
+func (n *NativePricing) notices() workflowNotices {
+	return workflowNotices{db: n.pool, push: n.push, live: n.live, logger: slog.Default()}
 }
 
 // NewNativePricing constructs a Django-independent Pricing/MovePricing/CancelPricing/
@@ -378,8 +392,12 @@ SELECT EXISTS (
 				Pooled:  true,
 			}, nil
 		}
-		if err := n.handOnFiledMonth(ctx, ownerUID, plannedDay); err != nil {
+		refusal, err := n.dayRefusal(ctx, ownerUID, false, plannedDay, "", "")
+		if err != nil {
 			return DayVerdict{}, err
+		}
+		if refusal != "" {
+			return DayVerdict{Refusal: refusal, Stage: "day", Pooled: true}, nil
 		}
 	}
 
@@ -392,6 +410,7 @@ type costsFollowSteps struct {
 	Weeks    [][]string   `json:"weeks"`
 	Months   [][]any      `json:"months"`
 	Notes    []followNote `json:"notes"`
+	Change   *string      `json:"change"`
 }
 
 // Settle computes and persists the day-pool cost split for every affected batch
@@ -459,6 +478,7 @@ func (n *NativePricing) Settle(ctx context.Context, rows []int64, activityID str
 		sort.Strings(batchIDs)
 
 		money := newDayMoney()
+		money.askedBy, money.askedRole = r.askedBy, r.askedRole
 		rowErr := money.addSteps(steps)
 		for _, batchID := range batchIDs {
 			if rowErr != nil {
@@ -468,6 +488,9 @@ func (n *NativePricing) Settle(ctx context.Context, rows []int64, activityID str
 		}
 		if rowErr == nil {
 			rowErr = n.completeFollowRow(ctx, r.id, money)
+			if rowErr == nil {
+				n.tellMonthly(ctx, money)
+			}
 		}
 		if rowErr != nil {
 			_ = n.recordFollowFailure(ctx, r.id, rowErr.Error())
@@ -754,7 +777,8 @@ SELECT gateway_costing.update_batch(
 		for _, m := range members {
 			memberIDs = append(memberIDs, m.id)
 		}
-		if err := clearDayMoney(ctx, tx, memberIDs, money); err != nil {
+		oldLines, err := clearDayMoney(ctx, tx, memberIDs, money)
+		if err != nil {
 			return err
 		}
 		allocations := daypool.AllocatePool(pool, count)
@@ -898,6 +922,9 @@ WHERE activity_id = $1 AND status IS DISTINCT FROM $2`, member.id, coreSlotStatu
 				return fmt.Errorf("activities: appending cost audit row for activity %s: %w", member.id, err)
 			}
 		}
+		if err := carryDayMonths(ctx, tx, memberIDs, oldLines, money, now); err != nil {
+			return err
+		}
 		if err := openDayMoney(ctx, tx, memberIDs, ownerUID, visitDate, now, money); err != nil {
 			return err
 		}
@@ -1010,8 +1037,12 @@ SELECT COALESCE(a.status, ''), COALESCE(a.payment_status, 'none'),
 		if locked {
 			return MoveVerdict{LeftFrozen: true, Pooled: true}, nil
 		}
-		if err := n.handOnFiledMonth(ctx, ownerUID, *oldVisitDate); err != nil {
+		refusal, err := n.dayRefusal(ctx, ownerUID, true, *oldVisitDate, activityID, "")
+		if err != nil {
 			return MoveVerdict{}, err
+		}
+		if refusal != "" {
+			return MoveVerdict{Refusal: refusal, Stage: "day", Pooled: true}, nil
 		}
 	}
 
@@ -1028,8 +1059,12 @@ SELECT COALESCE(a.status, ''), COALESCE(a.payment_status, 'none'),
 				Pooled:  true,
 			}, nil
 		}
-		if err := n.handOnFiledMonth(ctx, ownerUID, newDay); err != nil {
+		refusal, err := n.dayRefusal(ctx, ownerUID, true, newDay, "", activityID)
+		if err != nil {
 			return MoveVerdict{}, err
+		}
+		if refusal != "" {
+			return MoveVerdict{Refusal: refusal, Stage: "day", Pooled: true}, nil
 		}
 		var districtID, districtName string
 		if schoolID != "" {
@@ -1061,6 +1096,12 @@ SELECT COALESCE(s.district_id, ''), COALESCE(d.name, '')
 // returns the exact affected day/week/month buckets for post-commit settlement
 // (matching gateway_relay.visit_cancel_check).
 func (n *NativePricing) CancelCheck(ctx context.Context, activityID, _ string) (CancelVerdict, error) {
+	return n.cancelCheck(ctx, activityID, false)
+}
+
+// cancelCheck is CancelCheck; planChange is true for a group's cancel, which
+// is a planner's change (group_actions.planner_change).
+func (n *NativePricing) cancelCheck(ctx context.Context, activityID string, planChange bool) (CancelVerdict, error) {
 	if n.pool == nil {
 		return CancelVerdict{Found: true}, nil
 	}
@@ -1121,8 +1162,12 @@ SELECT EXISTS (
 				return CancelVerdict{}, err
 			}
 			verdict.LeftFrozen = locked
-			if err := n.handOnFiledMonth(ctx, owner, *visitDate); err != nil {
+			refusal, err := n.dayRefusal(ctx, owner, planChange, *visitDate, activityID, "")
+			if err != nil {
 				return CancelVerdict{}, err
+			}
+			if refusal != "" && !verdict.LeftFrozen {
+				return CancelVerdict{Found: true, Refusal: refusal}, nil
 			}
 		}
 		if !verdict.LeftFrozen {
@@ -1185,7 +1230,7 @@ func (n *NativePricing) GroupCheck(ctx context.Context, q GroupQuestion) (GroupV
 				picks = append(picks, VerdictPick{ID: id, Done: false, Refusal: groupAlreadyOff})
 				continue
 			}
-			cv, err := n.CancelCheck(ctx, id, q.Reason)
+			cv, err := n.cancelCheck(ctx, id, true)
 			if err != nil {
 				return GroupVerdict{}, err
 			}

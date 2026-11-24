@@ -241,10 +241,14 @@ SELECT COUNT(*) FROM audit_log
 		}
 
 		// 3c. FieldOps: upload evidence via HTTP, authorize read, IA verify via SaveDrawer.
+		// Verifying closes the activity, and the database refuses to close one
+		// without its Salesforce ID (closed_activity_must_have_sf_id), so the
+		// fixture is an activity that has one, not whichever was made last.
 		var actID, origRespStaff, origStatus, origIA string
 		if err := admin.QueryRow(ctx, `
 SELECT id, COALESCE(responsible_staff_id, ''), status, ia_verification_status
-  FROM activity WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT 1`).Scan(&actID, &origRespStaff, &origStatus, &origIA); err != nil {
+  FROM activity WHERE deleted_at IS NULL
+ ORDER BY (COALESCE(salesforce_activity_id, '') <> '') DESC, created_at DESC LIMIT 1`).Scan(&actID, &origRespStaff, &origStatus, &origIA); err != nil {
 			t.Fatalf("find seeded activity: %v", err)
 		}
 		if _, err := admin.Exec(ctx, `UPDATE activity SET responsible_staff_id = $2 WHERE id = $1`, actID, cceoStaffID); err != nil {

@@ -171,6 +171,12 @@ SELECT COALESCE(SUM(cs.unit_cost), 0)
 		for _, aid := range createdActivityIDs {
 			_, _ = admin.Exec(ctx, `DELETE FROM activity_completion_verification WHERE activity_id = $1`, aid)
 			_, _ = admin.Exec(ctx, `DELETE FROM activity_salesforce_reference WHERE activity_id = $1`, aid)
+			// The day's money follows its lines (gateway_day_money) and holds
+			// them, so it goes first.
+			_, _ = admin.Exec(ctx, `DELETE FROM weekly_fund_request_line WHERE activity_budget_line_id IN
+  (SELECT id FROM activity_schedule_cost_line WHERE activity_id = $1)`, aid)
+			_, _ = admin.Exec(ctx, `DELETE FROM fund_request_item WHERE activity_id = $1`, aid)
+			_, _ = admin.Exec(ctx, `DELETE FROM advance_request WHERE activity_id = $1`, aid)
 			_, _ = admin.Exec(ctx, `DELETE FROM activity_schedule_cost_line WHERE activity_id = $1`, aid)
 			_, _ = admin.Exec(ctx, `DELETE FROM activity_cost_snapshot WHERE activity_id = $1`, aid)
 			_, _ = admin.Exec(ctx, `DELETE FROM activity_schedule_change WHERE activity_id = $1`, aid)
@@ -179,10 +185,18 @@ SELECT COALESCE(SUM(cs.unit_cost), 0)
 			_, _ = admin.Exec(ctx, `DELETE FROM activity WHERE id = $1`, aid)
 		}
 		for _, bid := range createdBatchIDs {
+			_, _ = admin.Exec(ctx, `DELETE FROM transport_payment WHERE batch_id = $1`, bid)
 			_, _ = admin.Exec(ctx, `DELETE FROM daily_visit_batch WHERE id = $1`, bid)
 		}
+		_, _ = admin.Exec(ctx, `DELETE FROM transport_payment WHERE batch_id IN (SELECT id FROM daily_visit_batch
+  WHERE responsible_user = $1 AND visit_date IN ($2::date, $3::date, $4::date))`, cceoUserID, day1, day2, dayLocked)
 		_, _ = admin.Exec(ctx, `DELETE FROM daily_visit_batch WHERE responsible_user = $1 AND visit_date IN ($2::date, $3::date, $4::date)`,
 			cceoUserID, day1, day2, dayLocked)
+		// The requests the days' money made for the officer, left empty.
+		_, _ = admin.Exec(ctx, `DELETE FROM weekly_fund_request w WHERE w.responsible_user = $1
+  AND NOT EXISTS (SELECT 1 FROM weekly_fund_request_line l WHERE l.weekly_fund_request_id = w.id)`, cceoUserID)
+		_, _ = admin.Exec(ctx, `DELETE FROM fund_request f WHERE f.submitted_by_user_id = $1 AND f.status = 'draft'
+  AND NOT EXISTS (SELECT 1 FROM fund_request_item i WHERE i.fund_request_id = f.id)`, cceoUserID)
 	})
 
 	planningClient := screensv1connect.NewPlanningDrawerServiceClient(http.DefaultClient, gw.URL)

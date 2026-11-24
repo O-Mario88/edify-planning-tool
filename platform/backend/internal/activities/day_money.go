@@ -4,7 +4,10 @@ import (
 	"cmp"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
+	"log/slog"
 	"slices"
 	"strconv"
 	"strings"
@@ -43,6 +46,30 @@ type dayMoney struct {
 	weeks  map[weekBucket]struct{}
 	months map[monthBucket]struct{}
 	notes  []followNote
+	// planChange is a planner's own change (steps.change): a monthly request
+	// in its approval chain follows it, and its people are told.
+	planChange bool
+	change     string
+	askedBy    string
+	askedRole  string
+	followed   []followedMonth
+}
+
+// followedMonth is a monthly request the change carried along, with its
+// total before the change touched it.
+type followedMonth struct {
+	id     string
+	before int64
+}
+
+// follow keeps the first total seen for a request.
+func (m *dayMoney) follow(id string, before int64) {
+	for _, seen := range m.followed {
+		if seen.id == id {
+			return
+		}
+	}
+	m.followed = append(m.followed, followedMonth{id: id, before: before})
 }
 
 // followNote is what a save asked to be written on its lines once they are
@@ -123,6 +150,9 @@ func (m *dayMoney) addSteps(steps costsFollowSteps) error {
 		m.addMonth(fmt.Sprint(month[0]), fmt.Sprint(month[1]), number)
 	}
 	m.notes = append(m.notes, steps.Notes...)
+	if steps.Change != nil && *steps.Change != "" {
+		m.planChange, m.change = true, *steps.Change
+	}
 	return nil
 }
 
@@ -205,29 +235,81 @@ WHERE daily_visit_batch_id = $1 AND deleted_at IS NULL AND NOT (status = ANY($2)
 // clearDayMoney is the guard and the cascade of the existing cost writer: it
 // refuses a day whose money has moved, then lifts the advances and weekly
 // lines off the lines about to be rewritten.
-func clearDayMoney(ctx context.Context, tx pgx.Tx, activityIDs []string, money *dayMoney) error {
+func clearDayMoney(ctx context.Context, tx pgx.Tx, activityIDs []string, money *dayMoney) (map[string][]string, error) {
 	var refusal *string
-	if err := tx.QueryRow(ctx, `SELECT gateway_day_money.money_guard($1)`, activityIDs).Scan(&refusal); err != nil {
-		return fmt.Errorf("activities: checking the day's money: %w", err)
+	if err := tx.QueryRow(ctx, `SELECT gateway_day_money.money_guard($1, $2)`, activityIDs, money.planChange).Scan(&refusal); err != nil {
+		return nil, fmt.Errorf("activities: checking the day's money: %w", err)
 	}
 	if refusal != nil {
-		return fmt.Errorf("activities: the day cannot be priced: %s", *refusal)
+		return nil, fmt.Errorf("activities: the day cannot be priced: %s", *refusal)
+	}
+	oldLines, err := linesOf(ctx, tx, activityIDs)
+	if err != nil {
+		return nil, err
 	}
 	rows, err := tx.Query(ctx, `SELECT bucket_owner, bucket_week FROM gateway_day_money.clear_day($1)`, activityIDs)
 	if err != nil {
-		return fmt.Errorf("activities: clearing the day's advances: %w", err)
+		return nil, fmt.Errorf("activities: clearing the day's advances: %w", err)
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var owner string
 		var week time.Time
 		if err := rows.Scan(&owner, &week); err != nil {
-			return fmt.Errorf("activities: reading a cleared week: %w", err)
+			return nil, fmt.Errorf("activities: reading a cleared week: %w", err)
 		}
 		money.addWeek(owner, week)
 	}
 	if err := rows.Err(); err != nil {
-		return fmt.Errorf("activities: clearing the day's advances: %w", err)
+		return nil, fmt.Errorf("activities: clearing the day's advances: %w", err)
+	}
+	return oldLines, nil
+}
+
+// linesOf is each activity's cost lines as they stand, before the rewrite.
+func linesOf(ctx context.Context, tx pgx.Tx, activityIDs []string) (map[string][]string, error) {
+	rows, err := tx.Query(ctx, `SELECT activity_id, id FROM activity_schedule_cost_line WHERE activity_id = ANY($1)`, activityIDs)
+	if err != nil {
+		return nil, fmt.Errorf("activities: reading the day's old lines: %w", err)
+	}
+	defer rows.Close()
+	lines := map[string][]string{}
+	for rows.Next() {
+		var activity, line string
+		if err := rows.Scan(&activity, &line); err != nil {
+			return nil, fmt.Errorf("activities: reading an old line: %w", err)
+		}
+		lines[activity] = append(lines[activity], line)
+	}
+	return lines, rows.Err()
+}
+
+// carryDayMonths points the monthly requests that held these activities' old
+// lines at their lines as they now stand (carry_monthly_requests).
+func carryDayMonths(ctx context.Context, tx pgx.Tx, activityIDs []string, oldLines map[string][]string, money *dayMoney, now time.Time) error {
+	for _, activity := range activityIDs {
+		old := oldLines[activity]
+		if len(old) == 0 {
+			continue
+		}
+		rows, err := tx.Query(ctx, `SELECT request_id, total_before FROM gateway_day_money.carry_month($1, $2, $3, $4)`,
+			activity, old, money.planChange, now)
+		if err != nil {
+			return fmt.Errorf("activities: carrying the monthly requests: %w", err)
+		}
+		for rows.Next() {
+			var id string
+			var before int64
+			if err := rows.Scan(&id, &before); err != nil {
+				rows.Close()
+				return fmt.Errorf("activities: reading a carried request: %w", err)
+			}
+			money.follow(id, before)
+		}
+		rows.Close()
+		if err := rows.Err(); err != nil {
+			return fmt.Errorf("activities: carrying the monthly requests: %w", err)
+		}
 	}
 	return nil
 }
@@ -290,20 +372,134 @@ func refileDayMoney(ctx context.Context, tx pgx.Tx, money *dayMoney, now time.Ti
 	return nil
 }
 
-// handOnFiledMonth hands on a save whose day is carried by a request other
-// than the owner's own monthly draft. The existing application carries such a
-// request along with the change; Go does not yet.
-func (n *NativePricing) handOnFiledMonth(ctx context.Context, owner string, days ...time.Time) error {
-	dates := make([]string, 0, len(days))
-	for _, day := range days {
-		dates = append(dates, day.Format(time.DateOnly))
+// dayRefusal is the money guards' refusal for one day as the save will leave
+// it, asked before the save is written (_assert_days_can_follow): "" when it
+// may be priced. leaving and joining name a visit moving off or onto it.
+func (n *NativePricing) dayRefusal(ctx context.Context, owner string, planChange bool, day time.Time, leaving, joining string) (string, error) {
+	var refusal *string
+	if err := n.pool.QueryRow(ctx, `SELECT gateway_day_money.day_refusal($1, $2::date, $3, $4, $5)`,
+		owner, day.Format(time.DateOnly), planChange, leaving, joining).Scan(&refusal); err != nil {
+		return "", fmt.Errorf("activities: checking the day's money: %w", err)
 	}
-	var filed bool
-	if err := n.pool.QueryRow(ctx, `SELECT gateway_day_money.day_month_filed($1, $2::date[])`, owner, dates).Scan(&filed); err != nil {
-		return fmt.Errorf("activities: checking the day's monthly request: %w", err)
+	if refusal == nil {
+		return "", nil
 	}
-	if filed {
-		return handOn("a filed monthly request carries this day")
+	return *refusal, nil
+}
+
+// monthLabel is plan_changes._month_label: "December FY 2027".
+func monthLabel(periodKey string) string {
+	cut := strings.LastIndex(periodKey, "-M")
+	if cut >= 0 {
+		if month, err := strconv.Atoi(periodKey[cut+2:]); err == nil && month >= 1 && month <= 12 {
+			return time.Month(month).String() + " FY " + periodKey[:cut]
+		}
+	}
+	if periodKey == "" {
+		return "the month"
+	}
+	return periodKey
+}
+
+// groupThousands is Python's "{:,}" for a whole number.
+func groupThousands(amount int64) string {
+	digits := strconv.FormatInt(amount, 10)
+	sign := ""
+	if strings.HasPrefix(digits, "-") {
+		sign, digits = "-", digits[1:]
+	}
+	for i := len(digits) - 3; i > 0; i -= 3 {
+		digits = digits[:i] + "," + digits[i:]
+	}
+	return sign + digits
+}
+
+func monthFollowedBody(what, periodKey string, after, before int64) string {
+	return fmt.Sprintf("%s changed, so the %s request now totals UGX %s (it was UGX %s). It stays where it is; nothing needs sending again.",
+		what, monthLabel(periodKey), groupThousands(after), groupThousands(before))
+}
+
+// monthFollowedRecipients: the request's preparer, and whoever approved it.
+func monthFollowedRecipients(status, submitter, reviewer string) []string {
+	recipients := []string{}
+	if submitter != "" {
+		recipients = append(recipients, submitter)
+	}
+	if reviewer != "" && slices.Contains([]string{"approved_by_pl", "approved_by_cd", "approved_by_rvp"}, status) {
+		recipients = append(recipients, reviewer)
+	}
+	return recipients
+}
+
+// monthFollowedLink is NotificationLinkResolver's monthly_fund_request_followed_plan.
+func monthFollowedLink(role string) (route, label string) {
+	switch strings.ToLower(role) {
+	case "countrydirector", "admin":
+		return "/budget", "View Team Request"
+	}
+	return "/accounts/monthly-request", "View Monthly Request"
+}
+
+const monthFollowedEvent = "monthly_fund_request_followed_plan"
+
+// tellMonthly is plan_changes._tell_monthly, after the change has landed: an
+// audit row for each request it carried along, and a word to its people
+// where its total moved. Neither can undo the change.
+func (n *NativePricing) tellMonthly(ctx context.Context, money *dayMoney) {
+	for _, followed := range money.followed {
+		if err := n.tellOneMonth(ctx, money, followed); err != nil {
+			slog.Default().WarnContext(ctx, "activities: a followed monthly request was not told", "request", followed.id, "err", err)
+		}
+	}
+}
+
+func (n *NativePricing) tellOneMonth(ctx context.Context, money *dayMoney, followed followedMonth) error {
+	var after int64
+	var status, periodKey, submitter, reviewer string
+	err := n.pool.QueryRow(ctx, `SELECT COALESCE(total_amount, 0), status, COALESCE(period_key, ''),
+  COALESCE(submitted_by_user_id, ''), COALESCE(reviewed_by_user_id, '') FROM fund_request WHERE id = $1`, followed.id).
+		Scan(&after, &status, &periodKey, &submitter, &reviewer)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("reading the request: %w", err)
+	}
+	now := n.clock()
+	tx, err := n.pool.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	if _, err := audit.Append(ctx, tx, audit.Entry{
+		Action: "fund_request.followed_plan_change", SubjectKind: audit.Text("FundRequest"), SubjectID: audit.Text(followed.id),
+		ActorID: audit.Text(money.askedBy), ActorRole: audit.Text(money.askedRole), Success: true,
+		Reason: audit.Text("A planned activity in this month was changed."),
+		Payload: map[string]any{
+			"period_key": periodKey, "status": status, "total_before": followed.before, "total_after": after,
+			"activity": money.change,
+		},
+	}, now); err != nil {
+		return fmt.Errorf("auditing the followed request: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return err
+	}
+	if after == followed.before {
+		return nil
+	}
+	var recipients []noticeRecipient
+	for _, recipient := range monthFollowedRecipients(status, submitter, reviewer) {
+		var role string
+		_ = n.pool.QueryRow(ctx, `SELECT COALESCE(active_role, '') FROM "user" WHERE id = $1`, recipient).Scan(&role)
+		route, label := monthFollowedLink(role)
+		recipients = append(recipients, noticeRecipient{id: recipient, route: route, label: label})
+	}
+	if err := n.notices().sendTo(ctx, n.clock(), followed.id, money.askedBy, Origin{}, scheduledNotice{
+		title: "Monthly request total changed", body: monthFollowedBody(money.change, periodKey, after, followed.before),
+		event: monthFollowedEvent, category: "finance", contextType: "FundRequest",
+	}, recipients); err != nil {
+		return fmt.Errorf("telling the request's people: %w", err)
 	}
 	return nil
 }

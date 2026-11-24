@@ -488,7 +488,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 func visitSave(cfg config.Config, pool *pgxpool.Pool, logger *slog.Logger, live activities.NoticePublisher) *activities.Service {
 	var pricing activities.Pricing
 	if cfg.ExistingAppURL == "" {
-		pricing = activities.NewNativePricing(pool, notificationcenter.NewWriter(pool, time.Now))
+		pricing = activities.NewNativePricing(pool, notificationcenter.NewWriter(pool, time.Now)).
+			WithNotices(plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, live)
 	} else {
 		pricing = activities.NewHTTPPricing(cfg.ExistingAppURL, cfg.ClusterActions.InternalKey, nil)
 	}

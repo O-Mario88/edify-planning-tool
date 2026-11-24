@@ -151,6 +151,101 @@ func TestAFollowNoteOfAnUnknownKindFailsTheRow(t *testing.T) {
 	}
 }
 
+// plan_changes._tell_monthly: the words a monthly request's people read when
+// the plan under it moved its total.
+func TestAFollowedMonthSaysWhatMovedIt(t *testing.T) {
+	got := monthFollowedBody("Core Visit at Mpatta", "2027-M12", 1234567, 17714)
+	want := "Core Visit at Mpatta changed, so the December FY 2027 request now totals UGX 1,234,567 (it was UGX 17,714). " +
+		"It stays where it is; nothing needs sending again."
+	if got != want {
+		t.Fatalf("got %q", got)
+	}
+}
+
+func TestAMonthThatIsNoMonthIsNamedByItsKey(t *testing.T) {
+	if got := monthLabel("2027-Q1"); got != "2027-Q1" {
+		t.Fatalf("got %q", got)
+	}
+	if got := monthLabel(""); got != "the month" {
+		t.Fatalf("got %q", got)
+	}
+}
+
+func TestShillingsAreGroupedInThousands(t *testing.T) {
+	for amount, want := range map[int64]string{0: "0", 999: "999", 1000: "1,000", 62000: "62,000", 1234567: "1,234,567", -4500: "-4,500"} {
+		if got := groupThousands(amount); got != want {
+			t.Fatalf("%d = %q, want %q", amount, got, want)
+		}
+	}
+}
+
+// Its preparer is always told; whoever approved it is told too.
+func TestAFollowedMonthTellsItsPreparerAndItsApprover(t *testing.T) {
+	tests := []struct {
+		status string
+		want   []string
+	}{
+		{"submitted_to_pl", []string{"u1"}},
+		{"approved_by_pl", []string{"u1", "pl"}},
+		{"approved_by_cd", []string{"u1", "pl"}},
+		{"approved_by_rvp", []string{"u1", "pl"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.status, func(t *testing.T) {
+			if got := monthFollowedRecipients(tt.status, "u1", "pl"); !slices.Equal(got, tt.want) {
+				t.Fatalf("got %v", got)
+			}
+		})
+	}
+	if got := monthFollowedRecipients("approved_by_pl", "u1", ""); !slices.Equal(got, []string{"u1"}) {
+		t.Fatalf("an approver that is nobody is not told: %v", got)
+	}
+}
+
+func TestAFollowedMonthLinksByRole(t *testing.T) {
+	for role, want := range map[string][2]string{
+		"CountryDirector": {"/budget", "View Team Request"},
+		"Admin":           {"/budget", "View Team Request"},
+		"Program Lead":    {"/accounts/monthly-request", "View Monthly Request"},
+		"":                {"/accounts/monthly-request", "View Monthly Request"},
+	} {
+		route, label := monthFollowedLink(role)
+		if route != want[0] || label != want[1] {
+			t.Fatalf("%q = %s, %s", role, route, label)
+		}
+	}
+}
+
+func TestAPlannersChangeIsReadFromTheRow(t *testing.T) {
+	var steps costsFollowSteps
+	if err := json.Unmarshal([]byte(`{"days":[],"change":"Core Visit at Mpatta"}`), &steps); err != nil {
+		t.Fatal(err)
+	}
+	money := newDayMoney()
+	if err := money.addSteps(steps); err != nil {
+		t.Fatal(err)
+	}
+	if !money.planChange || money.change != "Core Visit at Mpatta" {
+		t.Fatalf("got %v %q", money.planChange, money.change)
+	}
+	plain := newDayMoney()
+	if err := plain.addSteps(costsFollowSteps{}); err != nil || plain.planChange {
+		t.Fatal("a row with no change is no planner's change")
+	}
+}
+
+// The total before is the first one seen: the change may touch a request
+// from more than one of its activities.
+func TestAFollowedMonthKeepsItsFirstTotal(t *testing.T) {
+	money := newDayMoney()
+	money.follow("f1", 100)
+	money.follow("f2", 50)
+	money.follow("f1", 300)
+	if len(money.followed) != 2 || money.followed[0] != (followedMonth{"f1", 100}) || money.followed[1] != (followedMonth{"f2", 50}) {
+		t.Fatalf("got %+v", money.followed)
+	}
+}
+
 // generate_weekly_fund_request: a request is filed under its Monday, and two
 // days of one week are one rebuild.
 func TestADaysWeekIsItsMonday(t *testing.T) {

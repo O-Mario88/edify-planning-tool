@@ -78,6 +78,14 @@ CREATE OR REPLACE FUNCTION gateway_day_money.month_repriceable() RETURNS varchar
     'returned_by_accountant']::varchar[]
 $fn$;
 
+-- plan_changes.MONTHLY_IN_CHAIN_STATUSES: sent to a reviewer or approved by
+-- one, and not yet with the accountant.
+CREATE OR REPLACE FUNCTION gateway_day_money.month_in_chain() RETURNS varchar[]
+  LANGUAGE sql IMMUTABLE SET search_path = pg_catalog, pg_temp AS $fn$
+  SELECT ARRAY['submitted', 'submitted_to_pl', 'approved_by_pl', 'submitted_to_cd', 'approved_by_cd',
+    'submitted_to_rvp', 'approved_by_rvp']::varchar[]
+$fn$;
+
 CREATE OR REPLACE FUNCTION gateway_day_money.new_id() RETURNS varchar
   LANGUAGE sql VOLATILE SET search_path = pg_catalog, pg_temp AS $fn$
   SELECT ('c' || left(replace(gen_random_uuid()::text, '-', ''), 24))::varchar
@@ -117,30 +125,90 @@ CREATE OR REPLACE FUNCTION gateway_day_money.fundable_lines(
                       WHERE r.budget_line_id = l.id AND r.status = ANY (gateway_day_money.not_requestable()))
 $fn$;
 
--- Whether a request other than the owner's own monthly draft carries a line of
--- this owner's days. The existing application carries such a request along;
--- Go does not yet, so the save is handed on before anything is written.
-CREATE OR REPLACE FUNCTION gateway_day_money.day_month_filed(p_owner varchar, p_days date[]) RETURNS boolean
-  LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
-  SELECT EXISTS (
-    SELECT 1
-      FROM public.daily_visit_batch b
-      JOIN public.activity a ON a.daily_visit_batch_id = b.id
-      JOIN public.activity_schedule_cost_line l ON l.activity_id = a.id
-      JOIN public.fund_request_item i ON i.activity_schedule_cost_line_id = l.id
-      JOIN public.fund_request f ON f.id = i.fund_request_id
-     WHERE b.responsible_user = p_owner
-       AND b.visit_date = ANY (p_days)
-       AND NOT (f.period = 'monthly' AND f.scope = 'own' AND f.status = 'draft'))
+-- Replaced by day_refusal: a filed monthly request is now carried along.
+DROP FUNCTION IF EXISTS gateway_day_money.day_month_filed(varchar, date[]);
+DROP FUNCTION IF EXISTS gateway_day_money.money_guard(varchar[]);
+
+-- costing_service._ask_money_guards for one activity, in its order: the
+-- refusal of money that has moved or is with someone, or NULL. A planner's own
+-- change (p_plan_change) passes a monthly request in its approval chain, which
+-- then follows the plan (plan_changes.follows_plan_change).
+CREATE OR REPLACE FUNCTION gateway_day_money.activity_refusal(p_activity varchar, p_plan_change boolean) RETURNS text
+  LANGUAGE plpgsql STABLE SET search_path = pg_catalog, pg_temp AS $fn$
+BEGIN
+  IF EXISTS (SELECT 1 FROM public.advance_request r JOIN public.activity_schedule_cost_line l ON l.id = r.budget_line_id
+              WHERE l.activity_id = p_activity AND r.status = ANY (gateway_day_money.money_moved())) THEN
+    RETURN 'This activity already has a disbursed or accounted advance — its cost snapshot is locked. '
+        || 'Use a budget amendment instead of rescheduling to change its cost.';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.advance_request r JOIN public.activity_schedule_cost_line l ON l.id = r.budget_line_id
+              WHERE l.activity_id = p_activity AND r.status IN ('confirmed_for_advance', 'submitted_to_accountant')) THEN
+    RETURN 'This activity''s advance is already confirmed and sitting in the accountant''s queue. '
+        || 'Ask the accountant to return the advance first, then reschedule.';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.weekly_fund_request_line wl
+               JOIN public.activity_schedule_cost_line l ON l.id = wl.activity_budget_line_id
+               JOIN public.weekly_fund_request w ON w.id = wl.weekly_fund_request_id
+              WHERE l.activity_id = p_activity AND NOT (w.status = ANY (gateway_day_money.week_rebuildable()))) THEN
+    RETURN 'This activity is already included in a submitted or approved weekly fund request. '
+        || 'Return that request before changing its cost.';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.fund_request_item i
+               JOIN public.activity_schedule_cost_line l ON l.id = i.activity_schedule_cost_line_id
+               JOIN public.fund_request f ON f.id = i.fund_request_id
+              WHERE l.activity_id = p_activity
+                AND NOT (f.status = ANY (gateway_day_money.month_repriceable()))
+                AND NOT (p_plan_change AND f.period = 'monthly' AND f.status = ANY (gateway_day_money.month_in_chain()))) THEN
+    RETURN 'This activity is already included in a submitted or approved monthly fund request. '
+        || 'Return that request before changing its cost.';
+  END IF;
+  RETURN NULL;
+END
 $fn$;
 
--- costing_service._ask_money_guards: locks what the day's lines carry, and
--- answers the refusal of the first activity whose money has moved or is with
--- someone. NULL when the day may be priced.
-CREATE OR REPLACE FUNCTION gateway_day_money.money_guard(p_activity_ids varchar[]) RETURNS text
+-- costs_follow._assert_days_can_follow's guards, asked before the save is
+-- written: the first refusal of the day's members as the pricing will find
+-- them, by id. A visit leaving the day (p_leaving) is not one of them; one
+-- joining it (p_joining) is. Nothing is locked.
+DROP FUNCTION IF EXISTS gateway_day_money.day_refusal(varchar, date[], boolean);
+CREATE OR REPLACE FUNCTION gateway_day_money.day_refusal(
+  p_owner varchar, p_day date, p_plan_change boolean, p_leaving varchar, p_joining varchar
+) RETURNS text
+  LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  v_activity varchar;
+  v_refusal  text;
+BEGIN
+  FOR v_activity IN
+    SELECT member.id FROM (
+      SELECT a.id
+        FROM public.daily_visit_batch b
+        JOIN public.activity a ON a.daily_visit_batch_id = b.id
+       WHERE b.responsible_user = p_owner AND b.visit_date = p_day
+         AND a.deleted_at IS NULL AND NOT (a.status = ANY (gateway_day_money.not_fundable()))
+         AND a.id IS DISTINCT FROM p_leaving
+      UNION
+      SELECT p_joining WHERE COALESCE(p_joining, '') <> ''
+    ) member
+     ORDER BY member.id
+  LOOP
+    v_refusal := gateway_day_money.activity_refusal(v_activity, p_plan_change);
+    IF v_refusal IS NOT NULL THEN
+      RETURN v_refusal;
+    END IF;
+  END LOOP;
+  RETURN NULL;
+END
+$fn$;
+
+-- The guards as the cost writer asks them: what the day's lines carry is
+-- locked first, then each activity is asked in turn. NULL when the day may be
+-- priced.
+CREATE OR REPLACE FUNCTION gateway_day_money.money_guard(p_activity_ids varchar[], p_plan_change boolean) RETURNS text
   LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
 DECLARE
   v_activity varchar;
+  v_refusal  text;
 BEGIN
   PERFORM 1 FROM public.advance_request r
     WHERE r.budget_line_id IN (SELECT l.id FROM public.activity_schedule_cost_line l WHERE l.activity_id = ANY (p_activity_ids))
@@ -157,34 +225,85 @@ BEGIN
     ORDER BY f.id FOR UPDATE;
 
   FOREACH v_activity IN ARRAY p_activity_ids LOOP
-    IF EXISTS (SELECT 1 FROM public.advance_request r JOIN public.activity_schedule_cost_line l ON l.id = r.budget_line_id
-                WHERE l.activity_id = v_activity AND r.status = ANY (gateway_day_money.money_moved())) THEN
-      RETURN 'This activity already has a disbursed or accounted advance — its cost snapshot is locked. '
-          || 'Use a budget amendment instead of rescheduling to change its cost.';
-    END IF;
-    IF EXISTS (SELECT 1 FROM public.advance_request r JOIN public.activity_schedule_cost_line l ON l.id = r.budget_line_id
-                WHERE l.activity_id = v_activity AND r.status IN ('confirmed_for_advance', 'submitted_to_accountant')) THEN
-      RETURN 'This activity''s advance is already confirmed and sitting in the accountant''s queue. '
-          || 'Ask the accountant to return the advance first, then reschedule.';
-    END IF;
-    IF EXISTS (SELECT 1 FROM public.weekly_fund_request_line wl
-                 JOIN public.activity_schedule_cost_line l ON l.id = wl.activity_budget_line_id
-                 JOIN public.weekly_fund_request w ON w.id = wl.weekly_fund_request_id
-                WHERE l.activity_id = v_activity AND NOT (w.status = ANY (gateway_day_money.week_rebuildable()))) THEN
-      RETURN 'This activity is already included in a submitted or approved weekly fund request. '
-          || 'Return that request before changing its cost.';
-    END IF;
-    IF EXISTS (SELECT 1 FROM public.fund_request_item i
-                 JOIN public.activity_schedule_cost_line l ON l.id = i.activity_schedule_cost_line_id
-                 JOIN public.fund_request f ON f.id = i.fund_request_id
-                WHERE l.activity_id = v_activity
-                  AND (NOT (f.status = ANY (gateway_day_money.month_repriceable()))
-                       OR (f.period = 'monthly' AND NOT (f.scope = 'own' AND f.status = 'draft')))) THEN
-      RETURN 'This activity is already included in a submitted or approved monthly fund request. '
-          || 'Return that request before changing its cost.';
+    v_refusal := gateway_day_money.activity_refusal(v_activity, p_plan_change);
+    IF v_refusal IS NOT NULL THEN
+      RETURN v_refusal;
     END IF;
   END LOOP;
   RETURN NULL;
+END
+$fn$;
+
+-- plan_changes._lines_the_request_holds: the activity's lines of the request's
+-- month, by the rule of whoever built it. A Programme Lead's team month holds
+-- every staff line of scheduled work; any other request the staff-payable ones.
+CREATE OR REPLACE FUNCTION gateway_day_money.request_lines(
+  p_activity varchar, p_fy varchar, p_month integer, p_team boolean
+) RETURNS TABLE(line_id varchar, amount bigint)
+  LANGUAGE sql STABLE SET search_path = pg_catalog, pg_temp AS $fn$
+  SELECT l.id::varchar, COALESCE(l.amount, 0)::bigint
+    FROM public.activity_schedule_cost_line l
+    JOIN public.activity a ON a.id = l.activity_id
+   WHERE l.activity_id = p_activity AND l.fiscal_year = p_fy AND l.month = p_month
+     AND a.deleted_at IS NULL AND a.scheduled_date IS NOT NULL
+     AND NOT (a.status = ANY (gateway_day_money.not_fundable()))
+     AND NOT (l.line_item_type = 'facilitation' AND a.facilitating_partner_id IS NOT NULL)
+     AND (p_team OR (
+           NOT a.cost_missing
+       AND l.amount <> 0
+       AND a.delivery_type IS DISTINCT FROM 'partner'
+       AND NOT gateway_day_money.is_vendor_direct(l.line_item_type, l.vendor_paid, a.school_id, a.planned_date, a.end_date)
+       AND NOT EXISTS (SELECT 1 FROM public.advance_request r
+                        WHERE r.budget_line_id = l.id AND r.status = ANY (gateway_day_money.not_requestable()))))
+$fn$;
+
+-- plan_changes.carry_monthly_requests: the monthly requests (other than the
+-- owner's own draft, which its sync rebuilds whole) that carried the
+-- activity's old lines are pointed at its lines as they now stand, and their
+-- totals follow. Answers each request in its approval chain with its total
+-- before, when the change is a planner's own, so they can be told.
+CREATE OR REPLACE FUNCTION gateway_day_money.carry_month(
+  p_activity varchar, p_old_lines varchar[], p_plan_change boolean, p_at timestamptz
+) RETURNS TABLE(request_id varchar, total_before bigint)
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  v_request record;
+  v_fy      varchar;
+  v_month   text;
+BEGIN
+  FOR v_request IN
+    SELECT f.id, f.status, f.scope, f.period, f.period_key, COALESCE(f.total_amount, 0)::bigint AS total
+      FROM public.fund_request f
+     WHERE f.period = 'monthly'
+       AND NOT (f.scope = 'own' AND f.status = 'draft')
+       AND EXISTS (SELECT 1 FROM public.fund_request_item i
+                    WHERE i.fund_request_id = f.id AND i.activity_schedule_cost_line_id = ANY (p_old_lines))
+     ORDER BY f.id
+  LOOP
+    IF p_plan_change AND v_request.status = ANY (gateway_day_money.month_in_chain()) THEN
+      request_id := v_request.id;
+      total_before := v_request.total;
+      RETURN NEXT;
+    END IF;
+    DELETE FROM public.fund_request_item i
+     WHERE i.fund_request_id = v_request.id AND i.activity_schedule_cost_line_id = ANY (p_old_lines);
+    v_fy := split_part(v_request.period_key, '-M', 1);
+    v_month := split_part(v_request.period_key, '-M', 2);
+    IF v_month ~ '^[0-9]+$' THEN
+      INSERT INTO public.fund_request_item (
+        id, created_at, updated_at, activity_id, activity_schedule_cost_line_id, amount, period, period_key,
+        added_after_generation, fund_request_id
+      )
+      SELECT gateway_day_money.new_id(), p_at, p_at, p_activity, h.line_id, h.amount, v_request.period,
+             v_request.period_key, true, v_request.id
+        FROM gateway_day_money.request_lines(p_activity, v_fy, v_month::integer, v_request.scope = 'team') h;
+    END IF;
+    UPDATE public.fund_request f
+       SET total_amount = (SELECT COALESCE(sum(i.amount), 0) FROM public.fund_request_item i WHERE i.fund_request_id = f.id),
+           activity_count = (SELECT count(DISTINCT i.activity_id) FROM public.fund_request_item i WHERE i.fund_request_id = f.id),
+           updated_at = p_at
+     WHERE f.id = v_request.id;
+  END LOOP;
 END
 $fn$;
 
@@ -405,8 +524,9 @@ RESET ROLE;
 
 GRANT USAGE ON SCHEMA gateway_day_money TO edify_activities_rw;
 GRANT EXECUTE ON FUNCTION
-  gateway_day_money.day_month_filed(varchar, date[]),
-  gateway_day_money.money_guard(varchar[]),
+  gateway_day_money.day_refusal(varchar, date, boolean, varchar, varchar),
+  gateway_day_money.money_guard(varchar[], boolean),
+  gateway_day_money.carry_month(varchar, varchar[], boolean, timestamptz),
   gateway_day_money.clear_day(varchar[]),
   gateway_day_money.open_advances(varchar[], varchar, timestamptz),
   gateway_day_money.ensure_transport(varchar, bigint, timestamptz),

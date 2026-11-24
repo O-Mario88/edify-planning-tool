@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"log/slog"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -106,47 +108,83 @@ func (s *Service) deliverNotice(ctx context.Context, pl *plan, notice scheduledN
 
 // sendNotice is one notice about contextID, from actorID's save.
 func (s *Service) sendNotice(ctx context.Context, contextID, actorID string, origin Origin, notice scheduledNotice) error {
-	now := s.now()
-	tx, err := s.db.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
+	return workflowNotices{db: s.db, push: s.noticePush, live: s.live, logger: s.logger}.send(ctx, s.now(), contextID, actorID, origin, notice)
+}
+
+// workflowNotices is WorkflowNotificationService.trigger's delivery: the
+// notice, its phone copy, its audit row, and a word to the recipient's pages.
+type workflowNotices struct {
+	db     *pgxpool.Pool
+	push   NoticePush
+	live   NoticePublisher
+	logger *slog.Logger
+}
+
+// send is one notice about contextID, from actorID.
+func (w workflowNotices) send(ctx context.Context, now time.Time, contextID, actorID string, origin Origin, notice scheduledNotice) error {
+	return w.sendTo(ctx, now, contextID, actorID, origin, notice, []noticeRecipient{
+		{id: notice.recipient, route: notice.route, label: notice.label},
+	})
+}
+
+// noticeRecipient is one person told, with the link their role opens.
+type noticeRecipient struct {
+	id, route, label string
+}
+
+// sendTo is one trigger to several people: a notice each, one audit row
+// naming every notice made, and a word to each one's open pages.
+func (w workflowNotices) sendTo(ctx context.Context, now time.Time, contextID, actorID string, origin Origin,
+	notice scheduledNotice, recipients []noticeRecipient) error {
+	tx, err := w.db.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
 	if err != nil {
-		return fmt.Errorf("activities: opening the owner's notice: %w", err)
+		return fmt.Errorf("activities: opening the notice: %w", err)
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
-	var notificationID, recipient string
-	err = tx.QueryRow(ctx, `SELECT out_notification_id, out_recipient_id
+	var made, told []any
+	var people []string
+	for _, r := range recipients {
+		var notificationID, recipient string
+		err := tx.QueryRow(ctx, `SELECT out_notification_id, out_recipient_id
   FROM gateway_notifications.notify_workflow($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-		cuid.New(), notice.recipient, notice.title, notice.body, notice.category, notice.contextType, contextID,
-		notice.route, notice.label, normalPriority, notice.event, now).Scan(&notificationID, &recipient)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil
-	}
-	if err != nil {
-		return fmt.Errorf("activities: delivering the owner's notice: %w", err)
-	}
-	if s.noticePush != nil {
-		if err := s.noticePush(ctx, tx, notificationID, recipient, now); err != nil {
-			s.logger.WarnContext(ctx, "activities: the phone copy was not queued", "context", contextID, "err", err)
+			cuid.New(), r.id, notice.title, notice.body, notice.category, notice.contextType, contextID,
+			r.route, r.label, normalPriority, notice.event, now).Scan(&notificationID, &recipient)
+		if errors.Is(err, pgx.ErrNoRows) {
+			continue
 		}
+		if err != nil {
+			return fmt.Errorf("activities: delivering the notice: %w", err)
+		}
+		if w.push != nil {
+			if err := w.push(ctx, tx, notificationID, recipient, now); err != nil {
+				w.logger.WarnContext(ctx, "activities: the phone copy was not queued", "context", contextID, "err", err)
+			}
+		}
+		made, told, people = append(made, notificationID), append(told, recipient), append(people, recipient)
+	}
+	if len(made) == 0 {
+		return nil
 	}
 	if _, err := audit.Append(ctx, tx, audit.Entry{
 		Action: "notification." + notice.event, SubjectKind: audit.Text(notice.contextType), SubjectID: audit.Text(contextID),
 		Success: true, IPAddress: nilIfEmpty(origin.IP), UserAgent: nilIfEmpty(origin.UserAgent),
 		CorrelationID: nilIfEmpty(origin.CorrelationID),
 		Payload: map[string]any{
-			"category": notice.category, "priority": normalPriority,
-			"recipient_ids": []any{recipient}, "notification_ids": []any{notificationID},
+			"category": notice.category, "priority": normalPriority, "recipient_ids": told, "notification_ids": made,
 		},
 	}, now); err != nil {
-		return fmt.Errorf("activities: auditing the owner's notice: %w", err)
+		return fmt.Errorf("activities: auditing the notice: %w", err)
 	}
 	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("activities: committing the owner's notice: %w", err)
+		return fmt.Errorf("activities: committing the notice: %w", err)
 	}
-	if s.live != nil {
-		s.live.Publish(realtime.Event{
-			Type: "notification." + notice.event, EntityType: notice.contextType, EntityID: contextID,
-			TargetUserID: recipient, ActorUserID: actorID,
-		})
+	if w.live != nil {
+		for _, recipient := range people {
+			w.live.Publish(realtime.Event{
+				Type: "notification." + notice.event, EntityType: notice.contextType, EntityID: contextID,
+				TargetUserID: recipient, ActorUserID: actorID,
+			})
+		}
 	}
 	return nil
 }
