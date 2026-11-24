@@ -99,6 +99,12 @@ func (s *Service) SavePlanningDrawer(
 			return connect.NewResponse(answer), nil
 		}
 	}
+	if answer, served, err := s.assignInGo(ctx, message); served {
+		if err != nil {
+			return nil, err
+		}
+		return connect.NewResponse(answer), nil
+	}
 	if answer, served, err := s.scheduleInGo(ctx, message); served {
 		if err != nil {
 			return nil, err

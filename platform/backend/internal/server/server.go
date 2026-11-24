@@ -343,7 +343,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		effectiveSaves.ScheduleGroupTraining || effectiveSaves.ScheduleClusterMeeting || effectiveSaves.CompleteVisit {
 		save := visitSave(cfg, pool, logger, realtimeBroker)
 		if effectiveSaves.ScheduleVisit {
-			screenService.WithVisitSave(save, logger).WithCoreVisitSave(save, logger).WithVisitDecisions(save).
+			screenService.WithVisitSave(save, logger).WithCoreVisitSave(save, logger).WithClientAssign(save).WithVisitDecisions(save).
 				WithActivityLifecycle(save).WithWeekOwner(save).WithAccountability(save.WithEvidence(evidenceSvc)).WithReimbursement(save)
 			weeklyPage.WithOwnerButtons(existingApp == nil)
 			if existingApp == nil {

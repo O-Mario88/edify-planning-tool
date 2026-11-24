@@ -7,10 +7,47 @@ import (
 	"connectrpc.com/connect"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/coreforms"
 )
+
+const assignKind = "assign"
+
+// ClientAssigner is the Go save of the Planning drawer's Assign to Partner
+// (internal/activities.Service).
+type ClientAssigner interface {
+	AssignClientPartner(ctx context.Context, p auth.Principal, req activities.ClientAssignRequest, origin activities.Origin) (activities.Answer, error)
+}
+
+// WithClientAssign makes Assign to Partner's save Go's where Go takes it.
+// While Django is present its own drawer keeps it: the form has no
+// form-only door to compose the post through.
+func (s *Service) WithClientAssign(saver ClientAssigner) *Service {
+	s.clientAssign = saver
+	return s
+}
+
+// assignInGo is assign_partner_action_view; served is false when the save
+// is forwarded, or handed on to the existing application.
+func (s *Service) assignInGo(ctx context.Context, message *screensv1.SavePlanningDrawerRequest) (
+	*screensv1.SavePlanningDrawerResponse, bool, error,
+) {
+	p, ok := auth.PrincipalFrom(ctx)
+	if !ok || s.clientAssign == nil || s.existingApp != nil || message.GetKind() != assignKind {
+		return nil, false, nil
+	}
+	if !coreforms.MayAssign(p.ActiveRole) {
+		return &screensv1.SavePlanningDrawerResponse{Saved: false, Error: coreforms.AssignPartnerRefused}, true, nil
+	}
+	req, taken := activities.ClientAssignRequestFromValues(message.GetSchoolId(), message.GetValues())
+	if !taken {
+		return nil, false, nil
+	}
+	saved, err := s.clientAssign.AssignClientPartner(ctx, p, req, activities.Origin{})
+	return outcomeOf(ctx, s.logger, saved, err)
+}
 
 // getAssignDrawerInGo is assign_partner_modal_view for one school, drawn as
 // the feed's planning_drawers.read_assign reads its page. Opening it writes

@@ -187,9 +187,14 @@ GRANT SELECT (activity_id, amount, disbursed_amount, responsible_user_id, reimbu
 GRANT INSERT (id, created_at, updated_at, assigning_staff_id, focus_intervention, expected_activity_type, status, notes,
               partner_id, school_id, support_type, training_number, visit_number, purpose_of_visit, assignment_mode,
               catalogue_item_id, catalogue_snapshot, override_reason, recommendation_reason, source_ssa_id,
-              source_activity_id, reassignment_sequence, training_course_id, resolution, resolution_note, outside_ssa)
+              source_activity_id, reassignment_sequence, training_course_id, resolution, resolution_note, outside_ssa,
+              monitoring_staff_id, purpose)
   ON partner_assignment TO edify_activities_rw;
-GRANT SELECT (id, school_id, partner_id, status, outside_ssa, purpose_of_visit, support_type, visit_number, training_number)
+-- assigning_staff_id, expected_activity_type, created_at: the Planning
+-- hand-over's double-submit guard (assign_partner_action_view's
+-- _recent_duplicate).
+GRANT SELECT (id, school_id, partner_id, status, outside_ssa, purpose_of_visit, support_type, visit_number, training_number,
+              assigning_staff_id, expected_activity_type, created_at)
   ON partner_assignment TO edify_activities_rw;
 GRANT SELECT (id, name, user_id, activity_codes, deleted_at, active_status, partner_role) ON partner TO edify_activities_rw;
 GRANT SELECT (partner_id, lifted_at) ON partner_hold TO edify_activities_rw;

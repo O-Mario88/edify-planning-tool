@@ -97,8 +97,10 @@ type Service struct {
 	// extraWork is Extra Assigned Work's saves, with Django absent.
 	extraWork ExtraWorker
 	// enroller is Add to Project's save, with Django absent.
-	enroller  Enroller
-	pairsInGo bool // schedule_training_pair: 32's In-school Training
+	enroller Enroller
+	// clientAssign is the Planning drawer's Assign to Partner, with Django absent.
+	clientAssign ClientAssigner
+	pairsInGo    bool // schedule_training_pair: 32's In-school Training
 	// groupTrainings is nil unless EDIFY_GO_SAVES names schedule_group_training (38).
 	groupTrainings GroupTrainingSaver
 	// clusterMeetings is nil unless EDIFY_GO_SAVES names schedule_cluster_meeting (49).

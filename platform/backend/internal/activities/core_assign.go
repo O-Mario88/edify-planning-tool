@@ -171,8 +171,14 @@ type handOver struct {
 	what, supportType, visitNumber, trainingNumber              string
 	planID                                                      string
 	slotKind                                                    string
-	preferred                                                   int
-	isDataCollection                                            bool
+	// monitor and assignmentPurpose are the Planning hand-over's
+	// monitoring_staff_id and purpose; the Core form sets neither.
+	monitor, assignmentPurpose string
+	// blankAsNull: the Planning view leaves notes and the slot fields None,
+	// where the Core form posts them as text.
+	blankAsNull      bool
+	preferred        int
+	isDataCollection bool
 }
 
 // AssignCorePartner makes the Core assign form's save, or refuses it in the
@@ -496,16 +502,23 @@ func (s *Service) writeHandOver(ctx context.Context, h *handOver, sc school, now
 }
 
 func insertHandOver(ctx context.Context, tx pgx.Tx, h *handOver, now time.Time) error {
+	text := func(v string) any {
+		if h.blankAsNull {
+			return optString(v)
+		}
+		return v
+	}
 	_, err := tx.Exec(ctx, `INSERT INTO partner_assignment (id, created_at, updated_at, assigning_staff_id, focus_intervention,
   expected_activity_type, status, notes, partner_id, school_id, support_type, training_number, visit_number, purpose_of_visit,
   assignment_mode, catalogue_item_id, catalogue_snapshot, override_reason, recommendation_reason, source_ssa_id,
-  source_activity_id, reassignment_sequence, training_course_id, resolution, resolution_note, outside_ssa)
+  source_activity_id, reassignment_sequence, training_course_id, resolution, resolution_note, outside_ssa,
+  monitoring_staff_id, purpose)
 SELECT $1, $2, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'specific_activity', i.id, `+catalogueSnapshotSQL+`,
-  '', $14, $15, $16, 0, $17, '', '', false
+  '', $14, $15, $16, 0, $17, '', '', false, $19, $20
 FROM activity_catalogue_item i WHERE i.id = $18`,
-		h.id, now, h.staff, optString(h.focus), h.kind, handOverOpenStatus, h.notes, h.partnerID, h.school, h.supportType,
-		h.trainingNumber, h.visitNumber, h.purpose, h.reason, optString(h.sourceSSA), optString(h.sourceActivityID),
-		optString(h.courseID), h.itemID)
+		h.id, now, h.staff, optString(h.focus), h.kind, handOverOpenStatus, text(h.notes), h.partnerID, h.school, text(h.supportType),
+		text(h.trainingNumber), text(h.visitNumber), h.purpose, h.reason, optString(h.sourceSSA), optString(h.sourceActivityID),
+		optString(h.courseID), h.itemID, optString(h.monitor), optString(h.assignmentPurpose))
 	if err != nil {
 		return fmt.Errorf("activities: writing the hand-over: %w", err)
 	}
@@ -515,6 +528,23 @@ FROM activity_catalogue_item i WHERE i.id = $18`,
 // afterHandOver is what the save's signals and view do once the row is made,
 // in their order. None of it can undo the hand-over.
 func (s *Service) afterHandOver(ctx context.Context, p auth.Principal, h *handOver, origin Origin) {
+	s.announceHandOver(ctx, p, h, origin)
+	if err := s.auditHandOver(ctx, "assign_core_partner", p.UserID, p.ActiveRole, h, origin, nil); err != nil {
+		s.logger.Warn("activities: the form's audit row was not written", "assignment", h.id, "err", err)
+	}
+	if h.partnerUser != "" {
+		if err := s.sendNotice(ctx, h.school, p.UserID, origin, scheduledNotice{
+			title: coreAssignedTitle, body: coreAssignedBody(h.schoolName, h.what), event: assignEvent, category: partnerCategory,
+			contextType: "School", route: coreSchoolsRoute, label: openCoreSchoolLabel, recipient: h.partnerUser,
+		}); err != nil {
+			s.logger.Warn("activities: the partner was not told", "assignment", h.id, "err", err)
+		}
+	}
+}
+
+// announceHandOver is the hand-over's post_save signals (apps/partners/
+// signals.py): its audit row, then the partner's queue notice.
+func (s *Service) announceHandOver(ctx context.Context, p auth.Principal, h *handOver, origin Origin) {
 	if err := s.auditHandOver(ctx, "partner.assigned", h.staff, "", h, origin, map[string]any{
 		"partner_id": h.partnerID, "school_id": h.school, "cluster_id": nil, "project_id": nil,
 	}); err != nil {
@@ -525,17 +555,6 @@ func (s *Service) afterHandOver(ctx context.Context, p auth.Principal, h *handOv
 		if err := s.sendNotice(ctx, h.id, p.UserID, origin, scheduledNotice{
 			title: partnerQueueTitle, body: partnerQueueBody, event: partnerQueueEvent, category: partnerCategory,
 			contextType: "partner_assignment", route: route, label: label, recipient: h.partnerUser,
-		}); err != nil {
-			s.logger.Warn("activities: the partner was not told", "assignment", h.id, "err", err)
-		}
-	}
-	if err := s.auditHandOver(ctx, "assign_core_partner", p.UserID, p.ActiveRole, h, origin, nil); err != nil {
-		s.logger.Warn("activities: the form's audit row was not written", "assignment", h.id, "err", err)
-	}
-	if h.partnerUser != "" {
-		if err := s.sendNotice(ctx, h.school, p.UserID, origin, scheduledNotice{
-			title: coreAssignedTitle, body: coreAssignedBody(h.schoolName, h.what), event: assignEvent, category: partnerCategory,
-			contextType: "School", route: coreSchoolsRoute, label: openCoreSchoolLabel, recipient: h.partnerUser,
 		}); err != nil {
 			s.logger.Warn("activities: the partner was not told", "assignment", h.id, "err", err)
 		}
