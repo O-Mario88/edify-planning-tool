@@ -50,9 +50,10 @@ func (s *Service) getPlanningDrawerInGo(ctx context.Context, p auth.Principal, s
 	if kind == "schedule" {
 		return s.getScheduleDrawerInGo(ctx, p, schoolID)
 	}
-	// Assign to Partner is assign_partner_modal_view, not yet built in Go:
-	// handed on, so with Django absent it is not available rather than a
-	// form with invented purposes and every partner. No other kind exists.
+	if kind == "assign" {
+		return s.getAssignDrawerInGo(ctx, p, schoolID)
+	}
+	// No other kind exists.
 	return nil, false, nil
 }
 

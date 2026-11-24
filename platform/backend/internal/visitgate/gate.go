@@ -103,6 +103,10 @@ type Gate struct {
 	Split CoreSplit
 }
 
+// OneCommitment is visit_gate's one_commitment: a client school whose type
+// takes one visit commitment a year, staff's or a partner's.
+func (g Gate) OneCommitment(r Rules) bool { return g.oneCommitment(r) }
+
 func (g Gate) oneCommitment(r Rules) bool {
 	return g.Rule == "client" && slices.Contains(r.OneCommitmentTypes, g.School.Type)
 }
