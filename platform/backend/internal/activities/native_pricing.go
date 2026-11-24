@@ -19,6 +19,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/cuid"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myplan"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/notificationcenter"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pricing"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -629,6 +630,33 @@ type batchMember struct {
 	paymentStatus        string
 }
 
+// memberOwnCost is one day member's own recipe (_plan_day's recipes): its
+// stored costing input on the day's district and return day, profiled, with
+// the card's rates linked to its catalogue item.
+func memberOwnCost(ctx context.Context, q pricing.Querier, activityID, districtType string, returnDay bool, rates map[string]int64, linkCard *pricing.Card) (costing.Cost, error) {
+	in, err := pricing.StoredInput(ctx, q, activityID)
+	if err != nil {
+		return costing.Cost{}, err
+	}
+	cost, err := ownCostOnDay(in, districtType, returnDay, rates, linkCard)
+	if err != nil {
+		return costing.Cost{}, fmt.Errorf("activities: the recipe of day member %s: %w", activityID, err)
+	}
+	return cost, nil
+}
+
+// ownCostOnDay prices a member's stored input on its day: the day's
+// district and return day, its costing profile, its linked rates.
+func ownCostOnDay(in pricing.Input, districtType string, returnDay bool, rates map[string]int64, linkCard *pricing.Card) (costing.Cost, error) {
+	in.DistrictType, in.ReturnDay = districtType, returnDay
+	recipe, err := pricing.Profiled(in)
+	if err != nil {
+		return costing.Cost{}, err
+	}
+	recipe.LinkedRates = linkCard.LinkedRates(in.CatalogueItemID)
+	return costing.CostForActivity(recipe, rates), nil
+}
+
 func (n *NativePricing) settleBatch(
 	ctx context.Context,
 	batchID, ownerOverride, actorID, actorRole string,
@@ -777,6 +805,12 @@ SELECT visit_date
 	if err != nil {
 		return err
 	}
+	// The card's links from a catalogue item to its own rates
+	// (_with_linked_rates), read on the day.
+	linkCard, err := pricing.ReadCard(ctx, tx, "operational", &visitDate)
+	if err != nil {
+		return err
+	}
 
 	poolTotal := pool.Total()
 	perSchool := int64(0)
@@ -867,19 +901,15 @@ SELECT gateway_costing.update_batch(
 				total += share
 			}
 
-			// Add any activity-specific non-daily components (e.g. group training meals, venue, facilitation, materials).
-			own := costing.CostForActivity(costing.Activity{
-				ActivityType:         member.activityType,
-				DeliveryType:         member.deliveryType,
-				DistrictType:         pricingType,
-				AccommodationKey:     accommKey,
-				ReturnDay:            returnDay,
-				CostingKind:          member.costingProfile,
-				ExpectedParticipants: member.expectedParticipants,
-				PrintingPages:        member.printingPages,
-				PhotocopyPages:       member.photocopyPages,
-				PhotocopyCopies:      member.photocopyCopies,
-			}, card.Rates)
+			// The member's own components that are not the day's (meals, venue,
+			// the facilitating partner's fee, materials, the catalogue item's
+			// linked rates), from its own recipe as _plan_day prices it:
+			// _costing_input with the day's district and return day, profiled,
+			// with the card's linked rates.
+			own, err := memberOwnCost(ctx, tx, member.id, pricingType, returnDay, card.Rates, linkCard)
+			if err != nil {
+				return err
+			}
 			var missingItems []string
 			for _, ol := range own.Lines {
 				if _, isDaily := dailyKeyLabels[ol.Key]; isDaily {
