@@ -63,9 +63,9 @@ var completedSessionTypes = []string{clusterMeetingType, clusterTrainingType}
 // completedMeeting is the session as its completion reads it.
 type completedMeeting struct {
 	id, kind, status, clusterID, responsible string
-	verification, recordType, reference string
-	planned                             *time.Time
-	other                               bool
+	verification, recordType, reference      string
+	planned                                  *time.Time
+	other                                    bool
 }
 
 func readCompletedMeeting(ctx context.Context, q Querier, id string) (*completedMeeting, error) {
