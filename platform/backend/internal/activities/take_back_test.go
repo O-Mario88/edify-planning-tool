@@ -3,6 +3,8 @@ package activities
 import (
 	"testing"
 	"time"
+
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myplan"
 )
 
 func TestAWeekIsFiledUnderItsMonday(t *testing.T) {
@@ -75,5 +77,13 @@ func TestATakenBackNoticeLinksToTheRequestOrTheList(t *testing.T) {
 func TestANoticeIsNormalUnlessItAsks(t *testing.T) {
 	if (scheduledNotice{}).level() != "normal" || (scheduledNotice{priority: "high"}).level() != "high" {
 		t.Fatal("the notice's priority is wrong")
+	}
+}
+
+func TestTheHandInNamesTheWorkAsTheExistingApplicationDoes(t *testing.T) {
+	for value, want := range map[string]string{"story_gathering_visit": "Gathering Story", "donor_visit": "Donor Visit"} {
+		if got := myplan.TypeLabel(value); got != want {
+			t.Fatalf("%s = %q, want %q", value, got, want)
+		}
 	}
 }

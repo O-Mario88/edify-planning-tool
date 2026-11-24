@@ -42,6 +42,8 @@ GRANT UPDATE (salesforce_activity_id, salesforce_activity_type, teachers_attende
               other_participants, attended_school_ids, actual_delivery_date, actual_outcome,
               actual_observations, follow_up_note, status, evidence_status, updated_at)
   ON activity TO edify_completion_owner;
+-- Start activity (services.start_completion): the first start's moment.
+GRANT SELECT (execution_started_at), UPDATE (execution_started_at) ON activity TO edify_completion_owner;
 GRANT SELECT (activity_id, normalized_value) ON activity_salesforce_reference TO edify_completion_owner;
 GRANT INSERT (id, created_at, updated_at, raw_value, normalized_value, activity_type, expected_prefix,
               entry_source, entered_by, entered_at, activity_id)
@@ -112,8 +114,81 @@ END
 $fn$;
 REVOKE ALL ON FUNCTION gateway_completion.hand_in_school_visit(varchar, date, varchar, varchar, integer,
   integer, integer, text, text, text, varchar, timestamptz, varchar, varchar) FROM PUBLIC;
+
+-- services.start_completion for a staff school visit: started, and the first
+-- start's moment kept. False when the visit is not one it may start.
+CREATE OR REPLACE FUNCTION gateway_completion.start_visit(target varchar, at timestamptz) RETURNS boolean
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+BEGIN
+  UPDATE public.activity a
+     SET status = 'completion_started', execution_started_at = COALESCE(a.execution_started_at, at), updated_at = at
+   WHERE a.id = target AND a.deleted_at IS NULL AND a.delivery_type = 'staff' AND a.cluster_id IS NULL
+     AND a.activity_type = ANY (ARRAY['school_visit', 'donor_visit', 'story_gathering_visit',
+                                      'school_invitation', 'social_visit']::varchar[])
+     AND a.status = ANY (ARRAY['scheduled', 'in_progress', 'partner_scheduled', 'assigned_to_partner',
+                               'rescheduled']::varchar[]);
+  RETURN FOUND;
+END
+$fn$;
+REVOKE ALL ON FUNCTION gateway_completion.start_visit(varchar, timestamptz) FROM PUBLIC;
+
+-- The Salesforce ID drawer's hand-in (services.hand_in_with_id): the same
+-- checks and reservation, but the visit's attendance, evidence and notes are
+-- left as they stand, as the existing drawer leaves them.
+CREATE OR REPLACE FUNCTION gateway_completion.hand_in_with_id(
+  target varchar, delivered date, raw_value varchar, normalized varchar,
+  entered_by varchar, at timestamptz, reference_id varchar, verification_id varchar
+) RETURNS text
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  visit record;
+  holder record;
+BEGIN
+  SELECT a.status, a.delivery_type, a.activity_type, a.cluster_id, a.deleted_at
+    INTO visit FROM public.activity a WHERE a.id = target FOR UPDATE;
+  IF NOT FOUND OR visit.status IS DISTINCT FROM 'completion_started'
+     OR visit.delivery_type IS DISTINCT FROM 'staff'
+     OR NOT (visit.activity_type = ANY (ARRAY['school_visit', 'donor_visit', 'story_gathering_visit',
+                                              'school_invitation', 'social_visit']::varchar[]))
+     OR visit.cluster_id IS NOT NULL OR visit.deleted_at IS NOT NULL THEN
+    RETURN 'changed';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.activity_salesforce_reference r WHERE r.activity_id = target) THEN
+    RETURN 'own_reference';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.activity_completion_verification v WHERE v.activity_id = target) THEN
+    RETURN 'verification';
+  END IF;
+  SELECT h.id, h.status, h.deleted_at INTO holder
+    FROM public.activity_salesforce_reference r JOIN public.activity h ON h.id = r.activity_id
+   WHERE r.normalized_value = normalized;
+  IF FOUND THEN
+    IF holder.deleted_at IS NOT NULL OR holder.status IN ('cancelled', 'deferred') THEN
+      RETURN 'called_off';
+    END IF;
+    RETURN 'held:' || holder.id;
+  END IF;
+  INSERT INTO public.activity_salesforce_reference (id, created_at, updated_at, raw_value, normalized_value,
+    activity_type, expected_prefix, entry_source, entered_by, entered_at, activity_id)
+  VALUES (reference_id, at, at, raw_value, normalized, visit.activity_type, 'SVE-', 'staff_self_entry',
+    entered_by, at, target);
+  UPDATE public.activity a SET
+    salesforce_activity_id = normalized, salesforce_activity_type = 'visit',
+    actual_delivery_date = delivered, status = 'submitted_to_pl', updated_at = at
+  WHERE a.id = target;
+  INSERT INTO public.activity_completion_verification (id, created_at, updated_at, salesforce_id, entered_by,
+    entered_at, status, activity_id)
+  VALUES (verification_id, at, at, normalized, entered_by, at, 'pending', target);
+  RETURN '';
+END
+$fn$;
+REVOKE ALL ON FUNCTION gateway_completion.hand_in_with_id(varchar, date, varchar, varchar, varchar, timestamptz,
+  varchar, varchar) FROM PUBLIC;
 RESET ROLE;
 
 GRANT USAGE ON SCHEMA gateway_completion TO edify_activities_rw;
 GRANT EXECUTE ON FUNCTION gateway_completion.hand_in_school_visit(varchar, date, varchar, varchar, integer,
   integer, integer, text, text, text, varchar, timestamptz, varchar, varchar) TO edify_activities_rw;
+GRANT EXECUTE ON FUNCTION gateway_completion.hand_in_with_id(varchar, date, varchar, varchar, varchar, timestamptz,
+  varchar, varchar) TO edify_activities_rw;
+GRANT EXECUTE ON FUNCTION gateway_completion.start_visit(varchar, timestamptz) TO edify_activities_rw;

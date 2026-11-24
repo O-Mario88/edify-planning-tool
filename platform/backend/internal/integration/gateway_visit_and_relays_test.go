@@ -387,7 +387,7 @@ INSERT INTO weekly_fund_request (
 	var notifCount int
 	_ = admin.QueryRow(ctx, `
 SELECT COUNT(*) FROM notification
- WHERE context_type = 'activity' AND context_id = $1 AND source_event_type = 'activity.completed_handed_in'`, visit1).Scan(&notifCount)
+ WHERE context_type = 'Activity' AND context_id = $1 AND source_event_type = 'activity_submitted_for_review'`, visit1).Scan(&notifCount)
 	if notifCount < 1 {
 		t.Fatalf("expected supervisor notification for completed visit %s, got %d", visit1, notifCount)
 	}
@@ -398,7 +398,7 @@ SELECT COUNT(*) FROM notification
 	var notifCount2 int
 	_ = admin.QueryRow(ctx, `
 SELECT COUNT(*) FROM notification
- WHERE context_type = 'activity' AND context_id = $1 AND source_event_type = 'activity.completed_handed_in'`, visit1).Scan(&notifCount2)
+ WHERE context_type = 'Activity' AND context_id = $1 AND source_event_type = 'activity_submitted_for_review'`, visit1).Scan(&notifCount2)
 	if notifCount2 != notifCount {
 		t.Fatalf("HandedIn not idempotent: first=%d second=%d", notifCount, notifCount2)
 	}

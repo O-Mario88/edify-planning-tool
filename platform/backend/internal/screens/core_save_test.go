@@ -2,6 +2,7 @@ package screens
 
 import (
 	"context"
+	"net/url"
 	"testing"
 
 	"connectrpc.com/connect"
@@ -203,6 +204,20 @@ func TestAnUnknownDecisionIsNotGos(t *testing.T) {
 type fakeStarter struct {
 	got []string
 	err error
+}
+
+func (f *fakeStarter) EnterSalesforceID(_ context.Context, _ auth.Principal, id string, form url.Values, _ activities.Origin) (activities.CompleteAnswer, error) {
+	f.got = append(f.got, id+"|"+form.Get("salesforce_id"))
+	return activities.CompleteAnswer{Message: "Saved."}, f.err
+}
+
+func TestTheSalesforceIDSavesInGoWithoutDjango(t *testing.T) {
+	starter := &fakeStarter{}
+	answer, err := decideVisit(NewService(nil).WithActivityLifecycle(starter), "/activities/a1/salesforce-id/action",
+		map[string]string{"salesforce_id": "SVE-1"})
+	if err != nil || !answer.GetSaved() || len(starter.got) != 1 || starter.got[0] != "a1|SVE-1" {
+		t.Fatalf("answer %v, %v, got %v", answer, err, starter.got)
+	}
 }
 
 func (f *fakeStarter) StartActivity(_ context.Context, _ auth.Principal, id, notes string, _ activities.Origin) (activities.Answer, error) {

@@ -6,8 +6,8 @@ hand in that script and changes only with evidence. *Proved* means compared with
 with Django stopped.
 
 - Saves: 225 destinations from 483 save controls.
-- Go: 13 proved, 21 with unproved Go code, 191 still Django's.
-- Field staff can reach 143 saves that are not yet proved in Go.
+- Go: 14 proved, 21 with unproved Go code, 190 still Django's.
+- Field staff can reach 142 saves that are not yet proved in Go.
 - 92 controls post to a destination the inventory cannot read (set by a variable or script); they are listed by template at the end and must be classified by hand.
 
 | Step | Saves |
@@ -23,6 +23,7 @@ with Django stopped.
 
 | Route | Go | Size | Roles | Labels |
 |---|---|---|---|---|
+| `/activities/<str:activity_id>/salesforce-id/action` | proved | medium | 9 roles | Save Salesforce ID |
 | `/activities/<str:activity_id>/start/action` | proved | small | 9 roles | Start activity |
 | `/activity-selection/cancel` | proved | small | 9 roles | Cancel {{ ready|length }} activit{{ ready|length|pluralize:"y,ies" }} |
 | `/activity-selection/reschedule` | proved | small | 9 roles | Reschedule {{ ready|length }} activit{{ ready|length|pluralize:"y,ies" }} |
@@ -46,7 +47,6 @@ with Django stopped.
 | `/activities/<str:activity_id>/facilitator` | django | small | 9 roles | Save |
 | `/activities/<str:activity_id>/partner-ssa-complete/action` | django | medium | 9 roles | Save SSA and complete |
 | `/activities/<str:activity_id>/reopen` | django | small | 7 roles | Confirm Reopen Reopening... |
-| `/activities/<str:activity_id>/salesforce-id/action` | django | medium | 9 roles | Save Salesforce ID |
 | `/activities/<str:activity_id>/ssa-upload/action` | django | medium | 9 roles | Save SSA scores |
 | `/activities/<str:activity_id>/submit/action` | django | small | 9 roles | Submit for review |
 | `/analytics/customize-dashboard` | django | medium | 10 roles | Save preferences |

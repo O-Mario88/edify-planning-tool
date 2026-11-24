@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -15,12 +16,17 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 )
 
-// startActivityPath is my_plan_views.start_activity_action's route.
-var startActivityPath = regexp.MustCompile(`^/activities/([A-Za-z0-9]{1,30})/start/action/?$`)
+var (
+	// startActivityPath is my_plan_views.start_activity_action's route.
+	startActivityPath = regexp.MustCompile(`^/activities/([A-Za-z0-9]{1,30})/start/action/?$`)
+	// salesforceEntryPath is my_plan_views.salesforce_id_action's route.
+	salesforceEntryPath = regexp.MustCompile(`^/activities/([A-Za-z0-9]{1,30})/salesforce-id/action/?$`)
+)
 
 // ActivityStarter is the Go save behind Start activity (internal/activities.Service).
 type ActivityStarter interface {
 	StartActivity(ctx context.Context, p auth.Principal, activityID, notes string, origin activities.Origin) (activities.Answer, error)
+	EnterSalesforceID(ctx context.Context, p auth.Principal, activityID string, form url.Values, origin activities.Origin) (activities.CompleteAnswer, error)
 }
 
 // WithActivityLifecycle makes an activity's lifecycle buttons Go's where Go
@@ -39,11 +45,19 @@ func (s *Service) lifecycleInGo(ctx context.Context, message *screensv1.SaveDraw
 		return nil, false, nil
 	}
 	path, _, _ := strings.Cut(message.GetPath(), "?")
-	m := startActivityPath.FindStringSubmatch(path)
-	if m == nil {
+	var said string
+	var err error
+	if m := startActivityPath.FindStringSubmatch(path); m != nil {
+		var saved activities.Answer
+		saved, err = s.starter.StartActivity(ctx, principal, m[1], message.GetValues()["notes"], from)
+		said = saved.Message
+	} else if m := salesforceEntryPath.FindStringSubmatch(path); m != nil {
+		var saved activities.CompleteAnswer
+		saved, err = s.starter.EnterSalesforceID(ctx, principal, m[1], directDrawerForm(message), from)
+		said = saved.Message
+	} else {
 		return nil, false, nil
 	}
-	saved, err := s.starter.StartActivity(ctx, principal, m[1], message.GetValues()["notes"], from)
 	var refusal *activities.Refusal
 	switch {
 	case errors.Is(err, activities.ErrHandOn):
@@ -56,5 +70,5 @@ func (s *Service) lifecycleInGo(ctx context.Context, message *screensv1.SaveDraw
 		}
 		return nil, true, apierr.New(ctx, connect.CodeUnavailable, apierr.ReasonInternal, "This could not be saved.")
 	}
-	return &screensv1.SaveDrawerResponse{Saved: true, Message: collapse(saved.Message)}, true, nil
+	return &screensv1.SaveDrawerResponse{Saved: true, Message: collapse(said)}, true, nil
 }

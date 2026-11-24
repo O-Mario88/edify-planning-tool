@@ -50,12 +50,11 @@ func (s *Service) StartActivity(ctx context.Context, p auth.Principal, activityI
 		return Answer{}, fmt.Errorf("activities: opening the start: %w", err)
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
-	tag, err := tx.Exec(ctx, `UPDATE activity SET status = $2, execution_started_at = COALESCE(execution_started_at, $3),
-  updated_at = $3 WHERE id = $1 AND status = ANY($4) AND deleted_at IS NULL`, a.id, startedStatus, now, startableStatuses)
-	if err != nil {
+	var started bool
+	if err := tx.QueryRow(ctx, `SELECT gateway_completion.start_visit($1, $2)`, a.id, now).Scan(&started); err != nil {
 		return Answer{}, fmt.Errorf("activities: starting the visit: %w", err)
 	}
-	if tag.RowsAffected() != 1 {
+	if !started {
 		return Answer{}, refuse(notStartable)
 	}
 	if err := tx.Commit(ctx); err != nil {

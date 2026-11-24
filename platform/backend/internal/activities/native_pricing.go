@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -18,6 +17,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/costing"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/costing/daypool"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/cuid"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myplan"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/notificationcenter"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
@@ -1350,90 +1350,101 @@ func (n *NativePricing) Announce(ctx context.Context, activityID string) error {
 	return tx.Commit(ctx)
 }
 
-// HandedIn notifies the officer's active reporting-line Programme Lead(s)
-// natively in Go via notificationcenter.Writer with deterministic SourceEventID
-// deduplication, closes any open overdue reminders on the activity, records a
-// durable plan.changed event, and returns delivery errors so failures are never
-// silently swallowed.
+// HandedIn is services._handed_in after the hand-in commits, as the existing
+// application does it with Django absent: _notify_completion_routed tells
+// the officer's Programme Leads the completion awaits their review,
+// _resolve_overdue_reminder closes the officer's overdue reminder, and the
+// change is announced. A notice never undoes the hand-in.
 func (n *NativePricing) HandedIn(ctx context.Context, activityID, actorID, _ string) error {
-	if n.pool == nil || n.writer == nil || strings.TrimSpace(activityID) == "" {
+	if n.pool == nil || strings.TrimSpace(activityID) == "" {
 		return nil
 	}
-	var staffID, schoolName, schoolID string
+	var owner, activityType, where string
 	err := n.pool.QueryRow(ctx, `
-SELECT COALESCE(a.responsible_staff_id, ''), COALESCE(s.name, 'a school'), COALESCE(a.school_id, '')
-  FROM activity a LEFT JOIN school s ON s.id = a.school_id
- WHERE a.id = $1 AND a.deleted_at IS NULL`, activityID).Scan(&staffID, &schoolName, &schoolID)
-	if errors.Is(err, pgx.ErrNoRows) || staffID == "" {
+SELECT COALESCE(NULLIF(a.responsible_staff_id, ''), a.monitored_by_staff_id, ''), a.activity_type,
+       COALESCE(s.name, c.name, 'the field')
+  FROM activity a LEFT JOIN school s ON s.id = a.school_id LEFT JOIN cluster c ON c.id = a.cluster_id
+ WHERE a.id = $1 AND a.deleted_at IS NULL`, activityID).Scan(&owner, &activityType, &where)
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil
 	}
 	if err != nil {
-		return fmt.Errorf("activities: reading activity for handed-in notification: %w", err)
+		return fmt.Errorf("activities: reading the handed-in activity: %w", err)
 	}
-
-	// Resolve active supervisors in the same country (when country_registry records exist).
-	rows, err := n.pool.Query(ctx, `
-SELECT DISTINCT sup.user_id
-  FROM staff_supervisor_assignment ssa
-  JOIN staff_profile sup ON sup.id = ssa.supervisor_id AND sup.deleted_at IS NULL
-  JOIN "user" u ON u.id = sup.user_id AND u.is_active = true AND u.deleted_at IS NULL
- WHERE ssa.supervisee_id = $1
-   AND (
-     $2 = ''
-     OR NOT EXISTS (
-       SELECT 1 FROM country_registry.school_country sc
-        WHERE sc.school_id = $2 AND sc.effective_until IS NULL
-     )
-     OR EXISTS (
-       SELECT 1
-         FROM country_registry.school_country sc
-         JOIN country_registry.country_membership cm
-           ON cm.country_id = sc.country_id
-          AND cm.user_id = sup.user_id
-          AND cm.revoked_at IS NULL
-          AND cm.effective_until IS NULL
-        WHERE sc.school_id = $2 AND sc.effective_until IS NULL
-     )
-   )`, staffID, schoolID)
+	recipients, err := n.reviewersOf(ctx, owner, activityID)
 	if err != nil {
-		return fmt.Errorf("activities: reading supervisors for handed-in notification: %w", err)
-	}
-	defer rows.Close()
-	var recipients []string
-	for rows.Next() {
-		var recipient string
-		if scanErr := rows.Scan(&recipient); scanErr != nil {
-			return scanErr
-		}
-		if recipient != "" && !slices.Contains(recipients, recipient) {
-			recipients = append(recipients, recipient)
-		}
-	}
-	if err := rows.Err(); err != nil {
 		return err
 	}
-
-	for _, recipient := range recipients {
-		if _, err := n.writer.Deliver(ctx, notificationcenter.Delivery{
-			RecipientID:     recipient,
-			SenderID:        actorID,
-			Title:           "Completion awaiting review",
-			Body:            "A completed school visit at " + schoolName + " is ready for your confirmation.",
-			Category:        "activity_review",
-			ContextType:     "activity",
-			ContextID:       activityID,
-			TargetRoute:     "/pl/review-queue",
-			ActionLabel:     "Review",
-			ActionRequired:  true,
-			Priority:        "high",
-			SourceEventType: "activity.completed_handed_in",
-			SourceEventID:   activityID,
-		}); err != nil {
-			return fmt.Errorf("activities: delivering handed-in notification to %s: %w", recipient, err)
+	who := "A staff member"
+	var name string
+	if err := n.pool.QueryRow(ctx, `SELECT COALESCE(name, '') FROM "user" WHERE id = $1`, actorID).Scan(&name); err == nil && name != "" {
+		who = name
+	}
+	if len(recipients) > 0 {
+		if err := n.notices().sendTo(ctx, n.clock(), activityID, actorID, Origin{}, scheduledNotice{
+			title: "Completion awaiting your review", body: fmt.Sprintf("%s submitted %s at %s.", who, myplan.TypeLabel(activityType), where),
+			event: "activity_submitted_for_review", category: "activity", contextType: "Activity", priority: "high",
+		}, recipients); err != nil {
+			return fmt.Errorf("activities: telling the reviewers: %w", err)
 		}
 	}
-
-	// Close open overdue reminders on this activity (matching gateway_relay.visit_completed).
-	_, _ = n.writer.ResolveContext(ctx, "activity_overdue", "activity", activityID)
+	if err := n.resolveOverdueReminder(ctx, activityID); err != nil {
+		return fmt.Errorf("activities: closing the overdue reminder: %w", err)
+	}
 	return n.Announce(ctx, activityID)
+}
+
+// reviewersOf is _supervisor_user_ids: the supervisors of the work's owner,
+// named by a staff profile or a user id, each with the link their role opens.
+func (n *NativePricing) reviewersOf(ctx context.Context, owner, activityID string) ([]noticeRecipient, error) {
+	if owner == "" {
+		return nil, nil
+	}
+	rows, err := n.pool.Query(ctx, `
+WITH supervisee AS (
+  SELECT id FROM (SELECT id, 0 AS rank FROM staff_profile WHERE id = $1
+                  UNION ALL SELECT id, 1 FROM staff_profile WHERE user_id = $1) p ORDER BY rank LIMIT 1)
+SELECT sup.user_id, COALESCE(u.active_role, '')
+  FROM staff_supervisor_assignment ssa
+  JOIN supervisee sv ON sv.id = ssa.supervisee_id
+  JOIN staff_profile sup ON sup.id = ssa.supervisor_id
+  LEFT JOIN "user" u ON u.id = sup.user_id
+ WHERE sup.user_id IS NOT NULL AND sup.user_id <> ''
+ ORDER BY ssa.id`, owner)
+	if err != nil {
+		return nil, fmt.Errorf("activities: reading the reviewers: %w", err)
+	}
+	defer rows.Close()
+	var recipients []noticeRecipient
+	seen := map[string]bool{}
+	for rows.Next() {
+		var userID, role string
+		if err := rows.Scan(&userID, &role); err != nil {
+			return nil, err
+		}
+		if seen[userID] {
+			continue
+		}
+		seen[userID] = true
+		recipient := noticeRecipient{id: userID, route: "/pl/review-queue?open=" + activityID, label: "Review Completion"}
+		if strings.EqualFold(role, "ImpactAssessment") {
+			recipient.route, recipient.label = "/ia/dashboard/", "Verify Activity"
+		}
+		recipients = append(recipients, recipient)
+	}
+	return recipients, rows.Err()
+}
+
+// resolveOverdueReminder is _resolve_overdue_reminder.
+func (n *NativePricing) resolveOverdueReminder(ctx context.Context, activityID string) error {
+	tx, err := n.pool.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	if _, err := tx.Exec(ctx, `SELECT gateway_notifications.resolve_condition('pl_activity_overdue_reminder', 'activity', $1, $2)`,
+		activityID, n.clock()); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
 }
