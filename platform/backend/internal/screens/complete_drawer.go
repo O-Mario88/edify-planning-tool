@@ -189,7 +189,7 @@ func purposeItems(f activities.CompleteFacts, courses []coreforms.Course) []*scr
 	zero := 0.0
 	return []*screensv1.DrawerItem{
 		drawerField(&screensv1.DrawerField{Name: "purpose_type", Label: "Purpose of the visit", Kind: "select",
-			Value: f.CurrentPurpose, Required: true, Help: completionPurposeHelp, Options: choiceOptions(completionPurposeChoices)}),
+			Value: f.CurrentPurpose, Required: true, Help: completionPurposeHelp, Options: purposeChoices(f.CurrentPurpose)}),
 		{Kind: &screensv1.DrawerItem_Heading{Heading: "Training delivered"}, ShowWhen: inSchoolTrainingShown},
 		drawerField(&screensv1.DrawerField{Name: "training_course_id", Label: "Which training was delivered?", Kind: "select",
 			Required: true, Options: trainings, ShowWhen: inSchoolTrainingShown}),
@@ -228,4 +228,21 @@ func ssaItems() []*screensv1.DrawerItem {
 func shownWhen(item *screensv1.DrawerItem, when []*screensv1.DrawerCondition) *screensv1.DrawerItem {
 	item.ShowWhen = when
 	return item
+}
+
+// heldPurposeLabels are STAFF_VISIT_PURPOSES' labels for the purposes a visit
+// holds outside the completion purposes.
+var heldPurposeLabels = map[string]string{
+	"donor_visit": "Donor Visit", "story_gathering": "Content/Story Collection",
+	"school_invitation": "School Invitation", "social_visit": "Social Visit",
+}
+
+// purposeChoices is completion_purpose_options: a purpose the visit holds
+// outside the four first, so completing it does not change it, then the four.
+func purposeChoices(current string) []*screensv1.DrawerOption {
+	options := choiceOptions(completionPurposeChoices)
+	if label, ok := heldPurposeLabels[current]; ok {
+		options = append([]*screensv1.DrawerOption{{Value: current, Label: label}}, options...)
+	}
+	return options
 }

@@ -37,9 +37,9 @@ type CompleteFacts struct {
 	Cluster                              bool // the register is asked
 	Register                             []RegisterSchool
 	Outcome, Observations, FollowUp      string
-	// SSA is a School Visit + SSA Collection: its purpose, training, SSA and
-	// follow-up sections are drawn, from the school, the planned day and
-	// the year.
+	// SSA is a visit whose purpose the drawer offers (every one Go completes
+	// but a plain School Visit): its purpose, training, SSA and follow-up
+	// sections are drawn, from the school, the planned day and the year.
 	SSA            bool
 	SchoolID, FY   string
 	Planned        time.Time
@@ -88,7 +88,7 @@ func (s *Service) visitDrawerInCase(ctx context.Context, p auth.Principal, id st
 	if err != nil {
 		return err
 	}
-	if a == nil || (a.activityType != plainSchoolVisit && a.activityType != ssaCollectionKind) {
+	if a == nil || !(in(completedVisitTypes, a.activityType) || a.activityType == ssaCollectionKind) {
 		return handOn("not a staff School Visit with a school and a day")
 	}
 	if why := a.outOfCase(p, true); why != "" {
@@ -151,7 +151,7 @@ FROM activity a LEFT JOIN school s ON s.id = a.school_id WHERE a.id = $1`, id).S
 func (s *Service) visitFacts(ctx context.Context, id string) (CompleteFacts, error) {
 	f, _, _, _, err := s.workFacts(ctx, id)
 	f.SalesforceKind = "visit"
-	if err != nil || f.ActivityType != ssaCollectionKind {
+	if err != nil || f.ActivityType == plainSchoolVisit {
 		return f, err
 	}
 	a, err := readCompletionVisit(ctx, s.db, id)

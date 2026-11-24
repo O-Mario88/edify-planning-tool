@@ -723,7 +723,8 @@ func (pl *completionPlan) trainingIDOnAVisit(form url.Values) error {
 		return nil
 	}
 	message := entered + " is a training ID. This visit is completed with its visit ID from Salesforce: SV-… or SVE-…."
-	if pl.a.activityType == ssaCollectionKind {
+	if pl.a.activityType != plainSchoolVisit {
+		// The drawer offers the visit as a training (completion_purpose_options).
 		message = entered + " is a training ID. If a training was delivered on this visit, choose “In-school Training”" +
 			" or “In-school Training + SSA Collection” as the purpose: the training's TS- ID goes in Training ID, and" +
 			" the visit's SV- or SVE- ID in Visit ID."
