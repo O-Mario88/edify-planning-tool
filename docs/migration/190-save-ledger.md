@@ -6,8 +6,8 @@ hand in that script and changes only with evidence. *Proved* means compared with
 with Django stopped.
 
 - Saves: 225 destinations from 483 save controls.
-- Go: 38 proved, 20 with unproved Go code, 157 still Django's, 1 retired on purpose, 9 made by Go's own services.
-- Field staff can reach 108 saves that are not yet proved in Go.
+- Go: 39 proved, 19 with unproved Go code, 157 still Django's, 1 retired on purpose, 9 made by Go's own services.
+- Field staff can reach 107 saves that are not yet proved in Go.
 - 92 controls post to a destination the inventory cannot read (set by a variable or script); they are listed by template at the end and must be classified by hand.
 
 | Step | Saves |
@@ -54,6 +54,7 @@ with Django stopped.
 | `/schools/<str:school_id>/take` | proved | small | 7 roles | Take {{ school.school_name }} as my school |
 | `/schools/bulk-assign-cluster` | proved | small | 7 roles | Assign cluster |
 | `/schools/bulk-assign-project` | proved | large | 7 roles | Add to project; Assign project |
+| `/support` | proved | small | 15 roles | Send to the platform team |
 | `/today/snooze` | proved | small | Admin, CCEO, ImpactAssessment, Program Lead, ProjectCoordinator | {{ label }} |
 | `/today/unsnooze` | proved | small | Admin, CCEO, ImpactAssessment, Program Lead, ProjectCoordinator | Undo |
 | `/acting-leadership/<str:assignment_id>/cancel` | go-owned | small | 6 roles | Cancel appointment |
@@ -136,7 +137,6 @@ with Django stopped.
 | `/strategic-priorities/milestones/<str:milestone_id>/approve` | django | small | 16 roles | Approve definition |
 | `/strategic-priorities/milestones/<str:milestone_id>/define` | django | small | 16 roles | Save definition for approval |
 | `/strategic-priorities/milestones/<str:milestone_id>/edit` | django | small | 16 roles | Save targets |
-| `/support` | unproved | small | 15 roles | Send to the platform team |
 | `/today/act` | django | small | Admin, CCEO, ImpactAssessment, Program Lead, ProjectCoordinator | {{ op.label }} |
 | `/today/action` | django | medium | Admin, CCEO, ImpactAssessment, Program Lead, ProjectCoordinator | Accept week; Dismiss; Regenerate draft Prepare my week |
 | `/work-plan/add/action` | django | medium | 16 roles | Add to my plan |

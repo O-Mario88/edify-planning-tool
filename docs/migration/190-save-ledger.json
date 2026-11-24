@@ -6,8 +6,8 @@
   "go": {
    "django": 157,
    "go-owned": 9,
-   "proved": 38,
-   "unproved": 20,
+   "proved": 39,
+   "unproved": 19,
    "retired": 1
   },
   "size": {
@@ -24,7 +24,7 @@
    "8 finance and money": 22,
    "9 admin and the rest": 10
   },
-  "field_staff_left": 108
+  "field_staff_left": 107
  },
  "saves": [
   {
@@ -5604,8 +5604,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "unproved",
-   "evidence": "internal/support",
+   "go": "proved",
+   "evidence": "Report a Problem, through Go's support API (doc 189)",
    "templates": [
     "pages/admin_ops/report_problem.html"
    ]

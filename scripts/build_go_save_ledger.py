@@ -211,7 +211,10 @@ GO_STATUS: dict[str, tuple[str, str]] = {
     ),
     # Go has code naming these paths, never compared with Django.
     "/admin-panel/staff-setup-queue": (UNPROVED, "Go names the path"),
-    "/support": (UNPROVED, "internal/support"),
+    "/support": (
+        PROVED,
+        "Report a Problem, through Go's support API (doc 189)",
+    ),
     "/cluster-oversight/scoring": (UNPROVED, "Go names the path"),
     "/debriefs/submit": (PROVED, "Daily Debrief submit, inline page form (doc 189)"),
     "/messages/new/": (UNPROVED, "Go names the path"),

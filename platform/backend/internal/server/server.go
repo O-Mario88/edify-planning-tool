@@ -444,7 +444,9 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	}
 	mux.Handle(screensv1connect.NewNotificationCenterServiceHandler(notificationcenter.NewHandler(notificationcenter.NewService(pool, notificationcenter.EmailConfigured(nil)), logger), options...))
 	notificationcenter.RegisterPreferencesHTTP(mux, authenticator, pool, time.Now)
-	support.NewService(pool, notificationcenter.NewWriter(pool, time.Now), time.Now).Register(mux, authenticator)
+	support.NewService(pool, notificationcenter.NewWriter(pool, time.Now), time.Now).
+		WithNotices(plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, realtimeBroker, logger).
+		Register(mux, authenticator)
 	messaging.NewNativeStore(pool, notificationcenter.NewWriter(pool, time.Now), time.Now).RegisterHTTP(mux, authenticator)
 	activities.NewBulkHTTPHandler(visitSave(cfg, pool, logger, realtimeBroker)).Register(mux, authenticator)
 	// Settings (/settings): the reader's own account, read through the

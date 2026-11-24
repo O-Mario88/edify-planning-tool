@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -11,9 +12,11 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/notificationcenter"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/trace"
 )
 
 // Authenticator authenticates a Bearer Authorization header into a Principal.
@@ -76,6 +79,65 @@ type Service struct {
 	pool   *pgxpool.Pool
 	writer *notificationcenter.Writer
 	now    func() time.Time
+	// The admins' notice goes through WorkflowNotificationService.trigger's
+	// port (activities.SendNotices) once these are set.
+	push   activities.NoticePush
+	live   activities.NoticePublisher
+	logger *slog.Logger
+}
+
+// WithNotices sends the admins' notice as the existing service does.
+func (s *Service) WithNotices(push activities.NoticePush, live activities.NoticePublisher, logger *slog.Logger) *Service {
+	s.push, s.live, s.logger = push, live, logger
+	return s
+}
+
+// ticketCategoryLabels are TicketCategory's labels.
+var ticketCategoryLabels = map[string]string{
+	"cannot_log_in": "Cannot Log In", "forgot_password": "Forgot Password", "account_locked": "Account Locked",
+	"cannot_access_page": "Cannot Access Page", "incorrect_permission": "Incorrect Permission",
+	"missing_data": "Missing School / Activity / Budget", "upload_problem": "Upload Problem", "dead_button": "Dead Button",
+	"broken_link": "Broken Link", "slow_page": "Slow Page", "frozen_screen": "Frozen Screen",
+	"incorrect_data": "Incorrect Data or Status", "notification_problem": "Notification Problem",
+	"message_problem": "Message Problem", "other": "Other",
+}
+
+// withRequestContext adds the request's browser and id where the caller sent
+// none, cut to the ticket's column lengths as the view cuts them.
+func withRequestContext(given map[string]string, browser, requestID string) map[string]string {
+	out := map[string]string{}
+	for k, v := range given {
+		out[k] = v
+	}
+	if out["browser"] == "" {
+		out["browser"] = cut(browser, 255)
+	}
+	if out["request_id"] == "" {
+		out["request_id"] = cut(requestID, 64)
+	}
+	return out
+}
+
+func cut(v string, n int) string {
+	if r := []rune(v); len(r) > n {
+		return string(r[:n])
+	}
+	return v
+}
+
+// ticketNoticeBody is SupportTicketService.create's notice body.
+func ticketNoticeBody(role, category, route string) string {
+	label, ok := ticketCategoryLabels[category]
+	if !ok {
+		label = category
+	}
+	if role == "" {
+		role = "A user"
+	}
+	if route == "" {
+		route = "an unknown page"
+	}
+	return fmt.Sprintf("%s reported %s on %s.", role, label, route)
 }
 
 // NewService constructs a native Go Support Ticket service.
@@ -128,6 +190,10 @@ SELECT ticket_id, reference FROM gateway_support.create_ticket(
 	).Scan(&id, &ref); err != nil {
 		return Ticket{}, err
 	}
+	cover, err := audit.CoverageStamp(ctx, tx, p.UserID, now)
+	if err != nil {
+		return Ticket{}, err
+	}
 	if _, err := audit.Append(ctx, tx, audit.Entry{
 		Action:      "admin_ops.ticket.submitted",
 		SubjectKind: audit.Text("support_ticket"),
@@ -135,11 +201,7 @@ SELECT ticket_id, reference FROM gateway_support.create_ticket(
 		ActorID:     audit.Text(p.UserID),
 		ActorRole:   audit.Text(p.ActiveRole),
 		Success:     true,
-		Payload: map[string]any{
-			"reference": ref,
-			"category":  cat,
-			"urgency":   urg,
-		},
+		Payload:     audit.WithStamps(map[string]any{"reference": ref, "category": cat}, cover),
 	}, now); err != nil {
 		return Ticket{}, err
 	}
@@ -147,45 +209,8 @@ SELECT ticket_id, reference FROM gateway_support.create_ticket(
 		return Ticket{}, err
 	}
 
-	// Notify active Admins natively (matches SupportTicketService.create).
-	if s.writer != nil {
-		prio := "high"
-		if urg == "critical" {
-			prio = "urgent"
-		}
-		rows, err := s.pool.Query(ctx, `SELECT id FROM "user"
-WHERE deleted_at IS NULL AND is_active = true AND (active_role = 'Admin' OR 'Admin' = ANY(roles))`)
-		if err == nil {
-			var adminIDs []string
-			for rows.Next() {
-				var aid string
-				if scanErr := rows.Scan(&aid); scanErr == nil && aid != "" {
-					adminIDs = append(adminIDs, aid)
-				}
-			}
-			rows.Close()
-			routeLabel := in.Context["route"]
-			if routeLabel == "" {
-				routeLabel = "the app"
-			}
-			for _, aid := range adminIDs {
-				_, _ = s.writer.Deliver(ctx, notificationcenter.Delivery{
-					RecipientID:     aid,
-					SenderID:        p.UserID,
-					Title:           fmt.Sprintf("Support ticket %s: %s", ref, title),
-					Body:            fmt.Sprintf("%s reported %s on %s.", p.ActiveRole, cat, routeLabel),
-					Category:        "support",
-					ContextType:     "support_ticket",
-					ContextID:       id,
-					TargetRoute:     "/support",
-					ActionLabel:     "Review ticket",
-					ActionRequired:  true,
-					Priority:        prio,
-					SourceEventType: "admin_ops.ticket.created",
-					SourceEventID:   id,
-				})
-			}
-		}
+	if s.push != nil {
+		s.notifyAdmins(ctx, p, id, ref, title, cat, urg, in.Context["route"], now)
 	}
 
 	return Ticket{
@@ -193,6 +218,44 @@ WHERE deleted_at IS NULL AND is_active = true AND (active_role = 'Admin' OR 'Adm
 		Urgency: urg, Status: "submitted", ReporterID: p.UserID, ReporterRole: p.ActiveRole,
 		Route: in.Context["route"], CreatedAt: now,
 	}, nil
+}
+
+// notifyAdmins is _notify_admins: every active Admin told, through the
+// trigger's port, with the event's own link (NotificationLinkResolver:
+// /admin-ops/support, "Triage Ticket"). Information only: a failure is logged.
+func (s *Service) notifyAdmins(ctx context.Context, p auth.Principal, id, ref, title, category, urgency, route string, now time.Time) {
+	rows, err := s.pool.Query(ctx, `SELECT id FROM "user" WHERE active_role = 'Admin' AND is_active AND deleted_at IS NULL`)
+	if err != nil {
+		s.warn("reading the admins", id, err)
+		return
+	}
+	admins, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil || len(admins) == 0 {
+		if err != nil {
+			s.warn("reading the admins", id, err)
+		}
+		return
+	}
+	priority := "high"
+	if urgency == "critical" {
+		priority = "urgent"
+	}
+	to := make([]activities.NoticeTo, 0, len(admins))
+	for _, admin := range admins {
+		to = append(to, activities.NoticeTo{UserID: admin, Route: "/admin-ops/support", Label: "Triage Ticket"})
+	}
+	if err := activities.SendNotices(ctx, s.pool, s.push, s.live, s.logger, now, id, p.UserID, activities.Origin{}, activities.Notice{
+		Title: fmt.Sprintf("Support ticket %s: %s", ref, title), Body: ticketNoticeBody(p.ActiveRole, category, route),
+		Event: "admin_ops.ticket.created", Category: "support", ContextType: "support_ticket", Priority: priority,
+	}, to); err != nil {
+		s.warn("telling the admins", id, err)
+	}
+}
+
+func (s *Service) warn(what, ticket string, err error) {
+	if s.logger != nil {
+		s.logger.Warn("support: "+what+" failed", "ticket", ticket, "err", err)
+	}
 }
 
 // List returns the caller's own tickets (or all recent tickets when Admin).
@@ -323,6 +386,9 @@ func (s *Service) Register(mux *http.ServeMux, auther Authenticator) {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid JSON body."})
 			return
 		}
+		// report_problem_view's own context: the browser and the request id
+		// (the reporter's route, page and record come in the body).
+		in.Context = withRequestContext(in.Context, r.Header.Get("User-Agent"), trace.FromContext(r.Context()).RequestID)
 		ticket, err := s.Create(r.Context(), p, in)
 		if err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
