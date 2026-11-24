@@ -4,8 +4,8 @@
   "controls": 483,
   "controls_without_a_destination": 92,
   "go": {
-   "django": 184,
-   "proved": 20,
+   "django": 183,
+   "proved": 21,
    "unproved": 21
   },
   "size": {
@@ -22,7 +22,7 @@
    "8 finance and money": 22,
    "9 admin and the rest": 10
   },
-  "field_staff_left": 136
+  "field_staff_left": 135
  },
  "saves": [
   {
@@ -3156,8 +3156,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "django",
-   "evidence": "",
+   "go": "proved",
+   "evidence": "officer's reimbursement receipt (doc 189)",
    "templates": [
     "partials/my_plan/confirm_reimbursement_receipt_drawer.html"
    ]

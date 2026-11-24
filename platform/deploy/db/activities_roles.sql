@@ -181,6 +181,9 @@ GRANT SELECT (id, total_amount, status, period_key, submitted_by_user_id, review
 -- An owner's weekly request is routed by the role stamped on it
 -- (weekly_service._owner_role); gateway_day_money.send_week writes it.
 GRANT SELECT (responsible_role) ON weekly_fund_request TO edify_activities_rw;
+-- An officer's accountability and reimbursement drawers read their advances.
+GRANT SELECT (activity_id, amount, disbursed_amount, responsible_user_id, reimbursed_amount, reimburse_reference,
+              reimbursed_at) ON advance_request TO edify_activities_rw;
 GRANT INSERT (id, created_at, updated_at, assigning_staff_id, focus_intervention, expected_activity_type, status, notes,
               partner_id, school_id, support_type, training_number, visit_number, purpose_of_visit, assignment_mode,
               catalogue_item_id, catalogue_snapshot, override_reason, recommendation_reason, source_ssa_id,

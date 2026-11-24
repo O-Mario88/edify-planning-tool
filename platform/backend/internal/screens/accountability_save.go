@@ -130,3 +130,93 @@ func (s *Service) accountabilityInGo(ctx context.Context, message *screensv1.Sav
 	}
 	return &screensv1.SaveDrawerResponse{Saved: true, Message: collapse(saved.Message)}, true, nil
 }
+
+// reimbursementPath is my_plan_views.confirm_reimbursement_receipt_action's route.
+var reimbursementPath = regexp.MustCompile(`^/my-plan/([A-Za-z0-9]{1,30})/confirm-reimbursement-receipt/?$`)
+
+// Reimburser is the Go save behind Confirm reimbursement receipt.
+type Reimburser interface {
+	ReimbursementDrawer(ctx context.Context, p auth.Principal, activityID string) (activities.ReimbursementView, error)
+	ConfirmReimbursement(ctx context.Context, p auth.Principal, activityID, amount string, sent bool, origin activities.Origin) (activities.Answer, error)
+}
+
+// WithReimbursement makes the reimbursement receipt drawer Go's, with Django absent.
+func (s *Service) WithReimbursement(r Reimburser) *Service {
+	s.reimburser = r
+	return s
+}
+
+// reimbursementDrawerInGo is partials/my_plan/confirm_reimbursement_receipt_drawer.html.
+func (s *Service) reimbursementDrawerInGo(ctx context.Context, p auth.Principal, path string) (*screensv1.GetDrawerResponse, bool, error) {
+	m := reimbursementPath.FindStringSubmatch(path)
+	if m == nil || s.reimburser == nil {
+		return nil, false, nil
+	}
+	view, err := s.reimburser.ReimbursementDrawer(ctx, p, m[1])
+	var refusal *activities.Refusal
+	switch {
+	case errors.Is(err, activities.ErrHandOn):
+		return nil, false, nil
+	case errors.As(err, &refusal):
+		return nil, true, apierr.New(ctx, connect.CodeNotFound, apierr.ReasonNotFound, refusal.Message)
+	case err != nil:
+		return nil, true, apierr.Internal(ctx, s.logger, err)
+	}
+	return &screensv1.GetDrawerResponse{Drawer: reimbursementDrawer(view)}, true, nil
+}
+
+func reimbursementDrawer(view activities.ReimbursementView) *screensv1.PageDrawer {
+	title := "Confirm reimbursement receipt"
+	if view.School != "" {
+		title += " for " + view.School
+	}
+	text := func(t string) *screensv1.DrawerItem {
+		return &screensv1.DrawerItem{Kind: &screensv1.DrawerItem_Text{Text: t}}
+	}
+	if !view.Waiting {
+		return &screensv1.PageDrawer{Title: title, CancelLabel: "Cancel",
+			Items: []*screensv1.DrawerItem{text("No disbursed reimbursement is awaiting receipt confirmation on this activity.")}}
+	}
+	reference := view.Reference
+	if reference == "" {
+		reference = "—"
+	}
+	zero := 0.0
+	return &screensv1.PageDrawer{Title: title, HasRequired: true, SubmitLabel: "Confirm receipt", CancelLabel: "Cancel", CanSubmit: true,
+		Items: []*screensv1.DrawerItem{
+			text("Disbursed to you: UGX " + groupedUGX(view.Amount) + " · Reference " + reference),
+			{Kind: &screensv1.DrawerItem_Field{Field: &screensv1.DrawerField{Name: "amount", Label: "Amount received (UGX)", Kind: "number",
+				Required: true, Min: &zero, Value: strconv.FormatInt(view.Amount, 10),
+				Help: "If it does not match, contact the Accountant before confirming."}}},
+		}}
+}
+
+// reimbursementInGo saves the drawer with Django absent.
+func (s *Service) reimbursementInGo(ctx context.Context, message *screensv1.SaveDrawerRequest, from activities.Origin) (
+	*screensv1.SaveDrawerResponse, bool, error,
+) {
+	principal, ok := auth.PrincipalFrom(ctx)
+	if !ok || s.reimburser == nil || s.existingApp != nil {
+		return nil, false, nil
+	}
+	path, _, _ := strings.Cut(message.GetPath(), "?")
+	m := reimbursementPath.FindStringSubmatch(path)
+	if m == nil {
+		return nil, false, nil
+	}
+	amount, sent := message.GetValues()["amount"]
+	saved, err := s.reimburser.ConfirmReimbursement(ctx, principal, m[1], amount, sent, from)
+	var refusal *activities.Refusal
+	switch {
+	case errors.Is(err, activities.ErrHandOn):
+		return nil, false, nil
+	case errors.As(err, &refusal):
+		return &screensv1.SaveDrawerResponse{Saved: false, Error: collapse(refusal.Message)}, true, nil
+	case err != nil:
+		if s.logger != nil {
+			s.logger.ErrorContext(ctx, "the Go reimbursement receipt failed before it was made", slog.String("error", err.Error()))
+		}
+		return nil, true, apierr.New(ctx, connect.CodeUnavailable, apierr.ReasonInternal, "This could not be saved.")
+	}
+	return &screensv1.SaveDrawerResponse{Saved: true, Message: collapse(saved.Message)}, true, nil
+}

@@ -90,6 +90,8 @@ type Service struct {
 	weekOwner WeekOwner
 	// accountant is the officer's accountability drawer, with Django absent.
 	accountant Accountant
+	// reimburser is Confirm reimbursement receipt, with Django absent.
+	reimburser Reimburser
 	pairsInGo  bool // schedule_training_pair: 32's In-school Training
 	// groupTrainings is nil unless EDIFY_GO_SAVES names schedule_group_training (38).
 	groupTrainings GroupTrainingSaver

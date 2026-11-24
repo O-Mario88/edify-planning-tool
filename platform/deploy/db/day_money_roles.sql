@@ -44,6 +44,9 @@ GRANT SELECT (id, activity_id, is_current, operational_cost, cost_status, approv
   ON activity_cost_snapshot TO edify_day_money_owner;
 GRANT UPDATE (amount_disbursed, actual_accounted_spend, unused_balance, reimbursement_amount, approved_operating_limit,
               cost_status, updated_at) ON activity_cost_snapshot TO edify_day_money_owner;
+-- advance_service._settle_activity_accounts: an activity whose money is all
+-- accounted is accountant_cleared.
+GRANT UPDATE (payment_status, updated_at) ON activity TO edify_day_money_owner;
 
 CREATE SCHEMA IF NOT EXISTS gateway_day_money AUTHORIZATION edify_day_money_owner;
 REVOKE ALL ON SCHEMA gateway_day_money FROM PUBLIC;
@@ -837,6 +840,66 @@ BEGIN
 END
 $fn$;
 
+-- advance_service._settle_activity_accounts.
+CREATE OR REPLACE FUNCTION gateway_day_money.settle_accounts(p_activity varchar, p_now timestamptz) RETURNS void
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM public.activity a WHERE a.id = p_activity AND a.delivery_type IS DISTINCT FROM 'partner') THEN
+    RETURN;
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.advance_request r WHERE r.activity_id = p_activity
+              AND r.status IN ('disbursed', 'accountability_pl_pending', 'accountability_pending',
+                               'reimbursement_submitted', 'reimbursement_disbursed')) THEN
+    RETURN;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.advance_request r WHERE r.activity_id = p_activity
+                  AND r.status IN ('accounted', 'reimbursed')) THEN
+    RETURN;
+  END IF;
+  UPDATE public.activity SET payment_status = 'accountant_cleared', updated_at = p_now WHERE id = p_activity;
+END
+$fn$;
+
+-- advance_service.confirm_reimbursement_receipt. p_amount NULL is the
+-- reimbursed amount. Answers 'gone', 'not_owner', 'nothing', 'unreconciled'
+-- or 'ok'.
+CREATE OR REPLACE FUNCTION gateway_day_money.confirm_reimbursement(
+  p_advance varchar, p_user varchar, p_role varchar, p_amount bigint, p_now timestamptz) RETURNS varchar
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  r record;
+  v_expected bigint;
+BEGIN
+  SELECT a.id, a.status, a.responsible_user_id, a.activity_id, a.disbursed_amount, a.amount, a.advance_type,
+         a.returned_amount, a.reimbursed_amount, a.accounted_amount
+    INTO r FROM public.advance_request a WHERE a.id = p_advance FOR UPDATE;
+  IF NOT FOUND THEN
+    RETURN 'gone';
+  END IF;
+  IF COALESCE(r.responsible_user_id, '') <> '' AND r.responsible_user_id <> p_user
+     AND p_role NOT IN ('CountryDirector', 'Admin') THEN
+    RETURN 'not_owner';
+  END IF;
+  IF r.status <> 'reimbursement_disbursed' THEN
+    RETURN 'nothing';
+  END IF;
+  v_expected := CASE WHEN r.disbursed_amount IS NOT NULL THEN r.disbursed_amount
+                     WHEN r.advance_type = 'self_funded' THEN 0
+                     ELSE COALESCE(r.amount, 0) END;
+  IF COALESCE(r.accounted_amount, 0) <> v_expected - COALESCE(r.returned_amount, 0) + COALESCE(r.reimbursed_amount, 0) THEN
+    RETURN 'unreconciled';
+  END IF;
+  UPDATE public.advance_request
+     SET reimbursement_receipt_confirmed_at = p_now,
+         reimbursement_receipt_confirmed_amount = COALESCE(p_amount, r.reimbursed_amount, 0),
+         status = 'reimbursed', updated_at = p_now
+   WHERE id = p_advance;
+  PERFORM gateway_day_money.project_actuals(ARRAY[r.activity_id]::varchar[], p_now);
+  PERFORM gateway_day_money.settle_accounts(r.activity_id, p_now);
+  RETURN 'ok';
+END
+$fn$;
+
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA gateway_day_money FROM PUBLIC;
 RESET ROLE;
 
@@ -856,5 +919,6 @@ GRANT EXECUTE ON FUNCTION
   gateway_day_money.send_week(varchar, varchar, varchar, varchar, varchar, varchar, timestamptz),
   gateway_day_money.skip_week(varchar, varchar, timestamptz),
   gateway_day_money.confirm_week_receipt(varchar, varchar, boolean, timestamptz),
-  gateway_day_money.account_advance(varchar, varchar, varchar, varchar, bigint, bigint, text, timestamptz)
+  gateway_day_money.account_advance(varchar, varchar, varchar, varchar, bigint, bigint, text, timestamptz),
+  gateway_day_money.confirm_reimbursement(varchar, varchar, varchar, bigint, timestamptz)
 TO edify_activities_rw;
