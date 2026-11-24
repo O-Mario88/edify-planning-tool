@@ -117,16 +117,28 @@ func (s *Service) Enrol(ctx context.Context, p auth.Principal, schoolPK string, 
 		return EnrolAnswer{Error: fmt.Sprintf("'%s' is %s — no new schools can be assigned to it.", pr.name,
 			strings.ToLower(statusLabel(pr.status)))}, nil
 	}
+	answer, holder, err := s.assignSchool(ctx, p, pr, sc, f)
+	if err != nil || !answer.Saved {
+		return answer, err
+	}
+	s.afterEnrol(ctx, p, pr, sc, holder, strings.TrimSpace(f.CoordinatorID), f, origin)
+	return EnrolAnswer{Saved: true, Message: sc.name + " assigned to " + pr.name + "."}, nil
+}
+
+// assignSchool is apps.projects.services.assign_school from its school
+// checks on: who may add it, the matched need, whose place it takes, the
+// baseline and the enrolment's writes. Saved, or the refusal as an Error.
+func (s *Service) assignSchool(ctx context.Context, p auth.Principal, pr enrolProject, sc enrolSchool, f EnrolForm) (EnrolAnswer, string, error) {
 	if refusal, err := s.enrolRefusal(ctx, p, pr, sc); err != nil || refusal != "" {
-		return EnrolAnswer{Error: refusal}, err
+		return EnrolAnswer{Error: refusal}, "", err
 	}
 	matched, err := s.matchedNeed(ctx, pr, sc.id)
 	if err != nil {
-		return EnrolAnswer{}, err
+		return EnrolAnswer{}, "", err
 	}
 	holder, err := s.placeHolder(ctx, p, pr.id, sc.id)
 	if err != nil {
-		return EnrolAnswer{}, err
+		return EnrolAnswer{}, "", err
 	}
 	intervention := matched
 	if intervention == "" {
@@ -134,7 +146,7 @@ func (s *Service) Enrol(ctx context.Context, p auth.Principal, schoolPK string, 
 	}
 	baselineRecord, baselineScore, band, classification, err := s.baseline(ctx, sc.id, intervention)
 	if err != nil {
-		return EnrolAnswer{}, err
+		return EnrolAnswer{}, "", err
 	}
 	var start any
 	if d, err := time.Parse(time.DateOnly, strings.TrimSpace(f.StartDate)); err == nil {
@@ -146,7 +158,7 @@ func (s *Service) Enrol(ctx context.Context, p auth.Principal, schoolPK string, 
 	id := cuid.New()
 	tx, err := s.saves.pool.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
 	if err != nil {
-		return EnrolAnswer{}, fmt.Errorf("projectcapacity: opening the enrolment: %w", err)
+		return EnrolAnswer{}, "", fmt.Errorf("projectcapacity: opening the enrolment: %w", err)
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	var answer string
@@ -155,24 +167,23 @@ func (s *Service) Enrol(ctx context.Context, p auth.Principal, schoolPK string, 
 		id, pr.id, sc.id, holder, p.UserID, strings.TrimSpace(f.ProjectType), strings.TrimSpace(f.ParticipationType), start,
 		strings.TrimSpace(f.SupportArea), notes, matched, notes, baselineRecord, baselineScore, band, classification,
 		coordinator, cuid.New(), now).Scan(&answer); err != nil {
-		return EnrolAnswer{}, fmt.Errorf("projectcapacity: enrolling: %w", err)
+		return EnrolAnswer{}, "", fmt.Errorf("projectcapacity: enrolling: %w", err)
 	}
 	switch {
 	case answer == "already":
-		return EnrolAnswer{Error: "School is already assigned to this project."}, nil
+		return EnrolAnswer{Error: "School is already assigned to this project."}, "", nil
 	case answer == "no_allocation":
 		return EnrolAnswer{Error: fmt.Sprintf("You have no school allocation for %s. Ask its Project Coordinator to set one "+
-			"before adding schools.", pr.name)}, nil
+			"before adding schools.", pr.name)}, "", nil
 	case strings.HasPrefix(answer, "full:"):
 		return EnrolAnswer{Error: fmt.Sprintf("Project capacity reached. You have reached your allocation of %s schools for %s. "+
 			"No additional schools can be added unless the Project Coordinator increases your allocation.",
-			strings.TrimPrefix(answer, "full:"), pr.name)}, nil
+			strings.TrimPrefix(answer, "full:"), pr.name)}, "", nil
 	}
 	if err := tx.Commit(ctx); err != nil {
-		return EnrolAnswer{}, fmt.Errorf("projectcapacity: committing the enrolment: %w", err)
+		return EnrolAnswer{}, "", fmt.Errorf("projectcapacity: committing the enrolment: %w", err)
 	}
-	s.afterEnrol(ctx, p, pr, sc, holder, coordinator, f, origin)
-	return EnrolAnswer{Saved: true, Message: sc.name + " assigned to " + pr.name + "."}, nil
+	return EnrolAnswer{Saved: true}, holder, nil
 }
 
 func statusLabel(status string) string {

@@ -4,9 +4,9 @@
   "controls": 483,
   "controls_without_a_destination": 92,
   "go": {
-   "django": 160,
+   "django": 159,
    "go-owned": 9,
-   "proved": 33,
+   "proved": 34,
    "unproved": 22,
    "retired": 1
   },
@@ -24,7 +24,7 @@
    "8 finance and money": 22,
    "9 admin and the rest": 10
   },
-  "field_staff_left": 113
+  "field_staff_left": 112
  },
  "saves": [
   {
@@ -5047,8 +5047,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "django",
-   "evidence": "",
+   "go": "proved",
+   "evidence": "bulk Add to Project: the School Directory dialog and the Core Schools and roster drawer (doc 189)",
    "templates": [
     "pages/schools/index.html",
     "partials/schools/bulk_assign_project_drawer.html"

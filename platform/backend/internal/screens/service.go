@@ -109,8 +109,10 @@ type Service struct {
 	// membership is a cluster's Add Schools, with Django absent.
 	membership ClusterMembership
 	// creator is the Clusters page's Create cluster, with Django absent.
-	creator   ClusterCreator
-	pairsInGo bool // schedule_training_pair: 32's In-school Training
+	creator ClusterCreator
+	// bulkEnroller is bulk Add to Project, with Django absent.
+	bulkEnroller BulkEnroller
+	pairsInGo    bool // schedule_training_pair: 32's In-school Training
 	// groupTrainings is nil unless EDIFY_GO_SAVES names schedule_group_training (38).
 	groupTrainings GroupTrainingSaver
 	// clusterMeetings is nil unless EDIFY_GO_SAVES names schedule_cluster_meeting (49).
@@ -514,6 +516,12 @@ func (s *Service) BulkAssignProject(
 		return nil, err
 	}
 	if p, ok := auth.PrincipalFrom(ctx); ok {
+		if resp, served, err := s.bulkProjectDialogInGo(ctx, p, request); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(resp), nil
+		}
 		if resp, served, err := s.bulkAssignProjectInGo(ctx, p, request.Msg); served {
 			if err != nil {
 				return nil, err

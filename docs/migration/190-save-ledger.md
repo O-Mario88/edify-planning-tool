@@ -6,8 +6,8 @@ hand in that script and changes only with evidence. *Proved* means compared with
 with Django stopped.
 
 - Saves: 225 destinations from 483 save controls.
-- Go: 33 proved, 22 with unproved Go code, 160 still Django's, 1 retired on purpose, 9 made by Go's own services.
-- Field staff can reach 113 saves that are not yet proved in Go.
+- Go: 34 proved, 22 with unproved Go code, 159 still Django's, 1 retired on purpose, 9 made by Go's own services.
+- Field staff can reach 112 saves that are not yet proved in Go.
 - 92 controls post to a destination the inventory cannot read (set by a variable or script); they are listed by template at the end and must be classified by hand.
 
 | Step | Saves |
@@ -49,6 +49,7 @@ with Django stopped.
 | `/planning/visit-requests/<str:activity_id>/<str:decision>` | proved | small | 7 roles | Approve visit; Decline |
 | `/schools/<str:school_id>/assign-to-project` | proved | small | 7 roles | Assign to project |
 | `/schools/<str:school_id>/take` | proved | small | 7 roles | Take {{ school.school_name }} as my school |
+| `/schools/bulk-assign-project` | proved | large | 7 roles | Add to project; Assign project |
 | `/today/snooze` | proved | small | Admin, CCEO, ImpactAssessment, Program Lead, ProjectCoordinator | {{ label }} |
 | `/today/unsnooze` | proved | small | Admin, CCEO, ImpactAssessment, Program Lead, ProjectCoordinator | Undo |
 | `/acting-leadership/<str:assignment_id>/cancel` | go-owned | small | 6 roles | Cancel appointment |
@@ -120,7 +121,6 @@ with Django stopped.
 | `/schools/<str:school_id>/ssa-entry` | django | medium | 7 roles | Save SSA |
 | `/schools/<str:school_id>/transfer-owner` | django | medium | 7 roles | Reassign owner |
 | `/schools/bulk-assign-cluster` | django | small | 7 roles | Assign cluster |
-| `/schools/bulk-assign-project` | django | large | 7 roles | Add to project; Assign project |
 | `/schools/bulk-match-staff` | django | small | 7 roles | Match staff |
 | `/schools/bulk-transfer-owner` | django | medium | 7 roles | Reassign ownership |
 | `/schools/create-drawer` | django | medium | 7 roles | Create school; Save and add SSA score |

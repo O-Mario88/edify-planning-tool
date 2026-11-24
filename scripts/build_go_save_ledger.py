@@ -146,6 +146,10 @@ GO_STATUS: dict[str, tuple[str, str]] = {
         PROVED,
         "a cluster's Add Schools, through the one membership service (doc 189)",
     ),
+    "/schools/bulk-assign-project": (
+        PROVED,
+        "bulk Add to Project: the School Directory dialog and the Core Schools and roster drawer (doc 189)",
+    ),
     "/clusters/create": (
         PROVED,
         "Create cluster, its staff refill and a school from its profile (doc 189)",

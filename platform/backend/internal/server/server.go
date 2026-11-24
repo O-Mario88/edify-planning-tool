@@ -360,8 +360,10 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 					plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, realtimeBroker, logger, time.Now)
 				screenService.WithClusterMembership(membership)
 				screenService.WithClusterCreate(clustercreate.New(pool, membership, logger, time.Now))
-				screenService.WithEnroller(projectcapacity.NewService(pool, time.Now).
-					WithSaves(pool, plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, realtimeBroker, logger))
+				enroller := projectcapacity.NewService(pool, time.Now).
+					WithSaves(pool, plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, realtimeBroker, logger)
+				screenService.WithEnroller(enroller)
+				screenService.WithBulkEnroller(enroller)
 			}
 		}
 		if effectiveSaves.RescheduleVisit {
