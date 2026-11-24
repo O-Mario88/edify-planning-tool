@@ -139,3 +139,63 @@ func TestAnotherDrawerNeverReachesTheCoreVisitSave(t *testing.T) {
 		t.Fatalf("got %+v", saver.got)
 	}
 }
+
+type fakeDecider struct {
+	got    []activities.VisitDecision
+	answer activities.Answer
+	err    error
+}
+
+func (f *fakeDecider) DecideVisitRequest(_ context.Context, _ auth.Principal, d activities.VisitDecision, _ activities.Origin) (activities.Answer, error) {
+	f.got = append(f.got, d)
+	return f.answer, f.err
+}
+
+func decideVisit(service *Service, path string, values map[string]string) (*screensv1.SaveDrawerResponse, error) {
+	answer, err := service.SaveDrawer(personSaving(), connect.NewRequest(&screensv1.SaveDrawerRequest{Path: path, Values: values}))
+	if err != nil {
+		return nil, err
+	}
+	return answer.Msg, nil
+}
+
+func TestTheOwnersDecisionSavesInGoWithoutDjango(t *testing.T) {
+	decider := &fakeDecider{answer: activities.Answer{Message: "Visit to Mpatta declined. The requester has been told."}}
+	service := NewService(nil).WithVisitDecisions(decider)
+
+	answer, err := decideVisit(service, "/planning/visit-requests/a1/decline", map[string]string{"reason": "the school is closed"})
+
+	if err != nil || !answer.GetSaved() || len(decider.got) != 1 {
+		t.Fatalf("answer %v, %v", answer, err)
+	}
+	if got := decider.got[0]; got != (activities.VisitDecision{ActivityID: "a1", Decision: "decline", Note: "the school is closed"}) {
+		t.Fatalf("got %+v", got)
+	}
+}
+
+func TestTheOwnersDecisionAnswersARefusalInItsWords(t *testing.T) {
+	decider := &fakeDecider{err: &activities.Refusal{Message: "Give the requester a reason for declining."}}
+	answer, err := decideVisit(NewService(nil).WithVisitDecisions(decider), "/planning/visit-requests/a1/decline", nil)
+	if err != nil || answer.GetSaved() || answer.GetError() != "Give the requester a reason for declining." {
+		t.Fatalf("answer %v, %v", answer, err)
+	}
+}
+
+func TestTheOwnersDecisionStaysWithDjangoWhileDjangoIsThere(t *testing.T) {
+	decider := &fakeDecider{}
+	fetcher := &formFetcher{}
+	if _, err := decideVisit(NewService(fetcher).WithVisitDecisions(decider), "/planning/visit-requests/a1/approve", nil); err != nil {
+		t.Fatal(err)
+	}
+	if len(decider.got) != 0 || len(fetcher.paths) != 1 {
+		t.Fatalf("Go decided %d, Django was asked %v", len(decider.got), fetcher.paths)
+	}
+}
+
+func TestAnUnknownDecisionIsNotGos(t *testing.T) {
+	decider := &fakeDecider{}
+	_, _ = decideVisit(NewService(&formFetcher{}).WithVisitDecisions(decider), "/planning/visit-requests/a1/maybe", nil)
+	if len(decider.got) != 0 {
+		t.Fatalf("got %+v", decider.got)
+	}
+}

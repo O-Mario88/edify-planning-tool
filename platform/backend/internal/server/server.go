@@ -334,7 +334,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		effectiveSaves.ScheduleGroupTraining || effectiveSaves.ScheduleClusterMeeting || effectiveSaves.CompleteVisit {
 		save := visitSave(cfg, pool, logger, realtimeBroker)
 		if effectiveSaves.ScheduleVisit {
-			screenService.WithVisitSave(save, logger).WithCoreVisitSave(save, logger)
+			screenService.WithVisitSave(save, logger).WithCoreVisitSave(save, logger).WithVisitDecisions(save)
 		}
 		if effectiveSaves.RescheduleVisit {
 			screenService.WithMoveSave(save, logger)

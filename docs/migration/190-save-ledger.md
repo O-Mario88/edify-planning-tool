@@ -6,8 +6,8 @@ hand in that script and changes only with evidence. *Proved* means compared with
 with Django stopped.
 
 - Saves: 225 destinations from 483 save controls.
-- Go: 11 proved, 21 with unproved Go code, 193 still Django's.
-- Field staff can reach 145 saves that are not yet proved in Go.
+- Go: 12 proved, 21 with unproved Go code, 192 still Django's.
+- Field staff can reach 144 saves that are not yet proved in Go.
 - 92 controls post to a destination the inventory cannot read (set by a variable or script); they are listed by template at the end and must be classified by hand.
 
 | Step | Saves |
@@ -32,6 +32,7 @@ with Django stopped.
 | `/my-plan/<str:activity_id>/complete` | proved | large | 9 roles | Submit training + visit Submit completion |
 | `/my-plan/<str:activity_id>/edit` | proved | medium | 9 roles | Save changes |
 | `/planning/schedule-action` | proved | large | 7 roles | Confirm & Schedule Activity; Schedule meeting Schedule training |
+| `/planning/visit-requests/<str:activity_id>/<str:decision>` | proved | small | 7 roles | Approve visit; Decline |
 | `/today/snooze` | proved | small | Admin, CCEO, ImpactAssessment, Program Lead, ProjectCoordinator | {{ label }} |
 | `/today/unsnooze` | proved | small | Admin, CCEO, ImpactAssessment, Program Lead, ProjectCoordinator | Undo |
 | `/acting-leadership/<str:assignment_id>/cancel` | django | small | 6 roles | Cancel appointment |
@@ -97,7 +98,6 @@ with Django stopped.
 | `/planning/bulk-action` | django | large | 7 roles | Assign {{ assignable|length }} school{{ assignable|length|pluralize }}; Export Selected |
 | `/planning/bulk-schedule` | django | medium | 7 roles | Schedule {{ schools|length }} school{{ schools|length|pluralize }} |
 | `/planning/undo` | django | small | 7 roles | Undo; Undo: {{ change.summary }} |
-| `/planning/visit-requests/<str:activity_id>/<str:decision>` | django | small | 7 roles | Approve visit; Decline |
 | `/priorities/ssa-mapping/<str:item_id>/save` | django | medium | 6 roles | Save draft; Submit for review |
 | `/projects/<str:project_id>/delete` | django | medium | 6 roles | Delete Project |
 | `/projects/<str:project_id>/edit` | django | medium | 6 roles | Save changes |

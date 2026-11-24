@@ -168,6 +168,10 @@ GRANT UPDATE (status, activity_id, scheduled_for, scheduled_month, scheduled_wee
 -- the slot's partner, and what decides whether the partner may take it.
 GRANT UPDATE (assigned_partner_id, assigned_partner_name) ON core_activity_slot TO edify_activities_rw;
 GRANT SELECT (activity_type, weight_hundredths, version, active) ON activity_workload_weight TO edify_activities_rw;
+-- A school owner decides on a visit request: the decision's own columns, and
+-- a declined Core visit's slot handed back whole.
+GRANT UPDATE (owner_decided_at, owner_decided_by, owner_decision_note) ON activity TO edify_activities_rw;
+GRANT UPDATE (assigned_staff_name) ON core_activity_slot TO edify_activities_rw;
 -- A monthly request carried along with a planner's change is told to its people.
 GRANT SELECT (id, total_amount, status, period_key, submitted_by_user_id, reviewed_by_user_id)
   ON fund_request TO edify_activities_rw;

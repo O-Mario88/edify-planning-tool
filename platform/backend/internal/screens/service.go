@@ -82,7 +82,9 @@ type Service struct {
 	visits      VisitSaver     // nil unless EDIFY_GO_SAVES names schedule_visit or schedule_training_pair
 	visitsInGo  bool           // schedule_visit: 27.3's visits
 	coreVisits  CoreVisitSaver // the Core Schools visit form, with Django absent
-	pairsInGo   bool           // schedule_training_pair: 32's In-school Training
+	// visitDecisions is a school owner's decision on a visit request, with Django absent.
+	visitDecisions VisitDecider
+	pairsInGo      bool // schedule_training_pair: 32's In-school Training
 	// groupTrainings is nil unless EDIFY_GO_SAVES names schedule_group_training (38).
 	groupTrainings GroupTrainingSaver
 	// clusterMeetings is nil unless EDIFY_GO_SAVES names schedule_cluster_meeting (49).
