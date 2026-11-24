@@ -292,7 +292,7 @@ BEGIN
 END
 $fn$;
 REVOKE ALL ON FUNCTION gateway_completion.record_attendance(varchar, integer, integer, timestamptz) FROM PUBLIC;
--- A staff cluster meeting's completion (my_plan_views.complete_activity_action
+-- A staff cluster meeting's or group training's completion (my_plan_views.complete_activity_action
 -- → services.start_completion and services.complete) with no visiting school
 -- on its register: started if it was not, its Training ID reserved, the
 -- register mirrored (_sync_cluster_attendance with release_absent: a ticked
@@ -321,7 +321,8 @@ BEGIN
   SELECT a.status, a.delivery_type, a.activity_type, a.cluster_id, a.deleted_at,
          a.teachers_per_school, a.leaders_per_school, a.other_per_school
     INTO work FROM public.activity a WHERE a.id = target FOR UPDATE;
-  IF NOT FOUND OR work.delivery_type IS DISTINCT FROM 'staff' OR work.activity_type IS DISTINCT FROM 'cluster_meeting'
+  IF NOT FOUND OR work.delivery_type IS DISTINCT FROM 'staff'
+     OR NOT (work.activity_type = ANY (ARRAY['cluster_meeting', 'cluster_training']::varchar[]))
      OR work.cluster_id IS NULL OR work.deleted_at IS NOT NULL
      OR NOT (work.status = ANY (ARRAY['completion_started', 'scheduled', 'in_progress', 'partner_scheduled',
                                       'assigned_to_partner', 'rescheduled']::varchar[])) THEN

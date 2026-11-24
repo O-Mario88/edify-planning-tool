@@ -60,6 +60,16 @@ func (s *Service) CompleteDrawer(ctx context.Context, p auth.Principal, id strin
 		return CompleteFacts{}, err
 	}
 	if m != nil {
+		if m.kind == clusterTrainingType {
+			var core bool
+			if err := s.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM school WHERE cluster_id = $1 AND deleted_at IS NULL
+  AND school_type = $2)`, m.clusterID, coreSchoolType).Scan(&core); err != nil {
+				return CompleteFacts{}, fmt.Errorf("activities: reading the cluster's Core schools: %w", err)
+			}
+			if core {
+				return CompleteFacts{}, handOn("a group training at a cluster with a Core school")
+			}
+		}
 		return s.meetingFacts(ctx, m)
 	}
 	if err := s.visitDrawerInCase(ctx, p, id); err != nil {

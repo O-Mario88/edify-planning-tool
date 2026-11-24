@@ -32,6 +32,7 @@ import (
 
 const (
 	clusterMeetingType      = "cluster_meeting"
+	clusterTrainingType     = "cluster_training"
 	trainingAttendanceAsked = "Training completion requires attendance (teachers and/or school leaders)"
 	trainingFormsRefusal    = "Enter the Salesforce ID as TS-…, or the record's own Salesforce ID."
 	absentReleasedAction    = "activity.absent_schools_released"
@@ -55,9 +56,13 @@ var meetingHandedOnFields = []string{"training_salesforce_id", "feedback_finding
 // under as a training (sf_kind_for_activity), "" being none recorded.
 var meetingRecordTypes = []string{"", "TRAINING"}
 
-// completedMeeting is the meeting as its completion reads it.
+// completedSessionTypes are the cluster sessions Go completes: a meeting,
+// and a group training no Core school takes a place at.
+var completedSessionTypes = []string{clusterMeetingType, clusterTrainingType}
+
+// completedMeeting is the session as its completion reads it.
 type completedMeeting struct {
-	id, status, clusterID, responsible  string
+	id, kind, status, clusterID, responsible string
 	verification, recordType, reference string
 	planned                             *time.Time
 	other                               bool
@@ -67,7 +72,7 @@ func readCompletedMeeting(ctx context.Context, q Querier, id string) (*completed
 	var m completedMeeting
 	var responsible, verification, recordType, reference *string
 	err := q.QueryRow(ctx, `
-SELECT a.id, a.status, a.cluster_id, a.responsible_staff_id, a.planned_date, a.ia_verification_status,
+SELECT a.id, a.activity_type, a.status, a.cluster_id, a.responsible_staff_id, a.planned_date, a.ia_verification_status,
        a.salesforce_record_type_snapshot, a.salesforce_activity_id,
        (a.school_id IS NOT NULL OR a.project_id IS NOT NULL OR a.assigned_partner_id IS NOT NULL
         OR a.delivery_type IS DISTINCT FROM 'staff' OR a.paired_school_visit_id IS NOT NULL
@@ -77,8 +82,8 @@ SELECT a.id, a.status, a.cluster_id, a.responsible_staff_id, a.planned_date, a.i
         -- it back on its save (cluster_credit.credit_cluster_session).
         OR EXISTS (SELECT 1 FROM core_activity_slot cs WHERE cs.activity_id = a.id))
 FROM activity a
-WHERE a.id = $1 AND a.deleted_at IS NULL AND a.activity_type = $2 AND a.cluster_id IS NOT NULL`,
-		id, clusterMeetingType).Scan(&m.id, &m.status, &m.clusterID, &responsible, &m.planned, &verification,
+WHERE a.id = $1 AND a.deleted_at IS NULL AND a.activity_type = ANY($2) AND a.cluster_id IS NOT NULL`,
+		id, completedSessionTypes).Scan(&m.id, &m.kind, &m.status, &m.clusterID, &responsible, &m.planned, &verification,
 		&recordType, &reference, &m.other)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
@@ -150,11 +155,16 @@ func (s *Service) meetingInCase(ctx context.Context, p auth.Principal, id string
 func (s *Service) completeMeeting(ctx context.Context, p auth.Principal, m *completedMeeting, form url.Values, origin Origin) (CompleteAnswer, error) {
 	pl := &completionPlan{
 		p: p, origin: origin, now: s.now(), sessions: true,
-		a: completedVisit{id: m.id, activityType: clusterMeetingType, status: m.status, responsible: m.responsible,
+		a: completedVisit{id: m.id, activityType: m.kind, status: m.status, responsible: m.responsible,
 			plannedDate: *m.planned},
 	}
 	if err := s.readMeetingForm(pl, form); err != nil {
 		return CompleteAnswer{}, err
+	}
+	if m.kind == clusterTrainingType {
+		if err := s.noCoreSchoolCredited(ctx, m, pl.attended); err != nil {
+			return CompleteAnswer{}, err
+		}
 	}
 	if !sameDay(pl.delivered, pl.a.plannedDate) {
 		var err error
@@ -315,6 +325,25 @@ func (s *Service) appendReleasedRow(ctx context.Context, tx pgx.Tx, pl *completi
 		CorrelationID: nilIfEmpty(pl.origin.CorrelationID),
 	}, s.now()); err != nil {
 		return fmt.Errorf("activities: writing the release's audit row: %w", err)
+	}
+	return nil
+}
+
+// noCoreSchoolCredited hands on a group training whose register would give
+// a Core school a training slot (cluster_credit.credit_cluster_session, run
+// on the session's save): a Core member invited to it or ticked as attending.
+// Go's group training refuses to invite one, so only an older session meets it.
+func (s *Service) noCoreSchoolCredited(ctx context.Context, m *completedMeeting, attended []string) error {
+	var core bool
+	if err := s.db.QueryRow(ctx, `
+SELECT EXISTS (SELECT 1 FROM school s WHERE s.cluster_id = $1 AND s.deleted_at IS NULL AND s.school_type = $2
+  AND (s.id = ANY($3) OR EXISTS (SELECT 1 FROM cluster_activity_attendance x
+                                  WHERE x.activity_id = $4 AND x.school_id = s.id AND x.invited)))`,
+		m.clusterID, coreSchoolType, attended, m.id).Scan(&core); err != nil {
+		return fmt.Errorf("activities: reading the training's Core schools: %w", err)
+	}
+	if core {
+		return handOn("a group training a Core school takes a place at")
 	}
 	return nil
 }
