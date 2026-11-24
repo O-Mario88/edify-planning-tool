@@ -105,14 +105,6 @@ func (s *Service) SavePlanningDrawer(
 		}
 		return connect.NewResponse(answer), nil
 	}
-	if p, ok := auth.PrincipalFrom(ctx); ok {
-		if answer, served, err := s.saveAssignPlanningInGo(ctx, p, message); served {
-			if err != nil {
-				return nil, err
-			}
-			return connect.NewResponse(answer), nil
-		}
-	}
 	return send[screensv1.SavePlanningDrawerResponse](ctx, s, schoolPath(message.GetSchoolId(), "planning/"+message.GetKind()), message)
 }
 
