@@ -4,9 +4,9 @@
   "controls": 483,
   "controls_without_a_destination": 92,
   "go": {
-   "django": 158,
+   "django": 157,
    "go-owned": 9,
-   "proved": 35,
+   "proved": 36,
    "unproved": 22,
    "retired": 1
   },
@@ -24,7 +24,7 @@
    "8 finance and money": 22,
    "9 admin and the rest": 10
   },
-  "field_staff_left": 111
+  "field_staff_left": 110
  },
  "saves": [
   {
@@ -5020,8 +5020,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "django",
-   "evidence": "",
+   "go": "proved",
+   "evidence": "the School Directory's bulk Assign cluster, through the membership service (doc 189)",
    "templates": [
     "pages/schools/index.html"
    ]

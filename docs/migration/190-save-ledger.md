@@ -6,8 +6,8 @@ hand in that script and changes only with evidence. *Proved* means compared with
 with Django stopped.
 
 - Saves: 225 destinations from 483 save controls.
-- Go: 35 proved, 22 with unproved Go code, 158 still Django's, 1 retired on purpose, 9 made by Go's own services.
-- Field staff can reach 111 saves that are not yet proved in Go.
+- Go: 36 proved, 22 with unproved Go code, 157 still Django's, 1 retired on purpose, 9 made by Go's own services.
+- Field staff can reach 110 saves that are not yet proved in Go.
 - 92 controls post to a destination the inventory cannot read (set by a variable or script); they are listed by template at the end and must be classified by hand.
 
 | Step | Saves |
@@ -50,6 +50,7 @@ with Django stopped.
 | `/schools/<str:school_id>/add-to-cluster` | proved | small | 7 roles | Change cluster Add to cluster |
 | `/schools/<str:school_id>/assign-to-project` | proved | small | 7 roles | Assign to project |
 | `/schools/<str:school_id>/take` | proved | small | 7 roles | Take {{ school.school_name }} as my school |
+| `/schools/bulk-assign-cluster` | proved | small | 7 roles | Assign cluster |
 | `/schools/bulk-assign-project` | proved | large | 7 roles | Add to project; Assign project |
 | `/today/snooze` | proved | small | Admin, CCEO, ImpactAssessment, Program Lead, ProjectCoordinator | {{ label }} |
 | `/today/unsnooze` | proved | small | Admin, CCEO, ImpactAssessment, Program Lead, ProjectCoordinator | Undo |
@@ -120,7 +121,6 @@ with Django stopped.
 | `/schools/<str:school_id>/reopen` | django | small | 7 roles | Reopen school |
 | `/schools/<str:school_id>/ssa-entry` | django | medium | 7 roles | Save SSA |
 | `/schools/<str:school_id>/transfer-owner` | django | medium | 7 roles | Reassign owner |
-| `/schools/bulk-assign-cluster` | django | small | 7 roles | Assign cluster |
 | `/schools/bulk-match-staff` | django | small | 7 roles | Match staff |
 | `/schools/bulk-transfer-owner` | django | medium | 7 roles | Reassign ownership |
 | `/schools/create-drawer` | django | medium | 7 roles | Create school; Save and add SSA score |

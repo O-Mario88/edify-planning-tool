@@ -65,3 +65,14 @@ func TestSchoolFormWords(t *testing.T) {
 		t.Errorf("ineligible = %q", got)
 	}
 }
+
+func TestBulkAssignMessagesAreRunBulks(t *testing.T) {
+	r := bulkAssignMessages(2, "Cluster N", []string{"Alpha", "Beta"})
+	if !r.GetSaved() || r.GetMessage() != "Successfully assigned 2 schools to cluster 'Cluster N'." ||
+		!reflect.DeepEqual(r.GetWarnings(), []string{"Skipped already-clustered schools: Alpha, Beta."}) {
+		t.Errorf("saved = %+v", r)
+	}
+	if r := bulkAssignMessages(0, "Cluster N", nil); r.GetSaved() || r.GetError() != "No unclustered schools were selected." {
+		t.Errorf("none = %+v", r)
+	}
+}

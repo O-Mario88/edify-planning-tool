@@ -512,6 +512,12 @@ func (s *Service) BulkAssignCluster(
 		return nil, err
 	}
 	if p, ok := auth.PrincipalFrom(ctx); ok {
+		if resp, served, err := s.bulkClusterInGo(ctx, p, request); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(resp), nil
+		}
 		if resp, served, err := s.bulkAssignClusterInGo(ctx, p, request.Msg); served {
 			if err != nil {
 				return nil, err

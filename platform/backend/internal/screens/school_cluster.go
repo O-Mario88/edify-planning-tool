@@ -65,3 +65,27 @@ func (s *Service) schoolClusterSaveInGo(ctx context.Context, p auth.Principal, r
 	}
 	return &screensv1.AddToClusterResponse{Result: result}, true, nil
 }
+
+// BulkClusterer saves the School Directory's bulk Assign cluster
+// (internal/clustermembership.Service).
+type BulkClusterer interface {
+	BulkAssign(ctx context.Context, p auth.Principal, schoolIDs []string, clusterID string, origin activities.Origin) (*screensv1.BulkActionResult, error)
+}
+
+// bulkClusterInGo is the directory's bulk Assign cluster with Django absent,
+// before the Batch-22 path (bulkAssignClusterInGo).
+func (s *Service) bulkClusterInGo(ctx context.Context, p auth.Principal, request *connect.Request[screensv1.BulkAssignClusterRequest]) (*screensv1.BulkAssignClusterResponse, bool, error) {
+	c, ok := s.membership.(BulkClusterer)
+	if !ok || s.existingApp != nil {
+		return nil, false, nil
+	}
+	read := origin.Read(request.Peer().Addr, request.Header(), s.trustProxy, trace.FromContext(ctx).RequestID)
+	result, err := c.BulkAssign(ctx, p, request.Msg.GetSchoolIds(), request.Msg.GetClusterId(), activities.Origin{IP: read.IP, UserAgent: read.UserAgent, CorrelationID: read.CorrelationID})
+	switch {
+	case errors.Is(err, clustermembership.ErrHandOn):
+		return nil, false, nil
+	case err != nil:
+		return nil, true, apierr.Internal(ctx, s.logger, err)
+	}
+	return &screensv1.BulkAssignClusterResponse{Result: result}, true, nil
+}
