@@ -4,9 +4,9 @@
   "controls": 483,
   "controls_without_a_destination": 92,
   "go": {
-   "django": 165,
+   "django": 164,
    "go-owned": 9,
-   "proved": 29,
+   "proved": 30,
    "unproved": 21,
    "retired": 1
   },
@@ -24,7 +24,7 @@
    "8 finance and money": 22,
    "9 admin and the rest": 10
   },
-  "field_staff_left": 117
+  "field_staff_left": 116
  },
  "saves": [
   {
@@ -4260,8 +4260,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "django",
-   "evidence": "",
+   "go": "proved",
+   "evidence": "a list's tick-bar Schedule, visits (doc 189)",
    "templates": [
     "partials/planning/bulk_schedule_drawer.html"
    ]

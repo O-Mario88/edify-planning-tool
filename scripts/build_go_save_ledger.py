@@ -138,6 +138,10 @@ GO_STATUS: dict[str, tuple[str, str]] = {
         "Go saves it; Django's own save always fails, so there is nothing to compare (doc 189)",
     ),
     "/schools/<str:school_id>/assign-to-project": (PROVED, "Add to Project (doc 189)"),
+    "/planning/bulk-schedule": (
+        PROVED,
+        "a list's tick-bar Schedule, visits (doc 189)",
+    ),
     "/planning/assign-partner-action": (
         PROVED,
         "Planning drawer's Assign to Partner, outside a Core package (doc 189)",

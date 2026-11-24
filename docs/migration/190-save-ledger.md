@@ -6,8 +6,8 @@ hand in that script and changes only with evidence. *Proved* means compared with
 with Django stopped.
 
 - Saves: 225 destinations from 483 save controls.
-- Go: 29 proved, 21 with unproved Go code, 165 still Django's, 1 retired on purpose, 9 made by Go's own services.
-- Field staff can reach 117 saves that are not yet proved in Go.
+- Go: 30 proved, 21 with unproved Go code, 164 still Django's, 1 retired on purpose, 9 made by Go's own services.
+- Field staff can reach 116 saves that are not yet proved in Go.
 - 92 controls post to a destination the inventory cannot read (set by a variable or script); they are listed by template at the end and must be classified by hand.
 
 | Step | Saves |
@@ -41,6 +41,7 @@ with Django stopped.
 | `/my-plan/<str:activity_id>/confirm-reimbursement-receipt` | proved | medium | 9 roles | Confirm receipt |
 | `/my-plan/<str:activity_id>/edit` | proved | medium | 9 roles | Save changes |
 | `/planning/assign-partner-action` | proved | large | 7 roles | Assign to partner |
+| `/planning/bulk-schedule` | proved | medium | 7 roles | Schedule {{ schools|length }} school{{ schools|length|pluralize }} |
 | `/planning/schedule-action` | proved | large | 7 roles | Confirm & Schedule Activity; Schedule meeting Schedule training |
 | `/planning/visit-requests/<str:activity_id>/<str:decision>` | proved | small | 7 roles | Approve visit; Decline |
 | `/schools/<str:school_id>/assign-to-project` | proved | small | 7 roles | Assign to project |
@@ -98,7 +99,6 @@ with Django stopped.
 | `/notifications/mark-all-read` | go-owned | small | 15 roles | Mark all as read |
 | `/notifications/settings` | go-owned | small | 15 roles | Save |
 | `/planning/bulk-action` | django | large | 7 roles | Assign {{ assignable|length }} school{{ assignable|length|pluralize }}; Export Selected |
-| `/planning/bulk-schedule` | django | medium | 7 roles | Schedule {{ schools|length }} school{{ schools|length|pluralize }} |
 | `/planning/undo` | django | small | 7 roles | Undo; Undo: {{ change.summary }} |
 | `/priorities/ssa-mapping/<str:item_id>/save` | django | medium | 6 roles | Save draft; Submit for review |
 | `/projects/<str:project_id>/delete` | django | medium | 6 roles | Delete Project |
