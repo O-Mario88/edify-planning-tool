@@ -51,6 +51,9 @@ var (
 // CancelSchoolVisitRequest), as the view reads them.
 type CancelRequest struct {
 	ActivityID, Reason string
+	// Sessions lets the cancel take a cluster meeting too, which Go does
+	// only with Django absent until it is shadow-proved with Django present.
+	Sessions bool
 }
 
 // CancelAnswer is the cancelled visit and the toast the web shows.
@@ -120,6 +123,9 @@ func (s *Service) prepareCancel(ctx context.Context, p auth.Principal, req Cance
 	if err != nil {
 		return nil, err
 	}
+	if a == nil && req.Sessions {
+		return s.prepareSessionCancel(ctx, p, req, origin, now)
+	}
 	if a == nil || !ownsVisit(p, a.responsible) || !in(cancellableStatuses, a.status) ||
 		!in(inScopePurposes, a.purpose) || rules.Purposes.ActivityTypes[a.purpose] != a.activityType {
 		return nil, handOn("not a visit of the first save's kind, owned by the person")
@@ -142,6 +148,12 @@ func (s *Service) prepareCancel(ctx context.Context, p auth.Principal, req Cance
 	if !slices.Contains(scope.OwnSchoolIDs, sc.ID) || owner != p.StaffProfileID {
 		return nil, handOn("outside the person's own portfolio")
 	}
+	return s.cancelChecks(ctx, p, a, req, origin, now)
+}
+
+// cancelChecks is the cancel's checks after its gate: the reason, the
+// notices it would write after commit, and the money.
+func (s *Service) cancelChecks(ctx context.Context, p auth.Principal, a *moved, req CancelRequest, origin Origin, now time.Time) (*cancelPlan, error) {
 	pl := &cancelPlan{p: p, a: *a, reason: strings.TrimSpace(req.Reason), origin: origin, now: now}
 	// The reason (6595), before any lock.
 	if pl.reason == "" {

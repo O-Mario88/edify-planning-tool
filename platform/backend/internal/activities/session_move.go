@@ -154,3 +154,23 @@ func (s *Service) prepareSessionMove(ctx context.Context, p auth.Principal, req 
 		session: true, clusterName: clusterName,
 	}, nil
 }
+
+// prepareSessionCancel is prepareCancel for a cluster meeting.
+func (s *Service) prepareSessionCancel(ctx context.Context, p auth.Principal, req CancelRequest, origin Origin, now time.Time) (*cancelPlan, error) {
+	a, _, meetingKind, err := movedSession(ctx, s.db, strings.TrimSpace(req.ActivityID))
+	if err != nil {
+		return nil, err
+	}
+	if a == nil || !ownsVisit(p, a.responsible) || !in(cancellableStatuses, a.status) ||
+		!myplan.IsClusterMeeting(a.activityType) || myplan.IsTraining(a.activityType, meetingKind) {
+		return nil, handOn("not a visit of the first save's kind, owned by the person")
+	}
+	access, err := myplan.ReadActivityAccess(ctx, s.db, p, a.id, now)
+	if err != nil {
+		return nil, err
+	}
+	if !access.Decided || !access.Runnable {
+		return nil, handOn("a session the person may not run")
+	}
+	return s.cancelChecks(ctx, p, a, req, origin, now)
+}

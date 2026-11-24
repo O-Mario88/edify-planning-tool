@@ -72,7 +72,7 @@ func (s *Service) cancelInGo(
 		form = directDrawerForm(message)
 	}
 	cancelled, err := s.cancels.Cancel(ctx, principal, activities.CancelRequest{
-		ActivityID: activityID, Reason: strings.TrimSpace(form.Get("reason")),
+		ActivityID: activityID, Reason: strings.TrimSpace(form.Get("reason")), Sessions: s.existingApp == nil,
 	}, origin)
 	var refusal *activities.Refusal
 	switch {
