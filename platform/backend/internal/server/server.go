@@ -131,6 +131,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/projectspage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/qualityflags"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/realtime"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/recentchanges"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/reports"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/rolesmatrix"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/routeplan"
@@ -364,6 +365,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 					WithSaves(pool, plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, realtimeBroker, logger)
 				screenService.WithEnroller(enroller)
 				screenService.WithBulkEnroller(enroller)
+				screenService.WithRecentChanges(recentchanges.New(pool, time.Now))
 			}
 		}
 		if effectiveSaves.RescheduleVisit {
