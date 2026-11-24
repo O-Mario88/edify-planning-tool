@@ -89,6 +89,11 @@ func (s *Service) groupInGo(
 		}
 	} else {
 		form = directDrawerForm(message)
+		// The drawer's hidden ids do not reach the gateway: the ticked ones
+		// it lists as changing, read again from the path it was opened on.
+		if len(form["activity_ids"]) == 0 {
+			form["activity_ids"] = s.groupReadyIDs(ctx, principal, opened.Query().Get("ids"), cancel)
+		}
 	}
 	req := activities.GroupRequest{ActivityIDs: form["activity_ids"], Date: first(form["scheduled_date"]),
 		Reason: first(form["reason"])}
