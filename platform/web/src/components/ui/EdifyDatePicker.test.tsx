@@ -31,6 +31,15 @@ describe('EdifyDatePicker — unified platform-wide calendar picker (Sections 10
     expect(html).not.toContain('lucide-chevron');
   });
 
+  it('names its button with the words it shows, so a spoken name matches what is on screen', () => {
+    const empty = renderToStaticMarkup(<EdifyDatePicker label="Needed by" placeholder="Select a date" />);
+    expect(empty).toContain('aria-label="Needed by: Select a date"');
+    const chosen = renderToStaticMarkup(<EdifyDatePicker label="Needed by" value="2026-11-23" displayStyle="weekday" />);
+    expect(chosen).toContain('aria-label="Needed by: Mon, 23 Nov 2026"');
+    const range = renderToStaticMarkup(<EdifyDateRangePicker startDate="" endDate="" label="Period" placeholder="Select date range" onChange={() => undefined} />);
+    expect(range).toContain('aria-label="Period: Select date range"');
+  });
+
   it('enforces Uganda FY2027 boundaries (Oct 1, 2026 to Sep 30, 2027) without UTC date drift', () => {
     expect(ugandaFiscalYear('2026-09-30')).toEqual({ fy: 'FY2026', start: '2025-10-01', end: '2026-09-30' });
     expect(ugandaFiscalYear('2026-10-01')).toEqual({ fy: 'FY2027', start: '2026-10-01', end: '2027-09-30' });

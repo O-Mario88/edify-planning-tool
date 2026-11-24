@@ -193,7 +193,7 @@ export function EdifyDatePicker({
         type="button"
         disabled={disabled}
         onClick={toggleOpen}
-        aria-label={`${label}${displayValue ? `: ${displayValue}` : ''}`}
+        aria-label={`${label}: ${displayValue || placeholder}`}
         aria-haspopup="dialog"
         aria-expanded={open}
         data-date-trigger="true"
@@ -507,7 +507,7 @@ export function EdifyDateRangePicker({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        aria-label={`${label}${summary ? `: ${summary}` : ''}`}
+        aria-label={`${label}: ${summary || placeholder}`}
         aria-haspopup="dialog"
         aria-expanded={open}
         data-date-trigger="true"

@@ -106,7 +106,7 @@ function FieldControl({ field, values, reloaded, onChange }: FieldProps) {
         </select>
       );
     case 'date':
-      return <EdifyDatePicker id={id} value={value} min={field.minDate || undefined} max={field.maxDate || undefined} required={field.required} disabled={field.readOnly} placeholder={field.placeholder || 'Select a date'} onChange={(iso) => onChange(field, iso)} />;
+      return <EdifyDatePicker id={id} label={field.label || undefined} value={value} min={field.minDate || undefined} max={field.maxDate || undefined} required={field.required} disabled={field.readOnly} placeholder={field.placeholder || 'Select a date'} onChange={(iso) => onChange(field, iso)} />;
     case 'radio':
       return (
         <div role="radiogroup" aria-labelledby={`${id}-label`} className="space-y-1">
