@@ -214,6 +214,9 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		// routed to.
 		// Extra Assigned Work (apps.hr.extra_work): the assignment's row.
 		filepath.Join(root, "internal", "extrawork") + sep: {"hr_extra_assignment"},
+		// A Most Significant Change Story submitted from My Targets
+		// (staff_views.mscs_submit_view; deploy/db/mscs_roles.sql).
+		filepath.Join(root, "internal", "mscs") + sep: {"mscs_story"},
 		filepath.Join(root, "internal", "debriefs") + sep: {
 			"daily_debrief", "daily_debrief_activity_link", "daily_debrief_recipient",
 		},
