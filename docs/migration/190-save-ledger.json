@@ -1,0 +1,6150 @@
+{
+ "summary": {
+  "saves": 225,
+  "controls": 483,
+  "controls_without_a_destination": 92,
+  "go": {
+   "django": 193,
+   "proved": 11,
+   "unproved": 21
+  },
+  "size": {
+   "small": 120,
+   "medium": 85,
+   "unknown": 1,
+   "large": 19
+  },
+  "phase": {
+   "3 field staff": 120,
+   "5 supervisors and leadership": 47,
+   "6 partners and loans": 21,
+   "7 HR, compliance and coaching": 5,
+   "8 finance and money": 22,
+   "9 admin and the rest": 10
+  },
+  "field_staff_left": 145
+ },
+ "saves": [
+  {
+   "route": "/accounts/activities/<str:activity_id>/netsuite-id",
+   "controls": 1,
+   "labels": [
+    "Save & Reconcile ID"
+   ],
+   "view": "apps.frontend.views.finance_operating_views.netsuite_id_action",
+   "view_lines": 15,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "8 finance and money",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/accounts/activity_finance_detail.html"
+   ]
+  },
+  {
+   "route": "/accounts/monthly-request/action",
+   "controls": 3,
+   "labels": [
+    "{{ fetch_label }}",
+    "{{ submit_label }}",
+    "{{ submit_rvp_label|default:\"Send to RVP for Approval\" }}"
+   ],
+   "view": "apps.frontend.views.finance_operating_views.monthly_request_action_view",
+   "view_lines": 38,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "8 finance and money",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/finance/monthly_request/root.html"
+   ]
+  },
+  {
+   "route": "/accounts/partner-invoices/<str:invoice_id>/pay",
+   "controls": 1,
+   "labels": [
+    "Pay Partner"
+   ],
+   "view": "apps.frontend.views.finance_operating_views.partner_invoice_pay_action",
+   "view_lines": 24,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "8 finance and money",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/accounts/partner_payments.html"
+   ]
+  },
+  {
+   "route": "/acting-leadership/<str:assignment_id>/cancel",
+   "controls": 1,
+   "labels": [
+    "Cancel appointment"
+   ],
+   "view": "apps.frontend.views.acting_views.acting_cancel_view",
+   "view_lines": 29,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "Program Lead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/acting/cancel_drawer.html"
+   ]
+  },
+  {
+   "route": "/acting-leadership/<str:assignment_id>/reschedule",
+   "controls": 1,
+   "labels": [
+    "Save month"
+   ],
+   "view": "apps.frontend.views.acting_views.acting_reschedule_view",
+   "view_lines": 37,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "Program Lead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/acting/reschedule_drawer.html"
+   ]
+  },
+  {
+   "route": "/acting-leadership/appoint",
+   "controls": 2,
+   "labels": [
+    "Appoint {{ entry.short_label }}",
+    "Confirm Appointment"
+   ],
+   "view": "apps.frontend.views.acting_views.acting_appoint_view",
+   "view_lines": 52,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "Program Lead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/acting/appoint_drawer.html"
+   ]
+  },
+  {
+   "route": "/actions/<str:action_id>/<str:transition>",
+   "controls": 2,
+   "labels": [
+    "Acknowledge {{ r.school }}",
+    "Escalate {{ r.school }} to your supervisor"
+   ],
+   "view": "apps.frontend.views.action_views.action_transition_view",
+   "view_lines": 51,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/actions/table.html"
+   ]
+  },
+  {
+   "route": "/activities/<str:activity_id>/attendance/action",
+   "controls": 1,
+   "labels": [
+    "Save attendance"
+   ],
+   "view": "apps.frontend.views.my_plan_views.attendance_upload_action",
+   "view_lines": 103,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/my_plan/attendance_drawer.html"
+   ]
+  },
+  {
+   "route": "/activities/<str:activity_id>/closure/close",
+   "controls": 1,
+   "labels": [
+    "Close & Lock Activity Closing..."
+   ],
+   "view": "apps.frontend.views.closure_views.close_activity_action",
+   "view_lines": 22,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/closure/activity_closure_detail.html"
+   ]
+  },
+  {
+   "route": "/activities/<str:activity_id>/evidence/action",
+   "controls": 2,
+   "labels": [
+    "Submit"
+   ],
+   "view": "apps.frontend.views.my_plan_views.evidence_upload_action",
+   "view_lines": 110,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/my_plan/evidence_drawer.html",
+    "partials/my_plan/offline_evidence_drawer.html"
+   ]
+  },
+  {
+   "route": "/activities/<str:activity_id>/facilitator",
+   "controls": 1,
+   "labels": [
+    "Save"
+   ],
+   "view": "apps.frontend.views.my_plan_views.facilitator_drawer_view",
+   "view_lines": 34,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/my_plan/facilitator_drawer.html"
+   ]
+  },
+  {
+   "route": "/activities/<str:activity_id>/partner-ssa-complete/action",
+   "controls": 1,
+   "labels": [
+    "Save SSA and complete"
+   ],
+   "view": "apps.frontend.views.my_plan_views.partner_ssa_completion_action",
+   "view_lines": 46,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/my_plan/partner_ssa_completion_drawer.html"
+   ]
+  },
+  {
+   "route": "/activities/<str:activity_id>/reopen",
+   "controls": 1,
+   "labels": [
+    "Confirm Reopen Reopening..."
+   ],
+   "view": "apps.frontend.views.closure_views.reopen_activity_action",
+   "view_lines": 18,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/closure/activity_closure_detail.html"
+   ]
+  },
+  {
+   "route": "/activities/<str:activity_id>/salesforce-id/action",
+   "controls": 1,
+   "labels": [
+    "Save Salesforce ID"
+   ],
+   "view": "apps.frontend.views.my_plan_views.salesforce_id_action",
+   "view_lines": 116,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/my_plan/salesforce_id_drawer.html"
+   ]
+  },
+  {
+   "route": "/activities/<str:activity_id>/ssa-upload/action",
+   "controls": 1,
+   "labels": [
+    "Save SSA scores"
+   ],
+   "view": "apps.frontend.views.my_plan_views.ssa_evidence_upload_action",
+   "view_lines": 86,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/my_plan/ssa_upload_drawer.html"
+   ]
+  },
+  {
+   "route": "/activities/<str:activity_id>/start/action",
+   "controls": 1,
+   "labels": [
+    "Start activity"
+   ],
+   "view": "apps.frontend.views.my_plan_views.start_activity_action",
+   "view_lines": 31,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/my_plan/start_drawer.html"
+   ]
+  },
+  {
+   "route": "/activities/<str:activity_id>/submit/action",
+   "controls": 1,
+   "labels": [
+    "Submit for review"
+   ],
+   "view": "apps.frontend.views.my_plan_views.submit_for_review_action",
+   "view_lines": 29,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/my_plan/submit_drawer.html"
+   ]
+  },
+  {
+   "route": "/activity-selection/cancel",
+   "controls": 1,
+   "labels": [
+    "Cancel {{ ready|length }} activit{{ ready|length|pluralize:\"y,ies\" }}"
+   ],
+   "view": "apps.frontend.views.activity_group_views.group_cancel_view",
+   "view_lines": 29,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "proved",
+   "evidence": "group cancel (doc 36)",
+   "templates": [
+    "partials/my_plan/group_cancel_drawer.html"
+   ]
+  },
+  {
+   "route": "/activity-selection/reschedule",
+   "controls": 1,
+   "labels": [
+    "Reschedule {{ ready|length }} activit{{ ready|length|pluralize:\"y,ies\" }}"
+   ],
+   "view": "apps.frontend.views.activity_group_views.group_reschedule_view",
+   "view_lines": 25,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "proved",
+   "evidence": "group reschedule (doc 36)",
+   "templates": [
+    "partials/my_plan/group_reschedule_drawer.html"
+   ]
+  },
+  {
+   "route": "/admin-ops/incidents/<str:incident_id>/acknowledge",
+   "controls": 1,
+   "labels": [
+    "Acknowledge Incident"
+   ],
+   "view": "apps.admin_ops.views.acknowledge_incident_view",
+   "view_lines": 9,
+   "size": "small",
+   "roles": [
+    "Admin"
+   ],
+   "field_staff": false,
+   "phase": "9 admin and the rest",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/admin_ops/incident_detail.html"
+   ]
+  },
+  {
+   "route": "/admin-ops/incidents/<str:incident_id>/resolve",
+   "controls": 1,
+   "labels": [
+    "Resolve"
+   ],
+   "view": "apps.admin_ops.views.resolve_incident_view",
+   "view_lines": 11,
+   "size": "small",
+   "roles": [
+    "Admin"
+   ],
+   "field_staff": false,
+   "phase": "9 admin and the rest",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/admin_ops/incident_detail.html"
+   ]
+  },
+  {
+   "route": "/admin-ops/tickets/<str:ticket_id>/resolve",
+   "controls": 1,
+   "labels": [
+    "Resolve"
+   ],
+   "view": "apps.admin_ops.views.resolve_ticket_view",
+   "view_lines": 13,
+   "size": "small",
+   "roles": [
+    "Admin"
+   ],
+   "field_staff": false,
+   "phase": "9 admin and the rest",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/admin_ops/support_queue.html"
+   ]
+  },
+  {
+   "route": "/admin-ops/tickets/<str:ticket_id>/triage",
+   "controls": 1,
+   "labels": [
+    "Triage"
+   ],
+   "view": "apps.admin_ops.views.triage_ticket_view",
+   "view_lines": 22,
+   "size": "small",
+   "roles": [
+    "Admin"
+   ],
+   "field_staff": false,
+   "phase": "9 admin and the rest",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/admin_ops/planning.html"
+   ]
+  },
+  {
+   "route": "/admin-ops/work-items/<str:item_id>/complete",
+   "controls": 1,
+   "labels": [
+    "Complete"
+   ],
+   "view": "apps.admin_ops.views.complete_work_item_view",
+   "view_lines": 11,
+   "size": "small",
+   "roles": [
+    "Admin"
+   ],
+   "field_staff": false,
+   "phase": "9 admin and the rest",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/admin_ops/_work_section.html"
+   ]
+  },
+  {
+   "route": "/admin-ops/work-items/<str:item_id>/schedule",
+   "controls": 1,
+   "labels": [
+    "Schedule"
+   ],
+   "view": "apps.admin_ops.views.schedule_work_item_view",
+   "view_lines": 19,
+   "size": "small",
+   "roles": [
+    "Admin"
+   ],
+   "field_staff": false,
+   "phase": "9 admin and the rest",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/admin_ops/planning.html"
+   ]
+  },
+  {
+   "route": "/admin-ops/work-items/<str:item_id>/start",
+   "controls": 1,
+   "labels": [
+    "{{ item.next_action|default:\"Start\" }}"
+   ],
+   "view": "apps.admin_ops.views.start_work_item_view",
+   "view_lines": 9,
+   "size": "small",
+   "roles": [
+    "Admin"
+   ],
+   "field_staff": false,
+   "phase": "9 admin and the rest",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/admin_ops/_work_section.html"
+   ]
+  },
+  {
+   "route": "/admin-panel/staff-setup-queue",
+   "controls": 2,
+   "labels": [
+    "Ignore",
+    "Match"
+   ],
+   "view": "apps.frontend.views.extended_views.admin_staff_setup_queue_view",
+   "view_lines": 51,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "unproved",
+   "evidence": "Go names the path",
+   "templates": [
+    "pages/admin/staff_setup_queue.html"
+   ]
+  },
+  {
+   "route": "/admin/(?P<url>.*)$",
+   "controls": 2,
+   "labels": [
+    "Create District",
+    "Resend Alert"
+   ],
+   "view": "",
+   "view_lines": null,
+   "size": "unknown",
+   "roles": [],
+   "field_staff": false,
+   "phase": "9 admin and the rest",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/admin/notifications_mgmt.html",
+    "pages/admin/region_district_setup.html"
+   ]
+  },
+  {
+   "route": "/analytics/customize-dashboard",
+   "controls": 1,
+   "labels": [
+    "Save preferences"
+   ],
+   "view": "apps.frontend.views.analytics_views.analytics_customize_dashboard_view",
+   "view_lines": 50,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/analytics/customize_dashboard_drawer.html"
+   ]
+  },
+  {
+   "route": "/analytics/schedule-report",
+   "controls": 1,
+   "labels": [
+    "Send to inbox"
+   ],
+   "view": "apps.frontend.views.analytics_views.analytics_schedule_report_view",
+   "view_lines": 62,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/analytics/schedule_report_drawer.html"
+   ]
+  },
+  {
+   "route": "/api/documents/acknowledge/<str:acknowledgement_id>",
+   "controls": 4,
+   "labels": [
+    "Change my answer to Agree",
+    "I Believe \u2192 Enter Edify I Accept \u2192 Continue",
+    "Submit response"
+   ],
+   "view": "apps.documents.views.submit_acknowledgement_view",
+   "view_lines": 32,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "ClusterLeader",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/documents/agreement_center.html",
+    "pages/documents/canonical_document.html",
+    "pages/documents/restricted.html"
+   ]
+  },
+  {
+   "route": "/api/documents/attest/<str:acknowledgement_id>",
+   "controls": 1,
+   "labels": [
+    "I reviewed this outside the viewer"
+   ],
+   "view": "apps.documents.views.attest_offline_view",
+   "view_lines": 15,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "ClusterLeader",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/documents/agreement_center.html"
+   ]
+  },
+  {
+   "route": "/auth/switch-role",
+   "controls": 3,
+   "labels": [
+    "{{ acting.label }} \u00b7 {{ acting.period }}",
+    "{{ r.value }}",
+    "{{ role.value }}"
+   ],
+   "view": "apps.frontend.views.auth_views.switch_role_view",
+   "view_lines": 59,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "ClusterLeader",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "layouts/shell.html",
+    "pages/profile/index.html"
+   ]
+  },
+  {
+   "route": "/change-password",
+   "controls": 1,
+   "labels": [
+    "Set new password and continue"
+   ],
+   "view": "apps.frontend.views.auth_views.force_change_password_view",
+   "view_lines": 44,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "ClusterLeader",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/auth/change_password.html"
+   ]
+  },
+  {
+   "route": "/cluster-oversight/scoring",
+   "controls": 1,
+   "labels": [
+    "Save Weights"
+   ],
+   "view": "apps.frontend.views.cluster_management_views.cluster_scoring_view",
+   "view_lines": 78,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "unproved",
+   "evidence": "Go names the path",
+   "templates": [
+    "pages/cluster_management/scoring.html"
+   ]
+  },
+  {
+   "route": "/clusters/<str:cluster_id>/bulk-assign-drawer",
+   "controls": 1,
+   "labels": [
+    "Save schools to cluster"
+   ],
+   "view": "apps.frontend.views.cluster_views.cluster_bulk_assign_drawer_view",
+   "view_lines": 117,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/clusters/bulk_assign_drawer.html"
+   ]
+  },
+  {
+   "route": "/clusters/<str:cluster_id>/bulk-schedule-drawer",
+   "controls": 1,
+   "labels": [
+    "Schedule the day"
+   ],
+   "view": "apps.frontend.views.cluster_views.cluster_bulk_schedule_drawer_view",
+   "view_lines": 92,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/clusters/bulk_schedule_drawer.html"
+   ]
+  },
+  {
+   "route": "/clusters/<str:cluster_id>/catchment-drawer",
+   "controls": 1,
+   "labels": [
+    "Approve district"
+   ],
+   "view": "apps.frontend.views.cluster_views.cluster_catchment_drawer_view",
+   "view_lines": 90,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/clusters/catchment_drawer.html"
+   ]
+  },
+  {
+   "route": "/clusters/<str:cluster_id>/catchment/<str:catchment_id>/end",
+   "controls": 1,
+   "labels": [
+    "End approval"
+   ],
+   "view": "apps.frontend.views.cluster_views.cluster_catchment_end_view",
+   "view_lines": 47,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/clusters/catchment_end_drawer.html"
+   ]
+  },
+  {
+   "route": "/clusters/<str:cluster_id>/delete",
+   "controls": 1,
+   "labels": [
+    "Delete {{ cluster.name }} cluster"
+   ],
+   "view": "apps.frontend.views.cluster_views.delete_cluster_view",
+   "view_lines": 38,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/clusters/_page_header.html"
+   ]
+  },
+  {
+   "route": "/clusters/<str:cluster_id>/facilitator",
+   "controls": 1,
+   "labels": [
+    "Save"
+   ],
+   "view": "apps.frontend.views.cluster_views.cluster_facilitator_action",
+   "view_lines": 26,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/clusters/facilitator_drawer.html"
+   ]
+  },
+  {
+   "route": "/clusters/<str:cluster_id>/schools/<str:school_id>/remove",
+   "controls": 3,
+   "labels": [
+    "Remove {{ s.name }} from this cluster"
+   ],
+   "view": "apps.frontend.views.cluster_views.remove_school_from_cluster_view",
+   "view_lines": 43,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/clusters/detail.html",
+    "partials/clusters/cluster_schools_table.html"
+   ]
+  },
+  {
+   "route": "/clusters/create",
+   "controls": 1,
+   "labels": [
+    "Create cluster"
+   ],
+   "view": "apps.frontend.views.cluster_views.create_cluster_view",
+   "view_lines": 99,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/clusters/create_cluster_drawer.html"
+   ]
+  },
+  {
+   "route": "/clusters/schedule-activity",
+   "controls": 1,
+   "labels": [
+    "Schedule training Schedule meeting"
+   ],
+   "view": "apps.frontend.views.cluster_views.cluster_schedule_activity_view",
+   "view_lines": 256,
+   "size": "large",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/clusters/cluster_action_planner_drawer.html"
+   ]
+  },
+  {
+   "route": "/core-schools/assign-partner/action",
+   "controls": 1,
+   "labels": [
+    "Assign to partner"
+   ],
+   "view": "apps.frontend.views.core_schools_views.core_assign_partner_action",
+   "view_lines": 228,
+   "size": "large",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "proved",
+   "evidence": "Core partner hand-over (doc 189)",
+   "templates": [
+    "partials/core_schools/assign_partner_drawer.html"
+   ]
+  },
+  {
+   "route": "/core-schools/oversight/send",
+   "controls": 1,
+   "labels": [
+    "Send to {{ r.responsible_first_name }}"
+   ],
+   "view": "apps.frontend.views.core_schools_views.core_oversight_send_action",
+   "view_lines": 121,
+   "size": "large",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/core_schools/team_oversight.html"
+   ]
+  },
+  {
+   "route": "/core-schools/recommendations/<str:rec_id>/<str:action>",
+   "controls": 3,
+   "labels": [
+    "Accept",
+    "Defer",
+    "Reject"
+   ],
+   "view": "apps.frontend.views.core_oversight_views.core_recommendation_action",
+   "view_lines": 43,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/schools/_core_school.html"
+   ]
+  },
+  {
+   "route": "/core-schools/schedule-training/action",
+   "controls": 1,
+   "labels": [
+    "Schedule training"
+   ],
+   "view": "apps.frontend.views.core_schools_views.core_schedule_training_action",
+   "view_lines": 176,
+   "size": "large",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "proved",
+   "evidence": "Core training form (doc 189)",
+   "templates": [
+    "partials/core_schools/schedule_training_drawer.html"
+   ]
+  },
+  {
+   "route": "/core-schools/schedule-visit/action",
+   "controls": 1,
+   "labels": [
+    "Schedule visit"
+   ],
+   "view": "apps.frontend.views.core_schools_views.core_schedule_visit_action",
+   "view_lines": 228,
+   "size": "large",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "proved",
+   "evidence": "Core visit form (doc 189)",
+   "templates": [
+    "partials/core_schools/schedule_visit_drawer.html"
+   ]
+  },
+  {
+   "route": "/cost-settings/add",
+   "controls": 1,
+   "labels": [
+    "Add cost"
+   ],
+   "view": "apps.frontend.views.finance_views.add_linked_cost_view",
+   "view_lines": 53,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "8 finance and money",
+   "go": "unproved",
+   "evidence": "form opens in Go; save not compared",
+   "templates": [
+    "partials/cost_settings/add_drawer.html"
+   ]
+  },
+  {
+   "route": "/cost-settings/carry-forward",
+   "controls": 1,
+   "labels": [
+    "Carry Forward FY{{ carry_forward_source.fy }} Rates"
+   ],
+   "view": "apps.frontend.views.finance_views.carry_forward_rate_card_view",
+   "view_lines": 25,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "8 finance and money",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/cost_settings/index.html"
+   ]
+  },
+  {
+   "route": "/cost-settings/initialize-default",
+   "controls": 1,
+   "labels": [
+    "Initialize Default Catalogue"
+   ],
+   "view": "apps.frontend.views.finance_views.initialize_default_catalogue_view",
+   "view_lines": 29,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "8 finance and money",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/cost_settings/index.html"
+   ]
+  },
+  {
+   "route": "/cost-settings/row/<str:key>",
+   "controls": 1,
+   "labels": [
+    "Save rate"
+   ],
+   "view": "apps.frontend.views.finance_views.cost_setting_row_view",
+   "view_lines": 114,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "8 finance and money",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/cost_settings/edit_drawer.html"
+   ]
+  },
+  {
+   "route": "/country-budget/action",
+   "controls": 16,
+   "labels": [
+    "Add admin item",
+    "Add item",
+    "Approve"
+   ],
+   "view": "apps.frontend.views.finance_views.country_budget_action_view",
+   "view_lines": 120,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "RegionalVicePresident"
+   ],
+   "field_staff": false,
+   "phase": "8 finance and money",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/budgets/monthly.html",
+    "partials/dashboards/rvp/approvals_drawer.html",
+    "partials/dashboards/rvp/operations.html"
+   ]
+  },
+  {
+   "route": "/country-planning-oversight/execution/follow-up",
+   "controls": 1,
+   "labels": [
+    "Send to {{ lead_name|default:\"the Programme Lead\" }}"
+   ],
+   "view": "apps.frontend.views.country_execution_views.follow_up_view",
+   "view_lines": 85,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "RegionalVicePresident"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/country_execution/drawer_follow_up.html"
+   ]
+  },
+  {
+   "route": "/country-planning-oversight/execution/snapshots/<str:snapshot_id>",
+   "controls": 1,
+   "labels": [
+    "Record a revision"
+   ],
+   "view": "apps.frontend.views.country_execution_views.snapshot_view",
+   "view_lines": 53,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "RegionalVicePresident"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/country_execution/drawer_snapshot.html"
+   ]
+  },
+  {
+   "route": "/country-planning-oversight/follow-up",
+   "controls": 1,
+   "labels": [
+    "Send to {{ lead_name|default:\"the Programme Lead\" }}"
+   ],
+   "view": "apps.frontend.views.country_oversight_views.follow_up_view",
+   "view_lines": 86,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "RegionalVicePresident"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/country_oversight/drawer_follow_up.html"
+   ]
+  },
+  {
+   "route": "/country-planning-oversight/follow-up/<str:followup_id>/<str:action>",
+   "controls": 3,
+   "labels": [
+    "Cancel the follow-up",
+    "Close",
+    "Escalate"
+   ],
+   "view": "apps.frontend.views.country_oversight_views.follow_up_action_view",
+   "view_lines": 33,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "RegionalVicePresident"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/country_oversight/drawer_followups.html"
+   ]
+  },
+  {
+   "route": "/country-planning-oversight/send",
+   "controls": 3,
+   "labels": [
+    "Send",
+    "Send to PL"
+   ],
+   "view": "apps.frontend.views.oversight_views.country_planning_send_action_view",
+   "view_lines": 65,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "RegionalVicePresident"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/country_oversight/drawer_lead.html",
+    "partials/oversight/cd_workspace.html",
+    "partials/oversight/team_country_workspace.html"
+   ]
+  },
+  {
+   "route": "/cpd-learning/action",
+   "controls": 11,
+   "labels": [
+    "Approve",
+    "Remind All ({{ g.count }})",
+    "Remind All to Apply ({{ not_applied_count }})"
+   ],
+   "view": "apps.frontend.views.hr_views.pd_dashboard_action_view",
+   "view_lines": 204,
+   "size": "large",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "Program Lead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/hr/pd_dashboard/body.html",
+    "partials/hr/pd_dashboard/fund_table.html",
+    "partials/hr/pd_dashboard/supervisor_queue.html"
+   ]
+  },
+  {
+   "route": "/cpd-learning/adjust-allocation",
+   "controls": 1,
+   "labels": [
+    "Save allocation"
+   ],
+   "view": "apps.frontend.views.hr_views.pd_dashboard_adjust_allocation_view",
+   "view_lines": 69,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "Program Lead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/hr/pd_dashboard/adjust_allocation_drawer.html"
+   ]
+  },
+  {
+   "route": "/dashboard/cd-approve",
+   "controls": 1,
+   "labels": [
+    "Approve"
+   ],
+   "view": "apps.frontend.views.dashboard_views.cd_dashboard_approve_view",
+   "view_lines": 32,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/dashboards/cd/operations.html"
+   ]
+  },
+  {
+   "route": "/dashboard/cd-return",
+   "controls": 1,
+   "labels": [
+    "Return"
+   ],
+   "view": "apps.frontend.views.dashboard_views.cd_dashboard_return_view",
+   "view_lines": 35,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/dashboards/cd/operations.html"
+   ]
+  },
+  {
+   "route": "/dashboard/notify-past-due/<str:activity_id>/",
+   "controls": 4,
+   "labels": [
+    "Notify {{ row.owner }} to complete, reschedule, or cancel this activity"
+   ],
+   "view": "apps.frontend.views.dashboard_views.notify_past_due_activity",
+   "view_lines": 20,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/dashboards/pl/_past_due_popup_table.html",
+    "partials/dashboards/what_needs_you_now.html"
+   ]
+  },
+  {
+   "route": "/dashboard/pl-send-urgent-action",
+   "controls": 1,
+   "labels": [
+    "Send {{ row.school }} to {{ row.owner_name }} for action"
+   ],
+   "view": "apps.frontend.views.dashboard_views.pl_send_urgent_action_view",
+   "view_lines": 87,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/dashboards/urgent_schools_table.html"
+   ]
+  },
+  {
+   "route": "/dashboard/pl-week-send/<str:activity_id>/",
+   "controls": 1,
+   "labels": [
+    "Remind {{ row.owner }} to complete this by entering the Salesforce ID"
+   ],
+   "view": "apps.frontend.views.dashboard_views.pl_week_send_reminder",
+   "view_lines": 25,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/dashboards/pl/_week_action.html"
+   ]
+  },
+  {
+   "route": "/data-quality/issue/<str:issue_id>/action",
+   "controls": 2,
+   "labels": [
+    "Assign to me",
+    "Resolve"
+   ],
+   "view": "apps.frontend.views.extended_views.data_quality_issue_action_view",
+   "view_lines": 35,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/data_quality/issue_row.html"
+   ]
+  },
+  {
+   "route": "/data-repair/<str:key>/apply",
+   "controls": 1,
+   "labels": [
+    "Apply Repair Refer for Correction"
+   ],
+   "view": "apps.admin_ops.views.apply_repair_view",
+   "view_lines": 30,
+   "size": "small",
+   "roles": [
+    "Admin"
+   ],
+   "field_staff": false,
+   "phase": "9 admin and the rest",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/admin_ops/data_repair.html"
+   ]
+  },
+  {
+   "route": "/debriefs/action",
+   "controls": 13,
+   "labels": [
+    "+ Create Action",
+    "Accept & Draft Activity",
+    "Ack"
+   ],
+   "view": "apps.frontend.views.debrief_views.field_debrief_action_view",
+   "view_lines": 114,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/debriefs/detail.html",
+    "partials/debriefs/dashboard_body.html"
+   ]
+  },
+  {
+   "route": "/debriefs/submit",
+   "controls": 1,
+   "labels": [
+    "Submit Daily Debrief"
+   ],
+   "view": "apps.frontend.views.debrief_views.field_debrief_submit_view",
+   "view_lines": 72,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "unproved",
+   "evidence": "Go names the path",
+   "templates": [
+    "pages/debriefs/submit.html"
+   ]
+  },
+  {
+   "route": "/disbursements/action",
+   "controls": 4,
+   "labels": [
+    "Disburse funds",
+    "Place on hold",
+    "Release Hold"
+   ],
+   "view": "apps.frontend.views.finance_views.disbursement_action_view",
+   "view_lines": 50,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "8 finance and money",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/disbursements/_actions.html",
+    "partials/disbursements/disburse_drawer.html",
+    "partials/disbursements/hold_drawer.html"
+   ]
+  },
+  {
+   "route": "/documents/<slug:slug>/<str:action>",
+   "controls": 4,
+   "labels": [
+    "Approve",
+    "Publish",
+    "Return for correction"
+   ],
+   "view": "apps.documents.views.document_action_view",
+   "view_lines": 42,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "RegionalVicePresident"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/documents/manage_document.html"
+   ]
+  },
+  {
+   "route": "/documents/<slug:slug>/versions/new",
+   "controls": 1,
+   "labels": [
+    "Upload version"
+   ],
+   "view": "apps.documents.views.new_version_view",
+   "view_lines": 35,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "RegionalVicePresident"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/documents/manage_document.html"
+   ]
+  },
+  {
+   "route": "/exports/prepare",
+   "controls": 1,
+   "labels": [
+    "Download Excel"
+   ],
+   "view": "apps.frontend.views.export_job_views.export_prepare_view",
+   "view_lines": 11,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "ClusterLeader",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/oversight/export_customization_drawer.html"
+   ]
+  },
+  {
+   "route": "/extra-work/<str:assignment_id>/<str:action>",
+   "controls": 5,
+   "labels": [
+    "Cancel",
+    "Return",
+    "Start"
+   ],
+   "view": "apps.frontend.views.extra_work_views.extra_work_action",
+   "view_lines": 33,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/hr/extra_work.html",
+    "partials/hr/extra_work_submit_drawer.html"
+   ]
+  },
+  {
+   "route": "/extra-work/assign",
+   "controls": 1,
+   "labels": [
+    "Assign work"
+   ],
+   "view": "apps.frontend.views.extra_work_views.extra_work_assign_action",
+   "view_lines": 23,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/hr/extra_work_assign_drawer.html"
+   ]
+  },
+  {
+   "route": "/finance/actions/disburse_advance",
+   "controls": 1,
+   "labels": [
+    "Disburse advance Clear payment Process reimbursement Confirm clearance Return for correction Confirm action"
+   ],
+   "view": "apps.frontend.views.finance_views.disburse_advance_action",
+   "view_lines": 24,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "8 finance and money",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/finance/finance_action_drawer.html"
+   ]
+  },
+  {
+   "route": "/fund-approvals/action",
+   "controls": 2,
+   "labels": [
+    "Resolve: {{ selected.issues|join:'; ' }} {{ selected.waiting_hint }}",
+    "Return for review"
+   ],
+   "view": "apps.frontend.views.extended_views.pl_fund_action_view",
+   "view_lines": 49,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead"
+   ],
+   "field_staff": false,
+   "phase": "8 finance and money",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/fund_approvals/_actions.html",
+    "partials/fund_approvals/return_drawer.html"
+   ]
+  },
+  {
+   "route": "/fund-approvals/invoices/<str:invoice_id>/action",
+   "controls": 2,
+   "labels": [
+    "Confirm & Send to Accountant",
+    "Return"
+   ],
+   "view": "apps.frontend.views.extended_views.pl_partner_invoice_action",
+   "view_lines": 28,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead"
+   ],
+   "field_staff": false,
+   "phase": "8 finance and money",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/fund_approvals/root.html"
+   ]
+  },
+  {
+   "route": "/fund-requests/advances/<str:advance_id>/pl-approve",
+   "controls": 1,
+   "labels": [
+    "Approve"
+   ],
+   "view": "apps.frontend.views.budget_views.advance_pl_approve_action",
+   "view_lines": 20,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "8 finance and money",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/fund_requests/weekly_request_workflow.html"
+   ]
+  },
+  {
+   "route": "/fund-requests/advances/<str:advance_id>/pl-return",
+   "controls": 1,
+   "labels": [
+    "Return"
+   ],
+   "view": "apps.frontend.views.budget_views.advance_pl_return_action",
+   "view_lines": 20,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "8 finance and money",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/fund_requests/weekly_request_workflow.html"
+   ]
+  },
+  {
+   "route": "/fund-requests/generate-request",
+   "controls": 1,
+   "labels": [
+    "Take Action"
+   ],
+   "view": "apps.frontend.views.budget_views.generate_request_action",
+   "view_lines": 25,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "8 finance and money",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/fund_requests/insights_panel.html"
+   ]
+  },
+  {
+   "route": "/fund-requests/receipt-confirm",
+   "controls": 1,
+   "labels": [
+    "Confirm Receipt"
+   ],
+   "view": "apps.frontend.views.finance_views.fund_receipt_confirm_action",
+   "view_lines": 19,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "8 finance and money",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/fund_requests/root.html"
+   ]
+  },
+  {
+   "route": "/fund-requests/weekly/<str:request_id>/approve",
+   "controls": 1,
+   "labels": [
+    "Approve"
+   ],
+   "view": "apps.frontend.views.budget_views.weekly_fund_request_approve_action",
+   "view_lines": 26,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "8 finance and money",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/fund_requests/weekly_request_workflow.html"
+   ]
+  },
+  {
+   "route": "/fund-requests/weekly/<str:request_id>/confirm",
+   "controls": 1,
+   "labels": [
+    "Send for Approval"
+   ],
+   "view": "apps.frontend.views.budget_views.weekly_fund_request_confirm_action",
+   "view_lines": 27,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "8 finance and money",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/fund_requests/weekly_request_workflow.html"
+   ]
+  },
+  {
+   "route": "/fund-requests/weekly/<str:request_id>/confirm-receipt",
+   "controls": 1,
+   "labels": [
+    "Fund Received"
+   ],
+   "view": "apps.frontend.views.budget_views.weekly_fund_request_receipt_action",
+   "view_lines": 25,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "8 finance and money",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/fund_requests/weekly_request_workflow.html"
+   ]
+  },
+  {
+   "route": "/fund-requests/weekly/<str:request_id>/not-requested",
+   "controls": 1,
+   "labels": [
+    "No Advance This Week"
+   ],
+   "view": "apps.frontend.views.budget_views.weekly_fund_request_not_requested_action",
+   "view_lines": 20,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "8 finance and money",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/fund_requests/weekly_request_workflow.html"
+   ]
+  },
+  {
+   "route": "/fund-requests/weekly/<str:request_id>/return",
+   "controls": 1,
+   "labels": [
+    "Return request"
+   ],
+   "view": "apps.frontend.views.budget_views.weekly_fund_request_return_action",
+   "view_lines": 22,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "8 finance and money",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/fund_requests/return_drawer.html"
+   ]
+  },
+  {
+   "route": "/fund-requests/weekly/<str:request_id>/self-funded",
+   "controls": 1,
+   "labels": [
+    "Self Fund"
+   ],
+   "view": "apps.frontend.views.budget_views.weekly_fund_request_self_funded_action",
+   "view_lines": 26,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "8 finance and money",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/fund_requests/weekly_request_workflow.html"
+   ]
+  },
+  {
+   "route": "/help/articles/<slug:slug>/feedback",
+   "controls": 3,
+   "labels": [
+    "Report missing step",
+    "Report outdated",
+    "Yes"
+   ],
+   "view": "apps.help_center.views.feedback",
+   "view_lines": 23,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/help/article.html"
+   ]
+  },
+  {
+   "route": "/help/manage/<slug:slug>/<slug:action>",
+   "controls": 4,
+   "labels": [
+    "Product review",
+    "Publish",
+    "Submit"
+   ],
+   "view": "apps.help_center.views.manage_transition",
+   "view_lines": 18,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/help/manage.html"
+   ]
+  },
+  {
+   "route": "/hr/performance-cycle/action",
+   "controls": 8,
+   "labels": [
+    "Activate & freeze snapshots",
+    "Approve & lock",
+    "Close window"
+   ],
+   "view": "apps.frontend.views.hr_views.hr_performance_action_view",
+   "view_lines": 156,
+   "size": "large",
+   "roles": [
+    "Admin",
+    "HumanResources",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "7 HR, compliance and coaching",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/hr/performance_console.html"
+   ]
+  },
+  {
+   "route": "/ia/duplicates/<str:duplicate_id>/action",
+   "controls": 3,
+   "labels": [
+    "Flag Investigation",
+    "Ignore Flag",
+    "Return to Plan"
+   ],
+   "view": "apps.frontend.views.ia_views.ia_duplicate_action",
+   "view_lines": 18,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/ia/duplicate_review.html"
+   ]
+  },
+  {
+   "route": "/ia/impact-report/download",
+   "controls": 1,
+   "labels": [
+    "Download today's live evidence annex (draft)"
+   ],
+   "view": "apps.frontend.views.ia_outcome_views.impact_report_download",
+   "view_lines": 78,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/ia/impact_reports_detail.html"
+   ]
+  },
+  {
+   "route": "/ia/impact-reports/<str:report_id>/correct",
+   "controls": 1,
+   "labels": [
+    "Start a correction"
+   ],
+   "view": "apps.frontend.views.impact_report_views.report_correct",
+   "view_lines": 10,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "RegionalVicePresident"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/ia/impact_reports_detail.html"
+   ]
+  },
+  {
+   "route": "/ia/impact-reports/<str:report_id>/release/leadership",
+   "controls": 1,
+   "labels": [
+    "Release to country leadership"
+   ],
+   "view": "apps.frontend.views.impact_report_views.release_leadership",
+   "view_lines": 9,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "RegionalVicePresident"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/ia/impact_reports_detail.html"
+   ]
+  },
+  {
+   "route": "/ia/impact-reports/<str:report_id>/submit",
+   "controls": 1,
+   "labels": [
+    "Submit for review"
+   ],
+   "view": "apps.frontend.views.impact_report_views.report_submit",
+   "view_lines": 10,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "RegionalVicePresident"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/ia/impact_reports_detail.html"
+   ]
+  },
+  {
+   "route": "/ia/impact-reports/<str:report_id>/withdraw",
+   "controls": 1,
+   "labels": [
+    "Withdraw"
+   ],
+   "view": "apps.frontend.views.impact_report_views.report_withdraw",
+   "view_lines": 7,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "RegionalVicePresident"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/ia/impact_reports_detail.html"
+   ]
+  },
+  {
+   "route": "/ia/partner-evidence/<str:activity_id>/complete-action",
+   "controls": 1,
+   "labels": [
+    "Record ID and complete"
+   ],
+   "view": "apps.frontend.views.ia_views.ia_partner_complete_action",
+   "view_lines": 32,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/ia/partner_complete_drawer.html"
+   ]
+  },
+  {
+   "route": "/ia/partner-evidence/<str:activity_id>/return-action",
+   "controls": 1,
+   "labels": [
+    "Return to partner"
+   ],
+   "view": "apps.frontend.views.ia_views.ia_partner_return_action",
+   "view_lines": 28,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/ia/partner_return_drawer.html"
+   ]
+  },
+  {
+   "route": "/ia/samples/<str:sample_id>/field-check",
+   "controls": 1,
+   "labels": [
+    "Field back-check"
+   ],
+   "view": "apps.frontend.views.ia_views.ia_sample_field_check_action",
+   "view_lines": 23,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/ia/verification_samples.html"
+   ]
+  },
+  {
+   "route": "/ia/samples/<str:sample_id>/outcome",
+   "controls": 1,
+   "labels": [
+    "Confirm"
+   ],
+   "view": "apps.frontend.views.ia_views.ia_sample_outcome_action",
+   "view_lines": 43,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/ia/verification_samples.html"
+   ]
+  },
+  {
+   "route": "/ia/samples/<str:sample_id>/resolve",
+   "controls": 1,
+   "labels": [
+    "Resolve"
+   ],
+   "view": "apps.frontend.views.ia_views.ia_sample_resolve_action",
+   "view_lines": 13,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/ia/verification_samples.html"
+   ]
+  },
+  {
+   "route": "/ia/samples/draw",
+   "controls": 1,
+   "labels": [
+    "Draw this week now"
+   ],
+   "view": "apps.frontend.views.ia_views.ia_sample_draw_action",
+   "view_lines": 21,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/ia/verification_samples.html"
+   ]
+  },
+  {
+   "route": "/ia/school-evidence/learning/upload",
+   "controls": 1,
+   "labels": [
+    "Upload results"
+   ],
+   "view": "apps.frontend.views.ia_school_evidence_views.learning_upload_action",
+   "view_lines": 22,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/ia/school_evidence.html"
+   ]
+  },
+  {
+   "route": "/ia/verification/<str:activity_id>/return",
+   "controls": 1,
+   "labels": [
+    "Return to officer"
+   ],
+   "view": "apps.frontend.views.ia_views.ia_return_action",
+   "view_lines": 50,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/ia/review_workspace.html"
+   ]
+  },
+  {
+   "route": "/ia/verification/<str:activity_id>/verify",
+   "controls": 2,
+   "labels": [
+    "Verified"
+   ],
+   "view": "apps.frontend.views.ia_views.ia_verify_action",
+   "view_lines": 56,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/ia/review_workspace.html"
+   ]
+  },
+  {
+   "route": "/impact-briefs/<str:release_id>/shared",
+   "controls": 1,
+   "labels": [
+    "Record as shared"
+   ],
+   "view": "apps.frontend.views.impact_report_views.brief_shared",
+   "view_lines": 8,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/ia/impact_reports_brief.html"
+   ]
+  },
+  {
+   "route": "/loan-applications/<str:application_id>/follow-up",
+   "controls": 1,
+   "labels": [
+    "Save follow-up"
+   ],
+   "view": "apps.business_transformation.frontend_views.loan_application_follow_up_action",
+   "view_lines": 4,
+   "size": "small",
+   "roles": [
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "6 partners and loans",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/business_transformation/loans.html"
+   ]
+  },
+  {
+   "route": "/loans/<str:loan_id>/ia-validation",
+   "controls": 1,
+   "labels": [
+    "Submit IA decision"
+   ],
+   "view": "apps.business_transformation.frontend_views.ia_validation_action",
+   "view_lines": 9,
+   "size": "small",
+   "roles": [
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "6 partners and loans",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/business_transformation/loan_drawer.html"
+   ]
+  },
+  {
+   "route": "/loans/<str:loan_id>/salesforce-confirmation",
+   "controls": 1,
+   "labels": [
+    "Confirm & complete"
+   ],
+   "view": "apps.business_transformation.frontend_views.salesforce_confirmation_action",
+   "view_lines": 9,
+   "size": "small",
+   "roles": [
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "6 partners and loans",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/business_transformation/loan_drawer.html"
+   ]
+  },
+  {
+   "route": "/logout",
+   "controls": 4,
+   "labels": [
+    "Log out",
+    "Sign out"
+   ],
+   "view": "apps.frontend.views.auth_views.logout_view",
+   "view_lines": 7,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "ClusterLeader",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "layouts/shell.html",
+    "pages/documents/agreement_center.html",
+    "pages/documents/canonical_document.html"
+   ]
+  },
+  {
+   "route": "/messages/new/",
+   "controls": 3,
+   "labels": [
+    "Save Draft",
+    "Save draft",
+    "Send Message"
+   ],
+   "view": "apps.frontend.views.message_views.message_compose_view",
+   "view_lines": 49,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "unproved",
+   "evidence": "Go names the path",
+   "templates": [
+    "pages/messages/new.html",
+    "partials/messages/compose_modal.html"
+   ]
+  },
+  {
+   "route": "/messages/thread/<str:thread_id>/archive",
+   "controls": 3,
+   "labels": [
+    "Archive"
+   ],
+   "view": "apps.frontend.views.message_views.thread_archive_action",
+   "view_lines": 10,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/messages/conversation.html"
+   ]
+  },
+  {
+   "route": "/messages/thread/<str:thread_id>/reply",
+   "controls": 1,
+   "labels": [
+    "Reply"
+   ],
+   "view": "apps.frontend.views.message_views.thread_reply_action",
+   "view_lines": 30,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/messages/conversation.html"
+   ]
+  },
+  {
+   "route": "/messages/thread/<str:thread_id>/star",
+   "controls": 1,
+   "labels": [
+    "Star conversation"
+   ],
+   "view": "apps.frontend.views.message_views.thread_star_action",
+   "view_lines": 23,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/messages/conversation.html"
+   ]
+  },
+  {
+   "route": "/my-plan/<str:activity_id>/accountability",
+   "controls": 1,
+   "labels": [
+    "Submit for finance review"
+   ],
+   "view": "apps.frontend.views.my_plan_views.accountability_action",
+   "view_lines": 122,
+   "size": "large",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/my_plan/accountability_drawer.html"
+   ]
+  },
+  {
+   "route": "/my-plan/<str:activity_id>/cancel",
+   "controls": 1,
+   "labels": [
+    "Cancel activity"
+   ],
+   "view": "apps.frontend.views.my_plan_views.cancel_activity_action",
+   "view_lines": 61,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "proved",
+   "evidence": "cancel (doc 30)",
+   "templates": [
+    "partials/my_plan/cancel_drawer.html"
+   ]
+  },
+  {
+   "route": "/my-plan/<str:activity_id>/complete",
+   "controls": 1,
+   "labels": [
+    "Submit training + visit Submit completion"
+   ],
+   "view": "apps.frontend.views.my_plan_views.complete_activity_action",
+   "view_lines": 203,
+   "size": "large",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "proved",
+   "evidence": "complete a staff visit (doc 182)",
+   "templates": [
+    "partials/my_plan/complete_drawer.html"
+   ]
+  },
+  {
+   "route": "/my-plan/<str:activity_id>/confirm-reimbursement-receipt",
+   "controls": 1,
+   "labels": [
+    "Confirm receipt"
+   ],
+   "view": "apps.frontend.views.my_plan_views.confirm_reimbursement_receipt_action",
+   "view_lines": 55,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/my_plan/confirm_reimbursement_receipt_drawer.html"
+   ]
+  },
+  {
+   "route": "/my-plan/<str:activity_id>/edit",
+   "controls": 1,
+   "labels": [
+    "Save changes"
+   ],
+   "view": "apps.frontend.views.my_plan_views.edit_activity_action",
+   "view_lines": 79,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "proved",
+   "evidence": "edit (doc 31)",
+   "templates": [
+    "partials/my_plan/edit_activity_drawer.html"
+   ]
+  },
+  {
+   "route": "/my-plan/<str:activity_id>/invite-school",
+   "controls": 1,
+   "labels": [
+    "Add {{ s.name }} to this session"
+   ],
+   "view": "apps.frontend.views.my_plan_views.invite_school_action",
+   "view_lines": 21,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/my_plan/invite_school_results.html"
+   ]
+  },
+  {
+   "route": "/my-professional-development/fund/<str:fund_request_id>/action",
+   "controls": 5,
+   "labels": [
+    "Clear accountability",
+    "Disburse funds",
+    "Place on hold"
+   ],
+   "view": "apps.frontend.views.pd_views.pd_fund_action_view",
+   "view_lines": 43,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/professional_development/request_form.html"
+   ]
+  },
+  {
+   "route": "/my-professional-development/request",
+   "controls": 3,
+   "labels": [
+    "Cancel this draft",
+    "Save draft",
+    "Submit for approval"
+   ],
+   "view": "apps.frontend.views.pd_views.pd_request_view",
+   "view_lines": 207,
+   "size": "large",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "unproved",
+   "evidence": "form opens in Go; save not compared",
+   "templates": [
+    "partials/professional_development/_sdf_form.html"
+   ]
+  },
+  {
+   "route": "/my-professional-development/request/<str:request_id>/action",
+   "controls": 15,
+   "labels": [
+    "Approve & send to HR",
+    "Approve & send to the Country Director",
+    "Authorize & send to Accounting"
+   ],
+   "view": "apps.frontend.views.pd_views.pd_action_view",
+   "view_lines": 112,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/professional_development/request_form.html"
+   ]
+  },
+  {
+   "route": "/my-professional-development/request/<str:request_id>/certificate",
+   "controls": 2,
+   "labels": [
+    "Upload another Upload proof",
+    "Upload certificate"
+   ],
+   "view": "apps.frontend.views.pd_views.pd_certificate_upload_view",
+   "view_lines": 22,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/professional_development/completion_upload.html",
+    "partials/professional_development/request_form.html"
+   ]
+  },
+  {
+   "route": "/my-targets/mscs",
+   "controls": 2,
+   "labels": [
+    "Submit for Review"
+   ],
+   "view": "apps.frontend.views.staff_views.mscs_submit_view",
+   "view_lines": 32,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "unproved",
+   "evidence": "Go names the path",
+   "templates": [
+    "pages/targets/index.html",
+    "partials/targets/my_body.html"
+   ]
+  },
+  {
+   "route": "/notifications",
+   "controls": 3,
+   "labels": [
+    "Archive",
+    "Archive All Read",
+    "Mark All Read"
+   ],
+   "view": "apps.frontend.views.staff_views.notifications_page_view",
+   "view_lines": 108,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "unproved",
+   "evidence": "notificationcenter",
+   "templates": [
+    "pages/notifications/index.html"
+   ]
+  },
+  {
+   "route": "/notifications/<str:notif_id>/read",
+   "controls": 1,
+   "labels": [
+    "Mark as read"
+   ],
+   "view": "apps.frontend.views.staff_views.mark_notification_read",
+   "view_lines": 37,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/notifications/notification_drawer_list.html"
+   ]
+  },
+  {
+   "route": "/notifications/mark-all-read",
+   "controls": 1,
+   "labels": [
+    "Mark all as read"
+   ],
+   "view": "apps.frontend.views.staff_views.mark_all_notifications_read",
+   "view_lines": 21,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/notifications/notification_drawer.html"
+   ]
+  },
+  {
+   "route": "/notifications/settings",
+   "controls": 1,
+   "labels": [
+    "Save"
+   ],
+   "view": "apps.frontend.views.staff_views.notification_settings_view",
+   "view_lines": 22,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/notifications/index.html"
+   ]
+  },
+  {
+   "route": "/partner-oversight/allowance-grant",
+   "controls": 1,
+   "labels": [
+    "Grant allowance"
+   ],
+   "view": "apps.frontend.views.oversight_views.partner_allowance_grant_action",
+   "view_lines": 35,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "6 partners and loans",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/oversight/allowance_grant_drawer.html"
+   ]
+  },
+  {
+   "route": "/partner-oversight/return/submit",
+   "controls": 1,
+   "labels": [
+    "Return to Partner"
+   ],
+   "view": "apps.frontend.views.partner_review_views.partner_return_submit_view",
+   "view_lines": 20,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "6 partners and loans",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/oversight/partner_return_drawer.html"
+   ]
+  },
+  {
+   "route": "/partner-oversight/send",
+   "controls": 2,
+   "labels": [
+    "Escalate",
+    "{{ risk.send_label }}"
+   ],
+   "view": "apps.frontend.views.oversight_views.partner_oversight_send_action_view",
+   "view_lines": 56,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "6 partners and loans",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/oversight/partner_detail_drawer.html"
+   ]
+  },
+  {
+   "route": "/partner-oversight/verify/submit",
+   "controls": 1,
+   "labels": [
+    "Verify & Confirm"
+   ],
+   "view": "apps.frontend.views.partner_review_views.partner_verify_submit_view",
+   "view_lines": 29,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "6 partners and loans",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/oversight/partner_verify_drawer.html"
+   ]
+  },
+  {
+   "route": "/partner-oversight/withdraw/bulk",
+   "controls": 1,
+   "labels": [
+    "Withdraw {{ withdraw_count }} \u00b7 request {{ request_count }} Send {{ request_count }} to Program Lead Withdraw {{ withdraw_count }} school{{ withdraw_count|plura"
+   ],
+   "view": "apps.frontend.views.oversight_views.partner_bulk_withdrawal_view",
+   "view_lines": 93,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "6 partners and loans",
+   "go": "unproved",
+   "evidence": "Go names the path",
+   "templates": [
+    "partials/oversight/bulk_withdrawal_drawer.html"
+   ]
+  },
+  {
+   "route": "/partner-oversight/withdraw/review",
+   "controls": 2,
+   "labels": [
+    "Approve",
+    "Reject"
+   ],
+   "view": "apps.frontend.views.oversight_views.partner_withdrawal_review_view",
+   "view_lines": 25,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "6 partners and loans",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/oversight/partner_workspace.html"
+   ]
+  },
+  {
+   "route": "/partner/activities/<str:activity_id>/delivered-by",
+   "controls": 1,
+   "labels": [
+    "Save"
+   ],
+   "view": "apps.frontend.views.partner_views.partner_delivery_member_view",
+   "view_lines": 78,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer"
+   ],
+   "field_staff": true,
+   "phase": "6 partners and loans",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/partners/delivery_member_drawer.html"
+   ]
+  },
+  {
+   "route": "/partner/activities/<str:activity_id>/start-action",
+   "controls": 3,
+   "labels": [
+    "Complete",
+    "Start Activity"
+   ],
+   "view": "apps.frontend.views.partner_views.partner_activity_start_action",
+   "view_lines": 26,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer"
+   ],
+   "field_staff": true,
+   "phase": "6 partners and loans",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/partner/activity_workroom.html",
+    "pages/partner/my_plan.html"
+   ]
+  },
+  {
+   "route": "/partner/activities/<str:activity_id>/submit-action",
+   "controls": 1,
+   "labels": [
+    "Submit Evidence to IA"
+   ],
+   "view": "apps.frontend.views.partner_views.partner_activity_submit_action",
+   "view_lines": 50,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer"
+   ],
+   "field_staff": true,
+   "phase": "6 partners and loans",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/partner/activity_workroom.html"
+   ]
+  },
+  {
+   "route": "/partner/assignments/<str:assignment_id>/return-action",
+   "controls": 1,
+   "labels": [
+    "Return to staff"
+   ],
+   "view": "apps.frontend.views.partner_views.partner_return_assignment_action",
+   "view_lines": 26,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer"
+   ],
+   "field_staff": true,
+   "phase": "6 partners and loans",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/partners/return_assignment_drawer.html"
+   ]
+  },
+  {
+   "route": "/partner/assignments/<str:assignment_id>/schedule-action",
+   "controls": 1,
+   "labels": [
+    "Schedule delivery"
+   ],
+   "view": "apps.frontend.views.partner_views.partner_schedule_assignment_action",
+   "view_lines": 41,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer"
+   ],
+   "field_staff": true,
+   "phase": "6 partners and loans",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/partners/schedule_assignment_drawer.html"
+   ]
+  },
+  {
+   "route": "/partner/invoices",
+   "controls": 1,
+   "labels": [
+    "Send invoice{{ basis.by_lead|length|pluralize }}"
+   ],
+   "view": "apps.frontend.views.partner_views.partner_invoice_submit",
+   "view_lines": 56,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "ImpactAssessment",
+    "PartnerAdmin",
+    "PartnerFieldOfficer"
+   ],
+   "field_staff": true,
+   "phase": "6 partners and loans",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/partner/invoice_drawer.html"
+   ]
+  },
+  {
+   "route": "/partners/<str:partner_id>/edit-drawer",
+   "controls": 1,
+   "labels": [
+    "Save details"
+   ],
+   "view": "apps.frontend.views.partner_views.partner_edit_drawer_view",
+   "view_lines": 119,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "6 partners and loans",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/partners/edit_drawer.html"
+   ]
+  },
+  {
+   "route": "/partners/<str:partner_id>/members",
+   "controls": 2,
+   "labels": [
+    "Add to roster",
+    "Remove {{ m.name }} from the roster"
+   ],
+   "view": "apps.frontend.views.partner_views.partner_member_action",
+   "view_lines": 31,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "6 partners and loans",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/partners/member_drawer.html",
+    "partials/partners/team_table.html"
+   ]
+  },
+  {
+   "route": "/partners/<str:partner_id>/members/<str:member_id>/login",
+   "controls": 4,
+   "labels": [
+    "Activate the login of {{ m.name }}",
+    "Create login",
+    "Deactivate the login of {{ m.name }}"
+   ],
+   "view": "apps.frontend.views.partner_views.partner_member_login_view",
+   "view_lines": 83,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "6 partners and loans",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/partners/member_login_drawer.html",
+    "partials/partners/team_table.html"
+   ]
+  },
+  {
+   "route": "/partners/<str:partner_id>/members/<str:member_id>/schools",
+   "controls": 1,
+   "labels": [
+    "Save schools"
+   ],
+   "view": "apps.frontend.views.partner_views.partner_member_schools_view",
+   "view_lines": 59,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "6 partners and loans",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/partners/member_schools_drawer.html"
+   ]
+  },
+  {
+   "route": "/partners/<str:partner_id>/status",
+   "controls": 1,
+   "labels": [
+    "Deactivate Activate"
+   ],
+   "view": "apps.frontend.views.partner_views.partner_status_action",
+   "view_lines": 21,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "6 partners and loans",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/partners/detail.html"
+   ]
+  },
+  {
+   "route": "/partners/<str:partner_id>/user-setup",
+   "controls": 1,
+   "labels": [
+    "Save login setup"
+   ],
+   "view": "apps.frontend.views.partner_views.partner_user_setup_drawer_view",
+   "view_lines": 71,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "6 partners and loans",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/partners/user_setup_drawer.html"
+   ]
+  },
+  {
+   "route": "/performance-conversation/<str:review_id>/agree-priorities",
+   "controls": 1,
+   "labels": [
+    "Agree these priorities"
+   ],
+   "view": "apps.frontend.views.hr_views.performance_agree_priorities_view",
+   "view_lines": 31,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "7 HR, compliance and coaching",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/hr/performance_conversation.html"
+   ]
+  },
+  {
+   "route": "/performance-conversation/<str:review_id>/sign-off",
+   "controls": 1,
+   "labels": [
+    "Sign off & lock"
+   ],
+   "view": "apps.frontend.views.hr_views.performance_signoff_view",
+   "view_lines": 34,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "7 HR, compliance and coaching",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/hr/performance_conversation.html"
+   ]
+  },
+  {
+   "route": "/performance-conversation/priority/<str:priority_id>/save",
+   "controls": 3,
+   "labels": [
+    "Save manager review",
+    "Save my reflection",
+    "Save rating"
+   ],
+   "view": "apps.frontend.views.hr_views.performance_input_save_view",
+   "view_lines": 43,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "7 HR, compliance and coaching",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/hr/performance_conversation.html"
+   ]
+  },
+  {
+   "route": "/performance-conversation/value/<str:commitment_id>/save",
+   "controls": 2,
+   "labels": [
+    "Save commitment",
+    "Save observation"
+   ],
+   "view": "apps.frontend.views.hr_views.performance_value_save_view",
+   "view_lines": 29,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "7 HR, compliance and coaching",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/hr/_value_commitment_row.html"
+   ]
+  },
+  {
+   "route": "/planning-follow-ups/<str:followup_id>/<str:action>",
+   "controls": 4,
+   "labels": [
+    "Acknowledge",
+    "Return to the Country Director",
+    "Save"
+   ],
+   "view": "apps.frontend.views.country_oversight_views.followup_lead_action_view",
+   "view_lines": 60,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/country_oversight/followup_banner.html"
+   ]
+  },
+  {
+   "route": "/planning-monitor/send",
+   "controls": 1,
+   "labels": [
+    "Ask {{ school.officer_name }} to plan for {{ school.name }}: {{ monitor_gap_label|lower }}"
+   ],
+   "view": "apps.frontend.views.oversight_views.planning_monitor_send_view",
+   "view_lines": 80,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/oversight/monitor_workspace.html"
+   ]
+  },
+  {
+   "route": "/planning/assign-partner-action",
+   "controls": 1,
+   "labels": [
+    "Assign to partner"
+   ],
+   "view": "apps.frontend.views.planning_views.assign_partner_action_view",
+   "view_lines": 297,
+   "size": "large",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/planning/assign_partner_drawer.html"
+   ]
+  },
+  {
+   "route": "/planning/bulk-action",
+   "controls": 2,
+   "labels": [
+    "Assign {{ assignable|length }} school{{ assignable|length|pluralize }}",
+    "Export Selected"
+   ],
+   "view": "apps.frontend.views.planning_views.bulk_action_view",
+   "view_lines": 181,
+   "size": "large",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/planning/index.html",
+    "partials/clusters/bulk_assign_partner_drawer.html"
+   ]
+  },
+  {
+   "route": "/planning/bulk-schedule",
+   "controls": 1,
+   "labels": [
+    "Schedule {{ schools|length }} school{{ schools|length|pluralize }}"
+   ],
+   "view": "apps.frontend.views.planning_views.bulk_schedule_action_view",
+   "view_lines": 97,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/planning/bulk_schedule_drawer.html"
+   ]
+  },
+  {
+   "route": "/planning/fiscal-years",
+   "controls": 2,
+   "labels": [
+    "Allow without training Require a training",
+    "Open FY{{ next_fy }}"
+   ],
+   "view": "apps.frontend.views.fy_planning_views.fiscal_year_planning_view",
+   "view_lines": 61,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "unproved",
+   "evidence": "Go names the path",
+   "templates": [
+    "pages/planning/fiscal_years.html"
+   ]
+  },
+  {
+   "route": "/planning/schedule-action",
+   "controls": 2,
+   "labels": [
+    "Confirm & Schedule Activity",
+    "Schedule meeting Schedule training"
+   ],
+   "view": "apps.frontend.views.planning_views.schedule_action_view",
+   "view_lines": 537,
+   "size": "large",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "proved",
+   "evidence": "Schedule Visit, the training pair, Group Training (docs 27, 33, 38, 189)",
+   "templates": [
+    "pages/planning/schedule.html",
+    "partials/planning/schedule_cluster_drawer.html"
+   ]
+  },
+  {
+   "route": "/planning/undo",
+   "controls": 2,
+   "labels": [
+    "Undo",
+    "Undo: {{ change.summary }}"
+   ],
+   "view": "apps.frontend.views.undo_views.undo_change_view",
+   "view_lines": 29,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/planning/recent_changes_list.html",
+    "partials/planning/undo_button.html"
+   ]
+  },
+  {
+   "route": "/planning/visit-requests/<str:activity_id>/<str:decision>",
+   "controls": 2,
+   "labels": [
+    "Approve visit",
+    "Decline"
+   ],
+   "view": "apps.frontend.views.visit_request_views.visit_request_decide",
+   "view_lines": 32,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/planning/visit_requests.html"
+   ]
+  },
+  {
+   "route": "/policy-compliance/comments/<str:comment_id>",
+   "controls": 1,
+   "labels": [
+    "Send"
+   ],
+   "view": "apps.documents.views.respond_comment_view",
+   "view_lines": 12,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "Program Lead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/documents/compliance.html"
+   ]
+  },
+  {
+   "route": "/priorities/ssa-mapping/<str:item_id>/save",
+   "controls": 2,
+   "labels": [
+    "Save draft",
+    "Submit for review"
+   ],
+   "view": "apps.frontend.views.ssa_mapping_views.ssa_mapping_action",
+   "view_lines": 63,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/hr/ssa_mapping_drawer.html"
+   ]
+  },
+  {
+   "route": "/projects/<str:project_id>/delete",
+   "controls": 1,
+   "labels": [
+    "Delete Project"
+   ],
+   "view": "apps.frontend.views.extended_views.project_delete_action_view",
+   "view_lines": 43,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/projects/detail.html"
+   ]
+  },
+  {
+   "route": "/projects/<str:project_id>/edit",
+   "controls": 1,
+   "labels": [
+    "Save changes"
+   ],
+   "view": "apps.frontend.views.extended_views.project_edit_drawer_view",
+   "view_lines": 50,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/projects/edit_project_drawer.html"
+   ]
+  },
+  {
+   "route": "/projects/<str:project_id>/schools/assign",
+   "controls": 1,
+   "labels": [
+    "Add School"
+   ],
+   "view": "apps.frontend.views.extended_views.project_assign_school_action_view",
+   "view_lines": 22,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/projects/detail.html"
+   ]
+  },
+  {
+   "route": "/projects/<str:project_id>/schools/bulk-assign-drawer",
+   "controls": 1,
+   "labels": [
+    "Add selected schools"
+   ],
+   "view": "apps.frontend.views.extended_views.project_bulk_assign_drawer_view",
+   "view_lines": 158,
+   "size": "large",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/projects/bulk_assign_drawer.html"
+   ]
+  },
+  {
+   "route": "/projects/<str:project_id>/schools/bulk-withdraw",
+   "controls": 1,
+   "labels": [
+    "Withdraw {{ withdrawable|length }} school{{ withdrawable|length|pluralize }}"
+   ],
+   "view": "apps.frontend.views.project_capacity_views.project_bulk_withdraw_view",
+   "view_lines": 67,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/projects/bulk_withdraw_drawer.html"
+   ]
+  },
+  {
+   "route": "/projects/<str:project_id>/staff/assign",
+   "controls": 1,
+   "labels": [
+    "Assign Project priority"
+   ],
+   "view": "apps.frontend.views.extended_views.project_assign_staff_action_view",
+   "view_lines": 17,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/projects/detail.html"
+   ]
+  },
+  {
+   "route": "/projects/capacity/set",
+   "controls": 2,
+   "labels": [
+    "Choose a project {{ p.name }} ({{ p.code }})",
+    "Save Capacity"
+   ],
+   "view": "apps.frontend.views.project_capacity_views.project_capacity_set_view",
+   "view_lines": 45,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "ImpactAssessment",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "unproved",
+   "evidence": "form opens in Go; save not compared",
+   "templates": [
+    "partials/projects/capacity_drawer.html"
+   ]
+  },
+  {
+   "route": "/projects/capacity/withdraw",
+   "controls": 1,
+   "labels": [
+    "Withdraw School"
+   ],
+   "view": "apps.frontend.views.project_capacity_views.project_withdraw_school_view",
+   "view_lines": 62,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "unproved",
+   "evidence": "form opens in Go; save not compared",
+   "templates": [
+    "partials/projects/withdraw_school_drawer.html"
+   ]
+  },
+  {
+   "route": "/projects/create/action",
+   "controls": 1,
+   "labels": [
+    "Create proposed project"
+   ],
+   "view": "apps.frontend.views.extended_views.project_create_action_view",
+   "view_lines": 23,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/projects/create_project_drawer.html"
+   ]
+  },
+  {
+   "route": "/projects/planning/bulk-partner",
+   "controls": 1,
+   "labels": [
+    "Assign {{ assignments|length }} school{{ assignments|length|pluralize }}"
+   ],
+   "view": "apps.frontend.views.planning_views.special_projects_bulk_partner_view",
+   "view_lines": 195,
+   "size": "large",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "unproved",
+   "evidence": "Go names the path",
+   "templates": [
+    "partials/projects/bulk_partner_drawer.html"
+   ]
+  },
+  {
+   "route": "/projects/planning/bulk-schedule",
+   "controls": 1,
+   "labels": [
+    "Schedule {{ assignments|length }} school{{ assignments|length|pluralize }}"
+   ],
+   "view": "apps.frontend.views.planning_views.special_projects_bulk_schedule_view",
+   "view_lines": 112,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/projects/bulk_schedule_drawer.html"
+   ]
+  },
+  {
+   "route": "/quality-checks",
+   "controls": 1,
+   "labels": [
+    "Acknowledge"
+   ],
+   "view": "apps.frontend.views.extended_views.quality_checks_view",
+   "view_lines": 193,
+   "size": "large",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "unproved",
+   "evidence": "Go names the path",
+   "templates": [
+    "pages/quality_checks/index.html"
+   ]
+  },
+  {
+   "route": "/rvp/annual/<str:budget_id>/action",
+   "controls": 4,
+   "labels": [
+    "Approve & Lock",
+    "Approve & lock",
+    "Return"
+   ],
+   "view": "apps.frontend.views.rvp_views.rvp_annual_action_view",
+   "view_lines": 21,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "ImpactAssessment",
+    "RegionalVicePresident"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/dashboards/rvp/approvals_drawer.html",
+    "partials/dashboards/rvp/operations.html"
+   ]
+  },
+  {
+   "route": "/rvp/strategy-note",
+   "controls": 1,
+   "labels": [
+    "Save Strategy Note"
+   ],
+   "view": "apps.frontend.views.rvp_views.rvp_strategy_note_view",
+   "view_lines": 29,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "ImpactAssessment",
+    "RegionalVicePresident"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/dashboards/rvp/operations.html"
+   ]
+  },
+  {
+   "route": "/schools/<str:school_id>/add-to-cluster",
+   "controls": 1,
+   "labels": [
+    "Change cluster Add to cluster"
+   ],
+   "view": "apps.frontend.views.school_views.add_to_cluster_drawer_view",
+   "view_lines": 4,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/schools/add_to_cluster_drawer.html"
+   ]
+  },
+  {
+   "route": "/schools/<str:school_id>/assign-to-project",
+   "controls": 1,
+   "labels": [
+    "Assign to project"
+   ],
+   "view": "apps.frontend.views.school_views.assign_to_project_drawer_view",
+   "view_lines": 4,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/schools/assign_to_project_drawer.html"
+   ]
+  },
+  {
+   "route": "/schools/<str:school_id>/change-type",
+   "controls": 1,
+   "labels": [
+    "Save"
+   ],
+   "view": "apps.frontend.views.school_views.school_change_type_view",
+   "view_lines": 28,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/schools/directory_intelligence.html"
+   ]
+  },
+  {
+   "route": "/schools/<str:school_id>/close",
+   "controls": 1,
+   "labels": [
+    "Close school"
+   ],
+   "view": "apps.frontend.views.school_views.school_close_action",
+   "view_lines": 24,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/schools/close_drawer.html"
+   ]
+  },
+  {
+   "route": "/schools/<str:school_id>/edit-drawer",
+   "controls": 1,
+   "labels": [
+    "Save school"
+   ],
+   "view": "apps.frontend.views.school_views.school_edit_drawer_view",
+   "view_lines": 371,
+   "size": "large",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/schools/edit_drawer.html"
+   ]
+  },
+  {
+   "route": "/schools/<str:school_id>/reopen",
+   "controls": 1,
+   "labels": [
+    "Reopen school"
+   ],
+   "view": "apps.frontend.views.school_views.school_reopen_action",
+   "view_lines": 18,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/schools/detail.html"
+   ]
+  },
+  {
+   "route": "/schools/<str:school_id>/ssa-entry",
+   "controls": 1,
+   "labels": [
+    "Save SSA"
+   ],
+   "view": "apps.frontend.views.school_views.school_ssa_entry_view",
+   "view_lines": 81,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/schools/ssa_entry_drawer.html"
+   ]
+  },
+  {
+   "route": "/schools/<str:school_id>/take",
+   "controls": 1,
+   "labels": [
+    "Take {{ school.school_name }} as my school"
+   ],
+   "view": "apps.frontend.views.school_views.school_take_view",
+   "view_lines": 24,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/schools/directory_row.html"
+   ]
+  },
+  {
+   "route": "/schools/<str:school_id>/transfer-owner",
+   "controls": 1,
+   "labels": [
+    "Reassign owner"
+   ],
+   "view": "apps.frontend.views.ownership_views.school_owner_transfer_drawer",
+   "view_lines": 75,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/schools/owner_transfer_drawer.html"
+   ]
+  },
+  {
+   "route": "/schools/bulk-assign-cluster",
+   "controls": 1,
+   "labels": [
+    "Assign cluster"
+   ],
+   "view": "apps.frontend.views.school_views.bulk_assign_cluster_view",
+   "view_lines": 34,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/schools/index.html"
+   ]
+  },
+  {
+   "route": "/schools/bulk-assign-project",
+   "controls": 2,
+   "labels": [
+    "Add to project",
+    "Assign project"
+   ],
+   "view": "apps.frontend.views.school_views.bulk_assign_project_view",
+   "view_lines": 134,
+   "size": "large",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/schools/index.html",
+    "partials/schools/bulk_assign_project_drawer.html"
+   ]
+  },
+  {
+   "route": "/schools/bulk-match-staff",
+   "controls": 1,
+   "labels": [
+    "Match staff"
+   ],
+   "view": "apps.frontend.views.school_views.bulk_match_staff_view",
+   "view_lines": 34,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/schools/index.html"
+   ]
+  },
+  {
+   "route": "/schools/bulk-transfer-owner",
+   "controls": 1,
+   "labels": [
+    "Reassign ownership"
+   ],
+   "view": "apps.frontend.views.ownership_views.bulk_school_owner_transfer_view",
+   "view_lines": 54,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/schools/index.html"
+   ]
+  },
+  {
+   "route": "/schools/create-drawer",
+   "controls": 2,
+   "labels": [
+    "Create school",
+    "Save and add SSA score"
+   ],
+   "view": "apps.frontend.views.school_views.school_onboard_drawer_view",
+   "view_lines": 104,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/schools/_onboard_form.html"
+   ]
+  },
+  {
+   "route": "/schools/upload",
+   "controls": 1,
+   "labels": [
+    "Upload Schools"
+   ],
+   "view": "apps.frontend.views.school_views.school_upload_view",
+   "view_lines": 30,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "unproved",
+   "evidence": "Go names the path",
+   "templates": [
+    "pages/schools/upload.html"
+   ]
+  },
+  {
+   "route": "/settings/activity-catalogue/<str:item_id>/edit",
+   "controls": 1,
+   "labels": [
+    "Save training"
+   ],
+   "view": "apps.frontend.views.catalogue_views.activity_catalogue_edit_action",
+   "view_lines": 72,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "ClusterLeader",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/catalogue/edit_training_drawer.html"
+   ]
+  },
+  {
+   "route": "/settings/activity-catalogue/<str:item_id>/lifecycle",
+   "controls": 1,
+   "labels": [
+    "Save lifecycle"
+   ],
+   "view": "apps.frontend.views.catalogue_views.activity_catalogue_lifecycle_action",
+   "view_lines": 9,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "ClusterLeader",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/settings/activity_catalogue.html"
+   ]
+  },
+  {
+   "route": "/settings/activity-catalogue/new",
+   "controls": 1,
+   "labels": [
+    "Add activity"
+   ],
+   "view": "apps.frontend.views.catalogue_views.activity_catalogue_create_action",
+   "view_lines": 65,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "ClusterLeader",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "unproved",
+   "evidence": "Go names the path",
+   "templates": [
+    "partials/catalogue/new_activity_drawer.html"
+   ]
+  },
+  {
+   "route": "/settings/activity-catalogue/reviews/<str:review_id>/resolve",
+   "controls": 1,
+   "labels": [
+    "Resolve"
+   ],
+   "view": "apps.frontend.views.catalogue_views.activity_catalogue_review_resolve_action",
+   "view_lines": 54,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "ClusterLeader",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/settings/activity_catalogue.html"
+   ]
+  },
+  {
+   "route": "/ssa/manual/",
+   "controls": 1,
+   "labels": [
+    "Save SSA Score"
+   ],
+   "view": "apps.frontend.views.ssa_views.ssa_manual_entry_view",
+   "view_lines": 65,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "unproved",
+   "evidence": "Go names the path",
+   "templates": [
+    "pages/ssa/manual_entry.html"
+   ]
+  },
+  {
+   "route": "/ssa/verification/",
+   "controls": 1,
+   "labels": [
+    "Confirm"
+   ],
+   "view": "apps.frontend.views.ssa_views.ssa_verification_queue_view",
+   "view_lines": 175,
+   "size": "large",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "unproved",
+   "evidence": "Go names the path",
+   "templates": [
+    "pages/ssa/verification_queue.html"
+   ]
+  },
+  {
+   "route": "/staff-activity/follow-ups/<str:follow_up_id>/<slug:action>",
+   "controls": 1,
+   "labels": [
+    "{{ a.label }}"
+   ],
+   "view": "apps.frontend.views.staff_activity_views.follow_up_transition_view",
+   "view_lines": 26,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/staff_activity/_follow_up_body.html"
+   ]
+  },
+  {
+   "route": "/staff-activity/people/<str:person_id>/follow-up/send",
+   "controls": 1,
+   "labels": [
+    "Send follow-up"
+   ],
+   "view": "apps.frontend.views.staff_activity_views.follow_up_create_view",
+   "view_lines": 43,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/staff_activity/_follow_up_new_drawer.html"
+   ]
+  },
+  {
+   "route": "/strategic-priorities/cycles/<str:cycle_id>/approve",
+   "controls": 1,
+   "labels": [
+    "Approve FY{{ cycle.financial_year }} cycle"
+   ],
+   "view": "apps.frontend.views.priority_views.cycle_approve_action",
+   "view_lines": 4,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "ClusterLeader",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/priorities/setting_view.html"
+   ]
+  },
+  {
+   "route": "/strategic-priorities/milestones/<str:milestone_id>/allocate",
+   "controls": 1,
+   "labels": [
+    "Allocate and approve"
+   ],
+   "view": "apps.frontend.views.priority_views.milestone_allocate_action",
+   "view_lines": 10,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "ClusterLeader",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/hr/priority_milestone_detail.html"
+   ]
+  },
+  {
+   "route": "/strategic-priorities/milestones/<str:milestone_id>/approve",
+   "controls": 1,
+   "labels": [
+    "Approve definition"
+   ],
+   "view": "apps.frontend.views.priority_views.milestone_approve_action",
+   "view_lines": 4,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "ClusterLeader",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/hr/priority_milestone_detail.html"
+   ]
+  },
+  {
+   "route": "/strategic-priorities/milestones/<str:milestone_id>/define",
+   "controls": 1,
+   "labels": [
+    "Save definition for approval"
+   ],
+   "view": "apps.frontend.views.priority_views.milestone_define_action",
+   "view_lines": 8,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "ClusterLeader",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/hr/priority_milestone_detail.html"
+   ]
+  },
+  {
+   "route": "/strategic-priorities/milestones/<str:milestone_id>/edit",
+   "controls": 1,
+   "labels": [
+    "Save targets"
+   ],
+   "view": "apps.frontend.views.priority_views.milestone_edit_action",
+   "view_lines": 14,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "ClusterLeader",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/hr/priority_milestone_detail.html"
+   ]
+  },
+  {
+   "route": "/support",
+   "controls": 1,
+   "labels": [
+    "Send to the platform team"
+   ],
+   "view": "apps.admin_ops.views.report_problem_view",
+   "view_lines": 37,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "unproved",
+   "evidence": "internal/support",
+   "templates": [
+    "pages/admin_ops/report_problem.html"
+   ]
+  },
+  {
+   "route": "/system-health/notifications/test",
+   "controls": 1,
+   "labels": [
+    "Send me a test notification"
+   ],
+   "view": "apps.frontend.views.notification_health_views.send_test_notification_view",
+   "view_lines": 28,
+   "size": "small",
+   "roles": [
+    "Admin"
+   ],
+   "field_staff": false,
+   "phase": "9 admin and the rest",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/system_health/notifications.html"
+   ]
+  },
+  {
+   "route": "/target-distribution/action",
+   "controls": 4,
+   "labels": [
+    "Approve & distribute",
+    "Confirm source figure",
+    "Publish FY{{ fy }} master"
+   ],
+   "view": "apps.frontend.views.target_distribution_views.target_distribution_action",
+   "view_lines": 106,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/hr/target_distribution_form.html",
+    "partials/priorities/distribution_view.html"
+   ]
+  },
+  {
+   "route": "/target-distribution/team/action",
+   "controls": 3,
+   "labels": [
+    "Approve & distribute",
+    "Approve spread",
+    "Save draft"
+   ],
+   "view": "apps.frontend.views.target_distribution_views.team_distribution_action",
+   "view_lines": 69,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "ImpactAssessment",
+    "Program Lead"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/hr/team_target_distribution_form.html",
+    "partials/priorities/team_view.html"
+   ]
+  },
+  {
+   "route": "/team-planning-oversight/send",
+   "controls": 1,
+   "labels": [
+    "Send to {{ risk.owner_name|default:\"the owner\" }}"
+   ],
+   "view": "apps.frontend.views.oversight_views.team_planning_send_action_view",
+   "view_lines": 50,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/oversight/detail_drawer.html"
+   ]
+  },
+  {
+   "route": "/team-targets/catchup",
+   "controls": 1,
+   "labels": [
+    "Submit catch-up plan"
+   ],
+   "view": "apps.frontend.views.staff_views.team_targets_catchup_create_view",
+   "view_lines": 43,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "Program Lead",
+    "RegionalProgramLead"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/targets/team/workspace.html"
+   ]
+  },
+  {
+   "route": "/team-targets/catchup/<str:plan_id>/action",
+   "controls": 2,
+   "labels": [
+    "Approve",
+    "Return"
+   ],
+   "view": "apps.frontend.views.staff_views.team_targets_catchup_action_view",
+   "view_lines": 37,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "Program Lead",
+    "RegionalProgramLead"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/targets/team/recovery_drawer.html"
+   ]
+  },
+  {
+   "route": "/today/act",
+   "controls": 4,
+   "labels": [
+    "{{ op.label }}"
+   ],
+   "view": "apps.frontend.views.today_views.today_act",
+   "view_lines": 29,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/today/queue_item.html",
+    "partials/today/queue_row.html"
+   ]
+  },
+  {
+   "route": "/today/action",
+   "controls": 3,
+   "labels": [
+    "Accept week",
+    "Dismiss",
+    "Regenerate draft Prepare my week"
+   ],
+   "view": "apps.frontend.views.today_views.today_action",
+   "view_lines": 52,
+   "size": "medium",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/today/workbench.html"
+   ]
+  },
+  {
+   "route": "/today/snooze",
+   "controls": 2,
+   "labels": [
+    "{{ label }}"
+   ],
+   "view": "apps.frontend.views.today_views.today_snooze",
+   "view_lines": 23,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "proved",
+   "evidence": "To-Do snooze (doc 50)",
+   "templates": [
+    "partials/today/queue_item.html",
+    "partials/today/queue_row.html"
+   ]
+  },
+  {
+   "route": "/today/unsnooze",
+   "controls": 2,
+   "labels": [
+    "Undo"
+   ],
+   "view": "apps.frontend.views.today_views.today_unsnooze",
+   "view_lines": 11,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "CCEO",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "proved",
+   "evidence": "To-Do unsnooze (doc 63)",
+   "templates": [
+    "partials/today/queue_item_done.html"
+   ]
+  },
+  {
+   "route": "/training-ceilings/country/set",
+   "controls": 2,
+   "labels": [
+    "Remove Country Ceiling",
+    "Save Country Ceiling"
+   ],
+   "view": "apps.frontend.views.training_ceiling_views.training_country_ceiling_set_view",
+   "view_lines": 59,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "unproved",
+   "evidence": "Go names the path",
+   "templates": [
+    "partials/trainings/country_ceiling_drawer.html"
+   ]
+  },
+  {
+   "route": "/training-ceilings/set",
+   "controls": 2,
+   "labels": [
+    "Remove ceiling",
+    "Save ceiling"
+   ],
+   "view": "apps.frontend.views.training_ceiling_views.training_ceiling_set_view",
+   "view_lines": 59,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "unproved",
+   "evidence": "Go names the path",
+   "templates": [
+    "partials/trainings/ceiling_drawer.html"
+   ]
+  },
+  {
+   "route": "/uploads/bulk-completion/batch/<str:batch_id>/cancel",
+   "controls": 1,
+   "labels": [
+    "Cancel Upload"
+   ],
+   "view": "apps.bulk_completion.views.cancel_view",
+   "view_lines": 8,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/bulk_completion/batch.html"
+   ]
+  },
+  {
+   "route": "/uploads/bulk-completion/batch/<str:batch_id>/confirm",
+   "controls": 1,
+   "labels": [
+    "Confirm Bulk Completion ({{ summary.ready }})"
+   ],
+   "view": "apps.bulk_completion.views.confirm_view",
+   "view_lines": 31,
+   "size": "small",
+   "roles": [
+    "Admin",
+    "ImpactAssessment"
+   ],
+   "field_staff": false,
+   "phase": "5 supervisors and leadership",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/bulk_completion/batch.html"
+   ]
+  },
+  {
+   "route": "/work-plan/add/action",
+   "controls": 1,
+   "labels": [
+    "Add to my plan"
+   ],
+   "view": "apps.frontend.views.work_plan_views.non_school_activity_action",
+   "view_lines": 109,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "ClusterLeader",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/work_plan/non_school_activity_drawer.html"
+   ]
+  },
+  {
+   "route": "/work-plan/add/preview",
+   "controls": 6,
+   "labels": [
+    "My own district {{ district.name }}",
+    "Select an approved activity {{ item.display_name }}",
+    "{{ date_prefill }}"
+   ],
+   "view": "apps.frontend.views.work_plan_views.non_school_activity_preview",
+   "view_lines": 86,
+   "size": "medium",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "ClusterLeader",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "partials/work_plan/non_school_activity_drawer.html"
+   ]
+  },
+  {
+   "route": "/work-plan/rvp-decision",
+   "controls": 2,
+   "labels": [
+    "Approve & lock",
+    "Return"
+   ],
+   "view": "apps.frontend.views.work_plan_views.work_plan_rvp_decision",
+   "view_lines": 31,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "ClusterLeader",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/work_plan/index.html"
+   ]
+  },
+  {
+   "route": "/work-plan/submit-to-rvp",
+   "controls": 1,
+   "labels": [
+    "Resolve the readiness issues first"
+   ],
+   "view": "apps.frontend.views.work_plan_views.work_plan_submit",
+   "view_lines": 14,
+   "size": "small",
+   "roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CCEO",
+    "ClusterLeader",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "MfiLoanOfficer",
+    "MfiPartnerAdmin",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+   ],
+   "field_staff": true,
+   "phase": "3 field staff",
+   "go": "django",
+   "evidence": "",
+   "templates": [
+    "pages/work_plan/index.html"
+   ]
+  }
+ ],
+ "templates_with_unresolved_destinations": {
+  "pages/admin/user_detail.html": 7,
+  "pages/admin/users.html": 7,
+  "pages/leave/public_holidays.html": 5,
+  "partials/leave/impact_panel.html": 5,
+  "pages/admin/region_district_setup.html": 4,
+  "pages/admin/unmatched_ssa_queue.html": 4,
+  "pages/debriefs/weekly_report.html": 4,
+  "pages/accounts/budget_amendments.html": 3,
+  "partials/ia/outcomes.html": 3,
+  "pages/auth/mfa_verify.html": 2,
+  "pages/escalations/_table.html": 2,
+  "pages/leave/personal_time_off.html": 2,
+  "pages/schools/ownership_transfers.html": 2,
+  "pages/schools/upload_preview.html": 2,
+  "pages/settings/two_step_app.html": 2,
+  "pages/team_performance/country_targets.html": 2,
+  "partials/core_schools/champion_review_drawer.html": 2,
+  "partials/ia/impact_reports_table.html": 2,
+  "pages/accounts/accountability.html": 1,
+  "pages/accounts/partner_payments.html": 1,
+  "pages/accounts/ready_for_advance.html": 1,
+  "pages/admin/duplicate_review.html": 1,
+  "pages/auth/login.html": 1,
+  "pages/auth/reset_password.html": 1,
+  "pages/bulk_completion/upload.html": 1,
+  "pages/business_transformation/loan_application_public.html": 1,
+  "pages/calendar/index.html": 1,
+  "pages/escalations/index.html": 1,
+  "pages/help/edit_article.html": 1,
+  "pages/hr/pulse_respond.html": 1,
+  "pages/ia/framework.html": 1,
+  "pages/profile/index.html": 1,
+  "pages/quality_checks/index.html": 1,
+  "pages/settings/index.html": 1,
+  "pages/ssa/upload_center.html": 1,
+  "pages/ssa/upload_preview.html": 1,
+  "partials/admin/add_user_drawer.html": 1,
+  "partials/admin/reset_password_drawer.html": 1,
+  "partials/clusters/edit_cluster_drawer.html": 1,
+  "partials/decisions/insight_row.html": 1,
+  "partials/finance/fund_workspace.html": 1,
+  "partials/hr/form_drawer.html": 1,
+  "partials/ia/reports_view.html": 1,
+  "partials/leave/request_leave_drawer.html": 1,
+  "partials/my_plan/pl_review_drawer.html": 1,
+  "partials/oversight/resolve_return_drawer.html": 1,
+  "partials/oversight/withdrawal_drawer.html": 1,
+  "partials/partners/create_partner_drawer.html": 1,
+  "partials/planning/schedule_drawer.html": 1,
+  "partials/profiles/_decisions.html": 1
+ }
+}
