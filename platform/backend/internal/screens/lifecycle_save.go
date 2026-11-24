@@ -25,6 +25,8 @@ var (
 	submitReviewPath = regexp.MustCompile(`^/activities/([A-Za-z0-9]{1,30})/submit/action/?$`)
 	// attendancePath is my_plan_views.attendance_upload_action's route.
 	attendancePath = regexp.MustCompile(`^/activities/([A-Za-z0-9]{1,30})/attendance/action/?$`)
+	// ssaUploadPath is my_plan_views.ssa_evidence_upload_action's route.
+	ssaUploadPath = regexp.MustCompile(`^/activities/([A-Za-z0-9]{1,30})/ssa-upload/action/?$`)
 )
 
 // attendanceErrorTitle is error_fragment(exc, action="Attendance Error").
@@ -36,6 +38,7 @@ type ActivityStarter interface {
 	EnterSalesforceID(ctx context.Context, p auth.Principal, activityID string, form url.Values, origin activities.Origin) (activities.CompleteAnswer, error)
 	SubmitForReview(ctx context.Context, p auth.Principal, activityID string, origin activities.Origin) (activities.Answer, error)
 	RecordAttendance(ctx context.Context, p auth.Principal, activityID string, form url.Values, origin activities.Origin) (activities.Answer, error)
+	KeyVisitSSA(ctx context.Context, p auth.Principal, activityID string, form url.Values, origin activities.Origin) (activities.Answer, error)
 }
 
 // WithActivityLifecycle makes an activity's lifecycle buttons Go's where Go
@@ -73,6 +76,10 @@ func (s *Service) lifecycleInGo(ctx context.Context, message *screensv1.SaveDraw
 		var saved activities.Answer
 		saved, err = s.starter.RecordAttendance(ctx, principal, m[1], directDrawerForm(message), from)
 		said, refusedAs = saved.Message, attendanceErrorTitle
+	} else if m := ssaUploadPath.FindStringSubmatch(path); m != nil {
+		var saved activities.Answer
+		saved, err = s.starter.KeyVisitSSA(ctx, principal, m[1], directDrawerForm(message), from)
+		said = saved.Message
 	} else {
 		return nil, false, nil
 	}

@@ -270,6 +270,20 @@ func TestAttendanceSavesInGoWithoutDjango(t *testing.T) {
 	}
 }
 
+func (f *fakeStarter) KeyVisitSSA(_ context.Context, _ auth.Principal, id string, form url.Values, _ activities.Origin) (activities.Answer, error) {
+	f.got = append(f.got, id+"|"+form.Get("score_leadership"))
+	return activities.Answer{Message: "Saved."}, f.err
+}
+
+func TestTheVisitSSASavesInGoWithoutDjango(t *testing.T) {
+	starter := &fakeStarter{}
+	answer, err := decideVisit(NewService(nil).WithActivityLifecycle(starter), "/activities/a1/ssa-upload/action",
+		map[string]string{"score_leadership": "6"})
+	if err != nil || !answer.GetSaved() || len(starter.got) != 1 || starter.got[0] != "a1|6" {
+		t.Fatalf("answer %v, %v, got %v", answer, err, starter.got)
+	}
+}
+
 func TestStartActivityStaysWithDjangoWhileDjangoIsThere(t *testing.T) {
 	starter := &fakeStarter{}
 	fetcher := &formFetcher{}

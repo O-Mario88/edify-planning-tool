@@ -95,6 +95,8 @@ const (
 	extraworkRolesFile = "../../../deploy/db/extrawork_roles.sql"
 	// Add to Project saved through Go.
 	projectEnrolRolesFile = "../../../deploy/db/project_enrol_roles.sql"
+	// SSA scores keyed on a visit through Go.
+	ssaEntryRolesFile = "../../../deploy/db/ssa_entry_roles.sql"
 	// Native Go security/account relay side effects (Step 2).
 	relayOpsRolesFile = "../../../deploy/db/relay_ops_roles.sql"
 	// Native Go cluster leader account onboarding (Batch 10).
@@ -386,6 +388,13 @@ func prepareGatewayRole(ctx context.Context) (string, error) {
 		return "", err
 	}
 	if _, err := conn.Conn().PgConn().Exec(ctx, string(projectEnrolRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	ssaEntryRoles, err := os.ReadFile(filepath.FromSlash(ssaEntryRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(ssaEntryRoles)).ReadAll(); err != nil {
 		return "", err
 	}
 	relayOpsRoles, err := os.ReadFile(filepath.FromSlash(relayOpsRolesFile))

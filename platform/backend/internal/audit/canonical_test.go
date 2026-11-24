@@ -1,6 +1,9 @@
 package audit
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
 
 // The expected strings and hashes were produced by the existing
 // application's own apps/core/audit_hash.py, so these tests fail the moment
@@ -56,11 +59,37 @@ func TestTheChainHashesExactlyAsTheExistingApplicationDoes(t *testing.T) {
 	}
 }
 
-func TestAFractionalNumberIsRefusedRatherThanHashedDifferently(t *testing.T) {
-	if _, err := Canonical(Entry{Action: "x", Payload: map[string]any{"rate": 0.1}}); err == nil {
-		t.Fatal("a fractional payload number was accepted")
+// The expected strings are Python's own repr() of each float, which
+// stable_stringify prints for a fractional number.
+func TestAFractionalNumberIsHashedAsPythonsRepr(t *testing.T) {
+	cases := map[float64]string{
+		5.6: "5.6", 0.1: "0.1", 3.25: "3.25", 1e-05: "1e-05", 0.0001: "0.0001", 1.5e-07: "1.5e-07",
+		123456.789: "123456.789", -2.5: "-2.5", 1234567.5: "1234567.5", 5.125: "5.125",
+		0.30000000000000004: "0.30000000000000004", 9999999999999.5: "9999999999999.5",
+		0.00030000000000000003: "0.00030000000000000003", 2.675: "2.675", -0.0001: "-0.0001",
+	}
+	for v, want := range cases {
+		if got, err := StableStringify(v); err != nil || got != want {
+			t.Fatalf("%v: got %q, %v; want %q", v, got, err, want)
+		}
 	}
 	if got, err := StableStringify(map[string]any{"n": 3.0}); err != nil || got != `{"n":3}` {
 		t.Fatalf("an integral float: %q %v", got, err)
+	}
+	entry := Entry{Action: "ssa_create", SubjectKind: Text("SsaRecord"), SubjectID: Text("r1"), ActorID: Text("u1"),
+		ActorRole: Text("CCEO"), Success: true, Payload: map[string]any{
+			"averageScore": 5.6, "scores": map[string]any{"leadership": 7.0, "teaching_environment": 3.25, "tiny": 1e-05}}}
+	got, err := Canonical(entry)
+	want := `["ssa_create","SsaRecord","r1","u1","CCEO",true,null,null,null,null,{"averageScore":5.6,"scores":{"leadership":7,"teaching_environment":3.25,"tiny":1e-05}}]`
+	if err != nil || got != want {
+		t.Fatalf("canonical\n got %s, %v\nwant %s", got, err, want)
+	}
+	if hash := ChainHash("", got); hash != "56370a51284f82c67bbb977bf0907cbaec794305b907646dab8dbe2af3930926" {
+		t.Fatalf("hash %s", hash)
+	}
+	for _, v := range []float64{math.NaN(), math.Inf(1)} {
+		if _, err := StableStringify(v); err == nil {
+			t.Fatalf("%v was accepted", v)
+		}
 	}
 }

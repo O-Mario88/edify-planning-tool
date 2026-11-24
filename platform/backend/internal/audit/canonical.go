@@ -122,15 +122,47 @@ func writeObject(out *strings.Builder, object map[string]any) error {
 	return nil
 }
 
-// writeFloat matches Python for an integral float (printed as an integer).
-// A fractional value is refused rather than risk a repr() the existing
-// verifier would print differently; the sign-in payloads hold integers only.
+// writeFloat matches stable_stringify: an integral float is printed as an
+// integer, a fractional one as Python's repr(). NaN, infinities and integral
+// values too large for an exact integer are refused.
 func writeFloat(out *strings.Builder, v float64) error {
-	if math.IsNaN(v) || math.IsInf(v, 0) || v != math.Trunc(v) || math.Abs(v) >= 1e15 {
+	if math.IsNaN(v) || math.IsInf(v, 0) || (v == math.Trunc(v) && math.Abs(v) >= 1e15) {
 		return fmt.Errorf("audit: the number %v is not supported in a payload", v)
 	}
-	out.WriteString(strconv.FormatInt(int64(v), 10))
+	if v == math.Trunc(v) {
+		out.WriteString(strconv.FormatInt(int64(v), 10))
+		return nil
+	}
+	out.WriteString(pythonRepr(v))
 	return nil
+}
+
+// pythonRepr is Python's repr() of a finite float: the shortest digits that
+// read back as v, in fixed notation for a decimal exponent from -4 up to 16,
+// otherwise as d.ddde±XX with at least two exponent digits.
+func pythonRepr(v float64) string {
+	shortest := strconv.FormatFloat(v, 'e', -1, 64) // [-]d[.ddd]e±XX
+	mantissa, expPart, _ := strings.Cut(shortest, "e")
+	exp, _ := strconv.Atoi(expPart)
+	sign := ""
+	if strings.HasPrefix(mantissa, "-") {
+		sign, mantissa = "-", mantissa[1:]
+	}
+	digits := strings.Replace(mantissa, ".", "", 1)
+	if exp < -4 || exp >= 16 {
+		expSign := "+"
+		if exp < 0 {
+			expSign, exp = "-", -exp
+		}
+		return fmt.Sprintf("%s%se%s%02d", sign, mantissa, expSign, exp)
+	}
+	if exp < 0 {
+		return sign + "0." + strings.Repeat("0", -exp-1) + digits
+	}
+	if len(digits) <= exp+1 {
+		return sign + digits + strings.Repeat("0", exp+1-len(digits)) + ".0"
+	}
+	return sign + digits[:exp+1] + "." + digits[exp+1:]
 }
 
 // writeString is the existing _json_escape.

@@ -4,9 +4,9 @@
   "controls": 483,
   "controls_without_a_destination": 92,
   "go": {
-   "django": 166,
+   "django": 165,
    "go-owned": 9,
-   "proved": 28,
+   "proved": 29,
    "unproved": 21,
    "retired": 1
   },
@@ -24,7 +24,7 @@
    "8 finance and money": 22,
    "9 admin and the rest": 10
   },
-  "field_staff_left": 118
+  "field_staff_left": 117
  },
  "saves": [
   {
@@ -424,8 +424,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "django",
-   "evidence": "",
+   "go": "proved",
+   "evidence": "SSA scores keyed on an officer's own staff visit (doc 189)",
    "templates": [
     "partials/my_plan/ssa_upload_drawer.html"
    ]

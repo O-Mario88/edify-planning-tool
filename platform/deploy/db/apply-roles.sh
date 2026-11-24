@@ -90,6 +90,8 @@ psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/debriefs_roles.sql"
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/extrawork_roles.sql"
 # Add to Project saved through Go: the enrolment, its place, baseline and outbox row.
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/project_enrol_roles.sql"
+# SSA scores keyed on a visit through Go: the record, its scores and the school's readiness.
+psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/ssa_entry_roles.sql"
 # Native Go security incident & partner login release relay replacements (Step 2).
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/relay_ops_roles.sql"
 # Native Go cluster leader account onboarding (Batch 10).
