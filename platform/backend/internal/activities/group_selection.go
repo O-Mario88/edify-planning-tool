@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jackc/pgx/v5"
+
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 )
 
@@ -34,6 +36,12 @@ func (s *Service) GroupSelection(ctx context.Context, p auth.Principal, raw []st
 		(!cancel && rules.CalendarBlocksRefuse) {
 		return nil, nil, 0, handOn("not the owner acting on their own visits")
 	}
+	// selection drops an id that matches no activity without a word: it did
+	// not come from a tick box on a page the reader was shown. None left is
+	// the drawer's "None of the selected activities can be ...".
+	if ids, err = s.existingActivities(ctx, ids); err != nil || len(ids) == 0 {
+		return nil, nil, 0, err
+	}
 	statuses := movableStatuses
 	if cancel {
 		statuses = cancellableStatuses
@@ -59,4 +67,23 @@ WHERE activity_id = ANY($1) AND status = ANY($2)`, readyIDs, rules.Cancel.MoneyM
 		}
 	}
 	return ready, left, moneyMoved, nil
+}
+
+// existingActivities are the ids that name a live activity, in their order.
+func (s *Service) existingActivities(ctx context.Context, ids []string) ([]string, error) {
+	rows, err := s.db.Query(ctx, `SELECT id FROM activity WHERE id = ANY($1) AND deleted_at IS NULL`, ids)
+	if err != nil {
+		return nil, fmt.Errorf("activities: reading the ticked activities: %w", err)
+	}
+	found, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return nil, err
+	}
+	kept := []string{}
+	for _, id := range ids {
+		if in(found, id) {
+			kept = append(kept, id)
+		}
+	}
+	return kept, nil
 }

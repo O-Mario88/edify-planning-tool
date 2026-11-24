@@ -127,13 +127,22 @@ func activitiesWord(n int) string {
 	return "activities"
 }
 
+// selectedCount is the drawer's subtitle: how many it lists, and none when
+// it lists nothing.
+func selectedCount(ready, left []activities.GroupPick) string {
+	if n := len(ready) + len(left); n > 0 {
+		return fmt.Sprintf("%d selected", n)
+	}
+	return ""
+}
+
 func groupNone(verb string) *screensv1.DrawerItem {
 	return &screensv1.DrawerItem{Kind: &screensv1.DrawerItem_Note{Note: &screensv1.DrawerNote{
 		Text: "None of the selected activities can be " + verb + ".", Tone: "warning"}}}
 }
 
 func moveSelectionDrawer(ready, left []activities.GroupPick) *screensv1.PageDrawer {
-	d := &screensv1.PageDrawer{Title: groupTitle(false), Subtitle: fmt.Sprintf("%d selected", len(ready)+len(left)), HasRequired: true,
+	d := &screensv1.PageDrawer{Title: groupTitle(false), Subtitle: selectedCount(ready, left), HasRequired: true,
 		Items: groupPicksItems(ready, left, "Moving", "Staying where they are")}
 	if len(ready) == 0 {
 		d.Items, d.CancelLabel = append(d.Items, groupNone("rescheduled")), "Close"
@@ -149,7 +158,7 @@ func moveSelectionDrawer(ready, left []activities.GroupPick) *screensv1.PageDraw
 }
 
 func cancelSelectionDrawer(ready, left []activities.GroupPick, moneyMoved int) *screensv1.PageDrawer {
-	d := &screensv1.PageDrawer{Title: groupTitle(true), Subtitle: fmt.Sprintf("%d selected", len(ready)+len(left)), HasRequired: true,
+	d := &screensv1.PageDrawer{Title: groupTitle(true), Subtitle: selectedCount(ready, left), HasRequired: true,
 		Items: groupPicksItems(ready, left, "Being cancelled", "Staying on the plan")}
 	if len(ready) == 0 {
 		d.Items, d.CancelLabel = append(d.Items, groupNone("cancelled")), "Close"
