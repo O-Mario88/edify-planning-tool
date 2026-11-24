@@ -4,9 +4,9 @@
   "controls": 483,
   "controls_without_a_destination": 92,
   "go": {
-   "django": 170,
+   "django": 169,
    "go-owned": 9,
-   "proved": 24,
+   "proved": 25,
    "unproved": 21,
    "retired": 1
   },
@@ -24,7 +24,7 @@
    "8 finance and money": 22,
    "9 admin and the rest": 10
   },
-  "field_staff_left": 122
+  "field_staff_left": 121
  },
  "saves": [
   {
@@ -4812,8 +4812,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "django",
-   "evidence": "",
+   "go": "proved",
+   "evidence": "Add to Project (doc 189)",
    "templates": [
     "partials/schools/assign_to_project_drawer.html"
    ]

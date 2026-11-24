@@ -125,6 +125,7 @@ GO_STATUS: dict[str, tuple[str, str]] = {
         UNPROVED,
         "Go saves it; Django's own save always fails, so there is nothing to compare (doc 189)",
     ),
+    "/schools/<str:school_id>/assign-to-project": (PROVED, "Add to Project (doc 189)"),
     "/logout": (GO_OWNED, "SignOut (doc 08)"),
     "/change-password": (GO_OWNED, "SetNewPassword (docs 08, 09)"),
     "/auth/switch-role": (GO_OWNED, "SwitchRole (doc 09)"),

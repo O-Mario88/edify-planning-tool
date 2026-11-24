@@ -28,6 +28,8 @@ const roleProjectCoordinator = "ProjectCoordinator"
 type Service struct {
 	db  schooldirectory.Querier
 	now func() time.Time
+	// saves is Add to Project's save (enrol.go), set only when Go makes it.
+	saves *enrolSaver
 }
 
 // NewService is the page over db.

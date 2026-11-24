@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
@@ -304,73 +305,39 @@ func addToProjectForm(school string, choices projectcapacity.EnrolmentForm) *scr
 	return form
 }
 
+// Enroller is Add to Project's save (internal/projectcapacity.Service).
+type Enroller interface {
+	Enrol(ctx context.Context, p auth.Principal, schoolPK string, f projectcapacity.EnrolForm, origin activities.Origin) (projectcapacity.EnrolAnswer, error)
+}
+
+// WithEnroller makes Add to Project's save Go's, with Django absent.
+func (s *Service) WithEnroller(e Enroller) *Service {
+	s.enroller = e
+	return s
+}
+
+// addToProjectInGo is assign_to_project_flow's save (projectcapacity.Enrol).
 func (s *Service) addToProjectInGo(ctx context.Context, p auth.Principal, req *screensv1.AddToProjectRequest) (*screensv1.AddToProjectResponse, bool, error) {
-	if !s.nativeForms() {
+	if !s.nativeForms() || s.enroller == nil {
 		return nil, false, nil
 	}
-	if !canMutateSchoolAssignment(p.ActiveRole) {
-		return &screensv1.AddToProjectResponse{
-			Result: &screensv1.SchoolActionResult{Refused: "Your role cannot enroll schools in projects."},
-		}, true, nil
+	answer := func(r *screensv1.SchoolActionResult) (*screensv1.AddToProjectResponse, bool, error) {
+		return &screensv1.AddToProjectResponse{Result: r}, true, nil
 	}
+	// get_scoped_object_or_404: a school outside the reader's scope is not found.
 	if inReach, err := s.schoolsInReach(ctx, p, req.GetSchoolId()); err != nil {
 		return nil, true, apierr.Internal(ctx, s.logger, err)
 	} else if !inReach {
-		return &screensv1.AddToProjectResponse{
-			Result: &screensv1.SchoolActionResult{Refused: "This school is outside your portfolio."},
-		}, true, nil
+		return answer(&screensv1.SchoolActionResult{Error: "Not found."})
 	}
-	if strings.TrimSpace(req.GetProjectId()) == "" {
-		return &screensv1.AddToProjectResponse{
-			Result: &screensv1.SchoolActionResult{Error: "Select a project first."},
-		}, true, nil
-	}
-	var startDate any = nil
-	if raw := strings.TrimSpace(req.GetStartDate()); raw != "" {
-		if d, err := time.Parse(time.DateOnly, raw); err == nil {
-			startDate = d
-		}
-	}
-	tx, err := s.db.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
+	saved, err := s.enroller.Enrol(ctx, p, req.GetSchoolId(), projectcapacity.EnrolForm{
+		ProjectID: req.GetProjectId(), ProjectType: req.GetProjectType(), ParticipationType: req.GetParticipationType(),
+		StartDate: req.GetStartDate(), SupportArea: req.GetSupportArea(), CoordinatorID: req.GetCoordinatorId(), Notes: req.GetNotes(),
+	}, activities.Origin{})
 	if err != nil {
 		return nil, true, apierr.Internal(ctx, s.logger, err)
 	}
-	defer func() { _ = tx.Rollback(ctx) }()
-	now := s.clock()
-	var asgID, msg string
-	var already bool
-	if err := tx.QueryRow(ctx,
-		`SELECT assignment_id, already_enrolled, message FROM gateway_school_actions.assign_school_to_project($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-		req.GetSchoolId(), req.GetProjectId(), req.GetProjectType(), req.GetParticipationType(),
-		startDate, req.GetSupportArea(), req.GetCoordinatorId(), req.GetNotes(),
-		p.UserID, p.ActiveRole, now,
-	).Scan(&asgID, &already, &msg); err != nil {
-		return &screensv1.AddToProjectResponse{
-			Result: &screensv1.SchoolActionResult{Error: err.Error()},
-		}, true, nil
-	}
-	if !already {
-		if _, err := audit.Append(ctx, tx, audit.Entry{
-			Action:      "school.project_enrolled",
-			SubjectKind: audit.Text("school"),
-			SubjectID:   audit.Text(req.GetSchoolId()),
-			ActorID:     audit.Text(p.UserID),
-			ActorRole:   audit.Text(p.ActiveRole),
-			Success:     true,
-			Payload: map[string]any{
-				"project_id":    req.GetProjectId(),
-				"assignment_id": asgID,
-			},
-		}, now); err != nil {
-			return nil, true, apierr.Internal(ctx, s.logger, err)
-		}
-	}
-	if err := tx.Commit(ctx); err != nil {
-		return nil, true, apierr.Internal(ctx, s.logger, err)
-	}
-	return &screensv1.AddToProjectResponse{
-		Result: &screensv1.SchoolActionResult{Saved: true, Message: msg},
-	}, true, nil
+	return answer(&screensv1.SchoolActionResult{Saved: saved.Saved, Message: saved.Message, Refused: saved.Refused, Error: saved.Error})
 }
 
 func (s *Service) bulkAssignClusterInGo(ctx context.Context, p auth.Principal, req *screensv1.BulkAssignClusterRequest) (*screensv1.BulkAssignClusterResponse, bool, error) {

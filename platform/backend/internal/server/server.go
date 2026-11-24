@@ -351,6 +351,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 				screenService.WithDailyDebrief(debriefPage)
 				extraWorkPage.WithSaves(pool, plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, realtimeBroker, logger)
 				screenService.WithExtraWork(extraWorkPage)
+				screenService.WithEnroller(projectcapacity.NewService(pool, time.Now).
+					WithSaves(pool, plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, realtimeBroker, logger))
 			}
 		}
 		if effectiveSaves.RescheduleVisit {
