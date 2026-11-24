@@ -72,7 +72,10 @@ SELECT a.id, a.status, a.cluster_id, a.responsible_staff_id, a.planned_date, a.i
        (a.school_id IS NOT NULL OR a.project_id IS NOT NULL OR a.assigned_partner_id IS NOT NULL
         OR a.delivery_type IS DISTINCT FROM 'staff' OR a.paired_school_visit_id IS NOT NULL
         OR a.monitored_by_staff_id IS NOT NULL
-        OR EXISTS (SELECT 1 FROM cluster_activity_attendance x WHERE x.activity_id = a.id AND x.is_guest))
+        OR EXISTS (SELECT 1 FROM cluster_activity_attendance x WHERE x.activity_id = a.id AND x.is_guest)
+        -- A meeting holding a Core training slot from before 2026-10-02 gives
+        -- it back on its save (cluster_credit.credit_cluster_session).
+        OR EXISTS (SELECT 1 FROM core_activity_slot cs WHERE cs.activity_id = a.id))
 FROM activity a
 WHERE a.id = $1 AND a.deleted_at IS NULL AND a.activity_type = $2 AND a.cluster_id IS NOT NULL`,
 		id, clusterMeetingType).Scan(&m.id, &m.status, &m.clusterID, &responsible, &m.planned, &verification,
@@ -92,7 +95,7 @@ WHERE a.id = $1 AND a.deleted_at IS NULL AND a.activity_type = $2 AND a.cluster_
 func (m *completedMeeting) outOfCase(p auth.Principal) string {
 	switch {
 	case m.other:
-		return "a meeting at a school, in a project, a pair or a partner's hands, or with visiting schools"
+		return "a meeting at a school, in a project, a pair or a partner's hands, with visiting schools or a Core slot"
 	case !ownsVisit(p, m.responsible):
 		return "someone else's meeting"
 	case m.status != startedStatus && !in(startableStatuses, m.status):

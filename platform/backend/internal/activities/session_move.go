@@ -47,7 +47,9 @@ SELECT a.id, a.activity_type, a.status, a.responsible_staff_id, a.daily_visit_ba
        (a.school_id IS NOT NULL OR a.project_id IS NOT NULL OR a.assigned_partner_id IS NOT NULL
         OR a.delivery_type IS DISTINCT FROM 'staff' OR a.paired_school_visit_id IS NOT NULL
         OR a.end_date IS NOT NULL OR a.execution_started_at IS NOT NULL
-        OR EXISTS (SELECT 1 FROM activity o WHERE o.paired_school_visit_id = a.id))
+        OR EXISTS (SELECT 1 FROM activity o WHERE o.paired_school_visit_id = a.id)
+        -- A Core slot held from before 2026-10-02 is given back on the save.
+        OR EXISTS (SELECT 1 FROM core_activity_slot cs WHERE cs.activity_id = a.id))
 FROM activity a WHERE a.id = $1 AND a.deleted_at IS NULL`, id).Scan(
 		&a.id, &a.activityType, &a.status, &responsible, &batch, &itemID, &name,
 		&scheduled, &planned, &a.count, &meetingKind, &clusterID, &other)
