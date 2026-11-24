@@ -4,9 +4,9 @@
   "controls": 483,
   "controls_without_a_destination": 92,
   "go": {
-   "django": 161,
+   "django": 160,
    "go-owned": 9,
-   "proved": 32,
+   "proved": 33,
    "unproved": 22,
    "retired": 1
   },
@@ -24,7 +24,7 @@
    "8 finance and money": 22,
    "9 admin and the rest": 10
   },
-  "field_staff_left": 114
+  "field_staff_left": 113
  },
  "saves": [
   {
@@ -1150,8 +1150,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "django",
-   "evidence": "",
+   "go": "proved",
+   "evidence": "Create cluster, its staff refill and a school from its profile (doc 189)",
    "templates": [
     "partials/clusters/create_cluster_drawer.html"
    ]

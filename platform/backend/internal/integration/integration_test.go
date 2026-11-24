@@ -101,6 +101,8 @@ const (
 	clusterFacilitationRolesFile = "../../../deploy/db/cluster_facilitation_roles.sql"
 	// A school joining a cluster, saved through Go.
 	clusterMembershipRolesFile = "../../../deploy/db/cluster_membership_roles.sql"
+	// A cluster created through Go.
+	clusterCreateRolesFile = "../../../deploy/db/cluster_create_roles.sql"
 	// Native Go security/account relay side effects (Step 2).
 	relayOpsRolesFile = "../../../deploy/db/relay_ops_roles.sql"
 	// Native Go cluster leader account onboarding (Batch 10).
@@ -413,6 +415,13 @@ func prepareGatewayRole(ctx context.Context) (string, error) {
 		return "", err
 	}
 	if _, err := conn.Conn().PgConn().Exec(ctx, string(clusterMembershipRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	clusterCreateRoles, err := os.ReadFile(filepath.FromSlash(clusterCreateRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(clusterCreateRoles)).ReadAll(); err != nil {
 		return "", err
 	}
 	relayOpsRoles, err := os.ReadFile(filepath.FromSlash(relayOpsRolesFile))

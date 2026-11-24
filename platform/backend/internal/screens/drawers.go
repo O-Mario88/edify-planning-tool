@@ -88,6 +88,12 @@ func (s *Service) GetDrawerOptions(
 		message.GetName() == "source" || len(message.GetValue()) > maxSchoolIDLength {
 		return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "These choices do not exist.")
 	}
+	if resp, served, err := s.eligibleStaffInGo(ctx, message.GetSource(), message.GetValue()); served {
+		if err != nil {
+			return nil, err
+		}
+		return connect.NewResponse(resp), nil
+	}
 	if resp, served, err := s.getDrawerOptionsInGo(ctx, message.GetSource(), message.GetName(), message.GetValue()); served {
 		if err != nil {
 			return nil, err
@@ -194,6 +200,14 @@ func (s *Service) SaveDrawer(
 			return connect.NewResponse(answer), nil
 		}
 		if answer, served, err := s.facilitatorSaveInGo(ctx, forwarded, activities.Origin{
+			IP: from.IP, UserAgent: from.UserAgent, CorrelationID: from.CorrelationID,
+		}); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(answer), nil
+		}
+		if answer, served, err := s.createClusterSaveInGo(ctx, forwarded, activities.Origin{
 			IP: from.IP, UserAgent: from.UserAgent, CorrelationID: from.CorrelationID,
 		}); served {
 			if err != nil {

@@ -6,8 +6,8 @@ hand in that script and changes only with evidence. *Proved* means compared with
 with Django stopped.
 
 - Saves: 225 destinations from 483 save controls.
-- Go: 32 proved, 22 with unproved Go code, 161 still Django's, 1 retired on purpose, 9 made by Go's own services.
-- Field staff can reach 114 saves that are not yet proved in Go.
+- Go: 33 proved, 22 with unproved Go code, 160 still Django's, 1 retired on purpose, 9 made by Go's own services.
+- Field staff can reach 113 saves that are not yet proved in Go.
 - 92 controls post to a destination the inventory cannot read (set by a variable or script); they are listed by template at the end and must be classified by hand.
 
 | Step | Saves |
@@ -32,6 +32,7 @@ with Django stopped.
 | `/activity-selection/reschedule` | proved | small | 9 roles | Reschedule {{ ready|length }} activit{{ ready|length|pluralize:"y,ies" }} |
 | `/clusters/<str:cluster_id>/bulk-assign-drawer` | proved | medium | 7 roles | Save schools to cluster |
 | `/clusters/<str:cluster_id>/facilitator` | proved | small | 7 roles | Save |
+| `/clusters/create` | proved | medium | 7 roles | Create cluster |
 | `/core-schools/assign-partner/action` | proved | large | 6 roles | Assign to partner |
 | `/core-schools/schedule-training/action` | proved | large | 6 roles | Schedule training |
 | `/core-schools/schedule-visit/action` | proved | large | 6 roles | Schedule visit |
@@ -70,7 +71,6 @@ with Django stopped.
 | `/clusters/<str:cluster_id>/catchment/<str:catchment_id>/end` | django | medium | Admin, CCEO, CountryDirector, ImpactAssessment, Program Lead | End approval |
 | `/clusters/<str:cluster_id>/delete` | django | small | 7 roles | Delete {{ cluster.name }} cluster |
 | `/clusters/<str:cluster_id>/schools/<str:school_id>/remove` | django | medium | 7 roles | Remove {{ s.name }} from this cluster |
-| `/clusters/create` | django | medium | 7 roles | Create cluster |
 | `/clusters/schedule-activity` | django | large | 7 roles | Schedule training Schedule meeting |
 | `/core-schools/oversight/send` | django | large | 6 roles | Send to {{ r.responsible_first_name }} |
 | `/core-schools/recommendations/<str:rec_id>/<str:action>` | django | medium | 6 roles | Accept; Defer; Reject |

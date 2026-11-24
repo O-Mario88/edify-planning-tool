@@ -108,7 +108,9 @@ type Service struct {
 	facilitation ClusterFacilitator
 	// membership is a cluster's Add Schools, with Django absent.
 	membership ClusterMembership
-	pairsInGo  bool // schedule_training_pair: 32's In-school Training
+	// creator is the Clusters page's Create cluster, with Django absent.
+	creator   ClusterCreator
+	pairsInGo bool // schedule_training_pair: 32's In-school Training
 	// groupTrainings is nil unless EDIFY_GO_SAVES names schedule_group_training (38).
 	groupTrainings GroupTrainingSaver
 	// clusterMeetings is nil unless EDIFY_GO_SAVES names schedule_cluster_meeting (49).
