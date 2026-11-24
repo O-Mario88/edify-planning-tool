@@ -73,6 +73,9 @@ func (s *Service) completeDrawerInGo(ctx context.Context, p auth.Principal, path
 // with one Salesforce ID, no purpose to choose, no SSA scores, no
 // accountability and no return note.
 func completionDrawer(f activities.CompleteFacts, canAddSchool bool, courses ...coreforms.Course) *screensv1.PageDrawer {
+	if f.Pair {
+		return pairCompletionDrawer(f)
+	}
 	title := "Complete " + strings.ReplaceAll(f.ActivityType, "_", " ")
 	if f.SchoolName != "" {
 		title += " at " + f.SchoolName
@@ -245,4 +248,60 @@ func purposeChoices(current string) []*screensv1.DrawerOption {
 		options = append([]*screensv1.DrawerOption{{Value: current, Label: label}}, options...)
 	}
 	return options
+}
+
+// pairCompletionDrawer is the template for an In-school Training and its
+// visit (is_paired_in_school_training): the training's day, the SSA taken on
+// the visit, both IDs, the head counts and the notes.
+func pairCompletionDrawer(f activities.CompleteFacts) *screensv1.PageDrawer {
+	title := "Complete training + visit"
+	if f.SchoolName != "" {
+		title += " at " + f.SchoolName
+	}
+	items := []*screensv1.DrawerItem{
+		drawerField(&screensv1.DrawerField{
+			Name: "actual_delivery_date", Label: completedOnLabel(f.ActivityType), Kind: "date", Value: f.Delivered,
+			Required: true, Help: completedOnHelp, MaxDate: f.Today,
+		}),
+	}
+	items = append(items, pairSSAItems()...)
+	zero := 0.0
+	items = append(items,
+		&screensv1.DrawerItem{Kind: &screensv1.DrawerItem_Heading{Heading: "Salesforce records"}},
+		drawerText("Both IDs are checked together. Neither record completes unless both are valid."),
+		drawerField(&screensv1.DrawerField{Name: "salesforce_id", Label: "Training ID", Kind: "text", Required: true, Placeholder: "TS-…"}),
+		drawerField(&screensv1.DrawerField{Name: "visit_salesforce_id", Label: "School visit ID", Kind: "text", Required: true, Placeholder: "SV-… or SVE-…"}),
+		drawerField(&screensv1.DrawerField{Name: "teachers_attended", Label: "Teachers attended", Kind: "number", Value: f.Teachers, Min: &zero}),
+		drawerField(&screensv1.DrawerField{Name: "leaders_attended", Label: "Leaders attended", Kind: "number", Value: f.Leaders, Min: &zero}),
+		&screensv1.DrawerItem{Kind: &screensv1.DrawerItem_Heading{Heading: "What you observed (optional)"}},
+		drawerText(observedNote),
+		drawerField(&screensv1.DrawerField{Name: "actual_outcome", Label: "Outcome", Kind: "textarea", Value: f.Outcome, MaxLength: length(outcomeMax)}),
+		drawerField(&screensv1.DrawerField{Name: "actual_observations", Label: "Observations", Kind: "textarea", Value: f.Observations, MaxLength: length(observationsMax)}),
+		drawerField(&screensv1.DrawerField{Name: "follow_up_note", Label: "Follow-up needed (optional)", Kind: "text", Value: f.FollowUp, MaxLength: length(followUpMax)}),
+	)
+	return &screensv1.PageDrawer{
+		Title: title, Subtitle: f.Name, HasRequired: true, Items: items,
+		SubmitLabel: "Submit training + visit", CancelLabel: "Cancel", CanSubmit: true,
+	}
+}
+
+// pairSSAItems are the SSA section on a pair whose visit was not planned to
+// collect it: no answer chosen, and no reason asked.
+func pairSSAItems() []*screensv1.DrawerItem {
+	const asked = "Were SSA scores collected on this activity?"
+	zero, ten, tenth := 0.0, 10.0, 0.1
+	collected := []*screensv1.DrawerCondition{{Field: "ssa_collected", Values: []string{"yes"}}}
+	items := []*screensv1.DrawerItem{
+		{Kind: &screensv1.DrawerItem_Heading{Heading: asked}},
+		{Kind: &screensv1.DrawerItem_Heading{Heading: "SSA scores (optional)"}},
+		drawerText("If the school's SSA was collected at this training, enter all eight scores. They are recorded on the school visit. The Salesforce IDs below are what complete the training and the visit."),
+		drawerField(&screensv1.DrawerField{Name: "ssa_collected", Label: asked, Kind: "radio",
+			Options: choiceOptions([][2]string{{"yes", "SSA data collected"}, {"no", "No, not collected"}})}),
+		shownWhen(drawerText("Each score is from 0 to 10."), collected),
+	}
+	for _, c := range ssaInterventionChoices {
+		items = append(items, drawerField(&screensv1.DrawerField{Name: "score_" + c[0], Label: c[1], Kind: "number",
+			Min: &zero, Max: &ten, Step: &tenth, ShowWhen: collected}))
+	}
+	return items
 }

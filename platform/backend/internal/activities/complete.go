@@ -148,6 +148,13 @@ type completionPlan struct {
 // existing completion's refusals roll its one transaction back.
 func (s *Service) Complete(ctx context.Context, p auth.Principal, req CompleteRequest, origin Origin) (CompleteAnswer, error) {
 	if req.Sessions {
+		pr, err := s.pairInCase(ctx, p, strings.TrimSpace(req.ActivityID))
+		if err != nil {
+			return CompleteAnswer{}, err
+		}
+		if pr != nil {
+			return s.completePair(ctx, p, pr, req.Form, origin)
+		}
 		m, err := s.meetingInCase(ctx, p, strings.TrimSpace(req.ActivityID))
 		if err != nil {
 			return CompleteAnswer{}, err
@@ -598,19 +605,24 @@ WHERE a.id = $1`, holderID).Scan(&activityType, &snapshot, &schoolName, &schoolC
 // appendSalesforceRow is the reservation's `activity.salesforce_id_entered`
 // row, with the stamps log() adds.
 func (s *Service) appendSalesforceRow(ctx context.Context, tx pgx.Tx, pl *completionPlan) error {
-	cover, err := coverageStamp(ctx, tx, pl.p.UserID, s.now())
+	return s.appendSalesforceRowFor(ctx, tx, pl.p, pl.origin, pl.a.id, pl.normalized)
+}
+
+// appendSalesforceRowFor is that row for any activity whose ID was reserved.
+func (s *Service) appendSalesforceRowFor(ctx context.Context, tx pgx.Tx, p auth.Principal, origin Origin, id, normalized string) error {
+	cover, err := coverageStamp(ctx, tx, p.UserID, s.now())
 	if err != nil {
 		return err
 	}
-	role := pl.p.ActiveRole
+	role := p.ActiveRole
 	_, err = audit.Append(ctx, tx, audit.Entry{
-		Action: salesforceAuditAction, SubjectKind: audit.Text("Activity"), SubjectID: audit.Text(pl.a.id),
-		ActorID: audit.Text(pl.p.UserID), ActorRole: &role, Success: true,
+		Action: salesforceAuditAction, SubjectKind: audit.Text("Activity"), SubjectID: audit.Text(id),
+		ActorID: audit.Text(p.UserID), ActorRole: &role, Success: true,
 		Payload: withStamps(map[string]any{
-			"normalized_value": pl.normalized, "entry_source": staffSelfEntry, "released_from_activity_id": nil,
+			"normalized_value": normalized, "entry_source": staffSelfEntry, "released_from_activity_id": nil,
 		}, cover),
-		IPAddress: nilIfEmpty(pl.origin.IP), UserAgent: nilIfEmpty(pl.origin.UserAgent),
-		CorrelationID: nilIfEmpty(pl.origin.CorrelationID),
+		IPAddress: nilIfEmpty(origin.IP), UserAgent: nilIfEmpty(origin.UserAgent),
+		CorrelationID: nilIfEmpty(origin.CorrelationID),
 	}, s.now())
 	if err != nil {
 		return fmt.Errorf("activities: writing the reservation's audit row: %w", err)
@@ -774,11 +786,16 @@ func asNotice(err error) error {
 
 // appendSSARow is upload's audit row, inside the completion's transaction.
 func (s *Service) appendSSARow(ctx context.Context, tx pgx.Tx, pl *completionPlan) error {
+	return s.appendSSARowFor(ctx, tx, pl, &pl.a)
+}
+
+// appendSSARowFor is that row for the visit the scores were collected on.
+func (s *Service) appendSSARowFor(ctx context.Context, tx pgx.Tx, pl *completionPlan, visit *completedVisit) error {
 	cover, err := coverageStamp(ctx, tx, pl.p.UserID, s.now())
 	if err != nil {
 		return err
 	}
-	action, data := pl.ssaKey.auditRow(&pl.a)
+	action, data := pl.ssaKey.auditRow(visit)
 	if _, err := audit.Append(ctx, tx, audit.Entry{
 		Action: action, SubjectKind: audit.Text("SsaRecord"), SubjectID: audit.Text(pl.ssaKey.record),
 		ActorID: audit.Text(pl.p.UserID), ActorRole: audit.Text(pl.p.ActiveRole), Success: true,

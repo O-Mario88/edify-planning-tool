@@ -40,7 +40,11 @@ type CompleteFacts struct {
 	// SSA is a visit whose purpose the drawer offers (every one Go completes
 	// but a plain School Visit): its purpose, training, SSA and follow-up
 	// sections are drawn, from the school, the planned day and the year.
-	SSA            bool
+	SSA bool
+	// Pair is an In-school Training and its visit, completed together; Name
+	// is the training's, the drawer's subtitle.
+	Pair           bool
+	Name           string
 	SchoolID, FY   string
 	Planned        time.Time
 	CurrentPurpose string
@@ -55,6 +59,13 @@ type RegisterSchool struct {
 // CompleteDrawer reads the drawer's facts, or ErrHandOn.
 func (s *Service) CompleteDrawer(ctx context.Context, p auth.Principal, id string) (CompleteFacts, error) {
 	id = strings.TrimSpace(id)
+	pr, err := s.pairInCase(ctx, p, id)
+	if err != nil {
+		return CompleteFacts{}, err
+	}
+	if pr != nil {
+		return s.pairFacts(ctx, pr)
+	}
 	m, err := s.meetingInCase(ctx, p, id)
 	if err != nil {
 		return CompleteFacts{}, err
@@ -225,4 +236,15 @@ func countValue(n *int) string {
 		return "0"
 	}
 	return strconv.Itoa(*n)
+}
+
+// pairFacts is the pair's drawer: the training's day, counts and notes.
+func (s *Service) pairFacts(ctx context.Context, pr *completedPair) (CompleteFacts, error) {
+	f, teachers, leaders, _, err := s.workFacts(ctx, pr.training.id)
+	if err != nil {
+		return f, err
+	}
+	f.Pair, f.Name, f.SalesforceKind, f.Attendance = true, pr.name, "training", true
+	f.Teachers, f.Leaders = countValue(teachers), countValue(leaders)
+	return f, nil
 }
