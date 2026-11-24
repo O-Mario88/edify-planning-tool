@@ -39,6 +39,22 @@ type view struct {
 	today                                    time.Time
 	mine, assignedByMe, toReview, monitoring []assignment
 	summary                                  summary
+	// saves draws each row's buttons, as drawers at their saves' paths;
+	// only when Go makes the saves.
+	saves bool
+}
+
+// button is one row button: a drawer at /extra-work/<id>/<action>.
+func button(label, id, action string) *screensv1.PageAction {
+	return &screensv1.PageAction{Key: action, Label: label, Enabled: true, Href: "/extra-work/" + id + "/" + action, Drawer: true}
+}
+
+func buttons(as ...*screensv1.PageAction) *screensv1.PagePanelItem {
+	links := make([]*screensv1.PageLink, 0, len(as))
+	for _, a := range as {
+		links = append(links, &screensv1.PageLink{Text: a.GetLabel(), Href: a.GetHref(), Drawer: true})
+	}
+	return &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{Links: links}}}
 }
 
 // overdue is the view's is_overdue: open work due before today.
@@ -131,8 +147,23 @@ func (v view) mineRow(a assignment) *screensv1.PageRow {
 		status += " · Overdue"
 	}
 	return &screensv1.PageRow{Cells: []*screensv1.PageCell{
-		cell(task, ""), cell(a.AssignerRole, ""), cell(day(a.Due), ""), cell(status, mineTone(a.Status)), cell(action(a), ""),
+		cell(task, ""), cell(a.AssignerRole, ""), cell(day(a.Due), ""), cell(status, mineTone(a.Status)), v.actionCell(a),
 	}}
+}
+
+// actionCell is the row's button when Go saves it, else its words.
+func (v view) actionCell(a assignment) *screensv1.PageCell {
+	c := cell(action(a), "")
+	if !v.saves {
+		return c
+	}
+	switch {
+	case a.Status == "assigned":
+		c.Actions = []*screensv1.PageAction{button("Start", a.ID, "start")}
+	case a.Status == "acknowledged" || a.Status == "in_progress" || a.Status == "returned":
+		c.Actions = []*screensv1.PageAction{button("Submit Result", a.ID, "submit")}
+	}
+	return c
 }
 
 var mineColumns = []*screensv1.PageColumn{{Label: "Task"}, {Label: "From"}, {Label: "Due"}, {Label: "Status"}, {Label: "Action", Numeric: true}}
@@ -172,6 +203,9 @@ func reviewBlock(v view) *screensv1.PageBlock {
 			// submitter's own, unchecked, and is not offered to the app.
 			items = append(items, text("Evidence link"))
 		}
+		if v.saves {
+			items = append(items, buttons(button("Verify & Complete", a.ID, "verify"), button("Return…", a.ID, "return")))
+		}
 	}
 	return panel("Awaiting my review",
 		"Verify what was delivered, or return it with what must be corrected — the assignee can never verify their own work.", items...)
@@ -194,6 +228,9 @@ func assignedByMeBlock(v view) *screensv1.PageBlock {
 			status += " · Overdue"
 		}
 		items = append(items, text(a.Title), text("· "+a.AssigneeRole+" · due "+day(a.Due)), toned(status, tone))
+		if v.saves && a.Status != "verified" && a.Status != "cancelled" {
+			items = append(items, buttons(button("Cancel", a.ID, "cancel")))
+		}
 	}
 	return panel("Assigned by me", "Everything you handed out, and where it stands.", items...)
 }

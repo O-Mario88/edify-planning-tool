@@ -91,6 +91,8 @@ const (
 	evidenceUploadRolesFile = "../../../deploy/db/evidence_upload_roles.sql"
 	// The Daily Debrief saved through Go.
 	debriefsRolesFile = "../../../deploy/db/debriefs_roles.sql"
+	// Extra Assigned Work saved through Go.
+	extraworkRolesFile = "../../../deploy/db/extrawork_roles.sql"
 	// Native Go security/account relay side effects (Step 2).
 	relayOpsRolesFile = "../../../deploy/db/relay_ops_roles.sql"
 	// Native Go cluster leader account onboarding (Batch 10).
@@ -368,6 +370,13 @@ func prepareGatewayRole(ctx context.Context) (string, error) {
 		return "", err
 	}
 	if _, err := conn.Conn().PgConn().Exec(ctx, string(debriefsRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	extraworkRoles, err := os.ReadFile(filepath.FromSlash(extraworkRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(extraworkRoles)).ReadAll(); err != nil {
 		return "", err
 	}
 	relayOpsRoles, err := os.ReadFile(filepath.FromSlash(relayOpsRolesFile))

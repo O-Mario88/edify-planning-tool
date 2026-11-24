@@ -202,6 +202,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	))
 	weeklyPage := weeklyrequest.NewService(pool, time.Now)
 	debriefPage := debriefs.NewService(pool, time.Now)
+	extraWorkPage := extrawork.NewService(pool, time.Now)
 	// Files people upload as evidence, kept where the existing application
 	// keeps them (local disk in development, private Spaces in production).
 	evidenceSvc := evidence.NewService(pool, privatestore.FromEnv(os.Getenv, privateUploadsDir(os.Getenv)),
@@ -316,7 +317,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			closurepages.NewService(pool, time.Now),
 			iapages.NewService(pool, time.Now),
 			ccelead.NewService(pool, time.Now),
-			extrawork.NewService(pool, time.Now),
+			extraWorkPage,
 			financedesks.NewService(pool, time.Now),
 			fieldpages.NewService(pool, time.Now),
 			adminpanel.NewService(pool, time.Now),
@@ -348,6 +349,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			if existingApp == nil {
 				debriefPage.WithSaves(pool, plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, realtimeBroker, logger)
 				screenService.WithDailyDebrief(debriefPage)
+				extraWorkPage.WithSaves(pool, plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, realtimeBroker, logger)
+				screenService.WithExtraWork(extraWorkPage)
 			}
 		}
 		if effectiveSaves.RescheduleVisit {

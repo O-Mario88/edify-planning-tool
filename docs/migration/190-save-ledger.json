@@ -4,10 +4,10 @@
   "controls": 483,
   "controls_without_a_destination": 92,
   "go": {
-   "django": 172,
+   "django": 170,
    "go-owned": 9,
-   "proved": 23,
-   "unproved": 20,
+   "proved": 24,
+   "unproved": 21,
    "retired": 1
   },
   "size": {
@@ -24,7 +24,7 @@
    "8 finance and money": 22,
    "9 admin and the rest": 10
   },
-  "field_staff_left": 123
+  "field_staff_left": 122
  },
  "saves": [
   {
@@ -1980,8 +1980,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "django",
-   "evidence": "",
+   "go": "proved",
+   "evidence": "Extra Assigned Work's start, submit, return, verify, cancel (doc 189)",
    "templates": [
     "pages/hr/extra_work.html",
     "partials/hr/extra_work_submit_drawer.html"
@@ -2005,8 +2005,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "django",
-   "evidence": "",
+   "go": "unproved",
+   "evidence": "Go saves it; Django's own save always fails, so there is nothing to compare (doc 189)",
    "templates": [
     "partials/hr/extra_work_assign_drawer.html"
    ]

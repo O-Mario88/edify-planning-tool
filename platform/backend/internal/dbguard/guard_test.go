@@ -212,6 +212,8 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		// The Daily Debrief (apps.debriefs.field_debrief_service
 		// DailyDebriefFlowService): the day's row, its work and who it is
 		// routed to.
+		// Extra Assigned Work (apps.hr.extra_work): the assignment's row.
+		filepath.Join(root, "internal", "extrawork") + sep: {"hr_extra_assignment"},
 		filepath.Join(root, "internal", "debriefs") + sep: {
 			"daily_debrief", "daily_debrief_activity_link", "daily_debrief_recipient",
 		},

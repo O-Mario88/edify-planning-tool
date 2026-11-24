@@ -94,7 +94,9 @@ type Service struct {
 	reimburser Reimburser
 	// dailyDebrief is the Daily Debrief's form, with Django absent.
 	dailyDebrief DailyDebriefer
-	pairsInGo    bool // schedule_training_pair: 32's In-school Training
+	// extraWork is Extra Assigned Work's saves, with Django absent.
+	extraWork ExtraWorker
+	pairsInGo bool // schedule_training_pair: 32's In-school Training
 	// groupTrainings is nil unless EDIFY_GO_SAVES names schedule_group_training (38).
 	groupTrainings GroupTrainingSaver
 	// clusterMeetings is nil unless EDIFY_GO_SAVES names schedule_cluster_meeting (49).

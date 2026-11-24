@@ -86,6 +86,8 @@ psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/day_money_roles.sql"
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/evidence_upload_roles.sql"
 # The Daily Debrief saved through Go: its rows and the one link removal.
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/debriefs_roles.sql"
+# Extra Assigned Work saved through Go: column grants on its row.
+psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/extrawork_roles.sql"
 # Native Go security incident & partner login release relay replacements (Step 2).
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/relay_ops_roles.sql"
 # Native Go cluster leader account onboarding (Batch 10).

@@ -117,6 +117,14 @@ GO_STATUS: dict[str, tuple[str, str]] = {
         "owner's Fund Received (doc 189)",
     ),
     "/fund-requests/receipt-confirm": (PROVED, "requester's monthly receipt (doc 189)"),
+    "/extra-work/<str:assignment_id>/<str:action>": (
+        PROVED,
+        "Extra Assigned Work's start, submit, return, verify, cancel (doc 189)",
+    ),
+    "/extra-work/assign": (
+        UNPROVED,
+        "Go saves it; Django's own save always fails, so there is nothing to compare (doc 189)",
+    ),
     "/logout": (GO_OWNED, "SignOut (doc 08)"),
     "/change-password": (GO_OWNED, "SetNewPassword (docs 08, 09)"),
     "/auth/switch-role": (GO_OWNED, "SwitchRole (doc 09)"),

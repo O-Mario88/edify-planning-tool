@@ -40,6 +40,8 @@ func mustZone(name string) *time.Location {
 type Service struct {
 	db  schooldirectory.Querier
 	now func() time.Time
+	// saves is Extra Assigned Work's saves (save.go), set only when Go makes them.
+	saves *saver
 }
 
 // NewService wires the service to the database it reads.
@@ -63,7 +65,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if fy == "" {
 		fy = schooldirectory.OperationalFY(now)
 	}
-	v := view{role: role, fy: fy, query: query, today: dayOf(now.In(zone))}
+	v := view{role: role, fy: fy, query: query, today: dayOf(now.In(zone)), saves: s.Saves()}
 	var err error
 	if v.mine, err = s.read(ctx, "mine", `assignee_id = $1`, `due_date`, rules.Limits.Mine, p.UserID, fy); err != nil {
 		return nil, true, err
