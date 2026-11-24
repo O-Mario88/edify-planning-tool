@@ -188,6 +188,49 @@ SELECT id, COALESCE(roles, ARRAY[]::varchar[]), COALESCE(active_role, '')
 	return prof, nil
 }
 
+// isWeekFrozen is isWeekLocked for a planner's move: a request sent and not
+// paid is taken back by the move (plan_changes), so it does not freeze it.
+func (n *NativePricing) isWeekFrozen(ctx context.Context, ownerID string, day time.Time) (bool, error) {
+	if ownerID == "" {
+		return false, nil
+	}
+	var frozen bool
+	err := n.pool.QueryRow(ctx, `
+SELECT EXISTS (
+  SELECT 1 FROM weekly_fund_request
+   WHERE responsible_user = $1 AND week_start_date <= $2::date AND week_end_date >= $2::date
+     AND NOT (status = ANY($3)) AND NOT (status = ANY($4))
+)`, ownerID, day.Format(time.DateOnly), rebuildableWeeklyStatuses, weekSentUnpaid).Scan(&frozen)
+	if err != nil {
+		return false, fmt.Errorf("activities: checking whether the week is frozen: %w", err)
+	}
+	return frozen, nil
+}
+
+// takesBack is whether a move of activityID between these days meets a
+// weekly request sent and not paid: one carrying its lines, or its owner's
+// for either week (plan_changes.sent_unpaid_requests).
+func (n *NativePricing) takesBack(ctx context.Context, activityID, ownerID string, days ...time.Time) (bool, error) {
+	weeks := make([]string, 0, len(days))
+	for _, day := range days {
+		weeks = append(weeks, mondayOf(day).Format(time.DateOnly))
+	}
+	var meets bool
+	err := n.pool.QueryRow(ctx, `
+SELECT NOT EXISTS (SELECT 1 FROM activity WHERE id = $1 AND delivery_type = 'partner') AND EXISTS (
+  SELECT 1 FROM weekly_fund_request w
+   WHERE w.status = ANY($4)
+     AND (w.id IN (SELECT wl.weekly_fund_request_id FROM weekly_fund_request_line wl
+                     JOIN activity_schedule_cost_line l ON l.id = wl.activity_budget_line_id WHERE l.activity_id = $1)
+          OR (w.week_start_date = ANY($3::date[]) AND (w.responsible_user = $2 OR w.responsible_user IN
+                (SELECT responsible_user FROM activity_schedule_cost_line WHERE activity_id = $1)))))`,
+		activityID, ownerID, weeks, weekSentUnpaid).Scan(&meets)
+	if err != nil {
+		return false, fmt.Errorf("activities: checking whether the move takes a request back: %w", err)
+	}
+	return meets, nil
+}
+
 func (n *NativePricing) isWeekLocked(ctx context.Context, ownerID string, day time.Time) (bool, error) {
 	if ownerID == "" {
 		return false, nil
@@ -392,7 +435,7 @@ SELECT EXISTS (
 				Pooled:  true,
 			}, nil
 		}
-		refusal, err := n.dayRefusal(ctx, ownerUID, false, plannedDay, "", "")
+		refusal, err := n.dayRefusal(ctx, ownerUID, false, false, plannedDay, "", "")
 		if err != nil {
 			return DayVerdict{}, err
 		}
@@ -1030,14 +1073,30 @@ SELECT COALESCE(a.status, ''), COALESCE(a.payment_status, 'none'),
 
 	// Check if old day is frozen.
 	if oldBatchID != nil && *oldBatchID != "" && oldVisitDate != nil {
-		locked, err := n.isWeekLocked(ctx, ownerUID, *oldVisitDate)
+		locked, err := n.isWeekFrozen(ctx, ownerUID, *oldVisitDate)
 		if err != nil {
 			return MoveVerdict{}, err
 		}
 		if locked {
+			// The money guards answer first, as the pricing meets them: the
+			// day left, then the day joined with the visit on it.
+			if newDay, parseErr := time.Parse(time.DateOnly, newDateStr); parseErr == nil {
+				for _, check := range []struct {
+					day              time.Time
+					leaving, joining string
+				}{{*oldVisitDate, activityID, ""}, {newDay, "", activityID}} {
+					refusal, err := n.dayRefusal(ctx, ownerUID, true, true, check.day, check.leaving, check.joining)
+					if err != nil {
+						return MoveVerdict{}, err
+					}
+					if refusal != "" {
+						return MoveVerdict{Refusal: refusal, Stage: "day", Pooled: true}, nil
+					}
+				}
+			}
 			return MoveVerdict{LeftFrozen: true, Pooled: true}, nil
 		}
-		refusal, err := n.dayRefusal(ctx, ownerUID, true, *oldVisitDate, activityID, "")
+		refusal, err := n.dayRefusal(ctx, ownerUID, true, true, *oldVisitDate, activityID, "")
 		if err != nil {
 			return MoveVerdict{}, err
 		}
@@ -1048,7 +1107,7 @@ SELECT COALESCE(a.status, ''), COALESCE(a.payment_status, 'none'),
 
 	// Check new day lock & rate card.
 	if newDay, parseErr := time.Parse(time.DateOnly, newDateStr); parseErr == nil {
-		locked, err := n.isWeekLocked(ctx, ownerUID, newDay)
+		locked, err := n.isWeekFrozen(ctx, ownerUID, newDay)
 		if err != nil {
 			return MoveVerdict{}, err
 		}
@@ -1059,7 +1118,7 @@ SELECT COALESCE(a.status, ''), COALESCE(a.payment_status, 'none'),
 				Pooled:  true,
 			}, nil
 		}
-		refusal, err := n.dayRefusal(ctx, ownerUID, true, newDay, "", activityID)
+		refusal, err := n.dayRefusal(ctx, ownerUID, true, true, newDay, "", activityID)
 		if err != nil {
 			return MoveVerdict{}, err
 		}
@@ -1088,7 +1147,18 @@ SELECT COALESCE(s.district_id, ''), COALESCE(d.name, '')
 		}
 	}
 
-	return MoveVerdict{Pooled: true}, nil
+	days := []time.Time{}
+	if oldVisitDate != nil {
+		days = append(days, *oldVisitDate)
+	}
+	if newDay, parseErr := time.Parse(time.DateOnly, newDateStr); parseErr == nil {
+		days = append(days, newDay)
+	}
+	takesBack, err := n.takesBack(ctx, activityID, ownerUID, days...)
+	if err != nil {
+		return MoveVerdict{}, err
+	}
+	return MoveVerdict{Pooled: true, TakesBack: takesBack}, nil
 }
 
 // CancelCheck checks whether the activity exists, whether its week or payment
@@ -1162,7 +1232,7 @@ SELECT EXISTS (
 				return CancelVerdict{}, err
 			}
 			verdict.LeftFrozen = locked
-			refusal, err := n.dayRefusal(ctx, owner, planChange, *visitDate, activityID, "")
+			refusal, err := n.dayRefusal(ctx, owner, planChange, false, *visitDate, activityID, "")
 			if err != nil {
 				return CancelVerdict{}, err
 			}
@@ -1219,7 +1289,11 @@ func (n *NativePricing) GroupCheck(ctx context.Context, q GroupQuestion) (GroupV
 			}
 			if mv.Refusal != "" {
 				picks = append(picks, VerdictPick{ID: id, Done: false, Refusal: mv.Refusal})
-			} else if mv.LeftFrozen || mv.TakesBack {
+			} else if mv.TakesBack {
+				// A group's move takes a week back too (group_actions calls
+				// services.reschedule); Go's group save does not yet.
+				return GroupVerdict{}, handOn("a group move would take a weekly request back")
+			} else if mv.LeftFrozen {
 				picks = append(picks, VerdictPick{ID: id, Done: false, Refusal: "This activity's week has left draft status."})
 			} else {
 				picks = append(picks, VerdictPick{ID: id, Done: true})

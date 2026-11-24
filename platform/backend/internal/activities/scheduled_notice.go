@@ -49,6 +49,15 @@ func (s *Service) WithOwnerNotices(push NoticePush, live NoticePublisher) *Servi
 
 type scheduledNotice struct {
 	title, body, event, category, contextType, route, label, recipient string
+	// priority is "normal" unless the trigger asks otherwise.
+	priority string
+}
+
+func (n scheduledNotice) level() string {
+	if n.priority == "" {
+		return normalPriority
+	}
+	return n.priority
 }
 
 // ownerNotice is _notify_scheduled_owner's decision for a school visit:
@@ -147,8 +156,8 @@ func (w workflowNotices) sendTo(ctx context.Context, now time.Time, contextID, a
 		var notificationID, recipient string
 		err := tx.QueryRow(ctx, `SELECT out_notification_id, out_recipient_id
   FROM gateway_notifications.notify_workflow($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-			cuid.New(), r.id, notice.title, notice.body, notice.category, notice.contextType, contextID,
-			r.route, r.label, normalPriority, notice.event, now).Scan(&notificationID, &recipient)
+			cuid.New(), r.id, notice.title, notice.body, notice.category, notice.contextType, nilIfEmpty(contextID),
+			r.route, r.label, notice.level(), notice.event, now).Scan(&notificationID, &recipient)
 		if errors.Is(err, pgx.ErrNoRows) {
 			continue
 		}
@@ -170,7 +179,7 @@ func (w workflowNotices) sendTo(ctx context.Context, now time.Time, contextID, a
 		Success: true, IPAddress: nilIfEmpty(origin.IP), UserAgent: nilIfEmpty(origin.UserAgent),
 		CorrelationID: nilIfEmpty(origin.CorrelationID),
 		Payload: map[string]any{
-			"category": notice.category, "priority": normalPriority, "recipient_ids": told, "notification_ids": made,
+			"category": notice.category, "priority": notice.level(), "recipient_ids": told, "notification_ids": made,
 		},
 	}, now); err != nil {
 		return fmt.Errorf("activities: auditing the notice: %w", err)

@@ -225,7 +225,7 @@ BEGIN
       source_event_id, reminder_count
     ) VALUES (
       new_id, at, at, person.id, COALESCE(NULLIF(person.active_role, ''), 'Staff'), notif_title, notif_body,
-      notif_category, ctx_type, ctx_id, route, btn_label, urgent, prio, 'unread', evt_type, ctx_id, 0
+      notif_category, ctx_type, ctx_id, route, btn_label, urgent, prio, 'unread', evt_type, COALESCE(ctx_id, ''), 0
     );
     out_notification_id := new_id;
   END IF;

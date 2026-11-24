@@ -80,10 +80,14 @@ type movePlan struct {
 	month, week       int
 	weeks             [][]string
 	months            [][]any
-	verdict           MoveVerdict
-	origin            Origin
-	now               time.Time
-	newBatch          string
+	// taken are the weekly requests the move brought back; staleDays the
+	// owner's days in those weeks priced for a split that no longer holds.
+	taken     []takenWeek
+	staleDays [][]string
+	verdict   MoveVerdict
+	origin    Origin
+	now       time.Time
+	newBatch  string
 }
 
 // Reschedule makes the move, or refuses it in the existing words, or hands
@@ -178,7 +182,7 @@ func (s *Service) prepareMove(ctx context.Context, p auth.Principal, req MoveReq
 	if err != nil {
 		return nil, err
 	}
-	if verdict.TakesBack || verdict.LeftFrozen || !verdict.Pooled {
+	if verdict.LeftFrozen || !verdict.Pooled {
 		return nil, handOn("the move's money has moved, or its day is not pooled")
 	}
 	weeks, months, err := lineBuckets(ctx, s.db, a.id)
@@ -319,6 +323,11 @@ func (s *Service) writeMove(ctx context.Context, pl *movePlan) (int64, error) {
 		return 0, fmt.Errorf("activities: opening the move: %w", err)
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
+	if pl.verdict.TakesBack {
+		if err := takeBackWeeks(ctx, tx, pl); err != nil {
+			return 0, err
+		}
+	}
 	if _, err := s.moveInTx(ctx, tx, pl); err != nil {
 		return 0, err
 	}
@@ -449,6 +458,11 @@ VALUES ($1, $2, $2, $3, $4, $5, '{}', 0, 0, 0, '{}')`,
 // its new lines, and the change it is.
 func keepMoveCosts(ctx context.Context, tx pgx.Tx, pl *movePlan) (int64, error) {
 	days := [][]string{}
+	for _, day := range pl.staleDays {
+		if day[0] != pl.a.batchID && day[0] != pl.newBatch {
+			days = append(days, day)
+		}
+	}
 	if pl.a.batchID != pl.newBatch {
 		days = append(days, []string{pl.a.batchID, pl.ownerUID})
 	}
@@ -510,6 +524,19 @@ func (s *Service) afterMove(ctx context.Context, pl *movePlan, rowID int64) {
 		if err := s.markOwnerYears(ctx, pl.a.responsible, pl.a.plannedDate, pl.newDay); err != nil {
 			s.logger.Warn("activities: the target ledger was not marked", "activity", pl.a.id, "err", err)
 		}
+	}
+	if len(pl.taken) > 0 {
+		// A week taken back is priced inside the existing save (priced_in_this_save),
+		// and its people are told from the week as the change leaves it.
+		if err := s.pricing.Settle(ctx, []int64{rowID}, pl.a.id); err != nil {
+			s.logger.Warn("activities: the costs to follow were not settled; the sweep takes them",
+				"activity", pl.a.id, "row", rowID, "err", err)
+		}
+		s.tellTakenBack(ctx, pl)
+		if err := s.auditMoved(ctx, pl); err != nil {
+			s.logger.Warn("activities: the reschedule audit row was not written", "activity", pl.a.id, "err", err)
+		}
+		return
 	}
 	if err := s.auditMoved(ctx, pl); err != nil {
 		s.logger.Warn("activities: the reschedule audit row was not written", "activity", pl.a.id, "err", err)

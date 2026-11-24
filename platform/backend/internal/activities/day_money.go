@@ -375,10 +375,14 @@ func refileDayMoney(ctx context.Context, tx pgx.Tx, money *dayMoney, now time.Ti
 // dayRefusal is the money guards' refusal for one day as the save will leave
 // it, asked before the save is written (_assert_days_can_follow): "" when it
 // may be priced. leaving and joining name a visit moving off or onto it.
-func (n *NativePricing) dayRefusal(ctx context.Context, owner string, planChange bool, day time.Time, leaving, joining string) (string, error) {
+// A planner's change (planChange) is a move or a group action; a move also
+// takes its sent-but-unpaid weeks back before it prices (takingBack), so they
+// refuse nothing.
+func (n *NativePricing) dayRefusal(ctx context.Context, owner string, planChange, takingBack bool, day time.Time,
+	leaving, joining string) (string, error) {
 	var refusal *string
-	if err := n.pool.QueryRow(ctx, `SELECT gateway_day_money.day_refusal($1, $2::date, $3, $4, $5)`,
-		owner, day.Format(time.DateOnly), planChange, leaving, joining).Scan(&refusal); err != nil {
+	if err := n.pool.QueryRow(ctx, `SELECT gateway_day_money.day_refusal($1, $2::date, $3, $4, $5, $6)`,
+		owner, day.Format(time.DateOnly), planChange, leaving, joining, takingBack).Scan(&refusal); err != nil {
 		return "", fmt.Errorf("activities: checking the day's money: %w", err)
 	}
 	if refusal == nil {

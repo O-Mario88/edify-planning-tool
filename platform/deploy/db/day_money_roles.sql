@@ -34,7 +34,7 @@ GRANT SELECT (id, activity_id, amount, line_item_type, vendor_paid, label, quant
               responsible_user, planned_date, fiscal_year, quarter, month)
   ON activity_schedule_cost_line TO edify_day_money_owner;
 GRANT SELECT (description), UPDATE (description, updated_at) ON activity_schedule_cost_line TO edify_day_money_owner;
-GRANT SELECT (id, responsible_user, visit_date) ON daily_visit_batch TO edify_day_money_owner;
+GRANT SELECT (id, responsible_user, visit_date, school_count) ON daily_visit_batch TO edify_day_money_owner;
 GRANT SELECT, INSERT, UPDATE, DELETE ON
   advance_request, weekly_fund_request, weekly_fund_request_line, fund_request, fund_request_item, transport_payment
 TO edify_day_money_owner;
@@ -133,7 +133,11 @@ DROP FUNCTION IF EXISTS gateway_day_money.money_guard(varchar[]);
 -- refusal of money that has moved or is with someone, or NULL. A planner's own
 -- change (p_plan_change) passes a monthly request in its approval chain, which
 -- then follows the plan (plan_changes.follows_plan_change).
-CREATE OR REPLACE FUNCTION gateway_day_money.activity_refusal(p_activity varchar, p_plan_change boolean) RETURNS text
+-- p_taking_back: the save takes a sent-but-unpaid week back before it prices
+-- (a planner's move), so such a week does not refuse it.
+DROP FUNCTION IF EXISTS gateway_day_money.activity_refusal(varchar, boolean);
+CREATE OR REPLACE FUNCTION gateway_day_money.activity_refusal(p_activity varchar, p_plan_change boolean, p_taking_back boolean)
+  RETURNS text
   LANGUAGE plpgsql STABLE SET search_path = pg_catalog, pg_temp AS $fn$
 BEGIN
   IF EXISTS (SELECT 1 FROM public.advance_request r JOIN public.activity_schedule_cost_line l ON l.id = r.budget_line_id
@@ -149,7 +153,8 @@ BEGIN
   IF EXISTS (SELECT 1 FROM public.weekly_fund_request_line wl
                JOIN public.activity_schedule_cost_line l ON l.id = wl.activity_budget_line_id
                JOIN public.weekly_fund_request w ON w.id = wl.weekly_fund_request_id
-              WHERE l.activity_id = p_activity AND NOT (w.status = ANY (gateway_day_money.week_rebuildable()))) THEN
+              WHERE l.activity_id = p_activity AND NOT (w.status = ANY (gateway_day_money.week_rebuildable()))
+                AND NOT (p_taking_back AND w.status = ANY (gateway_day_money.week_sent_unpaid()))) THEN
     RETURN 'This activity is already included in a submitted or approved weekly fund request. '
         || 'Return that request before changing its cost.';
   END IF;
@@ -171,8 +176,9 @@ $fn$;
 -- them, by id. A visit leaving the day (p_leaving) is not one of them; one
 -- joining it (p_joining) is. Nothing is locked.
 DROP FUNCTION IF EXISTS gateway_day_money.day_refusal(varchar, date[], boolean);
+DROP FUNCTION IF EXISTS gateway_day_money.day_refusal(varchar, date, boolean, varchar, varchar);
 CREATE OR REPLACE FUNCTION gateway_day_money.day_refusal(
-  p_owner varchar, p_day date, p_plan_change boolean, p_leaving varchar, p_joining varchar
+  p_owner varchar, p_day date, p_plan_change boolean, p_leaving varchar, p_joining varchar, p_taking_back boolean
 ) RETURNS text
   LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
 DECLARE
@@ -192,7 +198,7 @@ BEGIN
     ) member
      ORDER BY member.id
   LOOP
-    v_refusal := gateway_day_money.activity_refusal(v_activity, p_plan_change);
+    v_refusal := gateway_day_money.activity_refusal(v_activity, p_plan_change, p_taking_back);
     IF v_refusal IS NOT NULL THEN
       RETURN v_refusal;
     END IF;
@@ -225,7 +231,7 @@ BEGIN
     ORDER BY f.id FOR UPDATE;
 
   FOREACH v_activity IN ARRAY p_activity_ids LOOP
-    v_refusal := gateway_day_money.activity_refusal(v_activity, p_plan_change);
+    v_refusal := gateway_day_money.activity_refusal(v_activity, p_plan_change, false);
     IF v_refusal IS NOT NULL THEN
       RETURN v_refusal;
     END IF;
@@ -519,12 +525,83 @@ BEGIN
 END
 $fn$;
 
+-- plan_changes.SENT_UNPAID_STATUSES: with its approver, approved and waiting
+-- for the accountant, or set aside by its owner ("No Advance This Week").
+CREATE OR REPLACE FUNCTION gateway_day_money.week_sent_unpaid() RETURNS varchar[]
+  LANGUAGE sql IMMUTABLE SET search_path = pg_catalog, pg_temp AS $fn$
+  SELECT ARRAY['submitted_to_pl', 'submitted_to_cd', 'confirmed_for_advance', 'not_requested']::varchar[]
+$fn$;
+
+-- plan_changes.take_back_for_plan_change, inside the move's transaction: the
+-- sent-but-unpaid weekly requests the change runs into (those carrying the
+-- activity's lines, and its owners' requests for the weeks it leaves and joins)
+-- come back to their owner, and their advances go back to pending with them.
+-- An advance whose money has moved is left exactly as it is.
+CREATE OR REPLACE FUNCTION gateway_day_money.take_back_weeks(
+  p_activity varchar, p_owners varchar[], p_weeks date[], p_at timestamptz
+) RETURNS TABLE(request_id varchar, was varchar, owner varchar, week_start date, week_end date, total bigint)
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  v_request record;
+BEGIN
+  IF EXISTS (SELECT 1 FROM public.activity a WHERE a.id = p_activity AND a.delivery_type = 'partner') THEN
+    RETURN;
+  END IF;
+  FOR v_request IN
+    SELECT w.id, w.status, w.responsible_user, w.week_start_date, w.week_end_date, COALESCE(w.total_amount, 0)::bigint AS total
+      FROM public.weekly_fund_request w
+     WHERE w.status = ANY (gateway_day_money.week_sent_unpaid())
+       AND (w.id IN (SELECT wl.weekly_fund_request_id FROM public.weekly_fund_request_line wl
+                       JOIN public.activity_schedule_cost_line l ON l.id = wl.activity_budget_line_id
+                      WHERE l.activity_id = p_activity)
+            OR (w.responsible_user = ANY (p_owners) AND w.week_start_date = ANY (p_weeks)))
+     ORDER BY w.week_start_date, w.id
+       FOR UPDATE
+  LOOP
+    UPDATE public.weekly_fund_request w
+       SET status = 'pending_responsible_confirmation', confirmed_at = NULL, updated_at = p_at
+     WHERE w.id = v_request.id;
+    UPDATE public.advance_request r
+       SET status = 'pending_responsible_confirmation', advance_type = 'advance', confirmed_at = p_at, updated_at = p_at
+     WHERE r.budget_line_id IN (SELECT wl.activity_budget_line_id FROM public.weekly_fund_request_line wl
+                                 WHERE wl.weekly_fund_request_id = v_request.id)
+       AND NOT (r.status = ANY (gateway_day_money.money_moved()));
+    request_id := v_request.id;
+    was := v_request.status;
+    owner := v_request.responsible_user;
+    week_start := v_request.week_start_date;
+    week_end := v_request.week_end_date;
+    total := v_request.total;
+    RETURN NEXT;
+  END LOOP;
+END
+$fn$;
+
+-- services.resync_stale_batches' choice: the owner's days in the week, not
+-- frozen by a request outside its owner's hands, whose live members no longer
+-- match the split they were priced for.
+CREATE OR REPLACE FUNCTION gateway_day_money.stale_days(p_owner varchar, p_start date, p_end date)
+  RETURNS TABLE(batch_id varchar)
+  LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+  SELECT b.id::varchar
+    FROM public.daily_visit_batch b
+   WHERE b.responsible_user = p_owner AND b.visit_date BETWEEN p_start AND p_end
+     AND NOT EXISTS (SELECT 1 FROM public.weekly_fund_request w
+                      WHERE w.responsible_user = b.responsible_user
+                        AND w.week_start_date <= b.visit_date AND w.week_end_date >= b.visit_date
+                        AND NOT (w.status = ANY (gateway_day_money.week_rebuildable())))
+     AND (SELECT count(*) FROM public.activity a
+           WHERE a.daily_visit_batch_id = b.id AND a.deleted_at IS NULL
+             AND NOT (a.status = ANY (gateway_day_money.not_fundable()))) <> COALESCE(b.school_count, 0)
+   ORDER BY b.id
+$fn$;
+
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA gateway_day_money FROM PUBLIC;
 RESET ROLE;
 
 GRANT USAGE ON SCHEMA gateway_day_money TO edify_activities_rw;
 GRANT EXECUTE ON FUNCTION
-  gateway_day_money.day_refusal(varchar, date, boolean, varchar, varchar),
+  gateway_day_money.day_refusal(varchar, date, boolean, varchar, varchar, boolean),
   gateway_day_money.money_guard(varchar[], boolean),
   gateway_day_money.carry_month(varchar, varchar[], boolean, timestamptz),
   gateway_day_money.clear_day(varchar[]),
@@ -532,5 +609,7 @@ GRANT EXECUTE ON FUNCTION
   gateway_day_money.ensure_transport(varchar, bigint, timestamptz),
   gateway_day_money.refile_week(varchar, date, varchar, timestamptz),
   gateway_day_money.refile_month(varchar, varchar, integer, timestamptz),
-  gateway_day_money.note_lines(varchar, text, timestamptz)
+  gateway_day_money.note_lines(varchar, text, timestamptz),
+  gateway_day_money.take_back_weeks(varchar, varchar[], date[], timestamptz),
+  gateway_day_money.stale_days(varchar, date, date)
 TO edify_activities_rw;
