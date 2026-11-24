@@ -23,13 +23,19 @@ var (
 	salesforceEntryPath = regexp.MustCompile(`^/activities/([A-Za-z0-9]{1,30})/salesforce-id/action/?$`)
 	// submitReviewPath is my_plan_views.submit_for_review_action's route.
 	submitReviewPath = regexp.MustCompile(`^/activities/([A-Za-z0-9]{1,30})/submit/action/?$`)
+	// attendancePath is my_plan_views.attendance_upload_action's route.
+	attendancePath = regexp.MustCompile(`^/activities/([A-Za-z0-9]{1,30})/attendance/action/?$`)
 )
+
+// attendanceErrorTitle is error_fragment(exc, action="Attendance Error").
+const attendanceErrorTitle = "Attendance Error: "
 
 // ActivityStarter is the Go save behind Start activity (internal/activities.Service).
 type ActivityStarter interface {
 	StartActivity(ctx context.Context, p auth.Principal, activityID, notes string, origin activities.Origin) (activities.Answer, error)
 	EnterSalesforceID(ctx context.Context, p auth.Principal, activityID string, form url.Values, origin activities.Origin) (activities.CompleteAnswer, error)
 	SubmitForReview(ctx context.Context, p auth.Principal, activityID string, origin activities.Origin) (activities.Answer, error)
+	RecordAttendance(ctx context.Context, p auth.Principal, activityID string, form url.Values, origin activities.Origin) (activities.Answer, error)
 }
 
 // WithActivityLifecycle makes an activity's lifecycle buttons Go's where Go
@@ -63,6 +69,10 @@ func (s *Service) lifecycleInGo(ctx context.Context, message *screensv1.SaveDraw
 		saved, err = s.starter.SubmitForReview(ctx, principal, m[1], from)
 		// error_fragment(exc, action="Submission Error").
 		said, refusedAs = saved.Message, completeErrorTitle
+	} else if m := attendancePath.FindStringSubmatch(path); m != nil {
+		var saved activities.Answer
+		saved, err = s.starter.RecordAttendance(ctx, principal, m[1], directDrawerForm(message), from)
+		said, refusedAs = saved.Message, attendanceErrorTitle
 	} else {
 		return nil, false, nil
 	}

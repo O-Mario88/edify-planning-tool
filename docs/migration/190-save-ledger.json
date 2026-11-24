@@ -4,9 +4,9 @@
   "controls": 483,
   "controls_without_a_destination": 92,
   "go": {
-   "django": 167,
+   "django": 166,
    "go-owned": 9,
-   "proved": 27,
+   "proved": 28,
    "unproved": 21,
    "retired": 1
   },
@@ -24,7 +24,7 @@
    "8 finance and money": 22,
    "9 admin and the rest": 10
   },
-  "field_staff_left": 119
+  "field_staff_left": 118
  },
  "saves": [
   {
@@ -231,8 +231,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "django",
-   "evidence": "",
+   "go": "proved",
+   "evidence": "Attendance on an officer's own staff work at one school (doc 189)",
    "templates": [
     "partials/my_plan/attendance_drawer.html"
    ]

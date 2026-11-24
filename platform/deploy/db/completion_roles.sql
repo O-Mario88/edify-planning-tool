@@ -241,6 +241,40 @@ BEGIN
 END
 $fn$;
 REVOKE ALL ON FUNCTION gateway_completion.submit_for_review(varchar, varchar, timestamptz, varchar) FROM PUBLIC;
+
+-- Attendance (services.record_attendance) on staff work at one school outside
+-- a cluster: the head count, other participants and the register set as the
+-- view posts them (none), and work not yet started started. '' when kept,
+-- 'closed' under the lock, 'changed' when it is no longer that case.
+CREATE OR REPLACE FUNCTION gateway_completion.record_attendance(
+  target varchar, teachers integer, leaders integer, at timestamptz
+) RETURNS text
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  work record;
+BEGIN
+  SELECT a.status, a.delivery_type, a.activity_type, a.cluster_id, a.deleted_at
+    INTO work FROM public.activity a WHERE a.id = target FOR UPDATE;
+  IF NOT FOUND OR work.delivery_type IS DISTINCT FROM 'staff' OR work.cluster_id IS NOT NULL
+     OR work.deleted_at IS NOT NULL
+     OR NOT (work.activity_type = ANY (ARRAY['school_visit', 'donor_visit', 'story_gathering_visit',
+                                             'school_invitation', 'social_visit', 'in_school_training',
+                                             'training', 'school_improvement_training']::varchar[])) THEN
+    RETURN 'changed';
+  END IF;
+  IF work.status IN ('closed', 'cancelled', 'rejected', 'deferred') THEN
+    RETURN 'closed';
+  END IF;
+  UPDATE public.activity a SET teachers_attended = teachers, leaders_attended = leaders, other_participants = 0,
+    attended_school_ids = '{}',
+    status = CASE WHEN work.status IN ('scheduled', 'in_progress', 'partner_scheduled', 'assigned_to_partner',
+                                       'rescheduled') THEN 'completion_started' ELSE work.status END,
+    updated_at = at
+  WHERE a.id = target;
+  RETURN '';
+END
+$fn$;
+REVOKE ALL ON FUNCTION gateway_completion.record_attendance(varchar, integer, integer, timestamptz) FROM PUBLIC;
 RESET ROLE;
 
 GRANT USAGE ON SCHEMA gateway_completion TO edify_activities_rw;
@@ -250,4 +284,6 @@ GRANT EXECUTE ON FUNCTION gateway_completion.hand_in_with_id(varchar, date, varc
   varchar, varchar) TO edify_activities_rw;
 GRANT EXECUTE ON FUNCTION gateway_completion.start_visit(varchar, timestamptz) TO edify_activities_rw;
 GRANT EXECUTE ON FUNCTION gateway_completion.submit_for_review(varchar, varchar, timestamptz, varchar)
+  TO edify_activities_rw;
+GRANT EXECUTE ON FUNCTION gateway_completion.record_attendance(varchar, integer, integer, timestamptz)
   TO edify_activities_rw;

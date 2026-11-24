@@ -251,6 +251,25 @@ func TestSubmitForReviewSavesInGoWithoutDjango(t *testing.T) {
 	}
 }
 
+func (f *fakeStarter) RecordAttendance(_ context.Context, _ auth.Principal, id string, form url.Values, _ activities.Origin) (activities.Answer, error) {
+	f.got = append(f.got, id+"|"+form.Get("teachers_attended"))
+	return activities.Answer{Message: "Saved."}, f.err
+}
+
+func TestAttendanceSavesInGoWithoutDjango(t *testing.T) {
+	starter := &fakeStarter{}
+	answer, err := decideVisit(NewService(nil).WithActivityLifecycle(starter), "/activities/a1/attendance/action",
+		map[string]string{"teachers_attended": "12"})
+	if err != nil || !answer.GetSaved() || len(starter.got) != 1 || starter.got[0] != "a1|12" {
+		t.Fatalf("answer %v, %v, got %v", answer, err, starter.got)
+	}
+	starter.err = &activities.Refusal{Message: "teachersAttended cannot be negative."}
+	answer, err = decideVisit(NewService(nil).WithActivityLifecycle(starter), "/activities/a1/attendance/action", nil)
+	if err != nil || answer.GetSaved() || answer.GetError() != "Attendance Error: teachersAttended cannot be negative." {
+		t.Fatalf("refusal %v, %v", answer, err)
+	}
+}
+
 func TestStartActivityStaysWithDjangoWhileDjangoIsThere(t *testing.T) {
 	starter := &fakeStarter{}
 	fetcher := &formFetcher{}

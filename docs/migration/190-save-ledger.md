@@ -6,8 +6,8 @@ hand in that script and changes only with evidence. *Proved* means compared with
 with Django stopped.
 
 - Saves: 225 destinations from 483 save controls.
-- Go: 27 proved, 21 with unproved Go code, 167 still Django's, 1 retired on purpose, 9 made by Go's own services.
-- Field staff can reach 119 saves that are not yet proved in Go.
+- Go: 28 proved, 21 with unproved Go code, 166 still Django's, 1 retired on purpose, 9 made by Go's own services.
+- Field staff can reach 118 saves that are not yet proved in Go.
 - 92 controls post to a destination the inventory cannot read (set by a variable or script); they are listed by template at the end and must be classified by hand.
 
 | Step | Saves |
@@ -23,6 +23,7 @@ with Django stopped.
 
 | Route | Go | Size | Roles | Labels |
 |---|---|---|---|---|
+| `/activities/<str:activity_id>/attendance/action` | proved | medium | 9 roles | Save attendance |
 | `/activities/<str:activity_id>/salesforce-id/action` | proved | medium | 9 roles | Save Salesforce ID |
 | `/activities/<str:activity_id>/start/action` | proved | small | 9 roles | Start activity |
 | `/activities/<str:activity_id>/submit/action` | proved | small | 9 roles | Submit for review |
@@ -49,7 +50,6 @@ with Django stopped.
 | `/acting-leadership/<str:assignment_id>/reschedule` | go-owned | small | 6 roles | Save month |
 | `/acting-leadership/appoint` | go-owned | medium | 6 roles | Appoint {{ entry.short_label }}; Confirm Appointment |
 | `/actions/<str:action_id>/<str:transition>` | django | medium | 15 roles | Acknowledge {{ r.school }}; Escalate {{ r.school }} to your supervisor |
-| `/activities/<str:activity_id>/attendance/action` | django | medium | 9 roles | Save attendance |
 | `/activities/<str:activity_id>/closure/close` | django | small | 7 roles | Close & Lock Activity Closing... |
 | `/activities/<str:activity_id>/evidence/action` | django | medium | 9 roles | Submit |
 | `/activities/<str:activity_id>/facilitator` | django | small | 9 roles | Save |
