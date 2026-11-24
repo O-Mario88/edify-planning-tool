@@ -68,25 +68,29 @@ type Rules struct {
 // DetailRules are what an activity's detail drawer reads
 // (export_my_plan_rules.detail_drawer).
 type DetailRules struct {
-	RateUnits             map[string]string `json:"rate_units"`
-	KeyLabels             map[string]string `json:"key_labels"`
-	MixedTransportLabel   string            `json:"mixed_transport_label"`
-	PeriodSuffix          string            `json:"period_suffix"`
-	MissingLabels         map[string]string `json:"missing_labels"`
-	FeeLineType           string            `json:"fee_line_type"`
-	StaffFacilitatorLabel string            `json:"staff_facilitator_label"`
-	NonFundableStatuses   []string          `json:"non_fundable_statuses"`
-	UntickableStatuses    []string          `json:"untickable_statuses"`
-	ReturnedStatuses      []string          `json:"returned_statuses"`
-	SpentCostStatuses     []string          `json:"spent_cost_statuses"`
-	StatusLabels          map[string]string `json:"status_labels"`
-	TypeLabels            map[string]string `json:"type_labels"`
-	AccommodationKeys     []string          `json:"accommodation_keys"`
-	TrainingTypes         []string          `json:"training_types"`
-	MeetingTypes          []string          `json:"meeting_types"`
-	FacilitatorTypes      []string          `json:"facilitator_types"`
-	TrainingMeetingKind   string            `json:"training_meeting_kind"`
-	DeliveryLabels        map[string]string `json:"delivery_labels"`
+	RateUnits                          map[string]string `json:"rate_units"`
+	KeyLabels                          map[string]string `json:"key_labels"`
+	MixedTransportLabel                string            `json:"mixed_transport_label"`
+	PeriodSuffix                       string            `json:"period_suffix"`
+	MissingLabels                      map[string]string `json:"missing_labels"`
+	FeeLineType                        string            `json:"fee_line_type"`
+	StaffFacilitatorLabel              string            `json:"staff_facilitator_label"`
+	NonFundableStatuses                []string          `json:"non_fundable_statuses"`
+	UntickableStatuses                 []string          `json:"untickable_statuses"`
+	ReturnedStatuses                   []string          `json:"returned_statuses"`
+	SpentCostStatuses                  []string          `json:"spent_cost_statuses"`
+	StatusLabels                       map[string]string `json:"status_labels"`
+	TypeLabels                         map[string]string `json:"type_labels"`
+	AccommodationKeys                  []string          `json:"accommodation_keys"`
+	TrainingTypes                      []string          `json:"training_types"`
+	MeetingTypes                       []string          `json:"meeting_types"`
+	FacilitatorTypes                   []string          `json:"facilitator_types"`
+	TrainingMeetingKind                string            `json:"training_meeting_kind"`
+	ExecutedStatuses                   []string          `json:"executed_statuses"`
+	MoneyMovedAdvanceStatuses          []string          `json:"money_moved_advance_statuses"`
+	PartnerScheduledAssignmentStatuses []string          `json:"partner_scheduled_assignment_statuses"`
+	DatedByStaff                       string            `json:"dated_by_staff"`
+	DeliveryLabels                     map[string]string `json:"delivery_labels"`
 }
 
 // PastDueRules are what Home's "What needs you now" lists by

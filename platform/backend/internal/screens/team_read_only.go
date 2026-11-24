@@ -2,6 +2,7 @@ package screens
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
@@ -9,30 +10,37 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myplan"
 )
 
-// teamReadOnlyMessage is scoping.TEAM_READ_ONLY_MESSAGE.
-const teamReadOnlyMessage = "You can see this activity but not change it: a team member's scheduled work is edited, rescheduled or cancelled by the person responsible for it."
+// My Plan's Reschedule and Cancel drawers with Django absent, where Go's
+// own field forms (fieldFormInGo) have not drawn them: "Read only" for a
+// reader who may open the work and not change it, else the existing
+// drawer's form (internal/myplan.PlanDrawer).
 
-// teamReadOnlyDrawer is the Reschedule and Cancel drawers' first answer
-// (my_plan_views._team_read_only): a reader who may open the activity and
-// may not run it reads "Read only". Everyone else is the existing view's.
+// PlanDrawers draws them (internal/myplan.Service).
+type PlanDrawers interface {
+	PlanDrawer(ctx context.Context, p auth.Principal, id, kind string) (*screensv1.PageDrawer, error)
+}
+
+// WithPlanDrawers makes the two drawers Go's with Django absent.
+func (s *Service) WithPlanDrawers(d PlanDrawers) *Service {
+	s.planDrawers = d
+	return s
+}
+
 func (s *Service) teamReadOnlyDrawer(ctx context.Context, p auth.Principal, pathOnly string) (*screensv1.GetDrawerResponse, bool, error) {
-	if s.existingApp != nil || s.db == nil {
+	if s.existingApp != nil || s.planDrawers == nil {
 		return nil, false, nil
 	}
 	m := planDrawerPath.FindStringSubmatch(strings.TrimSpace(pathOnly))
-	if m == nil {
+	if m == nil || (m[1] != "reschedule" && m[1] != "cancel") {
 		return nil, false, nil
 	}
 	id := strings.Split(strings.TrimPrefix(pathOnly, "/my-plan/"), "/")[0]
-	access, err := myplan.ReadActivityAccess(ctx, s.db, p, id, s.clock())
-	if err != nil {
+	d, err := s.planDrawers.PlanDrawer(ctx, p, id, m[1])
+	switch {
+	case errors.Is(err, myplan.ErrDetailHandOn):
+		return nil, false, nil
+	case err != nil:
 		return nil, true, err
 	}
-	if !access.Decided || !access.Found || !access.Visible || access.Runnable {
-		return nil, false, nil
-	}
-	return &screensv1.GetDrawerResponse{Drawer: &screensv1.PageDrawer{
-		Title: "Read only", HasRequired: true, CancelLabel: "Close",
-		Items: []*screensv1.DrawerItem{{Kind: &screensv1.DrawerItem_Note{Note: &screensv1.DrawerNote{Text: teamReadOnlyMessage, Tone: "info"}}}},
-	}}, true, nil
+	return &screensv1.GetDrawerResponse{Drawer: d}, true, nil
 }

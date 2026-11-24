@@ -121,6 +121,8 @@ type Service struct {
 	// activityDetail draws an activity's detail drawer.
 	activityDetail ActivityDetail
 	// activityFacilitator draws and saves an activity's facilitator.
+	// planDrawers draws My Plan's Reschedule and Cancel drawers.
+	planDrawers         PlanDrawers
 	activityFacilitator ActivityFacilitator
 	pairsInGo           bool // schedule_training_pair: 32's In-school Training
 	// groupTrainings is nil unless EDIFY_GO_SAVES names schedule_group_training (38).

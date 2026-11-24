@@ -8,10 +8,22 @@
       "management_accommodation_per_night",
       "secondary_accommodation_per_night"
     ],
+    "dated_by_staff": "staff",
     "delivery_labels": {
       "cluster": "Group Training",
       "school": "In-School Training"
     },
+    "executed_statuses": [
+      "accountant_confirmed",
+      "awaiting_ia_verification",
+      "closed",
+      "completed",
+      "evidence_accepted",
+      "evidence_uploaded",
+      "ia_verified",
+      "salesforce_id_required",
+      "submitted_to_pl"
+    ],
     "facilitator_types": [
       "cluster_meeting",
       "cluster_meeting_ssa_review",
@@ -93,11 +105,26 @@
       "venue": "Venue cost"
     },
     "mixed_transport_label": "Transport Mixed District",
+    "money_moved_advance_statuses": [
+      "disbursed",
+      "accountability_pl_pending",
+      "accountability_pending",
+      "accounted",
+      "reimbursement_pl_pending",
+      "reimbursement_submitted",
+      "reimbursement_disbursed",
+      "reimbursed"
+    ],
     "non_fundable_statuses": [
       "cancelled",
       "rejected",
       "deferred",
       "awaiting_owner_approval"
+    ],
+    "partner_scheduled_assignment_statuses": [
+      "partner_scheduled",
+      "scheduled",
+      "completed"
     ],
     "period_suffix": "#m",
     "rate_units": {

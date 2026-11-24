@@ -117,7 +117,11 @@ def detail_drawer() -> dict:
     from apps.activities import facilitation
     from apps.activities.group_actions import _CALLED_OFF_STATUSES, _FINISHED_STATUSES
     from apps.activities.models import ActivityStatus, ActivityType
+    from apps.activities.editing import EXECUTED_STATUSES
     from apps.core.enums import MeetingKind
+    from apps.fund_requests.models import MONEY_MOVED_ADVANCE_STATUSES
+    from apps.partners.models import PartnerAssignment
+    from apps.planning.country_oversight.rules import DATED_BY_STAFF
     from apps.activities.services import RETURNED_STATUSES
     from apps.budget import breakdown, costing_service
     from apps.budget.models import ActivityCostStatus
@@ -154,6 +158,15 @@ def detail_drawer() -> dict:
         "facilitator_types": sorted(facilitation.FACILITATOR_TRAINING_TYPES),
         # _training_profile_context: a meeting held as a training, and how a
         # training is delivered (by a school of its own or a cluster).
+        # The Reschedule and Cancel drawers (reschedule_drawer_view,
+        # cancel_activity_drawer_view): work already carried out, money that
+        # has moved, and a partner's dated work whose school waits for it.
+        "executed_statuses": sorted(EXECUTED_STATUSES),
+        "money_moved_advance_statuses": [str(s) for s in MONEY_MOVED_ADVANCE_STATUSES],
+        "partner_scheduled_assignment_statuses": list(
+            PartnerAssignment.SCHEDULED_STATUSES
+        ),
+        "dated_by_staff": DATED_BY_STAFF,
         "training_meeting_kind": MeetingKind.TRAINING.value,
         "delivery_labels": {
             "school": training_ceilings.DELIVERY_LABELS[training_ceilings.IN_SCHOOL],

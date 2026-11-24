@@ -373,6 +373,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 				screenService.WithStories(mscs.New(pool, time.Now))
 				screenService.WithRolloutDrawer(programmerollout.NewService(pool, time.Now))
 				screenService.WithActivityDetail(myplan.NewService(pool, time.Now))
+				screenService.WithPlanDrawers(myplan.NewService(pool, time.Now))
 			}
 		}
 		if effectiveSaves.RescheduleVisit {
