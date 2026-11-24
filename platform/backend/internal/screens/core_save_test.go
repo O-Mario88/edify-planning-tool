@@ -199,3 +199,32 @@ func TestAnUnknownDecisionIsNotGos(t *testing.T) {
 		t.Fatalf("got %+v", decider.got)
 	}
 }
+
+type fakeStarter struct {
+	got []string
+	err error
+}
+
+func (f *fakeStarter) StartActivity(_ context.Context, _ auth.Principal, id, notes string, _ activities.Origin) (activities.Answer, error) {
+	f.got = append(f.got, id+"|"+notes)
+	return activities.Answer{Message: "Saved."}, f.err
+}
+
+func TestStartActivitySavesInGoWithoutDjango(t *testing.T) {
+	starter := &fakeStarter{}
+	answer, err := decideVisit(NewService(nil).WithActivityLifecycle(starter), "/activities/a1/start/action", map[string]string{"notes": "on site"})
+	if err != nil || !answer.GetSaved() || len(starter.got) != 1 || starter.got[0] != "a1|on site" {
+		t.Fatalf("answer %v, %v, got %v", answer, err, starter.got)
+	}
+}
+
+func TestStartActivityStaysWithDjangoWhileDjangoIsThere(t *testing.T) {
+	starter := &fakeStarter{}
+	fetcher := &formFetcher{}
+	if _, err := decideVisit(NewService(fetcher).WithActivityLifecycle(starter), "/activities/a1/start/action", nil); err != nil {
+		t.Fatal(err)
+	}
+	if len(starter.got) != 0 || len(fetcher.paths) != 1 {
+		t.Fatalf("Go started %d, Django was asked %v", len(starter.got), fetcher.paths)
+	}
+}

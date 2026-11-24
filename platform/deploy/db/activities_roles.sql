@@ -171,6 +171,8 @@ GRANT SELECT (activity_type, weight_hundredths, version, active) ON activity_wor
 -- A school owner decides on a visit request: the decision's own columns, and
 -- a declined Core visit's slot handed back whole.
 GRANT UPDATE (owner_decided_at, owner_decided_by, owner_decision_note) ON activity TO edify_activities_rw;
+-- Start activity: the first start's moment.
+GRANT UPDATE (execution_started_at) ON activity TO edify_activities_rw;
 GRANT UPDATE (assigned_staff_name) ON core_activity_slot TO edify_activities_rw;
 -- A monthly request carried along with a planner's change is told to its people.
 GRANT SELECT (id, total_amount, status, period_key, submitted_by_user_id, reviewed_by_user_id)
