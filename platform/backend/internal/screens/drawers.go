@@ -353,6 +353,12 @@ func (s *Service) SaveDrawer(
 		}
 	}
 	if form != "" {
+		if answer, served, err := s.mscsInGo(ctx, forwarded); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(answer), nil
+		}
 		from := origin.Read(request.Peer().Addr, request.Header(), s.trustProxy, trace.FromContext(ctx).RequestID)
 		if answer, served, err := s.dailyDebriefInGo(ctx, forwarded, activities.Origin{
 			IP: from.IP, UserAgent: from.UserAgent, CorrelationID: from.CorrelationID,

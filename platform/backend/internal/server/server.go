@@ -92,6 +92,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans"
 	loanschema "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/loans/schema"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/messaging"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/mscs"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myactions"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/mypd"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myperformance"
@@ -368,6 +369,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 				screenService.WithEnroller(enroller)
 				screenService.WithBulkEnroller(enroller)
 				screenService.WithRecentChanges(recentchanges.New(pool, time.Now))
+				screenService.WithStories(mscs.New(pool, time.Now))
 			}
 		}
 		if effectiveSaves.RescheduleVisit {

@@ -6,8 +6,8 @@
   "go": {
    "django": 157,
    "go-owned": 9,
-   "proved": 36,
-   "unproved": 22,
+   "proved": 37,
+   "unproved": 21,
    "retired": 1
   },
   "size": {
@@ -24,7 +24,7 @@
    "8 finance and money": 22,
    "9 admin and the rest": 10
   },
-  "field_staff_left": 110
+  "field_staff_left": 109
  },
  "saves": [
   {
@@ -3360,8 +3360,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "unproved",
-   "evidence": "Go names the path",
+   "go": "proved",
+   "evidence": "My Targets' Submit MSCS (doc 189)",
    "templates": [
     "pages/targets/index.html",
     "partials/targets/my_body.html"

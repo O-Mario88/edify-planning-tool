@@ -113,7 +113,9 @@ type Service struct {
 	// bulkEnroller is bulk Add to Project, with Django absent.
 	bulkEnroller BulkEnroller
 	// recent is the Planning page's Recent changes, with Django absent.
-	recent    RecentChanges
+	recent RecentChanges
+	// stories is My Targets' MSCS dialog, with Django absent.
+	stories   StorySubmitter
 	pairsInGo bool // schedule_training_pair: 32's In-school Training
 	// groupTrainings is nil unless EDIFY_GO_SAVES names schedule_group_training (38).
 	groupTrainings GroupTrainingSaver

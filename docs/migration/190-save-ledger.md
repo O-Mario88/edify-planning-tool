@@ -6,8 +6,8 @@ hand in that script and changes only with evidence. *Proved* means compared with
 with Django stopped.
 
 - Saves: 225 destinations from 483 save controls.
-- Go: 36 proved, 22 with unproved Go code, 157 still Django's, 1 retired on purpose, 9 made by Go's own services.
-- Field staff can reach 110 saves that are not yet proved in Go.
+- Go: 37 proved, 21 with unproved Go code, 157 still Django's, 1 retired on purpose, 9 made by Go's own services.
+- Field staff can reach 109 saves that are not yet proved in Go.
 - 92 controls post to a destination the inventory cannot read (set by a variable or script); they are listed by template at the end and must be classified by hand.
 
 | Step | Saves |
@@ -43,6 +43,7 @@ with Django stopped.
 | `/my-plan/<str:activity_id>/complete` | proved | large | 9 roles | Submit training + visit Submit completion |
 | `/my-plan/<str:activity_id>/confirm-reimbursement-receipt` | proved | medium | 9 roles | Confirm receipt |
 | `/my-plan/<str:activity_id>/edit` | proved | medium | 9 roles | Save changes |
+| `/my-targets/mscs` | proved | small | 7 roles | Submit for Review |
 | `/planning/assign-partner-action` | proved | large | 7 roles | Assign to partner |
 | `/planning/bulk-schedule` | proved | medium | 7 roles | Schedule {{ schools|length }} school{{ schools|length|pluralize }} |
 | `/planning/schedule-action` | proved | large | 7 roles | Confirm & Schedule Activity; Schedule meeting Schedule training |
@@ -96,7 +97,6 @@ with Django stopped.
 | `/my-professional-development/request` | unproved | large | 9 roles | Cancel this draft; Save draft; Submit for approval |
 | `/my-professional-development/request/<str:request_id>/action` | django | medium | 9 roles | Approve & send to HR; Approve & send to the Country Director; Authorize & send to Accounting |
 | `/my-professional-development/request/<str:request_id>/certificate` | django | small | 9 roles | Upload another Upload proof; Upload certificate |
-| `/my-targets/mscs` | unproved | small | 7 roles | Submit for Review |
 | `/notifications` | unproved | medium | 15 roles | Archive; Archive All Read; Mark All Read |
 | `/notifications/<str:notif_id>/read` | go-owned | small | 15 roles | Mark as read |
 | `/notifications/mark-all-read` | go-owned | small | 15 roles | Mark all as read |

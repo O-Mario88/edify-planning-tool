@@ -150,6 +150,10 @@ GO_STATUS: dict[str, tuple[str, str]] = {
         PROVED,
         "a school's Add to Cluster, a new cluster from the school included (doc 189)",
     ),
+    "/my-targets/mscs": (
+        PROVED,
+        "My Targets' Submit MSCS (doc 189)",
+    ),
     "/schools/bulk-assign-cluster": (
         PROVED,
         "the School Directory's bulk Assign cluster, through the membership service (doc 189)",
@@ -217,7 +221,6 @@ GO_STATUS: dict[str, tuple[str, str]] = {
     "/schools/upload": (UNPROVED, "Go names the path"),
     "/ssa/manual/": (UNPROVED, "Go names the path"),
     "/ssa/verification/": (UNPROVED, "Go names the path"),
-    "/my-targets/mscs": (UNPROVED, "Go names the path"),
     "/partner-oversight/withdraw/bulk": (UNPROVED, "Go names the path"),
     "/my-professional-development/request": (
         UNPROVED,
