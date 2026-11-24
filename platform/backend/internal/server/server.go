@@ -370,6 +370,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 				screenService.WithBulkEnroller(enroller)
 				screenService.WithRecentChanges(recentchanges.New(pool, time.Now))
 				screenService.WithStories(mscs.New(pool, time.Now))
+				screenService.WithRolloutDrawer(programmerollout.NewService(pool, time.Now))
 			}
 		}
 		if effectiveSaves.RescheduleVisit {
