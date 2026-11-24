@@ -117,8 +117,10 @@ type Service struct {
 	// stories is My Targets' MSCS dialog, with Django absent.
 	stories StorySubmitter
 	// rollout is Programme Rollout's schools drawer, with Django absent.
-	rollout   RolloutDrawer
-	pairsInGo bool // schedule_training_pair: 32's In-school Training
+	rollout RolloutDrawer
+	// activityDetail draws an activity's detail drawer.
+	activityDetail ActivityDetail
+	pairsInGo      bool // schedule_training_pair: 32's In-school Training
 	// groupTrainings is nil unless EDIFY_GO_SAVES names schedule_group_training (38).
 	groupTrainings GroupTrainingSaver
 	// clusterMeetings is nil unless EDIFY_GO_SAVES names schedule_cluster_meeting (49).

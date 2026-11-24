@@ -103,6 +103,62 @@ def rules() -> dict:
         "tables": plan_tables(),
         "past_due": past_due(),
         "week": week(),
+        "detail": detail_drawer(),
+    }
+
+
+def detail_drawer() -> dict:
+    """What an activity's detail drawer (/my-plan/<id>,
+    my_plan_views.activity_detail_view) reads: the budget breakdown's words
+    (apps.budget.breakdown), each line's funding status
+    (ActivityScheduleCostLine.finance_status), the statuses Cancel is offered
+    on (group_actions.may_tick) and the kinds of work whose drawer carries a
+    training's or a facilitator's parts, which Go hands on."""
+    from apps.activities import facilitation
+    from apps.activities.group_actions import _CALLED_OFF_STATUSES, _FINISHED_STATUSES
+    from apps.activities.models import ActivityStatus, ActivityType
+    from apps.core.enums import MeetingKind
+    from apps.activities.services import RETURNED_STATUSES
+    from apps.budget import breakdown, costing_service
+    from apps.budget.models import ActivityCostStatus
+    from apps.budget.reference import RATE_UNITS
+    from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
+    from apps.daily_visit_batches.pricing import (
+        ACCOMMODATION_KEYS,
+        KEY_LABELS,
+        MIXED_TRANSPORT_LABEL,
+    )
+    from apps.planning import training_ceilings
+
+    return {
+        "rate_units": dict(RATE_UNITS),
+        "key_labels": dict(KEY_LABELS),
+        "mixed_transport_label": MIXED_TRANSPORT_LABEL,
+        "period_suffix": breakdown._PERIOD_SUFFIX,
+        # costing_service._missing_label: a missing rate by its name.
+        "missing_labels": dict(costing_service._KEY_LABEL),
+        "fee_line_type": facilitation.FEE_LINE_TYPE,
+        "staff_facilitator_label": facilitation.STAFF_FACILITATOR_LABEL,
+        "non_fundable_statuses": list(NON_FUNDABLE_ACTIVITY_STATUSES),
+        "untickable_statuses": sorted(_FINISHED_STATUSES | _CALLED_OFF_STATUSES),
+        "returned_statuses": list(RETURNED_STATUSES),
+        "spent_cost_statuses": [
+            ActivityCostStatus.ACCOUNTED,
+            ActivityCostStatus.CLOSED,
+        ],
+        "status_labels": {value: str(label) for value, label in ActivityStatus.choices},
+        "type_labels": {value: str(label) for value, label in ActivityType.choices},
+        "accommodation_keys": sorted(ACCOMMODATION_KEYS),
+        "training_types": sorted(training_ceilings._TRAINING_TYPES),
+        "meeting_types": sorted(training_ceilings._MEETING_TYPES),
+        "facilitator_types": sorted(facilitation.FACILITATOR_TRAINING_TYPES),
+        # _training_profile_context: a meeting held as a training, and how a
+        # training is delivered (by a school of its own or a cluster).
+        "training_meeting_kind": MeetingKind.TRAINING.value,
+        "delivery_labels": {
+            "school": training_ceilings.DELIVERY_LABELS[training_ceilings.IN_SCHOOL],
+            "cluster": training_ceilings.DELIVERY_LABELS[training_ceilings.GROUP],
+        },
     }
 
 

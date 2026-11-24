@@ -1293,3 +1293,11 @@ GRANT SELECT (measurement_end_fy, measurement_start_fy) ON project TO edify_gate
 GRANT SELECT (baseline_band) ON project_school_assignment TO edify_gateway_ro;
 GRANT SELECT (staff_number) ON staff_profile TO edify_gateway_ro;
 GRANT SELECT (created_at) ON messaging_messageparticipant TO edify_gateway_ro;
+
+-- An activity's detail drawer (/my-plan/<id>, internal/myplan detail_*.go):
+-- the Finance tab's figure (the view's activity_cost), the snapshot the view
+-- reads first, the rate card it names and the order the cost lines are
+-- shown in.
+GRANT SELECT (cost_status, actual_accounted_spend, amount_disbursed, approved_operating_limit, calculated_at, sequence) ON activity_cost_snapshot TO edify_gateway_ro;
+GRANT SELECT (label) ON cost_catalogue TO edify_gateway_ro;
+GRANT SELECT (created_at) ON activity_schedule_cost_line TO edify_gateway_ro;

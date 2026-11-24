@@ -2,8 +2,10 @@ package calendarpage
 
 import (
 	"context"
+	"slices"
 	"time"
 
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -65,4 +67,28 @@ func kindWord(d dayOff) string {
 		return "Public holiday"
 	}
 	return "On leave"
+}
+
+// ViewedActivity is what deciding whether a member of staff may open one
+// activity reads of it (internal/myplan's detail drawer).
+type ViewedActivity struct {
+	StaffID, MonitorID, SchoolID, ClusterID     string
+	ClusterLead, ClusterDistrict, ClusterRegion string
+	HasCluster, ClusterLive                     bool
+}
+
+// CanViewActivity is RolePermissionService.can_view_record for an activity,
+// for a member of staff with no country scope: a school in their scope,
+// their own or monitored work, work they cover, or a supervisee's cluster
+// work.
+func CanViewActivity(ctx context.Context, db schooldirectory.Querier, p auth.Principal, scope schooldirectory.Scope, a ViewedActivity, now time.Time) (bool, error) {
+	if a.SchoolID != "" && slices.Contains(scope.SchoolIDs, a.SchoolID) {
+		return true, nil
+	}
+	v := viewer{db: db, p: p, scope: scope, now: now}
+	return v.canView(ctx, &activity{
+		staffID: a.StaffID, monitorID: a.MonitorID, schoolID: a.SchoolID, clusterID: a.ClusterID,
+		clusterLead: a.ClusterLead, clusterDistrict: a.ClusterDistrict, clusterRegion: a.ClusterRegion,
+		hasCluster: a.HasCluster, clusterLive: a.ClusterLive,
+	})
 }
