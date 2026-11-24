@@ -72,6 +72,10 @@ DJANGO = "django"
 #: A save the web no longer offers, decided on purpose: its effect happens
 #: elsewhere in Go, and the reason is in doc 189.
 RETIRED = "retired"
+#: A save Go's own service makes by design, ported earlier under the existing
+#: rules (sign-in, accounts, acting, the notification centre): the web calls
+#: Go for it, never Django. The doc beside it is where it was ported.
+GO_OWNED = "go-owned"
 
 #: Go's status for a destination, with its evidence. Only what is proved
 #: against Django and with Django stopped is "proved".
@@ -113,6 +117,21 @@ GO_STATUS: dict[str, tuple[str, str]] = {
         "owner's Fund Received (doc 189)",
     ),
     "/fund-requests/receipt-confirm": (PROVED, "requester's monthly receipt (doc 189)"),
+    "/logout": (GO_OWNED, "SignOut (doc 08)"),
+    "/change-password": (GO_OWNED, "SetNewPassword (docs 08, 09)"),
+    "/auth/switch-role": (GO_OWNED, "SwitchRole (doc 09)"),
+    "/acting-leadership/appoint": (GO_OWNED, "Appoint (doc 11)"),
+    "/acting-leadership/<str:assignment_id>/cancel": (
+        GO_OWNED,
+        "CancelAppointment (doc 11)",
+    ),
+    "/acting-leadership/<str:assignment_id>/reschedule": (
+        GO_OWNED,
+        "ChangeMonth (doc 11)",
+    ),
+    "/notifications/<str:notif_id>/read": (GO_OWNED, "notification centre (doc 189)"),
+    "/notifications/mark-all-read": (GO_OWNED, "notification centre (doc 189)"),
+    "/notifications/settings": (GO_OWNED, "notification preferences (doc 189)"),
     "/fund-requests/generate-request": (
         RETIRED,
         "the week is refiled with every priced day (doc 189)",
@@ -268,7 +287,9 @@ def main() -> None:
         "size": dict(collections.Counter(r["size"] for r in rows)),
         "phase": dict(sorted(collections.Counter(r["phase"] for r in rows).items())),
         "field_staff_left": sum(
-            1 for r in rows if r["field_staff"] and r["go"] not in (PROVED, RETIRED)
+            1
+            for r in rows
+            if r["field_staff"] and r["go"] not in (PROVED, RETIRED, GO_OWNED)
         ),
     }
     OUT_JSON.write_text(
@@ -297,7 +318,8 @@ def write_markdown(summary: dict, rows: list[dict], blank: collections.Counter) 
         "",
         f"- Saves: {summary['saves']} destinations from {summary['controls']} save controls.",
         f"- Go: {summary['go'].get(PROVED, 0)} proved, {summary['go'].get(UNPROVED, 0)} with unproved Go code, "
-        f"{summary['go'].get(DJANGO, 0)} still Django's, {summary['go'].get(RETIRED, 0)} retired on purpose.",
+        f"{summary['go'].get(DJANGO, 0)} still Django's, {summary['go'].get(RETIRED, 0)} retired on purpose, "
+        f"{summary['go'].get(GO_OWNED, 0)} made by Go's own services.",
         f"- Field staff can reach {summary['field_staff_left']} saves that are not yet proved in Go.",
         f"- {summary['controls_without_a_destination']} controls post to a destination the inventory cannot read "
         "(set by a variable or script); they are listed by template at the end and must be classified by hand.",

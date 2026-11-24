@@ -6,8 +6,8 @@ hand in that script and changes only with evidence. *Proved* means compared with
 with Django stopped.
 
 - Saves: 225 destinations from 483 save controls.
-- Go: 23 proved, 20 with unproved Go code, 181 still Django's, 1 retired on purpose.
-- Field staff can reach 132 saves that are not yet proved in Go.
+- Go: 23 proved, 20 with unproved Go code, 172 still Django's, 1 retired on purpose, 9 made by Go's own services.
+- Field staff can reach 123 saves that are not yet proved in Go.
 - 92 controls post to a destination the inventory cannot read (set by a variable or script); they are listed by template at the end and must be classified by hand.
 
 | Step | Saves |
@@ -41,9 +41,9 @@ with Django stopped.
 | `/schools/<str:school_id>/take` | proved | small | 7 roles | Take {{ school.school_name }} as my school |
 | `/today/snooze` | proved | small | Admin, CCEO, ImpactAssessment, Program Lead, ProjectCoordinator | {{ label }} |
 | `/today/unsnooze` | proved | small | Admin, CCEO, ImpactAssessment, Program Lead, ProjectCoordinator | Undo |
-| `/acting-leadership/<str:assignment_id>/cancel` | django | small | 6 roles | Cancel appointment |
-| `/acting-leadership/<str:assignment_id>/reschedule` | django | small | 6 roles | Save month |
-| `/acting-leadership/appoint` | django | medium | 6 roles | Appoint {{ entry.short_label }}; Confirm Appointment |
+| `/acting-leadership/<str:assignment_id>/cancel` | go-owned | small | 6 roles | Cancel appointment |
+| `/acting-leadership/<str:assignment_id>/reschedule` | go-owned | small | 6 roles | Save month |
+| `/acting-leadership/appoint` | go-owned | medium | 6 roles | Appoint {{ entry.short_label }}; Confirm Appointment |
 | `/actions/<str:action_id>/<str:transition>` | django | medium | 15 roles | Acknowledge {{ r.school }}; Escalate {{ r.school }} to your supervisor |
 | `/activities/<str:activity_id>/attendance/action` | django | medium | 9 roles | Save attendance |
 | `/activities/<str:activity_id>/closure/close` | django | small | 7 roles | Close & Lock Activity Closing... |
@@ -57,8 +57,8 @@ with Django stopped.
 | `/analytics/schedule-report` | django | medium | 10 roles | Send to inbox |
 | `/api/documents/acknowledge/<str:acknowledgement_id>` | django | small | 16 roles | Change my answer to Agree; I Believe → Enter Edify I Accept → Continue; Submit response |
 | `/api/documents/attest/<str:acknowledgement_id>` | django | small | 16 roles | I reviewed this outside the viewer |
-| `/auth/switch-role` | django | medium | 16 roles | {{ acting.label }} · {{ acting.period }}; {{ r.value }}; {{ role.value }} |
-| `/change-password` | django | medium | 16 roles | Set new password and continue |
+| `/auth/switch-role` | go-owned | medium | 16 roles | {{ acting.label }} · {{ acting.period }}; {{ r.value }}; {{ role.value }} |
+| `/change-password` | go-owned | medium | 16 roles | Set new password and continue |
 | `/clusters/<str:cluster_id>/bulk-assign-drawer` | django | medium | 7 roles | Save schools to cluster |
 | `/clusters/<str:cluster_id>/bulk-schedule-drawer` | django | medium | Admin, CCEO, CountryDirector, ImpactAssessment, Program Lead | Schedule the day |
 | `/clusters/<str:cluster_id>/catchment-drawer` | django | medium | Admin, CCEO, CountryDirector, ImpactAssessment, Program Lead | Approve district |
@@ -80,7 +80,7 @@ with Django stopped.
 | `/help/articles/<slug:slug>/feedback` | django | small | 15 roles | Report missing step; Report outdated; Yes |
 | `/help/manage/<slug:slug>/<slug:action>` | django | small | 15 roles | Product review; Publish; Submit |
 | `/impact-briefs/<str:release_id>/shared` | django | small | 7 roles | Record as shared |
-| `/logout` | django | small | 16 roles | Log out; Sign out |
+| `/logout` | go-owned | small | 16 roles | Log out; Sign out |
 | `/messages/new/` | unproved | medium | 15 roles | Save Draft; Save draft; Send Message |
 | `/messages/thread/<str:thread_id>/archive` | django | small | 15 roles | Archive |
 | `/messages/thread/<str:thread_id>/reply` | django | small | 15 roles | Reply |
@@ -92,9 +92,9 @@ with Django stopped.
 | `/my-professional-development/request/<str:request_id>/certificate` | django | small | 9 roles | Upload another Upload proof; Upload certificate |
 | `/my-targets/mscs` | unproved | small | 7 roles | Submit for Review |
 | `/notifications` | unproved | medium | 15 roles | Archive; Archive All Read; Mark All Read |
-| `/notifications/<str:notif_id>/read` | django | small | 15 roles | Mark as read |
-| `/notifications/mark-all-read` | django | small | 15 roles | Mark all as read |
-| `/notifications/settings` | django | small | 15 roles | Save |
+| `/notifications/<str:notif_id>/read` | go-owned | small | 15 roles | Mark as read |
+| `/notifications/mark-all-read` | go-owned | small | 15 roles | Mark all as read |
+| `/notifications/settings` | go-owned | small | 15 roles | Save |
 | `/planning/assign-partner-action` | django | large | 7 roles | Assign to partner |
 | `/planning/bulk-action` | django | large | 7 roles | Assign {{ assignable|length }} school{{ assignable|length|pluralize }}; Export Selected |
 | `/planning/bulk-schedule` | django | medium | 7 roles | Schedule {{ schools|length }} school{{ schools|length|pluralize }} |

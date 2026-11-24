@@ -4,7 +4,8 @@
   "controls": 483,
   "controls_without_a_destination": 92,
   "go": {
-   "django": 181,
+   "django": 172,
+   "go-owned": 9,
    "proved": 23,
    "unproved": 20,
    "retired": 1
@@ -23,7 +24,7 @@
    "8 finance and money": 22,
    "9 admin and the rest": 10
   },
-  "field_staff_left": 132
+  "field_staff_left": 123
  },
  "saves": [
   {
@@ -116,8 +117,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "django",
-   "evidence": "",
+   "go": "go-owned",
+   "evidence": "CancelAppointment (doc 11)",
    "templates": [
     "partials/acting/cancel_drawer.html"
    ]
@@ -141,8 +142,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "django",
-   "evidence": "",
+   "go": "go-owned",
+   "evidence": "ChangeMonth (doc 11)",
    "templates": [
     "partials/acting/reschedule_drawer.html"
    ]
@@ -167,8 +168,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "django",
-   "evidence": "",
+   "go": "go-owned",
+   "evidence": "Appoint (doc 11)",
    "templates": [
     "partials/acting/appoint_drawer.html"
    ]
@@ -888,8 +889,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "django",
-   "evidence": "",
+   "go": "go-owned",
+   "evidence": "SwitchRole (doc 09)",
    "templates": [
     "layouts/shell.html",
     "pages/profile/index.html"
@@ -924,8 +925,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "django",
-   "evidence": "",
+   "go": "go-owned",
+   "evidence": "SetNewPassword (docs 08, 09)",
    "templates": [
     "pages/auth/change_password.html"
    ]
@@ -2904,8 +2905,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "django",
-   "evidence": "",
+   "go": "go-owned",
+   "evidence": "SignOut (doc 08)",
    "templates": [
     "layouts/shell.html",
     "pages/documents/agreement_center.html",
@@ -3430,8 +3431,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "django",
-   "evidence": "",
+   "go": "go-owned",
+   "evidence": "notification centre (doc 189)",
    "templates": [
     "partials/notifications/notification_drawer_list.html"
    ]
@@ -3464,8 +3465,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "django",
-   "evidence": "",
+   "go": "go-owned",
+   "evidence": "notification centre (doc 189)",
    "templates": [
     "partials/notifications/notification_drawer.html"
    ]
@@ -3498,8 +3499,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "django",
-   "evidence": "",
+   "go": "go-owned",
+   "evidence": "notification preferences (doc 189)",
    "templates": [
     "pages/notifications/index.html"
    ]
