@@ -72,6 +72,10 @@ GRANT SELECT, INSERT, DELETE, UPDATE (attended, recorded_by, updated_at)
   ON cluster_activity_attendance TO edify_completion_owner;
 GRANT USAGE ON SEQUENCE cluster_activity_attendance_id_seq TO edify_completion_owner;
 
+-- A School Visit + SSA Collection completed with no scores keeps why none
+-- were taken (my_plan_views._record_completion_ssa).
+GRANT SELECT (ssa_not_collected_reason), UPDATE (ssa_not_collected_reason) ON activity TO edify_completion_owner;
+
 CREATE SCHEMA IF NOT EXISTS gateway_completion AUTHORIZATION edify_completion_owner;
 REVOKE ALL ON SCHEMA gateway_completion FROM PUBLIC;
 
@@ -92,7 +96,8 @@ BEGIN
   IF NOT FOUND OR visit.status IS DISTINCT FROM 'completion_started'
      OR visit.delivery_type IS DISTINCT FROM 'staff'
      OR NOT (visit.activity_type = ANY (ARRAY['school_visit', 'donor_visit', 'story_gathering_visit',
-                                              'school_invitation', 'social_visit']::varchar[]))
+                                              'school_invitation', 'social_visit',
+                                              'school_visit_ssa_collection']::varchar[]))
      OR visit.cluster_id IS NOT NULL OR visit.deleted_at IS NOT NULL THEN
     RETURN 'changed';
   END IF;
@@ -144,7 +149,8 @@ BEGIN
      SET status = 'completion_started', execution_started_at = COALESCE(a.execution_started_at, at), updated_at = at
    WHERE a.id = target AND a.deleted_at IS NULL AND a.delivery_type = 'staff' AND a.cluster_id IS NULL
      AND a.activity_type = ANY (ARRAY['school_visit', 'donor_visit', 'story_gathering_visit',
-                                      'school_invitation', 'social_visit']::varchar[])
+                                      'school_invitation', 'social_visit',
+                                      'school_visit_ssa_collection']::varchar[])
      AND a.status = ANY (ARRAY['scheduled', 'in_progress', 'partner_scheduled', 'assigned_to_partner',
                                'rescheduled']::varchar[]);
   RETURN FOUND;
@@ -392,6 +398,20 @@ END
 $fn$;
 REVOKE ALL ON FUNCTION gateway_completion.hand_in_cluster_meeting(varchar, date, varchar, varchar, integer,
   integer, varchar[], text, text, text, varchar, timestamptz, varchar, varchar) FROM PUBLIC;
+-- _record_completion_ssa for an officer's staff School Visit + SSA Collection
+-- completed without scores: why none were taken, or none. False when the
+-- visit is not that case.
+CREATE OR REPLACE FUNCTION gateway_completion.note_ssa_not_collected(target varchar, reason text, at timestamptz)
+  RETURNS boolean
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+BEGIN
+  UPDATE public.activity a SET ssa_not_collected_reason = reason, updated_at = at
+   WHERE a.id = target AND a.deleted_at IS NULL AND a.delivery_type = 'staff' AND a.cluster_id IS NULL
+     AND a.activity_type = 'school_visit_ssa_collection';
+  RETURN FOUND;
+END
+$fn$;
+REVOKE ALL ON FUNCTION gateway_completion.note_ssa_not_collected(varchar, text, timestamptz) FROM PUBLIC;
 RESET ROLE;
 
 GRANT USAGE ON SCHEMA gateway_completion TO edify_activities_rw;
@@ -406,3 +426,4 @@ GRANT EXECUTE ON FUNCTION gateway_completion.record_attendance(varchar, integer,
   TO edify_activities_rw;
 GRANT EXECUTE ON FUNCTION gateway_completion.hand_in_cluster_meeting(varchar, date, varchar, varchar, integer,
   integer, varchar[], text, text, text, varchar, timestamptz, varchar, varchar) TO edify_activities_rw;
+GRANT EXECUTE ON FUNCTION gateway_completion.note_ssa_not_collected(varchar, text, timestamptz) TO edify_activities_rw;

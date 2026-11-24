@@ -53,11 +53,19 @@ class Forms(HTMLParser):
         # Inputs inside <template> exist only when the drawer's script shows
         # them (x-if), so a browser does not post them unless shown.
         self._template = 0
+        # A browser sends no control inside a disabled fieldset (the
+        # Complete drawer's sections for the purposes not chosen).
+        self._fieldsets = []
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
         if tag == "template":
             self._template += 1
+            return
+        if tag == "fieldset":
+            self._fieldsets.append("disabled" in a)
+            return
+        if any(self._fieldsets) and tag in ("input", "select", "textarea"):
             return
         if tag == "form" and self._form is None:
             self._form = {
@@ -93,6 +101,10 @@ class Forms(HTMLParser):
     def handle_endtag(self, tag):
         if tag == "template":
             self._template = max(0, self._template - 1)
+            return
+        if tag == "fieldset":
+            if self._fieldsets:
+                self._fieldsets.pop()
             return
         if self._form is None:
             return

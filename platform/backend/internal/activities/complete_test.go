@@ -186,7 +186,9 @@ func TestTheHandInFunctionNamesTheCompletedVisitTypes(t *testing.T) {
 	for _, m := range regexp.MustCompile(`'([a-z_]+)'`).FindAllSubmatch(array[1], -1) {
 		named = append(named, string(m[1]))
 	}
-	want := slices.Clone(completedVisitTypes)
+	// The function takes a School Visit + SSA Collection too, which the Go
+	// save completes with the existing application absent.
+	want := append(slices.Clone(completedVisitTypes), ssaCollectionKind)
 	slices.Sort(named)
 	slices.Sort(want)
 	if !slices.Equal(named, want) {

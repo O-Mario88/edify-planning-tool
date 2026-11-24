@@ -55,6 +55,11 @@ const (
 	trainingSalesforcePart = "TS-"
 )
 
+// ssaScoreFields are the eight score fields (SsaIntervention.choices).
+var ssaScoreFields = []string{"score_christlike_behaviour", "score_exposure_to_word_of_god", "score_financial_health",
+	"score_leadership", "score_government_requirement", "score_learning_environment", "score_teaching_environment",
+	"score_enrolment"}
+
 // The forms a visit's ID may take (salesforce.py _SVE_RE, _SV_RE and
 // _RECORD_ID_RE), once normalised.
 var (
@@ -126,6 +131,8 @@ type completionPlan struct {
 	outcome, observations, notes *string
 	posted, attended             []string // a meeting's register, as posted and once each
 	start                        bool     // the work is started in the completion's transaction
+	ssaVisit                     bool     // a School Visit + SSA Collection, keeping why no SSA was taken
+	ssaReason                    *string  // that reason, nil for none
 	sessions                     bool     // Django is absent: Go moves work done on another day
 	done                         *doneDay // the move to the day done, decided before the hand-in
 	payload                      map[string]any
@@ -167,7 +174,7 @@ func (s *Service) prepareCompletion(ctx context.Context, p auth.Principal, req C
 	if p.InActingAppointment || p.StaffProfileID == "" || p.ActiveRole != officerRole || slices.Contains(p.Roles, programmeLeadRole) {
 		return nil, handOn("not an officer completing their own visit")
 	}
-	a, err := readCompletedVisit(ctx, s.db, strings.TrimSpace(req.ActivityID))
+	a, err := readCompletionVisit(ctx, s.db, strings.TrimSpace(req.ActivityID))
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +244,9 @@ func (a *completedVisit) outOfCase(p auth.Principal, startable bool) string {
 		return "someone else's visit"
 	case a.status != startedStatus && !(startable && in(startableStatuses, a.status)):
 		return "a visit in status " + a.status + ", not started"
-	case in(completionPurposes, a.purpose) || a.collectsSSA:
+	case a.activityType == ssaCollectionKind && !(startable && a.currentPurpose() == ssaSupportPurpose):
+		return "a School Visit + SSA Collection, with the existing application present or another purpose"
+	case (in(completionPurposes, a.purpose) || a.collectsSSA) && a.activityType != ssaCollectionKind:
 		return "a visit whose purpose the drawer decides, or one collecting the SSA"
 	case a.verification == confirmedVerification:
 		return "a visit IA has confirmed"
@@ -251,6 +260,16 @@ func (a *completedVisit) outOfCase(p auth.Principal, startable bool) string {
 
 // readCompletedVisit reads the visit; nil when there is none.
 func readCompletedVisit(ctx context.Context, q Querier, id string) (*completedVisit, error) {
+	return readVisit(ctx, q, id, false)
+}
+
+// readCompletionVisit is readCompletedVisit for the Complete save and drawer,
+// which also read a School Visit + SSA Collection (outOfCase decides).
+func readCompletionVisit(ctx context.Context, q Querier, id string) (*completedVisit, error) {
+	return readVisit(ctx, q, id, true)
+}
+
+func readVisit(ctx context.Context, q Querier, id string, withSSA bool) (*completedVisit, error) {
 	if id == "" {
 		return nil, nil
 	}
@@ -276,7 +295,7 @@ FROM activity a WHERE a.id = $1 AND a.deleted_at IS NULL`, id).Scan(
 	if err != nil {
 		return nil, fmt.Errorf("activities: reading the visit: %w", err)
 	}
-	if !in(completedVisitTypes, a.activityType) || school == nil || planned == nil {
+	if !(in(completedVisitTypes, a.activityType) || (withSSA && a.activityType == ssaCollectionKind)) || school == nil || planned == nil {
 		return nil, nil
 	}
 	a.purpose, a.schoolID, a.responsible = text(purpose), text(school), text(responsible)
@@ -297,8 +316,22 @@ func (s *Service) readCompletionForm(pl *completionPlan, form url.Values) error 
 	if pyStrip(form.Get("netsuite_id")) != "" || form.Get("visiting_register") == "1" {
 		return handOn("an accountability, or a register's visiting schools")
 	}
-	if posted := pyStrip(form.Get("purpose_type")); posted != "" && posted != pl.a.purpose {
+	held := pl.a.purpose
+	if pl.sessions {
+		held = pl.a.currentPurpose()
+	}
+	if posted := pyStrip(form.Get("purpose_type")); posted != "" && posted != held {
 		return handOn("a purpose given at completion")
+	}
+	if pl.sessions {
+		if err := pl.trainingIDOnAVisit(form); err != nil {
+			return err
+		}
+	}
+	if pl.a.activityType == ssaCollectionKind {
+		if err := readSSANotCollected(pl, form); err != nil {
+			return err
+		}
 	}
 	delivered, err := s.completedOn(form.Get("actual_delivery_date"))
 	if err != nil {
@@ -447,6 +480,15 @@ func (s *Service) writeCompletion(ctx context.Context, pl *completionPlan) error
 		return fmt.Errorf("activities: opening the completion: %w", err)
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
+	if pl.ssaVisit {
+		var noted bool
+		if err := tx.QueryRow(ctx, `SELECT gateway_completion.note_ssa_not_collected($1, $2, $3)`, pl.a.id, pl.ssaReason, pl.now).Scan(&noted); err != nil {
+			return fmt.Errorf("activities: keeping why no SSA was taken: %w", err)
+		}
+		if !noted {
+			return handOn("the SSA visit changed")
+		}
+	}
 	if pl.start {
 		var started bool
 		if err := tx.QueryRow(ctx, `SELECT gateway_completion.start_visit($1, $2)`, pl.a.id, pl.now).Scan(&started); err != nil {
@@ -592,4 +634,53 @@ func (s *Service) appendCompleteRow(ctx context.Context, pl *completionPlan) err
 		return err
 	}
 	return tx.Commit(ctx)
+}
+
+// currentPurpose is completion_purpose.current_purpose for the visits Go
+// completes: the purpose recorded, else the one its workflow is planned under.
+func (a *completedVisit) currentPurpose() string {
+	if a.purpose != "" {
+		return a.purpose
+	}
+	for purpose, workflow := range map[string]string{
+		ssaSupportPurpose: ssaCollectionKind, "donor_visit": "donor_visit", "story_gathering": "story_gathering_visit",
+		"school_invitation": "school_invitation", "social_visit": "social_visit",
+	} {
+		if workflow == a.activityType {
+			return purpose
+		}
+	}
+	return ""
+}
+
+// readSSANotCollected is _record_completion_ssa for a School Visit + SSA
+// Collection: scores entered with "collected" are the SSA upload, handed on;
+// otherwise the reason none were taken is kept (blank is none).
+func readSSANotCollected(pl *completionPlan, form url.Values) error {
+	entered := slices.ContainsFunc(ssaScoreFields, func(field string) bool { return pyStrip(form.Get(field)) != "" })
+	if form.Get("ssa_collected") == "yes" && entered {
+		return handOn("SSA scores entered at completion: the SSA upload")
+	}
+	pl.ssaVisit = true
+	if reason := pyStrip(form.Get("ssa_not_collected_reason")); reason != "" {
+		pl.ssaReason = &reason
+	}
+	return nil
+}
+
+// trainingIDOnAVisit is the view's _refuse_a_training_id_on_a_visit: a TS-
+// ID entered as the visit's, said for what it is, naming where a training's
+// ID goes when the drawer offers the visit as a training.
+func (pl *completionPlan) trainingIDOnAVisit(form url.Values) error {
+	entered, ok := normalizeSalesforceID(form.Get("salesforce_id"))
+	if !ok || !strings.HasPrefix(entered, trainingSalesforcePart) {
+		return nil
+	}
+	message := entered + " is a training ID. This visit is completed with its visit ID from Salesforce: SV-… or SVE-…."
+	if pl.a.activityType == ssaCollectionKind {
+		message = entered + " is a training ID. If a training was delivered on this visit, choose “In-school Training”" +
+			" or “In-school Training + SSA Collection” as the purpose: the training's TS- ID goes in Training ID, and" +
+			" the visit's SV- or SVE- ID in Visit ID."
+	}
+	return &Refusal{Message: message, Notice: true}
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 )
 
 const (
@@ -395,4 +396,21 @@ WHERE deleted_at IS NULL AND (id = $1 OR user_id = $1)`, owner)
 		}
 	}
 	return ids, rows.Err()
+}
+
+// CompletionLists are My Plan's Complete drawer's lists (complete_drawer_view):
+// the in-school training courses on the visit's planned day
+// (in_school_training_course_options) and the trainings the school took in
+// fy that a follow-up can name (follow_up_options).
+func (s *Service) CompletionLists(ctx context.Context, schoolID string, day time.Time, fy string, interventions [][2]string) ([]Course, []FollowUp, error) {
+	names := namesOf(interventions)
+	courses, err := s.courses(ctx, names, day)
+	if err != nil {
+		return nil, nil, err
+	}
+	followUps, err := s.followUps(ctx, School{ID: schoolID}, fy, names, schoolprofile.ActivityTypeLabels())
+	if err != nil {
+		return nil, nil, err
+	}
+	return courses, followUps, nil
 }

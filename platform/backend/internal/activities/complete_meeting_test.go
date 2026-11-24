@@ -218,3 +218,38 @@ func TestAMeetingDoneOnAnotherDayIsReadWithDjangoAbsent(t *testing.T) {
 		t.Errorf("delivered %v", pl.delivered)
 	}
 }
+
+// A training's TS- ID typed as a visit's is the view's own notice, naming
+// where it goes on a visit the drawer offers as a training.
+func TestATrainingIDOnAVisitIsTheViewsNotice(t *testing.T) {
+	for kind, want := range map[string]string{
+		"school_visit": "TS-12 is a training ID. This visit is completed with its visit ID from Salesforce: SV-… or SVE-….",
+		ssaCollectionKind: "TS-12 is a training ID. If a training was delivered on this visit, choose “In-school Training” or " +
+			"“In-school Training + SSA Collection” as the purpose: the training's TS- ID goes in Training ID, and the visit's SV- or SVE- ID in Visit ID.",
+	} {
+		pl := &completionPlan{a: completedVisit{activityType: kind}}
+		var refusal *Refusal
+		if err := pl.trainingIDOnAVisit(url.Values{"salesforce_id": {" ts-12"}}); !errors.As(err, &refusal) || !refusal.Notice || refusal.Message != want {
+			t.Errorf("%s: %v", kind, err)
+		}
+		if err := pl.trainingIDOnAVisit(url.Values{"salesforce_id": {"SV-12345"}}); err != nil {
+			t.Errorf("%s: a visit's ID refused: %v", kind, err)
+		}
+	}
+}
+
+// A School Visit + SSA Collection keeps why no SSA was taken; scores marked
+// collected are the SSA upload, handed on; a blank sheet is none.
+func TestTheSSANotCollectedIsReadAsTheViewReadsIt(t *testing.T) {
+	pl := &completionPlan{}
+	if err := readSSANotCollected(pl, url.Values{"ssa_collected": {"no"}, "ssa_not_collected_reason": {" Other "}}); err != nil || pl.ssaReason == nil || *pl.ssaReason != "Other" || !pl.ssaVisit {
+		t.Fatalf("%v %v", err, pl.ssaReason)
+	}
+	pl = &completionPlan{}
+	if err := readSSANotCollected(pl, url.Values{"ssa_collected": {"yes"}, "score_leadership": {""}}); err != nil || pl.ssaReason != nil {
+		t.Fatalf("a blank sheet: %v %v", err, pl.ssaReason)
+	}
+	if err := readSSANotCollected(&completionPlan{}, url.Values{"ssa_collected": {"yes"}, "score_leadership": {"7"}}); !errors.Is(err, ErrHandOn) {
+		t.Fatalf("scores: %v, want a hand-on", err)
+	}
+}

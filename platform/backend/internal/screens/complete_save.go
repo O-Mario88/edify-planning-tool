@@ -100,6 +100,9 @@ func (s *Service) completeInGo(
 			s.logger.InfoContext(ctx, "the completion is the existing application's", slog.String("why", err.Error()))
 		}
 		return nil, false, nil
+	case errors.As(err, &refusal) && refusal.Notice:
+		// The view's own notice, read back as the feed reads it.
+		return &screensv1.SaveDrawerResponse{Saved: false, Error: collapse(refusal.Message)}, true, nil
 	case errors.As(err, &refusal):
 		// error_fragment's words, read back as the feed reads them.
 		return &screensv1.SaveDrawerResponse{Saved: false, Error: collapse(completeErrorTitle + refusal.Message)}, true, nil

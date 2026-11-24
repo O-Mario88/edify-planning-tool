@@ -37,6 +37,13 @@ type CompleteFacts struct {
 	Cluster                              bool // the register is asked
 	Register                             []RegisterSchool
 	Outcome, Observations, FollowUp      string
+	// SSA is a School Visit + SSA Collection: its purpose, training, SSA and
+	// follow-up sections are drawn, from the school, the planned day and
+	// the year.
+	SSA            bool
+	SchoolID, FY   string
+	Planned        time.Time
+	CurrentPurpose string
 }
 
 // RegisterSchool is one of the cluster's schools on the register.
@@ -67,11 +74,11 @@ func (s *Service) visitDrawerInCase(ctx context.Context, p auth.Principal, id st
 	if p.InActingAppointment || p.StaffProfileID == "" || p.ActiveRole != officerRole || slices.Contains(p.Roles, programmeLeadRole) {
 		return handOn("not an officer completing their own visit")
 	}
-	a, err := readCompletedVisit(ctx, s.db, id)
+	a, err := readCompletionVisit(ctx, s.db, id)
 	if err != nil {
 		return err
 	}
-	if a == nil || a.activityType != plainSchoolVisit {
+	if a == nil || (a.activityType != plainSchoolVisit && a.activityType != ssaCollectionKind) {
 		return handOn("not a staff School Visit with a school and a day")
 	}
 	if why := a.outOfCase(p, true); why != "" {
@@ -134,6 +141,15 @@ FROM activity a LEFT JOIN school s ON s.id = a.school_id WHERE a.id = $1`, id).S
 func (s *Service) visitFacts(ctx context.Context, id string) (CompleteFacts, error) {
 	f, _, _, _, err := s.workFacts(ctx, id)
 	f.SalesforceKind = "visit"
+	if err != nil || f.ActivityType != ssaCollectionKind {
+		return f, err
+	}
+	a, err := readCompletionVisit(ctx, s.db, id)
+	if err != nil || a == nil {
+		return f, err
+	}
+	f.SSA, f.SchoolID, f.Planned, f.CurrentPurpose = true, a.schoolID, a.plannedDate, a.currentPurpose()
+	err = s.db.QueryRow(ctx, `SELECT COALESCE(fy, '') FROM activity WHERE id = $1`, id).Scan(&f.FY)
 	return f, err
 }
 
