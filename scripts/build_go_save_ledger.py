@@ -69,6 +69,9 @@ PARTNER_AREAS = (
 PROVED = "proved"
 UNPROVED = "unproved"
 DJANGO = "django"
+#: A save the web no longer offers, decided on purpose: its effect happens
+#: elsewhere in Go, and the reason is in doc 189.
+RETIRED = "retired"
 
 #: Go's status for a destination, with its evidence. Only what is proved
 #: against Django and with Django stopped is "proved".
@@ -108,6 +111,11 @@ GO_STATUS: dict[str, tuple[str, str]] = {
     "/fund-requests/weekly/<str:request_id>/confirm-receipt": (
         PROVED,
         "owner's Fund Received (doc 189)",
+    ),
+    "/fund-requests/receipt-confirm": (PROVED, "requester's monthly receipt (doc 189)"),
+    "/fund-requests/generate-request": (
+        RETIRED,
+        "the week is refiled with every priced day (doc 189)",
     ),
     "/my-plan/<str:activity_id>/confirm-reimbursement-receipt": (
         PROVED,
@@ -260,7 +268,7 @@ def main() -> None:
         "size": dict(collections.Counter(r["size"] for r in rows)),
         "phase": dict(sorted(collections.Counter(r["phase"] for r in rows).items())),
         "field_staff_left": sum(
-            1 for r in rows if r["field_staff"] and r["go"] != PROVED
+            1 for r in rows if r["field_staff"] and r["go"] not in (PROVED, RETIRED)
         ),
     }
     OUT_JSON.write_text(
@@ -289,7 +297,7 @@ def write_markdown(summary: dict, rows: list[dict], blank: collections.Counter) 
         "",
         f"- Saves: {summary['saves']} destinations from {summary['controls']} save controls.",
         f"- Go: {summary['go'].get(PROVED, 0)} proved, {summary['go'].get(UNPROVED, 0)} with unproved Go code, "
-        f"{summary['go'].get(DJANGO, 0)} still Django's.",
+        f"{summary['go'].get(DJANGO, 0)} still Django's, {summary['go'].get(RETIRED, 0)} retired on purpose.",
         f"- Field staff can reach {summary['field_staff_left']} saves that are not yet proved in Go.",
         f"- {summary['controls_without_a_destination']} controls post to a destination the inventory cannot read "
         "(set by a variable or script); they are listed by template at the end and must be classified by hand.",

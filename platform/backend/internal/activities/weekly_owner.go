@@ -226,7 +226,7 @@ func (s *Service) writeWeek(ctx context.Context, query string, args ...any) (str
 	if err := tx.QueryRow(ctx, query, args...).Scan(&answer); err != nil {
 		return "", fmt.Errorf("activities: saving the weekly request: %w", err)
 	}
-	if weekRefusal("", answer) != nil {
+	if weekRefusal("", answer) != nil || answer == "not_owner" || answer == "not_disbursed" {
 		return answer, nil
 	}
 	if err := tx.Commit(ctx); err != nil {
@@ -335,4 +335,36 @@ WHERE sv.user_id = $1 AND sup.user_id IS NOT NULL AND sup.user_id <> '' ORDER BY
 			title: "Weekly fund request awaiting your approval", body: weekSubmittedBody(w.start, w.end, w.total),
 			event: "weekly_fund_request_submitted", category: "finance", contextType: "WeeklyFundRequest", priority: "high",
 		}, recipients)
+}
+
+// ConfirmMonthReceipt is fund_receipt_confirm_action: the requester confirms
+// their disbursed monthly plan's funds arrived.
+func (s *Service) ConfirmMonthReceipt(ctx context.Context, p auth.Principal, fundRequestID string, origin Origin) (Answer, error) {
+	fundRequestID = strings.TrimSpace(fundRequestID)
+	if p.UserID == "" {
+		return Answer{}, handOn("nobody signed in")
+	}
+	answer, err := s.writeWeek(ctx, `SELECT gateway_day_money.confirm_month_receipt($1, $2, $3)`, fundRequestID, p.UserID, s.now())
+	if err != nil {
+		return Answer{}, err
+	}
+	switch answer {
+	case "gone":
+		return Answer{}, refuse("%s", "Fund plan not found.")
+	case "not_owner":
+		return Answer{}, refuse("%s", "Only the requester can confirm receipt of these funds.")
+	case "not_disbursed":
+		return Answer{}, refuse("%s", "These funds are not marked as disbursed.")
+	}
+	var period string
+	var total int64
+	_ = s.db.QueryRow(ctx, `SELECT COALESCE(period_key, ''), COALESCE(total_amount, 0)::bigint FROM fund_request WHERE id = $1`,
+		fundRequestID).Scan(&period, &total)
+	if answer == "confirmed" {
+		if err := s.auditAccountability(ctx, p, "fund_request.receipt_confirmed", "FundRequest", fundRequestID,
+			map[string]any{"period_key": period, "total": total}, origin); err != nil {
+			s.logger.Warn("activities: the plan's receipt audit row was not written", "plan", fundRequestID, "err", err)
+		}
+	}
+	return Answer{Message: "Receipt confirmed for " + period + "."}, nil
 }

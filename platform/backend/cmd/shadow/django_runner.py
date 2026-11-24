@@ -171,7 +171,9 @@ def post_form(client: Client, step: dict) -> dict:
     and posts them to "post" with the page's htmx headers (docs/migration/50)."""
     headers = {"HTTP_HX_REQUEST": "true", "HTTP_HOST": "localhost"}
     data = {k: [v] for k, v in step["data"].items()}
-    answer = client.post(step["post"], data, **headers)
+    # "follow": a view that answers with a redirect and a flash message is
+    # read on the page it leads to, where the message is shown.
+    answer = client.post(step["post"], data, follow=bool(step.get("follow")), **headers)
     return {
         "ok": answer.status_code < 400,
         "status": answer.status_code,

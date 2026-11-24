@@ -20,6 +20,19 @@ func (f *fakeWeekOwner) DecideOwnWeek(_ context.Context, _ auth.Principal, id, o
 	return f.answer, f.err
 }
 
+func (f *fakeWeekOwner) ConfirmMonthReceipt(_ context.Context, _ auth.Principal, id string, _ activities.Origin) (activities.Answer, error) {
+	f.got = append(f.got, "month|"+id)
+	return f.answer, f.err
+}
+
+func TestAMonthlyPlansReceiptSavesInGoWithoutDjango(t *testing.T) {
+	owner := &fakeWeekOwner{answer: activities.Answer{Message: "Receipt confirmed for 2026-12."}}
+	answer, err := decideVisit(NewService(nil).WithWeekOwner(owner), "/fund-requests/receipt-confirm?fund_request_id=fr1", nil)
+	if err != nil || !answer.GetSaved() || len(owner.got) != 1 || owner.got[0] != "month|fr1" {
+		t.Fatalf("answer %v, %v, got %v", answer, err, owner.got)
+	}
+}
+
 func TestAnOwnersWeekButtonSavesInGoWithoutDjango(t *testing.T) {
 	tests := []struct {
 		path   string

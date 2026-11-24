@@ -42,7 +42,14 @@ type view struct {
 	teamTabs                       [][3]string // id, name, active
 	showTeamFilters                bool
 	ownerButtons                   bool
+	// receiptPlans are the reader's disbursed monthly plans waiting for
+	// their receipt (budget_views: receipt_pending_plans), drawn only when
+	// Go saves the confirmation.
+	receiptPlans []receiptPlan
 }
+
+// receiptPlan is one disbursed monthly fund plan.
+type receiptPlan struct{ id, period, method, reference string }
 
 // mission is _mission_status_for_cceo: how vendor-paid costs are handled.
 type mission struct {
@@ -195,6 +202,13 @@ func roundHalfUp(x float64) int64 {
 
 func (s *Service) build(ctx context.Context, p auth.Principal, r role, a ask, now time.Time) (*screensv1.GetPageResponse, error) {
 	v := &view{p: p, r: r, a: a, fy: a.fy, today: day(now.In(kampala)), ownerButtons: s.ownerButtons}
+	if s.ownerButtons {
+		plans, err := s.receiptPending(ctx, p.UserID)
+		if err != nil {
+			return nil, err
+		}
+		v.receiptPlans = plans
+	}
 	currentFY := strconv.Itoa(v.today.Year())
 	if v.today.Month() >= time.October {
 		currentFY = strconv.Itoa(v.today.Year() + 1)
@@ -409,4 +423,24 @@ WHERE l.planned_date >= $1 AND l.planned_date < $2 AND `+staffMoney+`
 		return false, fmt.Errorf("weeklyrequest: reading the week's costs: %w", err)
 	}
 	return costed, nil
+}
+
+// receiptPending is receipt_pending_plans: at most three, latest paid first.
+func (s *Service) receiptPending(ctx context.Context, userID string) ([]receiptPlan, error) {
+	rows, err := s.db.Query(ctx, `SELECT id, COALESCE(period_key, ''), COALESCE(disburse_method, ''), COALESCE(disburse_reference, '')
+  FROM fund_request WHERE submitted_by_user_id = $1 AND period = 'monthly' AND status = 'disbursed'
+   AND receipt_confirmed_at IS NULL ORDER BY disbursed_at DESC NULLS FIRST LIMIT 3`, userID)
+	if err != nil {
+		return nil, fmt.Errorf("weeklyrequest: reading the plans waiting for receipt: %w", err)
+	}
+	defer rows.Close()
+	var out []receiptPlan
+	for rows.Next() {
+		var r receiptPlan
+		if err := rows.Scan(&r.id, &r.period, &r.method, &r.reference); err != nil {
+			return nil, err
+		}
+		out = append(out, r)
+	}
+	return out, rows.Err()
 }

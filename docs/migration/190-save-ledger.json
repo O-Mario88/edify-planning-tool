@@ -4,9 +4,10 @@
   "controls": 483,
   "controls_without_a_destination": 92,
   "go": {
-   "django": 183,
-   "proved": 21,
-   "unproved": 21
+   "django": 181,
+   "proved": 22,
+   "unproved": 21,
+   "retired": 1
   },
   "size": {
    "small": 120,
@@ -22,7 +23,7 @@
    "8 finance and money": 22,
    "9 admin and the rest": 10
   },
-  "field_staff_left": 135
+  "field_staff_left": 133
  },
  "saves": [
   {
@@ -2152,8 +2153,8 @@
    ],
    "field_staff": true,
    "phase": "8 finance and money",
-   "go": "django",
-   "evidence": "",
+   "go": "retired",
+   "evidence": "the week is refiled with every priced day (doc 189)",
    "templates": [
     "partials/fund_requests/insights_panel.html"
    ]
@@ -2178,8 +2179,8 @@
    ],
    "field_staff": true,
    "phase": "8 finance and money",
-   "go": "django",
-   "evidence": "",
+   "go": "proved",
+   "evidence": "requester's monthly receipt (doc 189)",
    "templates": [
     "partials/fund_requests/root.html"
    ]

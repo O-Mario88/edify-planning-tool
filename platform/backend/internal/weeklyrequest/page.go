@@ -293,6 +293,24 @@ func (v *view) card() []*screensv1.PageBlock {
 	return out
 }
 
+// receiptBlocks is root.html's "Funds disbursed" banner for each plan.
+func (v *view) receiptBlocks() []*screensv1.PageBlock {
+	var out []*screensv1.PageBlock
+	for _, p := range v.receiptPlans {
+		words := "Funds disbursed for your " + p.period + " fund plan"
+		if p.method != "" {
+			words += " via " + p.method
+		}
+		if p.reference != "" {
+			words += " (Ref " + p.reference + ")"
+		}
+		out = append(out, panel("", "", text(words+"."),
+			text("Check your account and confirm receipt — execution and accountability follow."),
+			links(&screensv1.PageLink{Text: "Confirm Receipt", Href: "/fund-requests/receipt-confirm?fund_request_id=" + url.QueryEscape(p.id), Drawer: true})))
+	}
+	return out
+}
+
 // ownerButton is one of the owner's buttons: a drawer at the save's own path.
 func ownerButton(label, requestID, save, query string) *screensv1.PageLink {
 	return &screensv1.PageLink{Text: label, Href: "/fund-requests/weekly/" + requestID + "/" + save + "?" + query, Drawer: true}
@@ -369,9 +387,10 @@ func page(v *view) *screensv1.GetPageResponse {
 	for _, s := range rules.StageLabels {
 		stages = append(stages, link(s, ""))
 	}
-	blocks := []*screensv1.PageBlock{panel("", "", links(stages...)), v.filters(),
+	blocks := v.receiptBlocks()
+	blocks = append(blocks, panel("", "", links(stages...)), v.filters(),
 		panel("Request totals and approval status", "This month's requested, awaiting, approved and ready-to-disburse amounts."),
-		v.strip()}
+		v.strip())
 	if b := v.teamTabsBlock(); b != nil {
 		blocks = append(blocks, b)
 	}

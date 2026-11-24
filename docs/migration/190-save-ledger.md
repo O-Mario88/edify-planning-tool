@@ -6,8 +6,8 @@ hand in that script and changes only with evidence. *Proved* means compared with
 with Django stopped.
 
 - Saves: 225 destinations from 483 save controls.
-- Go: 21 proved, 21 with unproved Go code, 183 still Django's.
-- Field staff can reach 135 saves that are not yet proved in Go.
+- Go: 22 proved, 21 with unproved Go code, 181 still Django's, 1 retired on purpose.
+- Field staff can reach 133 saves that are not yet proved in Go.
 - 92 controls post to a destination the inventory cannot read (set by a variable or script); they are listed by template at the end and must be classified by hand.
 
 | Step | Saves |
@@ -236,6 +236,7 @@ with Django stopped.
 
 | Route | Go | Size | Roles | Labels |
 |---|---|---|---|---|
+| `/fund-requests/receipt-confirm` | proved | small | 7 roles | Confirm Receipt |
 | `/fund-requests/weekly/<str:request_id>/confirm` | proved | small | 7 roles | Send for Approval |
 | `/fund-requests/weekly/<str:request_id>/confirm-receipt` | proved | small | 7 roles | Fund Received |
 | `/fund-requests/weekly/<str:request_id>/not-requested` | proved | small | 7 roles | No Advance This Week |
@@ -254,8 +255,7 @@ with Django stopped.
 | `/fund-approvals/invoices/<str:invoice_id>/action` | django | small | Admin, CountryDirector, ImpactAssessment, Program Lead | Confirm & Send to Accountant; Return |
 | `/fund-requests/advances/<str:advance_id>/pl-approve` | django | small | 7 roles | Approve |
 | `/fund-requests/advances/<str:advance_id>/pl-return` | django | small | 7 roles | Return |
-| `/fund-requests/generate-request` | django | small | 7 roles | Take Action |
-| `/fund-requests/receipt-confirm` | django | small | 7 roles | Confirm Receipt |
+| `/fund-requests/generate-request` | retired | small | 7 roles | Take Action |
 | `/fund-requests/weekly/<str:request_id>/approve` | django | small | 7 roles | Approve |
 | `/fund-requests/weekly/<str:request_id>/return` | django | small | 7 roles | Return request |
 

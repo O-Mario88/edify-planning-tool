@@ -900,6 +900,33 @@ BEGIN
 END
 $fn$;
 
+-- disbursement_dashboard_service.confirm_receipt: the requester's monthly
+-- plan. Answers 'gone', 'not_owner', 'not_disbursed', 'already' or 'confirmed'.
+CREATE OR REPLACE FUNCTION gateway_day_money.confirm_month_receipt(p_request varchar, p_user varchar, p_now timestamptz)
+  RETURNS varchar
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  r record;
+BEGIN
+  SELECT f.submitted_by_user_id, f.status, f.receipt_confirmed_at INTO r
+    FROM public.fund_request f WHERE f.id = p_request AND f.period = 'monthly' FOR UPDATE;
+  IF NOT FOUND THEN
+    RETURN 'gone';
+  END IF;
+  IF r.submitted_by_user_id IS DISTINCT FROM p_user THEN
+    RETURN 'not_owner';
+  END IF;
+  IF r.status <> 'disbursed' THEN
+    RETURN 'not_disbursed';
+  END IF;
+  IF r.receipt_confirmed_at IS NOT NULL THEN
+    RETURN 'already';
+  END IF;
+  UPDATE public.fund_request SET receipt_confirmed_at = p_now, updated_at = p_now WHERE id = p_request;
+  RETURN 'confirmed';
+END
+$fn$;
+
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA gateway_day_money FROM PUBLIC;
 RESET ROLE;
 
@@ -920,5 +947,6 @@ GRANT EXECUTE ON FUNCTION
   gateway_day_money.skip_week(varchar, varchar, timestamptz),
   gateway_day_money.confirm_week_receipt(varchar, varchar, boolean, timestamptz),
   gateway_day_money.account_advance(varchar, varchar, varchar, varchar, bigint, bigint, text, timestamptz),
-  gateway_day_money.confirm_reimbursement(varchar, varchar, varchar, bigint, timestamptz)
+  gateway_day_money.confirm_reimbursement(varchar, varchar, varchar, bigint, timestamptz),
+  gateway_day_money.confirm_month_receipt(varchar, varchar, timestamptz)
 TO edify_activities_rw;

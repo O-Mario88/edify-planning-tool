@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"net/url"
 	"strings"
 
 	"connectrpc.com/connect"
@@ -18,7 +19,12 @@ import (
 // request (internal/activities.Service).
 type WeekOwner interface {
 	DecideOwnWeek(ctx context.Context, p auth.Principal, requestID, op string, bankMessage bool, origin activities.Origin) (activities.Answer, error)
+	ConfirmMonthReceipt(ctx context.Context, p auth.Principal, fundRequestID string, origin activities.Origin) (activities.Answer, error)
 }
+
+// monthReceiptPath is finance_views.fund_receipt_confirm_action's route; the
+// plan is the drawer path's fund_request_id.
+const monthReceiptPath = "/fund-requests/receipt-confirm"
 
 // WithWeekOwner makes the owner's weekly request buttons Go's. The Fund
 // Requests page draws them (as drawers at each save's own path) only when Go
@@ -36,6 +42,11 @@ const bankReceivedLabel = "I have received the bank message and verified the fun
 func (s *Service) weekOwnerDrawer(path string) (*screensv1.GetDrawerResponse, bool) {
 	if s.weekOwner == nil {
 		return nil, false
+	}
+	if strings.TrimSuffix(path, "/") == monthReceiptPath {
+		return &screensv1.GetDrawerResponse{Drawer: &screensv1.PageDrawer{Title: "Confirm Receipt", SubmitLabel: "Confirm Receipt",
+			CancelLabel: "Cancel", CanSubmit: true, Items: []*screensv1.DrawerItem{{Kind: &screensv1.DrawerItem_Text{
+				Text: "Check your account and confirm receipt — execution and accountability follow."}}}}}, true
 	}
 	_, op, ok := activities.WeekOwnerForm(path)
 	if !ok {
@@ -74,13 +85,20 @@ func (s *Service) weekOwnerInGo(ctx context.Context, message *screensv1.SaveDraw
 	if !ok || s.weekOwner == nil || s.existingApp != nil {
 		return nil, false, nil
 	}
-	path, _, _ := strings.Cut(message.GetPath(), "?")
-	requestID, op, ok := activities.WeekOwnerForm(path)
-	if !ok {
-		return nil, false, nil
+	path, rawQuery, _ := strings.Cut(message.GetPath(), "?")
+	var saved activities.Answer
+	var err error
+	if strings.TrimSuffix(path, "/") == monthReceiptPath {
+		query, _ := url.ParseQuery(rawQuery)
+		saved, err = s.weekOwner.ConfirmMonthReceipt(ctx, principal, query.Get("fund_request_id"), from)
+	} else {
+		requestID, op, ok := activities.WeekOwnerForm(path)
+		if !ok {
+			return nil, false, nil
+		}
+		bank := message.GetValues()["bank_message_received"]
+		saved, err = s.weekOwner.DecideOwnWeek(ctx, principal, requestID, op, bank == "yes" || bank == "on", from)
 	}
-	bank := message.GetValues()["bank_message_received"]
-	saved, err := s.weekOwner.DecideOwnWeek(ctx, principal, requestID, op, bank == "yes" || bank == "on", from)
 	var refusal *activities.Refusal
 	switch {
 	case errors.Is(err, activities.ErrHandOn):
