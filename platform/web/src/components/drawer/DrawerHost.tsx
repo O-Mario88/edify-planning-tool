@@ -33,6 +33,51 @@ function Facts({ facts }: { facts: readonly { label?: string; value?: string }[]
   );
 }
 
+/** The kinds of file evidence accepts (apps.evidence.validation), as the existing drawers offer them. */
+const FILE_ACCEPT = 'image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv';
+
+/**
+ * A file field: the chosen file goes to the gateway at once, is checked and
+ * kept there, and the field's value becomes the kept file's id, which the
+ * drawer's save sends. A refused file says why, and the field stays empty.
+ */
+function FileControl({ id, described, required, disabled, onStaged }: {
+  readonly id: string; readonly described?: string; readonly required?: boolean; readonly disabled?: boolean;
+  readonly onStaged: (stagedId: string) => void;
+}) {
+  const [state, setState] = useState<{ busy: boolean; name: string; error: string }>({ busy: false, name: '', error: '' });
+  const choose = async (file: File | undefined) => {
+    onStaged('');
+    if (!file) {
+      setState({ busy: false, name: '', error: '' });
+      return;
+    }
+    setState({ busy: true, name: file.name, error: '' });
+    const form = new FormData();
+    form.append('file', file);
+    try {
+      const res = await fetch('/api/files/stage', { method: 'POST', body: form });
+      const answer = (await res.json().catch(() => ({}))) as { id?: string; error?: string };
+      if (!res.ok || !answer.id) {
+        setState({ busy: false, name: '', error: answer.error || 'The file could not be kept. Try again.' });
+        return;
+      }
+      onStaged(answer.id);
+      setState({ busy: false, name: file.name, error: '' });
+    } catch {
+      setState({ busy: false, name: '', error: 'The file could not be sent. Check your connection and try again.' });
+    }
+  };
+  return (
+    <div className="space-y-1">
+      <input id={id} type="file" accept={FILE_ACCEPT} required={required} disabled={disabled || state.busy} aria-describedby={described}
+        className={CONTROL} onChange={(event) => void choose(event.target.files?.[0])} />
+      {state.busy ? <p className="text-[length:var(--edify-text-micro-size)] text-[var(--edify-text-muted)]">Sending {state.name}…</p> : null}
+      {state.error ? <p role="alert" className="text-[length:var(--edify-text-micro-size)] text-[var(--edify-danger,#b42318)]">{state.error}</p> : null}
+    </div>
+  );
+}
+
 interface FieldProps {
   readonly field: DrawerFieldJson;
   readonly values: Values;
@@ -93,6 +138,8 @@ function FieldControl({ field, values, reloaded, onChange }: FieldProps) {
         </div>
       );
     }
+    case 'file':
+      return <FileControl id={id} described={described} required={field.required} disabled={field.readOnly} onStaged={(staged) => onChange(field, staged)} />;
     case 'hidden':
       return null;
     default:

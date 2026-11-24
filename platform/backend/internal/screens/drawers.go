@@ -201,6 +201,14 @@ func (s *Service) SaveDrawer(
 			}
 			return connect.NewResponse(answer), nil
 		}
+		if answer, served, err := s.accountabilityInGo(ctx, forwarded, activities.Origin{
+			IP: from.IP, UserAgent: from.UserAgent, CorrelationID: from.CorrelationID,
+		}); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(answer), nil
+		}
 		if answer, served, err := s.takeSchoolInGo(ctx, forwarded); served {
 			if err != nil {
 				return nil, err

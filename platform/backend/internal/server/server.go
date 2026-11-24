@@ -63,6 +63,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/detailpages"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/disbursements"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/escalations"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/evidence"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/exports"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/extrawork"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/feed"
@@ -116,6 +117,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/policycompliance"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/presence"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/prioritiesmaster"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/privatestore"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/profilepage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/programmerollout"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/programmeschools"
@@ -199,6 +201,10 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		schools.NewService(schools.NewStore(pool), summarizer, logger), options...,
 	))
 	weeklyPage := weeklyrequest.NewService(pool, time.Now)
+	// Files people upload as evidence, kept where the existing application
+	// keeps them (local disk in development, private Spaces in production).
+	evidenceSvc := evidence.NewService(pool, privatestore.FromEnv(os.Getenv, privateUploadsDir(os.Getenv)),
+		evidence.ScannerFromEnv(os.Getenv), time.Now, logger)
 	var existingApp screens.Fetcher
 	if cfg.ExistingAppURL != "" {
 		existingApp = feed.NewClient(cfg.ExistingAppURL, logger)
@@ -336,7 +342,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		save := visitSave(cfg, pool, logger, realtimeBroker)
 		if effectiveSaves.ScheduleVisit {
 			screenService.WithVisitSave(save, logger).WithCoreVisitSave(save, logger).WithVisitDecisions(save).
-				WithActivityLifecycle(save).WithWeekOwner(save)
+				WithActivityLifecycle(save).WithWeekOwner(save).WithAccountability(save.WithEvidence(evidenceSvc))
 			weeklyPage.WithOwnerButtons(existingApp == nil)
 		}
 		if effectiveSaves.RescheduleVisit {
@@ -395,6 +401,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	mux.Handle(screensv1connect.NewExportServiceHandler(screenService, options...))
 	exportsMgr.RegisterHTTP(mux, authenticator)
 	uploadsSvc.RegisterHTTP(mux, authenticator)
+	evidenceSvc.RegisterHTTP(mux, authenticator)
 	ssadecision.NewService(pool, time.Now).RegisterHTTP(mux, authenticator)
 	clusterOversightSvc.RegisterHTTP(mux, authenticator)
 	countryMapSvc.RegisterMapHTTP(mux, authenticator)
@@ -488,6 +495,15 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 // visitSave is the Go visit save (docs/migration/27 §27.10), switched on by
 // EDIFY_GO_SAVES in development or staging. Uses native Go pricing and
 // notifications when Django is absent.
+// privateUploadsDir is where development keeps private files: the existing
+// application's BASE_DIR/uploads, named by EDIFY_PRIVATE_UPLOADS_DIR.
+func privateUploadsDir(getenv func(string) string) string {
+	if dir := getenv("EDIFY_PRIVATE_UPLOADS_DIR"); dir != "" {
+		return dir
+	}
+	return "uploads"
+}
+
 func visitSave(cfg config.Config, pool *pgxpool.Pool, logger *slog.Logger, live activities.NoticePublisher) *activities.Service {
 	var pricing activities.Pricing
 	if cfg.ExistingAppURL == "" {

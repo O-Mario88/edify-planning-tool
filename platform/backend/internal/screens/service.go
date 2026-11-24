@@ -88,7 +88,9 @@ type Service struct {
 	starter ActivityStarter
 	// weekOwner is the owner's weekly request buttons, with Django absent.
 	weekOwner WeekOwner
-	pairsInGo bool // schedule_training_pair: 32's In-school Training
+	// accountant is the officer's accountability drawer, with Django absent.
+	accountant Accountant
+	pairsInGo  bool // schedule_training_pair: 32's In-school Training
 	// groupTrainings is nil unless EDIFY_GO_SAVES names schedule_group_training (38).
 	groupTrainings GroupTrainingSaver
 	// clusterMeetings is nil unless EDIFY_GO_SAVES names schedule_cluster_meeting (49).

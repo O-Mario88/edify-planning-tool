@@ -6,8 +6,8 @@ hand in that script and changes only with evidence. *Proved* means compared with
 with Django stopped.
 
 - Saves: 225 destinations from 483 save controls.
-- Go: 19 proved, 21 with unproved Go code, 185 still Django's.
-- Field staff can reach 137 saves that are not yet proved in Go.
+- Go: 20 proved, 21 with unproved Go code, 184 still Django's.
+- Field staff can reach 136 saves that are not yet proved in Go.
 - 92 controls post to a destination the inventory cannot read (set by a variable or script); they are listed by template at the end and must be classified by hand.
 
 | Step | Saves |
@@ -30,6 +30,7 @@ with Django stopped.
 | `/core-schools/assign-partner/action` | proved | large | 6 roles | Assign to partner |
 | `/core-schools/schedule-training/action` | proved | large | 6 roles | Schedule training |
 | `/core-schools/schedule-visit/action` | proved | large | 6 roles | Schedule visit |
+| `/my-plan/<str:activity_id>/accountability` | proved | large | 9 roles | Submit for finance review |
 | `/my-plan/<str:activity_id>/cancel` | proved | medium | 9 roles | Cancel activity |
 | `/my-plan/<str:activity_id>/complete` | proved | large | 9 roles | Submit training + visit Submit completion |
 | `/my-plan/<str:activity_id>/edit` | proved | medium | 9 roles | Save changes |
@@ -83,7 +84,6 @@ with Django stopped.
 | `/messages/thread/<str:thread_id>/archive` | django | small | 15 roles | Archive |
 | `/messages/thread/<str:thread_id>/reply` | django | small | 15 roles | Reply |
 | `/messages/thread/<str:thread_id>/star` | django | small | 15 roles | Star conversation |
-| `/my-plan/<str:activity_id>/accountability` | django | large | 9 roles | Submit for finance review |
 | `/my-plan/<str:activity_id>/confirm-reimbursement-receipt` | django | medium | 9 roles | Confirm receipt |
 | `/my-plan/<str:activity_id>/invite-school` | django | small | 9 roles | Add {{ s.name }} to this session |
 | `/my-professional-development/fund/<str:fund_request_id>/action` | django | medium | 9 roles | Clear accountability; Disburse funds; Place on hold |

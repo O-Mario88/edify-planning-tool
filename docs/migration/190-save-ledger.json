@@ -4,8 +4,8 @@
   "controls": 483,
   "controls_without_a_destination": 92,
   "go": {
-   "django": 185,
-   "proved": 19,
+   "django": 184,
+   "proved": 20,
    "unproved": 21
   },
   "size": {
@@ -22,7 +22,7 @@
    "8 finance and money": 22,
    "9 admin and the rest": 10
   },
-  "field_staff_left": 137
+  "field_staff_left": 136
  },
  "saves": [
   {
@@ -3072,8 +3072,8 @@
    ],
    "field_staff": true,
    "phase": "3 field staff",
-   "go": "django",
-   "evidence": "",
+   "go": "proved",
+   "evidence": "officer's accountability with a receipt (doc 189)",
    "templates": [
     "partials/my_plan/accountability_drawer.html"
    ]

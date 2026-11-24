@@ -109,6 +109,10 @@ GO_STATUS: dict[str, tuple[str, str]] = {
         PROVED,
         "owner's Fund Received (doc 189)",
     ),
+    "/my-plan/<str:activity_id>/accountability": (
+        PROVED,
+        "officer's accountability with a receipt (doc 189)",
+    ),
     "/activities/<str:activity_id>/salesforce-id/action": (
         PROVED,
         "Salesforce ID hand-in (doc 189)",

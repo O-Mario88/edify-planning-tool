@@ -38,6 +38,12 @@ GRANT SELECT (id, responsible_user, visit_date, school_count) ON daily_visit_bat
 GRANT SELECT, INSERT, UPDATE, DELETE ON
   advance_request, weekly_fund_request, weekly_fund_request_line, fund_request, fund_request_item, transport_payment
 TO edify_day_money_owner;
+-- apps.budget.signals: every advance saved projects its activity's advances
+-- into the current cost snapshot (costing_service.sync_snapshot_actuals).
+GRANT SELECT (id, activity_id, is_current, operational_cost, cost_status, approved_operating_limit)
+  ON activity_cost_snapshot TO edify_day_money_owner;
+GRANT UPDATE (amount_disbursed, actual_accounted_spend, unused_balance, reimbursement_amount, approved_operating_limit,
+              cost_status, updated_at) ON activity_cost_snapshot TO edify_day_money_owner;
 
 CREATE SCHEMA IF NOT EXISTS gateway_day_money AUTHORIZATION edify_day_money_owner;
 REVOKE ALL ON SCHEMA gateway_day_money FROM PUBLIC;
@@ -603,22 +609,62 @@ $fn$;
 -- caller routed by), 'status:<status>', 'paid', 'not_disbursed', 'already',
 -- 'no_bank', or the request's new status.
 
+-- costing_service.sync_snapshot_actuals for each activity: the advance
+-- ledger's totals onto the current snapshot; with no money moved, a confirmed
+-- or accountant-bound advance makes the snapshot approved at its cost.
+CREATE OR REPLACE FUNCTION gateway_day_money.project_actuals(p_activities varchar[], p_now timestamptz) RETURNS void
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  r record;
+  v_disbursed bigint;
+  v_actual bigint;
+  v_reimbursed bigint;
+  v_confirmed boolean;
+BEGIN
+  FOR r IN SELECT s.id, s.activity_id FROM public.activity_cost_snapshot s
+            WHERE s.activity_id = ANY (p_activities) AND s.is_current ORDER BY s.activity_id, s.id FOR UPDATE LOOP
+    SELECT COALESCE(sum(a.disbursed_amount), 0), COALESCE(sum(a.accounted_amount), 0),
+           COALESCE(sum(a.reimbursed_amount), 0),
+           COALESCE(bool_or(a.status IN ('confirmed_for_advance', 'submitted_to_accountant')), false)
+      INTO v_disbursed, v_actual, v_reimbursed, v_confirmed
+      FROM public.advance_request a WHERE a.activity_id = r.activity_id;
+    UPDATE public.activity_cost_snapshot s
+       SET amount_disbursed = v_disbursed, actual_accounted_spend = v_actual,
+           unused_balance = greatest(0, v_disbursed - v_actual), reimbursement_amount = v_reimbursed,
+           cost_status = CASE WHEN v_actual <> 0 THEN 'accounted' WHEN v_disbursed <> 0 THEN 'disbursed'
+                              WHEN v_confirmed THEN 'approved' ELSE s.cost_status END,
+           approved_operating_limit = CASE WHEN v_actual = 0 AND v_disbursed = 0 AND v_confirmed
+                                           THEN s.operational_cost ELSE s.approved_operating_limit END,
+           updated_at = p_now
+     WHERE s.id = r.id;
+  END LOOP;
+END
+$fn$;
+
 -- weekly_service._sync_advances: each line's advance whose money has not
 -- moved follows the request; the row locks keep a payment committing in
 -- another channel from being rewritten.
 CREATE OR REPLACE FUNCTION gateway_day_money.sync_week_advances(
   p_request varchar, p_status varchar, p_type varchar, p_now timestamptz) RETURNS void
   LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  v_activities varchar[];
 BEGIN
   PERFORM 1 FROM public.advance_request r
     WHERE r.budget_line_id IN (SELECT wl.activity_budget_line_id FROM public.weekly_fund_request_line wl
                                 WHERE wl.weekly_fund_request_id = p_request)
     FOR UPDATE;
-  UPDATE public.advance_request r
-     SET status = p_status, advance_type = p_type, confirmed_at = p_now, updated_at = p_now
-   WHERE r.budget_line_id IN (SELECT wl.activity_budget_line_id FROM public.weekly_fund_request_line wl
-                               WHERE wl.weekly_fund_request_id = p_request)
-     AND NOT (r.status = ANY (gateway_day_money.money_moved()));
+  WITH moved AS (
+    UPDATE public.advance_request r
+       SET status = p_status, advance_type = p_type, confirmed_at = p_now, updated_at = p_now
+     WHERE r.budget_line_id IN (SELECT wl.activity_budget_line_id FROM public.weekly_fund_request_line wl
+                                 WHERE wl.weekly_fund_request_id = p_request)
+       AND NOT (r.status = ANY (gateway_day_money.money_moved()))
+    RETURNING r.activity_id)
+  SELECT array_agg(DISTINCT activity_id) INTO v_activities FROM moved;
+  IF v_activities IS NOT NULL THEN
+    PERFORM gateway_day_money.project_actuals(v_activities, p_now);
+  END IF;
 END
 $fn$;
 
@@ -719,6 +765,78 @@ BEGIN
 END
 $fn$;
 
+-- advance_service.submit_accountability for one advance: the share of the
+-- declared spend and return the caller allocated to it. Answers 'gone',
+-- 'not_disbursed', 'not_owner', 'unreceipted', 'no_netsuite', 'negative',
+-- 'returned_on_overspend', 'variance:<under-spend>', or 'ok'.
+CREATE OR REPLACE FUNCTION gateway_day_money.account_advance(
+  p_advance varchar, p_user varchar, p_role varchar, p_netsuite varchar, p_spent bigint, p_returned bigint,
+  p_note text, p_now timestamptz) RETURNS varchar
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  r record;
+  v_expected bigint;
+  v_variance bigint;
+BEGIN
+  SELECT a.id, a.status, a.responsible_user_id, a.budget_line_id, a.disbursed_amount, a.amount, a.advance_type,
+         a.activity_id
+    INTO r FROM public.advance_request a WHERE a.id = p_advance FOR UPDATE;
+  IF NOT FOUND THEN
+    RETURN 'gone';
+  END IF;
+  IF r.status <> 'disbursed' THEN
+    RETURN 'not_disbursed';
+  END IF;
+  IF COALESCE(r.responsible_user_id, '') <> '' AND r.responsible_user_id <> p_user
+     AND p_role NOT IN ('CountryDirector', 'Admin') THEN
+    RETURN 'not_owner';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.weekly_fund_request w
+               JOIN public.weekly_fund_request_line wl ON wl.weekly_fund_request_id = w.id
+              WHERE wl.activity_budget_line_id = r.budget_line_id AND w.status = 'disbursed'
+                AND w.receipt_confirmed_at IS NULL)
+     OR EXISTS (SELECT 1 FROM public.fund_request f
+                  JOIN public.fund_request_item fi ON fi.fund_request_id = f.id
+                 WHERE fi.activity_schedule_cost_line_id = r.budget_line_id AND f.period = 'monthly'
+                   AND f.status = 'disbursed' AND f.receipt_confirmed_at IS NULL) THEN
+    RETURN 'unreceipted';
+  END IF;
+  IF COALESCE(btrim(p_netsuite), '') = '' THEN
+    RETURN 'no_netsuite';
+  END IF;
+  IF p_spent < 0 OR p_returned < 0 THEN
+    RETURN 'negative';
+  END IF;
+  -- uniq_advance_accountability_netsuite_id: a NetSuite Code clears at most
+  -- one advance. The existing view stamped one code on every advance and met
+  -- the constraint as an error after the first; here it is a refusal.
+  IF EXISTS (SELECT 1 FROM public.advance_request o
+              WHERE o.accountability_netsuite_id = btrim(p_netsuite) AND o.id <> p_advance) THEN
+    RETURN 'netsuite_used';
+  END IF;
+  -- _effective_disbursed.
+  v_expected := CASE WHEN r.disbursed_amount IS NOT NULL THEN r.disbursed_amount
+                     WHEN r.advance_type = 'self_funded' THEN 0
+                     ELSE COALESCE(r.amount, 0) END;
+  v_variance := p_spent - v_expected;
+  IF v_variance >= 0 AND p_returned <> 0 THEN
+    RETURN 'returned_on_overspend';
+  END IF;
+  IF v_variance < 0 AND p_returned <> -v_variance AND COALESCE(btrim(p_note), '') = '' THEN
+    RETURN 'variance:' || (-v_variance)::text;
+  END IF;
+  UPDATE public.advance_request
+     SET accounted_amount = p_spent, returned_amount = p_returned, accountability_netsuite_id = btrim(p_netsuite),
+         accountability_submitted_at = p_now,
+         last_note = CASE WHEN COALESCE(btrim(p_note), '') <> '' THEN left(btrim(p_note), 512) ELSE last_note END,
+         status = 'accountability_pl_pending', accountability_pl_approved_at = NULL,
+         accountability_pl_approved_by = NULL, updated_at = p_now
+   WHERE id = p_advance;
+  PERFORM gateway_day_money.project_actuals(ARRAY[r.activity_id]::varchar[], p_now);
+  RETURN 'ok';
+END
+$fn$;
+
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA gateway_day_money FROM PUBLIC;
 RESET ROLE;
 
@@ -737,5 +855,6 @@ GRANT EXECUTE ON FUNCTION
   gateway_day_money.stale_days(varchar, date, date),
   gateway_day_money.send_week(varchar, varchar, varchar, varchar, varchar, varchar, timestamptz),
   gateway_day_money.skip_week(varchar, varchar, timestamptz),
-  gateway_day_money.confirm_week_receipt(varchar, varchar, boolean, timestamptz)
+  gateway_day_money.confirm_week_receipt(varchar, varchar, boolean, timestamptz),
+  gateway_day_money.account_advance(varchar, varchar, varchar, varchar, bigint, bigint, text, timestamptz)
 TO edify_activities_rw;

@@ -82,6 +82,8 @@ psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/notification_roles.sql
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/costing_settle_roles.sql"
 # The transport obligation, advances, weekly request and monthly draft of a priced day.
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/day_money_roles.sql"
+# Activity evidence uploaded through Go: the staged file and the evidence record.
+psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/evidence_upload_roles.sql"
 # Native Go security incident & partner login release relay replacements (Step 2).
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/relay_ops_roles.sql"
 # Native Go cluster leader account onboarding (Batch 10).

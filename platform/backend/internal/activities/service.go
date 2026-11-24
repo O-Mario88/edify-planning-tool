@@ -74,9 +74,11 @@ type Origin struct {
 type Service struct {
 	db      *pgxpool.Pool
 	pricing Pricing
-	logger  *slog.Logger
-	now     func() time.Time
-	kampala *time.Location
+	// evidence keeps the files a save carries (an accountability's receipt).
+	evidence EvidenceKeeper
+	logger   *slog.Logger
+	now      func() time.Time
+	kampala  *time.Location
 	// The owner's notice for a visit someone else put on their plan.
 	noticePush NoticePush
 	live       NoticePublisher
