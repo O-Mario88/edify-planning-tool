@@ -186,3 +186,35 @@ func TestHeadCountsAreDrawnWithTheTemplatesDefault(t *testing.T) {
 		}
 	}
 }
+
+// Work done on another day keeps the local time it was scheduled for, and
+// is priced with the move's reason in completed_day's words.
+func TestWorkDoneOnAnotherDayKeepsItsTimeOfDay(t *testing.T) {
+	kampala, err := time.LoadLocation("Africa/Kampala")
+	if err != nil {
+		t.Fatal(err)
+	}
+	scheduled := time.Date(2026, 11, 27, 6, 30, 0, 0, time.UTC) // 09:30 in Kampala
+	day := time.Date(2026, 11, 5, 0, 0, 0, 0, time.UTC)
+	got := onDoneDay(scheduled, day, kampala)
+	if want := time.Date(2026, 11, 5, 9, 30, 0, 0, kampala); !got.Equal(want) {
+		t.Errorf("%v, want %v", got, want)
+	}
+	if got := completedOnReason(day); got != "Completed on 05 Nov 2026" {
+		t.Errorf("%q", got)
+	}
+}
+
+// With Django absent a meeting done on another day is read, not handed on:
+// the move is decided once the form is read.
+func TestAMeetingDoneOnAnotherDayIsReadWithDjangoAbsent(t *testing.T) {
+	pl := meetingPlan()
+	pl.sessions = true
+	form := url.Values{"actual_delivery_date": {"2026-11-19"}, "salesforce_id": {"TS-998877"}, "teachers_attended": {"2"}}
+	if err := meetingService().readMeetingForm(pl, form); err != nil {
+		t.Fatalf("%v, want the form read", err)
+	}
+	if !sameDay(pl.delivered, time.Date(2026, 11, 19, 0, 0, 0, 0, time.UTC)) {
+		t.Errorf("delivered %v", pl.delivered)
+	}
+}

@@ -96,6 +96,9 @@ type movePlan struct {
 	// cluster.
 	session     bool
 	clusterName string
+	// unnoted is a move made by a completion (completed_day._move): its new
+	// lines carry no reschedule note, which only the reschedule writes.
+	unnoted bool
 }
 
 // Reschedule makes the move, or refuses it in the existing words, or hands
@@ -486,7 +489,7 @@ func keepMoveCosts(ctx context.Context, tx pgx.Tx, pl *movePlan) (int64, error) 
 	}
 	days = append(days, []string{pl.newBatch, pl.ownerUID})
 	notes := []any{}
-	if !pl.a.scheduled.Equal(pl.scheduled) {
+	if !pl.a.scheduled.Equal(pl.scheduled) && !pl.unnoted {
 		notes = append(notes, map[string]any{
 			"kind": "reschedule_note", "activity": pl.a.id, "old": pyISO(pl.a.scheduled.UTC()),
 			"new": pyISO(pl.scheduled), "reason": pl.reason,

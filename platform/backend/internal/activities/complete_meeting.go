@@ -146,16 +146,23 @@ func (s *Service) meetingInCase(ctx context.Context, p auth.Principal, id string
 // completeMeeting is Complete for a cluster meeting.
 func (s *Service) completeMeeting(ctx context.Context, p auth.Principal, m *completedMeeting, form url.Values, origin Origin) (CompleteAnswer, error) {
 	pl := &completionPlan{
-		p: p, origin: origin, now: s.now(),
+		p: p, origin: origin, now: s.now(), sessions: true,
 		a: completedVisit{id: m.id, activityType: clusterMeetingType, status: m.status, responsible: m.responsible,
 			plannedDate: *m.planned},
 	}
 	if err := s.readMeetingForm(pl, form); err != nil {
 		return CompleteAnswer{}, err
 	}
+	if !sameDay(pl.delivered, pl.a.plannedDate) {
+		var err error
+		if pl.done, err = s.prepareDoneDay(ctx, pl, true); err != nil {
+			return CompleteAnswer{}, err
+		}
+	}
 	if err := s.writeMeetingCompletion(ctx, pl); err != nil {
 		return CompleteAnswer{}, err
 	}
+	s.afterDoneDay(ctx, pl)
 	s.afterCompletion(ctx, pl)
 	return CompleteAnswer{ActivityID: m.id, Status: handedInStatus, Message: rules.Move.SavedMessage}, nil
 }
@@ -176,7 +183,7 @@ func (s *Service) readMeetingForm(pl *completionPlan, form url.Values) error {
 	if err != nil {
 		return err
 	}
-	if !sameDay(delivered, pl.a.plannedDate) {
+	if !sameDay(delivered, pl.a.plannedDate) && !pl.sessions {
 		return handOn("done on another day than planned: the work and its money move")
 	}
 	pl.delivered = delivered

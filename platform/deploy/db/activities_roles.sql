@@ -224,6 +224,9 @@ GRANT SELECT (last_reason, updated_at) ON activity TO edify_activities_rw;
 GRANT UPDATE (scheduled_date, fy, quarter, planned_date, planned_month, planned_week, reschedule_count,
               last_reason, status, daily_visit_batch_id, updated_at)
   ON activity TO edify_activities_rw;
+-- Work completed on another day than planned moves to that day and keeps the
+-- day it was planned for (apps.activities.completed_day._move).
+GRANT UPDATE (planned_date_before_completion) ON activity TO edify_activities_rw;
 -- The day joined takes the move's reason when it differs (reschedule_within_batch).
 GRANT SELECT (reason) ON daily_visit_batch TO edify_activities_rw;
 GRANT UPDATE (reason) ON daily_visit_batch TO edify_activities_rw;

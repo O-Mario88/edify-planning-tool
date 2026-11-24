@@ -126,6 +126,8 @@ type completionPlan struct {
 	outcome, observations, notes *string
 	posted, attended             []string // a meeting's register, as posted and once each
 	start                        bool     // the work is started in the completion's transaction
+	sessions                     bool     // Django is absent: Go moves work done on another day
+	done                         *doneDay // the move to the day done, decided before the hand-in
 	payload                      map[string]any
 	origin                       Origin
 	now                          time.Time
@@ -151,6 +153,7 @@ func (s *Service) Complete(ctx context.Context, p auth.Principal, req CompleteRe
 	if err := s.writeCompletion(ctx, pl); err != nil {
 		return CompleteAnswer{}, err
 	}
+	s.afterDoneDay(ctx, pl)
 	s.afterCompletion(ctx, pl)
 	return CompleteAnswer{ActivityID: pl.a.id, Status: handedInStatus, Message: rules.Move.SavedMessage}, nil
 }
@@ -184,9 +187,14 @@ func (s *Service) prepareCompletion(ctx context.Context, p auth.Principal, req C
 		}
 		return nil, handOn(why)
 	}
-	pl := &completionPlan{p: p, a: *a, origin: origin, now: now, start: a.status != startedStatus}
+	pl := &completionPlan{p: p, a: *a, origin: origin, now: now, start: a.status != startedStatus, sessions: req.Sessions}
 	if err := s.readCompletionForm(pl, req.Form); err != nil {
 		return nil, err
+	}
+	if !sameDay(pl.delivered, pl.a.plannedDate) {
+		if pl.done, err = s.prepareDoneDay(ctx, pl, false); err != nil {
+			return nil, err
+		}
 	}
 	return pl, nil
 }
@@ -296,7 +304,7 @@ func (s *Service) readCompletionForm(pl *completionPlan, form url.Values) error 
 	if err != nil {
 		return err
 	}
-	if !sameDay(delivered, pl.a.plannedDate) {
+	if !sameDay(delivered, pl.a.plannedDate) && !pl.sessions {
 		return handOn("done on another day than planned: the work and its money move")
 	}
 	pl.delivered = delivered
@@ -550,10 +558,15 @@ func (s *Service) afterCompletion(ctx context.Context, pl *completionPlan) {
 		s.logger.Warn("activities: the completion audit row was not written", "activity", pl.a.id, "err", err)
 	}
 	if in(rules.LedgerCreditedTypes, pl.a.activityType) {
-		if err := s.markOwnerYears(ctx, pl.a.responsible, pl.a.plannedDate); err != nil {
+		days := []time.Time{pl.a.plannedDate}
+		if pl.done != nil && pl.done.move != nil {
+			days = append(days, pl.done.move.newDay)
+		}
+		if err := s.markOwnerYears(ctx, pl.a.responsible, days...); err != nil {
 			s.logger.Warn("activities: the target ledger was not marked", "activity", pl.a.id, "err", err)
 		}
 	}
+	s.settleDoneDay(ctx, pl.done)
 }
 
 // appendCompleteRow is the view's `complete_activity` row (my_plan_views
