@@ -72,3 +72,14 @@ func SessionNoun(kind string) string {
 	}
 	return "training"
 }
+
+// IsTraining is training_ceilings.is_training: a training, or a cluster
+// meeting held as one.
+func IsTraining(kind, meetingKind string) bool {
+	d := rules.Detail
+	return in(d.TrainingTypes, kind) || (in(d.MeetingTypes, kind) && meetingKind == d.TrainingMeetingKind)
+}
+
+// IsClusterMeeting is facilitation.is_meeting: a cluster meeting rather than
+// a training.
+func IsClusterMeeting(kind string) bool { return in(rules.Detail.MeetingTypes, kind) }

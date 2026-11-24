@@ -77,6 +77,7 @@ func (s *Service) rescheduleInGo(
 	}
 	moved, err := s.moves.Reschedule(ctx, principal, activities.MoveRequest{
 		ActivityID: activityID, Date: strings.TrimSpace(form.Get("scheduled_date")), Reason: strings.TrimSpace(form.Get("reason")),
+		Sessions: s.existingApp == nil,
 	}, origin)
 	return moveOutcomeOf(ctx, s.logger, moved, err)
 }

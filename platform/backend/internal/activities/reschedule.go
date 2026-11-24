@@ -30,6 +30,9 @@ import (
 // RescheduleSchoolVisitRequest), as the view reads them.
 type MoveRequest struct {
 	ActivityID, Date, Reason string
+	// Sessions lets the move take a cluster meeting too, which Go does only
+	// with Django absent until it is shadow-proved with Django present.
+	Sessions bool
 }
 
 // MoveAnswer is the moved visit and the toast the web shows.
@@ -88,6 +91,11 @@ type movePlan struct {
 	origin    Origin
 	now       time.Time
 	newBatch  string
+	// session is a cluster meeting moved (prepareSessionMove): it has no
+	// school, its day is where its cluster is, and the change names the
+	// cluster.
+	session     bool
+	clusterName string
 }
 
 // Reschedule makes the move, or refuses it in the existing words, or hands
@@ -120,7 +128,13 @@ func (s *Service) prepareMove(ctx context.Context, p auth.Principal, req MoveReq
 	if err != nil {
 		return nil, err
 	}
-	if a == nil || !ownsVisit(p, a.responsible) || !in(movableStatuses, a.status) ||
+	if a == nil && req.Sessions {
+		return s.prepareSessionMove(ctx, p, req, origin, now, today)
+	}
+	if a == nil {
+		return nil, handOn("not a scheduled visit of the first save's kind, owned by the person")
+	}
+	if !ownsVisit(p, a.responsible) || !in(movableStatuses, a.status) ||
 		!in(inScopePurposes, a.purpose) || rules.Purposes.ActivityTypes[a.purpose] != a.activityType ||
 		a.batchID == "" || a.nameSnapshot == "" {
 		return nil, handOn("not a scheduled visit of the first save's kind, owned by the person")
@@ -399,6 +413,10 @@ func sameDay(a, b time.Time) bool {
 // (duplicate_visits.existing_same_day_visit, excluding the visit itself).
 // The Core test is a no-op off Core schools.
 func moveDuplicate(ctx context.Context, q Querier, pl *movePlan) error {
+	if pl.session {
+		// existing_same_day_visit finds nothing at no school.
+		return nil
+	}
 	if !in(rules.Gate.ClientRuleTypes, pl.school.Type) || pl.a.purpose == rules.Gate.CompanionPurpose {
 		return nil
 	}
@@ -476,7 +494,7 @@ func keepMoveCosts(ctx context.Context, tx pgx.Tx, pl *movePlan) (int64, error) 
 	}
 	steps, err := json.Marshal(map[string]any{
 		"days": days, "together": false, "weeks": pl.weeks, "months": pl.months, "notes": notes,
-		"change": pl.a.nameSnapshot + " at " + pl.school.Name,
+		"change": pl.changeName(),
 	})
 	if err != nil {
 		return 0, err
