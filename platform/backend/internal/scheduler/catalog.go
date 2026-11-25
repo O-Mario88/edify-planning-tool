@@ -471,64 +471,8 @@ SELECT id FROM "user"
 		return sent, nil
 
 	case "scheduler_watchdog":
-		rows, err := pool.Query(ctx, `
-SELECT DISTINCT job_name
-  FROM scheduled_job_execution
- WHERE status = 'failed'
-   AND started_at >= $1
- LIMIT 50`, now.Add(-2*time.Hour))
-		if err != nil {
-			return 0, err
-		}
-		var failedJobs []string
-		for rows.Next() {
-			var name string
-			if scanErr := rows.Scan(&name); scanErr == nil && name != "" {
-				failedJobs = append(failedJobs, name)
-			}
-		}
-		rows.Close()
-		if len(failedJobs) == 0 {
-			return 0, nil
-		}
-		adminRows, err := pool.Query(ctx, `
-SELECT id FROM "user"
- WHERE deleted_at IS NULL AND is_active = true
-   AND (active_role = 'Admin' OR 'Admin' = ANY(roles))
- LIMIT 20`)
-		if err != nil {
-			return 0, err
-		}
-		var admins []string
-		for adminRows.Next() {
-			var uid string
-			if scanErr := adminRows.Scan(&uid); scanErr == nil && uid != "" {
-				admins = append(admins, uid)
-			}
-		}
-		adminRows.Close()
-		sent := 0
-		for _, job := range failedJobs {
-			for _, uid := range admins {
-				if ok, err := writer.Deliver(ctx, notificationcenter.Delivery{
-					RecipientID:     uid,
-					Title:           "Scheduled job failure: " + job,
-					Body:            "Background job " + job + " recorded a failed execution in the last 2 hours.",
-					Category:        "system_health",
-					ContextType:     "scheduled_job",
-					ContextID:       job,
-					TargetRoute:     "/admin/platform-health",
-					ActionLabel:     "Platform Health",
-					ActionRequired:  true,
-					Priority:        "urgent",
-					SourceEventType: "scheduler.job_failed",
-					SourceEventID:   "watchdog-" + job + ":" + today + ":" + uid,
-				}); err == nil && ok {
-					sent++
-				}
-			}
-		}
-		return sent, nil
+		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy
+		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) { return Watchdog(ctx, tx, now, loc, push) })
 
 	case "verification_reminders":
 		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy

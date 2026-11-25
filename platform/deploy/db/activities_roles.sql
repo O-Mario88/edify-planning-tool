@@ -732,3 +732,8 @@ GRANT SELECT (staff_id, status, start_date, end_date) ON leave TO edify_activiti
 GRANT SELECT (id, name) ON sub_county TO edify_activities_rw;
 GRANT SELECT (sub_county_id, school_type, current_fy_ssa_status) ON school TO edify_activities_rw;
 GRANT SELECT (average_score) ON ssa_record TO edify_activities_rw;
+
+-- ── The scheduler's scheduler_watchdog (docs/migration/189 §4) ──
+-- SchedulerHealthService.job_health reads the recorded runs; the notices go
+-- through gateway_notifications (notify_workflow, resolve_condition).
+GRANT SELECT (job_name, status, error_message, started_at) ON scheduled_job_execution TO edify_activities_rw;
