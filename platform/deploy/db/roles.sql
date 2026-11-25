@@ -1355,3 +1355,6 @@ GRANT SELECT (cost_setting_version) ON activity_schedule_cost_line TO edify_gate
 -- Team Oversight's record drawer for a hand-over (_assignment_item): its
 -- notes, the rationale when no purpose is given.
 GRANT SELECT (notes) ON partner_assignment TO edify_gateway_ro;
+-- Team Targets' recovery queue: each open catch-up plan's proposal, schools,
+-- dates and return reason.
+GRANT SELECT (activities_proposed, school_ids, planned_dates, return_reason) ON target_catchup_plan TO edify_gateway_ro;

@@ -129,10 +129,9 @@ func TestTeamTargetsBacklogDrawersAreGos(t *testing.T) {
 	}
 }
 
-// The recovery queue is Go's for a Lead with no catch-up plan open: its
-// empty-queue lines (the seed's team has nothing behind); with a plan open
-// it is handed on, since each submitted plan carries the Approve and Return
-// forms.
+// The recovery queue is Go's: its empty-queue lines (the seed's team has
+// nothing behind), then a submitted plan with its buttons' words and the
+// drawer's own Approve.
 func TestTeamTargetsRecoveryQueueIsGos(t *testing.T) {
 	ctx := context.Background()
 	clear := func() {
@@ -159,8 +158,13 @@ func TestTeamTargetsRecoveryQueueIsGos(t *testing.T) {
 		FROM "user" pl, "user" c, target_area a WHERE pl.email = 'pl1@edify.org' AND c.email = 'cceo@edify.org' AND a.key = 'school_visits'`); err != nil {
 		t.Fatalf("opening a plan: %v", err)
 	}
-	if _, err := drawers.GetDrawer(ctx, authed(&screensv1.GetDrawerRequest{Path: "/team-targets/recovery"}, lead)); connect.CodeOf(err) != connect.CodeUnavailable {
-		t.Fatalf("with a plan open: %v, want handed on", err)
+	open, err := drawers.GetDrawer(ctx, authed(&screensv1.GetDrawerRequest{Path: "/team-targets/recovery"}, lead))
+	if err != nil {
+		t.Fatalf("with a plan open: %v", err)
+	}
+	if q := open.Msg.GetDrawer(); q.GetSubmitLabel() != "Approve" || len(q.GetItems()) < 2 ||
+		!strings.HasSuffix(q.GetItems()[1].GetText(), " Submitted Approve Return") {
+		t.Fatalf("the queue with a plan %v", q)
 	}
 }
 

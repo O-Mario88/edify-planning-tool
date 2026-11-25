@@ -120,21 +120,15 @@ func (d *data) blocker(ctx context.Context, db schooldirectory.Querier, m Member
 }
 
 // Recovery is team_targets_recovery_view: the reader's open catch-up plans
-// and the team's behind members, read for the page as it opens (the view
-// ignores the query). A reader with any catch-up plan open is handed on
-// (each submitted plan carries the Approve and Return forms Go does not
-// answer yet), as is a read during which get_page would write.
+// (newest first, thirty at most) and the team's behind members, read for the
+// page as it opens (the view ignores the query). A submitted plan's Approve
+// and Return forms are read as their buttons' words, the first plan's
+// Approve as the drawer's own button; the feed saves neither (their route is
+// not one it saves), so a press is answered as unavailable either way. A
+// read during which get_page would write is handed on.
 func Recovery(ctx context.Context, db schooldirectory.Querier, p auth.Principal, now time.Time) (*screensv1.PageDrawer, error) {
 	if !slices.Contains(rules.PageRoles, p.ActiveRole) {
 		return nil, &RefusedError{Refusal}
-	}
-	var open int
-	if err := db.QueryRow(ctx, `SELECT count(*) FROM target_catchup_plan WHERE pl_user_id = $1 AND status <> 'closed'`,
-		p.UserID).Scan(&open); err != nil {
-		return nil, fmt.Errorf("teamtargets: the catch-up plans: %w", err)
-	}
-	if open > 0 {
-		return nil, ErrHandOn
 	}
 	l := now.In(kampala)
 	today := time.Date(l.Year(), l.Month(), l.Day(), 0, 0, 0, 0, time.UTC)
@@ -153,14 +147,87 @@ func Recovery(ctx context.Context, db schooldirectory.Querier, p auth.Principal,
 	if err != nil {
 		return nil, err
 	}
-	items := []*screensv1.DrawerItem{text("No catch-up plans yet."), text("Create one from any behind row in Target Recovery Focus.")}
+	plans, err := openPlans(ctx, db, p.UserID)
+	if err != nil {
+		return nil, err
+	}
+	names := map[string]string{}
+	for _, r := range d.t.rows {
+		names[r.member.UserID] = r.member.Name
+	}
+	drawer := &screensv1.PageDrawer{Title: "Recovery approval queue", HasRequired: true, CancelLabel: "Cancel"}
+	if len(plans) == 0 {
+		drawer.Items = []*screensv1.DrawerItem{text("No catch-up plans yet."), text("Create one from any behind row in Target Recovery Focus.")}
+	} else {
+		drawer.Items = []*screensv1.DrawerItem{text("Approving a catch-up plan sends its activities into Planning.")}
+		for _, c := range plans {
+			staff := names[c.staff]
+			if staff == "" {
+				staff = "—"
+			}
+			line := fmt.Sprintf("%s · %s %s · %d proposed · %d school(s)", staff, c.area, targets.MonthLabel(c.fy, c.month), c.proposed, c.schools)
+			if c.dated {
+				line += " · dated (will be scheduled & costed)"
+			}
+			if c.note != "" {
+				line += " " + c.note
+			}
+			if c.status == "returned" && c.returnReason != "" {
+				line += " Returned: " + c.returnReason
+			}
+			label := rules.CatchUpStatuses[c.status]
+			if label == "" {
+				label = c.status
+			}
+			line += " " + label
+			if c.status == "submitted" {
+				line += " Approve Return"
+				if !drawer.CanSubmit {
+					drawer.SubmitLabel, drawer.CanSubmit = "Approve", true
+				}
+			}
+			drawer.Items = append(drawer.Items, text(line))
+		}
+	}
 	if len(found) > 0 {
-		items = append(items, &screensv1.DrawerItem{Kind: &screensv1.DrawerItem_Heading{Heading: "Currently behind — candidates for recovery"}})
+		drawer.Items = append(drawer.Items, &screensv1.DrawerItem{Kind: &screensv1.DrawerItem_Heading{Heading: "Currently behind — candidates for recovery"}})
 		for _, c := range found[:min(recoveryLimit, len(found))] {
 			// The feed reads the row's two lines as one run and the risk
 			// pill after a space.
-			items = append(items, text(fmt.Sprintf("%s · %sgap %d · %s %s", c.staff, c.area, c.gap, c.reason, c.risk)))
+			drawer.Items = append(drawer.Items, text(fmt.Sprintf("%s · %sgap %d · %s %s", c.staff, c.area, c.gap, c.reason, c.risk)))
 		}
 	}
-	return &screensv1.PageDrawer{Title: "Recovery approval queue", HasRequired: true, CancelLabel: "Cancel", Items: items}, nil
+	return drawer, nil
+}
+
+// catchUp is one CatchUpPlan as the queue shows it.
+type catchUp struct {
+	staff, area, fy, note, status, returnReason string
+	month, proposed, schools                    int
+	dated                                       bool
+}
+
+// planLimit is the queue's `[:30]`.
+const planLimit = 30
+
+// openPlans are the reader's catch-up plans not closed, newest first.
+func openPlans(ctx context.Context, db schooldirectory.Querier, leadUserID string) ([]catchUp, error) {
+	rows, err := db.Query(ctx, `SELECT p.staff_user_id, COALESCE(a.label, ''), p.fy, COALESCE(p.note, ''), p.status, COALESCE(p.return_reason, ''),
+  p.month_of_fy, p.activities_proposed, jsonb_array_length(COALESCE(p.school_ids, '[]'::jsonb)),
+  jsonb_array_length(COALESCE(p.planned_dates, '[]'::jsonb)) > 0
+FROM target_catchup_plan p LEFT JOIN target_area a ON a.id = p.area_id
+WHERE p.pl_user_id = $1 AND p.status <> 'closed' ORDER BY p.created_at DESC, p.id LIMIT $2`, leadUserID, planLimit)
+	if err != nil {
+		return nil, fmt.Errorf("teamtargets: the catch-up plans: %w", err)
+	}
+	defer rows.Close()
+	out := []catchUp{}
+	for rows.Next() {
+		var c catchUp
+		if err := rows.Scan(&c.staff, &c.area, &c.fy, &c.note, &c.status, &c.returnReason, &c.month, &c.proposed, &c.schools, &c.dated); err != nil {
+			return nil, err
+		}
+		out = append(out, c)
+	}
+	return out, rows.Err()
 }
