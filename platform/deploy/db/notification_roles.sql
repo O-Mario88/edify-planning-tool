@@ -320,6 +320,26 @@ REVOKE ALL ON FUNCTION gateway_notifications.mark_all_read(varchar, timestamptz)
 REVOKE ALL ON FUNCTION gateway_notifications.resolve_context(varchar, varchar, varchar, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_notifications.update_preferences(varchar, boolean, boolean, jsonb, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_notifications.resolve_condition(varchar, varchar, varchar, timestamptz) FROM PUBLIC;
+-- _do_daily_plan_notifications' first step: yesterday's live day-keyed
+-- notices (the plan and the team monitor) describe a day that is over, so
+-- every one not keyed to today is closed as the existing job closes it.
+CREATE OR REPLACE FUNCTION gateway_notifications.close_stale_daily_notices(
+  evt_types varchar[], keep_ctx varchar, at timestamptz
+) RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  changed integer;
+BEGIN
+  UPDATE public.notification
+     SET resolved_at = at, status = 'archived', action_required = false, updated_at = at
+   WHERE source_event_type = ANY(evt_types)
+     AND resolved_at IS NULL
+     AND context_id IS DISTINCT FROM keep_ctx;
+  GET DIAGNOSTICS changed = ROW_COUNT;
+  RETURN changed;
+END
+$fn$;
+REVOKE ALL ON FUNCTION gateway_notifications.close_stale_daily_notices(varchar[], varchar, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_notifications.notify_workflow(varchar, varchar, varchar, text, varchar, varchar, varchar, varchar, varchar, varchar, varchar, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_notifications.queue_push_copy(varchar, varchar, varchar, varchar, timestamptz) FROM PUBLIC;
 RESET ROLE;
@@ -332,5 +352,6 @@ GRANT EXECUTE ON FUNCTION gateway_notifications.archive(varchar, varchar) TO edi
 GRANT EXECUTE ON FUNCTION gateway_notifications.resolve_context(varchar, varchar, varchar, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_notifications.update_preferences(varchar, boolean, boolean, jsonb, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_notifications.resolve_condition(varchar, varchar, varchar, timestamptz) TO edify_gateway;
+GRANT EXECUTE ON FUNCTION gateway_notifications.close_stale_daily_notices(varchar[], varchar, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_notifications.notify_workflow(varchar, varchar, varchar, text, varchar, varchar, varchar, varchar, varchar, varchar, varchar, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_notifications.queue_push_copy(varchar, varchar, varchar, varchar, timestamptz) TO edify_gateway;

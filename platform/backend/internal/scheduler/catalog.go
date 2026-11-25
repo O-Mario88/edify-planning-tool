@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 	"strconv"
 	"time"
@@ -369,49 +370,22 @@ SELECT a.id, COALESCE(sp.user_id, a.responsible_staff_id), COALESCE(s.name, 'a s
 		return sent, nil
 
 	case "daily_plan_notifications":
-		rows, err := pool.Query(ctx, `
-SELECT COALESCE(sp.user_id, a.responsible_staff_id), COUNT(a.id)::int
-  FROM activity a
-  LEFT JOIN staff_profile sp ON sp.id = a.responsible_staff_id AND sp.deleted_at IS NULL
- WHERE a.deleted_at IS NULL
-   AND a.status IN ('scheduled', 'rescheduled', 'in_progress')
-   AND a.planned_date = $1::date
- GROUP BY COALESCE(sp.user_id, a.responsible_staff_id)
- LIMIT 200`, today)
+		// _do_daily_planning_notices: the day's plan notices, then the
+		// recruit sweep, which never stops the first being counted as sent.
+		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy
+		notices := notificationjobs.Notices{Push: push}
+		sent, err := inTx(ctx, pool, func(tx pgx.Tx) (int, error) {
+			return notificationjobs.DailyPlan(ctx, tx, now, loc, notices)
+		})
 		if err != nil {
 			return 0, err
 		}
-		type dpRow struct {
-			uid   string
-			count int
+		opened, err := inTx(ctx, pool, func(tx pgx.Tx) (int, error) { return notificationjobs.RecruitSweep(ctx, tx, now, notices) })
+		if err != nil {
+			slog.Default().ErrorContext(ctx, "scheduler: the recruit sweep failed", "err", err)
+			return sent, nil
 		}
-		var items []dpRow
-		for rows.Next() {
-			var r dpRow
-			if scanErr := rows.Scan(&r.uid, &r.count); scanErr == nil && r.uid != "" && r.count > 0 {
-				items = append(items, r)
-			}
-		}
-		rows.Close()
-		sent := 0
-		for _, it := range items {
-			if ok, err := writer.Deliver(ctx, notificationcenter.Delivery{
-				RecipientID:     it.uid,
-				Title:           fmt.Sprintf("Today's plan: %d activity(ies) scheduled", it.count),
-				Body:            fmt.Sprintf("You have %d planned school activity(ies) on %s.", it.count, today),
-				Category:        "daily_plan",
-				ContextType:     "daily_plan",
-				ContextID:       "dp-" + today,
-				TargetRoute:     "/today",
-				ActionLabel:     "Open Today",
-				Priority:        "normal",
-				SourceEventType: "daily_plan.morning_brief",
-				SourceEventID:   "dp-" + today + ":" + it.uid,
-			}); err == nil && ok {
-				sent++
-			}
-		}
-		return sent, nil
+		return sent + opened, nil
 
 	case "daily_digest":
 		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy

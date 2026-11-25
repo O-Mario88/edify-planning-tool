@@ -481,3 +481,22 @@ func TeamMemberIDs(ctx context.Context, db schooldirectory.Querier, profileID st
 	}
 	return ids, nil
 }
+
+// TeamMember is one officer a lead line-manages, in both id spaces.
+type TeamMember struct{ StaffID, UserID string }
+
+// TeamMembers is team_members for a lead working in their own seat (as a
+// scheduled job reads a lead: no acting context is attached outside a
+// request): their supervisees and, while they cover an absent lead, that
+// lead's, by name.
+func TeamMembers(ctx context.Context, db schooldirectory.Querier, profileID string, now time.Time) ([]TeamMember, error) {
+	members, err := teamMembers(ctx, db, profileID, now)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]TeamMember, 0, len(members))
+	for _, m := range members {
+		out = append(out, TeamMember{StaffID: m.staffID, UserID: m.userID})
+	}
+	return out, nil
+}

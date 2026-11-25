@@ -231,8 +231,11 @@ INSERT INTO scheduled_job_execution (
 	var escalatedPrio string
 	var remCount int
 	_ = admin.QueryRow(ctx, `SELECT priority, reminder_count FROM notification WHERE id = $1`, staleNotif).Scan(&escalatedPrio, &remCount)
-	if escalatedPrio != "urgent" || remCount < 1 {
-		t.Fatalf("notification_escalation did not upgrade stale notice: priority=%q reminder_count=%d", escalatedPrio, remCount)
+	// The existing escalation raises the priority alone: the reminder count,
+	// which the email copy reads as a person's reminder, does not move.
+	if escalatedPrio != "urgent" || remCount != 0 {
+		t.Fatalf("notification_escalation did not escalate as the existing job does: priority=%q reminder_count=%d",
+			escalatedPrio, remCount)
 	}
 
 	var handledStatus, unhandledStatus string

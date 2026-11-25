@@ -320,7 +320,7 @@ INSERT INTO admin_maintenance_template (
 		t.Cleanup(func() {
 			_, _ = admin.Exec(context.Background(), `DELETE FROM admin_ops_work_item WHERE title = 'Batch 20 Weekly DB Health Check'`)
 			_, _ = admin.Exec(context.Background(), `DELETE FROM admin_maintenance_template WHERE id = $1`, tplID)
-			_, _ = admin.Exec(context.Background(), `DELETE FROM monthly_work_plan_budget WHERE month_key = '2027-09' AND country_id = 'UG'`)
+			_, _ = admin.Exec(context.Background(), `DELETE FROM monthly_work_plan_budget WHERE month_key = '2027-09' AND country_id = 'Uganda'`)
 			_, _ = admin.Exec(context.Background(), `DELETE FROM scheduled_job_execution WHERE runner = 'batch20-test'`)
 		})
 
@@ -365,10 +365,14 @@ INSERT INTO admin_maintenance_template (
 			t.Fatalf("re-run should stay idempotent at 1 item, got %d", itemCount)
 		}
 
-		// Verify monthly_work_plan created draft for 2027-09.
-		var mbStatus string
-		if err := admin.QueryRow(ctx, `SELECT status FROM monthly_work_plan_budget WHERE country_id = 'UG' AND month_key = '2027-09'`).Scan(&mbStatus); err != nil || mbStatus != "draft" {
-			t.Fatalf("expected draft monthly budget for 2027-09, got %q err=%v", mbStatus, err)
+		// Verify monthly_work_plan made next month's budget as the existing
+		// job makes it: Uganda's, a generated draft of FY2027 with no author.
+		var mbStatus, mbFY string
+		var mbBy *string
+		if err := admin.QueryRow(ctx, `SELECT status, fy, generated_by FROM monthly_work_plan_budget
+WHERE country_id = 'Uganda' AND month_key = '2027-09'`).Scan(&mbStatus, &mbFY, &mbBy); err != nil ||
+			mbStatus != "draft_generated" || mbFY != "2027" || mbBy != nil {
+			t.Fatalf("expected the generated draft budget for 2027-09, got %q %q %v err=%v", mbStatus, mbFY, mbBy, err)
 		}
 	})
 
