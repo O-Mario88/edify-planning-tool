@@ -530,6 +530,23 @@
       "review_grace_days": 5,
       "schedule_grace_days": 7
     },
+    "sends": {
+      "cceo_addressed": [
+        "assignment_returned",
+        "evidence_submission_stalled",
+        "salesforce_overdue"
+      ],
+      "partner_addressed": [
+        "partner_delivery_overdue",
+        "partner_evidence_overdue",
+        "partner_schedule_approaching",
+        "partner_schedule_overdue"
+      ],
+      "role_queues": {
+        "Accountant": "Accountant",
+        "ImpactAssessment": "Impact Assessment"
+      }
+    },
     "ssa_support_types": [
       "baseline_ssa_visit",
       "partner_ssa_collection",

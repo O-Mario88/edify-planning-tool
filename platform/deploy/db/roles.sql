@@ -1370,3 +1370,6 @@ GRANT SELECT (condition_key) ON team_action TO edify_gateway_ro;
 -- The delegated-action sweep's Core conditions (_core_condition_still_holds):
 -- whether the year's core assessment is on file.
 GRANT SELECT (assessment_completed) ON core_plan TO edify_gateway_ro;
+-- Partner Oversight's hand-over drawer (_cost_by_activity): the rate-card
+-- version a Partner's work was priced against.
+GRANT SELECT (catalogue_version) ON activity_schedule_cost_line TO edify_gateway_ro;

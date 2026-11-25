@@ -224,3 +224,23 @@ ORDER BY a.id LIMIT 1`, userID, role).Scan(&id, &name)
 	}
 	return id, *name, nil
 }
+
+// AddresseeLabel is partner_oversight_actions.escalation_addressee_label:
+// who the reader's Escalate reaches, in words — the named supervisor holding
+// the addressee's role ("Name (Country Director)"), else the role; "" for a
+// reader who cannot escalate.
+func (s *Service) AddresseeLabel(ctx context.Context, userID, activeRole string) (string, error) {
+	level := rules.Roles[activeRole].RaisesTo
+	if level == "" {
+		return "", nil
+	}
+	label := addresseeLabel(level)
+	if level == rules.RegionalLevel {
+		return label, nil
+	}
+	_, name, err := s.supervisor(ctx, userID, rules.RoleForAddressee[level])
+	if err != nil || name == "" {
+		return label, err
+	}
+	return name + " (" + label + ")", nil
+}

@@ -132,6 +132,12 @@ type Work struct {
 	Completion          CompletionRules   `json:"completion"`
 	FollowUp            FollowUpRules     `json:"follow_up"`
 	Risk                RiskRules         `json:"risk"`
+	// Sends are the hand-over drawer's: which send a risk offers.
+	Sends struct {
+		PartnerAddressed []string          `json:"partner_addressed"`
+		CCEOAddressed    []string          `json:"cceo_addressed"`
+		RoleQueues       map[string]string `json:"role_queues"`
+	} `json:"sends"`
 }
 
 // FollowUpRules are partners_needing_follow_up's vocabularies: the

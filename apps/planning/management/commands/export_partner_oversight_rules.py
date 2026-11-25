@@ -197,7 +197,9 @@ def work() -> dict:
         WithdrawalReason,
     )
     from apps.planning import partner_oversight_service as service
+    from apps.planning import partner_oversight_actions as partner_actions
     from apps.planning import partner_risk_service as risk
+    from apps.planning.action_service import ROLE_QUEUES
     from apps.planning.country_oversight.rules import DATED_BY_STAFF
     from apps.planning.school_planning_badges import PLANNED_STATUSES
     from apps.analytics.pl_analytics_service import (
@@ -269,6 +271,13 @@ def work() -> dict:
             "review_grace_days": risk.REVIEW_GRACE_DAYS,
             "payment_grace_days": risk.PAYMENT_GRACE_DAYS,
             "ia_verification_grace_days": risk.IA_VERIFICATION_GRACE_DAYS,
+        },
+        # The hand-over drawer (partner_oversight_detail_view): which send a
+        # risk offers, from who it names as responsible.
+        "sends": {
+            "partner_addressed": sorted(partner_actions.PARTNER_ADDRESSED_RISKS),
+            "cceo_addressed": sorted(partner_actions.CCEO_ADDRESSED_RISKS),
+            "role_queues": dict(sorted(ROLE_QUEUES.items())),
         },
     }
 
