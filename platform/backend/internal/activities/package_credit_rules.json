@@ -1,0 +1,60 @@
+{
+ "package_visit_types": [
+  "coaching_visit",
+  "core_visit",
+  "follow_up_visit",
+  "in_school_coaching_visit",
+  "in_school_support",
+  "school_visit",
+  "training_follow_up_visit"
+ ],
+ "package_training_types": [
+  "core_training",
+  "in_school_training",
+  "school_improvement_training",
+  "training"
+ ],
+ "school_training_types": [
+  "core_training",
+  "in_school_training",
+  "school_improvement_training",
+  "training"
+ ],
+ "outreach_visit_types": [
+  "donor_visit",
+  "school_invitation",
+  "social_visit",
+  "story_gathering_visit"
+ ],
+ "outreach_visit_purposes": [
+  "donor_visit",
+  "school_invitation",
+  "social_visit",
+  "story_gathering"
+ ],
+ "data_collection_visit_types": [
+  "baseline_ssa_visit",
+  "partner_ssa_collection",
+  "school_visit_ssa_collection"
+ ],
+ "data_collection_visit_purposes": [
+  "ssa_support"
+ ],
+ "companion_visit_purpose": "in_school_training_delivery_visit",
+ "uncredited_statuses": [
+  "awaiting_owner_approval",
+  "cancelled",
+  "deferred",
+  "not_planned",
+  "rejected"
+ ],
+ "core_plan_closed_statuses": [
+  "Archived",
+  "Cancelled",
+  "Exited",
+  "archived",
+  "cancelled",
+  "exited"
+ ],
+ "legacy_fy": "2026"
+}

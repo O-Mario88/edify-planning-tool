@@ -45,21 +45,42 @@ var (
 
 // SyncSSARecommendations is the job; it says what the existing job counts:
 // recommendations made, plans linked, plans judged and plans they linked.
-func SyncSSARecommendations(ctx context.Context, tx pgx.Tx, now time.Time, kampala *time.Location, logger *slog.Logger) (int, error) {
+//
+// The plans it saves are returned: each save's package credit follows the
+// commit (CreditSchoolActivity), as Activity.save queues it.
+func SyncSSARecommendations(ctx context.Context, tx pgx.Tx, now time.Time, kampala *time.Location, logger *slog.Logger) (int, []string, error) {
 	fy := schooldirectory.OperationalFY(now.In(kampala))
+	side := &packageSide{kampala: kampala}
 	created, err := generateMissing(ctx, tx, now, kampala)
 	if err != nil {
-		return 0, err
+		return 0, nil, err
 	}
-	linked, err := linkLivePlans(ctx, tx, fy, now)
+	linked, err := linkLivePlans(ctx, tx, fy, now, side)
 	if err != nil {
-		return 0, err
+		return 0, nil, err
 	}
-	judged, judgedLinks, err := judgeUnjudged(ctx, tx, fy, now, kampala, logger)
+	judged, judgedLinks, err := judgeUnjudged(ctx, tx, fy, now, kampala, logger, side)
 	if err != nil {
-		return 0, err
+		return 0, nil, err
 	}
-	return created + linked + judged + judgedLinks, nil
+	return created + linked + judged + judgedLinks, side.saved, nil
+}
+
+// packageSide is Activity.save's package side for the plans a run saves:
+// the slot mirror inside the save, the credit after the commit.
+type packageSide struct {
+	kampala *time.Location
+	saved   []string
+}
+
+func (ps *packageSide) afterSave(ctx context.Context, tx pgx.Tx, activityID string, now time.Time) error {
+	if err := MirrorSlots(ctx, tx, activityID, ps.kampala, now); err != nil {
+		return err
+	}
+	if !slices.Contains(ps.saved, activityID) {
+		ps.saved = append(ps.saved, activityID)
+	}
+	return nil
 }
 
 // generateMissing is sync_recommendations' first half, by school code.
@@ -111,7 +132,7 @@ type livePlan struct {
 }
 
 // linkLivePlans is sync_recommendations' second half.
-func linkLivePlans(ctx context.Context, tx pgx.Tx, fy string, now time.Time) (int, error) {
+func linkLivePlans(ctx context.Context, tx pgx.Tx, fy string, now time.Time, side *packageSide) (int, error) {
 	plans, err := readPlans(ctx, tx, `a.deleted_at IS NULL AND a.fy = $1 AND a.status = ANY($2)
   AND COALESCE(a.focus_intervention, '') <> ''
   AND NOT EXISTS (SELECT 1 FROM ssa_recommendation x WHERE x.planned_activity_id = a.id)`,
@@ -123,7 +144,7 @@ func linkLivePlans(ctx context.Context, tx pgx.Tx, fy string, now time.Time) (in
 	}
 	linked := 0
 	for i := range plans {
-		n, err := linkRecommendations(ctx, tx, &plans[i], now, false)
+		n, err := linkRecommendations(ctx, tx, &plans[i], now, false, side)
 		if err != nil {
 			return linked, err
 		}
@@ -162,7 +183,7 @@ FROM activity a WHERE `+where+` ORDER BY `+order, args...)
 // markLedger is whether the save marks the owner's ledger: the sync reads its
 // live plans with their owner and date deferred (.only), so the existing
 // ledger handler finds neither and marks nothing; a judged plan is read whole.
-func linkRecommendations(ctx context.Context, tx pgx.Tx, p *livePlan, now time.Time, markLedger bool) (int, error) {
+func linkRecommendations(ctx context.Context, tx pgx.Tx, p *livePlan, now time.Time, markLedger bool, side *packageSide) (int, error) {
 	if p.focus == "" {
 		return 0, nil
 	}
@@ -205,6 +226,9 @@ func linkRecommendations(ctx context.Context, tx pgx.Tx, p *livePlan, now time.T
 		if _, err := tx.Exec(ctx, `UPDATE activity SET ssa_recommendation_id = $2, updated_at = $3 WHERE id = $1`,
 			p.id, ids[0], now); err != nil {
 			return 0, fmt.Errorf("activities: pointing the plan at its recommendation: %w", err)
+		}
+		if err := side.afterSave(ctx, tx, p.id, now); err != nil {
+			return 0, err
 		}
 		first := ids[0]
 		p.recommendation = &first
@@ -273,7 +297,7 @@ ON CONFLICT (owner_id, fy) DO UPDATE SET marked_at = EXCLUDED.marked_at`, *p.own
 
 // judgeUnjudged is judge_unjudged_plans for the year.
 func judgeUnjudged(ctx context.Context, tx pgx.Tx, fy string, now time.Time, kampala *time.Location,
-	logger *slog.Logger) (int, int, error) {
+	logger *slog.Logger, side *packageSide) (int, int, error) {
 	plans, err := readPlans(ctx, tx, `a.deleted_at IS NULL AND a.fy = $1 AND a.status = ANY($2) AND a.ssa_alignment = ''`,
 		"a.planned_date, a.id", fy, livePlanStatuses)
 	if err != nil {
@@ -292,10 +316,10 @@ func judgeUnjudged(ctx context.Context, tx pgx.Tx, fy string, now time.Time, kam
 			}
 			continue
 		}
-		if err := judgePlan(ctx, tx, p, now, kampala); err != nil {
+		if err := judgePlan(ctx, tx, p, now, kampala, side); err != nil {
 			return judged, linked, err
 		}
-		n, err := linkRecommendations(ctx, tx, p, now, true)
+		n, err := linkRecommendations(ctx, tx, p, now, true, side)
 		if err != nil {
 			return judged, linked, err
 		}
@@ -306,7 +330,7 @@ func judgeUnjudged(ctx context.Context, tx pgx.Tx, fy string, now time.Time, kam
 }
 
 // judgePlan is assess then stamp(link=False) for a school plan.
-func judgePlan(ctx context.Context, tx pgx.Tx, p *livePlan, now time.Time, kampala *time.Location) error {
+func judgePlan(ctx context.Context, tx pgx.Tx, p *livePlan, now time.Time, kampala *time.Location, side *packageSide) error {
 	var clusterID string
 	if err := tx.QueryRow(ctx, `SELECT COALESCE(cluster_id, '') FROM school WHERE id = $1`, *p.schoolID).Scan(&clusterID); err != nil &&
 		!errors.Is(err, pgx.ErrNoRows) {
@@ -351,22 +375,28 @@ WHERE catalogue_item_id = $1 AND active`, *p.itemID)
 		source[k] = v
 	}
 	source["ssa"] = ssa
-	sets := `recommendation_source = $2, ssa_alignment = $3, updated_at = $4`
-	args := []any{p.id, source, ev.Alignment, now}
+	var (
+		setSSA, setScore bool
+		ssaID, band      any
+		score            any
+	)
 	if school, ok := ev.Data["school"].(map[string]any); ok && school != nil && p.sourceSSA == nil {
-		args = append(args, school["ssaId"])
-		sets += fmt.Sprintf(", source_ssa_id = $%d, source_ssa_verification_state = 'confirmed'", len(args))
-		if score, ok := school["focusScore"].(pyFloat); ok && p.sourceScore == nil {
-			args = append(args, float64(score), school["focusBand"])
-			sets += fmt.Sprintf(", source_score = $%d, source_classification = $%d", len(args)-1, len(args))
+		setSSA, ssaID = true, school["ssaId"]
+		if focus, ok := school["focusScore"].(pyFloat); ok && p.sourceScore == nil {
+			setScore, score, band = true, float64(focus), school["focusBand"]
 		}
 	}
-	if p.reason == nil || *p.reason == "" {
-		args = append(args, reason)
-		sets += fmt.Sprintf(", recommendation_reason = $%d", len(args))
-	}
-	if _, err := tx.Exec(ctx, `UPDATE activity SET `+sets+` WHERE id = $1`, args...); err != nil {
+	setReason := p.reason == nil || *p.reason == ""
+	if _, err := tx.Exec(ctx, `SELECT gateway_ssa_judge.judge_unjudged_plan($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+		p.id, source, ev.Alignment, setSSA, ssaID, setScore, score, band, setReason, reason, now); err != nil {
 		return fmt.Errorf("activities: recording the plan's SSA verdict: %w", err)
+	}
+	// A verdict alone is beside the package (BESIDE_THE_PACKAGE_FIELDS); the
+	// SSA, score or reason it records with it is not.
+	if setSSA || setScore || setReason {
+		if err := side.afterSave(ctx, tx, p.id, now); err != nil {
+			return err
+		}
 	}
 	return markOwnerLedger(ctx, tx, p, now)
 }

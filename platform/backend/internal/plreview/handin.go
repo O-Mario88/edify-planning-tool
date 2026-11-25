@@ -35,7 +35,8 @@ type handInCandidate struct{ id, status string }
 
 // HandInEnteredWork says how many pieces of work it handed in, as the
 // existing job counts them. Work whose save would also move a Core package
-// in a way Go does not yet write is left and named in the error.
+// in a way Go does not yet write (a cluster session's credit, or a year's
+// package still to be made) is left and named in the error.
 func (s *ReviewService) HandInEnteredWork(ctx context.Context, kampala *time.Location) (int, error) {
 	candidates, err := s.handInCandidates(ctx)
 	if err != nil {
@@ -55,7 +56,7 @@ func (s *ReviewService) HandInEnteredWork(ctx context.Context, kampala *time.Loc
 		if lead != "" {
 			final = statusVerified
 		}
-		left, err := activities.SlotMirrorHandedOn(ctx, s.pool, c.id, final)
+		left, err := activities.SlotMirrorHandedOn(ctx, s.pool, c.id, final, kampala, s.now())
 		if err != nil {
 			return done, err
 		}
@@ -146,7 +147,20 @@ func (s *ReviewService) handIn(ctx context.Context, c handInCandidate, kampala *
 		status = statusSubmittedToPL
 		return afterWorkSaved(ctx, tx, c.id, nil, kampala, now)
 	})
-	return status, err
+	if err != nil || status != statusSubmittedToPL {
+		return status, err
+	}
+	return status, s.creditPackage(ctx, c.id, kampala)
+}
+
+// creditPackage is the package credit Activity.save queues for after its
+// commit, in a transaction of its own.
+func (s *ReviewService) creditPackage(ctx context.Context, activityID string, kampala *time.Location) error {
+	now := s.now().UTC().Truncate(time.Microsecond)
+	return s.inTransaction(ctx, func(tx pgx.Tx) error {
+		_, err := activities.CreditSchoolActivity(ctx, tx, activityID, kampala, now)
+		return err
+	})
 }
 
 // afterWorkSaved is what Activity.save does beside the row for this work:
@@ -228,6 +242,9 @@ func (s *ReviewService) approveOnHandIn(ctx context.Context, activityID, lead st
 		return appendAudit(ctx, tx, decisionAudit(ctx, by, "pl_review_auto_approve", target, statusVerified, autoApproveReason), now)
 	})
 	if err != nil || !approved {
+		return err
+	}
+	if err := s.creditPackage(ctx, activityID, kampala); err != nil {
 		return err
 	}
 	if err := s.recordProgress(ctx, activityID, progress, now); err != nil {

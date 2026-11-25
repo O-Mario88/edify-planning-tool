@@ -4,38 +4,33 @@ package activities
 // package slot the work fills takes the work's status (core_slot_status), its
 // day, its Salesforce ID and, when the slot has none, the work's newest
 // evidence file, and the package's done counters are recomputed. Work called
-// off, a cluster session, and Core School work holding no slot (which the
-// package credit would link after commit) are the caller's to hand on.
+// off and a cluster session are the caller's to hand on; the package credit
+// that follows the commit is CreditSchoolActivity.
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 )
 
-// ErrSlotMirrorHandedOn is work whose save does more to the package than
-// the mirror: a cluster session's credit, a called-off visit's give-back, or
-// the package credit of Core School work holding no slot.
-var ErrSlotMirrorHandedOn = errors.New("activities: the package side of this save is handed on")
-
 // notInPlanStatuses are NOT_IN_PLAN_ACTIVITY_STATUSES.
 var notInPlanStatuses = []string{"cancelled", "rejected", "deferred", "not_planned"}
 
 // SlotMirrorHandedOn says, before a save, whether its package side is one
-// the mirror does not do (ErrSlotMirrorHandedOn's cases) for the work as it
-// will stand with status.
-func SlotMirrorHandedOn(ctx context.Context, q Querier, activityID, status string) (bool, error) {
-	var cluster, coreSchool, holdsSlot bool
-	err := q.QueryRow(ctx, `SELECT a.cluster_id IS NOT NULL, COALESCE(s.school_type = 'core', false),
-  EXISTS (SELECT 1 FROM core_activity_slot c WHERE c.activity_id = a.id)
-FROM activity a LEFT JOIN school s ON s.id = a.school_id WHERE a.id = $1`, activityID).Scan(&cluster, &coreSchool, &holdsSlot)
-	if err != nil {
+// Go does not write for the work as it will stand with status: a cluster
+// session's credit, a called-off visit's give-back, or a package credit
+// that would first make the year's package.
+func SlotMirrorHandedOn(ctx context.Context, q Querier, activityID, status string, kampala *time.Location, now time.Time) (bool, error) {
+	var cluster bool
+	if err := q.QueryRow(ctx, `SELECT cluster_id IS NOT NULL FROM activity WHERE id = $1`, activityID).Scan(&cluster); err != nil {
 		return false, fmt.Errorf("activities: reading the work's package side: %w", err)
 	}
-	return cluster || in(notInPlanStatuses, status) || (coreSchool && !holdsSlot), nil
+	if cluster || in(notInPlanStatuses, status) {
+		return true, nil
+	}
+	return PackageCreditHandedOn(ctx, q, activityID, kampala, now)
 }
 
 // MirrorSlots is the mirror, inside the caller's transaction, after the
@@ -52,13 +47,8 @@ FROM activity WHERE id = $1`, activityID).Scan(&status, &salesforce, &scheduled)
 		d := scheduled.In(kampala).Format(time.DateOnly)
 		day = &d
 	}
-	rows, err := tx.Query(ctx, `UPDATE core_activity_slot c SET status = $2,
-  scheduled_for = COALESCE($3::varchar, c.scheduled_for),
-  salesforce_id = CASE WHEN $4 <> '' THEN $4 ELSE c.salesforce_id END,
-  evidence_uri = CASE WHEN COALESCE(c.evidence_uri, '') = '' THEN (SELECT e.uri FROM evidence_record e
-      WHERE e.activity_id = $1 AND NOT e.quarantined ORDER BY e.created_at DESC LIMIT 1) ELSE c.evidence_uri END,
-  updated_at = $5
-WHERE c.activity_id = $1 RETURNING c.core_plan_id`, activityID, coreSlotStatus(status), day, salesforce, now)
+	rows, err := tx.Query(ctx, `SELECT gateway_core_slots.mirror_slots($1, $2, $3, $4, $5)`,
+		activityID, coreSlotStatus(status), day, salesforce, now)
 	if err != nil {
 		return fmt.Errorf("activities: mirroring the work to its package slots: %w", err)
 	}

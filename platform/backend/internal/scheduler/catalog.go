@@ -467,9 +467,25 @@ SELECT id, program_lead_user_id, COALESCE(school_name, ''), days_overdue
 		return updated, nil
 
 	case "ssa_recommendation_sync":
-		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) {
-			return activities.SyncSSARecommendations(ctx, tx, now, loc, slog.Default())
+		var saved []string
+		n, err := inTx(ctx, pool, func(tx pgx.Tx) (int, error) {
+			count, plans, err := activities.SyncSSARecommendations(ctx, tx, now, loc, slog.Default())
+			saved = plans
+			return count, err
 		})
+		if err != nil {
+			return n, err
+		}
+		// Each saved plan's package credit, after the commit, on its own.
+		for _, id := range saved {
+			if _, err := inTx(ctx, pool, func(tx pgx.Tx) (int, error) {
+				_, err := activities.CreditSchoolActivity(ctx, tx, id, loc, now)
+				return 0, err
+			}); err != nil {
+				return n, err
+			}
+		}
+		return n, nil
 
 	case "verification_sampling":
 		return callIntRW(ctx, pool, `SELECT gateway_scheduler.sample_ia_verifications($1, $2)`, now, 10)

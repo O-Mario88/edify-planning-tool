@@ -704,9 +704,61 @@ GRANT EXECUTE ON FUNCTION gateway_closure.remove_blockers(varchar[]) TO edify_ac
 -- sync_recommendations and judge_unjudged_plans: recommendations generated
 -- for schools with none (the confirmation handler's grants), live plans
 -- linked to what they answer, and an unjudged plan's SSA verdict recorded.
-GRANT UPDATE (ssa_recommendation_id, recommendation_source, ssa_alignment, source_ssa_id, source_ssa_verification_state,
-              source_score, source_classification, recommendation_reason, updated_at)
-  ON activity TO edify_activities_rw;
+-- Linking a plan to what it answers is a direct write; recording a verdict
+-- is not (a visit's SSA verdict is never rewritten by the gateway): it goes
+-- through gateway_ssa_judge.judge_unjudged_plan, owned by
+-- edify_ssa_judge_owner, a NOLOGIN role no one is a member of, which only
+-- judges a plan that has no verdict yet.
+-- A new database object: production needs the owner's approval at cutover.
+GRANT UPDATE (ssa_recommendation_id, updated_at) ON activity TO edify_activities_rw;
+-- An earlier draft granted these directly; the function holds them instead.
+REVOKE UPDATE (recommendation_source, ssa_alignment, source_ssa_id, source_ssa_verification_state, source_score,
+               source_classification, recommendation_reason)
+  ON activity FROM edify_activities_rw;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'edify_ssa_judge_owner') THEN
+    CREATE ROLE edify_ssa_judge_owner NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOINHERIT;
+  END IF;
+END
+$$;
+GRANT USAGE ON SCHEMA public TO edify_ssa_judge_owner;
+GRANT SELECT (id, ssa_alignment, deleted_at, source_ssa_id, source_ssa_verification_state, source_score,
+              source_classification, recommendation_reason),
+      UPDATE (recommendation_source, ssa_alignment, source_ssa_id, source_ssa_verification_state, source_score,
+              source_classification, recommendation_reason, updated_at)
+  ON activity TO edify_ssa_judge_owner;
+CREATE SCHEMA IF NOT EXISTS gateway_ssa_judge AUTHORIZATION edify_ssa_judge_owner;
+REVOKE ALL ON SCHEMA gateway_ssa_judge FROM PUBLIC;
+GRANT USAGE, CREATE ON SCHEMA gateway_ssa_judge TO edify_ssa_judge_owner;
+SET ROLE edify_ssa_judge_owner;
+-- judge_unjudged_plans' stamp(link=False): the verdict and its source on a
+-- plan with none; the SSA it was judged on, its score and the reason only
+-- where the caller says the plan holds none.
+CREATE OR REPLACE FUNCTION gateway_ssa_judge.judge_unjudged_plan(
+  p_target varchar, p_source jsonb, p_alignment varchar,
+  p_set_ssa boolean, p_ssa_id varchar, p_set_score boolean, p_score double precision, p_band varchar,
+  p_set_reason boolean, p_reason text, p_at timestamptz
+) RETURNS boolean
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+BEGIN
+  UPDATE public.activity a SET recommendation_source = p_source, ssa_alignment = p_alignment, updated_at = p_at,
+    source_ssa_id = CASE WHEN p_set_ssa THEN p_ssa_id ELSE a.source_ssa_id END,
+    source_ssa_verification_state = CASE WHEN p_set_ssa THEN 'confirmed' ELSE a.source_ssa_verification_state END,
+    source_score = CASE WHEN p_set_score THEN p_score ELSE a.source_score END,
+    source_classification = CASE WHEN p_set_score THEN p_band ELSE a.source_classification END,
+    recommendation_reason = CASE WHEN p_set_reason THEN p_reason ELSE a.recommendation_reason END
+  WHERE a.id = p_target AND a.ssa_alignment = '' AND a.deleted_at IS NULL;
+  RETURN FOUND;
+END
+$fn$;
+REVOKE ALL ON FUNCTION gateway_ssa_judge.judge_unjudged_plan(varchar, jsonb, varchar, boolean, varchar, boolean,
+  double precision, varchar, boolean, text, timestamptz) FROM PUBLIC;
+RESET ROLE;
+REVOKE CREATE ON SCHEMA gateway_ssa_judge FROM edify_ssa_judge_owner;
+GRANT USAGE ON SCHEMA gateway_ssa_judge TO edify_activities_rw;
+GRANT EXECUTE ON FUNCTION gateway_ssa_judge.judge_unjudged_plan(varchar, jsonb, varchar, boolean, varchar, boolean,
+  double precision, varchar, boolean, text, timestamptz) TO edify_activities_rw;
 GRANT SELECT (planned_activity_id) ON ssa_recommendation TO edify_activities_rw;
 GRANT SELECT (ssa_recommendation_id, recommendation_source, ssa_alignment, source_ssa_id, source_score,
               recommendation_reason, ssa_deviation_reason, ssa_collection_expected, focus_intervention, project_id)
@@ -740,12 +792,88 @@ GRANT SELECT (job_name, status, error_message, started_at) ON scheduled_job_exec
 
 -- ── Activity.save's Core package mirror (activities.MirrorSlots) ──
 -- The slot takes the work's status, day, Salesforce ID and newest evidence
--- file; the package's done counters follow (resync_plan_completion).
+-- file; the package's done counters follow (resync_plan_completion). The
+-- gateway never reads an evidence file's storage address, so the slot write
+-- is gateway_core_slots.mirror_slots, owned by edify_core_slots_owner, a
+-- NOLOGIN role no one is a member of, holding only what that write reads.
+-- A new database object: production needs the owner's approval at cutover.
 GRANT SELECT (status, salesforce_activity_id, scheduled_date, cluster_id, school_id) ON activity TO edify_activities_rw;
 GRANT SELECT (school_type) ON school TO edify_activities_rw;
-GRANT SELECT (scheduled_for, salesforce_id, evidence_uri), UPDATE (salesforce_id, evidence_uri)
+-- An earlier draft granted these directly; the function holds them instead.
+REVOKE SELECT (uri) ON evidence_record FROM edify_activities_rw;
+REVOKE UPDATE (salesforce_id, evidence_uri) ON core_activity_slot FROM edify_activities_rw;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'edify_core_slots_owner') THEN
+    CREATE ROLE edify_core_slots_owner NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOINHERIT;
+  END IF;
+END
+$$;
+GRANT USAGE ON SCHEMA public TO edify_core_slots_owner;
+GRANT SELECT (id, activity_id, core_plan_id, evidence_uri, scheduled_for, salesforce_id, assigned_partner_id),
+      UPDATE (status, scheduled_for, salesforce_id, evidence_uri, updated_at, activity_id, owner, assigned_staff_id,
+              assigned_partner_id, scheduled_month, scheduled_week)
+  ON core_activity_slot TO edify_core_slots_owner;
+GRANT SELECT (uri, activity_id, quarantined, created_at) ON evidence_record TO edify_core_slots_owner;
+CREATE SCHEMA IF NOT EXISTS gateway_core_slots AUTHORIZATION edify_core_slots_owner;
+REVOKE ALL ON SCHEMA gateway_core_slots FROM PUBLIC;
+GRANT USAGE, CREATE ON SCHEMA gateway_core_slots TO edify_core_slots_owner;
+SET ROLE edify_core_slots_owner;
+-- The slots this work fills take what Activity.save copies onto them; the
+-- plans they belong to come back for the counters.
+CREATE OR REPLACE FUNCTION gateway_core_slots.mirror_slots(
+  target varchar, slot_status varchar, day varchar, sfid varchar, at timestamptz
+) RETURNS SETOF varchar
+  LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+  UPDATE public.core_activity_slot c SET status = slot_status,
+    scheduled_for = COALESCE(day, c.scheduled_for),
+    salesforce_id = CASE WHEN COALESCE(sfid, '') <> '' THEN sfid ELSE c.salesforce_id END,
+    evidence_uri = CASE WHEN COALESCE(c.evidence_uri, '') = '' THEN (SELECT e.uri FROM public.evidence_record e
+        WHERE e.activity_id = target AND NOT e.quarantined ORDER BY e.created_at DESC LIMIT 1) ELSE c.evidence_uri END,
+    updated_at = at
+  WHERE c.activity_id = target
+  RETURNING c.core_plan_id
+$fn$;
+REVOKE ALL ON FUNCTION gateway_core_slots.mirror_slots(varchar, varchar, varchar, varchar, timestamptz) FROM PUBLIC;
+-- credit_school_activity's slot.save(): the work written onto the slot it
+-- takes, with its newest evidence file where the slot has none.
+CREATE OR REPLACE FUNCTION gateway_core_slots.link_slot(
+  p_slot varchar, p_activity varchar, p_status varchar, p_owner varchar, p_staff varchar, p_partner varchar,
+  p_day varchar, p_month varchar, p_week integer, p_sfid varchar, p_at timestamptz
+) RETURNS void
+  LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+  UPDATE public.core_activity_slot c SET activity_id = p_activity, status = p_status, owner = p_owner,
+    assigned_staff_id = p_staff,
+    assigned_partner_id = CASE WHEN COALESCE(p_partner, '') <> '' THEN p_partner ELSE c.assigned_partner_id END,
+    scheduled_for = p_day, scheduled_month = p_month, scheduled_week = p_week,
+    salesforce_id = CASE WHEN COALESCE(p_sfid, '') <> '' THEN p_sfid ELSE c.salesforce_id END,
+    evidence_uri = CASE WHEN COALESCE(c.evidence_uri, '') = '' THEN (SELECT e.uri FROM public.evidence_record e
+        WHERE e.activity_id = p_activity AND NOT e.quarantined ORDER BY e.created_at DESC LIMIT 1) ELSE c.evidence_uri END,
+    updated_at = p_at
+  WHERE c.id = p_slot
+$fn$;
+REVOKE ALL ON FUNCTION gateway_core_slots.link_slot(varchar, varchar, varchar, varchar, varchar, varchar, varchar, varchar,
+  integer, varchar, timestamptz) FROM PUBLIC;
+RESET ROLE;
+REVOKE CREATE ON SCHEMA gateway_core_slots FROM edify_core_slots_owner;
+GRANT USAGE ON SCHEMA gateway_core_slots TO edify_activities_rw;
+GRANT EXECUTE ON FUNCTION gateway_core_slots.mirror_slots(varchar, varchar, varchar, varchar, timestamptz) TO edify_activities_rw;
+GRANT EXECUTE ON FUNCTION gateway_core_slots.link_slot(varchar, varchar, varchar, varchar, varchar, varchar, varchar, varchar,
+  integer, varchar, timestamptz) TO edify_activities_rw;
+-- The package credit (activities.CreditSchoolActivity): what it reads of the
+-- work, its package and the universal trainings, and the slot it adds past
+-- the last when every one is taken.
+GRANT SELECT (id, deleted_at, school_id, status, activity_type, purpose_type, delivery_type, cluster_id, project_id,
+              training_course_id, catalogue_item_id, fy, responsible_staff_id, assigned_partner_id, salesforce_activity_id,
+              scheduled_date, planned_date, planned_month, planned_week, paired_school_visit_id)
+  ON activity TO edify_activities_rw;
+GRANT SELECT (id, school_id, school_type) ON school TO edify_activities_rw;
+GRANT SELECT (id, school_id, fy, status, interventions) ON core_plan TO edify_activities_rw;
+GRANT SELECT (assigned_partner_id) ON core_activity_slot TO edify_activities_rw;
+GRANT INSERT (id, created_at, updated_at, core_plan_id, school_id, intervention, activity_type, sequence_number, status, owner)
   ON core_activity_slot TO edify_activities_rw;
-GRANT SELECT (uri, activity_id, quarantined, created_at) ON evidence_record TO edify_activities_rw;
+GRANT SELECT (id, is_training_course, universal_training) ON activity_catalogue_item TO edify_activities_rw;
 
 -- ── The scheduler's pd_reminders (docs/migration/189 §4) ──
 -- send_due_reminders: the course clock (sync_dates), the reminder log, and
