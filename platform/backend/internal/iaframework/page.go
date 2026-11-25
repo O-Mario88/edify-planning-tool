@@ -138,7 +138,9 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 			return nil, true, pagegate.ErrNotAvailable
 		}
 		if role.FrameworkReader {
-			return nil, false, nil // redirected to the framework's rules
+			// ssa_mapping_page sends a framework reader to the rules they
+			// work (RULES_URL), whatever the query.
+			return &screensv1.GetPageResponse{Redirect: Path + "?tab=rules"}, true, nil
 		}
 		return s.mappingPage(ctx, query)
 	}
