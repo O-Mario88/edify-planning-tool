@@ -340,6 +340,26 @@ BEGIN
 END
 $fn$;
 REVOKE ALL ON FUNCTION gateway_notifications.close_stale_daily_notices(varchar[], varchar, timestamptz) FROM PUBLIC;
+-- send_verification_reminders: a lead's earlier live reminder is answered by
+-- tonight's, or by an empty queue, so every one not keyed to tonight is closed.
+CREATE OR REPLACE FUNCTION gateway_notifications.close_stale_notices_for(
+  recipient varchar, evt_type varchar, keep_ctx varchar, at timestamptz
+) RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  changed integer;
+BEGIN
+  UPDATE public.notification
+     SET resolved_at = at, status = 'archived', action_required = false, updated_at = at
+   WHERE recipient_id = recipient
+     AND source_event_type = evt_type
+     AND resolved_at IS NULL
+     AND context_id IS DISTINCT FROM keep_ctx;
+  GET DIAGNOSTICS changed = ROW_COUNT;
+  RETURN changed;
+END
+$fn$;
+REVOKE ALL ON FUNCTION gateway_notifications.close_stale_notices_for(varchar, varchar, varchar, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_notifications.notify_workflow(varchar, varchar, varchar, text, varchar, varchar, varchar, varchar, varchar, varchar, varchar, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_notifications.queue_push_copy(varchar, varchar, varchar, varchar, timestamptz) FROM PUBLIC;
 RESET ROLE;
@@ -353,5 +373,6 @@ GRANT EXECUTE ON FUNCTION gateway_notifications.resolve_context(varchar, varchar
 GRANT EXECUTE ON FUNCTION gateway_notifications.update_preferences(varchar, boolean, boolean, jsonb, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_notifications.resolve_condition(varchar, varchar, varchar, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_notifications.close_stale_daily_notices(varchar[], varchar, timestamptz) TO edify_gateway;
+GRANT EXECUTE ON FUNCTION gateway_notifications.close_stale_notices_for(varchar, varchar, varchar, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_notifications.notify_workflow(varchar, varchar, varchar, text, varchar, varchar, varchar, varchar, varchar, varchar, varchar, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_notifications.queue_push_copy(varchar, varchar, varchar, varchar, timestamptz) TO edify_gateway;

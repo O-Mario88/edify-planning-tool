@@ -602,48 +602,10 @@ SELECT id FROM "user"
 		return sent, nil
 
 	case "verification_reminders":
-		rows, err := pool.Query(ctx, `
-SELECT DISTINCT sup.user_id, COUNT(a.id)::int
-  FROM activity a
-  JOIN staff_supervisor_assignment ssa ON ssa.supervisee_id = a.responsible_staff_id
-  JOIN staff_profile sup ON sup.id = ssa.supervisor_id AND sup.deleted_at IS NULL
- WHERE a.deleted_at IS NULL AND a.status = 'submitted_to_pl' AND sup.user_id IS NOT NULL
- GROUP BY sup.user_id`)
-		if err != nil {
-			return 0, err
-		}
-		type vrRow struct {
-			uid   string
-			count int
-		}
-		var items []vrRow
-		for rows.Next() {
-			var r vrRow
-			if scanErr := rows.Scan(&r.uid, &r.count); scanErr == nil && r.count > 0 {
-				items = append(items, r)
-			}
-		}
-		rows.Close()
-		sent := 0
-		for _, it := range items {
-			if ok, err := writer.Deliver(ctx, notificationcenter.Delivery{
-				RecipientID:     it.uid,
-				Title:           fmt.Sprintf("%d completed visit(s) awaiting your review", it.count),
-				Body:            "Review and confirm your team's completed school visits in the PL Review Queue.",
-				Category:        "activity_review",
-				ContextType:     "verification_reminder",
-				ContextID:       "verify-" + today,
-				TargetRoute:     "/pl/review-queue",
-				ActionLabel:     "Review Queue",
-				ActionRequired:  true,
-				Priority:        "high",
-				SourceEventType: "verification.daily_reminder",
-				SourceEventID:   "verify-" + today,
-			}); err == nil && ok {
-				sent++
-			}
-		}
-		return sent, nil
+		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy
+		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) {
+			return plreview.VerificationReminders(ctx, tx, now, loc, push, nil)
+		})
 
 	case "escalation_sla_sweep":
 		rows, err := pool.Query(ctx, `
