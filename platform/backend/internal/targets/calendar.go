@@ -107,3 +107,9 @@ func (c calendar) expectedPace(start, end, today time.Time) int {
 	elapsed := c.workingDays(start, today.AddDate(0, 0, 1))
 	return min(100, int(math.RoundToEven(float64(elapsed)/float64(total)*100)))
 }
+
+// WorkingDays is working_days with no person: weekdays in [start, end) that
+// are not a public holiday the roster read.
+func (r *Roster) WorkingDays(start, end time.Time) int {
+	return calendar{holidays: r.holidays}.workingDays(start, end)
+}

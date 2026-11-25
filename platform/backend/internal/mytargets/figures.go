@@ -353,68 +353,87 @@ func (f *figures) focusPanel() *screensv1.PageBlock {
 // gapReason is MyTargetQueryService._gap_reason: the first thing holding
 // the area's month back, from its pipeline.
 func gapReason(ctx context.Context, db schooldirectory.Querier, pg *page, area string, start, end time.Time) (string, error) {
-	var pendingSF, iaPending, returned, provisional, scheduled int
-	ids := pg.userIDs()
+	c, err := CountPipeline(ctx, db, pg.userIDs(), pg.p.UserID, pg.fy, area, start, end)
+	if err != nil {
+		return "", err
+	}
+	switch {
+	case c.PendingSF > 0:
+		return fmt.Sprintf("%d completed item(s) missing Activity SF IDs — not yet credited", c.PendingSF), nil
+	case c.IAPending > 0:
+		return fmt.Sprintf("%d item(s) awaiting IA verification", c.IAPending), nil
+	case c.Returned > 0:
+		return fmt.Sprintf("%d returned item(s) need correction", c.Returned), nil
+	case c.Provisional > 0:
+		return fmt.Sprintf("%d item(s) awaiting review", c.Provisional), nil
+	case c.Scheduled > 0:
+		return fmt.Sprintf("%d scheduled item(s) not yet executed", c.Scheduled), nil
+	}
+	return "No activity planned yet this month", nil
+}
+
+// Pipeline is MyTargetQueryService._pipeline counted: how many of an
+// area's items in the month sit in each of its lists.
+type Pipeline struct {
+	Validated, PendingSF, IAPending, Returned, Scheduled, Provisional int
+}
+
+// CountPipeline is _pipeline for a person (ids are every id their work is
+// recorded under, userID their account) in fy's month [start, end).
+func CountPipeline(ctx context.Context, db schooldirectory.Querier, ids []string, userID, fy, area string, start, end time.Time) (Pipeline, error) {
+	var c Pipeline
 	src := rules.AreaSources[area]
 	switch src.Kind {
 	case "activity":
 		rows, err := db.Query(ctx, `SELECT status, COALESCE(TRIM(salesforce_activity_id), '') <> '' FROM activity
 WHERE responsible_staff_id = ANY($1) AND fy = $2 AND activity_type = ANY($3) AND planned_date >= $4::date AND planned_date < $5::date
-  AND deleted_at IS NULL AND NOT (delivery_type IS NOT NULL AND delivery_type = 'partner')`, ids, pg.fy, src.Types, start, end)
+  AND deleted_at IS NULL AND NOT (delivery_type IS NOT NULL AND delivery_type = 'partner')`, ids, fy, src.Types, start, end)
 		if err != nil {
-			return "", fmt.Errorf("mytargets: the area's activities: %w", err)
+			return c, fmt.Errorf("mytargets: the area's activities: %w", err)
 		}
 		defer rows.Close()
 		for rows.Next() {
 			var status string
 			var sf bool
 			if err := rows.Scan(&status, &sf); err != nil {
-				return "", fmt.Errorf("mytargets: the area's activities: %w", err)
+				return c, fmt.Errorf("mytargets: the area's activities: %w", err)
 			}
 			switch {
 			case contains(rules.ReturnedForCorrection, status):
-				returned++
+				c.Returned++
 			case contains(rules.ReturnedStatuses, status):
 			case contains(rules.CompletedStatuses, status):
 				switch {
 				case !sf:
-					pendingSF++
+					c.PendingSF++
 				case status == "awaiting_ia_verification":
-					iaPending++
+					c.IAPending++
+				default:
+					c.Validated++
 				}
 			default:
-				scheduled++
+				c.Scheduled++
 			}
 		}
 		if err := rows.Err(); err != nil {
-			return "", err
+			return c, err
 		}
 	case "ssa_record":
 		from := time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, local)
 		to := time.Date(end.Year(), end.Month(), end.Day(), 0, 0, 0, 0, local)
-		if err := db.QueryRow(ctx, `SELECT count(*) FROM ssa_record WHERE collected_by_user_id = ANY($1) AND deleted_at IS NULL
-  AND date_of_ssa >= $2 AND date_of_ssa < $3 AND verification_status <> 'confirmed'`, ids, from, to).Scan(&iaPending); err != nil {
-			return "", fmt.Errorf("mytargets: the area's SSAs: %w", err)
+		if err := db.QueryRow(ctx, `SELECT count(*) FILTER (WHERE verification_status = 'confirmed'), count(*) FILTER (WHERE verification_status <> 'confirmed')
+FROM ssa_record WHERE collected_by_user_id = ANY($1) AND deleted_at IS NULL
+  AND date_of_ssa >= $2 AND date_of_ssa < $3`, ids, from, to).Scan(&c.Validated, &c.IAPending); err != nil {
+			return c, fmt.Errorf("mytargets: the area's SSAs: %w", err)
 		}
 	default:
-		if err := db.QueryRow(ctx, `SELECT count(*) FILTER (WHERE status = 'returned'), count(*) FILTER (WHERE status IN ('draft', 'submitted'))
-FROM mscs_story WHERE user_id = $1 AND story_date >= $2::date AND story_date < $3::date`, pg.p.UserID, start, end).Scan(&returned, &provisional); err != nil {
-			return "", fmt.Errorf("mytargets: the area's stories: %w", err)
+		if err := db.QueryRow(ctx, `SELECT count(*) FILTER (WHERE status = 'approved'), count(*) FILTER (WHERE status = 'returned'),
+  count(*) FILTER (WHERE status IN ('draft', 'submitted'))
+FROM mscs_story WHERE user_id = $1 AND story_date >= $2::date AND story_date < $3::date`, userID, start, end).Scan(&c.Validated, &c.Returned, &c.Provisional); err != nil {
+			return c, fmt.Errorf("mytargets: the area's stories: %w", err)
 		}
 	}
-	switch {
-	case pendingSF > 0:
-		return fmt.Sprintf("%d completed item(s) missing Activity SF IDs — not yet credited", pendingSF), nil
-	case iaPending > 0:
-		return fmt.Sprintf("%d item(s) awaiting IA verification", iaPending), nil
-	case returned > 0:
-		return fmt.Sprintf("%d returned item(s) need correction", returned), nil
-	case provisional > 0:
-		return fmt.Sprintf("%d item(s) awaiting review", provisional), nil
-	case scheduled > 0:
-		return fmt.Sprintf("%d scheduled item(s) not yet executed", scheduled), nil
-	}
-	return "No activity planned yet this month", nil
+	return c, nil
 }
 
 func contains(list []string, v string) bool {

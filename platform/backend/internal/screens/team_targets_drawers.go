@@ -1,7 +1,7 @@
 package screens
 
 // Team Targets' drawers (staff_views.team_targets_*_view), drawn by
-// internal/teamtargets. They only read.
+// internal/teamtargets. They only read; one Go cannot draw yet is handed on.
 
 import (
 	"context"
@@ -23,6 +23,10 @@ var teamTargetsDrawers = map[string]func(context.Context, schooldirectory.Querie
 	"/team-targets/sfid-backlog":       teamtargets.SFIDBacklog,
 	"/team-targets/validation-backlog": teamtargets.ValidationBacklog,
 	"/team-targets/matrix":             teamtargets.MatrixDrawer,
+	// The view reads the page as it opens, whatever the query.
+	"/team-targets/recovery": func(ctx context.Context, db schooldirectory.Querier, p auth.Principal, _ map[string]string, now time.Time) (*screensv1.PageDrawer, error) {
+		return teamtargets.Recovery(ctx, db, p, now)
+	},
 }
 
 func (s *Service) teamTargetsDrawerInGo(ctx context.Context, p auth.Principal, rawPath string) (*screensv1.GetDrawerResponse, bool, error) {
@@ -38,6 +42,8 @@ func (s *Service) teamTargetsDrawerInGo(ctx context.Context, p auth.Principal, r
 	d, err := draw(ctx, s.db, p, teamtargets.Query(query), s.clock())
 	var refused *teamtargets.RefusedError
 	switch {
+	case errors.Is(err, teamtargets.ErrHandOn):
+		return nil, false, nil
 	case errors.As(err, &refused):
 		return &screensv1.GetDrawerResponse{Refusal: refused.Message}, true, nil
 	case err != nil:

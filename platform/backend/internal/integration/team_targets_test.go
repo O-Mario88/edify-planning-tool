@@ -129,6 +129,41 @@ func TestTeamTargetsBacklogDrawersAreGos(t *testing.T) {
 	}
 }
 
+// The recovery queue is Go's for a Lead with no catch-up plan open: its
+// empty-queue lines (the seed's team has nothing behind); with a plan open
+// it is handed on, since each submitted plan carries the Approve and Return
+// forms.
+func TestTeamTargetsRecoveryQueueIsGos(t *testing.T) {
+	ctx := context.Background()
+	clear := func() {
+		if _, err := admin.Exec(ctx, `DELETE FROM target_catchup_plan WHERE id = 'gttrecovery'`); err != nil {
+			t.Errorf("clearing the plan: %v", err)
+		}
+	}
+	clear()
+	t.Cleanup(clear)
+	borrowAccount(t, "pl1@edify.org")
+	lead := sessionOf(t, "pl1@edify.org", seededPassword).GetAccessToken()
+	drawers := screensv1connect.NewPageDrawerServiceClient(http.DefaultClient, baseURL)
+	answer, err := drawers.GetDrawer(ctx, authed(&screensv1.GetDrawerRequest{Path: "/team-targets/recovery?fy=2026"}, lead))
+	if err != nil {
+		t.Fatalf("the queue: %v", err)
+	}
+	d := answer.Msg.GetDrawer()
+	if d.GetTitle() != "Recovery approval queue" || len(d.GetItems()) < 2 || d.GetItems()[0].GetText() != "No catch-up plans yet." {
+		t.Fatalf("the queue %v", d)
+	}
+	if _, err := admin.Exec(ctx, `INSERT INTO target_catchup_plan (created_at, updated_at, id, pl_user_id, staff_user_id, fy, month_of_fy,
+		activities_proposed, school_ids, planned_dates, status, created_activity_ids, area_id)
+		SELECT now(), now(), 'gttrecovery', pl.id, c.id, '2027', 2, 2, '[]', '[]', 'submitted', '[]', a.id
+		FROM "user" pl, "user" c, target_area a WHERE pl.email = 'pl1@edify.org' AND c.email = 'cceo@edify.org' AND a.key = 'school_visits'`); err != nil {
+		t.Fatalf("opening a plan: %v", err)
+	}
+	if _, err := drawers.GetDrawer(ctx, authed(&screensv1.GetDrawerRequest{Path: "/team-targets/recovery"}, lead)); connect.CodeOf(err) != connect.CodeUnavailable {
+		t.Fatalf("with a plan open: %v, want handed on", err)
+	}
+}
+
 // A link from a planning follow-up opens its placeholder above every lens
 // Go draws, at /team-targets and on Team Oversight: the follow-up itself loads
 // later and the feed reads only the placeholder's caption; the page below is
