@@ -144,3 +144,45 @@ func CountryExecutionDataset(ctx context.Context, db schooldirectory.Querier, p 
 		"moved_out": in.movedOut, "cancelled": in.cancelled, "current": in.live}
 	return recs, cells, integrity, nil
 }
+
+// CountryExecutionTree is snapshot_for as a comparison reads it: the fold's
+// tallies, the planning position and the unique schools.
+func CountryExecutionTree(ctx context.Context, db schooldirectory.Querier, p auth.Principal, q map[string]string,
+	now time.Time) (map[string]any, error) {
+	scope, err := schooldirectory.ResolveScope(ctx, db, p, now)
+	if err != nil {
+		return nil, err
+	}
+	l := now.In(cpoLocation)
+	today := date(l.Year(), l.Month(), l.Day())
+	s, err := buildCEXSnapshot(ctx, db, scope, cexReadFilters(q, today), today)
+	if err != nil {
+		return nil, err
+	}
+	leads := []any{}
+	for _, ld := range s.tree.leads {
+		owners := []any{}
+		for _, o := range ld.owners {
+			partners := map[string][]int{}
+			for k, v := range o.partners {
+				partners[k] = v
+			}
+			owners = append(owners, map[string]any{"key": o.key, "name": o.name, "kind": o.kind, "values": []int(o.tally), "partners": partners})
+		}
+		leads = append(leads, map[string]any{"key": ld.key, "name": ld.name, "no_lead": ld.noLead, "values": []int(ld.tally), "owners": owners})
+	}
+	partners := map[string][]int{}
+	for k, v := range s.tree.partners {
+		partners[k] = v
+	}
+	flat := func(m map[[2]string]int) map[string]int {
+		out := map[string]int{}
+		for k, v := range m {
+			out[k[0]+"|"+k[1]] = v
+		}
+		return out
+	}
+	return map[string]any{"country": []int(s.tree.country), "staff": []int(s.tree.staff), "partner": []int(s.tree.partner),
+		"partners": partners, "leads": leads, "remaining": flat(s.remaining), "targets": flat(s.targets),
+		"unique_schools": s.uniqueSchools, "required": s.required}, nil
+}
