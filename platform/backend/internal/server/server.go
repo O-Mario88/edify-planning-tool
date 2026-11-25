@@ -87,6 +87,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/httpmw"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/iaframework"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/iapages"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/iareports"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/identity"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/leaveapprovals"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/leavepolicies"
@@ -260,6 +261,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			Logger: logger}).
 		WithTemporaryPasswords(accountService).
 		WithAccountCreation(accountService, staffService).
+		WithImpactReports(iareports.Reports{DB: pool, Now: time.Now}).
 		WithPartnerOversightSend(partneroversight.SendDeps{Push: plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
 			Logger: logger, Delegate: actionsweep.PartnerDelegate(plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, logger)}).
 		WithPages(logger,

@@ -189,6 +189,8 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		filepath.Join(root, "internal", "teams") + sep: {
 			"staff_supervisor_assignment", "partner_member", "partner_school_member", "activity",
 		},
+		// Impact Assessment's impact reports (apps.impact.reports).
+		filepath.Join(root, "internal", "iareports") + sep: {"impact_report"},
 		// A partner organisation's login setup (configure_partner_user).
 		filepath.Join(root, "internal", "adminusers") + sep: {"partner"},
 		// Acting appointments, and the account's acting hint and role in use.

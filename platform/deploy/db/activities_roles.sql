@@ -1201,3 +1201,6 @@ GRANT INSERT (id, created_at, updated_at, fy, staff_id, staff_name, position, co
 -- A partner organisation's login setup (partners.services.configure_partner_user):
 -- the account it signs in with and the setup status; nothing removed.
 GRANT SELECT (id, name, email, contact_person, user_id, user_setup_status, deleted_at), UPDATE (user_id, user_setup_status, user_setup_updated_by, user_setup_updated_at, updated_at) ON partner TO edify_activities_rw;
+-- An Impact Assessment officer's draft impact report (reports.create_report);
+-- nothing removed.
+GRANT SELECT (id, country, status, author_id, version, snapshot_hash), INSERT (id, created_at, updated_at, author_id, author_role, review_basis, review_note, country, fy, period_start, period_end, programme_areas, title, status, methodology, findings, limitations, evidence_snapshot, snapshot_hash, version, project_id) ON impact_report TO edify_activities_rw;

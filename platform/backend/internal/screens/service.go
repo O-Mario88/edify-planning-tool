@@ -187,6 +187,8 @@ type Service struct {
 	// accountCreation and teamAssignment are the Add User save.
 	accountCreation AccountCreation
 	teamAssignment  TeamAssignment
+	// impactReports draws and saves the impact report drawers.
+	impactReports ImpactReports
 }
 
 // NewService wires the service. existingApp may be nil.
