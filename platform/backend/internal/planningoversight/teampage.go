@@ -7,7 +7,6 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pageheader"
-	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 )
 
 // The words below are the templates' (pages/oversight/team_planning.html,
@@ -49,16 +48,13 @@ func teamPage(w teamPlan) *screensv1.GetPageResponse {
 	blocks := []*screensv1.PageBlock{
 		lensTabs(),
 		teamFilters(w),
-		teamStrip(),
+		kpiStrip(w.summary),
 		panel("", "", &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{Links: w.tabLinks()}}}),
 		{Kind: &screensv1.PageBlock_Section{Section: tabLabel(w.tabs, w.owner)}},
 		fieldPlan(w),
 	}
-	for _, s := range sections {
-		blocks = append(blocks,
-			panel("", "", heading(s[0]), text("0"), text(s[1])),
-			panel("", "", text(s[2])),
-		)
+	for t := range sections {
+		blocks = append(blocks, streamBlocks(t, w.streams[t], w.panelName, w.query)...)
 	}
 	blocks = append(blocks, chart(w))
 	var oversight []*screensv1.PagePanelItem
@@ -67,10 +63,8 @@ func teamPage(w teamPlan) *screensv1.GetPageResponse {
 			Links: []*screensv1.PageLink{{Text: evidenceGaps, Href: evidenceHref}},
 		}}})
 	}
-	blocks = append(blocks,
-		panel(schoolOversight, "", oversight...),
-		panel(flaggedTitle, flaggedSubtitle, text(flaggedNone)),
-	)
+	blocks = append(blocks, panel(schoolOversight, "", oversight...))
+	blocks = append(blocks, flaggedBlocks(w.flagged)...)
 	return &screensv1.GetPageResponse{
 		Header: &screensv1.PageHeader{
 			Title:       pageTitle,
@@ -150,52 +144,42 @@ func chosen(pairs [][2]string, value string) string {
 	return pairs[0][0]
 }
 
-// teamStrip is _kpi_items over no work through components/context_metrics:
-// a helper line carries the tile's tone; one cut to its figure keeps the
-// whole sentence as the note.
-func teamStrip() *screensv1.PageBlock {
-	figures := []schoolprofile.StripFigure{}
-	for _, k := range rules.TeamPlan.ZeroKPIs {
-		figures = append(figures, schoolprofile.StripFigure{Label: k.Label, Value: k.Value, Helper: k.Helper})
-	}
-	block := schoolprofile.Strip(stripTitle, figures)
-	for i, m := range block.GetStrip().GetMetrics() {
-		if m.Helper != "" {
-			m.Tone = rules.TeamPlan.ZeroKPIs[i].Tone
-		}
-	}
-	return block
-}
-
-// tabLinks are the people tabs then the activity tabs, each with its count
-// (none here), each link keeping the other strip's choice.
+// tabLinks are the people tabs then the activity tabs, each with its count,
+// each link keeping the other strip's choice.
 func (w teamPlan) tabLinks() []*screensv1.PageLink {
 	p := w.period
 	rest := "&period=" + p.Kind + "&fy=" + p.FY + "&week=" + p.Week + "&month=" + strconv.Itoa(p.Month) + "&quarter=" + p.Quarter
 	links := []*screensv1.PageLink{}
 	for _, t := range w.tabs {
-		links = append(links, &screensv1.PageLink{Text: t.Label, Href: "?owner=" + t.Key + "&activity=" + w.activity + rest, Caption: "0"})
+		links = append(links, &screensv1.PageLink{Text: t.Label, Href: "?owner=" + t.Key + "&activity=" + w.activity + rest, Caption: strconv.Itoa(len(w.tabItems[t.Key]))})
 	}
 	for _, t := range rules.TeamPlan.ActivityTabs {
-		links = append(links, &screensv1.PageLink{Text: t.Label, Href: "?owner=" + w.owner + "&activity=" + t.Key + rest, Caption: "0"})
+		count := len(inFamily(w.tabItems[w.owner], t.Key))
+		links = append(links, &screensv1.PageLink{Text: t.Label, Href: "?owner=" + w.owner + "&activity=" + t.Key + rest, Caption: strconv.Itoa(count)})
 	}
 	return links
 }
 
-// fieldPlan is the chosen tab's header summary with nothing in it.
+// fieldPlan is the chosen tab's header summary.
 func fieldPlan(w teamPlan) *screensv1.PageBlock {
-	return panel("", "",
+	f := w.panelSummary
+	budget := "UGX " + intcomma(f.budget)
+	items := []*screensv1.PagePanelItem{
 		text(initials(w.panelName)),
-		heading(w.panelName+" Field Plan "+w.periodLabel),
-		text("0 planned activities · UGX 0"),
-		text("0 planned"),
-		text("0 client visits"),
-		text("0 core visits"),
-		text("0 meetings"),
-		&screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Rows{Rows: &screensv1.PageDataRows{
-			Rows: []*screensv1.PageDataRow{{Label: "0 trainings", Value: "UGX 0"}},
+		heading(w.panelName + " Field Plan " + w.periodLabel),
+		text(strconv.Itoa(f.total) + " planned activities · " + budget),
+		text(strconv.Itoa(f.total) + " planned"),
+		text(strconv.Itoa(len(w.streams[clientVisits])) + " client visits"),
+		text(strconv.Itoa(len(w.streams[coreVisits])) + " core visits"),
+		text(strconv.Itoa(len(w.streams[clusterMeetings])) + " meetings"),
+		{Kind: &screensv1.PagePanelItem_Rows{Rows: &screensv1.PageDataRows{
+			Rows: []*screensv1.PageDataRow{{Label: strconv.Itoa(len(w.streams[plannedTrainings])) + " trainings", Value: budget}},
 		}}},
-	)
+	}
+	if f.atRisk > 0 {
+		items = append(items, text(strconv.Itoa(f.atRisk)+" at risk"))
+	}
+	return panel("", "", items...)
 }
 
 // initials is {{ name|slice:":2"|upper }}.
@@ -208,7 +192,7 @@ func initials(name string) string {
 }
 
 // chart is the team_chart tag over _team_progress_rows: the reader first,
-// then each officer, every figure nought.
+// then each officer, each folded from their work in the activity family.
 func chart(w teamPlan) *screensv1.PageBlock {
 	series := []*screensv1.PageSeries{}
 	for _, t := range w.tabs {
@@ -219,7 +203,9 @@ func chart(w teamPlan) *screensv1.PageBlock {
 		if t.Key == myWorkKey {
 			name = w.ownLabel
 		}
-		series = append(series, &screensv1.PageSeries{Name: name, Values: make([]float64, len(chartCategories))})
+		f := summarize(inFamily(w.tabItems[t.Key], w.activity), w.today)
+		values := []float64{float64(f.total), float64(f.total), float64(f.completed), float64(f.awaiting)}
+		series = append(series, &screensv1.PageSeries{Name: name, Values: values})
 	}
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Chart{Chart: &screensv1.PageChart{
 		Title:      chartTitle,

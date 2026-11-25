@@ -21,13 +21,16 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolplanning"
 )
 
-// Piece 2 (first slice): the Team Plan lens (team_planning_oversight_view
-// with no view) for a Programme Lead in their own role whose team has
-// nothing planned in the period and no flagged school: the lens strip, the
-// period bar, the headline tiles over no work, the people and activity
-// tabs, the chosen tab's Field Plan with its four empty tables, the
-// per-person chart, School Oversight and an empty Flagged schools. Any
-// reader or question outside that is handed on (served=false).
+// Piece 2: the Team Plan lens (team_planning_oversight_view with no view)
+// for a Programme Lead in their own role: the lens strip, the period bar,
+// the headline tiles folded from the team's staff work, the people and
+// activity tabs with their counts, the chosen tab's Field Plan with its four
+// tables, the per-person chart, School Oversight and the month's Flagged
+// schools. Handed on (served=false): an advanced filter or a custom period,
+// a reader working as someone else, rows the reader owns (their Actions
+// menu) or that offer Complete, a table or flagged list past its first
+// page, a flagged school whose problem is the recommendation engine's, and
+// a meals line Go does not price.
 
 const (
 	wholeTeamKey = "team"
@@ -70,6 +73,15 @@ type teamPlan struct {
 	tabs        []Tab // Whole team, My Work, one per officer
 	panelName   string
 	ownLabel    string
+	// The work: each tab's items, the fold of what is shown, the panel's
+	// fold and tables, and the month's flagged schools.
+	query        url.Values // the query the page was opened with (the pagers')
+	tabItems     map[string][]*item
+	summary      fold
+	panelSummary fold
+	streams      [4][]*item
+	flagged      flaggedSchools
+	today        time.Time
 }
 
 // buildTeamPlan answers the Team Plan for p, or served=false.
@@ -110,11 +122,18 @@ func (s *Service) buildTeamPlan(ctx context.Context, p auth.Principal, query url
 	if len(team) == 0 {
 		return nil, false, nil
 	}
-	if busy, err := s.anyPlanned(ctx, team, years, read); err != nil || busy {
-		return nil, err != nil, err
+	local := now.In(zone)
+	today := time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC)
+	items, err := s.buildItems(ctx, team, years, read, today)
+	if err != nil {
+		return nil, true, err
 	}
-	if busy, err := s.anyFlaggable(ctx, team, per, now); err != nil || busy {
-		return nil, err != nil, err
+	flagged, err := s.flaggedFor(ctx, team, per, now)
+	if errors.Is(err, errHandOn) {
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, true, err
 	}
 
 	members, err := s.members(ctx, supervised)
@@ -125,18 +144,52 @@ func (s *Service) buildTeamPlan(ctx context.Context, p auth.Principal, query url
 	if err != nil {
 		return nil, true, err
 	}
-	w := teamPlan{period: per, periodLabel: label, fyOptions: fyOptions, activity: allActivity}
+	w := teamPlan{period: per, periodLabel: label, fyOptions: fyOptions, activity: allActivity, flagged: flagged, query: query}
 	if a := strings.TrimSpace(query.Get("activity")); a != "" {
 		w.activity = a
 	}
 	w.tabs, w.owner = ownerTabs(members, strings.TrimSpace(query.Get("owner")))
+	w.tabItems = map[string][]*item{wholeTeamKey: items, myWorkKey: ownedBy(items, own)}
+	for _, m := range members {
+		w.tabItems[m.id] = ownedBy(items, m.ids)
+	}
+	visible := inFamily(w.tabItems[w.owner], w.activity)
+	w.summary = summarize(visible, today)
+	w.today = today
 	groups := rosterFor(roster, w.owner)
 	if len(groups) == 0 {
 		return nil, false, nil
 	}
-	w.panelName = tabLabel(w.tabs, w.owner)
-	if len(groups) == 1 {
-		w.panelName = groups[0].name
+	panelItems, single, err := s.panelGroup(ctx, groups, visible)
+	if err != nil {
+		return nil, true, err
+	}
+	w.panelName, w.panelSummary = tabLabel(w.tabs, w.owner), w.summary
+	if single != nil {
+		w.panelName, w.panelSummary = single.name, summarize(panelItems, today)
+	}
+	viewer := []string{p.UserID, p.StaffProfileID}
+	for _, it := range panelItems {
+		if it.showsComplete || (it.owner != "" && slices.Contains(viewer, it.owner)) {
+			return nil, false, nil
+		}
+	}
+	if single != nil && (slices.Contains(viewer, single.id) || strings.EqualFold(single.name, p.Name)) && len(panelItems) > 0 {
+		return nil, false, nil
+	}
+	w.streams, err = s.streams(ctx, p.Country, panelItems, today)
+	if errors.Is(err, errHandOn) {
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, true, err
+	}
+	for _, rows := range w.streams {
+		for _, it := range rows {
+			if it.showsComplete {
+				return nil, false, nil
+			}
+		}
 	}
 	w.ownLabel = p.Name
 	if w.ownLabel == "" {
@@ -144,6 +197,99 @@ func (s *Service) buildTeamPlan(ctx context.Context, p auth.Principal, query url
 	}
 	w.ownLabel += " (you)"
 	return teamPage(w), true, nil
+}
+
+// ownedBy is _items_owned_by for one person: the items whose owner (who
+// planned them too, for staff work) is one of their ids.
+func ownedBy(items []*item, ids []string) []*item {
+	out := []*item{}
+	for _, it := range items {
+		if it.owner != "" && slices.Contains(ids, it.owner) {
+			out = append(out, it)
+		}
+	}
+	return out
+}
+
+// panelGroup is group_by_owner over the roster and _tab_panel_group: the
+// one person the panel is, with their items, or (nil) everyone's rows
+// together under the tab's name.
+func (s *Service) panelGroup(ctx context.Context, roster []person, visible []*item) ([]*item, *person, error) {
+	filed := make([][]*item, len(roster))
+	remaining := []*item{}
+	for _, it := range visible {
+		found := -1
+		for i, m := range roster {
+			if m.owns(it.owner) {
+				found = i
+				break
+			}
+		}
+		if found < 0 {
+			remaining = append(remaining, it)
+			continue
+		}
+		filed[found] = append(filed[found], it)
+	}
+	others, err := s.peopleOf(ctx, remaining)
+	if err != nil {
+		return nil, nil, err
+	}
+	switch {
+	case len(roster) == 1 && len(others) == 0:
+		return filed[0], &roster[0], nil
+	case len(roster) == 0 && len(others) == 1:
+		return remaining, &others[0], nil
+	}
+	return visible, nil, nil
+}
+
+// peopleOf is _group_by_person's groups over items: one per person, both
+// id spaces folded into the profile.
+func (s *Service) peopleOf(ctx context.Context, items []*item) ([]person, error) {
+	if len(items) == 0 {
+		return nil, nil
+	}
+	owners := []string{}
+	for _, it := range items {
+		if it.owner != "" {
+			owners = append(owners, it.owner)
+		}
+	}
+	canonical := map[string]string{}
+	if len(owners) > 0 {
+		rows, err := s.db.Query(ctx, `SELECT id, COALESCE(user_id, '') FROM staff_profile WHERE id = ANY($1) OR user_id = ANY($1)`, owners)
+		if err != nil {
+			return nil, fmt.Errorf("planningoversight: reading the owners: %w", err)
+		}
+		for rows.Next() {
+			var id, user string
+			if err := rows.Scan(&id, &user); err != nil {
+				rows.Close()
+				return nil, fmt.Errorf("planningoversight: reading the owners: %w", err)
+			}
+			for _, key := range []string{id, user} {
+				if key != "" && slices.Contains(owners, key) {
+					canonical[key] = id
+				}
+			}
+		}
+		rows.Close()
+		if err := rows.Err(); err != nil {
+			return nil, err
+		}
+	}
+	out := []person{}
+	for _, it := range items {
+		key := canonical[it.owner]
+		if key == "" {
+			key = it.owner
+		}
+		if !slices.ContainsFunc(out, func(p person) bool { return p.id == key }) {
+			out = append(out, person{id: key, name: first(it.ownerName, "Unassigned")})
+		}
+	}
+	return out, nil
 }
 
 // plainTeamQuery is whether the query reads as this slice draws it: the
@@ -252,72 +398,6 @@ func dated(s, e string) string {
 	return "((a.planned_date >= " + s + " AND a.planned_date < " + e + ") OR (a.planned_date IS NULL AND " +
 		"(a.scheduled_date AT TIME ZONE '" + kampala + "')::date >= " + s + " AND " +
 		"(a.scheduled_date AT TIME ZONE '" + kampala + "')::date < " + e + "))"
-}
-
-// anyPlanned is whether build_items could hold anything for the team in the
-// period: a live activity of theirs (_activity_queryset with
-// _activity_scope_q). Partner work counts too, so the answer is at least as
-// wide as the page's (which drops partner work); unscheduled hand-overs are
-// partner work alone and never reach this lens.
-func (s *Service) anyPlanned(ctx context.Context, team, years []string, read periodRead) (bool, error) {
-	args := []any{rules.TeamPlan.LiveActivityStatuses, years, team}
-	where := ""
-	switch {
-	case read.month != 0:
-		year, _ := strconv.Atoi(years[0])
-		first := time.Date(year, time.Month(read.month), 1, 0, 0, 0, 0, time.UTC)
-		if read.month >= 10 {
-			first = first.AddDate(-1, 0, 0)
-		}
-		args = append(args, read.month, first, first.AddDate(0, 1, 0))
-		where = " AND ((a.planned_date IS NULL AND a.scheduled_date IS NULL AND a.planned_month = $4) OR " + dated("$5::date", "$6::date") + ")"
-	case read.quarter != "":
-		args = append(args, read.quarter)
-		where = " AND a.quarter = $4"
-	case !read.start.IsZero():
-		args = append(args, read.start, read.end)
-		where = " AND " + dated("$4::date", "$5::date")
-	}
-	var found bool
-	err := s.db.QueryRow(ctx, `
-SELECT EXISTS (
-  SELECT 1 FROM activity a
-  LEFT JOIN school sc ON sc.id = a.school_id
-  LEFT JOIN cluster c ON c.id = a.cluster_id
-  WHERE a.deleted_at IS NULL AND a.status = ANY($1) AND a.fy = ANY($2)`+where+`
-    AND (a.responsible_staff_id = ANY($3) OR a.monitored_by_staff_id = ANY($3)
-         OR sc.account_owner_id = ANY($3) OR c.responsible_staff_id = ANY($3)))`, args...).Scan(&found)
-	if err != nil {
-		return false, fmt.Errorf("planningoversight: reading the team's plan: %w", err)
-	}
-	return found, nil
-}
-
-// anyFlaggable is whether team_flagged_schools has a school to classify: an
-// activity of the team's at a school in the page year's month (the chosen
-// month, else today's), not cancelled, rejected or deferred.
-func (s *Service) anyFlaggable(ctx context.Context, team []string, per partneroversight.Period, now time.Time) (bool, error) {
-	month := int(now.In(zone).Month())
-	if per.Kind == "month" {
-		month = per.Month
-	}
-	year, _ := strconv.Atoi(per.FY)
-	if month < 10 {
-		year++
-	}
-	first := time.Date(year-1, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
-	var found bool
-	err := s.db.QueryRow(ctx, `
-SELECT EXISTS (
-  SELECT 1 FROM activity
-  WHERE fy = $1 AND planned_date >= $2::date AND planned_date < $3::date AND deleted_at IS NULL
-    AND (status IS NULL OR NOT status = ANY($4))
-    AND responsible_staff_id = ANY($5) AND school_id IS NOT NULL)`,
-		per.FY, first, first.AddDate(0, 1, 0), rules.TeamPlan.NotPlannedStatuses, team).Scan(&found)
-	if err != nil {
-		return false, fmt.Errorf("planningoversight: reading the month's planned schools: %w", err)
-	}
-	return found, nil
 }
 
 // members is _team_members: the live profiles the lens supervises, one tab

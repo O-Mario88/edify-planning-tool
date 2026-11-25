@@ -117,6 +117,100 @@ def team_plan() -> dict:
         "not_planned_statuses": list(flagged_schools.NOT_PLANNED_STATUSES),
         "filter_keys": list(oversight.FILTER_KEYS),
         "query_keys_not_passed": sorted(NOT_PASSED),
+        "items": team_items(),
+        "flagged": flagged(),
+    }
+
+
+def team_items() -> dict:
+    """The vocabularies build_items, risk_service.annotate, the four tables
+    (_partition_owner_groups_by_stream, _officer_panel_body.html) and the
+    completion columns read, for the Team Plan lens with work in it."""
+    from apps.activities import completion_columns as completion
+    from apps.activities.online_training import ONLINE, ONLINE_TRAINING_TYPES
+    from apps.activities.pair_costing import COMPANION_GONE_STATUSES
+    from apps.budget.costing import (
+        CLUSTER_MEALS_RATE_KEY,
+        GROUP_TRAINING_MEALS_RATE_KEY,
+    )
+    from apps.core.activity_types import (
+        CLUSTER_MEETING_TYPES,
+        COMPLETED_WORK_STATUSES,
+        TRAINING_TYPES,
+        VISIT_TYPES,
+    )
+    from apps.partners.purposes import _LABELS as PURPOSE_LABELS
+    from apps.planning import oversight_service as oversight
+    from apps.planning import risk_service as risk
+    from apps.planning.staff_plan import PARTNER_ONLY_STATUSES
+    from apps.projects.models import GENERAL_INTERVENTION
+    from apps.schools.lifecycle_models import OPERATING_STATUSES
+
+    return {
+        "visit_types": sorted(VISIT_TYPES),
+        "training_types": sorted(TRAINING_TYPES),
+        "cluster_meeting_types": sorted(CLUSTER_MEETING_TYPES),
+        "families": [
+            {"key": key, "types": sorted(types)}
+            for key, _label, types in oversight.ACTIVITY_FAMILIES
+        ],
+        "partner_only_statuses": list(PARTNER_ONLY_STATUSES),
+        "completed_work_statuses": sorted(COMPLETED_WORK_STATUSES),
+        "officer_completed_statuses": sorted(completion.OFFICER_COMPLETED_STATUSES),
+        "never_overdue": sorted(completion._NEVER_OVERDUE),
+        "companion_gone_statuses": list(COMPANION_GONE_STATUSES),
+        "purpose_labels": dict(sorted(PURPOSE_LABELS.items())),
+        "general_intervention": GENERAL_INTERVENTION,
+        "operating_statuses": list(OPERATING_STATUSES),
+        "online_training_types": sorted(ONLINE_TRAINING_TYPES),
+        "online": ONLINE,
+        "cluster_meals_rate_key": CLUSTER_MEALS_RATE_KEY,
+        "group_training_meals_rate_key": GROUP_TRAINING_MEALS_RATE_KEY,
+        "words": {
+            "not_in_sf": completion.NOT_IN_SF,
+            "finished_early": completion.FINISHED_EARLY,
+            "missing_sf": completion.MISSING_SF,
+            "missing_evidence": completion.MISSING_EVIDENCE,
+            "missing_both": completion.MISSING_BOTH,
+        },
+        "risk": {
+            "post_field_statuses": list(risk._POST_FIELD_STATUSES),
+            "evidence_expected_statuses": list(risk._EVIDENCE_EXPECTED_STATUSES),
+            "salesforce_expected_statuses": list(risk._SALESFORCE_EXPECTED_STATUSES),
+            "ia_settled_statuses": list(risk._IA_SETTLED_STATUSES),
+            "payment_settled_statuses": list(risk._PAYMENT_SETTLED_STATUSES),
+            "evidence_grace_days": risk.EVIDENCE_GRACE_DAYS,
+            "reschedule_limit": risk.RESCHEDULE_LIMIT,
+            "ia_verification_grace_days": risk.IA_VERIFICATION_GRACE_DAYS,
+            "payment_grace_days": risk.PAYMENT_GRACE_DAYS,
+        },
+    }
+
+
+def flagged() -> dict:
+    """What team_flagged_schools and urgent_attention's classifier read."""
+    from apps.activities.cluster_attendance import (
+        CLUSTER_CREDIT_STATUSES,
+        CLUSTER_TRAINING_TYPES,
+        SCHOOL_TRAINING_TYPES,
+    )
+    from apps.core.activity_types import COMPLETED_WORK_STATUSES
+    from apps.planning import urgent_attention as urgent
+    from apps.planning.action_models import ACTIVE_STATES
+    from apps.planning.country_oversight.rules import TRAINED_TYPES
+    from apps.targets.my_targets import IA_VERIFIED_STATUSES
+
+    return {
+        "precedence": dict(sorted(urgent._PRECEDENCE.items())),
+        "visit_types": list(urgent._VISIT_TYPES),
+        "training_types": list(urgent._TRAINING_TYPES),
+        "ia_verified_statuses": list(IA_VERIFIED_STATUSES),
+        "school_training_types": [str(t) for t in SCHOOL_TRAINING_TYPES],
+        "school_training_done_statuses": sorted(COMPLETED_WORK_STATUSES),
+        "cluster_training_types": [str(t) for t in CLUSTER_TRAINING_TYPES],
+        "cluster_credit_statuses": list(CLUSTER_CREDIT_STATUSES),
+        "trained_types": list(TRAINED_TYPES),
+        "active_action_states": sorted(str(s) for s in ACTIVE_STATES),
     }
 
 

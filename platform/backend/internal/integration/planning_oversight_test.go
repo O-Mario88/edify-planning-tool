@@ -42,13 +42,31 @@ func TestPlanningOversightRefusesTheReadersItsGatesRefuse(t *testing.T) {
 	}
 }
 
-// Piece 2: the Team Plan of a Programme Lead whose team has work in the
-// period is handed on; one with none is drawn by Go.
+// Piece 2: the Team Plan of a Programme Lead is drawn by Go, with work in
+// the period or none; an advanced filter is handed on.
 func TestPlanningOversightTeamPlanIsGosWhenTheTeamHasNothingPlanned(t *testing.T) {
 	borrowAccount(t, "pl1@edify.org")
 	lead := sessionOf(t, "pl1@edify.org", seededPassword).GetAccessToken()
-	if _, err := pageOf(lead, teamPlanningOversight, map[string]string{"fy": "2026", "period": "fy"}); connect.CodeOf(err) != connect.CodeUnavailable {
-		t.Fatalf("a team with FY 2026 work: %v, want handed on", err)
+	if _, err := pageOf(lead, teamPlanningOversight, map[string]string{"fy": "2026", "district_id": "nowhere"}); connect.CodeOf(err) != connect.CodeUnavailable {
+		t.Fatalf("an advanced filter: %v, want handed on", err)
+	}
+	busy, err := pageOf(lead, teamPlanningOversight, map[string]string{"fy": "2026", "period": "fy"})
+	if err != nil {
+		t.Fatalf("a team with FY 2026 work: %v", err)
+	}
+	// The tiles, the Whole team tab and the Field Plan fold the same work.
+	total := busy.GetBlocks()[2].GetStrip().GetMetrics()[0].GetValue()
+	tabs := busy.GetBlocks()[3].GetPanel().GetItems()[0].GetLinks().GetLinks()
+	if tabs[0].GetText() != "Whole team" || tabs[0].GetCaption() != strings.ReplaceAll(total, ",", "") {
+		t.Fatalf("Whole team tab %q, first tile %q", tabs[0].GetCaption(), total)
+	}
+	if got := busy.GetBlocks()[5].GetPanel().GetItems()[3].GetText(); got != tabs[0].GetCaption()+" planned" {
+		t.Fatalf("field plan count = %q, want %s planned", got, tabs[0].GetCaption())
+	}
+	for _, b := range busy.GetBlocks() {
+		if table := b.GetTable(); table != nil && table.GetPager() != nil && len(table.GetRows()) != 50 {
+			t.Fatalf("a paged table shows %d rows, want 50", len(table.GetRows()))
+		}
 	}
 	page, err := pageOf(lead, teamPlanningOversight, map[string]string{"fy": "2025", "owner": "mine"})
 	if err != nil {

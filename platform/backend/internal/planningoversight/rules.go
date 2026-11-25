@@ -89,6 +89,72 @@ type TeamPlan struct {
 	FilterKeys []string `json:"filter_keys"`
 	// QueryKeysNotPassed are the keys the feed never passes to a page.
 	QueryKeysNotPassed []string `json:"query_keys_not_passed"`
+	// Items is what the lens's work is built and drawn from.
+	Items ItemRules `json:"items"`
+	// Flagged is team_flagged_schools' and the urgent classifier's.
+	Flagged FlaggedRules `json:"flagged"`
+}
+
+// Family is one activity family of the strip: its key and types.
+type Family struct {
+	Key   string   `json:"key"`
+	Types []string `json:"types"`
+}
+
+// ItemRules are build_items', risk_service's, the four tables' and the
+// completion columns' vocabularies.
+type ItemRules struct {
+	VisitTypes                []string          `json:"visit_types"`
+	TrainingTypes             []string          `json:"training_types"`
+	ClusterMeetingTypes       []string          `json:"cluster_meeting_types"`
+	Families                  []Family          `json:"families"`
+	PartnerOnlyStatuses       []string          `json:"partner_only_statuses"`
+	CompletedWorkStatuses     []string          `json:"completed_work_statuses"`
+	OfficerCompletedStatuses  []string          `json:"officer_completed_statuses"`
+	NeverOverdue              []string          `json:"never_overdue"`
+	CompanionGoneStatuses     []string          `json:"companion_gone_statuses"`
+	PurposeLabels             map[string]string `json:"purpose_labels"`
+	GeneralIntervention       string            `json:"general_intervention"`
+	OperatingStatuses         []string          `json:"operating_statuses"`
+	OnlineTrainingTypes       []string          `json:"online_training_types"`
+	Online                    string            `json:"online"`
+	ClusterMealsRateKey       string            `json:"cluster_meals_rate_key"`
+	GroupTrainingMealsRateKey string            `json:"group_training_meals_rate_key"`
+	Words                     struct {
+		NotInSF         string `json:"not_in_sf"`
+		FinishedEarly   string `json:"finished_early"`
+		MissingSF       string `json:"missing_sf"`
+		MissingEvidence string `json:"missing_evidence"`
+		MissingBoth     string `json:"missing_both"`
+	} `json:"words"`
+	Risk RiskRules `json:"risk"`
+}
+
+// RiskRules are risk_service's thresholds and status vocabularies.
+type RiskRules struct {
+	PostFieldStatuses          []string `json:"post_field_statuses"`
+	EvidenceExpectedStatuses   []string `json:"evidence_expected_statuses"`
+	SalesforceExpectedStatuses []string `json:"salesforce_expected_statuses"`
+	IASettledStatuses          []string `json:"ia_settled_statuses"`
+	PaymentSettledStatuses     []string `json:"payment_settled_statuses"`
+	EvidenceGraceDays          int      `json:"evidence_grace_days"`
+	RescheduleLimit            int      `json:"reschedule_limit"`
+	IAVerificationGraceDays    int      `json:"ia_verification_grace_days"`
+	PaymentGraceDays           int      `json:"payment_grace_days"`
+}
+
+// FlaggedRules are team_flagged_schools' and urgent_attention's.
+type FlaggedRules struct {
+	Precedence                 map[string]int `json:"precedence"`
+	VisitTypes                 []string       `json:"visit_types"`
+	TrainingTypes              []string       `json:"training_types"`
+	IAVerifiedStatuses         []string       `json:"ia_verified_statuses"`
+	SchoolTrainingTypes        []string       `json:"school_training_types"`
+	SchoolTrainingDoneStatuses []string       `json:"school_training_done_statuses"`
+	ClusterTrainingTypes       []string       `json:"cluster_training_types"`
+	ClusterCreditStatuses      []string       `json:"cluster_credit_statuses"`
+	TrainedTypes               []string       `json:"trained_types"`
+	ActiveActionStates         []string       `json:"active_action_states"`
 }
 
 var rules = mustRules(rulesJSON)

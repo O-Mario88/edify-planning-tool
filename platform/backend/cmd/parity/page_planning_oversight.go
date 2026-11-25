@@ -49,6 +49,15 @@ func teamPlanQuestions() []map[string]string {
 		{"period": "month", "month": "10"}, {"period": "month", "month": "3"}, {"month": "6"},
 		{"period": "quarter", "quarter": "Q2"}, {"quarter": "Q4"},
 		{"district_id": "nowhere"}, {"risk": "any"}, {"followup": "x"},
+		// Piece 2 with work: a year with more than a page of visits (its
+		// tables page on g1_page-cv and the like, keys the feed drops, so
+		// only the first page is asked), an officer's tab, each family,
+		// its months (flagged schools) and the planning year's months.
+		{"fy": "2026", "owner": "cmw9p7bwp00t19mekheun"}, {"owner": "cmw9p7bwp00t19mekheun"},
+		{"fy": "2026", "activity": "meetings"}, {"fy": "2026", "activity": "trainings"}, {"fy": "2026", "activity": "visits"},
+		{"fy": "2026", "period": "month", "month": "11"}, {"fy": "2026", "period": "month", "month": "3"},
+		{"fy": "2026", "period": "quarter", "quarter": "Q2"}, {"period": "month", "month": "11"},
+		{"period": "week", "week": "2026-W45"}, {"period": "week", "week": "2026-W48"},
 	}
 	for _, fy := range []string{"2025", "2027", "2028"} {
 		for _, period := range []string{"week", "month", "quarter", "fy"} {

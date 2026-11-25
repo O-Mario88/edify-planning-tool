@@ -200,6 +200,243 @@
       "risk",
       "context"
     ],
+    "flagged": {
+      "active_action_states": [
+        "acknowledged",
+        "blocked",
+        "escalated",
+        "in_progress",
+        "open",
+        "overdue"
+      ],
+      "cluster_credit_statuses": [
+        "ia_verified",
+        "accountant_confirmed",
+        "closed"
+      ],
+      "cluster_training_types": [
+        "cluster_training",
+        "cluster_training_ssa_collection"
+      ],
+      "ia_verified_statuses": [
+        "ia_verified",
+        "closed",
+        "accountant_confirmed"
+      ],
+      "precedence": {
+        "intervention_critical": 4,
+        "intervention_follow_up": 6,
+        "intervention_warning": 5,
+        "no_ssa": 0,
+        "no_training": 2,
+        "no_visit": 3,
+        "no_visit_or_training": 1
+      },
+      "school_training_done_statuses": [
+        "accountant_confirmed",
+        "closed",
+        "completed",
+        "ia_verified"
+      ],
+      "school_training_types": [
+        "training",
+        "in_school_training",
+        "school_improvement_training",
+        "core_training"
+      ],
+      "trained_types": [
+        "core",
+        "client",
+        "core_trained",
+        "core_graduate"
+      ],
+      "training_types": [
+        "training",
+        "in_school_training",
+        "school_improvement_training",
+        "core_training"
+      ],
+      "visit_types": [
+        "school_visit",
+        "core_visit"
+      ]
+    },
+    "items": {
+      "cluster_meals_rate_key": "cluster_meetings_trainings_meals",
+      "cluster_meeting_types": [
+        "cluster_meeting",
+        "cluster_meeting_ssa_review"
+      ],
+      "companion_gone_statuses": [
+        "cancelled",
+        "rejected",
+        "deferred"
+      ],
+      "completed_work_statuses": [
+        "accountant_confirmed",
+        "closed",
+        "completed",
+        "ia_verified"
+      ],
+      "families": [
+        {
+          "key": "visits",
+          "types": [
+            "baseline_ssa_visit",
+            "coaching_visit",
+            "core_assessment_visit",
+            "core_visit",
+            "donor_visit",
+            "follow_up_visit",
+            "in_school_coaching_visit",
+            "in_school_support",
+            "partner_ssa_collection",
+            "school_invitation",
+            "school_visit",
+            "school_visit_ssa_collection",
+            "social_visit",
+            "story_gathering_visit",
+            "training_follow_up_visit"
+          ]
+        },
+        {
+          "key": "meetings",
+          "types": [
+            "cluster_meeting",
+            "cluster_meeting_ssa_review"
+          ]
+        },
+        {
+          "key": "trainings",
+          "types": [
+            "cluster_training",
+            "cluster_training_ssa_collection",
+            "core_training",
+            "in_school_training",
+            "school_improvement_training",
+            "training"
+          ]
+        }
+      ],
+      "general_intervention": "general",
+      "group_training_meals_rate_key": "group_training_meals",
+      "never_overdue": [
+        "awaiting_owner_approval",
+        "cancelled",
+        "deferred",
+        "not_planned",
+        "rejected",
+        "returned",
+        "returned_by_ia",
+        "returned_by_pl"
+      ],
+      "officer_completed_statuses": [
+        "accountant_confirmed",
+        "awaiting_ia_verification",
+        "closed",
+        "completed",
+        "ia_verified",
+        "submitted_to_pl"
+      ],
+      "online": "online",
+      "online_training_types": [
+        "cluster_training",
+        "cluster_training_ssa_collection",
+        "core_training",
+        "in_school_training",
+        "school_improvement_training",
+        "training"
+      ],
+      "operating_statuses": [
+        "active",
+        "reopened"
+      ],
+      "partner_only_statuses": [
+        "assigned_to_partner",
+        "partner_scheduled"
+      ],
+      "purpose_labels": {
+        "donor_visit": "Donor Visit",
+        "in_school_coaching": "In-school Coaching Visit",
+        "in_school_training": "In-school Training",
+        "in_school_training_delivery_visit": "In-school Training Delivery Visit",
+        "in_school_training_ssa": "In-school Training + SSA Collection",
+        "school_invitation": "School Invitation",
+        "social_visit": "Social Visit",
+        "ssa_support": "SSA Support",
+        "story_gathering": "Content/Story Collection",
+        "training_follow_up": "Training Follow Up"
+      },
+      "risk": {
+        "evidence_expected_statuses": [
+          "in_progress",
+          "completion_started",
+          "returned_by_pl",
+          "returned",
+          "returned_by_ia"
+        ],
+        "evidence_grace_days": 3,
+        "ia_settled_statuses": [
+          "confirmed",
+          "returned",
+          "flagged"
+        ],
+        "ia_verification_grace_days": 5,
+        "payment_grace_days": 14,
+        "payment_settled_statuses": [
+          "paid",
+          "disbursed",
+          "netsuite_accountability",
+          "closed",
+          "rejected"
+        ],
+        "post_field_statuses": [
+          "evidence_uploaded",
+          "evidence_accepted",
+          "salesforce_id_required",
+          "submitted_to_pl",
+          "awaiting_ia_verification",
+          "ia_verified",
+          "accountant_confirmed"
+        ],
+        "reschedule_limit": 2,
+        "salesforce_expected_statuses": [
+          "salesforce_id_required"
+        ]
+      },
+      "training_types": [
+        "cluster_training",
+        "cluster_training_ssa_collection",
+        "core_training",
+        "in_school_training",
+        "school_improvement_training",
+        "training"
+      ],
+      "visit_types": [
+        "baseline_ssa_visit",
+        "coaching_visit",
+        "core_assessment_visit",
+        "core_visit",
+        "donor_visit",
+        "follow_up_visit",
+        "in_school_coaching_visit",
+        "in_school_support",
+        "partner_ssa_collection",
+        "school_invitation",
+        "school_visit",
+        "school_visit_ssa_collection",
+        "social_visit",
+        "story_gathering_visit",
+        "training_follow_up_visit"
+      ],
+      "words": {
+        "finished_early": "Completed Early",
+        "missing_both": "Not Complete",
+        "missing_evidence": "Missing evidence",
+        "missing_sf": "Missing Salesforce ID",
+        "not_in_sf": "Not in SF"
+      }
+    },
     "lead_role": "Program Lead",
     "lens_tabs": [
       {
