@@ -37,6 +37,11 @@ type HRForms interface {
 	ReportIncident(ctx context.Context, p auth.Principal, values map[string]string, o activities.Origin) (string, error)
 	StartOffboarding(ctx context.Context, p auth.Principal, values map[string]string, o activities.Origin) (string, error)
 	OpenCase(ctx context.Context, p auth.Principal, values map[string]string, o activities.Origin) (string, error)
+	RecoveryPeople(ctx context.Context, p auth.Principal) ([]hrforms.Choice, error)
+	RecommendPlan(ctx context.Context, p auth.Principal, values map[string]string, o activities.Origin) (string, error)
+	RequestVacancy(ctx context.Context, p auth.Principal, values map[string]string, o activities.Origin) (string, error)
+	OpenVacancies(ctx context.Context, p auth.Principal) ([]hrforms.Choice, error)
+	RecordApplication(ctx context.Context, p auth.Principal, values map[string]string, o activities.Origin) (string, error)
 }
 
 // WithHRForms makes the HR programmes' forms Go's.
@@ -53,6 +58,9 @@ const (
 	incidentNew           = "/health-safety/new"
 	offboardingNew        = "/offboarding/new"
 	caseNew               = "/employee-relations/new"
+	recoveryNew           = "/recovery-plans/new"
+	vacancyNew            = "/recruitment/new"
+	candidateNew          = "/candidate-pipeline/new"
 )
 
 // hrFormPath is the form's path when Go answers it for p.
@@ -62,7 +70,8 @@ func (s *Service) hrFormPath(p auth.Principal, raw string) (string, bool) {
 	}
 	path, _, _ := strings.Cut(raw, "?")
 	switch path {
-	case recognitionNew, complianceRequirement, complianceEvidence, pulseNew, incidentNew, offboardingNew, caseNew:
+	case recognitionNew, complianceRequirement, complianceEvidence, pulseNew, incidentNew, offboardingNew, caseNew,
+		recoveryNew, vacancyNew, candidateNew:
 	default:
 		return "", false
 	}
@@ -96,6 +105,8 @@ func selectValue(f *screensv1.DrawerField, v string) {
 
 func hrDrawerFor(ctx context.Context, f HRForms, p auth.Principal, path string, query map[string]string) (*screensv1.PageDrawer, error) {
 	switch path {
+	case recoveryNew, vacancyNew, candidateNew:
+		return staffingDrawer(ctx, f, p, path)
 	case incidentNew, offboardingNew, caseNew:
 		return peopleFormDrawer(ctx, f, p, path)
 	case pulseNew:
@@ -216,6 +227,15 @@ func (s *Service) hrFormSaveInGo(ctx context.Context, message *screensv1.SaveDra
 	case caseNew:
 		words, err = s.hrForms.OpenCase(ctx, p, message.GetValues(), o)
 		back = hrforms.CasesPath
+	case recoveryNew:
+		words, err = s.hrForms.RecommendPlan(ctx, p, message.GetValues(), o)
+		back = hrforms.RecoveryPath
+	case vacancyNew:
+		words, err = s.hrForms.RequestVacancy(ctx, p, message.GetValues(), o)
+		back = hrforms.RecruitmentPath
+	case candidateNew:
+		words, err = s.hrForms.RecordApplication(ctx, p, message.GetValues(), o)
+		back = hrforms.PipelinePath
 	case pulseNew:
 		var title string
 		title, err = s.hrForms.OpenPulse(ctx, p, message.GetValues(), o)
@@ -292,5 +312,70 @@ func peopleFormDrawer(ctx context.Context, f HRForms, p auth.Principal, path str
 			{Name: "description", Label: "What has been reported", Kind: "textarea", Required: true, MaxLength: length(5000),
 				Placeholder: "Facts as reported, dates, and who raised it"},
 			{Name: "is_confidential", Label: "Keep this case confidential", Kind: "checkbox", Value: "1"},
+		}}), nil
+}
+
+// staffingDrawer is the recovery plan, vacancy and candidate drawers.
+func staffingDrawer(ctx context.Context, f HRForms, p auth.Principal, path string) (*screensv1.PageDrawer, error) {
+	switch path {
+	case recoveryNew:
+		people, err := f.RecoveryPeople(ctx, p)
+		if err != nil {
+			return nil, err
+		}
+		return formDrawer(formSpec{title: "Recommend a formal plan", subtitle: "A draft improvement plan, authorised separately by HR",
+			action: true, submit: "Recommend",
+			note: "A score never starts a formal plan on its own. Record the evidence and the cause; HR authorises it before anything is shared.",
+			fields: []*screensv1.DrawerField{
+				hrSelect("staff_id", "Employee", "Choose the employee", true, people),
+				hrSelect("cause", "Cause", "Choose the cause", true, hrforms.RecoveryCauses),
+				{Name: "reason", Label: "Evidence and reason", Kind: "textarea", Required: true,
+					Placeholder: "What has been observed, over what period, and the support already given"},
+				{Name: "start_date", Label: "Start date", Kind: "date"},
+			}}), nil
+	case vacancyNew:
+		countries, err := f.CountryOptions(ctx, p)
+		if err != nil {
+			return nil, err
+		}
+		kind := hrSelect("replacement_or_new_role", "Replacement or new role", "", true, hrforms.VacancyKinds)
+		kind.Options, kind.Value = kind.Options[1:], "replacement"
+		employment := hrSelect("employment_type", "Employment type", "", false, hrforms.EmploymentTypes)
+		employment.Options, employment.Value = employment.Options[1:], "Full-time"
+		return formDrawer(formSpec{title: "Request a vacancy", subtitle: "A staffing need for growth, or a replacement after someone leaves",
+			action: true, submit: "Submit for approval",
+			note: "A vacancy opens for applications once a Country Director or the Regional Vice President approves it. " +
+				"Whoever requests it cannot approve it.",
+			fields: []*screensv1.DrawerField{
+				hrSelect("country", "Country", "Choose the country", true, countries),
+				{Name: "role", Label: "Role", Kind: "text", Required: true, MaxLength: length(64), Placeholder: "e.g. CCEO"},
+				{Name: "department", Label: "Department", Kind: "text", MaxLength: length(64), Placeholder: "e.g. Programmes"},
+				kind, employment,
+				{Name: "target_start_date", Label: "Target start date", Kind: "date"},
+				{Name: "salary_band", Label: "Approved salary band", Kind: "text", MaxLength: length(64)},
+				{Name: "budget_source", Label: "Budget source", Kind: "text", MaxLength: length(128)},
+				{Name: "reason", Label: "Why the post is needed", Kind: "textarea", MaxLength: length(2000),
+					Placeholder: "Growth, turnover, a new country programme…"},
+				{Name: "required_skills", Label: "Required skills", Kind: "textarea"},
+			}}), nil
+	}
+	vacancies, err := f.OpenVacancies(ctx, p)
+	if err != nil {
+		return nil, err
+	}
+	if len(vacancies) == 0 {
+		// The feed reads the drawer's header and buttons; the "no open
+		// vacancy" line is not among what it reads.
+		return &screensv1.PageDrawer{Title: "Record a candidate", Subtitle: "An application against an open vacancy", HasRequired: true,
+			SubmitLabel: "Record application", CancelLabel: "Cancel", CanSubmit: true}, nil
+	}
+	return formDrawer(formSpec{title: "Record a candidate", subtitle: "An application against an open vacancy", action: true,
+		submit: "Record application", fields: []*screensv1.DrawerField{
+			hrSelect("vacancy_id", "Vacancy", "Choose an open vacancy", true, vacancies),
+			{Name: "name", Label: "Candidate name", Kind: "text", Required: true, MaxLength: length(255)},
+			{Name: "email", Label: "Email", Kind: "email", Required: true, MaxLength: length(254)},
+			{Name: "phone", Label: "Phone", Kind: "text", MaxLength: length(64)},
+			{Name: "skills", Label: "Skills and experience", Kind: "textarea"},
+			{Name: "consent", Label: "The candidate consented to Edify holding their details", Kind: "checkbox"},
 		}}), nil
 }

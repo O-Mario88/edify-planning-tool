@@ -224,9 +224,11 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 			"document_acknowledgement", "document_engagement_session"},
 		// The HR programmes' forms (apps.frontend.views.hr_programme_views):
 		// recognitions, compliance requirements and evidence, pulse surveys,
-		// safety incidents, offboardings and employee-relations cases.
+		// safety incidents, offboardings, employee-relations cases, formal
+		// plans, vacancies, candidates and applications.
 		filepath.Join(root, "internal", "hrforms") + sep: {"hr_staff_recognition", "hr_compliance_requirement",
-			"hr_employee_compliance_record", "hr_pulse_survey", "hr_safety_incident", "hr_offboarding", "hr_relations_case"},
+			"hr_employee_compliance_record", "hr_pulse_survey", "hr_safety_incident", "hr_offboarding", "hr_relations_case",
+			"hr_pip_plan", "hr_vacancy", "hr_candidate", "hr_application"},
 		// Team Coaching's saves (apps.cce_leadership.coaching).
 		filepath.Join(root, "internal", "ccelead") + sep: {"cce_cceo_coaching", "cce_regional_engagement", "cce_regional_report"},
 		// The Measurement Framework's saves (apps.impact.framework).

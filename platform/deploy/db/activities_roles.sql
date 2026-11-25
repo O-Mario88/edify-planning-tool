@@ -1126,3 +1126,10 @@ GRANT INSERT (id, created_at, updated_at, title, countries, opens_on, closes_on,
 GRANT INSERT (id, created_at, updated_at, country, incident_date, location, category, severity, description, immediate_action, corrective_action, days_lost, status, closed_at, affected_staff_id, reported_by_id) ON hr_safety_incident TO edify_activities_rw;
 GRANT SELECT (id, status, staff_id), INSERT (id, created_at, updated_at, status, last_working_day, clearance_completed, handover_owner_id, staff_id, exit_note, exit_reason), UPDATE (updated_at, last_working_day, exit_reason, exit_note, handover_owner_id) ON hr_offboarding TO edify_activities_rw;
 GRANT INSERT (id, created_at, updated_at, case_type, severity, status, description, findings, is_confidential, case_owner_id, action_taken, appeal_note, closed_at, country, investigator_id, opened_at, raised_by_id, retention_until, subject_staff_id, complainant_staff_id, hearing_date, sanction) ON hr_relations_case TO edify_activities_rw;
+-- Formal plans recommended (performance_engine.recommend_pip), vacancies
+-- requested and candidates recorded (recruitment_service.request_vacancy,
+-- record_application); nothing removed.
+GRANT INSERT (id, created_at, updated_at, status, cause, action_plan, start_date, end_date, staff_id, cause_evidence, plan_type, recommended_by_id) ON hr_pip_plan TO edify_activities_rw;
+GRANT SELECT (id, country, status, role), INSERT (id, created_at, updated_at, country, department, role, employment_type, reason_for_vacancy, replacement_or_new_role, required_skills, target_start_date, approved_salary_band, budget_source, status, approved_by_id, reporting_manager_id, approved_at, closed_at, decision_reason, requested_by_id) ON hr_vacancy TO edify_activities_rw;
+GRANT SELECT (id, name, email), INSERT (id, created_at, updated_at, name, email, phone, skills, talent_pool_notes, consent_given_at, retention_until) ON hr_candidate TO edify_activities_rw;
+GRANT SELECT (vacancy_id, candidate_id), INSERT (id, created_at, updated_at, stage, status_notes, candidate_id, vacancy_id) ON hr_application TO edify_activities_rw;
