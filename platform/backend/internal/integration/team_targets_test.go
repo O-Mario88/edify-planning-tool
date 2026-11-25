@@ -129,18 +129,34 @@ func TestTeamTargetsBacklogDrawersAreGos(t *testing.T) {
 	}
 }
 
-// A link to a follow-up opens its banner above the page, which Go does not
-// draw yet: such a render is the existing application's.
-func TestTeamTargetsHandsOnAFollowUpLink(t *testing.T) {
+// A link from a planning follow-up opens its placeholder above every lens
+// Go draws, at /team-targets and on Team Oversight: the follow-up itself loads
+// later and the feed reads only the placeholder's caption; the page below is
+// the page without the link.
+func TestAFollowUpLinkOpensItsPlaceholder(t *testing.T) {
 	borrowAccount(t, "pl1@edify.org")
 	lead := sessionOf(t, "pl1@edify.org", seededPassword).GetAccessToken()
-	for _, path := range []string{"/team-targets", teamPlanningOversight} {
-		q := map[string]string{"followup": "anything"}
-		if path == teamPlanningOversight {
-			q["view"] = "targets"
+	cases := []struct {
+		path string
+		view string
+	}{{"/team-targets", ""}, {teamPlanningOversight, ""}, {teamPlanningOversight, "targets"},
+		{teamPlanningOversight, "trainings"}, {teamPlanningOversight, "portfolio"}, {teamPlanningOversight, "coverage"}}
+	for _, c := range cases {
+		plainQuery, linked := map[string]string{}, map[string]string{"followup": "anything"}
+		if c.view != "" {
+			plainQuery["view"], linked["view"] = c.view, c.view
 		}
-		if _, err := pageOf(lead, path, q); connect.CodeOf(err) != connect.CodeUnavailable {
-			t.Fatalf("%s with a follow-up: %v, want handed on", path, err)
+		plain, err := pageOf(lead, c.path, plainQuery)
+		if err != nil {
+			t.Fatalf("%s %q: %v", c.path, c.view, err)
+		}
+		page, err := pageOf(lead, c.path, linked)
+		if err != nil {
+			t.Fatalf("%s %q with a follow-up: %v", c.path, c.view, err)
+		}
+		blocks := page.GetBlocks()
+		if len(blocks) != len(plain.GetBlocks())+1 || blocks[0].GetPanel().GetItems()[0].GetText() != "Opening the follow-up…" {
+			t.Fatalf("%s %q: %d blocks against %d, first %v", c.path, c.view, len(blocks), len(plain.GetBlocks()), blocks[0])
 		}
 	}
 }

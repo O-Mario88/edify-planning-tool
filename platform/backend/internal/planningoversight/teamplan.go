@@ -16,6 +16,7 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/oversightfollowup"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partneroversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolplanning"
@@ -41,9 +42,9 @@ const (
 	kampala = "Africa/Kampala"
 )
 
-// customPeriodKeys are the Export drawer's period fields and the planning
-// follow-up a Country Director's link carries: this slice draws neither.
-var customPeriodKeys = []string{"period_type", "from_month", "to_month", "start_date", "end_date", "followup"}
+// customPeriodKeys are the Export drawer's period fields: this slice does
+// not draw them.
+var customPeriodKeys = []string{"period_type", "from_month", "to_month", "start_date", "end_date"}
 
 var zone = mustZone(kampala)
 
@@ -98,6 +99,17 @@ type teamPlan struct {
 // buildTeamPlan answers the Team Plan for p, or served=false: the team
 // lens for a Programme Lead, the country lens for a country reader.
 func (s *Service) buildTeamPlan(ctx context.Context, p auth.Principal, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	page, served, err := s.buildTeamLens(ctx, p, query)
+	if !served || err != nil {
+		return page, served, err
+	}
+	// A link from a planning follow-up opens its placeholder above the lens.
+	return oversightfollowup.Above(passed(query), page), true, nil
+}
+
+// buildTeamLens is the lens the query asks for, without a follow-up's
+// placeholder.
+func (s *Service) buildTeamLens(ctx context.Context, p auth.Principal, query url.Values) (*screensv1.GetPageResponse, bool, error) {
 	reader, ok := rules.TeamPlan.Readers[p.ActiveRole]
 	if !ok || !reader.Planning || p.Acting != nil || p.InActingAppointment {
 		return nil, false, nil
@@ -321,7 +333,7 @@ func (s *Service) peopleOf(ctx context.Context, items []*item) ([]person, error)
 
 // plainTeamQuery is whether the query reads as this lens draws it: one
 // view at most, ASCII alone (a Unicode digit is a number to Python), no
-// custom period or follow-up, and no advanced filter.
+// custom period, and no advanced filter.
 func plainTeamQuery(q url.Values) bool {
 	if v, ok := q["view"]; ok && len(v) != 1 {
 		return false

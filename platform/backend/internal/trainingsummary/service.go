@@ -11,6 +11,7 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myplan"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/oversightfollowup"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
@@ -56,8 +57,9 @@ func lowered(query url.Values, key string) string {
 }
 
 // Build answers the Training Summary's Summary, By staff and Schools tabs.
-// served is false for any other path or lens, for a reader whose page answers in another way,
-// and for a page opened from a planning follow-up.
+// served is false for any other path or lens, and for a reader whose page
+// answers in another way. A link from a planning follow-up opens its
+// placeholder above the lens.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
 	if path != Path {
 		return nil, false, nil
@@ -66,7 +68,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		return nil, true, ErrNotAvailable
 	}
 	query = passed(query)
-	if lowered(query, "view") != "trainings" || query.Get("followup") != "" {
+	if lowered(query, "view") != "trainings" {
 		return nil, false, nil
 	}
 	doors, ok := rules.Doors[p.ActiveRole]
@@ -120,7 +122,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	default:
 		filters, table = filterBlock(summary, years, tab), tableBlock(summary)
 	}
-	return page(summary, lens, filters, table, tab), true, nil
+	return oversightfollowup.Above(query, page(summary, lens, filters, table, tab)), true, nil
 }
 
 // schoolsTab is the Schools tab: training_coverage.table over

@@ -21,7 +21,7 @@ func TestPlainTeamQueryHandsOnWhatThisSliceDoesNotDraw(t *testing.T) {
 		{"an advanced filter", url.Values{"district_id": {"d1"}}, false},
 		{"a blank advanced filter", url.Values{"risk": {"  "}}, true},
 		{"the Export drawer's custom dates", url.Values{"start_date": {"2026-11-01"}}, false},
-		{"a Country Director's follow-up", url.Values{"followup": {"f1"}}, false},
+		{"a Country Director's follow-up (its placeholder is drawn above the lens)", url.Values{"followup": {"f1"}}, true},
 		{"a Unicode digit", url.Values{"month": {"١"}}, false},
 	}
 	for _, tc := range cases {

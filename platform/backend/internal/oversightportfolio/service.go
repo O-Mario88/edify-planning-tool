@@ -17,6 +17,7 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myplan"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/oversightfollowup"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolplanning"
@@ -82,8 +83,8 @@ func periodReadable(query url.Values, fy string) bool {
 // Build answers /team-planning-oversight/?view=portfolio for a reader the
 // lens opens for. served is false for any other path or lens, for a reader
 // whose page answers in another way (the Accountant and Human Resources
-// fall back to the Team Plan), for a page opened from a planning follow-up,
-// and for a year the existing page cannot read.
+// fall back to the Team Plan), and for a year the existing page cannot read.
+// A link from a planning follow-up opens its placeholder above the lens.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
 	if path != Path {
 		return nil, false, nil
@@ -92,7 +93,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		return nil, true, pagegate.ErrNotAvailable
 	}
 	query, ok := passed(query)
-	if !ok || strings.ToLower(pyStrip(query, "view")) != "portfolio" || query.Get("followup") != "" {
+	if !ok || strings.ToLower(pyStrip(query, "view")) != "portfolio" {
 		return nil, false, nil
 	}
 	_, known := rules.Doors[p.ActiveRole]
@@ -119,7 +120,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		return nil, true, err
 	}
 	v.base = Path
-	return page(v, years), true, nil
+	return oversightfollowup.Above(query, page(v, years)), true, nil
 }
 
 func (s *Service) read(ctx context.Context, p auth.Principal, doors Doors, fy string, query url.Values, now time.Time) (view, []string, error) {
