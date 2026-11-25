@@ -61,6 +61,17 @@ SELECT country FROM staff_profile WHERE user_id = $1 AND deleted_at IS NULL ORDE
 		}
 		ids, err := strings1(ctx, db, `SELECT id FROM staff_profile WHERE deleted_at IS NULL AND country = $1`, *country)
 		return scope{ids: ids, locked: *country}, err
+	case "Program Lead":
+		// The Lead's live supervisees (resolve_user_scope's supervised_staff_ids).
+		sc, err := schooldirectory.ResolveScope(ctx, db, p, now)
+		if err != nil {
+			return scope{}, fmt.Errorf("cpdlearning: resolving the reader's scope: %w", err)
+		}
+		ids := sc.SupervisedStaffIDs
+		if ids == nil {
+			ids = []string{}
+		}
+		return scope{ids: ids}, nil
 	case "RegionalVicePresident":
 		sc, err := schooldirectory.ResolveScope(ctx, db, p, now)
 		if err != nil {

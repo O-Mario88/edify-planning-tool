@@ -20,13 +20,39 @@ func (d *dashboard) blocks() []*screensv1.PageBlock {
 		fundworkspace.Panel("1. Staff Professional Development Tracker",
 			fundworkspace.Text(fmt.Sprintf("%d request%s", d.trackerEntries, plural(d.trackerEntries)))),
 		d.trackerTable(), section("2. HR Action Center")}
-	out = append(out, d.actionCenter()...)
+	out = append(out, d.actionCenter(true)...)
 	out = append(out, d.fundBlocks()...)
 	out = append(out, d.roleBlocks()...)
 	out = append(out, d.charts()...)
 	out = append(out, workflowPanel(), section("6. Completed Courses & HR Sign-Off Snapshot"), d.snapshot(),
-		d.upcoming(), d.quickActions())
+		d.upcoming(false), d.quickActions())
 	return out
+}
+
+// teamBlocks is team_body.html: the Programme Lead's reading of the page —
+// the requests waiting on them (none, or the page is handed on), the team's
+// requests, the follow-up queues without HR's sign-off, the team's fund and
+// the courses to follow up. HR's settings, charts and sign-off are HR's.
+func (d *dashboard) teamBlocks() []*screensv1.PageBlock {
+	strip := d.strip()
+	strip.GetStrip().Title = "Team development context"
+	out := []*screensv1.PageBlock{d.filters()}
+	if st := d.role.Strip; st != nil {
+		tabs := []*screensv1.PageLinkTab{}
+		for _, t := range st.Tabs {
+			tabs = append(tabs, &screensv1.PageLinkTab{Label: t.Label, Href: t.Href, Active: t.Active})
+		}
+		out = append(out, &screensv1.PageBlock{Kind: &screensv1.PageBlock_LinkTabs{LinkTabs: &screensv1.PageLinkTabs{
+			Tabs: tabs, Label: st.Label, Scrolls: st.Scrolls}}})
+	}
+	out = append(out, strip,
+		fundworkspace.Panel("Waiting for your approval",
+			fundworkspace.Text("Nothing is waiting for your approval. A request an officer submits appears here before it goes to HR.")),
+		fundworkspace.Panel("Your team's requests", fundworkspace.Text(fmt.Sprintf("%d request%s", d.trackerEntries, plural(d.trackerEntries)))),
+		d.trackerTable(), section("Follow up with your team"))
+	out = append(out, d.actionCenter(false)...)
+	out = append(out, d.fundBlocks()...)
+	return append(out, d.upcoming(true))
 }
 
 func section(title string) *screensv1.PageBlock {
@@ -88,15 +114,19 @@ func (d *dashboard) filters() *screensv1.PageBlock {
 		fy.Options = append(fy.Options, &screensv1.PageFilterOption{Value: y, Label: "FY " + y})
 	}
 	filters := []*screensv1.PageFilter{fy}
-	if d.locked == "" {
+	// A Programme Lead's team view offers a country only where the team
+	// spans several, and no role.
+	if d.locked == "" && (!d.role.TeamView || len(d.countries) > 1) {
 		pairs := [][2]string{}
 		for _, c := range d.countries {
 			pairs = append(pairs, [2]string{c, c})
 		}
 		filters = append(filters, choiceFilter("country", "Country", "", d.country, "All Countries", pairs))
 	}
+	if !d.role.TeamView {
+		filters = append(filters, choiceFilter("role", "Role", "", d.ask.role, "All Roles", rules.EligibleRoles))
+	}
 	filters = append(filters,
-		choiceFilter("role", "Role", "", d.ask.role, "All Roles", rules.EligibleRoles),
 		choiceFilter("status", "Status", "Course Status", d.status, "All Statuses", rules.StatusBuckets),
 		choiceFilter("reminder", "Reminder", "Reminder Status", d.reminder, "Any", rules.Reminders))
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Filters{Filters: &screensv1.PageFilters{Filters: filters}}}
@@ -231,13 +261,16 @@ func (d *dashboard) dueLabel(r request, key string) string {
 
 // actionCenter is HR's five queues: each queue's count, its first three
 // courses, how many more there are, or the words for none.
-func (d *dashboard) actionCenter() []*screensv1.PageBlock {
+func (d *dashboard) actionCenter(signOff bool) []*screensv1.PageBlock {
 	out := []*screensv1.PageBlock{}
 	for _, g := range [][2]string{
 		{"not_started", "Not Yet Started"}, {"in_progress", "In Progress"},
 		{"pending_certificate", "Pending Certificate Upload"}, {"pending_accountability", "Pending Funds Accountability"},
 		{"ready_signoff", "Ready for HR Sign-Off"},
 	} {
+		if g[0] == "ready_signoff" && !signOff {
+			continue // Sign Off is HR's alone
+		}
 		items := []request{}
 		for _, r := range d.rows {
 			if (g[0] == "pending_accountability" && pendingAccountability(r)) ||
@@ -411,7 +444,7 @@ func (d *dashboard) snapshot() *screensv1.PageBlock {
 
 // upcoming is section 7: courses starting within 30 days, ended without a
 // certificate, and funded courses whose accountability is a week late.
-func (d *dashboard) upcoming() *screensv1.PageBlock {
+func (d *dashboard) upcoming(team bool) *screensv1.PageBlock {
 	var soon, noCert, late []request
 	for _, r := range d.rows {
 		if (in(rules.NotStartedStatuses, r.status) || in(rules.InProgressStatuses, r.status)) &&
@@ -433,6 +466,11 @@ func (d *dashboard) upcoming() *screensv1.PageBlock {
 		}
 		for _, r := range rs[:min(len(rs), listSample)] {
 			name := d.staffCell(r.staffName, r.staffID, "", "")
+			if team {
+				// team_body.html: the name, course and date on one line.
+				items = append(items, fundworkspace.Text(name.Text+" · "+line(r)))
+				continue
+			}
 			if name.Href != "" {
 				items = append(items, fundworkspace.Links(&screensv1.PageLink{Text: name.Text, Href: name.Href}))
 			} else {
@@ -441,14 +479,18 @@ func (d *dashboard) upcoming() *screensv1.PageBlock {
 			items = append(items, fundworkspace.Text(line(r)))
 		}
 	}
-	list("Starting in 30 Days", soon, "Nothing starting soon.", func(r request) string {
+	words := [4]string{"7. Upcoming & Overdue Courses", "Starting in 30 Days", "Overdue — No Certificate", "Overdue — Accountability"}
+	if team {
+		words = [4]string{"Upcoming & overdue courses", "Starting in 30 days", "Ended, no certificate", "Accountability overdue"}
+	}
+	list(words[1], soon, "Nothing starting soon.", func(r request) string {
 		return r.course + " · starts " + r.start.Format("02 Jan")
 	})
-	list("Overdue — No Certificate", noCert, "Nothing overdue.", func(r request) string {
+	list(words[2], noCert, "Nothing overdue.", func(r request) string {
 		return r.course + " · ended " + r.end.Format("02 Jan")
 	})
-	list("Overdue — Accountability", late, "Nothing overdue.", func(r request) string { return r.course })
-	return fundworkspace.Panel("7. Upcoming & Overdue Courses", feeddom.Paired(items)...)
+	list(words[3], late, "Nothing overdue.", func(r request) string { return r.course })
+	return fundworkspace.Panel(words[0], feeddom.Paired(items)...)
 }
 
 func (d *dashboard) quickActions() *screensv1.PageBlock {

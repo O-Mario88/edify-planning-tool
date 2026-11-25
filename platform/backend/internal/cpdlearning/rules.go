@@ -35,7 +35,16 @@ type roleRules struct {
 	AdjustAllocation bool `json:"adjust_allocation"`
 	SignOff          bool `json:"sign_off"`
 	StaffLinks       bool `json:"staff_links"`
-	Strip            any  `json:"strip"`
+	// Strip is the lens strip the page sits in for the role, if any.
+	Strip *struct {
+		Label   string `json:"label"`
+		Scrolls bool   `json:"scrolls"`
+		Tabs    []struct {
+			Label  string `json:"label"`
+			Href   string `json:"href"`
+			Active bool   `json:"active"`
+		} `json:"tabs"`
+	} `json:"strip"`
 }
 
 var rules = func() (r struct {

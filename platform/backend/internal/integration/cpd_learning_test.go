@@ -71,3 +71,56 @@ func TestCPDLearningMatchesTheExistingFeedOverCoursesTheSeedLacks(t *testing.T) 
 	}
 	compareGolden(t, "/cpd-learning", answers)
 }
+
+// A Programme Lead reads /cpd-learning as their team's development, drawn by
+// Go (team_body.html): the Performance & Coaching strip, the team's context,
+// what waits on them, their team's requests and the follow-up queues without
+// HR's sign-off. Go hands the page on only while a request waits at a
+// supervisor's stage, the approval queue it does not draw yet.
+func TestCPDLearningTeamViewIsGos(t *testing.T) {
+	borrowAccount(t, "pl1@edify.org")
+	lead := sessionOf(t, "pl1@edify.org", seededPassword).GetAccessToken()
+	var waiting bool
+	if err := admin.QueryRow(context.Background(), `SELECT EXISTS (SELECT 1 FROM pd_request WHERE status = 'submitted_to_supervisor')`).Scan(&waiting); err != nil {
+		t.Fatal(err)
+	}
+	page, err := pageOf(lead, "/cpd-learning", nil)
+	if waiting {
+		if err == nil {
+			t.Fatal("a request waits at a supervisor's stage, and Go drew the page")
+		}
+		t.Skip("a request waits at a supervisor's stage: the page is handed on")
+	}
+	if err != nil {
+		t.Fatalf("the Lead's team view: %v", err)
+	}
+	if page.GetHeader().GetTitle() != "Team Professional Development" {
+		t.Fatalf("title %q", page.GetHeader().GetTitle())
+	}
+	blocks := page.GetBlocks()
+	if tabs := blocks[1].GetLinkTabs(); tabs.GetLabel() != "Performance & Coaching" {
+		t.Fatalf("strip %v", blocks[1])
+	}
+	for _, f := range blocks[0].GetFilters().GetFilters() {
+		if f.GetName() == "role" {
+			t.Fatal("the team view offers a role filter")
+		}
+	}
+	titles := []string{}
+	for _, b := range blocks {
+		if p := b.GetPanel(); p != nil && p.GetTitle() != "" {
+			titles = append(titles, p.GetTitle())
+		}
+		if s := b.GetStrip(); s != nil {
+			for _, m := range s.GetMetrics() {
+				if m.GetLabel() == "Ready for HR Sign-Off" {
+					t.Fatal("the team view offers HR's sign-off queue")
+				}
+			}
+		}
+	}
+	if len(titles) < 3 || titles[0] != "Waiting for your approval" || titles[1] != "Your team's requests" ||
+		titles[len(titles)-1] != "Upcoming & overdue courses" {
+		t.Fatalf("panels %q", titles)
+	}
+}

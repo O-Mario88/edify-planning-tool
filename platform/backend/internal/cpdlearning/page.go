@@ -91,7 +91,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if !ok || !role.Page {
 		return nil, true, pagegate.ErrNotAvailable
 	}
-	if role.TeamView || p.StaffProfileID == "" || p.InActingAppointment {
+	if p.StaffProfileID == "" || p.InActingAppointment {
 		return nil, false, nil
 	}
 	now := s.now()
@@ -116,6 +116,12 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	d, ok, err := read(ctx, reader{db: s.db, sc: sc, fy: a.fy}, a, role, now)
 	if err != nil || !ok {
 		return nil, err != nil, err
+	}
+	if role.TeamView {
+		// A Programme Lead reads the page as their team's development.
+		h := &screensv1.PageHeader{Eyebrow: "Team performance", Title: "Team Professional Development",
+			Description: "Your officers' development requests: decide the ones waiting on you, then follow up courses that have stalled — FY " + a.fy + "."}
+		return &screensv1.GetPageResponse{Header: h, Blocks: d.teamBlocks(), WebPath: PagePath}, true, nil
 	}
 	desc := "Oversee course tracking, fund accountability, and HR sign-off across every staff member's PD plan — FY " + a.fy
 	if sc.locked != "" {
