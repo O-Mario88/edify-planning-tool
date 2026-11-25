@@ -34,6 +34,7 @@ const (
 	tableProgrammeSchool
 	tableTrainings
 	tableCoreTrainings
+	tableProgrammeActivities
 )
 
 // programmePageSize is how many rows a programme school section pages by.
@@ -49,6 +50,8 @@ type extra struct {
 	// meetingTraining is the course a training meeting delivers
 	// (recommendation_source's trainingCourseName).
 	meetingTraining string
+	// venue is where a programme activity is held.
+	venue                          *string
 	clusterDistrict, eventDistrict *string
 	endDate                        *time.Time
 	reviewNote, schoolSSAStatus    *string
@@ -82,6 +85,9 @@ type PlanTablesResult struct {
 	trainings, group []*planRow
 	// query is the page's own query, which picks each table's page.
 	query url.Values
+	// programmeActivities are the Work Plan's and the programme events'
+	// work (conferences, camps, exhibitions).
+	programmeActivities []*planRow
 	// programme are the programme schools' sections, by type.
 	programme map[string][]*planRow
 	// statusShown is the Status select's value when the Core slots overwrite
@@ -100,7 +106,8 @@ func readExtras(ctx context.Context, db schooldirectory.Querier, ids []string, l
 	out := map[string]*extra{}
 	rows, err := db.Query(ctx, `SELECT a.id, a.evidence_status, a.payment_status, a.meeting_kind, cd.name, ed.name, a.end_date,
   a.pl_review_note, s.current_fy_ssa_status, a.activity_name_snapshot,
-  COALESCE(CASE WHEN jsonb_typeof(a.recommendation_source::jsonb) = 'object' THEN a.recommendation_source::jsonb ->> 'trainingCourseName' END, '')
+  COALESCE(CASE WHEN jsonb_typeof(a.recommendation_source::jsonb) = 'object' THEN a.recommendation_source::jsonb ->> 'trainingCourseName' END, ''),
+  a.venue
 FROM activity a LEFT JOIN cluster c ON c.id = a.cluster_id LEFT JOIN district cd ON cd.id = c.district_id
 LEFT JOIN district ed ON ed.id = a.event_district_id LEFT JOIN school s ON s.id = a.school_id WHERE a.id = ANY($1)`, ids)
 	if err != nil {
@@ -110,7 +117,7 @@ LEFT JOIN district ed ON ed.id = a.event_district_id LEFT JOIN school s ON s.id 
 		var id string
 		x := &extra{}
 		if err := rows.Scan(&id, &x.evidence, &x.payment, &x.meetingKind, &x.clusterDistrict, &x.eventDistrict, &x.endDate,
-			&x.reviewNote, &x.schoolSSAStatus, &x.activityName, &x.meetingTraining); err != nil {
+			&x.reviewNote, &x.schoolSSAStatus, &x.activityName, &x.meetingTraining, &x.venue); err != nil {
 			rows.Close()
 			return nil, fmt.Errorf("myplan: reading the rows' columns: %w", err)
 		}
@@ -168,7 +175,7 @@ func tableOf(a *activity, slots coreSlots) int {
 	isCore := a.hasSchool && str(a.schoolType) == "core"
 	switch {
 	case str(a.planningSource) == "manual_work_plan" || in(r.ProgrammeEventTypes, a.activityType):
-		return -1
+		return tableProgrammeActivities
 	case a.hasSchool && in(r.ProgrammeSchoolTypes, str(a.schoolType)) && (in(r.VisitTypes, a.activityType) || in(r.TrainingTypes, a.activityType)):
 		return tableProgrammeSchool
 	case isCore:
@@ -277,6 +284,13 @@ func ReadPlanTables(ctx context.Context, db schooldirectory.Querier, place *regi
 			res.trainings = append(res.trainings, r)
 		case tableCoreTrainings:
 			res.coreTrainings = append(res.coreTrainings, r)
+		case tableProgrammeActivities:
+			if !a.hasSchool {
+				// school_name for non-school work: its venue, its name, else
+				// "Programme activity".
+				r.schoolName = orDefault(str(x.venue), orDefault(str(x.activityName), "Programme activity"))
+			}
+			res.programmeActivities = append(res.programmeActivities, r)
 		case tableProgrammeSchool:
 			if res.programme == nil {
 				res.programme = map[string][]*planRow{}
@@ -311,13 +325,14 @@ func ReadPlanTables(ctx context.Context, db schooldirectory.Querier, place *regi
 	}
 	all = append(all, expanded...)
 	visits, meetings, coreRows, coreTrainingRows := plain(res.visits), plain(res.meetings), plain(res.core), plain(res.coreTrainings)
+	programmeActivityRows := plain(res.programmeActivities)
 	tables := [][]*row{visits, meetings, coreRows}
 	kinds := rules.Rows.ProgrammeSchoolTypes
 	for _, kind := range kinds {
 		tables = append(tables, plain(res.programme[kind]))
 	}
 	trainingRows, groupRows := plain(res.trainings), plain(res.group)
-	tables = append(tables, trainingRows, groupRows, coreTrainingRows)
+	tables = append(tables, trainingRows, groupRows, coreTrainingRows, programmeActivityRows)
 	if err := pg.finish(ctx, db, acts, tables...); err != nil {
 		return res, false, err
 	}
@@ -335,12 +350,13 @@ func ReadPlanTables(ctx context.Context, db schooldirectory.Querier, place *regi
 	res.visits, res.meetings, res.core = reorder(visits), reorder(meetings), reorder(coreRows)
 	res.trainings, res.group = reorder(trainingRows), reorder(groupRows)
 	res.coreTrainings = reorder(coreTrainingRows)
+	res.programmeActivities = reorder(programmeActivityRows)
 	for i, kind := range kinds {
 		if rows := tables[3+i]; len(rows) > 0 {
 			res.programme[kind] = reorder(rows)
 		}
 	}
-	for _, rows := range [][]*planRow{res.visits, res.meetings, res.core, res.coreTrainings, res.trainings, res.group} {
+	for _, rows := range [][]*planRow{res.visits, res.meetings, res.core, res.coreTrainings, res.trainings, res.group, res.programmeActivities} {
 		for _, r := range rows {
 			r.settle(pg.today)
 		}

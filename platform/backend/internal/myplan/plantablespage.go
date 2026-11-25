@@ -302,7 +302,43 @@ func planTablesBlocks(t PlanTablesResult, p Period, clusters []clusterPlanRow) [
 	if len(t.core) > 0 || len(t.coreTrainings) > 0 {
 		blocks = append(blocks, coreBlocks(t, words, visitColumns)...)
 	}
-	return append(blocks, programmeBlocks(t)...)
+	blocks = append(blocks, programmeBlocks(t)...)
+	if len(t.programmeActivities) > 0 {
+		blocks = append(blocks, programmeActivitiesBlock(t, words))
+	}
+	return blocks
+}
+
+// programmeActivitiesBlock is programme_activities.html: the Work Plan's
+// and the programme events' work, drawn only when there is some.
+func programmeActivitiesBlock(t PlanTablesResult, words string) *screensv1.PageBlock {
+	shown, pg := t.page(t.programmeActivities, planTablePageSize, "programme_activities_page")
+	var rows []*screensv1.PageRow
+	for _, r := range shown {
+		name := &screensv1.PageCell{Text: dash}
+		if r.schoolID.truthy() {
+			name = &screensv1.PageCell{Text: orDefault(r.schoolName, dash), Href: "/schools/" + r.schoolID.value}
+		}
+		activity := orDefault(str(r.activityTypeLabel), orDefault(r.purpose, dash))
+		day := "Unscheduled"
+		if d := date(r.a.plannedDate); d != nil {
+			day = d.Format("Jan 2, Mon")
+		}
+		cells := []*screensv1.PageCell{
+			{Text: orDefault(r.schoolID.value, dash)}, name, {Text: orDefault(r.districtShown, dash)},
+			{Text: orDefault(r.districtType, dash)}, {Text: activity}, {Text: day + r.dayOffFlag()},
+		}
+		rows = append(rows, pageRow(r, r.schoolName, append(cells, tailCells(r)...)))
+	}
+	cols := []*screensv1.PageColumn{}
+	for _, l := range []string{"Venue ID", "School / Venue Name", "District", "District Type", "Activity", "Date",
+		"Budget status", "Verification", "Salesforce ID", "Status", ""} {
+		cols = append(cols, &screensv1.PageColumn{Label: l})
+	}
+	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{
+		Title: "Programme Activities Planned for " + words, Columns: cols, Rows: rows,
+		Count: strconv.Itoa(len(t.programmeActivities)), Footnote: pg.footnote(), Pager: pg.pager,
+	}}}
 }
 
 // programmeBlocks are programme_school_work.html's sections, one a
