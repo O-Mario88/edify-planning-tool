@@ -1198,3 +1198,6 @@ GRANT SELECT (id, staff_id, salary_band, currency, base_salary, allowances, medi
 -- A new Professional Development request saved as a draft (pd_request_view's
 -- POST without an id); submitting and editing stay the existing application's.
 GRANT INSERT (id, created_at, updated_at, fy, staff_id, staff_name, position, country, department, supervisor_staff_id, supervisor_name, course_name, course_category, course_type, institution, start_date, end_date, certification_expected, relevance_to_role, course_fee_cents, other_costs_cents, total_cost_cents, employee_contribution_cents, requested_amount_cents, funding_type, currency, is_exception, status, hr_is_independent_reviewer, enrollment_confirmed, bamboohr_uploaded, created_by, duration, purpose, requested_local_amount_cents, requested_local_currency) ON pd_request TO edify_activities_rw;
+-- A partner organisation's login setup (partners.services.configure_partner_user):
+-- the account it signs in with and the setup status; nothing removed.
+GRANT SELECT (id, name, email, contact_person, user_id, user_setup_status, deleted_at), UPDATE (user_id, user_setup_status, user_setup_updated_by, user_setup_updated_at, updated_at) ON partner TO edify_activities_rw;

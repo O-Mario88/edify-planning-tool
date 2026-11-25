@@ -189,6 +189,8 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		filepath.Join(root, "internal", "teams") + sep: {
 			"staff_supervisor_assignment", "partner_member", "partner_school_member", "activity",
 		},
+		// A partner organisation's login setup (configure_partner_user).
+		filepath.Join(root, "internal", "adminusers") + sep: {"partner"},
 		// Acting appointments, and the account's acting hint and role in use.
 		filepath.Join(root, "internal", "acting") + sep: {"acting_assignment", `"user"`},
 		// Scheduling a school visit, the first Go save (docs/migration/27;
