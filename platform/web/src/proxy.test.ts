@@ -54,6 +54,14 @@ describe('a download the gateway writes', () => {
     );
   });
 
+  it("sends a cluster's Export schools to the gateway", () => {
+    const request = new NextRequest('http://localhost:3000/clusters/cmw9p8e4900p50wekhe46/schools/export');
+    request.cookies.set(ACCESS_COOKIE, 'token');
+    expect(proxy(request).headers.get('x-middleware-rewrite')).toBe(
+      'http://localhost:3000/api/quick-export?target=%2Fclusters%2Fcmw9p8e4900p50wekhe46%2Fschools%2Fexport',
+    );
+  });
+
   it('leaves the queue page itself to the page', () => {
     const request = new NextRequest('http://localhost:3000/ia/history/?page=2');
     request.cookies.set(ACCESS_COOKIE, 'token');

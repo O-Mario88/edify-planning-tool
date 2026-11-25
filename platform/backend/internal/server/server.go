@@ -249,6 +249,9 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		}).
 		WithWorkbookRoute(func(target string) (detailpages.WorkbookExport, bool) {
 			return iapages.NewService(pool, time.Now).QueueExportRoute(target)
+		}).
+		WithWorkbookRoute(func(target string) (detailpages.WorkbookExport, bool) {
+			return clusterpage.NewService(pool, time.Now).SchoolsExportRoute(target)
 		})
 	screenService := screens.NewService(existingApp).TrustProxyHeaders(cfg.Loans.TrustProxyHeaders).
 		WithStrictReads(cfg.StrictReads).
