@@ -230,18 +230,19 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
 DECLARE
   v_deleted integer;
 BEGIN
+  -- _do_scheduler_history_prune: successes past 90 days, but never a job's
+  -- latest success (every run at that moment), and failures past 365 days.
+  -- A run still marked running is never removed.
   WITH latest_ok AS (
-    SELECT DISTINCT ON (job_name) id
+    SELECT job_name, max(started_at) AS started
       FROM public.scheduled_job_execution
      WHERE status = 'success'
-     ORDER BY job_name, started_at DESC
+     GROUP BY job_name
   )
   DELETE FROM public.scheduled_job_execution e
-   WHERE e.id NOT IN (SELECT id FROM latest_ok)
-     AND (
-       (e.status = 'success' AND e.started_at < p_now - interval '90 days')
-       OR (e.status <> 'success' AND e.started_at < p_now - interval '365 days')
-     );
+   WHERE (e.status = 'success' AND e.started_at < p_now - interval '90 days'
+          AND NOT EXISTS (SELECT 1 FROM latest_ok l WHERE l.job_name = e.job_name AND l.started = e.started_at))
+      OR (e.status = 'failed' AND e.started_at < p_now - interval '365 days');
   GET DIAGNOSTICS v_deleted = ROW_COUNT;
   RETURN v_deleted;
 END
