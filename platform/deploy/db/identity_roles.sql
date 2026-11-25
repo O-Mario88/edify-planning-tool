@@ -150,8 +150,8 @@ GRANT INSERT (id, created_at, updated_at, role_key, acting_role, appointee_id, a
               appointed_by_id, appointed_by_role, scope_type, seat_id, country, start_date, end_date,
               cancel_reason, in_capacity, grant_snapshot, revisions)
   ON acting_assignment TO edify_identity_rw;
-GRANT UPDATE (start_date, end_date, revisions, reminded_at, cancelled_at, cancelled_by_id, cancel_reason,
-              in_capacity, updated_at)
+GRANT UPDATE (start_date, end_date, revisions, reminded_at, activated_at, expired_at, cancelled_at, cancelled_by_id,
+              cancel_reason, in_capacity, updated_at)
   ON acting_assignment TO edify_identity_rw;
 GRANT SELECT (acting_until) ON "user" TO edify_identity_rw;
 GRANT UPDATE (acting_until) ON "user" TO edify_identity_rw;

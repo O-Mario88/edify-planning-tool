@@ -2,7 +2,6 @@ package scheduler
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
@@ -12,9 +11,9 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/acting"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/adminops"
-	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/autopilotjobs"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/btcases"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closurepages"
@@ -221,69 +220,8 @@ func executeJob(
 		return callIntRW(ctx, pool, `SELECT gateway_scheduler.purge_mfa_challenges($1)`, now.Add(-24*time.Hour))
 
 	case "acting_lifecycle":
-		tx, err := pool.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
-		if err != nil {
-			return 0, err
-		}
-		defer func() { _ = tx.Rollback(ctx) }()
-		var rem, act, exp int
-		var actRaw, expRaw []byte
-		if err := tx.QueryRow(ctx,
-			`SELECT reminded, activated, expired, activated_rows, expired_rows FROM gateway_scheduler.run_acting_lifecycle($1::date, $2)`,
-			today, now,
-		).Scan(&rem, &act, &exp, &actRaw, &expRaw); err != nil {
-			return 0, err
-		}
-		type actingRow struct {
-			ID          string `json:"id"`
-			AppointeeID string `json:"appointeeId"`
-			Role        string `json:"role"`
-		}
-		var activatedRows, expiredRows []actingRow
-		if len(actRaw) > 0 {
-			if err := json.Unmarshal(actRaw, &activatedRows); err != nil {
-				return 0, fmt.Errorf("scheduler: decoding activated acting rows: %w", err)
-			}
-		}
-		if len(expRaw) > 0 {
-			if err := json.Unmarshal(expRaw, &expiredRows); err != nil {
-				return 0, fmt.Errorf("scheduler: decoding expired acting rows: %w", err)
-			}
-		}
-		for _, r := range activatedRows {
-			if _, err := audit.Append(ctx, tx, audit.Entry{
-				Action:      "acting.activated",
-				SubjectKind: audit.Text("acting_assignment"),
-				SubjectID:   audit.Text(r.ID),
-				ActorID:     audit.Text("system"),
-				Success:     true,
-				Payload: map[string]any{
-					"appointeeId": r.AppointeeID,
-					"role":        r.Role,
-				},
-			}, now); err != nil {
-				return 0, fmt.Errorf("scheduler: appending acting.activated audit row: %w", err)
-			}
-		}
-		for _, r := range expiredRows {
-			if _, err := audit.Append(ctx, tx, audit.Entry{
-				Action:      "acting.expired",
-				SubjectKind: audit.Text("acting_assignment"),
-				SubjectID:   audit.Text(r.ID),
-				ActorID:     audit.Text("system"),
-				Success:     true,
-				Payload: map[string]any{
-					"appointeeId": r.AppointeeID,
-					"role":        r.Role,
-				},
-			}, now); err != nil {
-				return 0, fmt.Errorf("scheduler: appending acting.expired audit row: %w", err)
-			}
-		}
-		if err := tx.Commit(ctx); err != nil {
-			return 0, err
-		}
-		return rem + act + exp, nil
+		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy
+		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) { return acting.Sweep(ctx, tx, localNow, now, push) })
 
 	case "notification_escalation":
 		return callIntRW(ctx, pool, `SELECT gateway_scheduler.escalate_stale_notifications($1, $2)`, now.Add(-48*time.Hour), now)
