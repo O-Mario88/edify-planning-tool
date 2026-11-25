@@ -219,6 +219,8 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		filepath.Join(root, "internal", "mscs") + sep: {"mscs_story"},
 		filepath.Join(root, "internal", "debriefs") + sep: {
 			"daily_debrief", "daily_debrief_activity_link", "daily_debrief_recipient",
+			// The scheduler's recurring-issue scan (insight_service): its insights.
+			"daily_debrief_insight",
 		},
 		// My Professional Development's read writes what the existing read
 		// writes (owner, 2026-11-16: "Same writes"; docs/migration/68 §68.7;

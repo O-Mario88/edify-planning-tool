@@ -565,3 +565,21 @@ REVOKE CREATE ON SCHEMA gateway_telemetry FROM edify_telemetry_owner;
 
 GRANT USAGE ON SCHEMA gateway_telemetry TO edify_activities_rw;
 GRANT EXECUTE ON FUNCTION gateway_telemetry.prune_interaction_events(timestamptz) TO edify_activities_rw;
+
+-- ── The scheduler's field_debrief_recurring_issues (docs/migration/189 §4) ──
+-- RecurringIssueDetectionService.scan: a challenge recurring in a scope's
+-- debriefs opens or refreshes its insight, escalations are raised to the
+-- Country Director and the Regional Vice President, and the people told are
+-- remembered on the insight. No insight is removed by Go.
+GRANT SELECT (id, debrief_id, challenge_type, created_at) ON daily_debrief_challenge TO edify_activities_rw;
+GRANT SELECT (id, date, staff_id, partner_id, linked_school_ids, deleted_at, is_restricted_incident)
+  ON daily_debrief TO edify_activities_rw;
+GRANT SELECT (id, supervisee_id, supervisor_id) ON staff_supervisor_assignment TO edify_activities_rw;
+GRANT SELECT (country) ON staff_profile TO edify_activities_rw;
+GRANT SELECT (id, scope, scope_id, challenge_type, title, description, escalation_level, status, notified_user_ids)
+  ON daily_debrief_insight TO edify_activities_rw;
+GRANT INSERT (id, created_at, updated_at, scope, scope_id, challenge_type, title, description, occurrence_count,
+              window_start, window_end, debrief_ids, escalation_level, status, notified_user_ids)
+  ON daily_debrief_insight TO edify_activities_rw;
+GRANT UPDATE (occurrence_count, debrief_ids, window_start, window_end, description, escalation_level, notified_user_ids)
+  ON daily_debrief_insight TO edify_activities_rw;

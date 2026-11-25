@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -12,7 +13,9 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dataqualityscan"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/debriefs"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/notificationcenter"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/plreview"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/targets"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/telemetryrollup"
@@ -883,14 +886,11 @@ SELECT DISTINCT COALESCE(sp.user_id, r.manager_id), COUNT(r.id)::int
 		return sent, nil
 
 	case "field_debrief_recurring_issues":
-		since := now.AddDate(0, 0, -14)
-		var count int
-		if err := pool.QueryRow(ctx, `
-SELECT COUNT(*)::int FROM daily_debrief
- WHERE deleted_at IS NULL AND date >= $1 AND array_length(blockers, 1) > 0`, since).Scan(&count); err != nil {
-			return 0, err
-		}
-		return count, nil
+		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy
+		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) {
+			result, err := debriefs.ScanRecurringIssues(ctx, tx, now, loc, push, nil)
+			return result.Created + result.Updated, err
+		})
 
 	case "weekly_debrief_reports":
 		since := now.AddDate(0, 0, -7)
