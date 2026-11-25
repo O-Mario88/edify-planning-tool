@@ -100,6 +100,9 @@ func (s *cexSnapshot) unscheduledByPartner(ctx context.Context, db schooldirecto
 type cexPartnerRow struct {
 	key, name                                                                string
 	assigned, due, started, executed, verified, awaiting, unpaid, paid, late int
+	// returned, unscheduled and schools are the workbook's: IA returns, the
+	// hand-overs not dated yet, and the schools whose work was delivered.
+	returned, unscheduled, schools int
 }
 
 func (s *cexSnapshot) partnerRows(ctx context.Context, db schooldirectory.Querier) ([]cexPartnerRow, error) {
@@ -167,7 +170,15 @@ func (s *cexSnapshot) partnerRows(ctx context.Context, db schooldirectory.Querie
 			inc(r.verified && !r.paid, &row.unpaid)
 			inc(r.paid, &row.paid)
 			inc(r.overdue != "", &row.late)
+			inc(r.returned, &row.returned)
 		}
+		served := map[string]bool{}
+		for _, r := range byPartner[k] {
+			if !r.cancelled && r.schoolID != "" && r.executed {
+				served[r.schoolID] = true
+			}
+		}
+		row.schools, row.unscheduled = len(served), unscheduled[k]
 		row.assigned = row.due + unscheduled[k]
 		out = append(out, row)
 	}

@@ -267,6 +267,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			return myplan.NewService(pool, time.Now).ExportFile(ctx, p, query)
 		}).
 		WithWorkbook("/country-planning-oversight/coverage-export", planningmonitor.CoverageExport(pool, time.Now)).
+		WithWorkbook("/country-planning-oversight/execution/export", planningmonitor.CountryExecutionExport(pool, time.Now)).
 		WithWorkbookRoute(func(target string) (detailpages.WorkbookExport, bool) {
 			return planningmonitor.CountryExecutionRecordsExportRoute(pool, time.Now)(target)
 		}).

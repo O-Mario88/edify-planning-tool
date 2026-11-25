@@ -273,6 +273,18 @@
         "quarter": "Quarter",
         "week": "Week"
       },
+      "table_columns": [
+        "Planned",
+        "In-Progress",
+        "Completed & PL Verified",
+        "On-Time %",
+        "Overdue",
+        "Carried Forward",
+        "Returned",
+        "Remaining Slots",
+        "Forecast",
+        "Open Reminders"
+      ],
       "view_by": [
         [
           "lead",

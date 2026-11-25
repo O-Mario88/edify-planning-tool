@@ -284,6 +284,8 @@ def _country_execution() -> dict:
             "period_labels": dict(svc.PERIOD_LABELS),
             "forecast_on_track": svc.FORECAST_ON_TRACK,
             "forecast_min_due": svc.FORECAST_MIN_DUE,
+            # The tab's workbook's hierarchy headings (export_view).
+            "table_columns": [label for _key, label in svc.TABLE_COLUMNS],
             "lead_manageable": list(svc.LEAD_MANAGEABLE),
             "export_roles": sorted(
                 role.value

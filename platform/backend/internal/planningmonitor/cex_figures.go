@@ -25,6 +25,8 @@ type cexPage struct {
 	ForecastMinDue  int               `json:"forecast_min_due"`
 	LeadManageable  []string          `json:"lead_manageable"`
 	ExportRoles     []string          `json:"export_roles"`
+	// TableColumns are the hierarchy table's column labels (TABLE_COLUMNS).
+	TableColumns []string `json:"table_columns"`
 }
 
 // query is ExecFilters.query.
