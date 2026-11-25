@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { describe, expect, it } from 'vitest';
 
+import { ACCESS_COOKIE } from './lib/session';
 import { proxy } from './proxy';
 
 describe('a request without a session', () => {
@@ -14,5 +15,16 @@ describe('a request without a session', () => {
     const answer = proxy(new NextRequest('http://localhost:3000/route-planner', { method: 'POST', body: '{}' }));
     expect(answer.status).toBe(401);
     expect(await answer.json()).toEqual({ error: 'signed_out' });
+  });
+});
+
+describe('a download the gateway writes', () => {
+  it("sends an impact report's evidence annex to the gateway's quick export", () => {
+    const request = new NextRequest('http://localhost:3000/ia/impact-reports/cmwwi4g1600tspljcccqz/annex.csv');
+    request.cookies.set(ACCESS_COOKIE, 'token');
+    const answer = proxy(request);
+    expect(answer.headers.get('x-middleware-rewrite')).toBe(
+      'http://localhost:3000/api/quick-export?target=%2Fia%2Fimpact-reports%2Fcmwwi4g1600tspljcccqz%2Fannex.csv',
+    );
   });
 });

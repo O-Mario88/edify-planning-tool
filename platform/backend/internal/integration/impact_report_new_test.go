@@ -4,7 +4,10 @@ package integration
 
 import (
 	"context"
+	"io"
 	"net/http"
+	"net/url"
+	"strings"
 	"testing"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
@@ -141,6 +144,18 @@ func TestImpactAssessmentStartsAReportInGo(t *testing.T) {
 	returned, err := pages.GetPage(ctx, authed(&screensv1.GetPageRequest{Path: pagePath}, token))
 	if err != nil || returned.Msg.GetHeader().GetDescription() != "Returned · version 1 · "+country {
 		t.Fatalf("the returned report's page: %v %v", returned, err)
+	}
+	annexRequest, _ := http.NewRequestWithContext(ctx, http.MethodGet,
+		baseURL+"/api/v1/quick-export?target="+url.QueryEscape(pagePath+"annex.csv"), nil)
+	annexRequest.Header.Set("Authorization", "Bearer "+token)
+	annex, err := http.DefaultClient.Do(annexRequest)
+	if err != nil {
+		t.Fatalf("the annex: %v", err)
+	}
+	body, _ := io.ReadAll(annex.Body)
+	_ = annex.Body.Close()
+	if annex.StatusCode != http.StatusOK || !strings.HasPrefix(string(body), "Impact Assessment evidence annex,Version 1\r\n") {
+		t.Fatalf("the annex: %d %.200s", annex.StatusCode, body)
 	}
 	if r := save(map[string]string{"fy": fy, "title": title, "programme_areas": "visits"}); !r.GetSaved() {
 		t.Fatalf("a second draft: %+v", r)

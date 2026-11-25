@@ -26,6 +26,19 @@ import (
 type Service struct {
 	db  schooldirectory.Querier
 	now func() time.Time
+	// annex is an impact report's evidence annex (internal/iareports), for
+	// /ia/impact-reports/<id>/annex.csv.
+	annex ReportAnnex
+}
+
+// ReportAnnex writes a report's evidence annex for p: its file name and
+// bytes, or an error the download answers with not found.
+type ReportAnnex func(ctx context.Context, p auth.Principal, reportID string) (string, []byte, error)
+
+// WithReportAnnex serves the impact report annex download.
+func (s *Service) WithReportAnnex(a ReportAnnex) *Service {
+	s.annex = a
+	return s
 }
 
 // NewService wires the service to the PostgreSQL reader.

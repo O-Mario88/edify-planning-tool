@@ -239,7 +239,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		staffActivity = staffActivity.WithFollowUpPage()
 	}
 	countryMapSvc := oversightportfolio.NewCountryMap(oversightportfolio.NewService(pool, time.Now))
-	detailPagesSvc := detailpages.NewService(pool, time.Now)
+	detailPagesSvc := detailpages.NewService(pool, time.Now).WithReportAnnex(iareports.Reports{DB: pool, Now: time.Now, Logger: logger}.Annex)
 	screenService := screens.NewService(existingApp).TrustProxyHeaders(cfg.Loans.TrustProxyHeaders).
 		WithStrictReads(cfg.StrictReads).
 		WithDirectory(schooldirectory.NewService(pool, time.Now), logger).

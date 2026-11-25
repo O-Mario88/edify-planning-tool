@@ -19,7 +19,10 @@ type Saved struct {
 
 // reportDrawerPath is a report's own drawers: edit, and a new
 // recommendation.
-var reportDrawerPath = regexp.MustCompile(`^/ia/impact-reports/([A-Za-z0-9]{1,30})/(edit|recommendations/new|review)$`)
+var reportDrawerPath = regexp.MustCompile(`^/ia/impact-reports/([A-Za-z0-9]{1,30})/(edit|recommendations/new|review|release/schools)$`)
+
+// releasePath is one release's drawer.
+var releasePath = regexp.MustCompile(`^/ia/impact-reports/([A-Za-z0-9]{1,30})/releases/([A-Za-z0-9]{1,30})$`)
 
 // respondPath is a released report's recommendation drawer.
 var respondPath = regexp.MustCompile(`^/ia/impact-reports/([A-Za-z0-9]{1,30})/recommendations/([A-Za-z0-9]{1,30})$`)
@@ -30,6 +33,9 @@ func handled(path string) (string, string, bool) {
 	path = strings.TrimSuffix(path, "/")
 	if path == NewPath {
 		return "new", "", true
+	}
+	if m := releasePath.FindStringSubmatch(path); m != nil {
+		return "release", m[1] + "/" + m[2], true
 	}
 	if m := respondPath.FindStringSubmatch(path); m != nil && m[2] != "new" {
 		return "respond", m[1] + "/" + m[2], true
@@ -60,9 +66,17 @@ func (r Reports) Drawer(ctx context.Context, p auth.Principal, rawPath string) (
 		d, err = r.editDrawer(ctx, p, id)
 	case "review":
 		d, err = r.reviewDrawer(ctx, p, id)
+	case "release/schools":
+		d, err = r.schoolsDrawer(ctx, p, id)
 	case "respond":
 		report, rec, _ := strings.Cut(id, "/")
 		d, err = r.respondDrawer(ctx, p, report, rec)
+	case "release":
+		report, release, _ := strings.Cut(id, "/")
+		var served bool
+		if d, served, err = r.releaseDrawer(ctx, p, report, release); !served {
+			return nil, false, nil
+		}
 	default:
 		d, err = r.recommendationDrawer(ctx, p, id)
 	}
@@ -159,6 +173,8 @@ func (r Reports) Save(ctx context.Context, p auth.Principal, rawPath, form strin
 		saved, err = r.update(ctx, p, id, values)
 	case "review":
 		saved, err = r.review(ctx, p, id, values)
+	case "release/schools":
+		saved, err = r.releaseSchools(ctx, p, id, values)
 	case "respond":
 		report, rec, _ := strings.Cut(id, "/")
 		saved, err = r.respond(ctx, p, report, rec, values)

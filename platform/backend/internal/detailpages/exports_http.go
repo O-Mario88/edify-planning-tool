@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -37,6 +38,18 @@ func (s *Service) RegisterHTTP(mux *http.ServeMux, authn HTTPAuth) {
 		if fy == "" {
 			fy = schooldirectory.OperationalFY(s.now())
 		}
+		if m := annexTarget.FindStringSubmatch(target); m != nil && s.annex != nil {
+			name, body, err := s.annex(r.Context(), p, m[1])
+			if err != nil {
+				http.Error(w, "The evidence annex is not available to you.", http.StatusNotFound)
+				return
+			}
+			w.Header().Set("Content-Type", "text/csv; charset=utf-8")
+			w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, name))
+			w.Header().Set("Cache-Control", "no-store")
+			_, _ = w.Write(body)
+			return
+		}
 		switch {
 		case target == "/schools/upload/template":
 			s.writeSchoolUploadTemplate(w)
@@ -58,6 +71,9 @@ func (s *Service) RegisterHTTP(mux *http.ServeMux, authn HTTPAuth) {
 		}
 	})
 }
+
+// annexTarget is an impact report's evidence annex download.
+var annexTarget = regexp.MustCompile(`^/ia/impact-reports/([A-Za-z0-9]{1,30})/annex\.csv$`)
 
 // exportPermission is the matrix's data.export.
 const exportPermission = "data.export"

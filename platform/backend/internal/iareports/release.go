@@ -14,6 +14,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
+	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
@@ -171,4 +172,61 @@ WHERE 'CountryDirector' = ANY(u.roles) AND u.is_active AND u.deleted_at IS NULL 
 		return nil, fmt.Errorf("iareports: the Country Directors: %w", err)
 	}
 	return pgx.CollectRows(rows, pgx.RowTo[string])
+}
+
+// releaseDrawer is release_drawer for the leadership release; served is
+// false for a donor version or a school brief, still the existing page's.
+func (r Reports) releaseDrawer(ctx context.Context, p auth.Principal, reportID, id string) (*screensv1.PageDrawer, bool, error) {
+	x, err := r.visible(ctx, r.DB, p, reportID, false)
+	if err != nil || x == nil {
+		if err == nil {
+			err = errNoReport
+		}
+		return nil, true, err
+	}
+	var audience, status, measured, total string
+	var released *time.Time
+	err = r.DB.QueryRow(ctx, `SELECT audience, status, released_at, COALESCE(rendered_payload->'snapshot'->'cohort'->>'measured', '0'),
+  COALESCE(rendered_payload->'snapshot'->'cohort'->>'total', '0') FROM impact_report_release WHERE id = $1 AND report_id = $2`, id, reportID).
+		Scan(&audience, &status, &released, &measured, &total)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, true, errNoReport
+	}
+	if err != nil {
+		return nil, true, fmt.Errorf("iareports: the release: %w", err)
+	}
+	if audience != "leadership" {
+		if p.ActiveRole == "RegionalVicePresident" && audience != "donor" {
+			return nil, true, errNoReport
+		}
+		return nil, false, nil
+	}
+	if p.ActiveRole == "RegionalVicePresident" {
+		return nil, true, errNoReport
+	}
+	label := map[string]string{"pending_approval": "Awaiting approval", "approved": "Approved", "released": "Released", "revoked": "Revoked"}[status]
+	day := ""
+	if released != nil {
+		day = released.In(kampala).Format("2 Jan 2006 15:04")
+	}
+	return &screensv1.PageDrawer{Title: "Leadership release", Subtitle: "Country leadership · " + label, HasRequired: true, CancelLabel: "Cancel",
+		Items: []*screensv1.DrawerItem{
+			{Kind: &screensv1.DrawerItem_Facts{Facts: &screensv1.PageFacts{Facts: []*screensv1.PageFact{
+				{Label: "Released", Value: orDash(day)}, {Label: "Project cohort", Value: measured + " of " + total + " enrolments measured"}}}}},
+			note("The whole report and its evidence, as released to the country's leadership."),
+		}}, true, nil
+}
+
+var kampala = func() *time.Location {
+	z, err := time.LoadLocation("Africa/Kampala")
+	if err != nil {
+		return time.FixedZone("EAT", 3*60*60)
+	}
+	return z
+}()
+
+// kampalaDay is timezone.localdate().
+func kampalaDay(t time.Time) time.Time {
+	l := t.In(kampala)
+	return time.Date(l.Year(), l.Month(), l.Day(), 0, 0, 0, 0, time.UTC)
 }
