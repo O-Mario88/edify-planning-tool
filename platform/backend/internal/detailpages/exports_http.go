@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pageaccess"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/rbac"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
@@ -64,7 +65,7 @@ func (s *Service) RegisterHTTP(mux *http.ServeMux, authn HTTPAuth) {
 		}
 		switch {
 		case target == "/schools/upload/template":
-			s.writeSchoolUploadTemplate(w)
+			s.writeSchoolUploadTemplate(w, p)
 		case target == "/projects/export":
 			s.exportProjectsCSV(r.Context(), w, fy, "")
 		case strings.HasPrefix(target, "/projects/") && strings.HasSuffix(target, "/export"):
@@ -104,21 +105,23 @@ func startCSV(w http.ResponseWriter, filename string) *csv.Writer {
 	return csv.NewWriter(w)
 }
 
-func (s *Service) writeSchoolUploadTemplate(w http.ResponseWriter) {
-	cw := startCSV(w, "edify-schools-upload-template.csv")
-	_ = cw.Write([]string{
-		"school_id", "school_name", "district", "sub_county", "parish",
-		"school_type", "enrollment", "primary_contact_name", "primary_contact_phone",
-		"school_phone", "shipping_address", "latitude", "longitude",
-	})
-	_ = cw.Write([]string{
-		"1001", "Example Primary School", "Mukono", "Goma", "Nantabulirwa",
-		"Client", "420", "Jane Doe", "+256700000000",
-		"+256700000001", "Kampala-Jinja Highway", "", "",
-	})
+// writeSchoolUploadTemplate is school_template_download_view: the upload's
+// own column headings, required first, and its minimal sample row, for a
+// role the School Upload page admits.
+func (s *Service) writeSchoolUploadTemplate(w http.ResponseWriter, p auth.Principal) {
+	if !pageaccess.CanOpen(p.ActiveRole, false, "/schools/upload/template") {
+		http.Error(w, "You do not have access to this export.", http.StatusForbidden)
+		return
+	}
+	w.Header().Set("Content-Type", "text/csv")
+	w.Header().Set("Content-Disposition", `attachment; filename="school_upload_template.csv"`)
+	cw := csv.NewWriter(w)
+	cw.UseCRLF = true
+	_ = cw.Write([]string{"School ID", "School Name", "District", "Sub County", "Current Partner Type", "Staff Name",
+		"Enrolment", "Last Date of Enrolment", "Phone", "Primary Contact", "School Shipping Address"})
+	_ = cw.Write([]string{"SCH-0001", "St. Mary's Primary School", "", "", "", "", "", "", "", "", ""})
 	cw.Flush()
 }
-
 func (s *Service) exportProjectsCSV(ctx context.Context, w http.ResponseWriter, fy, projectID string) {
 	rows, err := s.db.Query(ctx, `
 SELECT COALESCE(pr.code, ''), pr.name, COALESCE(pr.category, ''), COALESCE(pr.status, ''),
