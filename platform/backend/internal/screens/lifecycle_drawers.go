@@ -45,6 +45,9 @@ func (s *Service) lifecycleDrawerInGo(ctx context.Context, p auth.Principal, pat
 	if err != nil {
 		return nil, true, err
 	}
+	if facts.Session && m[2] != "salesforce-id" {
+		return nil, false, nil
+	}
 	var drawer *screensv1.PageDrawer
 	switch m[2] {
 	case "start":

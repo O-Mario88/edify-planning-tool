@@ -16,7 +16,7 @@ import (
 )
 
 // The Salesforce ID drawer (my_plan_views.salesforce_id_action) for an
-// officer's own staff school visit: the ID is reserved and the visit handed
+// officer's own staff school visit (a cluster session: salesforce_session.go): the ID is reserved and the visit handed
 // in with it (services.hand_in_with_id), whatever day it was planned for.
 // Unlike the Complete drawer it carries no attendance or notes, and writes
 // no complete_activity row.
@@ -37,6 +37,20 @@ func (s *Service) EnterSalesforceID(ctx context.Context, p auth.Principal, activ
 		if !slices.Contains(salesforceEntryFields, name) && slices.ContainsFunc(values, func(v string) bool { return strings.TrimSpace(v) != "" }) {
 			return CompleteAnswer{}, handOn("the drawer posted " + name)
 		}
+	}
+	session, err := readCompletedMeeting(ctx, s.db, strings.TrimSpace(activityID))
+	if err != nil {
+		return CompleteAnswer{}, err
+	}
+	if session != nil {
+		m, err := s.meetingInCase(ctx, p, session.id)
+		if err != nil {
+			return CompleteAnswer{}, err
+		}
+		if m == nil {
+			return CompleteAnswer{}, handOn("the session is no longer there")
+		}
+		return s.enterSessionID(ctx, p, m, form, origin)
 	}
 	if p.InActingAppointment || p.StaffProfileID == "" || p.ActiveRole != officerRole || slices.Contains(p.Roles, programmeLeadRole) {
 		return CompleteAnswer{}, handOn("not an officer entering their own visit's ID")

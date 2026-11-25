@@ -79,6 +79,10 @@ GRANT SELECT (ssa_not_collected_reason), UPDATE (ssa_not_collected_reason) ON ac
 -- An In-school Training pair's training half names its visit.
 GRANT SELECT (paired_school_visit_id) ON activity TO edify_completion_owner;
 
+-- A cluster session's Salesforce ID: whether Submit's attendance gate
+-- passes, and the owner hand_in_entered_work names when it does not.
+GRANT SELECT (teachers_attended, leaders_attended, responsible_staff_id) ON activity TO edify_completion_owner;
+
 CREATE SCHEMA IF NOT EXISTS gateway_completion AUTHORIZATION edify_completion_owner;
 REVOKE ALL ON SCHEMA gateway_completion FROM PUBLIC;
 
@@ -402,6 +406,68 @@ END
 $fn$;
 REVOKE ALL ON FUNCTION gateway_completion.hand_in_cluster_meeting(varchar, date, varchar, varchar, integer,
   integer, varchar[], text, text, text, varchar, timestamptz, varchar, varchar) FROM PUBLIC;
+-- The Salesforce ID drawer on an officer's staff cluster session
+-- (my_plan_views.salesforce_id_action): the TS- ID reserved
+-- (reserve_salesforce_id), the day done kept, the session started if it was
+-- not (start_completion), then handed in. With its head count recorded it is
+-- Submit's hand-in (submit_for_review: the officer named on the completion
+-- record); without one Submit refuses it and hand_in_entered_work hands it in
+-- (_hand_in: evidence accepted, the session's owner named). `counted` is what
+-- Go read of the head count; 'changed' when the session no longer matches.
+CREATE OR REPLACE FUNCTION gateway_completion.hand_in_session_with_id(
+  target varchar, delivered date, raw_value varchar, normalized varchar, counted boolean,
+  entered_by varchar, at timestamptz, reference_id varchar, verification_id varchar
+) RETURNS text
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  work record;
+  holder record;
+BEGIN
+  SELECT a.status, a.delivery_type, a.activity_type, a.cluster_id, a.deleted_at, a.responsible_staff_id,
+         COALESCE(a.teachers_attended, 0) > 0 OR COALESCE(a.leaders_attended, 0) > 0 AS has_count
+    INTO work FROM public.activity a WHERE a.id = target FOR UPDATE;
+  IF NOT FOUND OR work.delivery_type IS DISTINCT FROM 'staff'
+     OR NOT (work.activity_type = ANY (ARRAY['cluster_meeting', 'cluster_training']::varchar[]))
+     OR work.cluster_id IS NULL OR work.deleted_at IS NOT NULL OR work.has_count IS DISTINCT FROM counted
+     OR NOT (work.status = ANY (ARRAY['completion_started', 'scheduled', 'in_progress', 'partner_scheduled',
+                                      'assigned_to_partner', 'rescheduled']::varchar[])) THEN
+    RETURN 'changed';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.activity_salesforce_reference r WHERE r.activity_id = target) THEN
+    RETURN 'own_reference';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.activity_completion_verification v WHERE v.activity_id = target) THEN
+    RETURN 'verification';
+  END IF;
+  SELECT h.id, h.status, h.deleted_at INTO holder
+    FROM public.activity_salesforce_reference r JOIN public.activity h ON h.id = r.activity_id
+   WHERE r.normalized_value = normalized;
+  IF FOUND THEN
+    IF holder.deleted_at IS NOT NULL OR holder.status IN ('cancelled', 'deferred') THEN
+      RETURN 'called_off';
+    END IF;
+    RETURN 'held:' || holder.id;
+  END IF;
+  INSERT INTO public.activity_salesforce_reference (id, created_at, updated_at, raw_value, normalized_value,
+    activity_type, expected_prefix, entry_source, entered_by, entered_at, activity_id)
+  VALUES (reference_id, at, at, raw_value, normalized, work.activity_type, 'TS-', 'staff_self_entry',
+    entered_by, at, target);
+  UPDATE public.activity a SET
+    execution_started_at = COALESCE(a.execution_started_at, at),
+    salesforce_activity_id = normalized, salesforce_activity_type = 'training',
+    actual_delivery_date = delivered, status = 'submitted_to_pl',
+    evidence_status = CASE WHEN NOT counted AND a.evidence_status = 'none' THEN 'accepted' ELSE a.evidence_status END,
+    updated_at = at
+  WHERE a.id = target;
+  INSERT INTO public.activity_completion_verification (id, created_at, updated_at, salesforce_id, entered_by,
+    entered_at, status, activity_id)
+  VALUES (verification_id, at, at, normalized,
+    CASE WHEN counted THEN entered_by ELSE COALESCE(work.responsible_staff_id, 'system') END, at, 'pending', target);
+  RETURN '';
+END
+$fn$;
+REVOKE ALL ON FUNCTION gateway_completion.hand_in_session_with_id(varchar, date, varchar, varchar, boolean,
+  varchar, timestamptz, varchar, varchar) FROM PUBLIC;
 -- _record_completion_ssa for an officer's staff School Visit + SSA Collection
 -- completed without scores: why none were taken, or none. False when the
 -- visit is not that case.
@@ -494,6 +560,8 @@ GRANT EXECUTE ON FUNCTION gateway_completion.record_attendance(varchar, integer,
   TO edify_activities_rw;
 GRANT EXECUTE ON FUNCTION gateway_completion.hand_in_cluster_meeting(varchar, date, varchar, varchar, integer,
   integer, varchar[], text, text, text, varchar, timestamptz, varchar, varchar) TO edify_activities_rw;
+GRANT EXECUTE ON FUNCTION gateway_completion.hand_in_session_with_id(varchar, date, varchar, varchar, boolean,
+  varchar, timestamptz, varchar, varchar) TO edify_activities_rw;
 GRANT EXECUTE ON FUNCTION gateway_completion.note_ssa_not_collected(varchar, text, timestamptz) TO edify_activities_rw;
 GRANT EXECUTE ON FUNCTION gateway_completion.hand_in_school_training(varchar, date, varchar, varchar, integer, integer,
   text, text, text, varchar, timestamptz, varchar, varchar) TO edify_activities_rw;

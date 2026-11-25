@@ -86,6 +86,9 @@ func (s *Service) lifecycleInGo(ctx context.Context, message *screensv1.SaveDraw
 	var refusal *activities.Refusal
 	switch {
 	case errors.Is(err, activities.ErrHandOn):
+		if s.logger != nil {
+			s.logger.DebugContext(ctx, "the lifecycle save is handed on", slog.String("why", err.Error()))
+		}
 		return nil, false, nil
 	case errors.As(err, &refusal):
 		return &screensv1.SaveDrawerResponse{Saved: false, Error: collapse(refusedAs + refusal.Message)}, true, nil
