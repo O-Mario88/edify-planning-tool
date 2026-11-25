@@ -227,6 +227,9 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		// The Measurement Framework's saves (apps.impact.framework).
 		filepath.Join(root, "internal", "iaframework") + sep: {"impact_outcome_area", "impact_outcome_area_domain",
 			"impact_indicator_definition", "bt_loan_purpose"},
+		// School Evidence's saves (apps.impact.evidence_services).
+		filepath.Join(root, "internal", "schoolevidence") + sep: {"impact_learning_result", "impact_discipleship_record",
+			"impact_edtech_deployment", "impact_edtech_check"},
 		// The Staff Activity follow-ups (apps.staff_activity.follow_ups).
 		filepath.Join(root, "internal", "staffactivity") + sep: {"staff_usage_follow_up"},
 		// The weekly sample checks (apps.activities.verification_sampling).

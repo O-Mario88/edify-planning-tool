@@ -193,6 +193,12 @@ func (s *Service) SaveDrawer(
 			}
 		}
 	}
+	if answer, served, err := s.evidenceSaveInGo(ctx, forwarded); served {
+		if err != nil {
+			return nil, err
+		}
+		return connect.NewResponse(answer), nil
+	}
 	if answer, served, err := s.frameworkSaveInGo(ctx, forwarded); served {
 		if err != nil {
 			return nil, err

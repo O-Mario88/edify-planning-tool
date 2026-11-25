@@ -1067,3 +1067,41 @@ RESET ROLE;
 REVOKE CREATE ON SCHEMA gateway_ia_framework FROM edify_ia_framework_owner;
 GRANT USAGE ON SCHEMA gateway_ia_framework TO edify_activities_rw;
 GRANT EXECUTE ON FUNCTION gateway_ia_framework.clear_area_domains(varchar) TO edify_activities_rw;
+
+-- ── School Evidence (apps.impact.evidence_services) ──
+-- Learning results, discipleship records, EdTech deployments and their
+-- checks recorded by Impact Assessment, corrected or withdrawn (a tombstone,
+-- never a removal) by their recorder, and confirmed or returned by a second
+-- person.
+GRANT SELECT, INSERT (id, created_at, updated_at, source, environment, deleted_at, country, fy, evidence_reference, notes,
+                      recorded_by_user_id, verification_status, verified_by_user_id, verified_at, return_reason, school_id,
+                      source_activity_id, assessment_type, assessed_on, grade_level, subject, learners_tested, mean_score,
+                      max_score, learners_proficient),
+      UPDATE (updated_at, deleted_at, fy, evidence_reference, notes, verification_status, verified_by_user_id, verified_at,
+              return_reason, assessment_type, assessed_on, grade_level, subject, learners_tested, mean_score, max_score,
+              learners_proficient)
+  ON impact_learning_result TO edify_activities_rw;
+GRANT SELECT, INSERT (id, created_at, updated_at, source, environment, deleted_at, country, fy, evidence_reference, notes,
+                      recorded_by_user_id, verification_status, verified_by_user_id, verified_at, return_reason, school_id,
+                      source_activity_id, observed_on, devotions_per_week, discipleship_groups_active, learners_in_groups,
+                      learners_enrolled, staff_in_devotions_pct, spiritual_lead_in_post, bible_lessons_timetabled),
+      UPDATE (updated_at, deleted_at, fy, evidence_reference, notes, verification_status, verified_by_user_id, verified_at,
+              return_reason, observed_on, devotions_per_week, discipleship_groups_active, learners_in_groups, learners_enrolled,
+              staff_in_devotions_pct, spiritual_lead_in_post, bible_lessons_timetabled)
+  ON impact_discipleship_record TO edify_activities_rw;
+GRANT SELECT, INSERT (id, created_at, updated_at, source, environment, deleted_at, country, fy, evidence_reference, notes,
+                      recorded_by_user_id, verification_status, verified_by_user_id, verified_at, return_reason, school_id,
+                      source_activity_id, asset_type, quantity, deployed_on, funding, project_id, teachers_trained,
+                      learners_with_access),
+      UPDATE (updated_at, deleted_at, fy, evidence_reference, notes, verification_status, verified_by_user_id, verified_at,
+              return_reason, asset_type, quantity, deployed_on, funding, project_id, teachers_trained, learners_with_access)
+  ON impact_edtech_deployment TO edify_activities_rw;
+GRANT SELECT, INSERT (id, created_at, updated_at, source, environment, deleted_at, country, fy, evidence_reference, notes,
+                      recorded_by_user_id, verification_status, verified_by_user_id, verified_at, return_reason, school_id,
+                      source_activity_id, deployment_id, checked_on, units_functional, teachers_using, learners_using,
+                      weekly_use_hours, issues),
+      UPDATE (updated_at, deleted_at, fy, evidence_reference, notes, verification_status, verified_by_user_id, verified_at,
+              return_reason, checked_on, units_functional, teachers_using, learners_using, weekly_use_hours, issues)
+  ON impact_edtech_check TO edify_activities_rw;
+GRANT SELECT (id, name, deleted_at) ON project TO edify_activities_rw;
+GRANT SELECT (id, name, school_id, region_id, deleted_at, created_at) ON school TO edify_activities_rw;

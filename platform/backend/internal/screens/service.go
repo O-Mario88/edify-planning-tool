@@ -78,6 +78,8 @@ type Service struct {
 	acting ActingDrawers
 	// coaching is Team Coaching's drawers, with Django absent.
 	coaching CoachingDrawers
+	// evidence is School Evidence's drawers, with Django absent.
+	evidence EvidenceDrawers
 	// framework is the Measurement Framework's drawers, with Django absent.
 	framework FrameworkDrawers
 	// leadership is the Regional Lead's drawers, with Django absent.
