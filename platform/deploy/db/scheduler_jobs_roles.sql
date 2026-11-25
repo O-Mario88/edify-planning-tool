@@ -41,6 +41,7 @@ GRANT SELECT, INSERT ON execution_period_snapshot TO edify_scheduler_owner;
 GRANT SELECT, UPDATE (live_remaining, live_checked_at, updated_at, status, resolved_at, resolved_by_system, history)
   ON planning_oversight_follow_up TO edify_scheduler_owner;
 GRANT SELECT, UPDATE (resolved_at, action_required) ON notification TO edify_scheduler_owner;
+GRANT SELECT, UPDATE (resolved_at, resolved_by_system) ON team_action TO edify_scheduler_owner;
 
 CREATE SCHEMA IF NOT EXISTS gateway_scheduler AUTHORIZATION edify_scheduler_owner;
 REVOKE ALL ON SCHEMA gateway_scheduler FROM PUBLIC;
@@ -623,6 +624,35 @@ BEGIN
 END
 $fn$;
 
+-- The delegated-action sweep (action_service.resolve_due_actions and
+-- mark_overdue_actions): closes an action whose condition cleared, or flags
+-- one past its due date. Go reads the conditions; these only write.
+CREATE OR REPLACE FUNCTION gateway_scheduler.resolve_team_action(p_id varchar, p_state varchar, p_now timestamptz)
+RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  v_changed integer;
+BEGIN
+  UPDATE public.team_action
+     SET state = p_state, resolved_at = p_now, resolved_by_system = true, updated_at = p_now
+   WHERE id = p_id;
+  GET DIAGNOSTICS v_changed = ROW_COUNT;
+  RETURN v_changed;
+END
+$fn$;
+
+CREATE OR REPLACE FUNCTION gateway_scheduler.mark_team_action_overdue(p_id varchar, p_state varchar, p_now timestamptz)
+RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  v_changed integer;
+BEGIN
+  UPDATE public.team_action SET state = p_state, updated_at = p_now WHERE id = p_id;
+  GET DIAGNOSTICS v_changed = ROW_COUNT;
+  RETURN v_changed;
+END
+$fn$;
+
 REVOKE ALL ON FUNCTION gateway_scheduler.record_execution(text, timestamptz, timestamptz, text, integer, text, text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_scheduler.purge_mfa_challenges(timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_scheduler.run_acting_lifecycle(date, timestamptz) FROM PUBLIC;
@@ -636,6 +666,8 @@ REVOKE ALL ON FUNCTION gateway_scheduler.generate_due_maintenance(date, timestam
 REVOKE ALL ON FUNCTION gateway_scheduler.upsert_weekly_drafts(date, date, text, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_scheduler.upsert_monthly_budget_draft(text, text, text, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_scheduler.reconcile_document_lifecycle(date, timestamptz) FROM PUBLIC;
+REVOKE ALL ON FUNCTION gateway_scheduler.resolve_team_action(varchar, varchar, timestamptz) FROM PUBLIC;
+REVOKE ALL ON FUNCTION gateway_scheduler.mark_team_action_overdue(varchar, varchar, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_scheduler.keep_followup_figure(varchar, integer, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_scheduler.close_followup(varchar, integer, timestamptz, varchar, jsonb, varchar) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_scheduler.lock_execution_snapshot(varchar, varchar, varchar, varchar, date, date, varchar, date, varchar, jsonb, jsonb, jsonb, jsonb, timestamptz) FROM PUBLIC;
@@ -656,6 +688,8 @@ GRANT EXECUTE ON FUNCTION gateway_scheduler.generate_due_maintenance(date, times
 GRANT EXECUTE ON FUNCTION gateway_scheduler.upsert_weekly_drafts(date, date, text, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_scheduler.upsert_monthly_budget_draft(text, text, text, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_scheduler.reconcile_document_lifecycle(date, timestamptz) TO edify_gateway;
+GRANT EXECUTE ON FUNCTION gateway_scheduler.resolve_team_action(varchar, varchar, timestamptz) TO edify_gateway;
+GRANT EXECUTE ON FUNCTION gateway_scheduler.mark_team_action_overdue(varchar, varchar, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_scheduler.keep_followup_figure(varchar, integer, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_scheduler.close_followup(varchar, integer, timestamptz, varchar, jsonb, varchar) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_scheduler.lock_execution_snapshot(varchar, varchar, varchar, varchar, date, date, varchar, date, varchar, jsonb, jsonb, jsonb, jsonb, timestamptz) TO edify_gateway;

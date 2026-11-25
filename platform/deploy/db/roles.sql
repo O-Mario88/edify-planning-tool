@@ -1364,3 +1364,9 @@ GRANT SELECT (country) ON planning_oversight_follow_up TO edify_gateway_ro;
 -- The planning follow-up sweep (followups.refresh): the period, the school,
 -- Partner and activity a follow-up names, and who sent it.
 GRANT SELECT (period_type, period_start, school_id, partner_id, activity_id, assigned_by_id) ON planning_oversight_follow_up TO edify_gateway_ro;
+-- The delegated-action sweep (action_service.condition_still_holds): the
+-- condition an action names, which carries the record or the area.
+GRANT SELECT (condition_key) ON team_action TO edify_gateway_ro;
+-- The delegated-action sweep's Core conditions (_core_condition_still_holds):
+-- whether the year's core assessment is on file.
+GRANT SELECT (assessment_completed) ON core_plan TO edify_gateway_ro;

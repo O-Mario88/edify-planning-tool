@@ -1203,6 +1203,15 @@ def resolve_due_actions(*, limit: int | None = None) -> dict:
     return {"checked": checked, "resolved": resolved}
 
 
+#: The states an action past its due date is flagged overdue from.
+OVERDUE_FROM_STATES = (
+    ActionState.OPEN,
+    ActionState.ACKNOWLEDGED,
+    ActionState.IN_PROGRESS,
+    ActionState.BLOCKED,
+)
+
+
 def mark_overdue_actions() -> dict:
     """Flip past-due actions to OVERDUE and tell both parties.
 
@@ -1212,12 +1221,7 @@ def mark_overdue_actions() -> dict:
     """
     today = timezone.localdate()
     qs = TeamAction.objects.filter(
-        state__in=[
-            ActionState.OPEN,
-            ActionState.ACKNOWLEDGED,
-            ActionState.IN_PROGRESS,
-            ActionState.BLOCKED,
-        ],
+        state__in=OVERDUE_FROM_STATES,
         due_date__lt=today,
     )
     count = 0

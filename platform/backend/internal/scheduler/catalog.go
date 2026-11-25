@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/acting"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/actionsweep"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/adminops"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/autopilotjobs"
@@ -101,10 +102,6 @@ var UgandaCutoverJobs = []JobMeta{
 var notRunByGo = map[string]string{
 	"bulk_completion": "apps.bulk_completion.worker.work: Go has no page that queues an upload yet",
 	"export_jobs":     "apps.reports.export_jobs.work: Go has no page that queues an export yet",
-	"school_action_sweep": "apps.planning.action_service.resolve_due_actions and mark_overdue_actions: " +
-		"whether a delegated action's condition still holds is read through the Planning Oversight and " +
-		"Partner Oversight risk detectors, Country Oversight's planning gaps and the SSA intervention bands, " +
-		"none of which are built in Go yet",
 }
 
 // KampalaOperationalFY returns the Uganda fiscal year (Oct 1 – Sep 30) in
@@ -216,7 +213,6 @@ func executeJob(
 		loc = time.UTC
 	}
 	localNow := now.In(loc)
-	today := localNow.Format(time.DateOnly)
 
 	switch m.Name {
 	case "cost_reprice_sweep":
@@ -234,7 +230,12 @@ func executeJob(
 		return callIntRW(ctx, pool, `SELECT gateway_scheduler.escalate_stale_notifications($1, $2)`, now.Add(-48*time.Hour), now)
 
 	case "school_action_sweep":
-		return callIntRW(ctx, pool, `SELECT gateway_scheduler.sweep_school_actions($1::date, $2)`, today, now)
+		// action_service.resolve_due_actions, then mark_overdue_actions: each
+		// active action's condition read again through the engine of its
+		// kind, the cleared ones closed, the late ones flagged overdue.
+		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy
+		day := time.Date(localNow.Year(), localNow.Month(), localNow.Day(), 0, 0, 0, 0, time.UTC)
+		return actionsweep.Sweep(ctx, pool, push, now, day, slog.Default())
 
 	case "outbox_drain":
 		// apps.outbox.services.drain, for the event types Go handles; the

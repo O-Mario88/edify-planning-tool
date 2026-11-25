@@ -1,0 +1,120 @@
+{
+  "active_states": [
+    "acknowledged",
+    "blocked",
+    "escalated",
+    "in_progress",
+    "open",
+    "overdue"
+  ],
+  "core_oversight_risk_keys": [
+    "core_assessment_missing",
+    "core_package_behind"
+  ],
+  "ia_verified_statuses": [
+    "accountant_confirmed",
+    "closed",
+    "ia_verified"
+  ],
+  "overdue_from_states": [
+    "acknowledged",
+    "blocked",
+    "in_progress",
+    "open"
+  ],
+  "overdue_state": "overdue",
+  "oversight_key_prefixes": [
+    "oversight",
+    "partner_oversight"
+  ],
+  "oversight_risk_keys": [
+    "activity_overdue",
+    "evidence_outstanding",
+    "ia_returned",
+    "partner_not_scheduled",
+    "repeated_reschedule",
+    "salesforce_missing",
+    "scheduled_without_cost"
+  ],
+  "partner_oversight_risk_keys": [
+    "assignment_returned",
+    "evidence_submission_stalled",
+    "partner_salesforce_overdue"
+  ],
+  "planning_gap_keys": [
+    "planning_cluster_gap",
+    "planning_meeting_gap",
+    "planning_partner_gap",
+    "planning_school_gap",
+    "planning_training_gap",
+    "planning_visit_gap"
+  ],
+  "resolved_state": "resolved",
+  "school_gap_figure": {
+    "planning_cluster_gap": "unclustered",
+    "planning_meeting_gap": "clustered_no_meeting",
+    "planning_partner_gap": "partner_gap",
+    "planning_school_gap": "unallocated",
+    "planning_training_gap": "training_gap",
+    "planning_visit_gap": "staff_gap"
+  },
+  "ssa_bands": [
+    [
+      10.0,
+      "Strong"
+    ],
+    [
+      8.0,
+      "Strong"
+    ],
+    [
+      6.0,
+      "Improving"
+    ],
+    [
+      5.0,
+      "Warning"
+    ],
+    [
+      0.0,
+      "Critical"
+    ]
+  ],
+  "system_verifiable": [
+    "activity_overdue",
+    "assignment_returned",
+    "core_assessment_missing",
+    "core_package_behind",
+    "evidence_outstanding",
+    "evidence_submission_stalled",
+    "ia_returned",
+    "intervention_critical",
+    "intervention_warning",
+    "low_ssa",
+    "no_ssa",
+    "no_training",
+    "no_visit",
+    "no_visit_or_training",
+    "partner_not_scheduled",
+    "partner_salesforce_overdue",
+    "planning_cluster_gap",
+    "planning_meeting_gap",
+    "planning_partner_gap",
+    "planning_school_gap",
+    "planning_training_gap",
+    "planning_visit_gap",
+    "repeated_reschedule",
+    "salesforce_missing",
+    "scheduled_without_cost"
+  ],
+  "training_types": [
+    "core_training",
+    "in_school_training",
+    "school_improvement_training",
+    "training"
+  ],
+  "visit_types": [
+    "core_visit",
+    "school_visit"
+  ]
+}
