@@ -33,6 +33,7 @@ type act struct {
 	hasSchool                                                        bool
 	clusterName, clusterDistrictID, clusterDistrict                  string
 	courseDisplay, courseSource                                      string
+	partnerName                                                      string
 }
 
 const actColumns = `a.id, COALESCE(a.activity_type, ''), COALESCE(a.status, ''), COALESCE(a.evidence_status, ''),
@@ -52,14 +53,15 @@ const actColumns = `a.id, COALESCE(a.activity_type, ''), COALESCE(a.status, ''),
   COALESCE(s.school_id, ''), COALESCE(s.name, ''), COALESCE(s.school_type, ''), COALESCE(s.district_id, ''),
   COALESCE(sd.name, ''), s.id IS NOT NULL,
   COALESCE(c.name, ''), COALESCE(c.district_id, ''), COALESCE(cd.name, ''),
-  COALESCE(tc.display_name, ''), COALESCE(tc.source_name, '')`
+  COALESCE(tc.display_name, ''), COALESCE(tc.source_name, ''), COALESCE(pt.name, '')`
 
 const actJoins = ` FROM activity a
 LEFT JOIN school s ON s.id = a.school_id
 LEFT JOIN district sd ON sd.id = s.district_id
 LEFT JOIN cluster c ON c.id = a.cluster_id
 LEFT JOIN district cd ON cd.id = c.district_id
-LEFT JOIN activity_catalogue_item tc ON tc.id = a.training_course_id`
+LEFT JOIN activity_catalogue_item tc ON tc.id = a.training_course_id
+LEFT JOIN partner pt ON pt.id = a.assigned_partner_id`
 
 // readTeamActs is _activity_queryset for the team (both id spaces; nil for
 // the country and region lenses) and the regions (nil but for the region
@@ -89,7 +91,7 @@ ORDER BY a.created_at DESC, a.id`, args...)
 			&a.submittedToIA, &a.scheduled, &a.executionStarted, &a.plReviewed,
 			&a.plannedDate, &a.actualDelivery, &a.plannedBefore,
 			&a.schoolCode, &a.schoolName, &a.schoolType, &a.schoolDistrictID, &a.schoolDist, &a.hasSchool,
-			&a.clusterName, &a.clusterDistrictID, &a.clusterDistrict, &a.courseDisplay, &a.courseSource); err != nil {
+			&a.clusterName, &a.clusterDistrictID, &a.clusterDistrict, &a.courseDisplay, &a.courseSource, &a.partnerName); err != nil {
 			return nil, fmt.Errorf("planningoversight: reading the team's work: %w", err)
 		}
 		out = append(out, a)
@@ -149,6 +151,11 @@ type item struct {
 	invited bool
 	// The Programme Lead the owner reports to (the country lens's tabs).
 	lead string
+	// Partner work (kept for the coverage lens only): delivered by a
+	// Partner, or a hand-over it has not dated yet (assignment set).
+	partner                      bool
+	partnerName                  string
+	assignment, assignmentStatus string
 }
 
 func (it *item) contextLabel() string {
@@ -176,13 +183,19 @@ func (a *act) isPartner() bool {
 // buildItems is build_items for the lens with the view's Partner filter:
 // the team's staff work, sorted by date then context, risk-annotated.
 func (s *Service) buildItems(ctx context.Context, team, regions, years []string, read periodRead, today time.Time) ([]*item, error) {
+	return s.buildItemsKeeping(ctx, team, regions, years, read, today, false)
+}
+
+// buildItemsKeeping is buildItems, with the Partner-delivered work kept
+// when withPartner (the coverage lens reads every school's planned work).
+func (s *Service) buildItemsKeeping(ctx context.Context, team, regions, years []string, read periodRead, today time.Time, withPartner bool) ([]*item, error) {
 	acts, err := s.readTeamActs(ctx, team, regions, years, read)
 	if err != nil {
 		return nil, err
 	}
 	staff := []*act{}
 	for _, a := range acts {
-		if !a.isPartner() {
+		if withPartner || !a.isPartner() {
 			staff = append(staff, a)
 		}
 	}
@@ -245,6 +258,9 @@ func compareDay(x, y *time.Time) int {
 func buildItem(a *act, names, costs map[string]int64Name, live map[string]bool, fixed map[string]string, outside []string) *item {
 	r := rules.TeamPlan.Items
 	owner := first(a.responsible, a.monitored)
+	if a.isPartner() {
+		owner = first(a.monitored, a.responsible)
+	}
 	inSchool := a.pairedVisit != "" || a.activityType == "in_school_training" || a.delivery == "in-school"
 	cost := a.estCost
 	if c, ok := costs[a.id]; ok && c.n != 0 {
@@ -295,6 +311,9 @@ func buildItem(a *act, names, costs map[string]int64Name, live map[string]bool, 
 		plannedCost: cost,
 	}
 	it.schoolCode = first(a.schoolCode, a.schoolPK, "—")
+	if a.isPartner() {
+		it.partner, it.partnerName = true, a.partnerName
+	}
 	if inSchool {
 		it.plannedFrom, it.delivery = "School Visit", "in-school"
 	}

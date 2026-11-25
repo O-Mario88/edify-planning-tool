@@ -190,6 +190,141 @@
         "label": "Group Trainings"
       }
     ],
+    "coverage": {
+      "assignment_statuses": [
+        "assigned",
+        "pending_scheduling",
+        "returned_to_staff"
+      ],
+      "budget": {
+        "created": "Budget created",
+        "in_school_visit": "In school visit",
+        "in_weekly_request": "In weekly fund request",
+        "no_cost": "No cost yet"
+      },
+      "cluster_meeting_types": [
+        "cluster_meeting",
+        "cluster_meeting_ssa_review"
+      ],
+      "cluster_session_types": [
+        "cluster_meeting",
+        "cluster_meeting_ssa_review",
+        "cluster_training",
+        "cluster_training_ssa_collection"
+      ],
+      "dead_statuses": [
+        "cancelled",
+        "deferred",
+        "not_planned",
+        "rejected",
+        "returned",
+        "returned_by_ia"
+      ],
+      "ia_status_labels": {
+        "": "Pending",
+        "confirmed": "Verified",
+        "flagged": "Flagged",
+        "pending": "Pending",
+        "returned": "Returned"
+      },
+      "left_partner_statuses": [
+        "cancelled",
+        "returned"
+      ],
+      "operating_statuses": [
+        "active",
+        "reopened"
+      ],
+      "pending_approval_statuses": [
+        "awaiting_owner_approval"
+      ],
+      "reasons": {
+        "canceled": "Existing plan canceled",
+        "no_training": "No cluster training planned",
+        "not_clustered": "School not attached to a cluster",
+        "not_required": "This school type takes no training",
+        "returned": "Existing plan returned"
+      },
+      "row_limit": 100,
+      "school_training_types": [
+        "training",
+        "in_school_training",
+        "school_improvement_training",
+        "core_training"
+      ],
+      "trained_types": [
+        "core",
+        "client",
+        "core_trained",
+        "core_graduate"
+      ],
+      "visit_labels": {
+        "no_visit_planned": "No Visit Planned",
+        "scheduled_for_visit": "Scheduled for Visit",
+        "visit_canceled": "Visit Canceled",
+        "visit_completed": "Visit Completed",
+        "visit_in_progress": "Visit In Progress",
+        "visit_planned": "Visit Planned",
+        "visit_submitted": "Visit Submitted",
+        "visit_verified": "Visit Verified"
+      },
+      "visit_precedence": [
+        "visit_in_progress",
+        "scheduled_for_visit",
+        "visit_submitted",
+        "visit_verified",
+        "visit_completed",
+        "visit_planned",
+        "visit_canceled",
+        "no_visit_planned"
+      ],
+      "visit_states": {
+        "accountant_confirmed": "visit_completed",
+        "assigned_to_partner": "visit_planned",
+        "awaiting_ia_verification": "visit_submitted",
+        "closed": "visit_completed",
+        "completed": "visit_completed",
+        "completion_started": "visit_in_progress",
+        "evidence_accepted": "visit_submitted",
+        "evidence_uploaded": "visit_submitted",
+        "ia_verified": "visit_verified",
+        "in_progress": "visit_in_progress",
+        "partner_scheduled": "scheduled_for_visit",
+        "planned": "visit_planned",
+        "rescheduled": "scheduled_for_visit",
+        "returned_by_pl": "visit_planned",
+        "salesforce_id_required": "visit_submitted",
+        "scheduled": "scheduled_for_visit",
+        "submitted_to_pl": "visit_submitted"
+      },
+      "visit_tones": {
+        "no_visit_planned": "neutral",
+        "scheduled_for_visit": "success",
+        "visit_canceled": "warning",
+        "visit_completed": "success",
+        "visit_in_progress": "info",
+        "visit_planned": "info",
+        "visit_submitted": "info",
+        "visit_verified": "success"
+      },
+      "visit_types": [
+        "baseline_ssa_visit",
+        "coaching_visit",
+        "core_assessment_visit",
+        "core_visit",
+        "donor_visit",
+        "follow_up_visit",
+        "in_school_coaching_visit",
+        "in_school_support",
+        "partner_ssa_collection",
+        "school_invitation",
+        "school_visit",
+        "school_visit_ssa_collection",
+        "social_visit",
+        "story_gathering_visit",
+        "training_follow_up_visit"
+      ]
+    },
     "evidence_link": true,
     "filter_keys": [
       "activity_type",

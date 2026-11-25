@@ -119,6 +119,7 @@ def team_plan() -> dict:
         "query_keys_not_passed": sorted(NOT_PASSED),
         "items": team_items(),
         "flagged": flagged(),
+        "coverage": coverage(),
         "readers": readers(),
         # The tiles' labels on the lenses that read many Programme Leads.
         "lens_kpi_labels": {
@@ -274,6 +275,57 @@ def team_items() -> dict:
             "reschedule_limit": risk.RESCHEDULE_LIMIT,
             "ia_verification_grace_days": risk.IA_VERIFICATION_GRACE_DAYS,
             "payment_grace_days": risk.PAYMENT_GRACE_DAYS,
+        },
+    }
+
+
+def coverage() -> dict:
+    """The Schools & Coverage lens (coverage_service, school_status,
+    coverage_workspace.html)."""
+    from apps.activities.cluster_attendance import SCHOOL_TRAINING_TYPES
+    from apps.core.activity_types import CLUSTER_MEETING_TYPES, VISIT_TYPES
+    from apps.partners.models import PartnerAssignment
+    from apps.partners.support_responsibility import LEFT_PARTNER_STATUSES
+    from apps.planning import coverage_service as cov
+    from apps.planning import oversight_service as oversight
+    from apps.planning.country_oversight.rules import TRAINED_TYPES
+    from apps.schools import school_status as st
+    from apps.schools.lifecycle_models import OPERATING_STATUSES
+
+    return {
+        "row_limit": cov.ROW_LIMIT,
+        # The hand-overs a Partner has not dated (_unscheduled_assignments_
+        # in_scope): these statuses, unless left_partner_q holds.
+        "assignment_statuses": [
+            *PartnerAssignment.UNSCHEDULED_STATUSES,
+            oversight._RETURNED_ASSIGNMENT_STATUS,
+        ],
+        "left_partner_statuses": sorted(LEFT_PARTNER_STATUSES),
+        "ia_status_labels": dict(sorted(cov.IA_STATUS_LABELS.items())),
+        "budget": {
+            "no_cost": cov.BUDGET_NO_COST,
+            "created": cov.BUDGET_CREATED,
+            "in_weekly_request": cov.BUDGET_IN_WEEKLY_REQUEST,
+            "in_school_visit": cov.BUDGET_IN_SCHOOL_VISIT,
+        },
+        "dead_statuses": sorted(st.DEAD_STATUSES),
+        "pending_approval_statuses": sorted(st.PENDING_APPROVAL_STATUSES),
+        "cluster_session_types": sorted(st.CLUSTER_SESSION_TYPES),
+        "cluster_meeting_types": sorted(str(t) for t in CLUSTER_MEETING_TYPES),
+        "visit_types": sorted(str(t) for t in VISIT_TYPES),
+        "school_training_types": [str(t) for t in SCHOOL_TRAINING_TYPES],
+        "trained_types": list(TRAINED_TYPES),
+        "operating_statuses": list(OPERATING_STATUSES),
+        "visit_labels": dict(sorted(st.VISIT_LABELS.items())),
+        "visit_tones": dict(sorted(st.VISIT_TONES.items())),
+        "visit_states": dict(sorted(st._STATUS_STATE.items())),
+        "visit_precedence": list(st._PRECEDENCE),
+        "reasons": {
+            "not_clustered": st.REASON_NOT_CLUSTERED,
+            "canceled": st.REASON_CANCELED,
+            "returned": st.REASON_RETURNED,
+            "no_training": st.REASON_NO_TRAINING,
+            "not_required": st.REASON_NOT_REQUIRED,
         },
     }
 

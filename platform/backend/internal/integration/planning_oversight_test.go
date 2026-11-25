@@ -149,3 +149,42 @@ func TestPlanningOversightCountryLensIsGos(t *testing.T) {
 		t.Fatalf("a lens the Accountant does not hold: %v, want the Team Plan", err)
 	}
 }
+
+// The Schools & Coverage lens is drawn by Go: the summary line counts the
+// schools the planned tables hold, and the two coverage tables split the
+// operating schools between a planned session and none.
+func TestPlanningOversightCoverageLensIsGos(t *testing.T) {
+	borrowAccount(t, "pl1@edify.org")
+	lead := sessionOf(t, "pl1@edify.org", seededPassword).GetAccessToken()
+	page, err := pageOf(lead, teamPlanningOversight, map[string]string{"view": "coverage", "fy": "2026", "period": "fy"})
+	if err != nil {
+		t.Fatalf("the Lead's coverage lens: %v", err)
+	}
+	blocks := page.GetBlocks()
+	var active string
+	for _, tab := range blocks[0].GetLinkTabs().GetTabs() {
+		if tab.GetActive() {
+			active = tab.GetLabel()
+		}
+	}
+	if active == "" || !strings.Contains(strings.ToLower(active), "coverage") {
+		t.Fatalf("active lens %q", active)
+	}
+	summary := blocks[2].GetPanel().GetItems()[0]
+	if !strings.HasPrefix(summary.GetText(), summary.GetLead()+" school") || !strings.HasSuffix(summary.GetText(), " with none.") {
+		t.Fatalf("summary %q (lead %q)", summary.GetText(), summary.GetLead())
+	}
+	var titles []string
+	for _, b := range blocks {
+		if p := b.GetPanel(); p != nil && p.GetTitle() != "" {
+			titles = append(titles, p.GetTitle())
+		}
+		if tbl := b.GetTable(); tbl != nil && len(tbl.GetRows()) > 50 {
+			t.Fatalf("a table shows %d rows, past a page", len(tbl.GetRows()))
+		}
+	}
+	want := []string{"Planned Schools · FY 2026", "Schools with Planned Cluster Training or Meeting", "Schools with No Training Planned"}
+	if len(titles) != 3 || titles[0] != want[0] || titles[1] != want[1] || titles[2] != want[2] {
+		t.Fatalf("panels %q, want %q", titles, want)
+	}
+}

@@ -93,6 +93,8 @@ type TeamPlan struct {
 	Items ItemRules `json:"items"`
 	// Flagged is team_flagged_schools' and the urgent classifier's.
 	Flagged FlaggedRules `json:"flagged"`
+	// Coverage is the Schools & Coverage lens's vocabulary.
+	Coverage CoverageRules `json:"coverage"`
 	// Readers are what the lens draws for each role its door opens for.
 	Readers map[string]Reader `json:"readers"`
 	// LensKPILabels are the tiles' labels on the country and region lenses.

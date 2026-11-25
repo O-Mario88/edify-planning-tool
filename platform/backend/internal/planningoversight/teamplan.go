@@ -102,7 +102,14 @@ func (s *Service) buildTeamPlan(ctx context.Context, p auth.Principal, query url
 		return nil, false, nil
 	}
 	query = passed(query)
-	if !plainTeamQuery(query) || activeLens(reader, query) != "planning" {
+	if !plainTeamQuery(query) {
+		return nil, false, nil
+	}
+	switch activeLens(reader, query) {
+	case "planning":
+	case "coverage":
+		return s.buildCoverage(ctx, p, reader, query)
+	default:
 		return nil, false, nil
 	}
 	switch reader.Scope {
