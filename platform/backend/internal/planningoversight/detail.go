@@ -59,9 +59,10 @@ func drawerFacts(facts ...[2]string) *screensv1.DrawerItem {
 // Detail is oversight_detail_view as the feed reads it: one activity's
 // ownership, planning, cost lines and workflow state, for a reader whose
 // lens holds it. Drawn for a Programme Lead's team lens and the country
-// lens, and for the team's own (staff) work: its risks for a country
-// reader, none for a Lead (a risk's Send form, Partner work, a hand-over, a
-// region's lens and anyone else are handed on, ErrDetailHandOn). refusal is the view's own refusal.
+// lens: its risks (with their Send forms for a Lead), ownership, planning,
+// cost lines, the hand-over it came from and its workflow. A hand-over not
+// yet scheduled, a region's lens and anyone else are handed on
+// (ErrDetailHandOn). refusal is the view's own refusal.
 func (s *Service) Detail(ctx context.Context, p auth.Principal, query url.Values) (*screensv1.PageDrawer, string, error) {
 	if !pageaccess.CanOpen(p.ActiveRole, false, DetailPath) {
 		return nil, DetailRefusal, nil
@@ -106,9 +107,6 @@ func (s *Service) Detail(ctx context.Context, p auth.Principal, query url.Values
 	if a == nil {
 		return notAvailable, "", nil
 	}
-	if a.isPartner() {
-		return nil, "", ErrDetailHandOn
-	}
 	local := now.In(zone)
 	today := time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC)
 	it, err := s.oneItem(ctx, a)
@@ -123,13 +121,9 @@ func (s *Service) Detail(ctx context.Context, p auth.Principal, query url.Values
 	// through the school's assignment, or a role's queue); the country lens
 	// sends nothing (can_send).
 	canSend := reader.Scope == "pl" && reader.MayDelegate
-	var handedOver bool
-	if err := s.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM partner_assignment WHERE scheduled_activity_id = $1)`,
-		a.id).Scan(&handedOver); err != nil {
-		return nil, "", fmt.Errorf("planningoversight: the activity's hand-over: %w", err)
-	}
-	if handedOver {
-		return nil, "", ErrDetailHandOn
+	handover, err := s.handoverOf(ctx, a.id)
+	if err != nil {
+		return nil, "", err
 	}
 	lines, err := s.costLines(ctx, a.id)
 	if err != nil {
@@ -138,7 +132,7 @@ func (s *Service) Detail(ctx context.Context, p auth.Principal, query url.Values
 	if len(lines) > costPageSize {
 		return nil, "", ErrDetailHandOn
 	}
-	d, err := s.detailDrawer(ctx, it, lines, reader.OpenActivity && p.ActiveRole != "Accountant")
+	d, err := s.detailDrawer(ctx, it, lines, handover, reader.OpenActivity && p.ActiveRole != "Accountant")
 	if err != nil || len(risks) == 0 {
 		return d, "", err
 	}
@@ -257,7 +251,7 @@ FROM activity_schedule_cost_line WHERE activity_id = $1 ORDER BY created_at, id`
 
 // detailDrawer is partials/oversight/detail_drawer.html for a staff item
 // with no risk, as the feed reads it.
-func (s *Service) detailDrawer(ctx context.Context, it *item, lines []costLine, openRecord bool) (*screensv1.PageDrawer, error) {
+func (s *Service) detailDrawer(ctx context.Context, it *item, lines []costLine, handover string, openRecord bool) (*screensv1.PageDrawer, error) {
 	a := it.a
 	planner := first(a.responsible, a.monitored)
 	people, err := s.staffNames(ctx, []string{planner, it.owner, it.lead})
@@ -273,6 +267,17 @@ func (s *Service) detailDrawer(ctx context.Context, it *item, lines []costLine, 
 		plannedBy += " (" + role + ")"
 	}
 	ownerName := people[it.owner].name
+	executor, managing, partner := first(ownerName, "—")+" (staff)", "—", "—"
+	if a.isPartner() {
+		// The Partner executes; the member of staff who monitors it manages.
+		managers, err := s.staffNames(ctx, []string{a.monitored})
+		if err != nil {
+			return nil, err
+		}
+		executor = first(a.partnerName, "—") + " (partner)"
+		managing = first(managers[a.monitored].name, "—")
+		partner = first(a.partnerName, "—")
+	}
 	lead := "Unassigned"
 	if it.lead != "" {
 		lead = first(people[it.lead].name, "Unassigned")
@@ -294,8 +299,8 @@ func (s *Service) detailDrawer(ctx context.Context, it *item, lines []costLine, 
 	items := []*screensv1.DrawerItem{
 		drawerHeading("Ownership"),
 		drawerFacts([2]string{"Planned by", plannedBy}, [2]string{"Operational owner", first(ownerName, "—")},
-			[2]string{"Executor", first(ownerName, "—") + " (staff)"}, [2]string{"Managing staff", "—"},
-			[2]string{"Supervising PL", lead}, [2]string{"Partner", "—"}),
+			[2]string{"Executor", executor}, [2]string{"Managing staff", managing},
+			[2]string{"Supervising PL", lead}, [2]string{"Partner", partner}),
 		drawerHeading("Planning"),
 		drawerFacts([2]string{"Planned date", planned}, [2]string{"Financial year", fy}, [2]string{"Assigned", "—"},
 			[2]string{"Intervention", first(djangoTitle(strings.ReplaceAll(it.intervention, "_", " ")), "—")},
@@ -323,6 +328,9 @@ func (s *Service) detailDrawer(ctx context.Context, it *item, lines []costLine, 
 		// The table's footer (the total) is not read by the feed.
 		items = append(items, &screensv1.DrawerItem{Kind: &screensv1.DrawerItem_Block{Block: &screensv1.PageBlock{
 			Kind: &screensv1.PageBlock_Table{Table: table}}}})
+	}
+	if handover != "" {
+		items = append(items, drawerHeading("Partner handover"), drawerText(handover))
 	}
 	salesforce := "Missing"
 	if a.salesforce != "" {
@@ -388,3 +396,25 @@ var (
 	titleApostrophe = regexp.MustCompile(`[a-z]'[A-Z]`)
 	titleDigit      = regexp.MustCompile(`\d[A-Z]`)
 )
+
+// handoverOf is the lineage's hand-over sentence for the newest Partner
+// assignment the activity was scheduled from (PartnerAssignment's order), or
+// "" when it came from none.
+func (s *Service) handoverOf(ctx context.Context, activityID string) (string, error) {
+	var name string
+	var created *time.Time
+	err := s.db.QueryRow(ctx, `SELECT COALESCE(pt.name, ''), pa.created_at FROM partner_assignment pa
+LEFT JOIN partner pt ON pt.id = pa.partner_id WHERE pa.scheduled_activity_id = $1 ORDER BY pa.created_at DESC, pa.id LIMIT 1`,
+		activityID).Scan(&name, &created)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("planningoversight: the activity's hand-over: %w", err)
+	}
+	line := "Handed to " + name + " and scheduled by them."
+	if created != nil {
+		line += " Assigned " + created.In(zone).Format("2 Jan 2006") + "."
+	}
+	return line, nil
+}
