@@ -38,6 +38,8 @@ type role struct {
 	ClearsEscalated bool            `json:"clears_escalated"`
 	MonthlyRequest  bool            `json:"monthly_request"`
 	Reports         bool            `json:"reports"`
+	// DataExport is the page's export check (data.export).
+	DataExport bool `json:"data_export"`
 }
 
 var rules = func() (r struct {
@@ -46,6 +48,7 @@ var rules = func() (r struct {
 	NonFundableStatuses  []string          `json:"non_fundable_statuses"`
 	StageLabels          []string          `json:"stage_labels"`
 	PurposeInterventions map[string]string `json:"purpose_interventions"`
+	ExportBook           exportBook        `json:"export_book"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {
 		panic(fmt.Sprintf("weeklyrequest: reading rules.json: %v", err))

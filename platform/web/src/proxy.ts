@@ -47,9 +47,14 @@ export function proxy(request: NextRequest) {
     (['csv', 'xlsx', 'excel'].includes((params.get('export') ?? '').trim().toLowerCase()) ||
       ['xlsx', 'excel'].includes((params.get('format') ?? '').trim().toLowerCase()) ||
       ['from_month', 'to_month', 'start_date', 'end_date', 'period_type'].some((key) => params.has(key)));
+  // The Weekly Advance Requests' Export (export=csv|xlsx|excel).
+  const weeklyExport =
+    /^\/fund-requests\/weekly\/?$/.test(pathname) &&
+    ['csv', 'xlsx', 'excel'].includes((params.get('export') ?? '').trim().toLowerCase());
   const exportsPage =
     request.method === 'GET' &&
     (myPlanExport ||
+      weeklyExport ||
       (Boolean(params.get('export')?.trim()) &&
       /^\/ia\/(returned|partner-evidence|history|verification)\/?$/.test(pathname)) ||
       (/^\/core-schools-oversight\/?$/.test(pathname) &&

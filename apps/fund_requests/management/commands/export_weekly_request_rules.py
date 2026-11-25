@@ -55,6 +55,8 @@ def roles() -> dict:
                 user, Permission.MANUAL_ACTIVITY_CREATE.value
             ),
             "export": bool(can_open_url(user, EXPORT_DRAWER)),
+            # weekly_fund_requests_view's export check (data.export).
+            "data_export": bool(RolePermissionService.can_export(user, PATH)),
             "payment_act": has_permission(user, Permission.PAYMENT_ACT.value),
             # _require_weekly_approver's can_clear_escalated.
             "clears_escalated": has_permission(
@@ -72,7 +74,12 @@ def roles() -> dict:
 def rules() -> dict:
     from apps.activities.models import Activity
     from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
-    from apps.frontend.views.budget_views import EVERYONE_STAFF, WEEKLY_STAGE_LABELS
+    from apps.frontend.views.budget_views import (
+        EVERYONE_STAFF,
+        REQUEST_LINE_SHEET_HEADERS,
+        REQUEST_SHEET_HEADERS,
+        WEEKLY_STAGE_LABELS,
+    )
 
     purposes = Activity._meta.get_field("purpose_intervention").choices
 
@@ -83,6 +90,15 @@ def rules() -> dict:
         "stage_labels": list(WEEKLY_STAGE_LABELS),
         # get_purpose_intervention_display(), a source activity's purpose line.
         "purpose_interventions": {str(value): str(label) for value, label in purposes},
+        # The export's two sheets (_export_weekly_fund_requests_xlsx).
+        "export_book": {
+            "request_headers": list(REQUEST_SHEET_HEADERS),
+            "line_headers": list(REQUEST_LINE_SHEET_HEADERS),
+            "activity_types": {
+                str(value): str(label)
+                for value, label in Activity._meta.get_field("activity_type").choices
+            },
+        },
     }
 
 

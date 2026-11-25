@@ -91,6 +91,10 @@ describe('a download the gateway writes', () => {
     );
     expect(send('/my-plan?export=CSV')).toBe('http://localhost:3000/api/quick-export?target=%2Fmy-plan&export=CSV');
     expect(send('/my-plan?period=month&status=planned')).toBeNull();
+    expect(send('/fund-requests/weekly?export=xlsx&fy=2027')).toBe(
+      'http://localhost:3000/api/quick-export?target=%2Ffund-requests%2Fweekly&export=xlsx&fy=2027',
+    );
+    expect(send('/fund-requests/weekly?fy=2027')).toBeNull();
     expect(send('/my-plan?format=csv')).toBeNull();
   });
 

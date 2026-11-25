@@ -1,5 +1,65 @@
 {
   "everyone_staff": "all",
+  "export_book": {
+    "activity_types": {
+      "baseline_ssa_visit": "SSA Visit",
+      "cluster_meeting": "Cluster Meeting",
+      "cluster_meeting_ssa_review": "Cluster Meeting + SSA Review",
+      "cluster_training": "Cluster Training",
+      "cluster_training_ssa_collection": "Cluster Training + SSA Collection",
+      "coaching_visit": "Coaching Visit",
+      "core_assessment_visit": "Core Assessment Visit",
+      "core_training": "Core Training",
+      "core_visit": "Core Visit",
+      "donor_visit": "Donor Visit",
+      "field_event": "Field Event",
+      "follow_up_visit": "Follow-up Visit",
+      "in_school_coaching_visit": "In-school Coaching Visit",
+      "in_school_support": "In-school Support",
+      "in_school_training": "In-school Training",
+      "partner_activity": "Partner Activity",
+      "partner_ssa_collection": "Partner SSA Collection",
+      "programme_event": "Programme Event",
+      "project_activity": "Project Activity",
+      "school_improvement_training": "School Improvement Training",
+      "school_invitation": "School Invitation",
+      "school_visit": "School Visit",
+      "school_visit_ssa_collection": "School Visit + SSA Collection",
+      "social_visit": "Social Visit",
+      "ssa_activity": "SSA Activity",
+      "story_gathering_visit": "Gathering Story",
+      "training": "Training",
+      "training_follow_up_visit": "Training Follow-up Visit"
+    },
+    "line_headers": [
+      "Request ID",
+      "Week Start",
+      "Requested By",
+      "Request Status",
+      "Activity ID",
+      "Planned Date",
+      "Activity Type",
+      "School ID",
+      "School",
+      "District",
+      "Cluster",
+      "Cost Item",
+      "Quantity",
+      "Unit Cost (UGX)",
+      "Amount (UGX)"
+    ],
+    "request_headers": [
+      "Request ID",
+      "Week Start",
+      "Week End",
+      "Requested By",
+      "Status",
+      "FY",
+      "Lines",
+      "Total Amount (UGX)",
+      "Disbursed (UGX)"
+    ]
+  },
   "non_fundable_statuses": [
     "awaiting_owner_approval",
     "cancelled",
@@ -20,6 +80,7 @@
     "Accountant": {
       "add_activity": false,
       "clears_escalated": false,
+      "data_export": true,
       "export": true,
       "monthly_request": true,
       "page": true,
@@ -30,6 +91,7 @@
     "Admin": {
       "add_activity": true,
       "clears_escalated": false,
+      "data_export": true,
       "export": true,
       "monthly_request": true,
       "page": true,
@@ -40,6 +102,7 @@
     "BusinessTransformationOfficer": {
       "add_activity": false,
       "clears_escalated": false,
+      "data_export": true,
       "export": false,
       "monthly_request": false,
       "page": false,
@@ -50,6 +113,7 @@
     "CCEO": {
       "add_activity": true,
       "clears_escalated": false,
+      "data_export": false,
       "export": true,
       "monthly_request": false,
       "page": true,
@@ -60,6 +124,7 @@
     "ClusterLeader": {
       "add_activity": false,
       "clears_escalated": false,
+      "data_export": false,
       "export": false,
       "monthly_request": false,
       "page": false,
@@ -70,6 +135,7 @@
     "CountryDirector": {
       "add_activity": true,
       "clears_escalated": true,
+      "data_export": true,
       "export": true,
       "monthly_request": true,
       "page": true,
@@ -80,6 +146,7 @@
     "HumanResources": {
       "add_activity": true,
       "clears_escalated": false,
+      "data_export": false,
       "export": false,
       "monthly_request": false,
       "page": false,
@@ -90,6 +157,7 @@
     "ImpactAssessment": {
       "add_activity": true,
       "clears_escalated": false,
+      "data_export": true,
       "export": true,
       "monthly_request": true,
       "page": true,
@@ -100,6 +168,7 @@
     "MfiLoanOfficer": {
       "add_activity": false,
       "clears_escalated": false,
+      "data_export": false,
       "export": false,
       "monthly_request": false,
       "page": false,
@@ -110,6 +179,7 @@
     "MfiPartnerAdmin": {
       "add_activity": false,
       "clears_escalated": false,
+      "data_export": false,
       "export": false,
       "monthly_request": false,
       "page": false,
@@ -120,6 +190,7 @@
     "PartnerAdmin": {
       "add_activity": false,
       "clears_escalated": false,
+      "data_export": false,
       "export": false,
       "monthly_request": false,
       "page": false,
@@ -130,6 +201,7 @@
     "PartnerFieldOfficer": {
       "add_activity": false,
       "clears_escalated": false,
+      "data_export": false,
       "export": false,
       "monthly_request": false,
       "page": false,
@@ -140,6 +212,7 @@
     "Program Lead": {
       "add_activity": true,
       "clears_escalated": false,
+      "data_export": true,
       "export": true,
       "monthly_request": false,
       "page": true,
@@ -150,6 +223,7 @@
     "ProjectCoordinator": {
       "add_activity": true,
       "clears_escalated": false,
+      "data_export": true,
       "export": true,
       "monthly_request": true,
       "page": true,
@@ -180,6 +254,7 @@
     "RegionalProgramLead": {
       "add_activity": false,
       "clears_escalated": false,
+      "data_export": true,
       "export": false,
       "monthly_request": false,
       "page": false,
@@ -190,6 +265,7 @@
     "RegionalVicePresident": {
       "add_activity": false,
       "clears_escalated": false,
+      "data_export": true,
       "export": false,
       "monthly_request": true,
       "page": false,

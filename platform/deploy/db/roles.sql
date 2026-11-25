@@ -935,6 +935,8 @@ GRANT SELECT (fy, submitted_by_role, total_amount, activity_count, disbursed_amo
 GRANT SELECT (fy, total_amount, disbursed_amount, accountability_submitted_at, accountability_reviewed_at)
   ON weekly_fund_request TO edify_gateway_ro;
 GRANT SELECT (line_item_type, description, quantity, unit_cost, total_cost) ON weekly_fund_request_line TO edify_gateway_ro;
+-- The Weekly Advance Requests' export lists each request's lines in their order.
+GRANT SELECT (id) ON weekly_fund_request_line TO edify_gateway_ro;
 GRANT SELECT (fy, month) ON advance_request TO edify_gateway_ro;
 GRANT SELECT (partner_name) ON partner_payment TO edify_gateway_ro;
 
