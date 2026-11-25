@@ -699,3 +699,16 @@ REVOKE CREATE ON SCHEMA gateway_closure FROM edify_closure_owner;
 
 GRANT USAGE ON SCHEMA gateway_closure TO edify_activities_rw;
 GRANT EXECUTE ON FUNCTION gateway_closure.remove_blockers(varchar[]) TO edify_activities_rw;
+
+-- ── The scheduler's ssa_recommendation_sync (docs/migration/189 §4) ──
+-- sync_recommendations and judge_unjudged_plans: recommendations generated
+-- for schools with none (the confirmation handler's grants), live plans
+-- linked to what they answer, and an unjudged plan's SSA verdict recorded.
+GRANT UPDATE (ssa_recommendation_id, recommendation_source, ssa_alignment, source_ssa_id, source_ssa_verification_state,
+              source_score, source_classification, recommendation_reason, updated_at)
+  ON activity TO edify_activities_rw;
+GRANT SELECT (planned_activity_id) ON ssa_recommendation TO edify_activities_rw;
+GRANT SELECT (ssa_recommendation_id, recommendation_source, ssa_alignment, source_ssa_id, source_score,
+              recommendation_reason, ssa_deviation_reason, ssa_collection_expected, focus_intervention, project_id)
+  ON activity TO edify_activities_rw;
+GRANT SELECT (school_id, invited, activity_id) ON cluster_activity_attendance TO edify_activities_rw;

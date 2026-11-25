@@ -12,6 +12,7 @@ package targets
 import (
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -142,4 +143,16 @@ ON CONFLICT DO NOTHING`, cuid.New(), now, userID, areaID, key.kind, key.id, fy, 
 		return fmt.Errorf("targets: recording a ledger row: %w", err)
 	}
 	return nil
+}
+
+// CreditedActivityType is ledger_sync._credited_activity_type: whether an
+// activity of this type is a source some target area counts, so its save
+// can move the owner's ledger.
+func CreditedActivityType(activityType string) bool {
+	for _, s := range rules.Rebuild.Sources {
+		if s.Kind == "activity" && slices.Contains(s.Types, activityType) {
+			return true
+		}
+	}
+	return false
 }

@@ -665,7 +665,9 @@ SELECT id, program_lead_user_id, COALESCE(school_name, ''), days_overdue
 		return updated, nil
 
 	case "ssa_recommendation_sync":
-		return callIntRW(ctx, pool, `SELECT gateway_scheduler.expire_ssa_recommendations($1::date, $2)`, today, now)
+		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) {
+			return activities.SyncSSARecommendations(ctx, tx, now, loc, slog.Default())
+		})
 
 	case "verification_sampling":
 		return callIntRW(ctx, pool, `SELECT gateway_scheduler.sample_ia_verifications($1, $2)`, now, 10)
