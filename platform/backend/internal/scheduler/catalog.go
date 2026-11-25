@@ -245,7 +245,10 @@ func executeJob(
 		return unsealed, nil
 
 	case "hand_in_entered_work":
-		return callIntRW(ctx, pool, `SELECT gateway_scheduler.hand_in_entered_work($1)`, now)
+		// Each piece of work commits on its own, as the existing job's do.
+		review := plreview.NewReviewService(pool, func() time.Time { return now }).
+			WithSalesforceSync(os.Getenv("SALESFORCE_SYNC_ENABLED") == "1")
+		return review.HandInEnteredWork(ctx, loc)
 
 	case "admin_maintenance_generation":
 		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) { return adminops.GenerateDueMaintenance(ctx, tx, now, loc) })

@@ -737,3 +737,12 @@ GRANT SELECT (average_score) ON ssa_record TO edify_activities_rw;
 -- SchedulerHealthService.job_health reads the recorded runs; the notices go
 -- through gateway_notifications (notify_workflow, resolve_condition).
 GRANT SELECT (job_name, status, error_message, started_at) ON scheduled_job_execution TO edify_activities_rw;
+
+-- ── Activity.save's Core package mirror (activities.MirrorSlots) ──
+-- The slot takes the work's status, day, Salesforce ID and newest evidence
+-- file; the package's done counters follow (resync_plan_completion).
+GRANT SELECT (status, salesforce_activity_id, scheduled_date, cluster_id, school_id) ON activity TO edify_activities_rw;
+GRANT SELECT (school_type) ON school TO edify_activities_rw;
+GRANT SELECT (scheduled_for, salesforce_id, evidence_uri), UPDATE (salesforce_id, evidence_uri)
+  ON core_activity_slot TO edify_activities_rw;
+GRANT SELECT (uri, activity_id, quarantined, created_at) ON evidence_record TO edify_activities_rw;

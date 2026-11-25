@@ -18,7 +18,6 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/cuid"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/origin"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/realtime"
-	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
 const (
@@ -393,12 +392,8 @@ SELECT out_notification_id, out_recipient_id
 // owner, for the kinds of work a target area counts, and each confirmed SSA's
 // collector.
 func (s *ReviewService) markLedger(ctx context.Context, r Review, marks []ledgerMark, now time.Time) error {
-	if r.ResponsibleStaffID != "" && r.Planned != nil && slices.Contains(rules.LedgerCreditedTypes, r.ActivityType) {
-		day := r.Planned.UTC()
-		marks = append(slices.Clone(marks), ledgerMark{
-			owner: r.ResponsibleStaffID,
-			fy:    schooldirectory.OperationalFY(time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.UTC)),
-		})
+	if mark, ok := workMark(r); ok {
+		marks = append(slices.Clone(marks), mark)
 	}
 	if len(marks) == 0 {
 		return nil

@@ -80,6 +80,11 @@ GRANT SELECT (activity_id), INSERT (id, created_at, updated_at, activity_id, cas
   ON bt_activity_link TO edify_pl_review_owner;
 -- The owner's year, marked for the targets ledger to rebuild.
 GRANT SELECT (owner_id, fy, marked_at) ON target_ledger_dirty TO edify_pl_review_owner;
+-- hand_in_entered (the scheduler's hand_in_entered_work).
+GRANT SELECT (evidence_status, responsible_staff_id) ON activity TO edify_pl_review_owner;
+GRANT SELECT (activity_id), INSERT (id, created_at, updated_at, salesforce_id, entered_by, entered_at, status, activity_id),
+      UPDATE (salesforce_id, entered_by, status, updated_at)
+  ON activity_completion_verification TO edify_pl_review_owner;
 GRANT INSERT (owner_id, fy, marked_at), UPDATE (marked_at) ON target_ledger_dirty TO edify_pl_review_owner;
 
 CREATE SCHEMA IF NOT EXISTS gateway_pl_review AUTHORIZATION edify_pl_review_owner;
@@ -484,10 +489,45 @@ REVOKE ALL ON FUNCTION gateway_pl_review.mark_ledger(varchar, varchar, timestamp
 REVOKE ALL ON FUNCTION gateway_pl_review.approve_completion(varchar, varchar, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_pl_review.return_completion(varchar, varchar, text, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_pl_review.enqueue_event(varchar, varchar, jsonb, varchar, timestamptz) FROM PUBLIC;
+-- apps.pl_review.handed_in._hand_in: work holding its Salesforce ID, not yet
+-- handed in, goes to the lead as Submit sends it, and its completion record
+-- names the ID (update_or_create). False when it is no longer waiting.
+CREATE OR REPLACE FUNCTION gateway_pl_review.hand_in_entered(
+  target varchar, verification_id varchar, at timestamptz
+) RETURNS boolean
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  work record;
+BEGIN
+  SELECT a.status, a.evidence_status, COALESCE(a.salesforce_activity_id, '') AS sfid,
+         COALESCE(NULLIF(a.responsible_staff_id, ''), 'system') AS owner
+    INTO work FROM public.activity a WHERE a.id = target FOR UPDATE;
+  IF NOT FOUND OR NOT (work.status = ANY (ARRAY['scheduled', 'rescheduled', 'in_progress', 'completion_started',
+      'evidence_uploaded', 'evidence_accepted', 'salesforce_id_required', 'completed']::varchar[])) THEN
+    RETURN false;
+  END IF;
+  UPDATE public.activity SET status = 'submitted_to_pl',
+    evidence_status = CASE WHEN work.evidence_status = 'none' THEN 'accepted' ELSE work.evidence_status END,
+    updated_at = at
+  WHERE id = target;
+  UPDATE public.activity_completion_verification SET salesforce_id = work.sfid, entered_by = work.owner,
+    status = 'pending', updated_at = at
+  WHERE activity_id = target;
+  IF NOT FOUND THEN
+    INSERT INTO public.activity_completion_verification (id, created_at, updated_at, salesforce_id, entered_by,
+      entered_at, status, activity_id)
+    VALUES (verification_id, at, at, work.sfid, work.owner, at, 'pending', target);
+  END IF;
+  RETURN true;
+END
+$fn$;
+REVOKE ALL ON FUNCTION gateway_pl_review.hand_in_entered(varchar, varchar, timestamptz) FROM PUBLIC;
+
 RESET ROLE;
 
 GRANT USAGE ON SCHEMA gateway_pl_review TO edify_activities_rw;
 GRANT EXECUTE ON FUNCTION gateway_pl_review.approve_completion(varchar, varchar, timestamptz) TO edify_activities_rw;
+GRANT EXECUTE ON FUNCTION gateway_pl_review.hand_in_entered(varchar, varchar, timestamptz) TO edify_activities_rw;
 GRANT EXECUTE ON FUNCTION gateway_pl_review.return_completion(varchar, varchar, text, timestamptz) TO edify_activities_rw;
 GRANT EXECUTE ON FUNCTION gateway_pl_review.enqueue_event(varchar, varchar, jsonb, varchar, timestamptz) TO edify_activities_rw;
 GRANT EXECUTE ON FUNCTION gateway_pl_review.mark_ledger(varchar, varchar, timestamptz) TO edify_activities_rw;
