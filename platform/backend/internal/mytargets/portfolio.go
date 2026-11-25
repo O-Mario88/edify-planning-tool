@@ -22,18 +22,27 @@ func strategicPriorities(ctx context.Context, db schooldirectory.Querier, pg *pa
 		// Read only for a People record (a partner's login has none).
 		return nil, nil
 	}
+	return StrategicPriorityBlocks(ctx, db, pg.fy, []string{pg.p.StaffProfileID}, "your personal target ledger")
+}
+
+// StrategicPriorityBlocks is strategic_priority_overview(fy, staff_ids)
+// through the template with its scope_label: the year's governed
+// priorities, each with its milestones and those allocated to the people
+// named; nothing when the year has none.
+func StrategicPriorityBlocks(ctx context.Context, db schooldirectory.Querier, fy string, staffIDs []string,
+	scopeLabel string) ([]*screensv1.PageBlock, error) {
 	rows, err := db.Query(ctx, `
 SELECT sp.title, sp.sequence,
        count(DISTINCT m.id),
        count(DISTINCT m.id) FILTER (WHERE m.active AND NOT m.requires_definition AND m.definition_status = 'approved'
                                     AND m.metric_definition_id IS NOT NULL),
-       count(DISTINCT a.id) FILTER (WHERE a.status = 'approved' AND a.employee_id = $2)
+       count(DISTINCT a.id) FILTER (WHERE a.status = 'approved' AND a.employee_id = ANY($2))
 FROM hr_strategic_priority sp
 LEFT JOIN hr_priority_milestone m ON m.priority_id = sp.id
 LEFT JOIN hr_milestone_allocation a ON a.milestone_id = m.id
 WHERE sp.fy = $1 AND sp.cycle_id IS NOT NULL
 GROUP BY sp.id, sp.title, sp.sequence
-ORDER BY sp.sequence, sp.title`, pg.fy, pg.p.StaffProfileID)
+ORDER BY sp.sequence, sp.title`, fy, staffIDs)
 	if err != nil {
 		return nil, fmt.Errorf("mytargets: the strategic priorities: %w", err)
 	}
@@ -67,8 +76,8 @@ ORDER BY sp.sequence, sp.title`, pg.fy, pg.p.StaffProfileID)
 		return nil, nil
 	}
 	head := &screensv1.PageBlock{Kind: &screensv1.PageBlock_Panel{Panel: &screensv1.PagePanel{
-		Title:    "FY " + pg.fy + " Strategic Priorities",
-		Subtitle: "The governed priority portfolio is shown for context. Only active, approved milestone allocations affect your personal target ledger.",
+		Title:    "FY " + fy + " Strategic Priorities",
+		Subtitle: "The governed priority portfolio is shown for context. Only active, approved milestone allocations affect " + scopeLabel + ".",
 		Items:    []*screensv1.PagePanelItem{text(fmt.Sprintf("%d priorities", len(records)))},
 	}}}
 	out := append([]*screensv1.PageBlock{head}, records...)
