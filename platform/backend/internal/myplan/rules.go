@@ -54,15 +54,24 @@ type Rules struct {
 	CCEORole           string          `json:"cceo_role"`
 	VisitTargets       map[string]int  `json:"visit_targets"`
 	PartnerRoleBridge  bool            `json:"partner_role_bridge"`
-	APIFormats         []string        `json:"api_formats"`
-	Plan               PlanRules       `json:"plan"`
-	Rows               RowRules        `json:"rows"`
-	Readiness          ReadinessRules  `json:"readiness"`
-	Tables             TableRules      `json:"tables"`
-	PastDue            PastDueRules    `json:"past_due"`
-	Week               WeekRules       `json:"week"`
-	Detail             DetailRules     `json:"detail"`
-	months             []monthOption
+	// ClusterStatus is the Cluster Planning Status's vocabulary
+	// (apps.clusters.planning_status).
+	ClusterStatus struct {
+		TrainingTypes     []string `json:"training_types"`
+		MeetingTypes      []string `json:"meeting_types"`
+		PlannedStatuses   []string `json:"planned_statuses"`
+		DeliveredStatuses []string `json:"delivered_statuses"`
+		OperatingStatuses []string `json:"operating_statuses"`
+	} `json:"cluster_status"`
+	APIFormats []string       `json:"api_formats"`
+	Plan       PlanRules      `json:"plan"`
+	Rows       RowRules       `json:"rows"`
+	Readiness  ReadinessRules `json:"readiness"`
+	Tables     TableRules     `json:"tables"`
+	PastDue    PastDueRules   `json:"past_due"`
+	Week       WeekRules      `json:"week"`
+	Detail     DetailRules    `json:"detail"`
+	months     []monthOption
 }
 
 // DetailRules are what an activity's detail drawer reads

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -13,6 +14,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolplanning"
 )
 
 // Path is the page this package answers (apps.mobile_feed.views.NATIVE_PAGES
@@ -103,6 +105,12 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		}
 	}
 	request := NewQuery(query)
+	// The schools behind a readiness figure (?list=) are drawn by Go only
+	// as the empty list a planner with no figures has; a planner with their
+	// own readiness is handed on for one.
+	if ownReadiness != nil && readinessList(request) != "" {
+		return nil, false, nil
+	}
 	f := ReadFilters(request)
 	owners := ownerIDs(p)
 	plan, err := ReadPlan(ctx, s.db, owners, period, f, now)
@@ -134,8 +142,10 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 			return nil, false, err
 		}
 	}
+	// Past the ceiling the tile says so (staff_plan.ceiling_notice), which
+	// Go does not draw: handed on whichever readiness reader is attached.
 	planned := 0
-	if target > 0 && ownReadiness == nil {
+	if target > 0 {
 		if planned, err = yearVisits(ctx, s.db, owners, period.FY); err != nil || planned > target {
 			return nil, false, err
 		}
@@ -154,7 +164,12 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	}
 	var clusters []clusterPlanRow
 	if s.readiness != nil {
-		if clusters, err = readClusterPlanningStatus(ctx, s.db, owners, period.FY); err != nil {
+		operational, _ := strconv.Atoi(schooldirectory.OperationalFY(now))
+		years, err := schoolplanning.Horizon(ctx, s.db, p.Country, period.FY, operational, schooldirectory.FYOptions(now), now)
+		if err != nil {
+			return nil, false, err
+		}
+		if clusters, err = readClusterPlanningStatus(ctx, s.db, owners, years); err != nil {
 			return nil, false, err
 		}
 	}

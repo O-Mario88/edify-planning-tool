@@ -84,6 +84,9 @@ type PlanCounts struct {
 	Visits, CoreVisits, ClientVisits int
 	Trainings, Meetings              int
 	Completed, Total                 int
+	// Outreach is the period's donor, story, social and invitation visits
+	// (and SSA Support), planned beside the target and not counted toward it.
+	Outreach int
 }
 
 // comma is |intcomma of a whole number.

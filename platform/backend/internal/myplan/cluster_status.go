@@ -56,26 +56,15 @@ type clusterPlanRow struct {
 	meeting  sessionState
 }
 
-var (
-	clusterTrainingSessionTypes = []string{"cluster_training", "cluster_training_ssa_collection"}
-	clusterOperatingStatuses    = []string{"active", "open"}
-	clusterPlannedStatuses      = []string{"scheduled", "in_progress", "pending_evidence", "assigned_to_partner", "planned"}
-	clusterDeliveredStatuses    = []string{"completed", "submitted", "pl_approved", "verified", "ia_verified", "confirmed", "closed", "pending_pl_review", "pending_ia_review"}
-)
-
-func planningHorizon(fy string) []string {
-	n, err := strconv.Atoi(strings.TrimSpace(fy))
-	if err != nil {
-		return []string{fy}
-	}
-	return []string{strconv.Itoa(n), strconv.Itoa(n + 1)}
-}
-
-// readClusterPlanningStatus ports apps/clusters/planning_status.py.
-func readClusterPlanningStatus(ctx context.Context, db schooldirectory.Querier, owners []string, fy string) ([]clusterPlanRow, error) {
+// readClusterPlanningStatus ports apps/clusters/planning_status.py: the
+// reader's clusters, their clustered operating schools, and each one's
+// group trainings and meetings over the year's planning horizon (years are
+// the horizon fy_policy.planning_horizon reads).
+func readClusterPlanningStatus(ctx context.Context, db schooldirectory.Querier, owners []string, years []string) ([]clusterPlanRow, error) {
 	if len(owners) == 0 {
 		return nil, nil
 	}
+	cs := rules.ClusterStatus
 	cRows, err := db.Query(ctx, `SELECT c.id, COALESCE(c.name, ''), COALESCE(d.name, '')
 FROM cluster c LEFT JOIN district d ON d.id = c.district_id
 WHERE c.responsible_staff_id = ANY($1) AND c.deleted_at IS NULL
@@ -103,7 +92,7 @@ ORDER BY c.name ASC`, owners)
 	mRows, err := db.Query(ctx, `SELECT cluster_id, count(*) FROM school
 WHERE cluster_id = ANY($1) AND cluster_status = 'clustered'
   AND deleted_at IS NULL AND operational_status = ANY($2)
-GROUP BY cluster_id`, ids, clusterOperatingStatuses)
+GROUP BY cluster_id`, ids, cs.OperatingStatuses)
 	if err != nil {
 		return nil, fmt.Errorf("myplan: counting cluster schools: %w", err)
 	}
@@ -121,13 +110,13 @@ GROUP BY cluster_id`, ids, clusterOperatingStatuses)
 		return nil, err
 	}
 
-	allStatuses := append(append([]string{}, clusterPlannedStatuses...), clusterDeliveredStatuses...)
-	allTypes := append(append([]string{}, clusterTrainingSessionTypes...), rules.Plan.MeetingTypes...)
+	allStatuses := append(append([]string{}, cs.PlannedStatuses...), cs.DeliveredStatuses...)
+	allTypes := append(append([]string{}, cs.TrainingTypes...), cs.MeetingTypes...)
 	aRows, err := db.Query(ctx, `SELECT cluster_id, activity_type, status, planned_date
 FROM activity
 WHERE cluster_id = ANY($1) AND fy = ANY($2) AND deleted_at IS NULL
   AND status = ANY($3) AND activity_type = ANY($4)`,
-		ids, planningHorizon(fy), allStatuses, allTypes)
+		ids, years, allStatuses, allTypes)
 	if err != nil {
 		return nil, fmt.Errorf("myplan: reading cluster sessions: %w", err)
 	}
@@ -141,7 +130,7 @@ WHERE cluster_id = ANY($1) AND fy = ANY($2) AND deleted_at IS NULL
 			return nil, err
 		}
 		kind := "training"
-		if in(rules.Plan.MeetingTypes, atype) {
+		if in(cs.MeetingTypes, atype) {
 			kind = "meeting"
 		}
 		st := states[stateKey{cid, kind}]
@@ -149,7 +138,7 @@ WHERE cluster_id = ANY($1) AND fy = ANY($2) AND deleted_at IS NULL
 			st = &sessionState{}
 			states[stateKey{cid, kind}] = st
 		}
-		if in(clusterDeliveredStatuses, status) {
+		if in(cs.DeliveredStatuses, status) {
 			st.delivered++
 			if planned != nil && (st.lastDelivered == nil || planned.After(*st.lastDelivered)) {
 				d := *planned
@@ -215,21 +204,20 @@ func clusterPlanningBlock(rows []clusterPlanRow) *screensv1.PageBlock {
 	pageRows := make([]*screensv1.PageRow, 0, limit)
 	for _, r := range rows[:limit] {
 		pageRows = append(pageRows, &screensv1.PageRow{Cells: []*screensv1.PageCell{
-			{Text: r.name, Href: "/clusters/" + r.id, Strong: true},
+			{Text: r.name, Href: "/clusters/" + r.id},
 			{Text: orDefault(r.district, dash)},
 			{Text: strconv.Itoa(r.schools)},
 			{Text: r.training.label(), Tone: r.training.tone()},
 			{Text: r.meeting.label(), Tone: r.meeting.tone()},
 			{Actions: []*screensv1.PageAction{
-				{Key: "training", Label: "Schedule Group Training", Enabled: true, Drawer: true,
+				{Key: "menu", Label: "Schedule Group Training", Enabled: true, Drawer: true,
 					Href: "/planning/schedule-modal?cluster_id=" + r.id + "&action=training"},
-				{Key: "meeting", Label: "Schedule Cluster Meeting", Enabled: true, Drawer: true,
+				{Key: "menu", Label: "Schedule Cluster Meeting", Enabled: true, Drawer: true,
 					Href: "/planning/schedule-modal?cluster_id=" + r.id + "&action=meeting"},
 			}},
 		}})
 	}
 	cols := columns("Cluster Name", "District", "Schools", "Group Training", "Cluster Meeting", "Actions")
-	cols[2].Numeric = true
 	cols[5].Numeric = true
 	subtitle := fmt.Sprintf("%d cluster%s · %d without a group training · %d without a meeting",
 		len(rows), pluralS(len(rows)), trainingsMissing, meetingsMissing)
@@ -238,6 +226,5 @@ func clusterPlanningBlock(rows []clusterPlanRow) *screensv1.PageBlock {
 		Subtitle: subtitle,
 		Columns:  cols,
 		Rows:     pageRows,
-		Count:    strconv.Itoa(len(rows)),
 	}}}
 }

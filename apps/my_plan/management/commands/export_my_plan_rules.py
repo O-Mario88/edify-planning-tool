@@ -94,6 +94,7 @@ def rules() -> dict:
         # scoping.resolve_partner_ids: with the demo bridge on, every reader
         # is the first active partner.
         "partner_role_bridge": bool(getattr(settings, "PARTNER_ROLE_BRIDGE", False)),
+        "cluster_status": cluster_status(),
         # The feed is a REST framework view: a ?format= no renderer answers
         # is "not found" before the page is asked.
         "api_formats": api_formats(),
@@ -422,6 +423,30 @@ def plan() -> dict:
         "summary_training_types": list(training_ceilings._TRAINING_TYPES),
         "summary_meeting_types": list(training_ceilings._MEETING_TYPES),
         "helper_figure_chars": HELPER_FIGURE_CHARS,
+    }
+
+
+def cluster_status() -> dict:
+    """My Plan's Cluster Planning Status (apps.clusters.planning_status): the
+    session types each column reads, the statuses that are planned and that
+    are delivered, and the member schools counted."""
+    from apps.clusters.planning_status import TRAINING_SESSION_TYPES
+    from apps.core.activity_types import CLUSTER_MEETING_TYPES
+    from apps.planning.school_planning_badges import (
+        AWAITING_VERIFICATION_STATUSES,
+        PLANNED_STATUSES,
+        VERIFIED_STATUSES,
+    )
+    from apps.schools.lifecycle_models import OPERATING_STATUSES
+
+    return {
+        "training_types": list(TRAINING_SESSION_TYPES),
+        "meeting_types": sorted(str(t) for t in CLUSTER_MEETING_TYPES),
+        "planned_statuses": sorted(PLANNED_STATUSES),
+        "delivered_statuses": sorted(
+            AWAITING_VERIFICATION_STATUSES | VERIFIED_STATUSES
+        ),
+        "operating_statuses": list(OPERATING_STATUSES),
     }
 
 

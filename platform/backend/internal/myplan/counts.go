@@ -284,6 +284,7 @@ func ReadPlan(ctx context.Context, db schooldirectory.Querier, owners []string, 
 	if err := db.QueryRow(ctx, `SELECT count(*) `+planFrom+` WHERE `+where, b.args...).Scan(&out.Outreach); err != nil {
 		return out, fmt.Errorf("myplan: counting the period's outreach visits: %w", err)
 	}
+	out.Counts.Outreach = out.Outreach
 	// What the tables list: still ahead, delivered or sent back, unless a
 	// left-out state, work under way or overdue work was asked for.
 	b = &sqlb{}

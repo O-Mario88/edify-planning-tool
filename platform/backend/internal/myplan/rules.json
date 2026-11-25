@@ -3,6 +3,40 @@
     "json"
   ],
   "cceo_role": "CCEO",
+  "cluster_status": {
+    "delivered_statuses": [
+      "accountant_confirmed",
+      "awaiting_ia_verification",
+      "closed",
+      "completed",
+      "evidence_accepted",
+      "evidence_uploaded",
+      "ia_verified",
+      "salesforce_id_required",
+      "submitted_to_pl"
+    ],
+    "meeting_types": [
+      "cluster_meeting",
+      "cluster_meeting_ssa_review"
+    ],
+    "operating_statuses": [
+      "active",
+      "reopened"
+    ],
+    "planned_statuses": [
+      "assigned_to_partner",
+      "completion_started",
+      "in_progress",
+      "partner_scheduled",
+      "planned",
+      "rescheduled",
+      "scheduled"
+    ],
+    "training_types": [
+      "cluster_training",
+      "cluster_training_ssa_collection"
+    ]
+  },
   "detail": {
     "accommodation_keys": [
       "management_accommodation_per_night",

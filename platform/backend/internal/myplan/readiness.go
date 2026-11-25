@@ -229,6 +229,21 @@ func fullReadinessTable(r *OwnReadiness, fy string, request Query) *screensv1.Pa
 	if r.SchoolsToRecruit > 0 {
 		b.WriteString("Your schools take " + comma(r.PortfolioVisits) + " of those " + t + " visits: recruit " + comma(r.SchoolsToRecruit) + " more school" + pluralS(r.SchoolsToRecruit) + " to meet your target. ")
 	}
+	// The two visit flags (readiness.html, owner 2026-10-07).
+	if n := r.ClientStaffAndPartner; n > 0 {
+		isAre, itThey := "are", "they are"
+		if n == 1 {
+			isAre, itThey = "is", "it is"
+		}
+		b.WriteString(comma(n) + " Client school" + pluralS(n) + " you scheduled " + isAre + " also with a Partner: a Client school takes one visit, so " + itThey + " booked twice. ")
+	}
+	if n := r.CoreVisitsOver; n > 0 {
+		hasHave := "have"
+		if n == 1 {
+			hasHave = "has"
+		}
+		b.WriteString(comma(n) + " Core school" + pluralS(n) + " " + hasHave + " more than the two staff visits and two Partner visits a Core school takes. ")
+	}
 	if r.ProjectAssignment.Required {
 		remVerb := ""
 		if r.ProjectAssignment.Remaining == 1 {
@@ -297,14 +312,19 @@ func pluralS(n int) string {
 
 // targetVisitsTile is the visits tile's line and note for a reader with a
 // target (get_frontend_context's visit_helper, cut by brief_helper): the
-// tile keeps "of N a year", the sentence becomes its note. A planner Go
-// answers has no outreach visits and is within the target.
+// tile keeps "of N a year", the sentence becomes its note, with the
+// outreach visits planned beside the target. A planner past the target (its
+// ceiling notice) is handed on before this.
 func targetVisitsTile(m *screensv1.PageMetric, target int, c PlanCounts) {
 	t := comma(target)
 	m.Helper = "of " + t + " a year"
 	m.Note = "Follow up and In-school Training visits you planned, toward the " + t +
 		" your role plans in a year: " + comma(c.CoreVisits) + " at Core schools, " + comma(c.ClientVisits) +
 		" at Client, Core Trained and Core Graduate schools."
+	if c.Outreach > 0 {
+		m.Note += " " + comma(c.Outreach) + " SSA Support, donor, story, social or invitation visit" + pluralS(c.Outreach) +
+			" planned as well, not counted toward the target."
+	}
 }
 
 // yearVisits is staff_plan.visit_tallies' total for the reader in the year

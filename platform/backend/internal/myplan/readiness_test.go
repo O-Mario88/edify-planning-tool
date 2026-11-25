@@ -1,6 +1,7 @@
 package myplan
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
@@ -57,5 +58,22 @@ func TestReadinessListReadsAKnownKeyStripped(t *testing.T) {
 	table := emptyReadinessList("staff_queue").GetTable()
 	if table.Rows[0].Cells[0].Text != "None of your schools: the staff queue: core schools, and schools not in a partner's hands." {
 		t.Errorf("%q", table.Rows[0].Cells[0].Text)
+	}
+}
+
+// readiness.html's two visit flags: a Client school scheduled by staff that
+// is also with a Partner is booked twice; a Core school over its package's
+// two staff and two Partner visits is named too.
+func TestReadinessFootnoteNamesTheSchoolsBookedTwice(t *testing.T) {
+	r := &OwnReadiness{StaffVisits: ReadinessLine{Target: 560, Required: true}, SchoolsStaffScheduled: 14,
+		ClientStaffAndPartner: 1, CoreVisitsOver: 2}
+	got := fullReadinessTable(r, "2027", NewQuery(values())).GetTable().GetFootnote()
+	for _, want := range []string{
+		"You have scheduled visits at 14 of your schools yourself. 1 Client school you scheduled is also with a Partner: a Client school takes one visit, so it is booked twice. ",
+		"2 Core schools have more than the two staff visits and two Partner visits a Core school takes. No project ceiling",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("footnote %q lacks %q", got, want)
+		}
 	}
 }
