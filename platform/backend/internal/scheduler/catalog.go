@@ -445,51 +445,10 @@ SELECT p.id, COALESCE(sp.user_id, p.staff_id), p.course_name, p.start_date::text
 		return sent, nil
 
 	case "daily_debrief_reminders":
-		rows, err := pool.Query(ctx, `
-SELECT DISTINCT COALESCE(sp.user_id, a.responsible_staff_id)
-  FROM activity a
-  LEFT JOIN staff_profile sp ON sp.id = a.responsible_staff_id AND sp.deleted_at IS NULL
- WHERE a.deleted_at IS NULL
-   AND a.planned_date = $1::date
-   AND a.status IN ('scheduled', 'in_progress', 'completed', 'submitted_to_pl')
-   AND NOT EXISTS (
-     SELECT 1 FROM daily_debrief d
-      WHERE d.deleted_at IS NULL
-        AND d.submitted_by_user_id = COALESCE(sp.user_id, a.responsible_staff_id)
-        AND d.date::date = $1::date
-   )
- LIMIT 200`, today)
-		if err != nil {
-			return 0, err
-		}
-		var uids []string
-		for rows.Next() {
-			var uid string
-			if scanErr := rows.Scan(&uid); scanErr == nil && uid != "" {
-				uids = append(uids, uid)
-			}
-		}
-		rows.Close()
-		sent := 0
-		for _, uid := range uids {
-			if ok, err := writer.Deliver(ctx, notificationcenter.Delivery{
-				RecipientID:     uid,
-				Title:           "Submit your daily field debrief",
-				Body:            "Please submit your end-of-day field debrief for " + today + ".",
-				Category:        "debrief",
-				ContextType:     "daily_debrief",
-				ContextID:       "debrief-" + today,
-				TargetRoute:     "/debriefs",
-				ActionLabel:     "Submit Debrief",
-				ActionRequired:  true,
-				Priority:        "normal",
-				SourceEventType: "debrief.daily_reminder",
-				SourceEventID:   "debrief-" + today + ":" + uid,
-			}); err == nil && ok {
-				sent++
-			}
-		}
-		return sent, nil
+		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy
+		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) {
+			return debriefs.DebriefReminders(ctx, tx, now, loc, debriefs.RoleBridgeFrom(os.Getenv), push, nil)
+		})
 
 	case "ia_verification_digest":
 		var pending int
