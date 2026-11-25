@@ -33,6 +33,9 @@ type ledgerRow struct {
 	fy, area, status string
 	day              time.Time
 	month, quantity  int
+	// id and validatedAt are the stored row's, for the ledger sync's writes.
+	id          string
+	validatedAt *time.Time
 }
 
 // sources are the stale people's workflow records of the year, as
@@ -89,6 +92,34 @@ func (r *Roster) projectLedger(ctx context.Context, db schooldirectory.Querier, 
 
 // rebuilt is the person's whole ledger after _rebuild for fy.
 func rebuilt(p Person, fy string, active map[string]bool, src sources) ([]ledgerRow, error) {
+	pending, seen, err := planLedger(p, fy, active, src)
+	if err != nil {
+		return nil, err
+	}
+	existing := src.ledger[p.UserID]
+	out := []ledgerRow{}
+	for key, row := range existing {
+		want, ok := pending[key]
+		switch {
+		case ok && (row.status != want.status || !row.day.Equal(want.day) || row.fy != fy):
+			// The row is moved to this year and rewritten; its area stays.
+			row.fy, row.day, row.month, row.status = fy, want.day, want.month, want.status
+		case !ok && row.fy == fy && !seen[key] && row.status != reversed:
+			row.status = reversed // its source left the workflow
+		}
+		out = append(out, row)
+	}
+	for key, want := range pending {
+		if _, ok := existing[key]; !ok {
+			out = append(out, ledgerRow{fy: fy, area: want.area, status: want.status, day: want.day, month: want.month, quantity: 1})
+		}
+	}
+	return out, nil
+}
+
+// planLedger is _rebuild's reading of the person's sources: the credit each
+// source in the year wants, and every source it looked at.
+func planLedger(p Person, fy string, active map[string]bool, src sources) (map[sourceKey]credit, map[sourceKey]bool, error) {
 	ids := []string{p.UserID}
 	if p.StaffID != "" {
 		ids = append(ids, p.StaffID)
@@ -148,28 +179,10 @@ func rebuilt(p Person, fy string, active map[string]bool, src sources) ([]ledger
 				upsert(s.Area, sourceKey{"mscs", story.id}, story.day, status)
 			}
 		default:
-			return nil, fmt.Errorf("%w: the rebuild credits an unknown source %q", ErrHandOn, s.Kind)
+			return nil, nil, fmt.Errorf("%w: the rebuild credits an unknown source %q", ErrHandOn, s.Kind)
 		}
 	}
-	existing := src.ledger[p.UserID]
-	out := []ledgerRow{}
-	for key, row := range existing {
-		want, ok := pending[key]
-		switch {
-		case ok && (row.status != want.status || !row.day.Equal(want.day) || row.fy != fy):
-			// The row is moved to this year and rewritten; its area stays.
-			row.fy, row.day, row.month, row.status = fy, want.day, want.month, want.status
-		case !ok && row.fy == fy && !seen[key] && row.status != reversed:
-			row.status = reversed // its source left the workflow
-		}
-		out = append(out, row)
-	}
-	for key, want := range pending {
-		if _, ok := existing[key]; !ok {
-			out = append(out, ledgerRow{fy: fy, area: want.area, status: want.status, day: want.day, month: want.month, quantity: 1})
-		}
-	}
-	return out, nil
+	return pending, seen, nil
 }
 
 // readSources reads the stale people's sources and whole ledgers at once.
@@ -250,7 +263,8 @@ func readDays(ctx context.Context, db schooldirectory.Querier, into map[string][
 // readStoredLedger is each person's whole ledger, every year, by source.
 func readStoredLedger(ctx context.Context, db schooldirectory.Querier, users []string, into map[string]map[sourceKey]ledgerRow) error {
 	rows, err := db.Query(ctx, `
-SELECT l.user_id, l.source_type, l.source_id, l.fy, a.key, l.validation_status, l.activity_date, l.credited_month, l.quantity
+SELECT l.user_id, l.source_type, l.source_id, l.fy, a.key, l.validation_status, l.activity_date, l.credited_month, l.quantity,
+  l.id, l.validated_at
 FROM target_achievement_ledger l JOIN target_area a ON a.id = l.area_id
 WHERE l.user_id = ANY($1)`, users)
 	if err != nil {
@@ -261,7 +275,8 @@ WHERE l.user_id = ANY($1)`, users)
 		var user string
 		var key sourceKey
 		var row ledgerRow
-		if err := rows.Scan(&user, &key.kind, &key.id, &row.fy, &row.area, &row.status, &row.day, &row.month, &row.quantity); err != nil {
+		if err := rows.Scan(&user, &key.kind, &key.id, &row.fy, &row.area, &row.status, &row.day, &row.month, &row.quantity,
+			&row.id, &row.validatedAt); err != nil {
 			return fmt.Errorf("targets: reading a stored ledger row: %w", err)
 		}
 		row.day = Day(row.day)

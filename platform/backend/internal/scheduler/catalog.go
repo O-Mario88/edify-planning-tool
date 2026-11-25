@@ -11,7 +11,10 @@ import (
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dataqualityscan"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/notificationcenter"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/targets"
 )
 
 // JobMeta documents every operational scheduled job migrated from Django's
@@ -72,6 +75,20 @@ var UgandaCutoverJobs = []JobMeta{
 	{Name: "bulk_completion", LockKey: 400241, Interval: 5 * time.Minute, Owner: "go-scheduler", Disposition: "native-go-maintenance", Query: "SELECT 1"},
 }
 
+// queueWorkers are the existing workers for work its pages queue (large
+// bulk-completion uploads, exports prepared in the background). Go has no
+// page that queues either yet, and the existing pages queue only while they
+// see a recent successful run of the worker (worker_is_running): a Go run
+// recorded as a success without doing the work would leave each queued
+// upload or export waiting for ever. So Go neither runs nor records them; the
+// existing pages complete the work in the request, as they do with no
+// worker, until the uploads and exports that queue are ported with their
+// workers (docs/migration/189 §4).
+var queueWorkers = map[string]string{
+	"bulk_completion": "apps.bulk_completion.worker.work",
+	"export_jobs":     "apps.reports.export_jobs.work",
+}
+
 // KampalaOperationalFY returns the Uganda fiscal year (Oct 1 – Sep 30) in
 // Africa/Kampala timezone for moment t.
 func KampalaOperationalFY(t time.Time) (int, error) {
@@ -114,6 +131,9 @@ func BuildUgandaJobsWithClock(pool *pgxpool.Pool, nowFn func() time.Time, runner
 			Interval: m.Interval,
 			Run: func(ctx context.Context) error {
 				if pool == nil {
+					return nil
+				}
+				if _, handedOn := queueWorkers[m.Name]; handedOn {
 					return nil
 				}
 				started := nowFn().UTC()
@@ -916,21 +936,15 @@ SELECT id FROM "user"
 		return count, nil
 
 	case "data_quality_scan":
-		var flagged int
-		if err := pool.QueryRow(ctx, `
-SELECT COUNT(*)::int FROM school
- WHERE deleted_at IS NULL
-   AND (district_id IS NULL OR enrollment IS NULL OR COALESCE(primary_contact_name, '') = '')`).Scan(&flagged); err != nil {
-			return 0, err
-		}
-		return flagged, nil
+		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) {
+			result, err := dataqualityscan.Scan(ctx, tx, now)
+			return result.Schools, err
+		})
 
 	case "target_ledger_sync":
-		var targets int
-		if err := pool.QueryRow(ctx, `SELECT COUNT(*)::int FROM monthly_personal_target WHERE fy = $1`, fyLabel).Scan(&targets); err != nil {
-			return 0, err
-		}
-		return targets, nil
+		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) {
+			return targets.SyncLedgers(ctx, tx, schooldirectory.OperationalFY(localNow), now)
+		})
 
 	case "execution_period_snapshots":
 		var executed int
@@ -988,12 +1002,6 @@ SELECT COUNT(*)::int FROM school WHERE deleted_at IS NULL AND operational_status
 		}
 		return totalSchools, nil
 
-	case "export_jobs":
-		return 0, nil
-
-	case "bulk_completion":
-		return callIntRW(ctx, pool, `SELECT gateway_scheduler.hand_in_entered_work($1)`, now)
-
 	default:
 		var n int64
 		if err := pool.QueryRow(ctx, m.Query).Scan(&n); err != nil {
@@ -1001,6 +1009,20 @@ SELECT COUNT(*)::int FROM school WHERE deleted_at IS NULL AND operational_status
 		}
 		return int(n), nil
 	}
+}
+
+// inTx runs one job's writes in a read-write transaction of their own.
+func inTx(ctx context.Context, pool *pgxpool.Pool, run func(pgx.Tx) (int, error)) (int, error) {
+	tx, err := pool.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
+	if err != nil {
+		return 0, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	n, err := run(tx)
+	if err != nil {
+		return 0, err
+	}
+	return n, tx.Commit(ctx)
 }
 
 func callIntRW(ctx context.Context, pool *pgxpool.Pool, sql string, args ...any) (int, error) {

@@ -244,6 +244,12 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		// The outbox's email copies (apps.notifications.email_delivery): a
 		// copy's status as it is sent or why it was not.
 		filepath.Join(root, "internal", "notifymail") + sep: {"notification_delivery"},
+		// The scheduler's target_ledger_sync (apps.targets): the stored
+		// achievement ledger, rebuilt; no row removed.
+		filepath.Join(root, "internal", "targets") + sep: {"target_achievement_ledger"},
+		// The scheduler's data_quality_scan (apps.schools.data_quality): the
+		// duplicate pairs it proposes and the quality issues it reconciles.
+		filepath.Join(root, "internal", "dataqualityscan") + sep: {"school_duplicate_candidate", "data_quality_issue"},
 	}
 	mechanics := filepath.Join(root, "internal", "ownedschema") + sep
 	// The lint describes the DDL it allows as patterns; it runs none.

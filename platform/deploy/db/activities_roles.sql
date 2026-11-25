@@ -437,3 +437,79 @@ GRANT SELECT (id, title, body, category, status, priority, action_label, sender_
               last_reminded_at, created_at)
   ON notification TO edify_activities_rw;
 GRANT SELECT (id, name, email, is_active, deleted_at) ON "user" TO edify_activities_rw;
+
+-- ── The scheduler's target_ledger_sync (docs/migration/189 §4) ──
+-- TargetAchievementService.rebuild for every active CCEO and Program Lead:
+-- a new source's ledger row, a changed source's row rewritten, a row whose
+-- source left the year's workflow reversed. No ledger row is removed.
+GRANT SELECT (id, user_id, area_id, source_type, source_id, fy, activity_date, credited_month, credited_quarter, quantity,
+              validation_status, validated_at)
+  ON target_achievement_ledger TO edify_activities_rw;
+GRANT INSERT (id, created_at, updated_at, user_id, area_id, source_type, source_id, fy, activity_date, credited_month,
+              credited_quarter, quantity, validation_status, validated_at)
+  ON target_achievement_ledger TO edify_activities_rw;
+GRANT UPDATE (fy, activity_date, credited_month, credited_quarter, validation_status, validated_at, updated_at)
+  ON target_achievement_ledger TO edify_activities_rw;
+GRANT SELECT (id, key, active) ON target_area TO edify_activities_rw;
+GRANT SELECT (id, status, roles, deleted_at, created_at) ON "user" TO edify_activities_rw;
+GRANT SELECT (id, user_id) ON staff_profile TO edify_activities_rw;
+
+-- ── The scheduler's data_quality_scan (docs/migration/189 §4) ──
+-- scan_all: duplicate pairs proposed by name similarity within a district,
+-- then every operating school's quality issues reconciled (resolved when
+-- cleared, refreshed, reopened, or added; never removed). The pair's schools
+-- are flagged potential only from none, through
+-- gateway_dataquality.flag_potential_duplicates: the gateway holds no right
+-- to change a school (dbguard), so the one column is changed by a function
+-- owned by edify_dataquality_owner, a NOLOGIN role no one is a member of,
+-- holding UPDATE (duplicate_status) on school and nothing else of it.
+-- A new database object: production needs the owner's approval at cutover.
+GRANT SELECT (id, name, district_id, duplicate_status, created_at, deleted_at, operational_status, latitude, longitude,
+              school_phone, primary_contact_name, school_type, sub_county_id, enrollment, account_owner_id,
+              account_owner_status, account_owner_name_raw, cluster_id, current_fy_ssa_status)
+  ON school TO edify_activities_rw;
+GRANT SELECT (school_id) ON school_geo_point TO edify_activities_rw;
+GRANT SELECT (id, school_id, candidate_id) ON school_duplicate_candidate TO edify_activities_rw;
+GRANT INSERT (id, created_at, updated_at, school_id, candidate_id, score, reasons, resolved)
+  ON school_duplicate_candidate TO edify_activities_rw;
+GRANT SELECT (id, school_id, condition_key, issue_type, severity, current_value, suggested_fix, status, resolved_at,
+              created_at)
+  ON data_quality_issue TO edify_activities_rw;
+GRANT INSERT (id, created_at, updated_at, issue_type, severity, field_name, current_value, suggested_fix, status,
+              school_id, condition_key)
+  ON data_quality_issue TO edify_activities_rw;
+GRANT UPDATE (status, resolved_at, severity, current_value, suggested_fix) ON data_quality_issue TO edify_activities_rw;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'edify_dataquality_owner') THEN
+    CREATE ROLE edify_dataquality_owner NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOINHERIT;
+  END IF;
+END
+$$;
+GRANT USAGE ON SCHEMA public TO edify_dataquality_owner;
+GRANT SELECT (id, duplicate_status) ON school TO edify_dataquality_owner;
+GRANT UPDATE (duplicate_status) ON school TO edify_dataquality_owner;
+
+CREATE SCHEMA IF NOT EXISTS gateway_dataquality AUTHORIZATION edify_dataquality_owner;
+REVOKE ALL ON SCHEMA gateway_dataquality FROM PUBLIC;
+
+SET ROLE edify_dataquality_owner;
+CREATE OR REPLACE FUNCTION gateway_dataquality.flag_potential_duplicates(target_ids varchar[]) RETURNS integer
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  changed integer;
+BEGIN
+  UPDATE public.school SET duplicate_status = 'potential'
+   WHERE id = ANY(target_ids) AND duplicate_status = 'none';
+  GET DIAGNOSTICS changed = ROW_COUNT;
+  RETURN changed;
+END
+$fn$;
+REVOKE ALL ON FUNCTION gateway_dataquality.flag_potential_duplicates(varchar[]) FROM PUBLIC;
+RESET ROLE;
+-- The function made, its owner keeps no right to add others.
+REVOKE CREATE ON SCHEMA gateway_dataquality FROM edify_dataquality_owner;
+
+GRANT USAGE ON SCHEMA gateway_dataquality TO edify_activities_rw;
+GRANT EXECUTE ON FUNCTION gateway_dataquality.flag_potential_duplicates(varchar[]) TO edify_activities_rw;
