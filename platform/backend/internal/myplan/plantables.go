@@ -166,7 +166,12 @@ func tableOf(a *activity, slots coreSlots) int {
 	case a.hasSchool && in(r.ProgrammeSchoolTypes, str(a.schoolType)) && (in(r.VisitTypes, a.activityType) || in(r.TrainingTypes, a.activityType)):
 		return tableProgrammeSchool
 	case isCore:
-		if _, slotted := slots.kind[a.id]; slotted {
+		// A slot's kind decides the Core table, as coreRows does; a slotted
+		// training is still the existing application's.
+		if kind, slotted := slots.kind[a.id]; slotted {
+			if kind == "visit" {
+				return tableCoreVisits
+			}
 			return -1
 		}
 		if in(r.VisitTypes, a.activityType) {

@@ -350,7 +350,11 @@ func coreBlocks(t PlanTablesResult, words string, visitColumns []string) []*scre
 		if in(rules.Plan.CompletedWorkStatuses, r.a.status) {
 			done++
 		}
-		rows = append(rows, pageRow(r, r.schoolName, append(schoolCells(r, r.schoolDistrict, "Core Visit"), tailCells(r)...)))
+		cells := schoolCells(r, r.schoolDistrict, "Core Visit")
+		// core_school_visits.html writes the slot's number and the
+		// package's progress after the activity (V2 1/8 Completed).
+		cells[4].Text = coreActivity(r.row)
+		rows = append(rows, pageRow(r, r.schoolName, append(cells, tailCells(r)...)))
 	}
 	coreColumns := append([]string{}, visitColumns...)
 	coreColumns[9] = "SSA Intervention"
