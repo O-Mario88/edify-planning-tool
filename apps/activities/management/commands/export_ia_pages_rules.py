@@ -230,8 +230,7 @@ def _dashboard() -> dict:
 
 
 def rules() -> dict:
-    from apps.activities.models import ActivityType
-    from apps.core.enums import ActivityStatus
+    from apps.activities.models import Activity, ActivityType
     from apps.core.permissions import (
         Permission,
         RolePermissionService,
@@ -319,7 +318,12 @@ def rules() -> dict:
         "activity_types": dict(ActivityType.choices),
         # The IA queues' export (apps.activities.ia_export.sheet): each
         # activity status's label and each visit purpose's.
-        "activity_status_labels": {k: str(v) for k, v in ActivityStatus.choices},
+        "activity_status_labels": {
+            str(k): str(v) for k, v in Activity._meta.get_field("status").flatchoices
+        },
+        # Activity.get_status_display: staff work's verification statuses
+        # say the Programme Lead verifies it.
+        "staff_verification_labels": dict(Activity._STAFF_VERIFICATION_LABELS),
         "visit_purpose_labels": dict(_purpose_labels()),
         # The evidence each activity must carry (apps.evidence.requirements):
         # by its evidence profile, else by its type.

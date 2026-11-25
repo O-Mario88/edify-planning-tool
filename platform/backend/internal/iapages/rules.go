@@ -52,6 +52,8 @@ var rules = func() (r struct {
 	// export names a status and a visit purpose (ia_export.sheet).
 	ActivityStatusLabels map[string]string `json:"activity_status_labels"`
 	VisitPurposeLabels   map[string]string `json:"visit_purpose_labels"`
+	// StaffVerificationLabels are get_status_display's for staff work.
+	StaffVerificationLabels map[string]string `json:"staff_verification_labels"`
 	// ExportRoles are offered Returned Activities' and Verification
 	// History's Export (the data-export permission).
 	ExportRoles []string `json:"export_roles"`

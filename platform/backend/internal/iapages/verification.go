@@ -65,16 +65,30 @@ func staffNamed(arg func(any) string, value string) string {
 		` UNION SELECT u.id FROM "user" u WHERE u.name ILIKE ` + v + `)`
 }
 
-func (s *Service) verification(ctx context.Context, p auth.Principal, role Role, query url.Values) (*screensv1.GetPageResponse, bool, error) {
-	for key := range query {
-		if !slices.Contains(verificationQuery, key) {
-			return nil, false, nil
-		}
-	}
+// verificationScope is the queue's population as the view filters it: the
+// FROM and WHERE, their arguments, the drill-downs read, and the order's
+// overdue line, for the page and its export.
+type verificationScope struct {
+	sql           string
+	args          []any
+	drill         map[string]string
+	overdueBefore time.Time
+}
+
+// order is the view's order_by: critical work, then overdue, then the
+// oldest submission; it adds its own arguments.
+func (v *verificationScope) order() string {
+	arg := func(x any) string { v.args = append(v.args, x); return "$" + strconv.Itoa(len(v.args)) }
+	return `ORDER BY CASE WHEN a.activity_type = ANY(` + arg(criticalTypes) + `) THEN 0 ELSE 1 END,
+		         CASE WHEN a.submitted_to_ia_at <= ` + arg(v.overdueBefore) + ` THEN 0 ELSE 1 END,
+		         COALESCE(a.submitted_to_ia_at, a.updated_at), a.id`
+}
+
+func (s *Service) verificationScope(ctx context.Context, p auth.Principal, query url.Values) (*verificationScope, error) {
 	now := s.now()
 	where, args, err := reach(ctx, s.db, p, now, nil)
 	if err != nil {
-		return nil, true, err
+		return nil, err
 	}
 	arg := func(v any) string { args = append(args, v); return "$" + strconv.Itoa(len(args)) }
 	drill := map[string]string{}
@@ -139,6 +153,23 @@ func (s *Service) verification(ctx context.Context, p auth.Principal, role Role,
 	sql := `FROM activity a LEFT JOIN school s ON s.id = a.school_id LEFT JOIN cluster cl ON cl.id = a.cluster_id
 		LEFT JOIN district sd ON sd.id = s.district_id LEFT JOIN district ed ON ed.id = a.event_district_id
 		WHERE ` + strings.Join(conds, " AND ")
+	return &verificationScope{sql: sql, args: args, drill: drill, overdueBefore: overdueBefore}, nil
+}
+
+func (s *Service) verification(ctx context.Context, p auth.Principal, role Role, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	for key := range query {
+		if !slices.Contains(verificationQuery, key) {
+			return nil, false, nil
+		}
+	}
+	now := s.now()
+	scope, err := s.verificationScope(ctx, p, query)
+	if err != nil {
+		return nil, true, err
+	}
+	sql, args, drill, overdueBefore := scope.sql, scope.args, scope.drill, scope.overdueBefore
+	arg := func(x any) string { args = append(args, x); return "$" + strconv.Itoa(len(args)) }
+	missing := drill["sf_id"] == "missing"
 	var total int
 	if err := s.db.QueryRow(ctx, "SELECT COUNT(*) "+sql, args...).Scan(&total); err != nil {
 		return nil, true, fmt.Errorf("iapages: counting the verification queue: %w", err)

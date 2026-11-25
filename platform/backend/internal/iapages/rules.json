@@ -2618,6 +2618,10 @@
     "Admin",
     "ImpactAssessment"
   ],
+  "staff_verification_labels": {
+    "awaiting_ia_verification": "Awaiting PL Verification",
+    "ia_verified": "PL Verified"
+  },
   "story_statuses": [
     [
       "draft",

@@ -58,6 +58,9 @@ ORDER BY a.ia_confirmed_at DESC, a.pl_reviewed_at DESC, a.id`
 // QueueExportRoute names a queue's export for its page path (the page asked
 // with ?export=…), or none.
 func (s *Service) QueueExportRoute(target string) (func(context.Context, auth.Principal, url.Values) (string, []workbook.Sheet, bool, error), bool) {
+	if target == strings.TrimSuffix(VerificationPath, "/") {
+		return s.verificationExport, true
+	}
 	q, ok := queueExports[target]
 	if !ok {
 		return nil, false
@@ -68,22 +71,54 @@ func (s *Service) QueueExportRoute(target string) (func(context.Context, auth.Pr
 	}, true
 }
 
-func (s *Service) queueExport(ctx context.Context, p auth.Principal, page string, q queueExport, query url.Values) (string, []workbook.Sheet, bool, error) {
+// queueGate is require_export_permission, then the page's own gate; handled
+// false when the page did not ask for its export.
+func queueGate(p auth.Principal, page string, query url.Values) (bool, error) {
 	if strings.TrimSpace(query.Get("export")) == "" {
-		return "", nil, false, nil
+		return false, nil
 	}
-	// require_export_permission, then the page's own gate.
 	if !slices.Contains(rules.ExportRoles, p.ActiveRole) {
-		return "", nil, true, workbook.Refusal(analyticsExportRefusal)
+		return true, workbook.Refusal(analyticsExportRefusal)
 	}
 	if role, ok := rules.Pages[page].Roles[p.ActiveRole]; !ok || !role.Page {
-		return "", nil, true, pagegate.ErrNotAvailable
+		return true, pagegate.ErrNotAvailable
+	}
+	return true, nil
+}
+
+func (s *Service) queueExport(ctx context.Context, p auth.Principal, page string, q queueExport, query url.Values) (string, []workbook.Sheet, bool, error) {
+	if handled, err := queueGate(p, page, query); !handled || err != nil {
+		return "", nil, handled, err
 	}
 	where, args, err := reach(ctx, s.db, p, s.now(), nil)
 	if err != nil {
 		return "", nil, true, err
 	}
-	rows, err := s.db.Query(ctx, q.ids(where), args...)
+	return s.queueFile(ctx, q.stem, q.title, q.ids(where), args)
+}
+
+// verificationExport is the Verification queue's: its population filtered
+// as the page filters it, in its order, every row.
+func (s *Service) verificationExport(ctx context.Context, p auth.Principal, query url.Values) (string, []workbook.Sheet, bool, error) {
+	if handled, err := queueGate(p, VerificationPath, query); !handled || err != nil {
+		return "", nil, handled, err
+	}
+	for key := range query {
+		if !slices.Contains(verificationQuery, key) && key != "export" && key != "format" {
+			return "", nil, false, nil
+		}
+	}
+	scope, err := s.verificationScope(ctx, p, query)
+	if err != nil {
+		return "", nil, true, err
+	}
+	sql := "SELECT a.id " + scope.sql + " " + scope.order()
+	return s.queueFile(ctx, "ia-verification-queue", "Verification Queue", sql, scope.args)
+}
+
+// queueFile reads the rows' ids in order and writes their sheet.
+func (s *Service) queueFile(ctx context.Context, stem, title, sql string, args []any) (string, []workbook.Sheet, bool, error) {
+	rows, err := s.db.Query(ctx, sql, args...)
 	if err != nil {
 		return "", nil, true, fmt.Errorf("iapages: reading the queue's rows: %w", err)
 	}
@@ -100,11 +135,11 @@ func (s *Service) queueExport(ctx context.Context, p auth.Principal, page string
 	if err := rows.Err(); err != nil {
 		return "", nil, true, fmt.Errorf("iapages: reading the queue's rows: %w", err)
 	}
-	sheet, err := s.queueSheet(ctx, q.title, ids)
+	sheet, err := s.queueSheet(ctx, title, ids)
 	if err != nil {
 		return "", nil, true, err
 	}
-	return q.stem, []workbook.Sheet{sheet}, true, nil
+	return stem, []workbook.Sheet{sheet}, true, nil
 }
 
 // queueRow is what ia_export.sheet reads of one activity.
@@ -257,10 +292,22 @@ func (r queueRow) cells(staff, partners, verifiers map[string]string, today time
 		workbook.Text(r.cluster), date(planned), date(r.delivered), date(sent), waiting, workbook.Text(purpose),
 		workbook.Text(text(rules.InterventionLabels, r.focus)), workbook.Text(expected), workbook.Text(r.notCollected),
 		count(r.teachers), count(r.leaders), count(r.others), workbook.Text(r.salesforce), workbook.Text(capitalized(r.evidence)),
-		workbook.Text(text(rules.ActivityStatusLabels, r.status)), workbook.Text(capitalized(r.verification)),
+		workbook.Text(r.statusLabel()), workbook.Text(capitalized(r.verification)),
 		workbook.Text(text(verifiers, verifiedBy)), date(verifiedOn), workbook.Text(r.reasons),
 		workbook.Text(capitalized(r.payment)), workbook.Int(r.cost),
 	}
+}
+
+// statusLabel is Activity.get_status_display: staff work's verification
+// statuses say the Programme Lead verifies it.
+func (r queueRow) statusLabel() string {
+	if label, ok := rules.StaffVerificationLabels[r.status]; ok && r.delivery != "partner" {
+		return label
+	}
+	if label, ok := rules.ActivityStatusLabels[r.status]; ok {
+		return label
+	}
+	return r.status
 }
 
 // capitalized is ia_export._label: underscores as spaces, trimmed, the first

@@ -42,7 +42,7 @@ export function proxy(request: NextRequest) {
   const exportsPage =
     request.method === 'GET' &&
     Boolean(request.nextUrl.searchParams.get('export')?.trim()) &&
-    /^\/ia\/(returned|partner-evidence|history)\/?$/.test(pathname);
+    /^\/ia\/(returned|partner-evidence|history|verification)\/?$/.test(pathname);
   if (
     exportsPage ||
     (request.method === 'GET' &&

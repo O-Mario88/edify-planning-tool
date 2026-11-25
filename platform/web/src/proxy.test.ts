@@ -46,6 +46,14 @@ describe('a download the gateway writes', () => {
     );
   });
 
+  it("sends the Verification queue's Export with its filters", () => {
+    const request = new NextRequest('http://localhost:3000/ia/verification/?age=overdue&export=xlsx');
+    request.cookies.set(ACCESS_COOKIE, 'token');
+    expect(proxy(request).headers.get('x-middleware-rewrite')).toBe(
+      'http://localhost:3000/api/quick-export?target=%2Fia%2Fverification&age=overdue&export=xlsx',
+    );
+  });
+
   it('leaves the queue page itself to the page', () => {
     const request = new NextRequest('http://localhost:3000/ia/history/?page=2');
     request.cookies.set(ACCESS_COOKIE, 'token');
