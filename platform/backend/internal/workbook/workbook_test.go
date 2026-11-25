@@ -69,12 +69,12 @@ func TestTheWorkbookHoldsEachSheetUnderItsOwnTitle(t *testing.T) {
 // A link asking for format=csv gets the first sheet as CSV, formulas
 // neutralised; any other gets the workbook.
 func TestDownloadAnswersTheFormatTheLinkAsks(t *testing.T) {
-	sheets := []Sheet{{Title: "Plan", Headers: []string{"School", "Cost"}, Rows: [][]Cell{{Text("=x"), Int(12000)}, {Text("B"), Number(1.5)}}}}
+	sheets := []Sheet{{Title: "Plan", Headers: []string{"School", "Cost"}, Rows: [][]Cell{{Text("=x"), Int(12000)}, {Text("B"), Number(1.5)}, {Text("C"), Number(3)}}}}
 	rec := httptest.NewRecorder()
 	if err := Download(rec, httptest.NewRequest("GET", "/x?format=csv", nil), "plan", sheets); err != nil {
 		t.Fatal(err)
 	}
-	if got := rec.Body.String(); got != "School,Cost\r\n'=x,12000\r\nB,1.5\r\n" {
+	if got := rec.Body.String(); got != "School,Cost\r\n'=x,12000\r\nB,1.5\r\nC,3.0\r\n" {
 		t.Errorf("csv: %q", got)
 	}
 	if got := rec.Header().Get("Content-Disposition"); got != `attachment; filename="plan.csv"` {

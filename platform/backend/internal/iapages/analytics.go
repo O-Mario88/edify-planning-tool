@@ -12,6 +12,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myplan"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 )
@@ -68,6 +69,7 @@ type analyticsData struct {
 	submitters          []rateRow
 	partners            []rateRow
 	verifiers           []verifierRow
+	lines               []decisionLine
 }
 
 // analyticsWindow is the view's window: digits naming one of the offered
@@ -129,6 +131,18 @@ type decisionRow struct {
 	verification, decision, decidedBy string
 	decidedAt                         time.Time
 	staff, partner                    string
+	// For the export (export_rows): the work and its school.
+	activityID, activityType, schoolCode string
+	schoolName                           *string
+	submittedToIA                        *time.Time
+}
+
+// decisionLine is one of verification_analytics' rows, as export_rows
+// writes it.
+type decisionLine struct {
+	decidedAt, activityID, schoolCode, school, activityType string
+	submitter, partner, decision, reasons, verifier         string
+	turnaround                                              *float64
 }
 
 // verificationAnalytics is apps.activities.verification_analytics
@@ -316,7 +330,37 @@ func (s *Service) verificationAnalytics(ctx context.Context, p auth.Principal, w
 	}
 	slices.SortStableFunc(reasons, func(a, b reasonRow) int { return b.count - a.count })
 
+	lines := make([]decisionLine, 0, len(decisions))
+	for _, d := range decisions {
+		key := d.staff
+		if key == "" {
+			key = "—"
+		}
+		submitter, ok := staff[key]
+		if !ok {
+			submitter = key
+		}
+		verifier, ok := verifierNames[d.decidedBy]
+		if !ok {
+			verifier = d.decidedBy
+		}
+		school := "Cluster-wide"
+		if d.schoolName != nil {
+			school = *d.schoolName
+		}
+		decision := "Verified"
+		if d.decision == "RETURN" {
+			decision = "Returned"
+		}
+		lines = append(lines, decisionLine{
+			decidedAt: d.decidedAt.In(zone).Format("2006-01-02 15:04"), activityID: d.activityID, schoolCode: d.schoolCode,
+			school: school, activityType: myplan.TypeLabel(d.activityType), submitter: submitter,
+			partner: partnerNames[d.partner], decision: decision, reasons: strings.Join(reasonsBy[d.verification], "; "),
+			verifier: verifier, turnaround: hours(d.submittedToIA, d.decidedAt),
+		})
+	}
 	return analyticsData{
+		lines:  lines,
 		window: window, decisions: len(decisions), returned: returnedTotal, rate: pct(returnedTotal, len(decisions)),
 		reasons: reasons, trend: trend,
 		submitters: rateRows(submitterOrder, submitters, staff),
@@ -328,8 +372,10 @@ func (s *Service) verificationAnalytics(ctx context.Context, p auth.Principal, w
 // analyticsDecisions is the window's decisions in reach, newest first.
 func (s *Service) analyticsDecisions(ctx context.Context, reach string, args []any) ([]decisionRow, error) {
 	rows, err := s.db.Query(ctx, `
-SELECT d.verification_id, d.decision, d.decided_by, d.decided_at, COALESCE(a.responsible_staff_id, ''), COALESCE(a.assigned_partner_id, '')
+SELECT d.verification_id, d.decision, d.decided_by, d.decided_at, COALESCE(a.responsible_staff_id, ''), COALESCE(a.assigned_partner_id, ''),
+       a.id, a.activity_type, COALESCE(sc.school_id, ''), sc.name, a.submitted_to_ia_at
 FROM ia_verification_decision d JOIN ia_verification v ON v.id = d.verification_id JOIN activity a ON a.id = v.activity_id
+LEFT JOIN school sc ON sc.id = a.school_id
 WHERE d.decided_at >= $1 AND v.activity_id IN (`+reach+`)
 ORDER BY d.decided_at DESC`, args...)
 	if err != nil {
@@ -339,7 +385,8 @@ ORDER BY d.decided_at DESC`, args...)
 	var out []decisionRow
 	for rows.Next() {
 		var d decisionRow
-		if err := rows.Scan(&d.verification, &d.decision, &d.decidedBy, &d.decidedAt, &d.staff, &d.partner); err != nil {
+		if err := rows.Scan(&d.verification, &d.decision, &d.decidedBy, &d.decidedAt, &d.staff, &d.partner,
+			&d.activityID, &d.activityType, &d.schoolCode, &d.schoolName, &d.submittedToIA); err != nil {
 			return nil, fmt.Errorf("iapages: reading the verification decisions: %w", err)
 		}
 		out = append(out, d)

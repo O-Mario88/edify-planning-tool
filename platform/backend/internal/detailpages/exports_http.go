@@ -71,8 +71,6 @@ func (s *Service) RegisterHTTP(mux *http.ServeMux, authn HTTPAuth) {
 		case strings.HasPrefix(target, "/projects/") && strings.HasSuffix(target, "/export"):
 			projID := strings.TrimSuffix(strings.TrimPrefix(target, "/projects/"), "/export")
 			s.exportProjectsCSV(r.Context(), w, fy, projID)
-		case target == "/ia/analytics/export":
-			s.exportIAAnalyticsCSV(r.Context(), w, fy)
 		default:
 			http.Error(w, "Unknown export target", http.StatusNotFound)
 		}
@@ -92,7 +90,7 @@ const exportPermission = "data.export"
 // project's records, with no limit to the reader's scope yet.
 func organisationWideExport(target string) bool {
 	switch target {
-	case "/projects/export", "/ia/analytics/export":
+	case "/projects/export":
 		return true
 	}
 	return strings.HasPrefix(target, "/projects/") && strings.HasSuffix(target, "/export")
@@ -149,32 +147,6 @@ ORDER BY pr.name`, fy, projectID)
 		var ceiling, schools, acts, done int64
 		if err := rows.Scan(&code, &pname, &cat, &status, &ceiling, &schools, &acts, &done); err == nil {
 			_ = cw.Write([]string{code, pname, cat, status, strconv.FormatInt(ceiling, 10), strconv.FormatInt(schools, 10), strconv.FormatInt(acts, 10), strconv.FormatInt(done, 10)})
-		}
-	}
-	cw.Flush()
-}
-
-func (s *Service) exportIAAnalyticsCSV(ctx context.Context, w http.ResponseWriter, fy string) {
-	rows, err := s.db.Query(ctx, `
-SELECT COALESCE(sc.school_id, ''), sc.name, COALESCE(d.name, ''), sr.fy,
-       COALESCE(sr.average_score, 0), COALESCE(sr.verification_status, '')
-FROM ssa_record sr
-JOIN school sc ON sc.id = sr.school_id
-LEFT JOIN district d ON d.id = sc.district_id
-WHERE sr.deleted_at IS NULL AND ($1 = '' OR sr.fy = $1)
-ORDER BY sr.created_at DESC LIMIT 2000`, fy)
-	if err != nil {
-		http.Error(w, "Export query failed", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
-	cw := startCSV(w, fmt.Sprintf("edify-ia-analytics-fy%s.csv", fy))
-	_ = cw.Write([]string{"School ID", "School Name", "District", "FY", "Overall SSA Score", "Verification Status"})
-	for rows.Next() {
-		var scode, sname, dist, rfy, status string
-		var score float64
-		if err := rows.Scan(&scode, &sname, &dist, &rfy, &score, &status); err == nil {
-			_ = cw.Write([]string{scode, sname, dist, rfy, fmt.Sprintf("%.2f", score), status})
 		}
 	}
 	cw.Flush()

@@ -242,7 +242,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	detailPagesSvc := detailpages.NewService(pool, time.Now).WithReportAnnex(iareports.Reports{DB: pool, Now: time.Now, Logger: logger}.Annex).WithReleaseDownload(iareports.Reports{DB: pool, Now: time.Now, Logger: logger}.ReleaseDownload).
 		WithWorkbook("/staff-activity/export", staffActivity.Export).
 		WithFile("/my-targets/export", mytargets.NewService(pool, time.Now).Export).
-		WithFile("/my-professional-development/export", mypd.NewService(pool, time.Now, cfg.PageWrites.MyProfessionalDevelopment).Export)
+		WithFile("/my-professional-development/export", mypd.NewService(pool, time.Now, cfg.PageWrites.MyProfessionalDevelopment).Export).
+		WithWorkbook("/ia/analytics/export", iapages.NewService(pool, time.Now).AnalyticsExport)
 	screenService := screens.NewService(existingApp).TrustProxyHeaders(cfg.Loans.TrustProxyHeaders).
 		WithStrictReads(cfg.StrictReads).
 		WithDirectory(schooldirectory.NewService(pool, time.Now), logger).

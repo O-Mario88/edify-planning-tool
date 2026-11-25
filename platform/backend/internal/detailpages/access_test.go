@@ -88,9 +88,9 @@ func TestOrganisationWideExportsAreRefusedForEveryoneButAdmin(t *testing.T) {
 	for _, role := range []string{"MfiLoanOfficer", "PartnerFieldOfficer", "CCEO", "Program Lead", "CountryDirector"} {
 		mux := http.NewServeMux()
 		s.RegisterHTTP(mux, fixedAuth{role: role})
-		// The Staff Activity export is the log's own workbook, behind the
-		// page's gate (workbooks_test.go), not one of these.
-		for _, target := range []string{"/projects/export", "/projects/project-1/export", "/ia/analytics/export"} {
+		// The Staff Activity and IA analytics exports are their pages' own
+		// workbooks, behind the pages' gates (workbooks_test.go).
+		for _, target := range []string{"/projects/export", "/projects/project-1/export"} {
 			t.Run(role+" "+target, func(t *testing.T) {
 				rec := httptest.NewRecorder()
 				mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/v1/quick-export?target="+url.QueryEscape(target), nil))

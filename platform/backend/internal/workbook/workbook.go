@@ -65,7 +65,9 @@ type Cell struct {
 	kind cellKind
 	text string
 	num  float64
-	when time.Time
+	// float is a Python float (str() writes 3.0), not an int.
+	float bool
+	when  time.Time
 }
 
 // Text is a str cell, kept as the text it is.
@@ -74,8 +76,8 @@ func Text(s string) Cell { return Cell{kind: kindText, text: s} }
 // Int is an int cell.
 func Int(n int64) Cell { return Cell{kind: kindNumber, num: float64(n)} }
 
-// Number is a float or Decimal cell.
-func Number(f float64) Cell { return Cell{kind: kindNumber, num: f} }
+// Number is a float cell (a Decimal's figure reads the same in a workbook).
+func Number(f float64) Cell { return Cell{kind: kindNumber, num: f, float: true} }
 
 // Date is a datetime.date cell (shown yyyy-mm-dd).
 func Date(t time.Time) Cell { return Cell{kind: kindDate, when: t} }
@@ -167,7 +169,7 @@ func safeRow(row []Cell) []string {
 		case kindText:
 			out[i] = SpreadsheetText(c.text)
 		case kindNumber:
-			out[i] = pyNumber(c.num)
+			out[i] = pyNumber(c.num, c.float)
 		case kindDate:
 			out[i] = c.when.Format(time.DateOnly)
 		case kindDateTime:
@@ -177,11 +179,17 @@ func safeRow(row []Cell) []string {
 	return out
 }
 
-// pyNumber is str() of the number as Python would hold it: an int as an
-// int, a float with its shortest repr.
-func pyNumber(f float64) string {
-	if f == math.Trunc(f) && math.Abs(f) < 1e15 {
+// pyNumber is str() of the number: an int's digits, a float's repr
+// ("3.0", "12.5", "1e+16").
+func pyNumber(f float64, float bool) string {
+	abs := math.Abs(f)
+	switch {
+	case !float:
 		return strconv.FormatInt(int64(f), 10)
+	case f == math.Trunc(f) && abs < 1e16:
+		return strconv.FormatFloat(f, 'f', 1, 64)
+	case abs >= 1e-4 && abs < 1e16:
+		return strconv.FormatFloat(f, 'f', -1, 64)
 	}
 	return strconv.FormatFloat(f, 'g', -1, 64)
 }
