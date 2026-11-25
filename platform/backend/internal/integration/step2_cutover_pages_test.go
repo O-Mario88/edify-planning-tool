@@ -152,8 +152,6 @@ func TestStep2DjangoAbsentDesktopTodosAndStrategicPriorities(t *testing.T) {
 			{"pl1@edify.org", "/target-distribution/team"},
 			{"pl1@edify.org", "/priorities/guidance"},
 			{"cd@edify.org", "/country-planning-oversight/"},
-			{"cd@edify.org", "/country-budget"},
-			{"cd@edify.org", "/country-budget/"},
 			{"cd@edify.org", "/analytics/country-director/drilldown"},
 			{"ia@edify.org", "/ia/learning/"},
 			{"ia@edify.org", "/ssa/unmatched"},
@@ -176,6 +174,14 @@ func TestStep2DjangoAbsentDesktopTodosAndStrategicPriorities(t *testing.T) {
 			}
 			if page.GetHeader().GetTitle() == "" {
 				t.Fatalf("%s %s: empty page header title", tc.email, tc.path)
+			}
+		}
+		// The Monthly General Budget's old address sends its reader to the
+		// unified Budget page (country_budget_view).
+		for _, path := range []string{"/country-budget", "/country-budget/"} {
+			page, err := getPage(toks["cd@edify.org"], path, true)
+			if err != nil || page.GetRedirect() != "/budget" {
+				t.Fatalf("cd %s: %v, redirect %q, want /budget", path, err, page.GetRedirect())
 			}
 		}
 	})
