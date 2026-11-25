@@ -195,8 +195,9 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	mux.Handle(identityv1connect.NewAccountAdminServiceHandler(accountHandler, options...))
 	// Staff and partner teams; member logins are accounts.
 	teamStore := teams.NewStore(pool)
+	staffService := teams.NewStaffService(teamStore, time.Now, accountService.StaffChanged)
 	teamHandler := teams.NewHandler(
-		teams.NewStaffService(teamStore, time.Now, accountService.StaffChanged),
+		staffService,
 		teams.NewPartnerService(teamStore, accountService, time.Now), logger)
 	mux.Handle(identityv1connect.NewStaffTeamServiceHandler(teamHandler, options...))
 	mux.Handle(identityv1connect.NewPartnerTeamServiceHandler(teamHandler, options...))
@@ -258,6 +259,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		WithExecutionFollowUps(planningmonitor.CEXSendDeps{Push: plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
 			Logger: logger}).
 		WithTemporaryPasswords(accountService).
+		WithAccountCreation(accountService, staffService).
 		WithPartnerOversightSend(partneroversight.SendDeps{Push: plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
 			Logger: logger, Delegate: actionsweep.PartnerDelegate(plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, logger)}).
 		WithPages(logger,

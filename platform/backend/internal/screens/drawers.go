@@ -242,6 +242,12 @@ func (s *Service) SaveDrawer(
 			}
 			return connect.NewResponse(answer), nil
 		}
+		if answer, served, err := s.addUserSaveInGo(ctx, forwarded); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(answer), nil
+		}
 		if answer, served, err := s.partnerDeliverySaveInGo(ctx, forwarded, activities.Origin{
 			IP: from.IP, UserAgent: from.UserAgent, CorrelationID: from.CorrelationID,
 		}); served {

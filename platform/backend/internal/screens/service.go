@@ -184,6 +184,9 @@ type Service struct {
 	partnerSend *partneroversight.SendDeps
 	// passwords is the Users page's Reset password save.
 	passwords TemporaryPasswords
+	// accountCreation and teamAssignment are the Add User save.
+	accountCreation AccountCreation
+	teamAssignment  TeamAssignment
 }
 
 // NewService wires the service. existingApp may be nil.

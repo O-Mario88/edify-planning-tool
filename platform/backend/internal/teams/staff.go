@@ -354,6 +354,23 @@ type Reassigned struct {
 // role that should supervise the person (an Admin may decide otherwise); only
 // the direct reporting line is replaced, oversight links stay.
 func (s *StaffService) AssignSupervisor(ctx context.Context, principal auth.Principal, userID, supervisorStaffID string) (Reassigned, error) {
+	var result Reassigned
+	err := s.store.write(ctx, func(tx pgx.Tx) error {
+		var err error
+		result, err = s.AssignSupervisorInTx(ctx, tx, principal, userID, supervisorStaffID, s.now())
+		return err
+	})
+	if err == nil {
+		s.changed()
+	}
+	return result, err
+}
+
+// AssignSupervisorInTx is AssignSupervisor inside the caller's transaction
+// (an account created with its supervisor, as create() does); the caller
+// commits and tells the existing application the staff changed.
+func (s *StaffService) AssignSupervisorInTx(ctx context.Context, tx pgx.Tx, principal auth.Principal, userID, supervisorStaffID string,
+	now time.Time) (Reassigned, error) {
 	if !rbac.Grants(principal.ActiveRole, permStaffManage) {
 		return Reassigned{}, forbidden("You do not have permission to assign supervisors.")
 	}
@@ -361,9 +378,8 @@ func (s *StaffService) AssignSupervisor(ctx context.Context, principal auth.Prin
 	if supervisorStaffID == "" {
 		return Reassigned{}, refuse("A supervisorId is required.")
 	}
-	now := s.now()
 	var result Reassigned
-	err := s.store.write(ctx, func(tx pgx.Tx) error {
+	err := func() error {
 		supervisee, err := personFound(tx.QueryRow(ctx, personSelect+` AND u.id = $1 FOR UPDATE OF sp`, userID))
 		if err != nil {
 			return err
@@ -411,10 +427,7 @@ func (s *StaffService) AssignSupervisor(ctx context.Context, principal auth.Prin
 				"newSupervisorId": supervisor.StaffID},
 		}, now)
 		return err
-	})
-	if err == nil {
-		s.changed()
-	}
+	}()
 	return result, err
 }
 
@@ -519,13 +532,27 @@ type Configured struct {
 // one Program Lead, so choosing one moves them; a Country Director's team is
 // automatic and cannot be listed.
 func (s *StaffService) ConfigureTeam(ctx context.Context, principal auth.Principal, userID string, staffIDs []string) (Configured, error) {
+	var result Configured
+	err := s.store.write(ctx, func(tx pgx.Tx) error {
+		var err error
+		result, err = s.ConfigureTeamInTx(ctx, tx, principal, userID, staffIDs, s.now())
+		return err
+	})
+	if err == nil {
+		s.changed()
+	}
+	return result, err
+}
+
+// ConfigureTeamInTx is ConfigureTeam inside the caller's transaction.
+func (s *StaffService) ConfigureTeamInTx(ctx context.Context, tx pgx.Tx, principal auth.Principal, userID string, staffIDs []string,
+	now time.Time) (Configured, error) {
 	if principal.ActiveRole != rbac.Admin {
 		return Configured{}, forbidden("Only an Admin can configure managed people.")
 	}
 	selected := dedupe(staffIDs)
-	now := s.now()
 	var result Configured
-	err := s.store.write(ctx, func(tx pgx.Tx) error {
+	err := func() error {
 		manager, err := personFound(tx.QueryRow(ctx, personSelect+` AND u.id = $1 FOR UPDATE OF sp`, userID))
 		if err != nil {
 			return err
@@ -553,24 +580,26 @@ func (s *StaffService) ConfigureTeam(ctx context.Context, principal auth.Princip
 				return refuse(fmt.Sprintf("A %s can only manage eligible staff in the same country.", role))
 			}
 		}
+		var moved Configured
 		if role == roleProgramLead {
-			if err := moveCCEOs(ctx, tx, principal, manager, selected, now); err != nil {
+			if moved, err = moveCCEOs(ctx, tx, principal, manager, selected, now); err != nil {
 				return err
 			}
 		}
 		result, err = replaceTeam(ctx, tx, principal, manager, role, selected, now)
+		if role == roleProgramLead {
+			// The Program Lead step made the change; its counts are the answer.
+			result.Added, result.Removed = moved.Added, moved.Removed
+		}
 		return err
-	})
-	if err == nil {
-		s.changed()
-	}
+	}()
 	return result, err
 }
 
 // moveCCEOs is configure_program_lead_team's move: each chosen CCEO's link
 // to any other Program Lead goes, so a CCEO has one Program Lead; audited as
 // the existing code audits it.
-func moveCCEOs(ctx context.Context, tx pgx.Tx, principal auth.Principal, lead person, selected []string, now time.Time) error {
+func moveCCEOs(ctx context.Context, tx pgx.Tx, principal auth.Principal, lead person, selected []string, now time.Time) (Configured, error) {
 	rows, err := tx.Query(ctx, `
 SELECT a.id, a.supervisee_id, a.supervisor_id = $1
 FROM staff_supervisor_assignment a
@@ -579,7 +608,7 @@ WHERE a.supervisor_id = $1
    OR (a.supervisee_id = ANY($2) AND (u.active_role = $3 OR u.roles @> ARRAY[$3]::varchar[]))
 FOR UPDATE OF a`, lead.StaffID, selected, roleProgramLead)
 	if err != nil {
-		return err
+		return Configured{}, err
 	}
 	current, previous := map[string]bool{}, map[string]bool{}
 	var competing []string
@@ -588,7 +617,7 @@ FOR UPDATE OF a`, lead.StaffID, selected, roleProgramLead)
 		var mine bool
 		if err := rows.Scan(&id, &supervisee, &mine); err != nil {
 			rows.Close()
-			return err
+			return Configured{}, err
 		}
 		if mine {
 			current[supervisee] = true
@@ -600,7 +629,18 @@ FOR UPDATE OF a`, lead.StaffID, selected, roleProgramLead)
 	rows.Close()
 	if len(competing) > 0 {
 		if _, err := tx.Exec(ctx, `DELETE FROM staff_supervisor_assignment WHERE id = ANY($1)`, competing); err != nil {
-			return err
+			return Configured{}, err
+		}
+	}
+	// configure_program_lead_team writes the lead's own links too, before
+	// the generic step reads them: that step then audits no change.
+	if _, err := tx.Exec(ctx, `DELETE FROM staff_supervisor_assignment WHERE supervisor_id = $1 AND NOT (supervisee_id = ANY($2))`,
+		lead.StaffID, selected); err != nil {
+		return Configured{}, err
+	}
+	for _, id := range selected {
+		if err := ensureLink(ctx, tx, id, lead.StaffID, now); err != nil {
+			return Configured{}, err
 		}
 	}
 	added, removed, reassigned := diff(selected, current, previous)
@@ -611,7 +651,7 @@ FOR UPDATE OF a`, lead.StaffID, selected, roleProgramLead)
 		Payload: map[string]any{"programLeadId": lead.StaffID, "cceoIds": toAny(selected), "addedCceoIds": toAny(added),
 			"removedCceoIds": toAny(removed), "reassignedCceoIds": toAny(reassigned)},
 	}, now)
-	return err
+	return Configured{Assigned: len(selected), Added: len(added), Removed: len(removed)}, err
 }
 
 // diff sorts a new selection against the current members and those moving

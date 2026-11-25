@@ -437,6 +437,9 @@ func (s *Service) getPageDrawerInGo(ctx context.Context, p auth.Principal, rawPa
 	if answer, served, err := s.adminPasswordDrawerInGo(ctx, p, rawPath); served {
 		return answer, true, err
 	}
+	if answer, served, err := s.addUserDrawerInGo(ctx, p, rawPath); served {
+		return answer, true, err
+	}
 	if answer, served, err := s.executionFollowUpDrawerInGo(ctx, p, rawPath); served {
 		return answer, true, err
 	}
