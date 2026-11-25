@@ -262,31 +262,9 @@ func (b *sql) peopleWindow(w cpoWindow) string {
 // Lead's and CCEO's own year over the schools kept.
 func cpoPeoplePlan(ctx context.Context, db schooldirectory.Querier, scope schooldirectory.Scope, schools []*cpoSchool,
 	w cpoWindow, n cpoNarrow, outside []string) ([]*cpoTeam, error) {
-	m := &monitor{db: db}
-	roster, err := m.roster(ctx, lensOf(scope))
+	pp, err := rosterPeople(ctx, db, scope)
 	if err != nil {
 		return nil, err
-	}
-	pp := &cpoPeople{teams: map[string]*cpoTeam{}, byID: map[string]*cpoPerson{}, pending: map[string]bool{}}
-	for _, t := range roster {
-		key, name := t.lead.Key, t.lead.Name
-		if t.noLead {
-			key, name = rules.NoLead[0], rules.NoLead[1]
-		}
-		team := &cpoTeam{key: key, name: name}
-		pp.teams[key] = team
-		pp.teamOrder = append(pp.teamOrder, key)
-		for _, person := range t.people {
-			role := rules.CCEORole
-			if person.lead {
-				role = rules.ProgramLeadRole
-			}
-			row := newPerson(person.key, person.name, role, key, name)
-			team.people = append(team.people, row)
-			for _, id := range person.ids {
-				pp.byID[id] = row
-			}
-		}
 	}
 	ids := keptSchoolIDs(schools, n)
 	staffSide, partnerSide := n.channel != "partner", n.channel != "staff"
@@ -546,4 +524,36 @@ func keptSchoolIDs(schools []*cpoSchool, n cpoNarrow) []string {
 		ids = append(ids, s.id)
 	}
 	return ids
+}
+
+// rosterPeople is _People(country): the roster's teams and people, every id
+// they go by pointing at their row.
+func rosterPeople(ctx context.Context, db schooldirectory.Querier, scope schooldirectory.Scope) (*cpoPeople, error) {
+	m := &monitor{db: db}
+	roster, err := m.roster(ctx, lensOf(scope))
+	if err != nil {
+		return nil, err
+	}
+	pp := &cpoPeople{teams: map[string]*cpoTeam{}, byID: map[string]*cpoPerson{}, pending: map[string]bool{}}
+	for _, t := range roster {
+		key, name := t.lead.Key, t.lead.Name
+		if t.noLead {
+			key, name = rules.NoLead[0], rules.NoLead[1]
+		}
+		team := &cpoTeam{key: key, name: name}
+		pp.teams[key] = team
+		pp.teamOrder = append(pp.teamOrder, key)
+		for _, person := range t.people {
+			role := rules.CCEORole
+			if person.lead {
+				role = rules.ProgramLeadRole
+			}
+			row := newPerson(person.key, person.name, role, key, name)
+			team.people = append(team.people, row)
+			for _, id := range person.ids {
+				pp.byID[id] = row
+			}
+		}
+	}
+	return pp, nil
 }

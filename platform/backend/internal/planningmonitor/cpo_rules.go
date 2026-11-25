@@ -57,6 +57,13 @@ type cpoRules struct {
 		Tables      []cpoTableSpec    `json:"tables"`
 		TableTabs   []string          `json:"table_tabs"`
 		TableLabels map[string]string `json:"table_labels"`
+		TableWords  struct {
+			Statuses      map[string]string `json:"statuses"`
+			Types         map[string]string `json:"types"`
+			Interventions map[string]string `json:"interventions"`
+			Kinds         map[string]string `json:"kinds"`
+			WaitingStates []string          `json:"waiting_states"`
+		} `json:"table_words"`
 		// The roles the drill-down offers Export to (can_export).
 		ExportRoles []string `json:"export_roles"`
 	} `json:"page"`

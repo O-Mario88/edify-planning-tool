@@ -1,6 +1,7 @@
 package planningmonitor
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -73,5 +74,29 @@ func TestCPOReadFilters(t *testing.T) {
 		if f.fy != c.fy || f.period != c.period || f.quarter != c.quarter || f.week != c.wk || f.month != c.month || f.schoolType != c.schoolType {
 			t.Errorf("%v: %+v", c.q, f)
 		}
+	}
+}
+
+// The tables' words: _count_line's plurals, _balance, _expected_from, the
+// header links' parameter order (page_blocks._resolved), the pager's pages
+// and str.title for an activity type without a label.
+func TestCPOTableWords(t *testing.T) {
+	if got := countLine(1, "activity") + "|" + countLine(1200, "activity") + "|" + countLine(2, "school"); got != "1 activity|1,200 activities|2 schools" {
+		t.Errorf("count lines %q", got)
+	}
+	if got := balance(6, 560) + "|" + balance(600, 560) + "|" + balance(3, 0); got != "6 of 560 · 554 to plan|600 of 560 · 0 to plan|no target" {
+		t.Errorf("balances %q", got)
+	}
+	if got := expectedFrom(2, 2) + "|" + expectedFrom(0, 1) + "|" + expectedFrom(1, 0) + "|" + expectedFrom(0, 0); got != "Staff 2 · Partner 2|Partner|Staff|" {
+		t.Errorf("expected from %q", got)
+	}
+	if got := resolvedHref("/x", "fy=2027&period=fy&cluster=c1&blank="); got != "/x?cluster=c1&fy=2027&period=fy" {
+		t.Errorf("resolved %q", got)
+	}
+	if got := fmt.Sprint(cpoPageWindow(1, 13), cpoPageWindow(7, 13), cpoPageWindow(13, 13), cpoPageWindow(3, 5)); got != "[1 2 0 13] [1 0 6 7 8 0 13] [1 0 12 13] [1 2 3 4 5]" {
+		t.Errorf("page windows %s", got)
+	}
+	if got := pyTitleWords("school visit"); got != "School Visit" {
+		t.Errorf("title %q", got)
 	}
 }

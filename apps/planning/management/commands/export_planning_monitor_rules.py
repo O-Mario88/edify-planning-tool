@@ -265,13 +265,15 @@ def _country_oversight_page() -> dict:
     """The planning-coverage dashboard's own words: each card's label and the
     table it opens, the tabs, the people table's columns and the filters'
     choices (apps.planning.country_oversight.service, oversight_views)."""
+    from apps.core.enums import ActivityStatus, ActivityType, SsaIntervention
     from apps.core.metrics import MetricValue, render_metric
+    from apps.core.permissions import RolePermissionService
+    from apps.core.rbac import EdifyRole
     from apps.frontend.views.oversight_views import country_lens_tabs
     from apps.planning.country_execution.followups import EXEC_ISSUES
     from apps.planning.country_oversight import followups as fu
+    from apps.planning.country_oversight import rules as book
     from apps.planning.country_oversight import service, tables
-    from apps.core.permissions import RolePermissionService
-    from apps.core.rbac import EdifyRole
     from apps.planning.followup_models import OPEN_FOLLOW_UP_STATES, FollowUpStatus
     from apps.schools.management.commands.export_school_directory_rules import (
         _role_user,
@@ -332,6 +334,18 @@ def _country_oversight_page() -> dict:
             "unclustered": tables.UNCLUSTERED,
             "no_lead": service.NO_LEAD_LABEL,
             "no_owner": service.NO_OWNER_LABEL,
+            "partner_planned": tables.PARTNER_PLANNED,
+            "awaiting_partner": tables.AWAITING_PARTNER,
+            "assigned": tables.ASSIGNED,
+            "data_collection": tables.DATA_COLLECTION,
+        },
+        # The words the activity tables print (tables._Book).
+        "table_words": {
+            "statuses": {str(k): str(v) for k, v in ActivityStatus.choices},
+            "types": {str(k): str(v) for k, v in ActivityType.choices},
+            "interventions": {str(k): str(v) for k, v in SsaIntervention.choices},
+            "kinds": {str(k): str(v) for k, v in book.KIND_LABELS.items()},
+            "waiting_states": sorted(tables._WAITING_STATES),
         },
         # may_export: the drill-down's Export (can_export).
         "export_roles": sorted(

@@ -189,7 +189,8 @@ func (p *cpoPlaces) ofRecord(s *cpoSchool) cpoRow {
 }
 
 // sortRows is _Places.sort: by Programme Lead in the page's order, then
-// the place, then keys (each read case-folded), a tie in School's own order.
+// the place, then keys (each read case-folded), a tie in the order the
+// rows were read.
 func (p *cpoPlaces) sortRows(rows []cpoRow, keys ...string) {
 	order := p.leadOrder
 	str := func(r cpoRow, k string) (bool, string) {
@@ -230,9 +231,7 @@ func (p *cpoPlaces) sortRows(rows []cpoRow, keys ...string) {
 				return va < vb
 			}
 		}
-		ia, _ := a["_school"].(string)
-		ib, _ := b["_school"].(string)
-		return p.newest[ia] < p.newest[ib]
+		return false
 	})
 }
 
@@ -298,8 +297,11 @@ func schoolRows(ctx context.Context, db schooldirectory.Querier, snap *cpoSnapsh
 	for _, o := range names {
 		partnerName[o.value] = o.label
 	}
+	// The dataset's facts in School's own order (-created_at).
+	schools := slices.Clone(d.schools)
+	sort.SliceStable(schools, func(i, j int) bool { return places.newest[schools[i].id] < places.newest[schools[j].id] })
 	rows := []cpoRow{}
-	for _, s := range d.schools {
+	for _, s := range schools {
 		values := cpoTally(d.vectors[s.id])
 		if len(values) == 0 {
 			continue
@@ -378,7 +380,7 @@ func buildTable(ctx context.Context, db schooldirectory.Querier, snap *cpoSnapsh
 	t := cpoTable{spec: spec}
 	figure, ok := schoolTables[key]
 	if !ok {
-		return t, false, nil
+		return activityTable(ctx, db, snap, places, t, e)
 	}
 	rows, err := schoolRows(ctx, db, snap, places, e, func(v cpoTally) bool { return v.n(figure) != 0 })
 	if err != nil {
@@ -403,7 +405,7 @@ func CountryOversightTable(ctx context.Context, db schooldirectory.Querier, p au
 	if !ok {
 		return nil, true, ErrNoSuchTable
 	}
-	if _, drawn := schoolTables[key]; !drawn {
+	if !tablesDrawn[key] {
 		return nil, false, nil
 	}
 	q := map[string]string{}
@@ -638,7 +640,7 @@ func tableCell(c cpoColumn, r cpoRow, code string) *screensv1.PageCell {
 			if blank == "" {
 				blank = "Not yet scheduled"
 			}
-			return plain(blank)
+			return &screensv1.PageCell{Text: blank, Tone: "warning"}
 		}
 		return plain("—")
 	}
@@ -646,11 +648,20 @@ func tableCell(c cpoColumn, r cpoRow, code string) *screensv1.PageCell {
 		return plain("—")
 	}
 	text := fmt.Sprint(v)
+	if c.Key == "flag" {
+		return &screensv1.PageCell{Text: text, Tone: "danger"}
+	}
 	switch c.Kind {
 	case "change":
-		if n, ok := v.(int); ok && n > 0 {
-			text = "+" + text
+		n, _ := v.(int)
+		tone := "neutral"
+		switch {
+		case n > 0:
+			text, tone = "+"+text, "success"
+		case n < 0:
+			tone = "danger"
 		}
+		return &screensv1.PageCell{Text: text, Tone: tone}
 	case "money":
 		if n, ok := v.(int); ok {
 			text = cpoFmt(n)
@@ -683,4 +694,44 @@ func resolvedHref(base, query string) string {
 		return base
 	}
 	return base + "?" + strings.Join(parts, "&")
+}
+
+// tablesDrawn are the tables Go draws; the rest are handed on.
+var tablesDrawn = map[string]bool{"not-planned": true, "partly-planned": true, "no-training": true, "unclustered": true,
+	"visits": true, "meetings": true}
+
+// activityTable is tables.build for the people-first tables Go draws.
+func activityTable(ctx context.Context, db schooldirectory.Querier, snap *cpoSnapshot, places *cpoPlaces, t cpoTable,
+	e cpoExtra) (cpoTable, bool, error) {
+	book, err := newBook(ctx, db, snap, places, e)
+	if err != nil {
+		return t, true, err
+	}
+	switch t.spec.Key {
+	case "visits":
+		rows, err := book.visitRows()
+		if err != nil {
+			return t, true, err
+		}
+		rows = flagRows(rows, twiceCodes(snap))
+		places.sortRows(rows, "date", "school")
+		t.rows = rows
+		t.summary = countLine(len(rows), t.spec.Unit) + " planned · " + balance(len(rows), cpoTally(snap.tree.country).n("target"))
+	case "meetings":
+		yes := true
+		rows, err := book.sessionRows(&yes)
+		if err != nil {
+			return t, true, err
+		}
+		places.sortRows(rows, "date")
+		invited := 0
+		for _, r := range rows {
+			invited += r["invited"].(int)
+		}
+		t.rows = rows
+		t.summary = countLine(len(rows), t.spec.Unit) + " planned · " + cpoFmt(invited) + " school invitation" + pluralize(invited, "", "s")
+	default:
+		return t, false, nil
+	}
+	return t, true, nil
 }

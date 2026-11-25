@@ -266,7 +266,8 @@ func TestCountryOversightCoverageIsGosInTheExistingDesign(t *testing.T) {
 // The school tables behind Country Oversight's figures are Go's
 // (tables.build, country_table.html): the fifteen table tabs, the table
 // page's nine filters, fifty rows a page, and as many schools as the page's
-// own figure counts. A table Go does not draw yet is handed on.
+// own figure counts, Staff Visit Plans as many visits. A table Go does not
+// draw yet is handed on.
 func TestCountryOversightSchoolTablesAreGos(t *testing.T) {
 	borrowAccount(t, "cd@edify.org")
 	director := sessionOf(t, "cd@edify.org", seededPassword).GetAccessToken()
@@ -313,7 +314,16 @@ func TestCountryOversightSchoolTablesAreGos(t *testing.T) {
 	if got := strings.ReplaceAll(strings.Fields(rows.GetSubtitle())[0], ",", ""); got != want {
 		t.Fatalf("the table lists %s schools, the page counts %s", got, want)
 	}
-	if _, err := pageOf(director, countryPlanningOversight+"table/visits", query); connect.CodeOf(err) != connect.CodeUnavailable {
-		t.Fatalf("Staff Visit Plans: %v, want handed on", err)
+	// Staff Visit Plans lists the visits the page's own figure counts.
+	visits, err := pageOf(director, countryPlanningOversight+"table/visits", query)
+	if err != nil {
+		t.Fatalf("Staff Visit Plans: %v", err)
+	}
+	planned := strings.ReplaceAll(strings.Fields(people.GetRows()[0].GetCells()[1].GetText())[0], ",", "")
+	if got := strings.ReplaceAll(strings.Fields(visits.GetBlocks()[2].GetTable().GetSubtitle())[0], ",", ""); got != planned {
+		t.Fatalf("Staff Visit Plans lists %s visits, the page counts %s", got, planned)
+	}
+	if _, err := pageOf(director, countryPlanningOversight+"table/partners", query); connect.CodeOf(err) != connect.CodeUnavailable {
+		t.Fatalf("Schools Assigned to Partners: %v, want handed on", err)
 	}
 }

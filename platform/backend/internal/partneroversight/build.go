@@ -577,3 +577,12 @@ func sortItems(items []*item) {
 		return items[a].schoolName < items[b].schoolName
 	})
 }
+
+// DescribeActivity is describe_work for one activity and its own catalogue
+// item (describe_work(activity=a, catalogue_item=a.catalogue_item)), as
+// Country Planning Oversight's tables read it: (Training, Purpose of
+// Assignment, SSA Intervention).
+func DescribeActivity(purpose, activityType, course, catalogue, snapshot, focus, purposeIntervention string) (string, string, string) {
+	return describe(work{catalogue: catalogue, act: &activity{purposeType: purpose, activityType: activityType,
+		courseName: course, snapshot: snapshot, focus: focus, purposeIntervention: purposeIntervention}})
+}
