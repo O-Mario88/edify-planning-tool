@@ -257,6 +257,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			Logger: logger, Now: time.Now}).
 		WithExecutionFollowUps(planningmonitor.CEXSendDeps{Push: plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
 			Logger: logger}).
+		WithTemporaryPasswords(accountService).
 		WithPartnerOversightSend(partneroversight.SendDeps{Push: plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
 			Logger: logger, Delegate: actionsweep.PartnerDelegate(plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, logger)}).
 		WithPages(logger,

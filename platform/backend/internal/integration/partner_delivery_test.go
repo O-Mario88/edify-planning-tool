@@ -27,7 +27,6 @@ WHERE u.email = 'partner@edify.org' AND a.deleted_at IS NULL ORDER BY a.id LIMIT
 	restore := func() {
 		for _, sql := range []string{
 			`DELETE FROM partner_member WHERE id = 'gomember1'`,
-			`DELETE FROM audit_log WHERE action = 'partner.delivery_member_named' AND subject_id = '` + activity + `'`,
 		} {
 			if _, err := admin.Exec(ctx, sql); err != nil {
 				t.Errorf("clearing: %v", err)
@@ -69,6 +68,12 @@ VALUES (now(), now(), 'gomember1', 'Field Officer One', 'officer', '', '', '', t
 		}
 		return answer.Msg
 	}
+	// The audit chain is append-only: count the rows this save adds.
+	var auditedBefore int
+	if err := admin.QueryRow(ctx, `SELECT count(*) FROM audit_log WHERE action = 'partner.delivery_member_named' AND subject_id = $1`,
+		activity).Scan(&auditedBefore); err != nil {
+		t.Fatalf("the audit so far: %v", err)
+	}
 	if s := save("field officer one"); !s.GetSaved() || s.GetMessage() != "Field Officer One will deliver this work." {
 		t.Fatalf("naming the team member: %+v", s)
 	}
@@ -76,7 +81,7 @@ VALUES (now(), now(), 'gomember1', 'Field Officer One', 'officer', '', '', '', t
 	var audited int
 	if err := admin.QueryRow(ctx, `SELECT COALESCE(delivery_contact_name, ''),
   (SELECT count(*) FROM audit_log WHERE action = 'partner.delivery_member_named' AND subject_id = $1) FROM activity WHERE id = $1`, activity).
-		Scan(&named, &audited); err != nil || named != "Field Officer One" || audited != 1 {
+		Scan(&named, &audited); err != nil || named != "Field Officer One" || audited != auditedBefore+1 {
 		t.Fatalf("named %q, audited %d: %v", named, audited, err)
 	}
 	if s := save("Somebody Else"); s.GetSaved() || s.GetError() != "Somebody Else is not on your organisation's team. Add them under Staff and volunteers on your organisation's profile, then choose them here." {

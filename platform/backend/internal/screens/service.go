@@ -182,6 +182,8 @@ type Service struct {
 	executionFollowUps *planningmonitor.CEXSendDeps
 	// partnerSend is what Partner Oversight's hand-over send needs.
 	partnerSend *partneroversight.SendDeps
+	// passwords is the Users page's Reset password save.
+	passwords TemporaryPasswords
 }
 
 // NewService wires the service. existingApp may be nil.
