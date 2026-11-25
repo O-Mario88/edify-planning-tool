@@ -433,9 +433,9 @@ GRANT SELECT (id, notification_id, recipient_id, channel, status, attempts, last
               failed_at) ON notification_delivery TO edify_activities_rw;
 GRANT UPDATE (status, updated_at, attempts, last_error, provider_message_id, sent_at, failed_at)
   ON notification_delivery TO edify_activities_rw;
-GRANT SELECT (id, title, body, category, status, priority, action_label, sender_id, action_required, resolved_at,
-              last_reminded_at, created_at)
-  ON notification TO edify_activities_rw;
+-- The notification's words and state are the gateway's already (roles.sql);
+-- the copy's "Sent" time also reads when it was last reminded.
+GRANT SELECT (last_reminded_at) ON notification TO edify_activities_rw;
 GRANT SELECT (id, name, email, is_active, deleted_at) ON "user" TO edify_activities_rw;
 
 -- ── The scheduler's target_ledger_sync (docs/migration/189 §4) ──
@@ -493,6 +493,8 @@ GRANT UPDATE (duplicate_status) ON school TO edify_dataquality_owner;
 
 CREATE SCHEMA IF NOT EXISTS gateway_dataquality AUTHORIZATION edify_dataquality_owner;
 REVOKE ALL ON SCHEMA gateway_dataquality FROM PUBLIC;
+-- Re-runnable: the owner may (re)define its function, then loses the right.
+GRANT USAGE, CREATE ON SCHEMA gateway_dataquality TO edify_dataquality_owner;
 
 SET ROLE edify_dataquality_owner;
 CREATE OR REPLACE FUNCTION gateway_dataquality.flag_potential_duplicates(target_ids varchar[]) RETURNS integer
@@ -543,6 +545,8 @@ GRANT DELETE ON interaction_event TO edify_telemetry_owner;
 
 CREATE SCHEMA IF NOT EXISTS gateway_telemetry AUTHORIZATION edify_telemetry_owner;
 REVOKE ALL ON SCHEMA gateway_telemetry FROM PUBLIC;
+-- Re-runnable: the owner may (re)define its function, then loses the right.
+GRANT USAGE, CREATE ON SCHEMA gateway_telemetry TO edify_telemetry_owner;
 
 SET ROLE edify_telemetry_owner;
 CREATE OR REPLACE FUNCTION gateway_telemetry.prune_interaction_events(before timestamptz) RETURNS integer
