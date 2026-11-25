@@ -27,4 +27,13 @@ describe('a download the gateway writes', () => {
       'http://localhost:3000/api/quick-export?target=%2Fia%2Fimpact-reports%2Fcmwwi4g1600tspljcccqz%2Fannex.csv',
     );
   });
+
+  it("sends a released version's download to the gateway's quick export", () => {
+    const request = new NextRequest('http://localhost:3000/ia/impact-reports/cmwwi4g1600tspljcccqz/releases/cmwwl717p008prmhldfhk/download');
+    request.cookies.set(ACCESS_COOKIE, 'token');
+    const answer = proxy(request);
+    expect(answer.headers.get('x-middleware-rewrite')).toBe(
+      'http://localhost:3000/api/quick-export?target=%2Fia%2Fimpact-reports%2Fcmwwi4g1600tspljcccqz%2Freleases%2Fcmwwl717p008prmhldfhk%2Fdownload',
+    );
+  });
 });

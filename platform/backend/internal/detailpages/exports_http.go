@@ -38,10 +38,20 @@ func (s *Service) RegisterHTTP(mux *http.ServeMux, authn HTTPAuth) {
 		if fy == "" {
 			fy = schooldirectory.OperationalFY(s.now())
 		}
+		var name string
+		var body []byte
+		var fileErr error
+		served := false
 		if m := annexTarget.FindStringSubmatch(target); m != nil && s.annex != nil {
-			name, body, err := s.annex(r.Context(), p, m[1])
-			if err != nil {
-				http.Error(w, "The evidence annex is not available to you.", http.StatusNotFound)
+			name, body, fileErr = s.annex(r.Context(), p, m[1])
+			served = true
+		} else if m := releaseTarget.FindStringSubmatch(target); m != nil && s.releaseFile != nil {
+			name, body, fileErr = s.releaseFile(r.Context(), p, m[1], m[2])
+			served = true
+		}
+		if served {
+			if fileErr != nil {
+				http.Error(w, "This file is not available to you.", http.StatusNotFound)
 				return
 			}
 			w.Header().Set("Content-Type", "text/csv; charset=utf-8")
@@ -74,6 +84,9 @@ func (s *Service) RegisterHTTP(mux *http.ServeMux, authn HTTPAuth) {
 
 // annexTarget is an impact report's evidence annex download.
 var annexTarget = regexp.MustCompile(`^/ia/impact-reports/([A-Za-z0-9]{1,30})/annex\.csv$`)
+
+// releaseTarget is a released version's download.
+var releaseTarget = regexp.MustCompile(`^/ia/impact-reports/([A-Za-z0-9]{1,30})/releases/([A-Za-z0-9]{1,30})/download$`)
 
 // exportPermission is the matrix's data.export.
 const exportPermission = "data.export"

@@ -19,6 +19,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/cuid"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/iapages"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/iaredaction"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -200,7 +201,7 @@ LEFT JOIN "user" u ON u.id = sp.user_id WHERE s.id = $1 AND s.deleted_at IS NULL
 			if exists || ownerUser == "" || !ownerActive {
 				continue
 			}
-			payload, err := json.Marshal(schoolPayload(snapshot, school, name, narrative))
+			payload, err := json.Marshal(iaredaction.SchoolPayload(snapshot, school, name, narrative))
 			if err != nil {
 				return fmt.Errorf("iareports: the school's brief: %w", err)
 			}

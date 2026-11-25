@@ -208,3 +208,105 @@ func pyISO(t time.Time) string {
 	}
 	return t.Format("2006-01-02T15:04:05.000000+00:00")
 }
+
+// releaseRow is one row of release_rows' walk.
+type releaseRow []any
+
+// walkRelease is release_rows' walk: every leaf of the payload as Section /
+// Measure / Value, objects in the order Django reads them back.
+func walkRelease(section string, value any, rows *[]releaseRow) {
+	switch x := value.(type) {
+	case map[string]any:
+		for _, k := range jsonbKeys(x) {
+			next := k
+			if section != "" {
+				next = section + "." + k
+			}
+			walkRelease(next, x[k], rows)
+		}
+	case []any:
+		for i, inner := range x {
+			walkRelease(fmt.Sprintf("%s[%d]", section, i+1), inner, rows)
+		}
+	default:
+		head, measure := "", section
+		if i := strings.LastIndex(section, "."); i >= 0 {
+			head, measure = section[:i], section[i+1:]
+		}
+		if head == "" {
+			head = section
+		}
+		if measure == "" {
+			measure = section
+		}
+		*rows = append(*rows, releaseRow{head, measure, value})
+	}
+}
+
+// ReleaseDownload is release_download: a released donor or school version
+// as Section / Measure / Value rows; the leadership version is the annex.
+func (r Reports) ReleaseDownload(ctx context.Context, p auth.Principal, reportID, releaseID string) (string, []byte, error) {
+	x, err := r.visible(ctx, r.DB, p, reportID, false)
+	if err != nil {
+		return "", nil, err
+	}
+	if x == nil {
+		return "", nil, ErrNoAnnex
+	}
+	var audience, status string
+	var released *time.Time
+	var raw []byte
+	err = r.DB.QueryRow(ctx, `SELECT audience, status, released_at, rendered_payload::text FROM impact_report_release
+WHERE id = $1 AND report_id = $2`, releaseID, reportID).Scan(&audience, &status, &released, &raw)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", nil, ErrNoAnnex
+	}
+	if err != nil {
+		return "", nil, fmt.Errorf("iareports: the release: %w", err)
+	}
+	if (p.ActiveRole == "RegionalVicePresident" && audience != "donor") || status != "released" || !slices.Contains(exportRoles, p.ActiveRole) {
+		return "", nil, ErrNoAnnex
+	}
+	if audience == "leadership" {
+		return r.Annex(ctx, p, reportID)
+	}
+	d := json.NewDecoder(bytes.NewReader(raw))
+	d.UseNumber()
+	var payload map[string]any
+	if err := d.Decode(&payload); err != nil {
+		return "", nil, fmt.Errorf("iareports: reading the release: %w", err)
+	}
+	var hash string
+	_ = r.DB.QueryRow(ctx, `SELECT snapshot_hash FROM impact_report WHERE id = $1`, reportID).Scan(&hash)
+	at := ""
+	if released != nil {
+		at = pyISO(*released)
+	}
+	label := map[string]string{"leadership": "Country leadership", "school": "Partner school", "donor": "Donors"}[audience]
+	rows := []releaseRow{{"Impact report", label}, {"Released at", at}, {"Report version", x.version}, {"Snapshot sha256", hash}, {},
+		{"Section", "Measure", "Value"}}
+	walkRelease("", payload, &rows)
+	var out bytes.Buffer
+	w := csv.NewWriter(&out)
+	w.UseCRLF = true
+	for _, row := range rows {
+		cells := make([]string, len(row))
+		for i, v := range row {
+			cells[i] = csvValue(v)
+		}
+		if err := w.Write(cells); err != nil {
+			return "", nil, err
+		}
+	}
+	w.Flush()
+	now := r.now()
+	err = pgx.BeginTxFunc(ctx, r.DB, pgx.TxOptions{AccessMode: pgx.ReadWrite}, func(tx pgx.Tx) error {
+		_, err := audit.Append(ctx, tx, reportAudit("ia.report.release_downloaded", reportID, p, x.country, x.version, x.status, hash,
+			map[string]any{"release_id": releaseID, "audience": audience}), now)
+		return err
+	})
+	if err != nil {
+		return "", nil, err
+	}
+	return fmt.Sprintf("impact-report-%s-v%d-%s.csv", reportID, x.version, audience), out.Bytes(), nil
+}

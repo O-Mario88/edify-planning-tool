@@ -19,7 +19,7 @@ type Saved struct {
 
 // reportDrawerPath is a report's own drawers: edit, and a new
 // recommendation.
-var reportDrawerPath = regexp.MustCompile(`^/ia/impact-reports/([A-Za-z0-9]{1,30})/(edit|recommendations/new|review|release/schools)$`)
+var reportDrawerPath = regexp.MustCompile(`^/ia/impact-reports/([A-Za-z0-9]{1,30})/(edit|recommendations/new|review|release/schools|release/donor)$`)
 
 // releasePath is one release's drawer.
 var releasePath = regexp.MustCompile(`^/ia/impact-reports/([A-Za-z0-9]{1,30})/releases/([A-Za-z0-9]{1,30})$`)
@@ -68,6 +68,8 @@ func (r Reports) Drawer(ctx context.Context, p auth.Principal, rawPath string) (
 		d, err = r.reviewDrawer(ctx, p, id)
 	case "release/schools":
 		d, err = r.schoolsDrawer(ctx, p, id)
+	case "release/donor":
+		d, err = r.donorDrawer(ctx, p, id)
 	case "respond":
 		report, rec, _ := strings.Cut(id, "/")
 		d, err = r.respondDrawer(ctx, p, report, rec)
@@ -182,6 +184,11 @@ func (r Reports) Save(ctx context.Context, p auth.Principal, rawPath, form strin
 		saved, err = r.review(ctx, p, id, values)
 	case "release/schools":
 		saved, err = r.releaseSchools(ctx, p, id, values)
+	case "release/donor":
+		saved, err = r.requestDonor(ctx, p, id, strings.TrimSpace(values["note"]))
+	case "release":
+		report, release, _ := strings.Cut(id, "/")
+		saved, err = r.decideDonor(ctx, p, report, release, values)
 	case "respond":
 		report, rec, _ := strings.Cut(id, "/")
 		saved, err = r.respond(ctx, p, report, rec, values)

@@ -29,6 +29,18 @@ type Service struct {
 	// annex is an impact report's evidence annex (internal/iareports), for
 	// /ia/impact-reports/<id>/annex.csv.
 	annex ReportAnnex
+	// releaseFile is a released donor or school version's download, for
+	// /ia/impact-reports/<id>/releases/<release>/download.
+	releaseFile ReleaseDownload
+}
+
+// ReleaseDownload writes a report's released version for p.
+type ReleaseDownload func(ctx context.Context, p auth.Principal, reportID, releaseID string) (string, []byte, error)
+
+// WithReleaseDownload serves the impact report release download.
+func (s *Service) WithReleaseDownload(d ReleaseDownload) *Service {
+	s.releaseFile = d
+	return s
 }
 
 // ReportAnnex writes a report's evidence annex for p: its file name and

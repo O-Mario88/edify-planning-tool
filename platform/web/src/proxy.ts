@@ -40,7 +40,7 @@ export function proxy(request: NextRequest) {
   }
   if (
     request.method === 'GET' &&
-    /^\/(ia\/analytics\/export|ia\/impact-reports\/[^/]+\/annex\.csv|my-professional-development\/export|my-targets\/export|projects\/export|projects\/[^/]+\/export|staff-activity\/export|schools\/upload\/template)\/?$/.test(
+    /^\/(ia\/analytics\/export|ia\/impact-reports\/[^/]+\/annex\.csv|ia\/impact-reports\/[^/]+\/releases\/[^/]+\/download|my-professional-development\/export|my-targets\/export|projects\/export|projects\/[^/]+\/export|staff-activity\/export|schools\/upload\/template)\/?$/.test(
       pathname,
     )
   ) {

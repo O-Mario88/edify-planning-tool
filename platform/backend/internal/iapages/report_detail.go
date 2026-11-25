@@ -7,7 +7,9 @@ package iapages
 // correction names the version it corrects: those are handed on.
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -22,8 +24,10 @@ import (
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/iaredaction"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pageheader"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
 var reportDetailPath = regexp.MustCompile(`^/ia/impact-reports/([A-Za-z0-9]{1,30})/$`)
@@ -79,6 +83,9 @@ type reportRights struct {
 	// releaseSchools is can_release_schools and can_request_donor; respond is
 	// the Country Director's answer to each recommendation.
 	releaseSchools, respond bool
+	// decideDonor is may_decide_donor: an RVP whose region covers the
+	// country.
+	decideDonor bool
 }
 
 func (s *Service) rightsOf(ctx context.Context, p auth.Principal, x pageReport) (reportRights, error) {
@@ -108,6 +115,11 @@ WHERE 'ImpactAssessment' = ANY(u.roles) AND u.is_active AND u.deleted_at IS NULL
 	countryCD := p.ActiveRole == roleCD && x.country != "" && country == x.country
 	r.releaseSchools = x.status == "released" && (x.reviewer == p.UserID || countryCD)
 	r.respond = x.status == "released" && countryCD
+	if p.ActiveRole == roleRVP {
+		if r.decideDonor, err = s.rvpCovers(ctx, p, x.country); err != nil {
+			return r, err
+		}
+	}
 	correctable := x.status == "returned" || x.status == "reviewed" || x.status == "released" ||
 		(x.status == "withdrawn" && x.submitted != nil)
 	r.correct = correctable && p.ActiveRole == roleIA && x.country != "" && country == x.country
@@ -149,17 +161,15 @@ FROM impact_report r LEFT JOIN project pr ON pr.id = r.project_id WHERE (%s) AND
 	// Released reports (their releases), corrections (the version they
 	// correct), reports with a newer version and the RVP's donor reading are
 	// the existing page's still.
+	var donor map[string]any
 	if frozen && p.ActiveRole == roleRVP {
-		return nil, false, nil
-	}
-	// A donor version (its approval and its RVP reading) is the existing
-	// page's still; the leadership release and school briefs are drawn here.
-	var other bool
-	if err := s.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM impact_report_release WHERE report_id = $1 AND audience = 'donor')`, id).Scan(&other); err != nil {
-		return nil, true, fmt.Errorf("iapages: the report's releases: %w", err)
-	}
-	if other {
-		return nil, false, nil
+		// The RVP reads the words as donors would: no school or staff names.
+		if donor, err = s.donorReading(ctx, x); err != nil {
+			return nil, true, err
+		}
+		x.title = strOr(obj(donor["report"])["title"])
+		narrative := obj(donor["narrative"])
+		x.methodology, x.findings, x.limitations = strOr(narrative["methodology"]), strOr(narrative["findings"]), strOr(narrative["limitations"])
 	}
 	notes, err := s.versionNotes(ctx, reach, args[:len(args)-1:len(args)-1], x)
 	if err != nil {
@@ -218,7 +228,9 @@ FROM impact_report r LEFT JOIN project pr ON pr.id = r.project_id WHERE (%s) AND
 		}
 		blocks = append(blocks, titled("Recommendations"), table)
 	}
-	if frozen {
+	if frozen && donor != nil {
+		blocks = append(blocks, donorEvidence(x, donor, query)...)
+	} else if frozen {
 		evidence, err := frozenEvidence(x, query)
 		if err != nil {
 			return nil, true, err
@@ -227,7 +239,7 @@ FROM impact_report r LEFT JOIN project pr ON pr.id = r.project_id WHERE (%s) AND
 	} else {
 		blocks = append(blocks, titled("Evidence", text("The evidence is taken by the server, in your scope, the moment the report is submitted — the project cohort in the period, school change with its evidence grades, learning, discipleship and EdTech evidence, mapping versions, verified loan conclusions and approved findings — and never changes afterwards.")))
 	}
-	releases, err := s.releaseTable(ctx, x, query)
+	releases, err := s.releaseTable(ctx, p, x, rights, query)
 	if err != nil {
 		return nil, true, err
 	}
@@ -389,9 +401,10 @@ var releaseStatusLabels = map[string]string{"pending_approval": "Awaiting approv
 
 // releaseTable is _release_rows under its title, for a report whose
 // releases are the leadership one and its school briefs.
-func (s *Service) releaseTable(ctx context.Context, x pageReport, query url.Values) ([]*screensv1.PageBlock, error) {
+func (s *Service) releaseTable(ctx context.Context, p auth.Principal, x pageReport, rights reportRights, query url.Values) ([]*screensv1.PageBlock, error) {
 	rows, err := s.db.Query(ctx, `SELECT r.id, r.audience, r.status, COALESCE(sc.name, ''), COALESCE(q.name, ''), COALESCE(d.name, ''),
-  r.released_at, COALESCE(a.state, ''), COALESCE(a.manual_resolution_reason, ''), a.id IS NOT NULL, COALESCE(ru.name, 'the account owner')
+  r.released_at, COALESCE(a.state, ''), COALESCE(a.manual_resolution_reason, ''), a.id IS NOT NULL, COALESCE(ru.name, 'the account owner'),
+  r.requested_by_id, r.revoked_reason
 FROM impact_report_release r LEFT JOIN school sc ON sc.id = r.school_id
 LEFT JOIN "user" q ON q.id = r.requested_by_id LEFT JOIN "user" d ON d.id = r.released_by_id
 LEFT JOIN LATERAL (SELECT t.id, t.state, t.manual_resolution_reason, t.recipient_id FROM team_action t
@@ -406,11 +419,15 @@ WHERE r.report_id = $1 ORDER BY r.audience, r.created_at`, x.id)
 	list := [][]string{}
 	actions := [][]*screensv1.PageAction{}
 	for rows.Next() {
-		var id, audience, status, school, requested, released, state, resolution, recipient string
+		var id, audience, status, school, requested, released, state, resolution, recipient, requester, revoked string
 		var at *time.Time
 		var hasAction bool
-		if err := rows.Scan(&id, &audience, &status, &school, &requested, &released, &at, &state, &resolution, &hasAction, &recipient); err != nil {
+		if err := rows.Scan(&id, &audience, &status, &school, &requested, &released, &at, &state, &resolution, &hasAction, &recipient,
+			&requester, &revoked); err != nil {
 			return nil, fmt.Errorf("iapages: a release: %w", err)
+		}
+		if rights.summaryOnly && audience != "donor" {
+			continue
 		}
 		label := status
 		if l, ok := releaseStatusLabels[status]; ok {
@@ -421,10 +438,14 @@ WHERE r.report_id = $1 ORDER BY r.audience, r.created_at`, x.id)
 			day = dayTime(*at)
 		}
 		buttons := []*screensv1.PageAction{{Label: "View", Enabled: true, Href: path + id + "/", Drawer: true}}
+		if audience == "donor" && status == "pending_approval" && rights.decideDonor && p.UserID != x.author && p.UserID != x.reviewer &&
+			p.UserID != requester {
+			buttons = []*screensv1.PageAction{{Label: "Approve or decline", Enabled: true, Href: path + id + "/", Drawer: true}}
+		}
 		if status == "released" && audience != "school" {
 			buttons = append(buttons, &screensv1.PageAction{Label: "Download", Enabled: true, Href: path + id + "/download"})
 		}
-		if audience == "school" {
+		if audience == "school" && !rights.summaryOnly {
 			buttons = append(buttons, &screensv1.PageAction{Label: "Open brief", Enabled: true, Href: "/impact-briefs/" + id + "/"})
 		}
 		key := "menu"
@@ -441,6 +462,9 @@ WHERE r.report_id = $1 ORDER BY r.audience, r.created_at`, x.id)
 			if state == "resolved" {
 				shared = resolution
 			}
+		}
+		if audience == "donor" && revoked != "" {
+			shared = "Declined: " + revoked
 		}
 		list = append(list, []string{reportAudienceLabels[audience], school, label, requested, released, day, shared})
 		actions = append(actions, buttons)
@@ -506,8 +530,8 @@ WHERE a.subject_kind = 'ImpactReport' AND a.subject_id = $1 ORDER BY a.created_a
 		}
 		if action == "ia.report.released" {
 			// Its payload's audience: the first release is the leadership
-			// one, every later one a school brief (the page hands on a report
-			// with a donor version).
+			// one, every later one a school brief (a donor version is audited
+			// in its own words).
 			audience := "Partner school"
 			if seq == first {
 				audience = "Country leadership"
@@ -568,4 +592,109 @@ WHERE r.id = $1`, x.id).Scan(&priorID, &priorVersion, &priorStatus); err != nil 
 	}
 	v := strconv.Itoa(priorVersion)
 	return append(out, note("This version corrects version "+v+", which stands until this one "+until+".", "version "+v, ReportsPath+priorID+"/")), nil
+}
+
+// rvpCovers is _rvp_covers: an RVP with no region on file covers every
+// country.
+func (s *Service) rvpCovers(ctx context.Context, p auth.Principal, country string) (bool, error) {
+	scope, err := schooldirectory.ResolveScope(ctx, s.db, p, s.now())
+	if err != nil {
+		return false, err
+	}
+	if !scope.RegionScope {
+		return true, nil
+	}
+	ids := scope.RegionIDs
+	if ids == nil {
+		ids = []string{}
+	}
+	var covers bool
+	err = s.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM region WHERE id = ANY($1) AND country = $2)`, ids, country).Scan(&covers)
+	return covers, err
+}
+
+// donorReading is redact(snapshot_with_people(report), DONOR, narrative=…):
+// the page as the RVP reads it.
+func (s *Service) donorReading(ctx context.Context, x pageReport) (map[string]any, error) {
+	d := json.NewDecoder(bytes.NewReader(x.snapshot))
+	d.UseNumber()
+	var snapshot map[string]any
+	if err := d.Decode(&snapshot); err != nil {
+		return nil, fmt.Errorf("iapages: reading the frozen evidence: %w", err)
+	}
+	rows, err := s.db.Query(ctx, `SELECT COALESCE(name, '') FROM "user" WHERE id = ANY($1)`, []string{x.author, x.reviewer})
+	if err != nil {
+		return nil, fmt.Errorf("iapages: the report's people: %w", err)
+	}
+	names, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return nil, err
+	}
+	people := list(snapshot["people"])
+	for _, n := range names {
+		people = append(people, n)
+	}
+	snapshot["people"] = people
+	payload := iaredaction.DonorPayload(snapshot, map[string]string{"methodology": x.methodology, "findings": x.findings,
+		"limitations": x.limitations}, nil)
+	b, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+	d = json.NewDecoder(bytes.NewReader(b))
+	d.UseNumber()
+	var out map[string]any
+	return out, d.Decode(&out)
+}
+
+// countCellText is the view's _count.
+func countCellText(v jsonValue) string {
+	if v == iaredaction.Suppressed {
+		return "Suppressed (fewer than 5)"
+	}
+	if v == nil || v == "" {
+		return "0"
+	}
+	return pyStr(v)
+}
+
+// donorShare is the view's _share over a donor cell.
+func donorShare(v jsonValue) string {
+	if v == iaredaction.Suppressed {
+		return "Suppressed (fewer than 5 schools)"
+	}
+	return shareText(v)
+}
+
+// donorSigned is the view's _signed over a donor cell.
+func donorSigned(v jsonValue) string {
+	if v == iaredaction.Suppressed {
+		return "Suppressed (fewer than 5 schools)"
+	}
+	return signedText(v)
+}
+
+// donorEvidence is _evidence_tables for the summary reader.
+func donorEvidence(x pageReport, donor map[string]any, query url.Values) []*screensv1.PageBlock {
+	cohort, portfolio := obj(donor["cohort"]), obj(donor["portfolio"])
+	summary := []string{
+		"Project enrolments", countCellText(cohort["enrolments"]),
+		"Measured enrolments", countCellText(cohort["measured"]),
+		"Improved (share of measured)", donorShare(cohort["improved_pct"]),
+		"Declined (share of measured)", donorShare(cohort["declined_pct"]),
+		"Schools in scope", countCellText(portfolio["schools_in_scope"]),
+		"Schools with paired confirmed SSAs", countCellText(portfolio["measured"]),
+		"Suppressed cells", pyStr(donor["suppressed_cells"]),
+	}
+	blocks := []*screensv1.PageBlock{{Kind: &screensv1.PageBlock_Section{Section: "Evidence frozen at submission"}},
+		titled("", paired(summary)...)}
+	change := [][]string{}
+	for _, raw := range list(portfolio["rows"]) {
+		row := obj(raw)
+		change = append(change, []string{strOr(row["name"]), countCellText(row["measured"]), donorShare(row["improved_pct"]),
+			donorShare(row["declined_pct"]), donorSigned(row["median_change"]), strOr(row["evidence"])})
+	}
+	return append(blocks, frozenTable(x.title, "School change (aggregates)", "change_page",
+		[]string{"Outcome area / domain", "Schools measured", "Improved", "Declined", "Median change", "Evidence"}, change,
+		"Not measured", "No school has two comparable confirmed SSAs.", query)...)
 }

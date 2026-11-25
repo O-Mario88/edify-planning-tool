@@ -204,7 +204,7 @@ func (r Reports) releaseDrawer(ctx context.Context, p auth.Principal, reportID, 
 	case "school":
 		return r.schoolReleaseDrawer(ctx, id, label)
 	case "donor":
-		return nil, false, nil
+		return r.donorReleaseDrawer(ctx, p, x, id, label)
 	}
 	day := ""
 	if released != nil {
