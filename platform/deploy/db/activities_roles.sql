@@ -589,3 +589,26 @@ GRANT UPDATE (occurrence_count, debrief_ids, window_start, window_end, descripti
 GRANT SELECT (fy, completed_at) ON hr_fiscal_year_rollover TO edify_activities_rw;
 -- Whether an analytics report schedule is due (analytics_report_delivery).
 GRANT SELECT (id, is_active, next_run_at) ON analytics_report_schedule TO edify_activities_rw;
+
+-- ── The scheduler's loan_tracking_notifications (docs/migration/189 §4) ──
+-- run_loan_tracking_notifications: application follow-ups, repayment
+-- follow-ups and the Regional Vice President's monthly report, each claimed
+-- once in the permanent delivery log. It reads the loans and their schedule
+-- and repayments; it changes none of them.
+GRANT SELECT (id, delivery_kind, subject_id, period_key, recipient_id) ON bt_loan_tracking_delivery_log TO edify_activities_rw;
+GRANT INSERT (id, created_at, updated_at, delivery_kind, subject_id, period_key, recipient_id)
+  ON bt_loan_tracking_delivery_log TO edify_activities_rw;
+GRANT SELECT (id, status, next_follow_up_on, school_id, deleted_at, created_at, submitted_at)
+  ON bt_loan_application TO edify_activities_rw;
+GRANT SELECT (id, school_id, mfi_id, status, repayment_frequency, disbursement_date, maturity_date, term_months,
+              disbursed_amount, created_at)
+  ON bt_mfi_loan TO edify_activities_rw;
+GRANT SELECT (id, name) ON bt_mfi_organization TO edify_activities_rw;
+GRANT SELECT (loan_id, as_of_date, next_payment_date, created_at) ON bt_repayment_snapshot TO edify_activities_rw;
+GRANT SELECT (id, loan_id, schedule_version, due_date, principal_due, interest_due, fee_due)
+  ON bt_loan_repayment_installment TO edify_activities_rw;
+GRANT SELECT (installment_id, transaction_id, component, amount) ON bt_repayment_allocation TO edify_activities_rw;
+GRANT SELECT (id, loan_id, kind, amount, value_date) ON bt_repayment_transaction TO edify_activities_rw;
+GRANT SELECT (account_owner_id, region_id) ON school TO edify_activities_rw;
+GRANT SELECT (id, country) ON region TO edify_activities_rw;
+GRANT SELECT (active_role, is_active) ON "user" TO edify_activities_rw;

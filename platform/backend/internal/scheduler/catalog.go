@@ -12,6 +12,7 @@ import (
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/btcases"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dataqualityscan"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/debriefs"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/notificationcenter"
@@ -830,13 +831,10 @@ SELECT id, program_lead_user_id, COALESCE(school_name, ''), days_overdue
 		return callIntRW(ctx, pool, `SELECT gateway_scheduler.refresh_closure_checklists($1)`, now)
 
 	case "loan_tracking_notifications":
-		var overdue int
-		if err := pool.QueryRow(ctx, `
-SELECT COUNT(*)::int FROM bt_mfi_loan
- WHERE deleted_at IS NULL AND status IN ('overdue', 'defaulted', 'active')`).Scan(&overdue); err != nil {
-			return 0, err
-		}
-		return overdue, nil
+		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy
+		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) {
+			return btcases.LoanTracking(ctx, tx, now, loc, btcases.Notices{Push: push})
+		})
 
 	case "performance_readiness":
 		soon := localNow.AddDate(0, 0, 7).Format(time.DateOnly)

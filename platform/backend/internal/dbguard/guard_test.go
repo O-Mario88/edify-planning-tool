@@ -235,6 +235,8 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		filepath.Join(root, "internal", "btcases") + sep: {
 			"bt_policy", "bt_case", "bt_case_trigger", "bt_case_recommendation",
 			"bt_loan_verification_requirement", "bt_loan_use_result",
+			// The scheduler's loan tracking: its permanent delivery log.
+			"bt_loan_tracking_delivery_log",
 		},
 		// The outbox's Special Project handlers (apps.projects.baselines and
 		// handlers; deploy/db/activities_roles.sql): an enrolment's baseline,
