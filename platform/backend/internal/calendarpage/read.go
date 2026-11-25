@@ -2,10 +2,13 @@ package calendarpage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5"
+
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
@@ -25,6 +28,8 @@ type activity struct {
 	clusterRegion                       string
 	clusterLive                         bool
 	inCountry                           bool
+	// A partner's calendar reads whose work it is and who delivers it.
+	partnerID, facilitatingID, contact, schoolCode string
 }
 
 // title is activity_name_snapshot or get_activity_type_display().
@@ -112,7 +117,9 @@ SELECT a.id, a.status, a.activity_type, COALESCE(a.activity_name_snapshot, ''),
   s.id IS NOT NULL, cl.id IS NOT NULL, d.id IS NOT NULL,
   a.venue, a.delivery_type, COALESCE(a.responsible_staff_id, ''), COALESCE(a.monitored_by_staff_id, ''),
   COALESCE(s.account_owner_id, ''), COALESCE(cl.responsible_staff_id, ''), COALESCE(cl.district_id, ''),
-  COALESCE(cl.region_id, ''), cl.id IS NOT NULL AND cl.deleted_at IS NULL, `+inCountry+`
+  COALESCE(cl.region_id, ''), cl.id IS NOT NULL AND cl.deleted_at IS NULL, `+inCountry+`,
+  COALESCE(a.assigned_partner_id, ''), COALESCE(a.facilitating_partner_id, ''),
+  COALESCE(a.delivery_contact_name, ''), COALESCE(s.school_id, '')
 FROM activity a
 LEFT JOIN school s ON s.id = a.school_id
 LEFT JOIN cluster cl ON cl.id = a.cluster_id
@@ -131,7 +138,8 @@ ORDER BY a.planned_date ASC, a.scheduled_date ASC, a.created_at ASC`, args...)
 		err := row.Scan(&a.id, &a.status, &a.kind, &a.name, &a.planned, &a.scheduled, &a.end,
 			&a.schoolID, &a.clusterID, &a.districtID, &a.schoolName, &a.clusterName, &a.district,
 			&a.hasSchool, &a.hasCluster, &a.hasDistrict, &a.venue, &a.delivery, &a.staffID, &a.monitorID,
-			&a.schoolOwner, &a.clusterLead, &a.clusterDistrict, &a.clusterRegion, &a.clusterLive, &a.inCountry)
+			&a.schoolOwner, &a.clusterLead, &a.clusterDistrict, &a.clusterRegion, &a.clusterLive, &a.inCountry,
+			&a.partnerID, &a.facilitatingID, &a.contact, &a.schoolCode)
 		if err != nil {
 			return nil, fmt.Errorf("calendarpage: reading the month's work: %w", err)
 		}
@@ -249,13 +257,43 @@ func viewerCountry(ctx context.Context, db schooldirectory.Querier, userID strin
 	return country, nil
 }
 
-// isPartner is scoping.resolve_partner_ids for a member of staff: an active
-// partner organisation signed in as this account.
-func isPartner(ctx context.Context, db schooldirectory.Querier, userID string) (bool, error) {
-	var yes bool
-	err := db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM partner WHERE user_id = $1 AND active_status)`, userID).Scan(&yes)
+// partnerIDs is scoping.resolve_partner_ids (internal/partnerassigned's,
+// which this package cannot import): the organisation whose login this is,
+// else the one a partner role's team-member login belongs to.
+func partnerIDs(ctx context.Context, db schooldirectory.Querier, p auth.Principal) ([]string, error) {
+	var id string
+	err := db.QueryRow(ctx, `SELECT id FROM partner WHERE user_id = $1 AND active_status ORDER BY created_at LIMIT 1`, p.UserID).Scan(&id)
+	if err == nil {
+		return []string{id}, nil
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return nil, fmt.Errorf("calendarpage: reading the reader's organisation: %w", err)
+	}
+	if !in(rules.PartnerRoles, p.ActiveRole) {
+		return nil, nil
+	}
+	err = db.QueryRow(ctx, `
+SELECT m.partner_id FROM partner_member m JOIN partner pa ON pa.id = m.partner_id
+WHERE m.user_id = $1 AND m.active AND pa.active_status LIMIT 1`, p.UserID).Scan(&id)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
 	if err != nil {
-		return false, fmt.Errorf("calendarpage: reading whether the reader is a partner: %w", err)
+		return nil, fmt.Errorf("calendarpage: reading the reader's membership: %w", err)
+	}
+	return []string{id}, nil
+}
+
+// leadsTeam is member_logins.leads_team over the reader's organisations:
+// the Admin, a Partner Admin, or the organisation's own login.
+func leadsTeam(ctx context.Context, db schooldirectory.Querier, p auth.Principal, partners []string) (bool, error) {
+	if p.ActiveRole == rules.AdminRole || p.ActiveRole == "PartnerAdmin" {
+		return true, nil
+	}
+	var yes bool
+	err := db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM partner WHERE id = ANY($1) AND user_id = $2)`, partners, p.UserID).Scan(&yes)
+	if err != nil {
+		return false, fmt.Errorf("calendarpage: reading who leads the team: %w", err)
 	}
 	return yes, nil
 }

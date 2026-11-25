@@ -7,6 +7,7 @@ import (
 	"unicode"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/feeddom"
 )
 
 // The page as the feed reads pages/calendar/index.html and its partials
@@ -135,9 +136,9 @@ func chip(it *items, e event) {
 	title, meta := collapse(e.title), collapse(e.meta)
 	switch {
 	case e.href != "" && e.pick:
-		it.link(linkItem([]string{title, meta}, e.title+e.meta, e.href))
+		it.link(linkItem([]string{title, meta}, feeddom.JoinParts(e.title, e.meta), e.href))
 	case e.href != "":
-		it.link(linkItem([]string{e.title + e.meta}, e.title+e.meta, e.href))
+		it.link(linkItem([]string{feeddom.JoinParts(e.title, e.meta)}, feeddom.JoinParts(e.title, e.meta), e.href))
 	default:
 		it.text(title)
 		it.text(meta)
@@ -151,7 +152,7 @@ func (v *view) agendaLink(d time.Time) *screensv1.PageLink {
 	events := v.m.days[d]
 	for _, e := range events {
 		if e.pick || e.href != "" {
-			return &screensv1.PageLink{Text: collapse(e.title + e.meta), Href: e.href}
+			return &screensv1.PageLink{Text: collapse(feeddom.JoinParts(e.title, e.meta)), Href: e.href}
 		}
 	}
 	words := []string{longDay(d)}
@@ -159,7 +160,7 @@ func (v *view) agendaLink(d time.Time) *screensv1.PageLink {
 		words = append(words, "Today")
 	}
 	for _, e := range events {
-		words = append(words, e.title+e.meta)
+		words = append(words, feeddom.JoinParts(e.title, e.meta))
 	}
 	return &screensv1.PageLink{Text: collapse(strings.Join(words, " "))}
 }
@@ -325,6 +326,13 @@ func (v *view) page() *screensv1.GetPageResponse {
 	if len(v.teamTabs) > 0 {
 		blocks = append(blocks, v.peoplePanel())
 	}
+	// Today's work, on the month that holds today.
+	var today *screensv1.PageTable
+	if v.m.partner && !v.today.Before(v.m.start) && !v.today.After(v.m.end) {
+		b := v.partnerToday()
+		today = b.GetTable()
+		blocks = append(blocks, b)
+	}
 	if len(v.m.dayOff) > 0 {
 		blocks = append(blocks, v.dayOffPanel())
 	}
@@ -333,7 +341,13 @@ func (v *view) page() *screensv1.GetPageResponse {
 		it.heading("Add other event")
 		blocks = append(blocks, panel("Add an organization event", "Country calendar", it))
 	}
-	blocks = append(blocks, v.filters(), v.rail(), v.calendar())
+	rail := v.rail()
+	if today != nil {
+		// The feed reads the rail under the page's first table heading: the
+		// Today table's title and count.
+		rail.GetSegments().Title, rail.GetSegments().Subtitle = today.GetTitle(), today.GetSubtitle()
+	}
+	blocks = append(blocks, v.filters(), rail, v.calendar())
 	out := &screensv1.GetPageResponse{
 		Header:  header(v.leave && v.person == nil),
 		Blocks:  blocks,
@@ -346,4 +360,48 @@ func (v *view) page() *screensv1.GetPageResponse {
 		}}
 	}
 	return out
+}
+
+// partnerToday is partials/calendar/partner_today.html: the organisation's
+// work today, each with who delivers it and the button that names them.
+func (v *view) partnerToday() *screensv1.PageBlock {
+	rows := v.m.partnerDays
+	noun := "activities"
+	if len(rows) == 1 {
+		noun = "activity"
+	}
+	t := &screensv1.PageTable{
+		Title:    "Today · " + v.today.Weekday().String() + " " + itoa(v.today.Day()) + " " + v.today.Month().String(),
+		Subtitle: itoa(len(rows)) + " " + noun,
+	}
+	if len(rows) == 0 {
+		t.EmptyMessage = "Nothing scheduled today."
+		return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: t}}
+	}
+	for _, c := range []string{"Activity", "School ID", "School / cluster", "Who delivers", "Status", "Actions"} {
+		t.Columns = append(t.Columns, &screensv1.PageColumn{Label: c, Numeric: c == "Actions"})
+	}
+	for _, r := range rows {
+		code := "—"
+		if r.code != "" {
+			code = r.code
+		}
+		who := &screensv1.PageCell{Text: r.who}
+		if r.who == "" {
+			who = &screensv1.PageCell{Text: rules.Partner.NobodyNamed, Tone: "warning"}
+		}
+		action := &screensv1.PageCell{Text: "—"}
+		if r.canName {
+			label := "Name team member"
+			if r.who != "" {
+				label = "Change"
+			}
+			action = &screensv1.PageCell{Actions: []*screensv1.PageAction{{Key: "button", Label: label, Primary: true,
+				Enabled: true, Href: "/partner/activities/" + r.id + "/delivered-by", Drawer: true}}}
+		}
+		t.Rows = append(t.Rows, &screensv1.PageRow{Cells: []*screensv1.PageCell{
+			{Text: r.title, Href: r.href}, {Text: code}, {Text: r.place}, who, {Text: r.stage, Tone: r.tone}, action,
+		}})
+	}
+	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: t}}
 }

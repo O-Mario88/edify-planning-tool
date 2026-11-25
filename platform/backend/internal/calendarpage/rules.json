@@ -11907,6 +11907,85 @@
   "submitted_to_pl"
  ],
  "own_label": "My calendar",
+ "partner": {
+  "nobody_named": "Nobody named yet",
+  "not_renamed_statuses": [
+   "accountant_confirmed",
+   "cancelled",
+   "closed",
+   "completed",
+   "deferred",
+   "ia_verified",
+   "not_planned",
+   "rejected"
+  ],
+  "scheduled_stage": [
+   "Scheduled",
+   "info"
+  ],
+  "stages": {
+   "accountant_confirmed": [
+    "Completed",
+    "success"
+   ],
+   "awaiting_ia_verification": [
+    "Evidence in review",
+    "info"
+   ],
+   "closed": [
+    "Completed",
+    "success"
+   ],
+   "completed": [
+    "Completed",
+    "success"
+   ],
+   "completion_started": [
+    "In progress",
+    "info"
+   ],
+   "evidence_accepted": [
+    "Evidence in review",
+    "info"
+   ],
+   "evidence_uploaded": [
+    "Evidence in review",
+    "info"
+   ],
+   "ia_verified": [
+    "Completed",
+    "success"
+   ],
+   "in_progress": [
+    "In progress",
+    "info"
+   ],
+   "returned": [
+    "Returned for correction",
+    "warning"
+   ],
+   "returned_by_ia": [
+    "Returned for correction",
+    "warning"
+   ],
+   "returned_by_pl": [
+    "Returned for correction",
+    "warning"
+   ],
+   "salesforce_id_required": [
+    "Evidence in review",
+    "info"
+   ],
+   "submitted_to_ia": [
+    "Evidence in review",
+    "info"
+   ],
+   "submitted_to_pl": [
+    "Evidence in review",
+    "info"
+   ]
+  }
+ },
  "partner_role_bridge": false,
  "partner_roles": [
   "PartnerAdmin",

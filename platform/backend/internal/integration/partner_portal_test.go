@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"os"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -88,7 +89,21 @@ func TestAPartnersMyPlanIsGos(t *testing.T) {
 	if actions := page.GetHeader().GetActions(); len(actions) != 1 || actions[0].GetLabel() != "Send Invoice" {
 		t.Fatalf("header actions = %v", actions)
 	}
-	if got := page.GetBlocks()[0].GetPanel().GetTitle(); got == "" || got[:15] != "Needs Attention" {
+	if got := page.GetBlocks()[0].GetPanel().GetTitle(); !strings.HasPrefix(got, "Needs Attention") {
 		t.Fatalf("first section = %q", got)
+	}
+}
+
+// A partner login's calendar is drawn by Go: its organisation's work today
+// is listed on top, under the month that holds today.
+func TestAPartnersCalendarIsGos(t *testing.T) {
+	borrowAccount(t, "partner@edify.org")
+	token := sessionOf(t, "partner@edify.org", seededPassword).GetAccessToken()
+	page, err := pageOf(token, "/calendar", nil)
+	if err != nil {
+		t.Fatalf("the partner's calendar: %v", err)
+	}
+	if got := page.GetBlocks()[0].GetTable().GetTitle(); !strings.HasPrefix(got, "Today · ") {
+		t.Fatalf("first block = %q, want the Today table", got)
 	}
 }

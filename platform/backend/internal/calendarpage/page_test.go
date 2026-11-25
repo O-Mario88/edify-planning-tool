@@ -221,16 +221,17 @@ func TestTheDirectorsStrips(t *testing.T) {
 }
 
 // A day with no link is read whole in the agenda: its date, Today, and each
-// entry's words.
+// entry's words, its title and line read apart (the feed's reader since
+// 2026-11-20: two parts drawn with nothing between them join with " · ").
 func TestAnAgendaDayWithNoLink(t *testing.T) {
 	m := newMonth(day(2026, 10, 1), day(2026, 10, 31))
 	m.days[day(2026, 10, 9)] = []event{{kind: "holiday", title: "Independence Day", meta: "Public holiday"}}
 	m.days[day(2026, 10, 10)] = []event{{kind: "holiday", title: "X", meta: "Y"}, {kind: "leave", title: "Your leave", meta: "Annual Leave", href: "/personal-time-off"}}
 	v := &view{m: m, today: day(2026, 10, 9)}
-	if got := v.agendaLink(day(2026, 10, 9)).GetText(); got != "Friday 9 October Today Independence DayPublic holiday" {
+	if got := v.agendaLink(day(2026, 10, 9)).GetText(); got != "Friday 9 October Today Independence Day · Public holiday" {
 		t.Errorf("%q", got)
 	}
-	if got := v.agendaLink(day(2026, 10, 10)); got.GetText() != "Your leaveAnnual Leave" || got.GetHref() != "/personal-time-off" {
+	if got := v.agendaLink(day(2026, 10, 10)); got.GetText() != "Your leave · Annual Leave" || got.GetHref() != "/personal-time-off" {
 		t.Errorf("%v", got)
 	}
 }

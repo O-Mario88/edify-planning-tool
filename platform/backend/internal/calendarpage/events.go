@@ -30,6 +30,19 @@ type month struct {
 	// dayOff are the activities to reschedule, in the order the page lists
 	// them.
 	dayOff []dayOffRow
+	// A partner's calendar names who delivers each entry and lists today's
+	// work on top (partner_today.html); leads is whether the reader may name
+	// that person.
+	partner     bool
+	leads       bool
+	today       time.Time
+	partnerDays []todayRow
+}
+
+// todayRow is one of a partner's activities today.
+type todayRow struct {
+	id, title, code, place, who, stage, tone, href string
+	canName                                        bool
 }
 
 type dayOffRow struct {
@@ -88,6 +101,16 @@ func (m *month) addActivities(rows []*activity, sp map[string]span, marks map[st
 		if dayOff {
 			m.dayOff = append(m.dayOff, dayOffRow{date: mark.days[0].day, title: title, place: place, why: mark.why(), href: href})
 		}
+		who := strings.TrimSpace(a.contact)
+		if m.partner && !s.start.After(m.today) && !s.end.Before(m.today) {
+			p := rules.Partner
+			stage, tone := p.ScheduledStage[0], p.ScheduledStage[1]
+			if st, ok := p.Stages[a.status]; ok {
+				stage, tone = st[0], st[1]
+			}
+			m.partnerDays = append(m.partnerDays, todayRow{id: a.id, title: title, code: a.schoolCode, place: place,
+				who: who, stage: stage, tone: tone, href: href, canName: m.leads && !in(p.NotRenamedStatuses, a.status)})
+		}
 		m.counts["activity"]++
 		for d := first; !d.After(last); d = d.AddDate(0, 0, 1) {
 			meta := place
@@ -97,6 +120,11 @@ func (m *month) addActivities(rows []*activity, sp map[string]span, marks map[st
 				meta = place + " · " + rng
 			default:
 				meta = place + " · Day " + itoa(int(d.Sub(s.start).Hours()/24)+1) + " of " + itoa(total)
+			}
+			if m.partner {
+				// First: a month cell has room for a few words, and the
+				// person is what this calendar is read for.
+				meta = orText(who, rules.Partner.NobodyNamed) + " · " + meta
 			}
 			if dayOff {
 				meta = "Reschedule: " + strings.ToLower(mark.label()) + " · " + meta
@@ -205,4 +233,12 @@ func (m *month) agendaDays() []time.Time {
 		}
 	}
 	return out
+}
+
+// orText is text, else the fallback.
+func orText(text, fallback string) string {
+	if text != "" {
+		return text
+	}
+	return fallback
 }

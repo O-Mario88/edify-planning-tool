@@ -150,6 +150,7 @@ def rules() -> dict:
             EdifyRole.PARTNER_ADMIN.value,
             EdifyRole.PARTNER_FIELD_OFFICER.value,
         ],
+        "partner": partner_calendar(),
         "own_label": calendar_people.OWN_LABEL,
         "no_lead_key": monitor_roster.NO_LEAD_KEY,
         "no_lead_label": monitor_roster.NO_LEAD_LABEL,
@@ -176,3 +177,26 @@ class Command(BaseCommand):
         EXPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
         EXPORT_PATH.write_text(rendered(), encoding="utf-8")
         self.stdout.write(f"Wrote {EXPORT_PATH}")
+
+
+def partner_calendar() -> dict:
+    """A partner's calendar (calendar_view's partner_calendar): the Today
+    table's stages (profile_lists.stage_of) and which work its team member
+    may still be named for (delivery_team.may_rename)."""
+    from apps.core.activity_types import (
+        COMPLETED_WORK_STATUSES,
+        NOT_IN_PLAN_ACTIVITY_STATUSES,
+    )
+    from apps.partners import profile_lists
+
+    return {
+        "stages": {
+            status: list(stage)
+            for status, stage in sorted(profile_lists._STAGES.items())
+        },
+        "scheduled_stage": list(profile_lists.SCHEDULED),
+        "not_renamed_statuses": sorted(
+            {*COMPLETED_WORK_STATUSES, *NOT_IN_PLAN_ACTIVITY_STATUSES}
+        ),
+        "nobody_named": "Nobody named yet",
+    }

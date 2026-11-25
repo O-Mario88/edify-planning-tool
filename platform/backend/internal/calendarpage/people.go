@@ -276,6 +276,18 @@ func find(teams []team, key string) (*team, *person) {
 
 // planOf is calendar_scope.plan_of: the work these ids are responsible for,
 // and the partner-delivered work they monitor.
+// organisationPlan is calendar_scope.personal_plan for a partner: the work
+// scheduled for its organisation, delivered by it or facilitated by it.
+func organisationPlan(rows []*activity, partners []string) []*activity {
+	out := []*activity{}
+	for _, a := range rows {
+		if (a.partnerID != "" && in(partners, a.partnerID)) || (a.facilitatingID != "" && in(partners, a.facilitatingID)) {
+			out = append(out, a)
+		}
+	}
+	return out
+}
+
 func planOf(rows []*activity, ids []string) []*activity {
 	out := []*activity{}
 	for _, a := range rows {

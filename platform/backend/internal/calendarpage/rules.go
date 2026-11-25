@@ -84,16 +84,24 @@ type Rules struct {
 	DirectorRole             string              `json:"director_role"`
 	CoordinatorRole          string              `json:"coordinator_role"`
 	PartnerRoles             []string            `json:"partner_roles"`
-	OwnLabel                 string              `json:"own_label"`
-	NoLeadKey                string              `json:"no_lead_key"`
-	NoLeadLabel              string              `json:"no_lead_label"`
-	PlanningLeadRole         string              `json:"planning_lead_role"`
-	PlanningCCEORole         string              `json:"planning_cceo_role"`
-	AllowCDOperational       bool                `json:"allow_cd_operational_planning"`
-	PartnerRoleBridge        bool                `json:"partner_role_bridge"`
-	Holidays                 HolidayRules        `json:"holidays"`
-	NotPassedQueryKeys       []string            `json:"not_passed_query_keys"`
-	APIFormats               []string            `json:"api_formats"`
+	// Partner is a partner's calendar: the Today table's stages and which
+	// work may still be given a team member.
+	Partner struct {
+		Stages             map[string][2]string `json:"stages"`
+		ScheduledStage     [2]string            `json:"scheduled_stage"`
+		NotRenamedStatuses []string             `json:"not_renamed_statuses"`
+		NobodyNamed        string               `json:"nobody_named"`
+	} `json:"partner"`
+	OwnLabel           string       `json:"own_label"`
+	NoLeadKey          string       `json:"no_lead_key"`
+	NoLeadLabel        string       `json:"no_lead_label"`
+	PlanningLeadRole   string       `json:"planning_lead_role"`
+	PlanningCCEORole   string       `json:"planning_cceo_role"`
+	AllowCDOperational bool         `json:"allow_cd_operational_planning"`
+	PartnerRoleBridge  bool         `json:"partner_role_bridge"`
+	Holidays           HolidayRules `json:"holidays"`
+	NotPassedQueryKeys []string     `json:"not_passed_query_keys"`
+	APIFormats         []string     `json:"api_formats"`
 }
 
 var (

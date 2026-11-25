@@ -2,6 +2,7 @@ package calendarpage
 
 import (
 	"context"
+	"errors"
 	"net/url"
 	"slices"
 	"strings"
@@ -88,24 +89,37 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if !ok || !role.Page {
 		return nil, true, pagegate.ErrNotAvailable
 	}
-	if rules.PartnerRoleBridge || in(rules.PartnerRoles, p.ActiveRole) {
+	if rules.PartnerRoleBridge {
 		return nil, false, nil
 	}
-	if partner, err := isPartner(ctx, s.db, p.UserID); err != nil || partner {
-		return nil, false, err
+	// A partner's calendar is its organisation's work (calendar_scope.
+	// personal_plan). A login holding an organisation in a staff role, whose
+	// strip may show someone else's calendar, is handed on.
+	partners, err := partnerIDs(ctx, s.db, p)
+	if err != nil {
+		return nil, true, err
+	}
+	if len(partners) > 0 && !in(rules.PartnerRoles, p.ActiveRole) {
+		return nil, false, nil
 	}
 	for _, key := range rules.NotPassedQueryKeys {
 		query.Del(key)
 	}
 	now := s.now()
-	v, err := s.view(ctx, p, role, readRequest(query, localDay(now)), now)
+	v, err := s.view(ctx, p, role, readRequest(query, localDay(now)), now, partners)
+	if errors.Is(err, errHandOn) {
+		return nil, false, nil
+	}
 	if err != nil {
 		return nil, true, err
 	}
 	return v.page(), true, nil
 }
 
-func (s *Service) view(ctx context.Context, p auth.Principal, role Role, r request, now time.Time) (*view, error) {
+// errHandOn is a calendar Go does not draw yet (handed on).
+var errHandOn = errors.New("calendarpage: a calendar Go does not draw yet")
+
+func (s *Service) view(ctx context.Context, p auth.Principal, role Role, r request, now time.Time, partners []string) (*view, error) {
 	today := localDay(now)
 	start := day(r.year, r.mon, 1)
 	end := start.AddDate(0, 1, -1)
@@ -143,11 +157,24 @@ func (s *Service) view(ctx context.Context, p auth.Principal, role Role, r reque
 			return nil, err
 		}
 		shownTeam, shown = find(teams, r.person)
-		if shown != nil {
+		switch {
+		case shown != nil:
 			rows = planOf(monthRows, shown.ids)
 			leaveStaff = []string{shown.key}
-		} else {
+		case len(partners) > 0:
+			rows = organisationPlan(monthRows, partners)
+		default:
 			rows = planOf(monthRows, ownerIDs(p))
+		}
+	}
+	partnerCalendar := len(partners) > 0 && shown == nil
+	if partnerCalendar {
+		// A training it facilitates is the officer's record, a link only
+		// where it opens (can_view_record): not drawn by Go yet.
+		for _, a := range rows {
+			if a.delivery != "partner" {
+				return nil, errHandOn
+			}
 		}
 	}
 	sp := spans(rows)
@@ -161,6 +188,15 @@ func (s *Service) view(ctx context.Context, p auth.Principal, role Role, r reque
 		if ticks, err = tickable(ctx, s.db, p, scope, rows); err != nil {
 			return nil, err
 		}
+		// Its organisation's live work, which it holds and may run
+		// (group_actions.tickable_ids: a partner supervises nobody).
+		if partnerCalendar && rules.Roles[p.ActiveRole].MyPlan {
+			for _, a := range rows {
+				if a.partnerID != "" && in(partners, a.partnerID) && !in(rules.Untickable, a.status) {
+					ticks[a.id] = true
+				}
+			}
+		}
 	}
 	closed := map[string]bool{}
 	if shown != nil {
@@ -169,6 +205,12 @@ func (s *Service) view(ctx context.Context, p auth.Principal, role Role, r reque
 		}
 	}
 	m := newMonth(start, end)
+	if partnerCalendar {
+		m.partner, m.today = true, today
+		if m.leads, err = leadsTeam(ctx, s.db, p, partners); err != nil {
+			return nil, err
+		}
+	}
 	m.addActivities(rows, sp, marks, ticks, closed)
 	leaves, err := readLeave(ctx, s.db, start, end, leaveStaff, leaveAll)
 	if err != nil {
