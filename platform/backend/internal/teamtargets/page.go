@@ -41,9 +41,6 @@ func Page(ctx context.Context, db schooldirectory.Querier, p auth.Principal, raw
 	if err != nil {
 		return nil, err
 	}
-	if d.ranked || d.groupByLead {
-		return nil, ErrHandOn // the ranked and Lead-grouped orders are not drawn yet
-	}
 	if w, err := wouldWrite(ctx, db, p.UserID, d.fy, d.current, d.t); err != nil || w {
 		return nil, handOnOr(err)
 	}

@@ -57,7 +57,14 @@ func (d *data) matrix() *node {
 	headRow.Add(el("th", "tt-matrix__action-head", el("span", "", "Review"), el("small", "", "Details")).Attr("scope", "col"))
 	body := el("tbody", "")
 	q := "fy=" + d.fy + "&month=" + strconv.Itoa(d.month)
+	lastLead := "\x00"
 	for _, r := range d.t.rows {
+		if d.groupByLead && r.leadName != lastLead {
+			// One header per Programme Lead, for a reader of many teams.
+			lastLead = r.leadName
+			body.Add(el("tr", "tt-lead-group", el("th", "", r.leadName).Attr("scope", "colgroup", "colspan", strconv.Itoa(len(heads)+2))).
+				Attr("data-lead-group", r.leadName))
+		}
 		bucket := "ok"
 		switch r.Status {
 		case "High Risk", "Critical":
@@ -67,7 +74,7 @@ func (d *data) matrix() *node {
 		}
 		row := el("tr", "tt-member-row",
 			el("td", "", el("div", "tt-person", " ",
-				el("button", "tt-expand").Attr("type", "button"), " ",
+				el("button", "tt-expand").Attr("type", "button"), " ", d.rankBadge(r), " ",
 				el("span", "tt-avatar", r.initials), " ",
 				el("span", "tt-person__copy", " ", el("strong", "", r.member.Name), " ", el("small", "", "CCEO · "+r.districtLabel), " "), " "))).
 			Attr("data-bucket", bucket, "x-show", "staffFilter === 'all'")
@@ -170,4 +177,17 @@ func (d *data) periodMatrix(r *row, heads []head, quarter string) *node {
 	}
 	return el("table", "tt-area-matrix", el("caption", "sr-only", r.member.Name+" agreed-priority performance by reporting period"),
 		el("thead", "", top, measures), body)
+}
+
+// rankBadge is the member's place in the ranked order ("—" with no target
+// for the year), nothing in the team order.
+func (d *data) rankBadge(r *row) any {
+	if !d.ranked {
+		return ""
+	}
+	if r.rank == nil {
+		return el("span", "tt-rank", "—").Attr("data-rank", "", "title", "No target set for the year")
+	}
+	n := strconv.Itoa(*r.rank)
+	return el("span", "tt-rank", n).Attr("data-rank", n, "title", "Place "+n+" by full-year achievement")
 }

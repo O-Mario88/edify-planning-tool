@@ -2,6 +2,7 @@ package teamtargets
 
 import (
 	"context"
+	"sort"
 	"strings"
 	"time"
 
@@ -95,7 +96,78 @@ func read(ctx context.Context, db schooldirectory.Querier, p auth.Principal, q q
 		}
 		d.t.rows = append(d.t.rows, r)
 	}
+	if d.groupByLead {
+		if err := d.groupRows(ctx, db); err != nil {
+			return nil, err
+		}
+	}
+	if d.ranked {
+		d.rankRows()
+	}
 	return d, nil
+}
+
+// noLead is owner_groups.NO_LEAD.
+const noLead = "No Program Lead"
+
+// groupRows files each member under their Programme Lead, for a reader of
+// many teams: the Leads by name, those with none last, then the member.
+func (d *data) groupRows(ctx context.Context, db schooldirectory.Querier) error {
+	ids := d.t.staffIDs()
+	leads, err := schooldirectory.OwnerLeads(ctx, db, ids)
+	if err != nil {
+		return err
+	}
+	for _, r := range d.t.rows {
+		r.leadName = leads[r.member.StaffID]
+		if r.leadName == "" {
+			r.leadName = noLead
+		}
+	}
+	sort.SliceStable(d.t.rows, func(i, j int) bool {
+		a, b := d.t.rows[i], d.t.rows[j]
+		if (a.leadName == noLead) != (b.leadName == noLead) {
+			return b.leadName == noLead
+		}
+		if a.leadName != b.leadName {
+			return a.leadName < b.leadName
+		}
+		return a.member.Name < b.member.Name
+	})
+	return nil
+}
+
+// rankRows is _rank: the members by their weighted full-year achievement,
+// the strongest first and numbered; those with no target for the year last
+// by name, without a place.
+func (d *data) rankRows() {
+	year := func(r *row) targets.Cell { return r.Cells[len(r.Cells)-1] }
+	pct := func(r *row) int {
+		if p := year(r).Pct; p != nil {
+			return *p
+		}
+		return 0
+	}
+	sort.SliceStable(d.t.rows, func(i, j int) bool {
+		a, b := d.t.rows[i], d.t.rows[j]
+		ua, ub := year(a).Target == 0, year(b).Target == 0
+		if ua != ub {
+			return ub
+		}
+		if pa, pb := pct(a), pct(b); pa != pb {
+			return pa > pb
+		}
+		return strings.ToLower(a.member.Name) < strings.ToLower(b.member.Name)
+	})
+	place := 0
+	for _, r := range d.t.rows {
+		r.rank = nil
+		if year(r).Target != 0 {
+			place++
+			v := place
+			r.rank = &v
+		}
+	}
 }
 
 func hasDistrict(schools []school, district string) bool {

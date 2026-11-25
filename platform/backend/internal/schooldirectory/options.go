@@ -294,3 +294,17 @@ func ownerRanking(ownerIDs []string, directory map[string]owner) []string {
 	})
 	return ranked
 }
+
+// OwnerLeads is owner_directory's pl_name for each owner id (in either id
+// space): the Programme Lead each person is filed under, "" for none.
+func OwnerLeads(ctx context.Context, q Querier, ownerIDs []string) (map[string]string, error) {
+	dir, err := ownerDirectory(ctx, q, ownerIDs)
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[string]string, len(dir))
+	for id, o := range dir {
+		out[id] = o.plName
+	}
+	return out, nil
+}
