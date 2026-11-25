@@ -34,6 +34,8 @@ type Service struct {
 	releaseFile ReleaseDownload
 	// workbooks are the workbook exports Go makes, by export path.
 	workbooks map[string]WorkbookExport
+	// files are the other file exports Go makes, by export path.
+	files map[string]FileExport
 }
 
 // ReleaseDownload writes a report's released version for p.

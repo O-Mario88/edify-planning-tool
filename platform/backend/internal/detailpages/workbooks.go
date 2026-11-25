@@ -52,3 +52,43 @@ func (s *Service) serveWorkbook(w http.ResponseWriter, r *http.Request, p auth.P
 	}
 	return true
 }
+
+// FileExport builds one of the existing application's file exports that is
+// not a workbook (a CSV written by the view itself): its file name and
+// bytes. handled and err answer as WorkbookExport's do.
+type FileExport func(ctx context.Context, p auth.Principal, query url.Values) (filename string, body []byte, handled bool, err error)
+
+// WithFile serves the file export at target from Go.
+func (s *Service) WithFile(target string, export FileExport) *Service {
+	if s.files == nil {
+		s.files = map[string]FileExport{}
+	}
+	s.files[target] = export
+	return s
+}
+
+// serveFile answers a file export Go takes, and says whether it did.
+func (s *Service) serveFile(w http.ResponseWriter, r *http.Request, p auth.Principal, target string) bool {
+	export, ok := s.files[target]
+	if !ok {
+		return false
+	}
+	query := r.URL.Query()
+	query.Del("target")
+	name, body, handled, err := export(r.Context(), p, query)
+	switch {
+	case errors.Is(err, pagegate.ErrNotAvailable), errors.Is(err, pagegate.ErrForbidden):
+		http.Error(w, "You do not have access to this export.", http.StatusForbidden)
+	case err != nil:
+		http.Error(w, "This export could not be made.", http.StatusInternalServerError)
+	case !handled:
+		http.Error(w, "This export is not available here yet. Use the Edify web app.", http.StatusServiceUnavailable)
+	default:
+		// The view's own content type: a CSV is "text/csv".
+		w.Header().Set("Content-Type", "text/csv")
+		w.Header().Set("Content-Disposition", `attachment; filename="`+name+`"`)
+		w.Header().Set("Cache-Control", "no-store")
+		_, _ = w.Write(body)
+	}
+	return true
+}

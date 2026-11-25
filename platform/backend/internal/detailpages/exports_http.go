@@ -30,7 +30,7 @@ func (s *Service) RegisterHTTP(mux *http.ServeMux, authn HTTPAuth) {
 			return
 		}
 		target := strings.TrimSuffix(strings.TrimSpace(r.URL.Query().Get("target")), "/")
-		if s.serveWorkbook(w, r, p, target) {
+		if s.serveWorkbook(w, r, p, target) || s.serveFile(w, r, p, target) {
 			return
 		}
 		if organisationWideExport(target) && !(p.ActiveRole == rbac.Admin && rbac.Grants(p.ActiveRole, exportPermission)) {
@@ -71,8 +71,6 @@ func (s *Service) RegisterHTTP(mux *http.ServeMux, authn HTTPAuth) {
 		case strings.HasPrefix(target, "/projects/") && strings.HasSuffix(target, "/export"):
 			projID := strings.TrimSuffix(strings.TrimPrefix(target, "/projects/"), "/export")
 			s.exportProjectsCSV(r.Context(), w, fy, projID)
-		case target == "/my-targets/export":
-			s.exportMyTargetsCSV(r.Context(), w, p, fy)
 		case target == "/my-professional-development/export":
 			s.exportMyPDCSV(r.Context(), w, p, fy)
 		case target == "/ia/analytics/export":
@@ -151,34 +149,6 @@ ORDER BY pr.name`, fy, projectID)
 		var ceiling, schools, acts, done int64
 		if err := rows.Scan(&code, &pname, &cat, &status, &ceiling, &schools, &acts, &done); err == nil {
 			_ = cw.Write([]string{code, pname, cat, status, strconv.FormatInt(ceiling, 10), strconv.FormatInt(schools, 10), strconv.FormatInt(acts, 10), strconv.FormatInt(done, 10)})
-		}
-	}
-	cw.Flush()
-}
-
-func (s *Service) exportMyTargetsCSV(ctx context.Context, w http.ResponseWriter, p auth.Principal, fy string) {
-	owners := []string{p.UserID}
-	if p.StaffProfileID != "" && p.StaffProfileID != p.UserID {
-		owners = append(owners, p.StaffProfileID)
-	}
-	rows, err := s.db.Query(ctx, `
-SELECT COALESCE(a.quarter, ''), COALESCE(a.activity_type, ''), count(*),
-       count(*) FILTER (WHERE a.status IN ('completed', 'verified', 'approved', 'submitted'))
-FROM activity a
-WHERE a.deleted_at IS NULL AND a.fy = $1 AND a.responsible_staff_id = ANY($2)
-GROUP BY 1, 2 ORDER BY 1, 2`, fy, owners)
-	if err != nil {
-		http.Error(w, "Export query failed", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
-	cw := startCSV(w, fmt.Sprintf("edify-my-targets-fy%s.csv", fy))
-	_ = cw.Write([]string{"FY", "Quarter", "Activity Type", "Planned", "Completed"})
-	for rows.Next() {
-		var q, atype string
-		var total, done int64
-		if err := rows.Scan(&q, &atype, &total, &done); err == nil {
-			_ = cw.Write([]string{fy, q, atype, strconv.FormatInt(total, 10), strconv.FormatInt(done, 10)})
 		}
 	}
 	cw.Flush()
