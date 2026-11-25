@@ -220,6 +220,7 @@ def _country_execution() -> dict:
     from apps.planning.country_execution import dataset as ds
     from apps.planning.country_execution import service as svc
     from apps.planning.country_execution import stages as st
+    from apps.planning.country_execution import tables as xtables
     from apps.schools.management.commands.export_school_directory_rules import (
         _role_user,
     )
@@ -291,6 +292,55 @@ def _country_execution() -> dict:
             for t in ActivityType.values
             if expected_evidence(t)[0] == "attendance_form"
         ),
+        # The consolidated tables behind the figures (country_execution.tables,
+        # records_view), in the order the table page offers them.
+        "records": {
+            "tables": [_table_spec(spec) for spec in xtables.SPECS.values()],
+            "tabs": list(xtables.TAB_ORDER),
+            "words": {
+                "nobody": xtables.NOBODY,
+                "counted": xtables.COUNTED,
+                "not_counted": xtables.NOT_COUNTED,
+                "not_recorded": xtables.NOT_RECORDED,
+                "verified": xtables.STATE_VERIFIED,
+                "delivered": xtables.STATE_DELIVERED,
+                "planned": xtables.STATE_PLANNED,
+            },
+            "export_roles": sorted(
+                role.value
+                for role in EdifyRole
+                if RolePermissionService.can_export(
+                    _role_user(role.value),
+                    "/country-planning-oversight/execution/records-export/due",
+                )
+            ),
+        },
+    }
+
+
+def _table_spec(spec) -> dict:
+    """A consolidated table's spec (country_oversight.tables.Spec): its words,
+    its columns and the columns only its workbook carries."""
+    return {
+        "key": spec.key,
+        "title": spec.title,
+        "short": spec.short,
+        "unit": spec.unit,
+        "description": spec.description,
+        "columns": [
+            {
+                "key": c.key,
+                "label": c.label,
+                "numeric": c.numeric,
+                "is_date": c.is_date,
+                "is_school": c.is_school,
+                "blank": c.blank,
+                "quiet": c.quiet,
+                "kind": c.kind,
+            }
+            for c in spec.columns
+        ],
+        "export_only": list(spec.export_only),
     }
 
 
@@ -392,30 +442,7 @@ def _country_oversight_page() -> dict:
         },
         # The consolidated tables behind the figures (tables.SPECS), in the
         # order the table page offers them.
-        "tables": [
-            {
-                "key": spec.key,
-                "title": spec.title,
-                "short": spec.short,
-                "unit": spec.unit,
-                "description": spec.description,
-                "columns": [
-                    {
-                        "key": c.key,
-                        "label": c.label,
-                        "numeric": c.numeric,
-                        "is_date": c.is_date,
-                        "is_school": c.is_school,
-                        "blank": c.blank,
-                        "quiet": c.quiet,
-                        "kind": c.kind,
-                    }
-                    for c in spec.columns
-                ],
-                "export_only": list(spec.export_only),
-            }
-            for spec in tables.SPECS.values()
-        ],
+        "tables": [_table_spec(spec) for spec in tables.SPECS.values()],
         "table_tabs": list(tables.TAB_ORDER),
         "table_labels": {
             "nobody": tables.NOBODY,

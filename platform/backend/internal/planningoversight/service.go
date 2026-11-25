@@ -57,6 +57,9 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if table, ok := tableFor(path); ok {
 		return s.buildCountryTable(ctx, p, table, query)
 	}
+	if table, ok := recordsFor(path); ok {
+		return s.buildExecutionRecords(ctx, p, table, query)
+	}
 	key := pageFor(path)
 	if key == "" {
 		return nil, false, nil
@@ -162,6 +165,32 @@ func (s *Service) buildCountryTable(ctx context.Context, p auth.Principal, key s
 		return nil, false, nil
 	}
 	return page, served, err
+}
+
+// recordsFor is the key of the execution records table at path
+// (country-planning-oversight/execution/records/<str:key>), if path is one.
+func recordsFor(path string) (string, bool) {
+	key, ok := strings.CutPrefix(path, CountryPath+"execution/records/")
+	if !ok || key == "" || strings.Contains(key, "/") {
+		return "", false
+	}
+	return key, true
+}
+
+// buildExecutionRecords is records_view for p, behind the page's own gate;
+// a key the tables lack is handed on (the existing application's 404).
+func (s *Service) buildExecutionRecords(ctx context.Context, p auth.Principal, key string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if myplan.FeedRefusesFormat(query) || refused(p.ActiveRole, countryKey) {
+		return nil, true, pagegate.ErrNotAvailable
+	}
+	page, err := planningmonitor.CountryExecutionRecords(ctx, s.db, p, key, query, s.now())
+	if errors.Is(err, planningmonitor.ErrNoSuchTable) {
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, true, err
+	}
+	return page, true, nil
 }
 
 // lastValue is QueryDict.get, stripped and lower-cased: a repeated key's

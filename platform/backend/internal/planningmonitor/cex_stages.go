@@ -35,6 +35,20 @@ type cexRules struct {
 	TrailMigration       string   `json:"trail_migration"`
 	AttendanceFormTypes  []string `json:"attendance_form_types"`
 	Page                 cexPage  `json:"page"`
+	Records              struct {
+		Tables []cpoTableSpec `json:"tables"`
+		Tabs   []string       `json:"tabs"`
+		Words  struct {
+			Nobody      string `json:"nobody"`
+			Counted     string `json:"counted"`
+			NotCounted  string `json:"not_counted"`
+			NotRecorded string `json:"not_recorded"`
+			Verified    string `json:"verified"`
+			Delivered   string `json:"delivered"`
+			Planned     string `json:"planned"`
+		} `json:"words"`
+		ExportRoles []string `json:"export_roles"`
+	} `json:"records"`
 }
 
 // cexStage is stages.Stage: one activity's position in the spine.

@@ -181,6 +181,1496 @@
         ]
       ]
     },
+    "records": {
+      "export_roles": [
+        "Accountant",
+        "Admin",
+        "BusinessTransformationOfficer",
+        "CountryDirector",
+        "ImpactAssessment",
+        "Program Lead",
+        "ProjectCoordinator",
+        "RegionalProgramLead",
+        "RegionalVicePresident"
+      ],
+      "tables": [
+        {
+          "columns": [
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "lead",
+              "kind": "",
+              "label": "Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "sub_region",
+              "kind": "",
+              "label": "Sub-region",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district",
+              "kind": "",
+              "label": "District",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "holder",
+              "kind": "",
+              "label": "CCEO / PL",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cluster",
+              "kind": "",
+              "label": "Cluster",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "school_id",
+              "kind": "",
+              "label": "School ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": true,
+              "key": "school",
+              "kind": "",
+              "label": "School Name",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "type",
+              "kind": "",
+              "label": "School Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "activity",
+              "kind": "",
+              "label": "Activity",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "counted",
+              "kind": "",
+              "label": "Counts Toward Target",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "by",
+              "kind": "",
+              "label": "Delivered By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "staff",
+              "kind": "",
+              "label": "Responsible",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "role",
+              "kind": "",
+              "label": "Responsible's Role",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "staff_lead",
+              "kind": "",
+              "label": "Responsible's Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "due",
+              "kind": "",
+              "label": "Due",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "Not yet delivered",
+              "is_date": true,
+              "is_school": false,
+              "key": "delivered",
+              "kind": "",
+              "label": "Delivered On",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "stage",
+              "kind": "",
+              "label": "Stage",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "age",
+              "kind": "",
+              "label": "Days Overdue",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "waiting",
+              "kind": "",
+              "label": "Waiting On",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "last",
+              "kind": "",
+              "label": "Last Action",
+              "numeric": false,
+              "quiet": false
+            }
+          ],
+          "description": "Every activity whose approved date falls in the period, the days still to come included, with who is responsible for it: staff work is its deliverer's, Partner work is whoever handed it over or monitors it.",
+          "export_only": [
+            "role",
+            "staff_lead",
+            "last"
+          ],
+          "key": "due",
+          "short": "Planned",
+          "title": "Activities Planned",
+          "unit": "activity"
+        },
+        {
+          "columns": [
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "lead",
+              "kind": "",
+              "label": "Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "sub_region",
+              "kind": "",
+              "label": "Sub-region",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district",
+              "kind": "",
+              "label": "District",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "holder",
+              "kind": "",
+              "label": "CCEO / PL",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cluster",
+              "kind": "",
+              "label": "Cluster",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "school_id",
+              "kind": "",
+              "label": "School ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": true,
+              "key": "school",
+              "kind": "",
+              "label": "School Name",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "type",
+              "kind": "",
+              "label": "School Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "activity",
+              "kind": "",
+              "label": "Activity",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "counted",
+              "kind": "",
+              "label": "Counts Toward Target",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "by",
+              "kind": "",
+              "label": "Delivered By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "staff",
+              "kind": "",
+              "label": "Responsible",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "role",
+              "kind": "",
+              "label": "Responsible's Role",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "staff_lead",
+              "kind": "",
+              "label": "Responsible's Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "due",
+              "kind": "",
+              "label": "Due",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "Not yet delivered",
+              "is_date": true,
+              "is_school": false,
+              "key": "delivered",
+              "kind": "",
+              "label": "Delivered On",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "stage",
+              "kind": "",
+              "label": "Stage",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "age",
+              "kind": "",
+              "label": "Days Overdue",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "waiting",
+              "kind": "",
+              "label": "Waiting On",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "last",
+              "kind": "",
+              "label": "Last Action",
+              "numeric": false,
+              "quiet": false
+            }
+          ],
+          "description": "The period's activities that have been started in the field.",
+          "export_only": [
+            "role",
+            "staff_lead",
+            "last"
+          ],
+          "key": "started",
+          "short": "Started",
+          "title": "Activities Started",
+          "unit": "activity"
+        },
+        {
+          "columns": [
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "lead",
+              "kind": "",
+              "label": "Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "sub_region",
+              "kind": "",
+              "label": "Sub-region",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district",
+              "kind": "",
+              "label": "District",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "holder",
+              "kind": "",
+              "label": "CCEO / PL",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cluster",
+              "kind": "",
+              "label": "Cluster",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "school_id",
+              "kind": "",
+              "label": "School ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": true,
+              "key": "school",
+              "kind": "",
+              "label": "School Name",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "type",
+              "kind": "",
+              "label": "School Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "activity",
+              "kind": "",
+              "label": "Activity",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "counted",
+              "kind": "",
+              "label": "Counts Toward Target",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "by",
+              "kind": "",
+              "label": "Delivered By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "staff",
+              "kind": "",
+              "label": "Responsible",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "role",
+              "kind": "",
+              "label": "Responsible's Role",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "staff_lead",
+              "kind": "",
+              "label": "Responsible's Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "due",
+              "kind": "",
+              "label": "Due",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "Not yet delivered",
+              "is_date": true,
+              "is_school": false,
+              "key": "delivered",
+              "kind": "",
+              "label": "Delivered On",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "stage",
+              "kind": "",
+              "label": "Stage",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "age",
+              "kind": "",
+              "label": "Days Overdue",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "waiting",
+              "kind": "",
+              "label": "Waiting On",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "last",
+              "kind": "",
+              "label": "Last Action",
+              "numeric": false,
+              "quiet": false
+            }
+          ],
+          "description": "The period's activities delivered and submitted for review: waiting on a Programme Lead or Impact Assessment, or verified.",
+          "export_only": [
+            "role",
+            "staff_lead",
+            "last"
+          ],
+          "key": "executed",
+          "short": "Completed",
+          "title": "Execution Completed",
+          "unit": "activity"
+        },
+        {
+          "columns": [
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "lead",
+              "kind": "",
+              "label": "Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "sub_region",
+              "kind": "",
+              "label": "Sub-region",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district",
+              "kind": "",
+              "label": "District",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "holder",
+              "kind": "",
+              "label": "CCEO / PL",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cluster",
+              "kind": "",
+              "label": "Cluster",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "school_id",
+              "kind": "",
+              "label": "School ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": true,
+              "key": "school",
+              "kind": "",
+              "label": "School Name",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "type",
+              "kind": "",
+              "label": "School Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "activity",
+              "kind": "",
+              "label": "Activity",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "counted",
+              "kind": "",
+              "label": "Counts Toward Target",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "by",
+              "kind": "",
+              "label": "Delivered By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "staff",
+              "kind": "",
+              "label": "Responsible",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "role",
+              "kind": "",
+              "label": "Responsible's Role",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "staff_lead",
+              "kind": "",
+              "label": "Responsible's Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "due",
+              "kind": "",
+              "label": "Due",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "Not yet delivered",
+              "is_date": true,
+              "is_school": false,
+              "key": "delivered",
+              "kind": "",
+              "label": "Delivered On",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "stage",
+              "kind": "",
+              "label": "Stage",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "age",
+              "kind": "",
+              "label": "Days Overdue",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "waiting",
+              "kind": "",
+              "label": "Waiting On",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "last",
+              "kind": "",
+              "label": "Last Action",
+              "numeric": false,
+              "quiet": false
+            }
+          ],
+          "description": "The period's activities verified: by the Programme Lead for a CCEO's work, by Impact Assessment for Partner work and a Lead's own.",
+          "export_only": [
+            "role",
+            "staff_lead",
+            "last"
+          ],
+          "key": "verified",
+          "short": "Verified",
+          "title": "Verified Activities",
+          "unit": "activity"
+        },
+        {
+          "columns": [
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "lead",
+              "kind": "",
+              "label": "Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "sub_region",
+              "kind": "",
+              "label": "Sub-region",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district",
+              "kind": "",
+              "label": "District",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "holder",
+              "kind": "",
+              "label": "CCEO / PL",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cluster",
+              "kind": "",
+              "label": "Cluster",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "school_id",
+              "kind": "",
+              "label": "School ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": true,
+              "key": "school",
+              "kind": "",
+              "label": "School Name",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "type",
+              "kind": "",
+              "label": "School Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "activity",
+              "kind": "",
+              "label": "Activity",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "counted",
+              "kind": "",
+              "label": "Counts Toward Target",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "by",
+              "kind": "",
+              "label": "Delivered By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "staff",
+              "kind": "",
+              "label": "Responsible",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "role",
+              "kind": "",
+              "label": "Responsible's Role",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "staff_lead",
+              "kind": "",
+              "label": "Responsible's Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "due",
+              "kind": "",
+              "label": "Due",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "Not yet delivered",
+              "is_date": true,
+              "is_school": false,
+              "key": "delivered",
+              "kind": "",
+              "label": "Delivered On",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "stage",
+              "kind": "",
+              "label": "Stage",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "age",
+              "kind": "",
+              "label": "Days Overdue",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "waiting",
+              "kind": "",
+              "label": "Waiting On",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "last",
+              "kind": "",
+              "label": "Last Action",
+              "numeric": false,
+              "quiet": false
+            }
+          ],
+          "description": "The period's activities through the governed closure: evidence, Salesforce ID, verification and \u2014 where money moved \u2014 accounts.",
+          "export_only": [
+            "role",
+            "staff_lead",
+            "last"
+          ],
+          "key": "closed",
+          "short": "Closed",
+          "title": "Fully Closed Activities",
+          "unit": "activity"
+        },
+        {
+          "columns": [
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "lead",
+              "kind": "",
+              "label": "Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "sub_region",
+              "kind": "",
+              "label": "Sub-region",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district",
+              "kind": "",
+              "label": "District",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "holder",
+              "kind": "",
+              "label": "CCEO / PL",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cluster",
+              "kind": "",
+              "label": "Cluster",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "school_id",
+              "kind": "",
+              "label": "School ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": true,
+              "key": "school",
+              "kind": "",
+              "label": "School Name",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "type",
+              "kind": "",
+              "label": "School Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "activity",
+              "kind": "",
+              "label": "Activity",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "counted",
+              "kind": "",
+              "label": "Counts Toward Target",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "by",
+              "kind": "",
+              "label": "Delivered By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "staff",
+              "kind": "",
+              "label": "Responsible",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "role",
+              "kind": "",
+              "label": "Responsible's Role",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "staff_lead",
+              "kind": "",
+              "label": "Responsible's Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "due",
+              "kind": "",
+              "label": "Due",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "Not yet delivered",
+              "is_date": true,
+              "is_school": false,
+              "key": "delivered",
+              "kind": "",
+              "label": "Delivered On",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "stage",
+              "kind": "",
+              "label": "Stage",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "age",
+              "kind": "",
+              "label": "Days Overdue",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "waiting",
+              "kind": "",
+              "label": "Waiting On",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "last",
+              "kind": "",
+              "label": "Last Action",
+              "numeric": false,
+              "quiet": false
+            }
+          ],
+          "description": "The period's activities past their approved date and not yet verified, with the stage each is stuck at and who holds the next action.",
+          "export_only": [
+            "role",
+            "staff_lead",
+            "last"
+          ],
+          "key": "overdue",
+          "short": "Overdue",
+          "title": "Overdue Activities",
+          "unit": "activity"
+        },
+        {
+          "columns": [
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "lead",
+              "kind": "",
+              "label": "Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "sub_region",
+              "kind": "",
+              "label": "Sub-region",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district",
+              "kind": "",
+              "label": "District",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "holder",
+              "kind": "",
+              "label": "CCEO / PL",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cluster",
+              "kind": "",
+              "label": "Cluster",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "school_id",
+              "kind": "",
+              "label": "School ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": true,
+              "key": "school",
+              "kind": "",
+              "label": "School Name",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "type",
+              "kind": "",
+              "label": "School Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "activity",
+              "kind": "",
+              "label": "Visit",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "staff",
+              "kind": "",
+              "label": "Planned By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "role",
+              "kind": "",
+              "label": "Planner's Role",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "staff_lead",
+              "kind": "",
+              "label": "Planner's Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "due",
+              "kind": "",
+              "label": "Due",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "Not yet delivered",
+              "is_date": true,
+              "is_school": false,
+              "key": "delivered",
+              "kind": "",
+              "label": "Delivered On",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "state",
+              "kind": "",
+              "label": "Delivery",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "stage",
+              "kind": "",
+              "label": "Stage",
+              "numeric": false,
+              "quiet": false
+            }
+          ],
+          "description": "Every Follow up and In-school Training visit staff have on the plan for the period, and how far each has got. These are the visits counted against each CCEO's 560 and each Programme Lead's 280.",
+          "export_only": [
+            "role",
+            "staff_lead"
+          ],
+          "key": "visits",
+          "short": "Visits",
+          "title": "Visits Against Target",
+          "unit": "visit"
+        }
+      ],
+      "tabs": [
+        "due",
+        "started",
+        "executed",
+        "verified",
+        "closed",
+        "overdue",
+        "visits"
+      ],
+      "words": {
+        "counted": "Yes",
+        "delivered": "Delivered, in review",
+        "nobody": "No responsible person recorded",
+        "not_counted": "No \u2014 donor, story or social",
+        "not_recorded": "Date not recorded",
+        "planned": "Planned, not yet delivered",
+        "verified": "Verified"
+      }
+    },
     "staff_key": "__staff__",
     "stages": {
       "age_groups": [

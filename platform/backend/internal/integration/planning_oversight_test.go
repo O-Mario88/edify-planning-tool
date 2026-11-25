@@ -430,3 +430,37 @@ func pageJSON(t *testing.T, page *screensv1.GetPageResponse) string {
 	}
 	return string(body)
 }
+
+// The consolidated tables behind the execution cards are Go's: behind the
+// page's gate, the seven tabs, the table with what its rows add up to; a
+// key the tables lack is handed on.
+func TestCountryExecutionRecordsAreGos(t *testing.T) {
+	borrowAccount(t, "cd@edify.org")
+	director := sessionOf(t, "cd@edify.org", seededPassword).GetAccessToken()
+	page, err := pageOf(director, countryPlanningOversight+"execution/records/due", map[string]string{"view": "execution", "fy": "2026", "period": "fy"})
+	if err != nil {
+		t.Fatalf("the planned activities: %v", err)
+	}
+	if page.GetHeader().GetTitle() != "Activities Planned" {
+		t.Fatalf("title %q", page.GetHeader().GetTitle())
+	}
+	blocks := page.GetBlocks()
+	if tabs := blocks[0].GetLinkTabs().GetTabs(); len(tabs) != 7 || !tabs[0].GetActive() || tabs[6].GetLabel() != "Visits" {
+		t.Fatalf("tabs %v", tabs)
+	}
+	table := blocks[2].GetTable()
+	if !strings.HasPrefix(table.GetTitle(), "Activities Planned · ") {
+		t.Fatalf("table title %q", table.GetTitle())
+	}
+	if !strings.Contains(table.GetSubtitle(), " planned delivered · ") {
+		t.Fatalf("summary %q", table.GetSubtitle())
+	}
+	if _, err := pageOf(director, countryPlanningOversight+"execution/records/nonsense", nil); connect.CodeOf(err) != connect.CodeUnavailable {
+		t.Fatalf("an unknown table: %v, want handed on", err)
+	}
+	borrowAccount(t, "cceo@edify.org")
+	cceo := sessionOf(t, "cceo@edify.org", seededPassword).GetAccessToken()
+	if _, err := pageOf(cceo, countryPlanningOversight+"execution/records/due", nil); connect.CodeOf(err) != connect.CodeNotFound {
+		t.Fatalf("a CCEO: %v, want not available", err)
+	}
+}
