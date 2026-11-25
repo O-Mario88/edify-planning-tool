@@ -120,8 +120,16 @@ func (m *completedMeeting) outOfCase(p auth.Principal) string {
 // meetingInCase reads the meeting and decides whether Go completes it for
 // p: nil and ErrHandOn when it does not.
 func (s *Service) meetingInCase(ctx context.Context, p auth.Principal, id string) (*completedMeeting, error) {
-	if p.InActingAppointment || p.StaffProfileID == "" || p.ActiveRole != officerRole || slices.Contains(p.Roles, programmeLeadRole) {
-		return nil, handOn("not an officer completing their own meeting")
+	if !officerOwn(p) {
+		if !s.completesOwnVisit(p) {
+			return nil, handOn("not an officer completing their own meeting")
+		}
+		// A lead completes their own visit in Go; their meetings are handed on.
+		m, err := readCompletedMeeting(ctx, s.db, id)
+		if err != nil || m == nil {
+			return nil, err
+		}
+		return nil, handOn("a lead's own meeting")
 	}
 	m, err := readCompletedMeeting(ctx, s.db, id)
 	if err != nil || m == nil {

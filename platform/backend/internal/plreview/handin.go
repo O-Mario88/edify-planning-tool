@@ -265,3 +265,18 @@ func workMark(r Review) (ledgerMark, bool) {
 		fy:    schooldirectory.OperationalFY(time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.UTC)),
 	}, true
 }
+
+// ApproveLeadsOwn is approve_on_hand_in for a lead's own completion as it is
+// handed in (activities.LeadApproval): approved by the lead's Verified
+// writer, audited, nobody told, its package credit after.
+func (s *ReviewService) ApproveLeadsOwn(ctx context.Context, activityID, leadUserID string) error {
+	kampala, err := time.LoadLocation("Africa/Kampala")
+	if err != nil {
+		return err
+	}
+	lead, err := programmeLeadOwner(ctx, s.pool, activityID)
+	if err != nil || lead == "" || lead != leadUserID {
+		return err
+	}
+	return s.approveOnHandIn(ctx, activityID, lead, kampala)
+}

@@ -12,7 +12,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -92,8 +91,8 @@ func (s *Service) CompleteDrawer(ctx context.Context, p auth.Principal, id strin
 // visitDrawerInCase is the completion's case for a School Visit, started or
 // still to be started, whose drawer asks for no accountability.
 func (s *Service) visitDrawerInCase(ctx context.Context, p auth.Principal, id string) error {
-	if p.InActingAppointment || p.StaffProfileID == "" || p.ActiveRole != officerRole || slices.Contains(p.Roles, programmeLeadRole) {
-		return handOn("not an officer completing their own visit")
+	if !s.completesOwnVisit(p) {
+		return handOn("not an officer or a lead completing their own visit")
 	}
 	a, err := readCompletionVisit(ctx, s.db, id)
 	if err != nil {

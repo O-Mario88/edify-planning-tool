@@ -180,9 +180,10 @@ func (s *Service) Complete(ctx context.Context, p auth.Principal, req CompleteRe
 func (s *Service) prepareCompletion(ctx context.Context, p auth.Principal, req CompleteRequest, origin Origin) (*completionPlan, error) {
 	now := s.now()
 	// A CCEO's own work routes to their Programme Lead (routes_to_lead); a
-	// lead's own work is approved as it lands (approve_on_hand_in): handed on.
-	if p.InActingAppointment || p.StaffProfileID == "" || p.ActiveRole != officerRole || slices.Contains(p.Roles, programmeLeadRole) {
-		return nil, handOn("not an officer completing their own visit")
+	// lead's own work routes there too and is approved as it lands
+	// (approve_on_hand_in), which needs the lead approval wired.
+	if !s.completesOwnVisit(p) {
+		return nil, handOn("not an officer or a lead completing their own visit")
 	}
 	a, err := readCompletionVisit(ctx, s.db, strings.TrimSpace(req.ActivityID))
 	if err != nil {
@@ -635,9 +636,18 @@ func (s *Service) appendSalesforceRowFor(ctx context.Context, tx pgx.Tx, p auth.
 // announcement), the view's complete_activity row, then the ledger's mark
 // (on commit). None of it can undo the completion.
 func (s *Service) afterCompletion(ctx context.Context, pl *completionPlan) {
-	if follower, ok := s.pricing.(CompletionFollower); ok {
-		if err := follower.HandedIn(ctx, pl.a.id, pl.p.UserID, pl.p.ActiveRole); err != nil {
-			s.logger.Warn("activities: the hand-in's notices were not sent", "activity", pl.a.id, "err", err)
+	switch {
+	case leadsOwn(pl.p):
+		// _handed_in: a Programme Lead's own work is approved at once, so
+		// nobody is asked.
+		if err := s.leadApproval.ApproveLeadsOwn(ctx, pl.a.id, pl.p.UserID); err != nil {
+			s.logger.Error("activities: the lead's own completion was not approved", "activity", pl.a.id, "err", err)
+		}
+	default:
+		if follower, ok := s.pricing.(CompletionFollower); ok {
+			if err := follower.HandedIn(ctx, pl.a.id, pl.p.UserID, pl.p.ActiveRole); err != nil {
+				s.logger.Warn("activities: the hand-in's notices were not sent", "activity", pl.a.id, "err", err)
+			}
 		}
 	}
 	if err := s.appendCompleteRow(ctx, pl); err != nil {
@@ -806,4 +816,41 @@ func (s *Service) appendSSARowFor(ctx context.Context, tx pgx.Tx, pl *completion
 		return fmt.Errorf("activities: writing the SSA's audit row: %w", err)
 	}
 	return nil
+}
+
+// LeadApproval approves a Programme Lead's own completion as it is handed in
+// (pl_review.services.approve_on_hand_in; plreview.ReviewService).
+type LeadApproval interface {
+	ApproveLeadsOwn(ctx context.Context, activityID, leadUserID string) error
+}
+
+// WithLeadApproval wires the lead's own approval; without it a lead's
+// completion is handed on.
+func (s *Service) WithLeadApproval(a LeadApproval) *Service {
+	s.leadApproval = a
+	return s
+}
+
+// leadsOwn is a Programme Lead working in the role they hold, not acting.
+func leadsOwn(p auth.Principal) bool {
+	return !p.InActingAppointment && p.ActiveRole == programmeLeadRole && slices.Contains(p.Roles, programmeLeadRole)
+}
+
+// completesOwnVisit is who completes their own School Visit in Go: an
+// officer in their own role, or a lead when the lead's approval is wired.
+func (s *Service) completesOwnVisit(p auth.Principal) bool {
+	if p.InActingAppointment || p.StaffProfileID == "" {
+		return false
+	}
+	if leadsOwn(p) {
+		return s.leadApproval != nil
+	}
+	return officerOwn(p)
+}
+
+// officerOwn is an officer in their own role, not acting, holding no lead's
+// role.
+func officerOwn(p auth.Principal) bool {
+	return !p.InActingAppointment && p.StaffProfileID != "" && p.ActiveRole == officerRole &&
+		!slices.Contains(p.Roles, programmeLeadRole)
 }

@@ -44,6 +44,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/coreforms"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/identity"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/plreview"
 )
 
 type step struct {
@@ -133,7 +134,7 @@ func run(dsn, scenarioPath, aOut, out, django, key, runner, repo string) error {
 		return err
 	}
 	forms := coreforms.NewService(pool, time.Now)
-	svc.WithVisitRequests(forms).WithGovernedSupport(forms)
+	svc.WithVisitRequests(forms).WithGovernedSupport(forms).WithLeadApproval(plreview.NewReviewService(pool, time.Now))
 	accounts := identity.NewStore(pool)
 
 	result := outcomes{Database: cfg.ConnConfig.Database, From: time.Now().UTC().Format(time.RFC3339Nano)}

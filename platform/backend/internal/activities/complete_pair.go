@@ -134,8 +134,16 @@ func (pr *completedPair) outOfCase(p auth.Principal) string {
 
 // pairInCase reads the pair id names and decides whether Go completes it.
 func (s *Service) pairInCase(ctx context.Context, p auth.Principal, id string) (*completedPair, error) {
-	if p.InActingAppointment || p.StaffProfileID == "" || p.ActiveRole != officerRole || slices.Contains(p.Roles, programmeLeadRole) {
-		return nil, handOn("not an officer completing their own pair")
+	if !officerOwn(p) {
+		if !s.completesOwnVisit(p) {
+			return nil, handOn("not an officer completing their own pair")
+		}
+		// A lead completes their own visit in Go; their pairs are handed on.
+		pr, err := readCompletedPair(ctx, s.db, id)
+		if err != nil || pr == nil {
+			return nil, err
+		}
+		return nil, handOn("a lead's own pair")
 	}
 	pr, err := readCompletedPair(ctx, s.db, id)
 	if err != nil || pr == nil {

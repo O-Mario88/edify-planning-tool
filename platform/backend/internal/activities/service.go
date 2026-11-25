@@ -92,6 +92,8 @@ type Service struct {
 	requests VisitRequests
 	// governed answers for a pinned governed visit; nil hands those on.
 	governed GovernedSupport
+	// leadApproval approves a lead's own completion; nil hands those on.
+	leadApproval LeadApproval
 }
 
 // NewService builds the save over the gateway's pool.

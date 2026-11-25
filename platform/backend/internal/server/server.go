@@ -552,8 +552,11 @@ func visitSave(cfg config.Config, pool *pgxpool.Pool, logger *slog.Logger, live 
 		panic(err)
 	}
 	forms := coreforms.NewService(pool, time.Now)
+	// A lead's own completion is approved as it lands, by the lead's Verified
+	// writer (approve_on_hand_in).
+	leadApproval := plreview.NewReviewService(pool, time.Now).WithSalesforceSync(cfg.SalesforceSync).WithLogger(logger)
 	return service.WithOwnerNotices(plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, live).
-		WithVisitRequests(forms).WithGovernedSupport(forms)
+		WithVisitRequests(forms).WithGovernedSupport(forms).WithLeadApproval(leadApproval)
 }
 
 // signInHandler assembles sign-in: the existing accounts, the existing
