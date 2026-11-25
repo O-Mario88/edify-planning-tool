@@ -63,7 +63,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		if !ok || !role.Page {
 			return nil, true, pagegate.ErrNotAvailable
 		}
-		return s.reportDetail(ctx, p, role, m[1])
+		return s.reportDetail(ctx, p, role, m[1], query)
 	}
 	if path == LearningPath || path == "/ia/learning" {
 		return s.learning(ctx, p, query)

@@ -697,6 +697,9 @@ GRANT SELECT (id, original_name, file_size) ON evidence_record TO edify_gateway_
 GRANT SELECT (title, created_at, programme_areas, fy, period_start, version, review_note, author_id, status, updated_at, reviewed_by_id, period_end, country) ON impact_report TO edify_gateway_ro;
 GRANT SELECT (report_id, status, due_date) ON impact_report_recommendation TO edify_gateway_ro;
 GRANT SELECT (audience, report_id, status) ON impact_report_release TO edify_gateway_ro;
+-- A report's own page: when it was submitted and reviewed, on what basis,
+-- and the evidence it froze (impact_report_views.report_detail).
+GRANT SELECT (submitted_at, reviewed_at, review_basis, snapshot_hash, evidence_snapshot, supersedes_id, project_id, methodology, findings, limitations) ON impact_report TO edify_gateway_ro;
 
 -- Ownership Transfers (internal/ownership): each district and school transfer's
 -- what, who from and to, when, the open-work decision and reason, and the

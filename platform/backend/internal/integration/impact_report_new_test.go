@@ -119,12 +119,40 @@ func TestImpactAssessmentStartsAReportInGo(t *testing.T) {
 		Scan(&submitted, &hash, &frozen); err != nil || submitted != "submitted" || len(hash) != 64 || !frozen {
 		t.Fatalf("the submitted report: %q %q %v %v", submitted, hash, frozen, err)
 	}
-	if r, err := drawers.SaveDrawer(ctx, authed(&screensv1.SaveDrawerRequest{Path: pagePath, Form: "withdraw"}, token)); err != nil ||
-		r.Msg.GetMessage() != "Report withdrawn." {
-		t.Fatalf("withdrawing: %v %v", r, err)
-	}
 	borrowAccount(t, "cd@edify.org")
 	cd := sessionOf(t, "cd@edify.org", seededPassword).GetAccessToken()
+	reviewPath := "/ia/impact-reports/" + id + "/review"
+	if r, err := drawers.GetDrawer(ctx, authed(&screensv1.GetDrawerRequest{Path: reviewPath}, token)); err != nil ||
+		r.Msg.GetDrawer().GetCanSubmit() {
+		t.Fatalf("the author's review drawer: %v %v", r, err)
+	}
+	if r, err := drawers.GetDrawer(ctx, authed(&screensv1.GetDrawerRequest{Path: reviewPath}, cd)); err != nil ||
+		!r.Msg.GetDrawer().GetCanSubmit() || r.Msg.GetDrawer().GetSubmitLabel() != "Save decision" {
+		t.Fatalf("the Country Director's review drawer: %v %v", r, err)
+	}
+	if r, err := drawers.SaveDrawer(ctx, authed(&screensv1.SaveDrawerRequest{Path: reviewPath, Values: map[string]string{
+		"decision": "return"}}, cd)); err != nil || r.Msg.GetError() != "Say what the author needs to change." {
+		t.Fatalf("returning without a note: %v %v", r, err)
+	}
+	if r, err := drawers.SaveDrawer(ctx, authed(&screensv1.SaveDrawerRequest{Path: reviewPath, Values: map[string]string{
+		"decision": "return", "note": "Tighten the findings"}}, cd)); err != nil || r.Msg.GetMessage() != "Report returned to its author." {
+		t.Fatalf("returning: %v %v", r, err)
+	}
+	returned, err := pages.GetPage(ctx, authed(&screensv1.GetPageRequest{Path: pagePath}, token))
+	if err != nil || returned.Msg.GetHeader().GetDescription() != "Returned · version 1 · "+country {
+		t.Fatalf("the returned report's page: %v %v", returned, err)
+	}
+	if r := save(map[string]string{"fy": fy, "title": title, "programme_areas": "visits"}); !r.GetSaved() {
+		t.Fatalf("a second draft: %+v", r)
+	}
+	var second string
+	if err := admin.QueryRow(ctx, `SELECT id FROM impact_report WHERE title = $1 AND status = 'draft'`, title).Scan(&second); err != nil {
+		t.Fatalf("the second draft: %v", err)
+	}
+	if r, err := drawers.SaveDrawer(ctx, authed(&screensv1.SaveDrawerRequest{Path: "/ia/impact-reports/" + second + "/", Form: "withdraw"}, token)); err != nil ||
+		r.Msg.GetMessage() != "Report withdrawn." {
+		t.Fatalf("withdrawing the second draft: %v %v", r, err)
+	}
 	if r, err := drawers.GetDrawer(ctx, authed(&screensv1.GetDrawerRequest{Path: editPath}, cd)); err != nil || r.Msg.GetDrawer().GetCanSubmit() {
 		t.Fatalf("the Country Director's edit drawer: %v %v", r, err)
 	}

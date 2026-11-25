@@ -19,7 +19,7 @@ type Saved struct {
 
 // reportDrawerPath is a report's own drawers: edit, and a new
 // recommendation.
-var reportDrawerPath = regexp.MustCompile(`^/ia/impact-reports/([A-Za-z0-9]{1,30})/(edit|recommendations/new)$`)
+var reportDrawerPath = regexp.MustCompile(`^/ia/impact-reports/([A-Za-z0-9]{1,30})/(edit|recommendations/new|review)$`)
 
 // handled says whether Go draws the drawer at path: which, and the report.
 func handled(path string) (string, string, bool) {
@@ -51,6 +51,8 @@ func (r Reports) Drawer(ctx context.Context, p auth.Principal, rawPath string) (
 		d, err = r.newDrawer(ctx, p, q.Get("project"))
 	case "edit":
 		d, err = r.editDrawer(ctx, p, id)
+	case "review":
+		d, err = r.reviewDrawer(ctx, p, id)
 	default:
 		d, err = r.recommendationDrawer(ctx, p, id)
 	}
@@ -69,6 +71,10 @@ func pageForm(id, form string) string {
 		return "submit"
 	case "withdraw", PagePath + id + "/withdraw":
 		return "withdraw"
+	case "start_a_correction", PagePath + id + "/correct":
+		return "correct"
+	case "release_to_country_leadership", PagePath + id + "/release/leadership":
+		return "release"
 	}
 	return ""
 }
@@ -90,6 +96,12 @@ func (r Reports) savePageForm(ctx context.Context, p auth.Principal, id, form st
 		return r.submit(ctx, p, id)
 	case which == "withdraw" && author && (x.status == statusDraft || x.status == "submitted"):
 		return r.withdraw(ctx, p, id, strings.TrimSpace(values["note"]))
+	case which == "release" && x.status == "reviewed":
+		return r.releaseToLeadership(ctx, p, id)
+	case which == "correct" && p.ActiveRole == roleIA:
+		// The page draws it for the country's officers on a correctable
+		// report with no correction open; start_correction checks each.
+		return r.correct(ctx, p, id)
 	}
 	return Saved{}, refuse("This form is not available.")
 }
@@ -135,6 +147,8 @@ func (r Reports) Save(ctx context.Context, p auth.Principal, rawPath, form strin
 		saved, err = r.create(ctx, p, values)
 	case "edit":
 		saved, err = r.update(ctx, p, id, values)
+	case "review":
+		saved, err = r.review(ctx, p, id, values)
 	default:
 		saved, err = r.addRecommendation(ctx, p, id, values)
 	}

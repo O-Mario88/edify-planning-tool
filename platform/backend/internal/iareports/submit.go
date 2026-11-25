@@ -8,7 +8,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -72,27 +71,9 @@ LEFT JOIN project pr ON pr.id = r.project_id WHERE r.id = $1`, id).Scan(&project
   submitted_at = $4, updated_at = $4 WHERE id = $1`, id, string(stored), hash, now); err != nil {
 			return fmt.Errorf("iareports: freezing the evidence: %w", err)
 		}
-		var superseded any
-		if supersedes != "" {
-			var prior report
-			prior, err = scanReport(tx.QueryRow(ctx, `SELECT `+reportColumns+` FROM impact_report r
-WHERE r.id = $1 AND r.status IN ('returned', 'withdrawn') FOR UPDATE`, supersedes))
-			switch {
-			case errors.Is(err, pgx.ErrNoRows):
-			case err != nil:
-				return fmt.Errorf("iareports: the version it corrects: %w", err)
-			default:
-				if _, err := tx.Exec(ctx, `UPDATE impact_report SET status = 'superseded', updated_at = $2 WHERE id = $1`, prior.id, now); err != nil {
-					return fmt.Errorf("iareports: superseding the earlier version: %w", err)
-				}
-				var priorHash string
-				_ = tx.QueryRow(ctx, `SELECT snapshot_hash FROM impact_report WHERE id = $1`, prior.id).Scan(&priorHash)
-				if _, err := audit.Append(ctx, tx, reportAudit("ia.report.superseded", prior.id, p, prior.country, prior.version,
-					"superseded", priorHash, map[string]any{"superseded_by": id}), now); err != nil {
-					return err
-				}
-				superseded = prior.id
-			}
+		superseded, err := r.supersedePrior(ctx, tx, p, id, supersedes, []string{"returned", "withdrawn"}, now)
+		if err != nil {
+			return err
 		}
 		cohort, _ := snapshot["cohort"].(map[string]any)
 		rows, _ := snapshot["rows"].([]any)
