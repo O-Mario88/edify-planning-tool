@@ -39,10 +39,14 @@ export function proxy(request: NextRequest) {
     }
   }
   // A page's own Export (?export=xlsx) whose workbook the gateway makes.
+  const params = request.nextUrl.searchParams;
   const exportsPage =
     request.method === 'GET' &&
-    Boolean(request.nextUrl.searchParams.get('export')?.trim()) &&
-    /^\/ia\/(returned|partner-evidence|history|verification)\/?$/.test(pathname);
+    ((Boolean(params.get('export')?.trim()) &&
+      /^\/ia\/(returned|partner-evidence|history|verification)\/?$/.test(pathname)) ||
+      (/^\/core-schools-oversight\/?$/.test(pathname) &&
+        (params.get('format') === 'csv' ||
+          (params.get('format') === 'xlsx' && /^core_(visits|trainings)$/.test(params.get('tab') ?? '')))));
   if (
     exportsPage ||
     (request.method === 'GET' &&

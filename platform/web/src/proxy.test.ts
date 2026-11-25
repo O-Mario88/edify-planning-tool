@@ -62,6 +62,21 @@ describe('a download the gateway writes', () => {
     );
   });
 
+  it("sends Core School Oversight's CSV and its plan workbooks to the gateway, not its other tabs", () => {
+    const send = (path: string) => {
+      const request = new NextRequest(`http://localhost:3000${path}`);
+      request.cookies.set(ACCESS_COOKIE, 'token');
+      return proxy(request).headers.get('x-middleware-rewrite');
+    };
+    expect(send('/core-schools-oversight/?format=csv&fy=2027')).toBe(
+      'http://localhost:3000/api/quick-export?target=%2Fcore-schools-oversight&format=csv&fy=2027',
+    );
+    expect(send('/core-schools-oversight/?tab=core_visits&format=xlsx')).toBe(
+      'http://localhost:3000/api/quick-export?target=%2Fcore-schools-oversight&tab=core_visits&format=xlsx',
+    );
+    expect(send('/core-schools-oversight/?tab=groups&format=xlsx')).toBeNull();
+  });
+
   it('leaves the queue page itself to the page', () => {
     const request = new NextRequest('http://localhost:3000/ia/history/?page=2');
     request.cookies.set(ACCESS_COOKIE, 'token');
