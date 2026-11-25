@@ -73,9 +73,10 @@ func CountryExecutionPage(ctx context.Context, db schooldirectory.Querier, p aut
 	if n, ok := clusterpage.PyInt(q["page"]); ok {
 		asked = n
 	}
-	if set, err := s.targetsSet(ctx, db); err != nil || set {
-		if err == nil || errors.Is(err, targets.ErrHandOn) {
-			err = errCEXHandOn // the target note's figures are not drawn yet
+	position, err := s.targetPosition(ctx, db)
+	if err != nil {
+		if errors.Is(err, targets.ErrHandOn) {
+			err = errCEXHandOn
 		}
 		return nil, err
 	}
@@ -86,7 +87,7 @@ func CountryExecutionPage(ctx context.Context, db schooldirectory.Querier, p aut
 	}
 	blocks = append(blocks, walk(notice)...)
 	blocks = append(blocks, walk(s.cardNodes())...)
-	blocks = append(blocks, walk(s.targetNote(ctx, db))...)
+	blocks = append(blocks, walk(s.targetNote(position))...)
 	blocks = append(blocks, s.chartBlocks()...)
 	blocks = append(blocks, walk(s.readingNodes(reader))...)
 	blocks = append(blocks, s.requirementBlocks()...)
@@ -305,19 +306,6 @@ func (s *cexSnapshot) cardNodes() *node {
 			el("span", "cxo-metric-note", c.note), " ").Attr("href", c.href))
 	}
 	return sec
-}
-
-// targetNote is target_position's note.
-func (s *cexSnapshot) targetNote(ctx context.Context, db schooldirectory.Querier) *node {
-	f, w := s.filters, s.data.window
-	switch {
-	case w.period == "week":
-		return el("p", "cpo-info", el("strong", "", "Targets"), " are set by month: a week has none of its own. Choose the month to read planned output against validated actual.")
-	case f.region != "" || f.channel != "" || f.partner != "" || f.activType != "":
-		return el("p", "cpo-info", el("strong", "", "Targets"), " are held by people, not by region, delivery channel, Partner or activity type, so they are not shown for this filter. Clear it, or choose a Programme Lead or CCEO, to read planned output against validated actual.")
-	}
-	return el("p", "cpo-info", el("strong", "", "Targets:"), " none are set in My Targets for the people in this selection for "+w.label()+
-		", so there is no planned output to read against. Validated credits still count in the canonical target ledger.")
 }
 
 // chartBlocks is the funnel, the trend and the two charts by Programme Lead,
@@ -744,55 +732,4 @@ func (s *cexSnapshot) targetPeople() []string {
 	}
 	sort.Strings(out)
 	return out
-}
-
-// targetsSet is whether target_position would read figures (status "ok"):
-// a target set in My Targets for the selection's people in the period. Go
-// does not draw that note yet, so such a page is handed on.
-func (s *cexSnapshot) targetsSet(ctx context.Context, db schooldirectory.Querier) (bool, error) {
-	f, w := s.filters, s.data.window
-	if w.period == "week" || f.region != "" || f.channel != "" || f.partner != "" || f.activType != "" {
-		return false, nil
-	}
-	staff := s.targetPeople()
-	if len(staff) == 0 {
-		return false, nil
-	}
-	rows, err := db.Query(ctx, `SELECT id, COALESCE(user_id, '') FROM staff_profile WHERE id = ANY($1)`, staff)
-	if err != nil {
-		return false, fmt.Errorf("planningmonitor: the selection's people: %w", err)
-	}
-	people := []targets.Person{}
-	for rows.Next() {
-		var p targets.Person
-		if err := rows.Scan(&p.StaffID, &p.UserID); err != nil {
-			rows.Close()
-			return false, err
-		}
-		if p.UserID != "" {
-			people = append(people, p)
-		}
-	}
-	rows.Close()
-	if err := rows.Err(); err != nil || len(people) == 0 {
-		return false, err
-	}
-	roster, err := targets.Prepare(ctx, db, people, w.fy, nil)
-	if err != nil {
-		return false, err
-	}
-	months := w.monthsOfFY
-	if w.period == "fy" {
-		months = []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
-	}
-	for _, p := range people {
-		for _, series := range roster.Targets(p) {
-			for _, m := range months {
-				if series[m-1] > 0 {
-					return true, nil
-				}
-			}
-		}
-	}
-	return false, nil
 }

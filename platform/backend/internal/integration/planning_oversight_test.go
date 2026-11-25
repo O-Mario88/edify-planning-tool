@@ -3,11 +3,14 @@
 package integration
 
 import (
+	"context"
 	"strconv"
 	"strings"
 	"testing"
 
 	"connectrpc.com/connect"
+
+	"google.golang.org/protobuf/encoding/protojson"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 )
@@ -378,7 +381,52 @@ func TestCountryExecutionIsGos(t *testing.T) {
 		!strings.HasPrefix(sections[3], "Visits Delivered Against Target by Program Lead") {
 		t.Fatalf("sections %q", sections)
 	}
-	if _, err := pageOf(director, countryPlanningOversight, map[string]string{"view": "execution", "table": "school"}); connect.CodeOf(err) != connect.CodeUnavailable {
-		t.Fatalf("the schools view: %v, want handed on", err)
+	schools, err := pageOf(director, countryPlanningOversight, map[string]string{"view": "execution", "table": "school", "fy": "2026", "period": "fy"})
+	if err != nil {
+		t.Fatalf("the schools view: %v", err)
 	}
+	if !strings.Contains(pageJSON(t, schools), `"School"`) {
+		t.Fatalf("the schools view has no School column: %s", pageJSON(t, schools))
+	}
+}
+
+// The target note reads the people's targets as My Targets reads them: a
+// CCEO's explicit monthly targets for last year, no validated credit.
+func TestCountryExecutionTargetNoteReadsMyTargets(t *testing.T) {
+	ctx := context.Background()
+	clear := func() {
+		if _, err := admin.Exec(ctx, `DELETE FROM monthly_personal_target WHERE id LIKE 'gcext%'`); err != nil {
+			t.Errorf("clearing the targets: %v", err)
+		}
+	}
+	clear()
+	t.Cleanup(clear)
+	var staffID string
+	if err := admin.QueryRow(ctx, `SELECT sp.id FROM staff_profile sp JOIN "user" u ON u.id = sp.user_id WHERE u.email = 'cceo1@edify.org'`).Scan(&staffID); err != nil {
+		t.Fatalf("the CCEO: %v", err)
+	}
+	if _, err := admin.Exec(ctx, `INSERT INTO monthly_personal_target (created_at, updated_at, id, user_id, fy, month_of_fy, target, area_id)
+		SELECT now(), now(), 'gcext' || m, sp.user_id, '2026', m, 2, a.id FROM staff_profile sp, generate_series(1, 12) m, target_area a
+		WHERE sp.id = $1 AND a.key = 'school_visits'`, staffID); err != nil {
+		t.Fatalf("setting the targets: %v", err)
+	}
+	borrowAccount(t, "cd@edify.org")
+	director := sessionOf(t, "cd@edify.org", seededPassword).GetAccessToken()
+	page, err := pageOf(director, countryPlanningOversight, map[string]string{"view": "execution", "fy": "2026", "period": "quarter", "quarter": "Q2", "cceo": staffID})
+	if err != nil {
+		t.Fatalf("the Execution lens: %v", err)
+	}
+	if body := pageJSON(t, page); !strings.Contains(body, "planned output 6 · validated actual") {
+		t.Fatalf("no target note with the quarter's six visits: %s", body)
+	}
+}
+
+// pageJSON is a page as JSON, for a test that looks for words in it.
+func pageJSON(t *testing.T, page *screensv1.GetPageResponse) string {
+	t.Helper()
+	body, err := protojson.Marshal(page)
+	if err != nil {
+		t.Fatalf("the page as JSON: %v", err)
+	}
+	return string(body)
 }

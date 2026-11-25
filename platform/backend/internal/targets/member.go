@@ -119,6 +119,48 @@ func WeightedPct(areas []Area, targets, achieved Series, months []int) (*int, in
 	return &pct, totA, totT
 }
 
+// AgreedAreas is agreed_target_areas: the union of the areas people agreed,
+// in roster order and each person's own order.
+func (r *Roster) AgreedAreas(people []Person) []Area {
+	seen := map[string]bool{}
+	var out []Area
+	for _, p := range people {
+		for _, a := range r.areas[p.UserID] {
+			if !seen[a.Key] {
+				seen[a.Key] = true
+				out = append(out, a)
+			}
+		}
+	}
+	return out
+}
+
+// TeamWeightedPct is team_weighted_pct over per_user_monthly_series(areas):
+// each person weighted over areas for the months, those with no target in
+// them left out of the average (which rounds half to even, as Python's
+// round does); and everyone's achieved and target totals.
+func (r *Roster) TeamWeightedPct(people []Person, areas []Area, months []int) (pct, achieved, target int) {
+	keys := make([]string, len(areas))
+	for i, a := range areas {
+		keys[i] = a.Key
+	}
+	sum, n := 0, 0
+	for _, p := range people {
+		t, a := r.SeriesOver(p, keys)
+		one, got, want := WeightedPct(areas, t, a, months)
+		achieved += got
+		target += want
+		if one != nil {
+			sum += *one
+			n++
+		}
+	}
+	if n > 0 {
+		pct = int(math.RoundToEven(float64(sum) / float64(n)))
+	}
+	return pct, achieved, target
+}
+
 // Cell is one period of a member's matrix (_member's matrix_cells).
 type Cell struct {
 	Key, Label       string

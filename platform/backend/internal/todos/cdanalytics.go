@@ -320,52 +320,25 @@ ORDER BY u.created_at DESC, u.id`, country)
 	return cd, err
 }
 
-// agreedAreas is agreed_target_areas over the CCEOs: the union of the areas
-// they agreed, in roster order and each person's own order.
+// agreedAreas is agreed_target_areas over the CCEOs.
 func agreedAreas(roster *targets.Roster, people []targets.Person) []targets.Area {
-	seen := map[string]bool{}
-	var out []targets.Area
-	for _, p := range people {
-		for _, a := range roster.Areas(p) {
-			if !seen[a.Key] {
-				seen[a.Key] = true
-				out = append(out, a)
-			}
-		}
-	}
-	return out
+	return roster.AgreedAreas(people)
 }
 
 // teamWeightedPct is _weighted_achievement over the primed CCEO series
 // (team_weighted_pct): each team member with a series is weighted over the
-// country's agreed areas for the whole year; members with no target are
-// left out of the average, which rounds half to even. The second answer is
-// the team's total target.
+// country's agreed areas for the whole year. The second answer is the
+// team's total target.
 func teamWeightedPct(roster *targets.Roster, inRoster map[string]targets.Person, users map[string]bool,
 	areas []targets.Area) (int, int) {
-	keys := make([]string, len(areas))
-	for i, a := range areas {
-		keys[i] = a.Key
-	}
-	months := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
-	sum, n, total := 0, 0, 0
+	people := []targets.Person{}
 	for id := range users {
-		p, ok := inRoster[id]
-		if !ok {
-			continue
-		}
-		t, a := roster.SeriesOver(p, keys)
-		pct, _, target := targets.WeightedPct(areas, t, a, months)
-		total += target
-		if pct != nil {
-			sum += *pct
-			n++
+		if p, ok := inRoster[id]; ok {
+			people = append(people, p)
 		}
 	}
-	if n == 0 {
-		return 0, total
-	}
-	return int(math.RoundToEven(float64(sum) / float64(n))), total
+	pct, _, target := roster.TeamWeightedPct(people, areas, []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12})
+	return pct, target
 }
 
 // plRisk is CDAnalyticsService._pl_risk's label.
