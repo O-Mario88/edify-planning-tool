@@ -29,6 +29,13 @@
       "training"
     ],
     "client_family": "client_family",
+    "closed_handover_statuses": [
+      "returned_to_staff",
+      "returned",
+      "withdrawn",
+      "cancelled",
+      "rejected"
+    ],
     "closed_statuses": [
       "permanently_closed",
       "temporarily_closed"

@@ -27,6 +27,7 @@ type cpoRules struct {
 	AttendanceTypes             []string            `json:"attendance_types"`
 	UnscheduledHandoverStatuses []string            `json:"unscheduled_handover_statuses"`
 	ReturnedToStaff             string              `json:"returned_to_staff"`
+	ClosedHandoverStatuses      []string            `json:"closed_handover_statuses"`
 	PackageTrainingTypes        []string            `json:"package_training_types"`
 	PackageVisitTypes           []string            `json:"package_visit_types"`
 	NonPackageVisitPurposes     []string            `json:"non_package_visit_purposes"`

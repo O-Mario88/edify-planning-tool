@@ -216,7 +216,7 @@ def _country_oversight() -> dict:
     from apps.core_schools import package_credit
     from apps.hr.performance_engine import DEFAULT_PHASING
     from apps.partners.models import PartnerAssignment
-    from apps.planning.country_oversight import hierarchy, policy, requirements
+    from apps.planning.country_oversight import hierarchy, policy, requirements, rules
     from apps.schools.lifecycle_models import CLOSED_STATUSES
 
     return {
@@ -243,6 +243,7 @@ def _country_oversight() -> dict:
         "attendance_types": sorted(_ATTENDANCE_TYPES),
         "unscheduled_handover_statuses": list(PartnerAssignment.UNSCHEDULED_STATUSES),
         "returned_to_staff": PartnerAssignment.STATUS_RETURNED_TO_STAFF,
+        "closed_handover_statuses": list(rules.CLOSED_HANDOVER_STATUSES),
         "package_training_types": sorted(package_credit.PACKAGE_TRAINING_TYPES),
         "package_visit_types": sorted(package_credit.PACKAGE_VISIT_TYPES),
         "non_package_visit_purposes": sorted(package_credit.NON_PACKAGE_VISIT_PURPOSES),
