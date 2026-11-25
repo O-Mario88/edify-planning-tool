@@ -60,6 +60,8 @@ type cpoRules struct {
 		FollowUpIssueLabels  map[string]string `json:"followup_issue_labels"`
 		// FollowUpPriorityLabels are FollowUpPriority's labels.
 		FollowUpPriorityLabels map[string]string `json:"followup_priority_labels"`
+		// RoleLabels are an owner's role in the tables' words.
+		RoleLabels map[string]string `json:"role_labels"`
 		// CoverageExport is the page's workbook's headings.
 		CoverageExport struct {
 			HierarchyHeaders []string `json:"hierarchy_headers"`

@@ -528,6 +528,8 @@ def _country_oversight_page() -> dict:
             "hierarchy_headers": list(views.HIERARCHY_HEADERS),
             "school_headers": list(views.SCHOOL_HEADERS),
         },
+        # An owner's role in the consolidated tables' words (rules.ROLE_LABELS).
+        "role_labels": dict(book.ROLE_LABELS),
         "followup_issue_labels": {
             key: issue.label for key, issue in {**EXEC_ISSUES, **fu.ISSUES}.items()
         },

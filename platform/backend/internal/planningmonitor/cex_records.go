@@ -292,6 +292,11 @@ func (s *cexSnapshot) recordRow(r cexRecord, places *cpoPlaces, others map[strin
 	row["lead"] = row["holder_lead"]
 	row["staff"] = person
 	row["staff_lead"] = lead
+	// _who's role: the owner's, in the tables' words; none for nobody.
+	row["role"] = ""
+	if o := s.data.owners[r.ownerKey]; o != nil && r.ownerKey != rules.CountryOversight.NoOwner[0] {
+		row["role"] = rules.CountryOversight.Page.RoleLabels[o.role]
+	}
 	row["by"] = "Staff"
 	if r.channel != "staff" {
 		row["by"] = "Partner · " + partner
