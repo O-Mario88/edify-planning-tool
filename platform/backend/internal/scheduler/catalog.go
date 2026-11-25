@@ -284,7 +284,8 @@ func executeJob(
 			strconv.Itoa(fy), nextMonth.Format("2006-01"), "Uganda", now)
 
 	case "document_lifecycle":
-		return callIntRW(ctx, pool, `SELECT gateway_scheduler.reconcile_document_lifecycle($1::date, $2)`, today, now)
+		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy
+		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) { return notificationjobs.DocumentLifecycle(ctx, tx, now, loc, push) })
 
 	case "activity_reminders":
 		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy

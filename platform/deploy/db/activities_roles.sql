@@ -906,3 +906,14 @@ GRANT SELECT (id, country) ON region TO edify_activities_rw;
 GRANT SELECT (id, region_id) ON school TO edify_activities_rw;
 GRANT SELECT (id, region_id) ON cluster TO edify_activities_rw;
 GRANT SELECT (id, school_id, verification_status, deleted_at, verified_at, verified_by_user_id) ON ssa_record TO edify_activities_rw;
+
+-- ── The scheduler's document_lifecycle (docs/migration/189 §4) ──
+-- apps.documents.jobs: a document's status on its version's dates, the
+-- acknowledgement reminders, and idle viewer sessions closed.
+GRANT SELECT (id, status, current_version_id, title, acknowledgement_reason), UPDATE (status, updated_at)
+  ON document_asset TO edify_activities_rw;
+GRANT SELECT (id, effective_date, expiry_date, preview_status) ON document_version TO edify_activities_rw;
+GRANT SELECT (id, user_id, document_id, state, due_date, last_reminded_at, reminder_count, created_at),
+      UPDATE (reminder_count, last_reminded_at, updated_at)
+  ON document_acknowledgement TO edify_activities_rw;
+GRANT SELECT (finalised, last_heartbeat_at), UPDATE (finalised, updated_at) ON document_engagement_session TO edify_activities_rw;

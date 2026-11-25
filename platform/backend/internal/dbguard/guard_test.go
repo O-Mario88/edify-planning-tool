@@ -219,7 +219,9 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		filepath.Join(root, "internal", "mscs") + sep: {"mscs_story"},
 		// The PD reminders job moves the course clock and logs each reminder
 		// (apps.professional_development.reminders).
-		filepath.Join(root, "internal", "notificationjobs") + sep: {"pd_request", "pd_reminder_log"},
+		// and the document lifecycle (apps.documents.jobs).
+		filepath.Join(root, "internal", "notificationjobs") + sep: {"pd_request", "pd_reminder_log", "document_asset d",
+			"document_acknowledgement", "document_engagement_session"},
 		// The weekly sample checks (apps.activities.verification_sampling).
 		filepath.Join(root, "internal", "iasampling") + sep: {"ia_verification_sample"},
 		filepath.Join(root, "internal", "debriefs") + sep: {
