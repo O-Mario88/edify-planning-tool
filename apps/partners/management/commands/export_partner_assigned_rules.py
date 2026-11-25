@@ -75,7 +75,7 @@ def rules() -> dict:
     from apps.core.pagination import TABLE_PAGE_SIZE
     from apps.core.permissions import RolePermissionService, can_open_url
     from apps.core.rbac import EdifyRole
-    from apps.core.activity_types import NOT_IN_PLAN_ACTIVITY_STATUSES
+    from apps.core.activity_types import NOT_IN_PLAN_ACTIVITY_STATUSES, TRAINING_TYPES
     from apps.frontend.views.partner_views import (
         _CLUSTER_SCOPE_TYPES,
         PARTNER_ASSIGNMENTS_LIMIT,
@@ -122,6 +122,8 @@ def rules() -> dict:
         },
         # The portal's three lists.
         "called_off_statuses": list(NOT_IN_PLAN_ACTIVITY_STATUSES),
+        # The delivered-by drawer calls a training a training (TRAINING_TYPES).
+        "training_types": sorted(TRAINING_TYPES),
         "awaiting_statuses": list(PARTNER_AWAITING_STATUSES),
         "log_limit": PARTNER_LOG_LIMIT,
         "assignments_limit": PARTNER_ASSIGNMENTS_LIMIT,

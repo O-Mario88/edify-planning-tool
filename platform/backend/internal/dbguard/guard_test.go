@@ -250,6 +250,8 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		filepath.Join(root, "internal", "actionsweep") + sep: {"team_action"},
 		filepath.Join(root, "internal", "workflowmsg") + sep: {"messaging_messagethread", "messaging_messageparticipant", "message"},
 		filepath.Join(root, "internal", "escalations") + sep: {"leadership_escalation"},
+		// The Partner naming who delivers its work (apps.partners.delivery_team).
+		filepath.Join(root, "internal", "partnerassigned") + sep: {"activity"},
 		// The weekly sample checks (apps.activities.verification_sampling).
 		filepath.Join(root, "internal", "iasampling") + sep: {"ia_verification_sample"},
 		filepath.Join(root, "internal", "debriefs") + sep: {

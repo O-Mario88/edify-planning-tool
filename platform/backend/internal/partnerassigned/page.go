@@ -80,9 +80,11 @@ var rules = func() (r struct {
 	ProfileLinkRoles  map[string][]string `json:"profile_link_roles"`
 	// The portal's lists (portal.go).
 	CalledOffStatuses []string `json:"called_off_statuses"`
-	AwaitingStatuses  []string `json:"awaiting_statuses"`
-	LogLimit          int      `json:"log_limit"`
-	AssignmentsLimit  int      `json:"assignments_limit"`
+	// TRAINING_TYPES: the delivered-by drawer calls a training a training.
+	TrainingTypes    []string `json:"training_types"`
+	AwaitingStatuses []string `json:"awaiting_statuses"`
+	LogLimit         int      `json:"log_limit"`
+	AssignmentsLimit int      `json:"assignments_limit"`
 	// My Plan (myplan.go).
 	Plan struct {
 		ScheduledStatuses    []string            `json:"scheduled_statuses"`

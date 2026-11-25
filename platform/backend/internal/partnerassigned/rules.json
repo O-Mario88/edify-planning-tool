@@ -276,5 +276,13 @@
     "assigned",
     "pending_scheduling",
     "returned"
+  ],
+  "training_types": [
+    "cluster_training",
+    "cluster_training_ssa_collection",
+    "core_training",
+    "in_school_training",
+    "school_improvement_training",
+    "training"
   ]
 }

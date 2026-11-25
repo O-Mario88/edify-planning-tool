@@ -1,9 +1,13 @@
 package plreview
 
 import (
+	"context"
+	"slices"
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/jackc/pgx/v5"
 )
 
 const (
@@ -91,6 +95,27 @@ func pythonISO(at time.Time) string {
 		return at.Format(isoSeconds) + isoUTCOffset
 	}
 	return at.Format(isoMicroseconds) + isoUTCOffset
+}
+
+// activityBridgeStates are the states the Activity save bridge
+// (business_transformation.signals._activity_state_bridge) raises
+// bt.activity.state_changed for.
+var activityBridgeStates = []string{"ia_verified", "accountant_confirmed", "closed", "returned", "returned_by_ia", "returned_by_pl"}
+
+// RaiseActivitySaved is that bridge for an activity another save wrote in
+// tx: its state change event, keyed by the IA confirmation's time or, with
+// none, the save's own.
+func RaiseActivitySaved(ctx context.Context, tx pgx.Tx, activityID, status string, iaConfirmedAt *time.Time, savedAt time.Time) error {
+	if !slices.Contains(activityBridgeStates, status) {
+		return nil
+	}
+	version := savedAt
+	if iaConfirmedAt != nil {
+		version = *iaConfirmedAt
+	}
+	return raiseEvents(ctx, tx, []outboxEvent{{Type: "bt.activity.state_changed",
+		Key: "bt.activity.state:" + activityID + ":" + status + ":" + pythonISO(version), Payload: map[string]string{"activityId": activityID}}},
+		savedAt)
 }
 
 // outboxEvent is one durable event a decision raises.

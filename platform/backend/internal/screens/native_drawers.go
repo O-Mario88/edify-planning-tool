@@ -431,6 +431,9 @@ func (s *Service) getPageDrawerInGo(ctx context.Context, p auth.Principal, rawPa
 	if answer, served, err := s.countryOversightDrawerInGo(ctx, p, rawPath); served {
 		return answer, true, err
 	}
+	if answer, served, err := s.partnerDeliveryDrawerInGo(ctx, p, rawPath); served {
+		return answer, true, err
+	}
 	if answer, served, err := s.executionFollowUpDrawerInGo(ctx, p, rawPath); served {
 		return answer, true, err
 	}

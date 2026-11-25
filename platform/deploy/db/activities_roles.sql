@@ -894,6 +894,12 @@ GRANT SELECT (id, status, severity, addressed_role, assigned_to_user_id, country
               raised_by_name, created_at)
   ON leadership_escalation TO edify_activities_rw;
 
+-- ── The Partner's "who delivers this work" (apps.partners.delivery_team) ──
+-- The team member named on one of the organisation's activities, from its
+-- active roster.
+GRANT UPDATE (delivery_contact_name, updated_at) ON activity TO edify_activities_rw;
+GRANT SELECT (partner_id, name, role, active) ON partner_member TO edify_activities_rw;
+
 -- ── Partner Oversight's hand-over send (partner_oversight_actions) ──
 -- send_action's TeamAction (one INSERT; the sweep closes it), the system
 -- message a workflow writes about a school or a hand-over
