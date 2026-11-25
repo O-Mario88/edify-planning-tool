@@ -24,6 +24,9 @@ type cpoActivity struct {
 	on                                                          *time.Time
 	created                                                     time.Time
 	partnerPlanned                                              bool
+	// noDelivery is a delivery type left empty (NULL), which visit_kind
+	// reads as nobody's staff.
+	noDelivery bool
 }
 
 const cpoActivityColumns = `a.id, COALESCE(a.school_id, ''), COALESCE(a.cluster_id, ''), COALESCE(a.responsible_staff_id, ''),
@@ -45,7 +48,7 @@ const cpoActivityJoins = ` FROM activity a LEFT JOIN school s ON s.id = a.school
 // where is the set's condition, kind and planned the expressions
 // its rows are annotated with.
 func readActivities(ctx context.Context, db schooldirectory.Querier, b *sql, where, kind, planned string) ([]*cpoActivity, error) {
-	q := `SELECT ` + cpoActivityColumns + cpoDay("a") + `, a.created_at, ` + kind + `, ` + planned + cpoActivityJoins + ` WHERE ` + where + ` ORDER BY a.created_at DESC, a.id`
+	q := `SELECT ` + cpoActivityColumns + cpoDay("a") + `, a.created_at, ` + kind + `, ` + planned + `, a.delivery_type IS NULL` + cpoActivityJoins + ` WHERE ` + where + ` ORDER BY a.created_at DESC, a.id`
 	rows, err := db.Query(ctx, q, b.args...)
 	if err != nil {
 		return nil, fmt.Errorf("planningmonitor: the year's activities: %w", err)
@@ -57,7 +60,7 @@ func readActivities(ctx context.Context, db schooldirectory.Querier, b *sql, whe
 		if err := rows.Scan(&a.id, &a.school, &a.cluster, &a.responsible, &a.monitor, &a.partner, &a.project,
 			&a.activityType, &a.purpose, &a.delivery, &a.status, &a.course, &a.catalogue, &a.snapshot, &a.focus,
 			&a.purposeIntervention, &a.courseID, &a.catalogueID, &a.code, &a.name, &a.schoolType, &a.district,
-			&a.schoolCluster, &a.owner, &a.on, &a.created, &a.kind, &a.partnerPlanned); err != nil {
+			&a.schoolCluster, &a.owner, &a.on, &a.created, &a.kind, &a.partnerPlanned, &a.noDelivery); err != nil {
 			return nil, err
 		}
 		out = append(out, a)
@@ -328,7 +331,11 @@ func (k *cpoBook) row(a *cpoActivity, p *cpoPerson, channel, label, counted stri
 	row["date"], row["status"], row["counted"] = on, status, counted
 	row["project"], row["_project"], row["partner"] = k.projects[a.project], a.project, partner
 	row["is_training"] = slices.Contains(rules.TrainingTypes, a.activityType)
-	row["is_visit"] = visitKind(a.activityType, a.purpose, a.project, a.delivery, k.snap.outside) != ""
+	delivery := a.delivery
+	if a.noDelivery {
+		delivery = "partner" // visit_kind: not staff's
+	}
+	row["is_visit"] = visitKind(a.activityType, a.purpose, a.project, delivery, k.snap.outside) != ""
 	if a.school == "" {
 		row["invited"] = k.invited[a.id]
 	}

@@ -698,7 +698,8 @@ func resolvedHref(base, query string) string {
 
 // tablesDrawn are the tables Go draws; the rest are handed on.
 var tablesDrawn = map[string]bool{"not-planned": true, "partly-planned": true, "no-training": true, "unclustered": true,
-	"visits": true, "meetings": true}
+	"visits": true, "meetings": true, "partners": true, "all-visits": true, "plans": true, "trainings": true,
+	"project-partners": true, "project-activities": true}
 
 // activityTable is tables.build for the people-first tables Go draws.
 func activityTable(ctx context.Context, db schooldirectory.Querier, snap *cpoSnapshot, places *cpoPlaces, t cpoTable,
@@ -731,7 +732,153 @@ func activityTable(ctx context.Context, db schooldirectory.Querier, snap *cpoSna
 		t.rows = rows
 		t.summary = countLine(len(rows), t.spec.Unit) + " planned · " + cpoFmt(invited) + " school invitation" + pluralize(invited, "", "s")
 	default:
-		return t, false, nil
+		rows, summary, ok, err := partnerTable(book, snap, t.spec)
+		if err != nil || !ok {
+			return t, ok, err
+		}
+		t.rows, t.summary = rows, summary
 	}
 	return t, true, nil
+}
+
+// gather is one table's rows from several sets, in the order given.
+func gather(parts ...func() ([]cpoRow, error)) ([]cpoRow, error) {
+	out := []cpoRow{}
+	for _, part := range parts {
+		rows, err := part()
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, rows...)
+	}
+	return out, nil
+}
+
+func where(rows []cpoRow, keep func(cpoRow) bool) []cpoRow {
+	out := []cpoRow{}
+	for _, r := range rows {
+		if keep(r) {
+			out = append(out, r)
+		}
+	}
+	return out
+}
+
+func byStaff(rows []cpoRow) int {
+	n := 0
+	for _, r := range rows {
+		if r["channel"] == "Staff" {
+			n++
+		}
+	}
+	return n
+}
+
+func distinct(rows []cpoRow, key string) int {
+	seen := map[any]bool{}
+	for _, r := range rows {
+		seen[r[key]] = true
+	}
+	return len(seen)
+}
+
+// partnerBalance is _partner_balance.
+func partnerBalance(rows []cpoRow) string {
+	planned := rules.CountryOversight.Page.TableLabels["partner_planned"]
+	dated := len(where(rows, func(r cpoRow) bool { return r["state"] == planned }))
+	return cpoFmt(dated) + " of " + cpoFmt(len(rows)) + " planned by the Partner · " + cpoFmt(len(rows)-dated) + " awaiting partner schedule"
+}
+
+// partnerTable is tables.build for the tables that list Partner work.
+func partnerTable(k *cpoBook, snap *cpoSnapshot, spec cpoTableSpec) ([]cpoRow, string, bool, error) {
+	planned := rules.CountryOversight.Page.TableLabels["partner_planned"]
+	partnerDated := func(every bool, sessions bool) func() ([]cpoRow, error) {
+		return func() ([]cpoRow, error) {
+			rows, err := k.partnerRows(every)
+			if err != nil || !sessions {
+				return rows, err
+			}
+			more, err := k.partnerSessionRows(nil)
+			return append(rows, more...), err
+		}
+	}
+	no := false
+	visits := k.visitRows
+	outreach := k.outreachRows
+	trainings := func() ([]cpoRow, error) { return k.trainingRows(true) }
+	sessions := func() ([]cpoRow, error) { return k.sessionRows(nil) }
+	twice := twiceCodes(snap)
+	var rows []cpoRow
+	var err error
+	summary := ""
+	unit := spec.Unit
+	switch spec.Key {
+	case "partners":
+		if rows, err = k.partnerRows(false); err != nil {
+			return nil, "", true, err
+		}
+		rows = flagRows(rows, twice)
+		k.places.sortRows(rows, "partner", "school", "date")
+		schools := distinct(rows, "school_id")
+		summary = countLine(len(rows), unit) + " at " + cpoFmt(schools) + " school" + pluralize(schools, "", "s") + " · " + partnerBalance(rows)
+	case "all-visits":
+		if rows, err = gather(visits, outreach, func() ([]cpoRow, error) {
+			p, err := k.partnerRows(false)
+			return where(p, func(r cpoRow) bool {
+				return (r["is_visit"] == true || r["is_training"] != true) && r["state"] == planned
+			}), err
+		}); err != nil {
+			return nil, "", true, err
+		}
+		rows = flagRows(rows, twice)
+		k.places.sortRows(rows, "date", "school")
+		staff := byStaff(rows)
+		summary = countLine(len(rows), unit) + " planned · " + cpoFmt(staff) + " by staff · " + cpoFmt(len(rows)-staff) + " by Partners"
+	case "plans":
+		if rows, err = gather(visits, outreach, trainings, k.otherRows, sessions, partnerDated(true, true)); err != nil {
+			return nil, "", true, err
+		}
+		rows = flagRows(rows, twice)
+		k.places.sortRows(rows, "date", "school", "activity")
+		staff := byStaff(rows)
+		summary = countLine(len(rows), "activity") + " · " + cpoFmt(staff) + " by staff · " + cpoFmt(len(rows)-staff) + " with Partners"
+	case "trainings":
+		if rows, err = gather(func() ([]cpoRow, error) { return k.trainingRows(false) },
+			func() ([]cpoRow, error) { return k.sessionRows(&no) },
+			func() ([]cpoRow, error) {
+				p, err := k.partnerRows(false)
+				return where(p, func(r cpoRow) bool { return r["is_training"] == true }), err
+			},
+			func() ([]cpoRow, error) { return k.partnerSessionRows(&no) }); err != nil {
+			return nil, "", true, err
+		}
+		k.places.sortRows(rows, "date", "school")
+		summary = countLine(len(rows), unit) + " planned"
+	case "project-partners":
+		p, err := k.partnerRows(true)
+		if err != nil {
+			return nil, "", true, err
+		}
+		rows = where(p, func(r cpoRow) bool { return r["_project"] != "" })
+		k.places.sortRows(rows, "project", "partner", "school", "date")
+		schools := distinct(rows, "school_id")
+		summary = countLine(len(rows), unit) + " at " + cpoFmt(schools) + " school" + pluralize(schools, "", "s") + " · " + partnerBalance(rows)
+	case "project-activities":
+		all, err := gather(visits, outreach, trainings, k.otherRows, sessions, func() ([]cpoRow, error) {
+			p, err := partnerDated(true, true)()
+			return where(p, func(r cpoRow) bool { return r["state"] == planned }), err
+		})
+		if err != nil {
+			return nil, "", true, err
+		}
+		rows = where(all, func(r cpoRow) bool { return r["_project"] != "" })
+		k.places.sortRows(rows, "project", "date", "school", "activity")
+		staff := byStaff(rows)
+		projects := distinct(rows, "_project")
+		summary = countLine(len(rows), unit) + " in " + cpoFmt(projects) + " project" + pluralize(projects, "", "s") + " · " +
+			cpoFmt(staff) + " by staff · " + cpoFmt(len(rows)-staff) + " by Partners"
+	default:
+		return nil, "", false, nil
+	}
+	return rows, summary, true, nil
 }

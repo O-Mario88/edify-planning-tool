@@ -586,3 +586,13 @@ func DescribeActivity(purpose, activityType, course, catalogue, snapshot, focus,
 	return describe(work{catalogue: catalogue, act: &activity{purposeType: purpose, activityType: activityType,
 		courseName: course, snapshot: snapshot, focus: focus, purposeIntervention: purposeIntervention}})
 }
+
+// DescribeHandover is describe_work for a hand-over: its own purpose,
+// expected activity type, course, catalogue item and focus, and the
+// activity it follows up (hasSource), as Country Planning Oversight's tables
+// read it.
+func DescribeHandover(purpose, expected, course, catalogue, focus string, hasSource bool, sourceCourse, sourceSnapshot,
+	sourceType string) (string, string, string) {
+	return describe(work{purpose: purpose, activityType: expected, course: course, catalogue: catalogue, focus: focus,
+		hasSource: hasSource, sourceCourse: sourceCourse, sourceSnapshot: sourceSnapshot, sourceType: sourceType})
+}

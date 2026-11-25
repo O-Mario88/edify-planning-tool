@@ -323,7 +323,12 @@ func TestCountryOversightSchoolTablesAreGos(t *testing.T) {
 	if got := strings.ReplaceAll(strings.Fields(visits.GetBlocks()[2].GetTable().GetSubtitle())[0], ",", ""); got != planned {
 		t.Fatalf("Staff Visit Plans lists %s visits, the page counts %s", got, planned)
 	}
-	if _, err := pageOf(director, countryPlanningOversight+"table/partners", query); connect.CodeOf(err) != connect.CodeUnavailable {
-		t.Fatalf("Schools Assigned to Partners: %v, want handed on", err)
+	// Schools Assigned to Partners is Go's; Clustered Schools is handed on.
+	if partners, err := pageOf(director, countryPlanningOversight+"table/partners", query); err != nil ||
+		!strings.HasPrefix(partners.GetBlocks()[2].GetTable().GetTitle(), "Schools Assigned to Partners · ") {
+		t.Fatalf("Schools Assigned to Partners: %v", err)
+	}
+	if _, err := pageOf(director, countryPlanningOversight+"table/clusters", query); connect.CodeOf(err) != connect.CodeUnavailable {
+		t.Fatalf("Clustered Schools: %v, want handed on", err)
 	}
 }
