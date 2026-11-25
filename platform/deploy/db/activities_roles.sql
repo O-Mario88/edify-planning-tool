@@ -224,6 +224,12 @@ GRANT SELECT (last_reason, updated_at) ON activity TO edify_activities_rw;
 GRANT UPDATE (scheduled_date, fy, quarter, planned_date, planned_month, planned_week, reschedule_count,
               last_reason, status, daily_visit_batch_id, updated_at)
   ON activity TO edify_activities_rw;
+-- The Work Plan's Add (create for a non-school programme activity): the
+-- columns only such work sets.
+GRANT INSERT (programme_activity_type, programme_delivery_mode, planned_school_count, event_district_id,
+              support_rationale, venue, primary_driver_type, primary_driver_id, driver_reason, end_date,
+              expected_participants)
+  ON activity TO edify_activities_rw;
 -- Work completed on another day than planned moves to that day and keeps the
 -- day it was planned for (apps.activities.completed_day._move).
 GRANT UPDATE (planned_date_before_completion) ON activity TO edify_activities_rw;

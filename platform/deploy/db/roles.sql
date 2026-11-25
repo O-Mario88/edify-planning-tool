@@ -272,6 +272,8 @@ GRANT SELECT (id, status) ON weekly_fund_request TO edify_gateway_ro;
 GRANT SELECT (catalogue_id, key, approved_minimum, unit_cost) ON cost_setting TO edify_gateway_ro;
 GRANT SELECT (activity_id, operational_rate_card_id, operational_breakdown, operational_cost, missing_configuration, is_current) ON activity_cost_snapshot TO edify_gateway_ro;
 GRANT SELECT (other) ON cluster_activity_attendance TO edify_gateway_ro;
+-- The Work Plan's Add reads what a non-school catalogue item allows.
+GRANT SELECT (non_school_allowed, requires_participant_counts, multi_day_allowed) ON activity_catalogue_item TO edify_gateway_ro;
 -- The Complete drawer and its save hand on a register holding a visiting school.
 GRANT SELECT (is_guest) ON cluster_activity_attendance TO edify_gateway_ro;
 GRANT SELECT (id, responsible_user, visit_date) ON daily_visit_batch TO edify_gateway_ro;

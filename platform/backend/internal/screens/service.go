@@ -126,7 +126,9 @@ type Service struct {
 	activityFacilitator ActivityFacilitator
 	// completeDrawers draws My Plan's Complete drawer with Django absent.
 	completeDrawers CompleteDrawers
-	pairsInGo       bool // schedule_training_pair: 32's In-school Training
+	// programmeAdds saves the Work Plan's Add with Django absent.
+	programmeAdds ProgrammeAdder
+	pairsInGo     bool // schedule_training_pair: 32's In-school Training
 	// groupTrainings is nil unless EDIFY_GO_SAVES names schedule_group_training (38).
 	groupTrainings GroupTrainingSaver
 	// clusterMeetings is nil unless EDIFY_GO_SAVES names schedule_cluster_meeting (49).

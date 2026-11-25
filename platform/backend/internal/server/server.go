@@ -401,7 +401,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			screenService.WithClusterMeetingSave(save, logger)
 		}
 		if effectiveSaves.CompleteVisit {
-			screenService.WithCompleteSave(save, logger).WithCompleteDrawer(save)
+			screenService.WithCompleteSave(save, logger).WithCompleteDrawer(save).WithProgrammeAdd(save)
 		}
 	}
 	exportsMgr := exports.NewManager(pool, time.Now)

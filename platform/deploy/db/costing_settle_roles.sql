@@ -44,6 +44,8 @@ GRANT UPDATE (
 
 GRANT INSERT ON activity_cost_snapshot TO edify_costing_owner;
 GRANT UPDATE (is_current, updated_at) ON activity_cost_snapshot TO edify_costing_owner;
+-- Work priced on its own keeps the create's own notes on its snapshot (note_snapshot).
+GRANT UPDATE (warnings, recalculation_reason) ON activity_cost_snapshot TO edify_costing_owner;
 
 GRANT INSERT, UPDATE, DELETE ON activity_schedule_cost_line TO edify_costing_owner;
 
@@ -451,6 +453,21 @@ REVOKE ALL ON FUNCTION gateway_costing.fail_costs_to_follow(bigint, text, timest
 REVOKE ALL ON FUNCTION gateway_costing.enqueue_day_reprice(text, text, text, text, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_costing.record_activity_event(text, text, text, text, jsonb, timestamptz) FROM PUBLIC;
 
+-- An activity priced on its own (a Work Plan programme activity) keeps the
+-- snapshot's notes as _apply_schedule_cost_snapshot writes them: no
+-- recalculation reason and costing_service.preview's warnings, where
+-- apply_activity_cost writes a day settlement's.
+CREATE OR REPLACE FUNCTION gateway_costing.note_snapshot(p_snapshot varchar, p_warnings jsonb, p_reason text)
+  RETURNS boolean
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+BEGIN
+  UPDATE public.activity_cost_snapshot SET warnings = p_warnings, recalculation_reason = p_reason
+   WHERE id = p_snapshot;
+  RETURN FOUND;
+END
+$fn$;
+REVOKE ALL ON FUNCTION gateway_costing.note_snapshot(varchar, jsonb, text) FROM PUBLIC;
+
 RESET ROLE;
 
 GRANT USAGE ON SCHEMA gateway_costing TO edify_gateway;
@@ -462,3 +479,4 @@ GRANT EXECUTE ON FUNCTION gateway_costing.complete_costs_to_follow(bigint) TO ed
 GRANT EXECUTE ON FUNCTION gateway_costing.fail_costs_to_follow(bigint, text, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_costing.enqueue_day_reprice(text, text, text, text, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_costing.record_activity_event(text, text, text, text, jsonb, timestamptz) TO edify_gateway;
+GRANT EXECUTE ON FUNCTION gateway_costing.note_snapshot(varchar, jsonb, text) TO edify_gateway;
