@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -33,7 +34,8 @@ func TestAWorkbookExportAnswersWithItsFileOrItsRefusal(t *testing.T) {
 	}{
 		{"the file", answer("staff-activity-20261126-20261126", true, nil), http.StatusOK, `attachment; filename="staff-activity-20261126-20261126.xlsx"`},
 		{"no page", answer("", true, pagegate.ErrNotAvailable), http.StatusForbidden, ""},
-		{"a refusal", answer("", true, errors.New("The Staff Activity Log is for Programme Leads and the Country Director.")), http.StatusForbidden, ""},
+		{"a refusal", answer("", true, workbook.Refusal("The Staff Activity Log is for Programme Leads and the Country Director.")), http.StatusForbidden, ""},
+		{"a failure", answer("", true, errors.New("ERROR: permission denied for table activity")), http.StatusInternalServerError, ""},
 		{"not Go's", answer("", false, nil), http.StatusServiceUnavailable, ""},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -44,6 +46,9 @@ func TestAWorkbookExportAnswersWithItsFileOrItsRefusal(t *testing.T) {
 			mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/v1/quick-export?target=%2Fstaff-activity%2Fexport%2F&period=week", nil))
 			if rec.Code != c.status || rec.Header().Get("Content-Disposition") != c.header {
 				t.Fatalf("status %d %q, want %d %q", rec.Code, rec.Header().Get("Content-Disposition"), c.status, c.header)
+			}
+			if strings.Contains(rec.Body.String(), "ERROR") {
+				t.Fatalf("the reader is shown the failure: %q", rec.Body.String())
 			}
 			if asked.Get("period") != "week" || asked.Has("target") {
 				t.Fatalf("the export was asked %v", asked)

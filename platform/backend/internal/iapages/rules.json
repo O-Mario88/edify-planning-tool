@@ -1,4 +1,30 @@
 {
+  "activity_status_labels": {
+    "accountant_confirmed": "Accountant Confirmed",
+    "assigned_to_partner": "Assigned to Partner",
+    "awaiting_ia_verification": "Awaiting IA Verification",
+    "awaiting_owner_approval": "Awaiting Owner Approval",
+    "cancelled": "Cancelled",
+    "closed": "Closed",
+    "completed": "Completed",
+    "completion_started": "Completion Started",
+    "deferred": "Deferred",
+    "evidence_accepted": "Evidence Accepted",
+    "evidence_uploaded": "Evidence Uploaded",
+    "ia_verified": "IA Verified",
+    "in_progress": "In Progress",
+    "not_planned": "Not Planned",
+    "partner_scheduled": "Partner Scheduled",
+    "planned": "Planned",
+    "rejected": "Rejected",
+    "rescheduled": "Rescheduled",
+    "returned": "Returned",
+    "returned_by_ia": "Returned by IA",
+    "returned_by_pl": "Returned by PL",
+    "salesforce_id_required": "Salesforce ID Required",
+    "scheduled": "Scheduled",
+    "submitted_to_pl": "Submitted to PL"
+  },
   "activity_types": {
     "baseline_ssa_visit": "SSA Visit",
     "cluster_meeting": "Cluster Meeting",
@@ -2643,5 +2669,17 @@
         "Hold for Review"
       ]
     ]
+  },
+  "visit_purpose_labels": {
+    "donor_visit": "Donor Visit",
+    "in_school_coaching": "In-school Coaching Visit",
+    "in_school_training": "In-school Training",
+    "in_school_training_delivery_visit": "In-school Training Delivery Visit",
+    "in_school_training_ssa": "In-school Training + SSA Collection",
+    "school_invitation": "School Invitation",
+    "social_visit": "Social Visit",
+    "ssa_support": "SSA Support",
+    "story_gathering": "Content/Story Collection",
+    "training_follow_up": "Training Follow Up"
   }
 }

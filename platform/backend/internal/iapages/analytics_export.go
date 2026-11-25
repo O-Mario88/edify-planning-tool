@@ -2,7 +2,6 @@ package iapages
 
 import (
 	"context"
-	"errors"
 	"net/url"
 	"strconv"
 
@@ -28,7 +27,7 @@ func (s *Service) AnalyticsExport(ctx context.Context, p auth.Principal, query u
 		return "", nil, true, pagegate.ErrNotAvailable
 	}
 	if !rbac.Grants(p.ActiveRole, "data.export") {
-		return "", nil, true, errors.New(analyticsExportRefusal)
+		return "", nil, true, workbook.Refusal(analyticsExportRefusal)
 	}
 	window := analyticsWindow(query.Get("window"))
 	data, err := s.verificationAnalytics(ctx, p, window)

@@ -64,15 +64,11 @@ func (s *Service) serveWorkbook(w http.ResponseWriter, r *http.Request, p auth.P
 	query := r.URL.Query()
 	query.Del("target")
 	stem, sheets, handled, err := export(r.Context(), p, query)
+	if err != nil {
+		s.exportFailed(w, r, target, err)
+		return true
+	}
 	switch {
-	case errors.Is(err, pagegate.ErrNotAvailable), errors.Is(err, pagegate.ErrForbidden):
-		http.Error(w, "You do not have access to this export.", http.StatusForbidden)
-	case err != nil && handled && notFound(err):
-		http.Error(w, err.Error(), http.StatusNotFound)
-	case err != nil && handled:
-		http.Error(w, err.Error(), http.StatusForbidden)
-	case err != nil:
-		http.Error(w, "This export could not be made.", http.StatusInternalServerError)
 	case !handled:
 		http.Error(w, "This export is not available here yet. Use the Edify web app.", http.StatusServiceUnavailable)
 	default:
@@ -107,11 +103,11 @@ func (s *Service) serveFile(w http.ResponseWriter, r *http.Request, p auth.Princ
 	query := r.URL.Query()
 	query.Del("target")
 	name, body, handled, err := export(r.Context(), p, query)
+	if err != nil {
+		s.exportFailed(w, r, target, err)
+		return true
+	}
 	switch {
-	case errors.Is(err, pagegate.ErrNotAvailable), errors.Is(err, pagegate.ErrForbidden):
-		http.Error(w, "You do not have access to this export.", http.StatusForbidden)
-	case err != nil:
-		http.Error(w, "This export could not be made.", http.StatusInternalServerError)
 	case !handled:
 		http.Error(w, "This export is not available here yet. Use the Edify web app.", http.StatusServiceUnavailable)
 	default:
@@ -122,4 +118,24 @@ func (s *Service) serveFile(w http.ResponseWriter, r *http.Request, p auth.Princ
 		_, _ = w.Write(body)
 	}
 	return true
+}
+
+// exportFailed answers an export's error: the page gate's refusal, a
+// refusal in the existing words, a record the reader does not see, or the
+// export failing, which is logged and never shown.
+func (s *Service) exportFailed(w http.ResponseWriter, r *http.Request, target string, err error) {
+	var refusal workbook.Refusal
+	switch {
+	case errors.Is(err, pagegate.ErrNotAvailable), errors.Is(err, pagegate.ErrForbidden):
+		http.Error(w, "You do not have access to this export.", http.StatusForbidden)
+	case errors.As(err, &refusal):
+		http.Error(w, string(refusal), http.StatusForbidden)
+	case notFound(err):
+		http.Error(w, err.Error(), http.StatusNotFound)
+	default:
+		if s.logger != nil {
+			s.logger.ErrorContext(r.Context(), "detailpages: the export failed", "target", target, "err", err)
+		}
+		http.Error(w, "This export could not be made.", http.StatusInternalServerError)
+	}
 }

@@ -38,11 +38,17 @@ export function proxy(request: NextRequest) {
       return NextResponse.rewrite(target, { request: { headers: forwarded } });
     }
   }
-  if (
+  // A page's own Export (?export=xlsx) whose workbook the gateway makes.
+  const exportsPage =
     request.method === 'GET' &&
-    /^\/(ia\/analytics\/export|ia\/impact-reports\/[^/]+\/annex\.csv|ia\/impact-reports\/[^/]+\/releases\/[^/]+\/download|my-professional-development\/export|my-targets\/export|projects\/export|projects\/[^/]+\/export|staff-activity\/export|schools\/upload\/template)\/?$/.test(
-      pathname,
-    )
+    Boolean(request.nextUrl.searchParams.get('export')?.trim()) &&
+    /^\/ia\/(returned|partner-evidence|history)\/?$/.test(pathname);
+  if (
+    exportsPage ||
+    (request.method === 'GET' &&
+      /^\/(ia\/analytics\/export|ia\/impact-reports\/[^/]+\/annex\.csv|ia\/impact-reports\/[^/]+\/releases\/[^/]+\/download|my-professional-development\/export|my-targets\/export|projects\/export|projects\/[^/]+\/export|staff-activity\/export|schools\/upload\/template)\/?$/.test(
+        pathname,
+      ))
   ) {
     const clean = pathname.replace(/\/$/, '');
     const target = new URL('/api/quick-export', request.url);

@@ -63,6 +63,12 @@ STRIP_PAGES = (
 SAMPLE_DRAW_ROLES = ["ImpactAssessment", "CountryDirector", "Admin"]
 
 
+def _purpose_labels() -> dict:
+    from apps.partners.purposes import _LABELS
+
+    return {str(k): str(v) for k, v in _LABELS.items()}
+
+
 def _lending() -> dict:
     """Lending Evidence (apps.frontend.views.ia_lending_views over
     apps.business_transformation.lending_impact): who sees the money, whose
@@ -225,6 +231,7 @@ def _dashboard() -> dict:
 
 def rules() -> dict:
     from apps.activities.models import ActivityType
+    from apps.core.enums import ActivityStatus
     from apps.core.permissions import (
         Permission,
         RolePermissionService,
@@ -310,6 +317,10 @@ def rules() -> dict:
             if RolePermissionService.can_export(_role_user(role.value), "")
         ),
         "activity_types": dict(ActivityType.choices),
+        # The IA queues' export (apps.activities.ia_export.sheet): each
+        # activity status's label and each visit purpose's.
+        "activity_status_labels": {k: str(v) for k, v in ActivityStatus.choices},
+        "visit_purpose_labels": dict(_purpose_labels()),
         # The evidence each activity must carry (apps.evidence.requirements):
         # by its evidence profile, else by its type.
         "required_evidence": {

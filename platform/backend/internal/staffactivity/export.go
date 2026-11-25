@@ -32,7 +32,7 @@ func (s *Service) Export(ctx context.Context, p auth.Principal, query url.Values
 		if p.ActiveRole == rules.Dashboard.Role {
 			return "", nil, false, nil
 		}
-		return "", nil, true, errors.New(exportRefusal)
+		return "", nil, true, workbook.Refusal(exportRefusal)
 	}
 	l, _, err := s.log(ctx, p, query)
 	if errors.Is(err, errPassOn) {

@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/url"
 	"slices"
 	"strconv"
@@ -38,6 +39,14 @@ type Service struct {
 	workbookRoutes []WorkbookRoute
 	// files are the other file exports Go makes, by export path.
 	files map[string]FileExport
+	// logger records an export that failed.
+	logger *slog.Logger
+}
+
+// WithLogger records the exports that fail.
+func (s *Service) WithLogger(logger *slog.Logger) *Service {
+	s.logger = logger
+	return s
 }
 
 // ReleaseDownload writes a report's released version for p.

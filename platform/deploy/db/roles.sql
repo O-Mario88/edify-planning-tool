@@ -265,6 +265,9 @@ GRANT SELECT (quarter) ON activity TO edify_gateway_ro;
 -- application.
 GRANT SELECT (other_participants, expected_participants, participants_per_school, teachers_per_school, planning_source, cost_missing, ia_verification_status, ssa_collection_expected, daily_visit_batch_id, event_district_id, execution_started_at, submitted_to_ia_at, pl_reviewed_at, planned_date_before_completion) ON activity TO edify_gateway_ro;
 GRANT SELECT (district_type) ON district TO edify_gateway_ro;
+-- The IA queues' export (apps.activities.ia_export.sheet) names who
+-- verified each activity: IA's confirmer, else the Programme Lead.
+GRANT SELECT (ia_confirmed_by, pl_reviewed_by) ON activity TO edify_gateway_ro;
 GRANT SELECT (primary_district_id) ON staff_profile TO edify_gateway_ro;
 GRANT SELECT (id) ON activity_schedule_cost_line TO edify_gateway_ro;
 GRANT SELECT (activity_budget_line_id, weekly_fund_request_id) ON weekly_fund_request_line TO edify_gateway_ro;

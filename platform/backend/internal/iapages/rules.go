@@ -48,6 +48,10 @@ var rules = func() (r struct {
 		PageSize        int         `json:"page_size"`
 	} `json:"unmatched"`
 	ActivityTypes map[string]string `json:"activity_types"`
+	// ActivityStatusLabels and VisitPurposeLabels are what the IA queues'
+	// export names a status and a visit purpose (ia_export.sheet).
+	ActivityStatusLabels map[string]string `json:"activity_status_labels"`
+	VisitPurposeLabels   map[string]string `json:"visit_purpose_labels"`
 	// ExportRoles are offered Returned Activities' and Verification
 	// History's Export (the data-export permission).
 	ExportRoles []string `json:"export_roles"`

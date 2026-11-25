@@ -370,3 +370,9 @@ func escape(s string) string {
 	}
 	return b.String()
 }
+
+// Refusal is an export's refusal in the existing words, shown to the
+// reader as it is; any other error is the export failing.
+type Refusal string
+
+func (r Refusal) Error() string { return string(r) }
