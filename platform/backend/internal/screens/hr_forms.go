@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"strconv"
 	"strings"
+	"time"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/proto"
@@ -43,6 +44,8 @@ type HRForms interface {
 	OpenVacancies(ctx context.Context, p auth.Principal) ([]hrforms.Choice, error)
 	RecordApplication(ctx context.Context, p auth.Principal, values map[string]string, o activities.Origin) (string, error)
 	SaveCompensation(ctx context.Context, p auth.Principal, values map[string]string, o activities.Origin) (string, error)
+	PDBalanceLine(ctx context.Context, p auth.Principal) (string, error)
+	SavePDDraft(ctx context.Context, p auth.Principal, values map[string]string) (string, error)
 }
 
 // WithHRForms makes the HR programmes' forms Go's.
@@ -63,6 +66,7 @@ const (
 	vacancyNew            = "/recruitment/new"
 	candidateNew          = "/candidate-pipeline/new"
 	compensationNew       = "/compensation-benefits/new"
+	pdRequest             = "/my-professional-development/request"
 )
 
 // hrFormPath is the form's path when Go answers it for p.
@@ -73,7 +77,7 @@ func (s *Service) hrFormPath(p auth.Principal, raw string) (string, bool) {
 	path, _, _ := strings.Cut(raw, "?")
 	switch path {
 	case recognitionNew, complianceRequirement, complianceEvidence, pulseNew, incidentNew, offboardingNew, caseNew,
-		recoveryNew, vacancyNew, candidateNew, compensationNew:
+		recoveryNew, vacancyNew, candidateNew, compensationNew, pdRequest:
 	default:
 		return "", false
 	}
@@ -107,6 +111,8 @@ func selectValue(f *screensv1.DrawerField, v string) {
 
 func hrDrawerFor(ctx context.Context, f HRForms, p auth.Principal, path string, query map[string]string) (*screensv1.PageDrawer, error) {
 	switch path {
+	case pdRequest:
+		return pdRequestDrawer(ctx, f, p)
 	case compensationNew:
 		people, err := f.PeopleOptions(ctx, p)
 		if err != nil {
@@ -217,7 +223,13 @@ func (s *Service) hrFormDrawerInGo(ctx context.Context, p auth.Principal, rawPat
 		return nil, false, nil
 	}
 	_, query, _ := strings.Cut(rawPath, "?")
+	if path == pdRequest && queryValues(query)["id"] != "" {
+		return nil, false, nil // a saved request: its stage, review and sheet are the existing application's
+	}
 	d, err := hrDrawerFor(ctx, s.hrForms, p, path, queryValues(query))
+	if errors.Is(err, hrforms.ErrHandOn) {
+		return nil, false, nil
+	}
 	if err != nil || d == nil {
 		return nil, err != nil, err
 	}
@@ -234,6 +246,9 @@ func (s *Service) hrFormSaveInGo(ctx context.Context, message *screensv1.SaveDra
 	path, ok := s.hrFormPath(p, message.GetPath())
 	if !ok {
 		return nil, false, nil
+	}
+	if _, query, _ := strings.Cut(message.GetPath(), "?"); path == pdRequest && queryValues(query)["id"] != "" {
+		return nil, false, nil // a saved request is edited by the existing application
 	}
 	var words, back string
 	var err error
@@ -258,6 +273,9 @@ func (s *Service) hrFormSaveInGo(ctx context.Context, message *screensv1.SaveDra
 	case caseNew:
 		words, err = s.hrForms.OpenCase(ctx, p, message.GetValues(), o)
 		back = hrforms.CasesPath
+	case pdRequest:
+		words, err = s.hrForms.SavePDDraft(ctx, p, message.GetValues())
+		back = hrforms.PDPath
 	case compensationNew:
 		words, err = s.hrForms.SaveCompensation(ctx, p, message.GetValues(), o)
 		back = hrforms.CompensationPath
@@ -412,4 +430,65 @@ func staffingDrawer(ctx context.Context, f HRForms, p auth.Principal, path strin
 			{Name: "skills", Label: "Skills and experience", Kind: "textarea"},
 			{Name: "consent", Label: "The candidate consented to Edify holding their details", Kind: "checkbox"},
 		}}), nil
+}
+
+func heading(t string) *screensv1.DrawerItem {
+	return &screensv1.DrawerItem{Kind: &screensv1.DrawerItem_Heading{Heading: t}}
+}
+
+// pdRequestDrawer is pd_request_view's GET for a new request: the Staff
+// Development Fund request form (partials/professional_development/
+// _sdf_form.html with _sdf_signoffs.html) as the feed reads it.
+func pdRequestDrawer(ctx context.Context, f HRForms, p auth.Principal) (*screensv1.PageDrawer, error) {
+	balance, err := f.PDBalanceLine(ctx, p)
+	if err != nil {
+		return nil, err
+	}
+	years, fy := hrforms.PDYears(time.Now())
+	field := func(d *screensv1.DrawerField) *screensv1.DrawerItem { return actingField(d) }
+	attach := "Please attach a copy of:"
+	currencies := []*screensv1.DrawerOption{}
+	for _, c := range hrforms.PDCurrencies {
+		currencies = append(currencies, &screensv1.DrawerOption{Value: c, Label: c})
+	}
+	yearOptions := []*screensv1.DrawerOption{}
+	for _, y := range years {
+		yearOptions = append(yearOptions, &screensv1.DrawerOption{Value: y, Label: y})
+	}
+	cents := func(name, label string, required bool, placeholder string) *screensv1.DrawerItem {
+		return field(&screensv1.DrawerField{Name: name, Label: label, Kind: "number", Required: required, Placeholder: placeholder,
+			Min: proto.Float64(0), Step: proto.Float64(0.01)})
+	}
+	return &screensv1.PageDrawer{Title: "Request professional development", HasRequired: true, SubmitLabel: "Save draft",
+		CancelLabel: "Cancel", CanSubmit: true, Items: []*screensv1.DrawerItem{
+			heading("STAFF DEVELOPMENT FUND REQUEST FORM"),
+			textItem("Please refer to the Staff Development Fund Policy before completing this form."),
+			textItem(attach),
+			field(&screensv1.DrawerField{Name: "programme_file", Label: "a) the conference and/or training course programme and " +
+				"registration forms (including dates, location, registration fees etc.)", Kind: "file", Help: attach}),
+			field(&screensv1.DrawerField{Name: "abstract_file", Label: "b) your abstract (optional)", Kind: "file", Help: attach}),
+			heading("Details"),
+			field(&screensv1.DrawerField{Name: "purpose", Label: "Purpose for Which Funding is Sought", Kind: "text", Required: true,
+				MaxLength: length(255), Placeholder: "e.g. Professional Development"}),
+			field(&screensv1.DrawerField{Name: "start_date", Label: "Start Date of Proposed Activity", Kind: "date", Required: true}),
+			field(&screensv1.DrawerField{Name: "end_date", Label: "End Date of Proposed Activity", Kind: "date", Required: true}),
+			field(&screensv1.DrawerField{Name: "duration", Label: "Duration of Activity", Kind: "text", Required: true, MaxLength: length(128),
+				Placeholder: "e.g. 3 days, 6 weeks, 1 year"}),
+			field(&screensv1.DrawerField{Name: "course_name", Label: "Title of Course, Conference, Paper", Kind: "text", Required: true,
+				MaxLength: length(255)}),
+			field(&screensv1.DrawerField{Name: "relevance_to_role", Label: "How will this course impact your work in Edify?",
+				Kind: "textarea", Required: true}),
+			heading("Budget"),
+			cents("approximate_cost", "Approximate cost of Activity (USD)", true, "$"),
+			field(&screensv1.DrawerField{Name: "requested_currency", Label: "Currency of the amount requested", Kind: "select",
+				Value: "USD", Options: currencies}),
+			cents("requested_amount", "Amount Requested", false, ""),
+			field(&screensv1.DrawerField{Name: "fy", Label: "What Fiscal Year are the Funds budgeted for?", Kind: "select", Value: fy,
+				Options: yearOptions}),
+			textItem(balance),
+			heading("Authorization"),
+			textItem("Approved, the source of funding is available and I fully support this request form."),
+			textItem("Denied, the source of funding is not available. If No, further reasons provided below"),
+			heading("Office Use Only"),
+		}}, nil
 }

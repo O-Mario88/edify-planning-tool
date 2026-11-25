@@ -301,33 +301,40 @@ func escalateOverdue(ctx context.Context, tx pgx.Tx, push activities.NoticePush,
 // such line, the Director of the person's country (never the person). It is
 // the reviewer's user id, or "".
 func pdSupervisor(ctx context.Context, tx pgx.Tx, staffID string) (string, error) {
+	_, user, err := PDSupervisorOf(ctx, tx, staffID)
+	return user, err
+}
+
+// PDSupervisorOf is supervisor_for: the reviewer's People record and user id,
+// or "" for both.
+func PDSupervisorOf(ctx context.Context, tx pgx.Tx, staffID string) (string, string, error) {
 	var activeRole, country string
 	err := tx.QueryRow(ctx, `SELECT COALESCE(u.active_role, ''), COALESCE(sp.country, '') FROM staff_profile sp
 LEFT JOIN "user" u ON u.id = sp.user_id WHERE sp.id = $1`, staffID).Scan(&activeRole, &country)
 	if err == pgx.ErrNoRows {
-		return "", nil
+		return "", "", nil
 	}
 	if err != nil {
-		return "", fmt.Errorf("notificationjobs: reading the employee: %w", err)
+		return "", "", fmt.Errorf("notificationjobs: reading the employee: %w", err)
 	}
 	expected := reviewerRoleFor[activeRole]
 	if len(expected) == 0 {
-		return "", nil
+		return "", "", nil
 	}
-	var reviewer string
-	err = tx.QueryRow(ctx, `SELECT COALESCE(s.user_id, '') FROM staff_supervisor_assignment l
+	var reviewer, reviewerProfile string
+	err = tx.QueryRow(ctx, `SELECT COALESCE(s.user_id, ''), s.id FROM staff_supervisor_assignment l
 JOIN staff_profile s ON s.id = l.supervisor_id JOIN "user" u ON u.id = s.user_id
 WHERE l.supervisee_id = $1 AND u.active_role = ANY($2) AND u.is_active AND u.deleted_at IS NULL
   AND s.onboarding_state = ANY($3)
-ORDER BY l.id LIMIT 1`, staffID, expected, liveStates).Scan(&reviewer)
+ORDER BY l.id LIMIT 1`, staffID, expected, liveStates).Scan(&reviewer, &reviewerProfile)
 	if err == nil {
-		return reviewer, nil
+		return reviewerProfile, reviewer, nil
 	}
 	if err != pgx.ErrNoRows {
-		return "", fmt.Errorf("notificationjobs: reading the employee's reporting line: %w", err)
+		return "", "", fmt.Errorf("notificationjobs: reading the employee's reporting line: %w", err)
 	}
 	if len(expected) != 1 || expected[0] != countryDirector || country == "" {
-		return "", nil
+		return "", "", nil
 	}
 	var director, directorProfile string
 	err = tx.QueryRow(ctx, `SELECT COALESCE(sp.user_id, ''), sp.id FROM staff_profile sp JOIN "user" u ON u.id = sp.user_id
@@ -335,10 +342,10 @@ WHERE sp.country = $1 AND (u.active_role = $2 OR u.roles @> ARRAY[$2::varchar]) 
   AND sp.onboarding_state = ANY($3)
 ORDER BY u.name, sp.id LIMIT 1`, country, countryDirector, liveStates).Scan(&director, &directorProfile)
 	if err == pgx.ErrNoRows || directorProfile == staffID {
-		return "", nil
+		return "", "", nil
 	}
 	if err != nil {
-		return "", fmt.Errorf("notificationjobs: reading the country's director: %w", err)
+		return "", "", fmt.Errorf("notificationjobs: reading the country's director: %w", err)
 	}
-	return director, nil
+	return directorProfile, director, nil
 }
