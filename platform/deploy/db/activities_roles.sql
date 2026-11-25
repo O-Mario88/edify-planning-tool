@@ -1120,3 +1120,9 @@ GRANT SELECT (id, staff_id, requirement_id, document_url, verified_by_id, verifi
 -- Pulse surveys opened (rewards_wellbeing_service.open_pulse_survey); their
 -- notices go through gateway_notifications.notify_workflow.
 GRANT INSERT (id, created_at, updated_at, title, countries, opens_on, closes_on, status, created_by_id) ON hr_pulse_survey TO edify_activities_rw;
+-- Safety incidents reported (report_incident), offboardings started or moved
+-- (offboarding_service.open_offboarding) and employee-relations cases opened
+-- (employee_relations_service.open_case); nothing removed.
+GRANT INSERT (id, created_at, updated_at, country, incident_date, location, category, severity, description, immediate_action, corrective_action, days_lost, status, closed_at, affected_staff_id, reported_by_id) ON hr_safety_incident TO edify_activities_rw;
+GRANT SELECT (id, status, staff_id), INSERT (id, created_at, updated_at, status, last_working_day, clearance_completed, handover_owner_id, staff_id, exit_note, exit_reason), UPDATE (updated_at, last_working_day, exit_reason, exit_note, handover_owner_id) ON hr_offboarding TO edify_activities_rw;
+GRANT INSERT (id, created_at, updated_at, case_type, severity, status, description, findings, is_confidential, case_owner_id, action_taken, appeal_note, closed_at, country, investigator_id, opened_at, raised_by_id, retention_until, subject_staff_id, complainant_staff_id, hearing_date, sanction) ON hr_relations_case TO edify_activities_rw;

@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"connectrpc.com/connect"
+	"google.golang.org/protobuf/proto"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
@@ -32,6 +33,10 @@ type HRForms interface {
 	RecordEvidence(ctx context.Context, p auth.Principal, values map[string]string, o activities.Origin) (string, error)
 	PulseCountries(ctx context.Context, p auth.Principal) ([]string, error)
 	OpenPulse(ctx context.Context, p auth.Principal, values map[string]string, o activities.Origin) (string, error)
+	CountryOptions(ctx context.Context, p auth.Principal) ([]hrforms.Choice, error)
+	ReportIncident(ctx context.Context, p auth.Principal, values map[string]string, o activities.Origin) (string, error)
+	StartOffboarding(ctx context.Context, p auth.Principal, values map[string]string, o activities.Origin) (string, error)
+	OpenCase(ctx context.Context, p auth.Principal, values map[string]string, o activities.Origin) (string, error)
 }
 
 // WithHRForms makes the HR programmes' forms Go's.
@@ -45,6 +50,9 @@ const (
 	complianceRequirement = "/compliance-register/requirement"
 	complianceEvidence    = "/compliance-register/new"
 	pulseNew              = "/pulse-surveys/new"
+	incidentNew           = "/health-safety/new"
+	offboardingNew        = "/offboarding/new"
+	caseNew               = "/employee-relations/new"
 )
 
 // hrFormPath is the form's path when Go answers it for p.
@@ -54,7 +62,7 @@ func (s *Service) hrFormPath(p auth.Principal, raw string) (string, bool) {
 	}
 	path, _, _ := strings.Cut(raw, "?")
 	switch path {
-	case recognitionNew, complianceRequirement, complianceEvidence, pulseNew:
+	case recognitionNew, complianceRequirement, complianceEvidence, pulseNew, incidentNew, offboardingNew, caseNew:
 	default:
 		return "", false
 	}
@@ -88,6 +96,8 @@ func selectValue(f *screensv1.DrawerField, v string) {
 
 func hrDrawerFor(ctx context.Context, f HRForms, p auth.Principal, path string, query map[string]string) (*screensv1.PageDrawer, error) {
 	switch path {
+	case incidentNew, offboardingNew, caseNew:
+		return peopleFormDrawer(ctx, f, p, path)
 	case pulseNew:
 		countries, err := f.PulseCountries(ctx, p)
 		if err != nil {
@@ -197,6 +207,15 @@ func (s *Service) hrFormSaveInGo(ctx context.Context, message *screensv1.SaveDra
 	case complianceEvidence:
 		words, err = s.hrForms.RecordEvidence(ctx, p, message.GetValues(), o)
 		back = hrforms.CompliancePath
+	case incidentNew:
+		words, err = s.hrForms.ReportIncident(ctx, p, message.GetValues(), o)
+		back = hrforms.SafetyPath
+	case offboardingNew:
+		words, err = s.hrForms.StartOffboarding(ctx, p, message.GetValues(), o)
+		back = hrforms.OffboardingPath
+	case caseNew:
+		words, err = s.hrForms.OpenCase(ctx, p, message.GetValues(), o)
+		back = hrforms.CasesPath
 	case pulseNew:
 		var title string
 		title, err = s.hrForms.OpenPulse(ctx, p, message.GetValues(), o)
@@ -215,4 +234,63 @@ func (s *Service) hrFormSaveInGo(ctx context.Context, message *screensv1.SaveDra
 		return nil, true, apierr.New(ctx, connect.CodeUnavailable, apierr.ReasonInternal, "This could not be saved.")
 	}
 	return &screensv1.SaveDrawerResponse{Saved: true, Message: words, Redirect: back}, true, nil
+}
+
+// peopleFormDrawer is the incident, offboarding and case drawers: each picks
+// people from the reader's reach.
+func peopleFormDrawer(ctx context.Context, f HRForms, p auth.Principal, path string) (*screensv1.PageDrawer, error) {
+	people, err := f.PeopleOptions(ctx, p)
+	if err != nil {
+		return nil, err
+	}
+	countries := []hrforms.Choice{}
+	if path != offboardingNew {
+		if countries, err = f.CountryOptions(ctx, p); err != nil {
+			return nil, err
+		}
+	}
+	severity := hrSelect("severity", "Severity", "", true, hrforms.Severities)
+	severity.Options, severity.Value = severity.Options[1:], "medium"
+	switch path {
+	case incidentNew:
+		return formDrawer(formSpec{title: "Report an incident", subtitle: "An injury, road traffic incident, near miss or hazard",
+			action: true, submit: "Report incident", fields: []*screensv1.DrawerField{
+				hrSelect("category", "What happened", "Choose the kind of incident", true, hrforms.IncidentCategories),
+				{Name: "incident_date", Label: "Date", Kind: "date", Required: true},
+				hrSelect("affected_staff_id", "Employee affected", "No one was hurt", false, people),
+				hrSelect("country", "Country", "The employee's country", false, countries),
+				{Name: "location", Label: "Where", Kind: "text", MaxLength: length(255), Placeholder: "School, road, office…"},
+				severity,
+				{Name: "days_lost", Label: "Working days lost", Kind: "number", Min: proto.Float64(0), Step: proto.Float64(1)},
+				{Name: "description", Label: "Description", Kind: "textarea", Required: true, MaxLength: length(5000)},
+				{Name: "immediate_action", Label: "Immediate action taken", Kind: "textarea"},
+			}}), nil
+	case offboardingNew:
+		return formDrawer(formSpec{title: "Start an offboarding",
+			subtitle: "Record an exit, why it is happening, and who takes over the work", action: true, submit: "Start offboarding",
+			note: "The account stays active until you close the offboarding, and it cannot close while schools, activities or " +
+				"direct reports still point at the person.",
+			fields: []*screensv1.DrawerField{
+				hrSelect("staff_id", "Employee leaving", "Choose the employee", true, people),
+				{Name: "last_working_day", Label: "Last working day", Kind: "date", Required: true},
+				hrSelect("exit_reason", "Reason for leaving", "Choose a reason", true, hrforms.ExitReasons),
+				hrSelect("handover_owner_id", "Handover owner", "Name later", false, people),
+				{Name: "note", Label: "Exit note", Kind: "textarea"},
+			}}), nil
+	}
+	return formDrawer(formSpec{title: "Open a case", subtitle: "Disciplinary matters, grievances, disputes and investigations",
+		action: true, submit: "Open case",
+		note: "Cases are confidential by default: only the case owner and the investigator see a confidential case's details. " +
+			"Opening one is recorded in the HR audit log.",
+		fields: []*screensv1.DrawerField{
+			hrSelect("case_type", "Case type", "Choose a case type", true, hrforms.CaseTypes),
+			hrSelect("subject_staff_id", "Employee the case concerns", "No named individual (e.g. a whistleblowing report)", false, people),
+			hrSelect("complainant_staff_id", "Complainant or other party", "None recorded", false, people),
+			severity,
+			hrSelect("country", "Country", "The employee's country", false, countries),
+			{Name: "hearing_date", Label: "Hearing or meeting date", Kind: "date"},
+			{Name: "description", Label: "What has been reported", Kind: "textarea", Required: true, MaxLength: length(5000),
+				Placeholder: "Facts as reported, dates, and who raised it"},
+			{Name: "is_confidential", Label: "Keep this case confidential", Kind: "checkbox", Value: "1"},
+		}}), nil
 }
