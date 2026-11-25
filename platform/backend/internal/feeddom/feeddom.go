@@ -444,6 +444,13 @@ func readTable(table *Node) *screensv1.PageTable {
 		if head != nil && inside(tr, head) {
 			continue
 		}
+		if isDetailRow(tr) {
+			// What opening the row above shows: under that row, not a row.
+			if len(out.Rows) > 0 {
+				rowDetails(out.Rows[len(out.Rows)-1], tr)
+			}
+			continue
+		}
 		row := &screensv1.PageRow{}
 		for _, c := range tr.elements() {
 			if c.tag == "td" || c.tag == "th" {
@@ -453,6 +460,40 @@ func readTable(table *Node) *screensv1.PageTable {
 		out.Rows = append(out.Rows, row)
 	}
 	return out
+}
+
+// isDetailRow is _is_detail_row: a row the web opens under the row above
+// it (shown by a script, one cell across the table).
+func isDetailRow(tr *Node) bool {
+	if tr.has("school-plan-table__details") {
+		return true
+	}
+	cells := []*Node{}
+	for _, c := range tr.elements() {
+		if c.tag == "td" {
+			cells = append(cells, c)
+		}
+	}
+	return tr.Get("x-show") != "" && len(cells) == 1 && cells[0].Get("colspan") != ""
+}
+
+// rowDetails is _row_details: the opened row's link and what else it shows,
+// read as page blocks. (Its "Label: value" lists are not read yet: no Go
+// page opens a row onto one.)
+func rowDetails(row *screensv1.PageRow, tr *Node) {
+	link := tr.find(func(x *Node) bool { return x.tag == "a" && x.Get("href") != "" })
+	if link != nil {
+		row.DetailsHref = link.Get("href")
+	}
+	rest := El("div", "")
+	for _, cell := range tr.elements() {
+		for _, child := range cell.elements() {
+			if child != link && child.tag != "dl" {
+				rest.children = append(rest.children, child)
+			}
+		}
+	}
+	row.DetailBlocks = Walk(rest, nil)
 }
 
 func readCell(c *Node) *screensv1.PageCell {

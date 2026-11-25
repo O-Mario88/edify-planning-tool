@@ -44,9 +44,6 @@ func Page(ctx context.Context, db schooldirectory.Querier, p auth.Principal, raw
 	if d.ranked || d.groupByLead {
 		return nil, ErrHandOn // the ranked and Lead-grouped orders are not drawn yet
 	}
-	if len(d.t.rows) > 0 && len(d.t.areas) > 0 {
-		return nil, ErrHandOn // the member matrix is not drawn yet
-	}
 	if w, err := wouldWrite(ctx, db, p.UserID, d.fy, d.current, d.t); err != nil || w {
 		return nil, handOnOr(err)
 	}
@@ -120,8 +117,18 @@ func (d *data) blocks(ctx context.Context, db schooldirectory.Querier, p auth.Pr
 	out = append(out, allocations.SummaryBlocks(contract)...)
 	out = append(out, stripBlock(teamPct, rate, atRisk, quarterPct, fyPct, planCount))
 	body := el("div", "tt-dashboard",
-		d.commandGrid(d.emptyMatrix(), d.supportStaff(), plans, awaiting, sfMissing, returned),
+		d.commandGrid(d.matrixOrEmpty(), d.supportStaff(), plans, awaiting, sfMissing, returned),
 		d.signals(signals), d.insights(d.keyProgress(), d.trend(), teamPct), d.lower(partners, d.districtsBehind()),
 		dataNote(now.In(kampala)), d.projectSection(), d.milestoneSection())
 	return feedWalk(body, out), nil
+}
+
+// matrixOrEmpty is the matrix panel's body: the member matrix for a team
+// with agreed priorities (approved milestones are handed on before this),
+// else its empty state.
+func (d *data) matrixOrEmpty() *node {
+	if len(d.t.rows) > 0 && len(d.t.areas) > 0 {
+		return d.matrix()
+	}
+	return d.emptyMatrix()
 }

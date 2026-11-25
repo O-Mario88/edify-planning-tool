@@ -3,6 +3,7 @@
 package integration
 
 import (
+	"context"
 	"testing"
 
 	"connectrpc.com/connect"
@@ -48,4 +49,39 @@ func TestTeamTargetsIsGos(t *testing.T) {
 	if _, err := pageOf(cceo, "/team-targets", nil); connect.CodeOf(err) != connect.CodeNotFound {
 		t.Fatalf("a CCEO: %v, want not available", err)
 	}
+}
+
+// With agreed targets the page draws the member matrix: one row a member,
+// the month, quarters and year, and under each row their priorities by
+// period (a past year, so no risk notice is due on the read).
+func TestTeamTargetsDrawsTheMemberMatrix(t *testing.T) {
+	ctx := context.Background()
+	clear := func() {
+		if _, err := admin.Exec(ctx, `DELETE FROM monthly_personal_target WHERE id LIKE 'gttm%'`); err != nil {
+			t.Errorf("clearing the targets: %v", err)
+		}
+	}
+	clear()
+	t.Cleanup(clear)
+	if _, err := admin.Exec(ctx, `INSERT INTO monthly_personal_target (created_at, updated_at, id, user_id, fy, month_of_fy, target, area_id)
+		SELECT now(), now(), 'gttm' || m, u.id, '2026', m, 3, a.id FROM "user" u, generate_series(1, 12) m, target_area a
+		WHERE u.email = 'cceo@edify.org' AND a.key = 'school_visits'`); err != nil {
+		t.Fatalf("setting the targets: %v", err)
+	}
+	borrowAccount(t, "pl1@edify.org")
+	lead := sessionOf(t, "pl1@edify.org", seededPassword).GetAccessToken()
+	page, err := pageOf(lead, "/team-targets", map[string]string{"fy": "2026", "month": "7"})
+	if err != nil {
+		t.Fatalf("Team Targets: %v", err)
+	}
+	for _, b := range page.GetBlocks() {
+		table := b.GetTable()
+		if len(table.GetColumns()) > 0 && table.GetColumns()[0].GetLabel() == "Team member" {
+			if len(table.GetRows()) == 0 || len(table.GetRows()[0].GetDetailBlocks()) == 0 {
+				t.Fatalf("matrix without member rows or their priorities: %v", table)
+			}
+			return
+		}
+	}
+	t.Fatalf("no member matrix: %v", page.GetBlocks())
 }
