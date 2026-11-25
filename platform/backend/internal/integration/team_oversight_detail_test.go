@@ -6,6 +6,7 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -74,6 +75,23 @@ VALUES (now(), now(), $1, 'school_visit', $2, '', 'staff', 'scheduled', 'none', 
 	}
 	if answer, err := open(lead, "/team-planning-oversight/detail?activity_id=nowhere"); err != nil || answer.GetDrawer().GetTitle() != "Not available" {
 		t.Fatalf("a record that is not there: %v %v", answer, err)
+	}
+	// Overdue: the Director reads the risk; the Lead's Send form is handed on.
+	if _, err := admin.Exec(ctx, `UPDATE activity SET planned_date = current_date - 3 WHERE id = $1`, id); err != nil {
+		t.Fatalf("moving the activity back: %v", err)
+	}
+	if _, err := open(lead, "/team-planning-oversight/detail?activity_id="+id); connect.CodeOf(err) != connect.CodeUnavailable {
+		t.Fatalf("the Lead on a risk: %v, want handed on", err)
+	}
+	borrowAccount(t, "cd@edify.org")
+	director := sessionOf(t, "cd@edify.org", seededPassword).GetAccessToken()
+	risky, err := open(director, "/team-planning-oversight/detail?activity_id="+id)
+	if err != nil {
+		t.Fatalf("the Director on a risk: %v", err)
+	}
+	if items := risky.GetDrawer().GetItems(); len(items) < 2 || items[0].GetHeading() != "Needs attention" ||
+		!strings.HasPrefix(items[1].GetText(), "Complete the activity or reschedule it Planned for ") {
+		t.Fatalf("the Director's risks %v", risky.GetDrawer())
 	}
 	borrowAccount(t, "cceo@edify.org")
 	cceo := sessionOf(t, "cceo@edify.org", seededPassword).GetAccessToken()

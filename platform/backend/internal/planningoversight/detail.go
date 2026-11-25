@@ -59,9 +59,9 @@ func drawerFacts(facts ...[2]string) *screensv1.DrawerItem {
 // Detail is oversight_detail_view as the feed reads it: one activity's
 // ownership, planning, cost lines and workflow state, for a reader whose
 // lens holds it. Drawn for a Programme Lead's team lens and the country
-// lens, and for the team's own (staff) work with no risk on it; a risk's
-// Send form, Partner work, a hand-over, a region's lens and anyone else is
-// handed on (ErrDetailHandOn). refusal is the view's own refusal.
+// lens, and for the team's own (staff) work: its risks for a country
+// reader, none for a Lead (a risk's Send form, Partner work, a hand-over, a
+// region's lens and anyone else are handed on, ErrDetailHandOn). refusal is the view's own refusal.
 func (s *Service) Detail(ctx context.Context, p auth.Principal, query url.Values) (*screensv1.PageDrawer, string, error) {
 	if !pageaccess.CanOpen(p.ActiveRole, false, DetailPath) {
 		return nil, DetailRefusal, nil
@@ -115,7 +115,10 @@ func (s *Service) Detail(ctx context.Context, p auth.Principal, query url.Values
 	if err != nil {
 		return nil, "", err
 	}
-	if hasRisk(it, today) {
+	risks := risksFor(it, today)
+	if hasRisk(it, today) != (len(risks) > 0) || (len(risks) > 0 && reader.Scope != "country") {
+		// A Programme Lead sees each risk's Send form, which Go does not
+		// draw; a country reader sees the risks themselves.
 		return nil, "", ErrDetailHandOn
 	}
 	var handedOver bool
@@ -134,7 +137,20 @@ func (s *Service) Detail(ctx context.Context, p auth.Principal, query url.Values
 		return nil, "", ErrDetailHandOn
 	}
 	d, err := s.detailDrawer(ctx, it, lines, reader.OpenActivity && p.ActiveRole != "Accountant")
-	return d, "", err
+	if err != nil || len(risks) == 0 {
+		return d, "", err
+	}
+	attention := []*screensv1.DrawerItem{drawerHeading("Needs attention")}
+	for _, r := range risks {
+		// Each risk's three lines, read as one.
+		line := r.action + " " + r.reason + " Owner: " + first(r.owner, "Unassigned")
+		if r.due != nil {
+			line += " · Due " + r.due.Format("2 Jan 2006")
+		}
+		attention = append(attention, drawerText(line))
+	}
+	d.Items = append(attention, d.Items...)
+	return d, "", nil
 }
 
 // readOneAct is build_item_by_reference's activity, if record_in_scope lets

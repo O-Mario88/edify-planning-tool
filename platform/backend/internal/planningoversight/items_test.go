@@ -146,3 +146,36 @@ func TestPageWindowIsTheSharedPagersWindow(t *testing.T) {
 		}
 	}
 }
+
+// risksFor names a risk exactly where hasRisk finds one, and words each as
+// risk_service does, worst first.
+func TestRisksForAgreeWithHasRiskAndReadAsTheDetectors(t *testing.T) {
+	today := *day("2026-11-25")
+	sub := time.Date(2026, 11, 19, 8, 0, 0, 0, time.UTC)
+	items := []*item{}
+	for _, status := range []string{"scheduled", "submitted_to_pl", "completed", "in_progress", "salesforce_id_required", "returned_by_ia", "awaiting_ia_verification", "ia_verified"} {
+		for _, planned := range []*time.Time{nil, day("2026-12-01"), day("2026-11-24"), day("2026-11-01")} {
+			for _, a := range []act{{}, {costMissing: true}, {ia: "returned"}, {reschedules: 3}, {ia: "confirmed"}, {ia: "pending"}} {
+				for _, cost := range []int64{0, 1000} {
+					a := a
+					it := &item{a: &a, status: status, plannedDate: planned, plannedCost: cost, ownerName: "Paul N."}
+					items = append(items, it)
+					queued := *it
+					queued.submittedToIA = &sub
+					items = append(items, &queued)
+				}
+			}
+		}
+	}
+	for i, it := range items {
+		if got, want := len(risksFor(it, today)) > 0, hasRisk(it, today); got != want {
+			t.Fatalf("item %d (%s, %v): risks %v, hasRisk %v", i, it.status, it.plannedDate, got, want)
+		}
+	}
+	overdue := &item{a: &act{costMissing: true}, status: "scheduled", plannedDate: day("2026-11-01"), ownerName: "Paul N."}
+	got := risksFor(overdue, today)
+	if len(got) != 2 || got[0].key != "scheduled_without_cost" || got[1].key != "activity_overdue" ||
+		got[1].reason != "Planned for 1 Nov and still not completed (24 days)." || got[1].severity != "critical" || got[0].owner != "Paul N." {
+		t.Fatalf("the overdue unpriced item: %+v", got)
+	}
+}
