@@ -160,16 +160,24 @@ INSERT INTO notification (
 	}
 	t.Cleanup(func() { _, _ = admin.Exec(ctx, `DELETE FROM notification WHERE id = $1`, staleNotif) })
 
-	// Seed unprocessed domain_event_log row with oldest timestamp so LIMIT 100 claims it first.
-	rawEvent := "evt_" + cuid.New()[len(cuid.New())-18:]
+	// Two due events in Django's outbox: one Go has a handler for (an SSA
+	// record that no longer exists, which the handler treats as done) and one
+	// it has none for, which must stay queued for the handler that owns it.
+	handledEvent, unhandledEvent := cuid.New(), cuid.New()
 	_, err = admin.Exec(ctx, `
-INSERT INTO domain_event_log (
-  created_at, updated_at, id, event_type, aggregate_type, aggregate_id, payload
-) VALUES ('2019-01-01T00:00:00Z'::timestamptz, '2019-01-01T00:00:00Z'::timestamptz, $1, 'step4.test.event', 'Test', 'step4', '{}'::jsonb)`, rawEvent)
+INSERT INTO outbox_event (created_at, updated_at, id, event_type, payload, idempotency_key, status, attempts,
+  max_attempts, next_attempt_at, locked_by, last_error)
+VALUES ('2019-01-01T00:00:00Z', '2019-01-01T00:00:00Z', $1, 'ssa.recommendations.generate', '{"ssaRecordId": "step4-gone"}',
+        $3, 'pending', 0, 8, '2019-01-01T00:00:00Z', '', ''),
+       ('2019-01-01T00:00:00Z', '2019-01-01T00:00:00Z', $2, 'step4.no.handler', '{}',
+        $4, 'pending', 0, 8, '2019-01-01T00:00:00Z', '', '')`, handledEvent, unhandledEvent,
+		"step4:"+handledEvent, "step4:"+unhandledEvent)
 	if err != nil {
-		t.Fatalf("seeding domain_event_log: %v", err)
+		t.Fatalf("seeding outbox_event: %v", err)
 	}
-	t.Cleanup(func() { _, _ = admin.Exec(ctx, `DELETE FROM domain_event_log WHERE id = $1`, rawEvent) })
+	t.Cleanup(func() {
+		_, _ = admin.Exec(ctx, `DELETE FROM outbox_event WHERE id IN ($1, $2)`, handledEvent, unhandledEvent)
+	})
 
 	// Seed old (>90d) scheduled_job_execution success row + fresh success row.
 	oldExecID := "sje_old_" + cuid.New()[len(cuid.New())-14:]
@@ -227,10 +235,14 @@ INSERT INTO scheduled_job_execution (
 		t.Fatalf("notification_escalation did not upgrade stale notice: priority=%q reminder_count=%d", escalatedPrio, remCount)
 	}
 
-	var processedAt *time.Time
-	_ = admin.QueryRow(ctx, `SELECT processed_at FROM domain_event_log WHERE id = $1`, rawEvent).Scan(&processedAt)
-	if processedAt == nil {
-		t.Fatalf("outbox_drain did not mark domain_event_log row %s processed", rawEvent)
+	var handledStatus, unhandledStatus string
+	_ = admin.QueryRow(ctx, `SELECT status FROM outbox_event WHERE id = $1`, handledEvent).Scan(&handledStatus)
+	_ = admin.QueryRow(ctx, `SELECT status FROM outbox_event WHERE id = $1`, unhandledEvent).Scan(&unhandledStatus)
+	if handledStatus != "succeeded" {
+		t.Fatalf("outbox_drain did not run outbox event %s: status %q", handledEvent, handledStatus)
+	}
+	if unhandledStatus != "pending" {
+		t.Fatalf("outbox_drain claimed event %s it has no handler for: status %q", unhandledEvent, unhandledStatus)
 	}
 
 	var oldExists, newExists bool

@@ -25,6 +25,12 @@ const (
 // Handler runs one event's payload inside the transaction it is given.
 type Handler func(ctx context.Context, tx pgx.Tx, payload map[string]any, now time.Time) error
 
+// OwnHandler runs one event's payload outside any transaction, for a handler
+// the existing outbox registers with atomic=False: one that waits on an
+// outside service and records each step as it goes, so a "sending" or
+// "retry scheduled" it writes survives the retry it asks for.
+type OwnHandler func(ctx context.Context, pool *pgxpool.Pool, payload map[string]any, now time.Time) error
+
 // DeadLetter is told of an event that used up its attempts.
 type DeadLetter func(ctx context.Context, eventID, eventType, lastError string)
 
@@ -32,6 +38,7 @@ type DeadLetter func(ctx context.Context, eventID, eventType, lastError string)
 type Worker struct {
 	pool     *pgxpool.Pool
 	handlers map[string]Handler
+	own      map[string]OwnHandler
 	now      func() time.Time
 	worker   string
 	dead     DeadLetter
@@ -40,12 +47,19 @@ type Worker struct {
 
 // New is a worker with no handlers yet.
 func New(pool *pgxpool.Pool, now func() time.Time, workerID string, logger *slog.Logger) *Worker {
-	return &Worker{pool: pool, handlers: map[string]Handler{}, now: now, worker: workerID, logger: logger}
+	return &Worker{pool: pool, handlers: map[string]Handler{}, own: map[string]OwnHandler{}, now: now, worker: workerID,
+		logger: logger}
 }
 
 // Handle registers the handler for an event type.
 func (w *Worker) Handle(eventType string, h Handler) *Worker {
 	w.handlers[eventType] = h
+	return w
+}
+
+// HandleOutside registers a handler that runs outside any transaction.
+func (w *Worker) HandleOutside(eventType string, h OwnHandler) *Worker {
+	w.own[eventType] = h
 	return w
 }
 
@@ -57,8 +71,11 @@ func (w *Worker) OnDeadLetter(d DeadLetter) *Worker {
 
 // Types are the event types the worker handles, sorted.
 func (w *Worker) Types() []string {
-	types := make([]string, 0, len(w.handlers))
+	types := make([]string, 0, len(w.handlers)+len(w.own))
 	for t := range w.handlers {
+		types = append(types, t)
+	}
+	for t := range w.own {
 		types = append(types, t)
 	}
 	sort.Strings(types)
@@ -167,11 +184,14 @@ func (w *Worker) run(ctx context.Context, e claimed) {
 }
 
 func (w *Worker) handle(ctx context.Context, e claimed) (err error) {
-	h := w.handlers[e.kind]
 	var payload map[string]any
 	if err := json.Unmarshal(e.payload, &payload); err != nil {
 		return fmt.Errorf("ValueError: the payload is not an object: %w", err)
 	}
+	if own, ok := w.own[e.kind]; ok {
+		return own(ctx, w.pool, payload, w.now())
+	}
+	h := w.handlers[e.kind]
 	tx, err := w.pool.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
 	if err != nil {
 		return err

@@ -1,0 +1,15 @@
+Hello there,
+
+Edify has an urgent notice for you:
+
+Overdue
+
+Open in Edify: http://localhost:3000/notifications/n2/open
+You will be asked to sign in first if you are not already.
+
+Sent 9 Jan 2026, 08:00.
+
+Urgent notices are always emailed.
+
+— Edify Planning and Monitoring Tool
+

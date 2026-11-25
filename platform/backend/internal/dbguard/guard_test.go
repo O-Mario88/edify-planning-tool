@@ -234,6 +234,16 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 			"bt_policy", "bt_case", "bt_case_trigger", "bt_case_recommendation",
 			"bt_loan_verification_requirement", "bt_loan_use_result",
 		},
+		// The outbox's Special Project handlers (apps.projects.baselines and
+		// handlers; deploy/db/activities_roles.sql): an enrolment's baseline,
+		// verdict, follow-up and stamped rule, never a new or removed one.
+		filepath.Join(root, "internal", "projectimpact") + sep: {"project_school_assignment"},
+		// The outbox's Salesforce and NetSuite handlers (apps.integrations;
+		// deploy/db/activities_roles.sql): a reconciled reference's ledger row.
+		filepath.Join(root, "internal", "integrationsync") + sep: {"integration_sync"},
+		// The outbox's email copies (apps.notifications.email_delivery): a
+		// copy's status as it is sent or why it was not.
+		filepath.Join(root, "internal", "notifymail") + sep: {"notification_delivery"},
 	}
 	mechanics := filepath.Join(root, "internal", "ownedschema") + sep
 	// The lint describes the DDL it allows as patterns; it runs none.

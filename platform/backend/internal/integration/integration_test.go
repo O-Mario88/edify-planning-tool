@@ -813,8 +813,11 @@ func TestGatewayRoleCanNeitherWriteNorReadSecrets(t *testing.T) {
 		"write a cluster":                  rw + `UPDATE cluster SET responsible_staff_id = responsible_staff_id`,
 		"delete a ledger mark":             rw + `DELETE FROM target_ledger_dirty`,
 		"delete domain events":             rw + `DELETE FROM domain_event_log`,
-		"rescore an SSA recommendation":    rw + `UPDATE ssa_recommendation SET score = score`,
-		"lock a school":                    rw + `SELECT id FROM school LIMIT 1 FOR UPDATE`,
+		// The outbox handler refreshes a recommendation's score (189 §4);
+		// which school it is for never changes, and none is removed.
+		"move an SSA recommendation":   rw + `UPDATE ssa_recommendation SET school_id = school_id`,
+		"delete an SSA recommendation": rw + `DELETE FROM ssa_recommendation`,
+		"lock a school":                rw + `SELECT id FROM school LIMIT 1 FOR UPDATE`,
 		// Cancelling a visit (30): advances are withdrawn only through
 		// gateway_money.withdraw_unmoved_advances.
 		"delete an advance":        rw + `DELETE FROM advance_request`,

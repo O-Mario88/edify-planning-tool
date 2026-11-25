@@ -387,3 +387,53 @@ GRANT SELECT (id, activity_id, due_date) ON bt_loan_verification_requirement TO 
 GRANT UPDATE (status, verified_at, updated_at) ON bt_loan_verification_requirement TO edify_activities_rw;
 GRANT SELECT (id, requirement_id) ON bt_loan_use_result TO edify_activities_rw;
 GRANT UPDATE (verification_status, ia_verified_at, updated_at) ON bt_loan_use_result TO edify_activities_rw;
+
+-- ── The outbox's projects.baselines.capture and projects.impact.refresh ──
+-- (docs/migration/189 §4.) capture_missing_baselines fills an enrolment's
+-- empty baseline once (locked as the existing capture locks it, which the
+-- update right below allows); refresh_follow_up writes the verdict, the day
+-- the follow-up is due and the assessment that judges it, and
+-- stamp_measurement_rule the rule an unstamped enrolment is measured under.
+-- No enrolment is inserted or removed by Go.
+GRANT SELECT (id, project_id, school_id, matched_intervention, impact_classification, mapping_id, baseline_ssa_id,
+              baseline_score, start_date, created_at)
+  ON project_school_assignment TO edify_activities_rw;
+GRANT UPDATE (baseline_ssa_id, baseline_score, baseline_band, baseline_captured_at, impact_classification, updated_at,
+              follow_up_due_on, follow_up_ssa_id, follow_up_score, mapping_id, mapping_version)
+  ON project_school_assignment TO edify_activities_rw;
+GRANT SELECT (id, intervention, deleted_at) ON project TO edify_activities_rw;
+GRANT SELECT (id, country) ON region TO edify_activities_rw;
+GRANT SELECT (actual_delivery_date, scheduled_date, catalogue_item_id, project_id) ON activity TO edify_activities_rw;
+GRANT SELECT (date_of_ssa) ON ssa_record TO edify_activities_rw;
+GRANT SELECT (id, version, follow_up_min_days, follow_up_expected_days, follow_up_max_days, expected_direction,
+              measurement_role, min_meaningful_change, intervention, country, status, active, catalogue_item_id,
+              not_ssa_measured_reason, effective_from, updated_at)
+  ON activity_intervention_mapping TO edify_activities_rw;
+
+-- ── The outbox's Salesforce and NetSuite handlers (docs/migration/189 §4) ──
+-- apps.integrations.services: the transport is not built, so a handler only
+-- records a reference staff pasted as reconciled (one ledger row per record);
+-- it reads the record's reference and never changes the record.
+GRANT SELECT (id, system, context_type, context_id, status, external_id, last_error, synced_at, updated_at)
+  ON integration_sync TO edify_activities_rw;
+GRANT INSERT (id, created_at, updated_at, system, context_type, context_id, external_id, status, last_error, synced_at)
+  ON integration_sync TO edify_activities_rw;
+GRANT UPDATE (status, external_id, last_error, synced_at, updated_at) ON integration_sync TO edify_activities_rw;
+GRANT SELECT (salesforce_activity_id) ON activity TO edify_activities_rw;
+GRANT SELECT (id, salesforce_status, salesforce_loan_id, deleted_at) ON bt_mfi_loan TO edify_activities_rw;
+GRANT SELECT (id) ON bt_funding_facility_tranche TO edify_activities_rw;
+GRANT SELECT (tranche_id) ON bt_funding_facility_tranche_reversal TO edify_activities_rw;
+GRANT SELECT (id, accountability_netsuite_id) ON advance_request TO edify_activities_rw;
+
+-- ── The outbox's notification.email (docs/migration/189 §4) ──
+-- email_delivery.handle_email: one queued email copy's status as it is sent,
+-- or why it was not. It reads the notification, its sender's name and the
+-- recipient's address; no copy is inserted or removed by Go.
+GRANT SELECT (id, notification_id, recipient_id, channel, status, attempts, last_error, provider_message_id, sent_at,
+              failed_at) ON notification_delivery TO edify_activities_rw;
+GRANT UPDATE (status, updated_at, attempts, last_error, provider_message_id, sent_at, failed_at)
+  ON notification_delivery TO edify_activities_rw;
+GRANT SELECT (id, title, body, category, status, priority, action_label, sender_id, action_required, resolved_at,
+              last_reminded_at, created_at)
+  ON notification TO edify_activities_rw;
+GRANT SELECT (id, name, email, is_active, deleted_at) ON "user" TO edify_activities_rw;

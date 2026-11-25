@@ -10,9 +10,12 @@ import (
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/btcases"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/integrationsync"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/notificationcenter"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/notifymail"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/outbox"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/plreview"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/projectimpact"
 )
 
 // outboxBudget is drain's time_budget_seconds.
@@ -40,6 +43,35 @@ func outboxWorker(pool *pgxpool.Pool, writer *notificationcenter.Writer, now fun
 			id, _ := payload["activityId"].(string)
 			return btcases.ProjectActivityState(ctx, tx, id, at)
 		}).
+		Handle("projects.impact.refresh", func(ctx context.Context, tx pgx.Tx, payload map[string]any, at time.Time) error {
+			id, _ := payload["schoolId"].(string)
+			_, err := projectimpact.RefreshSchoolImpact(ctx, tx, id, kampala, at)
+			return err
+		}).
+		Handle("projects.baselines.capture", func(ctx context.Context, tx pgx.Tx, payload map[string]any, at time.Time) error {
+			id, _ := payload["schoolId"].(string)
+			_, err := projectimpact.CaptureBaselines(ctx, tx, id, kampala, at)
+			return err
+		}).
+		Handle("integrations.salesforce.activity", func(ctx context.Context, tx pgx.Tx, payload map[string]any, at time.Time) error {
+			id, _ := payload["activityId"].(string)
+			return integrationsync.SalesforceActivity(ctx, tx, id, at)
+		}).
+		Handle("integrations.salesforce.school_loan", func(ctx context.Context, tx pgx.Tx, payload map[string]any, _ time.Time) error {
+			id, _ := payload["loanId"].(string)
+			return integrationsync.SalesforceSchoolLoan(ctx, tx, id)
+		}).
+		Handle("integrations.netsuite.facility_tranche", func(ctx context.Context, tx pgx.Tx, payload map[string]any, _ time.Time) error {
+			id, _ := payload["trancheId"].(string)
+			return integrationsync.NetSuiteFacilityTranche(ctx, tx, id)
+		}).
+		Handle("integrations.netsuite.advance", func(ctx context.Context, tx pgx.Tx, payload map[string]any, at time.Time) error {
+			id, _ := payload["advanceId"].(string)
+			return integrationsync.NetSuiteAdvance(ctx, tx, id, at)
+		}).
+		HandleOutside("notification.email", notifymail.Handler{
+			Mailer: notifymail.ResendFrom(os.Getenv), BaseURL: notifymail.BaseURLFrom(os.Getenv), Kampala: kampala,
+		}.Handle).
 		OnDeadLetter(func(ctx context.Context, id, kind, lastError string) {
 			tellDeadLetter(ctx, pool, writer, id, kind, lastError)
 		})
