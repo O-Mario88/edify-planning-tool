@@ -125,6 +125,12 @@
       "rebalance"
     ]
   },
+  "returned_statuses": [
+    "cancelled",
+    "rejected",
+    "returned_by_ia",
+    "returned_by_pl"
+  ],
   "risk_events": [
     "team_target_staff_at_risk",
     "team_target_own_at_risk"

@@ -31,3 +31,13 @@ func TestStaffPeriodReadsTheViewsYearAndMonth(t *testing.T) {
 		}
 	}
 }
+
+// str.title capitalises each run of letters: "submitted to pl" reads
+// "Submitted To Pl".
+func TestPyTitleIsPythonsTitle(t *testing.T) {
+	for in, want := range map[string]string{"submitted to pl": "Submitted To Pl", "ia verified": "Ia Verified", "x2y": "X2Y", "": ""} {
+		if got := pyTitle(in); got != want {
+			t.Errorf("%q: %q, want %q", in, got, want)
+		}
+	}
+}

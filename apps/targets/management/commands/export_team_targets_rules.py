@@ -6,7 +6,7 @@ apps.targets.team_targets.PLTeamTargetsService.get_page) from the target engine
 (platform/backend/internal/targets) and what this command writes to
 platform/backend/internal/teamtargets/rules.json: the activity types an
 Activity SF ID is owed for, the statuses that count as done, each blocker's
-recommendation, the ranked order's name, the risk notices' events and the
+recommendation, the statuses a day's drawer leaves out, the ranked order's name, the risk notices' events and the
 labels of the figures the page binds to the metric registry. A change to any
 of them must be exported again; apps/targets/test_team_targets_rules_export.py
 fails until it is.
@@ -84,6 +84,8 @@ def rules() -> dict:
         # sync_completion: the work a catch-up plan's activities are in.
         "not_in_plan_statuses": sorted(str(s) for s in NOT_IN_PLAN_ACTIVITY_STATUSES),
         "not_started_statuses": sorted(str(s) for s in NOT_STARTED_ACTIVITY_STATUSES),
+        # day_detail: the work a day's drawer leaves out.
+        "returned_statuses": sorted(str(s) for s in tt.RETURNED_STATUSES),
         "risk_events": [tt.TEAM_TARGET_STAFF_AT_RISK, tt.TEAM_TARGET_OWN_AT_RISK],
         "metric_labels": {
             key: render_precomputed_metric_item(key, "0")["label"]

@@ -197,6 +197,31 @@ func TestTeamTargetsStaffDrawerIsGos(t *testing.T) {
 	}
 }
 
+// A day's drawer is Go's: the team's work that day (or the empty line), and
+// a date that is not one refused in the view's words.
+func TestTeamTargetsDayDrawerIsGos(t *testing.T) {
+	ctx := context.Background()
+	borrowAccount(t, "pl1@edify.org")
+	lead := sessionOf(t, "pl1@edify.org", seededPassword).GetAccessToken()
+	drawers := screensv1connect.NewPageDrawerServiceClient(http.DefaultClient, baseURL)
+	open := func(path string) *screensv1.GetDrawerResponse {
+		t.Helper()
+		answer, err := drawers.GetDrawer(ctx, authed(&screensv1.GetDrawerRequest{Path: path}, lead))
+		if err != nil {
+			t.Fatalf("%s: %v", path, err)
+		}
+		return answer.Msg
+	}
+	d := open("/team-targets/day?date=2030-01-01").GetDrawer()
+	if d.GetTitle() != "Team activity on Tuesday, 01 January 2030" || len(d.GetItems()) != 1 ||
+		d.GetItems()[0].GetText() != "Nothing planned or completed by the team on this day." {
+		t.Fatalf("an empty day %v", d)
+	}
+	if r := open("/team-targets/day?date=2026-02-30").GetRefusal(); r != "Invalid date." {
+		t.Fatalf("a date that is not one: %q", r)
+	}
+}
+
 // A link from a planning follow-up opens its placeholder above every lens
 // Go draws, at /team-targets and on Team Oversight: the follow-up itself loads
 // later and the feed reads only the placeholder's caption; the page below is
