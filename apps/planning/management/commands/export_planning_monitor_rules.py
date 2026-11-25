@@ -225,7 +225,7 @@ def _country_execution() -> dict:
     from apps.planning.country_execution import tables as xtables
     from apps.planning.country_oversight import followups as planning_fu
     from apps.planning.country_oversight.service import warm_roles
-    from apps.planning.followup_models import OPEN_FOLLOW_UP_STATES
+    from apps.planning.followup_models import OPEN_FOLLOW_UP_STATES, FollowUpStatus
     from django.utils import timezone
     from apps.schools.management.commands.export_school_directory_rules import (
         _role_user,
@@ -316,6 +316,8 @@ def _country_execution() -> dict:
                 [str(v), str(label)] for v, label in planning_fu.PRIORITY_CHOICES
             ],
             "open_states": sorted(str(s) for s in OPEN_FOLLOW_UP_STATES),
+            # The sweep's close (followups.refresh).
+            "resolved_automatically": str(FollowUpStatus.RESOLVED_AUTOMATICALLY),
             "due_in_days": (planning_fu.default_due_date() - timezone.localdate()).days,
         },
         # The period snapshots (country_execution.snapshots): how long after a

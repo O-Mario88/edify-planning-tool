@@ -105,9 +105,6 @@ var notRunByGo = map[string]string{
 		"whether a delegated action's condition still holds is read through the Planning Oversight and " +
 		"Partner Oversight risk detectors, Country Oversight's planning gaps and the SSA intervention bands, " +
 		"none of which are built in Go yet",
-	"planning_followup_sweep": "apps.planning.country_oversight.followups.sweep: a follow-up closes when " +
-		"Country Oversight's coverage (or Country Execution's figures) shows its gap cleared, and neither " +
-		"is built in Go yet",
 }
 
 // KampalaOperationalFY returns the Uganda fiscal year (Oct 1 – Sep 30) in
@@ -371,46 +368,12 @@ func executeJob(
 		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) { return notificationjobs.SweepOverdueEscalations(ctx, tx, now, push) })
 
 	case "planning_followup_sweep":
-		updated, err := callIntRW(ctx, pool, `SELECT gateway_scheduler.sweep_planning_followups($1::date, $2)`, today, now)
-		if err != nil {
-			return 0, err
-		}
-		rows, err := pool.Query(ctx, `
-SELECT id, program_lead_user_id, COALESCE(school_name, ''), days_overdue
-  FROM planning_oversight_follow_up
- WHERE status NOT IN ('resolved', 'closed') AND days_overdue > 0
- LIMIT 100`)
-		if err == nil {
-			type fuRow struct {
-				id, uid, school string
-				days            int
-			}
-			var items []fuRow
-			for rows.Next() {
-				var r fuRow
-				if rows.Scan(&r.id, &r.uid, &r.school, &r.days) == nil && r.uid != "" {
-					items = append(items, r)
-				}
-			}
-			rows.Close()
-			for _, it := range items {
-				_, _ = writer.Deliver(ctx, notificationcenter.Delivery{
-					RecipientID:     it.uid,
-					Title:           fmt.Sprintf("Overdue planning follow-up (%dd): %s", it.days, it.school),
-					Body:            "A planning oversight follow-up has passed its due date.",
-					Category:        "planning_followup",
-					ContextType:     "planning_oversight_follow_up",
-					ContextID:       it.id,
-					TargetRoute:     "/planning/oversight",
-					ActionLabel:     "Open Oversight",
-					ActionRequired:  true,
-					Priority:        "high",
-					SourceEventType: "planning_followup.overdue",
-					SourceEventID:   "pfu-" + it.id + ":" + today,
-				})
-			}
-		}
-		return updated, nil
+		// country_oversight.followups.sweep: every open follow-up's gap read
+		// again through Go's Country Oversight and Country Execution figures,
+		// its live figure kept, and one whose gap cleared closed by the system.
+		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy
+		checked, _, err := planningmonitor.SweepFollowUps(ctx, pool, push, now, slog.Default())
+		return checked, err
 
 	case "ssa_recommendation_sync":
 		var saved []string

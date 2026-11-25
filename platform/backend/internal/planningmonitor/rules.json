@@ -185,7 +185,8 @@
           "critical",
           "Critical"
         ]
-      ]
+      ],
+      "resolved_automatically": "resolved_automatically"
     },
     "money_moved": [
       "accountability_pending",

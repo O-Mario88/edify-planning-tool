@@ -38,6 +38,9 @@ GRANT SELECT, INSERT ON ia_verification_sample TO edify_scheduler_owner;
 GRANT SELECT, UPDATE (activity_executed, salesforce_id_entered, ia_verified, last_evaluated_at, updated_at) ON closure_checklist TO edify_scheduler_owner;
 GRANT SELECT (seq, hash, prev_hash) ON audit_log TO edify_scheduler_owner;
 GRANT SELECT, INSERT ON execution_period_snapshot TO edify_scheduler_owner;
+GRANT SELECT, UPDATE (live_remaining, live_checked_at, updated_at, status, resolved_at, resolved_by_system, history)
+  ON planning_oversight_follow_up TO edify_scheduler_owner;
+GRANT SELECT, UPDATE (resolved_at, action_required) ON notification TO edify_scheduler_owner;
 
 CREATE SCHEMA IF NOT EXISTS gateway_scheduler AUTHORIZATION edify_scheduler_owner;
 REVOKE ALL ON SCHEMA gateway_scheduler FROM PUBLIC;
@@ -578,6 +581,48 @@ BEGIN
 END
 $fn$;
 
+-- The planning follow-up sweep (country_oversight.followups.refresh): keeps
+-- an open follow-up's live figure, or closes one whose gap cleared (resolved
+-- by the system, its history line added) and resolves the Lead's notices on
+-- it. Go reads the figures; these only write.
+CREATE OR REPLACE FUNCTION gateway_scheduler.keep_followup_figure(p_id varchar, p_remaining integer, p_now timestamptz)
+RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  v_changed integer;
+BEGIN
+  UPDATE public.planning_oversight_follow_up
+     SET live_remaining = p_remaining, live_checked_at = p_now, updated_at = p_now
+   WHERE id = p_id;
+  GET DIAGNOSTICS v_changed = ROW_COUNT;
+  RETURN v_changed;
+END
+$fn$;
+
+CREATE OR REPLACE FUNCTION gateway_scheduler.close_followup(
+  p_id varchar, p_remaining integer, p_now timestamptz, p_status varchar, p_line jsonb, p_context varchar
+) RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  v_lead varchar;
+BEGIN
+  UPDATE public.planning_oversight_follow_up
+     SET status = p_status, resolved_at = p_now, resolved_by_system = true,
+         history = COALESCE(history, '[]'::jsonb) || p_line,
+         live_remaining = p_remaining, live_checked_at = p_now, updated_at = p_now
+   WHERE id = p_id
+   RETURNING program_lead_user_id INTO v_lead;
+  IF NOT FOUND THEN
+    RETURN 0;
+  END IF;
+  -- _resolve_lead_notifications: a queryset update, so updated_at stays.
+  UPDATE public.notification
+     SET resolved_at = p_now, action_required = false
+   WHERE recipient_id = v_lead AND context_type = p_context AND context_id = p_id AND resolved_at IS NULL;
+  RETURN 1;
+END
+$fn$;
+
 REVOKE ALL ON FUNCTION gateway_scheduler.record_execution(text, timestamptz, timestamptz, text, integer, text, text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_scheduler.purge_mfa_challenges(timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_scheduler.run_acting_lifecycle(date, timestamptz) FROM PUBLIC;
@@ -591,6 +636,8 @@ REVOKE ALL ON FUNCTION gateway_scheduler.generate_due_maintenance(date, timestam
 REVOKE ALL ON FUNCTION gateway_scheduler.upsert_weekly_drafts(date, date, text, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_scheduler.upsert_monthly_budget_draft(text, text, text, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_scheduler.reconcile_document_lifecycle(date, timestamptz) FROM PUBLIC;
+REVOKE ALL ON FUNCTION gateway_scheduler.keep_followup_figure(varchar, integer, timestamptz) FROM PUBLIC;
+REVOKE ALL ON FUNCTION gateway_scheduler.close_followup(varchar, integer, timestamptz, varchar, jsonb, varchar) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_scheduler.lock_execution_snapshot(varchar, varchar, varchar, varchar, date, date, varchar, date, varchar, jsonb, jsonb, jsonb, jsonb, timestamptz) FROM PUBLIC;
 
 RESET ROLE;
@@ -609,6 +656,8 @@ GRANT EXECUTE ON FUNCTION gateway_scheduler.generate_due_maintenance(date, times
 GRANT EXECUTE ON FUNCTION gateway_scheduler.upsert_weekly_drafts(date, date, text, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_scheduler.upsert_monthly_budget_draft(text, text, text, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_scheduler.reconcile_document_lifecycle(date, timestamptz) TO edify_gateway;
+GRANT EXECUTE ON FUNCTION gateway_scheduler.keep_followup_figure(varchar, integer, timestamptz) TO edify_gateway;
+GRANT EXECUTE ON FUNCTION gateway_scheduler.close_followup(varchar, integer, timestamptz, varchar, jsonb, varchar) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_scheduler.lock_execution_snapshot(varchar, varchar, varchar, varchar, date, date, varchar, date, varchar, jsonb, jsonb, jsonb, jsonb, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_scheduler.sweep_planning_followups(date, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_scheduler.expire_ssa_recommendations(date, timestamptz) TO edify_gateway;

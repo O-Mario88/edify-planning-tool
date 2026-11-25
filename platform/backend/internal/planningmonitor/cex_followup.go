@@ -22,6 +22,8 @@ type cexFollowUpRules struct {
 	Priorities [][2]string    `json:"priorities"`
 	OpenStates []string       `json:"open_states"`
 	DueInDays  int            `json:"due_in_days"`
+	// ResolvedAutomatically is the status the sweep closes a follow-up in.
+	ResolvedAutomatically string `json:"resolved_automatically"`
 }
 
 // cexIssueRule is ExecIssue.
