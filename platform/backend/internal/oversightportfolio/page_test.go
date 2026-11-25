@@ -196,7 +196,7 @@ func TestBuildDoors(t *testing.T) {
 		{"no renderer", "Admin", Path, url.Values{"view": {"portfolio"}, "format": {"xml"}}, true, pagegate.ErrNotAvailable},
 		{"the Accountant falls back to the Team Plan", "Accountant", Path, url.Values{"view": {"portfolio"}}, false, nil},
 		{"an unknown role", "Nobody", Path, url.Values{"view": {"portfolio"}}, false, nil},
-		{"a planning follow-up", "Admin", Path, url.Values{"view": {"portfolio"}, "followup": {"x"}}, false, nil},
+		{"a planning follow-up is the lens, refused alike", "CCEO", Path, url.Values{"view": {"portfolio"}, "followup": {"x"}}, true, pagegate.ErrNotAvailable},
 		{"a list of ids", "Admin", Path, url.Values{"view": {"portfolio"}, "ids": {"a,b"}}, false, nil},
 		{"a year the page cannot read", "Admin", Path, url.Values{"view": {"portfolio"}, "fy": {"abc"}}, false, nil},
 		{"a month int() refuses", "Admin", Path, url.Values{"view": {"portfolio"}, "month": {"²"}}, false, nil},

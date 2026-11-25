@@ -201,7 +201,7 @@ func TestOnlyTheTrainingsLensIsGosAndOthersPassOn(t *testing.T) {
 		{lead, "/team-planning-oversight", url.Values{"view": {"trainings"}}, false},
 		{lead, Path, url.Values{}, false},
 		{lead, Path, url.Values{"view": {"portfolio"}}, false},
-		{lead, Path, url.Values{"view": {"trainings"}, "followup": {"f1"}}, false},
+		{cceo, Path, url.Values{"view": {"trainings"}, "followup": {"f1"}}, true},
 		{cceo, Path, url.Values{"view": {"trainings"}}, true},
 	} {
 		_, served, err := s.Build(context.Background(), c.who, c.path, c.query)
