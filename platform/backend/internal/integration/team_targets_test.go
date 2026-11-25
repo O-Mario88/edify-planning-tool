@@ -116,6 +116,12 @@ func TestTeamTargetsBacklogDrawersAreGos(t *testing.T) {
 	if r := open(lead, "/team-targets/validation-backlog?status=other").GetRefusal(); r != "Unknown validation backlog." {
 		t.Fatalf("an unknown state: %q", r)
 	}
+	if d := open(lead, "/team-targets/matrix?fy=2026&month=7").GetDrawer(); d.GetTitle() != "Team target matrix" || len(d.GetItems()) != 2 {
+		t.Fatalf("the matrix %v", d)
+	}
+	if r := open(lead, "/team-targets/matrix?month=13").GetRefusal(); r != "Invalid month." {
+		t.Fatalf("a month out of range: %q", r)
+	}
 	borrowAccount(t, "cceo@edify.org")
 	cceo := sessionOf(t, "cceo@edify.org", seededPassword).GetAccessToken()
 	if r := open(cceo, "/team-targets/sfid-backlog").GetRefusal(); !strings.Contains(r, "Team Targets") {

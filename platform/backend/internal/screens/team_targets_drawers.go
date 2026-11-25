@@ -22,6 +22,7 @@ import (
 var teamTargetsDrawers = map[string]func(context.Context, schooldirectory.Querier, auth.Principal, map[string]string, time.Time) (*screensv1.PageDrawer, error){
 	"/team-targets/sfid-backlog":       teamtargets.SFIDBacklog,
 	"/team-targets/validation-backlog": teamtargets.ValidationBacklog,
+	"/team-targets/matrix":             teamtargets.MatrixDrawer,
 }
 
 func (s *Service) teamTargetsDrawerInGo(ctx context.Context, p auth.Principal, rawPath string) (*screensv1.GetDrawerResponse, bool, error) {
