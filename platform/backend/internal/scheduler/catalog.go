@@ -384,45 +384,8 @@ SELECT id FROM "user"
 		})
 
 	case "escalation_sla_sweep":
-		rows, err := pool.Query(ctx, `
-SELECT id, COALESCE(assigned_to_user_id, ''), subject
-  FROM leadership_escalation
- WHERE status NOT IN ('resolved', 'closed')
-   AND due_date IS NOT NULL
-   AND due_date < $1::date
- LIMIT 100`, today)
-		if err != nil {
-			return 0, err
-		}
-		type escRow struct{ id, uid, subj string }
-		var items []escRow
-		for rows.Next() {
-			var r escRow
-			if scanErr := rows.Scan(&r.id, &r.uid, &r.subj); scanErr == nil && r.uid != "" {
-				items = append(items, r)
-			}
-		}
-		rows.Close()
-		sent := 0
-		for _, it := range items {
-			if ok, err := writer.Deliver(ctx, notificationcenter.Delivery{
-				RecipientID:     it.uid,
-				Title:           "Overdue escalation: " + it.subj,
-				Body:            "This leadership escalation has passed its SLA due date and requires attention.",
-				Category:        "escalation",
-				ContextType:     "leadership_escalation",
-				ContextID:       it.id,
-				TargetRoute:     "/escalations",
-				ActionLabel:     "Open Escalation",
-				ActionRequired:  true,
-				Priority:        "urgent",
-				SourceEventType: "escalation.sla_overdue",
-				SourceEventID:   it.id + ":" + today,
-			}); err == nil && ok {
-				sent++
-			}
-		}
-		return sent, nil
+		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy
+		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) { return notificationjobs.SweepOverdueEscalations(ctx, tx, now, push) })
 
 	case "planning_followup_sweep":
 		updated, err := callIntRW(ctx, pool, `SELECT gateway_scheduler.sweep_planning_followups($1::date, $2)`, today, now)

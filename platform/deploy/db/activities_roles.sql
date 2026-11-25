@@ -886,3 +886,10 @@ GRANT SELECT (request_id, reminder_key, sent_on),
   ON pd_reminder_log TO edify_activities_rw;
 GRANT SELECT (id, supervisee_id, supervisor_id) ON staff_supervisor_assignment TO edify_activities_rw;
 GRANT SELECT (id, user_id, country, onboarding_state) ON staff_profile TO edify_activities_rw;
+
+-- ── The scheduler's escalation_sla_sweep (docs/migration/189 §4) ──
+-- sweep_overdue reads the open escalations and who they are addressed to;
+-- the notices go through gateway_notifications.
+GRANT SELECT (id, status, severity, addressed_role, assigned_to_user_id, country_id, subject, detail, raised_by_user_id,
+              raised_by_name, created_at)
+  ON leadership_escalation TO edify_activities_rw;
