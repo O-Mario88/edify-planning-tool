@@ -746,3 +746,15 @@ GRANT SELECT (school_type) ON school TO edify_activities_rw;
 GRANT SELECT (scheduled_for, salesforce_id, evidence_uri), UPDATE (salesforce_id, evidence_uri)
   ON core_activity_slot TO edify_activities_rw;
 GRANT SELECT (uri, activity_id, quarantined, created_at) ON evidence_record TO edify_activities_rw;
+
+-- ── The scheduler's pd_reminders (docs/migration/189 §4) ──
+-- send_due_reminders: the course clock (sync_dates), the reminder log, and
+-- the supervisor the chart names (PDApprovalRoutingService.supervisor_for).
+GRANT SELECT (id, status, course_name, institution, staff_id, staff_name, start_date, end_date, created_at),
+      UPDATE (status, updated_at)
+  ON pd_request TO edify_activities_rw;
+GRANT SELECT (request_id, reminder_key, sent_on),
+      INSERT (id, created_at, updated_at, reminder_key, sent_on, request_id)
+  ON pd_reminder_log TO edify_activities_rw;
+GRANT SELECT (id, supervisee_id, supervisor_id) ON staff_supervisor_assignment TO edify_activities_rw;
+GRANT SELECT (id, user_id, country, onboarding_state) ON staff_profile TO edify_activities_rw;

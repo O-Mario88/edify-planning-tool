@@ -314,46 +314,8 @@ func executeJob(
 		})
 
 	case "pd_reminders":
-		soon := localNow.AddDate(0, 0, 3).Format(time.DateOnly)
-		rows, err := pool.Query(ctx, `
-SELECT p.id, COALESCE(sp.user_id, p.staff_id), p.course_name, p.start_date::text
-  FROM pd_request p
-  LEFT JOIN staff_profile sp ON sp.id = p.staff_id AND sp.deleted_at IS NULL
- WHERE p.status IN ('approved', 'enrolled')
-   AND p.start_date >= $1::date
-   AND p.start_date <= $2::date
- LIMIT 100`, today, soon)
-		if err != nil {
-			return 0, err
-		}
-		type pdRow struct{ id, uid, course, dt string }
-		var items []pdRow
-		for rows.Next() {
-			var r pdRow
-			if scanErr := rows.Scan(&r.id, &r.uid, &r.course, &r.dt); scanErr == nil && r.uid != "" {
-				items = append(items, r)
-			}
-		}
-		rows.Close()
-		sent := 0
-		for _, it := range items {
-			if ok, err := writer.Deliver(ctx, notificationcenter.Delivery{
-				RecipientID:     it.uid,
-				Title:           "Upcoming PD course: " + it.course,
-				Body:            "Your approved professional development course starts on " + it.dt + ".",
-				Category:        "pd_reminder",
-				ContextType:     "pd_request",
-				ContextID:       it.id,
-				TargetRoute:     "/my-pd",
-				ActionLabel:     "Open My PD",
-				Priority:        "normal",
-				SourceEventType: "pd.upcoming_reminder",
-				SourceEventID:   "pd-" + it.id + ":" + today,
-			}); err == nil && ok {
-				sent++
-			}
-		}
-		return sent, nil
+		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy
+		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) { return notificationjobs.SendPDReminders(ctx, tx, now, loc, push) })
 
 	case "daily_debrief_reminders":
 		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy

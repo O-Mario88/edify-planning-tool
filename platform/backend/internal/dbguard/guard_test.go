@@ -217,6 +217,9 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		// A Most Significant Change Story submitted from My Targets
 		// (staff_views.mscs_submit_view; deploy/db/mscs_roles.sql).
 		filepath.Join(root, "internal", "mscs") + sep: {"mscs_story"},
+		// The PD reminders job moves the course clock and logs each reminder
+		// (apps.professional_development.reminders).
+		filepath.Join(root, "internal", "notificationjobs") + sep: {"pd_request", "pd_reminder_log"},
 		filepath.Join(root, "internal", "debriefs") + sep: {
 			"daily_debrief", "daily_debrief_activity_link", "daily_debrief_recipient",
 			// The scheduler's recurring-issue scan (insight_service): its insights.
