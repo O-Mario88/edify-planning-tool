@@ -665,51 +665,10 @@ SELECT id, program_lead_user_id, COALESCE(school_name, ''), days_overdue
 		})
 
 	case "performance_readiness":
-		soon := localNow.AddDate(0, 0, 7).Format(time.DateOnly)
-		rows, err := pool.Query(ctx, `
-SELECT DISTINCT COALESCE(sp.user_id, r.manager_id), COUNT(r.id)::int
-  FROM hr_performance_review r
-  LEFT JOIN staff_profile sp ON sp.id = r.manager_id AND sp.deleted_at IS NULL
- WHERE r.status NOT IN ('completed', 'closed')
-   AND r.due_date <= $1::date
-   AND COALESCE(sp.user_id, r.manager_id, '') <> ''
- GROUP BY COALESCE(sp.user_id, r.manager_id)
- LIMIT 100`, soon)
-		if err != nil {
-			return 0, err
-		}
-		type prRow struct {
-			uid   string
-			count int
-		}
-		var items []prRow
-		for rows.Next() {
-			var r prRow
-			if rows.Scan(&r.uid, &r.count) == nil && r.uid != "" {
-				items = append(items, r)
-			}
-		}
-		rows.Close()
-		sent := 0
-		for _, it := range items {
-			if ok, err := writer.Deliver(ctx, notificationcenter.Delivery{
-				RecipientID:     it.uid,
-				Title:           fmt.Sprintf("%d performance review(s) due within 7 days", it.count),
-				Body:            "Complete your team's upcoming performance readiness reviews.",
-				Category:        "hr_performance",
-				ContextType:     "performance_readiness",
-				ContextID:       "perf-" + today,
-				TargetRoute:     "/my-team",
-				ActionLabel:     "Open Reviews",
-				ActionRequired:  true,
-				Priority:        "normal",
-				SourceEventType: "hr.performance_readiness",
-				SourceEventID:   "perf-" + today + ":" + it.uid,
-			}); err == nil && ok {
-				sent++
-			}
-		}
-		return sent, nil
+		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy
+		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) {
+			return notificationjobs.PerformanceReadiness(ctx, tx, now, loc, notificationjobs.Notices{Push: push})
+		})
 
 	case "field_debrief_recurring_issues":
 		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy
