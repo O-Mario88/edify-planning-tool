@@ -20,10 +20,15 @@ var rules = func() (r struct {
 	Recommendations   map[string][2]string `json:"recommendations"`
 	OrderRanked       string               `json:"order_ranked"`
 	CatchUpStatuses   map[string]string    `json:"catchup_status_labels"`
-	NotInPlan         []string             `json:"not_in_plan_statuses"`
-	NotStarted        []string             `json:"not_started_statuses"`
-	RiskEvents        []string             `json:"risk_events"`
-	MetricLabels      map[string]string    `json:"metric_labels"`
+	ActivityTypes     map[string]string    `json:"activity_type_labels"`
+	Backlogs          map[string]struct {
+		Title, Badge, Tone, Helper string
+		Empty                      string `json:"empty_message"`
+	} `json:"validation_backlogs"`
+	NotInPlan    []string          `json:"not_in_plan_statuses"`
+	NotStarted   []string          `json:"not_started_statuses"`
+	RiskEvents   []string          `json:"risk_events"`
+	MetricLabels map[string]string `json:"metric_labels"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {
 		panic("teamtargets: rules.json: " + err.Error())

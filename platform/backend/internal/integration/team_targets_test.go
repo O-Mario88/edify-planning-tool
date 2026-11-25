@@ -4,9 +4,14 @@ package integration
 
 import (
 	"context"
+	"net/http"
+	"strings"
 	"testing"
 
 	"connectrpc.com/connect"
+
+	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1/screensv1connect"
 )
 
 // Team Targets is Go's for a Programme Lead whose team has no agreed
@@ -84,4 +89,36 @@ func TestTeamTargetsDrawsTheMemberMatrix(t *testing.T) {
 		}
 	}
 	t.Fatalf("no member matrix: %v", page.GetBlocks())
+}
+
+// The two backlog drawers behind the validation tiles are Go's: the team's
+// work without an Activity SF ID and in each validation state; an unknown
+// state and a role without the page are refused in the view's words.
+func TestTeamTargetsBacklogDrawersAreGos(t *testing.T) {
+	ctx := context.Background()
+	borrowAccount(t, "pl1@edify.org")
+	lead := sessionOf(t, "pl1@edify.org", seededPassword).GetAccessToken()
+	drawers := screensv1connect.NewPageDrawerServiceClient(http.DefaultClient, baseURL)
+	open := func(token, path string) *screensv1.GetDrawerResponse {
+		t.Helper()
+		answer, err := drawers.GetDrawer(ctx, authed(&screensv1.GetDrawerRequest{Path: path}, token))
+		if err != nil {
+			t.Fatalf("%s: %v", path, err)
+		}
+		return answer.Msg
+	}
+	if d := open(lead, "/team-targets/sfid-backlog?fy=2026").GetDrawer(); d.GetTitle() != "Activity SF ID backlog" || len(d.GetItems()) == 0 {
+		t.Fatalf("SF ID backlog %v", d)
+	}
+	if d := open(lead, "/team-targets/validation-backlog?status=returned_by_ia&fy=2026").GetDrawer(); d.GetTitle() != "Returned by IA" {
+		t.Fatalf("returned backlog %v", d)
+	}
+	if r := open(lead, "/team-targets/validation-backlog?status=other").GetRefusal(); r != "Unknown validation backlog." {
+		t.Fatalf("an unknown state: %q", r)
+	}
+	borrowAccount(t, "cceo@edify.org")
+	cceo := sessionOf(t, "cceo@edify.org", seededPassword).GetAccessToken()
+	if r := open(cceo, "/team-targets/sfid-backlog").GetRefusal(); !strings.Contains(r, "Team Targets") {
+		t.Fatalf("a CCEO: %q", r)
+	}
 }

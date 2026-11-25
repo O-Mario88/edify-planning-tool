@@ -48,6 +48,8 @@ def rules() -> dict:
     )
     from apps.core.metrics.payload import render_precomputed_metric_item
     from apps.projects.models import LIVE_PROJECT_STATUSES
+    from apps.core.enums import ActivityType
+    from apps.frontend.views.staff_views import VALIDATION_BACKLOGS
     from apps.targets import team_targets as tt
     from apps.targets.models import CatchUpStatus
     from apps.targets.team_targets import (
@@ -72,6 +74,13 @@ def rules() -> dict:
         },
         "order_ranked": tt.ORDER_RANKED,
         "catchup_status_labels": {str(k): str(v) for k, v in CatchUpStatus.choices},
+        # The backlog drawers (staff_views): each activity's type as it reads,
+        # and each validation tile's words.
+        "activity_type_labels": {str(k): str(v) for k, v in ActivityType.choices},
+        "validation_backlogs": {
+            key: {name: str(value) for name, value in copy.items()}
+            for key, copy in VALIDATION_BACKLOGS.items()
+        },
         # sync_completion: the work a catch-up plan's activities are in.
         "not_in_plan_statuses": sorted(str(s) for s in NOT_IN_PLAN_ACTIVITY_STATUSES),
         "not_started_statuses": sorted(str(s) for s in NOT_STARTED_ACTIVITY_STATUSES),
