@@ -16,6 +16,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/outbox"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/plreview"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/projectimpact"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pushdelivery"
 )
 
 // outboxBudget is drain's time_budget_seconds.
@@ -72,6 +73,7 @@ func outboxWorker(pool *pgxpool.Pool, writer *notificationcenter.Writer, now fun
 		HandleOutside("notification.email", notifymail.Handler{
 			Mailer: notifymail.ResendFrom(os.Getenv), BaseURL: notifymail.BaseURLFrom(os.Getenv), Kampala: kampala,
 		}.Handle).
+		HandleOutside("notification.push", pushdelivery.Handler{Senders: pushdelivery.SendersFromEnv()}.Handle).
 		OnDeadLetter(func(ctx context.Context, id, kind, lastError string) {
 			tellDeadLetter(ctx, pool, writer, id, kind, lastError)
 		})

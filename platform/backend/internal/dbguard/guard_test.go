@@ -257,6 +257,9 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		// The outbox's email copies (apps.notifications.email_delivery): a
 		// copy's status as it is sent or why it was not.
 		filepath.Join(root, "internal", "notifymail") + sep: {"notification_delivery"},
+		// The outbox's notification.push (apps.notifications.push): the copy's
+		// status and the device's health; nothing inserted or removed.
+		filepath.Join(root, "internal", "pushdelivery") + sep: {"notification_delivery", "notification_push_subscription"},
 		// The scheduler's target_ledger_sync (apps.targets): the stored
 		// achievement ledger, rebuilt; no row removed.
 		filepath.Join(root, "internal", "targets") + sep: {"target_achievement_ledger"},

@@ -917,3 +917,16 @@ GRANT SELECT (id, user_id, document_id, state, due_date, last_reminded_at, remin
       UPDATE (reminder_count, last_reminded_at, updated_at)
   ON document_acknowledgement TO edify_activities_rw;
 GRANT SELECT (finalised, last_heartbeat_at), UPDATE (finalised, updated_at) ON document_engagement_session TO edify_activities_rw;
+
+-- ── The outbox's notification.push (docs/migration/189 §4) ──
+-- push.handle_push: one queued phone or browser copy's status as it is sent,
+-- or why it was not; the device's keys to encrypt to, and its health (a
+-- device gone is marked revoked, never removed); the recipient's push
+-- setting. No copy or device is inserted or removed by Go.
+GRANT SELECT (round, target) ON notification_delivery TO edify_activities_rw;
+GRANT SELECT (id, user_id, kind, endpoint, p256dh, auth, revoked_at, failure_count),
+      UPDATE (revoked_at, revoked_reason, last_error, failure_count, last_success_at)
+  ON notification_push_subscription TO edify_activities_rw;
+GRANT SELECT (user_id, push_enabled) ON notification_preference TO edify_activities_rw;
+-- The copy's round, when its event names none, is the notice's re-fire count.
+GRANT SELECT (reminder_count) ON notification TO edify_activities_rw;
