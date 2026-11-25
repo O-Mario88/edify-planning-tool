@@ -110,6 +110,7 @@ var rules = func() (r struct {
 	} `json:"page"`
 	// CountryOversight is Country Planning Oversight's own words.
 	CountryOversight cpoRules `json:"country_oversight"`
+	CountryExecution cexRules `json:"country_execution"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {
 		panic(fmt.Sprintf("planningmonitor: reading rules.json: %v", err))

@@ -17,6 +17,247 @@
   "core_types": [
     "core"
   ],
+  "country_execution": {
+    "attendance_form_types": [
+      "cluster_meeting",
+      "cluster_meeting_ssa_review",
+      "cluster_training",
+      "cluster_training_ssa_collection",
+      "core_training",
+      "in_school_training",
+      "school_improvement_training",
+      "training"
+    ],
+    "awaiting_disbursement": [
+      "confirmed_for_advance",
+      "submitted_to_accountant"
+    ],
+    "base_fields": [
+      "due",
+      "started",
+      "executed",
+      "pl_applicable",
+      "pl_reviewed",
+      "verified",
+      "closed",
+      "returned",
+      "cancelled",
+      "overdue",
+      "od_execution",
+      "od_evidence",
+      "od_correction",
+      "od_pl_review",
+      "od_ia_review",
+      "finance_open",
+      "on_time",
+      "late",
+      "start_unknown",
+      "not_started",
+      "upcoming",
+      "age_1_2",
+      "age_3_7",
+      "age_8_14",
+      "age_15",
+      "own_staff",
+      "own_pl",
+      "own_ia",
+      "own_partner",
+      "own_finance",
+      "own_external",
+      "carried_forward",
+      "funds_pending",
+      "v_planned",
+      "v_delivered",
+      "v_verified",
+      "v_outreach",
+      "in_progress",
+      "complete"
+    ],
+    "money_moved": [
+      "accountability_pending",
+      "accountability_pl_pending",
+      "accounted",
+      "disbursed",
+      "reimbursed",
+      "reimbursement_disbursed",
+      "reimbursement_pl_pending",
+      "reimbursement_submitted"
+    ],
+    "staff_key": "__staff__",
+    "stages": {
+      "age_groups": [
+        [
+          "age_1_2",
+          "1\u20132 days",
+          1,
+          2
+        ],
+        [
+          "age_3_7",
+          "3\u20137 days",
+          3,
+          7
+        ],
+        [
+          "age_8_14",
+          "8\u201314 days",
+          8,
+          14
+        ],
+        [
+          "age_15",
+          "> 14 days",
+          15,
+          1000000000
+        ]
+      ],
+      "at_ia": [
+        "awaiting_ia_verification"
+      ],
+      "at_pl": [
+        "submitted_to_pl"
+      ],
+      "closed": [
+        "closed"
+      ],
+      "in_field": [
+        "completed",
+        "completion_started",
+        "evidence_accepted",
+        "evidence_uploaded",
+        "in_progress",
+        "salesforce_id_required"
+      ],
+      "not_a_plan": [
+        "awaiting_owner_approval",
+        "not_planned",
+        "rejected"
+      ],
+      "not_operating": [
+        "permanently_closed",
+        "temporarily_closed"
+      ],
+      "off_plan": [
+        "cancelled",
+        "deferred"
+      ],
+      "overdue_labels": {
+        "correction": "Correction overdue",
+        "evidence": "Evidence overdue",
+        "execution": "Execution overdue",
+        "ia_review": "IA review overdue",
+        "pl_review": "PL review overdue"
+      },
+      "owner_labels": [
+        [
+          "staff",
+          "Staff"
+        ],
+        [
+          "pl",
+          "PL Review"
+        ],
+        [
+          "ia",
+          "IA"
+        ],
+        [
+          "partner",
+          "Partner"
+        ],
+        [
+          "finance",
+          "Finance"
+        ],
+        [
+          "external",
+          "External / School"
+        ]
+      ],
+      "policy": "2026-10-02.2",
+      "read_states": [
+        "accountant_confirmed",
+        "assigned_to_partner",
+        "awaiting_ia_verification",
+        "cancelled",
+        "closed",
+        "completed",
+        "completion_started",
+        "deferred",
+        "evidence_accepted",
+        "evidence_uploaded",
+        "ia_verified",
+        "in_progress",
+        "partner_scheduled",
+        "planned",
+        "rescheduled",
+        "returned",
+        "returned_by_ia",
+        "returned_by_pl",
+        "salesforce_id_required",
+        "scheduled",
+        "submitted_to_pl"
+      ],
+      "returned": [
+        "returned",
+        "returned_by_ia",
+        "returned_by_pl"
+      ],
+      "stage_labels": [
+        [
+          "scheduled",
+          "Scheduled \u2014 not started"
+        ],
+        [
+          "in_field",
+          "Started \u2014 evidence not submitted"
+        ],
+        [
+          "returned",
+          "Returned for correction"
+        ],
+        [
+          "pl_review",
+          "Waiting on PL review"
+        ],
+        [
+          "ia_review",
+          "Waiting on IA verification"
+        ],
+        [
+          "verified",
+          "Verified \u2014 closure open"
+        ],
+        [
+          "closed",
+          "Fully closed"
+        ],
+        [
+          "cancelled",
+          "Cancelled"
+        ]
+      ],
+      "verified": [
+        "accountant_confirmed",
+        "closed",
+        "ia_verified"
+      ],
+      "waiting_start": [
+        "assigned_to_partner",
+        "partner_scheduled",
+        "planned",
+        "rescheduled",
+        "scheduled"
+      ]
+    },
+    "trail_migration": "0062_activity_schedule_change",
+    "trend_series": [
+      "plan",
+      "exec",
+      "ver",
+      "closed"
+    ]
+  },
   "country_oversight": {
     "attendance_types": [
       "cluster_meeting",

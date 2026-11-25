@@ -153,6 +153,7 @@ def rules() -> dict:
         "monitor_tabs": [list(tab) for tab in oversight_views.MONITOR_TABS],
         "execution": _execution(),
         "country_oversight": _country_oversight(),
+        "country_execution": _country_execution(),
     }
 
 
@@ -204,6 +205,58 @@ KPI_COUNTS = (
     "monitor_partner_share",
     "monitor_schools_in_projects",
 )
+
+
+def _country_execution() -> dict:
+    """Country Oversight's Execution & Completion stage: the stage spine
+    (apps.planning.country_execution.stages) and the dataset's figures."""
+    from apps.activities.completion_columns import expected_evidence
+    from apps.activities.schedule_trail import TRAIL_MIGRATION
+    from apps.core.enums import ActivityType
+    from apps.fund_requests.models import MONEY_MOVED_ADVANCE_STATUSES
+    from apps.planning.country_execution import dataset as ds
+    from apps.planning.country_execution import stages as st
+
+    def sets(*names):
+        return {name.lower(): sorted(getattr(st, name)) for name in names}
+
+    return {
+        "stages": {
+            **sets(
+                "NOT_A_PLAN",
+                "OFF_PLAN",
+                "WAITING_START",
+                "IN_FIELD",
+                "RETURNED",
+                "AT_PL",
+                "AT_IA",
+                "VERIFIED",
+                "CLOSED",
+                "READ_STATES",
+                "NOT_OPERATING",
+            ),
+            "stage_labels": [list(pair) for pair in st.STAGES],
+            "overdue_labels": dict(st.OVERDUE_LABELS),
+            "owner_labels": [list(pair) for pair in st.OWNERS],
+            "age_groups": [
+                [k, label, low, high] for k, label, low, high in st.AGE_GROUPS
+            ],
+            "policy": st.STAGE_POLICY,
+        },
+        "base_fields": list(ds.BASE_FIELDS),
+        "trend_series": list(ds.TREND_SERIES),
+        "staff_key": ds.STAFF_KEY,
+        # The money, form and trail reads (dataset._funds_pending, _forms_in,
+        # schedule_trail.tracking_since).
+        "awaiting_disbursement": list(ds._AWAITING_DISBURSEMENT),
+        "money_moved": sorted(str(s) for s in MONEY_MOVED_ADVANCE_STATUSES),
+        "trail_migration": TRAIL_MIGRATION,
+        "attendance_form_types": sorted(
+            t
+            for t in ActivityType.values
+            if expected_evidence(t)[0] == "attendance_form"
+        ),
+    }
 
 
 def _country_oversight() -> dict:

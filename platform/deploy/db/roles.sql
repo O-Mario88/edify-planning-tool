@@ -1328,3 +1328,10 @@ GRANT SELECT (fy, module, issue_type, activity_label, partner_name, cceo_name, p
 -- (HRPDDashboardService.supervisor_queue): an over-allocation request and a
 -- schedule conflict are said on its row.
 GRANT SELECT (is_exception, conflict_status) ON pd_request TO edify_gateway_ro;
+
+-- Country Oversight's Execution & Completion stage (country_execution.dataset):
+-- the day verified work was fully closed, the schedule trail that says what
+-- was due when a period began, and when that trail began (its migration).
+GRANT SELECT (activity_id, closed_at) ON activity_closure TO edify_gateway_ro;
+GRANT SELECT (activity_id, from_day, to_day, from_status, changed_at) ON activity_schedule_change TO edify_gateway_ro;
+GRANT SELECT (id, app, name, applied) ON django_migrations TO edify_gateway_ro;
