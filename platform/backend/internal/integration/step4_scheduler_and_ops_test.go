@@ -133,18 +133,31 @@ func TestStep4SchedulerControlledClockTwoReplicasCrashAndQuarantine(t *testing.T
 		t.Fatalf("finding cceo user: %v", err)
 	}
 
-	// Seed expired MFA challenge (>24h before simNow).
+	// Seed an MFA challenge expired and made before the existing job's seven-day
+	// retention (MFA_CHALLENGE_RETENTION), which the purge removes.
 	expiredMFA := "mfa_" + cuid.New()[len(cuid.New())-18:]
 	_, err = admin.Exec(ctx, `
 INSERT INTO mfa_challenge (
   created_at, updated_at, id, channel, destination_hint, code_hash,
   expires_at, attempts, deliveries, user_id
 ) VALUES ($1, $1, $2, 'email', 'cc***@edify.org', 'hash', $3, 0, 1, $4)`,
-		simNow.Add(-48*time.Hour), expiredMFA, simNow.Add(-36*time.Hour), sampleUserID)
+		simNow.AddDate(0, 0, -9), expiredMFA, simNow.AddDate(0, 0, -8), sampleUserID)
 	if err != nil {
 		t.Fatalf("seeding expired mfa_challenge: %v", err)
 	}
 	t.Cleanup(func() { _, _ = admin.Exec(ctx, `DELETE FROM mfa_challenge WHERE id = $1`, expiredMFA) })
+	// One expired two days ago is inside the retention and is kept.
+	keptMFA := "mfa_" + cuid.New()[len(cuid.New())-18:]
+	_, err = admin.Exec(ctx, `
+INSERT INTO mfa_challenge (
+  created_at, updated_at, id, channel, destination_hint, code_hash,
+  expires_at, attempts, deliveries, user_id
+) VALUES ($1, $1, $2, 'email', 'cc***@edify.org', 'hash', $3, 0, 1, $4)`,
+		simNow.Add(-48*time.Hour), keptMFA, simNow.Add(-36*time.Hour), sampleUserID)
+	if err != nil {
+		t.Fatalf("seeding a recent mfa_challenge: %v", err)
+	}
+	t.Cleanup(func() { _, _ = admin.Exec(ctx, `DELETE FROM mfa_challenge WHERE id = $1`, keptMFA) })
 
 	// Seed stale (>48h) unread action-required notification.
 	staleNotif := "ntf_" + cuid.New()[len(cuid.New())-18:]
@@ -226,6 +239,11 @@ INSERT INTO scheduled_job_execution (
 	_ = admin.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM mfa_challenge WHERE id = $1)`, expiredMFA).Scan(&mfaExists)
 	if mfaExists {
 		t.Fatalf("mfa_challenge_purge did not delete expired MFA challenge %s", expiredMFA)
+	}
+	var keptExists bool
+	_ = admin.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM mfa_challenge WHERE id = $1)`, keptMFA).Scan(&keptExists)
+	if !keptExists {
+		t.Fatalf("mfa_challenge_purge removed challenge %s, inside the seven-day retention", keptMFA)
 	}
 
 	var escalatedPrio string

@@ -218,7 +218,8 @@ func executeJob(
 		return pricing.SettleUnsettled(ctx, 50)
 
 	case "mfa_challenge_purge":
-		return callIntRW(ctx, pool, `SELECT gateway_scheduler.purge_mfa_challenges($1)`, now.Add(-24*time.Hour))
+		// MFA_CHALLENGE_RETENTION is seven days.
+		return callIntRW(ctx, pool, `SELECT gateway_scheduler.purge_mfa_challenges($1)`, now.AddDate(0, 0, -7))
 
 	case "acting_lifecycle":
 		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy

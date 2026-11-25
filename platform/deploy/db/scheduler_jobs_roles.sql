@@ -79,9 +79,11 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
 DECLARE
   v_deleted integer;
 BEGIN
+  -- _do_mfa_challenge_purge: only challenges both expired and made before
+  -- the retention cutoff; one part-way through being answered never is.
   DELETE FROM public.mfa_challenge
    WHERE expires_at < p_cutoff
-      OR (consumed_at IS NOT NULL AND consumed_at < p_cutoff);
+     AND created_at < p_cutoff;
   GET DIAGNOSTICS v_deleted = ROW_COUNT;
   RETURN v_deleted;
 END
