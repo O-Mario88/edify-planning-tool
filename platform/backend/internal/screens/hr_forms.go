@@ -42,6 +42,7 @@ type HRForms interface {
 	RequestVacancy(ctx context.Context, p auth.Principal, values map[string]string, o activities.Origin) (string, error)
 	OpenVacancies(ctx context.Context, p auth.Principal) ([]hrforms.Choice, error)
 	RecordApplication(ctx context.Context, p auth.Principal, values map[string]string, o activities.Origin) (string, error)
+	SaveCompensation(ctx context.Context, p auth.Principal, values map[string]string, o activities.Origin) (string, error)
 }
 
 // WithHRForms makes the HR programmes' forms Go's.
@@ -61,6 +62,7 @@ const (
 	recoveryNew           = "/recovery-plans/new"
 	vacancyNew            = "/recruitment/new"
 	candidateNew          = "/candidate-pipeline/new"
+	compensationNew       = "/compensation-benefits/new"
 )
 
 // hrFormPath is the form's path when Go answers it for p.
@@ -71,7 +73,7 @@ func (s *Service) hrFormPath(p auth.Principal, raw string) (string, bool) {
 	path, _, _ := strings.Cut(raw, "?")
 	switch path {
 	case recognitionNew, complianceRequirement, complianceEvidence, pulseNew, incidentNew, offboardingNew, caseNew,
-		recoveryNew, vacancyNew, candidateNew:
+		recoveryNew, vacancyNew, candidateNew, compensationNew:
 	default:
 		return "", false
 	}
@@ -105,6 +107,35 @@ func selectValue(f *screensv1.DrawerField, v string) {
 
 func hrDrawerFor(ctx context.Context, f HRForms, p auth.Principal, path string, query map[string]string) (*screensv1.PageDrawer, error) {
 	switch path {
+	case compensationNew:
+		people, err := f.PeopleOptions(ctx, p)
+		if err != nil {
+			return nil, err
+		}
+		chosen := func(name, label string, cs []hrforms.Choice, value string) *screensv1.DrawerField {
+			field := hrSelect(name, label, "", false, cs)
+			field.Options, field.Value = field.Options[1:], value
+			return field
+		}
+		whole := func(name, label string) *screensv1.DrawerField {
+			return &screensv1.DrawerField{Name: name, Label: label, Kind: "number", Min: proto.Float64(0), Step: proto.Float64(1)}
+		}
+		return formDrawer(formSpec{title: "Add a compensation record", subtitle: "Band, benefits and the next pay review", action: true,
+			submit: "Save record", note: "Amounts are visible only inside this record, never on the register.",
+			fields: []*screensv1.DrawerField{
+				hrSelect("staff_id", "Employee", "Choose the employee", true, people),
+				{Name: "salary_band", Label: "Salary band", Kind: "text", MaxLength: length(64)},
+				chosen("currency", "Currency", hrforms.Currencies, "UGX"),
+				whole("base_salary", "Base salary (monthly)"),
+				whole("allowances", "Allowances (monthly)"),
+				chosen("medical_cover", "Medical cover", hrforms.MedicalCovers, "none"),
+				{Name: "pension_scheme", Label: "Pension or social security scheme", Kind: "text", MaxLength: length(128),
+					Placeholder: "e.g. NSSF"},
+				{Name: "other_benefits", Label: "Other benefits", Kind: "textarea"},
+				{Name: "effective_date", Label: "Effective from", Kind: "date"},
+				{Name: "next_review_date", Label: "Next pay review", Kind: "date"},
+				chosen("status", "Status", hrforms.CompensationStatuses, "HR Review"),
+			}}), nil
 	case recoveryNew, vacancyNew, candidateNew:
 		return staffingDrawer(ctx, f, p, path)
 	case incidentNew, offboardingNew, caseNew:
@@ -227,6 +258,9 @@ func (s *Service) hrFormSaveInGo(ctx context.Context, message *screensv1.SaveDra
 	case caseNew:
 		words, err = s.hrForms.OpenCase(ctx, p, message.GetValues(), o)
 		back = hrforms.CasesPath
+	case compensationNew:
+		words, err = s.hrForms.SaveCompensation(ctx, p, message.GetValues(), o)
+		back = hrforms.CompensationPath
 	case recoveryNew:
 		words, err = s.hrForms.RecommendPlan(ctx, p, message.GetValues(), o)
 		back = hrforms.RecoveryPath
