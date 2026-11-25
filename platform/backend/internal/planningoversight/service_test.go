@@ -32,7 +32,7 @@ func TestBuildAnswersTheDoorsAndHandsOpenReadersOn(t *testing.T) {
 		{"the Project Coordinator is refused either", "ProjectCoordinator", team, nil, true, true},
 		{"a refusal holds for every lens", "CCEO", team, url.Values{"view": {"trainings"}}, true, true},
 		{"a role unknown to the rules is refused", "", team, nil, true, true},
-		{"a Programme Lead's other lens is the existing application's", "Program Lead", team, url.Values{"view": {"targets"}}, false, false},
+		{"a Programme Lead's other lens is the existing application's", "Program Lead", team, url.Values{"view": {"execution"}}, false, false},
 		{"an acting Programme Lead's Team Plan is the existing application's", "Program Lead", team, nil, false, false},
 		{"the Country Director's Country Plan lens is the existing application's", "CountryDirector", country, url.Values{"view": {"plan"}}, false, false},
 		{"a Country Plan filter keeps the existing application's lens", "CountryDirector", country, url.Values{"risk": {"high"}}, false, false},

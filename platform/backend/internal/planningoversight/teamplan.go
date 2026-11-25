@@ -19,6 +19,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partneroversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolplanning"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/teamtargets"
 )
 
 // Piece 2: the Team Plan lens (team_planning_oversight_view with no view)
@@ -109,6 +110,8 @@ func (s *Service) buildTeamPlan(ctx context.Context, p auth.Principal, query url
 	case "planning":
 	case "coverage":
 		return s.buildCoverage(ctx, p, reader, query)
+	case "targets":
+		return s.buildTargets(ctx, p, reader, query)
 	default:
 		return nil, false, nil
 	}
@@ -588,4 +591,25 @@ func tabLabel(tabs []Tab, key string) string {
 		}
 	}
 	return ""
+}
+
+// buildTargets is the Target Performance lens: Team Targets
+// (teamtargets.Page) under the lens strip with its own tab active.
+func (s *Service) buildTargets(ctx context.Context, p auth.Principal, reader Reader, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	page, err := teamtargets.Page(ctx, s.db, p, teamtargets.Query(query), s.now())
+	if errors.Is(err, teamtargets.ErrHandOn) {
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, true, err
+	}
+	tabs := lensTabs(reader)
+	for _, b := range tabs {
+		for _, t := range b.GetLinkTabs().GetTabs() {
+			t.Active = strings.HasSuffix(t.GetHref(), "?view=targets")
+		}
+	}
+	page.Blocks = append(tabs, page.Blocks...)
+	page.WebPath = "/team-planning-oversight/"
+	return page, true, nil
 }

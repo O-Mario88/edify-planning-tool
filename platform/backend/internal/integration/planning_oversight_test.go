@@ -45,8 +45,8 @@ func TestPlanningOversightRefusesTheReadersItsGatesRefuse(t *testing.T) {
 		t.Fatalf("a format the feed cannot render: %v, want not found", err)
 	}
 	// A lens Go does not draw is the existing application's.
-	if _, err := pageOf(lead, teamPlanningOversight, map[string]string{"view": "targets"}); connect.CodeOf(err) != connect.CodeUnavailable {
-		t.Fatalf("a Programme Lead opening Target Performance: %v, want handed on", err)
+	if _, err := pageOf(lead, teamPlanningOversight, map[string]string{"view": "monitor"}); connect.CodeOf(err) != connect.CodeUnavailable {
+		t.Fatalf("a Programme Lead opening the monitor lens: %v, want handed on", err)
 	}
 }
 

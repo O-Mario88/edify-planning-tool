@@ -1340,6 +1340,12 @@ GRANT SELECT (id, app, name, applied) ON django_migrations TO edify_gateway_ro;
 -- sent for Recent Activity.
 GRANT SELECT (id, taken_at, country, period_type, period_start, version) ON execution_period_snapshot TO edify_gateway_ro;
 GRANT SELECT (program_lead_staff_id, cceo_staff_id, remaining_value) ON planning_oversight_follow_up TO edify_gateway_ro;
+-- Team Targets (apps.targets.team_targets.get_page): the supervision
+-- portfolio and the Lead's catch-up plans (read, and whether a render would
+-- advance one).
+GRANT SELECT (id, staff_id, school_id) ON staff_school_assignment TO edify_gateway_ro;
+GRANT SELECT (id, created_at, pl_user_id, staff_user_id, fy, month_of_fy, status, created_activity_ids, area_id)
+  ON target_catchup_plan TO edify_gateway_ro;
 -- Follow Up with PL for execution: the Lead's open follow-ups show what is
 -- still open as last checked (live_remaining).
 GRANT SELECT (live_remaining) ON planning_oversight_follow_up TO edify_gateway_ro;

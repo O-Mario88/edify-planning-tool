@@ -154,6 +154,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/targetdistribution"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/teamperformance"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/teams"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/teamtargets"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/todaypage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/todos"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/trainingsummary"
@@ -315,6 +316,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			staffActivity,
 			trainingsummary.NewService(pool, time.Now),
 			teamperformance.NewService(pool, time.Now),
+			teamtargets.NewService(pool, time.Now),
 			projectmonitoring.NewService(pool, time.Now),
 			projectspage.NewService(pool, time.Now),
 			disbursements.NewService(pool, time.Now),
