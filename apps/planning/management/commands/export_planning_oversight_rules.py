@@ -63,8 +63,13 @@ def doors() -> dict:
                 "page": any(
                     RolePermissionService.can_view_page(user, name) for name in pages
                 ),
+                # The plan export's own gates (team_planning_export_view,
+                # country_planning_export_view): the page permission named
+                # after the page, then data.export.
+                "export_page": bool(RolePermissionService.can_view_page(user, name)),
+                "export": bool(RolePermissionService.can_export(user, path)),
             }
-            for key, (path, _name, pages) in PAGES.items()
+            for key, (path, name, pages) in PAGES.items()
         }
     return out
 

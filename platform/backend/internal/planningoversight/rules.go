@@ -37,6 +37,10 @@ type Door struct {
 	Open bool `json:"open"`
 	// Page: the view's own page-permission decorator lets the reader in.
 	Page bool `json:"page"`
+	// ExportPage and Export are the plan export's gates: the page permission
+	// named after the page, and data.export.
+	ExportPage bool `json:"export_page"`
+	Export     bool `json:"export"`
 }
 
 // Rules is rules.json.

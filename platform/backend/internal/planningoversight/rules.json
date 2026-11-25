@@ -2,160 +2,224 @@
   "doors": {
     "Accountant": {
       "country": {
+        "export": true,
+        "export_page": false,
         "open": false,
         "page": false
       },
       "team": {
+        "export": true,
+        "export_page": true,
         "open": true,
         "page": true
       }
     },
     "Admin": {
       "country": {
+        "export": true,
+        "export_page": true,
         "open": true,
         "page": true
       },
       "team": {
+        "export": true,
+        "export_page": true,
         "open": true,
         "page": true
       }
     },
     "BusinessTransformationOfficer": {
       "country": {
+        "export": true,
+        "export_page": false,
         "open": false,
         "page": false
       },
       "team": {
+        "export": true,
+        "export_page": false,
         "open": false,
         "page": false
       }
     },
     "CCEO": {
       "country": {
+        "export": false,
+        "export_page": false,
         "open": false,
         "page": false
       },
       "team": {
+        "export": false,
+        "export_page": false,
         "open": false,
         "page": false
       }
     },
     "ClusterLeader": {
       "country": {
+        "export": false,
+        "export_page": false,
         "open": false,
         "page": false
       },
       "team": {
+        "export": false,
+        "export_page": false,
         "open": false,
         "page": false
       }
     },
     "CountryDirector": {
       "country": {
+        "export": true,
+        "export_page": true,
         "open": true,
         "page": true
       },
       "team": {
+        "export": true,
+        "export_page": true,
         "open": true,
         "page": true
       }
     },
     "HumanResources": {
       "country": {
+        "export": false,
+        "export_page": false,
         "open": false,
         "page": false
       },
       "team": {
+        "export": false,
+        "export_page": false,
         "open": true,
         "page": true
       }
     },
     "ImpactAssessment": {
       "country": {
+        "export": true,
+        "export_page": true,
         "open": true,
         "page": true
       },
       "team": {
+        "export": true,
+        "export_page": true,
         "open": true,
         "page": true
       }
     },
     "MfiLoanOfficer": {
       "country": {
+        "export": false,
+        "export_page": false,
         "open": false,
         "page": false
       },
       "team": {
+        "export": false,
+        "export_page": false,
         "open": false,
         "page": false
       }
     },
     "MfiPartnerAdmin": {
       "country": {
+        "export": false,
+        "export_page": false,
         "open": false,
         "page": false
       },
       "team": {
+        "export": false,
+        "export_page": false,
         "open": false,
         "page": false
       }
     },
     "PartnerAdmin": {
       "country": {
+        "export": false,
+        "export_page": false,
         "open": false,
         "page": false
       },
       "team": {
+        "export": false,
+        "export_page": false,
         "open": false,
         "page": false
       }
     },
     "PartnerFieldOfficer": {
       "country": {
+        "export": false,
+        "export_page": false,
         "open": false,
         "page": false
       },
       "team": {
+        "export": false,
+        "export_page": false,
         "open": false,
         "page": false
       }
     },
     "Program Lead": {
       "country": {
+        "export": true,
+        "export_page": false,
         "open": false,
         "page": false
       },
       "team": {
+        "export": true,
+        "export_page": true,
         "open": true,
         "page": true
       }
     },
     "ProjectCoordinator": {
       "country": {
+        "export": true,
+        "export_page": false,
         "open": false,
         "page": false
       },
       "team": {
+        "export": true,
+        "export_page": false,
         "open": false,
         "page": false
       }
     },
     "RegionalProgramLead": {
       "country": {
+        "export": true,
+        "export_page": true,
         "open": true,
         "page": true
       },
       "team": {
+        "export": true,
+        "export_page": true,
         "open": true,
         "page": true
       }
     },
     "RegionalVicePresident": {
       "country": {
+        "export": true,
+        "export_page": true,
         "open": true,
         "page": true
       },
       "team": {
+        "export": true,
+        "export_page": true,
         "open": true,
         "page": true
       }

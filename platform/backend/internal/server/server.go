@@ -265,7 +265,9 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 				return "", nil, false, err
 			}
 			return myplan.NewService(pool, time.Now).ExportFile(ctx, p, query)
-		})
+		}).
+		WithFile("/team-planning-oversight/export", planningoversight.NewService(pool, time.Now).PlanExportFile("team")).
+		WithFile("/country-planning-oversight/export", planningoversight.NewService(pool, time.Now).PlanExportFile("country"))
 	screenService := screens.NewService(existingApp).TrustProxyHeaders(cfg.Loans.TrustProxyHeaders).
 		WithStrictReads(cfg.StrictReads).
 		WithDirectory(schooldirectory.NewService(pool, time.Now), logger).

@@ -1541,6 +1541,7 @@
       "active",
       "reopened"
     ],
+    "planned_activity_id": "Planned Activity ID",
     "programme_title": "{label} School Plans",
     "school_type_labels": {
       "champion": "Champion",
@@ -1554,6 +1555,11 @@
       "core_school_trainings",
       "programme_activities"
     ],
+    "tab_kinds": {
+      "meetings": "meetings",
+      "trainings": "trainings",
+      "visits": "visits"
+    },
     "titles": {
       "cluster_meetings": "Cluster Meetings",
       "cluster_trainings": "Trainings",
@@ -1562,7 +1568,15 @@
       "group_trainings": "Group Trainings",
       "programme_activities": "Programme Activities",
       "school_visits": "School Visits"
-    }
+    },
+    "uploadable_sheets": [
+      "cluster_trainings",
+      "core_school_trainings",
+      "core_school_visits",
+      "group_trainings",
+      "programme_school_work",
+      "school_visits"
+    ]
   },
   "tables": {
     "awaiting_delivery": [

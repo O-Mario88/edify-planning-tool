@@ -291,6 +291,11 @@ def table_export() -> dict:
         "day_format": export.DAY,
         "short_day_format": export.SHORT_DAY,
         "money_format": export.MONEY,
+        # Planning Oversight's export leads these sheets with the activity's
+        # own ID (planned_ids).
+        "planned_activity_id": export.PLANNED_ACTIVITY_ID[0],
+        "uploadable_sheets": sorted(export.UPLOADABLE_SHEETS),
+        "tab_kinds": dict(export_kinds.TAB_KINDS),
     }
 
 

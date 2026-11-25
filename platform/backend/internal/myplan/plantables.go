@@ -249,7 +249,9 @@ func planTablesFor(ctx context.Context, db schooldirectory.Querier, place *regis
 		x := extras[a.id]
 		table := tableOf(a, pg.slots)
 		// Work in no table still reaches the attention cards.
-		if x == nil || table == -1 || unportedRow(a, x) != "" {
+		// A partner's delivery hands the page on for its actions alone, which
+		// an export does not draw.
+		if x == nil || table == -1 || (!export && unportedRow(a, x) != "") {
 			return res, false, nil
 		}
 		if a.hasSchool && str(a.schoolType) == "core" {

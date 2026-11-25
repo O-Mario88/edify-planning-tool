@@ -81,6 +81,14 @@ func monthRange(fy, from, to int) (time.Time, time.Time) {
 // exportBounds is _period_filters then export_period_bounds: the first and
 // last day an export covers, the drawer's months or dates, else the year.
 func exportBounds(q url.Values, fy int) (time.Time, time.Time) {
+	start, last, _ := DrawerPeriod(q, fy)
+	return start, last
+}
+
+// DrawerPeriod is _period_filters' custom period: the first and last day
+// the Export options drawer chose (its months, its dates, or the full
+// year), custom true; otherwise the whole year and custom false.
+func DrawerPeriod(q url.Values, fy int) (time.Time, time.Time, bool) {
 	fyStart := time.Date(fy-1, 10, 1, 0, 0, 0, 0, time.UTC)
 	fyLast := time.Date(fy, 9, 30, 0, 0, 0, 0, time.UTC)
 	kind := strings.ToLower(qget(q, "period_type"))
@@ -94,13 +102,16 @@ func exportBounds(q url.Values, fy int) (time.Time, time.Time) {
 	dates := kind == "custom_dates" || (kind == "" && !months && rawStart != "" && rawEnd != "")
 	switch {
 	case months:
+		var s, e time.Time
 		switch {
 		case hasFrom && hasTo:
-			return monthRange(fy, from, to)
+			s, e = monthRange(fy, from, to)
 		case hasFrom:
-			return monthRange(fy, from, from)
+			s, e = monthRange(fy, from, from)
+		default:
+			s, e = monthRange(fy, 10, 9)
 		}
-		return monthRange(fy, 10, 9)
+		return s, e, true
 	case dates:
 		s, err1 := time.Parse("2006-1-2", rawStart)
 		e, err2 := time.Parse("2006-1-2", rawEnd)
@@ -108,10 +119,36 @@ func exportBounds(q url.Values, fy int) (time.Time, time.Time) {
 			if s.After(e) {
 				s, e = e, s
 			}
-			return s, e
+			return s, e, true
 		}
+		return fyStart, fyLast, false
+	case kind == "fy":
+		return fyStart, fyLast, true
 	}
-	return fyStart, fyLast
+	return fyStart, fyLast, false
+}
+
+// ReadKindOrTab is export_kinds.read_kind_or_tab: the drawer's kind when it
+// sent one, else the page's activity tab, else everything.
+func ReadKindOrTab(q url.Values) string {
+	if qget(q, "activity_type") != "" {
+		return readKind(q)
+	}
+	if kind, ok := rules.TableExport.TabKinds[strings.ToLower(qget(q, "activity"))]; ok {
+		return kind
+	}
+	return "all"
+}
+
+// IsExportKind is whether value is one of export_kinds.KINDS.
+func IsExportKind(value string) bool {
+	_, ok := rules.TableExport.KindTypes[value]
+	return ok || value == "all"
+}
+
+// KeepsKind is export_kinds.keeps for an activity of this type, online or not.
+func KeepsKind(kind, activityType string, online bool) bool {
+	return keepsKind(kind, activityType, online)
 }
 
 // readKind is export_kinds.read_kind: the drawer's Activity Type, the whole
@@ -233,7 +270,7 @@ func (s *Service) ExportFile(ctx context.Context, p auth.Principal, query url.Va
 	for i, c := range chosen {
 		ids[i] = c.id
 	}
-	sheets, ported, err := TableSheets(ctx, s.db, p.Country, ids, kind, now)
+	sheets, ported, err := TableSheets(ctx, s.db, p.Country, ids, kind, now, false)
 	if errors.Is(err, ErrUnported) {
 		return "", nil, false, nil
 	}
@@ -241,7 +278,7 @@ func (s *Service) ExportFile(ctx context.Context, p auth.Principal, query url.Va
 		return "", nil, ported, err
 	}
 	if format == "csv" {
-		body, err := tablesCSV(sheets)
+		body, err := TablesCSV(sheets)
 		return "my_plan_export.csv", body, true, err
 	}
 	budget, err := budgetpage.CostPlanSheet(ctx, s.db, rules.TableExport.BudgetSheet, ids, periodLine(chosen))
@@ -276,7 +313,7 @@ func periodLine(chosen []chosenDay) string {
 // these activities that kind gives, in the page's order. ported is false
 // for rows Go does not draw yet.
 func TableSheets(ctx context.Context, db schooldirectory.Querier, place *registry.Work, ids []string, kind string,
-	now time.Time) ([]workbook.Sheet, bool, error) {
+	now time.Time, plannedIDs bool) ([]workbook.Sheet, bool, error) {
 	t := rules.TableExport
 	var res PlanTablesResult
 	if len(ids) > 0 {
@@ -302,7 +339,7 @@ func TableSheets(ctx context.Context, db schooldirectory.Querier, place *registr
 			for _, typ := range rules.Rows.ProgrammeSchoolTypes {
 				if rows := res.programme[typ]; len(rows) > 0 {
 					title := strings.ReplaceAll(t.ProgrammeTitle, "{label}", t.SchoolTypeLabels[typ])
-					out = append(out, sheetOf(title, key, rows, false))
+					out = append(out, sheetOf(title, key, rows, false, plannedIDs))
 				}
 			}
 		case "meeting_schools":
@@ -310,7 +347,7 @@ func TableSheets(ctx context.Context, db schooldirectory.Querier, place *registr
 			if err != nil {
 				return nil, true, err
 			}
-			out = append(out, sheetOf(t.MeetingSchoolsTitle, key, rows, false))
+			out = append(out, sheetOf(t.MeetingSchoolsTitle, key, rows, false, plannedIDs))
 		default:
 			rows := tables[key]
 			if key == "group_trainings" {
@@ -319,16 +356,16 @@ func TableSheets(ctx context.Context, db schooldirectory.Querier, place *registr
 					return nil, true, err
 				}
 			}
-			out = append(out, sheetOf(t.Titles[key], key, rows, in(t.ShortDays, key)))
+			out = append(out, sheetOf(t.Titles[key], key, rows, in(t.ShortDays, key), plannedIDs))
 		}
 	}
 	return out, true, nil
 }
 
-// tablesCSV is table_export.csv_rows through safe_csv_writer: each sheet's
+// TablesCSV is table_export.csv_rows through safe_csv_writer: each sheet's
 // name, its headings and its rows (a day as "5 Oct 2026"), a blank line
 // between.
-func tablesCSV(sheets []workbook.Sheet) ([]byte, error) {
+func TablesCSV(sheets []workbook.Sheet) ([]byte, error) {
 	var buf bytes.Buffer
 	w := csv.NewWriter(&buf)
 	w.UseCRLF = true

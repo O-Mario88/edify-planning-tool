@@ -28,6 +28,9 @@ type TableExportRules struct {
 	DayFormat              string              `json:"day_format"`
 	ShortDayFormat         string              `json:"short_day_format"`
 	MoneyFormat            string              `json:"money_format"`
+	PlannedActivityID      string              `json:"planned_activity_id"`
+	UploadableSheets       []string            `json:"uploadable_sheets"`
+	TabKinds               map[string]string   `json:"tab_kinds"`
 }
 
 // column is one of table_export's (heading, cell): the value the template
@@ -296,9 +299,14 @@ func framed(title string, headers []string, rows [][]workbook.Cell, shortDays bo
 	return workbook.Sheet{Title: title, Headers: headers, Rows: rows, NumberFormats: formats}
 }
 
-// sheetOf writes rows in key's columns.
-func sheetOf(title, key string, rows []*planRow, shortDays bool) workbook.Sheet {
-	cols := exportColumns[key]
+// sheetOf writes rows in key's columns, led by each activity's own ID when
+// plannedIDs asks for it on a sheet the bulk completion upload reads.
+func sheetOf(title, key string, rows []*planRow, shortDays, plannedIDs bool) workbook.Sheet {
+	cols, headers := exportColumns[key], rules.TableExport.Headers[key]
+	if plannedIDs && in(rules.TableExport.UploadableSheets, key) {
+		cols = append([]column{func(r *planRow) workbook.Cell { return txt(r.a.id) }}, cols...)
+		headers = append([]string{rules.TableExport.PlannedActivityID}, headers...)
+	}
 	out := make([][]workbook.Cell, 0, len(rows))
 	for _, r := range rows {
 		cells := make([]workbook.Cell, len(cols))
@@ -307,5 +315,5 @@ func sheetOf(title, key string, rows []*planRow, shortDays bool) workbook.Sheet 
 		}
 		out = append(out, cells)
 	}
-	return framed(title, rules.TableExport.Headers[key], out, shortDays)
+	return framed(title, headers, out, shortDays)
 }
