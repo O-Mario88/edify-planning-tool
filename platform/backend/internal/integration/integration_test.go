@@ -125,6 +125,7 @@ const (
 	messagingRolesFile = "../../../deploy/db/messaging_roles.sql"
 	// Native Go standalone scheduler operational jobs (Step 4).
 	schedulerJobsRolesFile = "../../../deploy/db/scheduler_jobs_roles.sql"
+	outboxRolesFile        = "../../../deploy/db/outbox_roles.sql"
 	// Native Go Settings two-step verification update (Batch 19).
 	settingsRolesFile = "../../../deploy/db/settings_roles.sql"
 	// Native Go School Actions & School Profile Drawer writers (Batches 22-23).
@@ -503,6 +504,13 @@ func prepareGatewayRole(ctx context.Context) (string, error) {
 		return "", err
 	}
 	if _, err := conn.Conn().PgConn().Exec(ctx, string(schedulerJobsRoles)).ReadAll(); err != nil {
+		return "", err
+	}
+	outboxRoles, err := os.ReadFile(filepath.FromSlash(outboxRolesFile))
+	if err != nil {
+		return "", err
+	}
+	if _, err := conn.Conn().PgConn().Exec(ctx, string(outboxRoles)).ReadAll(); err != nil {
 		return "", err
 	}
 	settingsRoles, err := os.ReadFile(filepath.FromSlash(settingsRolesFile))

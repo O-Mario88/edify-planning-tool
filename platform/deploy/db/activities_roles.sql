@@ -224,6 +224,14 @@ GRANT SELECT (last_reason, updated_at) ON activity TO edify_activities_rw;
 GRANT UPDATE (scheduled_date, fy, quarter, planned_date, planned_month, planned_week, reschedule_count,
               last_reason, status, daily_visit_batch_id, updated_at)
   ON activity TO edify_activities_rw;
+-- A confirmed SSA's recommendations (the outbox handler
+-- ssa.recommendations.generate): recorded, refreshed, or retired.
+GRANT INSERT (id, created_at, updated_at, condition_key, intervention, fy, score, score_band, rank, reason,
+              unmapped_reason, state, decision_reason, expires_on, engine_version, recommended_item_id, school_id,
+              ssa_record_id, supersedes_id)
+  ON ssa_recommendation TO edify_activities_rw;
+GRANT UPDATE (score, score_band, rank, reason, decision_reason) ON ssa_recommendation TO edify_activities_rw;
+GRANT SELECT (condition_key, ssa_record_id, fy) ON ssa_recommendation TO edify_activities_rw;
 -- The Work Plan's Add (create for a non-school programme activity): the
 -- columns only such work sets.
 GRANT INSERT (programme_activity_type, programme_delivery_mode, planned_school_count, event_district_id,

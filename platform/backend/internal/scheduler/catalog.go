@@ -248,7 +248,9 @@ func executeJob(
 		return callIntRW(ctx, pool, `SELECT gateway_scheduler.sweep_school_actions($1::date, $2)`, today, now)
 
 	case "outbox_drain":
-		return callIntRW(ctx, pool, `SELECT gateway_scheduler.drain_domain_events($1, $2)`, now, 100)
+		// apps.outbox.services.drain, for the event types Go handles; the
+		// rest stay queued for a handler.
+		return outboxWorker(pool, writer, func() time.Time { return time.Now() }, "go-scheduler").Drain(ctx, outboxBudget)
 
 	case "scheduler_history_prune":
 		return callIntRW(ctx, pool, `SELECT gateway_scheduler.prune_scheduler_history($1)`, now)

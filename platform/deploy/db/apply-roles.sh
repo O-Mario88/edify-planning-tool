@@ -120,6 +120,8 @@ psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/support_roles.sql"
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/messaging_roles.sql"
 # Native Go standalone scheduler operational jobs (Step 4).
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/scheduler_jobs_roles.sql"
+# Django's outbox drained by Go for the event types it handles.
+psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/outbox_roles.sql"
 # Native Go Settings two-step verification update (Batch 19).
 psql "$url" --set ON_ERROR_STOP=1 --quiet --file "${here}/settings_roles.sql"
 # Native Go School Actions & School Profile Drawer writers (Batches 22-23).

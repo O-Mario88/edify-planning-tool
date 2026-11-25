@@ -36,6 +36,9 @@ type rankedNeed struct {
 	Intervention, Label, Band string
 	// Score is round(latest, 1); Priority the composite.
 	Score, Priority float64
+	// Components and Confidence are what explain() says the ranking from.
+	Components map[string]component
+	Confidence string
 }
 
 type schoolNeed struct {
@@ -241,6 +244,12 @@ func clip01(v float64) float64 { return math.Max(0, math.Min(1, v)) }
 type component struct {
 	measurable bool
 	urgency    float64
+	// What explain() reads: the peer gap's z-score, mean and count, the
+	// trend's direction, and the weak assessments among those considered.
+	zScore, peerMean       float64
+	peerCount              int
+	direction              string
+	belowCount, considered int
 }
 
 // rankInterventions is recommendation_engine._rank_interventions.
@@ -269,7 +278,7 @@ func rankInterventions(history []ssaRecord, peers map[string]peerStat) []rankedN
 			continue
 		}
 		components := map[string]component{
-			"severity":    {true, clip01((10.0 - score) / 10.0)},
+			"severity":    {measurable: true, urgency: clip01((10.0 - score) / 10.0)},
 			"trend":       trendComponent(series[code]),
 			"peer_gap":    peerGapComponent(score, peers, code),
 			"persistence": persistenceComponent(series[code]),
@@ -278,6 +287,7 @@ func rankInterventions(history []ssaRecord, peers map[string]peerStat) []rankedN
 		ranked = append(ranked, rankedNeed{
 			Intervention: code, Label: rules.labels[code], Band: band,
 			Score: schooldirectory.PyRound1(score), Priority: composite(components),
+			Components: components, Confidence: confidenceOf(len(history)),
 		})
 	}
 	sort.SliceStable(ranked, func(i, j int) bool {
@@ -311,8 +321,15 @@ func trendComponent(series []float64) component {
 		}
 		slope = sxy / sxx
 	}
+	direction := "stable"
+	switch {
+	case slope > stableSlope:
+		direction = "improving"
+	case slope < -stableSlope:
+		direction = "declining"
+	}
 	slope = pyRound(slope, 4)
-	return component{true, clip01(0.5 - slope/2.0)}
+	return component{measurable: true, urgency: clip01(0.5 - slope/2.0), direction: direction}
 }
 
 func allEqual(values []float64) bool {
@@ -330,7 +347,8 @@ func peerGapComponent(score float64, peers map[string]peerStat, code string) com
 		return component{}
 	}
 	z := (score - stat.mean) / stat.std
-	return component{true, clip01(0.5 - z/4.0)}
+	return component{measurable: true, urgency: clip01(0.5 - z/4.0), zScore: pyRound(z, 2),
+		peerMean: pyRound(stat.mean, 2), peerCount: stat.count}
 }
 
 func persistenceComponent(series []float64) component {
@@ -344,7 +362,8 @@ func persistenceComponent(series []float64) component {
 			below++
 		}
 	}
-	return component{true, clip01(float64(below) / float64(len(window)))}
+	return component{measurable: true, urgency: clip01(float64(below) / float64(len(window))),
+		belowCount: below, considered: len(window)}
 }
 
 // composite is _composite_priority: the weighted mean of the measurable
@@ -378,4 +397,19 @@ func pyRound(x float64, digits int) float64 {
 		panic(fmt.Sprintf("activities: rounding %v: %v", x, err))
 	}
 	return v
+}
+
+// stableSlope is trend_analysis's stable_slope: a smaller slope either way
+// is stable.
+const stableSlope = 0.01
+
+// confidenceOf is recommendation_engine._confidence.
+func confidenceOf(records int) string {
+	switch {
+	case records >= 3:
+		return "high"
+	case records == 2:
+		return "moderate"
+	}
+	return "low"
 }
