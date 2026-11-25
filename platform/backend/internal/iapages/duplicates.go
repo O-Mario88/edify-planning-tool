@@ -58,6 +58,9 @@ func text(t string) *screensv1.PagePanelItem {
 // Build answers path for p. served is false for a path this package does not
 // answer.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if m := briefPath.FindStringSubmatch(path); m != nil {
+		return s.briefPage(ctx, p, m[1])
+	}
 	if m := reportDetailPath.FindStringSubmatch(path); m != nil {
 		role, ok := rules.Pages[ReportsPath].Roles[p.ActiveRole]
 		if !ok || !role.Page {

@@ -1309,6 +1309,9 @@ GRANT SELECT (mapping_version) ON project_school_assignment TO edify_gateway_ro;
 -- ... and the country's approved findings and verified loan conclusions it cites.
 GRANT SELECT (country, programme, statement, limitations, metric_snapshot, reviewed_at) ON impact_finding TO edify_gateway_ro;
 GRANT SELECT (ia_verified_at) ON bt_loan_impact_assessment TO edify_gateway_ro;
+-- A school's impact brief: its account owner's to-do (reports.brief_for).
+GRANT SELECT (id, condition_key, state, manual_resolution_reason, due_date, recipient_id, created_at) ON team_action TO edify_gateway_ro;
+GRANT SELECT (rendered_payload, released_at) ON impact_report_release TO edify_gateway_ro;
 GRANT SELECT (staff_number) ON staff_profile TO edify_gateway_ro;
 GRANT SELECT (created_at) ON messaging_messageparticipant TO edify_gateway_ro;
 

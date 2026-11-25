@@ -21,6 +21,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closedschools"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pageheader"
 )
@@ -151,11 +152,10 @@ FROM impact_report r LEFT JOIN project pr ON pr.id = r.project_id WHERE (%s) AND
 	if frozen && p.ActiveRole == roleRVP {
 		return nil, false, nil
 	}
-	// A school brief or a donor version (their releases' own actions, and
-	// the audience a history row names from its payload) is the existing
-	// page's still; the leadership release alone is drawn here.
+	// A donor version (its approval and its RVP reading) is the existing
+	// page's still; the leadership release and school briefs are drawn here.
 	var other bool
-	if err := s.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM impact_report_release WHERE report_id = $1 AND audience <> 'leadership')`, id).Scan(&other); err != nil {
+	if err := s.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM impact_report_release WHERE report_id = $1 AND audience = 'donor')`, id).Scan(&other); err != nil {
 		return nil, true, fmt.Errorf("iapages: the report's releases: %w", err)
 	}
 	if other {
@@ -387,22 +387,29 @@ WHERE report_id = $1 ORDER BY due_date, created_at`, x.id)
 
 var releaseStatusLabels = map[string]string{"pending_approval": "Awaiting approval", "approved": "Approved", "released": "Released", "revoked": "Revoked"}
 
-// releaseTable is _release_rows under its title, for a report whose only
-// release is the leadership one.
+// releaseTable is _release_rows under its title, for a report whose
+// releases are the leadership one and its school briefs.
 func (s *Service) releaseTable(ctx context.Context, x pageReport, query url.Values) ([]*screensv1.PageBlock, error) {
-	rows, err := s.db.Query(ctx, `SELECT r.id, r.status, COALESCE(q.name, ''), COALESCE(d.name, ''), r.released_at
-FROM impact_report_release r LEFT JOIN "user" q ON q.id = r.requested_by_id LEFT JOIN "user" d ON d.id = r.released_by_id
-WHERE r.report_id = $1 AND r.audience = 'leadership' ORDER BY r.created_at`, x.id)
+	rows, err := s.db.Query(ctx, `SELECT r.id, r.audience, r.status, COALESCE(sc.name, ''), COALESCE(q.name, ''), COALESCE(d.name, ''),
+  r.released_at, COALESCE(a.state, ''), COALESCE(a.manual_resolution_reason, ''), a.id IS NOT NULL, COALESCE(ru.name, 'the account owner')
+FROM impact_report_release r LEFT JOIN school sc ON sc.id = r.school_id
+LEFT JOIN "user" q ON q.id = r.requested_by_id LEFT JOIN "user" d ON d.id = r.released_by_id
+LEFT JOIN LATERAL (SELECT t.id, t.state, t.manual_resolution_reason, t.recipient_id FROM team_action t
+  WHERE t.condition_key = 'impact_brief:' || r.id ORDER BY t.created_at DESC LIMIT 1) a ON TRUE
+LEFT JOIN "user" ru ON ru.id = a.recipient_id
+WHERE r.report_id = $1 ORDER BY r.audience, r.created_at`, x.id)
 	if err != nil {
 		return nil, fmt.Errorf("iapages: the report's releases: %w", err)
 	}
 	defer rows.Close()
 	path := ReportsPath + x.id + "/releases/"
-	t := &screensv1.PageTable{}
+	list := [][]string{}
+	actions := [][]*screensv1.PageAction{}
 	for rows.Next() {
-		var id, status, requested, released string
+		var id, audience, status, school, requested, released, state, resolution, recipient string
 		var at *time.Time
-		if err := rows.Scan(&id, &status, &requested, &released, &at); err != nil {
+		var hasAction bool
+		if err := rows.Scan(&id, &audience, &status, &school, &requested, &released, &at, &state, &resolution, &hasAction, &recipient); err != nil {
 			return nil, fmt.Errorf("iapages: a release: %w", err)
 		}
 		label := status
@@ -413,30 +420,68 @@ WHERE r.report_id = $1 AND r.audience = 'leadership' ORDER BY r.created_at`, x.i
 		if at != nil {
 			day = dayTime(*at)
 		}
-		actions := []*screensv1.PageAction{{Key: "button", Label: "View", Primary: true, Enabled: true, Href: path + id + "/", Drawer: true}}
-		if status == "released" {
-			actions = []*screensv1.PageAction{{Key: "menu", Label: "View", Enabled: true, Href: path + id + "/", Drawer: true},
-				{Key: "menu", Label: "Download", Enabled: true, Href: path + id + "/download"}}
+		buttons := []*screensv1.PageAction{{Label: "View", Enabled: true, Href: path + id + "/", Drawer: true}}
+		if status == "released" && audience != "school" {
+			buttons = append(buttons, &screensv1.PageAction{Label: "Download", Enabled: true, Href: path + id + "/download"})
 		}
-		t.Rows = append(t.Rows, &screensv1.PageRow{Cells: []*screensv1.PageCell{dashCell("Country leadership"), dashCell(""),
-			dashCell(label), dashCell(requested), dashCell(released), dashCell(day), dashCell(""), {Actions: actions}}})
+		if audience == "school" {
+			buttons = append(buttons, &screensv1.PageAction{Label: "Open brief", Enabled: true, Href: "/impact-briefs/" + id + "/"})
+		}
+		key := "menu"
+		if len(buttons) == 1 {
+			key = "button"
+			buttons[0].Primary = true
+		}
+		for _, b := range buttons {
+			b.Key = key
+		}
+		shared := ""
+		if hasAction {
+			shared = "Waiting for " + recipient + " to share it"
+			if state == "resolved" {
+				shared = resolution
+			}
+		}
+		list = append(list, []string{reportAudienceLabels[audience], school, label, requested, released, day, shared})
+		actions = append(actions, buttons)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iapages: the report's releases: %w", err)
 	}
 	blocks := []*screensv1.PageBlock{titled("Releases")}
-	if len(t.Rows) == 0 {
+	if len(list) == 0 {
 		return append(blocks, emptyTable(x.title, "Not released",
 			"A reviewed report is released to country leadership first, then school briefs and the donor version.")), nil
 	}
+	size := 50
+	number, pages := closedschools.PageOf(query.Get("releases_page"), len(list), size)
+	t := &screensv1.PageTable{}
 	for _, c := range []string{"Audience", "School", "Status", "Requested by", "Released by", "Released", "Follow-through", ""} {
 		t.Columns = append(t.Columns, &screensv1.PageColumn{Label: c})
 	}
-	return append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: t}}), nil
+	for i := (number - 1) * size; i < min(number*size, len(list)); i++ {
+		cells := []*screensv1.PageCell{}
+		for _, c := range list[i] {
+			cells = append(cells, dashCell(c))
+		}
+		t.Rows = append(t.Rows, &screensv1.PageRow{Cells: append(cells, &screensv1.PageCell{Actions: actions[i]})})
+	}
+	blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: t}})
+	if pages > 1 {
+		blocks = append(blocks, closedschools.PagerPanel("releases_page", number, pages, len(list), size, query, rules.QueryKeysNotPassed))
+	}
+	return blocks, nil
 }
 
+var reportAudienceLabels = map[string]string{"leadership": "Country leadership", "school": "Partner school", "donor": "Donors"}
+
 func (s *Service) historyTable(ctx context.Context, x pageReport) (*screensv1.PageBlock, error) {
-	rows, err := s.db.Query(ctx, `SELECT a.action, COALESCE(a.actor_id, ''), COALESCE(a.actor_role, ''), a.created_at,
+	var first int64
+	if err := s.db.QueryRow(ctx, `SELECT COALESCE(min(seq), 0) FROM audit_log WHERE subject_kind = 'ImpactReport' AND subject_id = $1
+  AND action = 'ia.report.released'`, x.id).Scan(&first); err != nil {
+		return nil, fmt.Errorf("iapages: the report's first release: %w", err)
+	}
+	rows, err := s.db.Query(ctx, `SELECT a.seq, a.action, COALESCE(a.actor_id, ''), COALESCE(a.actor_role, ''), a.created_at,
   COALESCE(a.reason, ''), COALESCE(u.name, 'System')
 FROM audit_log a LEFT JOIN "user" u ON u.id = a.actor_id
 WHERE a.subject_kind = 'ImpactReport' AND a.subject_id = $1 ORDER BY a.created_at DESC LIMIT 50`, x.id)
@@ -448,7 +493,8 @@ WHERE a.subject_kind = 'ImpactReport' AND a.subject_id = $1 ORDER BY a.created_a
 	for rows.Next() {
 		var action, actorID, actorRole, reason, actor string
 		var at time.Time
-		if err := rows.Scan(&action, &actorID, &actorRole, &at, &reason, &actor); err != nil {
+		var seq int64
+		if err := rows.Scan(&seq, &action, &actorID, &actorRole, &at, &reason, &actor); err != nil {
 			return nil, fmt.Errorf("iapages: a history row: %w", err)
 		}
 		if actorID == "" {
@@ -459,9 +505,14 @@ WHERE a.subject_kind = 'ImpactReport' AND a.subject_id = $1 ORDER BY a.created_a
 			label = l
 		}
 		if action == "ia.report.released" {
-			// The leadership release: the page hands on a report with any
-			// other audience's.
-			label += " · Country leadership"
+			// Its payload's audience: the first release is the leadership
+			// one, every later one a school brief (the page hands on a report
+			// with a donor version).
+			audience := "Partner school"
+			if seq == first {
+				audience = "Country leadership"
+			}
+			label += " · " + audience
 		}
 		if actorRole == "" {
 			actorRole = "system"

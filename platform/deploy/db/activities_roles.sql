@@ -1209,3 +1209,6 @@ GRANT SELECT (id, report_id, created_at, text, owner_role, due_date, status, res
 -- A reviewed impact report released to country leadership
 -- (reports.release_to_leadership): the release, written once per audience.
 GRANT SELECT (id, report_id, audience, school_id, status, redaction_profile, rendered_payload, requested_by_id, approved_by_id, approved_at, released_by_id, released_at, revoked_reason, created_at, updated_at), INSERT (id, created_at, updated_at, audience, redaction_profile, rendered_payload, status, requested_by_id, approved_by_id, approved_at, released_by_id, released_at, revoked_reason, report_id, school_id), UPDATE (redaction_profile, rendered_payload, status, requested_by_id, approved_by_id, approved_at, released_by_id, released_at, revoked_reason, updated_at) ON impact_report_release TO edify_activities_rw;
+-- A school brief recorded as shared closes its account owner's to-do
+-- (reports.record_brief_shared → action_service.resolve_manually).
+GRANT SELECT (id, condition_key, state, recipient_id, due_date, manual_resolution_reason, created_at), UPDATE (state, resolved_at, manual_resolution_reason, resolved_by_system, updated_at) ON team_action TO edify_activities_rw;

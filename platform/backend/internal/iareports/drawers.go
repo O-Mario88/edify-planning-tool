@@ -134,6 +134,13 @@ func (r Reports) savePageForm(ctx context.Context, p auth.Principal, id, form st
 // false for one Go does not save.
 func (r Reports) Save(ctx context.Context, p auth.Principal, rawPath, form string, values map[string]string) (Saved, bool, error) {
 	path, _, _ := strings.Cut(rawPath, "?")
+	if m := briefPagePath.FindStringSubmatch(path); m != nil && form != "" {
+		if strings.TrimSuffix(form, "/") != "/impact-briefs/"+m[1]+"/shared" {
+			return Saved{}, false, nil
+		}
+		saved, err := r.saveBrief(ctx, p, m[1], values)
+		return saved, true, err
+	}
 	if m := reportPagePath.FindStringSubmatch(path); m != nil && form != "" {
 		if pageForm(m[1], form) == "" {
 			return Saved{}, false, nil

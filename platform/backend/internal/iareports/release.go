@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -195,16 +196,16 @@ func (r Reports) releaseDrawer(ctx context.Context, p auth.Principal, reportID, 
 	if err != nil {
 		return nil, true, fmt.Errorf("iareports: the release: %w", err)
 	}
-	if audience != "leadership" {
-		if p.ActiveRole == "RegionalVicePresident" && audience != "donor" {
-			return nil, true, errNoReport
-		}
-		return nil, false, nil
-	}
-	if p.ActiveRole == "RegionalVicePresident" {
+	if p.ActiveRole == "RegionalVicePresident" && audience != "donor" {
 		return nil, true, errNoReport
 	}
 	label := map[string]string{"pending_approval": "Awaiting approval", "approved": "Approved", "released": "Released", "revoked": "Revoked"}[status]
+	switch audience {
+	case "school":
+		return r.schoolReleaseDrawer(ctx, id, label)
+	case "donor":
+		return nil, false, nil
+	}
 	day := ""
 	if released != nil {
 		day = released.In(kampala).Format("2 Jan 2006 15:04")
@@ -229,4 +230,36 @@ var kampala = func() *time.Location {
 func kampalaDay(t time.Time) time.Time {
 	l := t.In(kampala)
 	return time.Date(l.Year(), l.Month(), l.Day(), 0, 0, 0, 0, time.UTC)
+}
+
+// schoolReleaseDrawer is release_drawer for a school brief.
+func (r Reports) schoolReleaseDrawer(ctx context.Context, id, label string) (*screensv1.PageDrawer, bool, error) {
+	var raw []byte
+	if err := r.DB.QueryRow(ctx, `SELECT rendered_payload::text FROM impact_report_release WHERE id = $1`, id).Scan(&raw); err != nil {
+		return nil, true, fmt.Errorf("iareports: the school brief: %w", err)
+	}
+	d := json.NewDecoder(strings.NewReader(string(raw)))
+	d.UseNumber()
+	var payload map[string]any
+	if err := d.Decode(&payload); err != nil {
+		return nil, true, fmt.Errorf("iareports: reading the school brief: %w", err)
+	}
+	lines := []string{}
+	for _, item := range list(payload["results"]) {
+		row := object(item)
+		before, after := "Missing", "Missing"
+		if row["baseline"] != nil {
+			before = pyText(row["baseline"])
+		}
+		if row["follow_up"] != nil {
+			after = pyText(row["follow_up"])
+		}
+		lines = append(lines, fmt.Sprintf("%s: %s → %s (%s)", pyText(row["area"]), before, after, pyText(row["status"])))
+	}
+	return &screensv1.PageDrawer{Title: "School brief", Subtitle: "Partner school · " + label, HasRequired: true, CancelLabel: "Cancel",
+		Items: []*screensv1.DrawerItem{
+			{Kind: &screensv1.DrawerItem_Facts{Facts: &screensv1.PageFacts{Facts: []*screensv1.PageFact{
+				{Label: "School", Value: orDash(str(object(payload["school"])["name"]))}, {Label: "Results", Value: orDash(strings.Join(lines, "\n"))}}}}},
+			note("The account owner shares it from the brief page."),
+		}}, true, nil
 }
