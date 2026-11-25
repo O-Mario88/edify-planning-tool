@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -308,11 +309,17 @@ func executeJob(
 			weekStart.Format(time.DateOnly), weekEnd.Format(time.DateOnly), fyLabel, now)
 
 	case "monthly_work_plan":
-		nextMonth := time.Date(localNow.Year(), localNow.Month()+1, 1, 0, 0, 0, 0, loc)
-		nextFY, _ := KampalaOperationalFY(nextMonth)
+		// Next month's country budget (_do_monthly_work_plan): its month from
+		// the UTC clock and its year as the existing job reckons it.
+		utc := now.UTC()
+		nextMonth := time.Date(utc.Year(), utc.Month(), 1, 0, 0, 0, 0, time.UTC).AddDate(0, 1, 0)
+		fy := nextMonth.Year()
+		if nextMonth.Month() >= time.October {
+			fy++
+		}
 		return callIntRW(ctx, pool,
 			`SELECT gateway_scheduler.upsert_monthly_budget_draft($1, $2, $3, $4)`,
-			fmt.Sprintf("FY%d", nextFY), nextMonth.Format("2006-01"), "UG", now)
+			strconv.Itoa(fy), nextMonth.Format("2006-01"), "Uganda", now)
 
 	case "document_lifecycle":
 		return callIntRW(ctx, pool, `SELECT gateway_scheduler.reconcile_document_lifecycle($1::date, $2)`, today, now)

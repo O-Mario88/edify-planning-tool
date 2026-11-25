@@ -29,7 +29,7 @@ GRANT SELECT, UPDATE (next_due_date, updated_at) ON admin_maintenance_template T
 GRANT SELECT, INSERT ON admin_ops_work_item TO edify_scheduler_owner;
 GRANT SELECT ON activity_schedule_cost_line TO edify_scheduler_owner;
 GRANT SELECT, INSERT, UPDATE (total_amount, updated_at) ON weekly_fund_request TO edify_scheduler_owner;
-GRANT SELECT, INSERT, UPDATE (program_total, total_amount, activity_count, updated_at) ON monthly_work_plan_budget TO edify_scheduler_owner;
+GRANT SELECT, INSERT, UPDATE (fy, program_total, total_amount, activity_count, updated_at) ON monthly_work_plan_budget TO edify_scheduler_owner;
 GRANT SELECT ON document_version TO edify_scheduler_owner;
 GRANT SELECT, UPDATE (status, updated_at) ON document_asset TO edify_scheduler_owner;
 GRANT SELECT, UPDATE (days_overdue, updated_at) ON planning_oversight_follow_up TO edify_scheduler_owner;
@@ -370,8 +370,13 @@ BEGIN
 END
 $fn$;
 
--- Batch 20: Upserts draft monthly_work_plan_budget for a country+month without
--- overwriting submitted/approved budgets.
+-- monthly_work_plan (apps.realtime.jobs._do_monthly_work_plan): next month's
+-- country budget exists, as MonthlyWorkPlanBudget.objects.update_or_create
+-- makes it: created as a generated draft with no author and every figure at
+-- its default; when it exists, only its fiscal year is kept current. The
+-- totals are the budget service's, never this job's, and a budget already
+-- submitted, approved or disbursed keeps its status (status and author are
+-- create-only, owner fix recorded in the existing job).
 CREATE OR REPLACE FUNCTION gateway_scheduler.upsert_monthly_budget_draft(
   p_fy         text,
   p_month_key  text,
@@ -379,19 +384,7 @@ CREATE OR REPLACE FUNCTION gateway_scheduler.upsert_monthly_budget_draft(
   p_now        timestamptz
 ) RETURNS integer
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
-DECLARE
-  v_prog  bigint := 0;
-  v_count integer := 0;
-  v_id    text := 'mwb_' || substr(md5(COALESCE(p_country_id, 'UG') || ':' || p_month_key), 1, 20);
 BEGIN
-  SELECT COALESCE(SUM(COALESCE(total_cost, amount, 0)), 0)::bigint,
-         COUNT(DISTINCT activity_id)::integer
-    INTO v_prog, v_count
-    FROM public.activity_schedule_cost_line
-   WHERE fiscal_year = p_fy
-     AND planned_date IS NOT NULL
-     AND to_char(planned_date, 'YYYY-MM') = p_month_key;
-
   INSERT INTO public.monthly_work_plan_budget (
     created_at, updated_at, id, fy, month_key, country_id,
     generated_at, generated_by, status,
@@ -400,22 +393,15 @@ BEGIN
     operational_activity_requirement, reference_configuration_missing_count,
     regional_standard_ceiling, strategic_reserve_requested
   ) VALUES (
-    p_now, p_now, v_id, p_fy, p_month_key, p_country_id,
-    p_now, 'go-scheduler', 'draft',
-    v_prog, 0, v_prog, v_count,
-    1, 0, 0, v_prog, 0, 0, 0
+    p_now, p_now, 'c' || substr(md5(p_country_id || ':' || p_month_key || ':' || p_now::text), 1, 24),
+    p_fy, p_month_key, p_country_id,
+    p_now, NULL, 'draft_generated',
+    0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0
   )
   ON CONFLICT (country_id, month_key) DO UPDATE
-    SET program_total  = EXCLUDED.program_total,
-        total_amount   = EXCLUDED.program_total + monthly_work_plan_budget.admin_total,
-        activity_count = EXCLUDED.activity_count,
-        updated_at     = p_now
-  WHERE monthly_work_plan_budget.status = 'draft';
-
-  IF FOUND THEN
-    RETURN 1;
-  END IF;
-  RETURN 0;
+    SET fy = EXCLUDED.fy, updated_at = p_now;
+  RETURN 1;
 END
 $fn$;
 
