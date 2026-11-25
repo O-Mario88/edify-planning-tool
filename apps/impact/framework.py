@@ -105,6 +105,9 @@ PROPOSED_OUTCOME_AREAS = (
     },
 )
 
+#: The change reason the proposed areas are drafted with.
+PROPOSED_CHANGE_REASON = "Proposed grouping of SSA domains (IA review, 2026-09-13)."
+
 PENDING = (DefinitionStatus.DRAFT, DefinitionStatus.RETURNED)
 
 STATUS_TONES = {
@@ -230,7 +233,7 @@ def propose_default_areas(principal) -> list[OutcomeArea]:
                 version=1,
                 author_id=_actor(principal),
                 author_role=IA,
-                change_reason="Proposed grouping of SSA domains (IA review, 2026-09-13).",
+                change_reason=PROPOSED_CHANGE_REASON,
             )
             OutcomeAreaDomain.objects.bulk_create(
                 OutcomeAreaDomain(

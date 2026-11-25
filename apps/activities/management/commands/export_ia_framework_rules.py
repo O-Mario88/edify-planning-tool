@@ -49,9 +49,14 @@ def rules() -> dict:
     from apps.core.pagination import TABLE_PAGE_SIZE
     from apps.core.permissions import RolePermissionService, can_open_url
     from apps.core.rbac import EdifyRole
-    from apps.frontend.views.ia_framework_views import TABS
+    from apps.frontend.views.ia_framework_views import REVIEW_DECISIONS, TABS
     from apps.impact import framework as fw
-    from apps.impact.models import DefinitionStatus, IndicatorLevel, IndicatorSource
+    from apps.impact.models import (
+        DefinitionStatus,
+        IndicatorLevel,
+        IndicatorSource,
+        ReviewBasis,
+    )
 
     roles = {}
     for role in EdifyRole:
@@ -93,6 +98,27 @@ def rules() -> dict:
         "intervention_labels": {k: str(v) for k, v in SsaIntervention.choices},
         "intervention_abbreviations": {
             str(k): v for k, v in INTERVENTION_ABBREVIATIONS.items()
+        },
+        # The drawers and saves (ia_framework_views, apps.impact.framework):
+        # the areas proposed for review, the choices in their order, the
+        # review's bases and decisions and an indicator's text fields.
+        "saves": {
+            "proposed_areas": [
+                {
+                    "code": a["code"],
+                    "name": a["name"],
+                    "definition": a["definition"],
+                    "interventions": list(a["interventions"]),
+                }
+                for a in fw.PROPOSED_OUTCOME_AREAS
+            ],
+            "intervention_choices": [[k, str(v)] for k, v in SsaIntervention.choices],
+            "level_choices": [[k, str(v)] for k, v in IndicatorLevel.choices],
+            "source_choices": [[k, str(v)] for k, v in IndicatorSource.choices],
+            "review_bases": {k: str(v) for k, v in ReviewBasis.choices},
+            "review_decisions": [[k, str(v)] for k, v in REVIEW_DECISIONS],
+            "indicator_text_fields": list(fw.INDICATOR_TEXT_FIELDS),
+            "proposed_change_reason": fw.PROPOSED_CHANGE_REASON,
         },
         "ia_role": fw.IA,
         "cd_role": fw.CD,

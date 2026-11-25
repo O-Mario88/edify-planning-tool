@@ -226,6 +226,10 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 	}
 	clusterOversightSvc := clusteroversight.NewService(pool, time.Now)
 	staffActivity := staffactivity.NewService(pool, time.Now)
+	frameworkPage := iaframework.NewService(pool)
+	if cfg.ExistingAppURL == "" {
+		frameworkPage = frameworkPage.WithForms()
+	}
 	if cfg.ExistingAppURL == "" {
 		staffActivity = staffActivity.WithFollowUpPage()
 	}
@@ -240,6 +244,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		WithActingDrawers(actingService).
 		WithCoachingDrawers(ccelead.Coaching{DB: pool, Push: plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
 			Logger: logger, Now: time.Now, Kampala: kampalaLocation()}).
+		WithFrameworkDrawers(iaframework.Framework{DB: pool, Push: plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
+			Logger: logger, Now: time.Now}).
 		WithLeadershipDrawers(ccelead.Coaching{DB: pool, Push: plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
 			Logger: logger, Now: time.Now, Kampala: kampalaLocation()}).
 		WithFollowUpDrawers(staffactivity.FollowUps{DB: pool, Push: plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
@@ -268,7 +274,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			helpcenter.NewService(pool, time.Now),
 			todaypage.NewService(pool, time.Now),
 			closurequality.NewService(pool, time.Now),
-			iaframework.NewService(pool),
+			frameworkPage,
 			ownership.NewService(pool),
 			dataquality.NewService(pool),
 			coverage.NewService(pool, time.Now),

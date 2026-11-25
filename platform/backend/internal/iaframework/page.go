@@ -64,9 +64,24 @@ var rules = func() (r struct {
 	ProposedAreaCodes         []string          `json:"proposed_area_codes"`
 	InterventionLabels        map[string]string `json:"intervention_labels"`
 	InterventionAbbreviations map[string]string `json:"intervention_abbreviations"`
-	IARole                    string            `json:"ia_role"`
-	CDRole                    string            `json:"cd_role"`
-	PageSize                  int               `json:"page_size"`
+	Saves                     struct {
+		ProposedAreas []struct {
+			Code          string   `json:"code"`
+			Name          string   `json:"name"`
+			Definition    string   `json:"definition"`
+			Interventions []string `json:"interventions"`
+		} `json:"proposed_areas"`
+		ProposedChangeReason string            `json:"proposed_change_reason"`
+		InterventionChoices  [][2]string       `json:"intervention_choices"`
+		LevelChoices         [][2]string       `json:"level_choices"`
+		SourceChoices        [][2]string       `json:"source_choices"`
+		ReviewBases          map[string]string `json:"review_bases"`
+		ReviewDecisions      [][2]string       `json:"review_decisions"`
+		IndicatorTextFields  []string          `json:"indicator_text_fields"`
+	} `json:"saves"`
+	IARole   string `json:"ia_role"`
+	CDRole   string `json:"cd_role"`
+	PageSize int    `json:"page_size"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.Roles) == 0 || len(r.Tabs) == 0 || r.PageSize == 0 {
 		panic(fmt.Sprintf("iaframework: the embedded rules are unreadable: %v", err))
@@ -75,10 +90,20 @@ var rules = func() (r struct {
 }()
 
 // Service answers the framework from the existing database.
-type Service struct{ db schooldirectory.Querier }
+type Service struct {
+	db schooldirectory.Querier
+	// forms draws the page's own forms (Django absent: Go saves them).
+	forms bool
+}
 
 // NewService is the framework over db.
 func NewService(db schooldirectory.Querier) *Service { return &Service{db: db} }
+
+// WithForms draws the page's own forms, which Framework saves.
+func (s *Service) WithForms() *Service {
+	s.forms = true
+	return s
+}
 
 // reader is who reads the page: their account, their People record's
 // country and whether they may author definitions.
@@ -94,6 +119,8 @@ type tab struct {
 	// noticeTone is the notice's tone as the feed reads it: only the notice
 	// that holds a form (the proposed areas) carries its data-tone through.
 	noticeTone string
+	// form is the notice's form, when Go saves it.
+	form       *screensv1.PageForm
 	actions    []*screensv1.PageAction
 	title      string
 	filters    []*screensv1.PageFilter
@@ -151,6 +178,9 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		t, err = s.purposesTab(ctx, r, res)
 	default:
 		t, err = s.areasTab(ctx, r, res, query.Get("status"))
+		if err == nil && s.forms && t.notice != "" && r.author {
+			t.form = &screensv1.PageForm{Key: ProposeForm, SubmitLabel: "Draft the proposed areas", CanSave: true}
+		}
 	}
 	if err != nil {
 		return nil, true, err
@@ -256,6 +286,9 @@ func page(strip *decisionlog.Strip, key string, counts [5]int, t tab, query url.
 	blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_LinkTabs{LinkTabs: rail}}, panel("", text(t.description, "")))
 	if t.notice != "" {
 		blocks = append(blocks, panel("", text(t.notice, t.noticeTone)))
+		if t.form != nil {
+			blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Form{Form: t.form}})
+		}
 	}
 	blocks = append(blocks, panel(t.title))
 	if t.filters != nil {

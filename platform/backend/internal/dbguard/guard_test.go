@@ -224,6 +224,9 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 			"document_acknowledgement", "document_engagement_session"},
 		// Team Coaching's saves (apps.cce_leadership.coaching).
 		filepath.Join(root, "internal", "ccelead") + sep: {"cce_cceo_coaching", "cce_regional_engagement", "cce_regional_report"},
+		// The Measurement Framework's saves (apps.impact.framework).
+		filepath.Join(root, "internal", "iaframework") + sep: {"impact_outcome_area", "impact_outcome_area_domain",
+			"impact_indicator_definition", "bt_loan_purpose"},
 		// The Staff Activity follow-ups (apps.staff_activity.follow_ups).
 		filepath.Join(root, "internal", "staffactivity") + sep: {"staff_usage_follow_up"},
 		// The weekly sample checks (apps.activities.verification_sampling).

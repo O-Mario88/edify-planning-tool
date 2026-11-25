@@ -999,3 +999,71 @@ GRANT SELECT (id, school_id, deleted_at, verification_status, date_of_ssa) ON ss
 GRANT SELECT (supervisor_id, supervisee_id) ON staff_supervisor_assignment TO edify_activities_rw;
 GRANT SELECT (id, staff_id, region_id) ON staff_geography_assignment TO edify_activities_rw;
 GRANT SELECT (id, status, roles, deleted_at) ON "user" TO edify_activities_rw;
+
+-- ── Impact Assessment's Measurement Framework (apps.impact.framework) ──
+-- Outcome areas and indicators drafted, edited while drafts, versioned once
+-- approved, submitted and reviewed (the version before superseded); an
+-- approved loan purpose measurement written onto its purpose. Editing a draft
+-- area replaces its SSA domains: the only removal, made by
+-- gateway_ia_framework.clear_area_domains, owned by edify_ia_framework_owner,
+-- a NOLOGIN role no one is a member of, which clears one area's domains.
+-- A new database object: production needs the owner's approval at cutover.
+GRANT SELECT (id, created_at, author_id, author_role, submitted_at, reviewed_by_id, reviewed_at, review_basis, review_note, code,
+              name, definition, status, version, change_reason),
+      INSERT (id, created_at, updated_at, author_id, author_role, submitted_at, reviewed_by_id, reviewed_at, review_basis,
+              review_note, code, name, definition, status, version, change_reason),
+      UPDATE (updated_at, name, definition, change_reason, status, submitted_at, reviewed_by_id, reviewed_at, review_basis,
+              review_note)
+  ON impact_outcome_area TO edify_activities_rw;
+GRANT SELECT (id, created_at, area_id, intervention),
+      INSERT (id, created_at, updated_at, intervention, note, area_id)
+  ON impact_outcome_area_domain TO edify_activities_rw;
+GRANT SELECT (id, author_id, author_role, submitted_at, reviewed_by_id, reviewed_at, review_basis, review_note, key, version, name,
+              level, unit, source, calculation, population, denominator, baseline_rule, frequency, disaggregation, limitations,
+              data_owner_role, country, status, effective_from, change_reason, outcome_area_id),
+      INSERT (id, created_at, updated_at, author_id, author_role, submitted_at, reviewed_by_id, reviewed_at, review_basis,
+              review_note, key, version, name, level, unit, source, calculation, population, denominator, baseline_rule, frequency,
+              disaggregation, limitations, data_owner_role, country, status, effective_from, change_reason, outcome_area_id),
+      UPDATE (updated_at, outcome_area_id, effective_from, change_reason, name, level, unit, source, calculation, population,
+              denominator, baseline_rule, frequency, disaggregation, limitations, data_owner_role, status, submitted_at,
+              reviewed_by_id, reviewed_at, review_basis, review_note)
+  ON impact_indicator_definition TO edify_activities_rw;
+GRANT SELECT (id, code, label, unit_of_measure, verification_method, follow_up_days, version, applicable_countries,
+              impact_indicators, required_evidence, active),
+      UPDATE (impact_indicators, required_evidence, verification_method, follow_up_days, measurement_profile_complete, version,
+              updated_at)
+  ON bt_loan_purpose TO edify_activities_rw;
+GRANT SELECT (id, name, email, active_role, roles, is_active, deleted_at) ON "user" TO edify_activities_rw;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'edify_ia_framework_owner') THEN
+    CREATE ROLE edify_ia_framework_owner NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOINHERIT;
+  END IF;
+END
+$$;
+GRANT USAGE ON SCHEMA public TO edify_ia_framework_owner;
+GRANT SELECT (area_id), DELETE ON impact_outcome_area_domain TO edify_ia_framework_owner;
+GRANT SELECT (id, status) ON impact_outcome_area TO edify_ia_framework_owner;
+CREATE SCHEMA IF NOT EXISTS gateway_ia_framework AUTHORIZATION edify_ia_framework_owner;
+REVOKE ALL ON SCHEMA gateway_ia_framework FROM PUBLIC;
+GRANT USAGE, CREATE ON SCHEMA gateway_ia_framework TO edify_ia_framework_owner;
+SET ROLE edify_ia_framework_owner;
+-- save_outcome_area's record.domains.all().delete(): one draft area's
+-- domains, before the edited ones are written.
+CREATE OR REPLACE FUNCTION gateway_ia_framework.clear_area_domains(p_area varchar) RETURNS integer
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  removed integer;
+BEGIN
+  DELETE FROM public.impact_outcome_area_domain d
+   WHERE d.area_id = p_area
+     AND EXISTS (SELECT 1 FROM public.impact_outcome_area a WHERE a.id = p_area AND a.status IN ('draft', 'returned'));
+  GET DIAGNOSTICS removed = ROW_COUNT;
+  RETURN removed;
+END
+$fn$;
+REVOKE ALL ON FUNCTION gateway_ia_framework.clear_area_domains(varchar) FROM PUBLIC;
+RESET ROLE;
+REVOKE CREATE ON SCHEMA gateway_ia_framework FROM edify_ia_framework_owner;
+GRANT USAGE ON SCHEMA gateway_ia_framework TO edify_activities_rw;
+GRANT EXECUTE ON FUNCTION gateway_ia_framework.clear_area_domains(varchar) TO edify_activities_rw;

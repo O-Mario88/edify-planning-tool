@@ -342,6 +342,141 @@
       "Published"
     ]
   ],
+  "saves": {
+    "indicator_text_fields": [
+      "population",
+      "denominator",
+      "baseline_rule",
+      "frequency",
+      "disaggregation",
+      "limitations",
+      "data_owner_role"
+    ],
+    "intervention_choices": [
+      [
+        "christlike_behaviour",
+        "Christlike Behaviour"
+      ],
+      [
+        "exposure_to_word_of_god",
+        "Exposure to the Word of God"
+      ],
+      [
+        "financial_health",
+        "Financial Health"
+      ],
+      [
+        "leadership",
+        "Leadership"
+      ],
+      [
+        "government_requirement",
+        "Government Requirements"
+      ],
+      [
+        "learning_environment",
+        "Learning Environment"
+      ],
+      [
+        "teaching_environment",
+        "Teacher's Environment"
+      ],
+      [
+        "enrolment",
+        "Enrolment"
+      ]
+    ],
+    "level_choices": [
+      [
+        "output",
+        "Output"
+      ],
+      [
+        "intermediate",
+        "Intermediate outcome"
+      ],
+      [
+        "outcome",
+        "Outcome"
+      ]
+    ],
+    "proposed_areas": [
+      {
+        "code": "spiritual-formation",
+        "definition": "Students and staff grow in Christ-like character and are regularly exposed to the Word of God in the life of the school. Read at school level through the SSA Christ-like Behaviour and Exposure to the Word of God domains, beside discipleship indicators and reviewed Most Significant Change stories.",
+        "interventions": [
+          "christlike_behaviour",
+          "exposure_to_word_of_god"
+        ],
+        "name": "Spiritual formation"
+      },
+      {
+        "code": "educational-quality",
+        "definition": "Learners are taught well, in an environment that supports learning, by a school that is well led. Read at school level through the SSA Learning Environment, Teaching Environment and Leadership domains, beside student learning results and EdTech use.",
+        "interventions": [
+          "learning_environment",
+          "teaching_environment",
+          "leadership"
+        ],
+        "name": "Educational quality"
+      },
+      {
+        "code": "sustainability",
+        "definition": "The school can keep serving its community: it is financially healthy, meets government requirements and holds or grows its enrolment. Read at school level through the SSA Financial Health, Government Requirements and Enrolment domains, beside lending impact evidence.",
+        "interventions": [
+          "financial_health",
+          "government_requirement",
+          "enrolment"
+        ],
+        "name": "Sustainability"
+      }
+    ],
+    "proposed_change_reason": "Proposed grouping of SSA domains (IA review, 2026-09-13).",
+    "review_bases": {
+      "cd_fallback": "Acknowledged by the Country Director",
+      "peer_ia": "Reviewed by a second IA officer"
+    },
+    "review_decisions": [
+      [
+        "approve",
+        "Approve"
+      ],
+      [
+        "return",
+        "Return with a note"
+      ]
+    ],
+    "source_choices": [
+      [
+        "ssa",
+        "School Self-Assessment"
+      ],
+      [
+        "learning_results",
+        "Student learning results"
+      ],
+      [
+        "discipleship",
+        "Discipleship indicators"
+      ],
+      [
+        "edtech",
+        "EdTech deployments and checks"
+      ],
+      [
+        "lending",
+        "Lending impact evidence"
+      ],
+      [
+        "activity",
+        "Verified activity records"
+      ],
+      [
+        "stories",
+        "Most Significant Change stories"
+      ]
+    ]
+  },
   "sources": {
     "activity": "Verified activity records",
     "discipleship": "Discipleship indicators",

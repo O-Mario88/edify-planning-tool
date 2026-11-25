@@ -113,9 +113,13 @@ const pathPageDrawer = "/api/mobile/v1/drawer"
 
 // drawerPath checks a drawer's web path and query and returns them as one
 // plain path the feed reads.
+// drawerPathShape is pagePath allowing a drawer's deeper paths: a record's
+// step ("/ia/framework/area/<id>/submit") runs to five segments or six.
+var drawerPathShape = regexp.MustCompile(`^(/[a-z0-9][a-z0-9_-]{0,63}){1,6}/?$`)
+
 func drawerPath(ctx context.Context, raw string) (string, error) {
 	parsed, err := url.Parse(raw)
-	if err != nil || parsed.Scheme != "" || parsed.Host != "" || !pagePath.MatchString(parsed.Path) {
+	if err != nil || parsed.Scheme != "" || parsed.Host != "" || !drawerPathShape.MatchString(parsed.Path) {
 		return "", apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This drawer cannot be opened.")
 	}
 	given := map[string]string{}
@@ -188,6 +192,12 @@ func (s *Service) SaveDrawer(
 				}), nil
 			}
 		}
+	}
+	if answer, served, err := s.frameworkSaveInGo(ctx, forwarded); served {
+		if err != nil {
+			return nil, err
+		}
+		return connect.NewResponse(answer), nil
 	}
 	if answer, served, err := s.followUpSaveInGo(ctx, forwarded); served {
 		if err != nil {
