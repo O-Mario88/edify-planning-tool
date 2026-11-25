@@ -485,7 +485,9 @@ func coreTrainingCells(r *planRow) []*screensv1.PageCell {
 	}
 	return []*screensv1.PageCell{
 		{Text: orDefault(r.schoolID.value, dash)}, name,
-		{Text: joined(orDefault(r.trainingNumber, dash), r.coreProgress)},
+		// The number's span and the progress's run together as the feed
+		// reads them ("T10/8 Completed").
+		{Text: orDefault(r.trainingNumber, dash) + r.coreProgress},
 		{Text: orDefault(r.trainingName, "Not yet named")}, district, {Text: orDefault(r.districtType, dash)},
 		{Text: day(plannedOn, "Unscheduled") + r.dayOffFlag()}, {Text: day(r.completedOn, dash)},
 		{Text: r.focus, Tone: "primary", Badge: true}, {Text: participants}, {Text: r.owner},
