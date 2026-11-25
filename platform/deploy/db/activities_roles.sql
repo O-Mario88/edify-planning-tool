@@ -944,7 +944,7 @@ GRANT SELECT (id, author_id, cceo_staff_id, cceo_user_id, kind, subject, strengt
               debrief_id),
       UPDATE (kind, held_on, fy, country, subject, strengths, growth_areas, agreed_actions, follow_up_due, activity_id,
               debrief_id, rating_biblical_integration, rating_need_alignment, rating_facilitation, rating_participation,
-              rating_application, shared_at, follow_up_done_at, follow_up_note, updated_at)
+              rating_application, shared_at, follow_up_done_at, follow_up_note, acknowledged_at, cceo_response, updated_at)
   ON cce_cceo_coaching TO edify_activities_rw;
 GRANT SELECT (id, submitted_by_user_id, deleted_at, date, title) ON daily_debrief TO edify_activities_rw;
 GRANT SELECT (id, responsible_staff_id, monitored_by_staff_id, deleted_at, planned_date, status, activity_name_snapshot,

@@ -31,6 +31,8 @@ type CoachingDrawers interface {
 	UpdateCoaching(ctx context.Context, p auth.Principal, id string, data map[string]string) (ccelead.Record, error)
 	ShareCoaching(ctx context.Context, p auth.Principal, id string) (ccelead.Record, error)
 	CompleteFollowUp(ctx context.Context, p auth.Principal, id, note string) error
+	OfficerVisible(ctx context.Context, p auth.Principal, id string) (*ccelead.Record, error)
+	AcknowledgeCoaching(ctx context.Context, p auth.Principal, id, response string) error
 }
 
 // WithCoachingDrawers makes Team Coaching's drawers Go's.
@@ -46,6 +48,7 @@ var (
 	coachingOne      = regexp.MustCompile(`^/team/coaching/([A-Za-z0-9]{1,30})$`)
 	coachingShare    = regexp.MustCompile(`^/team/coaching/([A-Za-z0-9]{1,30})/share$`)
 	coachingFollowUp = regexp.MustCompile(`^/team/coaching/([A-Za-z0-9]{1,30})/follow-up$`)
+	myCoaching       = regexp.MustCompile(`^/my-coaching/([A-Za-z0-9]{1,30})$`)
 )
 
 // formSpec is hr_programme_views._drawer's context.
@@ -285,6 +288,8 @@ func (s *Service) coachingDrawerInGo(ctx context.Context, p auth.Principal, rawP
 		d, err = s.followUpCoachingDrawer(ctx, p, coachingFollowUp.FindStringSubmatch(path)[1], "")
 	case coachingOne.MatchString(path):
 		d, err = s.oneCoachingDrawer(ctx, p, coachingOne.FindStringSubmatch(path)[1], "")
+	case myCoaching.MatchString(path):
+		d, err = s.myCoachingDrawer(ctx, p, myCoaching.FindStringSubmatch(path)[1])
 	default:
 		return nil, false, nil
 	}
@@ -511,6 +516,13 @@ func (s *Service) coachingSaveInGo(ctx context.Context, message *screensv1.SaveD
 			})
 		}
 		return saved("Follow-up closed.")
+	case myCoaching.MatchString(path):
+		id := myCoaching.FindStringSubmatch(path)[1]
+		if err := s.coaching.AcknowledgeCoaching(ctx, p, id, values["response"]); err != nil {
+			return refusedWith(err, nil)
+		}
+		return &screensv1.SaveDrawerResponse{Saved: true, Message: "Coaching acknowledged. Your Programme Lead has been told.",
+			Redirect: "/my-coaching"}, true, nil
 	case coachingOne.MatchString(path) && !coachingNew.MatchString(path):
 		id := coachingOne.FindStringSubmatch(path)[1]
 		redraw := func(words string) (*screensv1.PageDrawer, error) { return s.oneCoachingDrawer(ctx, p, id, words) }
@@ -527,4 +539,28 @@ func (s *Service) coachingSaveInGo(ctx context.Context, message *screensv1.SaveD
 		return saved("Coaching saved.")
 	}
 	return nil, false, nil
+}
+
+// myCoachingDrawer is my_coaching_drawer: coaching shared with the officer,
+// with the response that acknowledges it while it is unanswered.
+func (s *Service) myCoachingDrawer(ctx context.Context, p auth.Principal, id string) (*screensv1.PageDrawer, error) {
+	r, err := s.coaching.OfficerVisible(ctx, p, id)
+	if err != nil {
+		return nil, err
+	}
+	if r == nil {
+		return formDrawer(formSpec{title: "Coaching", subtitle: "My performance", empty: "This coaching was not shared with you."}), nil
+	}
+	officer, author := s.coachingNames(ctx, r)
+	subtitle := "Coaching"
+	if author != "" {
+		subtitle = "From " + author
+	}
+	facts := recordFacts(r, officer, author, true)
+	if r.Acknowledged != nil {
+		return formDrawer(formSpec{title: r.Subject, subtitle: subtitle, facts: facts, empty: "Acknowledged."}), nil
+	}
+	return formDrawer(formSpec{title: r.Subject, subtitle: subtitle, facts: facts, action: true, submit: "Acknowledge coaching",
+		fields: []*screensv1.DrawerField{{Name: "response", Label: "Your response", Kind: "textarea", Required: true,
+			Placeholder: "What you will keep doing, what you will change, and by when"}}}), nil
 }

@@ -681,3 +681,75 @@ WHERE id = $1`, id, now, note); err != nil {
 		return coachingAudit(ctx, tx, "cce.coaching_follow_up_closed", id, p, nil, now)
 	})
 }
+
+// OfficerVisible is coaching_visible_to for the officer: coaching shared
+// with them, by either id.
+func (c Coaching) OfficerVisible(ctx context.Context, p auth.Principal, id string) (*Record, error) {
+	if p.ActiveRole != cceo {
+		return nil, nil
+	}
+	r, err := scanRecord(c.DB.QueryRow(ctx, recordSelect+` WHERE id = $1 AND shared_at IS NOT NULL
+  AND (cceo_user_id = $2 OR ($3 <> '' AND cceo_staff_id = $3))`, id, p.UserID, p.StaffProfileID))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("ccelead: reading the coaching shared with the officer: %w", err)
+	}
+	return &r, nil
+}
+
+// AcknowledgeCoaching is acknowledge_coaching: the officer answers coaching
+// shared with them; their lead is told and the "shared" notice closes.
+func (c Coaching) AcknowledgeCoaching(ctx context.Context, p auth.Principal, id, response string) error {
+	if p.ActiveRole != cceo {
+		return forbidden("The officer the coaching was shared with acknowledges it.")
+	}
+	response = strings.TrimSpace(response)
+	if response == "" {
+		return badRequest("Say what you will do with this coaching: what you will keep, change or try.")
+	}
+	now := c.now().UTC().Truncate(time.Microsecond)
+	var r Record
+	err := c.write(ctx, func(tx pgx.Tx) error {
+		var err error
+		r, err = scanRecord(tx.QueryRow(ctx, recordSelect+` WHERE id = $1 AND shared_at IS NOT NULL
+  AND (cceo_user_id = $2 OR ($3 <> '' AND cceo_staff_id = $3)) FOR UPDATE`, id, p.UserID, p.StaffProfileID))
+		if errors.Is(err, pgx.ErrNoRows) {
+			return missing("Coaching not found.")
+		}
+		if err != nil {
+			return err
+		}
+		if r.Acknowledged != nil {
+			return badRequest("You already acknowledged this coaching.")
+		}
+		if _, err := tx.Exec(ctx, `UPDATE cce_cceo_coaching SET acknowledged_at = $2, cceo_response = $3, updated_at = $2 WHERE id = $1`,
+			id, now, response); err != nil {
+			return fmt.Errorf("ccelead: acknowledging the coaching: %w", err)
+		}
+		return coachingAudit(ctx, tx, "cce.coaching_acknowledged", id, p, nil, now)
+	})
+	if err != nil {
+		return err
+	}
+	name := p.Name
+	if name == "" {
+		name = "Your Programme Lead"
+	}
+	if err := activities.SendNotices(ctx, c.DB, c.Push, nil, c.Logger, now, r.ID, "", activities.Origin{}, activities.Notice{
+		Title: name + " acknowledged your coaching", Body: cutRunes(r.Subject+". "+response, 500),
+		Event: "cceo_coaching_acknowledged", Category: "performance", ContextType: "CceoCoaching", Priority: "normal",
+	}, []activities.NoticeTo{{UserID: r.Author, Route: "/team/coaching?open=" + r.ID, Label: "Open Coaching Log"}}); err != nil && c.Logger != nil {
+		c.Logger.WarnContext(ctx, "ccelead: the lead was not told of the acknowledgement", "record", r.ID, "err", err)
+	}
+	// resolve_condition(EVENT_SHARED, …, recipient_ids=[officer]): the shared
+	// notice only ever goes to the officer.
+	if err := c.write(ctx, func(tx pgx.Tx) error {
+		_, err := tx.Exec(ctx, `SELECT gateway_notifications.resolve_condition($1, 'CceoCoaching', $2, $3)`, eventShared, r.ID, now)
+		return err
+	}); err != nil && c.Logger != nil {
+		c.Logger.WarnContext(ctx, "ccelead: the shared notice was not closed", "record", r.ID, "err", err)
+	}
+	return nil
+}
