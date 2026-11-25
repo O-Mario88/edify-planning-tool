@@ -29,22 +29,39 @@ func cexRecordsSpec(key string) (cpoTableSpec, bool) {
 }
 
 // cexKeeps is _keeps: the records a table lists, by the test its card
-// counts with (STAGE_FILTERS), or the visits on the plan.
+// counts with, or the visits on the plan.
 func cexKeeps(key string) func(cexRecord) bool {
-	switch key {
-	case "visits":
+	if key == "visits" {
 		planned := rules.CountryOversight.PlannedStates
 		return func(r cexRecord) bool { return r.counted() && slices.Contains(planned, r.status) }
+	}
+	return cexStageFilter(key)
+}
+
+// cexStageFilter is STAGE_FILTERS[stage], the live work ("due") for a stage
+// it lacks.
+func cexStageFilter(stage string) func(cexRecord) bool {
+	switch stage {
 	case "started":
 		return func(r cexRecord) bool { return r.started && !r.cancelled }
+	case "not_started":
+		return func(r cexRecord) bool { return !r.started && !r.cancelled }
 	case "executed":
 		return func(r cexRecord) bool { return r.executed }
+	case "pl_review", "ia_review":
+		return func(r cexRecord) bool { return r.stage == stage }
 	case "verified":
 		return func(r cexRecord) bool { return r.verified }
 	case "closed":
 		return func(r cexRecord) bool { return r.closed }
+	case "returned":
+		return func(r cexRecord) bool { return r.returned }
 	case "overdue":
 		return func(r cexRecord) bool { return r.overdue != "" }
+	case "finance":
+		return func(r cexRecord) bool { return r.financeOpen }
+	case "cancelled":
+		return func(r cexRecord) bool { return r.cancelled }
 	}
 	return func(r cexRecord) bool { return !r.cancelled }
 }

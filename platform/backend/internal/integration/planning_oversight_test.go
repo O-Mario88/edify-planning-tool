@@ -4,6 +4,7 @@ package integration
 
 import (
 	"context"
+	"net/http"
 	"strconv"
 	"strings"
 	"testing"
@@ -13,6 +14,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1/screensv1connect"
 )
 
 const (
@@ -462,5 +464,34 @@ func TestCountryExecutionRecordsAreGos(t *testing.T) {
 	cceo := sessionOf(t, "cceo@edify.org", seededPassword).GetAccessToken()
 	if _, err := pageOf(cceo, countryPlanningOversight+"execution/records/due", nil); connect.CodeOf(err) != connect.CodeNotFound {
 		t.Fatalf("a CCEO: %v, want not available", err)
+	}
+}
+
+// The records behind an execution figure open in a drawer Go draws: the
+// line with the period and count and the table of activities, behind the
+// page's gate.
+func TestCountryExecutionDrawerIsGos(t *testing.T) {
+	ctx := context.Background()
+	borrowAccount(t, "cd@edify.org")
+	director := sessionOf(t, "cd@edify.org", seededPassword).GetAccessToken()
+	drawers := screensv1connect.NewPageDrawerServiceClient(http.DefaultClient, baseURL)
+	path := "/country-planning-oversight/execution/drawer?kind=activities&stage=due&view=execution&fy=2026&period=fy"
+	answer, err := drawers.GetDrawer(ctx, authed(&screensv1.GetDrawerRequest{Path: path}, director))
+	if err != nil {
+		t.Fatalf("the drawer: %v", err)
+	}
+	d := answer.Msg.GetDrawer()
+	items := d.GetItems()
+	if d.GetTitle() != "Activities planned" || len(items) < 2 || !strings.HasSuffix(items[0].GetText(), "activities") && !strings.HasSuffix(items[0].GetText(), "activity") {
+		t.Fatalf("drawer %v", d)
+	}
+	if items[len(items)-1].GetBlock().GetTable() == nil && items[len(items)-1].GetBlock().GetPager() == nil {
+		t.Fatalf("no table of activities: %v", items)
+	}
+	borrowAccount(t, "cceo@edify.org")
+	cceo := sessionOf(t, "cceo@edify.org", seededPassword).GetAccessToken()
+	refused, err := drawers.GetDrawer(ctx, authed(&screensv1.GetDrawerRequest{Path: path}, cceo))
+	if err != nil || !strings.HasPrefix(refused.Msg.GetRefusal(), "Access Denied") {
+		t.Fatalf("a CCEO: %v %v, want refused", refused, err)
 	}
 }

@@ -275,11 +275,35 @@ func (s *cexSnapshot) activityTableNodes(ctx context.Context, db schooldirectory
 	if !reader.seesSchools {
 		return []any{el("p", "cpo-muted cxo-pad", "Activity rows are not shown for your role; the figures above include every activity.")}, nil
 	}
+	picked := s.pickActivities(cexActivityPick{stage: "due"})
+	return s.activityRowsNodes(ctx, db, picked, asked, func(total, page, pages int) *node {
+		return s.pagerNodes("activity", total, page, pages)
+	})
+}
+
+// cexActivityPick is what activity_rows narrows the records to.
+type cexActivityPick struct{ stage, owner, lead, partner, blocker, age string }
+
+// pickActivities is activity_rows' selection: the stage's records (the live
+// work when none is named), narrowed, the oldest past-due first.
+func (s *cexSnapshot) pickActivities(k cexActivityPick) []cexRecord {
+	test := cexStageFilter(k.stage)
 	picked := []cexRecord{}
 	for _, r := range s.records() {
-		if !r.cancelled {
-			picked = append(picked, r)
+		if !test(r) || (k.owner != "" && r.ownerKey != k.owner) || (k.partner != "" && r.partnerKey != k.partner) ||
+			(k.blocker != "" && r.owner != k.blocker) || (k.age != "" && cexAgeGroup(r.age) != k.age) {
+			continue
 		}
+		if k.lead != "" {
+			lead := rules.CountryOversight.NoLead[0]
+			if o := s.data.owners[r.ownerKey]; o != nil {
+				lead = o.leadKey
+			}
+			if lead != k.lead {
+				continue
+			}
+		}
+		picked = append(picked, r)
 	}
 	sort.SliceStable(picked, func(i, j int) bool {
 		a, b := picked[i], picked[j]
@@ -298,6 +322,13 @@ func (s *cexSnapshot) activityTableNodes(ctx context.Context, db schooldirectory
 		}
 		return a.id < b.id
 	})
+	return picked
+}
+
+// activityRowsNodes is _activity_rows.html: a page of the records and the
+// pager its target draws.
+func (s *cexSnapshot) activityRowsNodes(ctx context.Context, db schooldirectory.Querier, picked []cexRecord, asked int,
+	pager func(total, page, pages int) *node) ([]any, error) {
 	page, pages, start, end := pageWindow(len(picked), 50, asked)
 	rows := picked[start:end]
 	schoolIDs, clusterIDs := []string{}, []string{}
@@ -397,7 +428,7 @@ func (s *cexSnapshot) activityTableNodes(ctx context.Context, db schooldirectory
 	}
 	heads := []string{"School ID", "School / Cluster", "Owner", "Channel", "Due", "Stage", "Days Overdue", "Waiting On", "Last Action"}
 	out := []any{el("div", "cpo-tscroll", el("table", "cpo-table", headRow("Activity", heads), body))}
-	if p := s.pagerNodes("activity", len(picked), page, pages); p != nil {
+	if p := pager(len(picked), page, pages); p != nil {
 		out = append(out, p)
 	}
 	return out, nil

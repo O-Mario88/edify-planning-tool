@@ -77,3 +77,20 @@ func TestCEXPagerReadsAsScopedPager(t *testing.T) {
 		t.Errorf("pages %v", pages)
 	}
 }
+
+// The drawer's pager pages the drawer's own list, the tab's selection and
+// the narrowing carried.
+func TestCEXDrawerPagerCarriesTheList(t *testing.T) {
+	s := &cexSnapshot{filters: cexFilters{fy: "2027", period: "fy"}}
+	list := s.listQuery(cexActivityPick{stage: "overdue", age: "age_15"})
+	if list != "view=execution&fy=2027&period=fy&kind=activities&stage=overdue&age=age_15" {
+		t.Fatalf("list %q", list)
+	}
+	if cexDrawerPager(list, 30, 1, 1) != nil {
+		t.Fatal("a single page draws no pager")
+	}
+	pages := walk(el("div", "", cexDrawerPager(list, 120, 1, 3)))[0].GetPager().GetPages()
+	if len(pages) != 2 || pages[1].GetHref() != cexBase+"/drawer?"+list+"&page=2" {
+		t.Errorf("pages %v", pages)
+	}
+}
