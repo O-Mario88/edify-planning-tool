@@ -20,6 +20,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/apierr"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pageaccess"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningmonitor"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
@@ -139,4 +140,26 @@ func (s *Service) executionFollowUpSaveInGo(ctx context.Context, message *screen
 		return &screensv1.SaveDrawerResponse{Saved: true, Message: sent}, true, nil
 	}
 	return nil, false, nil
+}
+
+// countryOversightDrawerInGo is Country Planning Oversight's drawer_view
+// for the kinds Go draws.
+func (s *Service) countryOversightDrawerInGo(ctx context.Context, p auth.Principal, rawPath string) (*screensv1.GetDrawerResponse, bool, error) {
+	path, rawQuery, _ := strings.Cut(rawPath, "?")
+	if strings.TrimSuffix(path, "/") != planningmonitor.CPODrawerPath || s.db == nil || p.InActingAppointment {
+		return nil, false, nil
+	}
+	if !pageaccess.CanOpen(p.ActiveRole, false, planningmonitor.CPODrawerPath) {
+		return &screensv1.GetDrawerResponse{Refusal: executionDrawerDenied}, true, nil
+	}
+	d, served, err := planningmonitor.CountryOversightDrawer(ctx, s.db, p, followUpValues(rawQuery, nil), s.clock())
+	switch {
+	case !served:
+		return nil, false, nil
+	case errors.Is(err, planningmonitor.ErrCPODrawerNotFound):
+		return nil, true, apierr.New(ctx, connect.CodeNotFound, apierr.ReasonNotFound, "This drawer is not available.")
+	case err != nil:
+		return nil, true, apierr.Internal(ctx, s.logger, err)
+	}
+	return &screensv1.GetDrawerResponse{Drawer: d}, true, nil
 }

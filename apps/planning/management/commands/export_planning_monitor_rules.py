@@ -461,6 +461,14 @@ def _country_oversight_page() -> dict:
             key: render_metric(key, MetricValue.ratio(1, 1)).as_dict()["label"]
             for key in service.KPI_TABLES
         },
+        # The card's drawer (drawer_kpi.html): what the card counts, the gap
+        # it opens on and that gap's words.
+        "kpi_definitions": {
+            key: render_metric(key, MetricValue.ratio(1, 1)).as_dict()["definition"]
+            for key in service.KPI_TABLES
+        },
+        "kpi_gaps": dict(service.KPI_GAPS),
+        "gap_figures": dict(service.GAP_FIGURES),
         "type_views": [list(v) for v in service.TYPE_VIEWS],
         "table_views": [list(v) for v in service.TABLE_VIEWS],
         "table_columns": [list(c) for c in service.TABLE_COLUMNS],

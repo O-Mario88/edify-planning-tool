@@ -250,10 +250,9 @@ func (snap *cpoSnapshot) headcount() (int, int) {
 	return leads, cceos
 }
 
-// cpoCards is service.kpis as workspace.html's cards read: each card's
-// label, and its figures and lines after it.
-func cpoCards(snap *cpoSnapshot) *screensv1.PageBlock {
-	page := rules.CountryOversight.Page
+// cpoCardList is service.kpis: each card's figures, headline, period note,
+// extras and further lines.
+func cpoCardList(snap *cpoSnapshot) []cpoCard {
 	t := cpoTally(snap.tree.country)
 	w := snap.tree.window
 	phased, week := w.hasPhasedTarget(), w.period == "week"
@@ -271,13 +270,6 @@ func cpoCards(snap *cpoSnapshot) *screensv1.PageBlock {
 		trainingPart = t.n("cum_training")
 	}
 	ceilings := rules.CountryOversight.StaffCeilings
-	type card struct {
-		key         string
-		part, whole int
-		headline    [2]string
-		note        string
-		extras      []string
-	}
 	keep := func(xs ...string) []string {
 		out := []string{}
 		for _, x := range xs {
@@ -301,25 +293,45 @@ func cpoCards(snap *cpoSnapshot) *screensv1.PageBlock {
 	if phased || week {
 		meetingNote = ""
 	}
-	cards := []card{
+	cards := []cpoCard{
 		{"cpo_staff_visit_planning", t.n("p_visits"), t.n("target"), [2]string{cpoFmt(t.planRemaining()), "visits still to plan"}, note,
 			keep(cpoFmt(cceos) + " CCEOs × " + strconv.Itoa(ceilings[rules.CCEORole]) + " + " + cpoFmt(leads) + " Leads × " +
-				strconv.Itoa(ceilings[rules.ProgramLeadRole]))},
+				strconv.Itoa(ceilings[rules.ProgramLeadRole])),
+			keep("Follow up "+cpoFmt(t.n("p_follow_up"))+" · In-school Training "+cpoFmt(t.n("p_in_school"))+" · SSA Support "+
+				cpoFmt(t.n("p_ssa")), when(t.n("p_outreach") > 0, cpoFmt(t.n("p_outreach"))+" donor, story and social visits not counted"))},
 		{"cpo_partner_planning", partnerPart, t.n("partner_expected"), [2]string{cpoFmt(t.n("pa_schools")), "Schools assigned to Partners"}, note,
 			keep(cpoFmt(t.n("core_partner_slots"))+" Core + "+cpoFmt(t.n("client_partner_expected"))+" beyond staff capacity",
-				cpoFmt(t.n("pa_work"))+" assigned · "+cpoFmt(t.partnerWaiting())+" awaiting the Partner's date")},
+				cpoFmt(t.n("pa_work"))+" assigned · "+cpoFmt(t.partnerWaiting())+" awaiting the Partner's date"),
+			keep(cpoFmt(t.n("partner_assigned")) + " of the target's visits are in a Partner's hands · " + cpoFmt(t.n("pp_work")) + " of " +
+				cpoFmt(t.n("pa_work")) + " pieces of work assigned are dated by the Partner")},
 		{"cpo_total_visit_coverage", visitPart, t.n("visit_slots"), [2]string{cpoFmt(t.n("any_visit")), "Schools with a visit planned"}, note,
 			keep(cpoFmt(t.n("unplanned"))+" schools not yet planned",
 				when(t.partnerToPlan() > 0, cpoFmt(t.partnerToPlan())+" awaiting a Partner's date"),
 				cpoFmt(max(0, t.n("visit_slots")-visitPart))+" visits remaining",
-				when(t.n("duplicates") > 0, cpoFmt(t.n("duplicates"))+" planned twice"))},
+				when(t.n("duplicates") > 0, cpoFmt(t.n("duplicates"))+" planned twice")), nil},
 		{"cpo_training_planning", trainingPart, t.n("training_slots"), [2]string{cpoFmt(t.n("any_training")), "Schools with training planned"}, note,
-			keep(cpoFmt(t.n("no_training"))+" schools not yet planned", cpoFmt(t.n("training_gap"))+" slots remaining")},
-		{"cpo_cluster_membership", t.n("clustered"), t.n("schools"), [2]string{cpoFmt(t.n("unclustered")), "Unclustered schools"}, "", nil},
+			keep(cpoFmt(t.n("no_training"))+" schools not yet planned", cpoFmt(t.n("training_gap"))+" slots remaining"), nil},
+		{"cpo_cluster_membership", t.n("clustered"), t.n("schools"), [2]string{cpoFmt(t.n("unclustered")), "Unclustered schools"}, "", nil, nil},
 		{"cpo_cluster_meeting_planning", t.n("meeting_covered_clustered"), t.n("clustered"),
 			[2]string{cpoFmt(t.n("p_meetings")), "Cluster meetings planned by staff"}, meetingNote,
-			keep(cpoFmt(t.n("clustered_no_meeting")) + " clustered schools on no planned meeting")},
+			keep(cpoFmt(t.n("clustered_no_meeting")) + " clustered schools on no planned meeting"), nil},
 	}
+	return cards
+}
+
+// cpoCard is one planning card (kpis): its figures and the lines under it.
+type cpoCard struct {
+	key          string
+	part, whole  int
+	headline     [2]string
+	note         string
+	extras, more []string
+}
+
+// cpoCards is the six planning cards as the feed reads the page's strip.
+func cpoCards(snap *cpoSnapshot) *screensv1.PageBlock {
+	page := rules.CountryOversight.Page
+	cards := cpoCardList(snap)
 	q := snap.filters.query(nil)
 	links := &screensv1.PageLinks{}
 	for _, c := range cards {

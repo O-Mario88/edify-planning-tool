@@ -2330,6 +2330,36 @@
         "waiting_for_resolution": "Waiting for Resolution",
         "waiting_for_team_member": "Waiting for Team Member"
       },
+      "gap_figures": {
+        "awaiting_partner": "Assigned, awaiting the Partner's schedule",
+        "clustered_no_meeting": "Clustered, on no planned meeting",
+        "deficit": "Core staff slots beyond capacity",
+        "duplicates": "Planned twice",
+        "no_training": "No training planned",
+        "no_visit": "No visit plan",
+        "partner_gap": "Partner slots nobody holds",
+        "staff_gap": "Staff visit slots with no plan",
+        "training_gap": "Training slots not planned",
+        "unallocated": "Visit slots unallocated",
+        "unclustered": "Not in an active cluster",
+        "with_partner": "In a Partner's hands"
+      },
+      "kpi_definitions": {
+        "cpo_cluster_meeting_planning": "Of the schools in an active cluster, those on the planned roster of a dated cluster meeting. the number of meetings staff have planned is shown beside it. Membership alone never counts as a planned meeting.",
+        "cpo_cluster_membership": "Eligible schools with an active cluster, against every eligible school. A school with more than one cluster record counts once.",
+        "cpo_partner_planning": "Visits Partners have dated themselves, against the Partner's target: two visits at each Core school and one at each Client, Core Trained and Core Graduate school beyond staff capacity (280 a Programme Lead, 560 a CCEO). Staff assign a school and the Partner sets the date: nothing counts as Partner planned until a Partner does, and a day staff chose for a Partner is assigned, not planned.",
+        "cpo_staff_visit_planning": "Follow up and In-school Training visits staff have planned, counted for the person who planned them, against the visits their roles plan in a year: 560 for each CCEO and 280 for each Programme Lead. SSA Support (data collection), donor, story, social and invitation visits are not counted.",
+        "cpo_total_visit_coverage": "Visit slots planned by staff or dated by a Partner against what the schools need in the year: four per Core school (two staff, two Partner) and one per Client, Core Trained and Core Graduate school. Champion schools are outside it. A slot counts once, however many plans land on it.",
+        "cpo_training_planning": "Training slots with a dated training planned against what the schools need: four per Core school (two staff, two Partner) and one per Client, Core Trained and Core Graduate school. Champion schools take none. A cluster session fills one slot for each school on its planned roster, never for the rest of the cluster."
+      },
+      "kpi_gaps": {
+        "cpo_cluster_meeting_planning": "clustered_no_meeting",
+        "cpo_cluster_membership": "unclustered",
+        "cpo_partner_planning": "with_partner",
+        "cpo_staff_visit_planning": "staff_gap",
+        "cpo_total_visit_coverage": "no_visit",
+        "cpo_training_planning": "training_gap"
+      },
       "kpi_labels": {
         "cpo_cluster_meeting_planning": "Cluster Meeting Planning",
         "cpo_cluster_membership": "Cluster Membership",

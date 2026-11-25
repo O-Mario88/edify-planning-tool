@@ -39,8 +39,13 @@ type cpoRules struct {
 	PhasedFields                []string            `json:"phased_fields"`
 	TypeFields                  map[string]string   `json:"type_fields"`
 	Page                        struct {
-		KPITables      map[string]string `json:"kpi_tables"`
-		KPILabels      map[string]string `json:"kpi_labels"`
+		KPITables map[string]string `json:"kpi_tables"`
+		KPILabels map[string]string `json:"kpi_labels"`
+		// The card's drawer: what it counts, the gap it opens on, the gap's
+		// words.
+		KPIDefinitions map[string]string `json:"kpi_definitions"`
+		KPIGaps        map[string]string `json:"kpi_gaps"`
+		GapFigures     map[string]string `json:"gap_figures"`
 		TypeViews      [][2]string       `json:"type_views"`
 		TableViews     [][2]string       `json:"table_views"`
 		TableColumns   [][3]string       `json:"table_columns"`
