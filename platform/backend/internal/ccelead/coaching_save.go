@@ -464,6 +464,19 @@ func (c Coaching) write(ctx context.Context, fn func(pgx.Tx) error) error {
 	return tx.Commit(ctx)
 }
 
+// coachingAuditAs is services._audit for another record kind.
+func coachingAuditAs(ctx context.Context, tx pgx.Tx, action, kind, id string, p auth.Principal, payload map[string]any, now time.Time) error {
+	if payload == nil {
+		payload = map[string]any{}
+	}
+	_, err := audit.Append(ctx, tx, audit.Entry{Action: action, SubjectKind: audit.Text(kind), SubjectID: audit.Text(id),
+		ActorID: audit.Text(p.UserID), ActorRole: audit.Text(p.ActiveRole), Success: true, Payload: payload}, now)
+	if err != nil {
+		return fmt.Errorf("ccelead: auditing %s: %w", action, err)
+	}
+	return nil
+}
+
 func coachingAudit(ctx context.Context, tx pgx.Tx, action, id string, p auth.Principal, payload map[string]any, now time.Time) error {
 	if payload == nil {
 		payload = map[string]any{}

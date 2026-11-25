@@ -962,3 +962,40 @@ GRANT SELECT (id, created_at, subject_id, assignee_id, created_by_id, route, per
       UPDATE (status, history, updated_at, resolved_at, resolved_by_id, resolution)
   ON staff_usage_follow_up TO edify_activities_rw;
 GRANT SELECT (id, name, email, is_active, roles, deleted_at) ON "user" TO edify_activities_rw;
+
+-- ── The Regional Lead's engagements and monthly reports (apps.cce_leadership.services) ──
+-- Engagements recorded, corrected until shared, shared and acknowledged; an
+-- acknowledged observation passed to the officer as coaching; monthly
+-- reports started, written, submitted and reviewed. Nothing removed.
+GRANT SELECT (id, created_at, author_id, kind, held_on, fy, country, program_lead_ids, subject, notes, agreed_actions, follow_up_due,
+              rating_biblical_integration, rating_need_alignment, rating_facilitation, rating_participation, rating_application,
+              recommendation, feedback, feedback_shared_at, acknowledged_at, acknowledged_by_id, lead_response, activity_id),
+      INSERT (id, created_at, updated_at, author_id, kind, held_on, fy, country, program_lead_ids, subject, notes, agreed_actions,
+              follow_up_due, rating_biblical_integration, rating_need_alignment, rating_facilitation, rating_participation,
+              rating_application, recommendation, feedback, lead_response, activity_id),
+      UPDATE (updated_at, kind, held_on, fy, country, program_lead_ids, subject, notes, agreed_actions, follow_up_due,
+              rating_biblical_integration, rating_need_alignment, rating_facilitation, rating_participation, rating_application,
+              recommendation, feedback, activity_id, feedback_shared_at, acknowledged_at, acknowledged_by_id, lead_response)
+  ON cce_regional_engagement TO edify_activities_rw;
+GRANT SELECT (id, author_id, period, fy, countries, status, executive_summary, training_programmes, cce_impact,
+              curriculum_development, programme_initiatives, partnerships, support_needed, metrics, submitted_at, reviewed_by_id,
+              reviewed_at, review_note),
+      INSERT (id, created_at, updated_at, author_id, period, fy, countries, status, executive_summary, training_programmes,
+              cce_impact, curriculum_development, programme_initiatives, partnerships, support_needed, metrics, submitted_at,
+              reviewed_by_id, reviewed_at, review_note),
+      UPDATE (updated_at, countries, status, executive_summary, training_programmes, cce_impact, curriculum_development,
+              programme_initiatives, partnerships, support_needed, metrics, submitted_at, reviewed_by_id, reviewed_at, review_note)
+  ON cce_regional_report TO edify_activities_rw;
+GRANT SELECT (source_engagement_id), INSERT (source_engagement_id, shared_at) ON cce_cceo_coaching TO edify_activities_rw;
+GRANT SELECT (id, activity_type, planned_date, status, deleted_at, school_id, cluster_id, activity_name_snapshot, responsible_staff_id,
+              monitored_by_staff_id, delivery_type, assigned_partner_id, teachers_attended, leaders_attended, fy, ssa_alignment)
+  ON activity TO edify_activities_rw;
+GRANT SELECT (id, name, region_id) ON school TO edify_activities_rw;
+GRANT SELECT (id, country) ON region TO edify_activities_rw;
+GRANT SELECT (id, name, district_id, region_id) ON cluster TO edify_activities_rw;
+GRANT SELECT (id, region_id) ON district TO edify_activities_rw;
+GRANT SELECT (id, name) ON partner TO edify_activities_rw;
+GRANT SELECT (id, school_id, deleted_at, verification_status, date_of_ssa) ON ssa_record TO edify_activities_rw;
+GRANT SELECT (supervisor_id, supervisee_id) ON staff_supervisor_assignment TO edify_activities_rw;
+GRANT SELECT (id, staff_id, region_id) ON staff_geography_assignment TO edify_activities_rw;
+GRANT SELECT (id, status, roles, deleted_at) ON "user" TO edify_activities_rw;

@@ -184,9 +184,44 @@ def rules() -> dict:
             "quarter_due_soon_days": cadence.QUARTER_DUE_SOON_DAYS,
             "annual_window_opens_month": cadence.ANNUAL_WINDOW_OPENS_MONTH,
         },
+        # The drawers and saves (cce_leadership_views, services): the
+        # observation rubric with its hints and scale, the report's written
+        # sections, the activities a lead may observe and the ones the month's
+        # figures count.
+        "saves": saves(),
         "helper_figure_chars": HELPER_FIGURE_CHARS,
         "page_size": TABLE_PAGE_SIZE,
         "query_keys_not_passed": sorted(NOT_PASSED),
+    }
+
+
+def saves() -> dict:
+    from apps.analytics.rpl_dashboard_service import COACHING_FOLLOW_UP_TYPES
+    from apps.cce_leadership import services
+    from apps.cce_leadership.models import (
+        OBSERVATION_CRITERIA,
+        RATING_SCALE,
+        REPORT_SECTIONS,
+        ObservationRecommendation,
+    )
+    from apps.core.activity_types import COMPLETED_WORK_STATUSES, TRAINING_TYPES
+    from apps.ssa.plan_alignment import INFORMED, LIVE_PLAN_STATUSES
+
+    return {
+        "observation_criteria": [list(c) for c in OBSERVATION_CRITERIA],
+        "rating_scale": [[v, label] for v, label in RATING_SCALE],
+        "recommendation_choices": [
+            [str(k), str(v)] for k, v in ObservationRecommendation.choices
+        ],
+        "report_sections": [list(s) for s in REPORT_SECTIONS],
+        "training_types": [str(t) for t in TRAINING_TYPES],
+        "not_live_statuses": list(services.NOT_LIVE_STATUSES),
+        "observation_lookback_days": services.OBSERVATION_LOOKBACK_DAYS,
+        "observation_lookahead_days": services.OBSERVATION_LOOKAHEAD_DAYS,
+        "completed_work_statuses": list(COMPLETED_WORK_STATUSES),
+        "coaching_follow_up_types": sorted(str(t) for t in COACHING_FOLLOW_UP_TYPES),
+        "live_plan_statuses": list(LIVE_PLAN_STATUSES),
+        "informed_verdicts": [str(v) for v in INFORMED],
     }
 
 

@@ -59,6 +59,20 @@ var rules = func() (r struct {
 		QuarterDueSoonDays     int               `json:"quarter_due_soon_days"`
 		AnnualWindowOpensMonth int               `json:"annual_window_opens_month"`
 	} `json:"cadence"`
+	Saves struct {
+		ObservationCriteria []([3]string) `json:"observation_criteria"`
+		RecommendationOrder [][2]string   `json:"recommendation_choices"`
+		ReportSections      []([3]string) `json:"report_sections"`
+		TrainingTypes       []string      `json:"training_types"`
+		NotLiveStatuses     []string      `json:"not_live_statuses"`
+		LookbackDays        int           `json:"observation_lookback_days"`
+		LookaheadDays       int           `json:"observation_lookahead_days"`
+		CompletedStatuses   []string      `json:"completed_work_statuses"`
+		CoachingFollowUps   []string      `json:"coaching_follow_up_types"`
+		LivePlanStatuses    []string      `json:"live_plan_statuses"`
+		InformedVerdicts    []string      `json:"informed_verdicts"`
+		RatingScale         []([2]any)    `json:"rating_scale"`
+	} `json:"saves"`
 	HelperFigureChars  int      `json:"helper_figure_chars"`
 	PageSize           int      `json:"page_size"`
 	QueryKeysNotPassed []string `json:"query_keys_not_passed"`

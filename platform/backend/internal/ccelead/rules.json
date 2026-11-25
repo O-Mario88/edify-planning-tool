@@ -865,6 +865,153 @@
     "submitted": "warning"
   },
   "reporting_starts": "2026-09-01",
+  "saves": {
+    "coaching_follow_up_types": [
+      "coaching_visit",
+      "follow_up_visit",
+      "in_school_coaching_visit",
+      "in_school_support",
+      "training_follow_up_visit"
+    ],
+    "completed_work_statuses": [
+      "ia_verified",
+      "closed",
+      "accountant_confirmed",
+      "completed"
+    ],
+    "informed_verdicts": [
+      "priority",
+      "ssa_collection",
+      "not_applicable"
+    ],
+    "live_plan_statuses": [
+      "planned",
+      "scheduled",
+      "rescheduled",
+      "assigned_to_partner",
+      "partner_scheduled",
+      "awaiting_owner_approval",
+      "in_progress",
+      "completion_started"
+    ],
+    "not_live_statuses": [
+      "cancelled",
+      "rejected",
+      "deferred",
+      "not_planned",
+      "awaiting_owner_approval"
+    ],
+    "observation_criteria": [
+      [
+        "rating_biblical_integration",
+        "Biblical integration",
+        "Christ-centered values are woven through the content, not added on."
+      ],
+      [
+        "rating_need_alignment",
+        "Answers the schools' SSA need",
+        "The content targets the needs the schools' SSA results show."
+      ],
+      [
+        "rating_facilitation",
+        "Facilitation quality",
+        "Clear, well paced and modelled on good teaching practice."
+      ],
+      [
+        "rating_participation",
+        "Participant engagement",
+        "Teachers and leaders practise, question and contribute."
+      ],
+      [
+        "rating_application",
+        "Practical application in schools",
+        "Participants leave with practice they can use and be coached on."
+      ]
+    ],
+    "observation_lookahead_days": 14,
+    "observation_lookback_days": 120,
+    "rating_scale": [
+      [
+        1,
+        "1 · Not evident"
+      ],
+      [
+        2,
+        "2 · Emerging"
+      ],
+      [
+        3,
+        "3 · Established"
+      ],
+      [
+        4,
+        "4 · Exemplary"
+      ]
+    ],
+    "recommendation_choices": [
+      [
+        "continue",
+        "Continue as delivered"
+      ],
+      [
+        "strengthen",
+        "Strengthen with the training partner"
+      ],
+      [
+        "replace",
+        "Replace the training"
+      ],
+      [
+        "economize",
+        "Economize the delivery"
+      ]
+    ],
+    "report_sections": [
+      [
+        "executive_summary",
+        "Executive summary",
+        "The month in a paragraph: progress, concerns and decisions needed."
+      ],
+      [
+        "training_programmes",
+        "Training programmes",
+        "Trainings delivered, observed, replaced or improved, and why."
+      ],
+      [
+        "cce_impact",
+        "Christ-centered education impact",
+        "What SSA results and school follow-up show about change in schools."
+      ],
+      [
+        "curriculum_development",
+        "Curriculum development",
+        "Training materials reviewed, created or revised with Programme Leads."
+      ],
+      [
+        "programme_initiatives",
+        "Programme initiatives",
+        "School networks, PLCs, coaching practice and new strategies."
+      ],
+      [
+        "partnerships",
+        "New partnerships",
+        "Training partners and Christian school networks engaged."
+      ],
+      [
+        "support_needed",
+        "Support needed",
+        "What the region needs from the RVP and the VP of CCE."
+      ]
+    ],
+    "training_types": [
+      "training",
+      "in_school_training",
+      "school_improvement_training",
+      "cluster_training",
+      "core_training",
+      "cluster_training_ssa_collection"
+    ]
+  },
   "shareable_kinds": [
     "training_observation",
     "pl_coaching"

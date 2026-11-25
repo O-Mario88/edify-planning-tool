@@ -78,6 +78,8 @@ type Service struct {
 	acting ActingDrawers
 	// coaching is Team Coaching's drawers, with Django absent.
 	coaching CoachingDrawers
+	// leadership is the Regional Lead's drawers, with Django absent.
+	leadership LeadershipDrawers
 	// followUps is the Staff Activity follow-ups, with Django absent.
 	followUps  FollowUpDrawers
 	directory  Directory

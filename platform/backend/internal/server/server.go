@@ -240,6 +240,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		WithActingDrawers(actingService).
 		WithCoachingDrawers(ccelead.Coaching{DB: pool, Push: plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
 			Logger: logger, Now: time.Now, Kampala: kampalaLocation()}).
+		WithLeadershipDrawers(ccelead.Coaching{DB: pool, Push: plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
+			Logger: logger, Now: time.Now, Kampala: kampalaLocation()}).
 		WithFollowUpDrawers(staffactivity.FollowUps{DB: pool, Push: plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
 			Logger: logger, Now: time.Now}).
 		WithPages(logger,

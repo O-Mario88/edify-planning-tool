@@ -246,6 +246,27 @@ BEGIN
 END
 $fn$;
 
+-- resolve_condition(..., recipient_ids=[one]): one person's live notices of
+-- one event about one record are closed.
+CREATE OR REPLACE FUNCTION gateway_notifications.resolve_condition_for(
+  evt_type varchar, ctx_type varchar, ctx_id varchar, recipient varchar, at timestamptz
+) RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  changed integer;
+BEGIN
+  UPDATE public.notification
+     SET resolved_at = at, status = 'archived', action_required = false, updated_at = at
+   WHERE source_event_type = evt_type
+     AND context_type = ctx_type
+     AND context_id = ctx_id
+     AND recipient_id = recipient
+     AND resolved_at IS NULL;
+  GET DIAGNOSTICS changed = ROW_COUNT;
+  RETURN changed;
+END
+$fn$;
+
 -- WorkflowNotificationService.trigger's sender=: the notice, new or brought
 -- back, names the person who asked for it (a follow-up, a reminder).
 CREATE OR REPLACE FUNCTION gateway_notifications.set_sender(notice_id varchar, sender varchar)
@@ -437,6 +458,7 @@ REVOKE ALL ON FUNCTION gateway_notifications.close_stale_notices_for(varchar, va
 REVOKE ALL ON FUNCTION gateway_notifications.notify_workflow(varchar, varchar, varchar, text, varchar, varchar, varchar, varchar, varchar, varchar, varchar, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_notifications.queue_push_copy(varchar, varchar, varchar, varchar, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_notifications.set_sender(varchar, varchar) FROM PUBLIC;
+REVOKE ALL ON FUNCTION gateway_notifications.resolve_condition_for(varchar, varchar, varchar, varchar, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_notifications.queue_email_copy(varchar, boolean, boolean, varchar, varchar, timestamptz) FROM PUBLIC;
 RESET ROLE;
 
@@ -454,4 +476,5 @@ GRANT EXECUTE ON FUNCTION gateway_notifications.close_stale_notices_for(varchar,
 GRANT EXECUTE ON FUNCTION gateway_notifications.notify_workflow(varchar, varchar, varchar, text, varchar, varchar, varchar, varchar, varchar, varchar, varchar, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_notifications.queue_push_copy(varchar, varchar, varchar, varchar, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_notifications.set_sender(varchar, varchar) TO edify_gateway;
+GRANT EXECUTE ON FUNCTION gateway_notifications.resolve_condition_for(varchar, varchar, varchar, varchar, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_notifications.queue_email_copy(varchar, boolean, boolean, varchar, varchar, timestamptz) TO edify_gateway;
