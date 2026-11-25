@@ -256,7 +256,36 @@ def _country_oversight() -> dict:
         "people_fields": list(hierarchy.PEOPLE_FIELDS),
         "phased_fields": list(hierarchy.PHASED_FIELDS),
         "type_fields": dict(sorted(hierarchy.TYPE_FIELDS.items())),
+        "page": _country_oversight_page(),
         "no_lead": [requirements.NO_LEAD_KEY, requirements.NO_LEAD_LABEL],
+    }
+
+
+def _country_oversight_page() -> dict:
+    """The planning-coverage dashboard's own words: each card's label and the
+    table it opens, the tabs, the people table's columns and the filters'
+    choices (apps.planning.country_oversight.service, oversight_views)."""
+    from apps.core.metrics import MetricValue, render_metric
+    from apps.frontend.views.oversight_views import country_lens_tabs
+    from apps.planning.country_oversight import service
+
+    return {
+        "kpi_tables": dict(service.KPI_TABLES),
+        "kpi_labels": {
+            key: render_metric(key, MetricValue.ratio(1, 1)).as_dict()["label"]
+            for key in service.KPI_TABLES
+        },
+        "type_views": [list(v) for v in service.TYPE_VIEWS],
+        "table_views": [list(v) for v in service.TABLE_VIEWS],
+        "table_columns": [list(c) for c in service.TABLE_COLUMNS],
+        "type_options": [list(o) for o in service.TYPE_OPTIONS],
+        "channel_options": [list(o) for o in service.CHANNEL_OPTIONS],
+        "cluster_options": [list(o) for o in service.CLUSTER_OPTIONS],
+        "status_options": [list(o) for o in service.STATUS_OPTIONS],
+        "lens_tabs": [
+            [t["key"], t["label"], t["short"], t["href"]]
+            for t in country_lens_tabs("coverage")
+        ],
     }
 
 

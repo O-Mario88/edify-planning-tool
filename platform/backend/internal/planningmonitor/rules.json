@@ -201,6 +201,243 @@
       "school_visit",
       "training_follow_up_visit"
     ],
+    "page": {
+      "channel_options": [
+        [
+          "staff",
+          "Staff"
+        ],
+        [
+          "partner",
+          "Partner"
+        ]
+      ],
+      "cluster_options": [
+        [
+          "clustered",
+          "Clustered"
+        ],
+        [
+          "unclustered",
+          "Unclustered"
+        ]
+      ],
+      "kpi_labels": {
+        "cpo_cluster_meeting_planning": "Cluster Meeting Planning",
+        "cpo_cluster_membership": "Cluster Membership",
+        "cpo_partner_planning": "Partner Planning",
+        "cpo_staff_visit_planning": "Staff Visit Planning",
+        "cpo_total_visit_coverage": "Total Visit Coverage",
+        "cpo_training_planning": "Training Planning"
+      },
+      "kpi_tables": {
+        "cpo_cluster_meeting_planning": "meetings",
+        "cpo_cluster_membership": "clusters",
+        "cpo_partner_planning": "partners",
+        "cpo_staff_visit_planning": "visits",
+        "cpo_total_visit_coverage": "plans",
+        "cpo_training_planning": "trainings"
+      },
+      "lens_tabs": [
+        [
+          "coverage",
+          "Country General Planning Oversight",
+          "General Planning",
+          "/country-planning-oversight/"
+        ],
+        [
+          "execution",
+          "Country Execution & Completion Oversight",
+          "Execution & Completion",
+          "/country-planning-oversight/?view=execution"
+        ]
+      ],
+      "status_options": [
+        [
+          "full",
+          "Fully planned"
+        ],
+        [
+          "partial",
+          "Partially planned"
+        ],
+        [
+          "none",
+          "Not planned"
+        ],
+        [
+          "awaiting",
+          "Awaiting Partner schedule"
+        ]
+      ],
+      "table_columns": [
+        [
+          "name",
+          "Name",
+          ""
+        ],
+        [
+          "p_visits",
+          "Visits Planned",
+          "workload"
+        ],
+        [
+          "p_core_visits",
+          "Core Visits",
+          "workload"
+        ],
+        [
+          "p_client_visits",
+          "Client Visits",
+          "workload"
+        ],
+        [
+          "partner_target",
+          "Partner Target",
+          "workload"
+        ],
+        [
+          "beyond_staff",
+          "Client Spillover",
+          "workload"
+        ],
+        [
+          "partner_assigned",
+          "Assigned to Partner",
+          "workload"
+        ],
+        [
+          "partner_scheduled",
+          "Partner Planned",
+          "workload"
+        ],
+        [
+          "schools",
+          "Portfolio",
+          "schools"
+        ],
+        [
+          "core_schools",
+          "Core",
+          "schools"
+        ],
+        [
+          "client_schools",
+          "Client",
+          "schools"
+        ],
+        [
+          "core_trained_schools",
+          "Core Trained",
+          "schools"
+        ],
+        [
+          "core_graduate_schools",
+          "Core Graduate",
+          "schools"
+        ],
+        [
+          "any_visit",
+          "Schools Planned",
+          "schools"
+        ],
+        [
+          "unplanned",
+          "Not Yet Planned",
+          "schools"
+        ],
+        [
+          "unclustered",
+          "Unclustered",
+          "schools"
+        ],
+        [
+          "training_staff",
+          "Staff Trainings",
+          "training"
+        ],
+        [
+          "training_partner",
+          "Partner Trainings",
+          "training"
+        ],
+        [
+          "training",
+          "Training Coverage",
+          "training"
+        ],
+        [
+          "no_training",
+          "No Training Planned",
+          "training"
+        ],
+        [
+          "meeting",
+          "Cluster Meeting Coverage",
+          "training"
+        ],
+        [
+          "followups",
+          "Open Follow-ups",
+          ""
+        ],
+        [
+          "action",
+          "Action",
+          ""
+        ]
+      ],
+      "table_views": [
+        [
+          "workload",
+          "Workload"
+        ],
+        [
+          "schools",
+          "Schools"
+        ],
+        [
+          "training",
+          "Trainings & Clusters"
+        ]
+      ],
+      "type_options": [
+        [
+          "core",
+          "Core"
+        ],
+        [
+          "client",
+          "Client"
+        ],
+        [
+          "core_trained",
+          "Core Trained"
+        ],
+        [
+          "core_graduate",
+          "Core Graduate"
+        ],
+        [
+          "champion",
+          "Champion"
+        ]
+      ],
+      "type_views": [
+        [
+          "schools",
+          "Schools"
+        ],
+        [
+          "visits",
+          "Visits"
+        ],
+        [
+          "trainings",
+          "Trainings"
+        ]
+      ]
+    },
     "people_fields": [
       "target",
       "p_visits",

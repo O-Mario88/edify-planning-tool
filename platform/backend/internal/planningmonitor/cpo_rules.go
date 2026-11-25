@@ -38,6 +38,18 @@ type cpoRules struct {
 	PeopleFields                []string            `json:"people_fields"`
 	PhasedFields                []string            `json:"phased_fields"`
 	TypeFields                  map[string]string   `json:"type_fields"`
+	Page                        struct {
+		KPITables      map[string]string `json:"kpi_tables"`
+		KPILabels      map[string]string `json:"kpi_labels"`
+		TypeViews      [][2]string       `json:"type_views"`
+		TableViews     [][2]string       `json:"table_views"`
+		TableColumns   [][3]string       `json:"table_columns"`
+		TypeOptions    [][2]string       `json:"type_options"`
+		ChannelOptions [][2]string       `json:"channel_options"`
+		ClusterOptions [][2]string       `json:"cluster_options"`
+		StatusOptions  [][2]string       `json:"status_options"`
+		LensTabs       [][4]string       `json:"lens_tabs"`
+	} `json:"page"`
 }
 
 // family is policy.family_of.
