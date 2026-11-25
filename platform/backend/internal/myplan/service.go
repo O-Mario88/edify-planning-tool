@@ -27,6 +27,8 @@ type Service struct {
 	now       func() time.Time
 	summary   TrainingSummaryReader
 	readiness ReadinessReader
+	// readinessList reads the schools behind a readiness figure (?list=).
+	readinessList ReadinessListReader
 }
 
 // NewService wires the service to the database it reads.
@@ -105,11 +107,17 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		}
 	}
 	request := NewQuery(query)
-	// The schools behind a readiness figure (?list=) are drawn by Go only
-	// as the empty list a planner with no figures has; a planner with their
-	// own readiness is handed on for one.
-	if ownReadiness != nil && readinessList(request) != "" {
-		return nil, false, nil
+	// The schools behind a readiness figure (?list=): the empty list a
+	// planner with no figures has, or the planner's own schools behind it.
+	var list *screensv1.PageBlock
+	if key := readinessList(request); ownReadiness != nil && key != "" {
+		if s.readinessList == nil {
+			return nil, false, nil
+		}
+		var drawn bool
+		if list, drawn, err = s.readinessListBlock(ctx, p, period.FY, key, query, now); err != nil || !drawn {
+			return nil, false, err
+		}
 	}
 	f := ReadFilters(request)
 	owners := ownerIDs(p)
@@ -180,7 +188,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	}
 	return planPage(pageParts{period: period, years: schooldirectory.FYOptions(now), choices: choices, request: request,
 		plan: plan, filters: f, target: target, planned: planned, readiness: ownReadiness,
-		tables: tables, summary: summary, clusters: clusters}), true, nil
+		list: list, tables: tables, summary: summary, clusters: clusters}), true, nil
 }
 
 // choices are the District and Staff member selects' options: every

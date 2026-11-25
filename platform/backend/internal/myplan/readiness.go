@@ -48,6 +48,12 @@ func (s *Service) WithReadiness(read ReadinessReader) *Service {
 // (planning_monitor.GAP_LABELS: the schools behind each figure).
 type ReadinessRules struct {
 	GapLabels map[string]string `json:"gap_labels"`
+	// ListDoors are each role's doors on a listed school (list_actions).
+	ListDoors map[string]ListDoors `json:"list_doors"`
+	// OpenStaffStatuses are staff work still a plan, which a list moves or
+	// cancels; OpenHandoverStatuses a hand-over a Partner still holds.
+	OpenStaffStatuses    []string `json:"open_staff_statuses"`
+	OpenHandoverStatuses []string `json:"open_handover_statuses"`
 }
 
 // visitTarget is staff_plan.visits_target (rules.planning_role, then

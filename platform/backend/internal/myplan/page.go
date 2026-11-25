@@ -203,7 +203,9 @@ type pageParts struct {
 	// is wired in.
 	target, planned int
 	readiness       *OwnReadiness
-	tables          PlanTablesResult
+	// list is the schools behind the readiness figure asked for (?list=).
+	list   *screensv1.PageBlock
+	tables PlanTablesResult
 	// summary is the reader's own My Training Summary.
 	summary []TrainingSummaryRow
 	// clusters is Cluster Planning Status (apps.clusters.planning_status).
@@ -253,8 +255,8 @@ func planPage(parts pageParts) *screensv1.GetPageResponse {
 	// (readiness_panel.html), and the schools behind a figure when asked.
 	if parts.readiness != nil {
 		blocks = append(blocks, fullReadinessTable(parts.readiness, p.FY, request))
-		if key := readinessList(request); key != "" {
-			blocks = append(blocks, emptyReadinessList(key))
+		if parts.list != nil {
+			blocks = append(blocks, parts.list)
 		}
 	} else if parts.target > 0 {
 		blocks = append(blocks, readinessTable(parts.target, parts.planned, p.FY, request))

@@ -678,7 +678,116 @@
       "training_due": "Schools that take a training",
       "visited": "With a visit planned",
       "with_partner": "In a Partner's hands"
-    }
+    },
+    "list_doors": {
+      "Accountant": {
+        "assign": false,
+        "move": true,
+        "schedule": true,
+        "withdraw": true
+      },
+      "Admin": {
+        "assign": true,
+        "move": true,
+        "schedule": false,
+        "withdraw": true
+      },
+      "BusinessTransformationOfficer": {
+        "assign": false,
+        "move": false,
+        "schedule": false,
+        "withdraw": false
+      },
+      "CCEO": {
+        "assign": true,
+        "move": true,
+        "schedule": true,
+        "withdraw": true
+      },
+      "ClusterLeader": {
+        "assign": false,
+        "move": false,
+        "schedule": false,
+        "withdraw": false
+      },
+      "CountryDirector": {
+        "assign": false,
+        "move": true,
+        "schedule": true,
+        "withdraw": true
+      },
+      "HumanResources": {
+        "assign": false,
+        "move": false,
+        "schedule": false,
+        "withdraw": false
+      },
+      "ImpactAssessment": {
+        "assign": true,
+        "move": true,
+        "schedule": true,
+        "withdraw": true
+      },
+      "MfiLoanOfficer": {
+        "assign": false,
+        "move": false,
+        "schedule": false,
+        "withdraw": false
+      },
+      "MfiPartnerAdmin": {
+        "assign": false,
+        "move": false,
+        "schedule": false,
+        "withdraw": false
+      },
+      "PartnerAdmin": {
+        "assign": false,
+        "move": true,
+        "schedule": false,
+        "withdraw": false
+      },
+      "PartnerFieldOfficer": {
+        "assign": false,
+        "move": true,
+        "schedule": false,
+        "withdraw": false
+      },
+      "Program Lead": {
+        "assign": true,
+        "move": true,
+        "schedule": true,
+        "withdraw": true
+      },
+      "ProjectCoordinator": {
+        "assign": true,
+        "move": true,
+        "schedule": true,
+        "withdraw": false
+      },
+      "RegionalProgramLead": {
+        "assign": false,
+        "move": false,
+        "schedule": false,
+        "withdraw": true
+      },
+      "RegionalVicePresident": {
+        "assign": false,
+        "move": false,
+        "schedule": false,
+        "withdraw": true
+      }
+    },
+    "open_handover_statuses": [
+      "assigned",
+      "pending_scheduling",
+      "partner_scheduled",
+      "scheduled"
+    ],
+    "open_staff_statuses": [
+      "planned",
+      "scheduled",
+      "rescheduled"
+    ]
   },
   "rows": {
     "activity_type_labels": {

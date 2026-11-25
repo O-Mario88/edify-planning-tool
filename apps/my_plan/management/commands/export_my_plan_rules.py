@@ -220,9 +220,34 @@ def readiness() -> dict:
     """What a planner's own Planned and remaining names its lists by: the
     schools behind each figure (planning_monitor.GAP_LABELS, which
     my_plan_views._readiness_list reads a ?list= key against)."""
+    from apps.core.permissions import RolePermissionService
+    from apps.core.rbac import EdifyRole
+    from apps.partners.models import PartnerAssignment
+    from apps.planning import list_actions
     from apps.planning.planning_monitor import GAP_LABELS
 
-    return {"gap_labels": dict(GAP_LABELS)}
+    doors = {}
+    for role in EdifyRole:
+        user = _role_user(role.value)
+        # What a listed school's Actions menu offers (list_actions.offer).
+        doors[role.value] = {
+            "schedule": bool(RolePermissionService.can_open_schedule_drawer(user)),
+            "assign": bool(RolePermissionService.can_assign_to_partner(user)),
+            "withdraw": bool(
+                RolePermissionService.can_view_page(user, "partner_oversight")
+            ),
+            "move": bool(RolePermissionService.can_view_page(user, "my_plan")),
+        }
+    return {
+        "gap_labels": dict(GAP_LABELS),
+        "list_doors": doors,
+        "open_staff_statuses": list(list_actions._OPEN_STAFF_STATUSES),
+        "open_handover_statuses": [
+            *PartnerAssignment.UNSCHEDULED_STATUSES,
+            PartnerAssignment.STATUS_PARTNER_SCHEDULED,
+            PartnerAssignment.STATUS_SCHEDULED,
+        ],
+    }
 
 
 def plan_tables() -> dict:

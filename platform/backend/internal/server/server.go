@@ -334,7 +334,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			coreoversight.NewService(pool, time.Now),
 			myplan.NewService(pool, time.Now).
 				WithTrainingSummary(trainingsummary.OwnSummary).
-				WithReadiness(planningmonitor.OwnReadiness),
+				WithReadiness(planningmonitor.OwnReadiness).
+				WithReadinessList(planningmonitor.OwnList),
 			calendarpage.NewService(pool, time.Now),
 			todos.NewService(pool, time.Now),
 			workplan.NewService(pool, time.Now),

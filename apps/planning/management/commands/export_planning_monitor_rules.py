@@ -143,6 +143,7 @@ def rules() -> dict:
         # What a figure opens, and the ledger's lines.
         "gaps": [list(gap) for gap in monitor.GAPS],
         "lists": [list(item) for item in monitor.LISTS],
+        "monitored_lists": sorted(monitor.MONITORED_LISTS),
         "gap_columns": [list(column) for column in monitor.GAP_COLUMNS],
         "gap_figures": dict(monitor.GAP_FIGURES),
         "ledger": [list(line) for line in readiness.LEDGER],

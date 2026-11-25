@@ -7145,6 +7145,11 @@
       "Schools and checks"
     ]
   ],
+  "monitored_lists": [
+    "no_ssa",
+    "not_trained",
+    "not_visited"
+  ],
   "no_lead": [
     "__no_lead__",
     "No Programme Lead"

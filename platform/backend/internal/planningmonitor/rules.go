@@ -78,6 +78,7 @@ var rules = func() (r struct {
 	OperatingStatuses           []string               `json:"operating_statuses"`
 	Gaps                        [][2]string            `json:"gaps"`
 	Lists                       [][2]string            `json:"lists"`
+	MonitoredLists              []string               `json:"monitored_lists"`
 	GapColumns                  [][3]string            `json:"gap_columns"`
 	GapFigures                  map[string]string      `json:"gap_figures"`
 	Ledger                      [][3]any               `json:"ledger"`
