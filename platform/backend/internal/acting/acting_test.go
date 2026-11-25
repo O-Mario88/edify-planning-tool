@@ -169,3 +169,13 @@ func TestWorkingInTheActingCapacityNeedsTheSwitchAndTheRoleItWasMadeFrom(t *test
 		}
 	}
 }
+
+func TestRevisionTimeIsWrittenAsTheExistingCodeWritesIt(t *testing.T) {
+	at := time.Date(2026, 11, 25, 7, 24, 48, 583098000, time.FixedZone("EAT", 3*3600))
+	if got := pythonISO(at); got != "2026-11-25T04:24:48.583098+00:00" {
+		t.Fatalf("got %s", got)
+	}
+	if got := pythonISO(time.Date(2026, 11, 25, 4, 0, 0, 0, time.UTC)); got != "2026-11-25T04:00:00+00:00" {
+		t.Fatalf("got %s", got)
+	}
+}

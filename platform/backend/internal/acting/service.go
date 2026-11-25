@@ -469,7 +469,7 @@ func (s *Service) ChangeMonth(ctx context.Context, p auth.Principal, id, month s
 		}
 		revisions = append(revisions, map[string]any{
 			"start_date": a.Start.Format("2006-01-02"), "end_date": a.End.Format("2006-01-02"),
-			"changed_at": now.Format(time.RFC3339Nano), "changed_by": p.UserID,
+			"changed_at": pythonISO(now), "changed_by": p.UserID,
 		})
 		encoded, err := json.Marshal(revisions)
 		if err != nil {
@@ -698,3 +698,6 @@ func (s *Service) message(p auth.Principal, own *seat, a Appointment, today time
 	}
 	return m
 }
+
+// Months is month_options for today: this month and the next eleven.
+func (s *Service) Months() []Month { return monthOptions(Today(s.now())) }

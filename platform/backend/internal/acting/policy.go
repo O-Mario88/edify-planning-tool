@@ -285,3 +285,13 @@ func refuse(message string) error    { return &Refused{Message: message} }
 func notFound(message string) error  { return &Refused{Message: message, NotFound: true} }
 func forbidden(message string) error { return &Refused{Message: message, Forbidden: true} }
 func conflict(message string) error  { return &Refused{Message: message, Conflict: true} }
+
+// pythonISO is timezone.now().isoformat(): UTC, microseconds when there are
+// any, "+00:00".
+func pythonISO(t time.Time) string {
+	t = t.UTC()
+	if t.Nanosecond()/int(time.Microsecond) == 0 {
+		return t.Format("2006-01-02T15:04:05") + "+00:00"
+	}
+	return t.Format("2006-01-02T15:04:05.000000") + "+00:00"
+}

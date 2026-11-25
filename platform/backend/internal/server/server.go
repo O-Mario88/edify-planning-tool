@@ -197,7 +197,15 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		teams.NewPartnerService(teamStore, accountService, time.Now), logger)
 	mux.Handle(identityv1connect.NewStaffTeamServiceHandler(teamHandler, options...))
 	mux.Handle(identityv1connect.NewPartnerTeamServiceHandler(teamHandler, options...))
-	actingHandler := acting.NewHandler(acting.NewService(acting.NewStore(pool), time.Now, accountService.ActingNotice, accountService.IssueToken), logger)
+	// The appointment's notices: the existing application sends them while it
+	// runs; with it absent Go sends them (apps.acting.services._notify_*).
+	actingNotice := accountService.ActingNotice
+	if cfg.ExistingAppURL == "" {
+		actingNotice = acting.Notices{DB: pool, Push: plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
+			Logger: logger, Now: time.Now}.Notify
+	}
+	actingService := acting.NewService(acting.NewStore(pool), time.Now, actingNotice, accountService.IssueToken)
+	actingHandler := acting.NewHandler(actingService, logger)
 	mux.Handle(identityv1connect.NewActingLeadershipServiceHandler(actingHandler, options...))
 	// Signing in needs no session: structured errors, no authentication.
 	mux.Handle(identityv1connect.NewSignInServiceHandler(signInHandler(cfg, pool, logger),
@@ -225,6 +233,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		WithProfile(schoolprofile.NewService(pool, time.Now), logger).
 		WithHome(home.NewService(pool, time.Now), logger).
 		WithNavigation(navigation.NewService(pool)).
+		WithActingDrawers(actingService).
 		WithPages(logger,
 			clusterpage.NewService(pool, time.Now),
 			closedschools.NewService(pool, time.Now),
