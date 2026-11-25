@@ -59,14 +59,23 @@ func (w *Writer) Deliver(ctx context.Context, d Delivery) (bool, error) {
 	defer func() { _ = tx.Rollback(ctx) }()
 
 	var created bool
+	id := cuid.New()
 	err = tx.QueryRow(ctx, `
 SELECT gateway_notifications.deliver($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
-		cuid.New(), d.RecipientID, d.SenderID, d.Title, d.Body, d.Category,
+		id, d.RecipientID, d.SenderID, d.Title, d.Body, d.Category,
 		d.ContextType, d.ContextID, d.TargetRoute, d.ActionLabel, d.ActionRequired,
 		d.Priority, d.SourceEventType, d.SourceEventID, now,
 	).Scan(&created)
 	if err != nil {
 		return false, fmt.Errorf("notificationcenter: delivering notification: %w", err)
+	}
+	if created {
+		// email_delivery._email_on_save: a new notice someone sent, or an
+		// urgent one, is emailed in the same transaction.
+		if _, err := tx.Exec(ctx, `SELECT gateway_notifications.queue_email_copy($1, true, false, $2, $3, $4)`,
+			id, cuid.New(), cuid.New(), now); err != nil {
+			return false, fmt.Errorf("notificationcenter: queueing the email copy: %w", err)
+		}
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return false, fmt.Errorf("notificationcenter: committing delivery: %w", err)

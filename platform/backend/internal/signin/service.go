@@ -60,6 +60,9 @@ type Deps struct {
 	AppBaseURL string
 	Logger     *slog.Logger
 	Now        func() time.Time
+	// AfterSignIn runs once a sign-in is recorded (presence.record_login's
+	// follow-up resolution); it never fails the sign-in.
+	AfterSignIn func(ctx context.Context, userID string)
 }
 
 // Service is sign-in.
@@ -351,6 +354,9 @@ func (s *Service) open(ctx context.Context, a account, requestedRole string, cal
 	event := signInEvent{UserID: a.ID, Role: role, IP: caller.IP, UserAgent: caller.UserAgent, Device: caller.Device}
 	if err := s.deps.Store.openSession(ctx, event, refresh, now.Add(s.deps.Policy.RefreshTokenTTL), now); err != nil {
 		return Session{}, err
+	}
+	if s.deps.AfterSignIn != nil {
+		s.deps.AfterSignIn(ctx, a.ID)
 	}
 	return Session{
 		Tokens: Tokens{AccessToken: access, RefreshToken: refresh},

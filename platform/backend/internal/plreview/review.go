@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/cuid"
@@ -354,10 +355,11 @@ func (s *ReviewService) tellOfficer(ctx context.Context, r Review, notice review
 	var recipient string
 	err := s.inTransaction(ctx, func(tx pgx.Tx) error {
 		var notificationID string
+		newID := cuid.New()
 		err := tx.QueryRow(ctx, `
 SELECT out_notification_id, out_recipient_id
   FROM gateway_notifications.notify_workflow($1, $2, $3, $4, $5, 'Activity', $6, $7, $8, $9, $10, $11)`,
-			cuid.New(), r.Owner, notice.title, notice.body, notificationCategory, r.ID, "/my-plan/"+r.ID,
+			newID, r.Owner, notice.title, notice.body, notificationCategory, r.ID, "/my-plan/"+r.ID,
 			notice.label, notice.priority, notice.event, now).Scan(&notificationID, &recipient)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil
@@ -367,6 +369,9 @@ SELECT out_notification_id, out_recipient_id
 		}
 		if err := s.queuePush(ctx, tx, notificationID, recipient, now); err != nil {
 			s.logger.WarnContext(ctx, "plreview: the phone copy was not queued", "activity", r.ID, "err", err)
+		}
+		if err := activities.QueueEmailCopy(ctx, tx, notificationID, notificationID == newID, false, now); err != nil {
+			return err
 		}
 		return appendAudit(ctx, tx, stamped(ctx, audit.Entry{
 			Action: "notification." + notice.event, SubjectKind: audit.Text("Activity"), SubjectID: audit.Text(r.ID),

@@ -51,6 +51,8 @@ type scheduledNotice struct {
 	title, body, event, category, contextType, route, label, recipient string
 	// priority is "normal" unless the trigger asks otherwise.
 	priority string
+	// sender is the person who asked (trigger's sender=), or ''.
+	sender string
 }
 
 func (n scheduledNotice) level() string {
@@ -176,15 +178,24 @@ func (w workflowNotices) deliverInTx(ctx context.Context, tx pgx.Tx, now time.Ti
 	var people []string
 	for _, r := range recipients {
 		var notificationID, recipient string
+		newID := cuid.New()
 		err := tx.QueryRow(ctx, `SELECT out_notification_id, out_recipient_id
   FROM gateway_notifications.notify_workflow($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-			cuid.New(), r.id, notice.title, notice.body, notice.category, nilIfEmpty(notice.contextType), nilIfEmpty(contextID),
+			newID, r.id, notice.title, notice.body, notice.category, nilIfEmpty(notice.contextType), nilIfEmpty(contextID),
 			r.route, r.label, notice.level(), notice.event, now).Scan(&notificationID, &recipient)
 		if errors.Is(err, pgx.ErrNoRows) {
 			continue
 		}
 		if err != nil {
 			return nil, fmt.Errorf("activities: delivering the notice: %w", err)
+		}
+		if notice.sender != "" {
+			if _, err := tx.Exec(ctx, `SELECT gateway_notifications.set_sender($1, $2)`, notificationID, notice.sender); err != nil {
+				return nil, fmt.Errorf("activities: naming the notice's sender: %w", err)
+			}
+		}
+		if err := QueueEmailCopy(ctx, tx, notificationID, notificationID == newID, notice.sender != "", now); err != nil {
+			return nil, err
 		}
 		if w.push != nil {
 			if err := w.push(ctx, tx, notificationID, recipient, now); err != nil && w.logger != nil {
@@ -209,6 +220,17 @@ func (w workflowNotices) deliverInTx(ctx context.Context, tx pgx.Tx, now time.Ti
 	return people, nil
 }
 
+// QueueEmailCopy is the notice's email copy (email_delivery._email_on_save):
+// a person's notice, new or their reminder, and a new urgent one. It is
+// written in the notice's own transaction, as the existing signal writes it.
+func QueueEmailCopy(ctx context.Context, tx pgx.Tx, notificationID string, created, sentByPerson bool, now time.Time) error {
+	if _, err := tx.Exec(ctx, `SELECT gateway_notifications.queue_email_copy($1, $2, $3, $4, $5, $6)`,
+		notificationID, created, sentByPerson, cuid.New(), cuid.New(), now); err != nil {
+		return fmt.Errorf("activities: queueing the notice's email copy: %w", err)
+	}
+	return nil
+}
+
 // NotifyInTx is SendNotices inside the caller's transaction, for work that
 // commits with its notices (an outbox handler): it says who was told, so the
 // caller can word their pages once it commits.
@@ -219,7 +241,7 @@ func NotifyInTx(ctx context.Context, tx pgx.Tx, push NoticePush, logger *slog.Lo
 
 func noticeOf(n Notice) scheduledNotice {
 	return scheduledNotice{title: n.Title, body: n.Body, event: n.Event, category: n.Category, contextType: n.ContextType,
-		priority: n.Priority}
+		priority: n.Priority, sender: n.Sender}
 }
 
 func recipientsOf(to []NoticeTo) []noticeRecipient {
@@ -233,6 +255,9 @@ func recipientsOf(to []NoticeTo) []noticeRecipient {
 // Notice is a workflow notification another package sends.
 type Notice struct {
 	Title, Body, Event, Category, ContextType, Priority string
+	// Sender is the person who asked, when one did (a follow-up, a
+	// reminder): the notice names them as the existing trigger does.
+	Sender string
 }
 
 // NoticeTo is one person told, with the link their role opens.

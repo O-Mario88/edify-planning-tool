@@ -29,11 +29,21 @@ const dashboardPath = "/dashboard"
 type Service struct {
 	db  schooldirectory.Querier
 	now func() time.Time
+	// followUpPage serves one follow-up as a page (Django absent).
+	pageInGo bool
 }
 
 // NewService wires the service to the database it reads.
 func NewService(db schooldirectory.Querier, now func() time.Time) *Service {
 	return &Service{db: db, now: now}
+}
+
+// WithFollowUpPage serves one follow-up as a page, as the existing
+// application does where a notification or the To-Do list opens it; only
+// with Django absent, as its steps save through FollowUps.
+func (s *Service) WithFollowUpPage() *Service {
+	s.pageInGo = true
+	return s
 }
 
 func isAlpha(r rune) bool { return unicode.IsLetter(r) }
@@ -44,6 +54,9 @@ func isAlpha(r rune) bool { return unicode.IsLetter(r) }
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
 	if id, ok := personID(path); ok {
 		return s.personPage(ctx, p, id, query)
+	}
+	if m := followUpOnePath.FindStringSubmatch(path); m != nil && s.pageInGo {
+		return s.followUpPage(ctx, p, m[1])
 	}
 	if path != Path {
 		return nil, false, nil

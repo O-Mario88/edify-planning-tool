@@ -77,7 +77,9 @@ type Service struct {
 	// acting is Acting Leadership's drawers, with Django absent.
 	acting ActingDrawers
 	// coaching is Team Coaching's drawers, with Django absent.
-	coaching   CoachingDrawers
+	coaching CoachingDrawers
+	// followUps is the Staff Activity follow-ups, with Django absent.
+	followUps  FollowUpDrawers
 	directory  Directory
 	profile    Profile
 	home       Home // nil unless Home is built in Go (internal/home)

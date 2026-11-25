@@ -33,6 +33,10 @@ GRANT SELECT (resolved_at, created_at, reminder_count) ON notification TO edify_
 GRANT UPDATE (title, body, target_route, action_label, priority, action_required, reminder_count,
               last_reminded_at)
   ON notification TO edify_notification_owner;
+-- set_sender: the person who asked for a notice (trigger's sender=).
+GRANT UPDATE (sender_id) ON notification TO edify_notification_owner;
+-- queue_email_copy: who sent the notice and its category decide its email.
+GRANT SELECT (sender_id, category) ON notification TO edify_notification_owner;
 -- queue_push_copy: one delivery row per device and round, and its durable event.
 GRANT SELECT (priority) ON notification TO edify_notification_owner;
 GRANT SELECT (notification_id, channel, round, target),
@@ -242,6 +246,61 @@ BEGIN
 END
 $fn$;
 
+-- WorkflowNotificationService.trigger's sender=: the notice, new or brought
+-- back, names the person who asked for it (a follow-up, a reminder).
+CREATE OR REPLACE FUNCTION gateway_notifications.set_sender(notice_id varchar, sender varchar)
+RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+BEGIN
+  IF sender IS NULL OR sender = '' THEN
+    RETURN;
+  END IF;
+  UPDATE public.notification SET sender_id = sender WHERE id = notice_id;
+END
+$fn$;
+
+-- email_delivery._email_on_save and enqueue: a notice a person sent (new, or
+-- their reminder about it) and a new urgent one get this round's email copy,
+-- recorded suppressed when the recipient turned email (or its category) off,
+-- else queued with its durable event. A read or resolved notice gets none.
+CREATE OR REPLACE FUNCTION gateway_notifications.queue_email_copy(
+  notice_id varchar, was_created boolean, sent_by_person boolean, delivery_id varchar, event_id varchar, at timestamptz
+) RETURNS boolean
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  notice record;
+  turned_off boolean;
+BEGIN
+  SELECT n.recipient_id, n.priority, n.category, n.sender_id, n.status, n.resolved_at,
+         COALESCE(n.reminder_count, 0) AS reminders INTO notice
+    FROM public.notification n WHERE n.id = notice_id;
+  IF NOT FOUND OR notice.status <> 'unread' OR notice.resolved_at IS NOT NULL THEN
+    RETURN false;
+  END IF;
+  IF NOT (sent_by_person OR (was_created AND (COALESCE(notice.sender_id, '') <> '' OR notice.priority = 'urgent'))) THEN
+    RETURN false;
+  END IF;
+  turned_off := notice.priority <> 'urgent' AND EXISTS (
+    SELECT 1 FROM public.notification_preference p
+     WHERE p.user_id = notice.recipient_id
+       AND (NOT p.email_enabled OR COALESCE(p.email_muted_categories, '[]'::jsonb) ? notice.category));
+  INSERT INTO public.notification_delivery (id, created_at, updated_at, notification_id, recipient_id, channel, round,
+                                            target, status, attempts, provider_message_id, last_error)
+  VALUES (delivery_id, at, at, notice_id, notice.recipient_id, 'email', notice.reminders, '',
+          CASE WHEN turned_off THEN 'suppressed' ELSE 'queued' END, 0, '', '')
+  ON CONFLICT (notification_id, channel, round, target) DO NOTHING;
+  IF NOT FOUND OR turned_off THEN
+    RETURN false;
+  END IF;
+  INSERT INTO public.outbox_event (id, created_at, updated_at, event_type, payload, idempotency_key, status, attempts,
+                                   max_attempts, next_attempt_at, locked_by, last_error)
+  VALUES (event_id, at, at, 'notification.email', jsonb_build_object('deliveryId', delivery_id),
+          'email:' || delivery_id, 'pending', 0, 8, at, '', '')
+  ON CONFLICT (idempotency_key) DO NOTHING;
+  RETURN true;
+END
+$fn$;
+
 -- push.enqueue for one device: a copy the recipient turned off is recorded as
 -- suppressed and not queued; a deactivated account is sent nothing.
 CREATE OR REPLACE FUNCTION gateway_notifications.queue_push_copy(
@@ -377,6 +436,8 @@ $fn$;
 REVOKE ALL ON FUNCTION gateway_notifications.close_stale_notices_for(varchar, varchar, varchar, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_notifications.notify_workflow(varchar, varchar, varchar, text, varchar, varchar, varchar, varchar, varchar, varchar, varchar, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_notifications.queue_push_copy(varchar, varchar, varchar, varchar, timestamptz) FROM PUBLIC;
+REVOKE ALL ON FUNCTION gateway_notifications.set_sender(varchar, varchar) FROM PUBLIC;
+REVOKE ALL ON FUNCTION gateway_notifications.queue_email_copy(varchar, boolean, boolean, varchar, varchar, timestamptz) FROM PUBLIC;
 RESET ROLE;
 
 GRANT USAGE ON SCHEMA gateway_notifications TO edify_gateway;
@@ -392,3 +453,5 @@ GRANT EXECUTE ON FUNCTION gateway_notifications.close_notices(varchar[], timesta
 GRANT EXECUTE ON FUNCTION gateway_notifications.close_stale_notices_for(varchar, varchar, varchar, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_notifications.notify_workflow(varchar, varchar, varchar, text, varchar, varchar, varchar, varchar, varchar, varchar, varchar, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_notifications.queue_push_copy(varchar, varchar, varchar, varchar, timestamptz) TO edify_gateway;
+GRANT EXECUTE ON FUNCTION gateway_notifications.set_sender(varchar, varchar) TO edify_gateway;
+GRANT EXECUTE ON FUNCTION gateway_notifications.queue_email_copy(varchar, boolean, boolean, varchar, varchar, timestamptz) TO edify_gateway;

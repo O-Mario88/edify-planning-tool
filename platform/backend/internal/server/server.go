@@ -225,6 +225,10 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		existingApp = feed.NewClient(cfg.ExistingAppURL, logger)
 	}
 	clusterOversightSvc := clusteroversight.NewService(pool, time.Now)
+	staffActivity := staffactivity.NewService(pool, time.Now)
+	if cfg.ExistingAppURL == "" {
+		staffActivity = staffActivity.WithFollowUpPage()
+	}
 	countryMapSvc := oversightportfolio.NewCountryMap(oversightportfolio.NewService(pool, time.Now))
 	detailPagesSvc := detailpages.NewService(pool, time.Now)
 	screenService := screens.NewService(existingApp).TrustProxyHeaders(cfg.Loans.TrustProxyHeaders).
@@ -236,6 +240,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		WithActingDrawers(actingService).
 		WithCoachingDrawers(ccelead.Coaching{DB: pool, Push: plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
 			Logger: logger, Now: time.Now, Kampala: kampalaLocation()}).
+		WithFollowUpDrawers(staffactivity.FollowUps{DB: pool, Push: plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
+			Logger: logger, Now: time.Now}).
 		WithPages(logger,
 			clusterpage.NewService(pool, time.Now),
 			closedschools.NewService(pool, time.Now),
@@ -293,7 +299,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			calendarpage.NewService(pool, time.Now),
 			todos.NewService(pool, time.Now),
 			workplan.NewService(pool, time.Now),
-			staffactivity.NewService(pool, time.Now),
+			staffActivity,
 			trainingsummary.NewService(pool, time.Now),
 			teamperformance.NewService(pool, time.Now),
 			projectmonitoring.NewService(pool, time.Now),
@@ -584,6 +590,8 @@ func signInHandler(cfg config.Config, pool *pgxpool.Pool, logger *slog.Logger) *
 	deps := signin.Deps{
 		Store: signin.NewStore(pool), Policy: policy, JWTSecret: []byte(cfg.JWTSecret), FieldKey: key,
 		AppBaseURL: cfg.SignIn.AppBaseURL, Logger: logger, Now: time.Now,
+		AfterSignIn: staffactivity.FollowUps{DB: pool, Push: plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
+			Logger: logger, Now: time.Now}.ResolveOnSignIn,
 	}
 	if mailer := loans.NewMailer(cfg.Loans); mailer != nil {
 		deps.Mail = mailAdapter{mailer}

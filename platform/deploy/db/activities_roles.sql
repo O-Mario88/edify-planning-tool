@@ -951,3 +951,14 @@ GRANT SELECT (id, responsible_staff_id, monitored_by_staff_id, deleted_at, plann
               activity_type, school_id, cluster_id)
   ON activity TO edify_activities_rw;
 GRANT SELECT (id, user_id, country, deleted_at) ON staff_profile TO edify_activities_rw;
+
+-- ── Staff Activity follow-ups (apps.staff_activity.follow_ups) ──
+-- A follow-up raised from the log and moved through its steps; its history
+-- grows and nothing is removed.
+GRANT SELECT (id, created_at, subject_id, assignee_id, created_by_id, route, period_key, trigger, snapshot, note, priority,
+              due_date, status, resolution, history),
+      INSERT (id, created_at, updated_at, subject_id, assignee_id, created_by_id, route, period_key, period_start, period_end,
+              trigger, snapshot, note, priority, due_date, status, resolution, resolved_at, resolved_by_id, history),
+      UPDATE (status, history, updated_at, resolved_at, resolved_by_id, resolution)
+  ON staff_usage_follow_up TO edify_activities_rw;
+GRANT SELECT (id, name, email, is_active, roles, deleted_at) ON "user" TO edify_activities_rw;
