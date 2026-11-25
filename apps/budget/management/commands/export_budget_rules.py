@@ -57,6 +57,10 @@ def rules() -> dict:
             "page": RolePermissionService.can_view_page(user, "monthly_budget")
             and bool(can_open_url(user, PATH)),
             "export": bool(can_open_url(user, "/budget/export")),
+            # budget_export_view's own check (data.export).
+            "data_export": bool(
+                RolePermissionService.can_export(user, "/budget/export")
+            ),
             "strip": strip(user, PATH, "partials/_section_nav.html") is not None,
             "country": role.value in COUNTRY_BUDGET_ROLES,
         }
@@ -72,6 +76,8 @@ def rules() -> dict:
         "participant_setting_keys": sorted(services.LEDGER_PARTICIPANT_SETTING_KEYS),
         "day_rate_keys": sorted(KEY_LABELS),
         "country": _country_rules(),
+        # The Budget workbook's other sheets (services._budget_export_book).
+        "export_book": _export_book(),
         # The Activity cost plan as a sheet (services.cost_plan_sheet).
         "cost_plan_sheet": {
             "title": services.COST_PLAN_SHEET_TITLE,
@@ -93,6 +99,23 @@ def rules() -> dict:
             )
             and can_open_url(_role_user(role.value), FUND_ALLOCATION_PATH)
         ],
+    }
+
+
+def _export_book() -> dict:
+    from apps.activities.models import Activity
+    from apps.budget import services
+    from apps.core import export_kinds
+
+    return {
+        "activity_headers": list(services.ACTIVITY_SHEET_HEADERS),
+        "line_headers": list(services.LINE_SHEET_HEADERS),
+        "summary_headers": list(services.SUMMARY_SHEET_HEADERS),
+        "money": services.MONEY,
+        "status_labels": _choices(Activity, "status"),
+        "kind_labels": dict(export_kinds.KIND_CHOICES),
+        "plan_status_labels": dict(export_kinds.STATUS_LABELS),
+        "school_lists": sorted(export_kinds.SCHOOL_LISTS),
     }
 
 

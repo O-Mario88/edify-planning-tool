@@ -593,3 +593,10 @@ WHERE activity_id = ANY($1) AND invited`, ids)
 	}
 	return out, nil
 }
+
+// ReadExportKind is export_kinds.read_kind: the drawer's Activity Type, the
+// whole plan for a blank or unknown one.
+func ReadExportKind(q url.Values) string { return readKind(q) }
+
+// KeepsStatus is export_kinds.keeps_status.
+func KeepsStatus(choice, status string) bool { return keepsStatus(choice, status) }

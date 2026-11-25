@@ -36,10 +36,12 @@ import (
 var rulesJSON []byte
 
 type role struct {
-	Page    bool `json:"page"`
-	Export  bool `json:"export"`
-	Strip   bool `json:"strip"`
-	Country bool `json:"country"`
+	Page   bool `json:"page"`
+	Export bool `json:"export"`
+	// DataExport is budget_export_view's can_export (data.export).
+	DataExport bool `json:"data_export"`
+	Strip      bool `json:"strip"`
+	Country    bool `json:"country"`
 }
 
 var rules = func() (r struct {
@@ -54,6 +56,17 @@ var rules = func() (r struct {
 	ParticipantSettingKeys []string          `json:"participant_setting_keys"`
 	DayRateKeys            []string          `json:"day_rate_keys"`
 	Country                countryRules      `json:"country"`
+	// ExportBook is the Budget workbook's other sheets' headings and words.
+	ExportBook struct {
+		ActivityHeaders  []string          `json:"activity_headers"`
+		LineHeaders      []string          `json:"line_headers"`
+		SummaryHeaders   []string          `json:"summary_headers"`
+		Money            string            `json:"money"`
+		StatusLabels     map[string]string `json:"status_labels"`
+		KindLabels       map[string]string `json:"kind_labels"`
+		PlanStatusLabels map[string]string `json:"plan_status_labels"`
+		SchoolLists      []string          `json:"school_lists"`
+	} `json:"export_book"`
 	// CostPlanSheet is cost_plan_sheet's title, caption, money format, empty
 	// line and each table kind's headings.
 	CostPlanSheet struct {
