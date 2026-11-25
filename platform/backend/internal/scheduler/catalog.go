@@ -972,19 +972,42 @@ SELECT COUNT(*)::int FROM school s
 		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) { return telemetryrollup.Rollup(ctx, tx, now, loc) })
 
 	case "fiscal_year_rollover":
-		var fySchools int
-		if err := pool.QueryRow(ctx, `
-SELECT COUNT(*)::int FROM school WHERE deleted_at IS NULL AND operational_status = 'active'`).Scan(&fySchools); err != nil {
+		// ensure_current_fiscal_year: once a year, from 1 October, the year's
+		// roll-over (year-end snapshots, the new cycles, the schools' SSA
+		// projection reset, every officer's draft agreement). A year whose
+		// roll-over is recorded complete has nothing to do, which is every
+		// run until the next 1 October. The roll-over itself needs the
+		// performance engine, which is not built in Go yet: a year begun
+		// without it fails here, so the watchdog tells the Admins, rather
+		// than reading as a healthy run (docs/migration/189 §4).
+		fy := schooldirectory.OperationalFY(localNow)
+		var done bool
+		if err := pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM hr_fiscal_year_rollover WHERE fy = $1 AND completed_at IS NOT NULL)`,
+			fy).Scan(&done); err != nil {
 			return 0, err
 		}
-		return fySchools, nil
+		if !done {
+			return 0, fmt.Errorf("scheduler: FY%s has begun and its roll-over is not recorded complete; Go does not roll a year "+
+				"over yet, so run the existing roll-over (ensure_current_fiscal_year)", fy)
+		}
+		return 0, nil
 
 	case "analytics_report_delivery":
-		var totalSchools int
-		if err := pool.QueryRow(ctx, `SELECT COUNT(*)::int FROM school WHERE deleted_at IS NULL`).Scan(&totalSchools); err != nil {
+		// deliver_due_schedules: each due schedule's analytics snapshot sent
+		// to its owner's inbox. The snapshot is built from the Analytics
+		// dashboard, which is not built in Go yet: with none due there is
+		// nothing to do; one due fails here, so the watchdog tells the Admins,
+		// rather than reading as delivered (docs/migration/189 §4).
+		var due int
+		if err := pool.QueryRow(ctx, `SELECT count(*)::int FROM analytics_report_schedule WHERE is_active AND next_run_at <= $1`,
+			now).Scan(&due); err != nil {
 			return 0, err
 		}
-		return totalSchools, nil
+		if due > 0 {
+			return 0, fmt.Errorf("scheduler: %d analytics report schedule(s) are due and Go does not build the snapshot yet; "+
+				"run the existing delivery (deliver_due_schedules)", due)
+		}
+		return 0, nil
 
 	default:
 		var n int64

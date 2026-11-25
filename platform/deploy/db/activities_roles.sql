@@ -583,3 +583,9 @@ GRANT INSERT (id, created_at, updated_at, scope, scope_id, challenge_type, title
   ON daily_debrief_insight TO edify_activities_rw;
 GRANT UPDATE (occurrence_count, debrief_ids, window_start, window_end, description, escalation_level, notified_user_ids)
   ON daily_debrief_insight TO edify_activities_rw;
+
+-- ── The scheduler's fiscal_year_rollover check (docs/migration/189 §4) ──
+-- Whether the operational year's roll-over is recorded complete.
+GRANT SELECT (fy, completed_at) ON hr_fiscal_year_rollover TO edify_activities_rw;
+-- Whether an analytics report schedule is due (analytics_report_delivery).
+GRANT SELECT (id, is_active, next_run_at) ON analytics_report_schedule TO edify_activities_rw;
