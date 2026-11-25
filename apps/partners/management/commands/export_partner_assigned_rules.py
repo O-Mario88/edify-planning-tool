@@ -125,6 +125,32 @@ def rules() -> dict:
         "awaiting_statuses": list(PARTNER_AWAITING_STATUSES),
         "log_limit": PARTNER_LOG_LIMIT,
         "assignments_limit": PARTNER_ASSIGNMENTS_LIMIT,
+        "plan": plan(),
+    }
+
+
+def plan() -> dict:
+    """The partner's My Plan (my_plan_view's partner branch,
+    partner_views.partner_plan_context, pages/partner/my_plan.html)."""
+    from apps.evidence.requirements import PROFILE_REQUIRED_EVIDENCE, required_kinds
+    from apps.activities.models import ActivityType
+    from apps.frontend.views import partner_views as views
+
+    return {
+        "scheduled_statuses": list(views._PLAN_SCHEDULED),
+        "in_progress_statuses": list(views._PLAN_IN_PROGRESS),
+        "returned_statuses": list(views._PLAN_RETURNED),
+        # partner_plan_context reads the first 200 rows (`[:200]`).
+        "limit": 200,
+        # The evidence each activity type needs, and each evidence profile's
+        # (required_kinds_for_activity).
+        "required_kinds": {
+            str(value): list(required_kinds(value))
+            for value, _label in ActivityType.choices
+        },
+        "profile_required_kinds": {
+            str(k): list(v) for k, v in PROFILE_REQUIRED_EVIDENCE.items()
+        },
     }
 
 

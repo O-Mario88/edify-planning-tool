@@ -2,6 +2,7 @@ package myplan
 
 import (
 	"context"
+	"net/url"
 
 	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
@@ -20,4 +21,23 @@ func MealRates(ctx context.Context, db schooldirectory.Querier, ids []string) (m
 // fallback.
 func CatalogueRate(ctx context.Context, db schooldirectory.Querier, place *registry.Work, key string) (*int64, error) {
 	return catalogueRate(ctx, db, place, key)
+}
+
+// Opens is My Plan's own door for a role (the page permission my_plan_view
+// is decorated with), for the partner's My Plan (internal/partnerassigned),
+// which the same view draws.
+func Opens(role string) bool {
+	door, ok := rules.Doors[role]
+	return ok && door.Page
+}
+
+// AsksExport is whether the query carries the Export drawer's period
+// fields, which my_plan_view answers with a file (handed on).
+func AsksExport(query url.Values) bool {
+	for _, key := range rules.ExportPeriodKeys {
+		if query.Has(key) {
+			return true
+		}
+	}
+	return false
 }

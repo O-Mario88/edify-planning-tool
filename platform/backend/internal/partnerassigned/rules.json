@@ -113,6 +113,117 @@
   },
   "page_size": 50,
   "partner_role_bridge": false,
+  "plan": {
+    "in_progress_statuses": [
+      "completion_started",
+      "in_progress",
+      "evidence_uploaded",
+      "evidence_accepted",
+      "salesforce_id_required"
+    ],
+    "limit": 200,
+    "profile_required_kinds": {
+      "ADMIN_NONE": [],
+      "FOLLOW_UP_MEETING": [
+        "attendance_form"
+      ],
+      "SCHOOL_VISIT_FORM": [
+        "visit_form"
+      ],
+      "SSA_DATA_GATHERING": [
+        "visit_form"
+      ],
+      "TRAINING_ATTENDANCE": [
+        "attendance_form"
+      ],
+      "YOUTH_CAMP_SAFEGUARDING": [
+        "attendance_form"
+      ]
+    },
+    "required_kinds": {
+      "baseline_ssa_visit": [],
+      "cluster_meeting": [
+        "attendance_form"
+      ],
+      "cluster_meeting_ssa_review": [
+        "attendance_form"
+      ],
+      "cluster_training": [
+        "attendance_form"
+      ],
+      "cluster_training_ssa_collection": [],
+      "coaching_visit": [
+        "visit_form"
+      ],
+      "core_assessment_visit": [
+        "visit_form"
+      ],
+      "core_training": [
+        "attendance_form"
+      ],
+      "core_visit": [
+        "visit_form"
+      ],
+      "donor_visit": [
+        "visit_form"
+      ],
+      "field_event": [],
+      "follow_up_visit": [
+        "visit_form"
+      ],
+      "in_school_coaching_visit": [
+        "visit_form"
+      ],
+      "in_school_support": [
+        "visit_form"
+      ],
+      "in_school_training": [
+        "attendance_form"
+      ],
+      "partner_activity": [],
+      "partner_ssa_collection": [],
+      "programme_event": [],
+      "project_activity": [
+        "visit_form"
+      ],
+      "school_improvement_training": [
+        "attendance_form"
+      ],
+      "school_invitation": [
+        "visit_form"
+      ],
+      "school_visit": [
+        "visit_form"
+      ],
+      "school_visit_ssa_collection": [
+        "visit_form"
+      ],
+      "social_visit": [
+        "visit_form"
+      ],
+      "ssa_activity": [],
+      "story_gathering_visit": [
+        "visit_form"
+      ],
+      "training": [
+        "attendance_form"
+      ],
+      "training_follow_up_visit": [
+        "visit_form"
+      ]
+    },
+    "returned_statuses": [
+      "returned",
+      "returned_by_pl",
+      "returned_by_ia"
+    ],
+    "scheduled_statuses": [
+      "partner_scheduled",
+      "scheduled",
+      "rescheduled",
+      "assigned_to_partner"
+    ]
+  },
   "profile_link_roles": {
     "clusters": [
       "Admin",

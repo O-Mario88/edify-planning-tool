@@ -83,8 +83,17 @@ var rules = func() (r struct {
 	AwaitingStatuses  []string `json:"awaiting_statuses"`
 	LogLimit          int      `json:"log_limit"`
 	AssignmentsLimit  int      `json:"assignments_limit"`
+	// My Plan (myplan.go).
+	Plan struct {
+		ScheduledStatuses    []string            `json:"scheduled_statuses"`
+		InProgressStatuses   []string            `json:"in_progress_statuses"`
+		ReturnedStatuses     []string            `json:"returned_statuses"`
+		Limit                int                 `json:"limit"`
+		RequiredKinds        map[string][]string `json:"required_kinds"`
+		ProfileRequiredKinds map[string][]string `json:"profile_required_kinds"`
+	} `json:"plan"`
 }) {
-	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.PageRoles) != 7 || r.LogLimit == 0 || r.AssignmentsLimit == 0 || len(r.AwaitingStatuses) == 0 || r.CompletedLimit == 0 || len(r.CompletedWorkStatuses) == 0 || len(r.QueueStatuses) == 0 || r.QueueLimit == 0 || r.PageSize == 0 {
+	if err := json.Unmarshal(rulesJSON, &r); err != nil || len(r.PageRoles) != 7 || r.LogLimit == 0 || r.AssignmentsLimit == 0 || len(r.AwaitingStatuses) == 0 || r.CompletedLimit == 0 || len(r.CompletedWorkStatuses) == 0 || r.Plan.Limit == 0 || len(r.QueueStatuses) == 0 || r.QueueLimit == 0 || r.PageSize == 0 {
 		panic(fmt.Sprintf("partnerassigned: the embedded rules are unreadable: %v", err))
 	}
 	return r
@@ -122,6 +131,11 @@ type assignment struct {
 
 // Build answers the two queues; every other path is not theirs.
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if path == MyPlanPath {
+		// Reached once internal/myplan has handed a partner login on (its
+		// own door is asked there first).
+		return s.partnerPlan(ctx, p, query)
+	}
 	roles, ok := rules.PageRoles[path]
 	if !ok {
 		return nil, false, nil

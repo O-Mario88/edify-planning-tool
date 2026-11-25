@@ -71,3 +71,24 @@ func TestThePartnerPortalListsMatchTheExistingPages(t *testing.T) {
 		compareGolden(t, page, byPath[page])
 	}
 }
+
+// A partner login's My Plan is drawn by Go: its Needs Attention section
+// always shows, and the organisation's login, who sees its money, has the
+// Send Invoice button.
+func TestAPartnersMyPlanIsGos(t *testing.T) {
+	borrowAccount(t, "partner@edify.org")
+	token := sessionOf(t, "partner@edify.org", seededPassword).GetAccessToken()
+	page, err := pageOf(token, "/my-plan", nil)
+	if err != nil {
+		t.Fatalf("the partner's My Plan: %v", err)
+	}
+	if got := page.GetHeader().GetTitle(); got != "My Plan" {
+		t.Fatalf("title = %q", got)
+	}
+	if actions := page.GetHeader().GetActions(); len(actions) != 1 || actions[0].GetLabel() != "Send Invoice" {
+		t.Fatalf("header actions = %v", actions)
+	}
+	if got := page.GetBlocks()[0].GetPanel().GetTitle(); got == "" || got[:15] != "Needs Attention" {
+		t.Fatalf("first section = %q", got)
+	}
+}
