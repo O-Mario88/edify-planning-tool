@@ -40,7 +40,7 @@ func TestBuildAnswersTheDoorsAndHandsOpenReadersOn(t *testing.T) {
 		{"a format the feed cannot render is refused even to an opener", "Admin", team, url.Values{"format": {"xml"}}, true, true},
 		{"a part under the page is not this package's", "Admin", country + "rows", nil, false, false},
 		{"a CCEO is refused Country Oversight's tables", "CCEO", country + "table/not-planned", nil, true, true},
-		{"a table Go does not draw yet is the existing application's", "CountryDirector", country + "table/clusters", nil, false, false},
+		{"a table Go does not draw yet is the existing application's", "CountryDirector", country + "table/projects", nil, false, false},
 		{"a table the page has none of is the existing application's", "CountryDirector", country + "table/bogus", nil, false, false},
 		{"a path under a table is not a table", "CountryDirector", country + "table/not-planned/x", nil, false, false},
 		{"a table refuses a format the feed cannot render", "CountryDirector", country + "table/not-planned", url.Values{"format": {"xml"}}, true, true},

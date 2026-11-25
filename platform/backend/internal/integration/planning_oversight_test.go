@@ -323,12 +323,15 @@ func TestCountryOversightSchoolTablesAreGos(t *testing.T) {
 	if got := strings.ReplaceAll(strings.Fields(visits.GetBlocks()[2].GetTable().GetSubtitle())[0], ",", ""); got != planned {
 		t.Fatalf("Staff Visit Plans lists %s visits, the page counts %s", got, planned)
 	}
-	// Schools Assigned to Partners is Go's; Clustered Schools is handed on.
-	if partners, err := pageOf(director, countryPlanningOversight+"table/partners", query); err != nil ||
-		!strings.HasPrefix(partners.GetBlocks()[2].GetTable().GetTitle(), "Schools Assigned to Partners · ") {
-		t.Fatalf("Schools Assigned to Partners: %v", err)
+	// Every table but Project Schools is Go's; that one is handed on.
+	for key, title := range map[string]string{"partners": "Schools Assigned to Partners", "clusters": "Clustered Schools",
+		"duplicates": "Schools Planned Twice", "plans": "All Activities"} {
+		page, err := pageOf(director, countryPlanningOversight+"table/"+key, query)
+		if err != nil || !strings.HasPrefix(page.GetBlocks()[2].GetTable().GetTitle(), title+" · ") {
+			t.Fatalf("%s: %v", title, err)
+		}
 	}
-	if _, err := pageOf(director, countryPlanningOversight+"table/clusters", query); connect.CodeOf(err) != connect.CodeUnavailable {
-		t.Fatalf("Clustered Schools: %v, want handed on", err)
+	if _, err := pageOf(director, countryPlanningOversight+"table/projects", query); connect.CodeOf(err) != connect.CodeUnavailable {
+		t.Fatalf("Project Schools: %v, want handed on", err)
 	}
 }

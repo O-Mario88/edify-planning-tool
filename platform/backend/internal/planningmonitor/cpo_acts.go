@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"sort"
 	"strings"
 	"time"
 
@@ -447,4 +448,49 @@ func balance(planned, expected int) string {
 		return "no target"
 	}
 	return cpoFmt(planned) + " of " + cpoFmt(expected) + " · " + cpoFmt(max(0, expected-planned)) + " to plan"
+}
+
+// clusterRows is _cluster_rows: every kept school in an active cluster,
+// under the person responsible for the cluster (the school's own holder
+// where the cluster names nobody).
+func (k *cpoBook) clusterRows() ([]cpoRow, error) {
+	kept := map[string]bool{}
+	for _, id := range k.ids {
+		kept[id] = true
+	}
+	schools := []*cpoSchool{}
+	for _, s := range k.snap.data.schools {
+		if kept[s.id] && s.clustered() {
+			schools = append(schools, s)
+		}
+	}
+	// Schools in School's own order (-created_at), as the read finds them.
+	sort.SliceStable(schools, func(i, j int) bool { return k.places.newest[schools[i].id] < k.places.newest[schools[j].id] })
+	for id, c := range k.places.clusters {
+		if k.places.active[id] {
+			k.staff.note(c[2])
+		}
+	}
+	for _, s := range schools {
+		k.staff.note(s.rawOwner)
+	}
+	if err := k.staff.resolve(k.ctx, k.db); err != nil {
+		return nil, err
+	}
+	rows := []cpoRow{}
+	for _, s := range schools {
+		p := k.staff.first(k.places.clusters[s.rawClusterID][2], s.rawOwner)
+		place := k.ofCluster(s.rawClusterID, p)
+		if !k.keeps(p, place, "") {
+			continue
+		}
+		holder := place["holder"]
+		if p == nil {
+			holder = "Nobody recorded"
+		}
+		rows = append(rows, cpoRow{"lead": place["holder_lead"], "sub_region": place["sub_region"], "district": place["district"],
+			"holder": holder, "cluster": place["cluster"], "school_id": s.code, "school": s.name, "type": typeLabel(s.schoolType),
+			"_school": s.id})
+	}
+	return rows, nil
 }

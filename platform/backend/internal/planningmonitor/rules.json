@@ -486,6 +486,13 @@
         ]
       ],
       "table_words": {
+        "duplicate_labels": {
+          "both": "Planned by staff and held by a Partner",
+          "partner": "The same kind of Partner visit assigned twice",
+          "partner_over": "More Partner visits than a Core school takes",
+          "staff": "The same kind of staff visit planned twice",
+          "staff_over": "More staff visits than a Core school takes"
+        },
         "interventions": {
           "christlike_behaviour": "Christlike Behaviour",
           "enrolment": "Enrolment",

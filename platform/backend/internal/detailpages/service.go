@@ -77,8 +77,6 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, rawPath string, q
 		}
 	case path == "/accounts/monthly-request":
 		return s.monthlyFundRequest(ctx, p, query)
-	case path == "/country-planning-oversight/table/projects":
-		return s.countryOversightProjectsTable(ctx, p, query)
 	case path == "/uploads/bulk-completion/visit":
 		return s.bulkCompletionPage(ctx, p, "visit")
 	case path == "/uploads/bulk-completion/training":
@@ -111,7 +109,7 @@ func recordID(path, prefix string) (string, bool) {
 // reads to the reader's own scope.
 func needsRecordScope(ctx context.Context, path string) bool {
 	switch path {
-	case "/projects/analytics", "/accounts/monthly-request", "/country-planning-oversight/table/projects":
+	case "/projects/analytics", "/accounts/monthly-request":
 		return true
 	case "/dashboard":
 		return pagegate.DjangoAbsent(ctx)
@@ -1146,20 +1144,9 @@ GROUP BY 1 ORDER BY 1 DESC LIMIT 12`, fy)
 	return &screensv1.GetPageResponse{Header: header, Blocks: blocks, WebPath: "/accounts/monthly-request"}, true, nil
 }
 
-// ── 8. Country Planning Oversight — Projects Table ──────────────────────
-
-func (s *Service) countryOversightProjectsTable(ctx context.Context, p auth.Principal, query url.Values) (*screensv1.GetPageResponse, bool, error) {
-	resp, served, err := s.projectAnalytics(ctx, p, query)
-	if err != nil || !served {
-		return resp, served, err
-	}
-	resp.Header.Eyebrow = "Country Planning Oversight"
-	resp.Header.BackLabel = "Back to Country Planning Oversight"
-	resp.Header.BackHref = "/country-planning-oversight"
-	resp.Header.Title = "Projects Planning Oversight Table"
-	resp.WebPath = "/country-planning-oversight/table/projects"
-	return resp, true, nil
-}
+// Country Planning Oversight's Project Schools table is planningoversight's
+// (country_oversight.tables), handed on until it is ported; the analytics
+// page this package once drew under its address is gone (docs/migration/189).
 
 // ── 9. Bulk Completion Upload Guide Pages ───────────────────────────────
 

@@ -101,11 +101,12 @@ type cpoPlaces struct {
 	// newest is each school's place in School's own order (-created_at),
 	// the order the existing page's ties fall in.
 	newest map[string]int
+	active map[string]bool // cluster id → whether it is active
 }
 
 func loadPlaces(ctx context.Context, db schooldirectory.Querier, snap *cpoSnapshot) (*cpoPlaces, error) {
 	p := &cpoPlaces{data: snap.data, leadOrder: map[string]int{}, districts: map[string][3]string{}, clusters: map[string][3]string{},
-		newest: map[string]int{}}
+		newest: map[string]int{}, active: map[string]bool{}}
 	ids := make([]string, 0, len(snap.data.schools))
 	for _, s := range snap.data.schools {
 		ids = append(ids, s.id)
@@ -149,7 +150,8 @@ func loadPlaces(ctx context.Context, db schooldirectory.Querier, snap *cpoSnapsh
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	rows, err = db.Query(ctx, `SELECT id, COALESCE(name, ''), COALESCE(district_id, ''), COALESCE(responsible_staff_id, '') FROM cluster`)
+	rows, err = db.Query(ctx, `SELECT id, COALESCE(name, ''), COALESCE(district_id, ''), COALESCE(responsible_staff_id, ''),
+		status = 'active' FROM cluster`)
 	if err != nil {
 		return nil, fmt.Errorf("planningmonitor: clusters: %w", err)
 	}
@@ -157,10 +159,12 @@ func loadPlaces(ctx context.Context, db schooldirectory.Querier, snap *cpoSnapsh
 	for rows.Next() {
 		var id string
 		var v [3]string
-		if err := rows.Scan(&id, &v[0], &v[1], &v[2]); err != nil {
+		var active bool
+		if err := rows.Scan(&id, &v[0], &v[1], &v[2], &active); err != nil {
 			return nil, err
 		}
 		p.clusters[id] = v
+		p.active[id] = active
 	}
 	return p, rows.Err()
 }
@@ -350,6 +354,11 @@ func schoolRows(ctx context.Context, db schooldirectory.Querier, snap *cpoSnapsh
 		row["trainings_remaining"] = values.n("training_gap")
 		row["with_partner"] = withPartner
 		row["partner"] = strings.Join(held, ", ")
+		why := []string{}
+		for _, r := range duplicateReasons(s) {
+			why = append(why, rules.CountryOversight.Page.TableWords.Duplicates[r])
+		}
+		row["why"] = strings.Join(why, "; ")
 		rows = append(rows, row)
 	}
 	places.sortRows(rows, "school")
@@ -699,7 +708,7 @@ func resolvedHref(base, query string) string {
 // tablesDrawn are the tables Go draws; the rest are handed on.
 var tablesDrawn = map[string]bool{"not-planned": true, "partly-planned": true, "no-training": true, "unclustered": true,
 	"visits": true, "meetings": true, "partners": true, "all-visits": true, "plans": true, "trainings": true,
-	"project-partners": true, "project-activities": true}
+	"project-partners": true, "project-activities": true, "clusters": true, "duplicates": true}
 
 // activityTable is tables.build for the people-first tables Go draws.
 func activityTable(ctx context.Context, db schooldirectory.Querier, snap *cpoSnapshot, places *cpoPlaces, t cpoTable,
@@ -709,6 +718,20 @@ func activityTable(ctx context.Context, db schooldirectory.Querier, snap *cpoSna
 		return t, true, err
 	}
 	switch t.spec.Key {
+	case "duplicates":
+		return duplicateTable(ctx, db, snap, places, t, e)
+	case "clusters":
+		rows, err := book.clusterRows()
+		if err != nil {
+			return t, true, err
+		}
+		places.sortRows(rows, "school")
+		clusters := map[[2]any]bool{}
+		for _, r := range rows {
+			clusters[[2]any{r["district"], r["cluster"]}] = true
+		}
+		t.rows = rows
+		t.summary = countLine(len(rows), t.spec.Unit) + " in " + cpoFmt(len(clusters)) + " cluster" + pluralize(len(clusters), "", "s")
 	case "visits":
 		rows, err := book.visitRows()
 		if err != nil {
@@ -881,4 +904,56 @@ func partnerTable(k *cpoBook, snap *cpoSnapshot, spec cpoTableSpec) ([]cpoRow, s
 		return nil, "", false, nil
 	}
 	return rows, summary, true, nil
+}
+
+// duplicateTable is _duplicate_table: every plan at every school planned
+// twice, whoever made it.
+func duplicateTable(ctx context.Context, db schooldirectory.Querier, snap *cpoSnapshot, places *cpoPlaces, t cpoTable,
+	e cpoExtra) (cpoTable, bool, error) {
+	schools, err := schoolRows(ctx, db, snap, places, e, func(v cpoTally) bool { return v.n("duplicates") != 0 })
+	if err != nil {
+		return t, true, err
+	}
+	if len(schools) == 0 {
+		t.summary = "No school is planned twice"
+		return t, true, nil
+	}
+	byCode, ids := map[string]cpoRow{}, []string{}
+	for _, r := range schools {
+		byCode[r["school_id"].(string)] = r
+		ids = append(ids, r["_school"].(string))
+	}
+	// The page's Lead and CCEO choice picked the schools, not the planners.
+	everyone := *snap
+	everyone.filters.programLead, everyone.filters.cceo = "", ""
+	everyone.narrow = cpoNarrow{schoolIDs: ids}
+	book, err := newBook(ctx, db, &everyone, places, cpoExtra{})
+	if err != nil {
+		return t, true, err
+	}
+	plans, err := gather(book.visitRows, func() ([]cpoRow, error) {
+		p, err := book.partnerRows(false)
+		return where(p, func(r cpoRow) bool { return r["is_visit"] == true }), err
+	})
+	if err != nil {
+		return t, true, err
+	}
+	rows := []cpoRow{}
+	for _, plan := range plans {
+		school, ok := byCode[plan["school_id"].(string)]
+		if !ok {
+			continue
+		}
+		responsible := plan["staff"]
+		if plan["channel"] == "Partner" {
+			responsible = fmt.Sprintf("%s (assigned by %s)", plan["partner"], plan["staff"])
+		}
+		plan["why"], plan["staff"] = school["why"], responsible
+		rows = append(rows, plan)
+	}
+	places.sortRows(rows, "school", "school_id", "date")
+	count := distinct(rows, "school_id")
+	t.rows = rows
+	t.summary = cpoFmt(count) + " school" + pluralize(count, "", "s") + " planned twice · " + countLine(len(rows), "plan") + " between them"
+	return t, true, nil
 }

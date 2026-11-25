@@ -24,7 +24,6 @@ var unscopedPages = []string{
 	"/my-plan/activity-1",
 	"/documents/staff-handbook",
 	"/accounts/monthly-request",
-	"/country-planning-oversight/table/projects",
 }
 
 func TestPagesWithoutRecordScopeAreHandedOnForEveryoneButAdmin(t *testing.T) {
@@ -37,6 +36,19 @@ func TestPagesWithoutRecordScopeAreHandedOnForEveryoneButAdmin(t *testing.T) {
 					t.Fatalf("served=%v err=%v, want it handed on", served, err)
 				}
 			})
+		}
+	}
+}
+
+// Country Planning Oversight's Project Schools table is not this package's:
+// planningoversight answers every consolidated table.
+func TestCountryOversightProjectSchoolsIsNotThisPackages(t *testing.T) {
+	s := NewService(nil, time.Now)
+	for _, role := range []string{"Admin", "CountryDirector", "CCEO"} {
+		_, served, err := s.Build(context.Background(), auth.Principal{UserID: "u1", ActiveRole: role},
+			"/country-planning-oversight/table/projects", url.Values{})
+		if served || err != nil {
+			t.Fatalf("%s: served=%v err=%v, want another package's", role, served, err)
 		}
 	}
 }

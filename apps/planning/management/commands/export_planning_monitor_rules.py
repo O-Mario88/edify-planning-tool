@@ -346,6 +346,7 @@ def _country_oversight_page() -> dict:
             "interventions": {str(k): str(v) for k, v in SsaIntervention.choices},
             "kinds": {str(k): str(v) for k, v in book.KIND_LABELS.items()},
             "waiting_states": sorted(tables._WAITING_STATES),
+            "duplicate_labels": dict(book.DUPLICATE_LABELS),
         },
         # may_export: the drill-down's Export (can_export).
         "export_roles": sorted(

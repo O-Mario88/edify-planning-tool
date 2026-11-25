@@ -36,10 +36,14 @@ func planningState(cl cpoClaims) string {
 // duplicated is coverage.duplicate_reasons non-empty: a school planned more
 // often than it should be, from the year's counts (a Partner's side with
 // what it has not dated yet).
-func duplicated(s *cpoSchool) bool {
+func duplicated(s *cpoSchool) bool { return len(duplicateReasons(s)) > 0 }
+
+// duplicateReasons is coverage.duplicate_reasons over rules.duplicate_reasons:
+// why a school's year is planned more often than it should be.
+func duplicateReasons(s *cpoSchool) []string {
 	c := rules.CountryOversight
 	if s.family != c.ClientFamily && s.family != c.CoreFamily {
-		return false
+		return nil
 	}
 	staffAll, staffSSA := s.staff[2], s.staffSSA
 	partnerAll, partnerSSA := 0, 0
@@ -49,19 +53,28 @@ func duplicated(s *cpoSchool) bool {
 	}
 	staffPools := []int{staffSSA, staffAll - staffSSA}
 	partnerPools := []int{partnerSSA, partnerAll - partnerSSA}
+	over := func(pools []int) bool { return slices.ContainsFunc(pools, func(n int) bool { return n > 1 }) }
+	reasons := []string{}
 	if slices.Contains(rules.ClientTypes, s.schoolType) {
 		if staffAll > 0 && partnerAll > 0 {
-			return true
+			reasons = append(reasons, "both")
 		}
-		for _, n := range append(staffPools, partnerPools...) {
-			if n > 1 {
-				return true
-			}
+		if over(staffPools) {
+			reasons = append(reasons, "staff")
 		}
-		return false
+		if over(partnerPools) {
+			reasons = append(reasons, "partner")
+		}
+		return reasons
 	}
 	n := need(s.schoolType)
-	return (n.StaffVisits > 0 && staffAll > n.StaffVisits) || (n.PartnerVisits > 0 && partnerAll > n.PartnerVisits)
+	if n.StaffVisits > 0 && staffAll > n.StaffVisits {
+		reasons = append(reasons, "staff_over")
+	}
+	if n.PartnerVisits > 0 && partnerAll > n.PartnerVisits {
+		reasons = append(reasons, "partner_over")
+	}
+	return reasons
 }
 
 // schoolValues is hierarchy.school_values: one school's contribution to every
