@@ -111,3 +111,54 @@ func peopleWindow(w cpoWindow) cpoWindow {
 	}
 	return w
 }
+
+// CPOTreeLead is one Lead of the tree as _tree leaves it.
+type CPOTreeLead struct {
+	Key, Name string
+	Values    []int
+	Owners    []CPOTreeOwner
+}
+
+// CPOTreeOwner is one person's row.
+type CPOTreeOwner struct {
+	Key, Name, Kind    string
+	Values             []int
+	Partners, Assigned map[string][]int
+}
+
+// CountryOversightTree is service._snapshot's tree for the reader and the
+// filters (as the page's query names them).
+func CountryOversightTree(ctx context.Context, db schooldirectory.Querier, p auth.Principal, q map[string]string, now time.Time) ([]int, map[string][]int, []CPOTreeLead, error) {
+	scope, err := schooldirectory.ResolveScope(ctx, db, p, now)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	month := 0
+	fmtSscanInt(q["month"], &month)
+	f := cpoFilters{fy: q["fy"], period: first(q["period"], "fy"), quarter: q["quarter"], month: month, week: q["week"], region: q["region"],
+		district: q["district"], programLead: q["program_lead"], cceo: q["cceo"], schoolType: q["school_type"], channel: q["channel"],
+		partner: q["partner"], clusterStatus: q["cluster_status"], planningStatus: q["planning_status"]}
+	l := now.In(cpoLocation)
+	snap, err := buildCPOSnapshot(ctx, db, scope, f, date(l.Year(), l.Month(), l.Day()))
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	leads := []CPOTreeLead{}
+	for _, ld := range snap.tree.leads {
+		owners := []CPOTreeOwner{}
+		for _, o := range ld.owners {
+			owners = append(owners, CPOTreeOwner{Key: o.key, Name: o.name, Kind: o.kind, Values: o.tally, Partners: o.partners, Assigned: o.assigned})
+		}
+		leads = append(leads, CPOTreeLead{Key: ld.key, Name: ld.name, Values: ld.tally, Owners: owners})
+	}
+	return snap.tree.country, snap.tree.byType, leads, nil
+}
+
+func fmtSscanInt(s string, n *int) { _, _ = fmtSscan(s, n) }
+
+func first(a, b string) string {
+	if a != "" {
+		return a
+	}
+	return b
+}

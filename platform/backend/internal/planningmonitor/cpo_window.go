@@ -125,3 +125,5 @@ func isoWeekStart(year, week int) time.Time {
 	monday := jan4.AddDate(0, 0, -((int(jan4.Weekday()) + 6) % 7))
 	return monday.AddDate(0, 0, (week-1)*7)
 }
+
+func fmtSscan(s string, n *int) (int, error) { return fmt.Sscan(s, n) }
