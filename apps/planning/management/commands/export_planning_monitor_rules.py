@@ -455,7 +455,12 @@ def _country_oversight_page() -> dict:
     from apps.planning.country_oversight import followups as fu
     from apps.planning.country_oversight import rules as book
     from apps.planning.country_oversight import service, tables
-    from apps.planning.followup_models import OPEN_FOLLOW_UP_STATES, FollowUpStatus
+    from apps.frontend.views import country_oversight_views as views
+    from apps.planning.followup_models import (
+        OPEN_FOLLOW_UP_STATES,
+        FollowUpPriority,
+        FollowUpStatus,
+    )
     from apps.schools.management.commands.export_school_directory_rules import (
         _role_user,
     )
@@ -515,6 +520,14 @@ def _country_oversight_page() -> dict:
         # The Open Follow-ups panel (country_oversight_views._followup_card).
         "followup_open_states": sorted(str(s) for s in OPEN_FOLLOW_UP_STATES),
         "followup_status_labels": {str(k): str(v) for k, v in FollowUpStatus.choices},
+        "followup_priority_labels": {
+            str(k): str(v) for k, v in FollowUpPriority.choices
+        },
+        # The page's workbook (country_oversight_views.coverage_export_view).
+        "coverage_export": {
+            "hierarchy_headers": list(views.HIERARCHY_HEADERS),
+            "school_headers": list(views.SCHOOL_HEADERS),
+        },
         "followup_issue_labels": {
             key: issue.label for key, issue in {**EXEC_ISSUES, **fu.ISSUES}.items()
         },

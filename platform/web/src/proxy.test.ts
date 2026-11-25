@@ -107,6 +107,9 @@ describe('a download the gateway writes', () => {
     expect(send('/country-planning-oversight/export?fy=2027&activity_type=planned')).toBe(
       'http://localhost:3000/api/quick-export?target=%2Fcountry-planning-oversight%2Fexport&fy=2027&activity_type=planned',
     );
+    expect(send('/country-planning-oversight/coverage-export?fy=2027')).toBe(
+      'http://localhost:3000/api/quick-export?target=%2Fcountry-planning-oversight%2Fcoverage-export&fy=2027',
+    );
     expect(send('/team-planning-oversight/export/?format=csv')).toBe(
       'http://localhost:3000/api/quick-export?target=%2Fteam-planning-oversight%2Fexport&format=csv',
     );

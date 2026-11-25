@@ -58,8 +58,15 @@ type cpoRules struct {
 		FollowUpOpenStates   []string          `json:"followup_open_states"`
 		FollowUpStatusLabels map[string]string `json:"followup_status_labels"`
 		FollowUpIssueLabels  map[string]string `json:"followup_issue_labels"`
-		FollowUpIssues       []cpoIssueRule    `json:"followup_issues"`
-		PolicyVersion        string            `json:"policy_version"`
+		// FollowUpPriorityLabels are FollowUpPriority's labels.
+		FollowUpPriorityLabels map[string]string `json:"followup_priority_labels"`
+		// CoverageExport is the page's workbook's headings.
+		CoverageExport struct {
+			HierarchyHeaders []string `json:"hierarchy_headers"`
+			SchoolHeaders    []string `json:"school_headers"`
+		} `json:"coverage_export"`
+		FollowUpIssues []cpoIssueRule `json:"followup_issues"`
+		PolicyVersion  string         `json:"policy_version"`
 		// The consolidated tables (tables.SPECS) and their tab order.
 		Tables      []cpoTableSpec    `json:"tables"`
 		TableTabs   []string          `json:"table_tabs"`
