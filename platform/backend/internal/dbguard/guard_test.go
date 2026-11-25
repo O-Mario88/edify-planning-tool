@@ -220,6 +220,8 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		// The PD reminders job moves the course clock and logs each reminder
 		// (apps.professional_development.reminders).
 		filepath.Join(root, "internal", "notificationjobs") + sep: {"pd_request", "pd_reminder_log"},
+		// The weekly sample checks (apps.activities.verification_sampling).
+		filepath.Join(root, "internal", "iasampling") + sep: {"ia_verification_sample"},
 		filepath.Join(root, "internal", "debriefs") + sep: {
 			"daily_debrief", "daily_debrief_activity_link", "daily_debrief_recipient",
 			// The scheduler's recurring-issue scan (insight_service): its insights.

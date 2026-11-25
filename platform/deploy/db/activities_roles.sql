@@ -893,3 +893,16 @@ GRANT SELECT (id, user_id, country, onboarding_state) ON staff_profile TO edify_
 GRANT SELECT (id, status, severity, addressed_role, assigned_to_user_id, country_id, subject, detail, raised_by_user_id,
               raised_by_name, created_at)
   ON leadership_escalation TO edify_activities_rw;
+
+-- ── The scheduler's verification_sampling (docs/migration/189 §4) ──
+-- draw_samples: the week's verifications and confirmed SSA records, where
+-- each was, and the samples drawn (one row per subject; nothing removed).
+GRANT SELECT (id, activity_id, verified_by, verified_at) ON ia_verification_history TO edify_activities_rw;
+GRANT SELECT (id, activity_id, ssa_record_id, subject_type, sampled_at),
+      INSERT (created_at, updated_at, id, original_verifier, sampled_at, sampled_by, status, outcome_note, activity_id,
+              ssa_record_id, method, subject_type)
+  ON ia_verification_sample TO edify_activities_rw;
+GRANT SELECT (id, country) ON region TO edify_activities_rw;
+GRANT SELECT (id, region_id) ON school TO edify_activities_rw;
+GRANT SELECT (id, region_id) ON cluster TO edify_activities_rw;
+GRANT SELECT (id, school_id, verification_status, deleted_at, verified_at, verified_by_user_id) ON ssa_record TO edify_activities_rw;

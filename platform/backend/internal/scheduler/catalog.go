@@ -19,6 +19,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closurepages"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dataqualityscan"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/debriefs"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/iasampling"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/notificationcenter"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/notificationjobs"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/plreview"
@@ -413,7 +414,7 @@ SELECT id, program_lead_user_id, COALESCE(school_name, ''), days_overdue
 		return n, nil
 
 	case "verification_sampling":
-		return callIntRW(ctx, pool, `SELECT gateway_scheduler.sample_ia_verifications($1, $2)`, now, 10)
+		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) { return iasampling.Draw(ctx, tx, now, loc) })
 
 	case "closure_checklist_refresh":
 		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) { return closurepages.RefreshOpen(ctx, tx, now) })
