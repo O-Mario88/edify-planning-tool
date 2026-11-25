@@ -3,21 +3,25 @@ package planningmonitor
 // Country Planning Oversight's drawers (country_oversight_views.drawer_view)
 // as the feed reads them: a planning card opened (drawer_kpi.html), a
 // Programme Lead (drawer_lead.html), a person or one Partner's share of
-// their schools (drawer_owner.html), and the year's follow-ups when none is
-// open (drawer_followups.html). A drawer listing open follow-ups, a list
-// longer than one page, and Impact Assessment's data-quality queue are
+// their schools (drawer_owner.html), and the year's planning follow-ups
+// (drawer_followups.html). A register holding an execution follow-up, a
+// list longer than one page, and Impact Assessment's data-quality queue are
 // handed on.
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/jackc/pgx/v5"
+
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
@@ -44,7 +48,7 @@ func CountryOversightDrawer(ctx context.Context, db schooldirectory.Querier, p a
 		}
 		return d, true, err
 	case "followups":
-		return cpoFollowUpsDrawer(ctx, db, q, now)
+		return cpoFollowUpsDrawer(ctx, db, p, q, now)
 	case "lead", "owner", "partner":
 		d, err := cpoPersonDrawer(ctx, db, p, q, now)
 		if errors.Is(err, errCPOHandOn) {
@@ -152,35 +156,149 @@ func cpoLeadShares(snap *cpoSnapshot) *screensv1.DrawerItem {
 		Table: &screensv1.PageTable{Columns: columns, Rows: rows}}}}}
 }
 
-// cpoFollowUpsDrawer is drawer_followups.html for a year with nothing to
-// list; a register with follow-ups in it is handed on.
-func cpoFollowUpsDrawer(ctx context.Context, db schooldirectory.Querier, q map[string]string,
+// cpoFollowUpsDrawer is drawer_followups.html: every planning follow-up of
+// the year (or the open ones), newest first, as the feed reads each entry.
+// A register holding an execution follow-up is handed on.
+func cpoFollowUpsDrawer(ctx context.Context, db schooldirectory.Querier, p auth.Principal, q map[string]string,
 	now time.Time) (*screensv1.PageDrawer, bool, error) {
 	l := now.In(cpoLocation)
-	f := cpoReadFilters(q, date(l.Year(), l.Month(), l.Day()))
+	today := date(l.Year(), l.Month(), l.Day())
+	f := cpoReadFilters(q, today)
 	show := strings.TrimSpace(q["show"])
 	if show == "" {
 		show = "open"
 	}
+	page := rules.CountryOversight.Page
 	where := `fy = $1`
 	args := []any{f.fy}
 	if show == "open" {
 		where += ` AND status = ANY($2)`
-		args = append(args, rules.CountryOversight.Page.FollowUpOpenStates)
+		args = append(args, page.FollowUpOpenStates)
 	}
-	var any bool
-	if err := db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM planning_oversight_follow_up WHERE `+where+`)`, args...).Scan(&any); err != nil {
+	rows, err := db.Query(ctx, `SELECT id, issue_type, COALESCE(NULLIF(activity_label, ''), NULLIF(school_name, ''), NULLIF(partner_name, ''),
+  NULLIF(cceo_name, ''), program_lead_name), program_lead_name, COALESCE(cceo_name, ''), status, module, period_label, priority, due_date,
+  planned_value, required_value, remaining_value, live_remaining, affected_count, instruction_history, COALESCE(returned_reason, ''),
+  COALESCE(jsonb_array_length(CASE WHEN jsonb_typeof(linked_team_action_ids) = 'array' THEN linked_team_action_ids END), 0),
+  COALESCE(linked_note, ''), COALESCE(resolution_note, '')
+FROM planning_oversight_follow_up WHERE `+where+` ORDER BY assigned_at DESC LIMIT 100`, args...)
+	if err != nil {
+		return nil, true, fmt.Errorf("planningmonitor: the follow-up register: %w", err)
+	}
+	defer rows.Close()
+	followUp := cpoReaderFor(p.ActiveRole, false).followUp
+	d := &screensv1.PageDrawer{Title: "Follow-ups", Subtitle: cpoFYLabel(f.fy) + " · open", HasRequired: true, CancelLabel: "Cancel"}
+	if show != "open" {
+		d.Subtitle = cpoFYLabel(f.fy) + " · all this year"
+	}
+	for rows.Next() {
+		var id, issue, subject, to, cceo, status, module, period, priority string
+		var due *time.Time
+		var planned, required, remaining, affected, asks int
+		var live *int
+		var history []byte
+		var returned, linked, resolution string
+		if err := rows.Scan(&id, &issue, &subject, &to, &cceo, &status, &module, &period, &priority, &due, &planned, &required,
+			&remaining, &live, &affected, &history, &returned, &asks, &linked, &resolution); err != nil {
+			return nil, true, fmt.Errorf("planningmonitor: a follow-up: %w", err)
+		}
+		if module != "planning" {
+			return nil, false, nil
+		}
+		label := orElse(page.FollowUpIssueLabels[issue], issue)
+		open := slices.Contains(page.FollowUpOpenStates, status)
+		overdue := open && due != nil && due.Before(today)
+		line := "Planning · to " + to + " (PL)"
+		if cceo != "" {
+			line += " about " + cceo
+		}
+		line += " · " + period + " · " + orElse(cpoPriorityLabels[priority], priority) + " · due "
+		if due != nil {
+			line += due.Format("2 Jan 2006")
+		}
+		if overdue {
+			line += " overdue"
+		}
+		figures := fmt.Sprintf("When sent: %d of %d · %d remaining", planned, required, remaining)
+		if live != nil {
+			figures += fmt.Sprintf(" — now %d remaining", *live)
+		}
+		if affected > 0 {
+			figures += fmt.Sprintf(" · %d %s", affected, pluralize(affected, "school", "schools"))
+		}
+		d.Items = append(d.Items, dHeading(label+" · "+subject), dText(line), dText(figures))
+		var trail []struct {
+			Name        string `json:"name"`
+			Instruction string `json:"instruction"`
+			Due         any    `json:"due"`
+		}
+		_ = json.Unmarshal(history, &trail)
+		for _, e := range trail {
+			due := ""
+			if e.Due != nil {
+				due = fmt.Sprint(e.Due)
+			}
+			d.Items = append(d.Items, dText(strings.TrimSpace(e.Name+": “"+e.Instruction+"” "+due)))
+		}
+		if returned != "" {
+			d.Items = append(d.Items, dText("Returned: "+returned))
+		}
+		if asks > 0 {
+			d.Items = append(d.Items, dText(fmt.Sprintf("%d school %s sent to the CCEO — Actions Sent", asks,
+				pluralize(asks, "action", "actions"))))
+		}
+		if linked != "" {
+			d.Items = append(d.Items, dText("Lead's note: "+linked))
+		}
+		if resolution != "" {
+			d.Items = append(d.Items, dText("Closed: "+resolution))
+		}
+		// The Director's first form is the first open entry's: Escalate when
+		// it is overdue and not escalated yet, else Close.
+		if followUp && open && !d.CanSubmit {
+			d.CanSubmit, d.SubmitLabel = true, "Close"
+			if overdue && status != "escalated" {
+				d.SubmitLabel = "Escalate"
+			}
+		}
+	}
+	if err := rows.Err(); err != nil {
 		return nil, true, err
 	}
-	if any {
-		return nil, false, nil
+	if len(d.Items) == 0 {
+		empty := "No follow-up is open for this year."
+		if show != "open" {
+			empty = "No follow-up has been sent this year."
+		}
+		d.Items = []*screensv1.DrawerItem{dText(empty)}
 	}
-	subtitle, empty := cpoFYLabel(f.fy)+" · open", "No follow-up is open for this year."
-	if show != "open" {
-		subtitle, empty = cpoFYLabel(f.fy)+" · all this year", "No follow-up has been sent this year."
+	return d, true, nil
+}
+
+// cpoPriorityLabels are FollowUpPriority's words.
+var cpoPriorityLabels = map[string]string{"normal": "Normal", "attention": "Attention", "high": "High", "critical": "Critical"}
+
+// cpoOpenFollowUpLines is _followup_list.html as the feed reads the list:
+// each open follow-up's status, newest first; "No open follow-up." for none.
+func cpoOpenFollowUpLines(ctx context.Context, db schooldirectory.Querier, fy, lead, cceo string) (*screensv1.DrawerItem, error) {
+	page := rules.CountryOversight.Page
+	rows, err := db.Query(ctx, `SELECT status FROM planning_oversight_follow_up WHERE fy = $1 AND status = ANY($2)
+  AND ($3 = '' OR program_lead_staff_id = $3) AND ($4 = '' OR cceo_staff_id = $4) ORDER BY assigned_at DESC LIMIT 20`,
+		fy, page.FollowUpOpenStates, lead, cceo)
+	if err != nil {
+		return nil, fmt.Errorf("planningmonitor: the scope's follow-ups: %w", err)
 	}
-	return &screensv1.PageDrawer{Title: "Follow-ups", Subtitle: subtitle, HasRequired: true, CancelLabel: "Cancel",
-		Items: []*screensv1.DrawerItem{dText(empty)}}, true, nil
+	statuses, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return nil, fmt.Errorf("planningmonitor: the scope's follow-ups: %w", err)
+	}
+	if len(statuses) == 0 {
+		return dText("No open follow-up."), nil
+	}
+	facts := []*screensv1.PageFact{}
+	for _, status := range statuses {
+		facts = append(facts, &screensv1.PageFact{Value: orElse(page.FollowUpStatusLabels[status], status)})
+	}
+	return &screensv1.DrawerItem{Kind: &screensv1.DrawerItem_Lines{Lines: &screensv1.PageFacts{Facts: facts}}}, nil
 }
 
 // cpoDrawerRead is what a person's drawer reads: the snapshot, the reader's
@@ -257,9 +375,9 @@ func cpoLeadDrawer(ctx context.Context, db schooldirectory.Querier, r cpoDrawerR
 	if len(lead.owners) == 0 || len(lead.owners) > cpoDrawerPage {
 		return nil, errCPOHandOn
 	}
-	open, err := cpoScopeHasOpenFollowUps(ctx, db, r.snap.filters.fy, lead.key, "")
-	if err != nil || open {
-		return nil, errOr(err, errCPOHandOn)
+	followups, err := cpoOpenFollowUpLines(ctx, db, r.snap.filters.fy, lead.key, "")
+	if err != nil {
+		return nil, err
 	}
 	items := []*screensv1.DrawerItem{dHeading("Figures"), cpoFigures(t), dHeading("Gaps")}
 	items = append(items, cpoGapLines(t, issues, r.followUp)...)
@@ -267,7 +385,7 @@ func cpoLeadDrawer(ctx context.Context, db schooldirectory.Querier, r cpoDrawerR
 	if r.seesSchools {
 		items = append(items, dHeading("Schools"), dText("Reading the schools…"))
 	}
-	items = append(items, dHeading("Open follow-ups"), dText("No open follow-up."))
+	items = append(items, dHeading("Open follow-ups"), followups)
 	if !lead.noLead {
 		items = append(items, dText("Country Plan (activities) Planning Oversight Country Portfolio"))
 	}
@@ -313,9 +431,9 @@ func cpoOwnerDrawer(ctx context.Context, db schooldirectory.Querier, r cpoDrawer
 			subtitle = orElse(owner.role, "Holder") + " · reports to " + lead.name
 		}
 	}
-	open, err := cpoScopeHasOpenFollowUps(ctx, db, r.snap.filters.fy, lead.key, map[bool]string{true: "", false: owner.key}[owner.kind == "pl_personal"])
-	if err != nil || open {
-		return nil, errOr(err, errCPOHandOn)
+	followups, err := cpoOpenFollowUpLines(ctx, db, r.snap.filters.fy, lead.key, map[bool]string{true: "", false: owner.key}[owner.kind == "pl_personal"])
+	if err != nil {
+		return nil, err
 	}
 	d := &screensv1.PageDrawer{Title: title, Subtitle: subtitle + " · " + r.period, HasRequired: true, CancelLabel: "Cancel"}
 	items := []*screensv1.DrawerItem{}
@@ -342,30 +460,13 @@ func cpoOwnerDrawer(ctx context.Context, db schooldirectory.Querier, r cpoDrawer
 	if r.seesSchools {
 		items = append(items, dHeading("Schools"), dText("Reading the schools…"))
 	}
-	d.Items = append(items, dHeading("Open follow-ups"), dText("No open follow-up."))
+	d.Items = append(items, dHeading("Open follow-ups"), followups)
 	return d, nil
 }
 
 // cpoNoPartnerKey is NO_PARTNER_KEY: staff delivery's place among the
 // Partners a person's schools are worked by.
 const cpoNoPartnerKey = "__staff__"
-
-func errOr(err, otherwise error) error {
-	if err != nil {
-		return err
-	}
-	return otherwise
-}
-
-// cpoScopeHasOpenFollowUps is whether _scoped_followups finds any open follow-up
-// for the scope (the drawers draw only an empty list).
-func cpoScopeHasOpenFollowUps(ctx context.Context, db schooldirectory.Querier, fy, lead, cceo string) (bool, error) {
-	var any bool
-	err := db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM planning_oversight_follow_up WHERE fy = $1 AND status = ANY($2)
-  AND ($3 = '' OR program_lead_staff_id = $3) AND ($4 = '' OR cceo_staff_id = $4))`,
-		fy, rules.CountryOversight.Page.FollowUpOpenStates, lead, cceo).Scan(&any)
-	return any, err
-}
 
 // cpoIssueMenu is _issue_menu: the gaps a follow-up could be about.
 func cpoIssueMenu(t cpoTally) []cpoIssueRule {
