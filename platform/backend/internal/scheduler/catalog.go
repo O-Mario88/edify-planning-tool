@@ -332,54 +332,8 @@ func executeJob(
 		})
 
 	case "ia_verification_digest":
-		var pending int
-		if err := pool.QueryRow(ctx, `
-SELECT COUNT(*)::int
-  FROM activity
- WHERE deleted_at IS NULL
-   AND status = 'pl_approved'
-   AND ia_verification_status = 'pending'`).Scan(&pending); err != nil {
-			return 0, err
-		}
-		if pending == 0 {
-			return 0, nil
-		}
-		rows, err := pool.Query(ctx, `
-SELECT id FROM "user"
- WHERE deleted_at IS NULL AND is_active = true
-   AND (active_role = 'ImpactAssessment' OR 'ImpactAssessment' = ANY(roles))
- LIMIT 50`)
-		if err != nil {
-			return 0, err
-		}
-		var uids []string
-		for rows.Next() {
-			var uid string
-			if scanErr := rows.Scan(&uid); scanErr == nil && uid != "" {
-				uids = append(uids, uid)
-			}
-		}
-		rows.Close()
-		sent := 0
-		for _, uid := range uids {
-			if ok, err := writer.Deliver(ctx, notificationcenter.Delivery{
-				RecipientID:     uid,
-				Title:           fmt.Sprintf("IA Verification Digest: %d activity(ies) awaiting verification", pending),
-				Body:            "Completed PL-approved activities are ready for Impact Assessment verification.",
-				Category:        "ia_verification",
-				ContextType:     "ia_digest",
-				ContextID:       "ia-" + today,
-				TargetRoute:     "/ia/verification",
-				ActionLabel:     "Open IA Queue",
-				ActionRequired:  true,
-				Priority:        "normal",
-				SourceEventType: "ia.daily_digest",
-				SourceEventID:   "ia-" + today + ":" + uid,
-			}); err == nil && ok {
-				sent++
-			}
-		}
-		return sent, nil
+		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy
+		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) { return notificationjobs.SendIADigest(ctx, tx, now, loc, push) })
 
 	case "scheduler_watchdog":
 		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy
