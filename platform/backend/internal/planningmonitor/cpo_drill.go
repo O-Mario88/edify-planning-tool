@@ -16,6 +16,9 @@ import (
 // _may_read_quality, may_follow_up, RolePermissionService.can_export).
 type cpoReader struct {
 	readQuality, followUp, export bool
+	// seesSchools is _may_see_schools: school-level rows are part of the
+	// reader's reading of the country.
+	seesSchools bool
 }
 
 func cpoReaderFor(role string, mayExport bool) cpoReader {

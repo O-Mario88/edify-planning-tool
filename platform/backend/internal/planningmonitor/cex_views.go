@@ -8,7 +8,9 @@ import (
 	"strings"
 	"time"
 
+	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	registry "github.com/O-Mario88/edify-planning-tool/platform/backend/internal/country"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/feeddom"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -237,4 +239,275 @@ func (s *cexSnapshot) partnerTableNodes(rows []cexPartnerRow) *node {
 	}
 	heads := []string{"Assigned", "Scheduled", "Started", "Evidence Submitted", "Verified", "Awaiting Verification", "Payment", "Overdue"}
 	return el("div", "cpo-tscroll", el("table", "cpo-table", headRow("Partner", heads, "Action"), body))
+}
+
+// pagerNodes is _pager.html for the table's own views, as the feed reads
+// an edify-pagination-scope (_scoped_pager): no "Showing" summary, so the
+// count line reads as a page without a link.
+func (s *cexSnapshot) pagerNodes(table string, total, page, pages int) *node {
+	if pages <= 1 {
+		return nil
+	}
+	q := s.filters.query()
+	p := &screensv1.PagePager{Pages: []*screensv1.PagePagerPage{{Label: fmt.Sprintf("%d in all · page %d of %d", total, page, pages)}}}
+	link := func(label string, to int) *screensv1.PagePagerPage {
+		return &screensv1.PagePagerPage{Label: label, Href: fmt.Sprintf("%s/table?table=%s&%s&page=%d", cexBase, table, q, to)}
+	}
+	if page > 1 {
+		p.Pages = append(p.Pages, link("Previous", page-1))
+	}
+	if page < pages {
+		p.Pages = append(p.Pages, link("Next", page+1))
+	}
+	return feeddom.PreBlock(&screensv1.PageBlock{Kind: &screensv1.PageBlock_Pager{Pager: p}})
+}
+
+func pageWindow(total, size, asked int) (page, pages, start, end int) {
+	pages = max(1, (total+size-1)/size)
+	page = min(max(1, asked), pages)
+	start = (page - 1) * size
+	return page, pages, start, min(start+size, total)
+}
+
+// activityTableNodes is table_activities.html over activity_rows (stage
+// "due": the live work).
+func (s *cexSnapshot) activityTableNodes(ctx context.Context, db schooldirectory.Querier, reader cpoReader, asked int) ([]any, error) {
+	if !reader.seesSchools {
+		return []any{el("p", "cpo-muted cxo-pad", "Activity rows are not shown for your role; the figures above include every activity.")}, nil
+	}
+	picked := []cexRecord{}
+	for _, r := range s.records() {
+		if !r.cancelled {
+			picked = append(picked, r)
+		}
+	}
+	sort.SliceStable(picked, func(i, j int) bool {
+		a, b := picked[i], picked[j]
+		if a.age != b.age {
+			return a.age > b.age
+		}
+		da, dbv := time.Time{}, time.Time{}
+		if a.due != nil {
+			da = *a.due
+		}
+		if b.due != nil {
+			dbv = *b.due
+		}
+		if !da.Equal(dbv) {
+			return da.Before(dbv)
+		}
+		return a.id < b.id
+	})
+	page, pages, start, end := pageWindow(len(picked), 50, asked)
+	rows := picked[start:end]
+	schoolIDs, clusterIDs := []string{}, []string{}
+	for _, r := range rows {
+		schoolIDs = append(schoolIDs, r.schoolID)
+		clusterIDs = append(clusterIDs, r.clusterID)
+	}
+	names, codes := map[string]string{}, map[string]string{}
+	q, err := db.Query(ctx, `SELECT id, COALESCE(name, ''), COALESCE(school_id, '') FROM school WHERE id = ANY($1)`, schoolIDs)
+	if err != nil {
+		return nil, fmt.Errorf("planningmonitor: the activities' schools: %w", err)
+	}
+	for q.Next() {
+		var id, name, code string
+		if err := q.Scan(&id, &name, &code); err != nil {
+			q.Close()
+			return nil, err
+		}
+		names[id], codes[id] = name, code
+	}
+	q.Close()
+	clusters, err := cpoNames(ctx, db, "cluster", clusterIDs)
+	if err != nil {
+		return nil, err
+	}
+	clusterName := map[string]string{}
+	for _, o := range clusters {
+		clusterName[o.value] = o.label
+	}
+	st := rules.CountryExecution.Stages
+	stageLabel := map[string]string{}
+	for _, p := range st.StageLabels {
+		stageLabel[p[0]] = p[1]
+	}
+	ownerLabel := map[string]string{}
+	for _, p := range st.OwnerLabels {
+		ownerLabel[p[0]] = p[1]
+	}
+	day := func(t *time.Time) string {
+		if t == nil {
+			return ""
+		}
+		return fmt.Sprintf("%d %s", t.Day(), t.Format("Jan 2006"))
+	}
+	body := el("tbody", "")
+	for _, r := range rows {
+		kind := rules.CountryOversight.Page.TableWords.Types[r.activityType]
+		if kind == "" {
+			kind = pyTitleWords(strings.ReplaceAll(r.activityType, "_", " "))
+		}
+		where := names[r.schoolID]
+		if where == "" {
+			where = clusterName[r.clusterID]
+		}
+		if where == "" {
+			where = "—"
+		}
+		code := codes[r.schoolID]
+		place := el("td", "", where)
+		codeCell := el("td", "", "—")
+		if code != "" {
+			place = el("td", "", el("a", "", where).Attr("href", "/schools/"+code))
+			codeCell = el("td", "", code)
+		}
+		owner := rules.CountryOversight.NoOwner[1]
+		if o := s.data.owners[r.ownerKey]; o != nil {
+			owner = o.name
+		}
+		channel := "Staff"
+		if r.channel == "partner" {
+			channel = "Partner"
+			if p := s.data.partnerName[r.partnerKey]; p != "" {
+				channel += " · " + p
+			}
+		}
+		stage := el("td", "", stageLabel[r.stage])
+		if l := st.OverdueLabels[r.overdue]; l != "" {
+			stage.Add(el("span", "cpo-hint", el("span", "", l)))
+		}
+		age := el("td", "", el("span", "cpo-none", "—"))
+		if r.age != 0 {
+			age = el("td", "", el("span", "cpo-alert", strconv.Itoa(r.age)))
+		}
+		waiting := ownerLabel[r.owner]
+		if waiting == "" {
+			waiting = "—"
+		}
+		last := day(r.lastAction)
+		if last == "" {
+			last = "—"
+		}
+		body.Add(el("tr", "", el("th", "cpo-namecell", el("span", "", kind)), codeCell, place, el("td", "", owner), el("td", "", channel),
+			el("td", "", day(r.due)), stage, age, el("td", "", waiting), el("td", "", last)))
+	}
+	if len(rows) == 0 {
+		body.Add(el("tr", "", el("td", "cpo-empty", "No activity matches.")))
+	}
+	heads := []string{"School ID", "School / Cluster", "Owner", "Channel", "Due", "Stage", "Days Overdue", "Waiting On", "Last Action"}
+	out := []any{el("div", "cpo-tscroll", el("table", "cpo-table", headRow("Activity", heads), body))}
+	if p := s.pagerNodes("activity", len(picked), page, pages); p != nil {
+		out = append(out, p)
+	}
+	return out, nil
+}
+
+// schoolTableNodes is table_schools.html over school_completion_rows.
+func (s *cexSnapshot) schoolTableNodes(reader cpoReader, asked int) []any {
+	if !reader.seesSchools {
+		return []any{el("p", "cpo-muted cxo-pad", "School-level rows are not shown for your role; the figures above include every school.")}
+	}
+	plan := s.plan
+	d := plan.data
+	pf := plan.filters
+	type row struct {
+		gap                                             int
+		s                                               *cpoSchool
+		cl                                              cpoClaims
+		staffLeft, partnerLeft, visitLeft, trainingLeft int
+	}
+	picked := []row{}
+	for _, sc := range d.schools {
+		if !sc.governed() {
+			continue
+		}
+		lead := rules.CountryOversight.NoLead[0]
+		if o := d.owners[sc.ownerKey]; o != nil {
+			lead = o.leadKey
+		}
+		if !keepsPlace(pf, sc, lead) {
+			continue
+		}
+		cl := claimsFor(sc, d.allocations[sc.id], d.window, "", nil)
+		r := row{s: sc, cl: cl, staffLeft: max(0, cl.staffExpected-cl.staffVerified), partnerLeft: max(0, cl.partnerExpected-cl.partnerVerified),
+			visitLeft: max(0, cl.visitSlots-cl.staffVerified-cl.partnerVerified), trainingLeft: max(0, cl.trainingSlots-cl.trainingVerified)}
+		r.gap = r.visitLeft + r.trainingLeft
+		picked = append(picked, r)
+	}
+	sort.SliceStable(picked, func(i, j int) bool {
+		a, b := picked[i], picked[j]
+		if a.gap != b.gap {
+			return a.gap > b.gap
+		}
+		if x, y := strings.ToLower(a.s.name), strings.ToLower(b.s.name); x != y {
+			return x < y
+		}
+		return a.s.id < b.s.id
+	})
+	page, pages, start, end := pageWindow(len(picked), 50, asked)
+	body := el("tbody", "")
+	plural := func(n int, word string) string {
+		if n == 1 {
+			return strconv.Itoa(n) + " " + word
+		}
+		return strconv.Itoa(n) + " " + word + "s"
+	}
+	for _, r := range picked[start:end] {
+		owner := rules.CountryOversight.NoOwner[1]
+		if o := d.owners[r.s.ownerKey]; o != nil {
+			owner = o.name
+		}
+		bits := []string{}
+		if r.s.family == rules.CountryOversight.CoreFamily {
+			if r.staffLeft > 0 {
+				bits = append(bits, plural(r.staffLeft, "staff visit"))
+			}
+			if r.partnerLeft > 0 {
+				bits = append(bits, plural(r.partnerLeft, "Partner visit"))
+			}
+		} else if r.visitLeft > 0 {
+			bits = append(bits, strconv.Itoa(r.visitLeft)+" visit")
+		}
+		if r.trainingLeft > 0 {
+			bits = append(bits, plural(r.trainingLeft, "training"))
+		}
+		remaining := strings.Join(bits, " · ")
+		if remaining == "" {
+			remaining = "Complete"
+		}
+		code := el("td", "", "—")
+		name := any(r.s.name)
+		if r.s.code != "" {
+			code = el("td", "", r.s.code)
+			name = el("a", "", r.s.name).Attr("href", "/schools/"+r.s.code)
+		}
+		meeting := el("td", "", el("span", "cpo-none", "No"))
+		if r.cl.cumMeetingCovered {
+			meeting = el("td", "", "Yes")
+		}
+		left := el("td", "", remaining)
+		if r.gap > 0 {
+			left = el("td", "", el("span", "cpo-alert", remaining))
+		}
+		of := func(a, b int) *node { return el("td", "", fmt.Sprintf("%d of %d", a, b)) }
+		body.Add(el("tr", "", code, el("th", "cpo-namecell", el("span", "", name),
+			el("span", "cpo-hint", el("span", "", pyTitleWords(strings.ReplaceAll(r.s.schoolType, "_", " "))))),
+			el("td", "", owner), el("td", "", strconv.Itoa(r.cl.visitSlots)), el("td", "", strconv.Itoa(r.cl.cumStaff+r.cl.cumPartnerScheduled)),
+			of(r.cl.staffVerified+r.cl.partnerVerified, r.cl.visitSlots), of(r.cl.staffVerified, r.cl.staffExpected),
+			of(r.cl.partnerVerified, r.cl.partnerExpected), of(r.cl.trainingVerified, r.cl.trainingSlots), meeting, left))
+	}
+	if len(picked) == 0 {
+		body.Add(el("tr", "", el("td", "cpo-empty", "No school in this selection.")))
+	}
+	heads := []string{"School", "CCEO", "Visits Required", "Visits Planned", "Visits Verified", "Staff", "Partner", "Training", "Meeting", "Remaining"}
+	out := []any{}
+	if s.filters.period == "week" {
+		out = append(out, el("p", "cpo-notice cxo-pad", "A week has no phased requirement: each school's slots are read for the year."))
+	}
+	out = append(out, el("div", "cpo-tscroll", el("table", "cpo-table", headRow("School ID", heads), body)))
+	if p := s.pagerNodes("school", len(picked), page, pages); p != nil {
+		out = append(out, p)
+	}
+	return out
 }

@@ -385,7 +385,10 @@ func readFacts(dl *Node) *screensv1.PageFacts {
 }
 
 func holdsKnown(n *Node) bool {
-	return n.find(func(x *Node) bool { return x.has("edify-empty-state") || x.Later != nil || x.pre != nil }) != nil
+	return n.find(func(x *Node) bool {
+		_, tablist := x.attrs["data-edify-tablist"]
+		return tablist || x.has("edify-empty-state") || x.Later != nil || x.pre != nil
+	}) != nil
 }
 
 func fallback(n *Node) *screensv1.PageBlock {

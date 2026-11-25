@@ -58,3 +58,22 @@ func TestCEXClassify(t *testing.T) {
 		t.Errorf("age %d", s.age)
 	}
 }
+
+// _pager.html is an edify-pagination-scope: the feed reads it as a pager of
+// its own whose count line is a page without a link, and only when there is
+// more than one page.
+func TestCEXPagerReadsAsScopedPager(t *testing.T) {
+	s := &cexSnapshot{filters: cexFilters{fy: "2027", period: "fy"}}
+	if s.pagerNodes("school", 40, 1, 1) != nil {
+		t.Fatal("a single page draws no pager")
+	}
+	blocks := walk(el("div", "", s.pagerNodes("school", 120, 2, 3)))
+	if len(blocks) != 1 || blocks[0].GetPager() == nil {
+		t.Fatalf("blocks %v", blocks)
+	}
+	pages := blocks[0].GetPager().GetPages()
+	if len(pages) != 3 || pages[0].GetLabel() != "120 in all · page 2 of 3" || pages[0].GetHref() != "" ||
+		pages[1].GetLabel() != "Previous" || pages[2].GetHref() != cexBase+"/table?table=school&view=execution&fy=2027&period=fy&page=3" {
+		t.Errorf("pages %v", pages)
+	}
+}

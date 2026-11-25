@@ -14,6 +14,7 @@ import (
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/clusterpage"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/feeddom"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/targets"
@@ -67,8 +68,10 @@ func CountryExecutionPage(ctx context.Context, db schooldirectory.Querier, p aut
 	if !slices.ContainsFunc(rules.CountryExecution.Page.ViewBy, func(v [2]string) bool { return v[0] == table }) {
 		table = "lead"
 	}
-	if table != "lead" && table != "cceo" && table != "partner" {
-		return nil, errCEXHandOn // the school and activity views are not drawn yet
+	reader.seesSchools = !scope.SummaryOnly
+	asked := 1
+	if n, ok := clusterpage.PyInt(q["page"]); ok {
+		asked = n
 	}
 	if set, err := s.targetsSet(ctx, db); err != nil || set {
 		if err == nil || errors.Is(err, targets.ErrHandOn) {
@@ -101,10 +104,24 @@ func CountryExecutionPage(ctx context.Context, db schooldirectory.Querier, p aut
 			return nil, err
 		}
 		body = s.partnerTableNodes(rows)
+	case "school":
+		body = el("div", "", s.schoolTableNodes(reader, asked)...)
+	case "activity":
+		nodes, err := s.activityTableNodes(ctx, db, reader, asked)
+		if err != nil {
+			return nil, err
+		}
+		body = el("div", "", nodes...)
 	default:
 		body = s.leadTableNodes(reader, reminders, country)
 	}
-	blocks = append(blocks, walk(s.timelinessNodes(body))...)
+	label := ""
+	for _, v := range rules.CountryExecution.Page.ViewBy {
+		if v[0] == table {
+			label = v[1]
+		}
+	}
+	blocks = append(blocks, walk(s.timelinessNodes(table, label, body))...)
 	recent, err := s.recent(ctx, db)
 	if err != nil {
 		return nil, err
@@ -602,16 +619,17 @@ func cellNodes(c cexCells, reader cpoReader) []any {
 }
 
 // timelinessNodes is _table.html around one of its views.
-func (s *cexSnapshot) timelinessNodes(body *node) *node {
+func (s *cexSnapshot) timelinessNodes(table, label string, body *node) *node {
 	q := s.filters.query()
-	tabs := el("div", "")
+	tabs := el("div", "").Attr("data-edify-tablist", "", "role", "group", "aria-label", "View execution by")
 	for _, t := range [][2]string{{"lead", "Program Leads"}, {"cceo", "CCEOs"}, {"partner", "Partners"}, {"school", "Schools"}, {"activity", "Activities"}} {
-		tabs.Add(el("button", "", t[1]).Attr("type", "button", "data-edify-tab", "", "hx-get", cexBase+"/table?table="+t[0]+"&"+q,
-			"hx-target", "#cxo-table", "hx-swap", "outerHTML"))
+		tabs.Add(el("button", "", t[1]).Attr("type", "button", "data-edify-tab", "", "aria-pressed", strconv.FormatBool(table == t[0]),
+			"hx-get", cexBase+"/table?table="+t[0]+"&"+q, "hx-target", "#cxo-table", "hx-swap", "outerHTML"))
 	}
 	return el("section", "cpo-drill cxo-drill",
-		el("header", "cpo-drill-head", el("h2", "cpo-drill-name", "Execution Timeliness")),
-		el("div", "cxo-drill-bar", tabs), body)
+		el("header", "cpo-drill-head", el("h2", "cpo-drill-name", "Execution Timeliness", el("span", "sr-only", " by "+label))).
+			Attr("data-no-titlebar", "", "data-card-header", ""),
+		el("div", "cxo-drill-bar", tabs), body).Attr("id", "cxo-table")
 }
 
 // leadTableNodes is table_leads.html.
