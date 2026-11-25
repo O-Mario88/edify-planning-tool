@@ -719,50 +719,7 @@ SELECT DISTINCT COALESCE(sp.user_id, r.manager_id), COUNT(r.id)::int
 		})
 
 	case "weekly_debrief_reports":
-		since := now.AddDate(0, 0, -7)
-		var count int
-		if err := pool.QueryRow(ctx, `
-SELECT COUNT(*)::int FROM daily_debrief
- WHERE deleted_at IS NULL AND date >= $1`, since).Scan(&count); err != nil {
-			return 0, err
-		}
-		if count == 0 {
-			return 0, nil
-		}
-		rows, err := pool.Query(ctx, `
-SELECT id FROM "user"
- WHERE deleted_at IS NULL AND is_active = true
-   AND (active_role = 'CountryDirector' OR 'CountryDirector' = ANY(roles))
- LIMIT 20`)
-		if err != nil {
-			return 0, err
-		}
-		var cds []string
-		for rows.Next() {
-			var uid string
-			if rows.Scan(&uid) == nil && uid != "" {
-				cds = append(cds, uid)
-			}
-		}
-		rows.Close()
-		_, isoWeek := localNow.ISOWeek()
-		weekKey := fmt.Sprintf("%d-W%02d", localNow.Year(), isoWeek)
-		for _, uid := range cds {
-			_, _ = writer.Deliver(ctx, notificationcenter.Delivery{
-				RecipientID:     uid,
-				Title:           fmt.Sprintf("Weekly debrief summary: %d submission(s)", count),
-				Body:            fmt.Sprintf("%d field debrief(s) were submitted in the last 7 days.", count),
-				Category:        "debrief",
-				ContextType:     "weekly_debrief",
-				ContextID:       "wdeb-" + weekKey,
-				TargetRoute:     "/debriefs",
-				ActionLabel:     "View Debriefs",
-				Priority:        "normal",
-				SourceEventType: "debrief.weekly_report",
-				SourceEventID:   "wdeb-" + weekKey + ":" + uid,
-			})
-		}
-		return count, nil
+		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) { return debriefs.WeeklyReports(ctx, tx, now, loc) })
 
 	case "data_quality_scan":
 		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) {

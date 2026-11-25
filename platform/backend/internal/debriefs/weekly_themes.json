@@ -1,0 +1,226 @@
+[
+ [
+  "poor_roads",
+  "Poor Road Conditions",
+  "challenge",
+  [
+   "\\broads?\\b.{0,40}\\b(bad|poor|flood|impass|terrible|muddy)",
+   "\\b(bad|poor|flooded|muddy|impassable)\\b.{0,25}\\broads?\\b",
+   "\\bpotholes?\\b"
+  ]
+ ],
+ [
+  "transport_delay",
+  "Transport Delays",
+  "challenge",
+  [
+   "\\btransport\\b.{0,40}\\b(late|delay)",
+   "\\b(boda|vehicle|car|bus)\\b.{0,30}\\blate\\b",
+   "\\barrived late\\b.{0,40}\\btransport\\b"
+  ]
+ ],
+ [
+  "no_transport",
+  "Transport Unavailable",
+  "challenge",
+  [
+   "\\bno (transport|vehicle|car)\\b",
+   "\\b(vehicle|car|transport)\\b.{0,30}\\b(unavailable|not available|broke down)"
+  ]
+ ],
+ [
+  "long_distance",
+  "Long Travel Distance",
+  "challenge",
+  [
+   "\\blong (travel|distance|journey)\\b",
+   "\\bdistan(ce|t)\\b.{0,30}\\b(far|long|hours)\\b",
+   "\\btook .{0,12}(hour|hrs)"
+  ]
+ ],
+ [
+  "funds_delayed",
+  "Delayed Funding",
+  "challenge",
+  [
+   "\\bfunds?\\b.{0,40}\\b(delay|late|not (yet )?(received|disbursed))",
+   "\\bno (funds|money)\\b",
+   "\\bdisbursement\\b.{0,30}\\bdelay"
+  ]
+ ],
+ [
+  "leader_unavailable",
+  "School Leader Unavailable",
+  "challenge",
+  [
+   "\\b(head ?teacher|school leader|proprietor|director)\\b.{0,50}\\b(unavailable|absent|not (there|present|available|around)|away)"
+  ]
+ ],
+ [
+  "teacher_absence",
+  "Teacher Absence",
+  "challenge",
+  [
+   "\\bteachers?\\b.{0,40}\\b(absent|did not attend|failed to attend|missing|few)"
+  ]
+ ],
+ [
+  "low_attendance",
+  "Low Attendance",
+  "challenge",
+  [
+   "\\blow (attendance|turnout)\\b",
+   "\\battendance\\b.{0,30}\\b(low|poor)\\b",
+   "\\bfew (participants|attendees)\\b"
+  ]
+ ],
+ [
+  "school_closed",
+  "School Closure",
+  "challenge",
+  [
+   "\\bschool\\b.{0,30}\\bclosed\\b",
+   "\\bclosure\\b"
+  ]
+ ],
+ [
+  "weather",
+  "Weather Disruption",
+  "challenge",
+  [
+   "\\b(heavy )?rain\\b",
+   "\\bstorm\\b",
+   "\\bweather\\b"
+  ]
+ ],
+ [
+  "network",
+  "Poor Network / Connectivity",
+  "challenge",
+  [
+   "\\b(poor|no|bad|weak)\\b.{0,15}\\b(network|internet|signal|connectivity)\\b"
+  ]
+ ],
+ [
+  "electricity",
+  "Electricity Problems",
+  "challenge",
+  [
+   "\\b(no |load.?shed|power (cut|outage|off)|electricity)\\b"
+  ]
+ ],
+ [
+  "facilities",
+  "Poor Facilities",
+  "challenge",
+  [
+   "\\b(classroom|facility|facilities|building)\\b.{0,40}\\b(poor|bad|leak|broken|double.?booked|unavailable)"
+  ]
+ ],
+ [
+  "partner_delay",
+  "Partner Delays",
+  "challenge",
+  [
+   "\\bpartner\\b.{0,50}\\b(delay|late|did not|failed|no.?show|not schedule)"
+  ]
+ ],
+ [
+  "workload",
+  "Workload Pressure",
+  "challenge",
+  [
+   "\\b(overload|too (many|much)|workload|overwhelm|stretched|back.?to.?back)\\b"
+  ]
+ ],
+ [
+  "safety",
+  "Safety Concern",
+  "challenge",
+  [
+   "\\b(unsafe|safety|insecur|robbery|accident)\\b"
+  ]
+ ],
+ [
+  "health",
+  "Health / Wellbeing",
+  "challenge",
+  [
+   "\\b(sick|unwell|ill|malaria|fatigue[d]?|exhaust|burn.?out)\\b"
+  ]
+ ],
+ [
+  "materials",
+  "Materials Unavailable",
+  "challenge",
+  [
+   "\\bmaterials?\\b.{0,30}\\b(unavailable|missing|not (there|available)|lack)",
+   "\\bno materials\\b"
+  ]
+ ],
+ [
+  "data_tech",
+  "Data / Technology Problems",
+  "challenge",
+  [
+   "\\b(system|app|salesforce|data|laptop|phone|tablet)\\b.{0,40}\\b(problem|error|fail|crash|not work|slow)"
+  ]
+ ],
+ [
+  "ssa_need",
+  "SSA Refresh Needed",
+  "challenge",
+  [
+   "\\bssa\\b.{0,50}\\b(refresh|outdated|missing|needed|expired|stale)",
+   "\\b(fresh|new) ssa\\b"
+  ]
+ ],
+ [
+  "leader_engaged",
+  "School Leadership Engaged",
+  "positive",
+  [
+   "\\b(head ?teacher|school leader|proprietor|leadership)\\b.{0,60}\\b(available|engaged|supportive|present|welcom|cooperat)"
+  ]
+ ],
+ [
+  "teacher_participation",
+  "Strong Teacher Participation",
+  "positive",
+  [
+   "\\bteachers?\\b.{0,50}\\b(engaged|participat|active|attentive|enthusias)"
+  ]
+ ],
+ [
+  "good_attendance",
+  "Strong Attendance",
+  "positive",
+  [
+   "\\b(good|strong|high|full)\\b.{0,15}\\b(attendance|turnout)\\b"
+  ]
+ ],
+ [
+  "partner_coordination",
+  "Good Partner Coordination",
+  "positive",
+  [
+   "\\bpartner\\b.{0,50}\\b(coordinat|on time|delivered|support|well)"
+  ]
+ ],
+ [
+  "transport_on_time",
+  "Transport On Time",
+  "positive",
+  [
+   "\\btransport\\b.{0,30}\\b(on time|early|smooth)"
+  ]
+ ],
+ [
+  "team_support",
+  "Good Team Support",
+  "positive",
+  [
+   "\\bteam\\b.{0,40}\\b(support|helped|collaborat)"
+  ]
+ ]
+]

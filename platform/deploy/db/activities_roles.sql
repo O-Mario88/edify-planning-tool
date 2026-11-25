@@ -617,3 +617,17 @@ GRANT SELECT (active_role, is_active) ON "user" TO edify_activities_rw;
 -- They write through the existing trigger (gateway_notifications.notify_workflow)
 -- and read whether today's notice was already sent.
 GRANT SELECT (source_event_id) ON notification TO edify_activities_rw;
+
+-- ── The scheduler's weekly_debrief_reports (docs/migration/189 §4) ──
+-- generate_pl_report: each lead's week as a draft report (regenerated in
+-- place) or a new version over a finalized one. No report is removed.
+GRANT SELECT (id, submitted_by_user_id, kind, date, linked_school_ids, linked_activity_ids, challenges_faced,
+              what_did_not_go_well, what_went_well, recommendations, status)
+  ON daily_debrief TO edify_activities_rw;
+GRANT SELECT (id, scope_kind, scope_id, week_start, status, version, snapshot) ON weekly_debrief_report TO edify_activities_rw;
+GRANT INSERT (id, created_at, updated_at, fy, scope_kind, scope_id, week_start, week_end, status, version, snapshot,
+              generated_by_user_id)
+  ON weekly_debrief_report TO edify_activities_rw;
+GRANT UPDATE (snapshot, generated_by_user_id, status, updated_at) ON weekly_debrief_report TO edify_activities_rw;
+GRANT SELECT (id, district_id) ON school TO edify_activities_rw;
+GRANT SELECT (id, name) ON district TO edify_activities_rw;
