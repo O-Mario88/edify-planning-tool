@@ -43,8 +43,14 @@ func cpoWindowOf(f cpoFilters) cpoWindow {
 // buildCPOSnapshot is service._snapshot over a freshly built dataset (the
 // existing page reads a cached one; Go reads the records each time).
 func buildCPOSnapshot(ctx context.Context, db schooldirectory.Querier, scope schooldirectory.Scope, f cpoFilters, today time.Time) (*cpoSnapshot, error) {
+	return buildCPOSnapshotOn(ctx, db, scope, f, today, nil)
+}
+
+// buildCPOSnapshotOn is _snapshot over build_dataset(base=...).
+func buildCPOSnapshotOn(ctx context.Context, db schooldirectory.Querier, scope schooldirectory.Scope, f cpoFilters, today time.Time,
+	base []string) (*cpoSnapshot, error) {
 	w := cpoWindowOf(f)
-	d, err := buildCPODataset(ctx, db, scope, w, today)
+	d, err := buildCPODatasetOn(ctx, db, scope, w, today, base)
 	if err != nil {
 		return nil, err
 	}

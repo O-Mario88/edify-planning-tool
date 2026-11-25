@@ -1340,3 +1340,6 @@ GRANT SELECT (id, app, name, applied) ON django_migrations TO edify_gateway_ro;
 -- sent for Recent Activity.
 GRANT SELECT (id, taken_at, country, period_type, period_start, version) ON execution_period_snapshot TO edify_gateway_ro;
 GRANT SELECT (program_lead_staff_id, cceo_staff_id, remaining_value) ON planning_oversight_follow_up TO edify_gateway_ro;
+-- Follow Up with PL for execution: the Lead's open follow-ups show what is
+-- still open as last checked (live_remaining).
+GRANT SELECT (live_remaining) ON planning_oversight_follow_up TO edify_gateway_ro;

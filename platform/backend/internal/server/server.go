@@ -253,6 +253,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			Logger: logger, Now: time.Now, Kampala: kampalaLocation()}).
 		WithFollowUpDrawers(staffactivity.FollowUps{DB: pool, Push: plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
 			Logger: logger, Now: time.Now}).
+		WithExecutionFollowUps(planningmonitor.CEXSendDeps{Push: plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
+			Logger: logger}).
 		WithPages(logger,
 			clusterpage.NewService(pool, time.Now),
 			closedschools.NewService(pool, time.Now),

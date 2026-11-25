@@ -81,9 +81,16 @@ JOIN school s ON s.school_id = o.school_id WHERE s.id = ANY($1) AND (o.onboarded
 
 // buildCPODataset is service.build_dataset for a reader's scope and window.
 func buildCPODataset(ctx context.Context, db schooldirectory.Querier, scope schooldirectory.Scope, w cpoWindow, today time.Time) (*cpoDataset, error) {
+	return buildCPODatasetOn(ctx, db, scope, w, today, nil)
+}
+
+// buildCPODatasetOn is build_dataset(base=...): the schools narrowed to the
+// operating portfolios of base's owners (nil for no narrowing).
+func buildCPODatasetOn(ctx context.Context, db schooldirectory.Querier, scope schooldirectory.Scope, w cpoWindow, today time.Time,
+	base []string) (*cpoDataset, error) {
 	c := rules.CountryOversight
 	asOf := cpoReportingDate(w.fy, today)
-	schools, err := eligibleSchools(ctx, db, scope, asOf)
+	schools, err := eligibleSchools(ctx, db, scope, asOf, base)
 	if err != nil {
 		return nil, err
 	}

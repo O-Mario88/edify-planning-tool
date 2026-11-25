@@ -10,6 +10,7 @@ import (
 	"context"
 	"errors"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/home"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningmonitor"
 	"log/slog"
 	"net/url"
 	"strconv"
@@ -176,6 +177,8 @@ type Service struct {
 	// Direct PostgreSQL pool + clock for native Go school actions & drawers (Batches 22-23).
 	db  *pgxpool.Pool
 	now func() time.Time
+	// executionFollowUps is what follows an execution Follow Up with PL.
+	executionFollowUps *planningmonitor.CEXSendDeps
 }
 
 // NewService wires the service. existingApp may be nil.

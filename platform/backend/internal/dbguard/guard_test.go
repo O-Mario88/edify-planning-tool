@@ -239,6 +239,8 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 			"impact_edtech_deployment", "impact_edtech_check"},
 		// The Staff Activity follow-ups (apps.staff_activity.follow_ups).
 		filepath.Join(root, "internal", "staffactivity") + sep: {"staff_usage_follow_up"},
+		// Follow Up with PL for execution (apps.planning.country_execution.followups).
+		filepath.Join(root, "internal", "planningmonitor") + sep: {"planning_oversight_follow_up"},
 		// The weekly sample checks (apps.activities.verification_sampling).
 		filepath.Join(root, "internal", "iasampling") + sep: {"ia_verification_sample"},
 		filepath.Join(root, "internal", "debriefs") + sep: {

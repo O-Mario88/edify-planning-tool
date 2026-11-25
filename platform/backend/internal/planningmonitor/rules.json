@@ -73,6 +73,120 @@
       "in_progress",
       "complete"
     ],
+    "follow_ups": {
+      "due_in_days": 7,
+      "issues": [
+        {
+          "figure": "od_execution",
+          "key": "exec_not_started",
+          "label": "Activity Not Started",
+          "owner": "staff",
+          "resolution_rule": "metric_zero",
+          "stage": "scheduled"
+        },
+        {
+          "figure": "od_evidence",
+          "key": "exec_evidence_overdue",
+          "label": "Evidence Submission Overdue",
+          "owner": "staff",
+          "resolution_rule": "metric_zero",
+          "stage": "in_field"
+        },
+        {
+          "figure": "od_pl_review",
+          "key": "exec_pl_review_backlog",
+          "label": "PL Review Backlog",
+          "owner": "pl",
+          "resolution_rule": "metric_zero",
+          "stage": "pl_review"
+        },
+        {
+          "figure": "overdue",
+          "key": "exec_team_gap",
+          "label": "Team Execution Gap",
+          "owner": "staff",
+          "resolution_rule": "metric_zero",
+          "stage": ""
+        },
+        {
+          "figure": "own_partner",
+          "key": "exec_partner_gap",
+          "label": "Partner Execution Gap",
+          "owner": "partner",
+          "resolution_rule": "metric_zero",
+          "stage": ""
+        },
+        {
+          "figure": "slots_visit",
+          "key": "exec_visit_slot_gap",
+          "label": "Visit-Slot Completion Gap",
+          "owner": "staff",
+          "resolution_rule": "metric_zero",
+          "stage": ""
+        },
+        {
+          "figure": "slots_training",
+          "key": "exec_training_slot_gap",
+          "label": "Training-Slot Completion Gap",
+          "owner": "staff",
+          "resolution_rule": "metric_zero",
+          "stage": ""
+        },
+        {
+          "figure": "carried_forward",
+          "key": "exec_carryover",
+          "label": "Carryover Requires Resolution",
+          "owner": "staff",
+          "resolution_rule": "manual",
+          "stage": ""
+        },
+        {
+          "figure": "returned",
+          "key": "exec_returned",
+          "label": "Returned Activity Requires Support",
+          "owner": "staff",
+          "resolution_rule": "metric_zero",
+          "stage": "returned"
+        },
+        {
+          "figure": "overdue",
+          "key": "exec_other",
+          "label": "Other Approved Execution Follow-Up",
+          "owner": "",
+          "resolution_rule": "manual",
+          "stage": ""
+        }
+      ],
+      "open_states": [
+        "acknowledged",
+        "action_linked",
+        "escalated",
+        "returned_for_clarification",
+        "sent_to_pl",
+        "waiting_for_external",
+        "waiting_for_partner",
+        "waiting_for_resolution",
+        "waiting_for_team_member"
+      ],
+      "priorities": [
+        [
+          "normal",
+          "Normal"
+        ],
+        [
+          "attention",
+          "Attention"
+        ],
+        [
+          "high",
+          "High"
+        ],
+        [
+          "critical",
+          "Critical"
+        ]
+      ]
+    },
     "money_moved": [
       "accountability_pending",
       "accountability_pl_pending",

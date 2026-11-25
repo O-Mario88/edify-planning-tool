@@ -73,10 +73,16 @@ func cpoDay(alias string) string {
 // eligibleSchools is eligible_school_queryset's rows: the reader's school lens
 // (scoped_school_queryset), never a duplicate record, created by the reporting
 // date and operating on it (operating_on_q).
-func eligibleSchools(ctx context.Context, db schooldirectory.Querier, scope schooldirectory.Scope, asOf time.Time) ([]*cpoSchool, error) {
+func eligibleSchools(ctx context.Context, db schooldirectory.Querier, scope schooldirectory.Scope, asOf time.Time,
+	base []string) ([]*cpoSchool, error) {
 	c := rules.CountryOversight
 	args := []any{}
 	reach := schooldirectory.AnalyticsReach(scope, &args)
+	if base != nil {
+		// active_schools().filter(account_owner_id__in=base): whole portfolios.
+		args = append(args, rules.OperatingStatuses, base)
+		reach += fmt.Sprintf(" AND s.operational_status = ANY($%d) AND s.account_owner_id = ANY($%d)", len(args)-1, len(args))
+	}
 	args = append(args, c.ExcludedDuplicateStatuses, asOf, c.ClosedStatuses)
 	n := len(args)
 	dup, day, closed := fmt.Sprintf("$%d", n-2), fmt.Sprintf("$%d::date", n-1), fmt.Sprintf("$%d", n)

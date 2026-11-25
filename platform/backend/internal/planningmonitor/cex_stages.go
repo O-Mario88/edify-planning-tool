@@ -30,11 +30,12 @@ type cexRules struct {
 	TrendSeries []string `json:"trend_series"`
 	StaffKey    string   `json:"staff_key"`
 	// The money, form and trail reads.
-	AwaitingDisbursement []string `json:"awaiting_disbursement"`
-	MoneyMoved           []string `json:"money_moved"`
-	TrailMigration       string   `json:"trail_migration"`
-	AttendanceFormTypes  []string `json:"attendance_form_types"`
-	Page                 cexPage  `json:"page"`
+	AwaitingDisbursement []string         `json:"awaiting_disbursement"`
+	MoneyMoved           []string         `json:"money_moved"`
+	TrailMigration       string           `json:"trail_migration"`
+	AttendanceFormTypes  []string         `json:"attendance_form_types"`
+	Page                 cexPage          `json:"page"`
+	FollowUps            cexFollowUpRules `json:"follow_ups"`
 	Records              struct {
 		Tables []cpoTableSpec `json:"tables"`
 		Tabs   []string       `json:"tabs"`

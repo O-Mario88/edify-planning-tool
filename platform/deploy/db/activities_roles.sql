@@ -963,6 +963,26 @@ GRANT SELECT (id, created_at, subject_id, assignee_id, created_by_id, route, per
   ON staff_usage_follow_up TO edify_activities_rw;
 GRANT SELECT (id, name, email, is_active, roles, deleted_at) ON "user" TO edify_activities_rw;
 
+-- ── Follow Up with PL for execution (apps.planning.country_execution.followups.send_follow_up) ──
+-- The Country Director's follow-up, created or reminded on the open record of
+-- the same condition; its instruction history and history grow, nothing is
+-- removed. Who it goes to is read off the Lead's account.
+GRANT SELECT (id, condition_key, status, instruction_history, history, reminder_count, assigned_by_name, activity_label,
+              partner_name, cceo_name, period_label, returned_reason),
+      INSERT (created_at, updated_at, id, fy, period_type, period_start, period_end, period_label, country, region_id,
+              region_name, program_lead_staff_id, program_lead_user_id, program_lead_name, cceo_staff_id, cceo_name,
+              school_id, school_name, condition_key, issue_type, metric_key, required_value, planned_value, remaining_value,
+              affected_school_ids, affected_count, snapshot, resolution_rule, live_remaining, live_checked_at, priority,
+              instruction, instruction_history, assigned_by_id, assigned_by_role, assigned_by_name, assigned_at, due_date,
+              status, acknowledged_at, action_linked_at, linked_team_action_ids, linked_note, resolved_at,
+              resolved_by_system, resolution_note, closed_by_id, returned_reason, returned_at, reminder_count,
+              last_reminder_at, history, activity_id, activity_label, blocker_owner, days_overdue, module, partner_id,
+              partner_name, stage),
+      UPDATE (instruction, instruction_history, reminder_count, last_reminder_at, priority, due_date, remaining_value,
+              live_remaining, live_checked_at, days_overdue, status, returned_reason, history, updated_at)
+  ON planning_oversight_follow_up TO edify_activities_rw;
+GRANT SELECT (active_role) ON "user" TO edify_activities_rw;
+
 -- ── The Regional Lead's engagements and monthly reports (apps.cce_leadership.services) ──
 -- Engagements recorded, corrected until shared, shared and acknowledged; an
 -- acknowledged observation passed to the officer as coaching; monthly
