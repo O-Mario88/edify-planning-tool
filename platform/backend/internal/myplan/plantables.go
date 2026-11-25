@@ -32,6 +32,7 @@ const (
 	tableCoreVisits
 	tableProgrammeSchool
 	tableTrainings
+	tableCoreTrainings
 )
 
 // programmePageSize is how many rows a programme school section pages by.
@@ -178,7 +179,7 @@ func tableOf(a *activity, slots coreSlots) int {
 			return tableCoreVisits
 		}
 		if in(r.TrainingTypes, a.activityType) {
-			return -1
+			return tableCoreTrainings
 		}
 	}
 	switch {
@@ -232,7 +233,7 @@ func ReadPlanTables(ctx context.Context, db schooldirectory.Querier, place *regi
 		if a.hasSchool && str(a.schoolType) == "core" {
 			core = true
 		}
-		isCore := table == tableCoreVisits
+		isCore := table == tableCoreVisits || table == tableCoreTrainings
 		next, known := computeNextAction(a, x, x.advances, pg.today)
 		if !known {
 			return res, false, nil
@@ -270,6 +271,8 @@ func ReadPlanTables(ctx context.Context, db schooldirectory.Querier, place *regi
 			res.meetings = append(res.meetings, r)
 		case tableTrainings:
 			res.trainings = append(res.trainings, r)
+		case tableCoreTrainings:
+			res.coreTrainings = append(res.coreTrainings, r)
 		case tableProgrammeSchool:
 			if res.programme == nil {
 				res.programme = map[string][]*planRow{}
@@ -303,14 +306,14 @@ func ReadPlanTables(ctx context.Context, db schooldirectory.Querier, place *regi
 		return res, false, err
 	}
 	all = append(all, expanded...)
-	visits, meetings, coreRows := plain(res.visits), plain(res.meetings), plain(res.core)
+	visits, meetings, coreRows, coreTrainingRows := plain(res.visits), plain(res.meetings), plain(res.core), plain(res.coreTrainings)
 	tables := [][]*row{visits, meetings, coreRows}
 	kinds := rules.Rows.ProgrammeSchoolTypes
 	for _, kind := range kinds {
 		tables = append(tables, plain(res.programme[kind]))
 	}
 	trainingRows, groupRows := plain(res.trainings), plain(res.group)
-	tables = append(tables, trainingRows, groupRows)
+	tables = append(tables, trainingRows, groupRows, coreTrainingRows)
 	if err := pg.finish(ctx, db, acts, tables...); err != nil {
 		return res, false, err
 	}
@@ -327,6 +330,7 @@ func ReadPlanTables(ctx context.Context, db schooldirectory.Querier, place *regi
 	}
 	res.visits, res.meetings, res.core = reorder(visits), reorder(meetings), reorder(coreRows)
 	res.trainings, res.group = reorder(trainingRows), reorder(groupRows)
+	res.coreTrainings = reorder(coreTrainingRows)
 	for i, kind := range kinds {
 		if rows := tables[3+i]; len(rows) > 0 {
 			res.programme[kind] = reorder(rows)

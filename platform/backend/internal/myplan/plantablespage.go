@@ -2,8 +2,10 @@ package myplan
 
 import (
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 )
@@ -370,14 +372,18 @@ func coreBlocks(t PlanTablesResult, words string, visitColumns []string) []*scre
 			if in(rules.Plan.CompletedWorkStatuses, r.a.status) {
 				tDone++
 			}
-			tRows = append(tRows, pageRow(r, r.clusterName, append(trainingTableCells(r), tailCells(r)...)))
+			tRows = append(tRows, pageRow(r, r.schoolName, append(coreTrainingCells(r), tailCells(r)...)))
+		}
+		// core_school_trainings.html's own columns; its last heading is empty.
+		cols := []*screensv1.PageColumn{}
+		for _, l := range []string{"School ID", "School Name", "Package", "Training", "District", "District Type",
+			"Planned Date", "Completed Date", "Focus Intervention", "Expected Participants", "Assigned Partner",
+			"Budget status", "Verification", "Salesforce ID", "Status", ""} {
+			cols = append(cols, &screensv1.PageColumn{Label: l})
 		}
 		trainingsBlock = &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{
 			Title: "Core School Trainings Planned for " + words, Subtitle: fmt.Sprintf("%d %d completed", len(tRows), tDone),
-			Columns: columns("School ID", "School / Cluster", "District", "District Type", "Cluster Planned From",
-				"Executor", "Training Name", "Planned Date", "Completed Date", "SSA Intervention", "Participants",
-				"Mode of Delivery", "Cost", "Budget status", "Verification", "Salesforce ID", "Status", "Actions"),
-			Rows: tRows,
+			Columns: cols, Rows: tRows,
 		}}}
 	}
 	return []*screensv1.PageBlock{
@@ -448,4 +454,40 @@ func dayOffCard(rows []*planRow) *screensv1.PageBlock {
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{
 		Title: "Reschedule — On a Public Holiday or Leave Day", Columns: cols, Rows: out,
 	}}}
+}
+
+// coreTrainingCells are core_school_trainings.html's cells before the
+// budget, verification, completion and status ones: the school with its
+// work's type, the package number and progress, the course, the district
+// as a directory search, days as "Nov 3, Tue".
+func coreTrainingCells(r *planRow) []*screensv1.PageCell {
+	name := &screensv1.PageCell{Text: joined(orDefault(r.schoolName, dash), str(r.activityTypeLabel))}
+	if r.schoolID.truthy() {
+		name.Href = "/schools/" + r.schoolID.value
+	}
+	district := &screensv1.PageCell{Text: dash}
+	if r.schoolDistrict != "" && r.schoolDistrict != dash {
+		district = &screensv1.PageCell{Text: r.schoolDistrict, Href: "/schools?q=" + url.QueryEscape(r.schoolDistrict)}
+	}
+	day := func(t *time.Time, fallback string) string {
+		if t == nil {
+			return fallback
+		}
+		return t.Format("Jan 2, Mon")
+	}
+	plannedOn := r.plannedBefore
+	if plannedOn == nil {
+		plannedOn = date(r.a.plannedDate)
+	}
+	participants := dash
+	if r.expected != nil && *r.expected != 0 {
+		participants = strconv.Itoa(*r.expected)
+	}
+	return []*screensv1.PageCell{
+		{Text: orDefault(r.schoolID.value, dash)}, name,
+		{Text: joined(orDefault(r.trainingNumber, dash), r.coreProgress)},
+		{Text: orDefault(r.trainingName, "Not yet named")}, district, {Text: orDefault(r.districtType, dash)},
+		{Text: day(plannedOn, "Unscheduled") + r.dayOffFlag()}, {Text: day(r.completedOn, dash)},
+		{Text: r.focus, Tone: "primary", Badge: true}, {Text: participants}, {Text: r.owner},
+	}
 }

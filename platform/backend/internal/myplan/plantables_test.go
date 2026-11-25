@@ -49,7 +49,7 @@ func TestTableOfFollowsTheLoopsOrder(t *testing.T) {
 		{"a Core school's visit", core("a", "school_visit"), tableCoreVisits},
 		{"a Core school's slotted visit", core("slotted", "school_visit"), tableCoreVisits},
 		{"a Core school's slotted training", core("slotted-training", "school_visit"), -1},
-		{"a Core school's training", core("b", "in_school_training"), -1},
+		{"a Core school's training", core("b", "in_school_training"), tableCoreTrainings},
 		{"a client visit", &activity{activityType: "follow_up_visit", hasSchool: true, schoolType: sp("client")}, tableSchoolVisits},
 		{"a meeting at a cluster", &activity{activityType: "cluster_meeting", hasCluster: true}, tableMeetings},
 		{"a meeting at no cluster", &activity{activityType: "cluster_meeting"}, -1},
