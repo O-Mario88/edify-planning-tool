@@ -152,6 +152,7 @@ def rules() -> dict:
         "kpi_labels": kpi_labels(),
         "monitor_tabs": [list(tab) for tab in oversight_views.MONITOR_TABS],
         "execution": _execution(),
+        "country_oversight": _country_oversight(),
     }
 
 
@@ -203,6 +204,59 @@ KPI_COUNTS = (
     "monitor_partner_share",
     "monitor_schools_in_projects",
 )
+
+
+def _country_oversight() -> dict:
+    """Country Planning Oversight's own vocabulary (apps.planning.country_oversight
+    .policy, coverage and requirements): the school groups and their slots,
+    the states its figures count, the staff ceilings, the phasing a quarter or
+    a month reads, and the hand-over and Core package rules the dataset reads.
+    The rulebook's own words are the Planning Monitor's, above."""
+    from apps.activities.completion_columns import _ATTENDANCE_TYPES
+    from apps.core_schools import package_credit
+    from apps.hr.performance_engine import DEFAULT_PHASING
+    from apps.partners.models import PartnerAssignment
+    from apps.planning.country_oversight import hierarchy, policy, requirements
+    from apps.schools.lifecycle_models import CLOSED_STATUSES
+
+    return {
+        "policy_version": policy.POLICY_VERSION,
+        "families": dict(sorted(policy.SCHOOL_TYPE_FAMILY.items())),
+        "family_labels": dict(sorted(policy.FAMILY_LABELS.items())),
+        "unmapped_family": policy.UNMAPPED_FAMILY,
+        "core_family": policy.CORE_FAMILY,
+        "client_family": policy.CLIENT_FAMILY,
+        "family_slots": {
+            family: {
+                "staff": need.staff_visit_slots,
+                "partner": need.partner_visit_slots,
+                "flexible": need.flexible_visit_slots,
+            }
+            for family, need in sorted(policy.REQUIREMENTS.items())
+        },
+        "staff_ceilings": dict(sorted(policy.STAFF_CEILINGS.items())),
+        "planned_states": sorted(policy.PLANNED_STATES),
+        "verified_states": sorted(policy.VERIFIED_STATES),
+        "excluded_duplicate_statuses": list(policy.EXCLUDED_DUPLICATE_STATUSES),
+        "closed_statuses": sorted(str(s) for s in CLOSED_STATUSES),
+        "phasing": {str(q): share for q, share in sorted(DEFAULT_PHASING.items())},
+        "attendance_types": sorted(_ATTENDANCE_TYPES),
+        "unscheduled_handover_statuses": list(PartnerAssignment.UNSCHEDULED_STATUSES),
+        "returned_to_staff": PartnerAssignment.STATUS_RETURNED_TO_STAFF,
+        "package_training_types": sorted(package_credit.PACKAGE_TRAINING_TYPES),
+        "package_visit_types": sorted(package_credit.PACKAGE_VISIT_TYPES),
+        "non_package_visit_purposes": sorted(package_credit.NON_PACKAGE_VISIT_PURPOSES),
+        "purpose_activity_types": dict(
+            sorted(package_credit.PURPOSE_ACTIVITY_TYPES.items())
+        ),
+        "no_owner": [requirements.NO_OWNER_KEY, requirements.NO_OWNER_LABEL],
+        # The figures a school, a person and every row carry, in order.
+        "fields": list(hierarchy.FIELDS),
+        "people_fields": list(hierarchy.PEOPLE_FIELDS),
+        "phased_fields": list(hierarchy.PHASED_FIELDS),
+        "type_fields": dict(sorted(hierarchy.TYPE_FIELDS.items())),
+        "no_lead": [requirements.NO_LEAD_KEY, requirements.NO_LEAD_LABEL],
+    }
 
 
 def kpi_labels() -> dict:

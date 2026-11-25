@@ -1311,3 +1311,10 @@ GRANT SELECT (created_at) ON activity_schedule_cost_line TO edify_gateway_ro;
 -- Fund Requests' monthly plans waiting for receipt (internal/weeklyrequest,
 -- receipt_pending_plans): how and under what reference each was paid.
 GRANT SELECT (disburse_method, disburse_reference) ON fund_request TO edify_gateway_ro;
+
+-- Country Planning Oversight's eligible schools on the reporting date (a reopened
+-- school's reopening) and, for a past year, the type each school had then
+-- (requirements.operating_on_q, historical_adjustments).
+GRANT SELECT (reopened_at) ON school TO edify_gateway_ro;
+GRANT SELECT (school_id, old_value, field_name, changed_at) ON school_change_log TO edify_gateway_ro;
+GRANT SELECT (previous_school_type, onboarded_at) ON core_school_onboarding TO edify_gateway_ro;

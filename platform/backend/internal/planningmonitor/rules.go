@@ -108,6 +108,8 @@ var rules = func() (r struct {
 		// RegionLensRoles read the Leads their region's schools are held under.
 		RegionLensRoles []string `json:"region_lens_roles"`
 	} `json:"page"`
+	// CountryOversight is Country Planning Oversight's own words.
+	CountryOversight cpoRules `json:"country_oversight"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {
 		panic(fmt.Sprintf("planningmonitor: reading rules.json: %v", err))

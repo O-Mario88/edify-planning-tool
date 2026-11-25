@@ -17,6 +17,276 @@
   "core_types": [
     "core"
   ],
+  "country_oversight": {
+    "attendance_types": [
+      "cluster_meeting",
+      "cluster_meeting_ssa_review",
+      "cluster_training",
+      "cluster_training_ssa_collection",
+      "core_training",
+      "in_school_training",
+      "school_improvement_training",
+      "training"
+    ],
+    "client_family": "client_family",
+    "closed_statuses": [
+      "permanently_closed",
+      "temporarily_closed"
+    ],
+    "core_family": "core_family",
+    "excluded_duplicate_statuses": [
+      "confirmed",
+      "merged"
+    ],
+    "families": {
+      "champion": "outreach_family",
+      "client": "client_family",
+      "core": "core_family",
+      "core_graduate": "client_family",
+      "core_trained": "client_family"
+    },
+    "family_labels": {
+      "client_family": "Client rule",
+      "core_family": "Core",
+      "outreach_family": "Outreach only",
+      "unmapped": "No governed type"
+    },
+    "family_slots": {
+      "client_family": {
+        "flexible": 1,
+        "partner": 0,
+        "staff": 0
+      },
+      "core_family": {
+        "flexible": 0,
+        "partner": 2,
+        "staff": 2
+      },
+      "outreach_family": {
+        "flexible": 0,
+        "partner": 0,
+        "staff": 0
+      },
+      "unmapped": {
+        "flexible": 0,
+        "partner": 0,
+        "staff": 0
+      }
+    },
+    "fields": [
+      "schools",
+      "core_schools",
+      "client_schools",
+      "core_trained_schools",
+      "core_graduate_schools",
+      "champion_schools",
+      "unmapped_schools",
+      "visit_schools",
+      "training_schools",
+      "visit_slots",
+      "staff_expected",
+      "partner_expected",
+      "core_staff_slots",
+      "core_partner_slots",
+      "client_slots",
+      "client_staff_expected",
+      "client_partner_expected",
+      "deficit",
+      "staff",
+      "staff_core",
+      "staff_client",
+      "partner_assigned",
+      "partner_scheduled",
+      "partner_core_assigned",
+      "partner_core_scheduled",
+      "partner_client_assigned",
+      "partner_client_scheduled",
+      "staff_verified",
+      "partner_verified",
+      "returned",
+      "cum_staff",
+      "cum_partner_assigned",
+      "cum_partner_scheduled",
+      "cum_training",
+      "cum_meeting_covered",
+      "unallocated",
+      "staff_gap",
+      "partner_gap",
+      "any_staff",
+      "any_partner_scheduled",
+      "any_partner_assigned",
+      "any_visit",
+      "staff_only",
+      "partner_only",
+      "both",
+      "no_visit",
+      "unplanned",
+      "planned_full",
+      "planned_part",
+      "core_staff_done",
+      "training_slots",
+      "training",
+      "training_verified",
+      "any_training",
+      "no_training",
+      "training_gap",
+      "training_staff_slots",
+      "training_partner_slots",
+      "training_staff",
+      "training_partner",
+      "training_partner_assigned",
+      "clustered",
+      "unclustered",
+      "meeting_covered",
+      "meeting_covered_clustered",
+      "clustered_no_meeting",
+      "fully_planned",
+      "partially_planned",
+      "not_planned",
+      "awaiting_partner",
+      "with_partner",
+      "duplicates",
+      "target",
+      "p_visits",
+      "p_follow_up",
+      "p_in_school",
+      "p_ssa",
+      "p_outreach",
+      "p_trainings",
+      "p_cluster_trainings",
+      "p_meetings",
+      "pa_work",
+      "pp_work",
+      "pa_schools",
+      "p_core_visits",
+      "p_client_visits",
+      "over_cap",
+      "over_cap_people",
+      "core_only_people"
+    ],
+    "no_lead": [
+      "__no_lead__",
+      "No Programme Lead"
+    ],
+    "no_owner": [
+      "__unassigned__",
+      "No account owner"
+    ],
+    "non_package_visit_purposes": [
+      "donor_visit",
+      "school_invitation",
+      "social_visit",
+      "ssa_support",
+      "story_gathering"
+    ],
+    "package_training_types": [
+      "core_training",
+      "in_school_training",
+      "school_improvement_training",
+      "training"
+    ],
+    "package_visit_types": [
+      "coaching_visit",
+      "core_visit",
+      "follow_up_visit",
+      "in_school_coaching_visit",
+      "in_school_support",
+      "school_visit",
+      "training_follow_up_visit"
+    ],
+    "people_fields": [
+      "target",
+      "p_visits",
+      "p_follow_up",
+      "p_in_school",
+      "p_ssa",
+      "p_outreach",
+      "p_trainings",
+      "p_cluster_trainings",
+      "p_meetings",
+      "pa_work",
+      "pp_work",
+      "pa_schools",
+      "p_core_visits",
+      "p_client_visits",
+      "over_cap",
+      "over_cap_people",
+      "core_only_people"
+    ],
+    "phased_fields": [
+      "visit_slots",
+      "staff_expected",
+      "partner_expected",
+      "core_staff_slots",
+      "core_partner_slots",
+      "client_slots",
+      "client_staff_expected",
+      "client_partner_expected",
+      "training_slots",
+      "training_staff_slots",
+      "training_partner_slots",
+      "target"
+    ],
+    "phasing": {
+      "1": 0.2,
+      "2": 0.3,
+      "3": 0.3,
+      "4": 0.2
+    },
+    "planned_states": [
+      "accountant_confirmed",
+      "awaiting_ia_verification",
+      "closed",
+      "completed",
+      "completion_started",
+      "evidence_accepted",
+      "evidence_uploaded",
+      "ia_verified",
+      "in_progress",
+      "partner_scheduled",
+      "planned",
+      "rescheduled",
+      "returned_by_ia",
+      "returned_by_pl",
+      "salesforce_id_required",
+      "scheduled",
+      "submitted_to_pl"
+    ],
+    "policy_version": "2026-10-18.1",
+    "purpose_activity_types": {
+      "donor_visit": "donor_visit",
+      "in_school_coaching": "in_school_coaching_visit",
+      "in_school_training": "in_school_training",
+      "in_school_training_ssa": "in_school_training",
+      "school_invitation": "school_invitation",
+      "social_visit": "social_visit",
+      "ssa_support": "school_visit_ssa_collection",
+      "story_gathering": "story_gathering_visit",
+      "training_follow_up": "training_follow_up_visit"
+    },
+    "returned_to_staff": "returned_to_staff",
+    "staff_ceilings": {
+      "CCEO": 560,
+      "Program Lead": 280
+    },
+    "type_fields": {
+      "champion": "champion_schools",
+      "client": "client_schools",
+      "core": "core_schools",
+      "core_graduate": "core_graduate_schools",
+      "core_trained": "core_trained_schools"
+    },
+    "unmapped_family": "unmapped",
+    "unscheduled_handover_statuses": [
+      "assigned",
+      "pending_scheduling"
+    ],
+    "verified_states": [
+      "accountant_confirmed",
+      "closed",
+      "ia_verified"
+    ]
+  },
   "current_ssa_statuses": [
     "confirmed"
   ],
