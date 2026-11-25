@@ -15,6 +15,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/notificationcenter"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/targets"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/telemetryrollup"
 )
 
 // JobMeta documents every operational scheduled job migrated from Django's
@@ -75,18 +76,20 @@ var UgandaCutoverJobs = []JobMeta{
 	{Name: "bulk_completion", LockKey: 400241, Interval: 5 * time.Minute, Owner: "go-scheduler", Disposition: "native-go-maintenance", Query: "SELECT 1"},
 }
 
-// queueWorkers are the existing workers for work its pages queue (large
-// bulk-completion uploads, exports prepared in the background). Go has no
-// page that queues either yet, and the existing pages queue only while they
-// see a recent successful run of the worker (worker_is_running): a Go run
-// recorded as a success without doing the work would leave each queued
-// upload or export waiting for ever. So Go neither runs nor records them; the
-// existing pages complete the work in the request, as they do with no
-// worker, until the uploads and exports that queue are ported with their
-// workers (docs/migration/189 §4).
-var queueWorkers = map[string]string{
-	"bulk_completion": "apps.bulk_completion.worker.work",
-	"export_jobs":     "apps.reports.export_jobs.work",
+// notRunByGo are the existing jobs Go neither runs nor records as run, each
+// with the existing function and why. A run recorded without its work would
+// read as healthy on Platform Health, and for the queue workers it would do
+// harm: the existing upload and export pages queue a large bulk completion
+// or an export only while they see a recent successful run of the worker
+// (worker_is_running), so a Go run recorded without the work would leave
+// each queued upload or export waiting for ever; with no run seen, the pages
+// complete the work in the request, as they do with no worker
+// (docs/migration/189 §4).
+var notRunByGo = map[string]string{
+	"bulk_completion": "apps.bulk_completion.worker.work: Go has no page that queues an upload yet",
+	"export_jobs":     "apps.reports.export_jobs.work: Go has no page that queues an export yet",
+	"execution_period_snapshots": "apps.planning.country_execution.snapshots.lock_ended_periods: " +
+		"the Country Execution figures it locks are not built in Go yet",
 }
 
 // KampalaOperationalFY returns the Uganda fiscal year (Oct 1 – Sep 30) in
@@ -133,7 +136,7 @@ func BuildUgandaJobsWithClock(pool *pgxpool.Pool, nowFn func() time.Time, runner
 				if pool == nil {
 					return nil
 				}
-				if _, handedOn := queueWorkers[m.Name]; handedOn {
+				if _, handedOn := notRunByGo[m.Name]; handedOn {
 					return nil
 				}
 				started := nowFn().UTC()
@@ -946,24 +949,11 @@ SELECT id FROM "user"
 			return targets.SyncLedgers(ctx, tx, schooldirectory.OperationalFY(localNow), now)
 		})
 
-	case "execution_period_snapshots":
-		var executed int
-		if err := pool.QueryRow(ctx, `
-SELECT COUNT(*)::int FROM activity
- WHERE deleted_at IS NULL AND fy = $1
-   AND status IN ('completed', 'submitted_to_pl', 'pl_approved', 'ia_verified', 'closed')`, fyLabel).Scan(&executed); err != nil {
-			return 0, err
-		}
-		return executed, nil
-
 	case "planning_oversight_warm":
-		var plannedSchools int
-		if err := pool.QueryRow(ctx, `
-SELECT COUNT(DISTINCT school_id)::int FROM activity
- WHERE deleted_at IS NULL AND fy = $1 AND status <> 'cancelled'`, fyLabel).Scan(&plannedSchools); err != nil {
-			return 0, err
-		}
-		return plannedSchools, nil
+		// The job builds the existing pages' cached Country Oversight and
+		// Execution figures before readers ask; Go's pages keep no such cache,
+		// so there is nothing for Go to warm.
+		return 0, nil
 
 	case "autopilot_weekly_proposals":
 		var unvisited int
@@ -979,13 +969,7 @@ SELECT COUNT(*)::int FROM school s
 		return unvisited, nil
 
 	case "interaction_rollup":
-		var recent int
-		if err := pool.QueryRow(ctx, `
-SELECT COUNT(*)::int FROM activity
- WHERE deleted_at IS NULL AND updated_at >= $1`, now.Add(-24*time.Hour)).Scan(&recent); err != nil {
-			return 0, err
-		}
-		return recent, nil
+		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) { return telemetryrollup.Rollup(ctx, tx, now, loc) })
 
 	case "fiscal_year_rollover":
 		var fySchools int

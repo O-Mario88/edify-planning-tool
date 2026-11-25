@@ -513,3 +513,51 @@ REVOKE CREATE ON SCHEMA gateway_dataquality FROM edify_dataquality_owner;
 
 GRANT USAGE ON SCHEMA gateway_dataquality TO edify_activities_rw;
 GRANT EXECUTE ON FUNCTION gateway_dataquality.flag_potential_duplicates(varchar[]) TO edify_activities_rw;
+
+-- ── The scheduler's interaction_rollup (docs/migration/189 §4) ──
+-- rollup_interaction_days: yesterday's request events folded into one row a
+-- person a day, then raw events past their 14-day retention pruned, as the
+-- existing job prunes them. Go code removes nothing itself (dbguard): the
+-- prune is gateway_telemetry.prune_interaction_events, owned by
+-- edify_telemetry_owner, a NOLOGIN role no one is a member of, holding only
+-- what that one statement needs.
+-- A new database object: production needs the owner's approval at cutover.
+GRANT SELECT (id, user_id, role, occurred_at, method, route) ON interaction_event TO edify_activities_rw;
+GRANT SELECT (id, user_id, day, role, active_seconds, planning_seconds, execution_seconds, request_count, write_count)
+  ON interaction_day TO edify_activities_rw;
+GRANT INSERT (id, user_id, day, role, active_seconds, planning_seconds, execution_seconds, request_count, write_count)
+  ON interaction_day TO edify_activities_rw;
+GRANT UPDATE (role, active_seconds, planning_seconds, execution_seconds, request_count, write_count)
+  ON interaction_day TO edify_activities_rw;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'edify_telemetry_owner') THEN
+    CREATE ROLE edify_telemetry_owner NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOINHERIT;
+  END IF;
+END
+$$;
+GRANT USAGE ON SCHEMA public TO edify_telemetry_owner;
+GRANT SELECT (occurred_at) ON interaction_event TO edify_telemetry_owner;
+GRANT DELETE ON interaction_event TO edify_telemetry_owner;
+
+CREATE SCHEMA IF NOT EXISTS gateway_telemetry AUTHORIZATION edify_telemetry_owner;
+REVOKE ALL ON SCHEMA gateway_telemetry FROM PUBLIC;
+
+SET ROLE edify_telemetry_owner;
+CREATE OR REPLACE FUNCTION gateway_telemetry.prune_interaction_events(before timestamptz) RETURNS integer
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  removed integer;
+BEGIN
+  DELETE FROM public.interaction_event WHERE occurred_at < before;
+  GET DIAGNOSTICS removed = ROW_COUNT;
+  RETURN removed;
+END
+$fn$;
+REVOKE ALL ON FUNCTION gateway_telemetry.prune_interaction_events(timestamptz) FROM PUBLIC;
+RESET ROLE;
+REVOKE CREATE ON SCHEMA gateway_telemetry FROM edify_telemetry_owner;
+
+GRANT USAGE ON SCHEMA gateway_telemetry TO edify_activities_rw;
+GRANT EXECUTE ON FUNCTION gateway_telemetry.prune_interaction_events(timestamptz) TO edify_activities_rw;
