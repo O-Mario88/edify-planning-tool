@@ -116,11 +116,13 @@ func (s *Service) Detail(ctx context.Context, p auth.Principal, query url.Values
 		return nil, "", err
 	}
 	risks := risksFor(it, today)
-	if hasRisk(it, today) != (len(risks) > 0) || (len(risks) > 0 && reader.Scope != "country") {
-		// A Programme Lead sees each risk's Send form, which Go does not
-		// draw; a country reader sees the risks themselves.
+	if hasRisk(it, today) != (len(risks) > 0) {
 		return nil, "", ErrDetailHandOn
 	}
+	// The Lead may send each risk to the one answerable for it (a person
+	// through the school's assignment, or a role's queue); the country lens
+	// sends nothing (can_send).
+	canSend := reader.Scope == "pl" && reader.MayDelegate
 	var handedOver bool
 	if err := s.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM partner_assignment WHERE scheduled_activity_id = $1)`,
 		a.id).Scan(&handedOver); err != nil {
@@ -140,6 +142,31 @@ func (s *Service) Detail(ctx context.Context, p auth.Principal, query url.Values
 	if err != nil || len(risks) == 0 {
 		return d, "", err
 	}
+	return withRisks(d, risks, canSend, it.schoolPK != ""), "", nil
+}
+
+// withRisks puts the record's risks above the drawer, as the feed reads
+// them. A risk the reader may send (canSend, and to a person a school is
+// needed; a role's queue needs none) carries a Send form. The
+// feed reads a drawer whose one form that is as the form alone (its note,
+// the risk's action as the help); with several forms it reads the whole
+// drawer, each sendable risk followed by its button's words, and offers the
+// first form's button. The send itself is the existing application's.
+func withRisks(d *screensv1.PageDrawer, risks []risk, canSend, hasSchool bool) *screensv1.PageDrawer {
+	sendable := func(r risk) bool { return canSend && (hasSchool || r.role != "") }
+	forms := []risk{}
+	for _, r := range risks {
+		if sendable(r) {
+			forms = append(forms, r)
+		}
+	}
+	button := func(r risk) string { return "Send to " + first(r.owner, "the owner") }
+	if len(forms) == 1 {
+		return &screensv1.PageDrawer{Title: d.Title, Subtitle: d.Subtitle, HasRequired: true, CancelLabel: "Cancel",
+			SubmitLabel: button(forms[0]), CanSubmit: true, Items: []*screensv1.DrawerItem{{Kind: &screensv1.DrawerItem_Field{
+				Field: &screensv1.DrawerField{Name: "note", Label: "Note for the recipient", Kind: "text", Help: forms[0].action,
+					Placeholder: "Add a note (optional)"}}}}}
+	}
 	attention := []*screensv1.DrawerItem{drawerHeading("Needs attention")}
 	for _, r := range risks {
 		// Each risk's three lines, read as one.
@@ -147,10 +174,16 @@ func (s *Service) Detail(ctx context.Context, p auth.Principal, query url.Values
 		if r.due != nil {
 			line += " · Due " + r.due.Format("2 Jan 2006")
 		}
+		if sendable(r) {
+			line += " " + button(r)
+		}
 		attention = append(attention, drawerText(line))
 	}
 	d.Items = append(attention, d.Items...)
-	return d, "", nil
+	if len(forms) > 0 {
+		d.SubmitLabel, d.CanSubmit = button(forms[0]), true
+	}
+	return d
 }
 
 // readOneAct is build_item_by_reference's activity, if record_in_scope lets

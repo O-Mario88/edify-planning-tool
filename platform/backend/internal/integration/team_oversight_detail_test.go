@@ -16,8 +16,8 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1/screensv1connect"
 )
 
-// The Team Plan's record drawer is Go's for the team's own work with no
-// risk on it: its ownership, planning, cost and workflow; a record outside
+// The Team Plan's record drawer is Go's for the team's own work: its risks,
+// ownership, planning, cost and workflow; a record outside
 // the lens or gone is "Not available"; a role without either oversight page
 // is refused; the Regional Programme Lead's region lens is handed on.
 func TestTeamOversightDetailIsGos(t *testing.T) {
@@ -76,12 +76,14 @@ VALUES (now(), now(), $1, 'school_visit', $2, '', 'staff', 'scheduled', 'none', 
 	if answer, err := open(lead, "/team-planning-oversight/detail?activity_id=nowhere"); err != nil || answer.GetDrawer().GetTitle() != "Not available" {
 		t.Fatalf("a record that is not there: %v %v", answer, err)
 	}
-	// Overdue: the Director reads the risk; the Lead's Send form is handed on.
+	// Overdue: both read the risk; with no school the Lead has no one to
+	// send it to, so no Send form.
 	if _, err := admin.Exec(ctx, `UPDATE activity SET planned_date = current_date - 3 WHERE id = $1`, id); err != nil {
 		t.Fatalf("moving the activity back: %v", err)
 	}
-	if _, err := open(lead, "/team-planning-oversight/detail?activity_id="+id); connect.CodeOf(err) != connect.CodeUnavailable {
-		t.Fatalf("the Lead on a risk: %v, want handed on", err)
+	leadRisk, err := open(lead, "/team-planning-oversight/detail?activity_id="+id)
+	if err != nil || leadRisk.GetDrawer().GetItems()[0].GetHeading() != "Needs attention" || leadRisk.GetDrawer().GetCanSubmit() {
+		t.Fatalf("the Lead on a risk: %v %v", leadRisk, err)
 	}
 	borrowAccount(t, "cd@edify.org")
 	director := sessionOf(t, "cd@edify.org", seededPassword).GetAccessToken()
