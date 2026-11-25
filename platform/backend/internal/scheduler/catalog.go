@@ -327,47 +327,10 @@ func executeJob(
 		return callIntRW(ctx, pool, `SELECT gateway_scheduler.reconcile_document_lifecycle($1::date, $2)`, today, now)
 
 	case "activity_reminders":
-		tomorrow := localNow.AddDate(0, 0, 1).Format(time.DateOnly)
-		rows, err := pool.Query(ctx, `
-SELECT a.id, COALESCE(sp.user_id, a.responsible_staff_id), COALESCE(s.name, 'a school')
-  FROM activity a
-  LEFT JOIN staff_profile sp ON sp.id = a.responsible_staff_id AND sp.deleted_at IS NULL
-  LEFT JOIN school s ON s.id = a.school_id
- WHERE a.deleted_at IS NULL
-   AND a.status IN ('scheduled', 'rescheduled')
-   AND a.planned_date = $1::date
- LIMIT 200`, tomorrow)
-		if err != nil {
-			return 0, err
-		}
-		type remRow struct{ id, uid, school string }
-		var items []remRow
-		for rows.Next() {
-			var r remRow
-			if scanErr := rows.Scan(&r.id, &r.uid, &r.school); scanErr == nil && r.uid != "" {
-				items = append(items, r)
-			}
-		}
-		rows.Close()
-		sent := 0
-		for _, it := range items {
-			if ok, err := writer.Deliver(ctx, notificationcenter.Delivery{
-				RecipientID:     it.uid,
-				Title:           "Starts tomorrow: " + it.school,
-				Body:            "Your planned school activity at " + it.school + " is scheduled for tomorrow (" + tomorrow + ").",
-				Category:        "reminder",
-				ContextType:     "activity",
-				ContextID:       it.id,
-				TargetRoute:     "/my-plan",
-				ActionLabel:     "Open My Plan",
-				Priority:        "normal",
-				SourceEventType: "activity.starts_tomorrow",
-				SourceEventID:   it.id,
-			}); err == nil && ok {
-				sent++
-			}
-		}
-		return sent, nil
+		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy
+		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) {
+			return notificationjobs.ActivityReminders(ctx, tx, now, loc, notificationjobs.Notices{Push: push})
+		})
 
 	case "daily_plan_notifications":
 		// _do_daily_planning_notices: the day's plan notices, then the
