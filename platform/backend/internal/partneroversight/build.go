@@ -394,8 +394,7 @@ func readItems(ctx context.Context, db schooldirectory.Querier, team, regions []
 			keptActivities = append(keptActivities, h.it.activityID)
 		}
 	}
-	unassigned, err := readActivities(ctx, db, `a.deleted_at IS NULL AND a.delivery_type = $1
-  AND COALESCE(a.assigned_partner_id, '') <> '' AND a.status <> ALL($2) AND a.fy = ANY($3) AND NOT (a.id = ANY($4))
+	unassigned, err := readActivities(ctx, db, unassignedPartnerWhere+` AND a.fy = ANY($3) AND NOT (a.id = ANY($4))
   AND ($5::text[] IS NULL OR a.monitored_by_staff_id = ANY($5) OR a.responsible_staff_id = ANY($5)
     OR s.account_owner_id = ANY($5) OR c.responsible_staff_id = ANY($5))
   AND ($6::text[] IS NULL OR s.region_id = ANY($6) OR c.region_id = ANY($6))
@@ -426,17 +425,7 @@ ORDER BY a.created_at DESC, a.id`, rules.PartnerDelivery, []string{"cancelled", 
 	if err != nil {
 		return nil, err
 	}
-	officer := func(it *item, ids ...string) {
-		id := first(ids...)
-		it.cceoID = id
-		if c, ok := dir.canonical[id]; ok {
-			it.cceoID = c
-		}
-		it.cceoName = dir.names[id]
-		if s, ok := dir.supervisor[it.cceoID]; ok {
-			it.plID, it.plName = s[0], s[1]
-		}
-	}
+	officer := officerFrom(dir)
 
 	items := []*item{}
 	for _, h := range kept {
@@ -468,20 +457,7 @@ ORDER BY a.created_at DESC, a.id`, rules.PartnerDelivery, []string{"cancelled", 
 		items = append(items, it)
 	}
 	for _, a := range unassigned {
-		it := &item{activityID: a.id, schoolID: a.schoolID, schoolCode: a.schoolCode, schoolName: a.schoolName,
-			schoolType: a.schoolType, district: a.district, clusterID: a.clusterID, clusterName: a.clusterName,
-			partnerID: a.partnerID, partnerName: a.partnerName, projectID: a.projectID, projectName: a.projectName}
-		officer(it, a.monitor, a.responsible, a.owner, a.clusterOwner)
-		it.stage = stageAwaiting
-		if a.plannedDate != nil || a.scheduled != nil {
-			it.stage = stageScheduled
-		}
-		it.activityType = a.activityType
-		it.targetIntervention = a.focus
-		it.trainingName, it.purposeLabel, it.interventionLabel = describe(work{act: a})
-		fill(it, a, costs)
-		it.withdrawalLabel = withdrawalLabelOf(it.withdrawalKind(), it.partnerHasDated)
-		items = append(items, it)
+		items = append(items, unassignedItem(a, officer, costs))
 	}
 	for _, it := range items {
 		it.risks = risksOf(it, today)
@@ -491,6 +467,45 @@ ORDER BY a.created_at DESC, a.id`, rules.PartnerDelivery, []string{"cancelled", 
 	}
 	sortItems(items)
 	return items, nil
+}
+
+// officerFrom is the page's managing officer for an item: the first of the
+// ids, in the directory's profile id, named, with the Lead they report to.
+func officerFrom(dir directory) func(it *item, ids ...string) {
+	return func(it *item, ids ...string) {
+		id := first(ids...)
+		it.cceoID = id
+		if c, ok := dir.canonical[id]; ok {
+			it.cceoID = c
+		}
+		it.cceoName = dir.names[id]
+		if s, ok := dir.supervisor[it.cceoID]; ok {
+			it.plID, it.plName = s[0], s[1]
+		}
+	}
+}
+
+// unassignedPartnerWhere is _unassigned_partner_activities' filter: live
+// Partner work with a Partner on it, not cancelled, rejected or deferred.
+const unassignedPartnerWhere = `a.deleted_at IS NULL AND a.delivery_type = $1
+  AND COALESCE(a.assigned_partner_id, '') <> '' AND a.status <> ALL($2)`
+
+// unassignedItem is the page's row for Partner work no hand-over points at.
+func unassignedItem(a *activity, officer func(it *item, ids ...string), costs map[string]int64) *item {
+	it := &item{activityID: a.id, schoolID: a.schoolID, schoolCode: a.schoolCode, schoolName: a.schoolName,
+		schoolType: a.schoolType, district: a.district, clusterID: a.clusterID, clusterName: a.clusterName,
+		partnerID: a.partnerID, partnerName: a.partnerName, projectID: a.projectID, projectName: a.projectName}
+	officer(it, a.monitor, a.responsible, a.owner, a.clusterOwner)
+	it.stage = stageAwaiting
+	if a.plannedDate != nil || a.scheduled != nil {
+		it.stage = stageScheduled
+	}
+	it.activityType = a.activityType
+	it.targetIntervention = a.focus
+	it.trainingName, it.purposeLabel, it.interventionLabel = describe(work{act: a})
+	fill(it, a, costs)
+	it.withdrawalLabel = withdrawalLabelOf(it.withdrawalKind(), it.partnerHasDated)
+	return it
 }
 
 // fill sets what the activity a Partner's scheduling created says.

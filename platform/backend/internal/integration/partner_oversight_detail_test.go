@@ -45,9 +45,21 @@ func TestPartnerOversightDetailIsGos(t *testing.T) {
 	if nope := open(director, "/partner-oversight/detail?assignment_id=nowhere").GetDrawer(); nope.GetTitle() != "Not available" {
 		t.Fatalf("a hand-over that is not there: %v", nope)
 	}
+	// Its withdrawal drawer: completed work can no longer be withdrawn; a
+	// hand-over that is not there is "Not available".
+	if w := open(director, "/partner-oversight/withdraw?assignment_id="+id).GetDrawer(); w.GetCanSubmit() || len(w.GetItems()) != 2 ||
+		w.GetItems()[0].GetText() != "This work can no longer be withdrawn." {
+		t.Fatalf("the withdrawal of completed work: %v", w)
+	}
+	if nope := open(director, "/partner-oversight/withdraw?assignment_id=nowhere").GetDrawer(); nope.GetTitle() != "Not available" {
+		t.Fatalf("a withdrawal of nothing: %v", nope)
+	}
 	borrowAccount(t, "hr@edify.org")
 	hr := sessionOf(t, "hr@edify.org", seededPassword).GetAccessToken()
 	if r := open(hr, "/partner-oversight/detail?assignment_id="+id).GetRefusal(); r != "Access Denied: Your active role does not have permission to view Partner Oversight." {
 		t.Fatalf("HR: %q", r)
+	}
+	if r := open(hr, "/partner-oversight/withdraw?assignment_id="+id).GetRefusal(); r != "Access Denied: Your active role does not have permission to view Partner Oversight." {
+		t.Fatalf("HR on the withdrawal: %q", r)
 	}
 }

@@ -190,6 +190,7 @@ def work() -> dict:
     from apps.partners import purposes
     from apps.partners import withdrawal_service as withdrawal
     from apps.partners.models import PartnerAssignment
+    from apps.fund_requests.models import MONEY_MOVED_ADVANCE_STATUSES
     from apps.partners.withdrawal_models import (
         WithdrawalAttribution,
         WithdrawalDisposition,
@@ -236,6 +237,13 @@ def work() -> dict:
             "reason_labels": dict(WithdrawalReason.choices),
             "attribution_labels": dict(WithdrawalAttribution.choices),
             "disposition_labels": dict(WithdrawalDisposition.choices),
+            # The withdrawal drawer's choices, in the order it offers them,
+            # and the advance statuses that lock an activity's money.
+            "reason_choices": [list(c) for c in WithdrawalReason.choices],
+            "disposition_choices": [list(c) for c in WithdrawalDisposition.choices],
+            "money_moved_advance_statuses": [
+                str(s) for s in MONEY_MOVED_ADVANCE_STATUSES
+            ],
         },
         "dated_by_staff": DATED_BY_STAFF,
         # SSA Support is confirmed in its own drawer

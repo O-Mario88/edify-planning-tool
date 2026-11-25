@@ -26,3 +26,23 @@ func TestFirstFormIsTheFirstRiskWithASend(t *testing.T) {
 		t.Fatalf("the send rules: %+v", rules.Work.Sends)
 	}
 }
+
+// A CCEO only asks their Lead to take back work the Partner has dated; work
+// still unscheduled, or dated only by staff, they withdraw themselves, and
+// every other role decides.
+func TestMustRequestIsTheOfficersAsk(t *testing.T) {
+	for _, c := range []struct {
+		role, kind  string
+		dated, want bool
+	}{
+		{"CCEO", "recall_scheduled", true, true},
+		{"CCEO", "recall_scheduled", false, false},
+		{"CCEO", "withdraw_unscheduled", false, false},
+		{"CCEO", "payment_hold", false, true},
+		{"Program Lead", "recall_scheduled", true, false},
+	} {
+		if got := mustRequest(c.role, preview{kind: c.kind, dated: c.dated}); got != c.want {
+			t.Errorf("mustRequest(%s, %s, dated %v) = %v", c.role, c.kind, c.dated, got)
+		}
+	}
+}

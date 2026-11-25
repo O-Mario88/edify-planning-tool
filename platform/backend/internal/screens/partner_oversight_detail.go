@@ -74,3 +74,26 @@ func (s *Service) partnerOversightSendInGo(ctx context.Context, message *screens
 	}
 	return &screensv1.SaveDrawerResponse{Saved: true, Message: answer}, true, nil
 }
+
+// partnerWithdrawDrawerInGo draws the withdrawal drawer (partner_withdrawal_
+// preview_view); its save stays the existing application's.
+func (s *Service) partnerWithdrawDrawerInGo(ctx context.Context, p auth.Principal, rawPath string) (*screensv1.GetDrawerResponse, bool, error) {
+	path, rawQuery, _ := strings.Cut(rawPath, "?")
+	if strings.TrimSuffix(path, "/") != partneroversight.WithdrawPath || s.db == nil {
+		return nil, false, nil
+	}
+	query, err := url.ParseQuery(rawQuery)
+	if err != nil {
+		return nil, true, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This link is not valid.")
+	}
+	d, refusal, err := partneroversight.NewService(s.db, s.clock).Withdraw(ctx, p, query.Get("assignment_id"), query.Get("activity_id"))
+	switch {
+	case errors.Is(err, partneroversight.ErrDetailHandOn):
+		return nil, false, nil
+	case err != nil:
+		return nil, true, apierr.Internal(ctx, s.logger, err)
+	case refusal != "":
+		return &screensv1.GetDrawerResponse{Refusal: refusal}, true, nil
+	}
+	return &screensv1.GetDrawerResponse{Drawer: d}, true, nil
+}

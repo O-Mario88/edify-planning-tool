@@ -167,6 +167,11 @@ type WithdrawalRules struct {
 	ReasonLabels        map[string]string `json:"reason_labels"`
 	AttributionLabels   map[string]string `json:"attribution_labels"`
 	DispositionLabels   map[string]string `json:"disposition_labels"`
+	// The drawer's choices in the order it offers them, and the advance
+	// statuses that lock an activity's money (is_financially_locked).
+	ReasonChoices             [][2]string `json:"reason_choices"`
+	DispositionChoices        [][2]string `json:"disposition_choices"`
+	MoneyMovedAdvanceStatuses []string    `json:"money_moved_advance_statuses"`
 }
 
 // CompletionRules are the completion columns' statuses and words.
