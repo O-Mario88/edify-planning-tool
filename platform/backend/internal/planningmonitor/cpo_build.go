@@ -204,7 +204,7 @@ func CountryOversightPage(ctx context.Context, db schooldirectory.Querier, p aut
 	if err != nil {
 		return nil, err
 	}
-	count, items, err := cpoFollowUps(ctx, db, f.fy, cpoLocation)
+	count, items, err := cpoFollowUps(ctx, db, f.fy, "planning", cpoLocation)
 	if err != nil {
 		return nil, err
 	}

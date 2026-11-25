@@ -335,3 +335,50 @@ func TestCountryOversightSchoolTablesAreGos(t *testing.T) {
 		t.Fatalf("Project Schools: %v, want handed on", err)
 	}
 }
+
+// Country Oversight's Execution & Completion lens is Go's
+// (country_execution, as the feed reads execution_page): the lens strip
+// with Execution active, the six cards, the funnel whose Planned is the
+// first card's figure, the readings, the requirement tables and the
+// timeliness table. Another of the timeliness views is handed on.
+func TestCountryExecutionIsGos(t *testing.T) {
+	borrowAccount(t, "cd@edify.org")
+	director := sessionOf(t, "cd@edify.org", seededPassword).GetAccessToken()
+	page, err := pageOf(director, countryPlanningOversight, map[string]string{"view": "execution", "fy": "2026", "period": "fy"})
+	if err != nil {
+		t.Fatalf("the Execution lens: %v", err)
+	}
+	if page.GetHeader().GetTitle() != "Execution & Completion" {
+		t.Fatalf("title %q", page.GetHeader().GetTitle())
+	}
+	blocks := page.GetBlocks()
+	if tabs := blocks[0].GetLinkTabs().GetTabs(); len(tabs) != 2 || !tabs[1].GetActive() {
+		t.Fatalf("lens strip %v", tabs)
+	}
+	cards := blocks[3].GetPanel().GetItems()[0].GetLinks().GetLinks()
+	if len(cards) != 6 || cards[0].GetText() != "Planned for the Period" {
+		t.Fatalf("cards %v", cards)
+	}
+	planned := strings.Fields(cards[0].GetCaption())[0]
+	var funnel *screensv1.PageTable
+	sections := []string{}
+	for i, b := range blocks {
+		if s := b.GetSection(); s != "" {
+			sections = append(sections, s)
+			if strings.HasPrefix(s, "Execution Funnel") {
+				funnel = blocks[i+2].GetTable()
+			}
+		}
+	}
+	if funnel == nil || funnel.GetRows()[0].GetCells()[0].GetText() != "Planned" ||
+		funnel.GetRows()[0].GetCells()[1].GetText() != strings.ReplaceAll(planned, ",", "") {
+		t.Fatalf("funnel %v, planned %s", funnel, planned)
+	}
+	if len(sections) < 4 || !strings.HasPrefix(sections[2], "Delivery by Program Lead") ||
+		!strings.HasPrefix(sections[3], "Visits Delivered Against Target by Program Lead") {
+		t.Fatalf("sections %q", sections)
+	}
+	if _, err := pageOf(director, countryPlanningOversight, map[string]string{"view": "execution", "table": "school"}); connect.CodeOf(err) != connect.CodeUnavailable {
+		t.Fatalf("the schools view: %v, want handed on", err)
+	}
+}

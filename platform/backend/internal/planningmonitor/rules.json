@@ -83,6 +83,104 @@
       "reimbursement_pl_pending",
       "reimbursement_submitted"
     ],
+    "page": {
+      "export_roles": [
+        "Accountant",
+        "Admin",
+        "BusinessTransformationOfficer",
+        "CountryDirector",
+        "ImpactAssessment",
+        "Program Lead",
+        "ProjectCoordinator",
+        "RegionalProgramLead",
+        "RegionalVicePresident"
+      ],
+      "forecast_min_due": 10,
+      "forecast_on_track": 0.9,
+      "issue_order": [
+        [
+          "execution_staff",
+          "Activity not started"
+        ],
+        [
+          "evidence",
+          "Evidence submission overdue"
+        ],
+        [
+          "correction",
+          "Returned work not corrected"
+        ],
+        [
+          "pl_review",
+          "PL review pending"
+        ],
+        [
+          "ia_review",
+          "IA verification pending"
+        ],
+        [
+          "partner",
+          "Partner execution delay"
+        ],
+        [
+          "external",
+          "School unavailable"
+        ],
+        [
+          "funds",
+          "Funding delayed"
+        ],
+        [
+          "finance",
+          "Finance closure pending"
+        ],
+        [
+          "closure",
+          "Closure checklist pending"
+        ]
+      ],
+      "kpi_labels": {
+        "cxo_activities_due": "Planned for the Period",
+        "cxo_execution_completed": "Execution Completed",
+        "cxo_fully_closed": "Fully Closed",
+        "cxo_ia_verified": "IA Verified",
+        "cxo_overdue": "Overdue Activities",
+        "cxo_started": "Started"
+      },
+      "lead_manageable": [
+        "staff",
+        "pl",
+        "partner"
+      ],
+      "period_labels": {
+        "fy": "Annual",
+        "month": "Month",
+        "quarter": "Quarter",
+        "week": "Week"
+      },
+      "view_by": [
+        [
+          "lead",
+          "Program Lead"
+        ],
+        [
+          "cceo",
+          "CCEO"
+        ],
+        [
+          "partner",
+          "Partner"
+        ],
+        [
+          "school",
+          "School"
+        ],
+        [
+          "activity",
+          "Activity"
+        ]
+      ]
+    },
     "staff_key": "__staff__",
     "stages": {
       "age_groups": [

@@ -214,8 +214,15 @@ def _country_execution() -> dict:
     from apps.activities.schedule_trail import TRAIL_MIGRATION
     from apps.core.enums import ActivityType
     from apps.fund_requests.models import MONEY_MOVED_ADVANCE_STATUSES
+    from apps.core.metrics import MetricValue, render_metric
+    from apps.core.permissions import RolePermissionService
+    from apps.core.rbac import EdifyRole
     from apps.planning.country_execution import dataset as ds
+    from apps.planning.country_execution import service as svc
     from apps.planning.country_execution import stages as st
+    from apps.schools.management.commands.export_school_directory_rules import (
+        _role_user,
+    )
 
     def sets(*names):
         return {name.lower(): sorted(getattr(st, name)) for name in names}
@@ -251,6 +258,34 @@ def _country_execution() -> dict:
         "awaiting_disbursement": list(ds._AWAITING_DISBURSEMENT),
         "money_moved": sorted(str(s) for s in MONEY_MOVED_ADVANCE_STATUSES),
         "trail_migration": TRAIL_MIGRATION,
+        # The page's own words (country_execution.service, the views).
+        "page": {
+            "kpi_labels": {
+                key: render_metric(key, MetricValue.ratio(1, 1)).as_dict()["label"]
+                for key in (
+                    "cxo_activities_due",
+                    "cxo_started",
+                    "cxo_execution_completed",
+                    "cxo_ia_verified",
+                    "cxo_fully_closed",
+                    "cxo_overdue",
+                )
+            },
+            "issue_order": [list(pair) for pair in svc.ISSUE_ORDER],
+            "view_by": [list(pair) for pair in svc.VIEW_BY],
+            "period_labels": dict(svc.PERIOD_LABELS),
+            "forecast_on_track": svc.FORECAST_ON_TRACK,
+            "forecast_min_due": svc.FORECAST_MIN_DUE,
+            "lead_manageable": list(svc.LEAD_MANAGEABLE),
+            "export_roles": sorted(
+                role.value
+                for role in EdifyRole
+                if RolePermissionService.can_export(
+                    _role_user(role.value),
+                    "/country-planning-oversight/execution/export",
+                )
+            ),
+        },
         "attendance_form_types": sorted(
             t
             for t in ActivityType.values

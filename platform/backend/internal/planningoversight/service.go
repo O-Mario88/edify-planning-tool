@@ -76,6 +76,11 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		if key == countryKey && asksForCoverage(query) {
 			return s.buildCountryCoverage(ctx, p, query)
 		}
+		// The Execution & Completion lens (execution_page) is Go's too, but
+		// for the views and the target note it does not draw yet.
+		if key == countryKey && lastValue(query, "view") == "execution" {
+			return s.buildCountryExecution(ctx, p, query)
+		}
 		// Every other lens is handed on (the summary Go used to draw in a
 		// design of its own is gone: docs/migration/189).
 		return nil, false, nil
@@ -106,11 +111,7 @@ var activityPlanParams = []string{"lead", "risk", "activity_type", "executor_typ
 // asksForCoverage is whether country_planning_oversight_view answers the
 // query with coverage_page.
 func asksForCoverage(query url.Values) bool {
-	view := ""
-	if values := query["view"]; len(values) > 0 {
-		// QueryDict.get answers a repeated key's last value.
-		view = strings.ToLower(strings.TrimSpace(values[len(values)-1]))
-	}
+	view := lastValue(query, "view")
 	if view != "" {
 		return !countryLenses[view]
 	}
@@ -161,4 +162,32 @@ func (s *Service) buildCountryTable(ctx context.Context, p auth.Principal, key s
 		return nil, false, nil
 	}
 	return page, served, err
+}
+
+// lastValue is QueryDict.get, stripped and lower-cased: a repeated key's
+// last value.
+func lastValue(query url.Values, key string) string {
+	values := query[key]
+	if len(values) == 0 {
+		return ""
+	}
+	return strings.ToLower(strings.TrimSpace(values[len(values)-1]))
+}
+
+// buildCountryExecution is execution_page for p.
+func (s *Service) buildCountryExecution(ctx context.Context, p auth.Principal, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	q := map[string]string{}
+	for key, values := range query {
+		if len(values) > 0 {
+			q[key] = values[len(values)-1]
+		}
+	}
+	page, err := planningmonitor.CountryExecutionPage(ctx, s.db, p, q, s.now())
+	if errors.Is(err, planningmonitor.ErrCountryExecutionHandOn) {
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, true, err
+	}
+	return page, true, nil
 }

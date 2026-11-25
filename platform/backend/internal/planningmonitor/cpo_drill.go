@@ -205,14 +205,15 @@ type cpoFollowUp struct {
 }
 
 // cpoFollowUps is _followups_panel and open_counts: the open planning
-// follow-ups of the year, the newest five, and the count per row.
-func cpoFollowUps(ctx context.Context, db schooldirectory.Querier, fy string, loc *time.Location) (int, []cpoFollowUp, error) {
+// follow-ups of the year in one stage (planning or execution), the newest
+// five, and the count per row.
+func cpoFollowUps(ctx context.Context, db schooldirectory.Querier, fy, module string, loc *time.Location) (int, []cpoFollowUp, error) {
 	page := rules.CountryOversight.Page
 	rows, err := db.Query(ctx, `SELECT id, issue_type, COALESCE(NULLIF(activity_label, ''), NULLIF(school_name, ''),
 		NULLIF(partner_name, ''), NULLIF(cceo_name, ''), program_lead_name), program_lead_name, status,
 		COALESCE(last_reminder_at, assigned_at), reminder_count
-		FROM planning_oversight_follow_up WHERE fy = $1 AND status = ANY($2) AND module = 'planning'
-		ORDER BY assigned_at DESC`, fy, page.FollowUpOpenStates)
+		FROM planning_oversight_follow_up WHERE fy = $1 AND status = ANY($2) AND module = $3
+		ORDER BY assigned_at DESC`, fy, page.FollowUpOpenStates, module)
 	if err != nil {
 		return 0, nil, fmt.Errorf("planningmonitor: open follow-ups: %w", err)
 	}

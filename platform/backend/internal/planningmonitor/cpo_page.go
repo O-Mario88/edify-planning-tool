@@ -112,10 +112,13 @@ func pct(part, whole int) string {
 func paren(part, whole int) string { return "(" + pct(part, whole) + ")" }
 
 // lensTabs is country_lens_tabs("coverage") as the feed reads the strip.
-func cpoLensTabs() *screensv1.PageBlock {
+func cpoLensTabs() *screensv1.PageBlock { return lensTabsAt("coverage") }
+
+// lensTabsAt is country_lens_tabs(active).
+func lensTabsAt(active string) *screensv1.PageBlock {
 	tabs := []*screensv1.PageLinkTab{}
 	for _, t := range rules.CountryOversight.Page.LensTabs {
-		tabs = append(tabs, &screensv1.PageLinkTab{Label: t[2], Href: t[3], Active: t[0] == "coverage"})
+		tabs = append(tabs, &screensv1.PageLinkTab{Label: t[2], Href: t[3], Active: t[0] == active})
 	}
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_LinkTabs{LinkTabs: &screensv1.PageLinkTabs{Tabs: tabs}}}
 }

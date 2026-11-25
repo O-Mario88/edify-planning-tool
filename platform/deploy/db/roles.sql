@@ -1335,3 +1335,8 @@ GRANT SELECT (is_exception, conflict_status) ON pd_request TO edify_gateway_ro;
 GRANT SELECT (activity_id, closed_at) ON activity_closure TO edify_gateway_ro;
 GRANT SELECT (activity_id, from_day, to_day, from_status, changed_at) ON activity_schedule_change TO edify_gateway_ro;
 GRANT SELECT (id, app, name, applied) ON django_migrations TO edify_gateway_ro;
+-- Its locked period figures (snapshots.for_window) and the open execution
+-- follow-ups each row counts (followups.open_counts), with the follow-ups
+-- sent for Recent Activity.
+GRANT SELECT (id, taken_at, country, period_type, period_start, version) ON execution_period_snapshot TO edify_gateway_ro;
+GRANT SELECT (program_lead_staff_id, cceo_staff_id, remaining_value) ON planning_oversight_follow_up TO edify_gateway_ro;

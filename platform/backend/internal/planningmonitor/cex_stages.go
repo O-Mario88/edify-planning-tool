@@ -34,6 +34,7 @@ type cexRules struct {
 	MoneyMoved           []string `json:"money_moved"`
 	TrailMigration       string   `json:"trail_migration"`
 	AttendanceFormTypes  []string `json:"attendance_form_types"`
+	Page                 cexPage  `json:"page"`
 }
 
 // cexStage is stages.Stage: one activity's position in the spine.

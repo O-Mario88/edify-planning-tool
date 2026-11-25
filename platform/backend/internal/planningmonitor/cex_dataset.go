@@ -359,6 +359,26 @@ func buildCEXDataset(ctx context.Context, db schooldirectory.Querier, scope scho
 		}
 		v[cexIdx["carried_forward"]]++
 	}
+	regions, partners := []string{}, []string{}
+	for _, r := range d.records {
+		regions = append(regions, r.regionID)
+		if r.partnerKey != "" && r.partnerKey != c.StaffKey {
+			partners = append(partners, r.partnerKey)
+		}
+	}
+	for table, into := range map[string]map[string]string{"region": d.regionName, "partner": d.partnerName} {
+		ids := regions
+		if table == "partner" {
+			ids = partners
+		}
+		names, err := cpoNames(ctx, db, table, ids)
+		if err != nil {
+			return nil, err
+		}
+		for _, o := range names {
+			into[o.value] = o.label
+		}
+	}
 	return d, nil
 }
 
