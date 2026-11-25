@@ -277,6 +277,11 @@ def work() -> dict:
         "sends": {
             "partner_addressed": sorted(partner_actions.PARTNER_ADDRESSED_RISKS),
             "cceo_addressed": sorted(partner_actions.CCEO_ADDRESSED_RISKS),
+            # The issue each CCEO-addressed risk is delegated as.
+            "cceo_issue_keys": dict(
+                sorted(partner_actions.CCEO_ADDRESSED_RISKS.items())
+            ),
+            "escalation_scope": partner_actions.ESCALATION_SCOPE,
             "role_queues": dict(sorted(ROLE_QUEUES.items())),
         },
     }

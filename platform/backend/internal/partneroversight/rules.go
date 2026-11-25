@@ -136,6 +136,8 @@ type Work struct {
 	Sends struct {
 		PartnerAddressed []string          `json:"partner_addressed"`
 		CCEOAddressed    []string          `json:"cceo_addressed"`
+		CCEOIssueKeys    map[string]string `json:"cceo_issue_keys"`
+		EscalationScope  string            `json:"escalation_scope"`
 		RoleQueues       map[string]string `json:"role_queues"`
 	} `json:"sends"`
 }

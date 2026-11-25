@@ -10,6 +10,7 @@ import (
 // move, what to do and by when.
 type partnerRisk struct {
 	key, severity, reason, responsible, action string
+	route                                      string
 	due                                        *time.Time
 	role                                       string // a role queue's
 }
@@ -49,12 +50,12 @@ func risksWithWords(i *item, today time.Time) []partnerRisk {
 			if n > r.ScheduleGraceDays {
 				severity = "high"
 			}
-			out = append(out, partnerRisk{key: "partner_schedule_overdue", severity: severity,
+			out = append(out, partnerRisk{key: "partner_schedule_overdue", route: "/partner-oversight/", severity: severity,
 				reason:      fmt.Sprintf("%s has not scheduled this, %d day(s) past due.", thePartner, n),
 				responsible: partner, action: "Remind the partner, or take the work back", due: at(deadline)})
 		}
 		if !deadline.Before(today) && !deadline.After(today.Add(days(r.ApproachingDays))) {
-			out = append(out, partnerRisk{key: "partner_schedule_approaching", severity: "warning",
+			out = append(out, partnerRisk{key: "partner_schedule_approaching", route: "/partner-oversight/", severity: "warning",
 				reason:      fmt.Sprintf("Schedule-by date is %s and no date has been set.", deadline.Format("2 Jan")),
 				responsible: partner, action: "Remind the partner", due: at(deadline)})
 		}
@@ -64,7 +65,7 @@ func risksWithWords(i *item, today time.Time) []partnerRisk {
 		if i.returnReason != "" {
 			reason = thePartner + " returned this: " + i.returnReason
 		}
-		out = append(out, partnerRisk{key: "assignment_returned", severity: "high", reason: reason, responsible: cceo,
+		out = append(out, partnerRisk{key: "assignment_returned", route: "/planning", severity: "high", reason: reason, responsible: cceo,
 			action: "Reassign, schedule as staff work, or cancel"})
 	}
 	noEvidence := i.evidenceStatus == "" || i.evidenceStatus == "none"
@@ -76,31 +77,31 @@ func risksWithWords(i *item, today time.Time) []partnerRisk {
 			if n > 14 {
 				severity = "critical"
 			}
-			out = append(out, partnerRisk{key: "partner_delivery_overdue", severity: severity,
+			out = append(out, partnerRisk{key: "partner_delivery_overdue", route: "/partner-oversight/", severity: severity,
 				reason:      fmt.Sprintf("Scheduled for %s with no evidence yet (%d days).", d.Format("2 Jan"), n),
 				responsible: partner, action: "Ask the partner to deliver or reschedule", due: at(d)})
 		}
 	}
 	if i.isScheduled() && (i.plannedCost == nil || *i.plannedCost == 0) {
-		out = append(out, partnerRisk{key: "partner_rate_missing", severity: "critical",
+		out = append(out, partnerRisk{key: "partner_rate_missing", route: "/cost-settings", severity: "critical",
 			reason: "Scheduled, but no partner rate was found in the cost catalogue.", responsible: "Country Director",
 			action: "Add the partner rate to the Cost Catalogue"})
 	}
 	if i.isScheduled() && i.scheduledDate != nil {
 		d := *i.scheduledDate
 		if noEvidence && in(w.InProgress, i.activityStatus) && d.Add(days(r.EvidenceGraceDays)).Before(today) {
-			out = append(out, partnerRisk{key: "partner_evidence_overdue", severity: "high",
+			out = append(out, partnerRisk{key: "partner_evidence_overdue", route: "/partner-oversight/", severity: "high",
 				reason: "Delivery began but no evidence has been uploaded.", responsible: partner,
 				action: "Ask the partner to upload the evidence pack", due: at(d.Add(days(r.EvidenceGraceDays)))})
 		}
 	}
 	if i.evidenceStatus == "uploaded" && i.scheduledDate != nil && i.scheduledDate.Add(days(r.ReviewGraceDays)).Before(today) {
-		out = append(out, partnerRisk{key: "evidence_submission_stalled", severity: "high",
+		out = append(out, partnerRisk{key: "evidence_submission_stalled", route: "/partner-oversight/", severity: "high",
 			reason: "Evidence was captured but never submitted to IA.", responsible: partner,
 			action: "Chase the partner to submit the evidence to IA", due: at(i.scheduledDate.Add(days(r.ReviewGraceDays)))})
 	}
 	if i.activityStatus == "salesforce_id_required" && !i.salesforceRecorded {
-		out = append(out, partnerRisk{key: "salesforce_overdue", severity: "warning",
+		out = append(out, partnerRisk{key: "salesforce_overdue", route: "/my-plan", severity: "warning",
 			reason: "Evidence is accepted but no Salesforce Activity ID has been entered.", responsible: cceo,
 			action: "Enter the Salesforce Activity ID"})
 	}
@@ -112,7 +113,7 @@ func risksWithWords(i *item, today time.Time) []partnerRisk {
 			if waiting > 2*r.IAVerificationGraceDays {
 				severity = "high"
 			}
-			out = append(out, partnerRisk{key: "ia_verification_overdue", severity: severity,
+			out = append(out, partnerRisk{key: "ia_verification_overdue", route: "/ia/verification/", severity: severity,
 				reason:      fmt.Sprintf("Submitted for verification %d day(s) ago. The partner cannot be paid until it is verified.", waiting),
 				responsible: "Impact Assessment", action: "Verify the partner's submission", due: at(due), role: "ImpactAssessment"})
 		}
@@ -121,7 +122,7 @@ func risksWithWords(i *item, today time.Time) []partnerRisk {
 		(i.paymentStatus == "" || i.paymentStatus == "none" || i.paymentStatus == "pending") && i.scheduledDate != nil {
 		due := i.scheduledDate.Add(days(r.PaymentGraceDays))
 		if due.Before(today) {
-			out = append(out, partnerRisk{key: "partner_payment_overdue", severity: "high",
+			out = append(out, partnerRisk{key: "partner_payment_overdue", route: "/accounts/partner-payments", severity: "high",
 				reason: "Verified by Impact Assessment and still unpaid.", responsible: "Accountant", action: "Pay the partner",
 				due: at(due), role: "Accountant"})
 		}

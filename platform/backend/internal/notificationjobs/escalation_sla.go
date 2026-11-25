@@ -9,28 +9,21 @@ package notificationjobs
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/escalations"
 )
 
-const (
-	escalationOpen    = "leadership_escalation_open"
-	escalationOverdue = "leadership_escalation_overdue"
-)
+const escalationOverdue = "leadership_escalation_overdue"
 
 // slaDays are SLA_DAYS, by severity; anything else takes normal's.
 var slaDays = map[string]int{"critical": 2, "high": 4, "normal": 7}
 
-// addresseeLabels are EscalationAddressee's labels; roleForAddressee is
-// ROLE_FOR_ADDRESSEE.
-var (
-	addresseeLabels  = map[string]string{"PL": "Programme Lead", "CD": "Country Director", "RVP": "Regional Vice President"}
-	roleForAddressee = map[string]string{"PL": "Program Lead", "CD": "CountryDirector", "RVP": "RegionalVicePresident"}
-)
+// addresseeLabels are EscalationAddressee's labels.
+var addresseeLabels = map[string]string{"PL": "Programme Lead", "CD": "Country Director", "RVP": "Regional Vice President"}
 
 type escalation struct {
 	id, status, severity, role, assigned, country, subject, detail, raiser, raiserName string
@@ -93,62 +86,22 @@ FROM leadership_escalation WHERE status IS DISTINCT FROM 'resolved' ORDER BY cre
 	return pushed, nil
 }
 
-// tellAddressees is _notify_addressees.
+// tellAddressees is _notify_addressees (escalations.TellAddressees).
 func tellAddressees(ctx context.Context, tx pgx.Tx, push activities.NoticePush, now time.Time, e escalation, title string) error {
-	recipients, err := addresseeIDs(ctx, tx, e)
-	if err != nil || len(recipients) == 0 {
-		return err
+	if err := escalations.TellAddressees(ctx, tx, push, now, e.addressed(), title); err != nil {
+		return fmt.Errorf("notificationjobs: %w", err)
 	}
-	priority := "high"
-	if e.severity == "normal" {
-		priority = "normal"
-	}
-	return escalationNotice(ctx, tx, push, now, e, escalationOpen, priority, title, firstRunes(e.detail, 300), recipients)
+	return nil
 }
 
-// addresseeIDs is _addressee_user_ids: the named person, or every active
-// holder of the addressed role, in the escalation's country for a lead or a
-// director when any holds it there.
-func addresseeIDs(ctx context.Context, tx pgx.Tx, e escalation) ([]string, error) {
-	if e.assigned != "" {
-		return []string{e.assigned}, nil
-	}
-	role := roleForAddressee[e.role]
-	if role == "" {
-		return nil, nil
-	}
-	read := func(inCountry bool) ([]string, error) {
-		query := `SELECT u.id FROM "user" u WHERE u.roles @> ARRAY[$1::varchar] AND u.status = 'active'`
-		args := []any{role}
-		if inCountry {
-			query += ` AND EXISTS (SELECT 1 FROM staff_profile sp WHERE sp.user_id = u.id AND sp.country = $2)`
-			args = append(args, e.country)
-		}
-		rows, err := tx.Query(ctx, query+` ORDER BY u.created_at DESC`, args...)
-		if err != nil {
-			return nil, fmt.Errorf("notificationjobs: reading the escalation's addressees: %w", err)
-		}
-		return pgx.CollectRows(rows, pgx.RowTo[string])
-	}
-	if e.role != "RVP" {
-		local, err := read(true)
-		if err != nil || len(local) > 0 {
-			return local, err
-		}
-	}
-	return read(false)
+func (e escalation) addressed() escalations.Addressed {
+	return escalations.Addressed{ID: e.id, Severity: e.severity, Level: e.role, Assigned: e.assigned, Country: e.country, Detail: e.detail}
 }
 
 func escalationNotice(ctx context.Context, tx pgx.Tx, push activities.NoticePush, now time.Time, e escalation,
 	event, priority, title, body string, recipients []string) error {
-	to := make([]activities.NoticeTo, 0, len(recipients))
-	for _, id := range recipients {
-		to = append(to, activities.NoticeTo{UserID: id, Route: "/escalations", Label: "Open Escalation"})
-	}
-	if _, err := activities.NotifyInTx(ctx, tx, push, slog.Default(), now, e.id, activities.Notice{
-		Title: title, Body: body, Event: event, Category: "leadership", ContextType: "escalation", Priority: priority,
-	}, to); err != nil {
-		return fmt.Errorf("notificationjobs: sending the escalation notice: %w", err)
+	if err := escalations.Notify(ctx, tx, push, now, e.id, event, priority, title, body, recipients); err != nil {
+		return fmt.Errorf("notificationjobs: %w", err)
 	}
 	return nil
 }

@@ -26,6 +26,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1/screensv1connect"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/accounts"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/acting"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/actionsweep"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/adminops"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/adminpanel"
@@ -256,6 +257,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			Logger: logger, Now: time.Now}).
 		WithExecutionFollowUps(planningmonitor.CEXSendDeps{Push: plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
 			Logger: logger}).
+		WithPartnerOversightSend(partneroversight.SendDeps{Push: plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
+			Logger: logger, Delegate: actionsweep.PartnerDelegate(plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, logger)}).
 		WithPages(logger,
 			clusterpage.NewService(pool, time.Now),
 			closedschools.NewService(pool, time.Now),

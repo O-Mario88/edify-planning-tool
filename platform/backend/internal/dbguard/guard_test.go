@@ -241,6 +241,15 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		filepath.Join(root, "internal", "staffactivity") + sep: {"staff_usage_follow_up"},
 		// Follow Up with PL for execution (apps.planning.country_execution.followups).
 		filepath.Join(root, "internal", "planningmonitor") + sep: {"planning_oversight_follow_up"},
+		// Partner Oversight's hand-over send (apps.planning.partner_oversight_
+		// actions; deploy/db/activities_roles.sql): send_action's TeamAction,
+		// the system message a workflow writes (messaging.services.
+		// workflow_message: thread, participants, message, the thread's last
+		// reply) and raise_escalation's escalation, insert only but for the
+		// thread's last reply.
+		filepath.Join(root, "internal", "actionsweep") + sep: {"team_action"},
+		filepath.Join(root, "internal", "workflowmsg") + sep: {"messaging_messagethread", "messaging_messageparticipant", "message"},
+		filepath.Join(root, "internal", "escalations") + sep: {"leadership_escalation"},
 		// The weekly sample checks (apps.activities.verification_sampling).
 		filepath.Join(root, "internal", "iasampling") + sep: {"ia_verification_sample"},
 		filepath.Join(root, "internal", "debriefs") + sep: {

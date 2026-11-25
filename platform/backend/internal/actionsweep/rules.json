@@ -11,6 +11,12 @@
     "core_assessment_missing",
     "core_package_behind"
   ],
+  "default_due_days": {
+    "critical": 3,
+    "high": 5,
+    "normal": 10,
+    "warning": 7
+  },
   "ia_verified_statuses": [
     "accountant_confirmed",
     "closed",
@@ -49,6 +55,164 @@
     "planning_training_gap",
     "planning_visit_gap"
   ],
+  "playbook": {
+    "activity_overdue": {
+      "action": "Complete or reschedule the overdue activity",
+      "route": "/my-plan",
+      "why": "The activity's planned date has passed and it is not complete."
+    },
+    "assignment_returned": {
+      "action": "Decide what happens to the returned assignment",
+      "route": "/partner-oversight/",
+      "why": "The partner handed this assignment back, so the school still needs the support arranged another way."
+    },
+    "core_assessment_missing": {
+      "action": "Complete the core assessment",
+      "route": "/core-schools?q={school_ref}",
+      "why": "The core package cannot be planned until this financial year's core assessment is on file."
+    },
+    "core_package_behind": {
+      "action": "Schedule the outstanding core visits and trainings",
+      "route": "/core-schools?q={school_ref}",
+      "why": "The school's 4 visits + 4 trainings core package is not fully allocated for this financial year."
+    },
+    "evidence_outstanding": {
+      "action": "Complete it with the Salesforce ID",
+      "route": "/my-plan",
+      "why": "The activity was started but has not been completed with its Salesforce ID."
+    },
+    "evidence_submission_stalled": {
+      "action": "Chase the partner to submit their evidence to IA",
+      "route": "/partner-oversight/",
+      "why": "The partner captured evidence but never submitted it, so IA cannot verify and the chain is stalled (§10: evidence goes directly to IA — there is no CCEO review stage)."
+    },
+    "ia_returned": {
+      "action": "Resolve the Impact Assessment return",
+      "route": "/my-plan",
+      "why": "Impact Assessment returned this activity and it has not been resubmitted."
+    },
+    "intervention_critical": {
+      "action": "Act on the school's critical intervention area",
+      "route": "/schools/{school_pk}",
+      "why": "The school's weakest intervention area is in the Critical band."
+    },
+    "intervention_follow_up": {
+      "action": "Follow up on the school's intervention areas",
+      "route": "/schools/{school_pk}",
+      "why": "The school's intervention areas need follow-up."
+    },
+    "intervention_warning": {
+      "action": "Act on the school's weak intervention area",
+      "route": "/schools/{school_pk}",
+      "why": "The school's weakest intervention area is in the Warning band."
+    },
+    "low_ssa": {
+      "action": "Schedule a coaching visit",
+      "route": "/planning/schedule-modal?school_id={school_ref}",
+      "why": "The school's SSA scores place it below the acceptable band."
+    },
+    "no_ssa": {
+      "action": "Complete a School Self-Assessment",
+      "route": "/planning/schedule-modal?school_id={school_ref}",
+      "why": "No confirmed SSA exists for this school this financial year, so no intervention performance can be determined."
+    },
+    "no_training": {
+      "action": "Schedule the school's training",
+      "route": "/planning/schedule-modal?school_id={school_ref}",
+      "why": "The school has had no completed training this financial year."
+    },
+    "no_visit": {
+      "action": "Schedule the school's visit",
+      "route": "/planning/schedule-modal?school_id={school_ref}",
+      "why": "The school has had no completed visit this financial year."
+    },
+    "no_visit_or_training": {
+      "action": "Schedule the school's visit and training",
+      "route": "/planning/schedule-modal?school_id={school_ref}",
+      "why": "A verified SSA exists but none of the required support has been completed."
+    },
+    "partner_delivery_escalation": {
+      "action": "Intervene on stalled partner delivery",
+      "route": "/partner-oversight/",
+      "why": "Partner-delivered work has stalled and asking the partner directly has not moved it."
+    },
+    "partner_not_scheduled": {
+      "action": "Resolve the partner scheduling delay",
+      "route": "/partners",
+      "why": "Work was handed to a partner who has not put a date on it."
+    },
+    "partner_salesforce_overdue": {
+      "action": "Enter the Salesforce Activity ID for the partner's work",
+      "route": "/my-plan",
+      "why": "The partner's evidence is accepted but the activity has no Salesforce Activity ID, so it cannot be paid."
+    },
+    "planning_cluster_gap": {
+      "action": "Put the school in an active cluster",
+      "route": "/schools/{school_pk}",
+      "why": "The school has no active cluster, so it cannot be convened or trained with one."
+    },
+    "planning_meeting_gap": {
+      "action": "Invite the school to a planned cluster meeting",
+      "route": "/clusters",
+      "why": "The school is in a cluster but on no planned cluster meeting's roster."
+    },
+    "planning_partner_gap": {
+      "action": "Arrange the school's Partner visits",
+      "route": "/planning/assign-partner-modal?school_id={school_ref}",
+      "why": "The school's Partner visit slots have not been handed to a Partner."
+    },
+    "planning_school_gap": {
+      "action": "Plan the school's outstanding visits",
+      "route": "/planning/schedule-modal?school_id={school_ref}",
+      "why": "Some of the school's visit slots for the year are held by nobody — neither planned by staff nor handed to a Partner."
+    },
+    "planning_training_gap": {
+      "action": "Plan the school's training",
+      "route": "/planning/schedule-modal?school_id={school_ref}",
+      "why": "The school's training slots for the year are not all planned."
+    },
+    "planning_visit_gap": {
+      "action": "Plan the school's outstanding staff visits",
+      "route": "/planning/schedule-modal?school_id={school_ref}",
+      "why": "Some of the visit slots staff are expected to deliver at the school this year have no staff visit planned."
+    },
+    "repeated_reschedule": {
+      "action": "Review whether the plan is realistic",
+      "route": "/my-plan",
+      "why": "The activity has been rescheduled repeatedly."
+    },
+    "salesforce_missing": {
+      "action": "Enter the Salesforce Activity ID",
+      "route": "/my-plan",
+      "why": "The activity is complete but has no Salesforce Activity ID."
+    },
+    "scheduled_without_cost": {
+      "action": "Correct the missing cost configuration",
+      "route": "/my-plan",
+      "why": "The activity is scheduled but carries no cost line, so it cannot enter a fund request or a monthly budget."
+    },
+    "team_costing_backlog": {
+      "action": "Get the team's scheduled work priced",
+      "route": "/team-planning-oversight/",
+      "why": "Scheduled activities in this team carry no cost, so they cannot enter a fund request."
+    },
+    "team_execution_risk": {
+      "action": "Provide a recovery plan for the team's overdue work",
+      "route": "/team-planning-oversight/",
+      "why": "Activities in this team are past their planned date and not complete."
+    },
+    "team_partner_backlog": {
+      "action": "Clear the partner scheduling backlog",
+      "route": "/team-planning-oversight/",
+      "why": "Several handovers in this team are waiting on partners to schedule them."
+    }
+  },
+  "priority_for": {
+    "critical": "urgent",
+    "high": "high",
+    "normal": "normal",
+    "warning": "normal"
+  },
   "resolved_state": "resolved",
   "school_gap_figure": {
     "planning_cluster_gap": "unclustered",

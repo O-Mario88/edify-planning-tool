@@ -1,4 +1,6 @@
-// Package actionsweep is the hourly school_action_sweep job
+// Package actionsweep is the delegated action (TeamAction): its send
+// (send.go, apps.planning.action_service.send_action) and the hourly
+// school_action_sweep job
 // (apps.planning.action_service.resolve_due_actions, then
 // mark_overdue_actions): every active delegated action whose condition has
 // cleared is closed by the system, and every one past its due date is
@@ -33,11 +35,19 @@ var rules = func() (r struct {
 	VisitTypes               []string          `json:"visit_types"`
 	TrainingTypes            []string          `json:"training_types"`
 	SSABands                 [][2]any          `json:"ssa_bands"`
+	Playbook                 map[string]struct {
+		Action string `json:"action"`
+		Route  string `json:"route"`
+		Why    string `json:"why"`
+	} `json:"playbook"`
+	DefaultDueDays map[string]int    `json:"default_due_days"`
+	PriorityFor    map[string]string `json:"priority_for"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {
 		panic("actionsweep: rules.json: " + err.Error())
 	}
-	if len(r.SystemVerifiable) == 0 || len(r.ActiveStates) == 0 || len(r.SSABands) == 0 {
+	if len(r.SystemVerifiable) == 0 || len(r.ActiveStates) == 0 || len(r.SSABands) == 0 || len(r.Playbook) == 0 ||
+		len(r.DefaultDueDays) == 0 || len(r.PriorityFor) == 0 {
 		panic("actionsweep: rules.json is incomplete")
 	}
 	return r

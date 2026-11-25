@@ -203,9 +203,13 @@ FROM leadership_escalation WHERE `+where+` ORDER BY created_at DESC`, args...)
 // supervisor is resolve_addressee's person: the reader's supervisor whose
 // account holds the role the level is held by, the first link on file.
 func (s *Service) supervisor(ctx context.Context, userID, role string) (string, string, error) {
+	return supervisorOf(ctx, s.db, userID, role)
+}
+
+func supervisorOf(ctx context.Context, q schooldirectory.Querier, userID, role string) (string, string, error) {
 	var id string
 	var name *string
-	err := s.db.QueryRow(ctx, `
+	err := q.QueryRow(ctx, `
 SELECT sup.user_id, u.name
 FROM staff_supervisor_assignment a
 JOIN staff_profile se ON se.id = a.supervisee_id

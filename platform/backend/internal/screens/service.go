@@ -10,6 +10,7 @@ import (
 	"context"
 	"errors"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/home"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/partneroversight"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningmonitor"
 	"log/slog"
 	"net/url"
@@ -179,6 +180,8 @@ type Service struct {
 	now func() time.Time
 	// executionFollowUps is what follows an execution Follow Up with PL.
 	executionFollowUps *planningmonitor.CEXSendDeps
+	// partnerSend is what Partner Oversight's hand-over send needs.
+	partnerSend *partneroversight.SendDeps
 }
 
 // NewService wires the service. existingApp may be nil.

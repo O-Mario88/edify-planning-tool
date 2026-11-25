@@ -72,35 +72,9 @@ func (s *Service) Detail(ctx context.Context, p auth.Principal, assignmentID str
 	now := s.now()
 	local := now.In(zone)
 	today := time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC)
-	it, owners, err := singleItem(ctx, s.db, assignmentID)
+	it, err := s.itemInScope(ctx, p, role.Lens, assignmentID, now)
 	if err != nil || it == nil {
 		return notAvailable, "", err
-	}
-	scope, err := schooldirectory.ResolveScope(ctx, s.db, p, now)
-	if err != nil {
-		return nil, "", err
-	}
-	inScope := true
-	switch role.Lens {
-	case "region":
-		inScope = len(scope.RegionIDs) > 0 && inRegions(ctx, s.db, assignmentID, scope.RegionIDs)
-	case "team":
-		team, err := bothIDSpaces(ctx, s.db, append([]string{p.UserID, p.StaffProfileID}, scope.SupervisedStaffIDs...))
-		if err != nil {
-			return nil, "", err
-		}
-		inScope = false
-		for _, id := range owners {
-			if id != "" && contains(team, id) {
-				inScope = true
-			}
-		}
-	case "country":
-	default:
-		return nil, "", ErrDetailHandOn
-	}
-	if !inScope {
-		return notAvailable, "", nil
 	}
 	lines, version, err := detailCostLines(ctx, s.db, it.activityID)
 	if err != nil {
@@ -118,6 +92,40 @@ func (s *Service) Detail(ctx context.Context, p auth.Principal, assignmentID str
 	}
 	openRecord := it.activityID != "" && p.ActiveRole != "Accountant" && pageaccess.CanOpen(p.ActiveRole, false, "/activities/0")
 	return detailDrawer(it, risksWithWords(it, today), lines, version, canAct, escalateTo, openRecord), "", nil
+}
+
+// itemInScope is _partner_item_in_scope: the one hand-over, only if the
+// reader's lens reads it; nil when it does not, or is not there.
+func (s *Service) itemInScope(ctx context.Context, p auth.Principal, lens, assignmentID string, now time.Time) (*item, error) {
+	it, owners, err := singleItem(ctx, s.db, assignmentID)
+	if err != nil || it == nil {
+		return nil, err
+	}
+	scope, err := schooldirectory.ResolveScope(ctx, s.db, p, now)
+	if err != nil {
+		return nil, err
+	}
+	switch lens {
+	case "region":
+		if len(scope.RegionIDs) > 0 && inRegions(ctx, s.db, assignmentID, scope.RegionIDs) {
+			return it, nil
+		}
+		return nil, nil
+	case "team":
+		team, err := bothIDSpaces(ctx, s.db, append([]string{p.UserID, p.StaffProfileID}, scope.SupervisedStaffIDs...))
+		if err != nil {
+			return nil, err
+		}
+		for _, id := range owners {
+			if id != "" && contains(team, id) {
+				return it, nil
+			}
+		}
+		return nil, nil
+	case "country":
+		return it, nil
+	}
+	return nil, ErrDetailHandOn
 }
 
 // inRegions is _assignment_team_q for a region: the hand-over's school or

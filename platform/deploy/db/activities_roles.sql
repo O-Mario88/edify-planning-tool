@@ -894,6 +894,38 @@ GRANT SELECT (id, status, severity, addressed_role, assigned_to_user_id, country
               raised_by_name, created_at)
   ON leadership_escalation TO edify_activities_rw;
 
+-- ── Partner Oversight's hand-over send (partner_oversight_actions) ──
+-- send_action's TeamAction (one INSERT; the sweep closes it), the system
+-- message a workflow writes about a school or a hand-over
+-- (messaging.services.workflow_message: the thread found or started, its
+-- participants, the message), and raise_escalation's escalation. Nothing
+-- removed; a closed action or escalation stays as history.
+GRANT SELECT (id, condition_key, state, recipient_id, created_at),
+      INSERT (created_at, updated_at, id, condition_key, issue_type, severity, school_id, fy, month_of_fy, related_ssa_id,
+              related_activity_id, sender_id, sender_role, recipient_id, recipient_role, requested_action, workflow_route, message,
+              priority, due_date, state, detected_at, blocked_reason, resolved_by_system, manual_resolution_reason, returned_reason,
+              reminder_count, supersedes_id)
+  ON team_action TO edify_activities_rw;
+GRANT SELECT (id, context_type, context_id, is_system_generated),
+      INSERT (created_at, updated_at, id, subject, context_type, context_id, context_label, category, priority, created_by,
+              last_reply_at, is_system_generated, linked_items, participant_a_id, participant_b_id),
+      UPDATE (last_reply_at, updated_at)
+  ON messaging_messagethread TO edify_activities_rw;
+GRANT SELECT (thread_id, user_id),
+      INSERT (created_at, updated_at, id, user_id, recipient_type, last_read_at, archived_at, starred, thread_id)
+  ON messaging_messageparticipant TO edify_activities_rw;
+GRANT INSERT (created_at, updated_at, id, thread_id, sender_id, recipient_id, body, category, context_type, context_id, target_route,
+              priority, action_required, is_system_generated, status)
+  ON message TO edify_activities_rw;
+GRANT SELECT (scope_type, scope_id),
+      INSERT (created_at, updated_at, id, raised_by_user_id, raised_by_name, addressed_role, assigned_to_user_id, country_id, category,
+              subject, detail, requested_decision, severity, scope_type, scope_id, scope_name, due_date, status)
+  ON leadership_escalation TO edify_activities_rw;
+GRANT SELECT (id, name, user_id) ON partner TO edify_activities_rw;
+GRANT SELECT (id, name, active_role, roles, status, deleted_at, created_at) ON "user" TO edify_activities_rw;
+GRANT SELECT (deleted_at) ON staff_profile TO edify_activities_rw;
+GRANT SELECT (id, name, school_id) ON school TO edify_activities_rw;
+
 -- ── The scheduler's verification_sampling (docs/migration/189 §4) ──
 -- draw_samples: the week's verifications and confirmed SSA records, where
 -- each was, and the samples drawn (one row per subject; nothing removed).

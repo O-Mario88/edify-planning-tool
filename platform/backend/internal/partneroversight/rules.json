@@ -536,6 +536,12 @@
         "evidence_submission_stalled",
         "salesforce_overdue"
       ],
+      "cceo_issue_keys": {
+        "assignment_returned": "assignment_returned",
+        "evidence_submission_stalled": "evidence_submission_stalled",
+        "salesforce_overdue": "partner_salesforce_overdue"
+      },
+      "escalation_scope": "PartnerAssignment",
       "partner_addressed": [
         "partner_delivery_overdue",
         "partner_evidence_overdue",

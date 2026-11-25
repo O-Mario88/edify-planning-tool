@@ -6,7 +6,9 @@ from what this command writes to
 platform/backend/internal/actionsweep/rules.json: which issue types the
 system may settle and through which detector, the states an action is active
 in and is flagged overdue from, the statuses that count as verified work, the
-visit and training types, and the SSA score bands. A change to any of them
+visit and training types, the SSA score bands, and what send_action asks
+(each issue's action, route and reason, the due days by severity and the
+priority each severity sends at). A change to any of them
 must be exported again; apps/planning/test_action_sweep_rules_export.py fails
 until it is.
 
@@ -56,6 +58,15 @@ def rules() -> dict:
         "visit_types": sorted(_VISIT_TYPES),
         "training_types": sorted(_TRAINING_TYPES),
         "ssa_bands": _bands(),
+        "playbook": {
+            key: dict(sorted(entry.items()))
+            for key, entry in sorted(svc.ISSUE_PLAYBOOK.items())
+        },
+        "default_due_days": dict(sorted(svc.DEFAULT_DUE_DAYS.items())),
+        "priority_for": {
+            severity: str(svc._priority_for(severity))
+            for severity in ("critical", "high", "warning", "normal")
+        },
     }
 
 
