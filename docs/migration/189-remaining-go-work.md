@@ -207,6 +207,18 @@ With Django absent, `SavePlanningDrawer` and `SaveDrawer` now make the person's 
 
 The review rule (`plreview.Reviewable`) now matches `_check_reviewable` and serves both forms and Go's approve and return saves. Seven disallowed saves were tried against the Go-only gateway (Country Director, Impact Assessment, partner work, another team's work) and all were refused with no record changed.
 
+### What the drawer sweep still finds on Django (2026-11-25)
+
+The reach sweep (every drawer link on every role's Go pages, against the Go-only gateway) for all sixteen roles after today's ports. Each item below is a piece of its own, not a drawer:
+
+- **Money (last, by the order of work):** budget plan sources (`/country-budget/plan-sources`: Accountant, Admin, Director, RVP), the Coordinator's bulk Partner planning (`/projects/planning/bulk-partner`), the Partner's invoice (`/partner/invoices/new`), the Partner's own reschedule and cancel (`/my-plan/<id>/reschedule-drawer`, `cancel-drawer`, `/activity-selection/*`: they re-price Partner work, which Go's reschedule and cancel do not take), the withdrawal save (above) and the cost settings rows.
+- **Evidence upload** (`/activities/<id>/evidence`, the Partner field officer and Partner Admin): the save joins photographed pages into one PDF (`record_pages_upload`) and attaches it as the governed form; Go stages and keeps a file (`internal/evidence`) but neither joins pages nor reads the governed-form checklist. The feed reads this drawer as raw file inputs, so the phone uses its own upload flow.
+- **Account administration** (Admin): Add User (`/admin-panel/users?drawer=add`: the account, its supervisor and the people it manages in one transaction; Go has the three as separate services) and a Partner's login setup (`/partners/<id>/user-setup`: link, invite or no login).
+- **Impact reports** (IA): the new-report drawer is the door to the report's own pages (detail, recommendations, submit, review, release, downloads), all still Django's; they move together.
+- **The data-quality queue** (`/country-planning-oversight/drawer?kind=dq`, IA and the Director): about twenty checks over the dataset, several reaching into Core package credit (`uncredited_package_work`, `unreserved_core_handovers`) and duplicate detection.
+- **A cluster session's Salesforce ID** (`/activities/<id>/salesforce-id` on a cluster meeting or training, the officer): Go's ID entry takes only a staff school visit; a session's hand-in has its own submit gates.
+- **Workbooks:** every Export options form now opens from Go, but each workbook it downloads (`?export=xlsx`) is still the existing application's.
+
 Found while porting, to fix before these saves are used without Django:
 
 - **Go's approve and return save now makes every decision itself** (`.do/uganda-go-staging.yaml` turns it on as `pl_review`). It writes the decision, ticked reasons, notices, audit rows, follow-on events, ledger marks, milestone credit and revival, period targets, the visit's SSA confirmation, the school's readiness and data quality issues, the Core package, SSA recommendations, the loan-use link and phone copies.
