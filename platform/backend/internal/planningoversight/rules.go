@@ -93,6 +93,27 @@ type TeamPlan struct {
 	Items ItemRules `json:"items"`
 	// Flagged is team_flagged_schools' and the urgent classifier's.
 	Flagged FlaggedRules `json:"flagged"`
+	// Readers are what the lens draws for each role its door opens for.
+	Readers map[string]Reader `json:"readers"`
+	// LensKPILabels are the tiles' labels on the country and region lenses.
+	LensKPILabels map[string][]string `json:"lens_kpi_labels"`
+}
+
+// Reader is one role's Team Plan: the scope it reads ("pl", "country",
+// "region"), whether its page opens on the planning lens, its lens strip,
+// whether the Send controls show, the Evidence Centre link, and which names
+// link to their record.
+type Reader struct {
+	Scope        string          `json:"scope"`
+	Planning     bool            `json:"planning"`
+	Lenses       map[string]bool `json:"lenses"`
+	LensTabs     []Tab           `json:"lens_tabs"`
+	MayDelegate  bool            `json:"may_delegate"`
+	EvidenceLink bool            `json:"evidence_link"`
+	OpenActivity bool            `json:"open_activity"`
+	OpenSchool   bool            `json:"open_school"`
+	OpenDistrict bool            `json:"open_district"`
+	OpenCluster  bool            `json:"open_cluster"`
 }
 
 // Family is one activity family of the strip: its key and types.

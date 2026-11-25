@@ -61,15 +61,18 @@ LEFT JOIN cluster c ON c.id = a.cluster_id
 LEFT JOIN district cd ON cd.id = c.district_id
 LEFT JOIN activity_catalogue_item tc ON tc.id = a.training_course_id`
 
-// readTeamActs is _activity_queryset for the team ($1, both id spaces) in
-// the years and period read, in the model's order made total.
-func (s *Service) readTeamActs(ctx context.Context, team, years []string, read periodRead) ([]*act, error) {
-	args := []any{rules.TeamPlan.LiveActivityStatuses, years, team}
+// readTeamActs is _activity_queryset for the team (both id spaces; nil for
+// the country and region lenses) and the regions (nil but for the region
+// lens: work at a school in one, or at a cluster whose district is) in the
+// years and period read, in the model's order made total.
+func (s *Service) readTeamActs(ctx context.Context, team, regions, years []string, read periodRead) ([]*act, error) {
+	args := []any{rules.TeamPlan.LiveActivityStatuses, years, team, regions}
 	where, args := periodWhere(read, years, args)
 	rows, err := s.db.Query(ctx, `SELECT `+actColumns+actJoins+`
 WHERE a.deleted_at IS NULL AND a.status = ANY($1) AND a.fy = ANY($2)`+where+`
-  AND (a.responsible_staff_id = ANY($3) OR a.monitored_by_staff_id = ANY($3)
+  AND ($3::text[] IS NULL OR a.responsible_staff_id = ANY($3) OR a.monitored_by_staff_id = ANY($3)
        OR s.account_owner_id = ANY($3) OR c.responsible_staff_id = ANY($3))
+  AND ($4::text[] IS NULL OR s.region_id = ANY($4) OR cd.region_id = ANY($4))
 ORDER BY a.created_at DESC, a.id`, args...)
 	if err != nil {
 		return nil, fmt.Errorf("planningoversight: reading the team's work: %w", err)
@@ -144,6 +147,8 @@ type item struct {
 	isComplete, finishedEarly, showsComplete bool
 	// A cluster session's row for one school it invited.
 	invited bool
+	// The Programme Lead the owner reports to (the country lens's tabs).
+	lead string
 }
 
 func (it *item) contextLabel() string {
@@ -170,8 +175,8 @@ func (a *act) isPartner() bool {
 
 // buildItems is build_items for the lens with the view's Partner filter:
 // the team's staff work, sorted by date then context, risk-annotated.
-func (s *Service) buildItems(ctx context.Context, team, years []string, read periodRead, today time.Time) ([]*item, error) {
-	acts, err := s.readTeamActs(ctx, team, years, read)
+func (s *Service) buildItems(ctx context.Context, team, regions, years []string, read periodRead, today time.Time) ([]*item, error) {
+	acts, err := s.readTeamActs(ctx, team, regions, years, read)
 	if err != nil {
 		return nil, err
 	}

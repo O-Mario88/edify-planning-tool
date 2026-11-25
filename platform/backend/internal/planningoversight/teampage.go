@@ -45,35 +45,63 @@ var periodOptions = [][2]string{{"week", "Week"}, {"month", "Month"}, {"quarter"
 var quarterOptions = [][2]string{{"Q1", "Q1 · Oct–Dec"}, {"Q2", "Q2 · Jan–Mar"}, {"Q3", "Q3 · Apr–Jun"}, {"Q4", "Q4 · Jul–Sep"}}
 
 func teamPage(w teamPlan) *screensv1.GetPageResponse {
-	blocks := []*screensv1.PageBlock{
-		lensTabs(),
-		teamFilters(w),
-		kpiStrip(w.summary),
-		panel("", "", &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{Links: w.tabLinks()}}}),
-		{Kind: &screensv1.PageBlock_Section{Section: tabLabel(w.tabs, w.owner)}},
-		fieldPlan(w),
-	}
-	for t := range sections {
-		blocks = append(blocks, streamBlocks(t, w.streams[t], w.panelName, w.query)...)
+	blocks := lensTabs(w.reader)
+	if w.country {
+		blocks = append(blocks, teamFilters(w), kpiStrip(w.summary, w.kpiLabels(), w.lensTitle+" overview"))
+		blocks = append(blocks, w.countryMiddle()...)
+	} else {
+		blocks = append(blocks,
+			teamFilters(w),
+			kpiStrip(w.summary, w.kpiLabels(), stripTitle),
+			panel("", "", &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{Links: w.tabLinks()}}}),
+			&screensv1.PageBlock{Kind: &screensv1.PageBlock_Section{Section: tabLabel(w.tabs, w.owner)}},
+			fieldPlan(w.panelName, w.panelName+" Field Plan "+w.periodLabel, w.panelSummary, w.streams),
+		)
+		for t := range sections {
+			blocks = append(blocks, streamBlocks(t, w.streams[t], w.panelName, w.query, w.reader, panelPageParam)...)
+		}
 	}
 	blocks = append(blocks, chart(w))
 	var oversight []*screensv1.PagePanelItem
-	if rules.TeamPlan.EvidenceLink {
+	if w.reader.EvidenceLink {
 		oversight = append(oversight, &screensv1.PagePanelItem{Kind: &screensv1.PagePanelItem_Links{Links: &screensv1.PageLinks{
 			Links: []*screensv1.PageLink{{Text: evidenceGaps, Href: evidenceHref}},
 		}}})
 	}
 	blocks = append(blocks, panel(schoolOversight, "", oversight...))
-	blocks = append(blocks, flaggedBlocks(w.flagged)...)
+	blocks = append(blocks, flaggedBlocks(w.flagged, w.reader)...)
+	description := teamDescription
+	if w.country {
+		description = countryDescription
+		if w.region {
+			description = regionDescription
+		}
+	}
 	return &screensv1.GetPageResponse{
 		Header: &screensv1.PageHeader{
 			Title:       pageTitle,
-			Description: teamDescription,
+			Description: description,
 			Actions:     []*screensv1.PageAction{pageheader.Drawer(exportLabel, exportHref(w), false)},
 		},
 		Blocks:  blocks,
 		WebPath: rules.Pages[teamKey].Path,
 	}
+}
+
+// kpiLabels are the tiles' labels for the lens.
+func (w teamPlan) kpiLabels() []string {
+	if w.country {
+		key := "country"
+		if w.region {
+			key = "region"
+		}
+		return rules.TeamPlan.LensKPILabels[key]
+	}
+	out := []string{}
+	for _, k := range rules.TeamPlan.ZeroKPIs {
+		out = append(out, k.Label)
+	}
+	return out
 }
 
 // exportHref is _export_menu.html's drawer link as the feed gives it.
@@ -84,19 +112,35 @@ func exportHref(w teamPlan) string {
 	q.Set("week", w.period.Week)
 	q.Set("month", strconv.Itoa(w.period.Month))
 	q.Set("quarter", w.period.Quarter)
-	q.Set("owner", w.owner)
+	if w.country {
+		q.Set("program_lead", w.owner)
+	} else {
+		q.Set("owner", w.owner)
+	}
 	if w.activity != allActivity {
 		q.Set("activity", w.activity)
 	}
 	return pageheader.Href(exportDrawer, q)
 }
 
-func lensTabs() *screensv1.PageBlock {
+// hiddenFilters are the period bar's hidden fields: the chosen tab.
+func (w teamPlan) hiddenFilters() map[string]string {
+	if w.country {
+		return map[string]string{"program_lead": w.owner}
+	}
+	return map[string]string{"owner": w.owner}
+}
+
+// lensTabs is the lens strip, none for a reader with one lens.
+func lensTabs(r Reader) []*screensv1.PageBlock {
+	if len(r.LensTabs) == 0 {
+		return nil
+	}
 	tabs := []*screensv1.PageLinkTab{}
-	for _, t := range rules.TeamPlan.LensTabs {
+	for _, t := range r.LensTabs {
 		tabs = append(tabs, &screensv1.PageLinkTab{Label: t.Label, Href: t.Href, Active: t.Active})
 	}
-	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_LinkTabs{LinkTabs: &screensv1.PageLinkTabs{Tabs: tabs}}}
+	return []*screensv1.PageBlock{{Kind: &screensv1.PageBlock_LinkTabs{LinkTabs: &screensv1.PageLinkTabs{Tabs: tabs}}}}
 }
 
 // teamFilters is period_filter_bar.html. The existing page's period select
@@ -119,7 +163,7 @@ func teamFilters(w teamPlan) *screensv1.PageBlock {
 			{Name: "month", Label: "Month", Value: chosen(months, strconv.Itoa(w.period.Month)), Options: options(months)},
 			{Name: "quarter", Label: "Financial quarter", Value: chosen(quarterOptions, w.period.Quarter), Options: options(quarterOptions), Caption: "Quarter"},
 		},
-		Hidden: map[string]string{"owner": w.owner},
+		Hidden: w.hiddenFilters(),
 	}}}
 }
 
@@ -160,20 +204,20 @@ func (w teamPlan) tabLinks() []*screensv1.PageLink {
 	return links
 }
 
-// fieldPlan is the chosen tab's header summary.
-func fieldPlan(w teamPlan) *screensv1.PageBlock {
-	f := w.panelSummary
+// fieldPlan is one panel's header summary (the officer's name, the Field
+// Plan heading, the counts of its four tables and its money).
+func fieldPlan(name, title string, f fold, streams [4][]*item) *screensv1.PageBlock {
 	budget := "UGX " + intcomma(f.budget)
 	items := []*screensv1.PagePanelItem{
-		text(initials(w.panelName)),
-		heading(w.panelName + " Field Plan " + w.periodLabel),
+		text(initials(name)),
+		heading(title),
 		text(strconv.Itoa(f.total) + " planned activities · " + budget),
 		text(strconv.Itoa(f.total) + " planned"),
-		text(strconv.Itoa(len(w.streams[clientVisits])) + " client visits"),
-		text(strconv.Itoa(len(w.streams[coreVisits])) + " core visits"),
-		text(strconv.Itoa(len(w.streams[clusterMeetings])) + " meetings"),
+		text(strconv.Itoa(len(streams[clientVisits])) + " client visits"),
+		text(strconv.Itoa(len(streams[coreVisits])) + " core visits"),
+		text(strconv.Itoa(len(streams[clusterMeetings])) + " meetings"),
 		{Kind: &screensv1.PagePanelItem_Rows{Rows: &screensv1.PageDataRows{
-			Rows: []*screensv1.PageDataRow{{Label: strconv.Itoa(len(w.streams[plannedTrainings])) + " trainings", Value: budget}},
+			Rows: []*screensv1.PageDataRow{{Label: strconv.Itoa(len(streams[plannedTrainings])) + " trainings", Value: budget}},
 		}}},
 	}
 	if f.atRisk > 0 {
@@ -207,9 +251,13 @@ func chart(w teamPlan) *screensv1.PageBlock {
 		values := []float64{float64(f.total), float64(f.total), float64(f.completed), float64(f.awaiting)}
 		series = append(series, &screensv1.PageSeries{Name: name, Values: values})
 	}
+	title, subtitle := chartTitle, chartSubtitle
+	if w.country {
+		title, subtitle = leadChartTitle, leadChartSubtitle
+	}
 	return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Chart{Chart: &screensv1.PageChart{
-		Title:      chartTitle,
-		Subtitle:   chartSubtitle + w.periodLabel,
+		Title:      title,
+		Subtitle:   subtitle + w.periodLabel,
 		Categories: chartCategories,
 		Series:     series,
 	}}}

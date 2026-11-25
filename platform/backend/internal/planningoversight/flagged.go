@@ -55,8 +55,8 @@ func monthBounds(per partneroversight.Period, now time.Time) (string, time.Time,
 	return per.FY, first, first.AddDate(0, 1, 0)
 }
 
-// flaggedFor is team_flagged_schools; errHandOn where a school's problem
-// is the recommendation engine's.
+// flaggedFor is team_flagged_schools (team nil: the country's); errHandOn
+// where a school's problem is the recommendation engine's.
 func (s *Service) flaggedFor(ctx context.Context, team []string, per partneroversight.Period, now time.Time) (flaggedSchools, error) {
 	fy, start, end := monthBounds(per, now)
 	rows, err := s.db.Query(ctx, `
@@ -64,7 +64,7 @@ SELECT a.school_id, COALESCE(a.responsible_staff_id, ''), a.planned_date,
   COALESCE(s.school_id, ''), COALESCE(s.name, ''), s.school_type, COALESCE(d.name, '')
 FROM activity a JOIN school s ON s.id = a.school_id LEFT JOIN district d ON d.id = s.district_id
 WHERE a.fy = $1 AND a.planned_date >= $2::date AND a.planned_date < $3::date AND a.deleted_at IS NULL
-  AND (a.status IS NULL OR NOT a.status = ANY($4)) AND a.responsible_staff_id = ANY($5)
+  AND (a.status IS NULL OR NOT a.status = ANY($4)) AND ($5::text[] IS NULL OR a.responsible_staff_id = ANY($5))
 ORDER BY a.planned_date, a.id`, fy, start, end, rules.TeamPlan.NotPlannedStatuses, team)
 	if err != nil {
 		return flaggedSchools{}, fmt.Errorf("planningoversight: reading the month's planned schools: %w", err)
@@ -233,7 +233,7 @@ func plural(n int, one, many string) string {
 }
 
 // flaggedBlocks is flagged_schools.html.
-func flaggedBlocks(f flaggedSchools) []*screensv1.PageBlock {
+func flaggedBlocks(f flaggedSchools, r Reader) []*screensv1.PageBlock {
 	if len(f.groups) == 0 {
 		return []*screensv1.PageBlock{panel(flaggedTitle, flaggedSubtitle, text(flaggedNone))}
 	}
@@ -248,25 +248,29 @@ func flaggedBlocks(f flaggedSchools) []*screensv1.PageBlock {
 			line += " · " + strconv.Itoa(g.delegated) + " already assigned"
 		}
 		rows := []*screensv1.PageRow{}
-		for _, r := range g.rows {
-			code := r.code
+		for _, row := range g.rows {
+			code := row.code
 			if code == "" {
 				code = "ID unavailable"
 			}
-			school := r.name
-			if r.district != "" {
-				school += " " + r.district
+			school := row.name
+			if row.district != "" {
+				school += " " + row.district
+			}
+			schoolCell := &screensv1.PageCell{Text: school}
+			if r.OpenSchool {
+				schoolCell.Href = "/schools/" + row.pk
 			}
 			planned := "—"
-			if r.planned != nil {
-				planned = strconv.Itoa(r.planned.Day()) + " " + r.planned.Month().String()[:3]
+			if row.planned != nil {
+				planned = strconv.Itoa(row.planned.Day()) + " " + row.planned.Month().String()[:3]
 			}
 			status := "Not yet assigned"
-			if r.delegated {
+			if row.delegated {
 				status = "Assigned"
 			}
 			rows = append(rows, &screensv1.PageRow{Cells: []*screensv1.PageCell{
-				{Text: code}, {Text: school, Href: "/schools/" + r.pk}, {Text: r.label}, {Text: planned}, {Text: status},
+				{Text: code}, schoolCell, {Text: row.label}, {Text: planned}, {Text: status},
 			}})
 		}
 		blocks = append(blocks, panel("", "", text(g.name), text(line)), &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{

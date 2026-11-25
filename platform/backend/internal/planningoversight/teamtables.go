@@ -107,7 +107,7 @@ func percent(n, d int) string {
 }
 
 // kpiStrip is _kpi_items over the fold, through components/context_metrics.
-func kpiStrip(f fold) *screensv1.PageBlock {
+func kpiStrip(f fold, labels []string, title string) *screensv1.PageBlock {
 	z := rules.TeamPlan.ZeroKPIs
 	tone := func(on bool, t string) string {
 		if on {
@@ -129,9 +129,9 @@ func kpiStrip(f fold) *screensv1.PageBlock {
 	}
 	figures := []schoolprofile.StripFigure{}
 	for i, t := range tiles {
-		figures = append(figures, schoolprofile.StripFigure{Label: z[i].Label, Value: t[0], Helper: t[1]})
+		figures = append(figures, schoolprofile.StripFigure{Label: labels[i], Value: t[0], Helper: t[1]})
 	}
-	block := schoolprofile.Strip(stripTitle, figures)
+	block := schoolprofile.Strip(title, figures)
 	for i, m := range block.GetStrip().GetMetrics() {
 		if m.Helper != "" {
 			m.Tone = tiles[i][2]
@@ -205,11 +205,11 @@ func (it *item) participantsCell() *screensv1.PageCell {
 	return cell(strconv.FormatInt(*it.participants, 10), "")
 }
 
-func districtCell(name, id string) *screensv1.PageCell {
+func districtCell(name, id string, r Reader) *screensv1.PageCell {
 	switch {
 	case name == "":
 		return cell("—", "")
-	case id == "":
+	case id == "" || !r.OpenDistrict:
 		return cell(name, "")
 	}
 	return cell(name, "/districts/"+id)
@@ -222,31 +222,36 @@ func (it *item) schoolCell() *screensv1.PageCell {
 	return cell(orDash(it.schoolName), "")
 }
 
-func (it *item) activityCell() *screensv1.PageCell {
+func (it *item) activityCell(r Reader, fallback string) *screensv1.PageCell {
+	if !r.OpenActivity {
+		return cell(first(stafflogs.StatusLabel(it.activityType), fallback), "")
+	}
 	return cell(stafflogs.StatusLabel(it.activityType), "/activities/"+it.a.id)
 }
 
 // visitCells are tables 1 and 2's row (2 adds the District).
-func (it *item) visitCells(groupName string, core bool) []*screensv1.PageCell {
+func (it *item) visitCells(groupName string, core bool, r Reader) []*screensv1.PageCell {
 	cells := []*screensv1.PageCell{cell(first(it.schoolCode, it.schoolPK, "—"), ""), it.schoolCell()}
+	fallback := "School Visit"
 	if core {
-		cells = append(cells, districtCell(it.districtName, it.districtID))
+		cells = append(cells, districtCell(it.districtName, it.districtID, r))
+		fallback = "Core Visit"
 	}
-	return append(cells, it.activityCell(), it.plannedCell(), it.completedCell(), it.executor(groupName),
+	return append(cells, it.activityCell(r, fallback), it.plannedCell(), it.completedCell(), it.executor(groupName),
 		cell(orDash(it.purpose), ""), it.interventionCell(), it.costCell(), it.salesforceCell(), it.statusCell(), it.actionsCell())
 }
 
-func (it *item) meetingCells(groupName string) []*screensv1.PageCell {
+func (it *item) meetingCells(groupName string, r Reader) []*screensv1.PageCell {
 	name := cell(first(it.clusterName, it.contextLabel()), "")
 	if it.clusterID != "" {
 		name.Href = "/clusters/" + it.clusterID
 	}
-	return []*screensv1.PageCell{name, districtCell(it.districtName, it.districtID), it.plannedCell(), it.completedCell(),
+	return []*screensv1.PageCell{name, districtCell(it.districtName, it.districtID, r), it.plannedCell(), it.completedCell(),
 		it.executor(groupName), cell(first(it.purpose, it.rationale, "Cluster Meeting"), ""), it.interventionCell(),
 		it.participantsCell(), it.costCell(), it.salesforceCell(), it.statusCell(), it.actionsCell()}
 }
 
-func (it *item) trainingCells(groupName string) []*screensv1.PageCell {
+func (it *item) trainingCells(groupName string, r Reader) []*screensv1.PageCell {
 	code := "—"
 	switch {
 	case it.schoolCode != "" && it.schoolCode != "—":
@@ -267,7 +272,7 @@ func (it *item) trainingCells(groupName string) []*screensv1.PageCell {
 		school = cell(it.schoolName, "")
 	case it.clusterName != "":
 		school = cell(it.clusterName, "")
-		if it.clusterID != "" {
+		if it.clusterID != "" && r.OpenCluster {
 			school.Href = "/clusters/" + it.clusterID
 		}
 	}
@@ -297,7 +302,7 @@ var streamColumns = [4][]string{
 
 // streamBlocks are one table's blocks: its heading and empty line, or the
 // table of its rows.
-func streamBlocks(t int, rows []*item, groupName string, query url.Values) []*screensv1.PageBlock {
+func streamBlocks(t int, rows []*item, groupName string, query url.Values, r Reader, pageParam string) []*screensv1.PageBlock {
 	s := sections[t]
 	if len(rows) == 0 {
 		return []*screensv1.PageBlock{panel("", "", heading(s[0]), text("0"), text(s[1])), panel("", "", text(s[2]))}
@@ -306,18 +311,18 @@ func streamBlocks(t int, rows []*item, groupName string, query url.Values) []*sc
 	for _, c := range streamColumns[t] {
 		cols = append(cols, &screensv1.PageColumn{Label: strings.TrimPrefix(c, "#"), Numeric: strings.HasPrefix(c, "#")})
 	}
-	param := panelPageParam + streamPageKeys[t]
+	param := pageParam + streamPageKeys[t]
 	number, pages, start, end := pageOf(query, param, len(rows))
 	out := []*screensv1.PageRow{}
 	for _, it := range rows[start:end] {
 		var cells []*screensv1.PageCell
 		switch t {
 		case clientVisits, coreVisits:
-			cells = it.visitCells(groupName, t == coreVisits)
+			cells = it.visitCells(groupName, t == coreVisits, r)
 		case clusterMeetings:
-			cells = it.meetingCells(groupName)
+			cells = it.meetingCells(groupName, r)
 		default:
-			cells = it.trainingCells(groupName)
+			cells = it.trainingCells(groupName, r)
 		}
 		out = append(out, &screensv1.PageRow{Cells: cells, Tone: it.rowState})
 	}

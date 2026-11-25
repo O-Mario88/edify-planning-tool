@@ -58,6 +58,13 @@ func teamPlanQuestions() []map[string]string {
 		{"fy": "2026", "period": "month", "month": "11"}, {"fy": "2026", "period": "month", "month": "3"},
 		{"fy": "2026", "period": "quarter", "quarter": "Q2"}, {"period": "month", "month": "11"},
 		{"period": "week", "week": "2026-W45"}, {"period": "week", "week": "2026-W48"},
+		// Piece 3, the country lens: each Lead's tab, Unassigned, an
+		// officer switch (with work, without, nobody's), in two years.
+		{"program_lead": "cmw9p7axf00zhz7ekherr"}, {"program_lead": "cmw9p7b6a00e4s8ekhefr"},
+		{"program_lead": "unassigned"}, {"officer": "cmw9p7bwp00t19mekheun"},
+		{"officer": "cmw9p7cx800o9ukekheg9"}, {"officer": "nobody"},
+		{"fy": "2026", "program_lead": "cmw9p7axf00zhz7ekherr", "officer": "cmw9p7cx800o9ukekheg9"},
+		{"fy": "2026", "activity": "meetings", "program_lead": "cmw9p7axf00zhz7ekherr"},
 	}
 	for _, fy := range []string{"2025", "2027", "2028"} {
 		for _, period := range []string{"week", "month", "quarter", "fy"} {

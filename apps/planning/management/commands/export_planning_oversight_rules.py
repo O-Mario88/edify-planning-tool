@@ -119,7 +119,98 @@ def team_plan() -> dict:
         "query_keys_not_passed": sorted(NOT_PASSED),
         "items": team_items(),
         "flagged": flagged(),
+        "readers": readers(),
+        # The tiles' labels on the lenses that read many Programme Leads.
+        "lens_kpi_labels": {
+            lens: [
+                k["label"]
+                for k in views._kpi_items(
+                    oversight.summarize([]),
+                    country=lens == "country",
+                    region=lens == "region",
+                )
+            ]
+            for lens in ("country", "region")
+        },
     }
+
+
+def readers() -> dict:
+    """What the Team Plan lens draws differently for each role its door
+    opens for: the scope it reads (resolve_oversight_scope), the lens strip,
+    whether the Send controls show (may_delegate), the Evidence Centre link,
+    and which names link to their record (can_open_url, the link tags).
+
+    The lens strip is drawn with COVERAGE_LENS_ROLES naming the Regional Vice
+    President as it means to, as the portfolio lens is (owner, 2026-11-13:
+    "Can you fix those from the go side"; intended.json go-fix-rvp-lens), so
+    the RVP's Team Plan offers the lenses Go draws for it."""
+    from unittest import mock
+
+    from apps.frontend.views import oversight_views
+    from apps.planning.management.commands.export_oversight_portfolio_rules import (
+        _MEANT_ROLE,
+        _MISSPELT_ROLE,
+    )
+
+    meant = frozenset(
+        _MEANT_ROLE if role == _MISSPELT_ROLE else role
+        for role in oversight_views.COVERAGE_LENS_ROLES
+    )
+    with (
+        mock.patch.object(oversight_views, "COVERAGE_LENS_ROLES", meant),
+        mock.patch.object(oversight_views, "PORTFOLIO_LENS_ROLES", meant),
+    ):
+        return _readers()
+
+
+def _readers() -> dict:
+    from apps.core.permissions import RolePermissionService, can_open_url
+    from apps.core.rbac import EdifyRole
+    from apps.frontend.views import oversight_views as views
+    from apps.planning import oversight_service as oversight
+
+    country_roles, region_roles = oversight._lens_roles()
+    out = {}
+    for role in EdifyRole:
+        user = _role_user(role.value)
+        if not can_open_url(user, views.TEAM_OVERSIGHT_PATH):
+            continue
+        scope = (
+            "country"
+            if role.value in country_roles
+            else ("region" if role.value in region_roles else "pl")
+        )
+        lenses = views.team_oversight_lenses(user)
+        tabs = views._lens_tabs(
+            views.TEAM_OVERSIGHT_PATH,
+            "planning",
+            views.team_available_lenses(lenses),
+            country=views.is_country_reader(user),
+        )
+        out[role.value] = {
+            "scope": scope,
+            "planning": bool(lenses["planning"]),
+            # Every lens the reader holds, which decides the lens a ?view=
+            # it does not hold falls back to (team_planning_oversight_view).
+            "lenses": {key: bool(value) for key, value in sorted(lenses.items())},
+            "lens_tabs": [
+                {"label": t["label"], "href": t["href"], "active": t["is_active"]}
+                for t in tabs
+            ],
+            "may_delegate": views.may_delegate(
+                user, country=scope == "country", region=scope == "region"
+            ),
+            "evidence_link": RolePermissionService.can_view_page(
+                user, "evidence_center"
+            ),
+            "open_activity": role.value != EdifyRole.PROGRAM_ACCOUNTANT.value
+            and bool(can_open_url(user, "/activities/0")),
+            "open_school": bool(can_open_url(user, "/schools/0")),
+            "open_district": bool(can_open_url(user, "/districts/0")),
+            "open_cluster": bool(can_open_url(user, "/clusters/0")),
+        }
+    return out
 
 
 def team_items() -> dict:

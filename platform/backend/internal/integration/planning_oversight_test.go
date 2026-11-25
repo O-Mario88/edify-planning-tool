@@ -99,3 +99,53 @@ func TestPlanningOversightTeamPlanIsGosWhenTheTeamHasNothingPlanned(t *testing.T
 		t.Fatalf("last panel = %q", got)
 	}
 }
+
+// Piece 3: a country reader's Team Plan is drawn by Go: a tab per
+// Programme Lead, the tiles folding the chosen Lead's work (the first tab),
+// the chosen Lead's officers as switches with only the open one's tables
+// drawn. A lens the reader does not hold falls back to it, as the page does.
+func TestPlanningOversightCountryLensIsGos(t *testing.T) {
+	borrowAccount(t, "cd@edify.org")
+	director := sessionOf(t, "cd@edify.org", seededPassword).GetAccessToken()
+	page, err := pageOf(director, teamPlanningOversight, map[string]string{"fy": "2026", "period": "fy"})
+	if err != nil {
+		t.Fatalf("the Country Director's Team Plan: %v", err)
+	}
+	var strip, leads, switches int
+	var total string
+	for i, b := range page.GetBlocks() {
+		switch {
+		case b.GetStrip() != nil:
+			strip = i
+			total = b.GetStrip().GetMetrics()[0].GetValue()
+		case b.GetSegments() != nil:
+			switches = i
+			open := 0
+			for _, s := range b.GetSegments().GetSegments() {
+				if len(s.GetBlocks()) > 1 {
+					open++
+				}
+			}
+			if open > 1 {
+				t.Fatalf("%d officer panels drawn, want at most one", open)
+			}
+		}
+	}
+	if got := page.GetBlocks()[strip].GetStrip().GetTitle(); got != "Country overview" {
+		t.Fatalf("strip title %q", got)
+	}
+	tabs := page.GetBlocks()[strip+1].GetPanel().GetItems()[0].GetLinks().GetLinks()
+	leads = len(tabs)
+	if leads == 0 || tabs[0].GetCaption() != strings.ReplaceAll(total, ",", "") {
+		t.Fatalf("%d Lead tabs, the first holding %s, the tile %q", leads, tabs[0].GetCaption(), total)
+	}
+	if switches == 0 {
+		t.Fatal("no officer switches")
+	}
+
+	borrowAccount(t, "accountant@edify.org")
+	accountant := sessionOf(t, "accountant@edify.org", seededPassword).GetAccessToken()
+	if _, err := pageOf(accountant, teamPlanningOversight, map[string]string{"view": "trainings"}); err != nil {
+		t.Fatalf("a lens the Accountant does not hold: %v, want the Team Plan", err)
+	}
+}

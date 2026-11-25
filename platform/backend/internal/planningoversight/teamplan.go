@@ -73,6 +73,16 @@ type teamPlan struct {
 	tabs        []Tab // Whole team, My Work, one per officer
 	panelName   string
 	ownLabel    string
+	// The reader's lens: what its role draws, and whether it reads many
+	// Programme Leads (the country and region lenses).
+	reader    Reader
+	country   bool
+	region    bool
+	lensTitle string
+	years     []string
+	read      periodRead
+	groups    []officerGroup // the country lens's officer switches
+	shown     int            // the open switch
 	// The work: each tab's items, the fold of what is shown, the panel's
 	// fold and tables, and the month's flagged schools.
 	query        url.Values // the query the page was opened with (the pagers')
@@ -84,26 +94,40 @@ type teamPlan struct {
 	today        time.Time
 }
 
-// buildTeamPlan answers the Team Plan for p, or served=false.
+// buildTeamPlan answers the Team Plan for p, or served=false: the team
+// lens for a Programme Lead, the country lens for a country reader.
 func (s *Service) buildTeamPlan(ctx context.Context, p auth.Principal, query url.Values) (*screensv1.GetPageResponse, bool, error) {
-	tp := rules.TeamPlan
-	if p.ActiveRole != tp.LeadRole || p.Acting != nil || p.InActingAppointment {
+	reader, ok := rules.TeamPlan.Readers[p.ActiveRole]
+	if !ok || !reader.Planning || p.Acting != nil || p.InActingAppointment {
 		return nil, false, nil
 	}
 	query = passed(query)
-	if !plainTeamQuery(query) {
+	if !plainTeamQuery(query) || activeLens(reader, query) != "planning" {
 		return nil, false, nil
 	}
+	switch reader.Scope {
+	case "country", "region":
+		return s.buildCountryPlan(ctx, p, reader, query)
+	case "pl":
+		if p.ActiveRole == rules.TeamPlan.LeadRole {
+			return s.buildLeadPlan(ctx, p, reader, query)
+		}
+	}
+	return nil, false, nil
+}
+
+// buildLeadPlan is the team lens: the Lead's own work and their officers'.
+func (s *Service) buildLeadPlan(ctx context.Context, p auth.Principal, reader Reader, query url.Values) (*screensv1.GetPageResponse, bool, error) {
 	now := s.now()
 	per, ok := partneroversight.ReadPeriod(query, now)
 	if !ok {
 		return nil, false, nil
 	}
-	fyOptions := schooldirectory.FYOptions(now)
-	years, label, read, err := s.planPeriod(ctx, p.Country, per, fyOptions, now)
-	if err != nil {
-		return nil, true, err
+	w, served, err := s.lensBase(ctx, p, reader, query, per, now)
+	if !served || err != nil {
+		return nil, served, err
 	}
+	years, read, today := w.years, w.read, w.today
 
 	scope, err := schooldirectory.ResolveScope(ctx, s.db, p, now)
 	if err != nil {
@@ -122,9 +146,7 @@ func (s *Service) buildTeamPlan(ctx context.Context, p auth.Principal, query url
 	if len(team) == 0 {
 		return nil, false, nil
 	}
-	local := now.In(zone)
-	today := time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC)
-	items, err := s.buildItems(ctx, team, years, read, today)
+	items, err := s.buildItems(ctx, team, nil, years, read, today)
 	if err != nil {
 		return nil, true, err
 	}
@@ -144,10 +166,7 @@ func (s *Service) buildTeamPlan(ctx context.Context, p auth.Principal, query url
 	if err != nil {
 		return nil, true, err
 	}
-	w := teamPlan{period: per, periodLabel: label, fyOptions: fyOptions, activity: allActivity, flagged: flagged, query: query}
-	if a := strings.TrimSpace(query.Get("activity")); a != "" {
-		w.activity = a
-	}
+	w.flagged = flagged
 	w.tabs, w.owner = ownerTabs(members, strings.TrimSpace(query.Get("owner")))
 	w.tabItems = map[string][]*item{wholeTeamKey: items, myWorkKey: ownedBy(items, own)}
 	for _, m := range members {
@@ -155,7 +174,6 @@ func (s *Service) buildTeamPlan(ctx context.Context, p auth.Principal, query url
 	}
 	visible := inFamily(w.tabItems[w.owner], w.activity)
 	w.summary = summarize(visible, today)
-	w.today = today
 	groups := rosterFor(roster, w.owner)
 	if len(groups) == 0 {
 		return nil, false, nil
@@ -221,8 +239,7 @@ func (s *Service) panelGroup(ctx context.Context, roster []person, visible []*it
 		found := -1
 		for i, m := range roster {
 			if m.owns(it.owner) {
-				found = i
-				break
+				found = i // a later member holding the same id wins, as the lookup does
 			}
 		}
 		if found < 0 {
@@ -292,11 +309,11 @@ func (s *Service) peopleOf(ctx context.Context, items []*item) ([]person, error)
 	return out, nil
 }
 
-// plainTeamQuery is whether the query reads as this slice draws it: the
-// planning lens named or left out, ASCII alone (a Unicode digit is a number
-// to Python), no custom period or follow-up, and no advanced filter.
+// plainTeamQuery is whether the query reads as this lens draws it: one
+// view at most, ASCII alone (a Unicode digit is a number to Python), no
+// custom period or follow-up, and no advanced filter.
 func plainTeamQuery(q url.Values) bool {
-	if v, ok := q["view"]; ok && (len(v) != 1 || v[0] != "planning") {
+	if v, ok := q["view"]; ok && len(v) != 1 {
 		return false
 	}
 	for key, values := range q {
@@ -319,6 +336,39 @@ func plainTeamQuery(q url.Values) bool {
 		}
 	}
 	return true
+}
+
+// otherLenses are the views team_planning_oversight_view answers with a
+// lens of their own; anything else is the planning lens.
+var otherLenses = []string{"targets", "coverage", "portfolio", "monitor", "execution", "trainings"}
+
+// activeLens is the lens team_planning_oversight_view opens for the asked
+// ?view= ("" where it redirects instead): a lens the reader does not hold
+// falls back to planning, and planning to targets for a reader without it.
+func activeLens(r Reader, q url.Values) string {
+	view := strings.ToLower(strings.TrimSpace(q.Get("view")))
+	if q.Get("view") == "" {
+		view = "planning"
+	}
+	switch {
+	case view == "projects" || view == "clusters":
+		return ""
+	case (view == "monitor" || view == "execution") && !r.Lenses["monitors"]:
+		return ""
+	}
+	active := "planning"
+	if slices.Contains(otherLenses, view) {
+		active = view
+	}
+	for _, lens := range []string{"trainings", "targets", "coverage", "portfolio"} {
+		if active == lens && !r.Lenses[lens] {
+			active = "planning"
+		}
+	}
+	if (active == "planning" || active == "coverage" || active == "portfolio") && !r.Lenses["planning"] {
+		active = "targets"
+	}
+	return active
 }
 
 // passed drops the query keys the app's feed never passes to a page.

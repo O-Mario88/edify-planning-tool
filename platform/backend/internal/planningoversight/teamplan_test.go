@@ -16,8 +16,7 @@ func TestPlainTeamQueryHandsOnWhatThisSliceDoesNotDraw(t *testing.T) {
 	}{
 		{"the page as it opens", url.Values{}, true},
 		{"the planning lens named", url.Values{"view": {"planning"}}, true},
-		{"another lens", url.Values{"view": {"coverage"}}, false},
-		{"the planning lens with stray spaces", url.Values{"view": {" planning"}}, false},
+		{"two views", url.Values{"view": {"planning", "coverage"}}, false},
 		{"a period, a tab and a family", url.Values{"period": {"week"}, "owner": {"mine"}, "activity": {"visits"}}, true},
 		{"an advanced filter", url.Values{"district_id": {"d1"}}, false},
 		{"a blank advanced filter", url.Values{"risk": {"  "}}, true},
@@ -31,6 +30,38 @@ func TestPlainTeamQueryHandsOnWhatThisSliceDoesNotDraw(t *testing.T) {
 				t.Fatalf("plainTeamQuery(%v) = %v, want %v", tc.query, got, tc.want)
 			}
 		})
+	}
+}
+
+// team_planning_oversight_view's lens: a lens the reader lacks falls back
+// to planning; the moved and redirected views are not this page's.
+func TestActiveLensFallsBackAsTheViewDoes(t *testing.T) {
+	lead := rules.TeamPlan.Readers[rules.TeamPlan.LeadRole]
+	accountant := rules.TeamPlan.Readers["Accountant"]
+	hr := rules.TeamPlan.Readers["HumanResources"]
+	cases := []struct {
+		name string
+		r    Reader
+		view string
+		want string
+	}{
+		{"the page as it opens", lead, "", "planning"},
+		{"stray spaces and capitals", lead, " PLANNING ", "planning"},
+		{"a lens the Lead holds", lead, "coverage", "coverage"},
+		{"a word the page does not know", lead, "nonsense", "planning"},
+		{"a lens the Accountant lacks", accountant, "trainings", "planning"},
+		{"the monitors, moved away", accountant, "monitor", ""},
+		{"Special Projects, redirected", lead, "projects", ""},
+		{"no planning lens", hr, "", "targets"},
+	}
+	for _, tc := range cases {
+		q := url.Values{}
+		if tc.view != "" {
+			q.Set("view", tc.view)
+		}
+		if got := activeLens(tc.r, q); got != tc.want {
+			t.Errorf("%s: lens %q, want %q", tc.name, got, tc.want)
+		}
 	}
 }
 
@@ -108,6 +139,7 @@ func TestTeamPageTonesOnlyAHelperLine(t *testing.T) {
 		period:      partneroversight.Period{FY: "2027", Kind: "fy", Week: "2026-W46", Month: 11, Quarter: "Q1"},
 		periodLabel: "FY 2027–2028", fyOptions: []string{"2026", "2027"}, activity: "visits",
 		owner: "mine", panelName: "Program Lead 2", ownLabel: "Program Lead 2 (you)",
+		reader: rules.TeamPlan.Readers[rules.TeamPlan.LeadRole],
 	}
 	w.tabs, _ = ownerTabs(nil, "mine")
 	page := teamPage(w)

@@ -23,7 +23,8 @@
       "*"
     ],
     "fields": [
-      ".blocks[1].filters.filters[0].value"
+      ".blocks[1].filters.filters[0].value",
+      ".blocks[0].filters.filters[0].value"
     ],
     "existing": "week",
     "go": "month|quarter|fy",
