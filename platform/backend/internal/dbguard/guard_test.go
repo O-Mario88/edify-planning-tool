@@ -222,6 +222,10 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		// and the document lifecycle (apps.documents.jobs).
 		filepath.Join(root, "internal", "notificationjobs") + sep: {"pd_request", "pd_reminder_log", "document_asset d",
 			"document_acknowledgement", "document_engagement_session"},
+		// The HR programmes' forms (apps.frontend.views.hr_programme_views):
+		// recognitions, compliance requirements and evidence, pulse surveys.
+		filepath.Join(root, "internal", "hrforms") + sep: {"hr_staff_recognition", "hr_compliance_requirement",
+			"hr_employee_compliance_record", "hr_pulse_survey"},
 		// Team Coaching's saves (apps.cce_leadership.coaching).
 		filepath.Join(root, "internal", "ccelead") + sep: {"cce_cceo_coaching", "cce_regional_engagement", "cce_regional_report"},
 		// The Measurement Framework's saves (apps.impact.framework).

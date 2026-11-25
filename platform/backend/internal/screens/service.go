@@ -84,6 +84,8 @@ type Service struct {
 	framework FrameworkDrawers
 	// leadership is the Regional Lead's drawers, with Django absent.
 	leadership LeadershipDrawers
+	// hrForms is the HR programmes' forms, with Django absent.
+	hrForms HRForms
 	// followUps is the Staff Activity follow-ups, with Django absent.
 	followUps  FollowUpDrawers
 	directory  Directory

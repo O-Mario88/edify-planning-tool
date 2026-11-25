@@ -80,6 +80,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/helpcenter"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/helpcontext"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/home"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/hrforms"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/hrregister"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/hrtoday"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/httpmw"
@@ -358,6 +359,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			detailPagesSvc,
 		)
 	realtimeBroker := realtime.NewBroker(time.Now)
+	screenService.WithHRForms(hrforms.Forms{DB: pool, Push: plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
+		Live: realtimeBroker, Logger: logger, Now: time.Now, Kampala: kampalaLocation()})
 	if cfg.RedisURL != "" {
 		if err := realtimeBroker.WithRedisPubSub(context.Background(), cfg.RedisURL, logger); err != nil {
 			logger.Warn("realtime: invalid redis pubsub configuration, staying single-node", slog.String("error", err.Error()))

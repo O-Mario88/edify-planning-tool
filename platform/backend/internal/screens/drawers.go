@@ -393,6 +393,14 @@ func (s *Service) SaveDrawer(
 			}
 			return connect.NewResponse(answer), nil
 		}
+		if answer, served, err := s.hrFormSaveInGo(ctx, forwarded, activities.Origin{
+			IP: from.IP, UserAgent: from.UserAgent, CorrelationID: from.CorrelationID,
+		}); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(answer), nil
+		}
 		// A decision's audit rows record where it was made from.
 		reviewCtx := origin.With(ctx, origin.Read(request.Peer().Addr, request.Header(), s.trustProxy, trace.FromContext(ctx).RequestID))
 		if answer, served, err := s.plReviewInGo(reviewCtx, forwarded); served {

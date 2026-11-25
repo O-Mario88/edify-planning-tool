@@ -239,6 +239,14 @@ func NotifyInTx(ctx context.Context, tx pgx.Tx, push NoticePush, logger *slog.Lo
 	return workflowNotices{push: push, logger: logger}.deliverInTx(ctx, tx, now, contextID, Origin{}, noticeOf(n), recipientsOf(to))
 }
 
+// NotifyInTxFrom is NotifyInTx for a save made over a request: the trigger's
+// audit row carries the request's address, browser and correlation id, as
+// the existing log reads them from the request.
+func NotifyInTxFrom(ctx context.Context, tx pgx.Tx, push NoticePush, logger *slog.Logger, now time.Time,
+	contextID string, origin Origin, n Notice, to []NoticeTo) ([]string, error) {
+	return workflowNotices{push: push, logger: logger}.deliverInTx(ctx, tx, now, contextID, origin, noticeOf(n), recipientsOf(to))
+}
+
 func noticeOf(n Notice) scheduledNotice {
 	return scheduledNotice{title: n.Title, body: n.Body, event: n.Event, category: n.Category, contextType: n.ContextType,
 		priority: n.Priority, sender: n.Sender}

@@ -30,6 +30,8 @@ type reach struct {
 	countries []string
 	// viewer is the Programme Lead's own People record (a team's reach).
 	viewer string
+	// regional is a regional role's reach of every registered country.
+	regional bool
 }
 
 // programmeLeads are apps.hr.reach's Programme Lead role names.
@@ -63,7 +65,7 @@ WHERE u.id = $1`, p.UserID).Scan(&superuser, &viewer, &country)
 		if err != nil {
 			return reach{}, err
 		}
-		return reach{kind: reachCountries, countries: names}, nil
+		return reach{kind: reachCountries, countries: names, regional: true}, nil
 	}
 	// Edify Global (docs/migration/80, §12): in a country whose roles come
 	// from the registry, a role held there reaches that country's People

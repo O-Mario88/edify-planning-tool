@@ -1105,3 +1105,18 @@ GRANT SELECT, INSERT (id, created_at, updated_at, source, environment, deleted_a
   ON impact_edtech_check TO edify_activities_rw;
 GRANT SELECT (id, name, deleted_at) ON project TO edify_activities_rw;
 GRANT SELECT (id, name, school_id, region_id, deleted_at, created_at) ON school TO edify_activities_rw;
+
+-- ── The HR programmes' forms (apps.frontend.views.hr_programme_views) ──
+-- Recognitions recorded (rewards_wellbeing_service.recognise); nothing removed.
+GRANT INSERT (id, created_at, updated_at, staff_id, country, category, citation, awarded_by_id, awarded_on)
+  ON hr_staff_recognition TO edify_activities_rw;
+-- Compliance requirements added and employees' evidence recorded
+-- (compliance_service.add_requirement, record_evidence); nothing removed.
+GRANT INSERT (id, created_at, updated_at, country, name, description, is_mandatory) ON hr_compliance_requirement TO edify_activities_rw;
+GRANT SELECT (id, staff_id, requirement_id, document_url, verified_by_id, verified_at),
+      INSERT (id, created_at, updated_at, staff_id, requirement_id, status, document_url, expiry_date, verified_by_id, verified_at),
+      UPDATE (updated_at, status, document_url, expiry_date, verified_by_id, verified_at)
+  ON hr_employee_compliance_record TO edify_activities_rw;
+-- Pulse surveys opened (rewards_wellbeing_service.open_pulse_survey); their
+-- notices go through gateway_notifications.notify_workflow.
+GRANT INSERT (id, created_at, updated_at, title, countries, opens_on, closes_on, status, created_by_id) ON hr_pulse_survey TO edify_activities_rw;
