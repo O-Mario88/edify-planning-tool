@@ -164,6 +164,39 @@ func TestTeamTargetsRecoveryQueueIsGos(t *testing.T) {
 	}
 }
 
+// A member's drawer is Go's: the month's four facts, the priorities with
+// where their work stands, and the portfolio line; someone outside the
+// reader's team is refused in the view's words.
+func TestTeamTargetsStaffDrawerIsGos(t *testing.T) {
+	ctx := context.Background()
+	var member, outsider string
+	if err := admin.QueryRow(ctx, `SELECT id FROM "user" WHERE email = 'cceo@edify.org'`).Scan(&member); err != nil {
+		t.Fatal(err)
+	}
+	if err := admin.QueryRow(ctx, `SELECT id FROM "user" WHERE email = 'pl2@edify.org'`).Scan(&outsider); err != nil {
+		t.Fatal(err)
+	}
+	borrowAccount(t, "pl1@edify.org")
+	lead := sessionOf(t, "pl1@edify.org", seededPassword).GetAccessToken()
+	drawers := screensv1connect.NewPageDrawerServiceClient(http.DefaultClient, baseURL)
+	open := func(path string) *screensv1.GetDrawerResponse {
+		t.Helper()
+		answer, err := drawers.GetDrawer(ctx, authed(&screensv1.GetDrawerRequest{Path: path}, lead))
+		if err != nil {
+			t.Fatalf("%s: %v", path, err)
+		}
+		return answer.Msg
+	}
+	d := open("/team-targets/staff-drawer?staff=" + member + "&fy=2026&month=7").GetDrawer()
+	if d.GetTitle() == "" || d.GetSubtitle() != "April 2026" || len(d.GetItems()) != 5 || len(d.GetItems()[0].GetFacts().GetFacts()) != 4 ||
+		!strings.HasPrefix(d.GetItems()[4].GetText(), "Districts: ") {
+		t.Fatalf("the member's drawer %v", d)
+	}
+	if r := open("/team-targets/staff-drawer?staff=" + outsider).GetRefusal(); r != "Not in your supervised team." {
+		t.Fatalf("someone outside the team: %q", r)
+	}
+}
+
 // A link from a planning follow-up opens its placeholder above every lens
 // Go draws, at /team-targets and on Team Oversight: the follow-up itself loads
 // later and the feed reads only the placeholder's caption; the page below is

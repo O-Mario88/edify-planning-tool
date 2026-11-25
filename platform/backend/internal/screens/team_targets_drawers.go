@@ -23,6 +23,7 @@ var teamTargetsDrawers = map[string]func(context.Context, schooldirectory.Querie
 	"/team-targets/sfid-backlog":       teamtargets.SFIDBacklog,
 	"/team-targets/validation-backlog": teamtargets.ValidationBacklog,
 	"/team-targets/matrix":             teamtargets.MatrixDrawer,
+	"/team-targets/staff-drawer":       teamtargets.StaffDrawer,
 	// The view reads the page as it opens, whatever the query.
 	"/team-targets/recovery": func(ctx context.Context, db schooldirectory.Querier, p auth.Principal, _ map[string]string, now time.Time) (*screensv1.PageDrawer, error) {
 		return teamtargets.Recovery(ctx, db, p, now)
