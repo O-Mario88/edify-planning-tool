@@ -37,6 +37,7 @@ GRANT SELECT, UPDATE (state, updated_at) ON ssa_recommendation TO edify_schedule
 GRANT SELECT, INSERT ON ia_verification_sample TO edify_scheduler_owner;
 GRANT SELECT, UPDATE (activity_executed, salesforce_id_entered, ia_verified, last_evaluated_at, updated_at) ON closure_checklist TO edify_scheduler_owner;
 GRANT SELECT (seq, hash, prev_hash) ON audit_log TO edify_scheduler_owner;
+GRANT SELECT, INSERT ON execution_period_snapshot TO edify_scheduler_owner;
 
 CREATE SCHEMA IF NOT EXISTS gateway_scheduler AUTHORIZATION edify_scheduler_owner;
 REVOKE ALL ON SCHEMA gateway_scheduler FROM PUBLIC;
@@ -553,6 +554,30 @@ BEGIN
 END
 $fn$;
 
+-- Locks one ended period's Country Execution snapshot
+-- (country_execution.snapshots.take): the original version, unless the
+-- period already has one. Go reads the figures; this only writes the row.
+CREATE OR REPLACE FUNCTION gateway_scheduler.lock_execution_snapshot(
+  p_id varchar, p_country varchar, p_fy varchar, p_period_type varchar, p_start date, p_end date,
+  p_label varchar, p_as_of date, p_policy varchar, p_figures jsonb, p_channels jsonb, p_hierarchy jsonb,
+  p_follow_ups jsonb, p_now timestamptz
+) RETURNS boolean
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+BEGIN
+  IF EXISTS (SELECT 1 FROM public.execution_period_snapshot
+              WHERE country = p_country AND period_type = p_period_type AND period_start = p_start) THEN
+    RETURN false;
+  END IF;
+  INSERT INTO public.execution_period_snapshot (id, country, fy, period_type, period_start, period_end, period_label,
+    version, kind, reason, as_of, taken_at, taken_by_id, taken_by_name, stage_policy, figures, channels, hierarchy,
+    follow_ups, revises_id)
+  VALUES (p_id, p_country, p_fy, p_period_type, p_start, p_end, p_label, 1, 'original', '', p_as_of, p_now, '', '',
+    p_policy, p_figures, p_channels, p_hierarchy, p_follow_ups, NULL)
+  ON CONFLICT DO NOTHING;
+  RETURN FOUND;
+END
+$fn$;
+
 REVOKE ALL ON FUNCTION gateway_scheduler.record_execution(text, timestamptz, timestamptz, text, integer, text, text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_scheduler.purge_mfa_challenges(timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_scheduler.run_acting_lifecycle(date, timestamptz) FROM PUBLIC;
@@ -566,6 +591,7 @@ REVOKE ALL ON FUNCTION gateway_scheduler.generate_due_maintenance(date, timestam
 REVOKE ALL ON FUNCTION gateway_scheduler.upsert_weekly_drafts(date, date, text, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_scheduler.upsert_monthly_budget_draft(text, text, text, timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION gateway_scheduler.reconcile_document_lifecycle(date, timestamptz) FROM PUBLIC;
+REVOKE ALL ON FUNCTION gateway_scheduler.lock_execution_snapshot(varchar, varchar, varchar, varchar, date, date, varchar, date, varchar, jsonb, jsonb, jsonb, jsonb, timestamptz) FROM PUBLIC;
 
 RESET ROLE;
 
@@ -583,6 +609,7 @@ GRANT EXECUTE ON FUNCTION gateway_scheduler.generate_due_maintenance(date, times
 GRANT EXECUTE ON FUNCTION gateway_scheduler.upsert_weekly_drafts(date, date, text, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_scheduler.upsert_monthly_budget_draft(text, text, text, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_scheduler.reconcile_document_lifecycle(date, timestamptz) TO edify_gateway;
+GRANT EXECUTE ON FUNCTION gateway_scheduler.lock_execution_snapshot(varchar, varchar, varchar, varchar, date, date, varchar, date, varchar, jsonb, jsonb, jsonb, jsonb, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_scheduler.sweep_planning_followups(date, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_scheduler.expire_ssa_recommendations(date, timestamptz) TO edify_gateway;
 GRANT EXECUTE ON FUNCTION gateway_scheduler.sample_ia_verifications(timestamptz, integer) TO edify_gateway;

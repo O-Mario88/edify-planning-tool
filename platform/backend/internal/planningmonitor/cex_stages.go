@@ -36,7 +36,15 @@ type cexRules struct {
 	AttendanceFormTypes  []string         `json:"attendance_form_types"`
 	Page                 cexPage          `json:"page"`
 	FollowUps            cexFollowUpRules `json:"follow_ups"`
-	Records              struct {
+	// The period snapshots (country_execution.snapshots).
+	Snapshots struct {
+		GraceDays         int      `json:"grace_days"`
+		RowFigures        []string `json:"row_figures"`
+		CountryRoles      []string `json:"country_roles"`
+		StaffDelivery     string   `json:"staff_delivery"`
+		UnrecordedPartner string   `json:"unrecorded_partner"`
+	} `json:"snapshots"`
+	Records struct {
 		Tables []cpoTableSpec `json:"tables"`
 		Tabs   []string       `json:"tabs"`
 		Words  struct {

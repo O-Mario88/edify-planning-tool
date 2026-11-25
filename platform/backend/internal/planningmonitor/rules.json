@@ -1785,6 +1785,30 @@
         "verified": "Verified"
       }
     },
+    "snapshots": {
+      "country_roles": [
+        "CountryDirector",
+        "ImpactAssessment"
+      ],
+      "grace_days": 14,
+      "row_figures": [
+        "due",
+        "started",
+        "executed",
+        "pl_applicable",
+        "pl_reviewed",
+        "verified",
+        "closed",
+        "overdue",
+        "returned",
+        "cancelled",
+        "carried_forward",
+        "finance_open",
+        "on_time"
+      ],
+      "staff_delivery": "Staff delivery",
+      "unrecorded_partner": "Unrecorded Partner"
+    },
     "staff_key": "__staff__",
     "stages": {
       "age_groups": [

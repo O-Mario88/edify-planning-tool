@@ -64,6 +64,11 @@ ROW_FIGURES = (
 )
 
 
+#: What a snapshot names staff delivery, and a Partner with no name recorded.
+STAFF_DELIVERY_NAME = "Staff delivery"
+UNRECORDED_PARTNER_NAME = "Unrecorded Partner"
+
+
 class SnapshotError(Exception):
     """A snapshot could not be taken or revised; the message says why."""
 
@@ -164,9 +169,9 @@ def _read(country: str, window: Window) -> dict:
                     "partners": [
                         {
                             "key": key,
-                            "name": "Staff delivery"
+                            "name": STAFF_DELIVERY_NAME
                             if key == ds.STAFF_KEY
-                            else names.get(key, "Unrecorded Partner"),
+                            else names.get(key, UNRECORDED_PARTNER_NAME),
                             "figures": _named(tally),
                         }
                         for key, tally in sorted(owner.partners.items())

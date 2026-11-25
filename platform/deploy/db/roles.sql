@@ -1358,3 +1358,6 @@ GRANT SELECT (notes) ON partner_assignment TO edify_gateway_ro;
 -- Team Targets' recovery queue: each open catch-up plan's proposal, schools,
 -- dates and return reason.
 GRANT SELECT (activities_proposed, school_ids, planned_dates, return_reason) ON target_catchup_plan TO edify_gateway_ro;
+-- Country Execution's period close (snapshots._open_follow_ups): which
+-- country each follow-up belongs to.
+GRANT SELECT (country) ON planning_oversight_follow_up TO edify_gateway_ro;

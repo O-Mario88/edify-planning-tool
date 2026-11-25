@@ -1254,6 +1254,14 @@ def _note_window(universe: str, filters: Filters) -> None:
         logger.warning("Could not note the oversight window", exc_info=True)
 
 
+def warm_roles() -> list[str]:
+    """The roles whose countries the warmer (and the period snapshots'
+    close, country_execution.snapshots.lock_ended_periods) reads."""
+    from apps.core.rbac import EdifyRole
+
+    return [EdifyRole.COUNTRY_DIRECTOR.value, EdifyRole.IMPACT_ASSESSMENT.value]
+
+
 def warm_targets(today: date | None = None) -> list[tuple[str, Filters]]:
     """(country, filters) the warmer rebuilds: each country a Country Director
     or Impact Assessment officer reads, for the operational year, plus the
@@ -1263,9 +1271,8 @@ def warm_targets(today: date | None = None) -> list[tuple[str, Filters]]:
 
     from apps.accounts.models import StaffProfile
     from apps.core.fy import get_operational_fy
-    from apps.core.rbac import EdifyRole
 
-    roles = [EdifyRole.COUNTRY_DIRECTOR.value, EdifyRole.IMPACT_ASSESSMENT.value]
+    roles = warm_roles()
     countries = sorted(
         {
             (country or "").strip()

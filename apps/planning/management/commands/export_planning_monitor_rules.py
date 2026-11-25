@@ -221,8 +221,10 @@ def _country_execution() -> dict:
     from apps.planning.country_execution import service as svc
     from apps.planning.country_execution import stages as st
     from apps.planning.country_execution import followups as efu
+    from apps.planning.country_execution import snapshots
     from apps.planning.country_execution import tables as xtables
     from apps.planning.country_oversight import followups as planning_fu
+    from apps.planning.country_oversight.service import warm_roles
     from apps.planning.followup_models import OPEN_FOLLOW_UP_STATES
     from django.utils import timezone
     from apps.schools.management.commands.export_school_directory_rules import (
@@ -315,6 +317,16 @@ def _country_execution() -> dict:
             ],
             "open_states": sorted(str(s) for s in OPEN_FOLLOW_UP_STATES),
             "due_in_days": (planning_fu.default_due_date() - timezone.localdate()).days,
+        },
+        # The period snapshots (country_execution.snapshots): how long after a
+        # period its close may be taken, the figures each row keeps, the
+        # countries' readers (warm_targets) and the channel names.
+        "snapshots": {
+            "grace_days": snapshots.GRACE_DAYS,
+            "row_figures": list(snapshots.ROW_FIGURES),
+            "country_roles": warm_roles(),
+            "staff_delivery": snapshots.STAFF_DELIVERY_NAME,
+            "unrecorded_partner": snapshots.UNRECORDED_PARTNER_NAME,
         },
         # The consolidated tables behind the figures (country_execution.tables,
         # records_view), in the order the table page offers them.

@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
@@ -17,11 +18,13 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/autopilotjobs"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/btcases"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closurepages"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/cuid"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dataqualityscan"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/debriefs"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/iasampling"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/notificationcenter"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/notificationjobs"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningmonitor"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/plreview"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/targets"
@@ -98,8 +101,6 @@ var UgandaCutoverJobs = []JobMeta{
 var notRunByGo = map[string]string{
 	"bulk_completion": "apps.bulk_completion.worker.work: Go has no page that queues an upload yet",
 	"export_jobs":     "apps.reports.export_jobs.work: Go has no page that queues an export yet",
-	"execution_period_snapshots": "apps.planning.country_execution.snapshots.lock_ended_periods: " +
-		"the Country Execution figures it locks are not built in Go yet",
 	"school_action_sweep": "apps.planning.action_service.resolve_due_actions and mark_overdue_actions: " +
 		"whether a delegated action's condition still holds is read through the Planning Oversight and " +
 		"Partner Oversight risk detectors, Country Oversight's planning gaps and the SSA intervention bands, " +
@@ -242,6 +243,16 @@ func executeJob(
 		// apps.outbox.services.drain, for the event types Go handles; the
 		// rest stay queued for a handler.
 		return outboxWorker(pool, writer, func() time.Time { return time.Now() }, "go-scheduler").Drain(ctx, outboxBudget)
+
+	case "execution_period_snapshots":
+		// country_execution.snapshots.lock_ended_periods: the figures are read
+		// through the gateway's read session; each row is written by the
+		// owned function.
+		day := time.Date(localNow.Year(), localNow.Month(), localNow.Day(), 0, 0, 0, 0, time.UTC)
+		return planningmonitor.LockEndedPeriods(ctx, pool, func(ctx context.Context, country string,
+			w planningmonitor.SnapshotWindow, snap planningmonitor.PeriodSnapshot) (bool, error) {
+			return lockExecutionSnapshot(ctx, pool, country, w, snap, now)
+		}, day, day)
 
 	case "scheduler_history_prune":
 		return callIntRW(ctx, pool, `SELECT gateway_scheduler.prune_scheduler_history($1)`, now)
@@ -550,4 +561,46 @@ func callIntRW(ctx context.Context, pool *pgxpool.Pool, sql string, args ...any)
 		return 0, err
 	}
 	return n, nil
+}
+
+// lockExecutionSnapshot writes one period's original snapshot through the
+// owned function (false when the period was locked meanwhile).
+func lockExecutionSnapshot(ctx context.Context, pool *pgxpool.Pool, country string, w planningmonitor.SnapshotWindow,
+	snap planningmonitor.PeriodSnapshot, now time.Time) (bool, error) {
+	parts := make([][]byte, 0, 4)
+	for _, v := range []any{snap.Figures, snap.Channels, snap.Hierarchy, snap.FollowUps} {
+		b, err := json.Marshal(v)
+		if err != nil {
+			return false, fmt.Errorf("scheduler: encoding the snapshot: %w", err)
+		}
+		parts = append(parts, b)
+	}
+	tx, err := pool.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
+	if err != nil {
+		return false, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	var wrote bool
+	if err := tx.QueryRow(ctx, `SELECT gateway_scheduler.lock_execution_snapshot($1, $2, $3, $4, $5::date, $6::date, $7, $8::date, $9,
+  $10::jsonb, $11::jsonb, $12::jsonb, $13::jsonb, $14)`, cuid.New(), country, w.FY(), w.Period(), w.Start(), w.End(), w.Label(),
+		snap.AsOf, snap.StagePolicy, string(parts[0]), string(parts[1]), string(parts[2]), string(parts[3]), now).Scan(&wrote); err != nil {
+		return false, fmt.Errorf("scheduler: locking the snapshot: %w", err)
+	}
+	return wrote, tx.Commit(ctx)
+}
+
+// LockExecutionSnapshotsFor runs the execution snapshot close as if on day
+// (a day at UTC midnight), the required slots read on the application's
+// own day of now; for proving the close against the existing one.
+func LockExecutionSnapshotsFor(ctx context.Context, pool *pgxpool.Pool, day, now time.Time) (int, error) {
+	loc, err := time.LoadLocation("Africa/Kampala")
+	if err != nil {
+		loc = time.UTC
+	}
+	local := now.In(loc)
+	live := time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC)
+	return planningmonitor.LockEndedPeriods(ctx, pool, func(ctx context.Context, country string,
+		w planningmonitor.SnapshotWindow, snap planningmonitor.PeriodSnapshot) (bool, error) {
+		return lockExecutionSnapshot(ctx, pool, country, w, snap, now)
+	}, day, live)
 }
