@@ -222,6 +222,8 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		// and the document lifecycle (apps.documents.jobs).
 		filepath.Join(root, "internal", "notificationjobs") + sep: {"pd_request", "pd_reminder_log", "document_asset d",
 			"document_acknowledgement", "document_engagement_session"},
+		// Team Coaching's saves (apps.cce_leadership.coaching).
+		filepath.Join(root, "internal", "ccelead") + sep: {"cce_cceo_coaching"},
 		// The weekly sample checks (apps.activities.verification_sampling).
 		filepath.Join(root, "internal", "iasampling") + sep: {"ia_verification_sample"},
 		filepath.Join(root, "internal", "debriefs") + sep: {

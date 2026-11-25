@@ -75,7 +75,9 @@ type Pages interface {
 type Service struct {
 	existingApp Fetcher // nil when no existing application is configured
 	// acting is Acting Leadership's drawers, with Django absent.
-	acting     ActingDrawers
+	acting ActingDrawers
+	// coaching is Team Coaching's drawers, with Django absent.
+	coaching   CoachingDrawers
 	directory  Directory
 	profile    Profile
 	home       Home // nil unless Home is built in Go (internal/home)

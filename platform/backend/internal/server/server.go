@@ -234,6 +234,8 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		WithHome(home.NewService(pool, time.Now), logger).
 		WithNavigation(navigation.NewService(pool)).
 		WithActingDrawers(actingService).
+		WithCoachingDrawers(ccelead.Coaching{DB: pool, Push: plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
+			Logger: logger, Now: time.Now, Kampala: kampalaLocation()}).
 		WithPages(logger,
 			clusterpage.NewService(pool, time.Now),
 			closedschools.NewService(pool, time.Now),
@@ -730,4 +732,13 @@ func (c clusterCards) Cards(ctx context.Context, ids []string, fy, today string)
 		out[id] = schoolprofile.ClusterCard(card)
 	}
 	return out, nil
+}
+
+// kampalaLocation is the platform's time zone, UTC when the zone database is
+// missing.
+func kampalaLocation() *time.Location {
+	if loc, err := time.LoadLocation("Africa/Kampala"); err == nil {
+		return loc
+	}
+	return time.UTC
 }

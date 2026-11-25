@@ -930,3 +930,24 @@ GRANT SELECT (id, user_id, kind, endpoint, p256dh, auth, revoked_at, failure_cou
 GRANT SELECT (user_id, push_enabled) ON notification_preference TO edify_activities_rw;
 -- The copy's round, when its event names none, is the notice's re-fire count.
 GRANT SELECT (reminder_count) ON notification TO edify_activities_rw;
+
+-- ── Team Coaching's saves (apps.cce_leadership.coaching) ──
+-- A lead's coaching records, recorded, corrected, shared and their follow-up
+-- closed; nothing removed. They read the officers' recent work and debriefs.
+GRANT SELECT (id, author_id, cceo_staff_id, cceo_user_id, kind, subject, strengths, growth_areas, agreed_actions, cceo_response,
+              follow_up_note, country, activity_id, debrief_id, held_on, follow_up_due, shared_at, acknowledged_at,
+              follow_up_done_at, rating_biblical_integration, rating_need_alignment, rating_facilitation, rating_participation,
+              rating_application),
+      INSERT (created_at, updated_at, id, author_id, cceo_staff_id, cceo_user_id, kind, held_on, fy, country, subject, strengths,
+              growth_areas, agreed_actions, follow_up_due, rating_biblical_integration, rating_need_alignment,
+              rating_facilitation, rating_participation, rating_application, cceo_response, follow_up_note, activity_id,
+              debrief_id),
+      UPDATE (kind, held_on, fy, country, subject, strengths, growth_areas, agreed_actions, follow_up_due, activity_id,
+              debrief_id, rating_biblical_integration, rating_need_alignment, rating_facilitation, rating_participation,
+              rating_application, shared_at, follow_up_done_at, follow_up_note, updated_at)
+  ON cce_cceo_coaching TO edify_activities_rw;
+GRANT SELECT (id, submitted_by_user_id, deleted_at, date, title) ON daily_debrief TO edify_activities_rw;
+GRANT SELECT (id, responsible_staff_id, monitored_by_staff_id, deleted_at, planned_date, status, activity_name_snapshot,
+              activity_type, school_id, cluster_id)
+  ON activity TO edify_activities_rw;
+GRANT SELECT (id, user_id, country, deleted_at) ON staff_profile TO edify_activities_rw;
