@@ -27,7 +27,8 @@ func TestUnportedRowsLeaveThePageToTheExistingApplication(t *testing.T) {
 		// An SSA visit awaiting its scores is drawn: the row is open work
 		// with its Enter SSA Scores action.
 		{"awaiting SSA scores", activity{status: "completed"}, extra{}, true, false},
-		{"a training meeting", activity{status: "completed"}, extra{meetingKind: sp("training")}, false, true},
+		// A meeting delivering a training is drawn, its topic naming the course.
+		{"a training meeting", activity{status: "completed"}, extra{meetingKind: sp("training")}, false, false},
 	}
 	for _, c := range cases {
 		if got := unportedRow(&c.a, &c.x) != ""; got != c.passed {

@@ -129,6 +129,10 @@ func meetingPurpose(r *planRow) string {
 	if !ok {
 		label = kind
 	}
+	if kind == "training" && r.x.meetingTraining != "" {
+		// _meeting_topic: the course the meeting delivers.
+		label += ": " + r.x.meetingTraining
+	}
 	if r.purpose != "" && r.purpose != str(r.activityTypeLabel) {
 		label += " · " + r.purpose
 	}

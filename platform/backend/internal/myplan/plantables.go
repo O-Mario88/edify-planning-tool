@@ -46,6 +46,9 @@ var statusOptions = []string{"scheduled", "upcoming", "under_way", "overdue", "c
 // extra is what a row of these tables reads beyond 3a's activity.
 type extra struct {
 	evidence, payment, meetingKind *string
+	// meetingTraining is the course a training meeting delivers
+	// (recommendation_source's trainingCourseName).
+	meetingTraining string
 	clusterDistrict, eventDistrict *string
 	endDate                        *time.Time
 	reviewNote, schoolSSAStatus    *string
@@ -96,7 +99,8 @@ type PlanTablesResult struct {
 func readExtras(ctx context.Context, db schooldirectory.Querier, ids []string, lines costLines) (map[string]*extra, error) {
 	out := map[string]*extra{}
 	rows, err := db.Query(ctx, `SELECT a.id, a.evidence_status, a.payment_status, a.meeting_kind, cd.name, ed.name, a.end_date,
-  a.pl_review_note, s.current_fy_ssa_status, a.activity_name_snapshot
+  a.pl_review_note, s.current_fy_ssa_status, a.activity_name_snapshot,
+  COALESCE(CASE WHEN jsonb_typeof(a.recommendation_source::jsonb) = 'object' THEN a.recommendation_source::jsonb ->> 'trainingCourseName' END, '')
 FROM activity a LEFT JOIN cluster c ON c.id = a.cluster_id LEFT JOIN district cd ON cd.id = c.district_id
 LEFT JOIN district ed ON ed.id = a.event_district_id LEFT JOIN school s ON s.id = a.school_id WHERE a.id = ANY($1)`, ids)
 	if err != nil {
@@ -106,7 +110,7 @@ LEFT JOIN district ed ON ed.id = a.event_district_id LEFT JOIN school s ON s.id 
 		var id string
 		x := &extra{}
 		if err := rows.Scan(&id, &x.evidence, &x.payment, &x.meetingKind, &x.clusterDistrict, &x.eventDistrict, &x.endDate,
-			&x.reviewNote, &x.schoolSSAStatus, &x.activityName); err != nil {
+			&x.reviewNote, &x.schoolSSAStatus, &x.activityName, &x.meetingTraining); err != nil {
 			rows.Close()
 			return nil, fmt.Errorf("myplan: reading the rows' columns: %w", err)
 		}
@@ -153,8 +157,6 @@ func unportedRow(a *activity, x *extra) string {
 	switch {
 	case str(a.delivery) == "partner":
 		return "a partner's delivery (compute_next_action's partner branches)"
-	case str(x.meetingKind) == "training":
-		return "a meeting delivering a training"
 	}
 	return ""
 }
