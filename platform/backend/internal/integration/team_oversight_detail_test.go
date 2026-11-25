@@ -10,8 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
-
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1/screensv1connect"
 )
@@ -19,7 +17,7 @@ import (
 // The Team Plan's record drawer is Go's for the team's own work: its risks,
 // ownership, planning, cost and workflow; a record outside
 // the lens or gone is "Not available"; a role without either oversight page
-// is refused; the Regional Programme Lead's region lens is handed on.
+// is refused; the Regional Programme Lead reads their region's work alone.
 func TestTeamOversightDetailIsGos(t *testing.T) {
 	ctx := context.Background()
 	var staffID string
@@ -103,7 +101,9 @@ VALUES (now(), now(), $1, 'school_visit', $2, '', 'staff', 'scheduled', 'none', 
 	}
 	borrowAccount(t, "regional-lead@edify.org")
 	regional := sessionOf(t, "regional-lead@edify.org", seededPassword).GetAccessToken()
-	if _, err := open(regional, "/team-planning-oversight/detail?activity_id="+id); connect.CodeOf(err) != connect.CodeUnavailable {
-		t.Fatalf("the Regional Programme Lead: %v, want handed on", err)
+	// A region reads the work at its schools and its clusters' districts:
+	// work at neither is outside it.
+	if answer, err := open(regional, "/team-planning-oversight/detail?activity_id="+id); err != nil || answer.GetDrawer().GetTitle() != "Not available" {
+		t.Fatalf("the Regional Programme Lead: %v %v", answer, err)
 	}
 }

@@ -61,15 +61,15 @@ func drawerFacts(facts ...[2]string) *screensv1.DrawerItem {
 // lens holds it. Drawn for a Programme Lead's team lens and the country
 // lens: its risks (with their Send forms for a Lead), ownership, planning,
 // cost lines, the hand-over it came from and its workflow. A hand-over not
-// yet scheduled, a region's lens and anyone else are handed on
-// (ErrDetailHandOn). refusal is the view's own refusal.
+// yet scheduled, a region reader with no reach and anyone else are handed
+// on (ErrDetailHandOn). refusal is the view's own refusal.
 func (s *Service) Detail(ctx context.Context, p auth.Principal, query url.Values) (*screensv1.PageDrawer, string, error) {
 	if !pageaccess.CanOpen(p.ActiveRole, false, DetailPath) {
 		return nil, DetailRefusal, nil
 	}
 	reader, ok := rules.TeamPlan.Readers[p.ActiveRole]
-	if !ok || p.Acting != nil || p.InActingAppointment || (reader.Scope != "country" && reader.Scope != "pl") ||
-		(reader.Scope == "pl" && p.ActiveRole != rules.TeamPlan.LeadRole) {
+	if !ok || p.Acting != nil || p.InActingAppointment || (reader.Scope == "pl" && p.ActiveRole != rules.TeamPlan.LeadRole) ||
+		(reader.Scope != "country" && reader.Scope != "pl" && reader.Scope != "region") {
 		return nil, "", ErrDetailHandOn
 	}
 	activityID := strings.TrimSpace(query.Get("activity_id"))
@@ -80,6 +80,7 @@ func (s *Service) Detail(ctx context.Context, p auth.Principal, query url.Values
 		return notAvailable, "", nil
 	}
 	now := s.now()
+	var err error
 	var team []string
 	if reader.Scope == "pl" {
 		scope, err := schooldirectory.ResolveScope(ctx, s.db, p, now)
@@ -100,7 +101,19 @@ func (s *Service) Detail(ctx context.Context, p auth.Principal, query url.Values
 			team = []string{""}
 		}
 	}
-	a, err := s.readOneAct(ctx, activityID, team)
+	var regions []string
+	if reader.Scope == "region" {
+		// A region's oversight is the work at its schools and its clusters'
+		// districts; a reader with no reach assigned is handed on, as the
+		// lens is.
+		if regions, err = s.regionalReach(ctx, p, now); err != nil {
+			return nil, "", err
+		}
+		if regions == nil {
+			return nil, "", ErrDetailHandOn
+		}
+	}
+	a, err := s.readOneAct(ctx, activityID, team, regions)
 	if err != nil {
 		return nil, "", err
 	}
@@ -118,8 +131,9 @@ func (s *Service) Detail(ctx context.Context, p auth.Principal, query url.Values
 		return nil, "", ErrDetailHandOn
 	}
 	// The Lead may send each risk to the one answerable for it (a person
-	// through the school's assignment, or a role's queue); the country lens
-	// sends nothing (can_send).
+	// through the school's assignment, or a role's queue); the country and
+	// region lenses send nothing here (can_send: may_delegate with
+	// country=False, which only a Lead and Admin pass).
 	canSend := reader.Scope == "pl" && reader.MayDelegate
 	handover, err := s.handoverOf(ctx, a.id)
 	if err != nil {
@@ -181,12 +195,13 @@ func withRisks(d *screensv1.PageDrawer, risks []risk, canSend, hasSchool bool) *
 }
 
 // readOneAct is build_item_by_reference's activity, if record_in_scope lets
-// the lens read it (team nil for the country).
-func (s *Service) readOneAct(ctx context.Context, id string, team []string) (*act, error) {
+// the lens read it (team nil but for a Lead, regions nil but for a region).
+func (s *Service) readOneAct(ctx context.Context, id string, team, regions []string) (*act, error) {
 	rows, err := s.db.Query(ctx, `SELECT `+actColumns+actJoins+`
 WHERE a.id = $1 AND a.deleted_at IS NULL
   AND ($2::text[] IS NULL OR a.responsible_staff_id = ANY($2) OR a.monitored_by_staff_id = ANY($2)
-       OR s.account_owner_id = ANY($2) OR c.responsible_staff_id = ANY($2))`, id, team)
+       OR s.account_owner_id = ANY($2) OR c.responsible_staff_id = ANY($2))
+  AND ($3::text[] IS NULL OR s.region_id = ANY($3) OR cd.region_id = ANY($3))`, id, team, regions)
 	if err != nil {
 		return nil, fmt.Errorf("planningoversight: reading the activity: %w", err)
 	}
