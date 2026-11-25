@@ -1352,3 +1352,6 @@ GRANT SELECT (live_remaining) ON planning_oversight_follow_up TO edify_gateway_r
 -- Team Oversight's record drawer (oversight_detail_view): each cost line's
 -- rate-card version.
 GRANT SELECT (cost_setting_version) ON activity_schedule_cost_line TO edify_gateway_ro;
+-- Team Oversight's record drawer for a hand-over (_assignment_item): its
+-- notes, the rationale when no purpose is given.
+GRANT SELECT (notes) ON partner_assignment TO edify_gateway_ro;
