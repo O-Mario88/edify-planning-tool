@@ -111,6 +111,10 @@ describe('a download the gateway writes', () => {
     expect(send('/country-planning-oversight/export?fy=2027&activity_type=planned')).toBe(
       'http://localhost:3000/api/quick-export?target=%2Fcountry-planning-oversight%2Fexport&fy=2027&activity_type=planned',
     );
+    expect(send('/ssa/upload/template')).toBe('http://localhost:3000/api/quick-export?target=%2Fssa%2Fupload%2Ftemplate');
+    expect(send('/ia/school-evidence/learning/template.csv')).toBe(
+      'http://localhost:3000/api/quick-export?target=%2Fia%2Fschool-evidence%2Flearning%2Ftemplate.csv',
+    );
     expect(send('/budget/export?period_type=fy&fy=2027')).toBe(
       'http://localhost:3000/api/quick-export?target=%2Fbudget%2Fexport&period_type=fy&fy=2027',
     );

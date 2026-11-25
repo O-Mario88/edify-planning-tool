@@ -1,0 +1,141 @@
+{
+  "doors": {
+    "Accountant": {
+      "evidence_page": false,
+      "priorities_import": false,
+      "ssa_page": false,
+      "ssa_upload": false,
+      "targets_page": false
+    },
+    "Admin": {
+      "evidence_page": true,
+      "priorities_import": true,
+      "ssa_page": true,
+      "ssa_upload": true,
+      "targets_page": true
+    },
+    "BusinessTransformationOfficer": {
+      "evidence_page": false,
+      "priorities_import": false,
+      "ssa_page": false,
+      "ssa_upload": false,
+      "targets_page": false
+    },
+    "CCEO": {
+      "evidence_page": false,
+      "priorities_import": false,
+      "ssa_page": true,
+      "ssa_upload": false,
+      "targets_page": false
+    },
+    "ClusterLeader": {
+      "evidence_page": false,
+      "priorities_import": false,
+      "ssa_page": false,
+      "ssa_upload": false,
+      "targets_page": false
+    },
+    "CountryDirector": {
+      "evidence_page": true,
+      "priorities_import": false,
+      "ssa_page": true,
+      "ssa_upload": false,
+      "targets_page": true
+    },
+    "HumanResources": {
+      "evidence_page": false,
+      "priorities_import": false,
+      "ssa_page": false,
+      "ssa_upload": false,
+      "targets_page": false
+    },
+    "ImpactAssessment": {
+      "evidence_page": true,
+      "priorities_import": true,
+      "ssa_page": true,
+      "ssa_upload": true,
+      "targets_page": true
+    },
+    "MfiLoanOfficer": {
+      "evidence_page": false,
+      "priorities_import": false,
+      "ssa_page": false,
+      "ssa_upload": false,
+      "targets_page": false
+    },
+    "MfiPartnerAdmin": {
+      "evidence_page": false,
+      "priorities_import": false,
+      "ssa_page": false,
+      "ssa_upload": false,
+      "targets_page": false
+    },
+    "PartnerAdmin": {
+      "evidence_page": false,
+      "priorities_import": false,
+      "ssa_page": false,
+      "ssa_upload": false,
+      "targets_page": false
+    },
+    "PartnerFieldOfficer": {
+      "evidence_page": false,
+      "priorities_import": false,
+      "ssa_page": false,
+      "ssa_upload": false,
+      "targets_page": false
+    },
+    "Program Lead": {
+      "evidence_page": false,
+      "priorities_import": false,
+      "ssa_page": true,
+      "ssa_upload": false,
+      "targets_page": false
+    },
+    "ProjectCoordinator": {
+      "evidence_page": false,
+      "priorities_import": false,
+      "ssa_page": false,
+      "ssa_upload": false,
+      "targets_page": false
+    },
+    "RegionalProgramLead": {
+      "evidence_page": false,
+      "priorities_import": false,
+      "ssa_page": false,
+      "ssa_upload": false,
+      "targets_page": false
+    },
+    "RegionalVicePresident": {
+      "evidence_page": false,
+      "priorities_import": false,
+      "ssa_page": true,
+      "ssa_upload": false,
+      "targets_page": false
+    }
+  },
+  "learning_columns": [
+    "school_id",
+    "assessment_type",
+    "assessed_on",
+    "grade_level",
+    "subject",
+    "learners_tested",
+    "mean_score",
+    "max_score",
+    "learners_proficient",
+    "evidence_reference",
+    "notes"
+  ],
+  "priority_template": "group_code,group_title,priority_code,priority_title,milestone_code,milestone_title,target_value,target_unit,core_target,client_target,measurement_type,metric_key,allocation_method,responsible_role,needs_confirmation,confirmation_note,quality_gate,counting_basis,activity_codes\r\nP1,School growth,P1,Strengthen school growth,P1-M1,Complete verified school support visits,120,visits,80,40,count,verified_activity_catalogue_progress,field_cascade,CCEO,no,,IA verified,distinct_activity,STANDARD_SCHOOL_VISIT\r\n",
+  "ssa_interventions": [
+    "Christlike Behaviour",
+    "Exposure to the Word of God",
+    "Financial Health",
+    "Leadership",
+    "Government Requirements",
+    "Learning Environment",
+    "Teacher's Environment",
+    "Enrolment"
+  ],
+  "ssa_refusal": "Only Impact Assessment and administrators upload official SSA scores."
+}

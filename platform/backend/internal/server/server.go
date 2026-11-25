@@ -164,6 +164,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/trainingsummary"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/uploadcenter"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/uploads"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/uploadtemplates"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/visitrequests"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/weeklyrequest"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/workforceops"
@@ -276,6 +277,9 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		}).
 		WithFile("/team-planning-oversight/export", planningoversight.NewService(pool, time.Now).PlanExportFile("team")).
 		WithFile("/country-planning-oversight/export", planningoversight.NewService(pool, time.Now).PlanExportFile("country"))
+	for target, file := range uploadtemplates.Files(time.Now) {
+		detailPagesSvc = detailPagesSvc.WithFile(target, detailpages.FileExport(file))
+	}
 	screenService := screens.NewService(existingApp).TrustProxyHeaders(cfg.Loans.TrustProxyHeaders).
 		WithStrictReads(cfg.StrictReads).
 		WithDirectory(schooldirectory.NewService(pool, time.Now), logger).
