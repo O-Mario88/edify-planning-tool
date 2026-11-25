@@ -28,7 +28,8 @@ import (
 //     - mfa_challenge_purge deletes expired MFA challenge rows
 //     - notification_escalation upgrades stale (>48h) unread action-required
 //     notices to priority='urgent'
-//     - school_action_sweep marks past-due team_action rows state='overdue'
+//     - document_lifecycle runs (school_action_sweep is left to the existing
+//     application until its condition detectors are in Go; 189 §4)
 //     - outbox_drain marks unprocessed domain_event_log rows processed_at
 //     - scheduler_history_prune removes >90d successes while keeping latest ok
 //     - every job run writes ground-truth rows to public.scheduled_job_execution
@@ -223,7 +224,7 @@ INSERT INTO scheduled_job_execution (
 	for _, name := range []string{
 		"mfa_challenge_purge",
 		"notification_escalation",
-		"school_action_sweep",
+		"document_lifecycle",
 		"acting_lifecycle",
 		"outbox_drain",
 		"audit_chain_seal",

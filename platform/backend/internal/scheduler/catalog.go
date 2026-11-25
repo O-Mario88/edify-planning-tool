@@ -100,6 +100,13 @@ var notRunByGo = map[string]string{
 	"export_jobs":     "apps.reports.export_jobs.work: Go has no page that queues an export yet",
 	"execution_period_snapshots": "apps.planning.country_execution.snapshots.lock_ended_periods: " +
 		"the Country Execution figures it locks are not built in Go yet",
+	"school_action_sweep": "apps.planning.action_service.resolve_due_actions and mark_overdue_actions: " +
+		"whether a delegated action's condition still holds is read through the Planning Oversight and " +
+		"Partner Oversight risk detectors, Country Oversight's planning gaps and the SSA intervention bands, " +
+		"none of which are built in Go yet",
+	"planning_followup_sweep": "apps.planning.country_oversight.followups.sweep: a follow-up closes when " +
+		"Country Oversight's coverage (or Country Execution's figures) shows its gap cleared, and neither " +
+		"is built in Go yet",
 }
 
 // KampalaOperationalFY returns the Uganda fiscal year (Oct 1 – Sep 30) in
