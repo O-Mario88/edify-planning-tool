@@ -261,7 +261,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 			Logger: logger}).
 		WithTemporaryPasswords(accountService).
 		WithAccountCreation(accountService, staffService).
-		WithImpactReports(iareports.Reports{DB: pool, Now: time.Now}).
+		WithImpactReports(iareports.Reports{DB: pool, Now: time.Now, Push: plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, Logger: logger}).
 		WithPartnerOversightSend(partneroversight.SendDeps{Push: plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy,
 			Logger: logger, Delegate: actionsweep.PartnerDelegate(plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy, logger)}).
 		WithPages(logger,

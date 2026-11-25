@@ -57,10 +57,57 @@ func (r Reports) Drawer(ctx context.Context, p auth.Principal, rawPath string) (
 	return d, true, err
 }
 
-// Save makes a report drawer's save; served is false for a drawer Go does
-// not save.
-func (r Reports) Save(ctx context.Context, p auth.Principal, rawPath string, values map[string]string) (Saved, bool, error) {
+// reportPagePath is a report's own page, whose one-button forms Submit for
+// review and Withdraw post.
+var reportPagePath = regexp.MustCompile(`^/ia/impact-reports/([A-Za-z0-9]{1,30})/$`)
+
+// pageForm is the page form a key names: its header button's key, or where
+// the form posts.
+func pageForm(id, form string) string {
+	switch strings.TrimSuffix(form, "/") {
+	case "submit_for_review", PagePath + id + "/submit":
+		return "submit"
+	case "withdraw", PagePath + id + "/withdraw":
+		return "withdraw"
+	}
+	return ""
+}
+
+// savePageForm is _save_page_form for a report's page: the form must be one
+// the page draws for the reader.
+func (r Reports) savePageForm(ctx context.Context, p auth.Principal, id, form string, values map[string]string) (Saved, error) {
+	which := pageForm(id, form)
+	x, err := r.visible(ctx, r.DB, p, id, false)
+	if err != nil {
+		return Saved{}, err
+	}
+	if x == nil {
+		return Saved{}, refuse("This page is not available.")
+	}
+	author := x.author == p.UserID && p.ActiveRole == roleIA
+	switch {
+	case which == "submit" && author && x.status == statusDraft:
+		return r.submit(ctx, p, id)
+	case which == "withdraw" && author && (x.status == statusDraft || x.status == "submitted"):
+		return r.withdraw(ctx, p, id, strings.TrimSpace(values["note"]))
+	}
+	return Saved{}, refuse("This form is not available.")
+}
+
+// Save makes a report drawer's save, or a report page's form; served is
+// false for one Go does not save.
+func (r Reports) Save(ctx context.Context, p auth.Principal, rawPath, form string, values map[string]string) (Saved, bool, error) {
 	path, _, _ := strings.Cut(rawPath, "?")
+	if m := reportPagePath.FindStringSubmatch(path); m != nil && form != "" {
+		if pageForm(m[1], form) == "" {
+			return Saved{}, false, nil
+		}
+		if !pageaccess.CanOpen(p.ActiveRole, false, path) {
+			return Saved{}, true, &Refusal{Message: "This page is not available."}
+		}
+		saved, err := r.savePageForm(ctx, p, m[1], form, values)
+		return saved, true, err
+	}
 	which, id, ok := handled(path)
 	if !ok {
 		return Saved{}, false, nil

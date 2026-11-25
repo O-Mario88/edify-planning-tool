@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -14,6 +15,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
@@ -36,6 +38,10 @@ var Programme = [][2]string{
 type Reports struct {
 	DB  *pgxpool.Pool
 	Now func() time.Time
+	// Push and Live carry a reviewer's notice to their phone and open pages.
+	Push   activities.NoticePush
+	Live   activities.NoticePublisher
+	Logger *slog.Logger
 }
 
 func (r Reports) now() time.Time {

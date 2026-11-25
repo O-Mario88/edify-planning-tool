@@ -19,7 +19,7 @@ import (
 // ImpactReports is internal/iareports.Reports.
 type ImpactReports interface {
 	Drawer(ctx context.Context, p auth.Principal, rawPath string) (*screensv1.PageDrawer, bool, error)
-	Save(ctx context.Context, p auth.Principal, rawPath string, values map[string]string) (iareports.Saved, bool, error)
+	Save(ctx context.Context, p auth.Principal, rawPath, form string, values map[string]string) (iareports.Saved, bool, error)
 }
 
 // WithImpactReports makes the impact report drawers Go's.
@@ -53,7 +53,7 @@ func (s *Service) impactReportSaveInGo(ctx context.Context, message *screensv1.S
 	if !ok || s.impactReports == nil || s.existingApp != nil || p.InActingAppointment {
 		return nil, false, nil
 	}
-	saved, served, err := s.impactReports.Save(ctx, p, message.GetPath(), message.GetValues())
+	saved, served, err := s.impactReports.Save(ctx, p, message.GetPath(), message.GetForm(), message.GetValues())
 	if !served {
 		return nil, false, nil
 	}

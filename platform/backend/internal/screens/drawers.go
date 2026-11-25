@@ -226,6 +226,12 @@ func (s *Service) SaveDrawer(
 		}
 		return connect.NewResponse(answer), nil
 	}
+	if answer, served, err := s.impactReportSaveInGo(ctx, forwarded); served {
+		if err != nil {
+			return nil, err
+		}
+		return connect.NewResponse(answer), nil
+	}
 	if form == "" {
 		from := origin.Read(request.Peer().Addr, request.Header(), s.trustProxy, trace.FromContext(ctx).RequestID)
 		if answer, served, err := s.coreVisitInGo(ctx, forwarded, activities.Origin{
@@ -249,12 +255,6 @@ func (s *Service) SaveDrawer(
 			return connect.NewResponse(answer), nil
 		}
 		if answer, served, err := s.partnerLoginSaveInGo(ctx, forwarded); served {
-			if err != nil {
-				return nil, err
-			}
-			return connect.NewResponse(answer), nil
-		}
-		if answer, served, err := s.impactReportSaveInGo(ctx, forwarded); served {
 			if err != nil {
 				return nil, err
 			}

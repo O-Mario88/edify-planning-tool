@@ -49,6 +49,9 @@ type enrolment struct {
 	baselineAt, followUpAt                            *time.Time
 	due, start                                        *time.Time
 	created                                           time.Time
+	// What a frozen report snapshot keeps (reports.ROW_KEYS).
+	baselineID, followUpID string
+	mappingVersion         *int
 }
 
 // evidenceRow is ia_workflow.evidence_row's result.
@@ -60,6 +63,9 @@ type evidenceRow struct {
 	baseline, followUp *float64
 	measured           bool
 	delta              *float64
+	// What a frozen report snapshot keeps (reports.ROW_KEYS).
+	assignmentID, baselineID, followUpID, baselineDate, followUpDate string
+	mappingVersion                                                   *int
 }
 
 // cohortDomain is one row of _cohort_domains.
@@ -215,10 +221,29 @@ func activeSchools(scope schooldirectory.Scope) (string, []any) {
 	return fmt.Sprintf("%s AND s.operational_status = ANY($%d)", where, len(args)), args
 }
 
-// outcomeAreaGroups is _outcome_area_groups' names: the approved areas (the
-// newest approved version of each code) by name, then the domains no area
-// claims.
+// areaGroup is one of _outcome_area_groups: an approved area's name and its
+// SSA domains, or the domains no area claims.
+type areaGroup struct {
+	name    string
+	domains []string
+}
+
+// outcomeAreaGroups is _outcome_area_groups' names.
 func (s *Service) outcomeAreaGroups(ctx context.Context) ([]string, error) {
+	groups, err := s.areaGroups(ctx)
+	if err != nil {
+		return nil, err
+	}
+	names := make([]string, 0, len(groups))
+	for _, g := range groups {
+		names = append(names, g.name)
+	}
+	return names, nil
+}
+
+// areaGroups is _outcome_area_groups: the approved areas (the newest
+// approved version of each code) by name, then the domains no area claims.
+func (s *Service) areaGroups(ctx context.Context) ([]areaGroup, error) {
 	o := rules.Dashboard.Outcomes
 	rows, err := s.db.Query(ctx, `
 SELECT a.code, a.name, a.version, d.intervention FROM impact_outcome_area_domain d JOIN impact_outcome_area a ON a.id = d.area_id
@@ -259,20 +284,23 @@ WHERE a.status = $1 ORDER BY a.code, a.version DESC, d.intervention`, o.AreaAppr
 	}
 	sort.SliceStable(list, func(i, j int) bool { return strings.ToLower(list[i].name) < strings.ToLower(list[j].name) })
 	claimed := map[string]bool{}
-	names := []string{}
+	groups := []areaGroup{}
 	for _, a := range list {
-		names = append(names, a.name)
+		groups = append(groups, areaGroup{name: a.name, domains: a.domains})
 		for _, d := range a.domains {
 			claimed[d] = true
 		}
 	}
+	unclaimed := []string{}
 	for _, i := range o.Interventions {
 		if !claimed[i[0]] {
-			names = append(names, "Not yet in an approved outcome area")
-			break
+			unclaimed = append(unclaimed, i[0])
 		}
 	}
-	return names, nil
+	if len(unclaimed) > 0 {
+		groups = append(groups, areaGroup{name: "Not yet in an approved outcome area", domains: unclaimed})
+	}
+	return groups, nil
 }
 
 // workspace reads the project enrolments in scope (current_enrolments over
@@ -313,7 +341,7 @@ SELECT a.id, a.school_id, s.name, COALESCE(s.account_owner_id, ''), a.project_id
                 AND (b.date_of_ssa AT TIME ZONE 'UTC')::date <= $%[2]d, FALSE), b.date_of_ssa,
        COALESCE(f.deleted_at IS NULL AND f.verification_status = 'confirmed' AND f.school_id = a.school_id
                 AND (f.date_of_ssa AT TIME ZONE 'UTC')::date <= $%[2]d, FALSE), f.date_of_ssa,
-       a.follow_up_due_on, a.start_date, a.created_at
+       a.follow_up_due_on, a.start_date, a.created_at, COALESCE(a.baseline_ssa_id, ''), COALESCE(a.follow_up_ssa_id, ''), a.mapping_version
 %[1]s
 LEFT JOIN ssa_record b ON b.id = a.baseline_ssa_id LEFT JOIN ssa_record f ON f.id = a.follow_up_ssa_id%[3]s
 ORDER BY a.follow_up_due_on ASC NULLS LAST, s.name, a.project_id`, from, t, where), args...)
@@ -325,7 +353,7 @@ ORDER BY a.follow_up_due_on ASC NULLS LAST, s.name, a.project_id`, from, t, wher
 		var e enrolment
 		if err := rows.Scan(&e.id, &e.schoolID, &e.school, &e.ownerID, &e.projectID, &e.project, &e.intervention, &e.classification,
 			&e.baselineScore, &e.followUpScore, &e.baselineSet, &e.followUpSet, &e.baselineOK, &e.baselineAt,
-			&e.followUpOK, &e.followUpAt, &e.due, &e.start, &e.created); err != nil {
+			&e.followUpOK, &e.followUpAt, &e.due, &e.start, &e.created, &e.baselineID, &e.followUpID, &e.mappingVersion); err != nil {
 			rows.Close()
 			return w, fmt.Errorf("iapages: reading an enrolment: %w", err)
 		}
@@ -447,11 +475,14 @@ func (e enrolment) row(today time.Time) evidenceRow {
 	}
 	r := evidenceRow{schoolID: e.schoolID, school: e.school, ownerID: e.ownerID, projectID: e.projectID, project: e.project,
 		code: e.intervention, intervention: label, state: state, status: status, action: action, measured: measured}
+	r.assignmentID, r.mappingVersion = e.id, e.mappingVersion
 	if validBaseline {
-		r.baseline = e.baselineScore
+		r.baseline, r.baselineID = e.baselineScore, e.baselineID
+		r.baselineDate = e.baselineAt.UTC().Format(time.DateOnly)
 	}
 	if validFollowUp {
-		r.followUp = e.followUpScore
+		r.followUp, r.followUpID = e.followUpScore, e.followUpID
+		r.followUpDate = e.followUpAt.UTC().Format(time.DateOnly)
 	}
 	if e.due != nil {
 		r.due = e.due.Format("2006-01-02")

@@ -99,6 +99,30 @@ func TestImpactAssessmentStartsAReportInGo(t *testing.T) {
 	if !recommended || !historyRows {
 		t.Fatalf("the page lacks the recommendation (%v) or the edit in its history (%v)", recommended, historyRows)
 	}
+	pagePath := "/ia/impact-reports/" + id + "/"
+	if r, err := drawers.SaveDrawer(ctx, authed(&screensv1.SaveDrawerRequest{Path: pagePath, Form: "submit_for_review"}, token)); err != nil ||
+		r.Msg.GetError() != "State the limitations: what this evidence cannot show before submitting." {
+		t.Fatalf("submitting without limitations: %v %v", r, err)
+	}
+	if r, err := drawers.SaveDrawer(ctx, authed(&screensv1.SaveDrawerRequest{Path: editPath, Values: map[string]string{
+		"fy": fy, "title": title, "programme_areas": "training", "methodology": "Method", "findings": "Found", "limitations": "Limits"}}, token)); err != nil ||
+		!r.Msg.GetSaved() {
+		t.Fatalf("adding the limitations: %v %v", r, err)
+	}
+	if r, err := drawers.SaveDrawer(ctx, authed(&screensv1.SaveDrawerRequest{Path: pagePath, Form: "submit_for_review"}, token)); err != nil ||
+		r.Msg.GetMessage() != "Submitted. The evidence is frozen and a second reviewer has been told." {
+		t.Fatalf("submitting: %v %v", r, err)
+	}
+	var submitted, hash string
+	var frozen bool
+	if err := admin.QueryRow(ctx, `SELECT status, snapshot_hash, evidence_snapshot ? 'cohort' FROM impact_report WHERE id = $1`, id).
+		Scan(&submitted, &hash, &frozen); err != nil || submitted != "submitted" || len(hash) != 64 || !frozen {
+		t.Fatalf("the submitted report: %q %q %v %v", submitted, hash, frozen, err)
+	}
+	if r, err := drawers.SaveDrawer(ctx, authed(&screensv1.SaveDrawerRequest{Path: pagePath, Form: "withdraw"}, token)); err != nil ||
+		r.Msg.GetMessage() != "Report withdrawn." {
+		t.Fatalf("withdrawing: %v %v", r, err)
+	}
 	borrowAccount(t, "cd@edify.org")
 	cd := sessionOf(t, "cd@edify.org", seededPassword).GetAccessToken()
 	if r, err := drawers.GetDrawer(ctx, authed(&screensv1.GetDrawerRequest{Path: editPath}, cd)); err != nil || r.Msg.GetDrawer().GetCanSubmit() {

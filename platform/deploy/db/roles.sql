@@ -1300,6 +1300,12 @@ GRANT SELECT (certification_status, contract_status, notes) ON partner TO edify_
 GRANT SELECT (updated_at) ON document_acknowledgement TO edify_gateway_ro;
 GRANT SELECT (measurement_end_fy, measurement_start_fy) ON project TO edify_gateway_ro;
 GRANT SELECT (baseline_band) ON project_school_assignment TO edify_gateway_ro;
+-- The evidence an impact report freezes keeps each enrolment's mapping
+-- version (reports.build_snapshot).
+GRANT SELECT (mapping_version) ON project_school_assignment TO edify_gateway_ro;
+-- ... and the country's approved findings and verified loan conclusions it cites.
+GRANT SELECT (country, programme, statement, limitations, metric_snapshot, reviewed_at) ON impact_finding TO edify_gateway_ro;
+GRANT SELECT (ia_verified_at) ON bt_loan_impact_assessment TO edify_gateway_ro;
 GRANT SELECT (staff_number) ON staff_profile TO edify_gateway_ro;
 GRANT SELECT (created_at) ON messaging_messageparticipant TO edify_gateway_ro;
 
