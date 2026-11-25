@@ -262,3 +262,58 @@ func TestCountryOversightCoverageIsGosInTheExistingDesign(t *testing.T) {
 		t.Fatalf("the Country Plan lens: %v, want handed on", err)
 	}
 }
+
+// The school tables behind Country Oversight's figures are Go's
+// (tables.build, country_table.html): the fifteen table tabs, the table
+// page's nine filters, fifty rows a page, and as many schools as the page's
+// own figure counts. A table Go does not draw yet is handed on.
+func TestCountryOversightSchoolTablesAreGos(t *testing.T) {
+	borrowAccount(t, "cd@edify.org")
+	director := sessionOf(t, "cd@edify.org", seededPassword).GetAccessToken()
+	query := map[string]string{"fy": "2026", "period": "fy"}
+	page, err := pageOf(director, countryPlanningOversight, query)
+	if err != nil {
+		t.Fatalf("the page: %v", err)
+	}
+	var people *screensv1.PageTable
+	for _, b := range page.GetBlocks() {
+		if tbl := b.GetTable(); tbl != nil && len(tbl.GetColumns()) > 14 && tbl.GetColumns()[0].GetLabel() == "Name" {
+			people = tbl
+		}
+	}
+	if people == nil || people.GetColumns()[14].GetLabel() != "Not Yet Planned" {
+		t.Fatalf("people table %v", people)
+	}
+	want := strings.ReplaceAll(people.GetRows()[0].GetCells()[14].GetText(), ",", "")
+	table, err := pageOf(director, countryPlanningOversight+"table/not-planned", query)
+	if err != nil {
+		t.Fatalf("Unplanned Schools: %v", err)
+	}
+	if table.GetHeader().GetTitle() != "Unplanned Schools" || table.GetWebPath() != countryPlanningOversight+"table/not-planned" {
+		t.Fatalf("header %v, web path %q", table.GetHeader(), table.GetWebPath())
+	}
+	blocks := table.GetBlocks()
+	tabs := blocks[0].GetLinkTabs().GetTabs()
+	active := 0
+	for _, tab := range tabs {
+		if tab.GetActive() {
+			active++
+			if tab.GetLabel() != "Unplanned" {
+				t.Fatalf("active tab %q", tab.GetLabel())
+			}
+		}
+	}
+	if len(tabs) != 15 || active != 1 || len(blocks[1].GetFilters().GetFilters()) != 9 {
+		t.Fatalf("tabs %d (active %d), filters %v", len(tabs), active, blocks[1].GetFilters())
+	}
+	rows := blocks[2].GetTable()
+	if !strings.HasPrefix(rows.GetTitle(), "Unplanned Schools · ") || len(rows.GetRows()) > 50 {
+		t.Fatalf("table %q with %d rows", rows.GetTitle(), len(rows.GetRows()))
+	}
+	if got := strings.ReplaceAll(strings.Fields(rows.GetSubtitle())[0], ",", ""); got != want {
+		t.Fatalf("the table lists %s schools, the page counts %s", got, want)
+	}
+	if _, err := pageOf(director, countryPlanningOversight+"table/visits", query); connect.CodeOf(err) != connect.CodeUnavailable {
+		t.Fatalf("Staff Visit Plans: %v, want handed on", err)
+	}
+}

@@ -269,7 +269,7 @@ def _country_oversight_page() -> dict:
     from apps.frontend.views.oversight_views import country_lens_tabs
     from apps.planning.country_execution.followups import EXEC_ISSUES
     from apps.planning.country_oversight import followups as fu
-    from apps.planning.country_oversight import service
+    from apps.planning.country_oversight import service, tables
     from apps.core.permissions import RolePermissionService
     from apps.core.rbac import EdifyRole
     from apps.planning.followup_models import OPEN_FOLLOW_UP_STATES, FollowUpStatus
@@ -299,6 +299,39 @@ def _country_oversight_page() -> dict:
         "followup_status_labels": {str(k): str(v) for k, v in FollowUpStatus.choices},
         "followup_issue_labels": {
             key: issue.label for key, issue in {**EXEC_ISSUES, **fu.ISSUES}.items()
+        },
+        # The consolidated tables behind the figures (tables.SPECS), in the
+        # order the table page offers them.
+        "tables": [
+            {
+                "key": spec.key,
+                "title": spec.title,
+                "short": spec.short,
+                "unit": spec.unit,
+                "description": spec.description,
+                "columns": [
+                    {
+                        "key": c.key,
+                        "label": c.label,
+                        "numeric": c.numeric,
+                        "is_date": c.is_date,
+                        "is_school": c.is_school,
+                        "blank": c.blank,
+                        "quiet": c.quiet,
+                        "kind": c.kind,
+                    }
+                    for c in spec.columns
+                ],
+                "export_only": list(spec.export_only),
+            }
+            for spec in tables.SPECS.values()
+        ],
+        "table_tabs": list(tables.TAB_ORDER),
+        "table_labels": {
+            "nobody": tables.NOBODY,
+            "unclustered": tables.UNCLUSTERED,
+            "no_lead": service.NO_LEAD_LABEL,
+            "no_owner": service.NO_OWNER_LABEL,
         },
         # may_export: the drill-down's Export (can_export).
         "export_roles": sorted(

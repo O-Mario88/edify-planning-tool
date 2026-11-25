@@ -2,6 +2,7 @@ package planningoversight
 
 import (
 	"context"
+	"errors"
 	"net/url"
 	"regexp"
 	"slices"
@@ -53,6 +54,9 @@ func pageFor(path string) string {
 // existing application (served=false), except the Team Plan a Programme
 // Lead's team has nothing planned on (teamplan.go).
 func (s *Service) Build(ctx context.Context, p auth.Principal, path string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if table, ok := tableFor(path); ok {
+		return s.buildCountryTable(ctx, p, table, query)
+	}
 	key := pageFor(path)
 	if key == "" {
 		return nil, false, nil
@@ -134,4 +138,27 @@ func (s *Service) buildCountryCoverage(ctx context.Context, p auth.Principal, qu
 	}
 	return &screensv1.GetPageResponse{Header: &screensv1.PageHeader{Title: "Country Planning Oversight"}, Blocks: blocks,
 		WebPath: CountryPath}, true, nil
+}
+
+// tableFor is the key of the consolidated table at path
+// (country-planning-oversight/table/<str:key>), if path is one.
+func tableFor(path string) (string, bool) {
+	key, ok := strings.CutPrefix(path, CountryPath+"table/")
+	if !ok || key == "" || strings.Contains(key, "/") {
+		return "", false
+	}
+	return key, true
+}
+
+// buildCountryTable is table_view for p: behind the page's own gate, the
+// tables Go draws, and every other handed on.
+func (s *Service) buildCountryTable(ctx context.Context, p auth.Principal, key string, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	if myplan.FeedRefusesFormat(query) || refused(p.ActiveRole, countryKey) {
+		return nil, true, pagegate.ErrNotAvailable
+	}
+	page, served, err := planningmonitor.CountryOversightTable(ctx, s.db, p, key, query, s.now())
+	if errors.Is(err, planningmonitor.ErrNoSuchTable) {
+		return nil, false, nil
+	}
+	return page, served, err
 }

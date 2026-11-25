@@ -53,6 +53,10 @@ type cpoRules struct {
 		FollowUpOpenStates   []string          `json:"followup_open_states"`
 		FollowUpStatusLabels map[string]string `json:"followup_status_labels"`
 		FollowUpIssueLabels  map[string]string `json:"followup_issue_labels"`
+		// The consolidated tables (tables.SPECS) and their tab order.
+		Tables      []cpoTableSpec    `json:"tables"`
+		TableTabs   []string          `json:"table_tabs"`
+		TableLabels map[string]string `json:"table_labels"`
 		// The roles the drill-down offers Export to (can_export).
 		ExportRoles []string `json:"export_roles"`
 	} `json:"page"`
@@ -72,4 +76,22 @@ func (c cpoRules) slots(family string) cpoSlots {
 		return s
 	}
 	return c.FamilySlots[c.UnmappedFamily]
+}
+
+// cpoTableSpec is tables.Spec.
+type cpoTableSpec struct {
+	Key, Title, Short, Unit, Description string
+	Columns                              []cpoColumn `json:"columns"`
+	ExportOnly                           []string    `json:"export_only"`
+}
+
+// cpoColumn is tables.Column.
+type cpoColumn struct {
+	Key, Label string
+	Numeric    bool   `json:"numeric"`
+	IsDate     bool   `json:"is_date"`
+	IsSchool   bool   `json:"is_school"`
+	Blank      string `json:"blank"`
+	Quiet      bool   `json:"quiet"`
+	Kind       string `json:"kind"`
 }

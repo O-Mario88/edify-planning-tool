@@ -444,6 +444,29 @@
           ""
         ]
       ],
+      "table_labels": {
+        "no_lead": "No Programme Lead",
+        "no_owner": "No account owner",
+        "nobody": "No responsible person recorded",
+        "unclustered": "Unclustered"
+      },
+      "table_tabs": [
+        "plans",
+        "all-visits",
+        "visits",
+        "partners",
+        "projects",
+        "project-partners",
+        "project-activities",
+        "trainings",
+        "clusters",
+        "meetings",
+        "not-planned",
+        "partly-planned",
+        "no-training",
+        "unclustered",
+        "duplicates"
+      ],
       "table_views": [
         [
           "workload",
@@ -457,6 +480,3876 @@
           "training",
           "Trainings & Clusters"
         ]
+      ],
+      "tables": [
+        {
+          "columns": [
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "lead",
+              "kind": "",
+              "label": "Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "sub_region",
+              "kind": "",
+              "label": "Sub-region",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district",
+              "kind": "",
+              "label": "District",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "holder",
+              "kind": "",
+              "label": "CCEO / PL",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cluster",
+              "kind": "",
+              "label": "Cluster",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "school_id",
+              "kind": "",
+              "label": "School ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": true,
+              "key": "school",
+              "kind": "",
+              "label": "School Name",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "type",
+              "kind": "",
+              "label": "School Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "activity",
+              "kind": "",
+              "label": "Visit",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "intervention",
+              "kind": "",
+              "label": "SSA Intervention",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "staff",
+              "kind": "",
+              "label": "Planned By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "date",
+              "kind": "",
+              "label": "Planned Date",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "status",
+              "kind": "",
+              "label": "Status",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "flag",
+              "kind": "",
+              "label": "Planned Twice",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district_type",
+              "kind": "",
+              "label": "District Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "purpose",
+              "kind": "",
+              "label": "Purpose",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "project",
+              "kind": "",
+              "label": "Project",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "facilitator",
+              "kind": "",
+              "label": "Facilitated By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "monitor",
+              "kind": "",
+              "label": "Monitored By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "role",
+              "kind": "",
+              "label": "Planner's Role",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "quarter",
+              "kind": "",
+              "label": "Quarter",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "participants",
+              "kind": "",
+              "label": "Participants",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cost",
+              "kind": "",
+              "label": "Planned Cost (UGX)",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "salesforce",
+              "kind": "",
+              "label": "Salesforce ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "ia",
+              "kind": "",
+              "label": "Verification",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "payment",
+              "kind": "",
+              "label": "Payment",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "rescheduled",
+              "kind": "",
+              "label": "Times Rescheduled",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "recorded",
+              "kind": "",
+              "label": "Recorded On",
+              "numeric": false,
+              "quiet": false
+            }
+          ],
+          "description": "Every Follow up and In-school Training visit staff have planned, with who planned it. These are the visits counted against each CCEO's 560 and each Programme Lead's 280.",
+          "export_only": [
+            "district_type",
+            "purpose",
+            "project",
+            "partner",
+            "assigned_by",
+            "facilitator",
+            "monitor",
+            "role",
+            "quarter",
+            "participants",
+            "invited",
+            "cost",
+            "salesforce",
+            "ia",
+            "payment",
+            "rescheduled",
+            "recorded"
+          ],
+          "key": "visits",
+          "short": "Staff Visits",
+          "title": "Staff Visit Plans",
+          "unit": "visit"
+        },
+        {
+          "columns": [
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "lead",
+              "kind": "",
+              "label": "Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "sub_region",
+              "kind": "",
+              "label": "Sub-region",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district",
+              "kind": "",
+              "label": "District",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "holder",
+              "kind": "",
+              "label": "CCEO / PL",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cluster",
+              "kind": "",
+              "label": "Cluster",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "school_id",
+              "kind": "",
+              "label": "School ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": true,
+              "key": "school",
+              "kind": "",
+              "label": "School Name",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "type",
+              "kind": "",
+              "label": "School Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "activity",
+              "kind": "",
+              "label": "Visit",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "intervention",
+              "kind": "",
+              "label": "SSA Intervention",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "channel",
+              "kind": "",
+              "label": "By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "by_name",
+              "kind": "",
+              "label": "Planned By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "Awaiting partner schedule",
+              "is_date": true,
+              "is_school": false,
+              "key": "date",
+              "kind": "",
+              "label": "Planned Date",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "status",
+              "kind": "",
+              "label": "Status",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "counted",
+              "kind": "",
+              "label": "Counts Toward Target",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "flag",
+              "kind": "",
+              "label": "Planned Twice",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district_type",
+              "kind": "",
+              "label": "District Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "purpose",
+              "kind": "",
+              "label": "Purpose",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "project",
+              "kind": "",
+              "label": "Project",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "partner",
+              "kind": "",
+              "label": "Partner",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "assigned_by",
+              "kind": "",
+              "label": "Assigned By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "facilitator",
+              "kind": "",
+              "label": "Facilitated By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "monitor",
+              "kind": "",
+              "label": "Monitored By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "role",
+              "kind": "",
+              "label": "Planner's Role",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "quarter",
+              "kind": "",
+              "label": "Quarter",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "participants",
+              "kind": "",
+              "label": "Participants",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cost",
+              "kind": "",
+              "label": "Planned Cost (UGX)",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "salesforce",
+              "kind": "",
+              "label": "Salesforce ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "ia",
+              "kind": "",
+              "label": "Verification",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "payment",
+              "kind": "",
+              "label": "Payment",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "rescheduled",
+              "kind": "",
+              "label": "Times Rescheduled",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "recorded",
+              "kind": "",
+              "label": "Recorded On",
+              "numeric": false,
+              "quiet": false
+            }
+          ],
+          "description": "Every visit planned for the year, by staff and by Partners. A Partner's visit is listed once the Partner has set its date; until then it is in Schools Assigned to Partners. SSA Support, donor, story, social and invitation visits are listed and marked as not counted toward a person's target.",
+          "export_only": [
+            "district_type",
+            "purpose",
+            "project",
+            "partner",
+            "assigned_by",
+            "facilitator",
+            "monitor",
+            "role",
+            "quarter",
+            "participants",
+            "invited",
+            "cost",
+            "salesforce",
+            "ia",
+            "payment",
+            "rescheduled",
+            "recorded"
+          ],
+          "key": "all-visits",
+          "short": "All Visits",
+          "title": "All Visit Plans",
+          "unit": "visit"
+        },
+        {
+          "columns": [
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "lead",
+              "kind": "",
+              "label": "Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "sub_region",
+              "kind": "",
+              "label": "Sub-region",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district",
+              "kind": "",
+              "label": "District",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "holder",
+              "kind": "",
+              "label": "CCEO / PL",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cluster",
+              "kind": "",
+              "label": "Cluster",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "partner",
+              "kind": "",
+              "label": "Partner",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "school_id",
+              "kind": "",
+              "label": "School ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": true,
+              "key": "school",
+              "kind": "",
+              "label": "School Name",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "type",
+              "kind": "",
+              "label": "School Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "activity",
+              "kind": "",
+              "label": "Activity",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "intervention",
+              "kind": "",
+              "label": "SSA Intervention",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "staff",
+              "kind": "",
+              "label": "Assigned By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "assigned_on",
+              "kind": "",
+              "label": "Assigned On",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "Awaiting partner schedule",
+              "is_date": true,
+              "is_school": false,
+              "key": "date",
+              "kind": "",
+              "label": "Planned Date",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "status",
+              "kind": "",
+              "label": "Status",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "flag",
+              "kind": "",
+              "label": "Planned Twice",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "state",
+              "kind": "",
+              "label": "Partner Planning",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "staff_date",
+              "kind": "",
+              "label": "Date Entered by Staff",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "course",
+              "kind": "",
+              "label": "Training",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district_type",
+              "kind": "",
+              "label": "District Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "purpose",
+              "kind": "",
+              "label": "Purpose",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "project",
+              "kind": "",
+              "label": "Project",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "facilitator",
+              "kind": "",
+              "label": "Facilitated By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "monitor",
+              "kind": "",
+              "label": "Monitored By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "role",
+              "kind": "",
+              "label": "Planner's Role",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "quarter",
+              "kind": "",
+              "label": "Quarter",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "participants",
+              "kind": "",
+              "label": "Participants",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cost",
+              "kind": "",
+              "label": "Planned Cost (UGX)",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "salesforce",
+              "kind": "",
+              "label": "Salesforce ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "ia",
+              "kind": "",
+              "label": "Verification",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "payment",
+              "kind": "",
+              "label": "Payment",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "rescheduled",
+              "kind": "",
+              "label": "Times Rescheduled",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "recorded",
+              "kind": "",
+              "label": "Recorded On",
+              "numeric": false,
+              "quiet": false
+            }
+          ],
+          "description": "Every piece of work staff put in a Partner's hands, with the Partner who holds it. The Planned Date is the date the Partner has set \u2014 until the Partner sets one it reads Awaiting partner schedule, whatever day staff entered. Partner planning counts only what a Partner dated.",
+          "export_only": [
+            "state",
+            "staff_date",
+            "course",
+            "district_type",
+            "purpose",
+            "project",
+            "assigned_by",
+            "facilitator",
+            "monitor",
+            "role",
+            "quarter",
+            "participants",
+            "invited",
+            "cost",
+            "salesforce",
+            "ia",
+            "payment",
+            "rescheduled",
+            "recorded"
+          ],
+          "key": "partners",
+          "short": "Partners",
+          "title": "Schools Assigned to Partners",
+          "unit": "assignment"
+        },
+        {
+          "columns": [
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "lead",
+              "kind": "",
+              "label": "Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "sub_region",
+              "kind": "",
+              "label": "Sub-region",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district",
+              "kind": "",
+              "label": "District",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "holder",
+              "kind": "",
+              "label": "CCEO / PL",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cluster",
+              "kind": "",
+              "label": "Cluster",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "project",
+              "kind": "",
+              "label": "Project Name",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "school_id",
+              "kind": "",
+              "label": "School ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": true,
+              "key": "school",
+              "kind": "",
+              "label": "School Name",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "course",
+              "kind": "",
+              "label": "Training",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "purpose",
+              "kind": "",
+              "label": "Purpose of Assignment",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "intervention",
+              "kind": "",
+              "label": "SSA Intervention",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "previous_score",
+              "kind": "score",
+              "label": "Previous SSA Score",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "current_score",
+              "kind": "score",
+              "label": "Current SSA Score",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "improvement",
+              "kind": "change",
+              "label": "SSA Improvement",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "status",
+              "kind": "",
+              "label": "Status",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "date",
+              "kind": "",
+              "label": "Activity Date",
+              "numeric": false,
+              "quiet": true
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "enrolled_on",
+              "kind": "",
+              "label": "Enrolled On",
+              "numeric": false,
+              "quiet": true
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "stage",
+              "kind": "",
+              "label": "Planning Stage",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "by_name",
+              "kind": "",
+              "label": "Planned By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "execution",
+              "kind": "",
+              "label": "Execution",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "activity_status",
+              "kind": "",
+              "label": "Activity Status",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cost",
+              "kind": "money",
+              "label": "Activity Cost (UGX)",
+              "numeric": true,
+              "quiet": false
+            }
+          ],
+          "description": "Every school in a live project, read from the Project Coordinators' own records, with the project table's columns: the work planned there, its SSA intervention and scores, where it stands, who planned it, and its cost once scheduled.",
+          "export_only": [],
+          "key": "projects",
+          "short": "Projects",
+          "title": "Project Schools",
+          "unit": "school"
+        },
+        {
+          "columns": [
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "lead",
+              "kind": "",
+              "label": "Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "sub_region",
+              "kind": "",
+              "label": "Sub-region",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district",
+              "kind": "",
+              "label": "District",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "holder",
+              "kind": "",
+              "label": "CCEO / PL",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cluster",
+              "kind": "",
+              "label": "Cluster",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "project",
+              "kind": "",
+              "label": "Project",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "partner",
+              "kind": "",
+              "label": "Partner",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "school_id",
+              "kind": "",
+              "label": "School ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": true,
+              "key": "school",
+              "kind": "",
+              "label": "School Name",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "type",
+              "kind": "",
+              "label": "School Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "activity",
+              "kind": "",
+              "label": "Activity",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "intervention",
+              "kind": "",
+              "label": "SSA Intervention",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "staff",
+              "kind": "",
+              "label": "Assigned By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "assigned_on",
+              "kind": "",
+              "label": "Assigned On",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "Awaiting partner schedule",
+              "is_date": true,
+              "is_school": false,
+              "key": "date",
+              "kind": "",
+              "label": "Planned Date",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "status",
+              "kind": "",
+              "label": "Status",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "state",
+              "kind": "",
+              "label": "Partner Planning",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "staff_date",
+              "kind": "",
+              "label": "Date Entered by Staff",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "course",
+              "kind": "",
+              "label": "Training",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district_type",
+              "kind": "",
+              "label": "District Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "purpose",
+              "kind": "",
+              "label": "Purpose",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "facilitator",
+              "kind": "",
+              "label": "Facilitated By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "monitor",
+              "kind": "",
+              "label": "Monitored By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "role",
+              "kind": "",
+              "label": "Planner's Role",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "quarter",
+              "kind": "",
+              "label": "Quarter",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "participants",
+              "kind": "",
+              "label": "Participants",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cost",
+              "kind": "",
+              "label": "Planned Cost (UGX)",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "salesforce",
+              "kind": "",
+              "label": "Salesforce ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "ia",
+              "kind": "",
+              "label": "Verification",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "payment",
+              "kind": "",
+              "label": "Payment",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "rescheduled",
+              "kind": "",
+              "label": "Times Rescheduled",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "recorded",
+              "kind": "",
+              "label": "Recorded On",
+              "numeric": false,
+              "quiet": false
+            }
+          ],
+          "description": "Every piece of project work a Project Coordinator has put in a Partner's hands: the project, the Partner, the school, the activity and its SSA intervention, who assigned it and when. The Planned Date is the date the Partner has set; until then it reads Awaiting partner schedule.",
+          "export_only": [
+            "state",
+            "staff_date",
+            "course",
+            "district_type",
+            "purpose",
+            "assigned_by",
+            "facilitator",
+            "monitor",
+            "role",
+            "quarter",
+            "participants",
+            "invited",
+            "cost",
+            "salesforce",
+            "ia",
+            "payment",
+            "rescheduled",
+            "recorded"
+          ],
+          "key": "project-partners",
+          "short": "Project Partners",
+          "title": "Project Schools With Partners",
+          "unit": "assignment"
+        },
+        {
+          "columns": [
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "lead",
+              "kind": "",
+              "label": "Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "sub_region",
+              "kind": "",
+              "label": "Sub-region",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district",
+              "kind": "",
+              "label": "District",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "holder",
+              "kind": "",
+              "label": "CCEO / PL",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cluster",
+              "kind": "",
+              "label": "Cluster",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "project",
+              "kind": "",
+              "label": "Project",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "school_id",
+              "kind": "",
+              "label": "School ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": true,
+              "key": "school",
+              "kind": "",
+              "label": "School Name",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "type",
+              "kind": "",
+              "label": "School Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "activity",
+              "kind": "",
+              "label": "Activity",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "course",
+              "kind": "",
+              "label": "Training",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "intervention",
+              "kind": "",
+              "label": "SSA Intervention",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "channel",
+              "kind": "",
+              "label": "By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "by_name",
+              "kind": "",
+              "label": "Scheduled By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "date",
+              "kind": "",
+              "label": "Planned Date",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "status",
+              "kind": "",
+              "label": "Status",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district_type",
+              "kind": "",
+              "label": "District Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "purpose",
+              "kind": "",
+              "label": "Purpose",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "partner",
+              "kind": "",
+              "label": "Partner",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "assigned_by",
+              "kind": "",
+              "label": "Assigned By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "facilitator",
+              "kind": "",
+              "label": "Facilitated By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "monitor",
+              "kind": "",
+              "label": "Monitored By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "role",
+              "kind": "",
+              "label": "Planner's Role",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "quarter",
+              "kind": "",
+              "label": "Quarter",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "participants",
+              "kind": "",
+              "label": "Participants",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "invited",
+              "kind": "",
+              "label": "Schools Invited",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cost",
+              "kind": "",
+              "label": "Planned Cost (UGX)",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "salesforce",
+              "kind": "",
+              "label": "Salesforce ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "ia",
+              "kind": "",
+              "label": "Verification",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "payment",
+              "kind": "",
+              "label": "Payment",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "rescheduled",
+              "kind": "",
+              "label": "Times Rescheduled",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "recorded",
+              "kind": "",
+              "label": "Recorded On",
+              "numeric": false,
+              "quiet": false
+            }
+          ],
+          "description": "Every project activity with a date on it: scheduled by a Project Coordinator or other staff, or by the Partner it was assigned to. One row an activity, so a school with three project activities is three rows. Work a Partner has not dated yet is in Project Schools With Partners.",
+          "export_only": [
+            "district_type",
+            "purpose",
+            "partner",
+            "assigned_by",
+            "facilitator",
+            "monitor",
+            "role",
+            "quarter",
+            "participants",
+            "invited",
+            "cost",
+            "salesforce",
+            "ia",
+            "payment",
+            "rescheduled",
+            "recorded"
+          ],
+          "key": "project-activities",
+          "short": "Project Activities",
+          "title": "Project Activities Scheduled",
+          "unit": "activity"
+        },
+        {
+          "columns": [
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "lead",
+              "kind": "",
+              "label": "Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "sub_region",
+              "kind": "",
+              "label": "Sub-region",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district",
+              "kind": "",
+              "label": "District",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "holder",
+              "kind": "",
+              "label": "CCEO / PL",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cluster",
+              "kind": "",
+              "label": "Cluster",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "school_id",
+              "kind": "",
+              "label": "School ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": true,
+              "key": "school",
+              "kind": "",
+              "label": "School Name",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "type",
+              "kind": "",
+              "label": "School Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "activity",
+              "kind": "",
+              "label": "Activity",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "course",
+              "kind": "",
+              "label": "Training",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "intervention",
+              "kind": "",
+              "label": "SSA Intervention",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "channel",
+              "kind": "",
+              "label": "By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "by_name",
+              "kind": "",
+              "label": "Planned By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "Awaiting partner schedule",
+              "is_date": true,
+              "is_school": false,
+              "key": "date",
+              "kind": "",
+              "label": "Planned Date",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "status",
+              "kind": "",
+              "label": "Status",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "counted",
+              "kind": "",
+              "label": "Counts Toward Target",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "flag",
+              "kind": "",
+              "label": "Planned Twice",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district_type",
+              "kind": "",
+              "label": "District Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "purpose",
+              "kind": "",
+              "label": "Purpose",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "project",
+              "kind": "",
+              "label": "Project",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "partner",
+              "kind": "",
+              "label": "Partner",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "assigned_by",
+              "kind": "",
+              "label": "Assigned By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "facilitator",
+              "kind": "",
+              "label": "Facilitated By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "monitor",
+              "kind": "",
+              "label": "Monitored By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "role",
+              "kind": "",
+              "label": "Planner's Role",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "quarter",
+              "kind": "",
+              "label": "Quarter",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "participants",
+              "kind": "",
+              "label": "Participants",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "invited",
+              "kind": "",
+              "label": "Schools Invited",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cost",
+              "kind": "",
+              "label": "Planned Cost (UGX)",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "salesforce",
+              "kind": "",
+              "label": "Salesforce ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "ia",
+              "kind": "",
+              "label": "Verification",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "payment",
+              "kind": "",
+              "label": "Payment",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "rescheduled",
+              "kind": "",
+              "label": "Times Rescheduled",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "recorded",
+              "kind": "",
+              "label": "Recorded On",
+              "numeric": false,
+              "quiet": false
+            }
+          ],
+          "description": "Every activity planned for the year \u2014 visits, trainings, cluster meetings and other work, by staff and with Partners \u2014 with its SSA intervention. The workbook carries every planning detail, for analysis. SSA Support, donor, story, social and invitation visits are marked as not counted toward a person's target.",
+          "export_only": [
+            "counted",
+            "district_type",
+            "purpose",
+            "project",
+            "partner",
+            "assigned_by",
+            "facilitator",
+            "monitor",
+            "role",
+            "quarter",
+            "participants",
+            "invited",
+            "cost",
+            "salesforce",
+            "ia",
+            "payment",
+            "rescheduled",
+            "recorded"
+          ],
+          "key": "plans",
+          "short": "All Activities",
+          "title": "All Activities",
+          "unit": "activity"
+        },
+        {
+          "columns": [
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "lead",
+              "kind": "",
+              "label": "Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "sub_region",
+              "kind": "",
+              "label": "Sub-region",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district",
+              "kind": "",
+              "label": "District",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "holder",
+              "kind": "",
+              "label": "CCEO / PL",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cluster",
+              "kind": "",
+              "label": "Cluster",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "school_id",
+              "kind": "",
+              "label": "School ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": true,
+              "key": "school",
+              "kind": "",
+              "label": "School Name",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "type",
+              "kind": "",
+              "label": "School Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "activity",
+              "kind": "",
+              "label": "Training",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "course",
+              "kind": "",
+              "label": "Course",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "intervention",
+              "kind": "",
+              "label": "SSA Intervention",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "channel",
+              "kind": "",
+              "label": "By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "by_name",
+              "kind": "",
+              "label": "Planned By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "invited",
+              "kind": "",
+              "label": "Schools Invited",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "Awaiting partner schedule",
+              "is_date": true,
+              "is_school": false,
+              "key": "date",
+              "kind": "",
+              "label": "Planned Date",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "status",
+              "kind": "",
+              "label": "Status",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district_type",
+              "kind": "",
+              "label": "District Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "purpose",
+              "kind": "",
+              "label": "Purpose",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "project",
+              "kind": "",
+              "label": "Project",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "partner",
+              "kind": "",
+              "label": "Partner",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "assigned_by",
+              "kind": "",
+              "label": "Assigned By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "facilitator",
+              "kind": "",
+              "label": "Facilitated By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "monitor",
+              "kind": "",
+              "label": "Monitored By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "role",
+              "kind": "",
+              "label": "Planner's Role",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "quarter",
+              "kind": "",
+              "label": "Quarter",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "participants",
+              "kind": "",
+              "label": "Participants",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cost",
+              "kind": "",
+              "label": "Planned Cost (UGX)",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "salesforce",
+              "kind": "",
+              "label": "Salesforce ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "ia",
+              "kind": "",
+              "label": "Verification",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "payment",
+              "kind": "",
+              "label": "Payment",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "rescheduled",
+              "kind": "",
+              "label": "Times Rescheduled",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "recorded",
+              "kind": "",
+              "label": "Recorded On",
+              "numeric": false,
+              "quiet": false
+            }
+          ],
+          "description": "Every training planned for the year: at a school, for a cluster, by staff and by Partners. A cluster training reaches the schools on its planned roster.",
+          "export_only": [
+            "district_type",
+            "purpose",
+            "project",
+            "partner",
+            "assigned_by",
+            "monitor",
+            "role",
+            "quarter",
+            "participants",
+            "cost",
+            "salesforce",
+            "ia",
+            "payment",
+            "rescheduled",
+            "recorded"
+          ],
+          "key": "trainings",
+          "short": "Trainings",
+          "title": "Training Plans",
+          "unit": "training"
+        },
+        {
+          "columns": [
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "lead",
+              "kind": "",
+              "label": "Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "sub_region",
+              "kind": "",
+              "label": "Sub-region",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district",
+              "kind": "",
+              "label": "District",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "holder",
+              "kind": "",
+              "label": "CCEO / PL",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cluster",
+              "kind": "",
+              "label": "Cluster",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "school_id",
+              "kind": "",
+              "label": "School ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": true,
+              "key": "school",
+              "kind": "",
+              "label": "School Name",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "type",
+              "kind": "",
+              "label": "School Type",
+              "numeric": false,
+              "quiet": false
+            }
+          ],
+          "description": "Every school in an active cluster, with the CCEO responsible for the cluster and that CCEO's Programme Lead.",
+          "export_only": [],
+          "key": "clusters",
+          "short": "Clusters",
+          "title": "Clustered Schools",
+          "unit": "school"
+        },
+        {
+          "columns": [
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "lead",
+              "kind": "",
+              "label": "Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "sub_region",
+              "kind": "",
+              "label": "Sub-region",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district",
+              "kind": "",
+              "label": "District",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "holder",
+              "kind": "",
+              "label": "CCEO / PL",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cluster",
+              "kind": "",
+              "label": "Cluster",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "activity",
+              "kind": "",
+              "label": "Meeting",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "intervention",
+              "kind": "",
+              "label": "SSA Intervention",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "staff",
+              "kind": "",
+              "label": "Planned By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "date",
+              "kind": "",
+              "label": "Planned Date",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "status",
+              "kind": "",
+              "label": "Status",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "invited",
+              "kind": "",
+              "label": "Schools Invited",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district_type",
+              "kind": "",
+              "label": "District Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "purpose",
+              "kind": "",
+              "label": "Purpose",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "project",
+              "kind": "",
+              "label": "Project",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "facilitator",
+              "kind": "",
+              "label": "Facilitated By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "monitor",
+              "kind": "",
+              "label": "Monitored By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "role",
+              "kind": "",
+              "label": "Planner's Role",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "quarter",
+              "kind": "",
+              "label": "Quarter",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "participants",
+              "kind": "",
+              "label": "Participants",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cost",
+              "kind": "",
+              "label": "Planned Cost (UGX)",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "salesforce",
+              "kind": "",
+              "label": "Salesforce ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "ia",
+              "kind": "",
+              "label": "Verification",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "payment",
+              "kind": "",
+              "label": "Payment",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "rescheduled",
+              "kind": "",
+              "label": "Times Rescheduled",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": true,
+              "is_school": false,
+              "key": "recorded",
+              "kind": "",
+              "label": "Recorded On",
+              "numeric": false,
+              "quiet": false
+            }
+          ],
+          "description": "Every cluster meeting staff have planned, with the CCEO responsible for the cluster, the staff member who planned the meeting and the schools on its roster.",
+          "export_only": [
+            "district_type",
+            "purpose",
+            "project",
+            "partner",
+            "assigned_by",
+            "monitor",
+            "role",
+            "quarter",
+            "participants",
+            "cost",
+            "salesforce",
+            "ia",
+            "payment",
+            "rescheduled",
+            "recorded"
+          ],
+          "key": "meetings",
+          "short": "Meetings",
+          "title": "Cluster Meeting Plans",
+          "unit": "meeting"
+        },
+        {
+          "columns": [
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "lead",
+              "kind": "",
+              "label": "Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "sub_region",
+              "kind": "",
+              "label": "Sub-region",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district",
+              "kind": "",
+              "label": "District",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "holder",
+              "kind": "",
+              "label": "CCEO / PL",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cluster",
+              "kind": "",
+              "label": "Cluster",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "school_id",
+              "kind": "",
+              "label": "School ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": true,
+              "key": "school",
+              "kind": "",
+              "label": "School Name",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "type",
+              "kind": "",
+              "label": "School Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "why",
+              "kind": "",
+              "label": "Why",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "channel",
+              "kind": "",
+              "label": "By",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "staff",
+              "kind": "",
+              "label": "Responsible",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "activity",
+              "kind": "",
+              "label": "Plan",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "intervention",
+              "kind": "",
+              "label": "SSA Intervention",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "Awaiting partner schedule",
+              "is_date": true,
+              "is_school": false,
+              "key": "date",
+              "kind": "",
+              "label": "Planned Date",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "status",
+              "kind": "",
+              "label": "Status",
+              "numeric": false,
+              "quiet": false
+            }
+          ],
+          "description": "Every plan at a school that is planned more often than it should be: a Client, Core Trained or Core Graduate school planned by staff and held by a Partner, or with the same kind of visit twice; a Core school with more than two staff or two Partner visits. One school, however many plans: each is counted once as coverage, and nothing is removed.",
+          "export_only": [],
+          "key": "duplicates",
+          "short": "Planned Twice",
+          "title": "Schools Planned Twice",
+          "unit": "plan"
+        },
+        {
+          "columns": [
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "lead",
+              "kind": "",
+              "label": "Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "sub_region",
+              "kind": "",
+              "label": "Sub-region",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district",
+              "kind": "",
+              "label": "District",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "holder",
+              "kind": "",
+              "label": "CCEO / PL",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cluster",
+              "kind": "",
+              "label": "Cluster",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "school_id",
+              "kind": "",
+              "label": "School ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": true,
+              "key": "school",
+              "kind": "",
+              "label": "School Name",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "type",
+              "kind": "",
+              "label": "School Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "visits_needed",
+              "kind": "",
+              "label": "Visits Needed",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "expected_from",
+              "kind": "",
+              "label": "Expected From",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "visits_planned",
+              "kind": "",
+              "label": "Visits Planned",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "visits_remaining",
+              "kind": "",
+              "label": "Visits Remaining",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "with_partner",
+              "kind": "",
+              "label": "With a Partner",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "trainings_needed",
+              "kind": "",
+              "label": "Trainings Needed",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "trainings_planned",
+              "kind": "",
+              "label": "Trainings Planned",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "trainings_remaining",
+              "kind": "",
+              "label": "Trainings Remaining",
+              "numeric": true,
+              "quiet": false
+            }
+          ],
+          "description": "Schools that need a visit this year and have none planned and none in a Partner's hands. A school assigned to a Partner is the Partner's to plan: it is in Schools Assigned to Partners.",
+          "export_only": [
+            "visits_planned",
+            "with_partner"
+          ],
+          "key": "not-planned",
+          "short": "Unplanned",
+          "title": "Unplanned Schools",
+          "unit": "school"
+        },
+        {
+          "columns": [
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "lead",
+              "kind": "",
+              "label": "Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "sub_region",
+              "kind": "",
+              "label": "Sub-region",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district",
+              "kind": "",
+              "label": "District",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "holder",
+              "kind": "",
+              "label": "CCEO / PL",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cluster",
+              "kind": "",
+              "label": "Cluster",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "school_id",
+              "kind": "",
+              "label": "School ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": true,
+              "key": "school",
+              "kind": "",
+              "label": "School Name",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "type",
+              "kind": "",
+              "label": "School Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "visits_needed",
+              "kind": "",
+              "label": "Visits Needed",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "expected_from",
+              "kind": "",
+              "label": "Expected From",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "visits_planned",
+              "kind": "",
+              "label": "Visits Planned",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "visits_remaining",
+              "kind": "",
+              "label": "Visits Remaining",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "with_partner",
+              "kind": "",
+              "label": "With a Partner",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "trainings_needed",
+              "kind": "",
+              "label": "Trainings Needed",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "trainings_planned",
+              "kind": "",
+              "label": "Trainings Planned",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "trainings_remaining",
+              "kind": "",
+              "label": "Trainings Remaining",
+              "numeric": true,
+              "quiet": false
+            }
+          ],
+          "description": "Schools with some of the year's visits planned and some still to plan: what each needs, what is planned and what remains.",
+          "export_only": [],
+          "key": "partly-planned",
+          "short": "Partly Planned",
+          "title": "Schools Partly Planned",
+          "unit": "school"
+        },
+        {
+          "columns": [
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "lead",
+              "kind": "",
+              "label": "Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "sub_region",
+              "kind": "",
+              "label": "Sub-region",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district",
+              "kind": "",
+              "label": "District",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "holder",
+              "kind": "",
+              "label": "CCEO / PL",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cluster",
+              "kind": "",
+              "label": "Cluster",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "school_id",
+              "kind": "",
+              "label": "School ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": true,
+              "key": "school",
+              "kind": "",
+              "label": "School Name",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "type",
+              "kind": "",
+              "label": "School Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "visits_needed",
+              "kind": "",
+              "label": "Visits Needed",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "expected_from",
+              "kind": "",
+              "label": "Expected From",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "visits_planned",
+              "kind": "",
+              "label": "Visits Planned",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "visits_remaining",
+              "kind": "",
+              "label": "Visits Remaining",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "with_partner",
+              "kind": "",
+              "label": "With a Partner",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "trainings_needed",
+              "kind": "",
+              "label": "Trainings Needed",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "trainings_planned",
+              "kind": "",
+              "label": "Trainings Planned",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "trainings_remaining",
+              "kind": "",
+              "label": "Trainings Remaining",
+              "numeric": true,
+              "quiet": false
+            }
+          ],
+          "description": "Schools that need a training this year and have none planned.",
+          "export_only": [
+            "trainings_planned"
+          ],
+          "key": "no-training",
+          "short": "No Training",
+          "title": "Schools With No Training Planned",
+          "unit": "school"
+        },
+        {
+          "columns": [
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "lead",
+              "kind": "",
+              "label": "Programme Lead",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "sub_region",
+              "kind": "",
+              "label": "Sub-region",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "district",
+              "kind": "",
+              "label": "District",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "holder",
+              "kind": "",
+              "label": "CCEO / PL",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "cluster",
+              "kind": "",
+              "label": "Cluster",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "school_id",
+              "kind": "",
+              "label": "School ID",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": true,
+              "key": "school",
+              "kind": "",
+              "label": "School Name",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "type",
+              "kind": "",
+              "label": "School Type",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "visits_needed",
+              "kind": "",
+              "label": "Visits Needed",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "expected_from",
+              "kind": "",
+              "label": "Expected From",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "visits_planned",
+              "kind": "",
+              "label": "Visits Planned",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "visits_remaining",
+              "kind": "",
+              "label": "Visits Remaining",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "with_partner",
+              "kind": "",
+              "label": "With a Partner",
+              "numeric": false,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "trainings_needed",
+              "kind": "",
+              "label": "Trainings Needed",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "trainings_planned",
+              "kind": "",
+              "label": "Trainings Planned",
+              "numeric": true,
+              "quiet": false
+            },
+            {
+              "blank": "",
+              "is_date": false,
+              "is_school": false,
+              "key": "trainings_remaining",
+              "kind": "",
+              "label": "Trainings Remaining",
+              "numeric": true,
+              "quiet": false
+            }
+          ],
+          "description": "Schools that are in no active cluster. A school has to be in a cluster before a cluster meeting or a cluster training can reach it.",
+          "export_only": [],
+          "key": "unclustered",
+          "short": "Unclustered",
+          "title": "Unclustered Schools",
+          "unit": "school"
+        }
       ],
       "type_options": [
         [
