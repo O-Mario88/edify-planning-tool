@@ -3,8 +3,6 @@ package detailpages
 import (
 	"context"
 	"errors"
-	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"testing"
 	"time"
@@ -81,23 +79,4 @@ type fixedAuth struct{ role string }
 
 func (a fixedAuth) Authenticate(context.Context, string) (auth.Principal, error) {
 	return auth.Principal{UserID: "u1", ActiveRole: a.role}, nil
-}
-
-func TestOrganisationWideExportsAreRefusedForEveryoneButAdmin(t *testing.T) {
-	s := NewService(nil, time.Now)
-	for _, role := range []string{"MfiLoanOfficer", "PartnerFieldOfficer", "CCEO", "Program Lead", "CountryDirector"} {
-		mux := http.NewServeMux()
-		s.RegisterHTTP(mux, fixedAuth{role: role})
-		// The Staff Activity and IA analytics exports are their pages' own
-		// workbooks, behind the pages' gates (workbooks_test.go).
-		for _, target := range []string{"/projects/export", "/projects/project-1/export"} {
-			t.Run(role+" "+target, func(t *testing.T) {
-				rec := httptest.NewRecorder()
-				mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/v1/quick-export?target="+url.QueryEscape(target), nil))
-				if rec.Code != http.StatusForbidden {
-					t.Fatalf("status %d, want 403", rec.Code)
-				}
-			})
-		}
-	}
 }

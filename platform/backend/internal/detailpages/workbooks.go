@@ -17,6 +17,13 @@ import (
 // the export for this reader; an error is the export's refusal.
 type WorkbookExport func(ctx context.Context, p auth.Principal, query url.Values) (stem string, sheets []workbook.Sheet, handled bool, err error)
 
+// notFound is an export's Http404: an error saying NotFound() true, for a
+// record the reader does not see.
+func notFound(err error) bool {
+	var nf interface{ NotFound() bool }
+	return errors.As(err, &nf) && nf.NotFound()
+}
+
 // WithWorkbook serves the export at target (a page's export path) from Go.
 func (s *Service) WithWorkbook(target string, export WorkbookExport) *Service {
 	if s.workbooks == nil {
@@ -26,9 +33,31 @@ func (s *Service) WithWorkbook(target string, export WorkbookExport) *Service {
 	return s
 }
 
+// WorkbookRoute names the workbook export at a target matching a pattern
+// (an export path carrying a record's id), or none.
+type WorkbookRoute func(target string) (WorkbookExport, bool)
+
+// WithWorkbookRoute serves the workbook exports a route names from Go.
+func (s *Service) WithWorkbookRoute(route WorkbookRoute) *Service {
+	s.workbookRoutes = append(s.workbookRoutes, route)
+	return s
+}
+
+func (s *Service) workbookFor(target string) (WorkbookExport, bool) {
+	if export, ok := s.workbooks[target]; ok {
+		return export, true
+	}
+	for _, route := range s.workbookRoutes {
+		if export, ok := route(target); ok {
+			return export, true
+		}
+	}
+	return nil, false
+}
+
 // serveWorkbook answers a workbook export Go takes, and says whether it did.
 func (s *Service) serveWorkbook(w http.ResponseWriter, r *http.Request, p auth.Principal, target string) bool {
-	export, ok := s.workbooks[target]
+	export, ok := s.workbookFor(target)
 	if !ok {
 		return false
 	}
@@ -38,6 +67,8 @@ func (s *Service) serveWorkbook(w http.ResponseWriter, r *http.Request, p auth.P
 	switch {
 	case errors.Is(err, pagegate.ErrNotAvailable), errors.Is(err, pagegate.ErrForbidden):
 		http.Error(w, "You do not have access to this export.", http.StatusForbidden)
+	case err != nil && handled && notFound(err):
+		http.Error(w, err.Error(), http.StatusNotFound)
 	case err != nil && handled:
 		http.Error(w, err.Error(), http.StatusForbidden)
 	case err != nil:

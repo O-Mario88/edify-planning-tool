@@ -6,13 +6,10 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pageaccess"
-	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/rbac"
-	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
 // HTTPAuth validates Bearer tokens on HTTP endpoints.
@@ -32,14 +29,6 @@ func (s *Service) RegisterHTTP(mux *http.ServeMux, authn HTTPAuth) {
 		target := strings.TrimSuffix(strings.TrimSpace(r.URL.Query().Get("target")), "/")
 		if s.serveWorkbook(w, r, p, target) || s.serveFile(w, r, p, target) {
 			return
-		}
-		if organisationWideExport(target) && !(p.ActiveRole == rbac.Admin && rbac.Grants(p.ActiveRole, exportPermission)) {
-			http.Error(w, "Your role cannot download this export.", http.StatusForbidden)
-			return
-		}
-		fy := strings.TrimSpace(r.URL.Query().Get("fy"))
-		if fy == "" {
-			fy = schooldirectory.OperationalFY(s.now())
 		}
 		var name string
 		var body []byte
@@ -66,11 +55,6 @@ func (s *Service) RegisterHTTP(mux *http.ServeMux, authn HTTPAuth) {
 		switch {
 		case target == "/schools/upload/template":
 			s.writeSchoolUploadTemplate(w, p)
-		case target == "/projects/export":
-			s.exportProjectsCSV(r.Context(), w, fy, "")
-		case strings.HasPrefix(target, "/projects/") && strings.HasSuffix(target, "/export"):
-			projID := strings.TrimSuffix(strings.TrimPrefix(target, "/projects/"), "/export")
-			s.exportProjectsCSV(r.Context(), w, fy, projID)
 		default:
 			http.Error(w, "Unknown export target", http.StatusNotFound)
 		}
@@ -82,19 +66,6 @@ var annexTarget = regexp.MustCompile(`^/ia/impact-reports/([A-Za-z0-9]{1,30})/an
 
 // releaseTarget is a released version's download.
 var releaseTarget = regexp.MustCompile(`^/ia/impact-reports/([A-Za-z0-9]{1,30})/releases/([A-Za-z0-9]{1,30})/download$`)
-
-// exportPermission is the matrix's data.export.
-const exportPermission = "data.export"
-
-// organisationWideExport is an export that reads every school's, person's or
-// project's records, with no limit to the reader's scope yet.
-func organisationWideExport(target string) bool {
-	switch target {
-	case "/projects/export":
-		return true
-	}
-	return strings.HasPrefix(target, "/projects/") && strings.HasSuffix(target, "/export")
-}
 
 func startCSV(w http.ResponseWriter, filename string) *csv.Writer {
 	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
@@ -118,36 +89,5 @@ func (s *Service) writeSchoolUploadTemplate(w http.ResponseWriter, p auth.Princi
 	_ = cw.Write([]string{"School ID", "School Name", "District", "Sub County", "Current Partner Type", "Staff Name",
 		"Enrolment", "Last Date of Enrolment", "Phone", "Primary Contact", "School Shipping Address"})
 	_ = cw.Write([]string{"SCH-0001", "St. Mary's Primary School", "", "", "", "", "", "", "", "", ""})
-	cw.Flush()
-}
-func (s *Service) exportProjectsCSV(ctx context.Context, w http.ResponseWriter, fy, projectID string) {
-	rows, err := s.db.Query(ctx, `
-SELECT COALESCE(pr.code, ''), pr.name, COALESCE(pr.category, ''), COALESCE(pr.status, ''),
-       COALESCE(pr.budget_ceiling_ugx, 0),
-       (SELECT count(*) FROM project_school_assignment psa WHERE psa.project_id = pr.id),
-       (SELECT count(*) FROM activity a WHERE a.project_id = pr.id AND a.deleted_at IS NULL AND a.fy = $1),
-       (SELECT count(*) FROM activity a WHERE a.project_id = pr.id AND a.deleted_at IS NULL AND a.fy = $1
-         AND a.status IN ('completed', 'verified', 'approved', 'submitted'))
-FROM project pr
-WHERE pr.deleted_at IS NULL AND ($2 = '' OR pr.id = $2)
-ORDER BY pr.name`, fy, projectID)
-	if err != nil {
-		http.Error(w, "Export query failed", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
-	name := fmt.Sprintf("edify-projects-fy%s.csv", fy)
-	if projectID != "" {
-		name = fmt.Sprintf("edify-project-%s-fy%s.csv", projectID, fy)
-	}
-	cw := startCSV(w, name)
-	_ = cw.Write([]string{"Project Code", "Project Name", "Category", "Status", "Budget Ceiling (UGX)", "Assigned Schools", "Total Activities", "Completed Activities"})
-	for rows.Next() {
-		var code, pname, cat, status string
-		var ceiling, schools, acts, done int64
-		if err := rows.Scan(&code, &pname, &cat, &status, &ceiling, &schools, &acts, &done); err == nil {
-			_ = cw.Write([]string{code, pname, cat, status, strconv.FormatInt(ceiling, 10), strconv.FormatInt(schools, 10), strconv.FormatInt(acts, 10), strconv.FormatInt(done, 10)})
-		}
-	}
 	cw.Flush()
 }
