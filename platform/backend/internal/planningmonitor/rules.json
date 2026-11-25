@@ -2650,6 +2650,13 @@
           "staff": "The same kind of staff visit planned twice",
           "staff_over": "More staff visits than a Core school takes"
         },
+        "evidence": {
+          "accepted": "Accepted",
+          "none": "None",
+          "rejected": "Rejected",
+          "returned": "Returned",
+          "uploaded": "Uploaded"
+        },
         "interventions": {
           "christlike_behaviour": "Christlike Behaviour",
           "enrolment": "Enrolment",
@@ -2664,6 +2671,19 @@
           "follow_up": "Follow up",
           "in_school_training": "In-school Training",
           "ssa_support": "SSA Support"
+        },
+        "payment": {
+          "accountant_cleared": "Accountant Cleared",
+          "closed": "Closed",
+          "disbursed": "Disbursed",
+          "ia_confirmed": "IA Confirmed",
+          "netsuite_accountability": "Netsuite Accountability",
+          "none": "None",
+          "paid": "Paid",
+          "pending_ia": "Pending IA",
+          "pl_approval_required": "PL Approval Required",
+          "pl_approved": "PL Approved",
+          "rejected": "Rejected"
         },
         "statuses": {
           "accountant_confirmed": "Accountant Confirmed",
@@ -2720,6 +2740,12 @@
           "story_gathering_visit": "Gathering Story",
           "training": "Training",
           "training_follow_up_visit": "Training Follow-up Visit"
+        },
+        "verification": {
+          "confirmed": "Confirmed",
+          "flagged": "Flagged",
+          "pending": "Pending",
+          "returned": "Returned"
         },
         "waiting_states": [
           "assigned_to_partner",

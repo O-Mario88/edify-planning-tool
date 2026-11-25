@@ -554,6 +554,11 @@ def _country_oversight_page() -> dict:
             "kinds": {str(k): str(v) for k, v in book.KIND_LABELS.items()},
             "waiting_states": sorted(tables._WAITING_STATES),
             "duplicate_labels": dict(book.DUPLICATE_LABELS),
+            # The workbook's evidence, verification and payment words
+            # (tables._Book, _field_labels).
+            "evidence": tables._field_labels("evidence_status"),
+            "verification": tables._field_labels("ia_verification_status"),
+            "payment": tables._field_labels("payment_status"),
         },
         # may_export: the drill-down's Export (can_export).
         "export_roles": sorted(

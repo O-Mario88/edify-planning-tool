@@ -217,9 +217,9 @@ func (k *cpoBook) partnerRows(every bool) ([]cpoRow, error) {
 		dataCollection := isDataCollection(expected, h.purpose)
 		_, _, intervention := partneroversight.DescribeHandover(h.purpose, expected, h.course, h.catalogue, h.focus,
 			h.source != "", h.sourceCourse, h.sourceSnapshot, h.sourceType)
-		course, _, _ := partneroversight.DescribeHandover(h.purpose, expected, h.course, h.catalogue, h.focus,
+		course, purpose, _ := partneroversight.DescribeHandover(h.purpose, expected, h.course, h.catalogue, h.focus,
 			h.source != "", h.sourceCourse, h.sourceSnapshot, h.sourceType)
-		_, name := who(p)
+		lead, name := who(p)
 		partner := k.partners[h.partner]
 		if partner == "" {
 			partner = "Unrecorded Partner"
@@ -255,6 +255,15 @@ func (k *cpoBook) partnerRows(every bool) ([]cpoRow, error) {
 		row["assigned_on"], row["date"], row["staff_date"] = localDay(h.created), nil, nil
 		row["state"], row["status"], row["counted"] = labels["awaiting_partner"], labels["assigned"], counted
 		row["project"], row["_project"] = k.projects[h.project], h.project
+		monitor := ""
+		if h.monitor != "" {
+			monitor = name
+		}
+		// What only the workbook prints: nothing is scheduled yet.
+		row["planner_lead"], row["role"], row["purpose"], row["facilitator"] = lead, roleOf(p), purpose, ""
+		row["monitor"], row["quarter"], row["participants"], row["cost"] = monitor, "", "", int64(0)
+		row["salesforce"], row["evidence"], row["ia"], row["payment"] = "", "", "", ""
+		row["rescheduled"], row["recorded"] = 0, localDay(h.created)
 		rows = append(rows, row)
 	}
 	for _, a := range work {

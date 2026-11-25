@@ -71,6 +71,11 @@ type cpoRules struct {
 			Kinds         map[string]string `json:"kinds"`
 			WaitingStates []string          `json:"waiting_states"`
 			Duplicates    map[string]string `json:"duplicate_labels"`
+			// Evidence, Verification and Payment are the workbook's words
+			// for those fields (_field_labels).
+			Evidence     map[string]string `json:"evidence"`
+			Verification map[string]string `json:"verification"`
+			Payment      map[string]string `json:"payment"`
 		} `json:"table_words"`
 		// The roles the drill-down offers Export to (can_export).
 		ExportRoles []string `json:"export_roles"`

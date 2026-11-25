@@ -169,6 +169,12 @@ func firstDistrict(ids ...*string) string {
 	return ""
 }
 
+// DistrictTypeLabels is district_marks.district_type_labels: each
+// activity's Primary, Secondary or Mixed District mark.
+func DistrictTypeLabels(ctx context.Context, db schooldirectory.Querier, ids []string) (map[string]string, error) {
+	return readDistrictTypes(ctx, db, ids)
+}
+
 // readDistrictTypes answers {activity id: label} (district_type_labels).
 func readDistrictTypes(ctx context.Context, db schooldirectory.Querier, ids []string) (map[string]string, error) {
 	out := map[string]string{}

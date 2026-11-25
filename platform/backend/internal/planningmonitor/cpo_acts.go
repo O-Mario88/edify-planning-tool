@@ -28,6 +28,10 @@ type cpoActivity struct {
 	// noDelivery is a delivery type left empty (NULL), which visit_kind
 	// reads as nobody's staff.
 	noDelivery bool
+	// What only the workbook prints (tables._Book.row).
+	facilitator, quarter, salesforce, evidence, verification, payment string
+	perSchool, expected                                               *int
+	reschedules                                                       int
 }
 
 const cpoActivityColumns = `a.id, COALESCE(a.school_id, ''), COALESCE(a.cluster_id, ''), COALESCE(a.responsible_staff_id, ''),
@@ -37,7 +41,10 @@ const cpoActivityColumns = `a.id, COALESCE(a.school_id, ''), COALESCE(a.cluster_
   COALESCE(a.activity_name_snapshot, ''), COALESCE(a.focus_intervention, ''), COALESCE(a.purpose_intervention, ''),
   COALESCE(a.training_course_id, ''), COALESCE(a.catalogue_item_id, ''),
   COALESCE(s.school_id, ''), COALESCE(s.name, ''), COALESCE(s.school_type, ''), COALESCE(s.district_id, ''),
-  COALESCE(s.cluster_id, ''), COALESCE(s.account_owner_id, ''), `
+  COALESCE(s.cluster_id, ''), COALESCE(s.account_owner_id, ''),
+  COALESCE(a.facilitating_partner_id, ''), COALESCE(a.quarter, ''), COALESCE(a.salesforce_activity_id, ''),
+  COALESCE(a.evidence_status, ''), COALESCE(a.ia_verification_status, ''), COALESCE(a.payment_status, ''),
+  a.participants_per_school, a.expected_participants, COALESCE(a.reschedule_count, 0), `
 
 const cpoActivityJoins = ` FROM activity a LEFT JOIN school s ON s.id = a.school_id
   LEFT JOIN activity_catalogue_item tc ON tc.id = a.training_course_id
@@ -61,7 +68,8 @@ func readActivities(ctx context.Context, db schooldirectory.Querier, b *sql, whe
 		if err := rows.Scan(&a.id, &a.school, &a.cluster, &a.responsible, &a.monitor, &a.partner, &a.project,
 			&a.activityType, &a.purpose, &a.delivery, &a.status, &a.course, &a.catalogue, &a.snapshot, &a.focus,
 			&a.purposeIntervention, &a.courseID, &a.catalogueID, &a.code, &a.name, &a.schoolType, &a.district,
-			&a.schoolCluster, &a.owner, &a.on, &a.created, &a.kind, &a.partnerPlanned, &a.noDelivery); err != nil {
+			&a.schoolCluster, &a.owner, &a.facilitator, &a.quarter, &a.salesforce, &a.evidence, &a.verification, &a.payment,
+			&a.perSchool, &a.expected, &a.reschedules, &a.on, &a.created, &a.kind, &a.partnerPlanned, &a.noDelivery); err != nil {
 			return nil, err
 		}
 		out = append(out, a)
@@ -83,6 +91,8 @@ type cpoBook struct {
 	projects map[string]string
 	invited  map[string]int
 	fixed    map[string]string
+	// costs are _cost_by_activity's: each activity's cost lines summed.
+	costs map[string]int64
 }
 
 func newBook(ctx context.Context, db schooldirectory.Querier, snap *cpoSnapshot, places *cpoPlaces, e cpoExtra) (*cpoBook, error) {
@@ -96,7 +106,8 @@ func newBook(ctx context.Context, db schooldirectory.Querier, snap *cpoSnapshot,
 	}
 	return &cpoBook{ctx: ctx, db: db, snap: snap, places: places, extra: e, staff: staff,
 		window: peopleWindow(cpoWindowOf(snap.filters)), ids: keptSchoolIDs(snap.data.schools, snap.narrow),
-		partners: map[string]string{}, projects: map[string]string{}, invited: map[string]int{}, fixed: fixed}, nil
+		partners: map[string]string{}, projects: map[string]string{}, invited: map[string]int{}, fixed: fixed,
+		costs: map[string]int64{}}, nil
 }
 
 func (k *cpoBook) staffSide() bool   { return k.snap.narrow.channel != "partner" }
@@ -130,7 +141,7 @@ func (k *cpoBook) learn(acts []*cpoActivity, staffIDs, partnerIDs, projectIDs []
 	k.staff.note(staffIDs...)
 	for _, a := range acts {
 		k.staff.note(a.responsible, a.monitor)
-		partners = append(partners, a.partner)
+		partners = append(partners, a.partner, a.facilitator)
 		projects = append(projects, a.project)
 		if a.school == "" {
 			k.staff.note(k.places.clusters[a.cluster][2])
@@ -160,6 +171,9 @@ func (k *cpoBook) learn(acts []*cpoActivity, staffIDs, partnerIDs, projectIDs []
 		for _, o := range names {
 			into[o.value] = o.label
 		}
+	}
+	if err := k.learnCosts(acts); err != nil {
+		return err
 	}
 	if len(sessions) == 0 {
 		return nil
@@ -340,7 +354,70 @@ func (k *cpoBook) row(a *cpoActivity, p *cpoPerson, channel, label, counted stri
 	if a.school == "" {
 		row["invited"] = k.invited[a.id]
 	}
+	k.workbookFields(row, a, p)
 	return row
+}
+
+// workbookFields are the row's columns only the workbook prints: who
+// planned it and in what role, the purpose, who facilitates and monitors,
+// the quarter, participants, cost, Salesforce ID, evidence, verification,
+// payment, reschedules and the day it was recorded.
+func (k *cpoBook) workbookFields(row cpoRow, a *cpoActivity, p *cpoPerson) {
+	words := rules.CountryOversight.Page.TableWords
+	lead, _ := who(p)
+	row["planner_lead"], row["role"] = lead, roleOf(p)
+	_, purpose, _ := partneroversight.DescribeActivity(a.purpose, a.activityType, a.course, a.catalogue, a.snapshot, a.focus, a.purposeIntervention)
+	row["purpose"], row["facilitator"] = purpose, k.partners[a.facilitator]
+	monitor := ""
+	if m := k.staff.first(a.monitor); m != nil && a.monitor != "" {
+		monitor = m.name
+	}
+	row["monitor"], row["quarter"] = monitor, a.quarter
+	var participants any = ""
+	switch {
+	case a.perSchool != nil && *a.perSchool != 0:
+		participants = *a.perSchool
+	case a.expected != nil && *a.expected != 0:
+		participants = *a.expected
+	}
+	row["participants"], row["cost"], row["_activity"] = participants, k.costs[a.id], a.id
+	row["salesforce"], row["evidence"] = a.salesforce, words.Evidence[a.evidence]
+	row["ia"], row["payment"] = words.Verification[a.verification], words.Payment[a.payment]
+	row["rescheduled"], row["recorded"] = a.reschedules, localDay(a.created)
+}
+
+// roleOf is _who's role: the person's role label, else the role in use.
+func roleOf(p *cpoPerson) string {
+	if p == nil {
+		return ""
+	}
+	return p.role
+}
+
+// learnCosts is _cost_by_activity for these activities.
+func (k *cpoBook) learnCosts(acts []*cpoActivity) error {
+	ids := make([]string, 0, len(acts))
+	for _, a := range acts {
+		ids = append(ids, a.id)
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	rows, err := k.db.Query(k.ctx, `SELECT activity_id, COALESCE(SUM(amount), 0) FROM activity_schedule_cost_line
+		WHERE activity_id = ANY($1) GROUP BY 1`, ids)
+	if err != nil {
+		return fmt.Errorf("planningmonitor: the activities' costs: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id string
+		var total int64
+		if err := rows.Scan(&id, &total); err != nil {
+			return err
+		}
+		k.costs[id] = total
+	}
+	return rows.Err()
 }
 
 // staffRows is the rows of one staff set, each under its responsible person.
