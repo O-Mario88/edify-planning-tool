@@ -9,6 +9,8 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"connectrpc.com/connect"
 )
 
 // weeklyRequestTables is what the golden files, in the order it files them.
@@ -65,4 +67,17 @@ func TestWeeklyRequestMatchesTheExistingFeed(t *testing.T) {
 		t.Fatal("the golden asks nothing of the Weekly Advance Request")
 	}
 	compareGolden(t, "/fund-requests/weekly", golden.Answers)
+}
+
+// Every reader the Fund Requests page opens for gets an answer from Go or is
+// handed on; none meets a database error. The receipt panel's read of the
+// monthly plans once lacked its grant, and only an opened page shows that.
+func TestWeeklyRequestOpensWithoutADatabaseError(t *testing.T) {
+	for _, who := range []string{"cceo@edify.org", "cd@edify.org", "admin@edify.org"} {
+		borrowAccount(t, who)
+		token := sessionOf(t, who, seededPassword).GetAccessToken()
+		if _, err := pageOf(token, "/fund-requests/weekly", nil); connect.CodeOf(err) == connect.CodeInternal {
+			t.Fatalf("%s opening Fund Requests: %v", who, err)
+		}
+	}
 }
