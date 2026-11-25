@@ -92,3 +92,36 @@ func CanViewActivity(ctx context.Context, db schooldirectory.Querier, p auth.Pri
 		hasCluster: a.HasCluster, clusterLive: a.ClusterLive,
 	})
 }
+
+// DayOffDay is one day off an activity runs on: the day, whether it is a
+// public holiday, and the holiday's name (else the person on leave).
+type DayOffDay struct {
+	Day     time.Time
+	Holiday bool
+	Name    string
+}
+
+// DayOffDays is day_off_marks' days for each marked activity of work (the
+// day-off alerts' reading, apps.activities.day_off.send_day_off_alerts).
+func DayOffDays(ctx context.Context, db schooldirectory.Querier, work []DayOffWork) (map[string][]DayOffDay, error) {
+	rows := make([]*activity, 0, len(work))
+	spans := map[string]span{}
+	for _, w := range work {
+		rows = append(rows, &activity{id: w.ID, status: w.Status, staffID: w.StaffID})
+		spans[w.ID] = span{start: w.Start, end: w.End}
+	}
+	marks, err := dayOffMarks(ctx, db, newHolidayBook(db), rows, spans)
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[string][]DayOffDay, len(marks))
+	for id, m := range marks {
+		for _, d := range m.days {
+			out[id] = append(out[id], DayOffDay{Day: d.day, Holiday: d.holiday, Name: d.name})
+		}
+	}
+	return out, nil
+}
+
+// AwaitingDelivery are the statuses of work still waiting for its day.
+func AwaitingDelivery() []string { return append([]string(nil), rules.AwaitingDelivery...) }

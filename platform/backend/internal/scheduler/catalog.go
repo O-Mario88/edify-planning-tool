@@ -212,8 +212,6 @@ func executeJob(
 	}
 	localNow := now.In(loc)
 	today := localNow.Format(time.DateOnly)
-	fyNum, _ := KampalaOperationalFY(now)
-	fyLabel := fmt.Sprintf("FY%d", fyNum)
 
 	switch m.Name {
 	case "cost_reprice_sweep":
@@ -315,16 +313,12 @@ func executeJob(
 		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) { return adminops.GenerateDueMaintenance(ctx, tx, now, loc) })
 
 	case "weekly_fund_request":
-		// Upcoming Monday–Sunday in Africa/Kampala.
-		daysUntilMon := (int(time.Monday) - int(localNow.Weekday()) + 7) % 7
-		if daysUntilMon == 0 {
-			daysUntilMon = 7
-		}
-		weekStart := localNow.AddDate(0, 0, daysUntilMon)
-		weekEnd := weekStart.AddDate(0, 0, 6)
-		return callIntRW(ctx, pool,
-			`SELECT gateway_scheduler.upsert_weekly_drafts($1::date, $2::date, $3, $4)`,
-			weekStart.Format(time.DateOnly), weekEnd.Format(time.DateOnly), fyLabel, now)
+		// Deliberately nothing, as the existing job: draft weekly fund
+		// requests are made per owner when work is scheduled, and the job's
+		// old regeneration once filed the whole year's national spend as one
+		// request (apps.realtime.jobs._do_weekly_fund_request). The slot is
+		// kept so the schedule and health tooling still see it.
+		return 0, nil
 
 	case "monthly_work_plan":
 		// Next month's country budget (_do_monthly_work_plan): its month from
@@ -373,50 +367,10 @@ func executeJob(
 		})
 
 	case "day_off_alerts":
-		rows, err := pool.Query(ctx, `
-SELECT a.id, COALESCE(sp.user_id, a.responsible_staff_id), a.planned_date::text
-  FROM activity a
-  JOIN leave l ON l.staff_id = a.responsible_staff_id
-  LEFT JOIN staff_profile sp ON sp.id = a.responsible_staff_id AND sp.deleted_at IS NULL
- WHERE a.deleted_at IS NULL
-   AND a.status IN ('scheduled', 'rescheduled')
-   AND a.planned_date >= $1::date
-   AND l.status = 'approved'
-   AND a.planned_date::text >= l.start_date
-   AND a.planned_date::text <= l.end_date
- LIMIT 100`, today)
-		if err != nil {
-			return 0, err
-		}
-		type doRow struct{ actID, uid, dt string }
-		var items []doRow
-		for rows.Next() {
-			var r doRow
-			if scanErr := rows.Scan(&r.actID, &r.uid, &r.dt); scanErr == nil && r.uid != "" {
-				items = append(items, r)
-			}
-		}
-		rows.Close()
-		sent := 0
-		for _, it := range items {
-			if ok, err := writer.Deliver(ctx, notificationcenter.Delivery{
-				RecipientID:     it.uid,
-				Title:           "Activity scheduled during approved leave (" + it.dt + ")",
-				Body:            "An activity is scheduled on a day covered by your approved leave. Please reschedule or hand it over.",
-				Category:        "schedule_conflict",
-				ContextType:     "activity",
-				ContextID:       it.actID,
-				TargetRoute:     "/my-plan",
-				ActionLabel:     "Reschedule",
-				ActionRequired:  true,
-				Priority:        "high",
-				SourceEventType: "schedule.leave_conflict",
-				SourceEventID:   "dayoff-" + it.actID + ":" + today,
-			}); err == nil && ok {
-				sent++
-			}
-		}
-		return sent, nil
+		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy
+		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) {
+			return notificationjobs.SendDayOffAlerts(ctx, tx, now, loc, push, nil)
+		})
 
 	case "pd_reminders":
 		soon := localNow.AddDate(0, 0, 3).Format(time.DateOnly)
