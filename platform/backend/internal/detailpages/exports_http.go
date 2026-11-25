@@ -30,6 +30,9 @@ func (s *Service) RegisterHTTP(mux *http.ServeMux, authn HTTPAuth) {
 			return
 		}
 		target := strings.TrimSuffix(strings.TrimSpace(r.URL.Query().Get("target")), "/")
+		if s.serveWorkbook(w, r, p, target) {
+			return
+		}
 		if organisationWideExport(target) && !(p.ActiveRole == rbac.Admin && rbac.Grants(p.ActiveRole, exportPermission)) {
 			http.Error(w, "Your role cannot download this export.", http.StatusForbidden)
 			return
@@ -68,8 +71,6 @@ func (s *Service) RegisterHTTP(mux *http.ServeMux, authn HTTPAuth) {
 		case strings.HasPrefix(target, "/projects/") && strings.HasSuffix(target, "/export"):
 			projID := strings.TrimSuffix(strings.TrimPrefix(target, "/projects/"), "/export")
 			s.exportProjectsCSV(r.Context(), w, fy, projID)
-		case target == "/staff-activity/export":
-			s.exportStaffActivityCSV(r.Context(), w, fy)
 		case target == "/my-targets/export":
 			s.exportMyTargetsCSV(r.Context(), w, p, fy)
 		case target == "/my-professional-development/export":
@@ -95,7 +96,7 @@ const exportPermission = "data.export"
 // project's records, with no limit to the reader's scope yet.
 func organisationWideExport(target string) bool {
 	switch target {
-	case "/projects/export", "/staff-activity/export", "/ia/analytics/export":
+	case "/projects/export", "/ia/analytics/export":
 		return true
 	}
 	return strings.HasPrefix(target, "/projects/") && strings.HasSuffix(target, "/export")
@@ -150,36 +151,6 @@ ORDER BY pr.name`, fy, projectID)
 		var ceiling, schools, acts, done int64
 		if err := rows.Scan(&code, &pname, &cat, &status, &ceiling, &schools, &acts, &done); err == nil {
 			_ = cw.Write([]string{code, pname, cat, status, strconv.FormatInt(ceiling, 10), strconv.FormatInt(schools, 10), strconv.FormatInt(acts, 10), strconv.FormatInt(done, 10)})
-		}
-	}
-	cw.Flush()
-}
-
-func (s *Service) exportStaffActivityCSV(ctx context.Context, w http.ResponseWriter, fy string) {
-	rows, err := s.db.Query(ctx, `
-SELECT COALESCE(u.name, ''), COALESCE(u.email, ''), COALESCE(a.activity_type, ''), COALESCE(a.status, ''),
-       COALESCE(a.planned_date, a.scheduled_date), COALESCE(sc.name, '')
-FROM activity a
-LEFT JOIN "user" u ON u.id = a.responsible_staff_id
-LEFT JOIN school sc ON sc.id = a.school_id
-WHERE a.deleted_at IS NULL AND a.fy = $1
-ORDER BY COALESCE(a.planned_date, a.scheduled_date) DESC NULLS LAST LIMIT 2000`, fy)
-	if err != nil {
-		http.Error(w, "Export query failed", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
-	cw := startCSV(w, fmt.Sprintf("edify-staff-activity-fy%s.csv", fy))
-	_ = cw.Write([]string{"Staff Name", "Email", "Activity Type", "Status", "Planned Date", "School"})
-	for rows.Next() {
-		var uname, email, atype, status, sname string
-		var dt *time.Time
-		if err := rows.Scan(&uname, &email, &atype, &status, &dt, &sname); err == nil {
-			d := ""
-			if dt != nil {
-				d = dt.Format("2006-01-02")
-			}
-			_ = cw.Write([]string{uname, email, atype, status, d, sname})
 		}
 	}
 	cw.Flush()

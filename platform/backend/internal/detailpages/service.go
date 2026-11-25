@@ -32,6 +32,8 @@ type Service struct {
 	// releaseFile is a released donor or school version's download, for
 	// /ia/impact-reports/<id>/releases/<release>/download.
 	releaseFile ReleaseDownload
+	// workbooks are the workbook exports Go makes, by export path.
+	workbooks map[string]WorkbookExport
 }
 
 // ReleaseDownload writes a report's released version for p.

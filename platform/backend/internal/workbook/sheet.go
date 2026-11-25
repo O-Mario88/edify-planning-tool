@@ -124,21 +124,22 @@ func cellXML(ref string, cell Cell, xf int) string {
 	if xf > 0 {
 		style = fmt.Sprintf(` s="%d"`, xf)
 	}
-	switch cell.kind {
-	case kindText:
+	switch {
+	case cell.kind == kindText && cell.text == "":
+		// openpyxl keeps no value for "": the cell is written empty.
+	case cell.kind == kindText:
 		return fmt.Sprintf(`<c r="%s" t="inlineStr"%s><is><t xml:space="preserve">%s</t></is></c>`, ref, style, escape(cell.text))
-	case kindNumber:
+	case cell.kind == kindNumber:
 		return fmt.Sprintf(`<c r="%s"%s><v>%s</v></c>`, ref, style, strconv.FormatFloat(cell.num, 'g', -1, 64))
-	case kindDate:
+	case cell.kind == kindDate:
 		return fmt.Sprintf(`<c r="%s"%s><v>%s</v></c>`, ref, style, strconv.FormatFloat(excelSerial(cell.when, false), 'f', -1, 64))
-	case kindDateTime:
+	case cell.kind == kindDateTime:
 		return fmt.Sprintf(`<c r="%s"%s><v>%s</v></c>`, ref, style, strconv.FormatFloat(excelSerial(cell.when, true), 'f', -1, 64))
-	default:
-		if xf == 0 {
-			return ""
-		}
-		return fmt.Sprintf(`<c r="%s"%s/>`, ref, style)
 	}
+	if xf == 0 {
+		return ""
+	}
+	return fmt.Sprintf(`<c r="%s"%s/>`, ref, style)
 }
 
 // cellStyle is what workbook_response leaves on the cell at row r, column c.
