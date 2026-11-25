@@ -67,8 +67,8 @@ func CountryExecutionPage(ctx context.Context, db schooldirectory.Querier, p aut
 	if !slices.ContainsFunc(rules.CountryExecution.Page.ViewBy, func(v [2]string) bool { return v[0] == table }) {
 		table = "lead"
 	}
-	if table != "lead" {
-		return nil, errCEXHandOn // the other four views are not drawn yet
+	if table != "lead" && table != "cceo" && table != "partner" {
+		return nil, errCEXHandOn // the school and activity views are not drawn yet
 	}
 	if set, err := s.targetsSet(ctx, db); err != nil || set {
 		if err == nil || errors.Is(err, targets.ErrHandOn) {
@@ -76,7 +76,7 @@ func CountryExecutionPage(ctx context.Context, db schooldirectory.Querier, p aut
 		}
 		return nil, err
 	}
-	blocks := []*screensv1.PageBlock{lensTabsAt("execution"), s.filterBlock()}
+	blocks := []*screensv1.PageBlock{lensTabsAt("execution"), s.filterBlock(table)}
 	notice, err := s.notice(ctx, db, country)
 	if err != nil {
 		return nil, err
@@ -91,7 +91,20 @@ func CountryExecutionPage(ctx context.Context, db schooldirectory.Querier, p aut
 	if err != nil {
 		return nil, err
 	}
-	blocks = append(blocks, walk(s.timelinessNodes(reader, reminders, country))...)
+	var body *node
+	switch table {
+	case "cceo":
+		body = s.ownerTableNodes(reader, reminders)
+	case "partner":
+		rows, err := s.partnerRows(ctx, db)
+		if err != nil {
+			return nil, err
+		}
+		body = s.partnerTableNodes(rows)
+	default:
+		body = s.leadTableNodes(reader, reminders, country)
+	}
+	blocks = append(blocks, walk(s.timelinessNodes(body))...)
 	recent, err := s.recent(ctx, db)
 	if err != nil {
 		return nil, err
@@ -144,7 +157,7 @@ func cexOpenCounts(ctx context.Context, db schooldirectory.Querier, fy string) (
 }
 
 // filterBlock is page.html's filter form as the feed reads it.
-func (s *cexSnapshot) filterBlock() *screensv1.PageBlock {
+func (s *cexSnapshot) filterBlock(table string) *screensv1.PageBlock {
 	f := s.filters
 	page := rules.CountryExecution.Page
 	opt := func(pairs [][2]string) []*screensv1.PageFilterOption {
@@ -222,7 +235,7 @@ func (s *cexSnapshot) filterBlock() *screensv1.PageBlock {
 		filter("quarter", "Quarter", "", f.quarter, quarters),
 		filter("month", "Month", "", month, months),
 		filter("fy", "Financial year", "", f.fy, years),
-		filter("table", "", "View by", "lead", page.ViewBy),
+		filter("table", "", "View by", table, page.ViewBy),
 		filter("channel", "", "Delivery Channel", f.channel, channels),
 		filter("activity_type", "", "Activity Type", f.activType, typeOpts),
 		filter("region", "", "Region", f.region, regionOpts),
@@ -588,14 +601,22 @@ func cellNodes(c cexCells, reader cpoReader) []any {
 		td(strconv.Itoa(c.carried)), td(strconv.Itoa(c.returned)), remaining, td(el("span", "cxo-outlook", c.forecast.label)), reminders}
 }
 
-// timelinessNodes is _table.html with table_leads.html.
-func (s *cexSnapshot) timelinessNodes(reader cpoReader, reminders map[[2]string]int, country string) *node {
+// timelinessNodes is _table.html around one of its views.
+func (s *cexSnapshot) timelinessNodes(body *node) *node {
 	q := s.filters.query()
 	tabs := el("div", "")
 	for _, t := range [][2]string{{"lead", "Program Leads"}, {"cceo", "CCEOs"}, {"partner", "Partners"}, {"school", "Schools"}, {"activity", "Activities"}} {
 		tabs.Add(el("button", "", t[1]).Attr("type", "button", "data-edify-tab", "", "hx-get", cexBase+"/table?table="+t[0]+"&"+q,
 			"hx-target", "#cxo-table", "hx-swap", "outerHTML"))
 	}
+	return el("section", "cpo-drill cxo-drill",
+		el("header", "cpo-drill-head", el("h2", "cpo-drill-name", "Execution Timeliness")),
+		el("div", "cxo-drill-bar", tabs), body)
+}
+
+// leadTableNodes is table_leads.html.
+func (s *cexSnapshot) leadTableNodes(reader cpoReader, reminders map[[2]string]int, country string) *node {
+	q := s.filters.query()
 	heads := []string{"Planned", "In-Progress", "Completed & PL Verified", "On-Time %", "Overdue", "Carried Forward", "Returned",
 		"Remaining Slots", "Forecast", "Open Reminders"}
 	table := el("table", "cpo-table cxo-table", headRow("Program Lead & Team", heads, "Action"))
@@ -628,9 +649,7 @@ func (s *cexSnapshot) timelinessNodes(reader cpoReader, reminders map[[2]string]
 	c := s.cells(s.tree.country, s.remainingOf("country", ""), reminders[[2]string{"country", ""}], false)
 	table.Add(el("tbody", "", el("tr", "cxo-total", append(append([]any{el("th", "cpo-namecell", el("span", "", country+" Total"))},
 		cellNodes(c, reader)...), el("td", "cpo-actcell", el("span", "cpo-none", "—")))...)))
-	return el("section", "cpo-drill cxo-drill",
-		el("header", "cpo-drill-head", el("h2", "cpo-drill-name", "Execution Timeliness")),
-		el("div", "cxo-drill-bar", tabs), el("div", "cpo-tscroll", table))
+	return el("div", "cpo-tscroll", table)
 }
 
 // lowerNodes is the issues, the recent movements and the follow-ups.

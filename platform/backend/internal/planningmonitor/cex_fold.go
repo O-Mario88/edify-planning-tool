@@ -109,6 +109,7 @@ func (f cexFilters) cellKeeps(k cexCellKey, leadOf map[string]string) bool {
 type cexRoster struct {
 	leads  [][2]string
 	people map[string][][2]string
+	ids    map[string][]string // every id each person goes by, the Lead's own included
 }
 
 func cexRosterOf(ctx context.Context, db schooldirectory.Querier, scope schooldirectory.Scope) (cexRoster, error) {
@@ -117,13 +118,14 @@ func cexRosterOf(ctx context.Context, db schooldirectory.Querier, scope schooldi
 	if err != nil {
 		return cexRoster{}, err
 	}
-	out := cexRoster{people: map[string][][2]string{}}
+	out := cexRoster{people: map[string][][2]string{}, ids: map[string][]string{}}
 	for _, t := range teams {
 		if t.noLead {
 			continue
 		}
 		out.leads = append(out.leads, [2]string{t.lead.Key, t.lead.Name})
 		for _, p := range t.people {
+			out.ids[p.key] = append([]string{p.key}, p.ids...)
 			if !p.lead {
 				out.people[t.lead.Key] = append(out.people[t.lead.Key], [2]string{p.key, p.name})
 			}
@@ -284,6 +286,7 @@ type cexSnapshot struct {
 	required      int
 	targets       map[[2]string]int
 	plan          *cpoSnapshot
+	scope         schooldirectory.Scope
 }
 
 // buildCEXSnapshot is snapshot_for.
@@ -297,7 +300,7 @@ func buildCEXSnapshot(ctx context.Context, db schooldirectory.Querier, scope sch
 	if err != nil {
 		return nil, err
 	}
-	s := &cexSnapshot{tree: cexFold(d, roster, f), filters: f, data: d, roster: roster}
+	s := &cexSnapshot{tree: cexFold(d, roster, f), filters: f, data: d, roster: roster, scope: scope}
 	if err := s.planningPosition(ctx, db, scope, today); err != nil {
 		return nil, err
 	}
