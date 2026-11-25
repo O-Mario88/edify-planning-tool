@@ -141,6 +141,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		if tables, ported, err = ReadPlanTables(ctx, s.db, p.Country, owners, period, f, now); err != nil || !ported {
 			return nil, false, err
 		}
+		tables.query = query
 	}
 	// Past the ceiling the tile says so (staff_plan.ceiling_notice), which
 	// Go does not draw: handed on whichever readiness reader is attached.

@@ -3,6 +3,7 @@ package myplan
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"time"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
@@ -76,6 +77,8 @@ type PlanTablesResult struct {
 	// trainings are the Trainings table (each session once a school it
 	// reached), group the Group Trainings table (each session once).
 	trainings, group []*planRow
+	// query is the page's own query, which picks each table's page.
+	query url.Values
 	// programme are the programme schools' sections, by type.
 	programme map[string][]*planRow
 	// statusShown is the Status select's value when the Core slots overwrite
@@ -340,42 +343,9 @@ func ReadPlanTables(ctx context.Context, db schooldirectory.Querier, place *regi
 			r.settle(pg.today)
 		}
 	}
-	if len(res.visits) > planTablePageSize {
-		res.visits = res.visits[:planTablePageSize]
-	}
-	if len(res.meetings) > planTablePageSize {
-		res.meetings = res.meetings[:planTablePageSize]
-	}
-	if len(res.core) > planTablePageSize {
-		res.core = res.core[:planTablePageSize]
-	}
-	if len(res.coreTrainings) > planTablePageSize {
-		res.coreTrainings = res.coreTrainings[:planTablePageSize]
-	}
-	if len(res.trainings) > planTablePageSize {
-		res.trainings = res.trainings[:planTablePageSize]
-	}
-	if len(res.group) > planTablePageSize {
-		res.group = res.group[:planTablePageSize]
-	}
-	if len(res.dayOff) > planTablePageSize {
-		res.dayOff = res.dayOff[:planTablePageSize]
-	}
-	if len(res.returned) > planTablePageSize {
-		res.returned = res.returned[:planTablePageSize]
-	}
-	if len(res.waiting) > planTablePageSize {
-		res.waiting = res.waiting[:planTablePageSize]
-	}
-	if len(res.finance) > planTablePageSize {
-		res.finance = res.finance[:planTablePageSize]
-	}
-	for kind, rows := range res.programme {
+	for _, rows := range res.programme {
 		for _, r := range rows {
 			r.settle(pg.today)
-		}
-		if len(rows) > programmePageSize {
-			res.programme[kind] = rows[:programmePageSize]
 		}
 	}
 	return res, true, nil

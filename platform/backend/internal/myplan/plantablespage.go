@@ -2,6 +2,7 @@ package myplan
 
 import (
 	"fmt"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/tablepager"
 	"net/url"
 	"strconv"
 	"strings"
@@ -238,9 +239,9 @@ func planTablesBlocks(t PlanTablesResult, p Period, clusters []clusterPlanRow) [
 	visitColumns := []string{"School ID", "School Name", "District", "District Type", "Activity", "Planned Date",
 		"Completed Date", "Executor", "Purpose of Visit", "Focus Intervention", "Cost", "Budget status",
 		"Verification", "Salesforce ID", "Status", "Actions"}
-	full := func(title string, cols []string, rows []*screensv1.PageRow) *screensv1.PageBlock {
+	full := func(title string, cols []string, rows []*screensv1.PageRow, total int, pg pageOf) *screensv1.PageBlock {
 		return &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{
-			Title: title + " " + words, Columns: columns(cols...), Rows: rows, Count: strconv.Itoa(len(rows)),
+			Title: title + " " + words, Columns: columns(cols...), Rows: rows, Count: strconv.Itoa(total), Footnote: pg.footnote(), Pager: pg.pager,
 		}}}
 	}
 	var blocks []*screensv1.PageBlock
@@ -248,44 +249,48 @@ func planTablesBlocks(t PlanTablesResult, p Period, clusters []clusterPlanRow) [
 		blocks = append(blocks, emptyTable(PlanTables[0], p))
 	} else {
 		var rows []*screensv1.PageRow
-		for _, r := range t.visits {
+		shown, pager := t.page(t.visits, planTablePageSize, "school_visits_page")
+		for _, r := range shown {
 			rows = append(rows, pageRow(r, r.schoolName, append(schoolCells(r, r.districtShown, "School Visit"), tailCells(r)...)))
 		}
-		blocks = append(blocks, full(PlanTables[0].Title, visitColumns, rows))
+		blocks = append(blocks, full(PlanTables[0].Title, visitColumns, rows, len(t.visits), pager))
 	}
 	if len(t.trainings) == 0 {
 		blocks = append(blocks, emptyTable(PlanTables[1], p))
 	} else {
 		var rows []*screensv1.PageRow
-		for _, r := range t.trainings {
+		shown, pager := t.page(t.trainings, planTablePageSize, "cluster_trainings_page")
+		for _, r := range shown {
 			rows = append(rows, pageRow(r, r.clusterName, append(trainingTableCells(r), tailCells(r)...)))
 		}
 		blocks = append(blocks, full(PlanTables[1].Title, []string{"School ID", "School / Cluster", "District",
 			"District Type", "Cluster Planned From", "Executor", "Training Name", "Planned Date", "Completed Date",
 			"SSA Intervention", "Participants", "Mode of Delivery", "Cost", "Budget status", "Verification",
-			"Salesforce ID", "Status", "Actions"}, rows))
+			"Salesforce ID", "Status", "Actions"}, rows, len(t.trainings), pager))
 	}
 	if len(t.group) == 0 {
 		blocks = append(blocks, emptyTable(PlanTables[2], p))
 	} else {
 		var rows []*screensv1.PageRow
-		for _, r := range t.group {
+		shown, pager := t.page(t.group, planTablePageSize, "group_trainings_page")
+		for _, r := range shown {
 			rows = append(rows, pageRow(r, r.clusterName, append(groupTableCells(r), tailCells(r)...)))
 		}
 		blocks = append(blocks, full(PlanTables[2].Title, []string{"Cluster Name", "District", "District Type",
 			"Planned Date", "Completed Date", "Executor", "Training", "SSA Intervention", "Participants", "Cost",
-			"Budget status", "Verification", "Salesforce ID", "Status", "Actions"}, rows))
+			"Budget status", "Verification", "Salesforce ID", "Status", "Actions"}, rows, len(t.group), pager))
 	}
 	if len(t.meetings) == 0 {
 		blocks = append(blocks, emptyTable(PlanTables[3], p))
 	} else {
 		var rows []*screensv1.PageRow
-		for _, r := range t.meetings {
+		shown, pager := t.page(t.meetings, planTablePageSize, "cluster_meetings_page")
+		for _, r := range shown {
 			rows = append(rows, pageRow(r, r.clusterName, append(meetingCells(r), tailCells(r)...)))
 		}
 		blocks = append(blocks, full(PlanTables[3].Title, []string{"Cluster Name", "District", "District Type",
 			"Planned Date", "Completed Date", "Executor", "Purpose (Meeting Topic)", "SSA Intervention",
-			"Participants", "Cost", "Budget status", "Verification", "Salesforce ID", "Status", "Actions"}, rows))
+			"Participants", "Cost", "Budget status", "Verification", "Salesforce ID", "Status", "Actions"}, rows, len(t.meetings), pager))
 	}
 	if cb := clusterPlanningBlock(clusters); cb != nil {
 		blocks = append(blocks, cb)
@@ -309,7 +314,8 @@ func programmeBlocks(t PlanTablesResult) []*screensv1.PageBlock {
 			continue
 		}
 		var rows []*screensv1.PageRow
-		for _, r := range section {
+		shown, pager := t.page(section, programmePageSize, kind)
+		for _, r := range shown {
 			code := r.schoolID.value
 			if r.schoolID.null {
 				code = "None"
@@ -337,8 +343,8 @@ func programmeBlocks(t PlanTablesResult) []*screensv1.PageBlock {
 			}})
 		}
 		blocks = append(blocks, &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{
-			Title:   fmt.Sprintf("%s School Visits and Trainings Planned (%d)", rules.Tables.ProgrammeSchoolLabels[kind], len(rows)),
-			Columns: cols, Rows: rows,
+			Title:   fmt.Sprintf("%s School Visits and Trainings Planned (%d)", rules.Tables.ProgrammeSchoolLabels[kind], len(section)),
+			Columns: cols, Rows: rows, Footnote: pager.footnote(), Pager: pager.pager,
 		}}})
 	}
 	return blocks
@@ -352,6 +358,9 @@ func coreBlocks(t PlanTablesResult, words string, visitColumns []string) []*scre
 		if in(rules.Plan.CompletedWorkStatuses, r.a.status) {
 			done++
 		}
+	}
+	coreShown, corePager := t.page(t.core, planTablePageSize, "core_visits_page")
+	for _, r := range coreShown {
 		cells := schoolCells(r, r.schoolDistrict, "Core Visit")
 		// core_school_visits.html writes the slot's number and the
 		// package's progress after the activity (V2 1/8 Completed).
@@ -372,6 +381,9 @@ func coreBlocks(t PlanTablesResult, words string, visitColumns []string) []*scre
 			if in(rules.Plan.CompletedWorkStatuses, r.a.status) {
 				tDone++
 			}
+		}
+		trainingShown, trainingPager := t.page(t.coreTrainings, planTablePageSize, "core_trainings_page")
+		for _, r := range trainingShown {
 			tRows = append(tRows, pageRow(r, r.schoolName, append(coreTrainingCells(r), tailCells(r)...)))
 		}
 		// core_school_trainings.html's own columns; its last heading is empty.
@@ -382,14 +394,14 @@ func coreBlocks(t PlanTablesResult, words string, visitColumns []string) []*scre
 			cols = append(cols, &screensv1.PageColumn{Label: l})
 		}
 		trainingsBlock = &screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{
-			Title: "Core School Trainings Planned for " + words, Subtitle: fmt.Sprintf("%d %d completed", len(tRows), tDone),
-			Columns: cols, Rows: tRows,
+			Title: "Core School Trainings Planned for " + words, Subtitle: fmt.Sprintf("%d %d completed", len(t.coreTrainings), tDone),
+			Columns: cols, Rows: tRows, Footnote: trainingPager.footnote(), Pager: trainingPager.pager,
 		}}}
 	}
 	return []*screensv1.PageBlock{
 		&screensv1.PageBlock{Kind: &screensv1.PageBlock_Table{Table: &screensv1.PageTable{
-			Title: "Core School Visits Planned for " + words, Subtitle: fmt.Sprintf("%d %d completed", len(rows), done),
-			Columns: columns(coreColumns...), Rows: rows,
+			Title: "Core School Visits Planned for " + words, Subtitle: fmt.Sprintf("%d %d completed", len(t.core), done),
+			Columns: columns(coreColumns...), Rows: rows, Footnote: corePager.footnote(), Pager: corePager.pager,
 		}}},
 		trainingsBlock,
 	}
@@ -492,4 +504,40 @@ func coreTrainingCells(r *planRow) []*screensv1.PageCell {
 		{Text: day(plannedOn, "Unscheduled") + r.dayOffFlag()}, {Text: day(r.completedOn, dash)},
 		{Text: r.focus, Tone: "primary", Badge: true}, {Text: participants}, {Text: r.owner},
 	}
+}
+
+// pageOf is what the feed reads of table_pager.html inside a table: the
+// pager, and its "Showing 51–67 of 67" line again as the table's footnote.
+type pageOf struct{ pager *screensv1.PagePager }
+
+func (p pageOf) footnote() string {
+	if p.pager == nil {
+		return ""
+	}
+	return p.pager.Summary
+}
+
+// set gives a table its pager and footnote.
+func (p pageOf) set(t *screensv1.PageTable) {
+	if p.pager != nil {
+		t.Pager, t.Footnote = p.pager, p.pager.Summary
+	}
+}
+
+// page is {% paginate rows param %}: the rows of the page the query asks
+// for, and its pager (none when they fit on one).
+func (t PlanTablesResult) page(rows []*planRow, size int, param string) ([]*planRow, pageOf) {
+	p := tablepager.Paginate(len(rows), size, t.query, param)
+	return rows[p.Start:p.End], pageOf{p.Pager}
+}
+
+// pagedCard is a card's {% paginate %}: its page of rows, its table given
+// the pager.
+func (t PlanTablesResult) pagedCard(rows []*planRow, param string, card func([]*planRow) *screensv1.PageBlock) *screensv1.PageBlock {
+	shown, pg := t.page(rows, planTablePageSize, param)
+	b := card(shown)
+	if table := b.GetTable(); table != nil {
+		pg.set(table)
+	}
+	return b
 }

@@ -234,16 +234,16 @@ func planPage(parts pageParts) *screensv1.GetPageResponse {
 	blocks := []*screensv1.PageBlock{p.Tabs(request), form}
 	t := parts.tables
 	if len(t.dayOff) > 0 {
-		blocks = append(blocks, dayOffCard(t.dayOff))
+		blocks = append(blocks, t.pagedCard(t.dayOff, "day_off_page", dayOffCard))
 	}
 	if len(t.returned) > 0 {
-		blocks = append(blocks, returnedCard(t.returned))
+		blocks = append(blocks, t.pagedCard(t.returned, "returned_needs_correction_page", returnedCard))
 	}
 	if len(t.waiting) > 0 {
-		blocks = append(blocks, waitingCard(t.waiting))
+		blocks = append(blocks, t.pagedCard(t.waiting, "waiting_on_approval_page", waitingCard))
 	}
 	if len(t.finance) > 0 {
-		blocks = append(blocks, financeCard(t.finance))
+		blocks = append(blocks, t.pagedCard(t.finance, "finance_pending_page", financeCard))
 	}
 	blocks = append(blocks, progressStrip(parts.plan.Counts, parts.target))
 	if parts.plan.PastDue > 0 && status != "overdue" && status != "under_way" {
