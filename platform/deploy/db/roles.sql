@@ -1349,3 +1349,6 @@ GRANT SELECT (id, created_at, pl_user_id, staff_user_id, fy, month_of_fy, status
 -- Follow Up with PL for execution: the Lead's open follow-ups show what is
 -- still open as last checked (live_remaining).
 GRANT SELECT (live_remaining) ON planning_oversight_follow_up TO edify_gateway_ro;
+-- Team Oversight's record drawer (oversight_detail_view): each cost line's
+-- rate-card version.
+GRANT SELECT (cost_setting_version) ON activity_schedule_cost_line TO edify_gateway_ro;

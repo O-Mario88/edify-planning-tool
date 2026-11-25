@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schoolprofile"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/visitgate"
 )
@@ -79,6 +81,11 @@ ORDER BY a.created_at DESC, a.id`, args...)
 	if err != nil {
 		return nil, fmt.Errorf("planningoversight: reading the team's work: %w", err)
 	}
+	return scanActs(rows)
+}
+
+// scanActs reads activity rows selected with actColumns.
+func scanActs(rows pgx.Rows) ([]*act, error) {
 	defer rows.Close()
 	out := []*act{}
 	for rows.Next() {
