@@ -305,9 +305,14 @@ func pdSupervisor(ctx context.Context, tx pgx.Tx, staffID string) (string, error
 	return user, err
 }
 
+// RowReader is what PDSupervisorOf reads with: a transaction or a pool.
+type RowReader interface {
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+}
+
 // PDSupervisorOf is supervisor_for: the reviewer's People record and user id,
 // or "" for both.
-func PDSupervisorOf(ctx context.Context, tx pgx.Tx, staffID string) (string, string, error) {
+func PDSupervisorOf(ctx context.Context, tx RowReader, staffID string) (string, string, error) {
 	var activeRole, country string
 	err := tx.QueryRow(ctx, `SELECT COALESCE(u.active_role, ''), COALESCE(sp.country, '') FROM staff_profile sp
 LEFT JOIN "user" u ON u.id = sp.user_id WHERE sp.id = $1`, staffID).Scan(&activeRole, &country)

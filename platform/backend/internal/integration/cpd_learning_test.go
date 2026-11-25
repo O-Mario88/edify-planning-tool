@@ -75,22 +75,11 @@ func TestCPDLearningMatchesTheExistingFeedOverCoursesTheSeedLacks(t *testing.T) 
 // A Programme Lead reads /cpd-learning as their team's development, drawn by
 // Go (team_body.html): the Performance & Coaching strip, the team's context,
 // what waits on them, their team's requests and the follow-up queues without
-// HR's sign-off. Go hands the page on only while a request waits at a
-// supervisor's stage, the approval queue it does not draw yet.
+// HR's sign-off.
 func TestCPDLearningTeamViewIsGos(t *testing.T) {
 	borrowAccount(t, "pl1@edify.org")
 	lead := sessionOf(t, "pl1@edify.org", seededPassword).GetAccessToken()
-	var waiting bool
-	if err := admin.QueryRow(context.Background(), `SELECT EXISTS (SELECT 1 FROM pd_request WHERE status = 'submitted_to_supervisor')`).Scan(&waiting); err != nil {
-		t.Fatal(err)
-	}
 	page, err := pageOf(lead, "/cpd-learning", nil)
-	if waiting {
-		if err == nil {
-			t.Fatal("a request waits at a supervisor's stage, and Go drew the page")
-		}
-		t.Skip("a request waits at a supervisor's stage: the page is handed on")
-	}
 	if err != nil {
 		t.Fatalf("the Lead's team view: %v", err)
 	}

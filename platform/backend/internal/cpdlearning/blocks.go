@@ -16,10 +16,11 @@ import (
 // blocks is partials/hr/pd_dashboard/body.html under the page's filters, as
 // the feed reads it.
 func (d *dashboard) blocks() []*screensv1.PageBlock {
-	out := []*screensv1.PageBlock{d.filters(), d.strip(),
-		fundworkspace.Panel("1. Staff Professional Development Tracker",
-			fundworkspace.Text(fmt.Sprintf("%d request%s", d.trackerEntries, plural(d.trackerEntries)))),
-		d.trackerTable(), section("2. HR Action Center")}
+	out := []*screensv1.PageBlock{d.filters(), d.strip()}
+	out = append(out, queueBlocks(d.queue, false)...)
+	out = append(out, fundworkspace.Panel("1. Staff Professional Development Tracker",
+		fundworkspace.Text(fmt.Sprintf("%d request%s", d.trackerEntries, plural(d.trackerEntries)))),
+		d.trackerTable(), section("2. HR Action Center"))
 	out = append(out, d.actionCenter(true)...)
 	out = append(out, d.fundBlocks()...)
 	out = append(out, d.roleBlocks()...)
@@ -45,10 +46,9 @@ func (d *dashboard) teamBlocks() []*screensv1.PageBlock {
 		out = append(out, &screensv1.PageBlock{Kind: &screensv1.PageBlock_LinkTabs{LinkTabs: &screensv1.PageLinkTabs{
 			Tabs: tabs, Label: st.Label, Scrolls: st.Scrolls}}})
 	}
-	out = append(out, strip,
-		fundworkspace.Panel("Waiting for your approval",
-			fundworkspace.Text("Nothing is waiting for your approval. A request an officer submits appears here before it goes to HR.")),
-		fundworkspace.Panel("Your team's requests", fundworkspace.Text(fmt.Sprintf("%d request%s", d.trackerEntries, plural(d.trackerEntries)))),
+	out = append(out, strip)
+	out = append(out, queueBlocks(d.queue, true)...)
+	out = append(out, fundworkspace.Panel("Your team's requests", fundworkspace.Text(fmt.Sprintf("%d request%s", d.trackerEntries, plural(d.trackerEntries)))),
 		d.trackerTable(), section("Follow up with your team"))
 	out = append(out, d.actionCenter(false)...)
 	out = append(out, d.fundBlocks()...)

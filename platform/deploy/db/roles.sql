@@ -1323,3 +1323,8 @@ GRANT SELECT (previous_school_type, onboarded_at) ON core_school_onboarding TO e
 -- (_followups_panel, _followup_card, open_counts).
 GRANT SELECT (fy, module, issue_type, activity_label, partner_name, cceo_name, program_lead_name,
   last_reminder_at, reminder_count) ON planning_oversight_follow_up TO edify_gateway_ro;
+
+-- The Professional Development dashboard's approval queue
+-- (HRPDDashboardService.supervisor_queue): an over-allocation request and a
+-- schedule conflict are said on its row.
+GRANT SELECT (is_exception, conflict_status) ON pd_request TO edify_gateway_ro;

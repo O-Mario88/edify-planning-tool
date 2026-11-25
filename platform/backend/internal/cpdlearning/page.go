@@ -99,12 +99,12 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if !ok {
 		return nil, false, nil
 	}
-	waiting, err := waitingOnOthers(ctx, s.db, p.StaffProfileID)
+	queue, err := supervisorQueue(ctx, s.db, p.StaffProfileID, now)
 	if err != nil {
 		return nil, true, err
 	}
-	if waiting {
-		return nil, false, nil
+	if len(queue) > tablePageSize {
+		return nil, false, nil // the queue's own pager is not drawn yet
 	}
 	sc, err := readScope(ctx, s.db, p, now)
 	if errors.Is(err, errHandOn) {
@@ -117,6 +117,7 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if err != nil || !ok {
 		return nil, err != nil, err
 	}
+	d.queue = queue
 	if role.TeamView {
 		// A Programme Lead reads the page as their team's development.
 		h := &screensv1.PageHeader{Eyebrow: "Team performance", Title: "Team Professional Development",
@@ -152,6 +153,7 @@ type dashboard struct {
 	roleCents      int64
 	certsVerified  int
 	trackerEntries int
+	queue          []queueRow
 }
 
 type trackerRow struct {

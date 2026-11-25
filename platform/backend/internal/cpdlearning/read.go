@@ -130,18 +130,6 @@ FROM pd_request WHERE fy = $1 AND staff_id = ANY($2) GROUP BY staff_id`, r.fy, s
 	return out, rows.Err()
 }
 
-// waitingOnOthers is whether a request waits at the supervisor stage that
-// is not the reader's own: the supervisor queue, which Go does not draw.
-func waitingOnOthers(ctx context.Context, db schooldirectory.Querier, profileID string) (bool, error) {
-	var waiting bool
-	err := db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM pd_request WHERE status = $1 AND staff_id <> $2)`,
-		statusSupervisor, profileID).Scan(&waiting)
-	if err != nil {
-		return false, fmt.Errorf("cpdlearning: reading the supervisor queue: %w", err)
-	}
-	return waiting, nil
-}
-
 // countryOptions is the countries of the people in the reader's scope.
 func (r reader) countryOptions(ctx context.Context) ([]string, error) {
 	where, args := r.sc.where("id", nil)
