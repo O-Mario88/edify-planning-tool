@@ -267,7 +267,15 @@ def _country_oversight_page() -> dict:
     choices (apps.planning.country_oversight.service, oversight_views)."""
     from apps.core.metrics import MetricValue, render_metric
     from apps.frontend.views.oversight_views import country_lens_tabs
+    from apps.planning.country_execution.followups import EXEC_ISSUES
+    from apps.planning.country_oversight import followups as fu
     from apps.planning.country_oversight import service
+    from apps.core.permissions import RolePermissionService
+    from apps.core.rbac import EdifyRole
+    from apps.planning.followup_models import OPEN_FOLLOW_UP_STATES, FollowUpStatus
+    from apps.schools.management.commands.export_school_directory_rules import (
+        _role_user,
+    )
 
     return {
         "kpi_tables": dict(service.KPI_TABLES),
@@ -286,6 +294,20 @@ def _country_oversight_page() -> dict:
             [t["key"], t["label"], t["short"], t["href"]]
             for t in country_lens_tabs("coverage")
         ],
+        # The Open Follow-ups panel (country_oversight_views._followup_card).
+        "followup_open_states": sorted(str(s) for s in OPEN_FOLLOW_UP_STATES),
+        "followup_status_labels": {str(k): str(v) for k, v in FollowUpStatus.choices},
+        "followup_issue_labels": {
+            key: issue.label for key, issue in {**EXEC_ISSUES, **fu.ISSUES}.items()
+        },
+        # may_export: the drill-down's Export (can_export).
+        "export_roles": sorted(
+            role.value
+            for role in EdifyRole
+            if RolePermissionService.can_export(
+                _role_user(role.value), "/country-planning-oversight/coverage-export"
+            )
+        ),
     }
 
 

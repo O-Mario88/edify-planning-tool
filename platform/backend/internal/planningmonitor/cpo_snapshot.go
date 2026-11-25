@@ -16,6 +16,7 @@ type cpoSnapshot struct {
 	data    *cpoDataset
 	leads   [][2]string
 	people  []*cpoTeam
+	roster  []cpoRosterOwner
 }
 
 // cpoWindowOf is Filters.window.
@@ -93,5 +94,5 @@ func buildCPOSnapshot(ctx context.Context, db schooldirectory.Querier, scope sch
 	if err != nil {
 		return nil, err
 	}
-	return &cpoSnapshot{tree: foldTree(d, f, people, owners, leads), filters: f, data: d, leads: leads, people: people}, nil
+	return &cpoSnapshot{tree: foldTree(d, f, people, owners, leads), filters: f, data: d, leads: leads, people: people, roster: owners}, nil
 }

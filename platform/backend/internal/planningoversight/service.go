@@ -3,6 +3,8 @@ package planningoversight
 import (
 	"context"
 	"net/url"
+	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -10,6 +12,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/myplan"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/planningmonitor"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -17,6 +20,9 @@ const (
 	teamKey    = "team"
 	countryKey = "country"
 )
+
+// CountryPath is the Country Planning Oversight page.
+const CountryPath = "/country-planning-oversight/"
 
 // Service answers the two oversight pages' doors.
 type Service struct {
@@ -61,12 +67,13 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 			// with country-wide figures, under the team's address.
 			return s.buildTeamPlan(ctx, p, query)
 		}
-		// The country summary stands in only with the existing application
-		// absent, and never for the portfolio view, which
-		// internal/oversightportfolio draws in full.
-		if key == countryKey && pagegate.DjangoAbsent(ctx) && !asksForPortfolio(query) {
-			return s.buildCountryOversight(ctx, p, query)
+		// The planning-coverage dashboard, the page's default lens, is
+		// Go's (planningmonitor.CountryOversightPage, as coverage_page draws it).
+		if key == countryKey && asksForCoverage(query) {
+			return s.buildCountryCoverage(ctx, p, query)
 		}
+		// Every other lens is handed on (the summary Go used to draw in a
+		// design of its own is gone: docs/migration/189).
 		return nil, false, nil
 	}
 	return nil, true, pagegate.ErrNotAvailable
@@ -83,8 +90,48 @@ func refused(role, key string) bool {
 	return !ok || !door.Open
 }
 
-// asksForPortfolio is whether the query names the portfolio view, as the
-// existing page reads it (stripped, any case).
-func asksForPortfolio(query url.Values) bool {
-	return strings.EqualFold(strings.TrimSpace(query.Get("view")), "portfolio")
+// countryLenses are the views country_planning_oversight_view sends
+// somewhere other than coverage_page.
+var countryLenses = map[string]bool{"clusters": true, "execution": true, "portfolio": true, "monitor": true,
+	"plan": true, "planning": true}
+
+// activityPlanParams are _ACTIVITY_PLAN_PARAMS: a link carrying the Country
+// Plan lens's own filters lands on that lens.
+var activityPlanParams = []string{"lead", "risk", "activity_type", "executor_type", "context", "status", "district_id", "partner_id"}
+
+// asksForCoverage is whether country_planning_oversight_view answers the
+// query with coverage_page.
+func asksForCoverage(query url.Values) bool {
+	view := ""
+	if values := query["view"]; len(values) > 0 {
+		// QueryDict.get answers a repeated key's last value.
+		view = strings.ToLower(strings.TrimSpace(values[len(values)-1]))
+	}
+	if view != "" {
+		return !countryLenses[view]
+	}
+	for key := range query {
+		if slices.Contains(activityPlanParams, key) || groupPage.MatchString(key) {
+			return false
+		}
+	}
+	return true
+}
+
+var groupPage = regexp.MustCompile(`^g\d+_page`)
+
+// buildCountryCoverage is coverage_page for p.
+func (s *Service) buildCountryCoverage(ctx context.Context, p auth.Principal, query url.Values) (*screensv1.GetPageResponse, bool, error) {
+	q := map[string]string{}
+	for key, values := range query {
+		if len(values) > 0 {
+			q[key] = values[len(values)-1]
+		}
+	}
+	blocks, err := planningmonitor.CountryOversightPage(ctx, s.db, p, q, s.now())
+	if err != nil {
+		return nil, true, err
+	}
+	return &screensv1.GetPageResponse{Header: &screensv1.PageHeader{Title: "Country Planning Oversight"}, Blocks: blocks,
+		WebPath: CountryPath}, true, nil
 }

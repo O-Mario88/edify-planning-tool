@@ -34,7 +34,8 @@ func TestBuildAnswersTheDoorsAndHandsOpenReadersOn(t *testing.T) {
 		{"a role unknown to the rules is refused", "", team, nil, true, true},
 		{"a Programme Lead's other lens is the existing application's", "Program Lead", team, url.Values{"view": {"targets"}}, false, false},
 		{"an acting Programme Lead's Team Plan is the existing application's", "Program Lead", team, nil, false, false},
-		{"the Country Director's Country Oversight is the existing application's", "CountryDirector", country, nil, false, false},
+		{"the Country Director's Country Plan lens is the existing application's", "CountryDirector", country, url.Values{"view": {"plan"}}, false, false},
+		{"a Country Plan filter keeps the existing application's lens", "CountryDirector", country, url.Values{"risk": {"high"}}, false, false},
 		{"a lens the reader may open is the existing application's", "ImpactAssessment", team, url.Values{"view": {"monitor"}}, false, false},
 		{"a format the feed cannot render is refused even to an opener", "Admin", team, url.Values{"format": {"xml"}}, true, true},
 		{"a part under the page is not this package's", "Admin", country + "rows", nil, false, false},
@@ -59,6 +60,21 @@ func TestBuildAnswersTheDoorsAndHandsOpenReadersOn(t *testing.T) {
 				t.Fatalf("page = %v, want none before the database is read", page)
 			}
 		})
+	}
+}
+
+// country_planning_oversight_view: coverage_page answers every view but the
+// lenses it sends elsewhere, and a link carrying the Country Plan's own
+// filters (or a group's page) lands on the plan.
+func TestAsksForCoverage(t *testing.T) {
+	cases := map[string]bool{"": true, "view=coverage": true, "view=Bogus": true, "fy=2027&period=quarter": true,
+		"view=plan": false, "view=PLANNING": false, "view=monitor": false, "view=execution": false, "view=clusters": false,
+		"view=portfolio": false, "lead=x": false, "g2_page=3": false, "view=coverage&risk=high": true, "view=plan&view=coverage": true}
+	for raw, want := range cases {
+		q, _ := url.ParseQuery(raw)
+		if got := asksForCoverage(q); got != want {
+			t.Errorf("%q: %v", raw, got)
+		}
 	}
 }
 

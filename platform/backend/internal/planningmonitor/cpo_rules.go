@@ -49,6 +49,12 @@ type cpoRules struct {
 		ClusterOptions [][2]string       `json:"cluster_options"`
 		StatusOptions  [][2]string       `json:"status_options"`
 		LensTabs       [][4]string       `json:"lens_tabs"`
+		// The Open Follow-ups panel's words.
+		FollowUpOpenStates   []string          `json:"followup_open_states"`
+		FollowUpStatusLabels map[string]string `json:"followup_status_labels"`
+		FollowUpIssueLabels  map[string]string `json:"followup_issue_labels"`
+		// The roles the drill-down offers Export to (can_export).
+		ExportRoles []string `json:"export_roles"`
 	} `json:"page"`
 }
 

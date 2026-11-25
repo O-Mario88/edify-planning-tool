@@ -1318,3 +1318,8 @@ GRANT SELECT (disburse_method, disburse_reference) ON fund_request TO edify_gate
 GRANT SELECT (reopened_at) ON school TO edify_gateway_ro;
 GRANT SELECT (school_id, old_value, field_name, changed_at) ON school_change_log TO edify_gateway_ro;
 GRANT SELECT (previous_school_type, onboarded_at) ON core_school_onboarding TO edify_gateway_ro;
+
+-- Its Open Follow-ups panel and the table's follow-up count
+-- (_followups_panel, _followup_card, open_counts).
+GRANT SELECT (fy, module, issue_type, activity_label, partner_name, cceo_name, program_lead_name,
+  last_reminder_at, reminder_count) ON planning_oversight_follow_up TO edify_gateway_ro;

@@ -3,10 +3,13 @@
 package integration
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 
 	"connectrpc.com/connect"
+
+	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
 )
 
 const (
@@ -186,5 +189,76 @@ func TestPlanningOversightCoverageLensIsGos(t *testing.T) {
 	want := []string{"Planned Schools · FY 2026", "Schools with Planned Cluster Training or Meeting", "Schools with No Training Planned"}
 	if len(titles) != 3 || titles[0] != want[0] || titles[1] != want[1] || titles[2] != want[2] {
 		t.Fatalf("panels %q, want %q", titles, want)
+	}
+}
+
+// Country Oversight's planning-coverage lens is drawn by Go in the existing
+// page's design (coverage_page, as the feed reads it): the lens strip, the
+// filters, the cards, the school types, the four charts by Programme Lead,
+// the drill-down with its capacity and the country's row, and the open
+// follow-ups. Each chart's Lead rows add up to the country's own row.
+func TestCountryOversightCoverageIsGosInTheExistingDesign(t *testing.T) {
+	borrowAccount(t, "cd@edify.org")
+	director := sessionOf(t, "cd@edify.org", seededPassword).GetAccessToken()
+	page, err := pageOf(director, countryPlanningOversight, map[string]string{"fy": "2026", "period": "fy"})
+	if err != nil {
+		t.Fatalf("the Director's Country Oversight: %v", err)
+	}
+	if page.GetHeader().GetTitle() != "Country Planning Oversight" || page.GetWebPath() != countryPlanningOversight {
+		t.Fatalf("title %q, web path %q", page.GetHeader().GetTitle(), page.GetWebPath())
+	}
+	blocks := page.GetBlocks()
+	if tabs := blocks[0].GetLinkTabs().GetTabs(); len(tabs) != 2 || !tabs[0].GetActive() || tabs[0].GetLabel() != "General Planning" {
+		t.Fatalf("lens strip %v", tabs)
+	}
+	if blocks[1].GetFilters() == nil || blocks[1].GetFilters().GetFilters()[0].GetValue() != "2026" {
+		t.Fatalf("filters %v", blocks[1])
+	}
+	var sections, titles []string
+	var visitChart, people *screensv1.PageTable
+	for i, b := range blocks {
+		if s := b.GetSection(); s != "" {
+			sections = append(sections, s)
+			if s == "Visits Planned Against Target by Program Lead" {
+				visitChart = blocks[i+2].GetTable()
+			}
+		}
+		if p := b.GetPanel(); p != nil && p.GetTitle() != "" {
+			titles = append(titles, p.GetTitle())
+		}
+		if tbl := b.GetTable(); tbl != nil && len(tbl.GetColumns()) > 0 && tbl.GetColumns()[0].GetLabel() == "Name" {
+			people = tbl
+		}
+	}
+	wantSections := []string{"Visits Planned Against Target by Program Lead", "Schools With a Visit Planned by Program Lead",
+		"Training Planning by Program Lead", "Cluster & Cluster-Meeting Coverage"}
+	if strings.Join(sections, "|") != strings.Join(wantSections, "|") {
+		t.Fatalf("sections %q", sections)
+	}
+	if len(titles) != 3 || titles[0] != "Planned and Not Yet Planned by School Type" ||
+		titles[1] != "Country → Program Lead → CCEO → Partner Drill-down" || !strings.HasPrefix(titles[2], "Open Follow-ups ") {
+		t.Fatalf("panels %q", titles)
+	}
+	if visitChart == nil || people == nil || len(people.GetRows()) != 1 {
+		t.Fatalf("visit chart %v, people %v", visitChart, people)
+	}
+	country := people.GetRows()[0].GetCells()
+	if !strings.HasSuffix(country[0].GetText(), " (Total)") {
+		t.Fatalf("country row %q", country[0].GetText())
+	}
+	planned := 0
+	for _, row := range visitChart.GetRows() {
+		n, err := strconv.Atoi(row.GetCells()[2].GetText())
+		if err != nil {
+			t.Fatalf("a Lead's visits planned %q", row.GetCells()[2].GetText())
+		}
+		planned += n
+	}
+	if got := strings.SplitN(country[1].GetText(), " ", 2)[0]; strings.ReplaceAll(got, ",", "") != strconv.Itoa(planned) {
+		t.Fatalf("the country planned %s, its Leads %d", got, planned)
+	}
+	// The Country Plan lens is still the existing application's.
+	if _, err := pageOf(director, countryPlanningOversight, map[string]string{"view": "plan"}); connect.CodeOf(err) != connect.CodeUnavailable {
+		t.Fatalf("the Country Plan lens: %v, want handed on", err)
 	}
 }

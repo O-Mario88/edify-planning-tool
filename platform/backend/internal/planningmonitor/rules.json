@@ -222,6 +222,63 @@
           "Unclustered"
         ]
       ],
+      "export_roles": [
+        "Accountant",
+        "Admin",
+        "BusinessTransformationOfficer",
+        "CountryDirector",
+        "ImpactAssessment",
+        "Program Lead",
+        "ProjectCoordinator",
+        "RegionalProgramLead",
+        "RegionalVicePresident"
+      ],
+      "followup_issue_labels": {
+        "capacity_deficit": "Internal Capacity Deficit",
+        "exec_carryover": "Carryover Requires Resolution",
+        "exec_evidence_overdue": "Evidence Submission Overdue",
+        "exec_not_started": "Activity Not Started",
+        "exec_other": "Other Approved Execution Follow-Up",
+        "exec_partner_gap": "Partner Execution Gap",
+        "exec_pl_review_backlog": "PL Review Backlog",
+        "exec_returned": "Returned Activity Requires Support",
+        "exec_team_gap": "Team Execution Gap",
+        "exec_training_slot_gap": "Training-Slot Completion Gap",
+        "exec_visit_slot_gap": "Visit-Slot Completion Gap",
+        "meeting_gap": "Cluster-Meeting Planning Gap",
+        "other": "Other Approved Planning Follow-Up",
+        "partner_assignment_gap": "Partner Assignment Gap",
+        "partner_scheduling_gap": "Partner Scheduling Gap",
+        "school_gap": "School-Specific Planning Gap",
+        "staff_visit_gap": "Staff Visit Planning Gap",
+        "training_gap": "Training Planning Gap",
+        "unclustered_schools": "Unclustered Schools"
+      },
+      "followup_open_states": [
+        "acknowledged",
+        "action_linked",
+        "escalated",
+        "returned_for_clarification",
+        "sent_to_pl",
+        "waiting_for_external",
+        "waiting_for_partner",
+        "waiting_for_resolution",
+        "waiting_for_team_member"
+      ],
+      "followup_status_labels": {
+        "acknowledged": "Acknowledged",
+        "action_linked": "Action Linked",
+        "cancelled": "Canceled",
+        "closed_by_cd": "Closed by CD with Reason",
+        "escalated": "Escalated",
+        "resolved_automatically": "Resolved Automatically",
+        "returned_for_clarification": "Returned for Clarification",
+        "sent_to_pl": "Sent to PL",
+        "waiting_for_external": "Waiting for External Dependency",
+        "waiting_for_partner": "Waiting for Partner",
+        "waiting_for_resolution": "Waiting for Resolution",
+        "waiting_for_team_member": "Waiting for Team Member"
+      },
       "kpi_labels": {
         "cpo_cluster_meeting_planning": "Cluster Meeting Planning",
         "cpo_cluster_membership": "Cluster Membership",
