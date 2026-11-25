@@ -164,6 +164,7 @@ type RiskRules struct {
 	RescheduleLimit            int      `json:"reschedule_limit"`
 	IAVerificationGraceDays    int      `json:"ia_verification_grace_days"`
 	PaymentGraceDays           int      `json:"payment_grace_days"`
+	PartnerScheduleGraceDays   int      `json:"partner_schedule_grace_days"`
 }
 
 // FlaggedRules are team_flagged_schools' and urgent_attention's.

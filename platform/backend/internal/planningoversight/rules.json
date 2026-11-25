@@ -517,6 +517,7 @@
           "flagged"
         ],
         "ia_verification_grace_days": 5,
+        "partner_schedule_grace_days": 7,
         "payment_grace_days": 14,
         "payment_settled_statuses": [
           "paid",

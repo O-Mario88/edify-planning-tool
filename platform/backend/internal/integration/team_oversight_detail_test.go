@@ -71,8 +71,10 @@ VALUES (now(), now(), $1, 'school_visit', $2, '', 'staff', 'scheduled', 'none', 
 	if d.GetTitle() != "School visit" || d.GetSubtitle() != "No context" || len(headings) != 4 || headings[2] != "Cost lineage" {
 		t.Fatalf("the record %v", d)
 	}
-	if answer, err := open(lead, "/team-planning-oversight/detail?activity_id=nowhere"); err != nil || answer.GetDrawer().GetTitle() != "Not available" {
-		t.Fatalf("a record that is not there: %v %v", answer, err)
+	for _, path := range []string{"/team-planning-oversight/detail?activity_id=nowhere", "/team-planning-oversight/detail?assignment_id=nowhere"} {
+		if answer, err := open(lead, path); err != nil || answer.GetDrawer().GetTitle() != "Not available" {
+			t.Fatalf("%s: %v %v", path, answer, err)
+		}
 	}
 	// Overdue: both read the risk; with no school the Lead has no one to
 	// send it to, so no Send form.

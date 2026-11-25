@@ -275,6 +275,8 @@ def team_items() -> dict:
             "reschedule_limit": risk.RESCHEDULE_LIMIT,
             "ia_verification_grace_days": risk.IA_VERIFICATION_GRACE_DAYS,
             "payment_grace_days": risk.PAYMENT_GRACE_DAYS,
+            # The record drawer's unscheduled hand-over (_partner_not_scheduled).
+            "partner_schedule_grace_days": risk.PARTNER_SCHEDULE_GRACE_DAYS,
         },
     }
 

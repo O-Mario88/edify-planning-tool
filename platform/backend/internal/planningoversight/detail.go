@@ -73,10 +73,8 @@ func (s *Service) Detail(ctx context.Context, p auth.Principal, query url.Values
 		return nil, "", ErrDetailHandOn
 	}
 	activityID := strings.TrimSpace(query.Get("activity_id"))
-	if activityID == "" {
-		if strings.TrimSpace(query.Get("assignment_id")) != "" {
-			return nil, "", ErrDetailHandOn
-		}
+	assignmentID := strings.TrimSpace(query.Get("assignment_id"))
+	if activityID == "" && assignmentID == "" {
 		return notAvailable, "", nil
 	}
 	now := s.now()
@@ -113,6 +111,14 @@ func (s *Service) Detail(ctx context.Context, p auth.Principal, query url.Values
 			return nil, "", ErrDetailHandOn
 		}
 	}
+	// The Lead may send each risk to the one answerable for it (a person
+	// through the school's assignment, or a role's queue); the country and
+	// region lenses send nothing here (can_send: may_delegate with
+	// country=False, which only a Lead and Admin pass).
+	canSend := reader.Scope == "pl" && reader.MayDelegate
+	if activityID == "" {
+		return s.handoverDetail(ctx, assignmentID, team, regions, now, canSend)
+	}
 	a, err := s.readOneAct(ctx, activityID, team, regions)
 	if err != nil {
 		return nil, "", err
@@ -130,11 +136,6 @@ func (s *Service) Detail(ctx context.Context, p auth.Principal, query url.Values
 	if hasRisk(it, today) != (len(risks) > 0) {
 		return nil, "", ErrDetailHandOn
 	}
-	// The Lead may send each risk to the one answerable for it (a person
-	// through the school's assignment, or a role's queue); the country and
-	// region lenses send nothing here (can_send: may_delegate with
-	// country=False, which only a Lead and Admin pass).
-	canSend := reader.Scope == "pl" && reader.MayDelegate
 	handover, err := s.handoverOf(ctx, a.id)
 	if err != nil {
 		return nil, "", err
