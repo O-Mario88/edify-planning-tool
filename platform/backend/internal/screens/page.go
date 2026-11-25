@@ -72,6 +72,10 @@ func (s *Service) GetPage(
 		ctx = origin.With(ctx, origin.Read(request.Peer().Addr, request.Header(), s.trustProxy, trace.FromContext(ctx).RequestID))
 		for _, pages := range s.pages {
 			response, served, err := pages.Build(ctx, effective, message.GetPath(), query)
+			if (served && err == nil && response.GetError() != "") || errors.Is(err, pagegate.ErrForbidden) {
+				o, _ := origin.From(ctx)
+				s.auditRefusedPage(ctx, effective, message.GetPath(), o)
+			}
 			switch {
 			case errors.Is(err, pagegate.ErrNotAvailable), errors.Is(err, schoolprofile.ErrNotFound):
 				return nil, apierr.New(ctx, connect.CodeNotFound, apierr.ReasonNotFound,

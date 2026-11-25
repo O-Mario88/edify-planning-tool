@@ -86,7 +86,26 @@ WHERE condition_key = 'partner_oversight|assignment_returned|assignment|' || $1`
 	}
 	borrowAccount(t, "hr@edify.org")
 	hr := sessionOf(t, "hr@edify.org", seededPassword).GetAccessToken()
+	refusals := func() int {
+		t.Helper()
+		var n int
+		if err := admin.QueryRow(ctx, `SELECT count(*) FROM audit_log a JOIN "user" u ON u.id = a.actor_id
+WHERE u.email = 'hr@edify.org' AND a.action = 'unauthorized_page_access' AND a.subject_kind = 'Page' AND a.subject_id = 'partner_oversight'
+  AND NOT a.success AND a.reason = 'Role ''HumanResources'' attempted to access page: partner_oversight'`).Scan(&n); err != nil {
+			t.Fatalf("the refusals: %v", err)
+		}
+		return n
+	}
+	seen := refusals()
 	if nope := save(hr, ""); nope.GetSaved() || nope.GetError() != "This drawer is not available." {
 		t.Fatalf("HR: %+v", nope)
+	}
+	opened, err := drawers.GetDrawer(ctx, authed(&screensv1.GetDrawerRequest{Path: "/partner-oversight/detail?assignment_id=" + id}, hr))
+	if err != nil || opened.Msg.GetRefusal() == "" {
+		t.Fatalf("HR opening the drawer: %v %v", opened, err)
+	}
+	// Each refusal Go answers is audited as the page gate audits it.
+	if after := refusals(); after != seen+2 {
+		t.Fatalf("refusals audited %d, want %d", after-seen, 2)
 	}
 }

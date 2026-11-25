@@ -152,6 +152,10 @@ func (s *Service) GetDrawer(
 			if err != nil {
 				return nil, err
 			}
+			if resp.GetRefusal() != "" {
+				s.auditRefusedPage(ctx, p, path, origin.Read(request.Peer().Addr, request.Header(), s.trustProxy,
+					trace.FromContext(ctx).RequestID))
+			}
 			return connect.NewResponse(resp), nil
 		}
 	}
@@ -161,7 +165,7 @@ func (s *Service) GetDrawer(
 // SaveDrawer saves a drawer through the view its form posts to.
 func (s *Service) SaveDrawer(
 	ctx context.Context, request *connect.Request[screensv1.SaveDrawerRequest],
-) (*connect.Response[screensv1.SaveDrawerResponse], error) {
+) (answered *connect.Response[screensv1.SaveDrawerResponse], failed error) {
 	message := request.Msg
 	path, err := drawerPath(ctx, message.GetPath())
 	if err != nil {
@@ -177,6 +181,17 @@ func (s *Service) SaveDrawer(
 		return nil, apierr.New(ctx, connect.CodeInvalidArgument, apierr.ReasonInvalidArgument, "This form cannot be saved.")
 	}
 	s.stampSave(ctx, pathPageDrawer)
+	// A save Go answers itself is audited as refused when the drawer's page
+	// gate refuses the reader, as the feed's reading of the drawer is.
+	handedOn := false
+	if p, ok := auth.PrincipalFrom(ctx); ok {
+		defer func() {
+			if !handedOn && failed == nil && answered != nil && !answered.Msg.GetSaved() {
+				s.auditRefusedPage(ctx, p, path, origin.Read(request.Peer().Addr, request.Header(), s.trustProxy,
+					trace.FromContext(ctx).RequestID))
+			}
+		}()
+	}
 	forwarded := &screensv1.SaveDrawerRequest{Path: path, Values: message.GetValues(), Form: form}
 	if m := schoolEditDrawer.FindStringSubmatch(strings.SplitN(path, "?", 2)[0]); m != nil && form == "" && s.nativeForms() {
 		if p, ok := auth.PrincipalFrom(ctx); ok {
@@ -449,5 +464,6 @@ func (s *Service) SaveDrawer(
 			return connect.NewResponse(answer), nil
 		}
 	}
+	handedOn = true
 	return send[screensv1.SaveDrawerResponse](ctx, s, pathPageDrawer, forwarded)
 }

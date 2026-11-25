@@ -32,3 +32,17 @@ func TestEveryExistingRouteCompiles(t *testing.T) {
 		t.Fatalf("only %d routes read", len(routes))
 	}
 }
+
+// The gate's refusal names the view's pages for a role that holds none of
+// them, and nothing for a role it lets in or a path no gate covers.
+func TestRefusedPagesNamesTheGatesPages(t *testing.T) {
+	if got := RefusedPages("HumanResources", false, "/partner-oversight/detail?assignment_id=x"); len(got) != 1 || got[0] != "partner_oversight" {
+		t.Fatalf("HR on Partner Oversight: %v", got)
+	}
+	if got := RefusedPages("Program Lead", false, "/partner-oversight/detail"); got != nil {
+		t.Fatalf("a Lead on Partner Oversight: %v", got)
+	}
+	if got := RefusedPages("HumanResources", false, "/no-such-page-at-all"); got != nil {
+		t.Fatalf("an unknown path: %v", got)
+	}
+}

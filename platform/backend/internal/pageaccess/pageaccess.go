@@ -121,3 +121,31 @@ func CanOpen(activeRole string, teamMember bool, link string) bool {
 	}
 	return false
 }
+
+// RefusedPages is the page gate's refusal of path for an account working in
+// activeRole: the pages the view is gated on, in its decorator's order, when
+// the role may open none of them (require_page_permission and
+// require_any_page_permission refuse, and audit, exactly then); nil when the
+// gate lets the role in or the path resolves to no gated view. An export
+// refusal is not the page gate's.
+func RefusedPages(activeRole string, teamMember bool, path string) []string {
+	path, _, _ = strings.Cut(path, "?")
+	if !strings.HasPrefix(path, "/") {
+		return nil
+	}
+	u, err := url.Parse(path)
+	if err != nil {
+		return nil
+	}
+	r, ok := resolve(u.EscapedPath())
+	if !ok || len(r.pages) == 0 {
+		return nil
+	}
+	answer := roles[activeRole]
+	for _, page := range r.pages {
+		if slices.Contains(answer.Pages, page) && !(teamMember && slices.Contains(memberWithheld, page)) {
+			return nil
+		}
+	}
+	return slices.Clone(r.pages)
+}
