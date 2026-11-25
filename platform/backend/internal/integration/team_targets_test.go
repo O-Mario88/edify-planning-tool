@@ -128,3 +128,19 @@ func TestTeamTargetsBacklogDrawersAreGos(t *testing.T) {
 		t.Fatalf("a CCEO: %q", r)
 	}
 }
+
+// A link to a follow-up opens its banner above the page, which Go does not
+// draw yet: such a render is the existing application's.
+func TestTeamTargetsHandsOnAFollowUpLink(t *testing.T) {
+	borrowAccount(t, "pl1@edify.org")
+	lead := sessionOf(t, "pl1@edify.org", seededPassword).GetAccessToken()
+	for _, path := range []string{"/team-targets", teamPlanningOversight} {
+		q := map[string]string{"followup": "anything"}
+		if path == teamPlanningOversight {
+			q["view"] = "targets"
+		}
+		if _, err := pageOf(lead, path, q); connect.CodeOf(err) != connect.CodeUnavailable {
+			t.Fatalf("%s with a follow-up: %v, want handed on", path, err)
+		}
+	}
+}

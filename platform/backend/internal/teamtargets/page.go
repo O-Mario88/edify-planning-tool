@@ -31,6 +31,12 @@ func Page(ctx context.Context, db schooldirectory.Querier, p auth.Principal, raw
 	if !slices.Contains(rules.PageRoles, p.ActiveRole) {
 		return nil, pagegate.ErrNotAvailable
 	}
+	if raw["followup"] != "" {
+		// The page opens a planning follow-up's banner above itself
+		// (team_planning.html loads /planning-follow-ups/<id>), which Go does
+		// not draw yet.
+		return nil, ErrHandOn
+	}
 	l := now.In(kampala)
 	today := time.Date(l.Year(), l.Month(), l.Day(), 0, 0, 0, 0, time.UTC)
 	operational := strconv.Itoa(l.Year())

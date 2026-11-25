@@ -9,7 +9,9 @@ import (
 // _rank: the strongest full-year share first and numbered; a member with no
 // target for the year last, by name, without a place.
 func TestRankRowsPutsTheUnsetLastWithoutAPlace(t *testing.T) {
-	year := func(pct *int, target int) []targets.Cell { return []targets.Cell{{Key: "fy", Pct: pct, Target: target}} }
+	year := func(pct *int, target int) []targets.Cell {
+		return []targets.Cell{{Key: "fy", Pct: pct, Target: target}}
+	}
 	p := func(v int) *int { return &v }
 	mk := func(name string, cells []targets.Cell) *row {
 		return &row{TeamMember: targets.TeamMember{Cells: cells}, member: Member{Name: name}}
