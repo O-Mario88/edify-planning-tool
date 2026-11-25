@@ -21,11 +21,18 @@ type Saved struct {
 // recommendation.
 var reportDrawerPath = regexp.MustCompile(`^/ia/impact-reports/([A-Za-z0-9]{1,30})/(edit|recommendations/new|review)$`)
 
-// handled says whether Go draws the drawer at path: which, and the report.
+// respondPath is a released report's recommendation drawer.
+var respondPath = regexp.MustCompile(`^/ia/impact-reports/([A-Za-z0-9]{1,30})/recommendations/([A-Za-z0-9]{1,30})$`)
+
+// handled says whether Go draws the drawer at path: which, and the report
+// (with a recommendation's id after a slash).
 func handled(path string) (string, string, bool) {
 	path = strings.TrimSuffix(path, "/")
 	if path == NewPath {
 		return "new", "", true
+	}
+	if m := respondPath.FindStringSubmatch(path); m != nil && m[2] != "new" {
+		return "respond", m[1] + "/" + m[2], true
 	}
 	if m := reportDrawerPath.FindStringSubmatch(path); m != nil {
 		return m[2], m[1], true
@@ -53,6 +60,9 @@ func (r Reports) Drawer(ctx context.Context, p auth.Principal, rawPath string) (
 		d, err = r.editDrawer(ctx, p, id)
 	case "review":
 		d, err = r.reviewDrawer(ctx, p, id)
+	case "respond":
+		report, rec, _ := strings.Cut(id, "/")
+		d, err = r.respondDrawer(ctx, p, report, rec)
 	default:
 		d, err = r.recommendationDrawer(ctx, p, id)
 	}
@@ -149,6 +159,9 @@ func (r Reports) Save(ctx context.Context, p auth.Principal, rawPath, form strin
 		saved, err = r.update(ctx, p, id, values)
 	case "review":
 		saved, err = r.review(ctx, p, id, values)
+	case "respond":
+		report, rec, _ := strings.Cut(id, "/")
+		saved, err = r.respond(ctx, p, report, rec, values)
 	default:
 		saved, err = r.addRecommendation(ctx, p, id, values)
 	}
