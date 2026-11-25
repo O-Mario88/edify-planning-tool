@@ -71,10 +71,8 @@ func addedMessage(n int, cluster string, skipped []string) string {
 	return msg
 }
 
-// open is the view's gates: the planning page, a cluster the reader may
-// read, and a field reader (a country or summary reader's pool is every
-// unclustered school, and an acting appointment answers as its holder: both
-// handed on).
+// open is the view's gates: the planning page and a cluster the reader may
+// read (an acting appointment answers as its holder: handed on).
 func (s *Service) open(ctx context.Context, p auth.Principal, id string) (*Cluster, schooldirectory.Scope, error) {
 	var scope schooldirectory.Scope
 	if p.InActingAppointment {
@@ -90,9 +88,6 @@ func (s *Service) open(ctx context.Context, p auth.Principal, id string) (*Clust
 	if scope, err = schooldirectory.ResolveScope(ctx, s.db, p, s.now()); err != nil {
 		return nil, scope, err
 	}
-	if scope.CountryScope || scope.SummaryOnly {
-		return nil, scope, ErrHandOn
-	}
 	var c Cluster
 	var owner, district, districtName *string
 	err = s.db.QueryRow(ctx, `SELECT c.id, c.name, c.responsible_staff_id, c.district_id, d.name
@@ -105,7 +100,7 @@ FROM cluster c LEFT JOIN district d ON d.id = c.district_id WHERE c.id = $1 AND 
 		return nil, scope, fmt.Errorf("clustermembership: reading the cluster: %w", err)
 	}
 	c.Owner, c.DistrictID, c.DistrictName = deref(owner), deref(district), deref(districtName)
-	if c.Owner != "" && (c.Owner == p.UserID || c.Owner == p.StaffProfileID) {
+	if c.Owner != "" && (c.Owner == p.UserID || c.Owner == p.StaffProfileID) && !scope.CountryScope && !scope.SummaryOnly {
 		return &c, scope, nil
 	}
 	today := s.now().In(s.kampala).Format(time.DateOnly)
@@ -125,6 +120,9 @@ WHERE cluster_id = $1 AND active AND effective_from <= $2::date AND (effective_t
 	c.Served = append(c.Served, served...)
 	return &c, scope, nil
 }
+
+// operatingStatuses are OPERATING_STATUSES.
+var operatingStatuses = []string{"active", "reopened"}
 
 func deref(v *string) string {
 	if v == nil {
@@ -155,6 +153,17 @@ func (s *Service) Drawer(ctx context.Context, p auth.Principal, clusterID string
 	}
 	var args []any
 	where := portfolio(scope, c, numbered(&args))
+	if scope.CountryScope || scope.SummaryOnly {
+		// A country or summary reader's pool is every operating unclustered
+		// school in the cluster's served districts (active_schools()); what
+		// they may save is still their direct portfolio.
+		args = nil
+		arg := numbered(&args)
+		where = "s.deleted_at IS NULL AND s.operational_status = ANY(" + arg(operatingStatuses) + ")"
+		if c.Served != nil {
+			where += " AND s.district_id = ANY(" + arg(c.Served) + ")"
+		}
+	}
 	rows, err := s.db.Query(ctx, `SELECT s.id, COALESCE(s.school_id, ''), s.name FROM school s
 LEFT JOIN sub_county sc ON sc.id = s.sub_county_id
 WHERE `+where+` AND s.cluster_status = 'unclustered' ORDER BY sc.name, s.name`, args...)
