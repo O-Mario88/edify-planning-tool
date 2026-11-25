@@ -391,3 +391,9 @@ func registryMetric(label string, value int, helper, tone, href string) *screens
 	}
 	return m
 }
+
+// ReportReach is visible_reports as a WHERE clause on impact_report `r`, for
+// the report drawers (internal/iareports).
+func ReportReach(ctx context.Context, db schooldirectory.Querier, p auth.Principal, now time.Time, args *[]any) (string, error) {
+	return NewService(db, func() time.Time { return now }).reportReach(ctx, p, args)
+}

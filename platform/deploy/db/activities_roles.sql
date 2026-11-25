@@ -1201,6 +1201,7 @@ GRANT INSERT (id, created_at, updated_at, fy, staff_id, staff_name, position, co
 -- A partner organisation's login setup (partners.services.configure_partner_user):
 -- the account it signs in with and the setup status; nothing removed.
 GRANT SELECT (id, name, email, contact_person, user_id, user_setup_status, deleted_at), UPDATE (user_id, user_setup_status, user_setup_updated_by, user_setup_updated_at, updated_at) ON partner TO edify_activities_rw;
--- An Impact Assessment officer's draft impact report (reports.create_report);
--- nothing removed.
-GRANT SELECT (id, country, status, author_id, version, snapshot_hash), INSERT (id, created_at, updated_at, author_id, author_role, review_basis, review_note, country, fy, period_start, period_end, programme_areas, title, status, methodology, findings, limitations, evidence_snapshot, snapshot_hash, version, project_id) ON impact_report TO edify_activities_rw;
+-- An Impact Assessment officer's draft impact report (reports.create_report,
+-- update_report) and its recommendations (add_recommendation); nothing removed.
+GRANT SELECT (id, title, country, status, author_id, reviewed_by_id, version, snapshot_hash, fy, project_id, methodology, findings, limitations, period_start, period_end, programme_areas, supersedes_id, evidence_snapshot), UPDATE (title, fy, period_start, period_end, programme_areas, project_id, methodology, findings, limitations, updated_at), INSERT (id, created_at, updated_at, author_id, author_role, review_basis, review_note, country, fy, period_start, period_end, programme_areas, title, status, methodology, findings, limitations, evidence_snapshot, snapshot_hash, version, project_id) ON impact_report TO edify_activities_rw;
+GRANT SELECT (id, report_id, created_at, text, owner_role, due_date, status, response), INSERT (id, created_at, updated_at, text, owner_role, due_date, status, response, report_id) ON impact_report_recommendation TO edify_activities_rw;

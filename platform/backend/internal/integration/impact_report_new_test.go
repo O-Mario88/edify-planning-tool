@@ -11,15 +11,17 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1/screensv1connect"
 )
 
-// Starting an impact report is Go's: Impact Assessment's drawer offers the
-// report's fields; a draft without a title is refused in Django's words; a
-// full one is saved as a draft in the officer's country; the Country
-// Director reads that only IA writes reports; the Accountant is refused the
-// page.
+// Starting an impact report, editing the draft, adding a recommendation and
+// reading its page are Go's: Impact Assessment's drawer offers the report's
+// fields; a draft without a title is refused in Django's words; a full one
+// is saved as a draft in the officer's country, edited, given a
+// recommendation, and its page shows both; the Country Director reads that
+// only IA writes reports and cannot edit; the Accountant is refused the page.
 func TestImpactAssessmentStartsAReportInGo(t *testing.T) {
 	ctx := context.Background()
 	const title = "Go test impact report"
 	clean := func() {
+		_, _ = admin.Exec(ctx, `DELETE FROM impact_report_recommendation WHERE report_id IN (SELECT id FROM impact_report WHERE title = $1)`, title)
 		_, _ = admin.Exec(ctx, `DELETE FROM impact_report WHERE title = $1`, title)
 	}
 	clean()
@@ -60,8 +62,48 @@ func TestImpactAssessmentStartsAReportInGo(t *testing.T) {
 		Scan(&status, &country, &areas); err != nil || status != "draft" || country == "" || len(areas) != 1 {
 		t.Fatalf("the stored draft: %q %q %v %v", status, country, areas, err)
 	}
+	var id string
+	if err := admin.QueryRow(ctx, `SELECT id FROM impact_report WHERE title = $1`, title).Scan(&id); err != nil {
+		t.Fatalf("the draft's id: %v", err)
+	}
+	editPath := "/ia/impact-reports/" + id + "/edit"
+	edited, err := drawers.SaveDrawer(ctx, authed(&screensv1.SaveDrawerRequest{Path: editPath, Values: map[string]string{
+		"fy": fy, "title": title, "programme_areas": "training", "methodology": "Method", "findings": "Found"}}, token))
+	if err != nil || !edited.Msg.GetSaved() || edited.Msg.GetMessage() != "Draft saved." {
+		t.Fatalf("the edit: %v %v", edited, err)
+	}
+	recPath := "/ia/impact-reports/" + id + "/recommendations/new"
+	if r, err := drawers.SaveDrawer(ctx, authed(&screensv1.SaveDrawerRequest{Path: recPath, Values: map[string]string{
+		"text": "Train more leaders", "owner_role": "Nobody", "due_date": "2027-02-01"}}, token)); err != nil ||
+		r.Msg.GetError() != "Say who should act on the recommendation." {
+		t.Fatalf("an unknown owner: %v %v", r, err)
+	}
+	if r, err := drawers.SaveDrawer(ctx, authed(&screensv1.SaveDrawerRequest{Path: recPath, Values: map[string]string{
+		"text": "Train more leaders", "owner_role": "Program Lead", "due_date": "2027-02-01"}}, token)); err != nil ||
+		r.Msg.GetMessage() != "Recommendation added." {
+		t.Fatalf("the recommendation: %v %v", r, err)
+	}
+	pages := screensv1connect.NewPageScreenServiceClient(http.DefaultClient, baseURL)
+	page, err := pages.GetPage(ctx, authed(&screensv1.GetPageRequest{Path: "/ia/impact-reports/" + id + "/"}, token))
+	if err != nil || page.Msg.GetHeader().GetTitle() != title || len(page.Msg.GetHeader().GetActions()) != 3 {
+		t.Fatalf("the report's page: %v %v", page, err)
+	}
+	var recommended, historyRows bool
+	for _, b := range page.Msg.GetBlocks() {
+		for _, row := range b.GetTable().GetRows() {
+			cells := row.GetCells()
+			recommended = recommended || (len(cells) > 1 && cells[0].GetText() == "Train more leaders" && cells[1].GetText() == "Programme Lead")
+			historyRows = historyRows || (len(cells) > 1 && cells[1].GetText() == "Draft edited")
+		}
+	}
+	if !recommended || !historyRows {
+		t.Fatalf("the page lacks the recommendation (%v) or the edit in its history (%v)", recommended, historyRows)
+	}
 	borrowAccount(t, "cd@edify.org")
 	cd := sessionOf(t, "cd@edify.org", seededPassword).GetAccessToken()
+	if r, err := drawers.GetDrawer(ctx, authed(&screensv1.GetDrawerRequest{Path: editPath}, cd)); err != nil || r.Msg.GetDrawer().GetCanSubmit() {
+		t.Fatalf("the Country Director's edit drawer: %v %v", r, err)
+	}
 	if r, err := drawers.GetDrawer(ctx, authed(&screensv1.GetDrawerRequest{Path: path}, cd)); err != nil ||
 		r.Msg.GetDrawer().GetCanSubmit() || r.Msg.GetDrawer().GetItems()[0].GetNote().GetText() != "Only Impact Assessment writes impact reports." {
 		t.Fatalf("the Country Director: %v %v", r, err)
