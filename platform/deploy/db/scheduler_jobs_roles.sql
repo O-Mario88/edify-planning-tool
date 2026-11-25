@@ -161,15 +161,15 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
 DECLARE
   v_changed integer;
 BEGIN
+  -- _do_notification_escalation: a queryset update of the priority alone,
+  -- so neither updated_at nor the reminder count (which the email copy
+  -- reads as a person's reminder) moves.
   UPDATE public.notification
-     SET priority       = 'urgent',
-         reminder_count = reminder_count + 1,
-         updated_at     = p_now
+     SET priority = 'urgent'
    WHERE status = 'unread'
      AND action_required = true
-     AND resolved_at IS NULL
-     AND priority <> 'urgent'
-     AND created_at <= p_cutoff;
+     AND priority IN ('normal', 'high')
+     AND created_at < p_cutoff;
   GET DIAGNOSTICS v_changed = ROW_COUNT;
   RETURN v_changed;
 END
