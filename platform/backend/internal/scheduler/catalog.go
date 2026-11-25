@@ -133,14 +133,27 @@ func BuildUgandaJobsWithClock(pool *pgxpool.Pool, nowFn func() time.Time, runner
 	}
 	writer := notificationcenter.NewWriter(pool, nowFn)
 	pricing := activities.NewNativePricing(pool, writer)
+	kampala, err := time.LoadLocation("Africa/Kampala")
+	if err != nil {
+		kampala = time.FixedZone("EAT", 3*3600)
+	}
+	schedules, err := djangoSchedules(kampala)
+	if err != nil {
+		panic(err) // schedules.json is the registry, embedded at build
+	}
 
 	out := make([]Job, 0, len(UgandaCutoverJobs))
 	for _, meta := range UgandaCutoverJobs {
 		m := meta
+		var schedule func(time.Time) time.Time
+		if c, ok := schedules[m.Name]; ok {
+			schedule = c.Next
+		}
 		out = append(out, Job{
 			Name:     m.Name,
 			LockKey:  m.LockKey,
 			Interval: m.Interval,
+			Schedule: schedule,
 			Run: func(ctx context.Context) error {
 				if pool == nil {
 					return nil

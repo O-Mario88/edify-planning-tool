@@ -1,0 +1,153 @@
+{
+ "acting_lifecycle": {
+  "minute": 5
+ },
+ "activity_reminders": {
+  "hour": 7,
+  "minute": 0
+ },
+ "admin_maintenance_generation": {
+  "hour": 5,
+  "minute": 30
+ },
+ "analytics_report_delivery": {
+  "minute": "*/15"
+ },
+ "audit_chain_seal": {
+  "minute": "*/5"
+ },
+ "autopilot_weekly_proposals": {
+  "day_of_week": "fri",
+  "hour": 5
+ },
+ "bulk_completion": {
+  "minute": "*"
+ },
+ "closure_checklist_refresh": {
+  "minute": "10,40"
+ },
+ "cost_reprice_sweep": {
+  "minute": "*/10"
+ },
+ "daily_debrief_reminders": {
+  "hour": "8,18",
+  "minute": 0
+ },
+ "daily_digest": {
+  "hour": 7,
+  "minute": 30
+ },
+ "daily_plan_notifications": {
+  "hour": 6,
+  "minute": 45
+ },
+ "data_quality_scan": {
+  "hour": 3,
+  "minute": 0
+ },
+ "day_off_alerts": {
+  "hour": 6,
+  "minute": 40
+ },
+ "document_lifecycle": {
+  "hour": 6,
+  "minute": 15
+ },
+ "escalation_sla_sweep": {
+  "hour": 7,
+  "minute": 0
+ },
+ "execution_period_snapshots": {
+  "hour": 0,
+  "minute": 20
+ },
+ "export_jobs": {
+  "minute": "*"
+ },
+ "field_debrief_recurring_issues": {
+  "hour": 5,
+  "minute": 30
+ },
+ "fiscal_year_rollover": {
+  "hour": 0,
+  "minute": 10
+ },
+ "hand_in_entered_work": {
+  "minute": "25,55"
+ },
+ "ia_verification_digest": {
+  "hour": 7,
+  "minute": 15
+ },
+ "interaction_rollup": {
+  "hour": 2,
+  "minute": 40
+ },
+ "loan_tracking_notifications": {
+  "hour": 7,
+  "minute": 15
+ },
+ "mfa_challenge_purge": {
+  "hour": 3,
+  "minute": 20
+ },
+ "monthly_work_plan": {
+  "day": 25,
+  "hour": 6
+ },
+ "notification_escalation": {
+  "minute": 0
+ },
+ "outbox_drain": {
+  "minute": "*"
+ },
+ "pd_reminders": {
+  "hour": 6,
+  "minute": 30
+ },
+ "performance_readiness": {
+  "hour": 6,
+  "minute": 45
+ },
+ "planning_followup_sweep": {
+  "minute": 35
+ },
+ "planning_oversight_warm": {
+  "minute": "*/4"
+ },
+ "scheduler_history_prune": {
+  "hour": 3,
+  "minute": 40
+ },
+ "scheduler_watchdog": {
+  "minute": "0,30"
+ },
+ "school_action_sweep": {
+  "minute": 20
+ },
+ "ssa_recommendation_sync": {
+  "hour": 3,
+  "minute": 30
+ },
+ "target_ledger_sync": {
+  "minute": "*/30"
+ },
+ "verification_reminders": {
+  "hour": 17,
+  "minute": 0
+ },
+ "verification_sampling": {
+  "day_of_week": "mon",
+  "hour": 6,
+  "minute": 30
+ },
+ "weekly_debrief_reports": {
+  "day_of_week": "mon",
+  "hour": 6,
+  "minute": 0
+ },
+ "weekly_fund_request": {
+  "day_of_week": "fri",
+  "hour": 6
+ }
+}

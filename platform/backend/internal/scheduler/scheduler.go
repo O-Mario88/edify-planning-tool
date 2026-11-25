@@ -19,6 +19,10 @@ type Job struct {
 	Name     string
 	LockKey  int64
 	Interval time.Duration
+	// Schedule, when set, is the job's next firing time after a moment (the
+	// existing scheduler's cron trigger): the job waits for it, never running
+	// at start-up, and Interval is not used.
+	Schedule func(after time.Time) time.Time
 	Run      func(ctx context.Context) error
 }
 
@@ -134,6 +138,14 @@ func (r *Runner) Start(ctx context.Context) {
 	var wg sync.WaitGroup
 	for _, job := range r.jobs {
 		j := job
+		if j.Schedule != nil {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				r.runScheduled(ctx, j)
+			}()
+			continue
+		}
 		if j.Interval <= 0 {
 			continue
 		}
@@ -154,6 +166,24 @@ func (r *Runner) Start(ctx context.Context) {
 		}()
 	}
 	wg.Wait()
+}
+
+// runScheduled fires the job at each of its scheduled times until ctx ends.
+func (r *Runner) runScheduled(ctx context.Context, j Job) {
+	for {
+		next := j.Schedule(r.now())
+		if next.IsZero() {
+			return
+		}
+		timer := time.NewTimer(time.Until(next))
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return
+		case <-timer.C:
+			_ = r.RunOnce(ctx, j)
+		}
+	}
 }
 
 // Snapshot returns a copy of all job execution statistics.
