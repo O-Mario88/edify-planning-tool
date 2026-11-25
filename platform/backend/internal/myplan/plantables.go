@@ -145,12 +145,10 @@ func listedIDs(ctx context.Context, db schooldirectory.Querier, owners []string,
 
 // unportedRow is why the page with this activity listed is still the
 // existing application's, or "".
-func unportedRow(a *activity, x *extra, awaiting bool) string {
+func unportedRow(a *activity, x *extra) string {
 	switch {
 	case str(a.delivery) == "partner":
 		return "a partner's delivery (compute_next_action's partner branches)"
-	case awaiting:
-		return "an SSA visit awaiting scores"
 	case str(x.meetingKind) == "training":
 		return "a meeting delivering a training"
 	}
@@ -222,9 +220,8 @@ func ReadPlanTables(ctx context.Context, db schooldirectory.Querier, place *regi
 	for _, a := range acts {
 		x := extras[a.id]
 		table := tableOf(a, pg.slots)
-		// Work in no table still reaches the attention cards; whether it
-		// awaits SSA scores shows only in a row.
-		if x == nil || table == -1 || unportedRow(a, x, table >= 0 && pg.awaiting[a.id]) != "" {
+		// Work in no table still reaches the attention cards.
+		if x == nil || table == -1 || unportedRow(a, x) != "" {
 			return res, false, nil
 		}
 		if a.hasSchool && str(a.schoolType) == "core" {
@@ -239,8 +236,7 @@ func ReadPlanTables(ctx context.Context, db schooldirectory.Querier, place *regi
 		r.tone = baseTone(a, r.statusLabel, isCore)
 		if r.awaitingSSA {
 			// Delivered, waiting for its school's SSA (visit_scores): its
-			// action is the SSA drawer, its pill amber. Only a row in no
-			// table reaches here (a table's is passed above).
+			// action is the SSA drawer, its pill amber.
 			r.tone = "amber"
 			r.next = nextAction{rules.Rows.EnterSSAText, "ssa", "/schools/" + str(a.schoolPK) + "/ssa-entry?activity=" + a.id, "SSA scores not entered"}
 			next = r.next
@@ -396,6 +392,11 @@ func (r *planRow) settle(today time.Time) {
 	case rules.Rows.FinishedEarly:
 		r.tone = "green"
 	}
+	if r.awaitingSSA {
+		// Delivered, but not complete until its SSA is in: not green, open
+		// work (get_frontend_context's awaiting_ssa update).
+		r.rowState = ""
+	}
 	r.showsComplete = r.isComplete && in(rules.Plan.CompletedWorkStatuses, a.status)
 	r.canPick = !in(rules.Tables.Untickable, a.status) && !r.showsComplete
 	r.districtShown = r.plannedDistrict()
@@ -480,6 +481,11 @@ func (r *planRow) actions() *screensv1.PageCell {
 		done := drawer("button", "Complete", "/my-plan/"+a.id, true)
 		done.Reason = "View Completed Activity"
 		cell.Actions = append(cell.Actions, done)
+		return cell
+	}
+	if r.awaitingSSA {
+		// activity_row.html's Enter SSA Scores button: the one thing left.
+		cell.Actions = append(cell.Actions, drawer("button", r.next.text, r.next.url, true))
 		return cell
 	}
 	cell.Actions = append(cell.Actions, drawer("menu", "View Details", "/my-plan/"+a.id, false))

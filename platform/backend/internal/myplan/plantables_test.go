@@ -24,11 +24,13 @@ func TestUnportedRowsLeaveThePageToTheExistingApplication(t *testing.T) {
 		{"verified by IA", activity{status: "ia_verified"}, extra{}, false, false},
 		{"disbursed", activity{status: "completed"}, extra{payment: sp("disbursed")}, false, false},
 		{"a partner's delivery", activity{status: "completed", delivery: sp("partner")}, extra{}, false, true},
-		{"awaiting SSA scores", activity{status: "completed"}, extra{}, true, true},
+		// An SSA visit awaiting its scores is drawn: the row is open work
+		// with its Enter SSA Scores action.
+		{"awaiting SSA scores", activity{status: "completed"}, extra{}, true, false},
 		{"a training meeting", activity{status: "completed"}, extra{meetingKind: sp("training")}, false, true},
 	}
 	for _, c := range cases {
-		if got := unportedRow(&c.a, &c.x, c.awaiting) != ""; got != c.passed {
+		if got := unportedRow(&c.a, &c.x) != ""; got != c.passed {
 			t.Errorf("%s: passed %v, want %v", c.name, got, c.passed)
 		}
 	}
