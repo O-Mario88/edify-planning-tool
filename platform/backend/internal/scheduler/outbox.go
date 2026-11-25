@@ -2,14 +2,17 @@ package scheduler
 
 import (
 	"context"
+	"os"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/btcases"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/notificationcenter"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/outbox"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/plreview"
 )
 
 // outboxBudget is drain's time_budget_seconds.
@@ -22,10 +25,20 @@ func outboxWorker(pool *pgxpool.Pool, writer *notificationcenter.Writer, now fun
 	if err != nil {
 		kampala = time.UTC
 	}
+	// A notice's phone copy, queued as the existing trigger queues it.
+	push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy
 	return outbox.New(pool, now, runner, nil).
 		Handle("ssa.recommendations.generate", func(ctx context.Context, tx pgx.Tx, payload map[string]any, at time.Time) error {
 			id, _ := payload["ssaRecordId"].(string)
 			return activities.GenerateSSARecommendations(ctx, tx, id, at, kampala)
+		}).
+		Handle("bt.ssa.confirmed", func(ctx context.Context, tx pgx.Tx, payload map[string]any, at time.Time) error {
+			id, _ := payload["ssaRecordId"].(string)
+			return btcases.EnsureCaseFromVerifiedSSA(ctx, tx, id, at, btcases.Notices{Push: push})
+		}).
+		Handle("bt.activity.state_changed", func(ctx context.Context, tx pgx.Tx, payload map[string]any, at time.Time) error {
+			id, _ := payload["activityId"].(string)
+			return btcases.ProjectActivityState(ctx, tx, id, at)
 		}).
 		OnDeadLetter(func(ctx context.Context, id, kind, lastError string) {
 			tellDeadLetter(ctx, pool, writer, id, kind, lastError)

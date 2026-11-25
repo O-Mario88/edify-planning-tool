@@ -225,6 +225,15 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		// deploy/db/mypd_roles.sql): a course moved on by its dates and the
 		// year's allocation; its reminders close through a narrow function.
 		filepath.Join(root, "internal", "mypd") + sep: {"pd_request", "pd_allocation"},
+		// The outbox's Business Transformation handlers (apps.business_
+		// transformation.handlers; deploy/db/activities_roles.sql): a verified
+		// SSA's case, trigger, recommendations and the year's policy, insert
+		// only; a loan-use verification's requirement and result following
+		// the visit's IA state.
+		filepath.Join(root, "internal", "btcases") + sep: {
+			"bt_policy", "bt_case", "bt_case_trigger", "bt_case_recommendation",
+			"bt_loan_verification_requirement", "bt_loan_use_result",
+		},
 	}
 	mechanics := filepath.Join(root, "internal", "ownedschema") + sep
 	// The lint describes the DDL it allows as patterns; it runs none.

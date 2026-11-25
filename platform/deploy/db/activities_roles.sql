@@ -351,3 +351,39 @@ GRANT INSERT (created_at, updated_at, id, sequence, is_current, activity_catalog
               missing_configuration, calculated_at, calculated_by, recalculation_reason, approved_by, approved_at,
               cost_status, activity_id, operational_rate_card_id, reference_rate_card_id, supersedes_id)
   ON activity_cost_snapshot TO edify_activities_rw;
+
+-- ── The outbox's bt.ssa.confirmed (docs/migration/189 §4) ──
+-- Production at cutover with the owner's approval like every role change.
+-- ensure_case_from_verified_ssa: a verified SSA's Financial Health or
+-- Government Requirements weakness opens the school's one Business
+-- Transformation case, its trigger and recommendations, and records the
+-- year's Uganda policy the first time a year is used. Insert only: no case,
+-- trigger, recommendation or policy is changed or removed by Go.
+GRANT SELECT (verified_by_user_id, uploaded_by, verified_at) ON ssa_record TO edify_activities_rw;
+GRANT SELECT (id, country_code, fy, active, financial_health_max_score, government_requirements_max_score)
+  ON bt_policy TO edify_activities_rw;
+GRANT INSERT (id, created_at, updated_at, country_code, fy, financial_health_max_score,
+              government_requirements_max_score, loan_use_verification_days, active, created_by)
+  ON bt_policy TO edify_activities_rw;
+GRANT SELECT (id, school_id, status, deleted_at, created_at) ON bt_case TO edify_activities_rw;
+GRANT INSERT (id, created_at, updated_at, source, environment, status, opened_fy, triage_decision, triage_reason,
+              closure_reason, school_id)
+  ON bt_case TO edify_activities_rw;
+GRANT SELECT (id, trigger_type, source_id) ON bt_case_trigger TO edify_activities_rw;
+GRANT INSERT (id, created_at, updated_at, trigger_type, source_id, source_snapshot, triggered_by, case_id)
+  ON bt_case_trigger TO edify_activities_rw;
+GRANT SELECT (id, trigger_id, kind) ON bt_case_recommendation TO edify_activities_rw;
+GRANT INSERT (id, created_at, updated_at, kind, status, reason, source_intervention, source_score, case_id, trigger_id)
+  ON bt_case_recommendation TO edify_activities_rw;
+
+-- ── The outbox's bt.activity.state_changed (docs/migration/189 §4) ──
+-- project_activity_state: a loan-use verification's requirement and result
+-- follow the visit's IA state. The requirement row is locked (SELECT … FOR
+-- UPDATE, which the status right below allows) as the existing handler locks
+-- it; the evidence notices are resolved through
+-- gateway_notifications.resolve_condition.
+GRANT SELECT (ia_confirmed_at) ON activity TO edify_activities_rw;
+GRANT SELECT (id, activity_id, due_date) ON bt_loan_verification_requirement TO edify_activities_rw;
+GRANT UPDATE (status, verified_at, updated_at) ON bt_loan_verification_requirement TO edify_activities_rw;
+GRANT SELECT (id, requirement_id) ON bt_loan_use_result TO edify_activities_rw;
+GRANT UPDATE (verification_status, ia_verified_at, updated_at) ON bt_loan_use_result TO edify_activities_rw;

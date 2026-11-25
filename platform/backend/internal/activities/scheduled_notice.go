@@ -150,39 +150,9 @@ func (w workflowNotices) sendTo(ctx context.Context, now time.Time, contextID, a
 		return fmt.Errorf("activities: opening the notice: %w", err)
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
-	var made, told []any
-	var people []string
-	for _, r := range recipients {
-		var notificationID, recipient string
-		err := tx.QueryRow(ctx, `SELECT out_notification_id, out_recipient_id
-  FROM gateway_notifications.notify_workflow($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-			cuid.New(), r.id, notice.title, notice.body, notice.category, notice.contextType, nilIfEmpty(contextID),
-			r.route, r.label, notice.level(), notice.event, now).Scan(&notificationID, &recipient)
-		if errors.Is(err, pgx.ErrNoRows) {
-			continue
-		}
-		if err != nil {
-			return fmt.Errorf("activities: delivering the notice: %w", err)
-		}
-		if w.push != nil {
-			if err := w.push(ctx, tx, notificationID, recipient, now); err != nil {
-				w.logger.WarnContext(ctx, "activities: the phone copy was not queued", "context", contextID, "err", err)
-			}
-		}
-		made, told, people = append(made, notificationID), append(told, recipient), append(people, recipient)
-	}
-	if len(made) == 0 {
-		return nil
-	}
-	if _, err := audit.Append(ctx, tx, audit.Entry{
-		Action: "notification." + notice.event, SubjectKind: audit.Text(notice.contextType), SubjectID: audit.Text(contextID),
-		Success: true, IPAddress: nilIfEmpty(origin.IP), UserAgent: nilIfEmpty(origin.UserAgent),
-		CorrelationID: nilIfEmpty(origin.CorrelationID),
-		Payload: map[string]any{
-			"category": notice.category, "priority": notice.level(), "recipient_ids": told, "notification_ids": made,
-		},
-	}, now); err != nil {
-		return fmt.Errorf("activities: auditing the notice: %w", err)
+	people, err := w.deliverInTx(ctx, tx, now, contextID, origin, notice, recipients)
+	if err != nil || len(people) == 0 {
+		return err
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("activities: committing the notice: %w", err)
@@ -196,6 +166,68 @@ func (w workflowNotices) sendTo(ctx context.Context, now time.Time, contextID, a
 		}
 	}
 	return nil
+}
+
+// deliverInTx writes the notices, their phone copies and the audit row in
+// the caller's transaction, and says who was told.
+func (w workflowNotices) deliverInTx(ctx context.Context, tx pgx.Tx, now time.Time, contextID string, origin Origin,
+	notice scheduledNotice, recipients []noticeRecipient) ([]string, error) {
+	var made, told []any
+	var people []string
+	for _, r := range recipients {
+		var notificationID, recipient string
+		err := tx.QueryRow(ctx, `SELECT out_notification_id, out_recipient_id
+  FROM gateway_notifications.notify_workflow($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+			cuid.New(), r.id, notice.title, notice.body, notice.category, notice.contextType, nilIfEmpty(contextID),
+			r.route, r.label, notice.level(), notice.event, now).Scan(&notificationID, &recipient)
+		if errors.Is(err, pgx.ErrNoRows) {
+			continue
+		}
+		if err != nil {
+			return nil, fmt.Errorf("activities: delivering the notice: %w", err)
+		}
+		if w.push != nil {
+			if err := w.push(ctx, tx, notificationID, recipient, now); err != nil && w.logger != nil {
+				w.logger.WarnContext(ctx, "activities: the phone copy was not queued", "context", contextID, "err", err)
+			}
+		}
+		made, told, people = append(made, notificationID), append(told, recipient), append(people, recipient)
+	}
+	if len(made) == 0 {
+		return nil, nil
+	}
+	if _, err := audit.Append(ctx, tx, audit.Entry{
+		Action: "notification." + notice.event, SubjectKind: audit.Text(notice.contextType), SubjectID: audit.Text(contextID),
+		Success: true, IPAddress: nilIfEmpty(origin.IP), UserAgent: nilIfEmpty(origin.UserAgent),
+		CorrelationID: nilIfEmpty(origin.CorrelationID),
+		Payload: map[string]any{
+			"category": notice.category, "priority": notice.level(), "recipient_ids": told, "notification_ids": made,
+		},
+	}, now); err != nil {
+		return nil, fmt.Errorf("activities: auditing the notice: %w", err)
+	}
+	return people, nil
+}
+
+// NotifyInTx is SendNotices inside the caller's transaction, for work that
+// commits with its notices (an outbox handler): it says who was told, so the
+// caller can word their pages once it commits.
+func NotifyInTx(ctx context.Context, tx pgx.Tx, push NoticePush, logger *slog.Logger, now time.Time,
+	contextID string, n Notice, to []NoticeTo) ([]string, error) {
+	return workflowNotices{push: push, logger: logger}.deliverInTx(ctx, tx, now, contextID, Origin{}, noticeOf(n), recipientsOf(to))
+}
+
+func noticeOf(n Notice) scheduledNotice {
+	return scheduledNotice{title: n.Title, body: n.Body, event: n.Event, category: n.Category, contextType: n.ContextType,
+		priority: n.Priority}
+}
+
+func recipientsOf(to []NoticeTo) []noticeRecipient {
+	recipients := make([]noticeRecipient, 0, len(to))
+	for _, t := range to {
+		recipients = append(recipients, noticeRecipient{id: t.UserID, route: t.Route, label: t.Label})
+	}
+	return recipients
 }
 
 // Notice is a workflow notification another package sends.
@@ -213,11 +245,6 @@ type NoticeTo struct {
 // and a word to each one's open pages.
 func SendNotices(ctx context.Context, db *pgxpool.Pool, push NoticePush, live NoticePublisher, logger *slog.Logger, now time.Time,
 	contextID, actorID string, origin Origin, n Notice, to []NoticeTo) error {
-	recipients := make([]noticeRecipient, 0, len(to))
-	for _, t := range to {
-		recipients = append(recipients, noticeRecipient{id: t.UserID, route: t.Route, label: t.Label})
-	}
 	return workflowNotices{db: db, push: push, live: live, logger: logger}.sendTo(ctx, now, contextID, actorID, origin,
-		scheduledNotice{title: n.Title, body: n.Body, event: n.Event, category: n.Category, contextType: n.ContextType,
-			priority: n.Priority}, recipients)
+		noticeOf(n), recipientsOf(to))
 }
