@@ -43,6 +43,8 @@ var exportPages = map[string][]string{
 	"fund_requests":                {rbac.CCEO, rbac.ProgramLead, roleCD, roleIA, roleAccountant, rolePC, rbac.Admin},
 	"team_planning_oversight":      {rbac.ProgramLead, roleCD, roleRVP, roleRPL, roleIA, roleAccountant, rbac.Admin},
 	"country_planning_oversight":   {roleCD, roleRVP, roleRPL, roleIA, rbac.Admin},
+	"my_plan": {roleAccountant, rbac.Admin, rbac.CCEO, roleCD, roleIA, "PartnerAdmin", "PartnerFieldOfficer", rbac.ProgramLead,
+		rolePC},
 }
 
 // oversightCountryRoles read the whole country on Planning Oversight (_lens_roles).
@@ -88,7 +90,13 @@ var exportForms = []exportForm{
 	{path: "/country-planning-oversight/export-drawer", title: "Export Country Planning Oversight", pageName: "Team Planning Oversight", subtitle: planningSubtitle,
 		pages: []string{"team_planning_oversight", "country_planning_oversight"}, needsExport: true, planning: true, country: true,
 		whoseName: "program_lead", whoseLabel: "Whose Plans"},
+	// My Plan's (my_plan_views.my_plan_export_drawer_view): the page gate
+	// only, and the kind always opens on the first.
+	{path: myPlanExportPath, title: "Export My Plan", pageName: "My Plan", pages: []string{"my_plan"},
+		subtitle: "Customize period from (Month) to (Month) and download to Excel"},
 }
+
+const myPlanExportPath = "/my-plan/export-drawer"
 
 func exportFormFor(path string) (exportForm, bool) {
 	path = strings.TrimSuffix(path, "/")
@@ -311,7 +319,7 @@ func (f exportForm) drawer(q url.Values, today time.Time, whose [][2]string) *sc
 func (s *Service) exportDrawerInGo(ctx context.Context, p auth.Principal, rawPath string) (*screensv1.GetDrawerResponse, bool, error) {
 	path, rawQuery, _ := strings.Cut(rawPath, "?")
 	form, ok := exportFormFor(path)
-	if !ok {
+	if !ok || (form.path == myPlanExportPath && p.InActingAppointment) {
 		return nil, false, nil
 	}
 	if reason := form.refusal(p); reason != "" {
