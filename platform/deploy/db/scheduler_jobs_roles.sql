@@ -248,13 +248,16 @@ BEGIN
 END
 $fn$;
 
--- Verifies audit_log chain continuity (returns count of empty hashes).
+-- How many audit_log rows are still unsealed: written inside a caller's
+-- transaction by the existing application (seq and hash left empty until its
+-- commit seals them). Go appends every row sealed; it may not read payloads,
+-- so it cannot seal these itself (audit_chain_seal reports them instead).
 CREATE OR REPLACE FUNCTION gateway_scheduler.verify_audit_chain()
 RETURNS integer
 LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
   SELECT COUNT(*)::integer
     FROM public.audit_log
-   WHERE hash IS NULL OR hash = '';
+   WHERE seq IS NULL OR hash IS NULL OR hash = '';
 $fn$;
 
 -- Batch 20: Hands in completed/in_progress activities that already carry a

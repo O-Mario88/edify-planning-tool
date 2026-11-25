@@ -238,11 +238,19 @@ func executeJob(
 		return callIntRW(ctx, pool, `SELECT gateway_scheduler.prune_scheduler_history($1)`, now)
 
 	case "audit_chain_seal":
+		// seal_pending chains rows the existing application wrote unsealed
+		// inside a caller's transaction. Go appends every row sealed and may
+		// not read payloads, so there is nothing for it to seal; rows left
+		// unsealed (a lost commit hook) are reported, so the watchdog says so,
+		// rather than counted as sealed.
 		var unsealed int
 		if err := pool.QueryRow(ctx, `SELECT gateway_scheduler.verify_audit_chain()`).Scan(&unsealed); err != nil {
 			return 0, err
 		}
-		return unsealed, nil
+		if unsealed > 0 {
+			return 0, fmt.Errorf("scheduler: %d audit rows are unsealed; the existing application's seal_pending chains them", unsealed)
+		}
+		return 0, nil
 
 	case "hand_in_entered_work":
 		// Each piece of work commits on its own, as the existing job's do.
