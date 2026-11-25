@@ -67,11 +67,13 @@ type Rules struct {
 	Plan       PlanRules      `json:"plan"`
 	Rows       RowRules       `json:"rows"`
 	Readiness  ReadinessRules `json:"readiness"`
-	Tables     TableRules     `json:"tables"`
-	PastDue    PastDueRules   `json:"past_due"`
-	Week       WeekRules      `json:"week"`
-	Detail     DetailRules    `json:"detail"`
-	months     []monthOption
+	// TableExport is what My Plan's export reads.
+	TableExport TableExportRules `json:"table_export"`
+	Tables      TableRules       `json:"tables"`
+	PastDue     PastDueRules     `json:"past_due"`
+	Week        WeekRules        `json:"week"`
+	Detail      DetailRules      `json:"detail"`
+	months      []monthOption
 }
 
 // DetailRules are what an activity's detail drawer reads

@@ -54,6 +54,15 @@ var rules = func() (r struct {
 	ParticipantSettingKeys []string          `json:"participant_setting_keys"`
 	DayRateKeys            []string          `json:"day_rate_keys"`
 	Country                countryRules      `json:"country"`
+	// CostPlanSheet is cost_plan_sheet's title, caption, money format, empty
+	// line and each table kind's headings.
+	CostPlanSheet struct {
+		Title   string              `json:"title"`
+		Caption string              `json:"caption"`
+		Money   string              `json:"money"`
+		Empty   string              `json:"empty"`
+		Headers map[string][]string `json:"headers"`
+	} `json:"cost_plan_sheet"`
 	// CountryLedgerRoles read the country's ledger whatever their scope.
 	CountryLedgerRoles []string `json:"country_ledger_roles"`
 	// FundAllocationRoles open the Consolidated Fund Allocation.

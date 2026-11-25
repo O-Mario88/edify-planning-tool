@@ -101,6 +101,7 @@ def rules() -> dict:
         "plan": plan(),
         "rows": plan_rows(),
         "readiness": readiness(),
+        "table_export": table_export(),
         "tables": plan_tables(),
         "past_due": past_due(),
         "week": week(),
@@ -247,6 +248,49 @@ def readiness() -> dict:
             PartnerAssignment.STATUS_PARTNER_SCHEDULED,
             PartnerAssignment.STATUS_SCHEDULED,
         ],
+    }
+
+
+def table_export() -> dict:
+    """What My Plan's export reads (my_plan_views._my_plan_export over
+    apps.my_plan.table_export): the drawer's Activity Type and Plan Status
+    (apps.core.export_kinds), the sheets each kind gives and their headings,
+    the cluster-meeting schools' rosters and the group trainings' Cost."""
+    from apps.activities.online_training import ONLINE
+    from apps.budget.costing import CLUSTER_MEALS_RATE_KEY
+    from apps.core import export_kinds, plan_export
+    from apps.core.activity_types import COMPLETED_WORK_STATUSES
+    from apps.my_plan import table_export as export
+    from apps.schools.lifecycle_models import OPERATING_STATUSES
+    from apps.schools.models import SchoolType
+
+    return {
+        "kind_types": {k: sorted(v) for k, v in export_kinds._TYPES.items()},
+        "online_kind": export_kinds.ONLINE,
+        "online_mode": ONLINE,
+        "completed_work_statuses": sorted(COMPLETED_WORK_STATUSES),
+        "kind_tables": {k: list(v) for k, v in export.KIND_TABLES.items()},
+        "all_sheets": list(export.ALL_SHEETS),
+        "titles": {table.key: table.title for table in export.TABLES},
+        "headers": {
+            **{
+                table.key: [heading for heading, _cell in table.columns]
+                for table in export.TABLES
+            },
+            "meeting_schools": [h for h, _cell in export.TRAININGS_COLUMNS],
+            "programme_school_work": [h for h, _cell in export.PROGRAMME_COLUMNS],
+        },
+        "short_days": [table.key for table in export.TABLES if table.short_days],
+        "meeting_schools_title": export.MEETING_SCHOOLS_TITLE,
+        "programme_title": export.PROGRAMME_TITLE,
+        "school_type_labels": dict(SchoolType.choices),
+        "operating_statuses": list(OPERATING_STATUSES),
+        "group_training_cost_types": sorted(plan_export.GROUP_TRAINING_COST_TYPES),
+        "cluster_meals_rate_key": CLUSTER_MEALS_RATE_KEY,
+        "budget_sheet": plan_export.BUDGET_SHEET,
+        "day_format": export.DAY,
+        "short_day_format": export.SHORT_DAY,
+        "money_format": export.MONEY,
     }
 
 

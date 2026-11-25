@@ -72,6 +72,17 @@ def rules() -> dict:
         "participant_setting_keys": sorted(services.LEDGER_PARTICIPANT_SETTING_KEYS),
         "day_rate_keys": sorted(KEY_LABELS),
         "country": _country_rules(),
+        # The Activity cost plan as a sheet (services.cost_plan_sheet).
+        "cost_plan_sheet": {
+            "title": services.COST_PLAN_SHEET_TITLE,
+            "caption": services.COST_PLAN_CAPTION,
+            "money": services.UGX_MONEY,
+            "empty": "No costed activities in this period.",
+            "headers": {
+                kind: services.cost_plan_column_headers(kind)
+                for kind in ("standard", "meeting", "training", "admin")
+            },
+        },
         "country_ledger_roles": list(services.COUNTRY_LEDGER_ROLES),
         # Who opens the Consolidated Fund Allocation (fund_allocation_view).
         "fund_allocation_roles": [

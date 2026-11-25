@@ -77,6 +77,23 @@ describe('a download the gateway writes', () => {
     expect(send('/core-schools-oversight/?tab=groups&format=xlsx')).toBeNull();
   });
 
+  it("sends My Plan's Export to the gateway, but not the page", () => {
+    const send = (path: string) => {
+      const request = new NextRequest(`http://localhost:3000${path}`);
+      request.cookies.set(ACCESS_COOKIE, 'token');
+      return proxy(request).headers.get('x-middleware-rewrite');
+    };
+    expect(send('/my-plan/?export=xlsx&fy=2027')).toBe(
+      'http://localhost:3000/api/quick-export?target=%2Fmy-plan&export=xlsx&fy=2027',
+    );
+    expect(send('/my-plan?from_month=10&to_month=12&activity_type=planned')).toBe(
+      'http://localhost:3000/api/quick-export?target=%2Fmy-plan&from_month=10&to_month=12&activity_type=planned',
+    );
+    expect(send('/my-plan?export=CSV')).toBe('http://localhost:3000/api/quick-export?target=%2Fmy-plan&export=CSV');
+    expect(send('/my-plan?period=month&status=planned')).toBeNull();
+    expect(send('/my-plan?format=csv')).toBeNull();
+  });
+
   it("sends a Country Planning Oversight table's Export to the gateway, but not All Tables yet", () => {
     const send = (path: string) => {
       const request = new NextRequest(`http://localhost:3000${path}`);

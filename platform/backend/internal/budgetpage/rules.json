@@ -29,6 +29,46 @@
     "training": "Training",
     "training_follow_up_visit": "Training Follow-up Visit"
   },
+  "cost_plan_sheet": {
+    "caption": "Costs come directly from scheduled planned activities and are grouped by activity and item. Training and meeting tables show sessions and participants.",
+    "empty": "No costed activities in this period.",
+    "headers": {
+      "admin": [
+        "Item",
+        "Quantity",
+        "—",
+        "Rate / Unit",
+        "Staff cost",
+        "Activity"
+      ],
+      "meeting": [
+        "Item",
+        "Meetings",
+        "Participants",
+        "Rate / Unit",
+        "Staff cost",
+        "Activity"
+      ],
+      "standard": [
+        "Item",
+        "No. of Days",
+        "No. of Persons",
+        "Rate / Unit",
+        "Staff cost",
+        "Activity"
+      ],
+      "training": [
+        "Item",
+        "Training sessions",
+        "Participants",
+        "Rate / Unit",
+        "Staff cost",
+        "Activity"
+      ]
+    },
+    "money": "\"UGX\" #,##0",
+    "title": "Activity cost plan"
+  },
   "country": {
     "approval_status_labels": {
       "admin_plan_added": "Ready for CD Review",

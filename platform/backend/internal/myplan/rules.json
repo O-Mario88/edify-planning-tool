@@ -1128,6 +1128,442 @@
     ],
     "no_data": "No data"
   },
+  "table_export": {
+    "all_sheets": [
+      "school_visits",
+      "cluster_trainings",
+      "group_trainings",
+      "cluster_meetings",
+      "meeting_schools",
+      "core_school_visits",
+      "core_school_trainings",
+      "programme_school_work",
+      "programme_activities"
+    ],
+    "budget_sheet": "Budget",
+    "cluster_meals_rate_key": "cluster_meetings_trainings_meals",
+    "completed_work_statuses": [
+      "accountant_confirmed",
+      "closed",
+      "completed",
+      "ia_verified"
+    ],
+    "day_format": "d mmm yyyy",
+    "group_training_cost_types": [
+      "facilitation",
+      "participant_meals",
+      "venue"
+    ],
+    "headers": {
+      "cluster_meetings": [
+        "Cluster Name",
+        "District",
+        "District Type",
+        "Planned Date",
+        "Completed Date",
+        "Executor",
+        "Purpose (Meeting Topic)",
+        "SSA Intervention",
+        "Participants",
+        "Cost",
+        "Budget status",
+        "Verification",
+        "Salesforce ID",
+        "Status"
+      ],
+      "cluster_trainings": [
+        "School ID",
+        "School / Cluster",
+        "District",
+        "District Type",
+        "Cluster Planned From",
+        "Executor",
+        "Training Name",
+        "Planned Date",
+        "Completed Date",
+        "SSA Intervention",
+        "Participants",
+        "Mode of Delivery",
+        "Cost",
+        "Budget status",
+        "Verification",
+        "Salesforce ID",
+        "Status"
+      ],
+      "core_school_trainings": [
+        "School ID",
+        "School Name",
+        "Package",
+        "Training",
+        "District",
+        "District Type",
+        "Planned Date",
+        "Completed Date",
+        "Focus Intervention",
+        "Expected Participants",
+        "Assigned Partner",
+        "Budget status",
+        "Verification",
+        "Salesforce ID",
+        "Status"
+      ],
+      "core_school_visits": [
+        "School ID",
+        "School Name",
+        "District",
+        "District Type",
+        "Activity",
+        "Planned Date",
+        "Completed Date",
+        "Executor",
+        "Purpose of Visit",
+        "SSA Intervention",
+        "Cost",
+        "Budget status",
+        "Verification",
+        "Salesforce ID",
+        "Status"
+      ],
+      "group_trainings": [
+        "Cluster Name",
+        "District",
+        "District Type",
+        "Planned Date",
+        "Completed Date",
+        "Executor",
+        "Training",
+        "SSA Intervention",
+        "Participants",
+        "Cost",
+        "Budget status",
+        "Verification",
+        "Salesforce ID",
+        "Status"
+      ],
+      "meeting_schools": [
+        "School ID",
+        "School / Cluster",
+        "District",
+        "District Type",
+        "Cluster Planned From",
+        "Executor",
+        "Training Name",
+        "Planned Date",
+        "Completed Date",
+        "SSA Intervention",
+        "Participants",
+        "Mode of Delivery",
+        "Cost",
+        "Budget status",
+        "Verification",
+        "Salesforce ID",
+        "Status"
+      ],
+      "programme_activities": [
+        "Venue ID",
+        "School / Venue Name",
+        "District",
+        "District Type",
+        "Activity",
+        "Date",
+        "Budget status",
+        "Verification",
+        "Salesforce ID",
+        "Status"
+      ],
+      "programme_school_work": [
+        "School ID",
+        "School name",
+        "District",
+        "District Type",
+        "Activity",
+        "Planned date",
+        "Completed date",
+        "Salesforce ID",
+        "Status"
+      ],
+      "school_visits": [
+        "School ID",
+        "School Name",
+        "District",
+        "District Type",
+        "Activity",
+        "Planned Date",
+        "Completed Date",
+        "Executor",
+        "Purpose of Visit",
+        "Focus Intervention",
+        "Cost",
+        "Budget status",
+        "Verification",
+        "Salesforce ID",
+        "Status"
+      ]
+    },
+    "kind_tables": {
+      "all": [
+        "school_visits",
+        "cluster_trainings",
+        "group_trainings",
+        "cluster_meetings",
+        "meeting_schools",
+        "core_school_visits",
+        "core_school_trainings",
+        "programme_school_work",
+        "programme_activities"
+      ],
+      "client_visits": [
+        "school_visits"
+      ],
+      "core_trainings": [
+        "core_school_trainings"
+      ],
+      "core_visits": [
+        "core_school_visits"
+      ],
+      "group_trainings": [
+        "cluster_trainings",
+        "group_trainings",
+        "core_school_trainings"
+      ],
+      "meeting_schools": [
+        "meeting_schools"
+      ],
+      "meetings": [
+        "cluster_meetings",
+        "meeting_schools"
+      ],
+      "online": [
+        "cluster_trainings",
+        "group_trainings",
+        "core_school_trainings"
+      ],
+      "planned": [
+        "school_visits",
+        "cluster_trainings",
+        "group_trainings",
+        "cluster_meetings",
+        "meeting_schools",
+        "core_school_visits",
+        "core_school_trainings",
+        "programme_school_work"
+      ],
+      "training_schools": [
+        "cluster_trainings"
+      ],
+      "trainings": [
+        "cluster_trainings",
+        "group_trainings",
+        "core_school_trainings",
+        "programme_school_work"
+      ],
+      "visits": [
+        "school_visits",
+        "core_school_visits",
+        "programme_school_work"
+      ],
+      "visits_trainings": [
+        "school_visits",
+        "cluster_trainings",
+        "group_trainings",
+        "core_school_visits",
+        "core_school_trainings",
+        "programme_school_work"
+      ]
+    },
+    "kind_types": {
+      "client_visits": [
+        "baseline_ssa_visit",
+        "coaching_visit",
+        "core_assessment_visit",
+        "core_visit",
+        "donor_visit",
+        "follow_up_visit",
+        "in_school_coaching_visit",
+        "in_school_support",
+        "partner_ssa_collection",
+        "school_invitation",
+        "school_visit",
+        "school_visit_ssa_collection",
+        "social_visit",
+        "story_gathering_visit",
+        "training_follow_up_visit"
+      ],
+      "core_trainings": [
+        "baseline_ssa_visit",
+        "cluster_training",
+        "cluster_training_ssa_collection",
+        "coaching_visit",
+        "core_assessment_visit",
+        "core_training",
+        "core_visit",
+        "donor_visit",
+        "follow_up_visit",
+        "in_school_coaching_visit",
+        "in_school_support",
+        "in_school_training",
+        "partner_ssa_collection",
+        "school_improvement_training",
+        "school_invitation",
+        "school_visit",
+        "school_visit_ssa_collection",
+        "social_visit",
+        "story_gathering_visit",
+        "training",
+        "training_follow_up_visit"
+      ],
+      "core_visits": [
+        "baseline_ssa_visit",
+        "cluster_training",
+        "cluster_training_ssa_collection",
+        "coaching_visit",
+        "core_assessment_visit",
+        "core_training",
+        "core_visit",
+        "donor_visit",
+        "follow_up_visit",
+        "in_school_coaching_visit",
+        "in_school_support",
+        "in_school_training",
+        "partner_ssa_collection",
+        "school_improvement_training",
+        "school_invitation",
+        "school_visit",
+        "school_visit_ssa_collection",
+        "social_visit",
+        "story_gathering_visit",
+        "training",
+        "training_follow_up_visit"
+      ],
+      "group_trainings": [
+        "cluster_training",
+        "cluster_training_ssa_collection"
+      ],
+      "meeting_schools": [
+        "cluster_meeting",
+        "cluster_meeting_ssa_review"
+      ],
+      "meetings": [
+        "cluster_meeting",
+        "cluster_meeting_ssa_review"
+      ],
+      "online": [
+        "cluster_training",
+        "cluster_training_ssa_collection"
+      ],
+      "planned": [
+        "baseline_ssa_visit",
+        "cluster_meeting",
+        "cluster_meeting_ssa_review",
+        "cluster_training",
+        "cluster_training_ssa_collection",
+        "coaching_visit",
+        "core_assessment_visit",
+        "core_training",
+        "core_visit",
+        "donor_visit",
+        "follow_up_visit",
+        "in_school_coaching_visit",
+        "in_school_support",
+        "in_school_training",
+        "partner_ssa_collection",
+        "school_improvement_training",
+        "school_invitation",
+        "school_visit",
+        "school_visit_ssa_collection",
+        "social_visit",
+        "story_gathering_visit",
+        "training",
+        "training_follow_up_visit"
+      ],
+      "training_schools": [
+        "cluster_training",
+        "cluster_training_ssa_collection",
+        "core_training",
+        "in_school_training",
+        "school_improvement_training",
+        "training"
+      ],
+      "trainings": [
+        "cluster_training",
+        "cluster_training_ssa_collection",
+        "core_training",
+        "in_school_training",
+        "school_improvement_training",
+        "training"
+      ],
+      "visits": [
+        "baseline_ssa_visit",
+        "coaching_visit",
+        "core_assessment_visit",
+        "core_visit",
+        "donor_visit",
+        "follow_up_visit",
+        "in_school_coaching_visit",
+        "in_school_support",
+        "partner_ssa_collection",
+        "school_invitation",
+        "school_visit",
+        "school_visit_ssa_collection",
+        "social_visit",
+        "story_gathering_visit",
+        "training_follow_up_visit"
+      ],
+      "visits_trainings": [
+        "baseline_ssa_visit",
+        "cluster_training",
+        "cluster_training_ssa_collection",
+        "coaching_visit",
+        "core_assessment_visit",
+        "core_training",
+        "core_visit",
+        "donor_visit",
+        "follow_up_visit",
+        "in_school_coaching_visit",
+        "in_school_support",
+        "in_school_training",
+        "partner_ssa_collection",
+        "school_improvement_training",
+        "school_invitation",
+        "school_visit",
+        "school_visit_ssa_collection",
+        "social_visit",
+        "story_gathering_visit",
+        "training",
+        "training_follow_up_visit"
+      ]
+    },
+    "meeting_schools_title": "Schools in Cluster Meetings",
+    "money_format": "\"UGX \"#,##0",
+    "online_kind": "online",
+    "online_mode": "online",
+    "operating_statuses": [
+      "active",
+      "reopened"
+    ],
+    "programme_title": "{label} School Plans",
+    "school_type_labels": {
+      "champion": "Champion",
+      "client": "Client",
+      "core": "Core",
+      "core_graduate": "Core Graduate",
+      "core_trained": "Core Trained"
+    },
+    "short_day_format": "mmm d, ddd",
+    "short_days": [
+      "core_school_trainings",
+      "programme_activities"
+    ],
+    "titles": {
+      "cluster_meetings": "Cluster Meetings",
+      "cluster_trainings": "Trainings",
+      "core_school_trainings": "Core School Trainings",
+      "core_school_visits": "Core School Visits",
+      "group_trainings": "Group Trainings",
+      "programme_activities": "Programme Activities",
+      "school_visits": "School Visits"
+    }
+  },
   "tables": {
     "awaiting_delivery": [
       "planned",

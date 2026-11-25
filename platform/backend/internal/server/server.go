@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -256,6 +257,14 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		WithWorkbook(strings.TrimSuffix(coreoversight.Path, "/"), coreoversight.NewService(pool, time.Now).Export).
 		WithWorkbookRoute(func(target string) (detailpages.WorkbookExport, bool) {
 			return planningmonitor.CountryTableExportRoute(pool, time.Now)(target)
+		}).
+		WithFile("/my-plan", func(ctx context.Context, p auth.Principal, query url.Values) (string, []byte, bool, error) {
+			// A partner's My Plan is its organisation's work (my_plan_activities'
+			// partner branch): still the existing export's.
+			if partners, err := partnerassigned.PartnerIDs(ctx, pool, p); err != nil || len(partners) > 0 {
+				return "", nil, false, err
+			}
+			return myplan.NewService(pool, time.Now).ExportFile(ctx, p, query)
 		})
 	screenService := screens.NewService(existingApp).TrustProxyHeaders(cfg.Loans.TrustProxyHeaders).
 		WithStrictReads(cfg.StrictReads).

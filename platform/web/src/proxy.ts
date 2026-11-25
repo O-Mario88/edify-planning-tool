@@ -40,9 +40,17 @@ export function proxy(request: NextRequest) {
   }
   // A page's own Export (?export=xlsx) whose workbook the gateway makes.
   const params = request.nextUrl.searchParams;
+  // My Plan's Export (_export_format): export=csv|xlsx|excel, format=xlsx|excel,
+  // or the Export options drawer's period fields.
+  const myPlanExport =
+    /^\/my-plan\/?$/.test(pathname) &&
+    (['csv', 'xlsx', 'excel'].includes((params.get('export') ?? '').trim().toLowerCase()) ||
+      ['xlsx', 'excel'].includes((params.get('format') ?? '').trim().toLowerCase()) ||
+      ['from_month', 'to_month', 'start_date', 'end_date', 'period_type'].some((key) => params.has(key)));
   const exportsPage =
     request.method === 'GET' &&
-    ((Boolean(params.get('export')?.trim()) &&
+    (myPlanExport ||
+      (Boolean(params.get('export')?.trim()) &&
       /^\/ia\/(returned|partner-evidence|history|verification)\/?$/.test(pathname)) ||
       (/^\/core-schools-oversight\/?$/.test(pathname) &&
         (params.get('format') === 'csv' ||

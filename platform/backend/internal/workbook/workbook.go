@@ -160,6 +160,13 @@ func stringsCells(values []string) []Cell {
 	return out
 }
 
+// SafeCSVRow is safe_csv_writer's row: each value as csv.writer writes it,
+// formula-shaped text given a leading apostrophe.
+func SafeCSVRow(row []Cell) []string { return safeRow(row) }
+
+// DateValue is the cell's day when it holds a date.
+func (c Cell) DateValue() (time.Time, bool) { return c.when, c.kind == kindDate }
+
 // safeRow is _SafeCsvWriter.writerow: each value as csv.writer writes it,
 // formula-shaped text given a leading apostrophe (spreadsheet_text).
 func safeRow(row []Cell) []string {

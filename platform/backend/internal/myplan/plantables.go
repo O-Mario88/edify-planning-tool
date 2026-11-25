@@ -211,11 +211,18 @@ func tableOf(a *activity, slots coreSlots) int {
 // owners. ok is false when a listed activity needs a part Go does not draw
 // yet: the page is the existing application's.
 func ReadPlanTables(ctx context.Context, db schooldirectory.Querier, place *registry.Work, owners []string, p Period, f Filters, now time.Time) (PlanTablesResult, bool, error) {
-	var res PlanTablesResult
 	ids, err := listedIDs(ctx, db, owners, p, f, now)
 	if err != nil || len(ids) == 0 {
-		return res, err == nil, err
+		return PlanTablesResult{}, err == nil, err
 	}
+	return planTablesFor(ctx, db, place, ids, now, false)
+}
+
+// planTablesFor is get_frontend_context's tables for exactly these
+// activities. An export (table_export.context_for) reads the rows alone:
+// not their actions, day-off marks or the Status select the page draws.
+func planTablesFor(ctx context.Context, db schooldirectory.Querier, place *registry.Work, ids []string, now time.Time, export bool) (PlanTablesResult, bool, error) {
+	var res PlanTablesResult
 	acts, err := readActivities(ctx, db, ids)
 	if err != nil {
 		return res, false, err
@@ -228,9 +235,13 @@ func ReadPlanTables(ctx context.Context, db schooldirectory.Querier, place *regi
 	if err != nil {
 		return res, false, err
 	}
-	marks, known, err := dayOffMarks(ctx, db, acts, extras)
-	if err != nil || !known {
-		return res, false, err
+	marks := map[string]calendarpage.DayOffMark{}
+	if !export {
+		var known bool
+		marks, known, err = dayOffMarks(ctx, db, acts, extras)
+		if err != nil || !known {
+			return res, false, err
+		}
 	}
 	var all []*planRow
 	core := false
@@ -246,7 +257,7 @@ func ReadPlanTables(ctx context.Context, db schooldirectory.Querier, place *regi
 		}
 		isCore := table == tableCoreVisits || table == tableCoreTrainings
 		next, known := computeNextAction(a, x, x.advances, pg.today)
-		if !known {
+		if !known && !export {
 			return res, false, nil
 		}
 		r := &planRow{row: pg.newRow(a, isCore), x: *x, table: table, inTable: table >= 0, next: next}
@@ -304,7 +315,7 @@ func ReadPlanTables(ctx context.Context, db schooldirectory.Querier, place *regi
 	// last slot's status in the Status filter (25.3): shown as "all" when no
 	// slot's status is one of the select's values; otherwise which slot is
 	// last is the table's order, which Go does not read.
-	if core && len(pg.slots.statuses) > 0 {
+	if core && len(pg.slots.statuses) > 0 && !export {
 		for _, s := range pg.slots.statuses {
 			if s != nil && in(statusOptions, *s) {
 				return res, false, nil

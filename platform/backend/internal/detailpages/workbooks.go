@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
@@ -112,7 +113,11 @@ func (s *Service) serveFile(w http.ResponseWriter, r *http.Request, p auth.Princ
 		http.Error(w, "This export is not available here yet. Use the Edify web app.", http.StatusServiceUnavailable)
 	default:
 		// The view's own content type: a CSV is "text/csv".
-		w.Header().Set("Content-Type", "text/csv")
+		if strings.HasSuffix(name, ".xlsx") {
+			w.Header().Set("Content-Type", workbook.ContentType)
+		} else {
+			w.Header().Set("Content-Type", "text/csv")
+		}
 		w.Header().Set("Content-Disposition", `attachment; filename="`+name+`"`)
 		w.Header().Set("Cache-Control", "no-store")
 		_, _ = w.Write(body)
