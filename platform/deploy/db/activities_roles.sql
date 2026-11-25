@@ -612,3 +612,8 @@ GRANT SELECT (id, loan_id, kind, amount, value_date) ON bt_repayment_transaction
 GRANT SELECT (account_owner_id, region_id) ON school TO edify_activities_rw;
 GRANT SELECT (id, country) ON region TO edify_activities_rw;
 GRANT SELECT (active_role, is_active) ON "user" TO edify_activities_rw;
+
+-- ── The scheduler's notification jobs (daily_digest, …; docs/migration/189 §4) ──
+-- They write through the existing trigger (gateway_notifications.notify_workflow)
+-- and read whether today's notice was already sent.
+GRANT SELECT (source_event_id) ON notification TO edify_activities_rw;

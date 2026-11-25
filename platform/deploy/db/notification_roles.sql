@@ -213,7 +213,10 @@ BEGIN
   END IF;
   SELECT n.id INTO live FROM public.notification n
    WHERE n.recipient_id = person.id AND n.source_event_type = evt_type
-     AND n.context_type = ctx_type AND n.context_id = ctx_id
+     -- context_type=None is IS NULL in the existing lookup; a notice with no
+     -- context id is never matched, as the existing trigger only looks when
+     -- there is one.
+     AND n.context_type IS NOT DISTINCT FROM ctx_type AND n.context_id = ctx_id
      AND n.resolved_at IS NULL AND n.status <> 'archived'
    ORDER BY n.created_at DESC LIMIT 1 FOR UPDATE;
   IF FOUND THEN

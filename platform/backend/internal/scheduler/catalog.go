@@ -17,6 +17,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dataqualityscan"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/debriefs"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/notificationcenter"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/notificationjobs"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/plreview"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/targets"
@@ -413,48 +414,10 @@ SELECT COALESCE(sp.user_id, a.responsible_staff_id), COUNT(a.id)::int
 		return sent, nil
 
 	case "daily_digest":
-		rows, err := pool.Query(ctx, `
-SELECT n.recipient_id, COUNT(n.id)::int
-  FROM notification n
-  JOIN notification_preference np ON np.user_id = n.recipient_id
- WHERE n.status = 'unread'
-   AND np.email_enabled = true
- GROUP BY n.recipient_id
- LIMIT 200`)
-		if err != nil {
-			return 0, err
-		}
-		type digRow struct {
-			uid   string
-			count int
-		}
-		var items []digRow
-		for rows.Next() {
-			var r digRow
-			if scanErr := rows.Scan(&r.uid, &r.count); scanErr == nil && r.uid != "" && r.count > 0 {
-				items = append(items, r)
-			}
-		}
-		rows.Close()
-		sent := 0
-		for _, it := range items {
-			if ok, err := writer.Deliver(ctx, notificationcenter.Delivery{
-				RecipientID:     it.uid,
-				Title:           fmt.Sprintf("Daily digest: %d unread notification(s)", it.count),
-				Body:            fmt.Sprintf("You have %d unread items waiting in your Edify notifications.", it.count),
-				Category:        "digest",
-				ContextType:     "daily_digest",
-				ContextID:       "digest-" + today,
-				TargetRoute:     "/notifications",
-				ActionLabel:     "Open Notifications",
-				Priority:        "normal",
-				SourceEventType: "notifications.daily_digest",
-				SourceEventID:   "digest-" + today + ":" + it.uid,
-			}); err == nil && ok {
-				sent++
-			}
-		}
-		return sent, nil
+		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy
+		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) {
+			return notificationjobs.DailyDigest(ctx, tx, now, loc, notificationjobs.Notices{Push: push})
+		})
 
 	case "day_off_alerts":
 		rows, err := pool.Query(ctx, `
