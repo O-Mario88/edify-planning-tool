@@ -2190,6 +2190,81 @@
           "Unclustered"
         ]
       ],
+      "data_quality": {
+        "companion_visit_purpose": "in_school_training_delivery_visit",
+        "data_collection_visit_purposes": [
+          "ssa_support"
+        ],
+        "data_collection_visit_types": [
+          "baseline_ssa_visit",
+          "partner_ssa_collection",
+          "school_visit_ssa_collection"
+        ],
+        "non_package_visit_purposes": [
+          "donor_visit",
+          "school_invitation",
+          "social_visit",
+          "ssa_support",
+          "story_gathering"
+        ],
+        "outreach_visit_purposes": [
+          "donor_visit",
+          "school_invitation",
+          "social_visit",
+          "story_gathering"
+        ],
+        "outreach_visit_types": [
+          "donor_visit",
+          "school_invitation",
+          "social_visit",
+          "story_gathering_visit"
+        ],
+        "package_training_types": [
+          "core_training",
+          "in_school_training",
+          "school_improvement_training",
+          "training"
+        ],
+        "package_visit_types": [
+          "coaching_visit",
+          "core_visit",
+          "follow_up_visit",
+          "in_school_coaching_visit",
+          "in_school_support",
+          "school_visit",
+          "training_follow_up_visit"
+        ],
+        "pending_family_decisions": {},
+        "purpose_activity_types": {
+          "donor_visit": "donor_visit",
+          "in_school_coaching": "in_school_coaching_visit",
+          "in_school_training": "in_school_training",
+          "in_school_training_ssa": "in_school_training",
+          "school_invitation": "school_invitation",
+          "social_visit": "social_visit",
+          "ssa_support": "school_visit_ssa_collection",
+          "story_gathering": "story_gathering_visit",
+          "training_follow_up": "training_follow_up_visit"
+        },
+        "sample": 10,
+        "session_types": [
+          "cluster_meeting",
+          "cluster_meeting_ssa_review",
+          "cluster_training",
+          "cluster_training_ssa_collection",
+          "core_training",
+          "in_school_training",
+          "school_improvement_training",
+          "training"
+        ],
+        "uncredited_statuses": [
+          "awaiting_owner_approval",
+          "cancelled",
+          "deferred",
+          "not_planned",
+          "rejected"
+        ]
+      },
       "export_roles": [
         "Accountant",
         "Admin",

@@ -158,6 +158,8 @@ func (s *Service) countryOversightDrawerInGo(ctx context.Context, p auth.Princip
 		return nil, false, nil
 	case errors.Is(err, planningmonitor.ErrCPODrawerNotFound):
 		return nil, true, apierr.New(ctx, connect.CodeNotFound, apierr.ReasonNotFound, "This drawer is not available.")
+	case errors.Is(err, planningmonitor.ErrCPODrawerRefused):
+		return &screensv1.GetDrawerResponse{Refusal: err.Error()}, true, nil
 	case err != nil:
 		return nil, true, apierr.Internal(ctx, s.logger, err)
 	}

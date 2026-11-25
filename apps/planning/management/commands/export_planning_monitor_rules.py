@@ -438,6 +438,10 @@ def _country_oversight() -> dict:
 
 
 def _country_oversight_page() -> dict:
+    from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES
+    from apps.core_schools import package_credit
+    from apps.planning.country_oversight import data_quality, policy
+
     """The planning-coverage dashboard's own words: each card's label and the
     table it opens, the tabs, the people table's columns and the filters'
     choices (apps.planning.country_oversight.service, oversight_views)."""
@@ -469,6 +473,33 @@ def _country_oversight_page() -> dict:
         },
         "kpi_gaps": dict(service.KPI_GAPS),
         "gap_figures": dict(service.GAP_FIGURES),
+        # The data-quality queue (country_oversight.data_quality): the
+        # cluster sessions it looks for a roster on, the family decisions it
+        # words, and how many records each check shows.
+        "data_quality": {
+            "session_types": sorted({*CLUSTER_MEETING_TYPES, *TRAINING_TYPES}),
+            "pending_family_decisions": dict(policy.PENDING_FAMILY_DECISIONS),
+            "sample": data_quality.SAMPLE,
+            # package_work_q's vocabularies, for the work no slot holds.
+            "package_visit_types": sorted(package_credit.PACKAGE_VISIT_TYPES),
+            "package_training_types": sorted(package_credit.PACKAGE_TRAINING_TYPES),
+            "non_package_visit_purposes": sorted(
+                package_credit.NON_PACKAGE_VISIT_PURPOSES
+            ),
+            "companion_visit_purpose": package_credit.COMPANION_VISIT_PURPOSE,
+            "data_collection_visit_types": sorted(
+                package_credit.DATA_COLLECTION_VISIT_TYPES
+            ),
+            "data_collection_visit_purposes": sorted(
+                package_credit.DATA_COLLECTION_VISIT_PURPOSES
+            ),
+            "outreach_visit_types": sorted(package_credit.OUTREACH_VISIT_TYPES),
+            "outreach_visit_purposes": sorted(package_credit.OUTREACH_VISIT_PURPOSES),
+            "uncredited_statuses": sorted(package_credit.UNCREDITED_STATUSES),
+            "purpose_activity_types": dict(
+                sorted(package_credit.PURPOSE_ACTIVITY_TYPES.items())
+            ),
+        },
         "type_views": [list(v) for v in service.TYPE_VIEWS],
         "table_views": [list(v) for v in service.TABLE_VIEWS],
         "table_columns": [list(c) for c in service.TABLE_COLUMNS],

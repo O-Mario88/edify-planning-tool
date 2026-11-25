@@ -4,9 +4,9 @@ package planningmonitor
 // as the feed reads them: a planning card opened (drawer_kpi.html), a
 // Programme Lead (drawer_lead.html), a person or one Partner's share of
 // their schools (drawer_owner.html), and the year's planning follow-ups
-// (drawer_followups.html). A register holding an execution follow-up, a
-// list longer than one page, and Impact Assessment's data-quality queue are
-// handed on.
+// (drawer_followups.html), and Impact Assessment's data-quality queue
+// (cpo_quality.go). A register holding an execution follow-up and a list
+// longer than one page are handed on.
 
 import (
 	"context"
@@ -33,6 +33,10 @@ const CPODrawerPath = cpoPath + "drawer"
 // snapshot does not hold.
 var ErrCPODrawerNotFound = errors.New("planningmonitor: no such Country Planning Oversight drawer")
 
+// ErrCPODrawerRefused is the queue's bare 403 for a reader who may not
+// read it, which the feed words as its fallback refusal.
+var ErrCPODrawerRefused = errors.New("This is not available to you.")
+
 // cpoDrawerPage is DRAWER_PAGE_SIZE: a drawer's list a page at a time.
 const cpoDrawerPage = 50
 
@@ -49,6 +53,12 @@ func CountryOversightDrawer(ctx context.Context, db schooldirectory.Querier, p a
 		return d, true, err
 	case "followups":
 		return cpoFollowUpsDrawer(ctx, db, p, q, now)
+	case "dq":
+		if !cpoReaderFor(p.ActiveRole, false).readQuality {
+			return nil, true, ErrCPODrawerRefused
+		}
+		d, err := cpoQualityDrawer(ctx, db, p, q, now)
+		return d, true, err
 	case "lead", "owner", "partner":
 		d, err := cpoPersonDrawer(ctx, db, p, q, now)
 		if errors.Is(err, errCPOHandOn) {

@@ -74,6 +74,22 @@ type cpoRules struct {
 		} `json:"table_words"`
 		// The roles the drill-down offers Export to (can_export).
 		ExportRoles []string `json:"export_roles"`
+		// The data-quality queue's vocabularies (country_oversight.data_quality).
+		DataQuality struct {
+			SessionTypes                []string          `json:"session_types"`
+			PendingFamilyDecisions      map[string]string `json:"pending_family_decisions"`
+			Sample                      int               `json:"sample"`
+			PackageVisitTypes           []string          `json:"package_visit_types"`
+			PackageTrainingTypes        []string          `json:"package_training_types"`
+			NonPackageVisitPurposes     []string          `json:"non_package_visit_purposes"`
+			CompanionVisitPurpose       string            `json:"companion_visit_purpose"`
+			DataCollectionVisitTypes    []string          `json:"data_collection_visit_types"`
+			DataCollectionVisitPurposes []string          `json:"data_collection_visit_purposes"`
+			OutreachVisitTypes          []string          `json:"outreach_visit_types"`
+			OutreachVisitPurposes       []string          `json:"outreach_visit_purposes"`
+			UncreditedStatuses          []string          `json:"uncredited_statuses"`
+			PurposeActivityTypes        map[string]string `json:"purpose_activity_types"`
+		} `json:"data_quality"`
 	} `json:"page"`
 }
 

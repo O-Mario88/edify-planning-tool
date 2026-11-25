@@ -46,9 +46,18 @@ func TestCountryOversightDrawersAreGos(t *testing.T) {
 	}
 	borrowAccount(t, "ia@edify.org")
 	ia := sessionOf(t, "ia@edify.org", seededPassword).GetAccessToken()
+	if dq := open(ia, "/country-planning-oversight/drawer?kind=dq").GetDrawer(); dq.GetTitle() != "Planning Oversight Data Quality" ||
+		len(dq.GetItems()) < 20 {
+		t.Fatalf("the data-quality queue: %v", dq)
+	}
 	full := open(ia, "/country-planning-oversight/drawer?kind=lead&key="+lead).GetDrawer()
 	if len(full.GetItems()) < 5 || full.GetItems()[0].GetHeading() != "Figures" {
 		t.Fatalf("Impact Assessment's Lead drawer: %v", full)
+	}
+	borrowAccount(t, "rvp@edify.org")
+	rvp := sessionOf(t, "rvp@edify.org", seededPassword).GetAccessToken()
+	if r := open(rvp, "/country-planning-oversight/drawer?kind=dq").GetRefusal(); r != "This is not available to you." {
+		t.Fatalf("the RVP on the queue: %q", r)
 	}
 	borrowAccount(t, "hr@edify.org")
 	hr := sessionOf(t, "hr@edify.org", seededPassword).GetAccessToken()
