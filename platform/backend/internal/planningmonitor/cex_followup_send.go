@@ -5,10 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"net/url"
 	"slices"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -16,9 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
-	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
-	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/realtime"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/schooldirectory"
 )
 
@@ -50,21 +46,18 @@ const (
 
 // cexSend is one send's settled inputs.
 type cexSend struct {
-	issue        cexIssueRule
-	instruction  string
-	priority     string
-	due          time.Time
-	lead         cexFollowLead
-	open, oldest int
-	f            cexFollowFigures
-	fs           cexFollowScope
-	country      string
-	now          time.Time
-	sender       auth.Principal
-	origin       activities.Origin
-	schoolIDs    []string
-	key          string
-	entry        map[string]any
+	issue       cexIssueRule
+	instruction string
+	priority    string
+	due         time.Time
+	lead        cexFollowLead
+	open        int
+	f           cexFollowFigures
+	fs          cexFollowScope
+	country     string
+	now         time.Time
+	sender      auth.Principal
+	origin      activities.Origin
 }
 
 // cexFollowLead is the Programme Lead a follow-up goes to (_lead).
@@ -98,30 +91,7 @@ func SendExecutionFollowUp(ctx context.Context, db *pgxpool.Pool, deps CEXSendDe
 		return "", err
 	}
 	in.now, in.sender, in.origin, in.country = now, p, origin, reader.Country
-	in.prepare()
-	tx, err := db.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
-	if err != nil {
-		return "", fmt.Errorf("planningmonitor: opening the follow-up: %w", err)
-	}
-	defer func() { _ = tx.Rollback(ctx) }()
-	w, err := in.write(ctx, tx)
-	if err != nil {
-		return "", err
-	}
-	if err := in.notify(ctx, tx, deps, w); err != nil {
-		return "", err
-	}
-	if err := tx.Commit(ctx); err != nil {
-		return "", fmt.Errorf("planningmonitor: committing the follow-up: %w", err)
-	}
-	if deps.Live != nil {
-		deps.Live.Publish(realtime.Event{Type: "notification." + cexFollowUpEvent, EntityType: cexFollowUpContext, EntityID: w.id,
-			TargetUserID: in.lead.userID, ActorUserID: p.UserID})
-	}
-	if w.created {
-		return "Sent to " + in.lead.name + ". It is on their To-Do.", nil
-	}
-	return fmt.Sprintf("Reminder %d sent to %s on the open follow-up.", w.reminders, in.lead.name), nil
+	return fuSend(ctx, db, deps, in.ask())
 }
 
 // cexSettle is send_follow_up's checks, in its order, and the figures read
@@ -202,24 +172,26 @@ func deref(s *string) string {
 	return *s
 }
 
-// prepare settles what the record names: the oldest overdue age, the
-// condition, the affected schools and the instruction's history line.
-func (in *cexSend) prepare() {
+// ask is the record the send writes: the condition, the oldest overdue
+// age, the affected schools and the instruction's history line.
+func (in *cexSend) ask() *fuAsk {
+	oldest := 0
 	ids := map[string]bool{}
 	for _, r := range in.f.records {
 		if r.overdue != "" || r.returned || r.financeOpen {
-			in.oldest = max(in.oldest, r.age)
+			oldest = max(oldest, r.age)
 			if r.schoolID != "" {
 				ids[r.schoolID] = true
 			}
 		}
 	}
+	schools := []string{}
 	for id := range ids {
-		in.schoolIDs = append(in.schoolIDs, id)
+		schools = append(schools, id)
 	}
-	sort.Strings(in.schoolIDs)
-	if len(in.schoolIDs) > 500 {
-		in.schoolIDs = in.schoolIDs[:500]
+	sort.Strings(schools)
+	if len(schools) > 500 {
+		schools = schools[:500]
 	}
 	w := in.fs.period.window()
 	dash := func(s string) string {
@@ -228,14 +200,47 @@ func (in *cexSend) prepare() {
 		}
 		return s
 	}
-	in.key = "cpx|" + in.fs.period.fy + "|" + w.period + ":" + w.start.Format("2006-01-02") + "|pl:" + in.fs.lead + "|cceo:" + dash(in.fs.cceo) +
-		"|partner:" + dash(in.fs.partner) + "|issue:" + in.issue.Key + "|activity:" + dash(in.fs.activityID)
+	key := "cpx|" + in.fs.period.fy + "|" + w.period + ":" + w.start.Format("2006-01-02") + "|pl:" + in.fs.lead + "|cceo:" +
+		dash(in.fs.cceo) + "|partner:" + dash(in.fs.partner) + "|issue:" + in.issue.Key + "|activity:" + dash(in.fs.activityID)
 	name := in.sender.Name
 	if name == "" {
 		name = "Country Director"
 	}
-	in.entry = map[string]any{"at": cexISO(in.now), "by": in.sender.UserID, "name": name, "instruction": in.instruction,
+	d, c := in.f.snap.data, in.f.snap.tree.country
+	a := &fuAsk{module: "execution", key: key, issueKey: in.issue.Key, issueLabel: in.issue.Label, metricKey: in.issue.Figure,
+		resolutionRule: in.issue.ResolutionRule, stage: in.issue.Stage, blockerOwner: in.issue.Owner, required: c.n("due"),
+		planned: c.n("verified"), remaining: in.open, affected: len(schools), schoolIDs: schools, daysOverdue: &oldest,
+		cceo: in.fs.cceo, partner: in.fs.partner, activity: in.fs.activityID, fy: in.fs.period.fy, country: in.country, w: w,
+		lead: in.lead, sender: in.sender, origin: in.origin, now: in.now, due: in.due, instruction: in.instruction,
+		priority: in.priority}
+	a.entry = map[string]any{"at": cexISO(in.now), "by": in.sender.UserID, "name": name, "instruction": in.instruction,
 		"priority": in.priority, "due": in.due.Format("2006-01-02"), "open": in.open}
+	a.snapshot = map[string]any{"due": c.n("due"), "started": c.n("started"), "executed": c.n("executed"),
+		"verified": c.n("verified"), "closed": c.n("closed"), "overdue": c.n("overdue"), "open": in.open,
+		"as_of": d.today.Format("2006-01-02")}
+	if o := d.owners[in.fs.cceo]; in.fs.cceo != "" && o != nil {
+		a.cceoName = o.name
+	}
+	if in.fs.partner != "" {
+		a.partnerName = d.partnerName[in.fs.partner]
+	}
+	if in.fs.activityID != "" && len(in.f.records) > 0 {
+		r := in.f.records[0]
+		if r.due != nil {
+			label := rules.CountryOversight.Page.TableWords.Types[r.activityType]
+			if label == "" {
+				label = r.activityType
+			}
+			a.activityLabel = fmt.Sprintf("%s · due %d %s", label, r.due.Day(), r.due.Format("Jan 2006"))
+		}
+		if a.stage == "" {
+			a.stage = r.stage
+		}
+	}
+	a.sentAudit = map[string]any{"module": "execution", "open": in.open, "due": in.due.Format("2006-01-02"),
+		"priority": in.priority, "stage": a.stage}
+	a.remindAudit = func(n int) map[string]any { return map[string]any{"module": "execution", "reminder_count": n} }
+	return a
 }
 
 // cexISO is datetime.isoformat() of an aware UTC moment.
@@ -245,69 +250,4 @@ func cexISO(t time.Time) string {
 		return t.Format("2006-01-02T15:04:05") + "+00:00"
 	}
 	return t.Format("2006-01-02T15:04:05.000000") + "+00:00"
-}
-
-// historyLine is _history's entry.
-func (in *cexSend) historyLine(action string) map[string]any {
-	by, name := any(in.sender.UserID), in.sender.Name
-	if in.sender.UserID == "" {
-		by = "system"
-	}
-	if name == "" {
-		name = "System"
-	}
-	return map[string]any{"at": cexISO(in.now), "by": by, "name": name, "action": action, "note": in.instruction}
-}
-
-// teamOversightLink is team_oversight_link: where the Lead acts.
-func (in *cexSend) teamOversightLink(id string) string {
-	w := in.fs.period.window()
-	v := []string{"followup=" + url.QueryEscape(id), "fy=" + url.QueryEscape(in.fs.period.fy)}
-	if w.period != "fy" {
-		v = append(v, "period="+w.period)
-		switch w.period {
-		case "quarter":
-			v = append(v, "quarter="+cexQuarterOf(w.start))
-		case "month":
-			v = append(v, "month="+strconv.Itoa(int(w.start.Month())))
-		case "week":
-			y, wk := w.start.ISOWeek()
-			v = append(v, fmt.Sprintf("week=%04d-W%02d", y, wk))
-		}
-	}
-	if in.fs.cceo != "" {
-		v = append(v, "owner="+url.QueryEscape(in.fs.cceo))
-	}
-	return cexTeamOversight + "?" + strings.Join(v, "&")
-}
-
-// cexQuarterOf is get_quarter_for_date: the FY quarter (October opens Q1).
-func cexQuarterOf(d time.Time) string {
-	return "Q" + strconv.Itoa((int(d.Month())+2)%12/3+1)
-}
-
-// auditRow is planning_fu._audit through log(): the actor with any cover
-// they hold, and the request's address, browser and correlation id.
-func (in *cexSend) auditRow(ctx context.Context, tx pgx.Tx, action, id, status string, extra map[string]any) error {
-	cover, err := audit.CoverageStamp(ctx, tx, in.sender.UserID, in.now)
-	if err != nil {
-		return err
-	}
-	var cceo any
-	if in.fs.cceo != "" {
-		cceo = in.fs.cceo
-	}
-	payload := map[string]any{"condition_key": in.key, "issue_type": in.issue.Key, "program_lead": in.lead.staffID, "cceo": cceo,
-		"school": nil, "status": status}
-	for k, v := range extra {
-		payload[k] = v
-	}
-	role := in.sender.ActiveRole
-	if _, err := audit.Append(ctx, tx, audit.Entry{Action: "planning_followup." + action, SubjectKind: audit.Text(cexFollowUpContext),
-		SubjectID: audit.Text(id), ActorID: audit.Text(in.sender.UserID), ActorRole: &role, Success: true,
-		Payload: audit.WithStamps(payload, cover), IPAddress: audit.Text(in.origin.IP), UserAgent: audit.Text(in.origin.UserAgent),
-		CorrelationID: audit.Text(in.origin.CorrelationID)}, in.now); err != nil {
-		return fmt.Errorf("planningmonitor: auditing the follow-up: %w", err)
-	}
-	return nil
 }
