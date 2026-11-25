@@ -262,6 +262,9 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		// The scheduler's admin_maintenance_generation (apps.admin_ops): a due
 		// template's work item, and the template's next due day.
 		filepath.Join(root, "internal", "adminops") + sep: {"admin_ops_work_item", "admin_maintenance_template"},
+		// The scheduler's closure_checklist_refresh (closure_services): each
+		// open activity's stored checklist and blockers.
+		filepath.Join(root, "internal", "closurepages") + sep: {"closure_checklist", "closure_blocker"},
 	}
 	mechanics := filepath.Join(root, "internal", "ownedschema") + sep
 	// The lint describes the DDL it allows as patterns; it runs none.

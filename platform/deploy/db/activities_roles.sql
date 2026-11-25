@@ -642,3 +642,60 @@ GRANT SELECT (id, reference) ON admin_ops_work_item TO edify_activities_rw;
 GRANT INSERT (id, created_at, updated_at, reference, title, category, description, severity, status, owner_id, due_date,
               scheduled_date, next_action, resolution_criteria, verification_note, affected_module, affected_route)
   ON admin_ops_work_item TO edify_activities_rw;
+
+-- ── The scheduler's closure_checklist_refresh (docs/migration/189 §4) ──
+-- ClosureEligibilityService.refresh_open: every open activity's checklist
+-- and blockers from its facts, written where they changed. A blocker that no
+-- longer applies is removed, as the existing refresh removes it, through
+-- gateway_closure.remove_blockers (Go code removes nothing itself; the
+-- function is owned by edify_closure_owner, a NOLOGIN role no one is a member
+-- of, holding only that right).
+-- A new database object: production needs the owner's approval at cutover.
+GRANT SELECT (id, activity_id, activity_executed, evidence_uploaded, salesforce_id_entered, ia_verified, finance_required,
+              accounts_cleared, netsuite_id_entered, analytics_published, audit_trail_saved)
+  ON closure_checklist TO edify_activities_rw;
+GRANT INSERT (id, created_at, updated_at, activity_id, activity_executed, evidence_uploaded, salesforce_id_entered,
+              ia_verified, finance_required, accounts_cleared, netsuite_id_entered, analytics_published, audit_trail_saved,
+              last_evaluated_at)
+  ON closure_checklist TO edify_activities_rw;
+GRANT UPDATE (activity_executed, evidence_uploaded, salesforce_id_entered, ia_verified, finance_required, accounts_cleared,
+              netsuite_id_entered, analytics_published, audit_trail_saved, last_evaluated_at, updated_at)
+  ON closure_checklist TO edify_activities_rw;
+GRANT SELECT (id, activity_id, blocking_reason, responsible_role, created_at) ON closure_blocker TO edify_activities_rw;
+GRANT INSERT (id, created_at, updated_at, activity_id, blocking_reason, responsible_role)
+  ON closure_blocker TO edify_activities_rw;
+GRANT SELECT (activity_id) ON activity_timeline_event TO edify_activities_rw;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'edify_closure_owner') THEN
+    CREATE ROLE edify_closure_owner NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOINHERIT;
+  END IF;
+END
+$$;
+GRANT USAGE ON SCHEMA public TO edify_closure_owner;
+GRANT SELECT (id) ON closure_blocker TO edify_closure_owner;
+GRANT DELETE ON closure_blocker TO edify_closure_owner;
+
+CREATE SCHEMA IF NOT EXISTS gateway_closure AUTHORIZATION edify_closure_owner;
+REVOKE ALL ON SCHEMA gateway_closure FROM PUBLIC;
+-- Re-runnable: the owner may (re)define its function, then loses the right.
+GRANT USAGE, CREATE ON SCHEMA gateway_closure TO edify_closure_owner;
+
+SET ROLE edify_closure_owner;
+CREATE OR REPLACE FUNCTION gateway_closure.remove_blockers(target_ids varchar[]) RETURNS integer
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+DECLARE
+  removed integer;
+BEGIN
+  DELETE FROM public.closure_blocker WHERE id = ANY(target_ids);
+  GET DIAGNOSTICS removed = ROW_COUNT;
+  RETURN removed;
+END
+$fn$;
+REVOKE ALL ON FUNCTION gateway_closure.remove_blockers(varchar[]) FROM PUBLIC;
+RESET ROLE;
+REVOKE CREATE ON SCHEMA gateway_closure FROM edify_closure_owner;
+
+GRANT USAGE ON SCHEMA gateway_closure TO edify_activities_rw;
+GRANT EXECUTE ON FUNCTION gateway_closure.remove_blockers(varchar[]) TO edify_activities_rw;

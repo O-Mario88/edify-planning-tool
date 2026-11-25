@@ -16,6 +16,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/adminops"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/btcases"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closurepages"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dataqualityscan"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/debriefs"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/notificationcenter"
@@ -657,7 +658,7 @@ SELECT id, program_lead_user_id, COALESCE(school_name, ''), days_overdue
 		return callIntRW(ctx, pool, `SELECT gateway_scheduler.sample_ia_verifications($1, $2)`, now, 10)
 
 	case "closure_checklist_refresh":
-		return callIntRW(ctx, pool, `SELECT gateway_scheduler.refresh_closure_checklists($1)`, now)
+		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) { return closurepages.RefreshOpen(ctx, tx, now) })
 
 	case "loan_tracking_notifications":
 		push := plreview.PushReadinessFrom(os.Getenv, os.ReadFile).QueueCopy
