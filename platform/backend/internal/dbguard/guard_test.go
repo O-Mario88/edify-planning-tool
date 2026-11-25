@@ -259,6 +259,9 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		// The scheduler's interaction_rollup (apps.telemetry): one row a
 		// person a day.
 		filepath.Join(root, "internal", "telemetryrollup") + sep: {"interaction_day"},
+		// The scheduler's admin_maintenance_generation (apps.admin_ops): a due
+		// template's work item, and the template's next due day.
+		filepath.Join(root, "internal", "adminops") + sep: {"admin_ops_work_item", "admin_maintenance_template"},
 	}
 	mechanics := filepath.Join(root, "internal", "ownedschema") + sep
 	// The lint describes the DDL it allows as patterns; it runs none.

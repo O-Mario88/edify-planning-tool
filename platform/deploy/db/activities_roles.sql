@@ -631,3 +631,14 @@ GRANT INSERT (id, created_at, updated_at, fy, scope_kind, scope_id, week_start, 
 GRANT UPDATE (snapshot, generated_by_user_id, status, updated_at) ON weekly_debrief_report TO edify_activities_rw;
 GRANT SELECT (id, district_id) ON school TO edify_activities_rw;
 GRANT SELECT (id, name) ON district TO edify_activities_rw;
+
+-- ── The scheduler's admin_maintenance_generation (docs/migration/189 §4) ──
+-- MaintenanceService.generate_due: a due template's scheduled work item (the
+-- next OPS reference) and the template's next due day. Nothing is removed.
+GRANT SELECT (id, name, category, description, frequency_days, next_due_date, active) ON admin_maintenance_template
+  TO edify_activities_rw;
+GRANT UPDATE (next_due_date, updated_at) ON admin_maintenance_template TO edify_activities_rw;
+GRANT SELECT (id, reference) ON admin_ops_work_item TO edify_activities_rw;
+GRANT INSERT (id, created_at, updated_at, reference, title, category, description, severity, status, owner_id, due_date,
+              scheduled_date, next_action, resolution_criteria, verification_note, affected_module, affected_route)
+  ON admin_ops_work_item TO edify_activities_rw;

@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/adminops"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/btcases"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dataqualityscan"
@@ -296,7 +297,7 @@ func executeJob(
 		return callIntRW(ctx, pool, `SELECT gateway_scheduler.hand_in_entered_work($1)`, now)
 
 	case "admin_maintenance_generation":
-		return callIntRW(ctx, pool, `SELECT gateway_scheduler.generate_due_maintenance($1::date, $2)`, today, now)
+		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) { return adminops.GenerateDueMaintenance(ctx, tx, now, loc) })
 
 	case "weekly_fund_request":
 		// Upcoming Monday–Sunday in Africa/Kampala.
