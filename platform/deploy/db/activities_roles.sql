@@ -979,7 +979,8 @@ GRANT SELECT (id, condition_key, status, instruction_history, history, reminder_
               last_reminder_at, history, activity_id, activity_label, blocker_owner, days_overdue, module, partner_id,
               partner_name, stage),
       UPDATE (instruction, instruction_history, reminder_count, last_reminder_at, priority, due_date, remaining_value,
-              live_remaining, live_checked_at, days_overdue, status, returned_reason, history, updated_at)
+              live_remaining, live_checked_at, days_overdue, status, returned_reason, history, updated_at,
+              required_value, planned_value, affected_school_ids, affected_count)
   ON planning_oversight_follow_up TO edify_activities_rw;
 GRANT SELECT (active_role) ON "user" TO edify_activities_rw;
 

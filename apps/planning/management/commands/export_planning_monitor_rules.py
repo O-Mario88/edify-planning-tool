@@ -464,6 +464,21 @@ def _country_oversight_page() -> dict:
         "followup_issue_labels": {
             key: issue.label for key, issue in {**EXEC_ISSUES, **fu.ISSUES}.items()
         },
+        # Follow Up with PL on the planning stage (country_oversight.followups):
+        # each gap's tally fields and school test, and the policy it records.
+        "followup_issues": [
+            {
+                "key": i.key,
+                "label": i.label,
+                "required": i.required,
+                "planned": i.planned,
+                "remaining": i.remaining,
+                "school_test": i.school_test,
+                "resolution_rule": i.resolution_rule,
+            }
+            for i in fu.ISSUES.values()
+        ],
+        "policy_version": fu._policy_version(),
         # The consolidated tables behind the figures (tables.SPECS), in the
         # order the table page offers them.
         "tables": [_table_spec(spec) for spec in tables.SPECS.values()],

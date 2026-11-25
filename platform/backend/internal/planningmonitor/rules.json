@@ -2197,6 +2197,89 @@
         "training_gap": "Training Planning Gap",
         "unclustered_schools": "Unclustered Schools"
       },
+      "followup_issues": [
+        {
+          "key": "staff_visit_gap",
+          "label": "Staff Visit Planning Gap",
+          "planned": "staff",
+          "remaining": "staff_gap",
+          "required": "staff_expected",
+          "resolution_rule": "metric_zero",
+          "school_test": "staff_gap"
+        },
+        {
+          "key": "partner_assignment_gap",
+          "label": "Partner Assignment Gap",
+          "planned": "partner_assigned",
+          "remaining": "partner_gap",
+          "required": "partner_expected",
+          "resolution_rule": "metric_zero",
+          "school_test": "partner_gap"
+        },
+        {
+          "key": "partner_scheduling_gap",
+          "label": "Partner Scheduling Gap",
+          "planned": "partner_scheduled",
+          "remaining": "assigned_unscheduled",
+          "required": "partner_assigned",
+          "resolution_rule": "metric_zero",
+          "school_test": "awaiting_partner"
+        },
+        {
+          "key": "training_gap",
+          "label": "Training Planning Gap",
+          "planned": "training",
+          "remaining": "training_gap",
+          "required": "training_slots",
+          "resolution_rule": "metric_zero",
+          "school_test": "training_gap"
+        },
+        {
+          "key": "unclustered_schools",
+          "label": "Unclustered Schools",
+          "planned": "clustered",
+          "remaining": "unclustered",
+          "required": "schools",
+          "resolution_rule": "metric_zero",
+          "school_test": "unclustered"
+        },
+        {
+          "key": "meeting_gap",
+          "label": "Cluster-Meeting Planning Gap",
+          "planned": "meeting_covered_clustered",
+          "remaining": "clustered_no_meeting",
+          "required": "clustered",
+          "resolution_rule": "metric_zero",
+          "school_test": "clustered_no_meeting"
+        },
+        {
+          "key": "capacity_deficit",
+          "label": "Internal Capacity Deficit",
+          "planned": "staff_core",
+          "remaining": "deficit",
+          "required": "core_staff_slots",
+          "resolution_rule": "metric_zero",
+          "school_test": "deficit"
+        },
+        {
+          "key": "school_gap",
+          "label": "School-Specific Planning Gap",
+          "planned": "planned",
+          "remaining": "unallocated",
+          "required": "visit_slots",
+          "resolution_rule": "metric_zero",
+          "school_test": "unallocated"
+        },
+        {
+          "key": "other",
+          "label": "Other Approved Planning Follow-Up",
+          "planned": "planned",
+          "remaining": "unallocated",
+          "required": "visit_slots",
+          "resolution_rule": "manual",
+          "school_test": "unallocated"
+        }
+      ],
       "followup_open_states": [
         "acknowledged",
         "action_linked",
@@ -2252,6 +2335,7 @@
           "/country-planning-oversight/?view=execution"
         ]
       ],
+      "policy_version": "2026-10-18.1",
       "status_options": [
         [
           "full",

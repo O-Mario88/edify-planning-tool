@@ -53,6 +53,8 @@ type cpoRules struct {
 		FollowUpOpenStates   []string          `json:"followup_open_states"`
 		FollowUpStatusLabels map[string]string `json:"followup_status_labels"`
 		FollowUpIssueLabels  map[string]string `json:"followup_issue_labels"`
+		FollowUpIssues       []cpoIssueRule    `json:"followup_issues"`
+		PolicyVersion        string            `json:"policy_version"`
 		// The consolidated tables (tables.SPECS) and their tab order.
 		Tables      []cpoTableSpec    `json:"tables"`
 		TableTabs   []string          `json:"table_tabs"`
@@ -102,4 +104,16 @@ type cpoColumn struct {
 	Blank      string `json:"blank"`
 	Quiet      bool   `json:"quiet"`
 	Kind       string `json:"kind"`
+}
+
+// cpoIssueRule is followups.Issue: a planning gap's tally fields (required,
+// planned, remaining) and the school-level test that puts a school in it.
+type cpoIssueRule struct {
+	Key            string `json:"key"`
+	Label          string `json:"label"`
+	Required       string `json:"required"`
+	Planned        string `json:"planned"`
+	Remaining      string `json:"remaining"`
+	SchoolTest     string `json:"school_test"`
+	ResolutionRule string `json:"resolution_rule"`
 }
