@@ -1361,6 +1361,11 @@ GRANT SELECT (activities_proposed, school_ids, planned_dates, return_reason) ON 
 -- Country Execution's period close (snapshots._open_follow_ups): which
 -- country each follow-up belongs to.
 GRANT SELECT (country) ON planning_oversight_follow_up TO edify_gateway_ro;
+-- Country Planning Oversight's follow-up register (drawer_followups.html):
+-- each entry's period, the figures when sent, its instruction trail, a
+-- return, the asks linked, the Lead's note and the closing note.
+GRANT SELECT (period_label, planned_value, required_value, affected_count, instruction_history, returned_reason,
+  linked_team_action_ids, linked_note, resolution_note) ON planning_oversight_follow_up TO edify_gateway_ro;
 -- The planning follow-up sweep (followups.refresh): the period, the school,
 -- Partner and activity a follow-up names, and who sent it.
 GRANT SELECT (period_type, period_start, school_id, partner_id, activity_id, assigned_by_id) ON planning_oversight_follow_up TO edify_gateway_ro;
