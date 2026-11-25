@@ -15,6 +15,7 @@ import (
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/activities"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/adminops"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/autopilotjobs"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/btcases"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/closurepages"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/dataqualityscan"
@@ -715,17 +716,9 @@ SELECT id, program_lead_user_id, COALESCE(school_name, ''), days_overdue
 		return 0, nil
 
 	case "autopilot_weekly_proposals":
-		var unvisited int
-		if err := pool.QueryRow(ctx, `
-SELECT COUNT(*)::int FROM school s
- WHERE s.deleted_at IS NULL AND s.operational_status = 'active'
-   AND NOT EXISTS (
-     SELECT 1 FROM activity a
-      WHERE a.deleted_at IS NULL AND a.school_id = s.id AND a.fy = $1 AND a.status <> 'cancelled'
-   )`, fyLabel).Scan(&unvisited); err != nil {
-			return 0, err
-		}
-		return unvisited, nil
+		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) {
+			return autopilotjobs.WeeklyProposals(ctx, tx, now, loc, slog.Default())
+		})
 
 	case "interaction_rollup":
 		return inTx(ctx, pool, func(tx pgx.Tx) (int, error) { return telemetryrollup.Rollup(ctx, tx, now, loc) })

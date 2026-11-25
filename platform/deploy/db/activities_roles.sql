@@ -712,3 +712,23 @@ GRANT SELECT (ssa_recommendation_id, recommendation_source, ssa_alignment, sourc
               recommendation_reason, ssa_deviation_reason, ssa_collection_expected, focus_intervention, project_id)
   ON activity TO edify_activities_rw;
 GRANT SELECT (school_id, invited, activity_id) ON cluster_activity_attendance TO edify_activities_rw;
+
+-- ── The scheduler's autopilot_weekly_proposals (docs/migration/189 §4) ──
+-- generate_week_proposal: next week's draft per CCEO and its proposed visits;
+-- a live draft is dismissed when drafted again. Nothing is removed.
+GRANT SELECT (id, staff_id, week_start, status, created_at) ON autopilot_proposed_plan TO edify_activities_rw;
+GRANT INSERT (id, created_at, updated_at, staff_id, week_start, status, rationale, accepted_by, accepted_at)
+  ON autopilot_proposed_plan TO edify_activities_rw;
+GRANT UPDATE (status, updated_at) ON autopilot_proposed_plan TO edify_activities_rw;
+GRANT INSERT (id, created_at, updated_at, plan_id, school_id, school_name, area, proposed_date, activity_type,
+              catalogue_stable_code, reason, created_activity_id)
+  ON autopilot_proposed_activity TO edify_activities_rw;
+GRANT SELECT (staff_id, school_id) ON staff_school_assignment TO edify_activities_rw;
+GRANT SELECT (block_type, applies_to_roles, applies_to_all_roles, country, region_id, district_id, is_active, start_date,
+              end_date)
+  ON calendar_block TO edify_activities_rw;
+GRANT SELECT (staff_id, region_id, district_id) ON staff_geography_assignment TO edify_activities_rw;
+GRANT SELECT (staff_id, status, start_date, end_date) ON leave TO edify_activities_rw;
+GRANT SELECT (id, name) ON sub_county TO edify_activities_rw;
+GRANT SELECT (sub_county_id, school_type, current_fy_ssa_status) ON school TO edify_activities_rw;
+GRANT SELECT (average_score) ON ssa_record TO edify_activities_rw;

@@ -265,6 +265,9 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 		// The scheduler's closure_checklist_refresh (closure_services): each
 		// open activity's stored checklist and blockers.
 		filepath.Join(root, "internal", "closurepages") + sep: {"closure_checklist", "closure_blocker"},
+		// The scheduler's autopilot_weekly_proposals (apps.autopilot): next
+		// week's drafts and their proposed visits.
+		filepath.Join(root, "internal", "autopilotjobs") + sep: {"autopilot_proposed_plan", "autopilot_proposed_activity"},
 	}
 	mechanics := filepath.Join(root, "internal", "ownedschema") + sep
 	// The lint describes the DDL it allows as patterns; it runs none.
