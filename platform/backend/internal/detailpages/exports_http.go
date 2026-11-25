@@ -8,7 +8,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/rbac"
@@ -71,8 +70,6 @@ func (s *Service) RegisterHTTP(mux *http.ServeMux, authn HTTPAuth) {
 		case strings.HasPrefix(target, "/projects/") && strings.HasSuffix(target, "/export"):
 			projID := strings.TrimSuffix(strings.TrimPrefix(target, "/projects/"), "/export")
 			s.exportProjectsCSV(r.Context(), w, fy, projID)
-		case target == "/my-professional-development/export":
-			s.exportMyPDCSV(r.Context(), w, p, fy)
 		case target == "/ia/analytics/export":
 			s.exportIAAnalyticsCSV(r.Context(), w, fy)
 		default:
@@ -149,34 +146,6 @@ ORDER BY pr.name`, fy, projectID)
 		var ceiling, schools, acts, done int64
 		if err := rows.Scan(&code, &pname, &cat, &status, &ceiling, &schools, &acts, &done); err == nil {
 			_ = cw.Write([]string{code, pname, cat, status, strconv.FormatInt(ceiling, 10), strconv.FormatInt(schools, 10), strconv.FormatInt(acts, 10), strconv.FormatInt(done, 10)})
-		}
-	}
-	cw.Flush()
-}
-
-func (s *Service) exportMyPDCSV(ctx context.Context, w http.ResponseWriter, p auth.Principal, fy string) {
-	rows, err := s.db.Query(ctx, `
-SELECT COALESCE(a.activity_type, ''), COALESCE(a.status, ''), COALESCE(a.planned_date, a.scheduled_date),
-       COALESCE(a.activity_name_snapshot, a.purpose_intervention, '')
-FROM activity a
-WHERE a.deleted_at IS NULL AND a.fy = $1 AND a.responsible_staff_id = $2
-ORDER BY COALESCE(a.planned_date, a.scheduled_date) DESC NULLS LAST LIMIT 500`, fy, p.UserID)
-	if err != nil {
-		http.Error(w, "Export query failed", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
-	cw := startCSV(w, fmt.Sprintf("edify-my-pd-fy%s.csv", fy))
-	_ = cw.Write([]string{"FY", "Activity Type", "Status", "Date", "Title"})
-	for rows.Next() {
-		var atype, status, title string
-		var dt *time.Time
-		if err := rows.Scan(&atype, &status, &dt, &title); err == nil {
-			d := ""
-			if dt != nil {
-				d = dt.Format("2006-01-02")
-			}
-			_ = cw.Write([]string{fy, atype, status, d, title})
 		}
 	}
 	cw.Flush()

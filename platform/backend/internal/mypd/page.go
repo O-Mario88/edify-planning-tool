@@ -185,6 +185,18 @@ func (s *Service) write(ctx context.Context, sp staff, fy string, today time.Tim
 			return fmt.Errorf("mypd: closing course %s's reminders: %w", m.id, err)
 		}
 	}
+	if err := allocate(ctx, tx, sp, fy); err != nil {
+		return err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("mypd: committing the read's writes: %w", err)
+	}
+	return nil
+}
+
+// allocate is StaffPDService.get_or_create_allocation: the year's
+// allocation, at nothing, when the reader has none.
+func allocate(ctx context.Context, tx pgx.Tx, sp staff, fy string) error {
 	country := sp.country
 	if country == "" {
 		country = defaultCountry
@@ -193,9 +205,6 @@ func (s *Service) write(ctx context.Context, sp staff, fy string, today time.Tim
 		annual_allocation, status, set_by) VALUES (now(), now(), $1, $2, $3, $4, $5, 0, $6, NULL)
 		ON CONFLICT (staff_id, fy) DO NOTHING`, cuid.New(), sp.id, fy, country, allocationCcy, allocationStatus); err != nil {
 		return fmt.Errorf("mypd: making the year's allocation: %w", err)
-	}
-	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("mypd: committing the read's writes: %w", err)
 	}
 	return nil
 }
