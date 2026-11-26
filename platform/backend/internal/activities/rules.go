@@ -56,9 +56,19 @@ type Rules struct {
 	ClosedStatuses        []string `json:"closed_statuses"`
 	OperatingStatuses     []string `json:"operating_statuses"`
 	ClosedSchoolMessage   string   `json:"closed_school_message"`
-	CalendarBlocksRefuse  bool     `json:"calendar_blocks_refuse"`
-	DefaultCountry        string   `json:"default_country"`
-	Alignment             struct {
+	// ProjectHandOversKeepSchoolRules is handover_policy's one switch; Go
+	// makes a project's hand-over only while it is off.
+	ProjectHandOversKeepSchoolRules bool `json:"project_handovers_keep_school_rules"`
+	// GeneralIntervention is the project target that is no SSA intervention.
+	GeneralIntervention string `json:"general_intervention"`
+	// MultiplePartnerIssueType and ClosedHandoverActivityStatuses are
+	// support_responsibility's: the review a school held by two partners
+	// opens, and the activity statuses that no longer hold a school.
+	MultiplePartnerIssueType       string   `json:"multiple_partner_issue_type"`
+	ClosedHandoverActivityStatuses []string `json:"closed_handover_activity_statuses"`
+	CalendarBlocksRefuse           bool     `json:"calendar_blocks_refuse"`
+	DefaultCountry                 string   `json:"default_country"`
+	Alignment                      struct {
 		EngineVersion             string   `json:"engine_version"`
 		PriorityDepth             int      `json:"priority_depth"`
 		StrongScore               float64  `json:"strong_score"`

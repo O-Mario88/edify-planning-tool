@@ -179,6 +179,11 @@ type handOver struct {
 	blankAsNull      bool
 	preferred        int
 	isDataCollection bool
+	// projectID, outsideSSA and override are a project's hand-over's
+	// (planning_views.special_projects_bulk_partner_view); every other
+	// hand-over names no project.
+	projectID, override string
+	outsideSSA          bool
 }
 
 // AssignCorePartner makes the Core assign form's save, or refuses it in the
@@ -512,13 +517,13 @@ func insertHandOver(ctx context.Context, tx pgx.Tx, h *handOver, now time.Time) 
   expected_activity_type, status, notes, partner_id, school_id, support_type, training_number, visit_number, purpose_of_visit,
   assignment_mode, catalogue_item_id, catalogue_snapshot, override_reason, recommendation_reason, source_ssa_id,
   source_activity_id, reassignment_sequence, training_course_id, resolution, resolution_note, outside_ssa,
-  monitoring_staff_id, purpose)
+  monitoring_staff_id, purpose, project_id)
 SELECT $1, $2, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'specific_activity', i.id, `+catalogueSnapshotSQL+`,
-  '', $14, $15, $16, 0, $17, '', '', false, $19, $20
+  $22, $14, $15, $16, 0, $17, '', '', $23, $19, $20, $21
 FROM activity_catalogue_item i WHERE i.id = $18`,
 		h.id, now, h.staff, optString(h.focus), h.kind, handOverOpenStatus, text(h.notes), h.partnerID, h.school, text(h.supportType),
 		text(h.trainingNumber), text(h.visitNumber), h.purpose, h.reason, optString(h.sourceSSA), optString(h.sourceActivityID),
-		optString(h.courseID), h.itemID, optString(h.monitor), optString(h.assignmentPurpose))
+		optString(h.courseID), h.itemID, optString(h.monitor), optString(h.assignmentPurpose), optString(h.projectID), h.override, h.outsideSSA)
 	if err != nil {
 		return fmt.Errorf("activities: writing the hand-over: %w", err)
 	}
@@ -546,7 +551,7 @@ func (s *Service) afterHandOver(ctx context.Context, p auth.Principal, h *handOv
 // signals.py): its audit row, then the partner's queue notice.
 func (s *Service) announceHandOver(ctx context.Context, p auth.Principal, h *handOver, origin Origin) {
 	if err := s.auditHandOver(ctx, "partner.assigned", h.staff, "", h, origin, map[string]any{
-		"partner_id": h.partnerID, "school_id": h.school, "cluster_id": nil, "project_id": nil,
+		"partner_id": h.partnerID, "school_id": h.school, "cluster_id": nil, "project_id": optString(h.projectID),
 	}); err != nil {
 		s.logger.Warn("activities: the hand-over's audit row was not written", "assignment", h.id, "err", err)
 	}

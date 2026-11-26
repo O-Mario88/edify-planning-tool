@@ -88,6 +88,12 @@
       "reimbursed"
     ]
   },
+  "closed_handover_activity_statuses": [
+    "cancelled",
+    "rejected",
+    "deferred",
+    "closed"
+  ],
   "closed_school_message": "This school is closed, so it takes no new activities. Its history is on the Closed Schools page; reopen the school before planning work there.",
   "closed_statuses": [
     "temporarily_closed",
@@ -236,6 +242,7 @@
       "partner_ssa_collection"
     ]
   },
+  "general_intervention": "general",
   "group_training": {
     "active_support_statuses": [
       "planned",
@@ -333,6 +340,7 @@
     "overdue_event": "pl_activity_overdue_reminder",
     "saved_message": "Saved. Press Refresh to see it on the page."
   },
+  "multiple_partner_issue_type": "multiple_partner_support",
   "operating_statuses": [
     "active",
     "reopened"
@@ -352,6 +360,7 @@
     ],
     "visit_kind": "school_visit"
   },
+  "project_handovers_keep_school_rules": false,
   "purposes": {
     "activity_types": {
       "donor_visit": "donor_visit",

@@ -23,6 +23,8 @@ from pathlib import Path
 
 from django.core.management.base import BaseCommand
 
+from apps.partners import handover_policy, support_responsibility
+from apps.projects.models import GENERAL_INTERVENTION
 from apps.schools.management.commands.export_school_directory_rules import (
     _role_user,
 )
@@ -118,6 +120,19 @@ def rules() -> dict:
         "closed_statuses": [str(s) for s in CLOSED_STATUSES],
         "operating_statuses": [str(s) for s in OPERATING_STATUSES],
         "closed_school_message": CLOSED_SCHOOL_MESSAGE,
+        # A project's hand-over goes past the school rules while this is
+        # False (apps.partners.handover_policy); Go makes only that one.
+        "project_handovers_keep_school_rules": bool(
+            handover_policy.PROJECT_HANDOVERS_KEEP_SCHOOL_RULES
+        ),
+        # The target that is no SSA intervention (Project.measured_by_ssa).
+        "general_intervention": GENERAL_INTERVENTION,
+        # The multiple-Partner review a new hand-over keeps in step
+        # (support_responsibility.sync_multiple_partner_exception).
+        "multiple_partner_issue_type": support_responsibility.MULTIPLE_PARTNER_ISSUE_TYPE,
+        "closed_handover_activity_statuses": list(
+            support_responsibility.CLOSED_ACTIVITY_STATUSES
+        ),
         "calendar_blocks_refuse": bool(CALENDAR_BLOCKS_REFUSE),
         "default_country": default_country(),
         "alignment": {

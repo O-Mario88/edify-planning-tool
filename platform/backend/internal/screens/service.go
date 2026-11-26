@@ -120,6 +120,8 @@ type Service struct {
 	bulkSchedule BulkScheduler
 	// bulkAssign is a list's tick-bar Assign to partner, with Django absent.
 	bulkAssign BulkAssigner
+	// projectAssign is the coordinator's project hand-over, with Django absent.
+	projectAssign ProjectAssigner
 	// facilitation is a cluster's Partner to Facilitate, with Django absent.
 	facilitation ClusterFacilitator
 	// membership is a cluster's Add Schools, with Django absent.

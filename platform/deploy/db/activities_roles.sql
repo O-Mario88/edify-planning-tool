@@ -1212,3 +1212,9 @@ GRANT SELECT (id, report_id, audience, school_id, status, redaction_profile, ren
 -- A school brief recorded as shared closes its account owner's to-do
 -- (reports.record_brief_shared → action_service.resolve_manually).
 GRANT SELECT (id, condition_key, state, recipient_id, due_date, manual_resolution_reason, created_at), UPDATE (state, resolved_at, manual_resolution_reason, resolved_by_system, updated_at) ON team_action TO edify_activities_rw;
+-- A coordinator's hand-over of project schools to a partner
+-- (planning_views.special_projects_bulk_partner_view): the hand-over names
+-- its project, and the school's multiple-Partner review is read by its key
+-- before the save, which Go makes only while that review would not change.
+GRANT INSERT (project_id) ON partner_assignment TO edify_activities_rw;
+GRANT SELECT (condition_key) ON data_quality_issue TO edify_activities_rw;
