@@ -272,6 +272,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		WithFile("/fund-requests/weekly", weeklyrequest.NewService(pool, time.Now).ExportFile).
 		WithFile("/team-targets/export", teamtargets.NewService(pool, time.Now).Export).
 		WithFile("/clusters", clusterpage.NewService(pool, time.Now).ListExport).
+		WithFile("/schools", schooldirectory.NewService(pool, time.Now).Export).
 		WithWorkbook("/country-planning-oversight/coverage-export", planningmonitor.CoverageExport(pool, time.Now)).
 		WithWorkbook("/country-planning-oversight/execution/export", planningmonitor.CountryExecutionExport(pool, time.Now)).
 		WithWorkbookRoute(func(target string) (detailpages.WorkbookExport, bool) {

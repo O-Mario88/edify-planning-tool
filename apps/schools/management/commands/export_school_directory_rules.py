@@ -51,6 +51,10 @@ def page_access() -> dict:
                 _role_user(role.value), "school_directory"
             ),
             "profile": can_open_url(_role_user(role.value), "/schools/0"),
+            # school_directory_view's require_export_permission (?export=).
+            "data_export": bool(
+                RolePermissionService.can_export(_role_user(role.value), "/schools")
+            ),
         }
         for role in EdifyRole
     }

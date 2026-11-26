@@ -107,6 +107,10 @@ type Sheet struct {
 	// NoFreeze is freeze=None; Freeze names another cell than A2.
 	NoFreeze bool
 	Freeze   string
+	// Plain is openpyxl's write-only sheet as a view writes one by hand: the
+	// values alone, no heading style, bands, widths, frozen row, filter or
+	// hidden grid.
+	Plain bool
 }
 
 // Download writes table_download: the workbook as <stem>.xlsx, or the first

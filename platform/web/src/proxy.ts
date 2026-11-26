@@ -51,9 +51,9 @@ export function proxy(request: NextRequest) {
   const weeklyExport =
     /^\/fund-requests\/weekly\/?$/.test(pathname) &&
     ['csv', 'xlsx', 'excel'].includes((params.get('export') ?? '').trim().toLowerCase());
-  // The Clusters list's Export (export=csv|xlsx).
+  // The Clusters list's and the School Directory's Export (export=csv|xlsx).
   const clustersExport =
-    /^\/clusters\/?$/.test(pathname) && ['csv', 'xlsx'].includes((params.get('export') ?? '').trim());
+    /^\/(clusters|schools)\/?$/.test(pathname) && ['csv', 'xlsx'].includes((params.get('export') ?? '').trim());
   const exportsPage =
     request.method === 'GET' &&
     (myPlanExport ||

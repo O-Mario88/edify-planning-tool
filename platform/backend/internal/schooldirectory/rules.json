@@ -117,66 +117,82 @@
   ],
   "page_access": {
     "Accountant": {
+      "data_export": true,
       "directory": false,
       "profile": false
     },
     "Admin": {
+      "data_export": true,
       "directory": true,
       "profile": true
     },
     "BusinessTransformationOfficer": {
+      "data_export": true,
       "directory": false,
       "profile": true
     },
     "CCEO": {
+      "data_export": false,
       "directory": true,
       "profile": true
     },
     "ClusterLeader": {
+      "data_export": false,
       "directory": false,
       "profile": false
     },
     "CountryDirector": {
+      "data_export": true,
       "directory": true,
       "profile": true
     },
     "HumanResources": {
+      "data_export": false,
       "directory": false,
       "profile": false
     },
     "ImpactAssessment": {
+      "data_export": true,
       "directory": true,
       "profile": true
     },
     "MfiLoanOfficer": {
+      "data_export": false,
       "directory": false,
       "profile": false
     },
     "MfiPartnerAdmin": {
+      "data_export": false,
       "directory": false,
       "profile": false
     },
     "PartnerAdmin": {
+      "data_export": false,
       "directory": false,
       "profile": false
     },
     "PartnerFieldOfficer": {
+      "data_export": false,
       "directory": false,
       "profile": false
     },
     "Program Lead": {
+      "data_export": true,
       "directory": true,
       "profile": true
     },
     "ProjectCoordinator": {
+      "data_export": true,
       "directory": true,
       "profile": true
     },
     "RegionalProgramLead": {
+      "data_export": true,
       "directory": true,
       "profile": false
     },
     "RegionalVicePresident": {
+      "data_export": true,
       "directory": false,
       "profile": false
     }

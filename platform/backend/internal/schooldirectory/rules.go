@@ -28,6 +28,8 @@ type Rules struct {
 	PageAccess map[string]struct {
 		Directory bool `json:"directory"`
 		Profile   bool `json:"profile"`
+		// DataExport is the page's require_export_permission (?export=).
+		DataExport bool `json:"data_export"`
 	} `json:"page_access"`
 	CountryRoles            []string          `json:"country_roles"`
 	RegionRoles             []string          `json:"region_roles"`

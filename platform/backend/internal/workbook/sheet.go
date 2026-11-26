@@ -28,13 +28,17 @@ func sheetXML(sheet Sheet, st *styles) string {
 	if width > 0 && height > 0 {
 		fmt.Fprintf(&b, `<dimension ref="A1:%s"/>`, cellRef(width, height))
 	}
-	b.WriteString(`<sheetViews><sheetView showGridLines="0" workbookViewId="0">`)
-	if freeze := freezeCell(sheet, headers); freeze != "" {
+	if sheet.Plain {
+		b.WriteString(`<sheetViews><sheetView workbookViewId="0">`)
+	} else {
+		b.WriteString(`<sheetViews><sheetView showGridLines="0" workbookViewId="0">`)
+	}
+	if freeze := freezeCell(sheet, headers); freeze != "" && !sheet.Plain {
 		b.WriteString(paneXML(freeze))
 	}
 	b.WriteString(`</sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/>`)
 	widths := sheet.Widths
-	if len(widths) == 0 {
+	if len(widths) == 0 && !sheet.Plain {
 		widths = WidthsFor(sheet.Headers)
 	}
 	if len(widths) > 0 {
@@ -51,7 +55,7 @@ func sheetXML(sheet Sheet, st *styles) string {
 		switch {
 		case name == RowBand || name == RowTitle || name == RowTotal:
 			fmt.Fprintf(&b, `<row r="%d" ht="%d" customHeight="1">`, r, ledgerHeight)
-		case r == 1 && headers:
+		case r == 1 && headers && !sheet.Plain:
 			fmt.Fprintf(&b, `<row r="%d" ht="%d" customHeight="1">`, r, headerHeight)
 		default:
 			fmt.Fprintf(&b, `<row r="%d">`, r)
@@ -67,7 +71,7 @@ func sheetXML(sheet Sheet, st *styles) string {
 		b.WriteString(`</row>`)
 	}
 	b.WriteString(`</sheetData>`)
-	if headers && height > 1 && !sheet.NoFilter {
+	if headers && height > 1 && !sheet.NoFilter && !sheet.Plain {
 		fmt.Fprintf(&b, `<autoFilter ref="A1:%s"/>`, cellRef(width, height))
 	}
 	b.WriteString(`<pageMargins left="0.75" right="0.75" top="1" bottom="1" header="0.5" footer="0.5"/></worksheet>`)
@@ -150,6 +154,9 @@ func cellStyle(sheet Sheet, headers bool, r, c int, cell Cell) xfKey {
 		k.numFmt = dateFormat
 	case kindDateTime:
 		k.numFmt = dateTimeFormat
+	}
+	if sheet.Plain {
+		return k
 	}
 	switch {
 	case r == 1 && headers:

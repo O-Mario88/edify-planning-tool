@@ -79,106 +79,14 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, req *screensv1.Ge
 		return nil, ErrForbidden
 	}
 	now := s.now()
-	scope, err := resolveScope(ctx, s.db, p, now)
+	d, err := s.listingFor(ctx, p, req, now)
 	if err != nil {
 		return nil, err
 	}
-
-	// Schools nobody holds, for the field staff who may take them.
-	canTake := in(rules.TakeRoles, p.ActiveRole) && p.StaffProfileID != ""
-	var unheld *sqlb
-	if canTake {
-		var country *string
-		err := s.db.QueryRow(ctx, `SELECT country FROM staff_profile WHERE user_id = $1 AND deleted_at IS NULL LIMIT 1`, p.UserID).Scan(&country)
-		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("schooldirectory: reading the officer's country: %w", err)
-		}
-		c := ""
-		if country != nil {
-			c = *country
-		}
-		unheld = unheldBase(c)
-	}
-	base := scopeBase(scope)
-	gap := strings.TrimSpace(req.GetGap())
-	if _, known := gapLabel(gap); gap == "unheld" && unheld != nil {
-		base = unheld.clone()
-	} else if !known {
-		gap = ""
-	}
-
-	fy := strings.TrimSpace(req.GetFy())
-	options := fyOptions(now)
-	if !in(options, fy) {
-		fy = strconv.Itoa(operationalFY(now))
-	}
-	district := strings.TrimSpace(req.GetDistrict())
-	subCounty := strings.TrimSpace(req.GetSubCounty())
-	if subCounty != "" {
-		var valid bool
-		if district != "" {
-			if err := s.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM sub_county WHERE id = $1 AND district_id = $2)`,
-				subCounty, district).Scan(&valid); err != nil {
-				return nil, err
-			}
-		}
-		if !valid {
-			subCounty = ""
-		}
-	}
-	schoolType := strings.TrimSpace(req.GetSchoolType())
-	clusterStatus := strings.TrimSpace(req.GetClusterStatus())
-	projectStatus := strings.TrimSpace(req.GetProjectStatus())
-	tab := strings.TrimSpace(req.GetTab())
-	if !in([]string{"all", "unclustered", "clustered", "not_assigned", "assigned"}, tab) {
-		tab = "all"
-	}
-
-	filtered := base.clone()
-	if q := strings.TrimSpace(req.GetQ()); q != "" {
-		filtered.search(q)
-	}
-	if district != "" {
-		filtered.and("s.district_id = " + filtered.arg(district))
-	}
-	if subCounty != "" {
-		filtered.and("s.sub_county_id = " + filtered.arg(subCounty))
-	}
-	if schoolType != "" {
-		filtered.and("s.school_type = " + filtered.arg(schoolType))
-	}
-	if clusterStatus != "" {
-		filtered.and("s.cluster_status = " + filtered.arg(clusterStatus))
-	}
-	switch projectStatus {
-	case "assigned":
-		filtered.and(inProject)
-	case "unassigned":
-		filtered.and(notInProject)
-	}
-
-	gapCounts, err := s.gapCounts(ctx, filtered, fy)
-	if err != nil {
-		return nil, err
-	}
-	if gap != "" && gap != "unheld" {
-		if condition := filtered.gapCondition(gap, fy); condition != "" {
-			filtered.and(condition)
-		}
-	}
-
-	tabCounts := map[string]int{}
-	for _, t := range rules.DirectoryTabs {
-		n, err := s.count(ctx, filtered, tabCondition(t[0]))
-		if err != nil {
-			return nil, fmt.Errorf("schooldirectory: counting %s: %w", t[0], err)
-		}
-		tabCounts[t[0]] = n
-	}
-	listing := filtered.clone()
-	if condition := tabCondition(tab); condition != "" {
-		listing.and(condition)
-	}
+	scope, base, unheld, canTake := d.scope, d.base, d.unheld, d.canTake
+	gap, fy, options, tab := d.gap, d.fy, d.options, d.tab
+	district, subCounty, schoolType, clusterStatus, projectStatus := d.district, d.subCounty, d.schoolType, d.clusterStatus, d.projectStatus
+	gapCounts, tabCounts, listing := d.gapCounts, d.tabCounts, d.listing
 	total := tabCounts[tab]
 
 	order, err := s.order(ctx, scope, listing)
@@ -547,4 +455,124 @@ func actions(p auth.Principal, clustered, activeProjects, takeable bool) []*scre
 		}
 	}
 	return out
+}
+
+// directoryListing is school_directory_context's reading of the request: the
+// reader's scope and schools, the filters it validates, the counts by gap
+// and tab, and the listing the active tab shows.
+type directoryListing struct {
+	scope                                                         Scope
+	base, unheld, listing                                         *sqlb
+	canTake                                                       bool
+	gap, fy, tab                                                  string
+	options                                                       []string
+	district, subCounty, schoolType, clusterStatus, projectStatus string
+	gapCounts                                                     map[string]int
+	tabCounts                                                     map[string]int
+}
+
+func (s *Service) listingFor(ctx context.Context, p auth.Principal, req *screensv1.GetSchoolDirectoryRequest, now time.Time) (*directoryListing, error) {
+	scope, err := resolveScope(ctx, s.db, p, now)
+	if err != nil {
+		return nil, err
+	}
+
+	// Schools nobody holds, for the field staff who may take them.
+	canTake := in(rules.TakeRoles, p.ActiveRole) && p.StaffProfileID != ""
+	var unheld *sqlb
+	if canTake {
+		var country *string
+		err := s.db.QueryRow(ctx, `SELECT country FROM staff_profile WHERE user_id = $1 AND deleted_at IS NULL LIMIT 1`, p.UserID).Scan(&country)
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("schooldirectory: reading the officer's country: %w", err)
+		}
+		c := ""
+		if country != nil {
+			c = *country
+		}
+		unheld = unheldBase(c)
+	}
+	base := scopeBase(scope)
+	gap := strings.TrimSpace(req.GetGap())
+	if _, known := gapLabel(gap); gap == "unheld" && unheld != nil {
+		base = unheld.clone()
+	} else if !known {
+		gap = ""
+	}
+
+	fy := strings.TrimSpace(req.GetFy())
+	options := fyOptions(now)
+	if !in(options, fy) {
+		fy = strconv.Itoa(operationalFY(now))
+	}
+	district := strings.TrimSpace(req.GetDistrict())
+	subCounty := strings.TrimSpace(req.GetSubCounty())
+	if subCounty != "" {
+		var valid bool
+		if district != "" {
+			if err := s.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM sub_county WHERE id = $1 AND district_id = $2)`,
+				subCounty, district).Scan(&valid); err != nil {
+				return nil, err
+			}
+		}
+		if !valid {
+			subCounty = ""
+		}
+	}
+	schoolType := strings.TrimSpace(req.GetSchoolType())
+	clusterStatus := strings.TrimSpace(req.GetClusterStatus())
+	projectStatus := strings.TrimSpace(req.GetProjectStatus())
+	tab := strings.TrimSpace(req.GetTab())
+	if !in([]string{"all", "unclustered", "clustered", "not_assigned", "assigned"}, tab) {
+		tab = "all"
+	}
+
+	filtered := base.clone()
+	if q := strings.TrimSpace(req.GetQ()); q != "" {
+		filtered.search(q)
+	}
+	if district != "" {
+		filtered.and("s.district_id = " + filtered.arg(district))
+	}
+	if subCounty != "" {
+		filtered.and("s.sub_county_id = " + filtered.arg(subCounty))
+	}
+	if schoolType != "" {
+		filtered.and("s.school_type = " + filtered.arg(schoolType))
+	}
+	if clusterStatus != "" {
+		filtered.and("s.cluster_status = " + filtered.arg(clusterStatus))
+	}
+	switch projectStatus {
+	case "assigned":
+		filtered.and(inProject)
+	case "unassigned":
+		filtered.and(notInProject)
+	}
+
+	gapCounts, err := s.gapCounts(ctx, filtered, fy)
+	if err != nil {
+		return nil, err
+	}
+	if gap != "" && gap != "unheld" {
+		if condition := filtered.gapCondition(gap, fy); condition != "" {
+			filtered.and(condition)
+		}
+	}
+
+	tabCounts := map[string]int{}
+	for _, t := range rules.DirectoryTabs {
+		n, err := s.count(ctx, filtered, tabCondition(t[0]))
+		if err != nil {
+			return nil, fmt.Errorf("schooldirectory: counting %s: %w", t[0], err)
+		}
+		tabCounts[t[0]] = n
+	}
+	listing := filtered.clone()
+	if condition := tabCondition(tab); condition != "" {
+		listing.and(condition)
+	}
+	return &directoryListing{scope: scope, base: base, unheld: unheld, listing: listing, canTake: canTake, gap: gap, fy: fy,
+		tab: tab, options: options, district: district, subCounty: subCounty, schoolType: schoolType, clusterStatus: clusterStatus,
+		projectStatus: projectStatus, gapCounts: gapCounts, tabCounts: tabCounts}, nil
 }
