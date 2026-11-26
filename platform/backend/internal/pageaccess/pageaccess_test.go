@@ -42,6 +42,13 @@ func TestRefusedPagesNamesTheGatesPages(t *testing.T) {
 	if got := RefusedPages("Program Lead", false, "/partner-oversight/detail"); got != nil {
 		t.Fatalf("a Lead on Partner Oversight: %v", got)
 	}
+	// A download names its page too, so the export refused is audited.
+	if got := RefusedPages("Program Lead", false, "/ia/impact-report/download"); len(got) != 1 || got[0] != "ia_dashboard" {
+		t.Fatalf("a Lead on the live evidence annex: %v", got)
+	}
+	if got := RefusedPages("ImpactAssessment", false, "/ia/impact-report/download"); got != nil {
+		t.Fatalf("IA on the live evidence annex: %v", got)
+	}
 	if got := RefusedPages("HumanResources", false, "/no-such-page-at-all"); got != nil {
 		t.Fatalf("an unknown path: %v", got)
 	}

@@ -17,6 +17,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	screensv1 "github.com/O-Mario88/edify-planning-tool/platform/backend/gen/edify/screens/v1"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/rbac"
@@ -43,6 +44,18 @@ type Service struct {
 	files map[string]FileExport
 	// logger records an export that failed.
 	logger *slog.Logger
+	// refusals writes the page gate's unauthorized_page_access row for an
+	// export it refuses; trustProxy reads the client's address from the
+	// proxy's header.
+	refusals   audit.Beginner
+	trustProxy bool
+}
+
+// WithRefusalAudit audits the exports the page gate refuses, as
+// require_page_permission does before it refuses.
+func (s *Service) WithRefusalAudit(db audit.Beginner, trustProxy bool) *Service {
+	s.refusals, s.trustProxy = db, trustProxy
+	return s
 }
 
 // WithLogger records the exports that fail.

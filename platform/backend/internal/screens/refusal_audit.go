@@ -8,11 +8,7 @@ package screens
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
-	"strings"
-
-	"github.com/jackc/pgx/v5"
 
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
@@ -33,30 +29,6 @@ func (s *Service) auditRefusedPage(ctx context.Context, p auth.Principal, path s
 }
 
 func (s *Service) appendRefusal(ctx context.Context, p auth.Principal, pages []string, o origin.Origin) error {
-	now := s.clock()
-	tx, err := s.db.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
-	if err != nil {
-		return fmt.Errorf("screens: opening the refusal's audit: %w", err)
-	}
-	defer func() { _ = tx.Rollback(ctx) }()
-	cover, err := audit.CoverageStamp(ctx, tx, p.UserID, now)
-	if err != nil {
-		return err
-	}
-	var payload any
-	if cover != nil {
-		payload = cover
-	}
-	role := p.ActiveRole
-	reason := fmt.Sprintf("Role '%s' attempted to access page: %s", role, strings.Join(pages, " or "))
-	if _, err := audit.Append(ctx, tx, audit.Entry{Action: "unauthorized_page_access", SubjectKind: audit.Text("Page"),
-		SubjectID: audit.Text(pages[0]), ActorID: audit.Text(p.UserID), ActorRole: audit.Text(role), Success: false,
-		Reason: &reason, Payload: payload, IPAddress: audit.Text(o.IP), UserAgent: audit.Text(o.UserAgent),
-		CorrelationID: audit.Text(o.CorrelationID)}, now); err != nil {
-		return err
-	}
-	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("screens: committing the refusal's audit: %w", err)
-	}
-	return nil
+	return audit.AppendRefusedPage(ctx, s.db, audit.RefusedPage{UserID: p.UserID, Role: p.ActiveRole, Pages: pages,
+		IP: o.IP, UserAgent: o.UserAgent, CorrelationID: o.CorrelationID}, s.clock())
 }

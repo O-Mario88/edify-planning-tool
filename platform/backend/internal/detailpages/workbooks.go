@@ -9,8 +9,12 @@ import (
 	"path"
 	"strings"
 
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/audit"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/auth"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/origin"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pageaccess"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/pagegate"
+	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/trace"
 	"github.com/O-Mario88/edify-planning-tool/platform/backend/internal/workbook"
 )
 
@@ -68,7 +72,7 @@ func (s *Service) serveWorkbook(w http.ResponseWriter, r *http.Request, p auth.P
 	query.Del("target")
 	stem, sheets, handled, err := export(r.Context(), p, query)
 	if err != nil {
-		s.exportFailed(w, r, target, err)
+		s.exportFailed(w, r, p, target, err)
 		return true
 	}
 	switch {
@@ -128,7 +132,7 @@ func (s *Service) serveFile(w http.ResponseWriter, r *http.Request, p auth.Princ
 	query.Del("target")
 	name, body, handled, err := export(r.Context(), p, query)
 	if err != nil {
-		s.exportFailed(w, r, target, err)
+		s.exportFailed(w, r, p, target, err)
 		return true
 	}
 	switch {
@@ -157,13 +161,14 @@ func (s *Service) serveFile(w http.ResponseWriter, r *http.Request, p auth.Princ
 // exportFailed answers an export's error: the page gate's refusal, a
 // refusal in the existing words, a record the reader does not see, or the
 // export failing, which is logged and never shown.
-func (s *Service) exportFailed(w http.ResponseWriter, r *http.Request, target string, err error) {
+func (s *Service) exportFailed(w http.ResponseWriter, r *http.Request, p auth.Principal, target string, err error) {
 	var refusal workbook.Refusal
 	var bad workbook.BadRequest
 	switch {
 	case errors.As(err, &bad):
 		http.Error(w, string(bad), http.StatusBadRequest)
 	case errors.Is(err, pagegate.ErrNotAvailable), errors.Is(err, pagegate.ErrForbidden):
+		s.auditRefusal(r, p, target)
 		http.Error(w, "You do not have access to this export.", http.StatusForbidden)
 	case errors.As(err, &refusal):
 		http.Error(w, string(refusal), http.StatusForbidden)
@@ -174,5 +179,21 @@ func (s *Service) exportFailed(w http.ResponseWriter, r *http.Request, target st
 			s.logger.ErrorContext(r.Context(), "detailpages: the export failed", "target", target, "err", err)
 		}
 		http.Error(w, "This export could not be made.", http.StatusInternalServerError)
+	}
+}
+
+// auditRefusal writes the unauthorized_page_access row when the page gate
+// refuses p the export's page. It is best-effort: a failure is logged and
+// the refusal stands.
+func (s *Service) auditRefusal(r *http.Request, p auth.Principal, target string) {
+	pages := pageaccess.RefusedPages(p.ActiveRole, false, target)
+	if len(pages) == 0 || s.refusals == nil || p.UserID == "" {
+		return
+	}
+	o := origin.Read(r.RemoteAddr, r.Header, s.trustProxy, trace.FromContext(r.Context()).RequestID)
+	err := audit.AppendRefusedPage(r.Context(), s.refusals, audit.RefusedPage{UserID: p.UserID, Role: p.ActiveRole, Pages: pages,
+		IP: o.IP, UserAgent: o.UserAgent, CorrelationID: o.CorrelationID}, s.now())
+	if err != nil && s.logger != nil {
+		s.logger.ErrorContext(r.Context(), "detailpages: the refused export was not audited", "target", target, "err", err)
 	}
 }
