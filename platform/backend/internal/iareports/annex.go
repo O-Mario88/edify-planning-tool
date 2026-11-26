@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"slices"
 	"sort"
 	"strings"
@@ -27,9 +28,7 @@ import (
 var ErrNoAnnex = errors.New("The evidence annex is not available to you.")
 
 // rowKeys are reports.ROW_KEYS.
-var rowKeys = []string{"assignment_id", "school_id", "school", "owner_id", "owner", "project_id", "project", "intervention_code",
-	"intervention", "state", "status", "measured", "baseline", "follow_up", "delta", "baseline_date", "follow_up_date",
-	"baseline_id", "follow_up_id", "mapping_version", "due", "action"}
+var rowKeys = iapages.RowKeys
 
 // exportRoles may export (RolePermissionService.can_export).
 var exportRoles = []string{"Accountant", "Admin", "BusinessTransformationOfficer", "CountryDirector", "ImpactAssessment",
@@ -37,28 +36,7 @@ var exportRoles = []string{"Accountant", "Admin", "BusinessTransformationOfficer
 
 // csvValue is reports.csv_value then spreadsheet_text, over a value read
 // from the stored snapshot.
-func csvValue(v any) string {
-	switch x := v.(type) {
-	case nil:
-		return ""
-	case bool:
-		if x {
-			return "Yes"
-		}
-		return "No"
-	case json.Number:
-		return x.String()
-	case int:
-		return fmt.Sprint(x)
-	}
-	text := fmt.Sprint(v)
-	trimmed := strings.TrimLeft(text, " \t\n\r\x0b\x0c")
-	if strings.HasPrefix(trimmed, "=") || strings.HasPrefix(trimmed, "+") || strings.HasPrefix(trimmed, "-") ||
-		strings.HasPrefix(trimmed, "@") || strings.HasPrefix(text, "\t") || strings.HasPrefix(text, "\r") || strings.HasPrefix(text, "\n") {
-		return "'" + text
-	}
-	return text
-}
+func csvValue(v any) string { return iapages.CSVCell(v) }
 
 // jsonbKeys are an object's keys in the order PostgreSQL's jsonb keeps
 // them, which is the order Django reads them back in: shorter first, then
@@ -309,4 +287,21 @@ WHERE id = $1 AND report_id = $2`, releaseID, reportID).Scan(&audience, &status,
 		return "", nil, err
 	}
 	return fmt.Sprintf("impact-report-%s-v%d-%s.csv", reportID, x.version, audience), out.Bytes(), nil
+}
+
+// LiveAnnex is impact_report_download: the live evidence annex for p,
+// audited as the view audits it.
+func (r Reports) LiveAnnex(ctx context.Context, p auth.Principal, query url.Values) (string, []byte, bool, error) {
+	name, body, entry, handled, err := iapages.NewService(r.DB, r.now).LiveAnnexFile(ctx, p, query)
+	if !handled || err != nil {
+		return "", nil, handled, err
+	}
+	err = pgx.BeginTxFunc(ctx, r.DB, pgx.TxOptions{AccessMode: pgx.ReadWrite}, func(tx pgx.Tx) error {
+		_, err := audit.Append(ctx, tx, entry, r.now())
+		return err
+	})
+	if err != nil {
+		return "", nil, true, fmt.Errorf("iareports: auditing the evidence annex: %w", err)
+	}
+	return name, body, true, nil
 }

@@ -274,6 +274,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		WithWorkbook(workplan.ExportPath, workplan.NewService(pool, time.Now).Export).
 		WithFile("/planning", planningpage.NewService(pool, time.Now).ExportCSV).
 		WithFile(partneroversight.ExportPath, partneroversight.NewService(pool, time.Now).Export).
+		WithFile(iapages.AnnexPath, iareports.Reports{DB: pool, Now: time.Now, Logger: logger}.LiveAnnex).
 		WithFileRoute(func(target string) (detailpages.FileExport, bool) {
 			route, ok := partnerpayments.DocumentRoute(pool, privatestore.FromEnv(os.Getenv, privateUploadsDir(os.Getenv)))(target)
 			return route, ok

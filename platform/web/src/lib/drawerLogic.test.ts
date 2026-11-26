@@ -5,6 +5,7 @@ import {
   addToProjectOf,
   choicesFor,
   clearedBy,
+  downloadHref,
   drawerLinksOf,
   initialValues,
   isDrawerPath,
@@ -19,6 +20,15 @@ import {
   withTicked,
 } from './drawerLogic';
 import type { DrawerJson } from './drawerLogic';
+
+describe('downloadHref', () => {
+  it("puts a download form's values in its key's query, the empty ones kept", () => {
+    expect(downloadHref('/ia/impact-report/download', { project: 'p 1', fy: '2026', period_start: '' })).toBe(
+      '/ia/impact-report/download?project=p+1&fy=2026&period_start=',
+    );
+    expect(downloadHref('/ia/impact-report/download', {})).toBe('/ia/impact-report/download');
+  });
+});
 
 describe('planningDrawerOf', () => {
   it('reads the school and the kind from a planning drawer path', () => {

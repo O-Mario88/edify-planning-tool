@@ -4,7 +4,8 @@
  * A form a page shows itself (the Daily Debrief's questions), drawn and saved
  * here when the gateway marks that it saves it: its fields are the drawer's
  * own, its save is the page's path with the form's key, and the page is read
- * again once it is saved.
+ * again once it is saved. A download form (the live evidence annex) saves
+ * nothing: its fields are the query of the file at its key.
  */
 import { toJson } from '@bufbuild/protobuf';
 import { useRouter } from 'next/navigation';
@@ -15,7 +16,7 @@ import { submitPageForm } from '@/app/(app)/actions/drawer';
 import { DrawerFormItem } from '@/components/drawer/DrawerHost';
 import { PageFormSchema } from '@/gen/edify/screens/v1/page_pb';
 import type { PageForm } from '@/gen/edify/screens/v1/page_pb';
-import { initialValues, valuesToSend } from '@/lib/drawerLogic';
+import { downloadHref, initialValues, valuesToSend } from '@/lib/drawerLogic';
 import type { DrawerFieldJson, DrawerJson } from '@/lib/drawerLogic';
 
 import { BUTTON_PRIMARY } from '../blocks/buttons';
@@ -40,6 +41,10 @@ export function PageFormInline({ form, pagePath }: PageFormInlineProps) {
 
   const save = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (form.download) {
+      window.location.assign(downloadHref(form.key, valuesToSend(drawer, values)));
+      return;
+    }
     setSaid({ busy: true, error: '', message: '' });
     const answer = await submitPageForm(pagePath, form.key, valuesToSend(drawer, values));
     if (!answer.saved) {

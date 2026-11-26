@@ -154,6 +154,12 @@ export function valuesToSend(drawer: DrawerJson, values: Values): Record<string,
   return sent;
 }
 
+/** A download form's link: its key with the values it sends as the query. */
+export function downloadHref(key: string, sent: Record<string, string>): string {
+  const query = new URLSearchParams(sent).toString();
+  return query ? `${key}?${query}` : key;
+}
+
 /** A checklist's ticked choices, from its value (their values joined by commas). */
 export function ticked(value: string): string[] {
   return value.split(',').filter((part) => part !== '');

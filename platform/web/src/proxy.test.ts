@@ -37,6 +37,14 @@ describe('a download the gateway writes', () => {
     );
   });
 
+  it("sends the live evidence annex to the gateway's quick export with its period", () => {
+    const request = new NextRequest('http://localhost:3000/ia/impact-report/download?project=p1&fy=2026&period_start=&period_end=2026-06-30');
+    request.cookies.set(ACCESS_COOKIE, 'token');
+    expect(proxy(request).headers.get('x-middleware-rewrite')).toBe(
+      'http://localhost:3000/api/quick-export?target=%2Fia%2Fimpact-report%2Fdownload&project=p1&fy=2026&period_start=&period_end=2026-06-30',
+    );
+  });
+
   it("sends an IA queue's Export to the gateway with the queue's own query", () => {
     const request = new NextRequest('http://localhost:3000/ia/returned/?export=xlsx&format=csv');
     request.cookies.set(ACCESS_COOKIE, 'token');

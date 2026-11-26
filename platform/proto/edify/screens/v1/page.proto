@@ -521,6 +521,9 @@ message PageForm {
   string key = 5;
   // The app saves it; otherwise the form is finished on the web.
   bool can_save = 6;
+  // The form downloads a file: its fields are the query of a download at
+  // its key (the live evidence annex), not a save.
+  bool download = 7;
 }
 
 // A record card that opens in place (a cluster, a school, a project): its

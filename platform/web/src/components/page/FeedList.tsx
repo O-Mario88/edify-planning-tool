@@ -188,10 +188,11 @@ export function FeedList({
  * A form the page shows itself (Escalations' "Escalate to …"). When the
  * gateway saves it (`canSave`) it is drawn and saved here; otherwise its save
  * is the existing web's, so the card says what it is and opens it there,
- * rather than drawing fields that would not save.
+ * rather than drawing fields that would not save. A download form is drawn
+ * here too: its file is the gateway's.
  */
 export function FeedForm({ form, drawerHref, pagePath }: { form: PageForm; drawerHref: string; pagePath?: string }) {
-  if (form.canSave && pagePath) return <PageFormInline form={form} pagePath={pagePath} />;
+  if (form.download || (form.canSave && pagePath)) return <PageFormInline form={form} pagePath={pagePath ?? ''} />;
   return (
     <section aria-label={form.title} data-block="form" className="card p-4 shadow-[var(--edify-shadow-sm)]">
       <h2 className="text-[length:var(--edify-text-title-size)] font-bold">{form.title}</h2>

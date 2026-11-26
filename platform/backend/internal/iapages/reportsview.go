@@ -74,10 +74,12 @@ func (s *Service) reportsView(ctx context.Context, p auth.Principal, scope schoo
 		Title: "Live evidence annex (draft)",
 		Text: "Today's project cohort evidence for a period — measured and missing evidence, assessment references and mapping versions — " +
 			"with who generated it and a hash of its rows. It is not a report: a submitted report freezes its own annex.",
-		Items: []*screensv1.PageFormItem{field(years), field(&screensv1.DrawerField{Name: "period_start", Kind: "date"}),
+		Items: []*screensv1.PageFormItem{field(&screensv1.DrawerField{Name: "project", Kind: "hidden", Value: w.project}),
+			field(years), field(&screensv1.DrawerField{Name: "period_start", Kind: "date"}),
 			field(&screensv1.DrawerField{Name: "period_end", Kind: "date"})},
 		SubmitLabel: "Download annex (CSV)",
 		Key:         annexKey,
+		Download:    true,
 	}
 	return []*screensv1.PageBlock{
 		filters[0],

@@ -3745,7 +3745,10 @@ type PageForm struct {
 	// Names this form among the page's forms when it is saved.
 	Key string `protobuf:"bytes,5,opt,name=key,proto3" json:"key,omitempty"`
 	// The app saves it; otherwise the form is finished on the web.
-	CanSave       bool `protobuf:"varint,6,opt,name=can_save,json=canSave,proto3" json:"can_save,omitempty"`
+	CanSave bool `protobuf:"varint,6,opt,name=can_save,json=canSave,proto3" json:"can_save,omitempty"`
+	// The form downloads a file: its fields are the query of a download at
+	// its key (the live evidence annex), not a save.
+	Download      bool `protobuf:"varint,7,opt,name=download,proto3" json:"download,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3818,6 +3821,13 @@ func (x *PageForm) GetKey() string {
 func (x *PageForm) GetCanSave() bool {
 	if x != nil {
 		return x.CanSave
+	}
+	return false
+}
+
+func (x *PageForm) GetDownload() bool {
+	if x != nil {
+		return x.Download
 	}
 	return false
 }
@@ -4441,14 +4451,15 @@ const file_edify_screens_v1_page_proto_rawDesc = "" +
 	"\x04text\x18\x03 \x01(\tH\x00R\x04text\x125\n" +
 	"\x05field\x18\x04 \x01(\v2\x1d.edify.screens.v1.DrawerFieldH\x00R\x05field\x12>\n" +
 	"\tshow_when\x18\x05 \x03(\v2!.edify.screens.v1.DrawerConditionR\bshowWhenB\x06\n" +
-	"\x04kind\"\xba\x01\n" +
+	"\x04kind\"\xd6\x01\n" +
 	"\bPageForm\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x12\n" +
 	"\x04text\x18\x02 \x01(\tR\x04text\x124\n" +
 	"\x05items\x18\x03 \x03(\v2\x1e.edify.screens.v1.PageFormItemR\x05items\x12!\n" +
 	"\fsubmit_label\x18\x04 \x01(\tR\vsubmitLabel\x12\x10\n" +
 	"\x03key\x18\x05 \x01(\tR\x03key\x12\x19\n" +
-	"\bcan_save\x18\x06 \x01(\bR\acanSave\"\x83\x03\n" +
+	"\bcan_save\x18\x06 \x01(\bR\acanSave\x12\x1a\n" +
+	"\bdownload\x18\a \x01(\bR\bdownload\"\x83\x03\n" +
 	"\n" +
 	"PageRecord\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x12\n" +
