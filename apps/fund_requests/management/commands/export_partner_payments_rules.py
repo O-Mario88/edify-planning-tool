@@ -57,6 +57,7 @@ def rules() -> dict:
     from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
     from apps.core.pagination import TABLE_PAGE_SIZE
     from apps.fund_requests.finance_models import PartnerInvoice
+    from apps.fund_requests import partner_invoices
     from apps.fund_requests.finance_services import PARTNER_PAYABLE_STATUSES
 
     return {
@@ -68,6 +69,14 @@ def rules() -> dict:
         "non_fundable_statuses": list(NON_FUNDABLE_ACTIVITY_STATUSES),
         "partner_payable_statuses": list(PARTNER_PAYABLE_STATUSES),
         "page_size": TABLE_PAGE_SIZE,
+        # The partner's own invoice document (partner_invoices.invoice_file):
+        # where it is kept, who may download it whatever its Lead, and the
+        # Lead's own role.
+        "document": {
+            "namespace": partner_invoices.INVOICE_NAMESPACE,
+            "finance_roles": list(partner_invoices._FINANCE_ROLES),
+            "lead_role": "Program Lead",
+        },
     }
 
 

@@ -29,6 +29,15 @@
     "training": "Training",
     "training_follow_up_visit": "Training Follow-up Visit"
   },
+  "document": {
+    "finance_roles": [
+      "Accountant",
+      "CountryDirector",
+      "Admin"
+    ],
+    "lead_role": "Program Lead",
+    "namespace": "partner-invoices"
+  },
   "invoice_types": {
     "advance": "50% Advance Invoice",
     "clearance": "Completed Work Invoice"

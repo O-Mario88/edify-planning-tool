@@ -55,6 +55,11 @@ var rules = func() (r struct {
 	NonFundableStatuses    []string             `json:"non_fundable_statuses"`
 	PartnerPayableStatuses []string             `json:"partner_payable_statuses"`
 	PageSize               int                  `json:"page_size"`
+	Document               struct {
+		Namespace    string   `json:"namespace"`
+		FinanceRoles []string `json:"finance_roles"`
+		LeadRole     string   `json:"lead_role"`
+	} `json:"document"`
 }) {
 	if err := json.Unmarshal(rulesJSON, &r); err != nil {
 		panic(fmt.Sprintf("partnerpayments: reading rules.json: %v", err))

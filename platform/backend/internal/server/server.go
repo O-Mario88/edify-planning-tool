@@ -274,6 +274,10 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		WithWorkbook(workplan.ExportPath, workplan.NewService(pool, time.Now).Export).
 		WithFile("/planning", planningpage.NewService(pool, time.Now).ExportCSV).
 		WithFile(partneroversight.ExportPath, partneroversight.NewService(pool, time.Now).Export).
+		WithFileRoute(func(target string) (detailpages.FileExport, bool) {
+			route, ok := partnerpayments.DocumentRoute(pool, privatestore.FromEnv(os.Getenv, privateUploadsDir(os.Getenv)))(target)
+			return route, ok
+		}).
 		WithFile("/clusters", clusterpage.NewService(pool, time.Now).ListExport).
 		WithFile("/schools", schooldirectory.NewService(pool, time.Now).Export).
 		WithWorkbook("/country-planning-oversight/coverage-export", planningmonitor.CoverageExport(pool, time.Now)).

@@ -94,6 +94,16 @@ describe('a download the gateway writes', () => {
     expect(proxy(drawer).headers.get('x-middleware-rewrite') ?? '').not.toContain('quick-export');
   });
 
+  it("sends a partner's invoice document to the gateway from Partner Payments and Fund Approvals", () => {
+    for (const path of ['/accounts/partner-invoices/inv1/download', '/fund-approvals/invoices/inv1/download']) {
+      const request = new NextRequest(`http://localhost:3000${path}`);
+      request.cookies.set(ACCESS_COOKIE, 'token');
+      expect(proxy(request).headers.get('x-middleware-rewrite')).toBe(
+        `http://localhost:3000/api/quick-export?target=${encodeURIComponent(path)}`,
+      );
+    }
+  });
+
   it("sends a cluster's Export schools to the gateway", () => {
     const request = new NextRequest('http://localhost:3000/clusters/cmw9p8e4900p50wekhe46/schools/export');
     request.cookies.set(ACCESS_COOKIE, 'token');

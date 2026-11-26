@@ -409,3 +409,9 @@ func escape(s string) string {
 type Refusal string
 
 func (r Refusal) Error() string { return string(r) }
+
+// BadRequest is a view's BadRequest: the request is refused with 400 in the
+// existing words.
+type BadRequest string
+
+func (b BadRequest) Error() string { return string(b) }

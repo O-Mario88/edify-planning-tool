@@ -1406,3 +1406,7 @@ GRANT SELECT (instalment, payment_id) ON partner_invoice_item TO edify_gateway_r
 -- The Work Plan's Export (work_plan_views.work_plan_export): each activity's
 -- Number of Schools.
 GRANT SELECT (planned_school_count) ON activity TO edify_gateway_ro;
+-- A partner's own invoice document, downloaded from Partner Payments and Fund
+-- Approvals (partner_invoices.invoice_file): its file name and the Lead it is
+-- addressed to.
+GRANT SELECT (original_name, program_lead_staff_id) ON partner_invoice TO edify_gateway_ro;

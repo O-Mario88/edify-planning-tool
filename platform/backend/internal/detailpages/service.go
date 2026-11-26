@@ -37,6 +37,8 @@ type Service struct {
 	workbooks map[string]WorkbookExport
 	// workbookRoutes name the workbook exports at patterned paths.
 	workbookRoutes []WorkbookRoute
+	// fileRoutes name the file exports at patterned paths.
+	fileRoutes []FileRoute
 	// files are the other file exports Go makes, by export path.
 	files map[string]FileExport
 	// logger records an export that failed.
