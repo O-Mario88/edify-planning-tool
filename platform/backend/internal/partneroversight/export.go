@@ -49,23 +49,12 @@ func (s *Service) Export(ctx context.Context, p auth.Principal, query url.Values
 	// The format is the download's own: read before the page's query is.
 	excel, csvAsked := wantsExcel(query), strings.EqualFold(strings.TrimSpace(query.Get("format")), "csv")
 	query = passed(query)
-	for key := range query {
-		if contains(customPeriodKeys, key) {
-			return "", nil, false, nil
-		}
-	}
-	if strings.EqualFold(strings.TrimSpace(query.Get("period")), "custom") {
-		return "", nil, false, nil
-	}
 	now := s.now()
 	per, ok := readPeriod(query, now)
 	if !ok {
 		return "", nil, false, nil
 	}
 	kind := myplan.ReadExportKind(query)
-	if kind == "online" {
-		return "", nil, false, nil
-	}
 	scope, err := schooldirectory.ResolveScope(ctx, s.db, p, now)
 	if err != nil {
 		return "", nil, true, err
@@ -94,7 +83,16 @@ func (s *Service) Export(ctx context.Context, p auth.Principal, query url.Values
 			staff = []string{}
 		}
 	}
-	items, trainings, err := s.exportedWork(ctx, p, query, per, staff, regions, kind, now)
+	year, _ := strconv.Atoi(per.fy)
+	first, last, custom := myplan.DrawerPeriod(query, year)
+	var days *dayRange
+	switch {
+	case custom:
+		days = &dayRange{first: first, last: last}
+	case myplan.DrawerPeriodAsked(query):
+		per.kind = "fy"
+	}
+	items, trainings, err := s.exportedWork(ctx, p, query, per, days, staff, regions, kind, now)
 	if err != nil {
 		return "", nil, true, err
 	}
@@ -156,33 +154,67 @@ func workbookFile(stem string, sheets []workbook.Sheet) (string, []byte, bool, e
 	return stem + ".xlsx", buf.Bytes(), true, nil
 }
 
-// wantsExcel is oversight_views._wants_excel: format=xlsx or excel.
+// wantsExcel is oversight_views._wants_excel: format=xlsx or excel, or
+// one of the drawer's period fields; never with format=csv.
 func wantsExcel(q url.Values) bool {
-	f := strings.ToLower(strings.TrimSpace(q.Get("format")))
-	return f == "xlsx" || f == "excel"
+	switch strings.ToLower(strings.TrimSpace(q.Get("format"))) {
+	case "csv":
+		return false
+	case "xlsx", "excel":
+		return true
+	}
+	// The Export drawer's own period fields ask for the workbook.
+	for _, key := range customPeriodKeys {
+		if q.Has(key) {
+			return true
+		}
+	}
+	return false
 }
 
 // budgetSchoolList is export_kinds.SCHOOL_LISTS.
 func budgetSchoolList(kind string) bool { return contains(rules.Export.SchoolLists, kind) }
 
+// dayRange is the Export drawer's custom period: its first and last days.
+type dayRange struct{ first, last time.Time }
+
+func (d *dayRange) holds(day *time.Time) bool {
+	return day != nil && !day.Before(d.first) && !day.After(d.last)
+}
+
 // exportedWork is the view's items and trainings, narrowed as it narrows
 // them.
-func (s *Service) exportedWork(ctx context.Context, p auth.Principal, query url.Values, per period, staff, regions []string, kind string,
-	now time.Time) ([]*item, []*training, error) {
-	operational, _ := strconv.Atoi(schooldirectory.OperationalFY(now))
-	years, err := schoolplanning.Horizon(ctx, s.db, p.Country, per.fy, operational, schooldirectory.FYOptions(now), now)
-	if err != nil {
-		return nil, nil, err
+func (s *Service) exportedWork(ctx context.Context, p auth.Principal, query url.Values, per period, days *dayRange, staff, regions []string,
+	kind string, now time.Time) ([]*item, []*training, error) {
+	// The page's years (planning_horizon), or for the drawer's own period
+	// that year alone.
+	years := []string{per.fy}
+	if days == nil {
+		operational, _ := strconv.Atoi(schooldirectory.OperationalFY(now))
+		var err error
+		if years, err = schoolplanning.Horizon(ctx, s.db, p.Country, per.fy, operational, schooldirectory.FYOptions(now), now); err != nil {
+			return nil, nil, err
+		}
 	}
 	today := dateOf(now.In(zone))
 	items, err := readItems(ctx, s.db, staff, regions, years, today)
 	if err != nil {
 		return nil, nil, err
 	}
-	items = narrow(items, per)
 	trainings, err := readTrainings(ctx, s.db, staff, regions, years)
 	if err != nil {
 		return nil, nil, err
+	}
+	if days == nil {
+		items = narrow(items, per)
+	} else {
+		items = filterItems(items, func(i *item) bool {
+			if i.scheduledDate != nil {
+				return days.holds(i.scheduledDate)
+			}
+			return days.holds(i.assignmentDate)
+		})
+		trainings = filterTrainings(trainings, func(t *training) bool { return days.holds(t.day) })
 	}
 	if err := annotate(ctx, s.db, items, today); err != nil {
 		return nil, nil, err
@@ -252,8 +284,21 @@ func (s *Service) exportedWork(ctx context.Context, p auth.Principal, query url.
 		items = filterItems(items, func(i *item) bool { return i.deliveryPhase() == asked })
 		trainings = filterTrainings(trainings, func(t *training) bool { return t.deliveryPhase() == asked })
 	}
-	items = filterItems(items, func(i *item) bool { return myplan.KeepsKind(kind, i.activityType, false) })
-	trainings = filterTrainings(trainings, func(t *training) bool { return myplan.KeepsKind(kind, t.activityType, false) })
+	ids := []string{}
+	if kind == "online" {
+		for _, i := range items {
+			ids = append(ids, i.activityID)
+		}
+		for _, t := range trainings {
+			ids = append(ids, t.activityID)
+		}
+	}
+	online, err := myplan.OnlineActivityIDs(ctx, s.db, ids)
+	if err != nil {
+		return nil, nil, err
+	}
+	items = filterItems(items, func(i *item) bool { return myplan.KeepsKind(kind, i.activityType, online[i.activityID]) })
+	trainings = filterTrainings(trainings, func(t *training) bool { return myplan.KeepsKind(kind, t.activityType, online[t.activityID]) })
 	return items, trainings, nil
 }
 

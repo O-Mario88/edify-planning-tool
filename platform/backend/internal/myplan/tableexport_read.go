@@ -91,15 +91,10 @@ func exportBounds(q url.Values, fy int) (time.Time, time.Time) {
 func DrawerPeriod(q url.Values, fy int) (time.Time, time.Time, bool) {
 	fyStart := time.Date(fy-1, 10, 1, 0, 0, 0, 0, time.UTC)
 	fyLast := time.Date(fy, 9, 30, 0, 0, 0, 0, time.UTC)
-	kind := strings.ToLower(qget(q, "period_type"))
-	if kind != "month_range" && kind != "custom_dates" && kind != "fy" {
-		kind = ""
-	}
+	kind, months, dates := drawerPeriodKind(q)
 	from, hasFrom := month1to12(qget(q, "from_month"))
 	to, hasTo := month1to12(qget(q, "to_month"))
 	rawStart, rawEnd := qget(q, "start_date"), qget(q, "end_date")
-	months := kind == "month_range" || (kind == "" && hasFrom && hasTo)
-	dates := kind == "custom_dates" || (kind == "" && !months && rawStart != "" && rawEnd != "")
 	switch {
 	case months:
 		var s, e time.Time
@@ -126,6 +121,57 @@ func DrawerPeriod(q url.Values, fy int) (time.Time, time.Time, bool) {
 		return fyStart, fyLast, true
 	}
 	return fyStart, fyLast, false
+}
+
+// OnlineActivityIDs is export_kinds.online_activity_ids: which of ids are
+// online group trainings, in one read; none asked, none read.
+func OnlineActivityIDs(ctx context.Context, db schooldirectory.Querier, ids []string) (map[string]bool, error) {
+	out := map[string]bool{}
+	asked := []string{}
+	for _, id := range ids {
+		if id != "" {
+			asked = append(asked, id)
+		}
+	}
+	if len(asked) == 0 {
+		return out, nil
+	}
+	rows, err := db.Query(ctx, `SELECT id FROM activity WHERE id = ANY($1) AND deleted_at IS NULL
+  AND activity_type = ANY($2) AND programme_delivery_mode = $3`, asked, rules.Rows.OnlineTrainingTypes, rules.Rows.OnlineMode)
+	if err != nil {
+		return nil, fmt.Errorf("myplan: reading the online trainings: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		out[id] = true
+	}
+	return out, rows.Err()
+}
+
+// drawerPeriodKind is which of the drawer's periods the query asks for:
+// its type ('' for none), and whether the months or the dates are read.
+func drawerPeriodKind(q url.Values) (kind string, months, dates bool) {
+	kind = strings.ToLower(qget(q, "period_type"))
+	if kind != "month_range" && kind != "custom_dates" && kind != "fy" {
+		kind = ""
+	}
+	_, hasFrom := month1to12(qget(q, "from_month"))
+	_, hasTo := month1to12(qget(q, "to_month"))
+	months = kind == "month_range" || (kind == "" && hasFrom && hasTo)
+	dates = kind == "custom_dates" || (kind == "" && !months && qget(q, "start_date") != "" && qget(q, "end_date") != "")
+	return kind, months, dates
+}
+
+// DrawerPeriodAsked is whether the query asks for one of the drawer's
+// periods. Asked but not custom (dates that do not read), _period_filters
+// reads the whole year as the page's "fy", whatever else the link says.
+func DrawerPeriodAsked(q url.Values) bool {
+	kind, months, dates := drawerPeriodKind(q)
+	return months || dates || kind == "fy"
 }
 
 // ReadKindOrTab is export_kinds.read_kind_or_tab: the drawer's kind when it

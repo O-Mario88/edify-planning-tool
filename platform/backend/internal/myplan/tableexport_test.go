@@ -43,6 +43,19 @@ func TestExportBoundsReadTheDrawersPeriod(t *testing.T) {
 	}
 }
 
+func TestDrawerPeriodAskedSaysWhenTheDrawerChoseAPeriod(t *testing.T) {
+	for query, want := range map[string]bool{
+		"": false, "from_month=2": false, "period=month&month=3": false, "start_date=2027-01-02": false,
+		"period_type=month_range": true, "from_month=11&to_month=1": true, "period_type=fy": true,
+		"start_date=2027-01-02&end_date=bad": true, "period_type=custom_dates": true, "period_type=week": false,
+	} {
+		q, _ := url.ParseQuery(query)
+		if got := DrawerPeriodAsked(q); got != want {
+			t.Errorf("DrawerPeriodAsked(%q) = %v, want %v", query, got, want)
+		}
+	}
+}
+
 func TestExportFormatAndKind(t *testing.T) {
 	for query, want := range map[string]string{
 		"export=csv": "csv", "export=EXCEL": "xlsx", "format=xlsx": "xlsx", "from_month=1": "xlsx",
