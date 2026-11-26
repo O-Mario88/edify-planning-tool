@@ -111,6 +111,17 @@ type Sheet struct {
 	// values alone, no heading style, bands, widths, frozen row, filter or
 	// hidden grid.
 	Plain bool
+	// HeadingOnly is a sheet styled by style_header alone: its body rows
+	// carry no bands or rules, only the number formats and bold cells below.
+	HeadingOnly bool
+	// FilterHeading filters the heading row alone when no row follows it
+	// (auto_filter.ref = sheet.dimensions on a sheet a view builds by hand).
+	FilterHeading bool
+	// FormatThrough is the last row the NumberFormats reach; 0 is every row.
+	FormatThrough int
+	// Bold maps a 1-based row to the 1-based columns set Font(bold=True,
+	// size=10).
+	Bold map[int][]int
 }
 
 // Download writes table_download: the workbook as <stem>.xlsx, or the first

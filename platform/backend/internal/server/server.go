@@ -271,6 +271,7 @@ func New(cfg config.Config, pool *pgxpool.Pool, summarizer schools.Summarizer, l
 		WithWorkbook("/budget/export", budgetexport.Export(pool, time.Now)).
 		WithFile("/fund-requests/weekly", weeklyrequest.NewService(pool, time.Now).ExportFile).
 		WithFile("/team-targets/export", teamtargets.NewService(pool, time.Now).Export).
+		WithWorkbook(workplan.ExportPath, workplan.NewService(pool, time.Now).Export).
 		WithFile("/clusters", clusterpage.NewService(pool, time.Now).ListExport).
 		WithFile("/schools", schooldirectory.NewService(pool, time.Now).Export).
 		WithWorkbook("/country-planning-oversight/coverage-export", planningmonitor.CoverageExport(pool, time.Now)).

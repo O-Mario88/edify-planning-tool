@@ -67,7 +67,7 @@ export function proxy(request: NextRequest) {
   if (
     exportsPage ||
     (request.method === 'GET' &&
-      /^\/(ia\/analytics\/export|ia\/impact-reports\/[^/]+\/annex\.csv|ia\/impact-reports\/[^/]+\/releases\/[^/]+\/download|my-professional-development\/export|my-targets\/export|projects\/export|projects\/[^/]+\/export|staff-activity\/export|schools\/upload\/template|clusters\/[^/]+\/schools\/export|country-planning-oversight\/table-export\/(?!all\/?$)[a-z-]+|team-planning-oversight\/export|country-planning-oversight\/export|country-planning-oversight\/coverage-export|country-planning-oversight\/execution\/records-export\/[a-z_-]+|country-planning-oversight\/execution\/export|budget\/export|ssa\/upload\/template|ia\/school-evidence\/learning\/template\.csv|target-distribution\/import\/template|team-targets\/export)\/?$/.test(
+      /^\/(ia\/analytics\/export|ia\/impact-reports\/[^/]+\/annex\.csv|ia\/impact-reports\/[^/]+\/releases\/[^/]+\/download|my-professional-development\/export|my-targets\/export|projects\/export|projects\/[^/]+\/export|staff-activity\/export|work-plan\/export\.xlsx|schools\/upload\/template|clusters\/[^/]+\/schools\/export|country-planning-oversight\/table-export\/(?!all\/?$)[a-z-]+|team-planning-oversight\/export|country-planning-oversight\/export|country-planning-oversight\/coverage-export|country-planning-oversight\/execution\/records-export\/[a-z_-]+|country-planning-oversight\/execution\/export|budget\/export|ssa\/upload\/template|ia\/school-evidence\/learning\/template\.csv|target-distribution\/import\/template|team-targets\/export)\/?$/.test(
         pathname,
       ))
   ) {

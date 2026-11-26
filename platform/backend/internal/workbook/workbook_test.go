@@ -109,3 +109,20 @@ func readPart(t *testing.T, raw []byte, name string) string {
 	t.Fatalf("no part %s", name)
 	return ""
 }
+
+func TestAHeadingOnlySheetStylesItsBodyByItsBoldCellsAndFormatRange(t *testing.T) {
+	sheet := Sheet{Headers: []string{"A", "B"}, HeadingOnly: true, FormatThrough: 2, Bold: map[int][]int{2: {1}},
+		NumberFormats: map[int]string{2: "#,##0"}}
+	if k := cellStyle(sheet, true, 2, 1, Text("x")); !k.font.bold || k.fill != "" || k.border.style != "" {
+		t.Fatalf("a bold cell keeps no band or rule: %+v", k)
+	}
+	if k := cellStyle(sheet, true, 2, 2, Int(1)); k.numFmt != "#,##0" {
+		t.Fatalf("formatted through row 2: %+v", k)
+	}
+	if k := cellStyle(sheet, true, 3, 2, Int(1)); k.numFmt != "" {
+		t.Fatalf("past the format range: %+v", k)
+	}
+	if !strings.Contains(sheetXML(Sheet{Headers: []string{"A"}, FilterHeading: true}, newStyles()), `<autoFilter ref="A1:A1"/>`) {
+		t.Fatal("an empty sheet that filters its heading")
+	}
+}

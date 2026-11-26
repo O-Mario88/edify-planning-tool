@@ -1403,3 +1403,6 @@ GRANT SELECT (catalogue_version) ON activity_schedule_cost_line TO edify_gateway
 -- The partner's Send invoice drawer (partner_invoices.invoice_basis): an
 -- activity already on an instalment's invoice, and a 50% still on one unpaid.
 GRANT SELECT (instalment, payment_id) ON partner_invoice_item TO edify_gateway_ro;
+-- The Work Plan's Export (work_plan_views.work_plan_export): each activity's
+-- Number of Schools.
+GRANT SELECT (planned_school_count) ON activity TO edify_gateway_ro;

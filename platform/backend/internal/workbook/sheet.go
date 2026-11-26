@@ -2,6 +2,7 @@ package workbook
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -71,7 +72,7 @@ func sheetXML(sheet Sheet, st *styles) string {
 		b.WriteString(`</row>`)
 	}
 	b.WriteString(`</sheetData>`)
-	if headers && height > 1 && !sheet.NoFilter && !sheet.Plain {
+	if headers && (height > 1 || sheet.FilterHeading) && !sheet.NoFilter && !sheet.Plain {
 		fmt.Fprintf(&b, `<autoFilter ref="A1:%s"/>`, cellRef(width, height))
 	}
 	b.WriteString(`<pageMargins left="0.75" right="0.75" top="1" bottom="1" header="0.5" footer="0.5"/></worksheet>`)
@@ -156,6 +157,16 @@ func cellStyle(sheet Sheet, headers bool, r, c int, cell Cell) xfKey {
 		k.numFmt = dateTimeFormat
 	}
 	if sheet.Plain {
+		return k
+	}
+	formatted := sheet.FormatThrough == 0 || r <= sheet.FormatThrough
+	if sheet.HeadingOnly && r >= 2 {
+		if format, ok := sheet.NumberFormats[c]; ok && formatted {
+			k.numFmt = format
+		}
+		if slices.Contains(sheet.Bold[r], c) {
+			k.font = fontKey{bold: true, size: 10}
+		}
 		return k
 	}
 	switch {
