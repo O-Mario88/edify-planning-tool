@@ -127,8 +127,10 @@ func (s *Service) Export(ctx context.Context, p auth.Principal, projectID string
 	return exportStem(rows, fy, single), sheets, true, nil
 }
 
-// exportTarget is the export's two paths: every project, or one.
-var exportTarget = regexp.MustCompile(`^/projects/(?:([A-Za-z0-9_-]{1,64})/)?export$`)
+// exportTarget is the export's paths: every project, or one, from Project
+// Monitoring or from Team Planning Oversight's Special Projects (the same
+// view, oversight_views.special_project_export_view).
+var exportTarget = regexp.MustCompile(`^/(?:team-planning-oversight/)?projects/(?:([A-Za-z0-9_-]{1,64})/)?export$`)
 
 // ExportRoute names Export for the quick export's targets.
 func ExportRoute(s *Service) func(string) (func(context.Context, auth.Principal, url.Values) (string, []workbook.Sheet, bool, error), bool) {

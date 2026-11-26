@@ -62,6 +62,16 @@ describe('a download the gateway writes', () => {
     );
   });
 
+  it("sends Team Oversight's Special Projects export to the gateway, all projects or one", () => {
+    for (const path of ['/team-planning-oversight/projects/export', '/team-planning-oversight/projects/p1/export']) {
+      const request = new NextRequest(`http://localhost:3000${path}?fy=2027`);
+      request.cookies.set(ACCESS_COOKIE, 'token');
+      expect(proxy(request).headers.get('x-middleware-rewrite')).toBe(
+        `http://localhost:3000/api/quick-export?target=${encodeURIComponent(path)}&fy=2027`,
+      );
+    }
+  });
+
   it("sends a cluster's Export schools to the gateway", () => {
     const request = new NextRequest('http://localhost:3000/clusters/cmw9p8e4900p50wekhe46/schools/export');
     request.cookies.set(ACCESS_COOKIE, 'token');
