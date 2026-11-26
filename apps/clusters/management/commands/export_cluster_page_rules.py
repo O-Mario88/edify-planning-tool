@@ -77,6 +77,8 @@ def doors() -> dict:
             "assign_partner": RolePermissionService.can_assign_to_partner(user),
             "bulk_schedule": RolePermissionService.can_schedule_activity(user),
             "open_school": bool(can_open_url(user, "/schools/0")),
+            # cluster_list_view's require_export_permission (?export=).
+            "data_export": bool(RolePermissionService.can_export(user, "/clusters")),
         }
     return out
 

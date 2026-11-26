@@ -32,6 +32,8 @@ type Doors struct {
 	AssignPartner bool `json:"assign_partner"`
 	BulkSchedule  bool `json:"bulk_schedule"`
 	OpenSchool    bool `json:"open_school"`
+	// DataExport is the list's require_export_permission (?export=).
+	DataExport bool `json:"data_export"`
 }
 
 // SupportRule is support_responsibility.visibility_enabled's settings.

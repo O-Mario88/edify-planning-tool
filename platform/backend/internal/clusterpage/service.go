@@ -47,40 +47,11 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 	if !ok || !doors.Page {
 		return nil, true, ErrNotAvailable
 	}
-	now := s.now()
-	scope, err := schooldirectory.ResolveScope(ctx, s.db, p, now)
+	l, err := s.list(ctx, p, query)
 	if err != nil {
 		return nil, true, err
 	}
-	owners := []string(nil)
-	if !scope.CountryScope && !scope.SummaryOnly {
-		if owners, err = ownerIDs(ctx, s.db, scope); err != nil {
-			return nil, true, err
-		}
-	}
-	years := schooldirectory.FYOptions(now)
-	get := func(key string) string { return strings.TrimSpace(query.Get(key)) }
-	f := filterState{
-		q: get("q"), fy: get("fy"), quarter: get("quarter"), district: get("district"),
-		subCounty: get("sub_county"), staff: get("staff"), ssaStatus: get("ssa_status"),
-		risk: get("cluster_risk"), activity: get("activity_status"),
-	}
-	if !in(years, f.fy) {
-		f.fy = schooldirectory.OperationalFY(now)
-	}
-
-	clusters, err := s.clusters(ctx, scope, owners, f)
-	if err != nil {
-		return nil, true, err
-	}
-	if err := covered(ctx, s.db, clusters); err != nil {
-		return nil, true, err
-	}
-	all, err := cards(ctx, s.db, clusters, f.fy)
-	if err != nil {
-		return nil, true, err
-	}
-	listed := keep(all, f)
+	scope, owners, years, f, listed := l.scope, l.owners, l.years, l.f, l.cards
 
 	districts, subCounties, staff, err := s.options(ctx, scope, owners)
 	if err != nil {
@@ -101,6 +72,52 @@ func (s *Service) Build(ctx context.Context, p auth.Principal, path string, quer
 		blocks = append(blocks, pager(number, pages, len(listed)))
 	}
 	return &screensv1.GetPageResponse{Header: header(doors, query), Blocks: blocks, WebPath: Path}, true, nil
+}
+
+// listing is get_dashboard_data for the reader: the clusters' cards the
+// page's filters keep, with how they were read.
+type listing struct {
+	scope  schooldirectory.Scope
+	owners []string
+	years  []string
+	f      filterState
+	cards  []card
+}
+
+func (s *Service) list(ctx context.Context, p auth.Principal, query url.Values) (listing, error) {
+	now := s.now()
+	scope, err := schooldirectory.ResolveScope(ctx, s.db, p, now)
+	if err != nil {
+		return listing{}, err
+	}
+	owners := []string(nil)
+	if !scope.CountryScope && !scope.SummaryOnly {
+		if owners, err = ownerIDs(ctx, s.db, scope); err != nil {
+			return listing{}, err
+		}
+	}
+	years := schooldirectory.FYOptions(now)
+	get := func(key string) string { return strings.TrimSpace(query.Get(key)) }
+	f := filterState{
+		q: get("q"), fy: get("fy"), quarter: get("quarter"), district: get("district"),
+		subCounty: get("sub_county"), staff: get("staff"), ssaStatus: get("ssa_status"),
+		risk: get("cluster_risk"), activity: get("activity_status"),
+	}
+	if !in(years, f.fy) {
+		f.fy = schooldirectory.OperationalFY(now)
+	}
+	clusters, err := s.clusters(ctx, scope, owners, f)
+	if err != nil {
+		return listing{}, err
+	}
+	if err := covered(ctx, s.db, clusters); err != nil {
+		return listing{}, err
+	}
+	all, err := cards(ctx, s.db, clusters, f.fy)
+	if err != nil {
+		return listing{}, err
+	}
+	return listing{scope: scope, owners: owners, years: years, f: f, cards: keep(all, f)}, nil
 }
 
 // keep is get_dashboard_data's filters on the figures: SSA complete or
