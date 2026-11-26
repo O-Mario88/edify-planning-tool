@@ -64,6 +64,14 @@ def rules() -> dict:
             for r in EdifyRole
             if RolePermissionService.can_view_page(_role_user(r.value), "team_targets")
         ),
+        # team_targets_export_view's require_export_permission.
+        "export_roles": sorted(
+            r.value
+            for r in EdifyRole
+            if RolePermissionService.can_export(
+                _role_user(r.value), "/team-targets/export"
+            )
+        ),
         "sf_required_types": sorted(tt.SF_REQUIRED_TYPES),
         "completed_statuses": sorted(str(s) for s in COMPLETED_STATUSES),
         "visit_types": sorted(str(t) for t in VISIT_TYPES),

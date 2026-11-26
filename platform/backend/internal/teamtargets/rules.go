@@ -13,6 +13,7 @@ var rulesJSON []byte
 
 var rules = func() (r struct {
 	PageRoles         []string             `json:"page_roles"`
+	ExportRoles       []string             `json:"export_roles"`
 	SFRequiredTypes   []string             `json:"sf_required_types"`
 	CompletedStatuses []string             `json:"completed_statuses"`
 	VisitTypes        []string             `json:"visit_types"`

@@ -49,6 +49,17 @@
     "salesforce_id_required",
     "submitted_to_pl"
   ],
+  "export_roles": [
+    "Accountant",
+    "Admin",
+    "BusinessTransformationOfficer",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Program Lead",
+    "ProjectCoordinator",
+    "RegionalProgramLead",
+    "RegionalVicePresident"
+  ],
   "live_project_statuses": [
     "active",
     "paused",
