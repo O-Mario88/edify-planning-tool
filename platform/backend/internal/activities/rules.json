@@ -360,6 +360,68 @@
     ],
     "visit_kind": "school_visit"
   },
+  "partner_invoice": {
+    "activity_type_labels": {
+      "baseline_ssa_visit": "SSA Visit",
+      "cluster_meeting": "Cluster Meeting",
+      "cluster_meeting_ssa_review": "Cluster Meeting + SSA Review",
+      "cluster_training": "Cluster Training",
+      "cluster_training_ssa_collection": "Cluster Training + SSA Collection",
+      "coaching_visit": "Coaching Visit",
+      "core_assessment_visit": "Core Assessment Visit",
+      "core_training": "Core Training",
+      "core_visit": "Core Visit",
+      "donor_visit": "Donor Visit",
+      "field_event": "Field Event",
+      "follow_up_visit": "Follow-up Visit",
+      "in_school_coaching_visit": "In-school Coaching Visit",
+      "in_school_support": "In-school Support",
+      "in_school_training": "In-school Training",
+      "partner_activity": "Partner Activity",
+      "partner_ssa_collection": "Partner SSA Collection",
+      "programme_event": "Programme Event",
+      "project_activity": "Project Activity",
+      "school_improvement_training": "School Improvement Training",
+      "school_invitation": "School Invitation",
+      "school_visit": "School Visit",
+      "school_visit_ssa_collection": "School Visit + SSA Collection",
+      "social_visit": "Social Visit",
+      "ssa_activity": "SSA Activity",
+      "story_gathering_visit": "Gathering Story",
+      "training": "Training",
+      "training_follow_up_visit": "Training Follow-up Visit"
+    },
+    "cleared_statuses": [
+      "ia_verified",
+      "closed",
+      "accountant_confirmed"
+    ],
+    "cluster_meeting_types": [
+      "cluster_meeting",
+      "cluster_meeting_ssa_review"
+    ],
+    "director_role": "CountryDirector",
+    "fee_line_type": "facilitation",
+    "invoice_type_labels": {
+      "advance": "50% Advance Invoice",
+      "clearance": "Completed Work Invoice"
+    },
+    "lead_role": "Program Lead",
+    "non_fundable_statuses": [
+      "cancelled",
+      "rejected",
+      "deferred",
+      "awaiting_owner_approval"
+    ],
+    "training_types": [
+      "training",
+      "in_school_training",
+      "school_improvement_training",
+      "cluster_training",
+      "core_training",
+      "cluster_training_ssa_collection"
+    ]
+  },
   "project_handovers_keep_school_rules": false,
   "purposes": {
     "activity_types": {

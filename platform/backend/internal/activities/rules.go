@@ -137,6 +137,19 @@ type Rules struct {
 		TrainingKind string   `json:"training_kind"`
 	} `json:"cluster_meeting"`
 
+	// The partner's period invoice (fund_requests.partner_invoices).
+	PartnerInvoice struct {
+		TrainingTypes       []string          `json:"training_types"`
+		ClusterMeetingTypes []string          `json:"cluster_meeting_types"`
+		FeeLineType         string            `json:"fee_line_type"`
+		NonFundable         []string          `json:"non_fundable_statuses"`
+		Cleared             []string          `json:"cleared_statuses"`
+		ActivityTypeLabels  map[string]string `json:"activity_type_labels"`
+		InvoiceTypeLabels   map[string]string `json:"invoice_type_labels"`
+		LeadRole            string            `json:"lead_role"`
+		DirectorRole        string            `json:"director_role"`
+	} `json:"partner_invoice"`
+
 	weights []weight
 	labels  map[string]string
 	order   []string

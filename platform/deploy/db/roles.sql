@@ -1400,3 +1400,6 @@ GRANT SELECT (assessment_completed) ON core_plan TO edify_gateway_ro;
 -- Partner Oversight's hand-over drawer (_cost_by_activity): the rate-card
 -- version a Partner's work was priced against.
 GRANT SELECT (catalogue_version) ON activity_schedule_cost_line TO edify_gateway_ro;
+-- The partner's Send invoice drawer (partner_invoices.invoice_basis): an
+-- activity already on an instalment's invoice, and a 50% still on one unpaid.
+GRANT SELECT (instalment, payment_id) ON partner_invoice_item TO edify_gateway_ro;

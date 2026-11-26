@@ -256,8 +256,44 @@ def cluster_meeting() -> dict:
     }
 
 
+def partner_invoice() -> dict:
+    """The partner's period invoice (apps.fund_requests.partner_invoices):
+    what it counts, how it names its lines, and where it goes."""
+    from apps.activities.facilitation import FEE_LINE_TYPE
+    from apps.core.activity_types import (
+        CLUSTER_MEETING_TYPES,
+        NON_FUNDABLE_ACTIVITY_STATUSES,
+        TRAINING_TYPES,
+    )
+    from apps.core.enums import ActivityType
+    from apps.core.rbac import EdifyRole
+    from apps.fund_requests import partner_invoices
+    from apps.fund_requests.finance_models import PartnerInvoice
+
+    return {
+        "training_types": [str(t) for t in TRAINING_TYPES],
+        "cluster_meeting_types": [str(t) for t in CLUSTER_MEETING_TYPES],
+        "fee_line_type": FEE_LINE_TYPE,
+        "non_fundable_statuses": [str(s) for s in NON_FUNDABLE_ACTIVITY_STATUSES],
+        "cleared_statuses": list(partner_invoices._CLEARED_STATUSES),
+        "activity_type_labels": {
+            str(v): str(label) for v, label in ActivityType.choices
+        },
+        "invoice_type_labels": {
+            str(v): str(label) for v, label in PartnerInvoice.TYPE_CHOICES
+        },
+        "lead_role": EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+        "director_role": EdifyRole.COUNTRY_DIRECTOR.value,
+    }
+
+
 def rendered() -> str:
-    return json.dumps(rules(), indent=2, sort_keys=True) + "\n"
+    return (
+        json.dumps(
+            rules() | {"partner_invoice": partner_invoice()}, indent=2, sort_keys=True
+        )
+        + "\n"
+    )
 
 
 class Command(BaseCommand):

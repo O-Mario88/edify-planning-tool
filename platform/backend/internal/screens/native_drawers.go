@@ -365,6 +365,9 @@ func (s *Service) getPageDrawerInGo(ctx context.Context, p auth.Principal, rawPa
 	if answer, served, err := s.projectAssignDrawerInGo(ctx, p, rawPath); served {
 		return answer, true, err
 	}
+	if answer, served, err := s.invoiceDrawerInGo(ctx, p, rawPath); served {
+		return answer, true, err
+	}
 	if answer, served, err := s.groupDrawerInGo(ctx, p, rawPath); served {
 		return answer, true, err
 	}

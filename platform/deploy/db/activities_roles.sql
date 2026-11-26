@@ -1218,3 +1218,13 @@ GRANT SELECT (id, condition_key, state, recipient_id, due_date, manual_resolutio
 -- before the save, which Go makes only while that review would not change.
 GRANT INSERT (project_id) ON partner_assignment TO edify_activities_rw;
 GRANT SELECT (condition_key) ON data_quality_issue TO edify_activities_rw;
+-- The partner's period invoice (partner_invoices.submit_invoice): one invoice
+-- for each Programme Lead and its lines, written from the plan; nothing
+-- changed or removed.
+GRANT INSERT (id, created_at, updated_at, partner_id, invoice_type, period_kind, period_start, period_end, system_total,
+              entered_total, payable_amount, stored_name, original_name, mime_type, file_size, status, submitted_by,
+              pl_confirmed_by, pl_confirmed_at, pl_note, program_lead_staff_id)
+  ON partner_invoice TO edify_activities_rw;
+GRANT INSERT (id, created_at, updated_at, instalment, planned_amount, payable_amount, category, activity_id, invoice_id,
+              payment_id)
+  ON partner_invoice_item TO edify_activities_rw;

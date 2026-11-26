@@ -122,6 +122,8 @@ type Service struct {
 	bulkAssign BulkAssigner
 	// projectAssign is the coordinator's project hand-over, with Django absent.
 	projectAssign ProjectAssigner
+	// partnerInvoice is the partner's Send invoice, with Django absent.
+	partnerInvoice PartnerInvoicer
 	// facilitation is a cluster's Partner to Facilitate, with Django absent.
 	facilitation ClusterFacilitator
 	// membership is a cluster's Add Schools, with Django absent.
