@@ -83,9 +83,23 @@ func (s *Service) PlanDrawer(ctx context.Context, p auth.Principal, id, kind str
 		return nil, handOn("no such activity")
 	}
 	if kind == "cancel" {
-		return s.cancelDrawer(ctx, a)
+		return s.cancelDrawer(ctx, a, false)
 	}
 	return s.rescheduleDrawer(ctx, a)
+}
+
+// PartnerCancelDrawer is the Cancel drawer for the partner whose work it is
+// (the caller has asked can_view_record for the partner login): it is not
+// told the partner is notified.
+func (s *Service) PartnerCancelDrawer(ctx context.Context, id string) (*screensv1.PageDrawer, error) {
+	a, err := readChangedWork(ctx, s.db, id)
+	if err != nil {
+		return nil, err
+	}
+	if a == nil {
+		return nil, handOn("no such activity")
+	}
+	return s.cancelDrawer(ctx, a, true)
 }
 
 // noteDrawer is refusal_drawer: a title and one note, closed.
@@ -109,7 +123,7 @@ func drawerField(f *screensv1.DrawerField) *screensv1.DrawerItem {
 }
 
 // cancelDrawer is cancel_drawer.html for work the reader may cancel.
-func (s *Service) cancelDrawer(ctx context.Context, a *changedWork) (*screensv1.PageDrawer, error) {
+func (s *Service) cancelDrawer(ctx context.Context, a *changedWork, byItsPartner bool) (*screensv1.PageDrawer, error) {
 	if a.paired {
 		return nil, handOn("the other half of a pair is cancelled with it")
 	}
@@ -137,7 +151,7 @@ SELECT EXISTS (SELECT 1 FROM advance_request WHERE activity_id = $1 AND status =
 		items = append(items, drawerNote("The school stays assigned to "+name+": only this date is cancelled, and the partner schedules the school again. To take the school back from the partner, withdraw it instead.", "info"))
 	}
 	words := "It stays on the record as Cancelled, leaves your plan and is no longer counted anywhere. Its cost and any undisbursed advance are withdrawn."
-	if a.partnerID != "" {
+	if a.partnerID != "" && !byItsPartner {
 		words += " The assigned partner is notified."
 	}
 	items = append(items, drawerText(words), drawerField(&screensv1.DrawerField{

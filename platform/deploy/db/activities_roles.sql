@@ -1228,3 +1228,9 @@ GRANT INSERT (id, created_at, updated_at, partner_id, invoice_type, period_kind,
 GRANT INSERT (id, created_at, updated_at, instalment, planned_amount, payable_amount, category, activity_id, invoice_id,
               payment_id)
   ON partner_invoice_item TO edify_activities_rw;
+-- A partner cancelling its own dated work (services._cancel_or_defer →
+-- partners.services.undo_assignment_scheduling): the hand-over waits for the
+-- partner again, or is closed with the booking; locked for that change.
+GRANT UPDATE (status, scheduled_date, scheduled_activity_id, training_course_id, returned_at, return_reason, resolution,
+              resolution_note, resolved_at, resolved_by, updated_at)
+  ON partner_assignment TO edify_activities_rw;

@@ -430,6 +430,12 @@ func (s *Service) SaveDrawer(
 			}
 			return connect.NewResponse(answer), nil
 		}
+		if answer, served, err := s.partnerCancelInGo(ctx, forwarded); served {
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(answer), nil
+		}
 		if answer, served, err := s.cancelInGo(ctx, forwarded); served {
 			if err != nil {
 				return nil, err

@@ -124,6 +124,8 @@ type Service struct {
 	projectAssign ProjectAssigner
 	// partnerInvoice is the partner's Send invoice, with Django absent.
 	partnerInvoice PartnerInvoicer
+	// partnerCancel is a partner's cancel of its own work, with Django absent.
+	partnerCancel PartnerCanceller
 	// facilitation is a cluster's Partner to Facilitate, with Django absent.
 	facilitation ClusterFacilitator
 	// membership is a cluster's Add Schools, with Django absent.

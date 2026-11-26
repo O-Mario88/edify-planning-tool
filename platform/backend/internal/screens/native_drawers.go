@@ -481,7 +481,10 @@ func (s *Service) getPageDrawerInGo(ctx context.Context, p auth.Principal, rawPa
 		// A team member's work is read, not moved or called off
 		// (_team_read_only); the forms themselves are Go's only where its
 		// saves take them (fieldFormInGo above), and the existing view's
-		// otherwise.
+		// otherwise. A partner's own Cancel drawer is Go's with Django absent.
+		if answer, served, err := s.partnerCancelDrawerInGo(ctx, p, pathOnly); served {
+			return answer, true, err
+		}
 		return s.teamReadOnlyDrawer(ctx, p, pathOnly)
 
 	case strings.Contains(pathOnly, "/pl/review-queue/"):
