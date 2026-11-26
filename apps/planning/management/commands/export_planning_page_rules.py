@@ -152,8 +152,39 @@ def rules() -> dict:
     }
 
 
+def csv_export() -> dict:
+    """The Planning page's CSV (planning_views.planning_view, export=csv): the
+    words its columns are written in, and what the Responsible and Partner
+    Workflow columns read (support_responsibility)."""
+    from apps.core.enums import SsaIntervention
+    from apps.partners import support_responsibility as sr
+    from apps.schools.models import SSA_COLLECTION_DONE_STATUSES, School
+
+    return {
+        "school_type_labels": {
+            str(v): str(label)
+            for v, label in School._meta.get_field("school_type").choices
+        },
+        "intervention_labels": {
+            str(v): str(label) for v, label in SsaIntervention.choices
+        },
+        "stage_labels": dict(sr.STAGE_LABELS),
+        "in_progress": list(sr._IN_PROGRESS),
+        "submitted": list(sr._SUBMITTED),
+        "returned_by_review": list(sr._RETURNED_BY_REVIEW),
+        "multiple_label": sr.MULTIPLE_PARTNERS_LABEL,
+        "returned_label": sr.PARTNER_RETURNED_LABEL,
+        "closed_activity_statuses": list(sr.CLOSED_ACTIVITY_STATUSES),
+        # School.ssa_readiness_state (models.readiness_from).
+        "ssa_collection_done_statuses": list(SSA_COLLECTION_DONE_STATUSES),
+    }
+
+
 def rendered() -> str:
-    return json.dumps(rules(), indent=2, sort_keys=True) + "\n"
+    return (
+        json.dumps(rules() | {"csv_export": csv_export()}, indent=2, sort_keys=True)
+        + "\n"
+    )
 
 
 class Command(BaseCommand):

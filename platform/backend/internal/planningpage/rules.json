@@ -94,6 +94,63 @@
       "Program Lead": 280
     }
   },
+  "csv_export": {
+    "closed_activity_statuses": [
+      "cancelled",
+      "rejected",
+      "deferred",
+      "closed"
+    ],
+    "in_progress": [
+      "in_progress",
+      "completion_started",
+      "evidence_uploaded",
+      "evidence_accepted"
+    ],
+    "intervention_labels": {
+      "christlike_behaviour": "Christlike Behaviour",
+      "enrolment": "Enrolment",
+      "exposure_to_word_of_god": "Exposure to the Word of God",
+      "financial_health": "Financial Health",
+      "government_requirement": "Government Requirements",
+      "leadership": "Leadership",
+      "learning_environment": "Learning Environment",
+      "teaching_environment": "Teacher's Environment"
+    },
+    "multiple_label": "Multiple Partners \u2014 Review Required",
+    "returned_by_review": [
+      "returned",
+      "returned_by_pl",
+      "returned_by_ia"
+    ],
+    "returned_label": "Partner Returned \u2014 Staff Action Required",
+    "school_type_labels": {
+      "champion": "Champion",
+      "client": "Client",
+      "core": "Core",
+      "core_graduate": "Core Graduate",
+      "core_trained": "Core Trained"
+    },
+    "ssa_collection_done_statuses": [
+      "cancelled",
+      "completed",
+      "ia_verified"
+    ],
+    "stage_labels": {
+      "awaiting_schedule": "Awaiting Schedule",
+      "evidence_submitted": "Evidence Submitted",
+      "ia_verified": "IA Verified",
+      "in_progress": "In Progress",
+      "returned": "Partner Returned \u2014 Staff Action Required",
+      "returned_by_ia": "Returned by IA",
+      "scheduled": "Scheduled"
+    },
+    "submitted": [
+      "submitted_to_pl",
+      "awaiting_ia_verification",
+      "salesforce_id_required"
+    ]
+  },
   "doors": {
     "Accountant": {
       "assign_partner": false,

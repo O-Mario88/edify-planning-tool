@@ -54,10 +54,13 @@ export function proxy(request: NextRequest) {
   // The Clusters list's and the School Directory's Export (export=csv|xlsx).
   const clustersExport =
     /^\/(clusters|schools)\/?$/.test(pathname) && ['csv', 'xlsx'].includes((params.get('export') ?? '').trim());
+  // The Planning page's CSV (export=csv).
+  const planningExport = /^\/planning\/?$/.test(pathname) && (params.get('export') ?? '').trim() === 'csv';
   const exportsPage =
     request.method === 'GET' &&
     (myPlanExport ||
       clustersExport ||
+      planningExport ||
       weeklyExport ||
       (Boolean(params.get('export')?.trim()) &&
       /^\/ia\/(returned|partner-evidence|history|verification)\/?$/.test(pathname)) ||

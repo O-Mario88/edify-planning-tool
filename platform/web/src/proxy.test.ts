@@ -72,6 +72,17 @@ describe('a download the gateway writes', () => {
     }
   });
 
+  it("sends the Planning page's CSV to the gateway, but not the page", () => {
+    const csv = new NextRequest('http://localhost:3000/planning?tab=client&export=csv');
+    csv.cookies.set(ACCESS_COOKIE, 'token');
+    expect(proxy(csv).headers.get('x-middleware-rewrite')).toBe(
+      'http://localhost:3000/api/quick-export?target=%2Fplanning&tab=client&export=csv',
+    );
+    const page = new NextRequest('http://localhost:3000/planning?tab=client');
+    page.cookies.set(ACCESS_COOKIE, 'token');
+    expect(proxy(page).headers.get('x-middleware-rewrite') ?? '').not.toContain('quick-export');
+  });
+
   it("sends a cluster's Export schools to the gateway", () => {
     const request = new NextRequest('http://localhost:3000/clusters/cmw9p8e4900p50wekhe46/schools/export');
     request.cookies.set(ACCESS_COOKIE, 'token');

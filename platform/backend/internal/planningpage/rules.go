@@ -85,6 +85,20 @@ type Rules struct {
 		Kind    string `json:"kind"`
 		Status  string `json:"status"`
 	} `json:"catalogue"`
+	// CSVExport is the page's CSV's words and what its Responsible and
+	// Partner Workflow columns read (support_responsibility).
+	CSVExport struct {
+		SchoolTypeLabels       map[string]string `json:"school_type_labels"`
+		InterventionLabels     map[string]string `json:"intervention_labels"`
+		StageLabels            map[string]string `json:"stage_labels"`
+		InProgress             []string          `json:"in_progress"`
+		Submitted              []string          `json:"submitted"`
+		ReturnedByReview       []string          `json:"returned_by_review"`
+		MultipleLabel          string            `json:"multiple_label"`
+		ReturnedLabel          string            `json:"returned_label"`
+		ClosedActivityStatuses []string          `json:"closed_activity_statuses"`
+		SSACollectionDone      []string          `json:"ssa_collection_done_statuses"`
+	} `json:"csv_export"`
 }
 
 var rules = mustLoad(rulesJSON)
