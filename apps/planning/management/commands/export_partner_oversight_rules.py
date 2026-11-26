@@ -295,8 +295,29 @@ def work() -> dict:
     }
 
 
+def export() -> dict:
+    """The page's Export (oversight_views.partner_oversight_export_view):
+    the kinds of work the five school lists name, the Plan Status values the
+    drawer sends, and the Programme Lead choice that means everyone."""
+    from apps.core import export_kinds
+    from apps.frontend.views.oversight_views import EVERYONE
+    from apps.planning.partner_oversight_service import FACILITATED_SUPPORT_TYPE
+
+    return {
+        "school_lists": sorted(export_kinds.SCHOOL_LISTS),
+        "status_labels": dict(export_kinds.STATUS_LABELS),
+        "everyone": EVERYONE,
+        "facilitated_support_type": FACILITATED_SUPPORT_TYPE,
+    }
+
+
 def rendered() -> str:
-    return json.dumps(rules(), indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+    return (
+        json.dumps(
+            rules() | {"export": export()}, indent=2, sort_keys=True, ensure_ascii=False
+        )
+        + "\n"
+    )
 
 
 class Command(BaseCommand):

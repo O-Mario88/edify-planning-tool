@@ -78,6 +78,14 @@ type Tile struct {
 
 // Rules are the page's vocabularies.
 type Rules struct {
+	// Export is the page's Export: the five school lists' kinds, the Plan
+	// Status values, the everyone choice and the facilitated support type.
+	Export struct {
+		SchoolLists            []string          `json:"school_lists"`
+		StatusLabels           map[string]string `json:"status_labels"`
+		Everyone               string            `json:"everyone"`
+		FacilitatedSupportType string            `json:"facilitated_support_type"`
+	} `json:"export"`
 	Roles                        map[string]Role      `json:"roles"`
 	StatusFilterKeys             []string             `json:"status_filter_keys"`
 	WorkTabs                     []string             `json:"work_tabs"`

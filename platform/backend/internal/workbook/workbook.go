@@ -148,23 +148,34 @@ func Response(w http.ResponseWriter, filename string, sheets []Sheet) error {
 func writeCSV(w http.ResponseWriter, stem string, sheets []Sheet) error {
 	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
 	w.Header().Set("Content-Disposition", `attachment; filename="`+stem+`.csv"`)
-	cw := csv.NewWriter(w)
+	body, err := FirstSheetCSV(sheets)
+	if err != nil {
+		return err
+	}
+	_, err = w.Write(body)
+	return err
+}
+
+// FirstSheetCSV is table_download's CSV: the first sheet's heading and rows.
+func FirstSheetCSV(sheets []Sheet) ([]byte, error) {
+	var buf bytes.Buffer
+	cw := csv.NewWriter(&buf)
 	cw.UseCRLF = true
 	if len(sheets) > 0 {
 		sheet := sheets[0]
 		if len(sheet.Headers) > 0 {
 			if err := cw.Write(safeRow(stringsCells(sheet.Headers))); err != nil {
-				return err
+				return nil, err
 			}
 		}
 		for _, row := range sheet.Rows {
 			if err := cw.Write(safeRow(row)); err != nil {
-				return err
+				return nil, err
 			}
 		}
 	}
 	cw.Flush()
-	return cw.Error()
+	return buf.Bytes(), cw.Error()
 }
 
 func stringsCells(values []string) []Cell {

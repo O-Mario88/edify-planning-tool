@@ -24,15 +24,15 @@ type training struct {
 	name, intervention               string
 	day                              *time.Time
 	fee                              int64
-	cceoID, cceoName, plID           string
+	cceoID, cceoName, plID, plName   string
 	// owner is the staff member the completion belongs to (the officer,
 	// else the monitor), and canReview whether the reader may decide it.
 	owner     string
 	canReview bool
 	// The completion columns.
-	salesforceID              string
-	isComplete, showsComplete bool
-	completionGap             string
+	salesforceID, evidenceLabel string
+	isComplete, showsComplete   bool
+	completionGap               string
 }
 
 var returnedStatuses = []string{"returned", "returned_by_pl", "returned_by_ia"}
@@ -148,7 +148,7 @@ WHERE a.id = ANY($1)`, ids)
 			t.cceoID = c
 		}
 		if s, ok := dir.supervisor[t.cceoID]; ok {
-			t.plID = s[0]
+			t.plID, t.plName = s[0], s[1]
 		}
 		name, _, intervention := describe(work{act: a})
 		if name == "" {
@@ -167,6 +167,7 @@ WHERE a.id = ANY($1)`, ids)
 	for k, t := range out {
 		s := stand[k]
 		t.salesforceID, t.isComplete, t.completionGap, t.showsComplete = s.salesforceID, s.isComplete, s.completionGap, s.showsComplete()
+		t.evidenceLabel = s.evidenceLabel
 	}
 	// Open work by its training date, undated last among it; complete work
 	// at the bottom (sort_completed_last).

@@ -34,6 +34,23 @@
   },
   "engagement_page_param": "engagement_page",
   "engagement_row_limit": 500,
+  "export": {
+    "everyone": "all",
+    "facilitated_support_type": "Facilitated by partner",
+    "school_lists": [
+      "client_visits",
+      "core_trainings",
+      "core_visits",
+      "meeting_schools",
+      "training_schools"
+    ],
+    "status_labels": {
+      "all": "Scheduled and completed plans",
+      "completed": "Completed only",
+      "in_progress": "In progress only",
+      "scheduled": "All scheduled plans"
+    }
+  },
   "left_partner_statuses": [
     "returned",
     "cancelled"

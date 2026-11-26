@@ -83,6 +83,17 @@ describe('a download the gateway writes', () => {
     expect(proxy(page).headers.get('x-middleware-rewrite') ?? '').not.toContain('quick-export');
   });
 
+  it("sends Partner Monitoring's Export to the gateway, but not its drawer", () => {
+    const request = new NextRequest('http://localhost:3000/partner-oversight/export?fy=2027&format=xlsx');
+    request.cookies.set(ACCESS_COOKIE, 'token');
+    expect(proxy(request).headers.get('x-middleware-rewrite')).toBe(
+      'http://localhost:3000/api/quick-export?target=%2Fpartner-oversight%2Fexport&fy=2027&format=xlsx',
+    );
+    const drawer = new NextRequest('http://localhost:3000/partner-oversight/export-drawer');
+    drawer.cookies.set(ACCESS_COOKIE, 'token');
+    expect(proxy(drawer).headers.get('x-middleware-rewrite') ?? '').not.toContain('quick-export');
+  });
+
   it("sends a cluster's Export schools to the gateway", () => {
     const request = new NextRequest('http://localhost:3000/clusters/cmw9p8e4900p50wekhe46/schools/export');
     request.cookies.set(ACCESS_COOKIE, 'token');
