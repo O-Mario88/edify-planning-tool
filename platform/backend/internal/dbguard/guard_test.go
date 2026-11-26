@@ -209,6 +209,9 @@ func TestGatewaySourcesContainNoSchemaChanges(t *testing.T) {
 			"core_activity_slot", "core_plan",
 			// The Core Schools form's hand-over to a partner.
 			"partner_assignment",
+			// The partner's period invoice and its lines
+			// (fund_requests.partner_invoices.submit_invoice).
+			"partner_invoice", "partner_invoice_item",
 		},
 		// Snoozing a To-Do from Today (docs/migration/50;
 		// deploy/db/todo_roles.sql): the person's snooze row.
